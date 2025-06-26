@@ -179,7 +179,7 @@ rules:
       ```python
       # Automatic grouping for database tests (configured in services/conftest.py)
       # Tests using these fixtures are automatically grouped by service:
-      async def test_with_database(async_session_maker, workspace): ...
+      async def test_with_database(async_session_maker, project): ...
       # -> Grouped as "db_rag", "db_indexer", etc.
 
       # Manual grouping for tests that need specific isolation:
@@ -360,7 +360,7 @@ rules:
 
       ### WebSocket Integration
 
-      Extract to custom hooks, use `react-use-websocket`, convert HTTP→WS URLs, handle null IDs gracefully. Endpoint: `/workspaces/{id}/applications/{id}/notifications`
+      Extract to custom hooks, use `react-use-websocket`, convert HTTP→WS URLs, handle null IDs gracefully. Endpoint: `/projects/{id}/applications/{id}/notifications`
 
       ### Environment Variables
 

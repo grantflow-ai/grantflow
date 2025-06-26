@@ -14,7 +14,7 @@ NOTIFICATION_POLL_INTERVAL = 3.0
 
 
 @websocket_stream(
-    "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/notifications",
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}/notifications",
     opt={
         "allowed_roles": [UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER]
     },

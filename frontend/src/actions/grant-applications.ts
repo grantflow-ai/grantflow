@@ -5,12 +5,12 @@ import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 export async function createApplication(
-	workspaceId: string,
+	projectId: string,
 	data: API.CreateApplication.RequestBody,
 ): Promise<API.CreateApplication.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
-			.post(`workspaces/${workspaceId}/applications`, {
+			.post(`projects/${projectId}/applications`, {
 				headers: await createAuthHeaders(),
 				json: data,
 			})
@@ -18,29 +18,29 @@ export async function createApplication(
 	);
 }
 
-export async function deleteApplication(workspaceId: string, applicationId: string): Promise<void> {
+export async function deleteApplication(projectId: string, applicationId: string): Promise<void> {
 	await withAuthRedirect(
-		getClient().delete(`workspaces/${workspaceId}/applications/${applicationId}`, {
+		getClient().delete(`projects/${projectId}/applications/${applicationId}`, {
 			headers: await createAuthHeaders(),
 		}),
 	);
 }
 
-export async function generateApplication(workspaceId: string, applicationId: string): Promise<void> {
+export async function generateApplication(projectId: string, applicationId: string): Promise<void> {
 	await withAuthRedirect(
-		getClient().post(`workspaces/${workspaceId}/applications/${applicationId}`, {
+		getClient().post(`projects/${projectId}/applications/${applicationId}`, {
 			headers: await createAuthHeaders(),
 		}),
 	);
 }
 
 export async function retrieveApplication(
-	workspaceId: string,
+	projectId: string,
 	applicationId: string,
 ): Promise<API.RetrieveApplication.Http200.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
-			.get(`workspaces/${workspaceId}/applications/${applicationId}`, {
+			.get(`projects/${projectId}/applications/${applicationId}`, {
 				headers: await createAuthHeaders(),
 			})
 			.json<API.RetrieveApplication.Http200.ResponseBody>(),
@@ -48,13 +48,13 @@ export async function retrieveApplication(
 }
 
 export async function updateApplication(
-	workspaceId: string,
+	projectId: string,
 	applicationId: string,
 	data: Partial<API.UpdateApplication.RequestBody>,
 ): Promise<API.UpdateApplication.Http200.ResponseBody> {
 	return await withAuthRedirect(
 		getClient()
-			.patch(`workspaces/${workspaceId}/applications/${applicationId}`, {
+			.patch(`projects/${projectId}/applications/${applicationId}`, {
 				headers: await createAuthHeaders(),
 				json: data,
 			})

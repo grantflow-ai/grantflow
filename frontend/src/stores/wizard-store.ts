@@ -59,7 +59,7 @@ interface WizardActions {
 	addObjective: (objective: Objective) => void;
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
 	checkTemplateRagJobStatus: () => Promise<void>;
-	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
+	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
@@ -93,8 +93,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 		(set, get) => {
 			const debouncedUpdateTitle = createDebounce((title: string) => {
 				const { application, updateApplicationTitle } = useApplicationStore.getState();
-				if (application?.workspace_id && title.trim() && title !== application.title) {
-					void updateApplicationTitle(application.workspace_id, application.id, title);
+				if (application?.project_id && title.trim() && title !== application.title) {
+					void updateApplicationTitle(application.project_id, application.id, title);
 				}
 			}, DEBOUNCE_DELAY_MS);
 
@@ -172,7 +172,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					const ragJobId = application.grant_template.rag_job_id;
 
 					try {
-						const jobData = await retrieveRagJob(application.workspace_id, ragJobId);
+						const jobData = await retrieveRagJob(application.project_id, ragJobId);
 
 						set((state) => ({
 							...state,
@@ -198,11 +198,11 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
-				handleApplicationInit: async (workspaceId: string, applicationId?: string) => {
+				handleApplicationInit: async (projectId: string, applicationId?: string) => {
 					const { createApplication, retrieveApplication } = useApplicationStore.getState();
 					await (applicationId
-						? retrieveApplication(workspaceId, applicationId)
-						: createApplication(workspaceId));
+						? retrieveApplication(projectId, applicationId)
+						: createApplication(projectId));
 				},
 
 				handleObjectiveDragEnd: (event: DragEndEvent) => {

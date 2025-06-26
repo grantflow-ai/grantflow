@@ -28,16 +28,16 @@ from services.backend.src.api.routes.sources import (
     handle_delete_rag_source,
     handle_retrieve_rag_sources,
 )
-from services.backend.src.api.routes.workspaces import (
+from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
     handle_create_invitation_redirect_url,
-    handle_create_workspace,
+    handle_create_project,
     handle_delete_invitation,
-    handle_delete_workspace,
-    handle_retrieve_workspace,
-    handle_retrieve_workspaces,
+    handle_delete_project,
+    handle_retrieve_project,
+    handle_retrieve_projects,
     handle_update_invitation_role,
-    handle_update_workspace,
+    handle_update_project,
 )
 from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
@@ -54,12 +54,12 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_organization,
     handle_create_otp,
     handle_create_upload_url,
-    handle_create_workspace,
+    handle_create_project,
     handle_delete_application,
     handle_delete_invitation,
     handle_delete_organization,
     handle_delete_rag_source,
-    handle_delete_workspace,
+    handle_delete_project,
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
@@ -68,13 +68,13 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_organizations,
     handle_retrieve_rag_job,
     handle_retrieve_rag_sources,
-    handle_retrieve_workspace,
-    handle_retrieve_workspaces,
+    handle_retrieve_project,
+    handle_retrieve_projects,
     handle_update_application,
     handle_update_grant_template,
     handle_update_invitation_role,
     handle_update_organization,
-    handle_update_workspace,
+    handle_update_project,
 ]
 
 

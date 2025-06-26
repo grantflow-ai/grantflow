@@ -4,7 +4,7 @@ from litestar import Request
 from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
-from packages.db.src.tables import WorkspaceUser
+from packages.db.src.tables import ProjectUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
@@ -47,8 +47,8 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             firebase_uid = verify_jwt_token(otp)
 
         if allowed_roles := connection.route_handler.opt.get("allowed_roles"):
-            workspace_id = connection.path_params.get("workspace_id")
-            if not workspace_id:
+            project_id = connection.path_params.get("project_id")
+            if not project_id:
                 raise NotAuthorizedException
 
             if not firebase_uid:
@@ -56,17 +56,17 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
             async with connection.app.state.session_maker() as session:
                 stmt = (
-                    select(WorkspaceUser)
-                    .where(WorkspaceUser.firebase_uid == firebase_uid)
-                    .where(WorkspaceUser.workspace_id == workspace_id)
+                    select(ProjectUser)
+                    .where(ProjectUser.firebase_uid == firebase_uid)
+                    .where(ProjectUser.project_id == project_id)
                 )
                 if allowed_roles is not None:
-                    stmt = stmt.where(WorkspaceUser.role.in_(allowed_roles))
+                    stmt = stmt.where(ProjectUser.role.in_(allowed_roles))
 
                 result = await session.execute(stmt)
 
-            if workspace_user := result.scalar_one_or_none():
-                return AuthenticationResult(user=workspace_user.role, auth=firebase_uid)
+            if project_user := result.scalar_one_or_none():
+                return AuthenticationResult(user=project_user.role, auth=firebase_uid)
             raise NotAuthorizedException
 
         if firebase_uid:

@@ -1,16 +1,16 @@
 export enum PagePath {
 	ABOUT_US = "/about",
-	APPLICATION_DETAIL = "/workspaces/:workspaceId/applications/:applicationId",
-	APPLICATION_WIZARD = "/workspaces/:workspaceId/applications/:applicationId/wizard",
+	APPLICATION_DETAIL = "/projects/:projectId/applications/:applicationId",
+	APPLICATION_WIZARD = "/projects/:projectId/applications/:applicationId/wizard",
 	FINISH_EMAIL_SIGNIN = "/onboarding/email",
 	IMPRINT = "/imprint",
 	LOGIN = "/login",
 	ONBOARDING = "/onboarding",
 	PRIVACY = "/privacy",
+	PROJECT_DETAIL = "/projects/:projectId",
+	PROJECTS = "/projects",
 	ROOT = "/",
 	TERMS = "/terms",
-	WORKSPACE_DETAIL = "/workspaces/:workspaceId",
-	WORKSPACES = "/workspaces",
 }
 
 export enum SourceIndexingStatus {

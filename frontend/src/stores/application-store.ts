@@ -97,15 +97,15 @@ interface ApplicationActions {
 	addUrl: (url: string, parentId: string) => Promise<void>;
 	checkAndRestoreJobState: () => Promise<void>;
 	clearRestoredJobState: () => void;
-	createApplication: (workspaceId: string) => Promise<void>;
+	createApplication: (projectId: string) => Promise<void>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
-	retrieveApplication: (workspaceId: string, applicationId: string) => Promise<void>;
+	retrieveApplication: (projectId: string, applicationId: string) => Promise<void>;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
-	updateApplicationTitle: (workspaceId: string, applicationId: string, title: string) => Promise<void>;
+	updateApplicationTitle: (projectId: string, applicationId: string, title: string) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
 }
 
@@ -116,7 +116,7 @@ const uploadFileInDevelopment = async (
 	isApplicationParent: boolean,
 ) => {
 	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
-	const { url } = await createUploadUrl(application.workspace_id, parentId, file.name);
+	const { url } = await createUploadUrl(application.project_id, parentId, file.name);
 
 	const { extractObjectPathFromUrl } = await import("@/utils/dev-indexing-patch");
 	const objectPath = extractObjectPathFromUrl(url);
@@ -153,7 +153,7 @@ const uploadFileInProduction = async (
 	isApplicationParent: boolean,
 ) => {
 	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
-	const { url } = await createUploadUrl(application.workspace_id, parentId, file.name);
+	const { url } = await createUploadUrl(application.project_id, parentId, file.name);
 
 	await ky(url, {
 		body: file,
@@ -188,7 +188,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
 
 			toast.success(`File ${file.name} uploaded successfully`);
-			await get().retrieveApplication(application!.workspace_id, application!.id);
+			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "addFile" });
 			toast.error("Failed to upload file. Please try again.");
@@ -206,9 +206,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
-			await crawlUrl(application!.workspace_id, parentId, url);
+			await crawlUrl(application!.project_id, parentId, url);
 			toast.success("URL added successfully");
-			await get().retrieveApplication(application!.workspace_id, application!.id);
+			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "addUrl" });
 			toast.error("Failed to process URL. Please try again.");
@@ -237,7 +237,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 
 		try {
-			const jobData = await retrieveRagJob(application.workspace_id, ragJobId);
+			const jobData = await retrieveRagJob(application.project_id, ragJobId);
 
 			const shouldRestore = jobData.status === "PROCESSING" || jobData.status === "PENDING";
 
@@ -290,10 +290,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 	},
 
-	createApplication: async (workspaceId: string) => {
+	createApplication: async (projectId: string) => {
 		set({ areAppOperationsInProgress: true });
 		try {
-			const response = await handleCreateApplication(workspaceId, { title: DEFAULT_APPLICATION_TITLE });
+			const response = await handleCreateApplication(projectId, { title: DEFAULT_APPLICATION_TITLE });
 			set({
 				application: response,
 				areAppOperationsInProgress: false,
@@ -312,7 +312,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			message: "Application should not be null when calling generateTemplate",
 		});
 		try {
-			await withRetry(() => generateGrantTemplate(application.workspace_id, application.id, templateId), {
+			await withRetry(() => generateGrantTemplate(application.project_id, application.id, templateId), {
 				initialDelay: 1000,
 				maxRetries: 3,
 				retryCondition: (error: unknown) => {
@@ -352,9 +352,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(application!.workspace_id, parentId, fileToRemove.id);
+			await deleteSource(application!.project_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
-			await get().retrieveApplication(application!.workspace_id, application!.id);
+			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "removeFile" });
 			toast.error("Failed to remove file. Please try again.");
@@ -382,9 +382,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(application!.workspace_id, parentId, ragSource.sourceId);
+			await deleteSource(application!.project_id, parentId, ragSource.sourceId);
 			toast.success("URL removed successfully");
-			await get().retrieveApplication(application!.workspace_id, application!.id);
+			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			logError({ error, identifier: "removeUrl" });
 			toast.error("Failed to remove URL. Please try again.");
@@ -395,10 +395,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set(structuredClone(initialState));
 	},
 
-	retrieveApplication: async (workspaceId: string, applicationId: string) => {
+	retrieveApplication: async (projectId: string, applicationId: string) => {
 		set({ areAppOperationsInProgress: true });
 		try {
-			const response = await handleRetrieveApplication(workspaceId, applicationId);
+			const response = await handleRetrieveApplication(projectId, applicationId);
 			set({
 				application: response,
 				areAppOperationsInProgress: false,
@@ -429,7 +429,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const response = await handleUpdateApplication(
-				existingApplication.workspace_id,
+				existingApplication.project_id,
 				existingApplication.id,
 				data,
 			);
@@ -443,12 +443,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	updateApplicationTitle: async (workspaceId: string, applicationId: string, title: string) => {
+	updateApplicationTitle: async (projectId: string, applicationId: string, title: string) => {
 		const { application } = get();
 		const previousApplication = application;
 
 		try {
-			const response = await handleUpdateApplication(workspaceId, applicationId, { title });
+			const response = await handleUpdateApplication(projectId, applicationId, { title });
 			set({ application: response });
 		} catch (error) {
 			set({ application: previousApplication });
@@ -477,7 +477,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application: updatedApplication });
 
 		try {
-			await updateGrantTemplate(application.workspace_id, application.id, application.grant_template.id, {
+			await updateGrantTemplate(application.project_id, application.id, application.grant_template.id, {
 				grant_sections: sections,
 			});
 		} catch (error) {

@@ -85,7 +85,7 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
 
 async def handle_create_rag_source(
     session_maker: async_sessionmaker[Any],
-    workspace_id: UUID | None,
+    project_id: UUID | None,
     url: str | None = None,
     blob_name: str | None = None,
     mime_type: str | None = None,
@@ -153,8 +153,8 @@ async def handle_create_rag_source(
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
-                if not workspace_id and parent_type != "funding_organization":
-                    raise BackendError("Missing workspace_id for file source")
+                if not project_id and parent_type != "funding_organization":
+                    raise BackendError("Missing project_id for file source")
 
                 await session.execute(
                     insert(RagFile).values(
@@ -166,7 +166,7 @@ async def handle_create_rag_source(
                                 "size": 0,
                                 "bucket_name": "",
                                 "object_path": construct_object_uri(
-                                    workspace_id=workspace_id,
+                                    project_id=project_id,
                                     parent_id=parent_id,
                                     source_id=source_id,
                                     blob_name=blob_name,
@@ -223,8 +223,8 @@ async def handle_create_rag_source(
 
 @get(
     [
-        "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources",
+        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
+        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
@@ -302,8 +302,8 @@ async def handle_retrieve_rag_sources(
 
 @delete(
     [
-        "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
+        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
+        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
@@ -383,8 +383,8 @@ async def handle_delete_rag_source(
 
 @post(
     [
-        "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
+        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
+        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
@@ -396,7 +396,7 @@ async def handle_create_upload_url(
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
     template_id: UUID | None = None,
-    workspace_id: UUID | None = None,
+    project_id: UUID | None = None,
 ) -> UploadUrlResponse:
     file_extension = blob_name.split(".")[-1].lower()
     mime_type = SUPPORTED_FILE_EXTENSIONS.get(file_extension)
@@ -409,8 +409,8 @@ async def handle_create_upload_url(
             },
         )
 
-    if not workspace_id and not organization_id:
-        raise ValidationError("Either workspace_id or organization_id must be provided")
+    if not project_id and not organization_id:
+        raise ValidationError("Either project_id or organization_id must be provided")
 
     source_id = await handle_create_rag_source(
         application_id=application_id,
@@ -419,7 +419,7 @@ async def handle_create_upload_url(
         organization_id=organization_id,
         session_maker=session_maker,
         template_id=template_id,
-        workspace_id=workspace_id,
+        project_id=project_id,
     )
 
     if application_id:
@@ -434,7 +434,7 @@ async def handle_create_upload_url(
         )
 
     url = await create_signed_upload_url(
-        workspace_id=workspace_id,
+        project_id=project_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
@@ -445,8 +445,8 @@ async def handle_create_upload_url(
 
 @post(
     [
-        "/workspaces/{workspace_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
-        "/workspaces/{workspace_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
+        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
+        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
         "/organizations/{organization_id:uuid}/sources/crawl-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
@@ -458,16 +458,16 @@ async def handle_crawl_url(
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
     template_id: UUID | None = None,
-    workspace_id: UUID | None = None,
+    project_id: UUID | None = None,
 ) -> UrlCrawlingResponse:
     url = data["url"]
 
-    if not workspace_id and not organization_id:
-        raise ValidationError("Either workspace_id or organization_id must be provided")
+    if not project_id and not organization_id:
+        raise ValidationError("Either project_id or organization_id must be provided")
 
     source_id = await handle_create_rag_source(
         session_maker=session_maker,
-        workspace_id=workspace_id,
+        project_id=project_id,
         url=url,
         application_id=application_id,
         organization_id=organization_id,
@@ -489,7 +489,7 @@ async def handle_crawl_url(
         logger=logger,
         url=url,
         source_id=source_id,
-        workspace_id=workspace_id,
+        project_id=project_id,
         parent_id=parent_id,
     )
 

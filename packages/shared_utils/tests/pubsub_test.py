@@ -89,7 +89,7 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
         return_value=mock_publisher_client,
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
-        workspace_id = UUID("223e4567-e89b-12d3-a456-426614174000")
+        project_id = UUID("223e4567-e89b-12d3-a456-426614174000")
 
         source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
         result = await publish_url_crawling_task(
@@ -97,7 +97,7 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
             url="https://example.com",
             source_id=source_id,
             parent_id=parent_id,
-            workspace_id=workspace_id,
+            project_id=project_id,
         )
 
         assert result == "test-message-id"
@@ -118,7 +118,7 @@ async def test_publish_url_crawling_task_with_all_params(
         return_value=mock_publisher_client,
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
-        workspace_id = UUID("223e4567-e89b-12d3-a456-426614174000")
+        project_id = UUID("223e4567-e89b-12d3-a456-426614174000")
         source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
         result = await publish_url_crawling_task(
@@ -126,13 +126,13 @@ async def test_publish_url_crawling_task_with_all_params(
             url="https://example.com",
             source_id=source_id,
             parent_id=parent_id,
-            workspace_id=workspace_id,
+            project_id=project_id,
         )
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
         _, kwargs = mock_publisher_client.publish.call_args
-        assert b"workspace_id" in kwargs["data"]
+        assert b"project_id" in kwargs["data"]
 
 
 async def test_publish_url_crawling_task_message_too_large(
@@ -152,7 +152,7 @@ async def test_publish_url_crawling_task_message_too_large(
                 url="https://example.com" + "x" * 10000000,
                 source_id="323e4567-e89b-12d3-a456-426614174000",
                 parent_id="123e4567-e89b-12d3-a456-426614174000",
-                workspace_id="223e4567-e89b-12d3-a456-426614174000",
+                project_id="223e4567-e89b-12d3-a456-426614174000",
             )
 
         assert "Error publishing URL crawling message" in str(exc_info.value)
@@ -170,14 +170,14 @@ async def test_publish_url_crawling_task_with_string_ids(
             url="https://example.com",
             source_id="323e4567-e89b-12d3-a456-426614174000",
             parent_id="123e4567-e89b-12d3-a456-426614174000",
-            workspace_id="223e4567-e89b-12d3-a456-426614174000",
+            project_id="223e4567-e89b-12d3-a456-426614174000",
         )
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
 
 
-async def test_publish_url_crawling_task_with_none_workspace(
+async def test_publish_url_crawling_task_with_none_project(
     mock_publisher_client: Mock,
 ) -> None:
     with patch(
@@ -189,7 +189,7 @@ async def test_publish_url_crawling_task_with_none_workspace(
             url="https://example.com",
             source_id="323e4567-e89b-12d3-a456-426614174000",
             parent_id="123e4567-e89b-12d3-a456-426614174000",
-            workspace_id=None,
+            project_id=None,
         )
 
         assert result == "test-message-id"
@@ -198,7 +198,7 @@ async def test_publish_url_crawling_task_with_none_workspace(
         call_args = mock_publisher_client.publish.call_args
         data_bytes = call_args.kwargs["data"]
         published_data = deserialize(data_bytes, CrawlingRequest)
-        assert published_data["workspace_id"] is None
+        assert published_data["project_id"] is None
 
 
 async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
@@ -512,11 +512,11 @@ def test_crawling_request_typed_dict() -> None:
     request: CrawlingRequest = {
         "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
         "parent_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "workspace_id": UUID("223e4567-e89b-12d3-a456-426614174000"),
+        "project_id": UUID("223e4567-e89b-12d3-a456-426614174000"),
         "url": "https://example.com",
     }
     assert request["url"] == "https://example.com"
-    assert request["workspace_id"] == UUID("223e4567-e89b-12d3-a456-426614174000")
+    assert request["project_id"] == UUID("223e4567-e89b-12d3-a456-426614174000")
 
 
 def test_source_processing_result_typed_dict() -> None:

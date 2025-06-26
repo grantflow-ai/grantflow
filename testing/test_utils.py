@@ -11,10 +11,10 @@ from packages.db.src.tables import (
     FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
+    Project,
     RagFile,
     RagSource,
     TextVector,
-    Workspace,
 )
 from packages.shared_utils.src.extraction import extract_file_content
 from packages.shared_utils.src.serialization import deserialize, serialize
@@ -240,7 +240,7 @@ async def parse_source_file(
 async def create_funding_application(
     async_session_maker: async_sessionmaker[Any],
     fixture_id: str,
-    workspace_id: str,
+    project_id: str,
     title: str,
     research_objectives: list[ResearchObjective],
     form_inputs: ResearchDeepDive,
@@ -253,7 +253,7 @@ async def create_funding_application(
                 .values(
                     {
                         "id": fixture_id,
-                        "workspace_id": workspace_id,
+                        "project_id": project_id,
                         "title": title,
                         "research_objectives": research_objectives,
                         "form_inputs": form_inputs,
@@ -350,7 +350,7 @@ async def process_application_files(
 
 
 async def create_grant_application_data(
-    workspace: Workspace,
+    project: Project,
     research_objectives: list[ResearchObjective],
     form_inputs: ResearchDeepDive,
     async_session_maker: async_sessionmaker[Any],
@@ -360,7 +360,7 @@ async def create_grant_application_data(
     title: str = "Test Application",
 ) -> str:
     application_id = await create_funding_application(
-        async_session_maker, fixture_id, str(workspace.id), title, research_objectives, form_inputs
+        async_session_maker, fixture_id, str(project.id), title, research_objectives, form_inputs
     )
 
     cfp_content_file = FIXTURES_FOLDER / "cfps" / cfp_markdown_file_name

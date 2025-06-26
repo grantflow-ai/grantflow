@@ -6,7 +6,7 @@ from uuid import UUID
 import pytest
 from dotenv import load_dotenv
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
-from packages.db.src.tables import FundingOrganization, Workspace
+from packages.db.src.tables import FundingOrganization, Project
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
@@ -326,7 +326,7 @@ def research_objectives() -> list[ResearchObjective]:
 
 @pytest.fixture
 async def melanoma_alliance_full_application_id(
-    workspace: Workspace,
+    project: Project,
     research_objectives: list[ResearchObjective],
     async_session_maker: async_sessionmaker[Any],
 ) -> str:
@@ -342,7 +342,7 @@ async def melanoma_alliance_full_application_id(
         "scientific_infrastructure": "Our lab is equipped with the state-of-the-art single cell and molecular biology technologies and is supported by the vast scientific infrastructure of the Weizmann Institute of Science.",
     }
     return await create_grant_application_data(
-        workspace=workspace,
+        project=project,
         research_objectives=research_objectives,
         form_inputs=form_inputs,
         async_session_maker=async_session_maker,

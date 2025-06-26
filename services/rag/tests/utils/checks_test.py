@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationFactory,
     GrantTemplateFactory,
+    ProjectFactory,
     RagSourceFactory,
-    WorkspaceFactory,
 )
 
 from services.rag.src.constants import NotificationEvents
@@ -24,12 +24,12 @@ from services.rag.src.utils.checks import verify_rag_sources_indexed
 
 
 @pytest.fixture
-async def test_workspace(async_session_maker: async_sessionmaker[Any]) -> tuple[Any, Any]:
+async def test_project(async_session_maker: async_sessionmaker[Any]) -> tuple[Any, Any]:
     async with async_session_maker() as session:
-        workspace = WorkspaceFactory.build()
-        session.add(workspace)
+        project = ProjectFactory.build()
+        session.add(project)
         await session.flush()
-        return workspace, session
+        return project, session
 
 
 @pytest.fixture
@@ -37,11 +37,11 @@ async def test_grant_application(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantApplication:
     async with async_session_maker() as session:
-        workspace = WorkspaceFactory.build()
-        session.add(workspace)
+        project = ProjectFactory.build()
+        session.add(project)
         await session.flush()
 
-        application = GrantApplicationFactory.build(workspace_id=workspace.id)
+        application = GrantApplicationFactory.build(project_id=project.id)
         session.add(application)
         await session.commit()
         return application
@@ -52,11 +52,11 @@ async def test_grant_template(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantTemplate:
     async with async_session_maker() as session:
-        workspace = WorkspaceFactory.build()
-        session.add(workspace)
+        project = ProjectFactory.build()
+        session.add(project)
         await session.flush()
 
-        application = GrantApplicationFactory.build(workspace_id=workspace.id)
+        application = GrantApplicationFactory.build(project_id=project.id)
         session.add(application)
         await session.flush()
 

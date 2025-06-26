@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from packages.db.src.tables import FundingOrganization, Workspace
+from packages.db.src.tables import FundingOrganization, Project
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 async def test_generate_erc_application_for_asaf(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    workspace: Workspace,
+    project: Project,
     erc_organization: FundingOrganization,
 ) -> None:
     logger.info("Running end-to-end test for generating ERC application for Asaf")
@@ -86,7 +86,7 @@ async def test_generate_erc_application_for_asaf(
 
     logger.info("Creating grant application data in database")
     grant_application_id = await create_grant_application_data(
-        workspace=workspace,
+        project=project,
         research_objectives=research_objectives,
         form_inputs=form_inputs,
         async_session_maker=async_session_maker,

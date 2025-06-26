@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 from testing.factories import (
     GrantApplicationFactory,
-    WorkspaceFactory,
+    ProjectFactory,
 )
 
 from services.rag.src.constants import NotificationEvents
@@ -196,13 +196,13 @@ def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
 @pytest.fixture
 async def test_application(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
     async with async_session_maker() as session:
-        workspace = WorkspaceFactory.build()
-        session.add(workspace)
+        project = ProjectFactory.build()
+        session.add(project)
         await session.flush()
 
         application = GrantApplicationFactory.build(
             title="Novel Biomarkers for Early Cancer Detection",
-            workspace_id=workspace.id,
+            project_id=project.id,
             form_inputs={
                 "project_summary": "This project aims to develop novel biomarkers for early cancer detection.",
                 "principal_investigator": "Dr. Jane Smith",
@@ -435,13 +435,13 @@ async def test_pipeline_missing_grant_template(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
-        workspace = WorkspaceFactory.build()
-        session.add(workspace)
+        project = ProjectFactory.build()
+        session.add(project)
         await session.flush()
 
         application = GrantApplicationFactory.build(
             title="Test Application",
-            workspace_id=workspace.id,
+            project_id=project.id,
             research_objectives=[{"number": 1, "title": "Test Objective", "research_tasks": []}],
         )
         session.add(application)
@@ -461,13 +461,13 @@ async def test_pipeline_missing_research_objectives(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
-        workspace = WorkspaceFactory.build()
-        session.add(workspace)
+        project = ProjectFactory.build()
+        session.add(project)
         await session.flush()
 
         application = GrantApplicationFactory.build(
             title="Test Application",
-            workspace_id=workspace.id,
+            project_id=project.id,
             research_objectives=None,
         )
         session.add(application)

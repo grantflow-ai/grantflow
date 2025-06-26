@@ -9,8 +9,8 @@ from litestar.testing import TestClient
 from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
-    Workspace,
-    WorkspaceUser,
+    Project,
+    ProjectUser,
 )
 from packages.shared_utils.src.pubsub import SourceProcessingResult, WebsocketMessage
 from sqlalchemy import insert, select
@@ -32,7 +32,7 @@ def mock_server_start() -> Generator[None]:
 
 @pytest.fixture
 async def application(
-    workspace: Workspace, async_session_maker: async_sessionmaker[Any]
+    project: Project, async_session_maker: async_sessionmaker[Any]
 ) -> GrantApplication:
     application_id = uuid4()
 
@@ -40,7 +40,7 @@ async def application(
         await session.execute(
             insert(GrantApplication).values(
                 id=application_id,
-                workspace_id=workspace.id,
+                project_id=project.id,
                 title="Test Application",
                 status=ApplicationStatusEnum.DRAFT,
             )
@@ -61,24 +61,24 @@ def mock_pull_notifications() -> Generator[AsyncMock]:
 
 
 async def test_handle_grant_application_notifications_unauthorized_error_no_otp(
-    workspace: Workspace,
+    project: Project,
     application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     sync_test_client: TestClient[Any],
 ) -> None:
     with (
         pytest.raises(WebSocketDisconnect),
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp="
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp="
         ) as ws,
     ):
         ws.receive_json()
 
 
-async def test_handle_grant_application_notifications_unauthorized_error_no_workspace_user(
-    workspace: Workspace,
+async def test_handle_grant_application_notifications_unauthorized_error_no_project_user(
+    project: Project,
     application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
@@ -88,16 +88,16 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_work
         pytest.raises(WebSocketDisconnect),
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         ws.receive_json()
 
 
 async def test_handle_grant_application_notifications_success(
-    workspace: Workspace,
+    project: Project,
     application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -133,7 +133,7 @@ async def test_handle_grant_application_notifications_success(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message1 = ws.receive_json()
@@ -160,9 +160,9 @@ async def test_handle_grant_application_notifications_success(
 
 
 async def test_handle_grant_application_notifications_failed_status(
-    workspace: Workspace,
+    project: Project,
     application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -193,7 +193,7 @@ async def test_handle_grant_application_notifications_failed_status(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message = ws.receive_json()
@@ -206,9 +206,9 @@ async def test_handle_grant_application_notifications_failed_status(
 
 
 async def test_handle_grant_application_notifications_empty_notifications(
-    workspace: Workspace,
+    project: Project,
     application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -218,7 +218,7 @@ async def test_handle_grant_application_notifications_empty_notifications(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ),
     ):
         pass
@@ -227,9 +227,9 @@ async def test_handle_grant_application_notifications_empty_notifications(
 
 
 async def test_handle_grant_application_notifications_different_roles(
-    workspace: Workspace,
+    project: Project,
     application: GrantApplication,
-    workspace_admin_user: WorkspaceUser,
+    project_admin_user: ProjectUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -260,7 +260,7 @@ async def test_handle_grant_application_notifications_different_roles(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message = ws.receive_json()
@@ -271,9 +271,9 @@ async def test_handle_grant_application_notifications_different_roles(
 
 
 async def test_handle_grant_application_notifications_continuous_updates(
-    workspace: Workspace,
+    project: Project,
     application: GrantApplication,
-    workspace_member_user: WorkspaceUser,
+    project_member_user: ProjectUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -323,7 +323,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/workspaces/{workspace.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message1 = ws.receive_json()

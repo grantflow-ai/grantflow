@@ -17,8 +17,8 @@ from packages.db.src.tables import (
     GrantTemplateRagSource,
     RagFile,
     RagUrl,
-    Workspace,
-    WorkspaceUser,
+    Project,
+    ProjectUser,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -28,12 +28,12 @@ from services.backend.tests.conftest import TestingClientType
 
 async def test_create_application_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications",
+        f"/projects/{project.id}/applications",
         json={"title": "Test Grant Application"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -48,17 +48,17 @@ async def test_create_application_success(
         )
         assert application is not None
         assert application.title == "Test Grant Application"
-        assert application.workspace_id == workspace.id
+        assert application.project_id == project.id
         assert application.status == ApplicationStatusEnum.DRAFT
 
 
 async def test_create_application_unauthorized(
     test_client: TestingClientType,
 ) -> None:
-    different_workspace_id = UUID("00000000-0000-0000-0000-000000000000")
+    different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
-        f"/workspaces/{different_workspace_id}/applications",
+        f"/projects/{different_project_id}/applications",
         json={"title": "Test Grant Application"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -68,10 +68,10 @@ async def test_create_application_unauthorized(
 
 async def test_update_application_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     update_data = {
         "title": "Updated Title",
@@ -94,7 +94,7 @@ async def test_update_application_success(
     }
 
     response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -115,13 +115,13 @@ async def test_update_application_success(
 
 async def test_update_application_not_found(
     test_client: TestingClientType,
-    workspace: Workspace,
-    workspace_member_user: None,
+    project: Project,
+    project_member_user: None,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.patch(
-        f"/workspaces/{workspace.id}/applications/{non_existent_id}",
+        f"/projects/{project.id}/applications/{non_existent_id}",
         json={"title": "Updated Title"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -132,13 +132,13 @@ async def test_update_application_not_found(
 
 async def test_delete_application_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     response = await test_client.delete(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -153,13 +153,13 @@ async def test_delete_application_success(
 
 async def test_delete_application_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
 ) -> None:
-    different_workspace_id = UUID("00000000-0000-0000-0000-000000000000")
+    different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.delete(
-        f"/workspaces/{different_workspace_id}/applications/{grant_application.id}",
+        f"/projects/{different_project_id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -173,10 +173,10 @@ async def test_delete_application_unauthorized(
 async def test_generate_application_success(
     mock_publish_rag_task: AsyncMock,
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         grant_application.research_objectives = [
@@ -227,7 +227,7 @@ async def test_generate_application_success(
         await session.commit()
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -239,12 +239,12 @@ async def test_generate_application_success(
 
 async def test_generate_application_insufficient_data(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -254,10 +254,10 @@ async def test_generate_application_insufficient_data(
 
 async def test_generate_application_no_rag_sources(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         grant_application.research_objectives = [
@@ -292,7 +292,7 @@ async def test_generate_application_no_rag_sources(
         await session.commit()
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -302,13 +302,13 @@ async def test_generate_application_no_rag_sources(
 
 async def test_generate_application_not_found(
     test_client: TestingClientType,
-    workspace: Workspace,
-    workspace_member_user: None,
+    project: Project,
+    project_member_user: None,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
-        f"/workspaces/{workspace.id}/applications/{non_existent_id}",
+        f"/projects/{project.id}/applications/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -317,12 +317,12 @@ async def test_generate_application_not_found(
 
 async def test_retrieve_application_success(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -330,7 +330,7 @@ async def test_retrieve_application_success(
     data = response.json()
 
     assert data["id"] == str(grant_application.id)
-    assert data["workspace_id"] == str(grant_application.workspace_id)
+    assert data["project_id"] == str(grant_application.project_id)
     assert data["title"] == grant_application.title
     assert data["status"] == grant_application.status.value
     assert "created_at" in data
@@ -341,13 +341,13 @@ async def test_retrieve_application_success(
 
 async def test_retrieve_application_with_grant_template(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -376,42 +376,42 @@ async def test_retrieve_application_with_grant_template(
 
 async def test_retrieve_application_not_found(
     test_client: TestingClientType,
-    workspace: Workspace,
-    workspace_member_user: None,
+    project: Project,
+    project_member_user: None,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{non_existent_id}",
+        f"/projects/{project.id}/applications/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
 
-async def test_retrieve_application_wrong_workspace(
+async def test_retrieve_application_wrong_project(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        different_workspace = Workspace(name="Different Workspace")
-        session.add(different_workspace)
+        different_project = Project(name="Different Project")
+        session.add(different_project)
         await session.flush()
 
         firebase_uid = "a" * 128
-        workspace_user = WorkspaceUser(
-            workspace_id=different_workspace.id,
+        project_user = ProjectUser(
+            project_id=different_project.id,
             firebase_uid=firebase_uid,
             role=UserRoleEnum.MEMBER,
         )
-        session.add(workspace_user)
+        session.add(project_user)
         await session.commit()
 
     response = await test_client.get(
-        f"/workspaces/{different_workspace.id}/applications/{grant_application.id}",
+        f"/projects/{different_project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -420,11 +420,11 @@ async def test_retrieve_application_wrong_workspace(
 
 async def test_retrieve_application_unauthorized(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
 ) -> None:
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -432,11 +432,11 @@ async def test_retrieve_application_unauthorized(
 
 async def test_retrieve_application_with_complete_data(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = await session.get(GrantApplication, grant_application.id)
@@ -469,7 +469,7 @@ async def test_retrieve_application_with_complete_data(
         await session.commit()
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -477,7 +477,7 @@ async def test_retrieve_application_with_complete_data(
     data = response.json()
 
     assert data["id"] == str(grant_application.id)
-    assert data["workspace_id"] == str(grant_application.workspace_id)
+    assert data["project_id"] == str(grant_application.project_id)
     assert data["title"] == grant_application.title
     assert data["status"] == grant_application.status.value
     assert data["form_inputs"] == {
@@ -506,11 +506,11 @@ async def test_retrieve_application_with_complete_data(
 
 async def test_retrieve_application_with_rag_job_ids(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     from testing.factories import (
         GrantApplicationGenerationJobFactory,
@@ -539,7 +539,7 @@ async def test_retrieve_application_with_rag_job_ids(
         await session.commit()
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -558,11 +558,11 @@ async def test_retrieve_application_with_rag_job_ids(
 
 async def test_retrieve_application_with_rag_sources(
     test_client: TestingClientType,
-    workspace: Workspace,
+    project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    workspace_member_user: None,
+    project_member_user: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = await session.get(GrantApplication, grant_application.id)
@@ -620,7 +620,7 @@ async def test_retrieve_application_with_rag_sources(
         await session.commit()
 
     response = await test_client.get(
-        f"/workspaces/{workspace.id}/applications/{grant_application.id}",
+        f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 

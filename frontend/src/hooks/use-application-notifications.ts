@@ -61,7 +61,7 @@ export const CONNECTION_STATUS_COLOR_MAP = {
 
 interface UseApplicationNotificationsProps {
 	applicationId: null | string | undefined;
-	workspaceId: string | undefined;
+	projectId: string | undefined;
 }
 
 interface UseApplicationNotificationsReturn {
@@ -78,14 +78,14 @@ const RECONNECT_ATTEMPTS_MAX = 10;
 
 export function useApplicationNotifications({
 	applicationId,
-	workspaceId,
+	projectId,
 }: UseApplicationNotificationsProps): UseApplicationNotificationsReturn {
 	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
 	const reconnectAttemptRef = useRef(0);
 
 	const getSocketUrl = useCallback(async () => {
-		if (!(workspaceId && applicationId)) {
-			throw new Error("Workspace ID and Application ID are required");
+		if (!(projectId && applicationId)) {
+			throw new Error("Project ID and Application ID are required");
 		}
 
 		const response = await getOtp();
@@ -93,13 +93,13 @@ export function useApplicationNotifications({
 			.NEXT_PUBLIC_BACKEND_API_BASE_URL.replace(/^https/, "wss")
 			.replace(/^http/, "ws");
 		return new URL(
-			`workspaces/${workspaceId}/applications/${applicationId}/notifications?otp=${response.otp}`,
+			`projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
 			baseUrl,
 		).toString();
-	}, [workspaceId, applicationId]);
+	}, [projectId, applicationId]);
 
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
-		workspaceId && applicationId ? getSocketUrl : null,
+		projectId && applicationId ? getSocketUrl : null,
 		{
 			onOpen: () => {
 				reconnectAttemptRef.current = 0;

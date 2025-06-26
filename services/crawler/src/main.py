@@ -76,7 +76,7 @@ async def handle_gcs_file_upload(
             )
 
             object_path = construct_object_uri(
-                workspace_id=crawling_request["workspace_id"],
+                project_id=crawling_request["project_id"],
                 parent_id=crawling_request["parent_id"],
                 source_id=source_id,
                 blob_name=file["filename"],
