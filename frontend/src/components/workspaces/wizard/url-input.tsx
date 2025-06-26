@@ -7,7 +7,7 @@ import { IconGlobe } from "@/components/workspaces/icons";
 import { useApplicationStore } from "@/stores/application-store";
 import { isValidUrl } from "@/utils/validation";
 
-export function UrlInput({ onUrlAdded, parentId }: { onUrlAdded?: () => void; parentId?: string }) {
+export function UrlInput({ parentId }: { parentId?: string }) {
 	const { addUrl, application } = useApplicationStore();
 
 	const urls = React.useMemo(() => {
@@ -44,7 +44,6 @@ export function UrlInput({ onUrlAdded, parentId }: { onUrlAdded?: () => void; pa
 
 			if (!urls.includes(trimmedUrl)) {
 				await addUrl(trimmedUrl, parentId);
-				onUrlAdded?.();
 			}
 			setUrlInput("");
 		}

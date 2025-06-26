@@ -59,10 +59,8 @@ interface WizardActions {
 	addObjective: (objective: Objective) => void;
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
 	checkTemplateRagJobStatus: () => Promise<void>;
-	debouncedRetrieveApplication: () => void;
 	handleApplicationInit: (workspaceId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
-	handleRetrieveWithPolling: () => Promise<void>;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
 	polling: PollingActions;
@@ -99,10 +97,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					void updateApplicationTitle(application.workspace_id, application.id, title);
 				}
 			}, DEBOUNCE_DELAY_MS);
-
-			const debouncedRetrieveApplication = createDebounce(() => {
-				void get().handleRetrieveWithPolling();
-			}, 1000);
 
 			return {
 				...initialWizardState,
@@ -204,10 +198,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
-				debouncedRetrieveApplication: () => {
-					debouncedRetrieveApplication.call();
-				},
-
 				handleApplicationInit: async (workspaceId: string, applicationId?: string) => {
 					const { createApplication, retrieveApplication } = useApplicationStore.getState();
 					await (applicationId
@@ -236,18 +226,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						}));
 
 						void updateApplication({ research_objectives: updatedObjectives });
-					}
-				},
-
-				handleRetrieveWithPolling: async () => {
-					const { getIndexingStatus } = useApplicationStore.getState();
-					const { polling } = get();
-					const isIndexing = await getIndexingStatus();
-
-					if (isIndexing) {
-						polling.start(get().handleRetrieveWithPolling, POLLING_INTERVAL_DURATION, false);
-					} else {
-						polling.stop();
 					}
 				},
 
@@ -423,19 +401,22 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
+					const nextStep = WIZARD_STEP_TITLES[WIZARD_STEP_TITLES.indexOf(currentStep) + 1];
+
+					set((state) => ({
+						...state,
+						currentStep: nextStep,
+					}));
+
+					// Trigger template generation when entering APPLICATION_STRUCTURE if no sections exist
 					const { application, generateTemplate } = useApplicationStore.getState();
 					if (
-						currentStep === WizardStep.APPLICATION_DETAILS &&
+						nextStep === WizardStep.APPLICATION_STRUCTURE &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
 						void generateTemplate(application.grant_template.id);
 					}
-
-					set((state) => ({
-						...state,
-						currentStep: WIZARD_STEP_TITLES[WIZARD_STEP_TITLES.indexOf(currentStep) + 1],
-					}));
 				},
 
 				toPreviousStep: () => {
@@ -454,9 +435,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 				validateStepNext: (): boolean => {
 					const { currentStep } = get();
-					const { application, areAppOperationsInProgress } = useApplicationStore.getState();
+					const { application } = useApplicationStore.getState();
 
-					if (!application || areAppOperationsInProgress) {
+					if (!application) {
 						return false;
 					}
 
@@ -466,9 +447,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								return false;
 							}
 
-							const totalSources =
-								application.rag_sources.length + (application.grant_template?.rag_sources.length ?? 0);
-							return totalSources > 0;
+							// Only require that grant template sources exist (don't require indexing completion)
+							return (application.grant_template?.rag_sources.length ?? 0) > 0;
 						}
 						case WizardStep.APPLICATION_STRUCTURE: {
 							return !!application.grant_template?.grant_sections.length;

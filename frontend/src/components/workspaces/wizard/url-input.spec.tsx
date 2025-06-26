@@ -12,7 +12,6 @@ vi.mock("@/utils/validation");
 const mockIsValidUrl = vi.mocked(validation.isValidUrl);
 
 describe("UrlInput", () => {
-	const mockOnUrlAdded = vi.fn();
 	const defaultParentId = "test-parent-id";
 
 	beforeEach(() => {
@@ -89,7 +88,7 @@ describe("UrlInput", () => {
 			const user = userEvent.setup();
 			const testUrl = "https://example.com";
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -138,7 +137,7 @@ describe("UrlInput", () => {
 			const testUrl = "https://example.com";
 			mockIsValidUrl.mockReturnValue(true);
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -156,7 +155,7 @@ describe("UrlInput", () => {
 			const user = userEvent.setup();
 			const testUrl = "https://example.com";
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -165,25 +164,23 @@ describe("UrlInput", () => {
 
 			const store = useApplicationStore.getState();
 			expect(store.addUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
-			expect(mockOnUrlAdded).toHaveBeenCalledTimes(1);
 		});
 
 		it("does not add URL when Enter is pressed with empty input", async () => {
 			const user = userEvent.setup();
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			await user.keyboard("{Enter}");
 
 			const store = useApplicationStore.getState();
 			expect(store.addUrl).not.toHaveBeenCalled();
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
 		});
 
 		it("does not add URL when Enter is pressed with only whitespace", async () => {
 			const user = userEvent.setup();
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -192,14 +189,13 @@ describe("UrlInput", () => {
 
 			const store = useApplicationStore.getState();
 			expect(store.addUrl).not.toHaveBeenCalled();
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
 		});
 
 		it("ignores other key presses", async () => {
 			const user = userEvent.setup();
 			const testUrl = "https://example.com";
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -210,7 +206,6 @@ describe("UrlInput", () => {
 
 			const store = useApplicationStore.getState();
 			expect(store.addUrl).not.toHaveBeenCalled();
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
 		});
 	});
 
@@ -291,7 +286,7 @@ describe("UrlInput", () => {
 				} as any,
 			});
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -299,7 +294,6 @@ describe("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			expect(store.addUrl).not.toHaveBeenCalled();
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
 		});
 
 		it("does not add URL if it already exists in template context", async () => {
@@ -330,7 +324,7 @@ describe("UrlInput", () => {
 				} as any,
 			});
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={templateId} />);
+			render(<UrlInput parentId={templateId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -338,7 +332,6 @@ describe("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			expect(store.addUrl).not.toHaveBeenCalled();
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
 		});
 
 		it("adds URL if it does not exist in either context", async () => {
@@ -371,7 +364,7 @@ describe("UrlInput", () => {
 				} as any,
 			});
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -379,7 +372,6 @@ describe("UrlInput", () => {
 			await user.keyboard("{Enter}");
 
 			expect(store.addUrl).toHaveBeenCalledWith(newUrl, defaultParentId);
-			expect(mockOnUrlAdded).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -388,7 +380,7 @@ describe("UrlInput", () => {
 			const user = userEvent.setup();
 			const testUrl = "https://example.com";
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -467,95 +459,6 @@ describe("UrlInput", () => {
 		});
 	});
 
-	describe("Callback Handling", () => {
-		it("calls onUrlAdded callback when URL is successfully added", async () => {
-			const user = userEvent.setup();
-			const testUrl = "https://example.com";
-
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
-
-			const input = screen.getByLabelText("URL");
-
-			await user.type(input, testUrl);
-			await user.keyboard("{Enter}");
-
-			expect(mockOnUrlAdded).toHaveBeenCalledTimes(1);
-		});
-
-		it("does not call onUrlAdded callback when URL already exists", async () => {
-			const user = userEvent.setup();
-			const existingUrl = "https://existing.com";
-
-			useApplicationStore.setState({
-				application: {
-					id: "test-app-id",
-					rag_sources: [
-						{
-							filename: null,
-							parentId: defaultParentId,
-							sourceId: "existing-source-id",
-							status: "FINISHED",
-							url: existingUrl,
-						},
-					],
-					title: "Test Application",
-					workspace_id: "test-workspace",
-				} as any,
-			});
-
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
-
-			const input = screen.getByLabelText("URL");
-
-			await user.type(input, existingUrl);
-			await user.keyboard("{Enter}");
-
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
-		});
-
-		it("does not call onUrlAdded when validation fails", async () => {
-			const user = userEvent.setup();
-			const invalidUrl = "invalid-url";
-			mockIsValidUrl.mockReturnValue(false);
-
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
-
-			const input = screen.getByLabelText("URL");
-
-			await user.type(input, invalidUrl);
-			await user.keyboard("{Enter}");
-
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
-		});
-
-		it("does not call onUrlAdded when parentId is missing", async () => {
-			const user = userEvent.setup();
-			const testUrl = "https://example.com";
-
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} />);
-
-			const input = screen.getByLabelText("URL");
-
-			await user.type(input, testUrl);
-			await user.keyboard("{Enter}");
-
-			expect(mockOnUrlAdded).not.toHaveBeenCalled();
-		});
-
-		it("works without onUrlAdded callback", async () => {
-			const user = userEvent.setup();
-			const testUrl = "https://example.com";
-
-			render(<UrlInput parentId={defaultParentId} />);
-
-			const input = screen.getByLabelText("URL");
-
-			await user.type(input, testUrl);
-
-			expect(() => user.keyboard("{Enter}")).not.toThrow();
-		});
-	});
-
 	describe("Error Message Display", () => {
 		it("displays validation error message", async () => {
 			const user = userEvent.setup();
@@ -610,7 +513,7 @@ describe("UrlInput", () => {
 			const testUrl = "https://example.com";
 			const testParentId = "test-parent-123";
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={testParentId} />);
+			render(<UrlInput parentId={testParentId} />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -634,7 +537,7 @@ describe("UrlInput", () => {
 			];
 
 			for (const url of urls) {
-				const { unmount } = render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+				const { unmount } = render(<UrlInput parentId={defaultParentId} />);
 
 				const input = screen.getByLabelText("URL");
 				await user.type(input, url);
@@ -655,7 +558,7 @@ describe("UrlInput", () => {
 			const user = userEvent.setup();
 			const { url } = UrlResponseFactory.build();
 
-			render(<UrlInput onUrlAdded={mockOnUrlAdded} parentId={defaultParentId} />);
+			render(<UrlInput parentId={defaultParentId} />);
 
 			const input = screen.getByLabelText("URL");
 

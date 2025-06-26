@@ -278,59 +278,6 @@ describe("Application Store", () => {
 		});
 	});
 
-	describe("areFilesOrUrlsIndexing", () => {
-		it("should return true when sources are indexing", () => {
-			const application = ApplicationFactory.build({
-				rag_sources: [
-					{ id: "1", status: "FINISHED" },
-					{ id: "2", status: "INDEXING" },
-				] as any,
-			});
-
-			useApplicationStore.setState({ application });
-
-			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
-
-			expect(areFilesOrUrlsIndexing()).toBe(true);
-		});
-
-		it("should check template sources as well", () => {
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [{ status: "INDEXING" }] as any,
-				}),
-				rag_sources: [{ status: "FINISHED" }] as any,
-			});
-
-			useApplicationStore.setState({ application });
-
-			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
-
-			expect(areFilesOrUrlsIndexing()).toBe(true);
-		});
-
-		it("should return false when no sources are indexing", () => {
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [{ status: "FINISHED" }] as any,
-				}),
-				rag_sources: [{ status: "FINISHED" }] as any,
-			});
-
-			useApplicationStore.setState({ application });
-
-			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
-
-			expect(areFilesOrUrlsIndexing()).toBe(false);
-		});
-
-		it("should return false when application is null", () => {
-			const { areFilesOrUrlsIndexing } = useApplicationStore.getState();
-
-			expect(areFilesOrUrlsIndexing()).toBe(false);
-		});
-	});
-
 	describe("RAG job restoration", () => {
 		describe("checkAndRestoreJobState", () => {
 			it("should not restore when application is null", async () => {

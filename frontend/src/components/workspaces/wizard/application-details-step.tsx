@@ -17,7 +17,7 @@ interface ApplicationDetailsStepProps {
 }
 
 export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
-	const { debouncedRetrieveApplication, handleTitleChange } = useWizardStore();
+	const { handleTitleChange } = useWizardStore();
 	const { application } = useApplicationStore();
 	const applicationTitle = application?.title ?? "";
 
@@ -69,7 +69,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader onUploadComplete={debouncedRetrieveApplication} parentId={parentId} />
+						<TemplateFileUploader parentId={parentId} />
 					</div>
 
 					<div>
@@ -79,7 +79,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							understand the funding requirements.
 						</p>
 
-						<UrlInput onUrlAdded={debouncedRetrieveApplication} parentId={parentId} />
+						<UrlInput parentId={parentId} />
 					</div>
 				</div>
 			</div>
