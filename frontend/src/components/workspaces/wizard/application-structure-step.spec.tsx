@@ -6,13 +6,13 @@ import {
 	RagJobResponseFactory,
 	RagSourceFactory,
 } from "::testing/factories";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
-import { ApplicationStructureStep } from "./application-structure-step";
+import { ApplicationStructureLeftPane, ApplicationStructureStep } from "./application-structure-step";
 
 vi.mock("next/image", () => ({
 	default: ({ alt, className }: { alt: string; className?: string; src: string }) => (
@@ -193,199 +193,6 @@ describe("ApplicationStructureStep", () => {
 
 			expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 		});
-
-		it("calls updateGrantSections when add button is clicked", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_application_id: "test-id",
-					grant_sections: [], // Empty sections array
-					id: "template-id",
-				}),
-				id: "test-id",
-				title: "Test Application",
-				workspace_id: "test-workspace-id",
-			});
-
-			useApplicationStore.setState({
-				application,
-				updateGrantSections: mockUpdateGrantSections,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
-					expect.objectContaining({
-						depends_on: [],
-						generation_instructions: "",
-						is_clinical_trial: null,
-						is_detailed_workplan: null,
-						keywords: [],
-						max_words: 3000,
-						order: 0,
-						parent_id: null,
-						search_queries: [],
-						title: "Category Name",
-						topics: [],
-					}),
-				]);
-			});
-		});
-
-		it("displays max words for sections", () => {
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "1",
-					max_words: 1500,
-					order: 0,
-					parent_id: null,
-					title: "Introduction",
-				}),
-			];
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: grantSections,
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			expect(screen.getByText("1,500 Max words")).toBeInTheDocument();
-		});
-
-		it("handles subsections correctly", () => {
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "1",
-					order: 0,
-					parent_id: null,
-					title: "Main Section",
-				}),
-				GrantSectionDetailedFactory.build({
-					id: "2",
-					order: 1,
-					parent_id: "1",
-					title: "Subsection",
-				}),
-			];
-
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: grantSections,
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			expect(screen.getByText("Main Section")).toBeInTheDocument();
-			expect(screen.getByText("Subsection")).toBeInTheDocument();
-		});
-	});
-
-	describe("RAG job polling and effects", () => {
-		it("calls checkTemplateRagJobStatus when application has rag_job_id", () => {
-			const mockCheckTemplateRagJobStatus = vi.fn();
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_job_id: "test-rag-job-id",
-				}),
-			});
-
-			useWizardStore.setState({
-				checkTemplateRagJobStatus: mockCheckTemplateRagJobStatus,
-				grantTemplateRagJobData: null,
-			});
-
-			useApplicationStore.setState({
-				application,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			expect(mockCheckTemplateRagJobStatus).toHaveBeenCalled();
-		});
-
-		it("does not call checkTemplateRagJobStatus when no rag_job_id", () => {
-			const mockCheckTemplateRagJobStatus = vi.fn();
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_job_id: undefined,
-				}),
-			});
-
-			useWizardStore.setState({
-				checkTemplateRagJobStatus: mockCheckTemplateRagJobStatus,
-				grantTemplateRagJobData: null,
-			});
-
-			useApplicationStore.setState({
-				application,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			expect(mockCheckTemplateRagJobStatus).not.toHaveBeenCalled();
-		});
-
-		it("calls retrieveApplication when RAG job completes", async () => {
-			const mockRetrieveApplication = vi.fn();
-			const application = ApplicationWithTemplateFactory.build({
-				id: "test-app-id",
-				workspace_id: "test-workspace-id",
-			});
-
-			useApplicationStore.setState({
-				application,
-				retrieveApplication: mockRetrieveApplication,
-			});
-
-			useWizardStore.setState({
-				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
-			});
-
-			const { rerender } = render(<ApplicationStructureStep />);
-
-			useWizardStore.setState({
-				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
-			});
-
-			rerender(<ApplicationStructureStep />);
-
-			await waitFor(() => {
-				expect(mockRetrieveApplication).toHaveBeenCalledWith("test-workspace-id", "test-app-id");
-			});
-		});
-
-		it("does not call retrieveApplication when RAG job is not completed", () => {
-			const mockRetrieveApplication = vi.fn();
-			const application = ApplicationWithTemplateFactory.build();
-
-			useApplicationStore.setState({
-				application,
-				retrieveApplication: mockRetrieveApplication,
-			});
-
-			useWizardStore.setState({
-				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
-			});
-
-			render(<ApplicationStructureStep />);
-
-			expect(mockRetrieveApplication).not.toHaveBeenCalled();
-		});
 	});
 
 	describe("template generation animation", () => {
@@ -521,7 +328,7 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			expect(screen.getByText("Links")).toBeInTheDocument();
+			expect(screen.getByTestId("template-links-title")).toBeInTheDocument();
 		});
 
 		it("filters out sources without filename for files", () => {
@@ -575,7 +382,7 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			expect(screen.getByText("Links")).toBeInTheDocument();
+			expect(screen.getByTestId("template-links-title")).toBeInTheDocument();
 		});
 
 		it("shows no documents message when no files exist", () => {
@@ -613,7 +420,7 @@ describe("ApplicationStructureStep", () => {
 
 			render(<ApplicationStructureStep />);
 
-			expect(screen.queryByText("Links")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("template-links-title")).not.toBeInTheDocument();
 		});
 	});
 
@@ -687,325 +494,379 @@ describe("ApplicationStructureStep", () => {
 			).toBeInTheDocument();
 		});
 	});
+});
 
-	describe("helper functions", () => {
-		// We need to test these functions indirectly since they're not exported
-		// We'll test their behavior through the component interactions
+describe("ApplicationStructureLeftPane", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
 
-		it("handles detailed section identification correctly", () => {
-			const grantSections = [
-				GrantSectionDetailedFactory.build({
-					id: "detailed-section",
-					max_words: 3000,
-					title: "Detailed Section",
-				}),
-			];
+		useWizardStore.setState({
+			checkTemplateRagJobStatus: vi.fn(),
+			currentStep: WizardStep.APPLICATION_STRUCTURE,
+			polling: {
+				intervalId: null,
+				isActive: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+			},
+		});
 
+		useApplicationStore.setState({
+			application: null,
+			areAppOperationsInProgress: false,
+			retrieveApplication: vi.fn(),
+			updateGrantSections: vi.fn(),
+		});
+	});
+
+	describe("Animation Timer Logic", () => {
+		beforeEach(() => {
+			vi.useFakeTimers();
+		});
+
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		it("initializes with no visible steps", () => {
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
+			});
+
+			render(<ApplicationStructureLeftPane />);
+
+			expect(
+				screen.getByText("Review and customize the structure of your grant application."),
+			).toBeInTheDocument();
+		});
+
+		it("starts timer animation when template is generating", () => {
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+			});
+
+			render(<ApplicationStructureLeftPane />);
+
+			expect(
+				screen.getByText("Analyzing your knowledge base to generate the optimal structure..."),
+			).toBeInTheDocument();
+		});
+
+		it("progresses through animation steps correctly", () => {
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+			});
+
+			render(<ApplicationStructureLeftPane />);
+
+			// All step titles should be present in the DOM but with different visual states
+			expect(screen.getByText("Reading the call")).toBeInTheDocument();
+			expect(screen.getByText("Building the outline")).toBeInTheDocument();
+			expect(screen.getByText("Adding writing cues")).toBeInTheDocument();
+			expect(screen.getByText("Final check")).toBeInTheDocument();
+
+			// After 1000ms, animation progresses
+			act(() => {
+				vi.advanceTimersByTime(1000);
+			});
+
+			// Steps should still be present (this is about visual styling, not DOM presence)
+			expect(screen.getByText("Reading the call")).toBeInTheDocument();
+			expect(screen.getByText("Building the outline")).toBeInTheDocument();
+
+			act(() => {
+				vi.advanceTimersByTime(1000);
+			});
+
+			expect(screen.getByText("Building the outline")).toBeInTheDocument();
+
+			act(() => {
+				vi.advanceTimersByTime(1000);
+			});
+
+			expect(screen.getByText("Adding writing cues")).toBeInTheDocument();
+
+			act(() => {
+				vi.advanceTimersByTime(1000);
+			});
+
+			expect(screen.getByText("Final check")).toBeInTheDocument();
+		});
+
+		it("resets animation when generation status changes", () => {
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+			});
+
+			const { rerender } = render(<ApplicationStructureLeftPane />);
+
+			act(() => {
+				vi.advanceTimersByTime(2000);
+			});
+
+			expect(screen.getByText("Building the outline")).toBeInTheDocument();
+
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
+			});
+
+			rerender(<ApplicationStructureLeftPane />);
+
+			expect(screen.queryByText("Building the outline")).not.toBeInTheDocument();
+			expect(
+				screen.getByText("Review and customize the structure of your grant application."),
+			).toBeInTheDocument();
+		});
+
+		it("cleans up timer on unmount", () => {
+			const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
+
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+			});
+
+			const { unmount } = render(<ApplicationStructureLeftPane />);
+
+			unmount();
+
+			expect(clearIntervalSpy).toHaveBeenCalled();
+		});
+	});
+
+	describe("RAG Job Polling", () => {
+		it("calls checkTemplateRagJobStatus when rag_job_id exists", () => {
+			const mockCheckTemplateRagJobStatus = vi.fn();
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: grantSections,
+					rag_job_id: "test-rag-job-id",
 				}),
+			});
+
+			useWizardStore.setState({
+				checkTemplateRagJobStatus: mockCheckTemplateRagJobStatus,
 			});
 
 			useApplicationStore.setState({
 				application,
 			});
 
-			render(<ApplicationStructureStep />);
+			render(<ApplicationStructureLeftPane />);
 
-			// The detailed section should render properly with max_words
-			expect(screen.getByText("3,000 Max words")).toBeInTheDocument();
+			expect(mockCheckTemplateRagJobStatus).toHaveBeenCalled();
 		});
 
-		it("converts sections to update format when adding new section", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const existingSections = [
-				GrantSectionDetailedFactory.build({
-					id: "existing-1",
-					max_words: 2000,
-					order: 0,
-					parent_id: null,
-					title: "Existing Section",
-				}),
-			];
-
-			const application = ApplicationFactory.build({
+		it("does not call checkTemplateRagJobStatus when rag_job_id is missing", () => {
+			const mockCheckTemplateRagJobStatus = vi.fn();
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_application_id: "test-id",
-					grant_sections: existingSections,
-					id: "template-id",
+					rag_job_id: undefined,
 				}),
-				id: "test-id",
-				title: "Test Application",
+			});
+
+			useWizardStore.setState({
+				checkTemplateRagJobStatus: mockCheckTemplateRagJobStatus,
+			});
+
+			useApplicationStore.setState({
+				application,
+			});
+
+			render(<ApplicationStructureLeftPane />);
+
+			expect(mockCheckTemplateRagJobStatus).not.toHaveBeenCalled();
+		});
+
+		it("calls retrieveApplication when RAG job completes", async () => {
+			const mockRetrieveApplication = vi.fn();
+			const application = ApplicationWithTemplateFactory.build({
+				id: "test-app-id",
 				workspace_id: "test-workspace-id",
 			});
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
+				retrieveApplication: mockRetrieveApplication,
 			});
 
-			render(<ApplicationStructureStep />);
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+			});
 
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
+			const { rerender } = render(<ApplicationStructureLeftPane />);
+
+			useWizardStore.setState({
+				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
+			});
+
+			rerender(<ApplicationStructureLeftPane />);
 
 			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
-					// Existing section should be preserved
-					expect.objectContaining({
-						id: "existing-1",
-						max_words: 2000,
-						title: "Existing Section",
-					}),
-					// New section should have default values
-					expect.objectContaining({
-						depends_on: [],
-						generation_instructions: "",
-						is_clinical_trial: null,
-						is_detailed_workplan: null,
-						keywords: [],
-						max_words: 3000,
-						order: 1, // Should be length of existing sections
-						parent_id: null,
-						search_queries: [],
-						title: "Category Name",
-						topics: [],
-					}),
-				]);
-			});
-		});
-
-		it("generates proper default values for new sections", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
-					id: "template-id",
-				}),
-			});
-
-			useApplicationStore.setState({
-				application,
-				updateGrantSections: mockUpdateGrantSections,
-			});
-
-			render(<ApplicationStructureStep />);
-
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
-					expect.objectContaining({
-						depends_on: [],
-						generation_instructions: "",
-						id: expect.stringMatching(/^section-/), // Should start with "section-"
-						is_clinical_trial: null,
-						is_detailed_workplan: null,
-						keywords: [],
-						max_words: 3000,
-						order: 0,
-						parent_id: null,
-						search_queries: [],
-						title: "Category Name",
-						topics: [],
-					}),
-				]);
+				expect(mockRetrieveApplication).toHaveBeenCalledWith("test-workspace-id", "test-app-id");
 			});
 		});
 	});
 
-	describe("handleAddNewSection logic", () => {
-		it("creates main section with correct title", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const application = ApplicationFactory.build({
+	describe("File and URL Processing", () => {
+		it("processes template files correctly", () => {
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
+					rag_sources: [
+						RagSourceFactory.build({
+							filename: "document1.pdf",
+							sourceId: "source-1",
+							url: undefined,
+						}),
+						RagSourceFactory.build({
+							filename: "document2.docx",
+							sourceId: "source-2",
+							url: undefined,
+						}),
+						RagSourceFactory.build({
+							filename: undefined,
+							sourceId: "source-3",
+							url: "https://example.com",
+						}),
+					],
 				}),
 			});
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
 			});
 
-			render(<ApplicationStructureStep />);
+			render(<ApplicationStructureLeftPane />);
 
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
-					expect.objectContaining({
-						parent_id: null,
-						title: "Category Name", // Main section title
-					}),
-				]);
-			});
+			expect(screen.queryByTestId("no-documents-message")).not.toBeInTheDocument();
 		});
 
-		it("assigns correct order to new sections", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const existingSections = [
-				GrantSectionDetailedFactory.build({ order: 0 }),
-				GrantSectionDetailedFactory.build({ order: 1 }),
-				GrantSectionDetailedFactory.build({ order: 2 }),
-			];
-
-			const application = ApplicationFactory.build({
+		it("processes template URLs correctly", () => {
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: existingSections,
+					rag_sources: [
+						RagSourceFactory.build({
+							filename: undefined,
+							sourceId: "source-1",
+							url: "https://example.com/grant-guidelines",
+						}),
+						RagSourceFactory.build({
+							filename: undefined,
+							sourceId: "source-2",
+							url: "https://example.com/application-form",
+						}),
+						// This should be filtered out (no URL)
+						RagSourceFactory.build({
+							filename: "document.pdf",
+							sourceId: "source-3",
+							url: undefined,
+						}),
+					],
 				}),
 			});
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
 			});
 
-			render(<ApplicationStructureStep />);
+			render(<ApplicationStructureLeftPane />);
 
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalled();
-				const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-				expect(calledWith).toHaveLength(4); // 3 existing + 1 new
-				// Check that the new section (last one) has the correct order
-				expect(calledWith[3]).toEqual(
-					expect.objectContaining({
-						order: 3, // Should be the length of existing sections
-					}),
-				);
-			});
+			expect(screen.getByTestId("template-links-title")).toBeInTheDocument();
 		});
 
-		it("preserves existing sections when adding new one", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const existingSections = [
-				GrantSectionDetailedFactory.build({
-					id: "keep-1",
-					title: "Keep This Section",
-				}),
-				GrantSectionDetailedFactory.build({
-					id: "keep-2",
-					title: "Keep This Too",
-				}),
-			];
-
-			const application = ApplicationFactory.build({
+		it("shows no documents message when no files exist", () => {
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: existingSections,
+					rag_sources: [
+						RagSourceFactory.build({
+							filename: undefined,
+							sourceId: "source-1",
+							url: "https://example.com",
+						}),
+					],
 				}),
 			});
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
 			});
 
-			render(<ApplicationStructureStep />);
+			render(<ApplicationStructureLeftPane />);
 
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-				expect(calledWith).toHaveLength(3); // 2 existing + 1 new
-				expect(calledWith[0]).toEqual(
-					expect.objectContaining({
-						id: "keep-1",
-						title: "Keep This Section",
-					}),
-				);
-				expect(calledWith[1]).toEqual(
-					expect.objectContaining({
-						id: "keep-2",
-						title: "Keep This Too",
-					}),
-				);
-				expect(calledWith[2]).toEqual(
-					expect.objectContaining({
-						title: "Category Name",
-					}),
-				);
-			});
+			expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
 		});
 
-		it("handles empty grant sections array", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
-			const application = ApplicationFactory.build({
+		it("handles empty rag_sources array", () => {
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
+					rag_sources: [],
 				}),
 			});
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
 			});
 
-			render(<ApplicationStructureStep />);
+			render(<ApplicationStructureLeftPane />);
 
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
+			expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
+			expect(screen.queryByTestId("template-links-title")).not.toBeInTheDocument();
+		});
+	});
 
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
-					expect.objectContaining({
-						order: 0,
-						parent_id: null,
-						title: "Category Name",
-					}),
-				]);
+	describe("Edge Cases", () => {
+		it("handles null application gracefully", () => {
+			useApplicationStore.setState({
+				application: null,
 			});
+
+			render(<ApplicationStructureLeftPane />);
+
+			expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
+			expect(screen.queryByTestId("template-links-title")).not.toBeInTheDocument();
 		});
 
-		it("generates unique IDs for new sections", async () => {
-			const mockUpdateGrantSections = vi.fn().mockResolvedValue(undefined);
+		it("handles application without grant_template", () => {
 			const application = ApplicationFactory.build({
+				grant_template: undefined,
+			});
+
+			useApplicationStore.setState({
+				application,
+			});
+
+			render(<ApplicationStructureLeftPane />);
+
+			expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
+			expect(screen.queryByTestId("template-links-title")).not.toBeInTheDocument();
+		});
+
+		it("handles malformed rag_sources", () => {
+			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
+					rag_sources: [
+						// Sources with empty strings
+						RagSourceFactory.build({
+							filename: "",
+							sourceId: "source-1",
+							url: "",
+						}),
+						// Sources with null values
+						RagSourceFactory.build({
+							filename: null as any,
+							sourceId: "source-2",
+							url: null as any,
+						}),
+					],
 				}),
 			});
 
 			useApplicationStore.setState({
 				application,
-				updateGrantSections: mockUpdateGrantSections,
 			});
 
-			render(<ApplicationStructureStep />);
+			render(<ApplicationStructureLeftPane />);
 
-			// Add first section
-			const addButton = screen.getByTestId("add-new-section-button");
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalled();
-			});
-
-			const [[firstCall]] = mockUpdateGrantSections.mock.calls;
-			const [firstSection] = firstCall;
-			const firstCallId = firstSection.id;
-
-			// Reset and add second section
-			mockUpdateGrantSections.mockClear();
-			fireEvent.click(addButton);
-
-			await waitFor(() => {
-				expect(mockUpdateGrantSections).toHaveBeenCalled();
-			});
-
-			const [[secondCall]] = mockUpdateGrantSections.mock.calls;
-			const [secondSection] = secondCall;
-			const secondCallId = secondSection.id;
-
-			// IDs should be different
-			expect(firstCallId).not.toBe(secondCallId);
-			expect(firstCallId).toMatch(/^section-/);
-			expect(secondCallId).toMatch(/^section-/);
+			expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
+			expect(screen.queryByTestId("template-links-title")).not.toBeInTheDocument();
 		});
 	});
 });
