@@ -67,7 +67,6 @@ describe("KnowledgeBaseStep", () => {
 			addFile: vi.fn(),
 			addUrl: vi.fn(),
 			application: ApplicationFactory.build({ id: "test-app-id", workspace_id: "test-workspace" }),
-			areFilesOrUrlsIndexing: vi.fn(() => false),
 			removeFile: vi.fn(),
 			removeUrl: vi.fn(),
 			retrieveApplication: vi.fn(),
@@ -244,52 +243,6 @@ describe("KnowledgeBaseStep", () => {
 			await userEvent.click(screen.getByTestId("url-input"));
 
 			expect(mockRetrieveApplication).toHaveBeenCalled();
-		});
-	});
-
-	describe("Polling Logic", () => {
-		it("starts polling when files are indexing", async () => {
-			const mockStart = vi.fn();
-			const mockStop = vi.fn();
-			const mockAreFilesOrUrlsIndexing = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
-
-			const wizardState = useWizardStore.getState();
-			useWizardStore.setState({
-				...wizardState,
-				polling: {
-					...wizardState.polling,
-					start: mockStart,
-					stop: mockStop,
-				},
-			});
-
-			useApplicationStore.setState({
-				areFilesOrUrlsIndexing: mockAreFilesOrUrlsIndexing,
-			});
-
-			render(<KnowledgeBaseStep />);
-
-			await userEvent.click(screen.getByTestId("template-file-uploader"));
-
-			expect(mockAreFilesOrUrlsIndexing).toHaveBeenCalled();
-		});
-
-		it("stops polling when component unmounts", () => {
-			const mockStop = vi.fn();
-			const wizardState = useWizardStore.getState();
-			useWizardStore.setState({
-				...wizardState,
-				polling: {
-					...wizardState.polling,
-					start: vi.fn(),
-					stop: mockStop,
-				},
-			});
-
-			const { unmount } = render(<KnowledgeBaseStep />);
-			unmount();
-
-			expect(mockStop).toHaveBeenCalled();
 		});
 	});
 

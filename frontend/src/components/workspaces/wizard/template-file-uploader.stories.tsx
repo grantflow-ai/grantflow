@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
-import { action } from "storybook/actions";
 import { useApplicationStore } from "@/stores/application-store";
 import { TemplateFileUploader } from "./template-file-uploader";
 
@@ -23,9 +22,6 @@ export default meta;
 type Story = StoryObj<typeof TemplateFileUploader>;
 
 export const Default: Story = {
-	args: {
-		onUploadComplete: action("upload-complete"),
-	},
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -41,7 +37,6 @@ export const Default: Story = {
 
 export const WithParentId: Story = {
 	args: {
-		onUploadComplete: action("upload-complete"),
 		parentId: "template-123",
 	},
 	decorators: [
@@ -59,9 +54,6 @@ export const WithParentId: Story = {
 };
 
 export const WithUploadInProgress: Story = {
-	args: {
-		onUploadComplete: action("upload-complete"),
-	},
 	decorators: [
 		(Story) => {
 			useEffect(() => {

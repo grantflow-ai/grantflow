@@ -8,13 +8,11 @@ import FilePreviewCard from "@/components/workspaces/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/workspaces/wizard/link-preview-item";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
 import type { FileWithId } from "@/types/files";
 import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
 export function KnowledgeBaseStep() {
-	const { debouncedRetrieveApplication } = useWizardStore();
 	const { application } = useApplicationStore();
 
 	usePollingCleanup();
@@ -49,10 +47,7 @@ export function KnowledgeBaseStep() {
 							>
 								Documents
 							</h3>
-							<TemplateFileUploader
-								onUploadComplete={debouncedRetrieveApplication}
-								parentId={applicationId}
-							/>
+							<TemplateFileUploader parentId={applicationId} />
 						</div>
 
 						<div>
@@ -66,7 +61,7 @@ export function KnowledgeBaseStep() {
 								Use a static link that doesn&apos;t require login, so we can retrieve the information.
 							</p>
 
-							<UrlInput onUrlAdded={debouncedRetrieveApplication} parentId={applicationId} />
+							<UrlInput parentId={applicationId} />
 						</div>
 					</div>
 				</div>

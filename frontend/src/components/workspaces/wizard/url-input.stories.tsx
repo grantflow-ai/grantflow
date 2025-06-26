@@ -25,7 +25,6 @@ type Story = StoryObj<typeof UrlInput>;
 
 export const Default: Story = {
 	args: {
-		onUrlAdded: action("url-added"),
 		parentId: "template-123",
 	},
 	decorators: [
@@ -54,7 +53,6 @@ export const Default: Story = {
 
 export const WithExistingUrls: Story = {
 	args: {
-		onUrlAdded: action("url-added"),
 		parentId: "template-123",
 	},
 	decorators: [
@@ -94,9 +92,6 @@ export const WithExistingUrls: Story = {
 };
 
 export const WithoutParentId: Story = {
-	args: {
-		onUrlAdded: action("url-added"),
-	},
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -119,7 +114,6 @@ export const WithoutParentId: Story = {
 
 export const WithoutApplication: Story = {
 	args: {
-		onUrlAdded: action("url-added"),
 		parentId: "template-123",
 	},
 	decorators: [
@@ -140,7 +134,6 @@ export const WithoutApplication: Story = {
 
 export const WithApplicationRagSources: Story = {
 	args: {
-		onUrlAdded: action("url-added"),
 		parentId: "different-parent",
 	},
 	decorators: [
@@ -191,5 +184,5 @@ export const WithoutCallback: Story = {
 			return <Story />;
 		},
 	],
-	name: "Without URL Added Callback",
+	name: "Simple Component",
 };
