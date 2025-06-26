@@ -30,7 +30,9 @@ rules:
     content: |
       - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
       - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
-      - **Services**: backend (API), indexer (docs), crawler (web)
+      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing)
+      - **Database**: PostgreSQL with asyncpg, pgvector for embeddings
+      - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
       - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
       - **Linting**: Biome (formatting/style), ESLint (TS/React), MyPy (Python types), Ruff (Python), Codespell
 
@@ -327,11 +329,13 @@ rules:
       - TypedDict: Use `NotRequired[type]` not `type | None`
       - Check entity exists before updates
       - Use `logger.exception()` not `logger.error(..., exc_info=True)`
+      - **Logging**: Use structlog with key=value pairs, not f-strings (e.g. `logger.info("Created job", job_id=str(job.id))`)
       - Avoid `global` - use singleton classes
       - Use `get_env()` with fallbacks
       - Always use UUIDs as strings in responses (convert with `str()`)
       - Use `.isoformat()` for datetime serialization
       - Polymorphic SQLAlchemy models for flexible schemas
+      - **Database**: Handle unique constraint violations gracefully with existence checks
 
   - name: "Key Learnings"
     priority: 50
@@ -410,10 +414,10 @@ rules:
 
       Biome is the primary formatter and linter for JS/TS/JSON/CSS:
 
-      - Configuration: `biome.json` in root
+      - Configuration: `biome.json` in frontend directory
       - Integrates with ESLint via `eslint-config-biome`
       - Handles formatting, import sorting, and many style rules
-      - Run with: `task lint:biome` or `pnpm biome check --write .`
+      - Run with: `task lint:biome` or from frontend directory: `pnpm biome check --write .`
 
       ### Common Linting Patterns
 

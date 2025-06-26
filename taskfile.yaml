@@ -512,12 +512,14 @@ tasks:
 
     lint:biome:
         desc: Format and lint code with Biome
+        dir: "{{.FRONTEND_DIR}}"
         cmds:
             - pnpm biome check --write .
             - pnpm biome format --write .
 
     lint:eslint:
         desc: Lint JavaScript/TypeScript with ESLint
+        dir: "{{.FRONTEND_DIR}}"
         cmds:
             - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
 

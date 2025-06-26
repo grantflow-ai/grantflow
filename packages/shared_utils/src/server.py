@@ -10,7 +10,7 @@ from litestar.di import Provide
 from litestar.logging import StructLoggingConfig
 from litestar.types import ExceptionHandler, LifespanHook
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from structlog.typing import EventDict, FilteringBoundLogger
 
 from packages.db.src.connection import get_session_maker
@@ -57,7 +57,24 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
     def handle_exception(
         _: Request[Any, Any, Any], exception: Exception
     ) -> Response[Any]:
-        if isinstance(exception, SQLAlchemyError):
+        if isinstance(exception, IntegrityError):
+            if "duplicate key value violates unique constraint" in str(exception):
+                logger.info(
+                    "Duplicate job creation attempt - returning success for idempotency",
+                    exc_name=type(exception).__name__,
+                    constraint_error=str(exception),
+                )
+                message = "Job already exists or was created successfully"
+                status_code = HTTPStatus.OK
+            else:
+                logger.error(
+                    "Database integrity constraint violation",
+                    exc_name=type(exception).__name__,
+                    exec_info=exception,
+                )
+                message = "Database constraint violation"
+                status_code = HTTPStatus.CONFLICT
+        elif isinstance(exception, SQLAlchemyError):
             logger.error(
                 "An unexpected sqlalchemy error occurred",
                 exc_name=type(exception).__name__,
@@ -72,7 +89,7 @@ def create_exception_handler(logger: FilteringBoundLogger) -> ExceptionHandler: 
         elif isinstance(exception, ValidationError):
             logger.error("Validation error", exec_info=exception)
             message = "Invalid pubsub message"
-            status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+            status_code = HTTPStatus.BAD_REQUEST
         else:
             logger.error("An unexpected backend error occurred.", exec_info=exception)
             message = "An unexpected backend error occurred"
@@ -152,6 +169,7 @@ def create_litestar_app(
         ),
         debug=get_env("DEBUG", fallback="", raise_on_missing=False) == "true",
         exception_handlers={
+            IntegrityError: exception_handler,
             SQLAlchemyError: exception_handler,
             BackendError: exception_handler,
             ValidationError: exception_handler,

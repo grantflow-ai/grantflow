@@ -23,6 +23,7 @@ import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
 import { logError } from "@/utils/logging";
+import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
@@ -311,7 +312,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			message: "Application should not be null when calling generateTemplate",
 		});
 		try {
-			await generateGrantTemplate(application.workspace_id, application.id, templateId);
+			await withRetry(() => generateGrantTemplate(application.workspace_id, application.id, templateId), {
+				initialDelay: 1000,
+				maxRetries: 3,
+				retryCondition: (error: unknown) => {
+					if (error instanceof HTTPError) {
+						const { status } = error.response;
+						// Don't retry on validation errors (422) or other client errors
+						// But do retry on server errors (500+)
+						return status >= 500;
+					}
+					return true;
+				},
+			});
 		} catch (error: unknown) {
 			if (error instanceof HTTPError && error.response.status === 422) {
 				await handleGrantTemplateValidationError(error);

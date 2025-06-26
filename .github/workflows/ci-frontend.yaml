@@ -36,12 +36,10 @@ jobs:
               with:
                   node-version: 22
                   cache: pnpm
-                  cache-dependency-path: |
-                      pnpm-lock.yaml
-                      frontend/pnpm-lock.yaml
+                  cache-dependency-path: frontend/pnpm-lock.yaml
 
             - name: Install Dependencies
-              run: pnpm install -r
+              run: cd frontend && pnpm install
 
             - name: Run Tests
               run: cd frontend && pnpm run test
@@ -63,12 +61,10 @@ jobs:
               with:
                   node-version: 22
                   cache: pnpm
-                  cache-dependency-path: |
-                      pnpm-lock.yaml
-                      frontend/pnpm-lock.yaml
+                  cache-dependency-path: frontend/pnpm-lock.yaml
 
             - name: Install Dependencies
-              run: pnpm install -r
+              run: cd frontend && pnpm install
 
             - name: Type Check
               run: cd frontend && pnpm run typecheck
@@ -104,12 +100,10 @@ jobs:
               with:
                   node-version: 22
                   cache: pnpm
-                  cache-dependency-path: |
-                      pnpm-lock.yaml
-                      frontend/pnpm-lock.yaml
+                  cache-dependency-path: frontend/pnpm-lock.yaml
 
             - name: Install Dependencies
-              run: pnpm install -r
+              run: cd frontend && pnpm install
 
             - name: Build Next.js App
               run: cd frontend && pnpm run build
