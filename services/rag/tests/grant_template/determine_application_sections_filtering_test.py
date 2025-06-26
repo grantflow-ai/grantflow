@@ -11,7 +11,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Abstracts",
             "id": "abstracts",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 1,
         },
@@ -19,7 +19,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Scientific Background",
             "id": "scientific_background",
             "parent_id": "research_plan",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 3,
         },
@@ -27,7 +27,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Research Question",
             "id": "research_question",
             "parent_id": "research_plan",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 4,
         },
@@ -35,7 +35,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Study Design",
             "id": "study_design",
             "parent_id": "research_plan",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 5,
         },
@@ -43,7 +43,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Detailed Plan & Methods",
             "id": "detailed_plan_methods",
             "parent_id": "study_design",
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 6,
         },
@@ -51,7 +51,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Sample Size Justification",
             "id": "sample_size_justification",
             "parent_id": "study_design",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 7,
         },
@@ -59,7 +59,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Preliminary Results",
             "id": "preliminary_results",
             "parent_id": "research_plan",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 8,
         },
@@ -67,7 +67,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Schematic Representation",
             "id": "schematic_representation",
             "parent_id": "research_plan",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 9,
         },
@@ -75,7 +75,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Partner Responsibilities",
             "id": "partner_responsibilities",
             "parent_id": "schematic_representation",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 10,
         },
@@ -83,7 +83,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Time Estimate for Each Stage",
             "id": "time_estimate_each_stage",
             "parent_id": "research_plan",
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 11,
         },
@@ -91,7 +91,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Research Plan",
             "id": "research_plan",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 2,
         },
@@ -99,7 +99,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Budget",
             "id": "budget",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 12,
         },
@@ -107,7 +107,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Curriculum Vitae",
             "id": "curriculum_vitae",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 13,
         },
@@ -115,7 +115,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Collaboration Letters",
             "id": "collaboration_letters",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 14,
         },
@@ -123,7 +123,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Bio-Ethics Approvals",
             "id": "bio_ethics_approvals",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 15,
         },
@@ -131,7 +131,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Suggested Reviewers",
             "id": "suggested_reviewers",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 16,
         },
@@ -139,7 +139,7 @@ SECTION_OUTPOUT: ExtractedSections = {
             "title": "Checklist",
             "id": "checklist",
             "parent_id": None,
-            "is_detailed_workplan": None,
+            "is_detailed_research_plan": None,
             "is_long_form": True,
             "order": 17,
         },
@@ -150,7 +150,7 @@ SECTION_OUTPOUT: ExtractedSections = {
 async def test_section_filtering() -> None:
     result = await filter_extracted_sections(sections=SECTION_OUTPOUT["sections"])
     assert len(result) > 0
-    assert any(s.get("is_detailed_workplan") for s in result)
+    assert any(s.get("is_detailed_research_plan") for s in result)
 
 
 async def test_section_filtering_empty_input() -> None:
@@ -158,13 +158,13 @@ async def test_section_filtering_empty_input() -> None:
     assert result == []
 
 
-async def test_section_filtering_always_keeps_workplan() -> None:
+async def test_section_filtering_always_keeps_research_plan() -> None:
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Methods",
             "id": "methods",
             "parent_id": None,
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 1,
         }
@@ -180,7 +180,7 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
             "title": "Research Plan",
             "id": "research_plan",
             "parent_id": None,
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_long_form": False,
             "order": 1,
         },
@@ -188,7 +188,7 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
             "title": "Methods",
             "id": "methods",
             "parent_id": "research_plan",
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 2,
         },
@@ -201,10 +201,10 @@ async def test_section_filtering_keeps_long_form_parents() -> None:
 async def test_section_filtering_removes_non_long_form() -> None:
     sections: list[ExtractedSectionDTO] = [
         {
-            "title": "Workplan",
-            "id": "workplan",
+            "title": "Research Plan",
+            "id": "research_plan",
             "parent_id": None,
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 1,
         },
@@ -212,14 +212,14 @@ async def test_section_filtering_removes_non_long_form() -> None:
             "title": "Research Plan",
             "id": "research_plan",
             "parent_id": None,
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_long_form": False,
             "order": 2,
         },
     ]
     result = await filter_extracted_sections(sections=sections, initial_threshold=0.9)
     assert len(result) == 1
-    assert result[0]["id"] == "workplan"
+    assert result[0]["id"] == "research_plan"
 
 
 async def test_section_filtering_threshold() -> None:
@@ -228,7 +228,7 @@ async def test_section_filtering_threshold() -> None:
             "title": "Research Methods Section",
             "id": "methods",
             "parent_id": None,
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_long_form": True,
             "order": 1,
         }
@@ -240,13 +240,13 @@ async def test_section_filtering_threshold() -> None:
     await filter_extracted_sections(sections=sections, initial_threshold=0.5)
 
 
-async def test_adaptive_threshold_preserves_workplan() -> None:
+async def test_adaptive_threshold_preserves_research_plan() -> None:
     sections: list[ExtractedSectionDTO] = [
         {
             "title": "Methods",
             "id": "methods",
             "parent_id": None,
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 1,
         }
@@ -254,7 +254,7 @@ async def test_adaptive_threshold_preserves_workplan() -> None:
 
     result = await filter_extracted_sections(sections=sections, initial_threshold=0.1)
     assert len(result) == 1
-    assert result[0]["is_detailed_workplan"] is True
+    assert result[0]["is_detailed_research_plan"] is True
 
 
 async def test_maintain_hierarchy_integrity() -> None:
@@ -263,7 +263,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "title": "Research Plan",
             "id": "research_plan",
             "parent_id": None,
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_long_form": True,
             "order": 1,
         },
@@ -271,7 +271,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "title": "Methods",
             "id": "methods",
             "parent_id": "research_plan",
-            "is_detailed_workplan": True,
+            "is_detailed_research_plan": True,
             "is_long_form": True,
             "order": 2,
         },
@@ -279,7 +279,7 @@ async def test_maintain_hierarchy_integrity() -> None:
             "title": "Budget",
             "id": "budget",
             "parent_id": None,
-            "is_detailed_workplan": False,
+            "is_detailed_research_plan": False,
             "is_long_form": False,
             "order": 3,
         },
@@ -287,7 +287,7 @@ async def test_maintain_hierarchy_integrity() -> None:
 
     result = await filter_extracted_sections(sections=sections, initial_threshold=0.5)
 
-    assert any(s["is_detailed_workplan"] for s in result)
+    assert any(s["is_detailed_research_plan"] for s in result)
 
     orders = [s["order"] for s in result]
     assert min(orders) == 1

@@ -481,8 +481,8 @@ describe("wizard store", () => {
 		it("should handle errors in title change gracefully", () => {
 			const mockUpdateApplication = vi.fn().mockRejectedValue(new Error("Update failed"));
 			const application = ApplicationFactory.build({
-				title: "Old Title",
 				project_id: "project-123",
+				title: "Old Title",
 			});
 
 			useApplicationStore.setState({ application });

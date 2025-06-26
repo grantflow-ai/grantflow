@@ -126,7 +126,7 @@ async def generate_section_text(
     dependencies: dict[str, str],
     grant_section: GrantLongFormSection,
     form_input: ResearchDeepDive,
-    workplan_text: str,
+    research_plan_text: str,
 ) -> str:
     logger.debug("Generating section text.", grant_section=grant_section)
 
@@ -148,7 +148,7 @@ async def generate_section_text(
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
         max_length=grant_section["max_words"],
-        sources={"rag_results": rag_results, "form_inputs": form_input, "workplan_text": workplan_text},
+        sources={"rag_results": rag_results, "form_inputs": form_input, "research_plan_text": research_plan_text},
     ):
         return source_validation_error
 
@@ -161,7 +161,7 @@ async def generate_section_text(
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
         form_inputs=form_input,
-        workplan_text=workplan_text,
+        research_plan_text=research_plan_text,
         passing_score=80,
         increment=10,
         retries=5,

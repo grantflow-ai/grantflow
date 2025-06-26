@@ -107,7 +107,7 @@ async def extract_and_enrich_sections(
                     generation_instructions=metadata["generation_instructions"],
                     id=section["id"],
                     is_clinical_trial=section.get("is_clinical_trial", False),
-                    is_detailed_workplan=section.get("is_detailed_workplan", False),
+                    is_detailed_research_plan=section.get("is_detailed_research_plan", False),
                     keywords=metadata["keywords"],
                     max_words=metadata["max_words"],
                     order=section["order"],

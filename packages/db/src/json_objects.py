@@ -36,7 +36,7 @@ class GrantLongFormSection(GrantElement):
     depends_on: list[str]
     generation_instructions: str
     is_clinical_trial: bool | None
-    is_detailed_workplan: bool | None
+    is_detailed_research_plan: bool | None
     keywords: list[str]
     max_words: int
     search_queries: list[str]

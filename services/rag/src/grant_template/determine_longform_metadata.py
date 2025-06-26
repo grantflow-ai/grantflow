@@ -67,7 +67,7 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
          * Lines: multiply by 10-12 depending on line spacing
        - Reduce total by 12.5% to account for figures, tables, and diagrams
        - Distribute words across sections based on strategic importance:
-         * Research plan or workplan should receive 50-66% of total words unless specified otherwise
+         * Research plan or research_plan should receive 50-66% of total words unless specified otherwise
          * Give more words to technically complex sections
          * Give fewer words to standard/boilerplate sections
        - Respect any explicit section word limits found in the guidelines
@@ -347,20 +347,20 @@ def validate_template_sections(
             },
         )
 
-    workplan_sections = [s for s in input_sections if s.get("is_detailed_workplan")]
-    if workplan_sections:
-        workplan_id = workplan_sections[0]["id"]
-        workplan_metadata = next((s for s in response["sections"] if s["id"] == workplan_id), None)
+    research_plan_sections = [s for s in input_sections if s.get("is_detailed_research_plan")]
+    if research_plan_sections:
+        research_plan_id = research_plan_sections[0]["id"]
+        research_plan_metadata = next((s for s in response["sections"] if s["id"] == research_plan_id), None)
 
-        if workplan_metadata and workplan_metadata["max_words"] < 100:
+        if research_plan_metadata and research_plan_metadata["max_words"] < 100:
             raise ValidationError(
-                "Workplan section requires more substantial word count",
+                "Research Plan section requires more substantial word count",
                 context={
-                    "section_id": workplan_id,
-                    "section_title": workplan_sections[0].get("title", "Workplan"),
-                    "max_words": workplan_metadata["max_words"],
+                    "section_id": research_plan_id,
+                    "section_title": research_plan_sections[0].get("title", "Research Plan"),
+                    "max_words": research_plan_metadata["max_words"],
                     "min_expected": 100,
-                    "recovery_instruction": f"Increase the word count for the workplan section '{workplan_id}' to at least 100 words",
+                    "recovery_instruction": f"Increase the word count for the research_plan section '{research_plan_id}' to at least 100 words",
                 },
             )
 
@@ -391,7 +391,7 @@ evaluation_criteria = [
             - Word distributions align with section importance and typical grant structure
             - Adjustments for figures/tables are reasonable (~10-15%)
             - Word allocations are practical and balanced across sections
-            - The workplan has appropriate priority in word allocation
+            - The research_plan has appropriate priority in word allocation
         """,
     ),
     EvaluationCriterion(
@@ -424,7 +424,7 @@ evaluation_criteria = [
         Assess the structural coherence of the template:
             - Section dependencies are logical and correctly identified
             - The overall structure forms a coherent narrative
-            - Workplan is properly integrated with related sections
+            - Research Plan is properly integrated with related sections
             - Section relationships support a natural content flow
             - Content allocations follow standard scientific writing patterns
             - Structure supports the specific type of grant application
@@ -458,7 +458,7 @@ async def handle_generate_grant_template(
         long_form_sections="\n".join(
             [
                 f"- {section['id']}: {section['title']}"
-                + (" (Detailed Workplan)" if section.get("is_detailed_workplan") else "")
+                + (" (Detailed Research Plan)" if section.get("is_detailed_research_plan") else "")
                 + (" (Clinical Trial)" if section.get("is_clinical_trial") else "")
                 + (" (Title Only)" if section.get("is_title_only") else "")
                 for section in long_form_sections
