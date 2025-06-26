@@ -1,16 +1,14 @@
-"use client";
-
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { SectionIconButton } from "@/components/projects/wizard/section-icon-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SectionIconButton } from "@/components/projects/wizard/section-icon-button";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 
 interface SectionEditFormProps {
@@ -68,7 +66,7 @@ export function SortableSection({
 	} = useSortable({ id: section.id });
 
 	const [formData, setFormData] = useState<SectionFormData>({
-		isResearchPlan: "max_words" in section ? (section.is_detailed_workplan ?? false) : false,
+		isResearchPlan: "max_words" in section ? (section.is_detailed_research_plan ?? false) : false,
 		max_words: "max_words" in section ? section.max_words : 3000,
 		title: section.title,
 		useWords: true,
@@ -76,7 +74,7 @@ export function SortableSection({
 
 	useEffect(() => {
 		setFormData({
-			isResearchPlan: "max_words" in section ? (section.is_detailed_workplan ?? false) : false,
+			isResearchPlan: "max_words" in section ? (section.is_detailed_research_plan ?? false) : false,
 			max_words: "max_words" in section ? section.max_words : 3000,
 			title: section.title,
 			useWords: true,
@@ -95,7 +93,7 @@ export function SortableSection({
 		onUpdate({
 			max_words: formData.max_words,
 			title: formData.title,
-			...(formData.isResearchPlan !== undefined && { is_detailed_workplan: formData.isResearchPlan }),
+			...(formData.isResearchPlan !== undefined && { is_detailed_research_plan: formData.isResearchPlan }),
 		});
 		onToggleExpand();
 	}, [formData, onUpdate, onToggleExpand]);

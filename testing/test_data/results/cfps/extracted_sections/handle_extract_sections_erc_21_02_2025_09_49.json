@@ -4,7 +4,7 @@
 		"title": "Abstract",
 		"parent_id": null,
 		"is_long_form": true,
-		"is_detailed_workplan": false,
+		"is_detailed_research_plan": false,
 		"is_title_only": false,
 		"is_clinical_trial": false
 	},
@@ -13,7 +13,7 @@
 		"title": "Section 1a: The idea - Breakthrough Innovation potential",
 		"parent_id": null,
 		"is_long_form": true,
-		"is_detailed_workplan": false,
+		"is_detailed_research_plan": false,
 		"is_title_only": false,
 		"is_clinical_trial": false
 	},
@@ -22,7 +22,7 @@
 		"title": "Section 1b: Approach and Methodology",
 		"parent_id": null,
 		"is_long_form": true,
-		"is_detailed_workplan": true,
+		"is_detailed_research_plan": true,
 		"is_title_only": false,
 		"is_clinical_trial": false
 	},
@@ -31,7 +31,7 @@
 		"title": "GANTT chart and milestones",
 		"parent_id": null,
 		"is_long_form": true,
-		"is_detailed_workplan": false,
+		"is_detailed_research_plan": false,
 		"is_title_only": false,
 		"is_clinical_trial": false
 	},
@@ -40,7 +40,7 @@
 		"title": "Description of the team",
 		"parent_id": null,
 		"is_long_form": true,
-		"is_detailed_workplan": false,
+		"is_detailed_research_plan": false,
 		"is_title_only": false,
 		"is_clinical_trial": false
 	},
@@ -49,7 +49,7 @@
 		"title": "Risk mitigation table",
 		"parent_id": null,
 		"is_long_form": true,
-		"is_detailed_workplan": false,
+		"is_detailed_research_plan": false,
 		"is_title_only": false,
 		"is_clinical_trial": false
 	}

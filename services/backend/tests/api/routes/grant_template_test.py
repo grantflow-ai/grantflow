@@ -52,7 +52,7 @@ async def test_update_grant_template_success(
                 "depends_on": [],
                 "generation_instructions": "Write an introduction",
                 "is_clinical_trial": False,
-                "is_detailed_workplan": False,
+                "is_detailed_research_plan": False,
                 "keywords": ["intro", "background"],
                 "max_words": 500,
                 "search_queries": ["introduction research"],
@@ -85,7 +85,7 @@ async def test_update_grant_template_success(
         assert section["depends_on"] == []
         assert section["generation_instructions"] == "Write an introduction"
         assert section["is_clinical_trial"] is False
-        assert section["is_detailed_workplan"] is False
+        assert section["is_detailed_research_plan"] is False
         assert section["keywords"] == ["intro", "background"]
         assert section["max_words"] == 500
         assert section["search_queries"] == ["introduction research"]

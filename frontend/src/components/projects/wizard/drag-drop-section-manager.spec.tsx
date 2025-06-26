@@ -360,7 +360,7 @@ describe("DragDropSectionManager", () => {
 						generation_instructions: "",
 						id: expect.stringMatching(/^section-/), // Should start with "section-"
 						is_clinical_trial: null,
-						is_detailed_workplan: null,
+						is_detailed_research_plan: null,
 						keywords: [],
 						max_words: 3000,
 						order: 0,

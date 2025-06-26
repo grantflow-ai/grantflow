@@ -5,7 +5,7 @@
 			"generation_instructions": "The abstract should provide a concise and compelling overview of the proposed project, highlighting the innovation potential of the ERC-funded research and its commercial viability. It must be written in English and should not exceed 2000 characters (approximately 285 words). The abstract should clearly state the project's objectives, the approach and methodology to be used, and the expected outcomes, including potential market applications. It should also emphasize the potential impact of the project, its relevance to the ERC Proof of Concept Grant, and its potential for commercial success. Avoid including any confidential information in the abstract. Ensure the abstract is identical to the text in the administrative form. The abstract serves as the first impression of your project, so clarity, conciseness, and a persuasive tone are crucial.",
 			"id": "abstract",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"ERC",
 				"Proof of Concept",
@@ -52,7 +52,7 @@
 			"generation_instructions": "Provide a brief, non-specialist description of your PoC project with expected outcomes. Structure your response in three clear sections: 1) The problem: Describe the problem to be solved, including its context and impact; 2) The solution: Detail the proposed solution, its value proposition, core technology/research, and potential applications; 3) The origin: Explain the connection to the original ERC-funded project, including the scientific basis and innovative aspects. Use clear language, avoid jargon, define technical terms, and incorporate visuals where helpful.",
 			"id": "idea_description",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Innovation",
 				"Concept",
@@ -91,7 +91,7 @@
 			"generation_instructions": "Demonstrate how the idea drives innovation and tackles societal challenges. Detail how the project outcomes are innovative compared to existing solutions. Include: 1) A clear value proposition explaining why potential users should choose this solution over alternatives, 2) A detailed comparison with competing products/solutions highlighting your unique advantages, and 3) Quantifiable evidence of breakthrough potential (market size, competitive advantage, scalability). Provide supporting evidence from research, patents, or expert opinions. Explain how the innovation addresses an unmet need, its scalability and commercialization potential. Use a persuasive tone that emphasizes the 'how' and 'why' of your innovation's distinctiveness.",
 			"id": "innovation_potential",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Breakthrough",
 				"Innovation",
@@ -138,7 +138,7 @@
 			"generation_instructions": "Explain how the successful implementation of this idea will result in breakthrough innovation and significant impact. Highlight the high-gain aspects including potential economic, social, and scientific advancements that justify pursuing this high-risk endeavor. Identify and analyze the specific challenging aspects that may be difficult to overcome, including technical barriers, market uncertainties, and regulatory hurdles. Describe what features might require development of new approaches or methodologies. Provide a realistic assessment of these challenges while emphasizing the transformative potential rewards. Balance acknowledging risks with strategies for mitigation. Adopt a confident tone that conveys both the ambitious nature of the project and a thoughtful understanding of its feasibility.",
 			"id": "high_risk_gain",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Risk",
 				"Reward",
@@ -192,7 +192,7 @@
 			"generation_instructions": "This section requires a concise outline of the approach and methodology to explore the commercial and innovation potential of your ERC-funded research. Begin with a brief market analysis of the relevant industry, including market size, growth projections, and commercial opportunities. Describe your chosen pathway from research to innovation (e.g., patenting, creation of spinouts, licensing agreements) and explain why this pathway is most appropriate. Clearly articulate how your approach represents a paradigm shift or significant advancement over existing technologies, highlighting 2-3 key competitive advantages. Outline your specific research objectives in numbered format (3-4 objectives maximum), describing only the essential experiments or development steps without excessive technical detail. Conclude with a brief statement about commercial strategy, including potential partnerships, IP protection, or formation of new entities. Use a clear, concise style with business-oriented language that emphasizes commercial potential alongside scientific innovation. Limit discussions of technical methodology to only what's necessary for understanding the innovation's unique value.",
 			"id": "approach_methodology",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Methodology",
 				"Approach",
@@ -238,7 +238,7 @@
 			"generation_instructions": "This section requires a clear, direct description of activities that will explore the innovation potential of your ERC-funded research. Begin immediately with your planned approach, using active voice statements like 'To understand X, we will...' followed by numbered points of key methodological steps (1-3 points maximum). For each major technological approach, start a new paragraph with 'To [accomplish specific goal], we are using [specific technology/method].' Include both planned activities and ongoing work seamlessly, using present tense. After describing the core methodological approaches (approximately 30%-40% of content), transition to preliminary data with phrases like 'The feasibility of this project is supported by strong preliminary data...' and describe 2-3 key preliminary findings that demonstrate proof-of-concept. Include a note in bold where figures would enhance understanding (e.g., '**[FIGURE X: Brief description would be helpful here]**'). Conclude with two clearly labeled sections: 1) 'IPR strategy:' outlining patent development and technology transfer plans with your university; and 2) 'Market landscape and potential end users:' describing commercialization plans, intended user base, and any planned commercial entities or partnerships. Use technical language appropriate to the field without excessive detail or jargon, focusing on methodological approaches rather than granular protocols.",
 			"id": "activities",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Methodological Approach",
 				"Technology Platform",
@@ -289,7 +289,7 @@
 			"generation_instructions": "This section requires a detailed description of the action and timescale, presented as a comprehensive work plan. The work plan should include a Gantt chart or similar visual representation of the project timeline, clearly indicating the start and end dates for each task, as well as key milestones and deliverables. Describe the dependencies between tasks and how they will be managed. Explain how resources will be allocated to each task. Address any potential contingencies and how they will be handled. The work plan should be realistic and achievable, demonstrating a clear understanding of the project's scope and complexity. Avoid overly optimistic or unrealistic timelines. Focus on the 'how' and 'when' of each task and how it contributes to the overall project objectives. Include a critical path analysis to identify the most important tasks and potential bottlenecks. Ensure the Gantt chart is clear and easy to understand.",
 			"id": "work_plan",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": true,
+			"is_detailed_research_plan": true,
 			"keywords": [
 				"Gantt Chart",
 				"Timeline",
@@ -334,7 +334,7 @@
 			"generation_instructions": "This section requires a concise description of the resources needed for project implementation, without including any financial figures or costs. Organize the content by objective or task leader, with each paragraph following this pattern: 'Task/Objective X, led by [Name/Role], will require [specific personnel allocation in person-months] of [specific roles].' For each task, clearly specify: 1) Task leadership, 2) Personnel requirements with specific time allocations (in person-months or work months), 3) Materials and equipment needed (specify whether using existing equipment or requiring new purchases), 4) External services or partnerships if applicable, and 5) Expected duration in months. Include only essential details that demonstrate the appropriate allocation of resources for achieving project objectives. The tone should be matter-of-fact and focused on resource justification rather than detailed methodology. Use brief, direct sentences and avoid unnecessary elaboration on technical processes unless directly relevant to resource needs.",
 			"id": "resources",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Budget",
 				"Equipment",
@@ -379,7 +379,7 @@
 			"generation_instructions": "This section requires a detailed description of the project team, including the Principal Investigator (PI) and all other key personnel. Highlight the expertise and experience of each team member and their qualifications for their respective roles. Clearly define the roles and responsibilities of each team member. Explain the management structure of the team and how it will ensure effective communication and collaboration. Address any potential gaps in expertise and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'who' and 'why' of each team member and how they contribute to the overall project objectives. Emphasize the PI's strategic lead and project management capabilities. Highlight the team's commitment to diversity and inclusion.",
 			"id": "team_description",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Principal Investigator",
 				"Researchers",
@@ -424,7 +424,7 @@
 			"generation_instructions": "This section requires a clear articulation of the Principal Investigator's (PI) strategic lead and project management capabilities. Highlight the PI's leadership qualities, strategic vision, and management skills. Explain how the PI will provide direction and guidance to the project team. Describe the PI's decision-making process and how they will ensure that the project stays on track. Explain how the PI will coordinate the activities of the team and communicate effectively with stakeholders. Address any potential challenges to the PI's leadership and how they will be addressed. Avoid vague or generic descriptions. Focus on the 'how' and 'why' the PI is the right person to lead the project and ensure its success. Emphasize the PI's mentorship capabilities and their ability to delegate tasks effectively.",
 			"id": "strategic_lead",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Leadership",
 				"Vision",
@@ -469,7 +469,7 @@
 			"generation_instructions": "This section requires a detailed description of the project management approach, focusing on the organizational structure and decision-making processes. Explain why the chosen structure is appropriate for the complexity and scale of the project. Present a comprehensive risk management plan that identifies potential scientific/technical risks (e.g., failed experiments or tests) and describes strategies for acceptance or mitigation. Include a contingency plan for unforeseen non-scientific/technical events, such as personnel changes or facility access issues, detailing backup procedures, emergency responses, and recovery strategies. Avoid vague or generic descriptions. Focus on the 'how' the project will be managed effectively to ensure its success despite potential challenges. Use a clear and structured approach, incorporating visual elements like organizational charts or risk matrices where appropriate.",
 			"id": "project_management",
 			"is_clinical_trial": false,
-			"is_detailed_workplan": false,
+			"is_detailed_research_plan": false,
 			"keywords": [
 				"Project Management",
 				"Organizational Structure",

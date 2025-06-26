@@ -339,8 +339,8 @@ describe("ApplicationDetailsStep", () => {
 				id: "test-template-id",
 			}),
 			id: "test-id",
-			title: "Test Title",
 			project_id: "test-project-id",
+			title: "Test Title",
 		});
 
 		useApplicationStore.setState({
@@ -367,8 +367,8 @@ describe("ApplicationDetailsStep", () => {
 		const application = ApplicationFactory.build({
 			grant_template: undefined,
 			id: "test-id",
-			title: "Test Title",
 			project_id: "test-project-id",
+			title: "Test Title",
 		});
 
 		useApplicationStore.setState({

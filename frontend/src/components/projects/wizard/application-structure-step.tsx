@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useCallback } from "react";
 import { AppButton } from "@/components/app-button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { IconPreviewLogo } from "@/components/projects/icons";
 import ApplicationStructureLeftPane from "@/components/projects/wizard/application-structure-left-pane";
 import { DragDropSectionManager } from "@/components/projects/wizard/drag-drop-section-manager";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
@@ -29,7 +29,7 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 		generation_instructions: "",
 		id: section.id,
 		is_clinical_trial: null,
-		is_detailed_workplan: null,
+		is_detailed_research_plan: null,
 		keywords: [],
 		max_words: 3000,
 		order: section.order,
@@ -66,7 +66,7 @@ function ApplicationStructurePreview() {
 				generation_instructions: "",
 				id: `section-${crypto.randomUUID()}`,
 				is_clinical_trial: null,
-				is_detailed_workplan: null,
+				is_detailed_research_plan: null,
 				keywords: [],
 				max_words: 3000,
 				order: grantSections.length,

@@ -23,7 +23,7 @@ If these guidelines are available (non-empty JSON array):
   - Required section hierarchies and dependencies
   - Mandatory sections that must be included
   - Special formatting or content requirements
-  - Organization-specific terminology for workplan sections
+  - Organization-specific terminology for research_plan sections
 
 If no organization guidelines are available, use the CFP as the primary source for guidelines.
 
