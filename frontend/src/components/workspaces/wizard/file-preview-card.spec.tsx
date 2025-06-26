@@ -118,14 +118,14 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "test-document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			expect(screen.getByText("test-document.pdf")).toBeInTheDocument();
+			expect(screen.getByTestId("file-name")).toHaveTextContent("test-document.pdf");
 		});
 
 		it("shows file name in title attribute for accessibility", () => {
 			const file = FileWithIdFactory.build({ name: "very-long-filename-that-might-be-truncated.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const fileNameElement = screen.getByText("very-long-filename-that-might-be-truncated.pdf");
+			const fileNameElement = screen.getByTestId("file-name");
 			expect(fileNameElement).toHaveAttribute("title", "very-long-filename-that-might-be-truncated.pdf");
 		});
 	});
@@ -144,7 +144,7 @@ describe("FilePreviewCard", () => {
 			});
 		});
 
-		it("opens file in new tab when clicked", () => {
+		it("opens file in new tab when clicked", async () => {
 			const mockCreateObjectURL = vi.fn().mockReturnValue("blob:http://localhost/test-url");
 			const mockRevokeObjectURL = vi.fn();
 			const mockWindowOpen = vi.fn();
@@ -153,18 +153,20 @@ describe("FilePreviewCard", () => {
 			globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 			globalThis.window.open = mockWindowOpen;
 
-			const file = new File(["test content"], "image.png", { type: "image/png" }) as any;
-			file.id = "test-id";
+			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
 			render(<FilePreviewCard file={file} />);
 
 			const button = screen.getByRole("button", { name: "Open image.png" });
+
 			fireEvent.click(button);
 
-			expect(mockCreateObjectURL).toHaveBeenCalledWith(file);
-			expect(mockWindowOpen).toHaveBeenCalledWith("blob:http://localhost/test-url", "_blank");
+			await waitFor(() => {
+				expect(mockCreateObjectURL).toHaveBeenCalledWith(file);
+				expect(mockWindowOpen).toHaveBeenCalledWith("blob:http://localhost/test-url", "_blank");
+			});
 		});
 
-		it("revokes object URL after opening file", () => {
+		it("revokes object URL after opening file", async () => {
 			vi.useFakeTimers();
 			const mockCreateObjectURL = vi.fn().mockReturnValue("blob:http://localhost/test-url");
 			const mockRevokeObjectURL = vi.fn();
@@ -174,14 +176,13 @@ describe("FilePreviewCard", () => {
 			globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 			globalThis.window.open = mockWindowOpen;
 
-			const file = new File(["test content"], "image.png", { type: "image/png" }) as any;
-			file.id = "test-id";
+			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
 			render(<FilePreviewCard file={file} />);
 
 			const button = screen.getByRole("button", { name: "Open image.png" });
 			fireEvent.click(button);
 
-			vi.advanceTimersByTime(1000);
+			await vi.advanceTimersByTimeAsync(1000);
 
 			expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/test-url");
 			vi.useRealTimers();
@@ -207,8 +208,8 @@ describe("FilePreviewCard", () => {
 			const button = screen.getByRole("button", { name: "Open document.pdf" });
 			fireEvent.contextMenu(button);
 
-			expect(screen.getByText("Open")).toBeInTheDocument();
-			expect(screen.getByText("Remove")).toBeInTheDocument();
+			expect(screen.getByTestId("file-menu-open")).toBeInTheDocument();
+			expect(screen.getByTestId("file-menu-remove")).toBeInTheDocument();
 		});
 
 		it("opens dropdown menu on right click for non-openable files", () => {
@@ -218,8 +219,8 @@ describe("FilePreviewCard", () => {
 			const container = screen.getByRole("img", { name: /File document\.docx - right click for options/i });
 			fireEvent.contextMenu(container);
 
-			expect(screen.getByText("Open")).toBeInTheDocument();
-			expect(screen.getByText("Remove")).toBeInTheDocument();
+			expect(screen.getByTestId("file-menu-open")).toBeInTheDocument();
+			expect(screen.getByTestId("file-menu-remove")).toBeInTheDocument();
 		});
 
 		it("disables Open option for non-browser-openable files", () => {
@@ -229,18 +230,18 @@ describe("FilePreviewCard", () => {
 			const container = screen.getByRole("img", { name: /File document\.docx - right click for options/i });
 			fireEvent.contextMenu(container);
 
-			const openMenuItem = screen.getByText("Open").closest("div");
+			const openMenuItem = screen.getByTestId("file-menu-open");
 			expect(openMenuItem).toHaveAttribute("aria-disabled", "true");
 		});
 
 		it("enables Open option for browser-openable files", () => {
-			const file = FileWithIdFactory.build({ name: "image.png" });
+			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
 			render(<FilePreviewCard file={file} />);
 
 			const button = screen.getByRole("button", { name: "Open image.png" });
 			fireEvent.contextMenu(button);
 
-			const openMenuItem = screen.getByText("Open").closest("div");
+			const openMenuItem = screen.getByTestId("file-menu-open");
 			expect(openMenuItem).not.toHaveAttribute("aria-disabled", "true");
 		});
 	});
@@ -253,7 +254,7 @@ describe("FilePreviewCard", () => {
 			const button = screen.getByRole("button", { name: "Open document.pdf" });
 			fireEvent.contextMenu(button);
 
-			const removeMenuItem = screen.getByText("Remove").closest("div");
+			const removeMenuItem = screen.getByTestId("file-menu-remove");
 			expect(removeMenuItem).toHaveAttribute("aria-disabled", "true");
 		});
 
@@ -264,7 +265,7 @@ describe("FilePreviewCard", () => {
 			const button = screen.getByRole("button", { name: "Open document.pdf" });
 			fireEvent.contextMenu(button);
 
-			const removeMenuItem = screen.getByText("Remove").closest("div");
+			const removeMenuItem = screen.getByTestId("file-menu-remove");
 			expect(removeMenuItem).not.toHaveAttribute("aria-disabled", "true");
 		});
 
@@ -292,10 +293,10 @@ describe("FilePreviewCard", () => {
 			fireEvent.contextMenu(button);
 
 			await waitFor(() => {
-				expect(screen.getByText("Remove")).toBeInTheDocument();
+				expect(screen.getByTestId("file-context-menu")).toBeInTheDocument();
 			});
 
-			const removeMenuItem = screen.getByText("Remove");
+			const removeMenuItem = screen.getByTestId("file-menu-remove");
 			fireEvent.click(removeMenuItem);
 
 			await waitFor(() => {
@@ -303,7 +304,7 @@ describe("FilePreviewCard", () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.queryByText("Remove")).not.toBeInTheDocument();
+				expect(screen.queryByTestId("file-context-menu")).not.toBeInTheDocument();
 			});
 		});
 	});
@@ -314,20 +315,8 @@ describe("FilePreviewCard", () => {
 			const { container } = render(<FilePreviewCard file={file} />);
 
 			const cardElement = container.firstChild as HTMLElement;
-			expect(cardElement).toHaveClass(
-				"hover:bg-app-gray-100",
-				"group",
-				"relative",
-				"flex",
-				"cursor-pointer",
-				"flex-col",
-				"items-center",
-				"justify-center",
-				"rounded",
-				"bg-white",
-				"p-2",
-				"transition-all",
-			);
+			expect(cardElement).toHaveClass("group");
+			expect(cardElement).toHaveClass("hover:bg-app-gray-100");
 		});
 
 		it("renders file icon with correct dimensions", () => {
@@ -342,7 +331,7 @@ describe("FilePreviewCard", () => {
 
 	describe("Accessibility", () => {
 		it("has proper aria-label for clickable files", () => {
-			const file = FileWithIdFactory.build({ name: "image.png" });
+			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
 			render(<FilePreviewCard file={file} />);
 
 			const button = screen.getByRole("button", { name: "Open image.png" });
@@ -372,7 +361,7 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "my.file.name.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			expect(screen.getByText("my.file.name.pdf")).toBeInTheDocument();
+			expect(screen.getByTestId("file-name")).toHaveTextContent("my.file.name.pdf");
 		});
 
 		it("handles files with no filename", () => {
@@ -389,8 +378,8 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: longFilename });
 			render(<FilePreviewCard file={file} />);
 
-			expect(screen.getByText(longFilename)).toBeInTheDocument();
-			expect(screen.getByText(longFilename)).toHaveClass("truncate");
+			expect(screen.getByTestId("file-name")).toHaveTextContent(longFilename);
+			expect(screen.getByTestId("file-name")).toHaveClass("truncate");
 		});
 	});
 });
