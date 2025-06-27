@@ -37,6 +37,11 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 			if (file.size > MAX_FILE_SIZE_BYTES) {
 				toast.error(
 					`File ${file.name} is too large. The max size per file is ${formatBytes(MAX_FILE_SIZE_BYTES)}`,
+					{
+						classNames: {
+							toast: "bg-surface-primary text-error border-error",
+						},
+					},
 				);
 				return false;
 			}

@@ -17,7 +17,7 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
-	WizardStep.PREVIEW_AND_APPROVE,
+	WizardStep.APPLICATION_STRUCTURE,
 	WizardStep.KNOWLEDGE_BASE,
 	WizardStep.RESEARCH_PLAN,
 	WizardStep.RESEARCH_DEEP_DIVE,
@@ -63,7 +63,7 @@ export function WizardFooter() {
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const disabled = !validateStepNext();
-	const backDisabled = currentStep === WizardStep.PREVIEW_AND_APPROVE && isGeneratingTemplate;
+	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
 
 	return (
 		<footer
@@ -240,7 +240,7 @@ function Deadline() {
 }
 
 function generateFooterRightButtonProps(currentStep: WizardStep) {
-	const isApproveStep = currentStep === WizardStep.PREVIEW_AND_APPROVE;
+	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	return {

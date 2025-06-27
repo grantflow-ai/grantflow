@@ -1,0 +1,24 @@
+{
+  "test_name": "test_post_processing_pipeline_performance",
+  "test_category": "quality_assessment",
+  "status": "failed",
+  "error": {
+    "type": "TypeError",
+    "message": "Logger._log() got an unexpected keyword argument 'error'",
+    "execution_time_before_failure": 0.0017209053039550781
+  },
+  "performance": {
+    "execution_time": 0.0017209053039550781,
+    "timeout_reached": false,
+    "timeout_utilization": 2.8681755065917967e-06
+  },
+  "diagnostic_info": {
+    "timeout_configured": 600,
+    "category": "quality_assessment",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-06-27T23:25:47.567070+00:00"
+}

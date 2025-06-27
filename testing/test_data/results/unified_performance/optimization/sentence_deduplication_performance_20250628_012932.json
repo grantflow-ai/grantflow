@@ -1,0 +1,81 @@
+{
+  "test_name": "sentence_deduplication_performance",
+  "test_category": "optimization",
+  "timestamp": "2025-06-28T01:29:32.998610",
+  "test_id": "f8e2a550-8bae-40de-a727-721cd2101f8e",
+  "configuration": {
+    "test_type": "deduplication_performance",
+    "operation": "sentence_similarity_analysis",
+    "complexity": "quadratic_n_squared"
+  },
+  "total_duration_seconds": 4.5e-05,
+  "total_duration_minutes": 7.5e-07,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 71.2,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 0,
+    "total_words": 0,
+    "total_lines": 1,
+    "section_count": 1,
+    "avg_chars_per_section": 0.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": false,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [],
+    "content_richness_score": 0.0,
+    "structure_quality_score": 0.0,
+    "completeness_score": 20.0,
+    "overall_quality_score": 4.0,
+    "meets_min_length": false,
+    "meets_min_sections": false,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "optimization"
+  },
+  "errors_encountered": [
+    "TypeError: Logger._log() got an unexpected keyword argument 'error'"
+  ],
+  "warnings": []
+}
