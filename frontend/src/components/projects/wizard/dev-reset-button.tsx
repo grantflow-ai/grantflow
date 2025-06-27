@@ -8,8 +8,12 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 export function DevResetButton() {
-	const { currentStep } = useWizardStore();
-	const { updateGrantSections } = useApplicationStore();
+	const { currentStep } = useWizardStore((state) => ({
+		currentStep: state.currentStep,
+	}));
+	const { updateGrantSections } = useApplicationStore((state) => ({
+		updateGrantSections: state.updateGrantSections,
+	}));
 
 	const handleReset = async () => {
 		try {

@@ -18,7 +18,9 @@ export function ApplicationPreview({
 	connectionStatusColor?: string;
 	parentId?: string;
 }) {
-	const { application } = useApplicationStore();
+	const { application } = useApplicationStore((state) => ({
+		application: state.application,
+	}));
 
 	const templateFiles: FileWithId[] = (application?.grant_template?.rag_sources ?? [])
 		.filter((source) => source.filename)

@@ -36,8 +36,17 @@ const TEST_URLS = [
 
 export function DevAutofillButton() {
 	const params = useParams();
-	const { currentStep, handleTitleChange } = useWizardStore();
-	const { addFile, addUrl, application, updateApplication, updateGrantSections } = useApplicationStore();
+	const { currentStep, handleTitleChange } = useWizardStore((state) => ({
+		currentStep: state.currentStep,
+		handleTitleChange: state.handleTitleChange,
+	}));
+	const { addFile, addUrl, application, updateApplication, updateGrantSections } = useApplicationStore((state) => ({
+		addFile: state.addFile,
+		addUrl: state.addUrl,
+		application: state.application,
+		updateApplication: state.updateApplication,
+		updateGrantSections: state.updateGrantSections,
+	}));
 
 	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Dev hack - intentionally complex for testing
 	const handleAutofill = async () => {
