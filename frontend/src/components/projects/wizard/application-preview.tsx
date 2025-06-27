@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { IconApplication, IconPreviewLogo } from "@/components/projects/icons";
-import { ThemeBadge } from "@/components/projects/theme-badge";
+import { IconApplication, IconPreviewLogo } from "@/components/projects/shared/icons";
+import { ThemeBadge } from "@/components/projects/shared/theme-badge";
 import FilePreviewCard from "@/components/projects/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/projects/wizard/link-preview-item";
 import { Card } from "@/components/ui/card";

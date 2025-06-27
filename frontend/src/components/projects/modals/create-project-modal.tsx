@@ -7,7 +7,7 @@ import { BaseModal } from "@/components/ui/base-modal";
 import { Button } from "@/components/ui/button";
 import { PagePath } from "@/enums";
 
-import { CreateProjectForm } from "./create-project-form";
+import { CreateProjectForm } from "../forms/create-project-form";
 
 export function CreateProjectModal() {
 	const router = useRouter();

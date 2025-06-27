@@ -3,11 +3,10 @@
 import { Edit, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-
-import { DeleteApplicationModal } from "@/components/projects/delete-application-modal";
 import { AvatarGroup } from "@/components/ui/avatar";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
+import { DeleteApplicationModal } from "../applications/delete-application-modal";
 
 import { ProjectSidebar } from "./project-sidebar";
 

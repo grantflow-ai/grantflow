@@ -1,6 +1,6 @@
 "use client";
 
-import { IconPreviewLogo } from "@/components/projects/icons";
+import { IconPreviewLogo } from "@/components/projects/shared/icons";
 import FilePreviewCard from "@/components/projects/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/projects/wizard/link-preview-item";
 import { Card } from "@/components/ui/card";

@@ -3,12 +3,12 @@
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { InviteCollaboratorModal } from "@/components/projects/invite-collaborator-modal";
 import { Avatar } from "@/components/ui/avatar";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { logTrace } from "@/utils/logging";
 import { generateInitials } from "@/utils/user";
+import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
 import { EditPermissionModal } from "./edit-permission-modal";
 
 interface ProjectMember {
