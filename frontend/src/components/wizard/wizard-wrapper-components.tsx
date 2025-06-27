@@ -101,12 +101,12 @@ export function WizardHeader() {
 	const application = useApplicationStore((state) => state.application);
 	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
 	return (
-		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
-			<div className="mb-8 flex items-center justify-between">
+		<header className="w-full border-b border-solid border-app-gray-100 p-4 sm:p-6" data-testid="wizard-header">
+			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
 					{showHeaderInfo ? (
 						<>
-							<h1 className="text-nowrap" data-testid="app-name">
+							<h1 className="text-sm sm:text-base text-nowrap font-medium" data-testid="app-name">
 								{application?.title}
 							</h1>
 							<Deadline />
@@ -115,7 +115,12 @@ export function WizardHeader() {
 						<div className="invisible" />
 					)}
 				</div>
-				<AppButton className="py-0 text-base" data-testid="exit-button" size="lg" variant="link">
+				<AppButton
+					className="py-0 text-sm sm:text-base text-primary"
+					data-testid="exit-button"
+					size="lg"
+					variant="link"
+				>
 					Exit
 				</AppButton>
 			</div>
@@ -133,8 +138,16 @@ function ApplicationProgressBar({
 }) {
 	return (
 		<div className="flex justify-center">
-			<div className="flex w-full flex-col items-center px-16" data-testid="step-indicators">
-				<div className="relative flex w-full justify-center px-20">
+			<div
+				aria-label="Application wizard progress"
+				aria-valuemax={stepTitles.length}
+				aria-valuemin={1}
+				aria-valuenow={stepTitles.indexOf(currentStep) + 1}
+				className="flex w-full flex-col items-center px-4 sm:px-16"
+				data-testid="step-indicators"
+				role="progressbar"
+			>
+				<div className="relative flex w-full justify-center px-4 sm:px-20">
 					{stepTitles.map((title, index) => {
 						const isLastStep = index === stepTitles.length - 1;
 						const currentStepIndex = stepTitles.indexOf(currentStep);
@@ -144,6 +157,7 @@ function ApplicationProgressBar({
 								className={`${isLastStep ? "w-auto flex-initial" : "flex-1"} relative flex flex-col items-center`}
 								data-testid={`step-${index}`}
 								key={index}
+								aria-current={index === currentStepIndex ? "step" : undefined}
 							>
 								<div className={`flex items-center ${isLastStep ? "" : "w-full"} relative`}>
 									{(() => {
@@ -157,21 +171,19 @@ function ApplicationProgressBar({
 									})()}
 
 									<div
-										className="absolute -bottom-8 flex justify-center text-nowrap"
-										style={{
-											left: "0",
-											transform: "translateX(-45%)",
-										}}
+										className="absolute -bottom-8 flex w-full justify-center"
+										data-testid="step-title-container"
 									>
 										<span
-											className={`font-heading text-center text-xs ${(() => {
+											aria-hidden="true"
+											className={`font-heading text-center text-xs max-w-full truncate ${(() => {
 												if (index < currentStepIndex) {
 													return "text-secondary";
 												}
 												if (index === currentStepIndex) {
 													return "text-primary";
 												}
-												return "text-gray-400";
+												return "text-app-gray-400";
 											})()}`}
 											data-testid={`step-title-${index}`}
 										>

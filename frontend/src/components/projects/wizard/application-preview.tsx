@@ -44,7 +44,7 @@ export function ApplicationPreview({
 	const isEmpty = !application?.title && templateFiles.length === 0 && templateUrls.length === 0;
 
 	return (
-		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
+		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-app-gray-100 p-5 md:p-7">
 			{isEmpty ? (
 				<div className="flex h-full items-center justify-center">
 					<IconPreviewLogo height={180} width={180} />
@@ -63,7 +63,7 @@ export function ApplicationPreview({
 							)}
 						</div>
 						<h3
-							className={`font-heading text-center text-3xl font-medium ${application?.title ? "" : "text-muted-foreground-dark/50"}`}
+							className={`font-heading text-3xl font-medium leading-[34px] ${application?.title ? "" : "text-muted-foreground-dark/50"}`}
 							data-testid="application-title"
 						>
 							{application?.title ?? "Untitled Application"}
@@ -77,8 +77,10 @@ export function ApplicationPreview({
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-documents"
 								>
-									<h4 className="font-heading mb-8 font-semibold">Application Documents</h4>
-									<div className="flex gap-3" data-testid="file-collection">
+									<h4 className="font-heading mb-8 text-base font-semibold leading-[22px]">
+										Application Documents
+									</h4>
+									<div className="flex flex-wrap gap-3" data-testid="file-collection">
 										{templateFiles.map((file, index) => (
 											<FilePreviewCard
 												file={file}
@@ -95,7 +97,7 @@ export function ApplicationPreview({
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-links"
 								>
-									<h4 className="font-heading mb-8 font-semibold">Links</h4>
+									<h4 className="font-heading mb-8 text-base font-semibold leading-[22px]">Links</h4>
 									<div className="space-y-1">
 										{templateUrls.map((url, index) => (
 											<LinkPreviewItem

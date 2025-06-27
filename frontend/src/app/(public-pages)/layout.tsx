@@ -11,6 +11,5 @@ export default function LandingPagesLayout({ children }: { children: React.React
 				<Footer />
 			</div>
 		</SharedLayout>
-		
 	);
 }
