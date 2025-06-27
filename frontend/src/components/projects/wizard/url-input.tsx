@@ -8,7 +8,8 @@ import { useApplicationStore } from "@/stores/application-store";
 import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ parentId }: { parentId?: string }) {
-	const { addUrl, application } = useApplicationStore();
+	const addUrl = useApplicationStore((state) => state.addUrl);
+	const application = useApplicationStore((state) => state.application);
 
 	const urls = React.useMemo(() => {
 		if (!application) return [];

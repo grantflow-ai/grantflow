@@ -3,13 +3,13 @@ import { useEffect } from "react";
 import { useWizardStore } from "@/stores/wizard-store";
 
 export function usePollingCleanup() {
-	const polling = useWizardStore((state) => state.polling);
+	const stopPolling = useWizardStore((state) => state.polling.stop);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 
 	useEffect(() => {
 		return () => {
-			polling.stop();
+			stopPolling();
 			setGeneratingTemplate(false);
 		};
-	}, [polling, setGeneratingTemplate]);
+	}, [stopPolling, setGeneratingTemplate]);
 }

@@ -47,7 +47,8 @@ export function DragDropSectionManager({
 	onAddSection: (parentId?: null | string) => Promise<void>;
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }) {
-	const { application, updateGrantSections } = useApplicationStore();
+	const application = useApplicationStore((state) => state.application);
+	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
 	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
