@@ -1,4 +1,12 @@
 /**
+ * Temporary debug logging function - TO BE REMOVED LATER
+ */
+export function logDebug(message: string, data?: unknown): void {
+	// eslint-disable-next-line no-console
+	console.log(`[DEBUG] ${message}`, data ?? "");
+}
+
+/**
  * Logs an error to the error console.
  *
  * This is the only place we allow this.

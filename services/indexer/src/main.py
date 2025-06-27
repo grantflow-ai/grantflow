@@ -33,7 +33,8 @@ class GCSNotification(TypedDict):
 
 def get_gcs_notification_data(event: PubSubEvent) -> tuple[GCSNotification | None, str | None]:
     attributes = event.message.attributes or {}
-    correlation_id = attributes.get("correlation_id")
+
+    correlation_id = attributes.get("customMetadata_correlation-id") or attributes.get("correlation_id")
     logger.debug(
         "Parsing GCS notification",
         attributes_count=len(attributes),

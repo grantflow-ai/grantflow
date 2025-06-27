@@ -22,6 +22,7 @@ import {
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
+import { logDebug } from "@/utils/logging";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;
@@ -29,16 +30,31 @@ interface WizardClientComponentProps {
 }
 
 export function WizardClientComponent({ application: initialApplication, projectId }: WizardClientComponentProps) {
-	const { currentStep, setGeneratingTemplate } = useWizardStore();
-	const { ragJobState, retrieveApplication } = useApplicationStore();
+	logDebug("WizardClientComponent render", { initialApplication: initialApplication.id, projectId });
+
+	const { currentStep, setGeneratingTemplate } = useWizardStore((state) => {
+		logDebug("useWizardStore selector called", { currentStep: state.currentStep });
+		return {
+			currentStep: state.currentStep,
+			setGeneratingTemplate: state.setGeneratingTemplate,
+		};
+	});
+	const { ragJobState, retrieveApplication } = useApplicationStore((state) => {
+		logDebug("useApplicationStore selector called", { ragJobState: state.ragJobState });
+		return {
+			ragJobState: state.ragJobState,
+			retrieveApplication: state.retrieveApplication,
+		};
+	});
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
 		projectId,
 	});
 
-	const stepComponents: Record<string, React.ReactElement> = useMemo(
-		() => ({
+	const stepComponents: Record<string, React.ReactElement> = useMemo(() => {
+		logDebug("stepComponents memo recalculating", { connectionStatus, connectionStatusColor });
+		return {
 			"Application Details": (
 				<ApplicationDetailsStep
 					connectionStatus={connectionStatus}
@@ -51,9 +67,8 @@ export function WizardClientComponent({ application: initialApplication, project
 			"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 			"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
 			"Research Plan": <ResearchPlanStep key="Research Plan" />,
-		}),
-		[connectionStatus, connectionStatusColor],
-	);
+		};
+	}, [connectionStatus, connectionStatusColor]);
 
 	useEffect(() => {
 		useApplicationStore.getState().reset();

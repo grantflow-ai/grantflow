@@ -13,7 +13,9 @@ import { TemplateFileUploader } from "./template-file-uploader";
 import { UrlInput } from "./url-input";
 
 export function KnowledgeBaseStep() {
-	const { application } = useApplicationStore();
+	const { application } = useApplicationStore((state) => ({
+		application: state.application,
+	}));
 
 	usePollingCleanup();
 

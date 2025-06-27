@@ -437,11 +437,14 @@ async def handle_create_upload_url(
             "One of application_id, organization_id, or template_id must be provided"
         )
 
+    correlation_id = get_correlation_id(request)
+
     url = await create_signed_upload_url(
         project_id=project_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
+        correlation_id=correlation_id,
     )
 
     return UploadUrlResponse(url=url, source_id=source_id)
