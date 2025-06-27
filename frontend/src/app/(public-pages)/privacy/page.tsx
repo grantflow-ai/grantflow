@@ -1,4 +1,5 @@
 import { LegalPageContainer, TitledLegalSection, UntitledLegalSection } from "@/components/info-legal-page-components";
+import { NavHeader } from "@/components/nav-header";
 
 const terms = [
 	{
@@ -114,14 +115,17 @@ const terms = [
 
 export default function PrivacyPolicyPage() {
 	return (
-		<LegalPageContainer title="Privacy Policy">
-			{terms.map((term, index) =>
-				term.title ? (
-					<TitledLegalSection clause={term.clause} key={index} title={term.title} />
-				) : (
-					<UntitledLegalSection clause={term.clause} key={index} />
-				),
-			)}
-		</LegalPageContainer>
+		<div className="flex min-h-screen w-full flex-col bg-white">
+			<NavHeader />
+			<LegalPageContainer title="Privacy Policy">
+				{terms.map((term, index) =>
+					term.title ? (
+						<TitledLegalSection clause={term.clause} key={index} title={term.title} />
+					) : (
+						<UntitledLegalSection clause={term.clause} key={index} />
+					),
+				)}
+			</LegalPageContainer>
+		</div>
 	);
 }

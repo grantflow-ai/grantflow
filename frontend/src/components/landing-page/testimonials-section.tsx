@@ -96,7 +96,7 @@ export function TestimonialsSection() {
 								width={100}
 							/>
 							<MotionBlockquote
-								className="mt-6 text-xl font-semibold leading-tight md:text-lg lg:text-base"
+								className="mt-6 leading-tight"
 								data-testid="mock-motion-blockquote"
 								variants={textVariants}
 							>
