@@ -32,8 +32,8 @@ interface ProjectSettingsMembersProps {
 
 const ROLE_COLORS = {
 	[UserRole.ADMIN]: "bg-[#9747ff] text-white",
-	[UserRole.MEMBER]: "bg-[#636170] text-white",
-	[UserRole.OWNER]: "bg-[#1e13f8] text-white",
+	[UserRole.MEMBER]: "bg-text-secondary text-white",
+	[UserRole.OWNER]: "bg-action-primary text-white",
 };
 
 const ROLE_LABELS = {
@@ -137,14 +137,14 @@ export function ProjectSettingsMembers({
 			{/* Header with Invite Button */}
 			<div className="flex items-center justify-between mb-6">
 				<div>
-					<h2 className="text-[24px] font-['Cabin'] font-medium text-[#2e2d36] mb-2">Team Members</h2>
-					<p className="text-[#636170] font-['Source_Sans_Pro'] text-[16px]">
+					<h2 className="text-[24px] font-medium text-text-primary mb-2 font-heading">Team Members</h2>
+					<p className="text-text-secondary text-[16px] font-body">
 						Manage who has access to this project and their permissions.
 					</p>
 				</div>
 				{canInvite && (
 					<button
-						className="flex items-center gap-2 px-4 py-2 bg-[#1e13f8] text-white rounded-md hover:bg-[#1710d4] transition-colors font-['Source_Sans_Pro'] text-[14px]"
+						className="flex items-center gap-2 px-4 py-2 bg-action-primary text-white rounded-md hover:bg-action-primary/90 transition-colors text-[14px] font-body"
 						onClick={() => {
 							setIsInviteModalOpen(true);
 						}}
@@ -157,39 +157,37 @@ export function ProjectSettingsMembers({
 			</div>
 
 			{/* Members Table */}
-			<div className="bg-white border border-[#e1dfeb] rounded-lg overflow-hidden">
+			<div className="bg-surface-primary border border-border-primary rounded-lg overflow-hidden">
 				{/* Table Header */}
-				<div className="bg-[#faf9fb] border-b border-[#e1dfeb] px-6 py-4">
+				<div className="bg-surface-secondary border-b border-border-primary px-6 py-4">
 					<div className="grid grid-cols-5 gap-4">
-						<div className="font-['Source_Sans_Pro'] font-semibold text-[14px] text-[#636170]">Name</div>
-						<div className="font-['Source_Sans_Pro'] font-semibold text-[14px] text-[#636170]">Email</div>
-						<div className="font-['Source_Sans_Pro'] font-semibold text-[14px] text-[#636170]">Role</div>
-						<div className="font-['Source_Sans_Pro'] font-semibold text-[14px] text-[#636170]">
+						<div className="font-semibold text-[14px] text-text-secondary font-body">Name</div>
+						<div className="font-semibold text-[14px] text-text-secondary font-body">Email</div>
+						<div className="font-semibold text-[14px] text-text-secondary font-body">Role</div>
+						<div className="font-semibold text-[14px] text-text-secondary font-body">
 							Research Projects Access
 						</div>
-						<div className="font-['Source_Sans_Pro'] font-semibold text-[14px] text-[#636170]">
+						<div className="font-semibold text-[14px] text-text-secondary font-body">
 							{/* Actions column */}
 						</div>
 					</div>
 				</div>
 
 				{/* Table Body */}
-				<div className="divide-y divide-[#e1dfeb]">
+				<div className="divide-y divide-border-primary">
 					{members.map((member) => (
-						<div className="px-6 py-4 hover:bg-[#faf9fb] transition-colors" key={member.id}>
+						<div className="px-6 py-4 hover:bg-surface-secondary transition-colors" key={member.id}>
 							<div className="grid grid-cols-5 gap-4 items-center">
 								{/* Name with Avatar */}
 								<div className="flex items-center gap-3">
 									<Avatar initials={generateInitials(member.fullName, member.email)} size="sm" />
-									<span className="font-['Source_Sans_Pro'] text-[16px] text-[#2e2d36] truncate">
+									<span className="text-[16px] text-text-primary truncate font-body">
 										{member.fullName ?? "Name name"}
 									</span>
 								</div>
 
 								{/* Email */}
-								<div className="font-['Source_Sans_Pro'] text-[14px] text-[#636170] truncate">
-									{member.email}
-								</div>
+								<div className="text-[14px] text-text-secondary truncate font-body">{member.email}</div>
 
 								{/* Role Badge */}
 								<div>
@@ -220,10 +218,10 @@ export function ProjectSettingsMembers({
 				{/* Empty State */}
 				{members.length === 0 && (
 					<div className="px-6 py-12 text-center">
-						<p className="font-['Source_Sans_Pro'] text-[16px] text-[#636170] mb-4">No team members yet.</p>
+						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
 						{canInvite && (
 							<button
-								className="flex items-center gap-2 px-4 py-2 bg-[#1e13f8] text-white rounded-md hover:bg-[#1710d4] transition-colors font-['Source_Sans_Pro'] text-[14px] mx-auto"
+								className="flex items-center gap-2 px-4 py-2 bg-action-primary text-white rounded-md hover:bg-action-primary/90 transition-colors text-[14px] mx-auto font-body"
 								onClick={() => {
 									setIsInviteModalOpen(true);
 								}}
@@ -239,19 +237,19 @@ export function ProjectSettingsMembers({
 
 			{/* Team Stats */}
 			<div className="mt-6 grid grid-cols-3 gap-4">
-				<div className="bg-[#faf9fb] border border-[#e1dfeb] rounded-lg p-4">
-					<div className="font-['Source_Sans_Pro'] text-[14px] text-[#636170] mb-1">Total Members</div>
-					<div className="font-['Cabin'] text-[24px] font-semibold text-[#2e2d36]">{members.length}</div>
+				<div className="bg-surface-secondary border border-border-primary rounded-lg p-4">
+					<div className="text-[14px] text-text-secondary mb-1 font-body">Total Members</div>
+					<div className="text-[24px] font-semibold text-text-primary font-heading">{members.length}</div>
 				</div>
-				<div className="bg-[#faf9fb] border border-[#e1dfeb] rounded-lg p-4">
-					<div className="font-['Source_Sans_Pro'] text-[14px] text-[#636170] mb-1">Admins</div>
-					<div className="font-['Cabin'] text-[24px] font-semibold text-[#2e2d36]">
+				<div className="bg-surface-secondary border border-border-primary rounded-lg p-4">
+					<div className="text-[14px] text-text-secondary mb-1 font-body">Admins</div>
+					<div className="text-[24px] font-semibold text-text-primary font-heading">
 						{members.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
 					</div>
 				</div>
-				<div className="bg-[#faf9fb] border border-[#e1dfeb] rounded-lg p-4">
-					<div className="font-['Source_Sans_Pro'] text-[14px] text-[#636170] mb-1">Collaborators</div>
-					<div className="font-['Cabin'] text-[24px] font-semibold text-[#2e2d36]">
+				<div className="bg-surface-secondary border border-border-primary rounded-lg p-4">
+					<div className="text-[14px] text-text-secondary mb-1 font-body">Collaborators</div>
+					<div className="text-[24px] font-semibold text-text-primary font-heading">
 						{members.filter((m) => m.role === UserRole.MEMBER).length}
 					</div>
 				</div>
@@ -323,22 +321,22 @@ function MemberActionMenu({
 	return (
 		<div className="relative" ref={menuRef}>
 			<button
-				className="p-2 hover:bg-[#f5f5f5] rounded-md transition-colors"
+				className="p-2 hover:bg-surface-secondary rounded-md transition-colors"
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
 				type="button"
 			>
-				<MoreHorizontal className="size-4 text-[#636170]" />
+				<MoreHorizontal className="size-4 text-text-secondary" />
 			</button>
 
 			{isOpen && (
-				<div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10">
+				<div className="absolute right-0 top-full mt-1 w-48 bg-surface-primary border border-border-primary rounded-md shadow-lg z-10">
 					<div className="py-1">
 						{currentUserRole === UserRole.OWNER && (
 							<>
 								<button
-									className="w-full px-4 py-2 text-left text-sm text-[#2e2d36] hover:bg-[#f5f5f5] transition-colors"
+									className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-surface-secondary transition-colors"
 									onClick={() => {
 										onEditPermissions(member);
 										setIsOpen(false);
@@ -347,7 +345,7 @@ function MemberActionMenu({
 								>
 									Edit permissions
 								</button>
-								<hr className="my-1 border-[#e1dfeb]" />
+								<hr className="my-1 border-border-primary" />
 							</>
 						)}
 						<button
@@ -372,7 +370,7 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
 		return (
 			<div className="flex items-center gap-2">
-				<span className="px-3 py-1 bg-[#1e13f8] text-white rounded-full text-sm font-medium">All</span>
+				<span className="px-3 py-1 bg-action-primary text-white rounded-full text-sm font-medium">All</span>
 			</div>
 		);
 	}
@@ -381,7 +379,9 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 	if (projectAccess.length === 0) {
 		return (
 			<div className="flex items-center gap-2">
-				<span className="px-3 py-1 bg-[#f5f5f5] text-[#636170] rounded-full text-sm">No access</span>
+				<span className="px-3 py-1 bg-surface-secondary text-text-secondary rounded-full text-sm">
+					No access
+				</span>
 			</div>
 		);
 	}
@@ -392,12 +392,12 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 	return (
 		<div className="flex items-center gap-2 flex-wrap">
 			{displayedApps.map((appId, index) => (
-				<span className="px-3 py-1 bg-[#1e13f8] text-white rounded-full text-sm font-medium" key={appId}>
+				<span className="px-3 py-1 bg-action-primary text-white rounded-full text-sm font-medium" key={appId}>
 					Application {index + 1}
 				</span>
 			))}
 			{remainingCount > 0 && (
-				<span className="px-3 py-1 bg-[#636170] text-white rounded-full text-sm font-medium">
+				<span className="px-3 py-1 bg-text-secondary text-white rounded-full text-sm font-medium">
 					+ {remainingCount}
 				</span>
 			)}
