@@ -8,9 +8,9 @@ export enum WizardStep {
 	APPLICATION_STRUCTURE = "Application Structure",
 	GENERATE_AND_COMPLETE = "Generate and Complete",
 	KNOWLEDGE_BASE = "Knowledge Base",
+	PREVIEW_AND_APPROVE = "Preview and Approve",
 	RESEARCH_DEEP_DIVE = "Research Deep Dive",
 	RESEARCH_PLAN = "Research Plan",
-	PREVIEW_AND_APPROVE = "Preview and Approve",
 }
 
 export const WIZARD_STEP_TITLES = [

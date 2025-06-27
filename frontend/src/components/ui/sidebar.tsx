@@ -312,7 +312,7 @@ function SidebarProvider({
 			// This sets the cookie to keep the sidebar state.
 			// Using document.cookie directly is not recommended, but we'll keep it for now
 			// and mark it as safe for linting purposes
-			// eslint-disable-next-line no-restricted-syntax, lint/suspicious/noDocumentCookie
+			// eslint-disable-next-line lint/suspicious/noDocumentCookie
 			document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
 		},
 		[setOpenProp, open],
@@ -320,7 +320,7 @@ function SidebarProvider({
 
 	// Helper to toggle the sidebar.
 	const toggleSidebar = React.useCallback(() => {
-		return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+		isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
 	}, [isMobile, setOpen]);
 
 	// Adds a keyboard shortcut to toggle the sidebar.
