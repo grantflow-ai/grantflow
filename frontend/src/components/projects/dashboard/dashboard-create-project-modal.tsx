@@ -2,7 +2,7 @@
 
 import { BaseModal } from "@/components/ui/base-modal";
 
-import { CreateProjectForm } from "./create-project-form";
+import { CreateProjectForm } from "../forms/create-project-form";
 
 interface DashboardCreateProjectModalProps {
 	isOpen: boolean;

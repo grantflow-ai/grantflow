@@ -30,7 +30,7 @@ vi.mock("@/components/projects/wizard", () => ({
 	ResearchPlanStep: () => <div data-testid="research-plan-step" />,
 }));
 
-vi.mock("@/components/projects/wizard-wrapper-components", () => ({
+vi.mock("@/components/wizard/wizard-wrapper-components", () => ({
 	WizardFooter: () => <div data-testid="wizard-footer" />,
 	WizardHeader: () => <div data-testid="wizard-header" />,
 }));

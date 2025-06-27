@@ -16,7 +16,10 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 	});
 
 	const projectCount = projects.length;
-	const applicationCount = projects.reduce((total, project) => total + project.applications_count, 0);
+	const applicationCount = projects.reduce(
+		(total: number, project: API.ListProjects.Http200.ResponseBody[number]) => total + project.applications_count,
+		0,
+	);
 
 	return (
 		<div className="flex w-full flex-row items-start justify-start gap-8">

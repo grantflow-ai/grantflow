@@ -8,7 +8,7 @@ import {
 	IconApprove,
 	IconButtonLogo,
 	IconDeadline,
-} from "@/components/projects/icons";
+} from "@/components/projects/shared/icons";
 import { DevAutofillButton } from "@/components/projects/wizard/dev-autofill-button";
 import { DevResetButton } from "@/components/projects/wizard/dev-reset-button";
 import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";

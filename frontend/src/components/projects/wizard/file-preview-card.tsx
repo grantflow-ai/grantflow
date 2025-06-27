@@ -9,7 +9,7 @@ import {
 	IconFilePdf,
 	IconFilePpt,
 	IconFilePptx,
-} from "@/components/projects/icons";
+} from "@/components/projects/shared/icons";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
