@@ -88,7 +88,7 @@ function DocumentsSection({ files, parentId }: { files: FileWithId[]; parentId?:
 }
 
 function KnowledgeBasePreview() {
-	const { application } = useApplicationStore();
+	const application = useApplicationStore((state) => state.application);
 
 	const applicationId = application?.id;
 

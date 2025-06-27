@@ -35,7 +35,7 @@ const FILE_ICON_MAP = {
 
 export default function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId?: string }) {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
-	const { removeFile } = useApplicationStore();
+	const removeFile = useApplicationStore((state) => state.removeFile);
 
 	const extension = getFileExtension(file.name) ?? "";
 
