@@ -410,7 +410,7 @@ async def test_handle_file_indexing_unsupported_extension(
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
     mock_publish_notification.assert_not_called()
 
@@ -582,7 +582,7 @@ async def test_invalid_pubsub_message(
     }
 
     response = await test_client.post("/", json=msgspec.to_builtins(invalid_event))
-    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
     mock_publish_notification.assert_not_called()
 
