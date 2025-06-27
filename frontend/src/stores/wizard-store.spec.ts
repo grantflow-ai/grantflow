@@ -112,7 +112,7 @@ describe("wizard store", () => {
 
 			useWizardStore.getState().toNextStep();
 
-			expect(useWizardStore.getState().currentStep).toBe(WizardStep.PREVIEW_AND_APPROVE);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
 			expect(mockGenerateTemplate).toHaveBeenCalledWith("template-id");
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(true);
 			expect(mockStart).toHaveBeenCalled();
@@ -168,7 +168,7 @@ describe("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application });
-			useWizardStore.setState({ currentStep: WizardStep.PREVIEW_AND_APPROVE });
+			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
 
 			expect(useWizardStore.getState().validateStepNext()).toBe(false);
 		});
