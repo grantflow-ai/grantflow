@@ -57,7 +57,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Navigation Button Visibility", () => {
 		it("displays back button for steps after the first", () => {
 			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				currentStep: WizardStep.PREVIEW_AND_APPROVE,
 			});
 			render(<WizardFooter />);
 
@@ -77,7 +77,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	describe("Action Button Configuration", () => {
 		it("displays approval action on step 2", () => {
 			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				currentStep: WizardStep.PREVIEW_AND_APPROVE,
 			});
 			render(<WizardFooter />);
 
@@ -163,7 +163,7 @@ describe("WizardHeader", () => {
 	describe("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
 			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				currentStep: WizardStep.PREVIEW_AND_APPROVE,
 			});
 			render(<WizardHeader />);
 
@@ -213,7 +213,7 @@ describe("WizardHeader", () => {
 			});
 
 			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				currentStep: WizardStep.PREVIEW_AND_APPROVE,
 				isGeneratingTemplate: true,
 			});
 
