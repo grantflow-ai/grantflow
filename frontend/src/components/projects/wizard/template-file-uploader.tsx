@@ -81,8 +81,15 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 				}}
 				type="file"
 			/>
-			<AppButton data-testid="upload-files-button" leftIcon={<IconUpload />} variant="secondary">
-				<label htmlFor="file-upload-template-files">Upload Documents</label>
+			<AppButton
+				className="text-sm font-normal leading-[22px]"
+				data-testid="upload-files-button"
+				leftIcon={<IconUpload className="text-primary" />}
+				variant="secondary"
+			>
+				<label className="cursor-pointer" htmlFor="file-upload-template-files">
+					Upload Documents
+				</label>
 			</AppButton>
 		</div>
 	);

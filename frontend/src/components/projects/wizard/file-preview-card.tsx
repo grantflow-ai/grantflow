@@ -89,20 +89,23 @@ export default function FilePreviewCard({ file, parentId }: { file: FileWithId; 
 				<DropdownMenuTrigger className="sr-only" disabled>
 					<span>File options</span>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent align="start" className="w-40" data-testid="file-context-menu">
+				<DropdownMenuContent
+					align="start"
+					className="w-40 border-app-gray-100 bg-white p-1"
+					data-testid="file-context-menu"
+				>
 					<DropdownMenuItem
-						className="gap-2"
+						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
 						data-testid="file-menu-open"
 						disabled={!canOpenInBrowser}
 						onClick={handleOpen}
 					>
-						<ExternalLink className="size-4" />
+						<ExternalLink className="size-4 text-app-gray-600" />
 						Open
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						className="text-destructive focus:text-destructive gap-2"
+						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-app-red hover:bg-app-gray-100"
 						data-testid="file-menu-remove"
-						disabled={!parentId}
 						onClick={handleRemove}
 					>
 						<Trash2 className="size-4" />
@@ -117,24 +120,16 @@ export default function FilePreviewCard({ file, parentId }: { file: FileWithId; 
 function FileContent({ extension, fileName }: { extension: string; fileName: string }) {
 	return (
 		<>
-			<div className="mb-1">
-				<FileIcon extension={extension} />
+			<div className="flex h-14 w-12 items-center justify-center">
+				{extension in FILE_ICON_MAP
+					? FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]
+					: FILE_ICON_MAP.unknown}
 			</div>
-			<span
-				className="text-app-gray-700 max-w-fit truncate text-[10px] font-normal leading-3"
-				data-testid="file-name"
-				title={fileName}
-			>
+			<span className="mt-1 max-w-20 truncate text-center text-[10px] leading-[13px]" title={fileName}>
 				{fileName}
 			</span>
 		</>
 	);
-}
-
-function FileIcon({ extension }: { extension: string }) {
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-	const iconComponent = FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP] ?? FILE_ICON_MAP.unknown;
-	return <div className="flex items-center justify-center">{iconComponent}</div>;
 }
 
 function getFileExtension(filename: string) {

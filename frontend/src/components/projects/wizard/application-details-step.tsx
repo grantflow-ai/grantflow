@@ -31,13 +31,13 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 				<div className="space-y-6">
 					<div>
 						<h2
-							className="font-heading text-2xl font-medium leading-loose"
+							className="font-heading text-2xl font-medium leading-[30px]"
 							data-testid="application-title-header"
 						>
 							Application Title
 						</h2>
 						<p
-							className="text-muted-foreground-dark leading-tight"
+							className="text-muted-foreground-dark text-sm leading-[18px]"
 							data-testid="application-title-description"
 						>
 							Give your application file a clear, descriptive name.
@@ -62,15 +62,15 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 
 				<div className="space-y-6">
 					<h2
-						className="font-heading text-2xl font-medium leading-loose"
+						className="font-heading text-2xl font-medium leading-[30px]"
 						data-testid="application-instructions-header"
 					>
 						Application Instructions
 					</h2>
 
 					<div>
-						<h3 className="font-heading mb-1 text-base font-semibold leading-snug">Documents</h3>
-						<p className="text-muted-foreground-dark mb-5 text-sm leading-none">
+						<h3 className="font-heading mb-1 text-base font-semibold leading-[22px]">Documents</h3>
+						<p className="text-muted-foreground-dark mb-5 text-sm leading-[18px]">
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
@@ -78,8 +78,8 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 					</div>
 
 					<div>
-						<h3 className="font-heading text-base font-semibold leading-snug">Links</h3>
-						<p className="text-muted-foreground-dark mb-5 text-sm leading-none">
+						<h3 className="font-heading text-base font-semibold leading-[22px]">Links</h3>
+						<p className="text-muted-foreground-dark mb-5 text-sm leading-[18px]">
 							Paste links to any online guidelines or application portals. These will help us better
 							understand the funding requirements.
 						</p>
