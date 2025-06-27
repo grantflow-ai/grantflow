@@ -53,6 +53,7 @@
 	--color-app-dark-blue: var(--app-dark-blue);
 	--color-app-slate-blue: var(--app-slate-blue);
 
+	--color-light-gray: var(--app-light-gray);
 	--color-app-gray-100: var(--app-gray-100);
 	--color-app-gray-300: var(--app-gray-300);
 	--color-app-gray-400: var(--app-gray-400);
@@ -112,6 +113,7 @@
 	--app-gray-700: oklch(0.4085 0.0217 292.47); /* 4A4855 */
 	--app-lavender-gray: oklch(0.9462 0.0254 268.85); /* #E6EDFF */
 	--app-popup-cover: oklch(41.33% 0.07 278.62deg); /* #3F3B67 */
+	--app-light-gray: oklch(0.9609 0.012 247.95); /* #ecf3fa */
 
 	--background-dark: var(--app-dark-blue);
 	--background-light: oklch(1 0 0);

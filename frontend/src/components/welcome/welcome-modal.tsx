@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-nested-conditional */
 "use client";
 
-import { Button } from "@/components/ui/button";
+
 import {
   Dialog,
   DialogContent,
@@ -12,23 +12,18 @@ import {
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Check } from "lucide-react";
+import { PROGRESS_BAR_STEPS } from "@/constants";
+import { AppButton } from "../app-button";
 
 export default function WelcomeModal() {
   const [open, setOpen] = useState(true);
   const [step, setStep] = useState(1);
 
-  const progressBarLabels = [
-    "Application Details",
-    "Preview and Approve",
-    "Knowledge Base",
-    "Research Plan",
-    "Research Deep Dive",
-    "Generate and Complete",
-  ];
+
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setStep((prev) => (prev < progressBarLabels.length ? prev + 1 : 1));
+      setStep((prev) => (prev < PROGRESS_BAR_STEPS.length ? prev + 1 : 1));
     }, 2000);
 
     const hasVisited = localStorage.getItem("hasVisitedWelcomeModal");
@@ -50,10 +45,10 @@ export default function WelcomeModal() {
           <figure className="flex flex-col items-center justify-center gap-4">
             {/* Progress Bar */}
             <main className="flex items-center">
-              {progressBarLabels.map((_, index) => (
+              {PROGRESS_BAR_STEPS.map((_, index) => (
                 <div
                   className={`${
-                    index < progressBarLabels.length - 1 ? "w-[145px]" : ""
+                    index < PROGRESS_BAR_STEPS.length - 1 ? "w-[145px]" : ""
                   } flex items-center`}
                   key={index}
                 >
@@ -70,14 +65,14 @@ export default function WelcomeModal() {
                     style={{
                       borderColor:
                         index === step
-                          ? "#1E13F8"
+                          ? "var(--app-primary-blue)"
                           : index < step
                           ? "transparent"
                           : "#E5E7EB",
                     }}
                     transition={{ duration: 0.5 }}
                     variants={{
-                      active: { backgroundColor: "#1E13F8", scale: 1.1 },
+                      active: { backgroundColor: "var(--app-primary-blue)", scale: 1.1 },
                       next: { backgroundColor: "transparent", scale: 1 },
                       inactive: { backgroundColor: "transparent", scale: 1 },
                     }}
@@ -103,12 +98,12 @@ export default function WelcomeModal() {
                       index === step ? (
                         <motion.div
                           animate="active"
-                          className="size-[3.5px] rounded-full"
+                          className="size-[3.5px] rounded-full bg-primary"
                           exit="hidden"
                           initial="hidden"
                           key={`dot-${index}`}
                           style={{
-                            backgroundColor: "#1E13F8",
+                           
                             transform: "translate(0, -0.5px)",
                           }}
                           transition={{ duration: 0.5 }}
@@ -122,19 +117,19 @@ export default function WelcomeModal() {
                   </motion.div>
 
                   {/* Animated Line */}
-                  {index < progressBarLabels.length - 1 && (
+                  {index < PROGRESS_BAR_STEPS.length - 1 && (
                     <div className="relative h-px w-full overflow-hidden bg-gray-200">
                       {index === step - 1 ? (
                         <motion.div
                           animate={{ width: "100%" }}
-                          className="absolute left-0 top-0 h-full bg-[#1E13F8]"
+                          className="absolute left-0 top-0 h-full bg-primary"
                           initial={{ width: 0 }}
                           key={`line-${index}`}
                           transition={{ duration: 0.8, ease: "easeInOut" }}
                         />
                       ) : // eslint-disable-next-line sonarjs/no-nested-conditional
                       index < step - 1 ? (
-                        <div className="absolute left-0 top-0 size-full bg-[#1E13F8]" />
+                        <div className="absolute left-0 top-0 size-full bg-primary" />
                       ) : null}
                     </div>
                   )}
@@ -144,14 +139,14 @@ export default function WelcomeModal() {
 
             {/* Labels */}
             <main className="flex w-[839px] items-center justify-between">
-              {progressBarLabels.map((label, index) => (
+              {PROGRESS_BAR_STEPS.map((label, index) => (
                 <h5
                   className={`text-[11px] font-semibold ${
                     index < step - 1
-                      ? "text-[#211968]"
+                      ? "text-app-dark-blue"
                       : // eslint-disable-next-line sonarjs/no-nested-conditional
                       index === step - 1
-                      ? "text-[#1E13F8]"
+                      ? "text-primary"
                       : "text-gray-400"
                   }`}
                   key={index}
@@ -183,7 +178,7 @@ export default function WelcomeModal() {
                 closer the result will be to what you need.
               </p>
             </div>
-            <article className="flex gap-1 rounded-lg border border-[#8698BD] bg-[#ECF3FA] p-2">
+            <article className="flex gap-1 rounded-lg border border-app-slate-blue bg-light-gray p-2">
               <div className="size-4">
                 <AlertCircle className="text-gray-700 size-4" />
               </div>
@@ -195,19 +190,20 @@ export default function WelcomeModal() {
           </DialogDescription>
         </section>
         <footer className="flex w-full items-center justify-between px-10">
-          <Button
+          <AppButton
+          variant="secondary"
             onClick={() => setOpen(false)}
-            className="w-28 cursor-pointer hover:border-2 border border-[#1E13F8] bg-white px-4 py-2 text-base font-normal text-[#1E13F8] hover:bg-white"
+            className="w-28  px-4 py-2 "
           >
             Later
-          </Button>
-          <Button
-            className="cursor-pointer text-base font-normal hover:bg-[#3C31FF]"
-            variant="default"
+          </AppButton>
+          <AppButton
+            className="  px-4 py-2 "
+            variant="primary"
             onClick={() => setOpen(false)}
           >
             Start New Application
-          </Button>
+          </AppButton>
         </footer>
       </DialogContent>
     </Dialog>

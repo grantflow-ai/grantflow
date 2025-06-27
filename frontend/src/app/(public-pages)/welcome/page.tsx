@@ -1,9 +1,10 @@
-import WelcomeModal from '@/components/welcome/welcome-modal'
-
+"use client";
+import WelcomeModal from "@/components/welcome/welcome-modal";
 
 export default function WelcomePage() {
   return (
-    <WelcomeModal/>
-  )
+    <section className="bg-white w-full h-screen">
+      <WelcomeModal />
+    </section>
+  );
 }
-
