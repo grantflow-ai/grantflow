@@ -33,6 +33,14 @@ async def optimized_count_tokens(text: str) -> int:
     return cached_estimate_token_count(text)
 
 
+def estimate_prompt_tokens(text: str) -> int:
+    """Estimate tokens for a prompt using cached estimation."""
+    if not text:
+        return 0
+
+    return cached_estimate_token_count(text)
+
+
 class SentenceInfo(TypedDict):
     text: str
     processed_text: str
