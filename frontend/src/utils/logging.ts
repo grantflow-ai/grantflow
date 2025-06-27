@@ -8,3 +8,21 @@ export function logError({ error, identifier }: { error: unknown; identifier: st
 	// eslint-disable-next-line no-console
 	console.error(`${identifier}: ${message}`);
 }
+
+/**
+ * Logs a structured trace event for distributed tracing.
+ */
+export function logTrace(level: "error" | "info", message: string, metadata: Record<string, unknown>): void {
+	const logData = {
+		...metadata,
+		timestamp: new Date().toISOString(),
+	};
+
+	if (level === "error") {
+		// eslint-disable-next-line no-console
+		console.error(`[TRACE] ${message}`, logData);
+	} else {
+		// eslint-disable-next-line no-console
+		console.log(`[TRACE] ${message}`, logData);
+	}
+}

@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { NotificationProgress } from "@/components/notification-progress";
-import type { RagProcessingStatus, RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
+import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
 
 type ToastId = number | string | undefined;
 
@@ -53,19 +52,19 @@ export function NotificationHandler({ notification }: NotificationHandlerProps) 
 		}
 
 		previousEventRef.current = event;
-		const newToastId = displayNotification(notification, toastId);
+		const newToastId = displayNotification(notification);
 		setToastId(newToastId);
 	}, [notification, toastId]);
 
 	return null;
 }
 
-// eslint-disable-next-line sonarjs/function-return-type
-function displayNotification(notification: RagProcessingStatusMessage, toastId: ToastId): ToastId {
-	const { current_pipeline_stage, data, event, message, total_pipeline_stages } = notification.data;
+function displayNotification(notification: RagProcessingStatusMessage): ToastId {
+	const { data, event, message } = notification.data;
 
-	if (PROGRESS_EVENTS.has(event) && current_pipeline_stage && total_pipeline_stages) {
-		return showProgressToast(notification.data, toastId);
+	if (PROGRESS_EVENTS.has(event)) {
+		showInfoToast(message, data, notification.type);
+		return undefined;
 	}
 
 	if (ERROR_EVENTS.has(event)) {
@@ -107,14 +106,6 @@ function showInfoToast(message: string, data: Record<string, unknown> | undefine
 			: undefined;
 	const prefix = type === "info" ? "ℹ️ " : "";
 	toast.info(`${prefix}${message}`, { description });
-}
-
-// eslint-disable-next-line sonarjs/function-return-type
-function showProgressToast(notification: RagProcessingStatus, toastId: ToastId): ToastId {
-	return toast(<NotificationProgress notification={notification} />, {
-		duration: Number.POSITIVE_INFINITY,
-		id: toastId,
-	});
 }
 
 function showSuccessToast(message: string, event: string): void {

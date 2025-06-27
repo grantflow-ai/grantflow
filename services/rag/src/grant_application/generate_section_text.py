@@ -1,3 +1,4 @@
+import time
 from typing import Any, Final
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
@@ -128,8 +129,16 @@ async def generate_section_text(
     form_input: ResearchDeepDive,
     research_plan_text: str,
 ) -> str:
-    logger.debug("Generating section text.", grant_section=grant_section)
+    start_time = time.time()
+    logger.debug(
+        "Starting section text generation",
+        section_id=grant_section["id"],
+        section_title=grant_section["title"],
+        max_words=grant_section["max_words"],
+        has_dependencies=len(dependencies) > 0,
+    )
 
+    prompt_start = time.time()
     prompt = GENERATE_SECTION_TEXT_USER_PROMPT.to_string(
         dependencies=dependencies,
         instructions=grant_section["generation_instructions"],
@@ -137,22 +146,58 @@ async def generate_section_text(
         section_title=grant_section["title"],
         topics=grant_section["topics"],
     )
+    prompt_duration = time.time() - prompt_start
 
+    logger.debug(
+        "Prompt template rendered",
+        section_id=grant_section["id"],
+        prompt_length=len(prompt),
+        dependency_count=len(dependencies),
+        keyword_count=len(grant_section["keywords"]) if grant_section["keywords"] else 0,
+        topic_count=len(grant_section["topics"]) if grant_section["topics"] else 0,
+        prompt_duration_ms=round(prompt_duration * 1000, 2),
+    )
+
+    retrieval_start = time.time()
     rag_results = await retrieve_documents(
         application_id=application_id,
         task_description=prompt,
         search_queries=grant_section.get("search_queries"),
         form_inputs=form_input,
     )
+    retrieval_duration = time.time() - retrieval_start
 
+    logger.debug(
+        "Document retrieval completed",
+        section_id=grant_section["id"],
+        rag_document_count=len(rag_results),
+        search_query_count=len(grant_section.get("search_queries", [])),
+        retrieval_duration_ms=round(retrieval_duration * 1000, 2),
+    )
+
+    validation_start = time.time()
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
         max_length=grant_section["max_words"],
         sources={"rag_results": rag_results, "form_inputs": form_input, "research_plan_text": research_plan_text},
     ):
+        validation_duration = time.time() - validation_start
+        logger.warning(
+            "Source validation failed, returning error",
+            section_id=grant_section["id"],
+            validation_duration_ms=round(validation_duration * 1000, 2),
+        )
         return source_validation_error
+    validation_duration = time.time() - validation_start
 
-    return await with_prompt_evaluation(
+    logger.debug(
+        "Source validation passed",
+        section_id=grant_section["id"],
+        validation_duration_ms=round(validation_duration * 1000, 2),
+    )
+
+    generation_start = time.time()
+    result = await with_prompt_evaluation(
         criteria=evaluation_criteria,
         max_words=grant_section["max_words"],
         min_words=int(grant_section["max_words"] * MIN_WORDS_RATIO),
@@ -166,3 +211,17 @@ async def generate_section_text(
         increment=10,
         retries=5,
     )
+    generation_duration = time.time() - generation_start
+
+    total_duration = time.time() - start_time
+    logger.info(
+        "Section text generation completed",
+        section_id=grant_section["id"],
+        section_title=grant_section["title"],
+        result_word_count=len(result.split()),
+        max_words=grant_section["max_words"],
+        generation_duration_ms=round(generation_duration * 1000, 2),
+        total_duration_ms=round(total_duration * 1000, 2),
+    )
+
+    return result

@@ -1,3 +1,4 @@
+import time
 from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
@@ -213,22 +214,54 @@ async def retrieve_documents(
     with_guided_retrieval: bool = False,
     **kwargs: Any,
 ) -> list[str]:
+    start_time = time.time()
+    entity_id = application_id or organization_id
+    entity_type = "application" if application_id else "organization"
+
+    logger.debug(
+        "Starting document retrieval",
+        entity_id=entity_id,
+        entity_type=entity_type,
+        max_results=max_results,
+        max_tokens=max_tokens,
+        with_guided_retrieval=with_guided_retrieval,
+    )
+
     if not application_id and not organization_id:
         raise ValueError("Either application_id or organization_id must be provided.")
 
+    query_start = time.time()
     search_queries = search_queries or await handle_create_search_queries(user_prompt=task_description, **kwargs)
+    query_duration = time.time() - query_start
+
+    logger.debug(
+        "Search queries prepared",
+        entity_id=entity_id,
+        query_count=len(search_queries),
+        query_duration_ms=round(query_duration * 1000, 2),
+    )
 
     attempts = 0
     previous_scores: list[float] = []
     best_score = 0.0
 
+    retrieval_start = time.time()
     vectors = await handle_retrieval(
         application_id=application_id,
         organization_id=organization_id,
         search_queries=search_queries,
         max_results=max_results,
     )
+    retrieval_duration = time.time() - retrieval_start
 
+    logger.debug(
+        "Vector retrieval completed",
+        entity_id=entity_id,
+        vector_count=len(vectors),
+        retrieval_duration_ms=round(retrieval_duration * 1000, 2),
+    )
+
+    document_conversion_start = time.time()
     documents = [
         cast(
             "DocumentDTO",
@@ -236,7 +269,16 @@ async def retrieve_documents(
         )
         for vector in vectors
     ]
+    document_conversion_duration = time.time() - document_conversion_start
 
+    logger.debug(
+        "Documents converted",
+        entity_id=entity_id,
+        document_count=len(documents),
+        conversion_duration_ms=round(document_conversion_duration * 1000, 2),
+    )
+
+    processing_start = time.time()
     processed_contents = await post_process_documents(
         documents=documents,
         query=",".join(search_queries),
@@ -244,8 +286,25 @@ async def retrieve_documents(
         max_tokens=max_tokens,
         model=model,
     )
+    processing_duration = time.time() - processing_start
+
+    logger.debug(
+        "Document processing completed",
+        entity_id=entity_id,
+        processed_count=len(processed_contents),
+        processing_duration_ms=round(processing_duration * 1000, 2),
+    )
 
     if not with_guided_retrieval or not processed_contents:
+        total_duration = time.time() - start_time
+        logger.info(
+            "Document retrieval completed",
+            entity_id=entity_id,
+            entity_type=entity_type,
+            result_count=len(processed_contents),
+            guided_retrieval=with_guided_retrieval,
+            total_duration_ms=round(total_duration * 1000, 2),
+        )
         return processed_contents
 
     best_processed_contents = processed_contents
@@ -334,6 +393,15 @@ async def retrieve_documents(
 
         search_queries = improved_queries
 
-    logger.info("Completed retrieval optimization", attempts=attempts, final_score=best_score)
+    total_duration = time.time() - start_time
+    logger.info(
+        "Completed retrieval optimization",
+        entity_id=entity_id,
+        entity_type=entity_type,
+        attempts=attempts,
+        final_score=best_score,
+        result_count=len(best_processed_contents),
+        total_duration_ms=round(total_duration * 1000, 2),
+    )
 
     return best_processed_contents

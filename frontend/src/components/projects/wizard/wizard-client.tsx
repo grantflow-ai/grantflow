@@ -29,8 +29,8 @@ interface WizardClientComponentProps {
 }
 
 export function WizardClientComponent({ application: initialApplication, projectId }: WizardClientComponentProps) {
-	const { currentStep } = useWizardStore();
-	const { ragJobState } = useApplicationStore();
+	const { currentStep, setGeneratingTemplate } = useWizardStore();
+	const { ragJobState, retrieveApplication } = useApplicationStore();
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
@@ -98,27 +98,35 @@ export function WizardClientComponent({ application: initialApplication, project
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 
-	const restoredJobNotification = ragJobState.restoredJob
-		? {
-				data: {
-					current_pipeline_stage: ragJobState.restoredJob.current_stage,
-					event: "restored_progress",
-					message: `Resuming ${ragJobState.restoredJob.job_type === "grant_template_generation" ? "template generation" : "application generation"}...`,
-					total_pipeline_stages: ragJobState.restoredJob.total_stages,
-				},
-				event: "restored_progress",
-				parent_id: initialApplication.id,
-				type: "data" as const,
-			}
-		: null;
-
-	const notificationToShow = latestRagNotification ?? restoredJobNotification;
-
 	useEffect(() => {
 		if (latestRagNotification && ragJobState.restoredJob) {
 			useApplicationStore.getState().clearRestoredJobState();
 		}
 	}, [latestRagNotification, ragJobState.restoredJob]);
+
+	// Track grant template generation state
+	useEffect(() => {
+		if (!latestRagNotification) return;
+
+		const { event } = latestRagNotification.data;
+
+		// Start generating state
+		if (event === "grant_template_generation_started") {
+			setGeneratingTemplate(true);
+		}
+
+		// End generating state and refresh application
+		if (event === "grant_template_generation_completed") {
+			setGeneratingTemplate(false);
+			// Refresh application data to get updated grant sections
+			void retrieveApplication(projectId, initialApplication.id);
+		}
+
+		// Handle errors
+		if (event === "generation_error" || event === "pipeline_error") {
+			setGeneratingTemplate(false);
+		}
+	}, [latestRagNotification, setGeneratingTemplate, retrieveApplication, projectId, initialApplication.id]);
 
 	return (
 		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
@@ -127,7 +135,8 @@ export function WizardClientComponent({ application: initialApplication, project
 				{stepComponents[currentStep]}
 			</section>
 			<WizardFooter />
-			{notificationToShow && <NotificationHandler notification={notificationToShow} />}
+			{/* Show latest RAG notification in toast */}
+			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
 		</div>
 	);
 }

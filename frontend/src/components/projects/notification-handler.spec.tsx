@@ -1,4 +1,3 @@
-import { RagProcessingStatusMessageFactory } from "::testing/factories";
 import { render, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { vi } from "vitest";
@@ -15,55 +14,46 @@ vi.mock("sonner", () => {
 	return { toast: mockToast };
 });
 
-vi.mock("@/components/notification-progress", () => ({
-	NotificationProgress: ({ notification }: { notification: any }) => (
-		<div data-testid="mock-notification-progress">{notification.message}</div>
-	),
-}));
-
 describe("NotificationHandler", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
-	it("shows progress toast for progress events", async () => {
-		const notification = RagProcessingStatusMessageFactory.build({
+	it("shows info toast for progress events", async () => {
+		const notification: RagProcessingStatusMessage = {
 			data: {
-				current_pipeline_stage: 1,
+				data: {
+					current_pipeline_stage: 1,
+					total_pipeline_stages: 9,
+				},
 				event: "grant_application_generation_started",
 				message: "Starting grant application text generation pipeline...",
-				total_pipeline_stages: 9,
 			},
 			event: "grant_application_generation_started",
+			parent_id: "test-parent-id",
 			type: "data",
-		});
+		};
 
 		render(<NotificationHandler notification={notification} />);
 
 		await waitFor(() => {
-			expect(toast).toHaveBeenCalledWith(
-				expect.objectContaining({
-					props: expect.objectContaining({
-						notification: notification.data,
-					}),
-				}),
-				expect.objectContaining({
-					duration: Number.POSITIVE_INFINITY,
-				}),
-			);
+			expect(toast.info).toHaveBeenCalledWith("Starting grant application text generation pipeline...", {
+				description: "current_pipeline_stage: 1, total_pipeline_stages: 9",
+			});
 		});
 	});
 
 	it("shows error toast for error events", async () => {
-		const notification = RagProcessingStatusMessageFactory.build({
+		const notification: RagProcessingStatusMessage = {
 			data: {
 				data: { recoverable: true },
 				event: "generation_error",
 				message: "An error occurred",
 			},
 			event: "generation_error",
+			parent_id: "test-parent-id",
 			type: "error",
-		});
+		};
 
 		render(<NotificationHandler notification={notification} />);
 
@@ -76,14 +66,15 @@ describe("NotificationHandler", () => {
 	});
 
 	it("shows warning toast for warning events", async () => {
-		const notification = RagProcessingStatusMessageFactory.build({
+		const notification: RagProcessingStatusMessage = {
 			data: {
 				event: "insufficient_context_error",
 				message: "Insufficient context provided",
 			},
 			event: "insufficient_context_error",
+			parent_id: "test-parent-id",
 			type: "data",
-		});
+		};
 
 		render(<NotificationHandler notification={notification} />);
 
@@ -96,14 +87,15 @@ describe("NotificationHandler", () => {
 	});
 
 	it("shows success toast for success events", async () => {
-		const notification = RagProcessingStatusMessageFactory.build({
+		const notification: RagProcessingStatusMessage = {
 			data: {
 				event: "application_saved",
 				message: "Application saved successfully",
 			},
 			event: "application_saved",
+			parent_id: "test-parent-id",
 			type: "data",
-		});
+		};
 
 		render(<NotificationHandler notification={notification} />);
 
@@ -135,52 +127,59 @@ describe("NotificationHandler", () => {
 		});
 	});
 
-	it("dismisses previous toast when showing new progress", async () => {
-		const firstNotification = RagProcessingStatusMessageFactory.build({
+	it("shows multiple info toasts for progress events", async () => {
+		const firstNotification: RagProcessingStatusMessage = {
 			data: {
-				current_pipeline_stage: 1,
+				data: {
+					current_pipeline_stage: 1,
+					total_pipeline_stages: 9,
+				},
 				event: "grant_application_generation_started",
 				message: "Starting...",
-				total_pipeline_stages: 9,
 			},
 			event: "grant_application_generation_started",
+			parent_id: "test-parent-id",
 			type: "data",
-		});
+		};
 
-		const secondNotification = RagProcessingStatusMessageFactory.build({
+		const secondNotification: RagProcessingStatusMessage = {
 			data: {
-				current_pipeline_stage: 2,
+				data: {
+					current_pipeline_stage: 2,
+					total_pipeline_stages: 9,
+				},
 				event: "validating_template",
 				message: "Validating...",
-				total_pipeline_stages: 9,
 			},
 			event: "validating_template",
+			parent_id: "test-parent-id",
 			type: "data",
-		});
+		};
 
 		const { rerender } = render(<NotificationHandler notification={firstNotification} />);
 
 		await waitFor(() => {
-			expect(toast).toHaveBeenCalled();
+			expect(toast.info).toHaveBeenCalledWith("Starting...", expect.any(Object));
 		});
 
 		rerender(<NotificationHandler notification={secondNotification} />);
 
 		await waitFor(() => {
-			expect(toast.dismiss).toHaveBeenCalledWith("toast-id-123");
+			expect(toast.info).toHaveBeenCalledWith("Validating...", expect.any(Object));
 		});
 	});
 
 	it("does not show description for error without recoverable flag", async () => {
-		const notification = RagProcessingStatusMessageFactory.build({
+		const notification: RagProcessingStatusMessage = {
 			data: {
 				data: { recoverable: false },
 				event: "generation_error",
 				message: "An error occurred",
 			},
 			event: "generation_error",
+			parent_id: "test-parent-id",
 			type: "error",
-		});
+		};
 
 		render(<NotificationHandler notification={notification} />);
 

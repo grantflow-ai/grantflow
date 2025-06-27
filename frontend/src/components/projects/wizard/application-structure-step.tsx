@@ -51,10 +51,7 @@ export function ApplicationStructureStep() {
 
 function ApplicationStructurePreview() {
 	const { application, updateGrantSections } = useApplicationStore();
-	const { grantTemplateRagJobData } = useWizardStore();
-
-	const isGeneratingTemplate =
-		grantTemplateRagJobData?.status === "PROCESSING" || grantTemplateRagJobData?.status === "PENDING";
+	const { isGeneratingTemplate } = useWizardStore();
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 

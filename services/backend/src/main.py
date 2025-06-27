@@ -2,7 +2,7 @@ from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.server import create_litestar_app
 
-from services.backend.src.api.middleware import AuthMiddleware
+from services.backend.src.api.middleware import AuthMiddleware, CorrelationIdMiddleware
 from services.backend.src.api.routes.auth import handle_create_otp, handle_login
 from services.backend.src.api.routes.funding_organizations import (
     handle_create_organization,
@@ -86,5 +86,5 @@ app = create_litestar_app(
     logger=logger,
     route_handlers=api_routes,
     on_startup=[before_server_start],
-    middleware=[AuthMiddleware],
+    middleware=[CorrelationIdMiddleware, AuthMiddleware],
 )
