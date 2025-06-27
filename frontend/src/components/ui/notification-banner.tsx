@@ -24,31 +24,29 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 	return (
 		<div
 			className={cn(
-				"relative flex w-[320px] flex-col gap-2 rounded-lg bg-white p-4 shadow-lg border border-[#e1dfeb]",
+				"relative flex w-[320px] flex-col gap-2 rounded-lg bg-surface-primary p-4 shadow-lg border border-border-primary",
 				className,
 			)}
 		>
 			{/* Header with indicator and close button */}
 			<div className="flex items-start justify-between">
 				<div className="flex items-center gap-2">
-					{/* Blue dot indicator */}
+					{/* Dot indicator */}
 					<div
 						className={cn(
 							"size-2 rounded-full shrink-0",
-							type === "deadline" && "bg-[#1e13f8]",
-							type === "info" && "bg-[#369e94]",
+							type === "deadline" && "bg-action-primary",
+							type === "info" && "bg-action-secondary",
 							type === "warning" && "bg-[#ff9747]",
 							type === "success" && "bg-[#47ff97]",
 						)}
 					/>
-					<h3 className="font-['Source_Sans_Pro'] font-semibold text-[14px] leading-[18px] text-[#2e2d36]">
-						{title}
-					</h3>
+					<h3 className="font-body font-semibold text-[14px] leading-[18px] text-text-primary">{title}</h3>
 				</div>
 				{onClose && (
 					<button
 						aria-label="Close notification"
-						className="flex size-4 items-center justify-center text-[#636170] hover:text-[#2e2d36] transition-colors"
+						className="flex size-4 items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
 						onClick={() => {
 							onClose(id);
 						}}
@@ -61,8 +59,8 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 
 			{/* Content */}
 			<div className="flex flex-col gap-1">
-				<p className="font-['Source_Sans_Pro'] text-[12px] leading-[16px] text-[#636170]">
-					Your project <span className="font-semibold text-[#2e2d36]">&ldquo;{projectName}&rdquo;</span>{" "}
+				<p className="font-body text-[12px] leading-[16px] text-text-secondary">
+					Your project <span className="font-semibold text-text-primary">&ldquo;{projectName}&rdquo;</span>{" "}
 					{message}
 				</p>
 			</div>
