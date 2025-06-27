@@ -13,7 +13,6 @@ import { DevResetButton } from "@/components/projects/wizard/dev-reset-button";
 import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { logDebug } from "@/utils/logging";
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
 	let IconComponent: React.ComponentType;
@@ -46,21 +45,11 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { currentStep, isGeneratingTemplate, toNextStep, toPreviousStep, validateStepNext } = useWizardStore(
-		(state) => {
-			logDebug("WizardFooter useWizardStore selector", {
-				currentStep: state.currentStep,
-				isGeneratingTemplate: state.isGeneratingTemplate,
-			});
-			return {
-				currentStep: state.currentStep,
-				isGeneratingTemplate: state.isGeneratingTemplate,
-				toNextStep: state.toNextStep,
-				toPreviousStep: state.toPreviousStep,
-				validateStepNext: state.validateStepNext,
-			};
-		},
-	);
+	const currentStep = useWizardStore((state) => state.currentStep);
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const toNextStep = useWizardStore((state) => state.toNextStep);
+	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+	const validateStepNext = useWizardStore((state) => state.validateStepNext);
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const disabled = !validateStepNext();
@@ -108,18 +97,8 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
-	const { currentStep } = useWizardStore((state) => {
-		logDebug("WizardHeader useWizardStore selector", { currentStep: state.currentStep });
-		return {
-			currentStep: state.currentStep,
-		};
-	});
-	const { application } = useApplicationStore((state) => {
-		logDebug("WizardHeader useApplicationStore selector", { application: state.application?.id });
-		return {
-			application: state.application,
-		};
-	});
+	const currentStep = useWizardStore((state) => state.currentStep);
+	const application = useApplicationStore((state) => state.application);
 	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
 	return (
 		<header className="border-app-lavender-gray w-full border-b border-solid p-6" data-testid="wizard-header">
