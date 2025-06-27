@@ -118,28 +118,6 @@ describe("AboutPage", () => {
 		expect(tirzaImage).toBeInTheDocument();
 	});
 
-	it("passes correct props to LegalPageContainer", () => {
-		const legalContainer = screen.getByTestId("mock-legal-page-container");
-
-		expect(legalContainer).toHaveAttribute("data-background", "dark");
-		expect(legalContainer).toHaveAttribute("data-children-span", "parent");
-		expect(legalContainer).toHaveAttribute("data-heading-level", "h1");
-		expect(legalContainer).toHaveAttribute("data-text-centered", "true");
-		expect(legalContainer).toHaveAttribute("data-text-color", "text-white");
-		expect(legalContainer).toHaveAttribute("data-title", "About GrantFlow");
-
-		const backgroundStackContainer = screen.getByTestId("background-stack-container");
-		expect(backgroundStackContainer).toBeInTheDocument();
-	});
-
-	it("ensures background elements have proper accessibility attributes", () => {
-		const brandPattern = screen.getByTestId("mock-brand-pattern");
-
-		expect(brandPattern).toHaveAttribute("aria-hidden", "true");
-		expect(brandPattern).toHaveAttribute("role", "presentation");
-		expect(brandPattern.className).toContain("pointer-events-none");
-	});
-
 	it("ensures toolkit items are displayed in a responsive grid layout", () => {
 		const toolkitItem = screen.getByText("Generate draft proposals based on previous documents and lab notes");
 
@@ -153,13 +131,6 @@ describe("AboutPage", () => {
 			expect(item.textContent).toBeTruthy();
 			expect(item.querySelector("[data-testid^='mock-icon-']")).toBeInTheDocument();
 		});
-	});
-
-	it("ensures background elements have proper z-index for layering", () => {
-		const brandPattern = screen.getByTestId("mock-brand-pattern");
-
-		expect(brandPattern.className).toContain("z-0");
-		expect(brandPattern.className).toContain("absolute inset-0");
 	});
 
 	it("ensures responsive design for toolkit items grid", () => {

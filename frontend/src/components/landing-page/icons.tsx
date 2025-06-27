@@ -64,7 +64,7 @@ function IconCancel({ className, height = 15, width = 15, ...props }: React.HTML
 function IconEarlyAccessBenefit1({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
-			fill="#FFFFFF"
+			fill="#2E2D36"
 			height="24px"
 			viewBox="0 -960 960 960"
 			width="24px"
@@ -79,7 +79,7 @@ function IconEarlyAccessBenefit1({ ...props }: React.HTMLProps<SVGSVGElement>) {
 function IconEarlyAccessBenefit2({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
-			fill="#FFFFFF"
+			fill="#2E2D36"
 			height="24px"
 			viewBox="0 -960 960 960"
 			width="24px"
@@ -94,7 +94,7 @@ function IconEarlyAccessBenefit2({ ...props }: React.HTMLProps<SVGSVGElement>) {
 function IconEarlyAccessBenefit3({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
-			fill="#FFFFFF"
+			fill="#2E2D36"
 			height="24px"
 			viewBox="0 -960 960 960"
 			width="24px"
@@ -109,7 +109,7 @@ function IconEarlyAccessBenefit3({ ...props }: React.HTMLProps<SVGSVGElement>) {
 function IconEarlyAccessBenefit4({ ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
-			fill="#FFFFFF"
+			fill="#2E2D36"
 			height="24px"
 			viewBox="0 -960 960 960"
 			width="24px"
