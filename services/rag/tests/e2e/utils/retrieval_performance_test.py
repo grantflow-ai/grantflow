@@ -10,8 +10,10 @@ Tests the most critical performance bottlenecks in retrieval.py:
 
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from packages.db.src.tables import GrantApplicationRagSource
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.utils.retrieval import (
@@ -27,7 +29,10 @@ from services.rag.tests.e2e.performance_utils import (
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
-async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
+async def test_vector_retrieval_performance(
+    async_session_maker: async_sessionmaker[Any],
+    logger: logging.Logger,
+) -> None:
     """
     Test database vector similarity query performance.
     Critical bottleneck: Complex vector queries with cosine distance calculations.
@@ -43,11 +48,9 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
             "query_embeddings": 3,
             "max_results": 100,
         },
-        expected_patterns=["vector", "similarity", "database", "performance"]
+        expected_patterns=["vector", "similarity", "database", "performance"],
     ) as perf_ctx:
-
         logger.info("=== VECTOR RETRIEVAL PERFORMANCE TEST ===")
-
 
         test_embeddings = [
             [0.1] * 384,
@@ -56,7 +59,6 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
         ]
 
         application_id = "550e8400-e29b-41d4-a716-446655440010"
-
 
         with perf_ctx.stage_timer("single_embedding_query"):
             single_start = datetime.now(UTC)
@@ -75,7 +77,6 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
                 duration_seconds=single_duration,
                 results_count=len(single_results) if single_results else 0,
             )
-
 
         with perf_ctx.stage_timer("multiple_embedding_queries"):
             batch_start = datetime.now(UTC)
@@ -96,10 +97,8 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
                 results_count=len(batch_results) if batch_results else 0,
             )
 
-
         with perf_ctx.stage_timer("recursive_threshold_queries"):
             recursive_start = datetime.now(UTC)
-
 
             recursive_results = await retrieve_vectors_for_embedding(
                 application_id=application_id,
@@ -116,7 +115,6 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
                 duration_seconds=recursive_duration,
                 results_count=len(recursive_results) if recursive_results else 0,
             )
-
 
         query_efficiency = single_duration / len(test_embeddings[:1]) if single_duration > 0 else 0
         batch_efficiency = batch_duration / len(test_embeddings) if batch_duration > 0 else 0
@@ -148,24 +146,24 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
         ### Recursive Threshold Queries
         - Duration: {recursive_duration:.3f} seconds
         - Results: {len(recursive_results) if recursive_results else 0}
-        - Recursion impact: {'High' if recursive_duration > batch_duration * 2 else 'Low'}
+        - Recursion impact: {"High" if recursive_duration > batch_duration * 2 else "Low"}
 
         ## Performance Analysis
         - **Scaling factor**: {scaling_factor:.2f}x (batch vs single)
         - **Query throughput**: {len(test_embeddings) / batch_duration:.1f} embeddings/second
-        - **Database efficiency**: {'Good' if batch_efficiency < 0.1 else 'Needs optimization'}
-        - **Recursion overhead**: {'Significant' if recursive_duration > batch_duration * 1.5 else 'Minimal'}
+        - **Database efficiency**: {"Good" if batch_efficiency < 0.1 else "Needs optimization"}
+        - **Recursion overhead**: {"Significant" if recursive_duration > batch_duration * 1.5 else "Minimal"}
 
         ## Optimization Opportunities
-        - Database query optimization: {'High priority' if batch_efficiency > 0.1 else 'Low priority'}
-        - Index optimization: {'Recommended' if scaling_factor > 2.0 else 'Current indexes adequate'}
-        - Connection pooling: {'Critical' if single_duration > 0.05 else 'Current setup adequate'}
-        - Query result caching: {'High impact' if recursive_duration > batch_duration * 1.5 else 'Limited impact'}
+        - Database query optimization: {"High priority" if batch_efficiency > 0.1 else "Low priority"}
+        - Index optimization: {"Recommended" if scaling_factor > 2.0 else "Current indexes adequate"}
+        - Connection pooling: {"Critical" if single_duration > 0.05 else "Current setup adequate"}
+        - Query result caching: {"High impact" if recursive_duration > batch_duration * 1.5 else "Limited impact"}
 
         ## Performance Recommendations
         - Target query time: < 0.1s per embedding
-        - {'✅ Performance target met' if batch_efficiency < 0.1 else '❌ Performance optimization needed'}
-        - Next steps: {'Monitor production performance' if batch_efficiency < 0.1 else 'Implement database optimizations'}
+        - {"✅ Performance target met" if batch_efficiency < 0.1 else "❌ Performance optimization needed"}
+        - Next steps: {"Monitor production performance" if batch_efficiency < 0.1 else "Implement database optimizations"}
         """
 
         section_analysis = [
@@ -173,11 +171,10 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
             "Performance Results",
             "Performance Analysis",
             "Optimization Opportunities",
-            "Performance Recommendations"
+            "Performance Recommendations",
         ]
 
         perf_ctx.set_content(analysis_content, section_analysis)
-
 
         if batch_efficiency > 0.2:
             perf_ctx.add_warning(f"Slow vector queries detected: {batch_efficiency:.3f}s per embedding")
@@ -191,7 +188,10 @@ async def test_vector_retrieval_performance(logger: logging.Logger) -> None:
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
-async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
+async def test_retrieval_pipeline_performance(
+    async_session_maker: async_sessionmaker[Any],
+    logger: logging.Logger,
+) -> None:
     """
     Test end-to-end retrieval pipeline performance.
     Measures complete retrieval workflow including embeddings, queries, and post-processing.
@@ -207,22 +207,22 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
             "search_queries": 5,
             "max_tokens": 4000,
         },
-        expected_patterns=["retrieval", "pipeline", "embeddings", "performance"]
+        expected_patterns=["retrieval", "pipeline", "embeddings", "performance"],
     ) as perf_ctx:
-
         logger.info("=== RETRIEVAL PIPELINE PERFORMANCE TEST ===")
 
         application_id = "550e8400-e29b-41d4-a716-446655440011"
-        task_description = "Investigate melanoma immunotherapy resistance mechanisms and develop combination therapy approaches"
+        task_description = (
+            "Investigate melanoma immunotherapy resistance mechanisms and develop combination therapy approaches"
+        )
 
         search_queries = [
             "melanoma immunotherapy resistance",
             "combination therapy approaches",
             "predictive biomarkers cancer",
             "therapeutic targets validation",
-            "treatment protocols oncology"
+            "treatment protocols oncology",
         ]
-
 
         with perf_ctx.stage_timer("basic_retrieval"):
             basic_start = datetime.now(UTC)
@@ -245,7 +245,6 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
                 results_count=len(basic_results) if basic_results else 0,
             )
 
-
         with perf_ctx.stage_timer("guided_retrieval"):
             guided_start = datetime.now(UTC)
 
@@ -265,7 +264,6 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
                 result_length=len("".join(guided_results)) if guided_results else 0,
                 results_count=len(guided_results) if guided_results else 0,
             )
-
 
         large_queries = search_queries * 3
 
@@ -289,7 +287,6 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
                 result_length=len("".join(stress_results)) if stress_results else 0,
             )
 
-
         basic_throughput = len(search_queries) / basic_duration if basic_duration > 0 else 0
         guided_overhead = (guided_duration - basic_duration) / basic_duration * 100 if basic_duration > 0 else 0
         stress_scaling = stress_duration / (basic_duration * 3) if basic_duration > 0 else 1.0
@@ -310,40 +307,40 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
         - Queries processed: {len(search_queries)}
         - Results count: {len(basic_results) if basic_results else 0}
         - Throughput: {basic_throughput:.1f} queries/second
-        - Result size: {len(''.join(basic_results)) if basic_results else 0} characters
+        - Result size: {len("".join(basic_results)) if basic_results else 0} characters
 
         ### Guided Retrieval (With Optimization)
         - Duration: {guided_duration:.2f} seconds
         - Optimization overhead: {guided_overhead:.1f}%
         - Results count: {len(guided_results) if guided_results else 0}
-        - Quality impact: {'Positive' if len(guided_results) > len(basic_results) else 'Neutral'}
+        - Quality impact: {"Positive" if len(guided_results) > len(basic_results) else "Neutral"}
 
         ### Large Query Batch (Stress Test)
         - Duration: {stress_duration:.2f} seconds
         - Queries processed: {len(large_queries)}
         - Scaling factor: {stress_scaling:.2f}x
-        - Performance degradation: {'Significant' if stress_scaling > 1.5 else 'Minimal'}
+        - Performance degradation: {"Significant" if stress_scaling > 1.5 else "Minimal"}
 
         ## Pipeline Performance Analysis
         - **Query processing rate**: {basic_throughput:.1f} queries/second
         - **Guided retrieval cost**: {guided_overhead:.1f}% overhead
         - **Scaling efficiency**: {stress_scaling:.2f}x (ideal: 1.0x)
-        - **Memory efficiency**: {'Good' if stress_scaling < 1.2 else 'Needs optimization'}
+        - **Memory efficiency**: {"Good" if stress_scaling < 1.2 else "Needs optimization"}
 
         ## Bottleneck Identification
-        - Primary bottleneck: {'Database queries' if basic_duration > 5.0 else 'Embedding generation' if basic_duration > 2.0 else 'Network I/O'}
-        - Guided retrieval impact: {'High cost' if guided_overhead > 50 else 'Acceptable cost'}
-        - Scaling issues: {'Yes' if stress_scaling > 1.5 else 'No'}
+        - Primary bottleneck: {"Database queries" if basic_duration > 5.0 else "Embedding generation" if basic_duration > 2.0 else "Network I/O"}
+        - Guided retrieval impact: {"High cost" if guided_overhead > 50 else "Acceptable cost"}
+        - Scaling issues: {"Yes" if stress_scaling > 1.5 else "No"}
 
         ## Optimization Recommendations
-        - Database optimization: {'Critical' if basic_duration > 5.0 else 'Standard monitoring'}
-        - Caching strategy: {'High priority' if guided_overhead > 30 else 'Low priority'}
-        - Parallel processing: {'Implement' if stress_scaling > 1.3 else 'Current approach adequate'}
-        - Connection pooling: {'Upgrade' if basic_throughput < 2.0 else 'Current setup adequate'}
+        - Database optimization: {"Critical" if basic_duration > 5.0 else "Standard monitoring"}
+        - Caching strategy: {"High priority" if guided_overhead > 30 else "Low priority"}
+        - Parallel processing: {"Implement" if stress_scaling > 1.3 else "Current approach adequate"}
+        - Connection pooling: {"Upgrade" if basic_throughput < 2.0 else "Current setup adequate"}
 
         ## Production Readiness
-        - Performance grade: {'A' if basic_duration < 3.0 and stress_scaling < 1.2 else 'B' if basic_duration < 5.0 else 'C'}
-        - Recommendation: {'Production ready' if basic_duration < 5.0 and stress_scaling < 1.5 else 'Optimization required'}
+        - Performance grade: {"A" if basic_duration < 3.0 and stress_scaling < 1.2 else "B" if basic_duration < 5.0 else "C"}
+        - Recommendation: {"Production ready" if basic_duration < 5.0 and stress_scaling < 1.5 else "Optimization required"}
         """
 
         section_analysis = [
@@ -352,11 +349,10 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
             "Pipeline Performance Analysis",
             "Bottleneck Identification",
             "Optimization Recommendations",
-            "Production Readiness"
+            "Production Readiness",
         ]
 
         perf_ctx.set_content(analysis_content, section_analysis)
-
 
         if basic_duration > 10.0:
             perf_ctx.add_warning(f"Slow retrieval pipeline: {basic_duration:.1f}s for basic retrieval")
@@ -372,7 +368,10 @@ async def test_retrieval_pipeline_performance(logger: logging.Logger) -> None:
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=180)
-async def test_embedding_generation_performance(logger: logging.Logger) -> None:
+async def test_embedding_generation_performance(
+    async_session_maker: async_sessionmaker[Any],
+    logger: logging.Logger,
+) -> None:
     """
     Test embedding generation performance in isolation.
     Critical component: generate_embeddings function called by handle_retrieval.
@@ -386,16 +385,13 @@ async def test_embedding_generation_performance(logger: logging.Logger) -> None:
             "test_type": "embedding_performance",
             "operation": "batch_embedding_generation",
         },
-        expected_patterns=["embedding", "generation", "performance"]
+        expected_patterns=["embedding", "generation", "performance"],
     ) as perf_ctx:
-
         logger.info("=== EMBEDDING GENERATION PERFORMANCE TEST ===")
-
 
         small_queries = ["melanoma research", "immunotherapy approaches"]
         medium_queries = ["melanoma research"] * 5
         large_queries = ["melanoma research"] * 10
-
 
         with perf_ctx.stage_timer("small_batch_embeddings"):
             small_start = datetime.now(UTC)
@@ -415,7 +411,6 @@ async def test_embedding_generation_performance(logger: logging.Logger) -> None:
                 results_count=len(small_results) if small_results else 0,
             )
 
-
         with perf_ctx.stage_timer("medium_batch_embeddings"):
             medium_start = datetime.now(UTC)
 
@@ -433,7 +428,6 @@ async def test_embedding_generation_performance(logger: logging.Logger) -> None:
                 queries_count=len(medium_queries),
                 results_count=len(medium_results) if medium_results else 0,
             )
-
 
         with perf_ctx.stage_timer("large_batch_embeddings"):
             large_start = datetime.now(UTC)
@@ -453,7 +447,6 @@ async def test_embedding_generation_performance(logger: logging.Logger) -> None:
                 results_count=len(large_results) if large_results else 0,
             )
 
-
         small_efficiency = small_duration / len(small_queries) if small_duration > 0 else 0
         medium_efficiency = medium_duration / len(medium_queries) if medium_duration > 0 else 0
         large_efficiency = large_duration / len(large_queries) if large_duration > 0 else 0
@@ -467,11 +460,11 @@ async def test_embedding_generation_performance(logger: logging.Logger) -> None:
         - Large batch ({len(large_queries)} queries): {large_duration:.2f}s ({large_efficiency:.3f}s per query)
 
         ## Analysis
-        - Embedding efficiency: {'Good' if large_efficiency < 0.1 else 'Needs optimization'}
-        - Batch scaling: {'Linear' if abs(large_efficiency - small_efficiency) < 0.02 else 'Sub-linear'}
-        - Performance grade: {'A' if large_efficiency < 0.05 else 'B' if large_efficiency < 0.1 else 'C'}
+        - Embedding efficiency: {"Good" if large_efficiency < 0.1 else "Needs optimization"}
+        - Batch scaling: {"Linear" if abs(large_efficiency - small_efficiency) < 0.02 else "Sub-linear"}
+        - Performance grade: {"A" if large_efficiency < 0.05 else "B" if large_efficiency < 0.1 else "C"}
 
-        ## Status: {'PASSED ✓' if large_efficiency < 0.2 else 'NEEDS OPTIMIZATION ⚠️'}
+        ## Status: {"PASSED ✓" if large_efficiency < 0.2 else "NEEDS OPTIMIZATION ⚠️"}
         """
 
         perf_ctx.set_content(smoke_content, ["Results", "Analysis", "Status"])
