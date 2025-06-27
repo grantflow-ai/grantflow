@@ -55,11 +55,24 @@ describe("Grant Template Actions", () => {
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
-					headers: mockAuthHeaders,
+					headers: expect.objectContaining({
+						...mockAuthHeaders,
+						"X-Correlation-ID": expect.any(String),
+						"X-Operation": "grant_template_generation",
+						"X-Service": "frontend",
+						"X-Trace-Timestamp": expect.any(String),
+					}),
 				},
 			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+
+		it("should return a correlation ID", async () => {
+			const correlationId = await generateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId);
+
+			expect(correlationId).toEqual(expect.any(String));
+			expect(correlationId.length).toBeGreaterThan(0);
 		});
 	});
 

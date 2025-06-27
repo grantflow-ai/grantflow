@@ -1,9 +1,15 @@
 from typing import Any
+from uuid import uuid4
 
 from litestar import Request
 from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
-from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
+from litestar.middleware import (
+    AbstractAuthenticationMiddleware,
+    AbstractMiddleware,
+    AuthenticationResult,
+)
+from litestar.types import Receive, Scope, Send
 from packages.db.src.tables import ProjectUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
@@ -73,3 +79,40 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return AuthenticationResult(user=None, auth=firebase_uid)
 
         raise NotAuthorizedException
+
+
+class CorrelationIdMiddleware(AbstractMiddleware):
+    """Middleware to extract or generate correlation IDs for request tracing."""
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        scope_type = scope.get("type")
+        if scope_type not in ("http", "websocket"):
+            await self.app(scope, receive, send)
+            return
+
+        correlation_id = None
+        for name, value in scope.get("headers", []):
+            if name.lower() == b"x-correlation-id":
+                correlation_id = value.decode("utf-8")
+                break
+
+        if not correlation_id:
+            correlation_id = str(uuid4())
+
+        if "state" not in scope:
+            scope["state"] = {}
+        scope["state"]["correlation_id"] = correlation_id
+
+        logger.debug(
+            "Request correlation ID set",
+            correlation_id=correlation_id,
+            method=scope.get("method"),
+            path=scope.get("path"),
+        )
+
+        await self.app(scope, receive, send)
+
+
+def get_correlation_id(request: Request[Any, Any, APIRequestState]) -> str | None:
+    """Get the correlation ID from the request state."""
+    return getattr(request.state, "correlation_id", None)

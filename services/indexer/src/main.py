@@ -1,3 +1,4 @@
+import time
 from typing import Any, TypedDict
 
 from litestar import post
@@ -30,31 +31,75 @@ class GCSNotification(TypedDict):
     event_type: str
 
 
-def get_gcs_notification_data(event: PubSubEvent) -> GCSNotification | None:
+def get_gcs_notification_data(event: PubSubEvent) -> tuple[GCSNotification | None, str | None]:
     attributes = event.message.attributes or {}
+    correlation_id = attributes.get("correlation_id")
+    logger.debug(
+        "Parsing GCS notification",
+        attributes_count=len(attributes),
+        attributes=list(attributes.keys()),
+        correlation_id=correlation_id,
+    )
+
     if any(key not in attributes for key in ("bucketId", "objectId", "eventType")):
-        return None
+        logger.debug(
+            "Missing required GCS attributes",
+            missing_keys=[key for key in ("bucketId", "objectId", "eventType") if key not in attributes],
+            correlation_id=correlation_id,
+        )
+        return None, correlation_id
 
     bucket_name = attributes["bucketId"]
     object_name = attributes["objectId"]
     event_type = attributes["eventType"]
 
+    logger.debug(
+        "Parsed GCS notification",
+        bucket_name=bucket_name,
+        object_name=object_name,
+        event_type=event_type,
+        correlation_id=correlation_id,
+    )
+
     return GCSNotification(
         bucket_name=bucket_name,
         object_name=object_name,
         event_type=event_type,
-    )
+    ), correlation_id
 
 
 async def handle_pubsub_message(
     event: PubSubEvent,
-) -> tuple[URIParseResult, str]:
-    if gcs_notification := get_gcs_notification_data(event):
-        object_path = gcs_notification["object_name"]
-        logger.debug("Received object path for indexing", object_path=object_path)
-        parsed = parse_object_uri(object_path=object_path)
-        return parsed, object_path
+) -> tuple[URIParseResult, str, str | None]:
+    logger.debug(
+        "Processing PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
+    )
 
+    gcs_notification, correlation_id = get_gcs_notification_data(event)
+
+    if gcs_notification:
+        object_path = gcs_notification["object_name"]
+        logger.debug(
+            "Received object path for indexing",
+            object_path=object_path,
+            event_type=gcs_notification["event_type"],
+            correlation_id=correlation_id,
+        )
+
+        parsed = parse_object_uri(object_path=object_path)
+        logger.debug(
+            "Parsed object URI",
+            source_id=str(parsed["source_id"]),
+            parent_id=str(parsed["parent_id"]),
+            blob_name=parsed["blob_name"],
+            correlation_id=correlation_id,
+        )
+
+        return parsed, object_path, correlation_id
+
+    logger.warning(
+        "Invalid PubSub message format", message_attributes=event.message.attributes, correlation_id=correlation_id
+    )
     raise ValidationError(
         "Invalid pubsub message.",
         context={
@@ -69,24 +114,61 @@ async def handle_file_indexing(
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    parse_result, object_path = await handle_pubsub_message(data)
-    content = await download_blob(object_path)
+    start_time = time.time()
 
+    logger.info("Starting file indexing request")
+
+    parse_result, object_path, correlation_id = await handle_pubsub_message(data)
+    logger.debug(
+        "PubSub message parsed",
+        parse_duration_ms=round((time.time() - start_time) * 1000, 2),
+        correlation_id=correlation_id,
+    )
+
+    download_start = time.time()
+    content = await download_blob(object_path)
+    download_duration = time.time() - download_start
+    logger.debug(
+        "Downloaded blob content",
+        content_size=len(content),
+        download_duration_ms=round(download_duration * 1000, 2),
+        correlation_id=correlation_id,
+    )
+
+    db_start = time.time()
     async with session_maker() as session:
+        logger.debug(
+            "Querying database for file and source records",
+            source_id=str(parse_result["source_id"]),
+            correlation_id=correlation_id,
+        )
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
+    db_duration = time.time() - db_start
+    logger.debug(
+        "Database queries completed",
+        db_duration_ms=round(db_duration * 1000, 2),
+        rag_file_found=rag_file is not None,
+        rag_source_found=rag_source is not None,
+        correlation_id=correlation_id,
+    )
+
     if not rag_file:
-        logger.error("Rag file not found", source_id=parse_result["source_id"])
+        logger.error("Rag file not found", source_id=parse_result["source_id"], correlation_id=correlation_id)
         raise ValidationError("Rag file not found", context={"source_id": parse_result["source_id"]})
 
     if not rag_source:
-        logger.error("Rag source not found", source_id=parse_result["source_id"])
+        logger.error("Rag source not found", source_id=parse_result["source_id"], correlation_id=correlation_id)
         raise ValidationError("Rag source not found", context={"source_id": parse_result["source_id"]})
 
     if rag_source.indexing_status == SourceIndexingStatusEnum.FINISHED:
         logger.info(
-            "File already processed, skipping", filename=parse_result["blob_name"], source_id=parse_result["source_id"]
+            "File already processed, skipping",
+            filename=parse_result["blob_name"],
+            source_id=parse_result["source_id"],
+            current_status=rag_source.indexing_status.value,
+            correlation_id=correlation_id,
         )
 
         await update_source_indexing_status(
@@ -99,16 +181,41 @@ async def handle_file_indexing(
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
+        total_duration = time.time() - start_time
+        logger.info(
+            "File indexing completed (already processed)",
+            total_duration_ms=round(total_duration * 1000, 2),
+            correlation_id=correlation_id,
+        )
         return
 
+    logger.debug(
+        "Starting file processing",
+        filename=parse_result["blob_name"],
+        mime_type=rag_file.mime_type,
+        file_size=len(content),
+        correlation_id=correlation_id,
+    )
+
     try:
+        processing_start = time.time()
         vectors, text_content = await process_source(
             content=content,
             source_id=str(parse_result["source_id"]),
             filename=parse_result["blob_name"],
             mime_type=rag_file.mime_type,
         )
+        processing_duration = time.time() - processing_start
 
+        logger.debug(
+            "File processing completed",
+            processing_duration_ms=round(processing_duration * 1000, 2),
+            text_length=len(text_content),
+            vector_count=len(vectors) if vectors else 0,
+            correlation_id=correlation_id,
+        )
+
+        status_update_start = time.time()
         await update_source_indexing_status(
             logger=logger,
             session_maker=session_maker,
@@ -119,19 +226,34 @@ async def handle_file_indexing(
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
         )
+        status_update_duration = time.time() - status_update_start
+        total_duration = time.time() - start_time
 
         logger.info(
-            "Successfully indexed file", filename=parse_result["blob_name"], source_id=parse_result["source_id"]
+            "Successfully indexed file",
+            filename=parse_result["blob_name"],
+            source_id=parse_result["source_id"],
+            total_duration_ms=round(total_duration * 1000, 2),
+            status_update_duration_ms=round(status_update_duration * 1000, 2),
+            text_length=len(text_content),
+            vector_count=len(vectors) if vectors else 0,
+            correlation_id=correlation_id,
         )
 
     except Exception as e:
+        error_duration = time.time() - start_time
         logger.exception(
             "Error processing file",
             filename=parse_result["blob_name"],
             source_id=parse_result["source_id"],
             error_type=type(e).__name__,
+            error_duration_ms=round(error_duration * 1000, 2),
+            file_size=len(content),
+            mime_type=rag_file.mime_type,
+            correlation_id=correlation_id,
         )
 
+        failure_update_start = time.time()
         await update_source_indexing_status(
             logger=logger,
             session_maker=session_maker,
@@ -141,6 +263,14 @@ async def handle_file_indexing(
             text_content="",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
+        )
+        failure_update_duration = time.time() - failure_update_start
+
+        logger.debug(
+            "Updated status to failed",
+            failure_update_duration_ms=round(failure_update_duration * 1000, 2),
+            is_retryable_error=isinstance(e, (FileParsingError, ExternalOperationError, ValidationError)),
+            correlation_id=correlation_id,
         )
 
         if isinstance(e, (FileParsingError, ExternalOperationError, ValidationError)):

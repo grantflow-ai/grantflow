@@ -33,6 +33,9 @@ from packages.db.src.constants import RAG_URL, RAG_FILE
 from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
+from services.backend.src.api.middleware import get_correlation_id
+from services.backend.src.common_types import APIRequest
+
 if TYPE_CHECKING:
     from packages.shared_utils.src.shared_types import ParentType
 
@@ -393,6 +396,7 @@ async def handle_delete_rag_source(
 async def handle_create_upload_url(
     session_maker: async_sessionmaker[Any],
     blob_name: str,
+    request: APIRequest,
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
     template_id: UUID | None = None,
@@ -455,12 +459,23 @@ async def handle_create_upload_url(
 async def handle_crawl_url(
     session_maker: async_sessionmaker[Any],
     data: UrlCrawlingRequest,
+    request: APIRequest,
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
     template_id: UUID | None = None,
     project_id: UUID | None = None,
 ) -> UrlCrawlingResponse:
+    correlation_id = get_correlation_id(request)
     url = data["url"]
+
+    logger.debug(
+        "Starting URL crawl request",
+        url=url,
+        correlation_id=correlation_id,
+        application_id=str(application_id) if application_id else None,
+        organization_id=str(organization_id) if organization_id else None,
+        template_id=str(template_id) if template_id else None,
+    )
 
     if not project_id and not organization_id:
         raise ValidationError("Either project_id or organization_id must be provided")
@@ -491,9 +506,15 @@ async def handle_crawl_url(
         source_id=source_id,
         project_id=project_id,
         parent_id=parent_id,
+        correlation_id=correlation_id,
     )
 
-    logger.info("Published URL crawling task", url=url, message_id=message_id)
+    logger.info(
+        "Published URL crawling task",
+        url=url,
+        message_id=message_id,
+        correlation_id=correlation_id,
+    )
 
     return UrlCrawlingResponse(
         source_id=source_id,

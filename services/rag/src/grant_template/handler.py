@@ -130,10 +130,20 @@ async def grant_template_generation_pipeline_handler(
 
     if job_manager is None:
         job_manager = JobManager(session_maker)
-        await job_manager.create_grant_template_job(
-            grant_template_id=grant_template_id,
-            total_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
-        )
+        try:
+            await job_manager.create_grant_template_job(
+                grant_template_id=grant_template_id,
+                total_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
+            )
+        except ValueError as e:
+            logger.warning(
+                "Cannot create grant template generation job - template may have been deleted",
+                template_id=str(grant_template_id),
+                error=str(e),
+            )
+
+            msg = f"Grant template {grant_template_id} not found - cannot proceed with generation"
+            raise RuntimeError(msg) from e
 
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 

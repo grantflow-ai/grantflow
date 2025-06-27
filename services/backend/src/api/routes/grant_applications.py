@@ -324,10 +324,31 @@ async def handle_delete_application(
 
     async with session_maker() as session, session.begin():
         try:
+            template_result = await session.execute(
+                select(GrantTemplate.id).where(
+                    GrantTemplate.grant_application_id == application_id
+                )
+            )
+            template_ids = template_result.scalars().all()
+
+            if template_ids:
+                logger.debug(
+                    "Grant templates will be deleted due to CASCADE",
+                    application_id=str(application_id),
+                    template_ids=[str(t_id) for t_id in template_ids],
+                )
+
             await session.execute(
                 sa_delete(GrantApplication).where(GrantApplication.id == application_id)
             )
             await session.commit()
+
+            if template_ids:
+                logger.debug(
+                    "Application and associated templates deleted successfully",
+                    application_id=str(application_id),
+                    deleted_template_ids=[str(t_id) for t_id in template_ids],
+                )
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error deleting application", exc_info=e)

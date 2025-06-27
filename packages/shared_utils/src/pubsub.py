@@ -40,12 +40,14 @@ class CrawlingRequest(TypedDict):
     project_id: UUID | None
     parent_id: UUID
     url: str
+    correlation_id: NotRequired[str]
 
 
 class SourceProcessingResult(TypedDict):
     source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
+    correlation_id: NotRequired[str]
 
 
 class RagProcessingStatus(TypedDict):
@@ -54,11 +56,13 @@ class RagProcessingStatus(TypedDict):
     data: NotRequired[dict[str, Any]]
     current_pipeline_stage: NotRequired[int]
     total_pipeline_stages: NotRequired[int]
+    correlation_id: NotRequired[str]
 
 
 class RagRequest(TypedDict):
     parent_type: Literal["grant_application", "grant_template"]
     parent_id: UUID
+    correlation_id: NotRequired[str]
 
 
 class WebsocketMessage[T](TypedDict):
@@ -66,6 +70,7 @@ class WebsocketMessage[T](TypedDict):
     parent_id: UUID
     event: str
     data: T
+    correlation_id: NotRequired[str]
 
 
 def get_pubsub_credentials() -> Credentials | None:
@@ -112,6 +117,7 @@ async def publish_url_crawling_task(
     source_id: str | UUID,
     project_id: str | UUID | None,
     parent_id: str | UUID,
+    correlation_id: str | None = None,
 ) -> str:
     client = get_publisher_client()
 
@@ -121,6 +127,9 @@ async def publish_url_crawling_task(
         project_id=UUID(str(project_id)) if project_id else None,
         parent_id=UUID(str(parent_id)),
     )
+
+    if correlation_id:
+        data["correlation_id"] = correlation_id
 
     try:
         message_data = serialize(data)
@@ -135,6 +144,7 @@ async def publish_url_crawling_task(
             message_id=message_id,
             url=url,
             source_id=str(source_id),
+            correlation_id=correlation_id,
         )
         return str(message_id)
     except MessageTooLargeError as e:
@@ -149,7 +159,18 @@ async def publish_rag_task(
     logger: "FilteringBoundLogger",
     parent_type: Literal["grant_application", "grant_template"],
     parent_id: str | UUID,
+    correlation_id: str | None = None,
 ) -> str:
+    import time
+
+    start_time = time.time()
+    logger.debug(
+        "Starting PubSub message publishing",
+        parent_type=parent_type,
+        parent_id=str(parent_id),
+        correlation_id=correlation_id,
+    )
+
     client = get_publisher_client()
 
     data = RagRequest(
@@ -157,19 +178,41 @@ async def publish_rag_task(
         parent_id=UUID(str(parent_id)),
     )
 
+    if correlation_id:
+        data["correlation_id"] = correlation_id
+
     try:
         message_data = serialize(data)
+        logger.debug(
+            "Serialized RAG request data",
+            parent_type=parent_type,
+            parent_id=str(parent_id),
+            message_size=len(message_data),
+        )
+
         topic_path = client.topic_path(
             project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
             topic=get_env("RAG_PROCESSING_PUBSUB_TOPIC", fallback="rag-processing"),
         )
+
+        logger.debug(
+            "Publishing message to PubSub topic",
+            parent_type=parent_type,
+            parent_id=str(parent_id),
+            topic_path=topic_path,
+        )
+
         future = client.publish(topic=topic_path, data=message_data)
         message_id = await run_sync(future.result)
+
+        publish_duration = time.time() - start_time
         logger.info(
             "Published message to process RAG",
             message_id=message_id,
             parent_type=parent_type,
             parent_id=str(parent_id),
+            correlation_id=correlation_id,
+            publish_duration_ms=round(publish_duration * 1000, 2),
         )
         return str(message_id)
     except MessageTooLargeError as e:
@@ -211,6 +254,7 @@ async def publish_notification[T](
     parent_id: UUID,
     event: str,
     data: T,
+    correlation_id: str | None = None,
 ) -> str:
     client = get_publisher_client()
 
@@ -221,14 +265,17 @@ async def publish_notification[T](
         ),
     )
     try:
-        message_data = serialize(
-            WebsocketMessage(
-                event=event,
-                data=data,
-                parent_id=parent_id,
-                type="data",
-            )
+        websocket_message = WebsocketMessage(
+            event=event,
+            data=data,
+            parent_id=parent_id,
+            type="data",
         )
+
+        if correlation_id:
+            websocket_message["correlation_id"] = correlation_id
+
+        message_data = serialize(websocket_message)
         future = client.publish(
             topic=topic_path,
             data=message_data,
@@ -243,6 +290,7 @@ async def publish_notification[T](
         logger.info(
             "Published source processing message",
             message_id=message_id,
+            correlation_id=correlation_id,
         )
         return str(message_id)
     except MessageTooLargeError as e:

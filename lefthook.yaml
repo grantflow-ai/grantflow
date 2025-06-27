@@ -52,12 +52,14 @@ pre-commit:
             stage_fixed: true
 
         codespell:
-            run: uv run codespell {staged_files}
+            glob: "*.{py,ts,tsx,js,jsx,yaml,yml,md,txt,sh}"
             exclude: |
                 packages/*/tests/**/*
                 services/*/tests/**/*
+                testing/test_data/**/*
                 test_data/**/*
                 pnpm-lock.yaml
+            run: uv run codespell {staged_files}
 
         pyproject-fmt:
             glob: "*pyproject.toml"
@@ -77,9 +79,15 @@ pre-commit:
             run: |
                 for file in {staged_files}; do
                   if [ -f "$file" ] && [ -s "$file" ]; then
+                    # Skip binary files
                     case "$file" in
-                      *.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.webp) continue ;;
+                      *.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.webp|*.pdf|*.zip|*.tar|*.gz|*.bz2) continue ;;
+                      testing/test_data/**/*) continue ;;
+                      test_data/**/*) continue ;;
+                      *node_modules*) continue ;;
+                      *.lock) continue ;;
                     esac
+                    # Check if file is missing final newline
                     if [ -n "$(tail -c 1 "$file")" ]; then
                       echo >> "$file"
                     fi
