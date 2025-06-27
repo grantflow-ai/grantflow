@@ -42,17 +42,17 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 			<div className="flex size-full flex-col items-start justify-start px-10 py-14 gap-14">
 				{/* Header */}
 				<div className="flex w-full flex-col gap-8">
-					<h1 className="font-['Cabin'] font-medium text-[36px] leading-[42px] text-[#2e2d36]">Settings</h1>
+					<h1 className="font-medium text-[36px] leading-[42px] text-text-primary font-heading">Settings</h1>
 
 					{/* Tabs */}
 					<div className="flex items-center gap-6">
 						{tabs.map((tab) => (
 							<Link
 								className={cn(
-									"relative px-2 py-3 text-[16px] font-['Source_Sans_Pro'] text-[#2e2d36] transition-all",
+									"relative px-2 py-3 text-[16px] text-text-primary transition-all font-body",
 									pathname === tab.href
-										? "font-['Cabin'] font-semibold border-b-[3px] border-[#1e13f8]"
-										: "hover:text-[#636170]",
+										? "font-semibold border-b-[3px] border-action-primary font-heading"
+										: "hover:text-text-secondary",
 								)}
 								href={tab.href}
 								key={tab.href}
