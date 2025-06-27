@@ -50,8 +50,6 @@ const LogoSection = () => (
 			className={
 				"sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16"
 			}
-			height="auto"
-			width="auto"
 		/>
 	</Link>
 );
