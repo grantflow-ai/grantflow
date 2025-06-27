@@ -1,7 +1,7 @@
 """Optimized token counting with batching, caching, and rate limiting."""
 
 from functools import lru_cache
-from typing import Any, TypedDict
+from typing import TypedDict
 
 from packages.shared_utils.src.ai import estimate_token_count
 from packages.shared_utils.src.logger import get_logger
@@ -20,7 +20,7 @@ async def batch_count_tokens(texts: list[str]) -> list[int]:
     if not texts:
         return []
 
-    # Use local estimation for all requests to avoid API rate limits
+
     return [cached_estimate_token_count(text) for text in texts]
 
 
@@ -29,7 +29,7 @@ async def optimized_count_tokens(text: str) -> int:
     if not text:
         return 0
 
-    # Use local estimation to avoid API rate limits
+
     return cached_estimate_token_count(text)
 
 
@@ -49,13 +49,13 @@ async def smart_parse_documents_with_batched_tokens(
     if not sentence_infos:
         return [], 0
 
-    # Extract all sentences for batch token counting
+
     sentences = [info["text"] for info in sentence_infos]
 
-    # Batch count tokens for all sentences at once
+
     token_counts = await batch_count_tokens(sentences)
 
-    # Now efficiently select sentences within token limit
+
     doc_contents: dict[int, list[str]] = {}
     total_tokens = 0
 
@@ -72,7 +72,7 @@ async def smart_parse_documents_with_batched_tokens(
         doc_contents[doc_idx].append(sentence)
         total_tokens += token_count
 
-    # Reconstruct documents
+
     final_docs = [" ".join(sentences).strip() for sentences in doc_contents.values() if sentences]
 
     logger.debug(

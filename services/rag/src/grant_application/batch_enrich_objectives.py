@@ -22,8 +22,8 @@ logger = get_logger(__name__)
 
 BATCH_ENRICH_OBJECTIVES_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
-Your role is to enhance multiple research objectives and their tasks simultaneously with detailed 
-scientific content, guiding questions, and search queries that will produce competitive and 
+Your role is to enhance multiple research objectives and their tasks simultaneously with detailed
+scientific content, guiding questions, and search queries that will produce competitive and
 compelling grant applications. Process all objectives in a single pass for efficiency.
 """
 
@@ -77,7 +77,7 @@ BATCH_ENRICH_OBJECTIVES_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - Enriched content for the research objective (instructions, description, guiding_questions, search_queries)
     - Enriched content for each of its research tasks
 
-    IMPORTANT: 
+    IMPORTANT:
     - Process ALL objectives in the input
     - Maintain the exact order and numbering of objectives
     - Each objective and task must have all required fields with substantial content (minimum 50 characters)
@@ -153,7 +153,7 @@ def validate_batch_enrichment_response(
             },
         )
 
-    # Validate each objective follows the same rules as individual enrichment
+
     for i, enriched_obj in enumerate(response["objectives"]):
         if "objective_number" not in enriched_obj:
             raise ValidationError(f"Missing objective_number in enriched objective at index {i}")
@@ -164,7 +164,7 @@ def validate_batch_enrichment_response(
         if "research_tasks" not in enriched_obj:
             raise ValidationError(f"Missing research_tasks in enriched objective at index {i}")
 
-        # Validate tasks count matches
+
         input_obj = input_objectives[i]
         if len(enriched_obj["research_tasks"]) != len(input_obj["research_tasks"]):
             raise ValidationError(
@@ -202,7 +202,7 @@ async def handle_batch_enrich_objectives(
 ) -> list[ObjectiveEnrichmentDTO]:
     """Batch enrich all objectives in a single LLM call with shared retrieval."""
 
-    # Format all objectives for batch processing
+
     objectives_text = "\n\n".join([
         f"Objective {obj['number']}: {obj['title']}\nTasks: {obj['research_tasks']}"
         for obj in research_objectives
@@ -215,21 +215,21 @@ async def handle_batch_enrich_objectives(
         form_inputs=form_inputs,
     )
 
-    # Single retrieval call for all objectives
+
     logger.info("Starting batch retrieval for %d objectives", len(research_objectives))
     enrichment_rag_results = await retrieve_documents(
         application_id=application_id,
         search_queries=grant_section["search_queries"],
         task_description=str(enrichment_prompt),
-        max_tokens=2000,  # Limit token count to prevent oversized prompts
+        max_tokens=2000,
     )
     logger.info("Retrieved %d documents for batch enrichment", len(enrichment_rag_results))
 
-    # Single LLM call for all objectives
+
     prompt_with_rag = enrichment_prompt.to_string(rag_results=enrichment_rag_results)
-    logger.info("Prompt size for batch enrichment: %d chars (~%d tokens)", 
+    logger.info("Prompt size for batch enrichment: %d chars (~%d tokens)",
                 len(prompt_with_rag), len(prompt_with_rag) // 4)
-    
+
     try:
         batch_result = await with_prompt_evaluation(
             prompt_identifier="batch_enrich_objectives",
@@ -246,7 +246,7 @@ async def handle_batch_enrich_objectives(
         logger.error("Error type: %s", type(e).__name__)
         raise
 
-    # Transform batch result to match expected format
+
     enrichment_responses: list[ObjectiveEnrichmentDTO] = [
         {
             "research_objective": enriched["research_objective"],
