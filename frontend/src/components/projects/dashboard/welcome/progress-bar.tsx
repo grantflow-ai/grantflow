@@ -4,8 +4,25 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { PROGRESS_BAR_STEPS } from "@/constants";
 
+interface ProgressBarLabelProps {
+	currentStep: number;
+	index: number;
+	label: string;
+}
+
+interface ProgressBarLineProps {
+	currentStep: number;
+	index: number;
+}
+
 interface ProgressBarProps {
 	currentStep: number;
+}
+
+interface ProgressBarStepProps {
+	currentStep: number;
+	index: number;
+	isLast: boolean;
 }
 
 export function ProgressBar({ currentStep }: ProgressBarProps) {
@@ -33,10 +50,40 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
 	);
 }
 
-interface ProgressBarStepProps {
-	currentStep: number;
-	index: number;
-	isLast: boolean;
+function ProgressBarLabel({ currentStep, index, label }: ProgressBarLabelProps) {
+	const isCompleted = index < currentStep - 1;
+	const isCurrent = index === currentStep - 1;
+
+	return (
+		<h5
+			className={`text-[11px] font-semibold font-heading ${
+				isCompleted ? "text-app-dark-blue" : isCurrent ? "text-primary" : "text-app-gray-400"
+			}`}
+		>
+			{label}
+		</h5>
+	);
+}
+
+function ProgressBarLine({ currentStep, index }: ProgressBarLineProps) {
+	const isAnimating = index === currentStep - 1;
+	const isCompleted = index < currentStep - 1;
+
+	return (
+		<div className="relative h-px w-full overflow-hidden bg-app-gray-200">
+			{isAnimating ? (
+				<motion.div
+					animate={{ width: "100%" }}
+					className="absolute left-0 top-0 h-full bg-primary"
+					initial={{ width: 0 }}
+					key={`line-${index}`}
+					transition={{ duration: 0.8, ease: "easeInOut" }}
+				/>
+			) : isCompleted ? (
+				<div className="absolute left-0 top-0 size-full bg-primary" />
+			) : null}
+		</div>
+	);
 }
 
 function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
@@ -44,7 +91,7 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 	const isCurrent = index === currentStep;
 
 	return (
-		<div className={`${!isLast ? "w-[145px]" : ""} flex items-center`}>
+		<div className={`${isLast ? "" : "w-[145px]"} flex items-center`}>
 			<motion.div
 				animate={isActive ? "active" : isCurrent ? "next" : "inactive"}
 				className="size-[11px] rounded-full flex justify-center items-center border"
@@ -105,51 +152,3 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 		</div>
 	);
 }
-
-interface ProgressBarLineProps {
-	currentStep: number;
-	index: number;
-}
-
-function ProgressBarLine({ currentStep, index }: ProgressBarLineProps) {
-	const isAnimating = index === currentStep - 1;
-	const isCompleted = index < currentStep - 1;
-
-	return (
-		<div className="relative h-px w-full overflow-hidden bg-app-gray-200">
-			{isAnimating ? (
-				<motion.div
-					animate={{ width: "100%" }}
-					className="absolute left-0 top-0 h-full bg-primary"
-					initial={{ width: 0 }}
-					key={`line-${index}`}
-					transition={{ duration: 0.8, ease: "easeInOut" }}
-				/>
-			) : isCompleted ? (
-				<div className="absolute left-0 top-0 size-full bg-primary" />
-			) : null}
-		</div>
-	);
-}
-
-interface ProgressBarLabelProps {
-	currentStep: number;
-	index: number;
-	label: string;
-}
-
-function ProgressBarLabel({ currentStep, index, label }: ProgressBarLabelProps) {
-	const isCompleted = index < currentStep - 1;
-	const isCurrent = index === currentStep - 1;
-
-	return (
-		<h5
-			className={`text-[11px] font-semibold font-heading ${
-				isCompleted ? "text-app-dark-blue" : isCurrent ? "text-primary" : "text-app-gray-400"
-			}`}
-		>
-			{label}
-		</h5>
-	);
-}
-

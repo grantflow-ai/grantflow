@@ -1,13 +1,15 @@
 "use client";
 
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppButton } from "@/components/app-button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PROGRESS_BAR_STEPS } from "@/constants";
 import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
+import { WelcomeModalContent } from "./modal-overlay";
 import { ProgressBar } from "./progress-bar";
 
 interface WelcomeModalProps {
@@ -53,12 +55,19 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 	};
 
 	return (
-		<Dialog onOpenChange={(isOpen) => !isOpen && handleClose()} open={open}>
-			<DialogContent className="flex max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-primary bg-white px-0 pb-8 pt-0">
-				<DialogHeader className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-preview-bg">
+		<DialogPrimitive.Root
+			onOpenChange={(isOpen) => {
+				if (!isOpen) {
+					handleClose();
+				}
+			}}
+			open={open}
+		>
+			<WelcomeModalContent className="flex max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-primary bg-white px-0 pb-8 pt-0">
+				<header className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-preview-bg">
 					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_var(--color-primary)_0%,_transparent_70%)] opacity-80" />
 					<ProgressBar currentStep={step} />
-				</DialogHeader>
+				</header>
 				<section className="flex w-full justify-between px-10">
 					<DialogTitle>
 						<h2 className="text-4xl font-medium text-app-black font-heading">
@@ -97,8 +106,7 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 						Start New Application
 					</AppButton>
 				</footer>
-			</DialogContent>
-		</Dialog>
+			</WelcomeModalContent>
+		</DialogPrimitive.Root>
 	);
 }
-
