@@ -10,11 +10,20 @@ export enum WizardStep {
 	KNOWLEDGE_BASE = "Knowledge Base",
 	RESEARCH_DEEP_DIVE = "Research Deep Dive",
 	RESEARCH_PLAN = "Research Plan",
+	PREVIEW_AND_APPROVE = "Preview and Approve",
 }
 
 export const WIZARD_STEP_TITLES = [
 	WizardStep.APPLICATION_DETAILS,
 	WizardStep.APPLICATION_STRUCTURE,
+	WizardStep.KNOWLEDGE_BASE,
+	WizardStep.RESEARCH_PLAN,
+	WizardStep.RESEARCH_DEEP_DIVE,
+	WizardStep.GENERATE_AND_COMPLETE,
+] as const;
+export const PROGRESS_BAR_STEPS = [
+	WizardStep.APPLICATION_DETAILS,
+	WizardStep.PREVIEW_AND_APPROVE,
 	WizardStep.KNOWLEDGE_BASE,
 	WizardStep.RESEARCH_PLAN,
 	WizardStep.RESEARCH_DEEP_DIVE,

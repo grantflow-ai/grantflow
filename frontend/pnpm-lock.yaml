@@ -74,6 +74,9 @@ importers:
       firebase:
         specifier: ^11.9.1
         version: 11.9.1
+      framer-motion:
+        specifier: ^12.19.1
+        version: 12.19.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       ky:
         specifier: ^1.8.1
         version: 1.8.1
