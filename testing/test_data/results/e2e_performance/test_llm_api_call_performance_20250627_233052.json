@@ -1,0 +1,11 @@
+{
+  "test_name": "test_llm_api_call_performance",
+  "test_category": "quality_assessment",
+  "status": "success",
+  "performance": {
+    "execution_time": 27.90883779525757,
+    "within_threshold": true,
+    "timeout_utilization": 0.04651472965876261
+  },
+  "timestamp": "2025-06-27T23:30:52.109919+00:00"
+}

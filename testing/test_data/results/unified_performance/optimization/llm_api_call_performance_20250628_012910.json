@@ -1,0 +1,94 @@
+{
+  "test_name": "llm_api_call_performance",
+  "test_category": "optimization",
+  "timestamp": "2025-06-28T01:29:10.783557",
+  "test_id": "d3924968-08c7-4aa4-85d2-a4afbdbfff8b",
+  "configuration": {
+    "test_type": "api_performance",
+    "operation": "llm_completion_calls",
+    "providers": [
+      "anthropic",
+      "google"
+    ],
+    "prompt_sizes": [
+      "small",
+      "medium",
+      "large"
+    ]
+  },
+  "total_duration_seconds": 31.46426,
+  "total_duration_minutes": 0.5244043333333334,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 83.4,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 1843,
+    "total_words": 200,
+    "total_lines": 58,
+    "section_count": 7,
+    "avg_chars_per_section": 263.2857142857143,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": true,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [
+      "llm",
+      "api",
+      "performance",
+      "latency"
+    ],
+    "content_richness_score": 36.86,
+    "structure_quality_score": 25.0,
+    "completeness_score": 100,
+    "overall_quality_score": 44.744,
+    "meets_min_length": true,
+    "meets_min_sections": true,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "optimization"
+  },
+  "errors_encountered": [],
+  "warnings": [
+    "High API latency detected: 10.0s average"
+  ]
+}

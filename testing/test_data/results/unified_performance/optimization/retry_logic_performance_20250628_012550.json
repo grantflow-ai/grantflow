@@ -1,0 +1,84 @@
+{
+  "test_name": "retry_logic_performance",
+  "test_category": "optimization",
+  "timestamp": "2025-06-28T01:25:50.733399",
+  "test_id": "5690dffb-718e-4e71-bac9-5bf3511f29a1",
+  "configuration": {
+    "test_type": "retry_performance",
+    "operation": "failure_recovery_analysis",
+    "max_retries": 3
+  },
+  "total_duration_seconds": 2.451268,
+  "total_duration_minutes": 0.040854466666666665,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 82.9,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 1618,
+    "total_words": 167,
+    "total_lines": 49,
+    "section_count": 6,
+    "avg_chars_per_section": 269.6666666666667,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": true,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [
+      "retry",
+      "failure",
+      "recovery",
+      "performance"
+    ],
+    "content_richness_score": 32.36,
+    "structure_quality_score": 25.0,
+    "completeness_score": 100,
+    "overall_quality_score": 42.944,
+    "meets_min_length": true,
+    "meets_min_sections": true,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "optimization"
+  },
+  "errors_encountered": [],
+  "warnings": []
+}

@@ -1,0 +1,11 @@
+{
+  "test_name": "test_semantic_ranking_performance",
+  "test_category": "smoke",
+  "status": "success",
+  "performance": {
+    "execution_time": 0.03241991996765137,
+    "within_threshold": true,
+    "timeout_utilization": 0.00027016599973042805
+  },
+  "timestamp": "2025-06-27T23:23:55.143126+00:00"
+}

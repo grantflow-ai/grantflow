@@ -95,7 +95,7 @@ describe("WizardClientComponent", () => {
 	it("should render all step components correctly", () => {
 		const stepTests = [
 			{ step: WizardStep.APPLICATION_DETAILS, testId: "application-details-step" },
-			{ step: WizardStep.PREVIEW_AND_APPROVE, testId: "application-structure-step" },
+			{ step: WizardStep.APPLICATION_STRUCTURE, testId: "application-structure-step" },
 			{ step: WizardStep.KNOWLEDGE_BASE, testId: "knowledge-base-step" },
 			{ step: WizardStep.RESEARCH_PLAN, testId: "research-plan-step" },
 			{ step: WizardStep.RESEARCH_DEEP_DIVE, testId: "research-deep-dive-step" },

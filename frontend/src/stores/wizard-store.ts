@@ -14,7 +14,7 @@ export const MIN_TITLE_LENGTH = 10;
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
-	WizardStep.PREVIEW_AND_APPROVE,
+	WizardStep.APPLICATION_STRUCTURE,
 	WizardStep.KNOWLEDGE_BASE,
 	WizardStep.RESEARCH_PLAN,
 	WizardStep.RESEARCH_DEEP_DIVE,
@@ -414,8 +414,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					// Clean up polling when leaving PREVIEW_AND_APPROVE
-					if (currentStep === WizardStep.PREVIEW_AND_APPROVE) {
+					// Clean up polling when leaving APPLICATION_STRUCTURE
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
 						set((state) => ({
 							...state,
@@ -430,10 +430,10 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						currentStep: nextStep,
 					}));
 
-					// Trigger template generation when entering PREVIEW_AND_APPROVE if no sections exist
+					// Trigger template generation when entering APPLICATION_STRUCTURE if no sections exist
 					const { application, generateTemplate } = useApplicationStore.getState();
 					if (
-						nextStep === WizardStep.PREVIEW_AND_APPROVE &&
+						nextStep === WizardStep.APPLICATION_STRUCTURE &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
@@ -456,11 +456,11 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
 
 					// Prevent going back during template generation
-					if (currentStep === WizardStep.PREVIEW_AND_APPROVE && isGeneratingTemplate) {
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return;
 					}
 
-					if (currentStep === WizardStep.PREVIEW_AND_APPROVE) {
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
 						set((state) => ({
 							...state,
@@ -491,6 +491,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							// Only require that grant template sources exist (don't require indexing completion)
 							return (application.grant_template?.rag_sources.length ?? 0) > 0;
 						}
+						case WizardStep.APPLICATION_STRUCTURE: {
+							return !!application.grant_template?.grant_sections.length;
+						}
 						case WizardStep.GENERATE_AND_COMPLETE:
 						case WizardStep.RESEARCH_DEEP_DIVE:
 						case WizardStep.RESEARCH_PLAN: {
@@ -501,9 +504,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								!!application.rag_sources.length &&
 								application.rag_sources.every((source) => source.status !== "FAILED")
 							);
-						}
-						case WizardStep.PREVIEW_AND_APPROVE: {
-							return !!application.grant_template?.grant_sections.length;
 						}
 						default: {
 							return false;
