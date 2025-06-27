@@ -1,0 +1,20 @@
+"use server";
+
+import { redirect } from "next/navigation";
+
+import { getProject } from "@/actions/project";
+import { ProjectSettingsClient } from "@/components/projects/settings/project-settings-client";
+import { UserRole } from "@/types/user";
+
+export default async function ProjectSettingsMembersPage({ params }: { params: Promise<{ projectId: string }> }) {
+	const { projectId } = await params;
+
+	const project = await getProject(projectId);
+
+	// Redirect members to account settings
+	if (project.role === UserRole.MEMBER) {
+		redirect(`/projects/${projectId}/settings/account`);
+	}
+
+	return <ProjectSettingsClient activeTab="members" initialProject={project} />;
+}
