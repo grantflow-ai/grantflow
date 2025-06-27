@@ -154,10 +154,10 @@ function ApplicationProgressBar({
 
 						return (
 							<div
+								aria-current={index === currentStepIndex ? "step" : undefined}
 								className={`${isLastStep ? "w-auto flex-initial" : "flex-1"} relative flex flex-col items-center`}
 								data-testid={`step-${index}`}
 								key={index}
-								aria-current={index === currentStepIndex ? "step" : undefined}
 							>
 								<div className={`flex items-center ${isLastStep ? "" : "w-full"} relative`}>
 									{(() => {
