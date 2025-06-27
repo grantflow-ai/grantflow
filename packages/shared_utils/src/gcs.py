@@ -180,14 +180,16 @@ async def create_signed_upload_url(
 
         blob = bucket.blob(blob_path)
 
+        headers = {}
         if correlation_id:
-            blob.metadata = {"correlation_id": correlation_id}
+            headers["x-goog-meta-correlation-id"] = correlation_id
 
         signed_url = await run_sync(
             lambda: blob.generate_signed_url(
                 version="v4",
                 expiration=ONE_MINUTE_SECONDS * 5,
                 method="PUT",
+                headers=headers if headers else None,
             )
         )
 

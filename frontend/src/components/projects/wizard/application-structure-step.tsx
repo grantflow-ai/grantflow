@@ -50,8 +50,13 @@ export function ApplicationStructureStep() {
 }
 
 function ApplicationStructurePreview() {
-	const { application, updateGrantSections } = useApplicationStore();
-	const { isGeneratingTemplate } = useWizardStore();
+	const { application, updateGrantSections } = useApplicationStore((state) => ({
+		application: state.application,
+		updateGrantSections: state.updateGrantSections,
+	}));
+	const { isGeneratingTemplate } = useWizardStore((state) => ({
+		isGeneratingTemplate: state.isGeneratingTemplate,
+	}));
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 

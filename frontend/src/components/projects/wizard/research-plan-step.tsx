@@ -28,8 +28,14 @@ import { useApplicationStore } from "@/stores/application-store";
 import { MAX_OBJECTIVES, type Objective, useWizardStore } from "@/stores/wizard-store";
 
 export function ResearchPlanStep() {
-	const { application } = useApplicationStore();
-	const { addNextObjective, handleObjectiveDragEnd, removeObjective } = useWizardStore();
+	const { application } = useApplicationStore((state) => ({
+		application: state.application,
+	}));
+	const { addNextObjective, handleObjectiveDragEnd, removeObjective } = useWizardStore((state) => ({
+		addNextObjective: state.addNextObjective,
+		handleObjectiveDragEnd: state.handleObjectiveDragEnd,
+		removeObjective: state.removeObjective,
+	}));
 	const objectives = application?.research_objectives ?? [];
 
 	const sensors: SensorDescriptor<SensorOptions>[] = useSensors(
