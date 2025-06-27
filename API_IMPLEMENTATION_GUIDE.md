@@ -71,77 +71,147 @@ Headers: Authorization: Bearer <token>
 
 ### 2. Enhanced Project APIs
 
-#### **GET /projects/{id}/collaborators**
-**Purpose:** Get team members for a project to display proper avatars
-**Frontend Integration:** Used by `AvatarGroup` in project cards and headers
+#### **GET /projects/{id}/members** ⚠️ **NEEDS IMPLEMENTATION**
+**Purpose:** Get team members for a project for members management page
+**Frontend Integration:** Used by `ProjectSettingsMembers` component
+**Backend Status:** **Missing - needs to be implemented**
 **Backend Implementation:** Uses Firebase Admin SDK to fetch user data on-demand
 
 ```typescript
 // Request
-GET /projects/{id}/collaborators
+GET /projects/{id}/members
 Headers: Authorization: Bearer <token>
 
 // Response
 {
-  "collaborators": [
+  "members": [
     {
-      "id": "uuid", // Firebase UID
+      "id": "firebase_uid", // Firebase UID from ProjectUser table
       "firebase_uid": "firebase_user_id", // Firebase user ID
       "initials": "NH", // Generated from display_name or email
       "full_name": "Naaman Hirschfeld", // From Firebase user.displayName
-      "display_name": "Naaman Hirschfeld", // From Firebase user.displayName
       "email": "naaman@example.com", // From Firebase user.email
       "email_verified": true, // From Firebase user.emailVerified
       "photo_url": "https://lh3.googleusercontent.com/...", // From Firebase user.photoURL
-      "role": "owner" | "admin" | "member", // From project_collaborators table
-      "avatar_color": "#369e94", // Generated or stored custom color
-      "provider_data": [ // From Firebase user.providerData
-        {
-          "provider_id": "google.com",
-          "uid": "google_user_id",
-          "display_name": "Naaman Hirschfeld",
-          "email": "naaman@example.com",
-          "photo_url": "https://lh3.googleusercontent.com/..."
-        }
-      ],
-      "last_sign_in": "2025-06-27T10:00:00Z", // From Firebase user.metadata.lastSignInTime
-      "created_at": "2025-06-01T10:00:00Z", // From Firebase user.metadata.creationTime
-      "joined_project_at": "2025-06-15T10:00:00Z", // From project_collaborators table
-      "invited_by": "inviter_user_id", // From project_collaborators table
-      "status": "active" | "pending" | "removed" // From project_collaborators table
+      "role": "owner" | "admin" | "member", // From ProjectUser.role
+      "joined_at": "2025-06-15T10:00:00Z", // From ProjectUser.created_at
+      "status": "active", // All ProjectUser records are active
+      "project_access": ["app1", "app2", "app3"] // Future: specific application access
     }
   ]
 }
 
 // Backend Implementation Notes:
-// 1. Query project_collaborators table for user IDs and roles
+// 1. Query ProjectUser table for firebase_uid and role WHERE project_id = ?
 // 2. Use Firebase Admin SDK to fetch user data: admin.auth().getUsers(uids)
-// 3. Merge Firebase user data with project role data
+// 3. Merge Firebase user data with ProjectUser role data
 // 4. Generate initials from displayName or email if displayName is null
 // 5. Cache Firebase user data for 15 minutes to reduce API calls
 // 6. Handle deleted/disabled Firebase users gracefully
+// 7. Only show to users with OWNER or ADMIN role
 ```
 
-#### **POST /projects/{id}/collaborators**
+#### **POST /projects/{id}/create-invitation-redirect-url** ✅ **ALREADY IMPLEMENTED**
 **Purpose:** Invite collaborators to a project
-**Frontend Integration:** Connected to invite button tooltip in dashboard header
+**Frontend Integration:** Used by invite modal in project settings members page
+**Backend Status:** **Already implemented** - uses existing invitation system
+
+```typescript
+// Request (already working)
+POST /projects/{id}/create-invitation-redirect-url
+{
+  "email": "user@example.com",
+  "role": "MEMBER" | "ADMIN", // Note: backend uses uppercase
+  "inviter_name": "John Doe",
+  "project_name": "My Project"
+}
+
+// Response (already working)
+{
+  "invitation_id": "uuid",
+  "redirect_url": "https://app.grantflow.ai/invitation/accept?token=..."
+}
+```
+
+#### **PATCH /projects/{id}/members/{firebase_uid}** ⚠️ **NEEDS IMPLEMENTATION**
+**Purpose:** Update collaborator role
+**Frontend Integration:** Called from Edit Permission modal in members management
+**Backend Status:** **Missing - needs to be implemented**
 
 ```typescript
 // Request
+PATCH /projects/{id}/members/{firebase_uid}
+Headers: Authorization: Bearer <token>
 {
-  "email": "user@example.com",
-  "role": "member" | "admin"
+  "role": "ADMIN" | "MEMBER" // Note: backend uses uppercase UserRoleEnum
 }
 
 // Response
 {
   "success": true,
-  "invitation_id": "uuid",
-  "invited_user": {
-    "email": "user@example.com",
-    "status": "pending" | "accepted"
+  "member": {
+    "firebase_uid": "firebase_uid",
+    "role": "MEMBER",
+    "updated_at": "2025-06-27T10:00:00Z"
   }
 }
+
+// Error Response (400)
+{
+  "error": "Insufficient permissions to update this member",
+  "message": "Only project owners can modify admin roles, and only owners/admins can modify member roles"
+}
+
+// Error Response (400)
+{
+  "error": "Cannot modify project owner",
+  "message": "Project owner role cannot be changed"
+}
+
+// Backend Implementation:
+// 1. Check requester permissions (only OWNER can change ADMIN, OWNER/ADMIN can change MEMBER)
+// 2. Prevent modifying OWNER role
+// 3. Update ProjectUser.role in database
+// 4. Return success response
+```
+
+#### **DELETE /projects/{id}/members/{firebase_uid}** ⚠️ **NEEDS IMPLEMENTATION**
+**Purpose:** Remove collaborator from project
+**Frontend Integration:** Called from member action menu "Remove from project"
+**Backend Status:** **Missing - needs to be implemented**
+
+```typescript
+// Request
+DELETE /projects/{id}/members/{firebase_uid}
+Headers: Authorization: Bearer <token>
+
+// Response
+{
+  "success": true,
+  "removed_member": {
+    "firebase_uid": "firebase_uid",
+    "email": "user@example.com",
+    "role": "MEMBER"
+  }
+}
+
+// Error Response (400)
+{
+  "error": "Cannot remove project owner",
+  "message": "Project owner cannot be removed from project"
+}
+
+// Error Response (400)
+{
+  "error": "Member not found",
+  "message": "User is not a member of this project"
+}
+
+// Backend Implementation:
+// 1. Check requester permissions (only OWNER can remove ADMIN, OWNER/ADMIN can remove MEMBER)
+// 2. Prevent removing OWNER
+// 3. Delete ProjectUser record from database
+// 4. Return success response with removed member info
 ```
 
 ### 3. Billing & Payment APIs (Stripe Integration)
@@ -1229,6 +1299,14 @@ Due to foreign key relationships, deletion order matters:
 ## 📋 Implementation Checklist
 
 ### Backend API Development
+- [ ] **Members Management APIs** ⚠️ **HIGH PRIORITY - FRONTEND READY**
+  - [ ] Implement `GET /projects/{id}/members` endpoint
+  - [ ] Implement `PATCH /projects/{id}/members/{firebase_uid}` endpoint
+  - [ ] Implement `DELETE /projects/{id}/members/{firebase_uid}` endpoint
+  - [ ] Add Firebase Admin SDK integration for user data resolution
+  - [ ] Add role-based permission checks (OWNER/ADMIN only)
+  - [ ] Add error handling for owner modification attempts
+  - ✅ Invitation system already implemented and working
 - [ ] **Firebase Admin SDK Integration**
   - [ ] Set up Firebase Admin SDK with service account credentials
   - [ ] Implement FirebaseUserService with caching (15-min TTL)
@@ -1243,11 +1321,6 @@ Due to foreign key relationships, deletion order matters:
   - [ ] Add creator filtering (created_by user ID)
   - [ ] Include Firebase user data resolution for created_by fields
   - [ ] Add database indexes for search performance
-- [ ] **Enhanced Collaborators API**
-  - [ ] Integrate Firebase Admin SDK for real user data
-  - [ ] Merge project role data with Firebase user info
-  - [ ] Handle deleted/disabled Firebase users gracefully
-  - [ ] Add avatar color generation and persistence
 - [ ] **User Account Management**
   - [ ] Implement user account soft delete endpoints (DELETE /user/account, POST /user/account/restore, GET /user/account/status)
   - [ ] Create background job for permanent deletion after grace period
@@ -1285,19 +1358,32 @@ Due to foreign key relationships, deletion order matters:
   - [ ] Add foreign key constraints with proper cascading
 
 ### Frontend Integration
-- [ ] Complete user account API actions (/src/actions/user.ts) - partially done
-- [ ] Add account status check on login
-- [ ] Implement warning banner for accounts pending deletion
-- [ ] Add restoration page for email links
-- [ ] Create notification API actions (/src/actions/notification.ts)
-- [ ] Create application API actions (/src/actions/application.ts)
-- [ ] Integrate real notification loading on app start
-- [ ] Connect dismiss notification to backend API
-- [ ] Update AvatarGroup to use real collaborator data
-- [ ] Add collaborator invitation flow
-- [ ] Connect project detail page to real application data
-- [ ] Implement create new application flow
-- [ ] Set up WebSocket connection for real-time notifications
+- ✅ **Members Management UI** - Complete and ready for backend APIs
+  - ✅ ProjectSettingsMembers component fully implemented
+  - ✅ EditPermissionModal component with role management
+  - ✅ Member action menu (edit permissions, remove member)
+  - ✅ Invitation flow integrated with existing backend API
+  - ✅ Role-based access control (OWNER/ADMIN see members tab)
+  - ✅ Mock data ready to be replaced with real API calls
+- [ ] **Connect Members Management to Backend APIs**
+  - [ ] Create `/src/actions/members.ts` for member management APIs
+  - [ ] Replace mock data in ProjectSettingsMembers with real API calls
+  - [ ] Implement real handleUpdateRole function
+  - [ ] Implement real handleRemoveMember function
+  - [ ] Add error handling and loading states
+- [ ] **Other Frontend Integration**
+  - [ ] Complete user account API actions (/src/actions/user.ts) - partially done
+  - [ ] Add account status check on login
+  - [ ] Implement warning banner for accounts pending deletion
+  - [ ] Add restoration page for email links
+  - [ ] Create notification API actions (/src/actions/notification.ts)
+  - [ ] Create application API actions (/src/actions/application.ts)
+  - [ ] Integrate real notification loading on app start
+  - [ ] Connect dismiss notification to backend API
+  - [ ] Update AvatarGroup to use real collaborator data
+  - [ ] Connect project detail page to real application data
+  - [ ] Implement create new application flow
+  - [ ] Set up WebSocket connection for real-time notifications
 
 ### Testing & Polish
 - [ ] Test notification creation and dismissal
