@@ -7,7 +7,6 @@ import {
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
 import { HTTPError } from "ky";
-import type { API } from "@/types/api-types";
 import { createProject, deleteProject, getProject, getProjects, updateProject } from "./project";
 
 const mockPost = vi.fn();
@@ -163,7 +162,7 @@ describe("Project Actions", () => {
 
 	describe("updateProject", () => {
 		it("should call the API with correct parameters", async () => {
-			const updateData = UpdateProjectRequestFactory.build() as API.UpdateProject.RequestBody;
+			const updateData = UpdateProjectRequestFactory.build();
 
 			const result = await updateProject(mockProjectId, updateData);
 
