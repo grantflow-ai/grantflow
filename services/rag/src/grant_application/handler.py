@@ -70,21 +70,21 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    # Use batch enrichment with optimal batch size for better performance
-    OPTIMAL_BATCH_SIZE = 3  # Testing with 3 objectives per batch
-    
+
+    optimal_batch_size = 3
+
     enrichment_responses = []
-    
-    # Process objectives in batches
-    for i in range(0, len(research_objectives), OPTIMAL_BATCH_SIZE):
-        batch = research_objectives[i:i + OPTIMAL_BATCH_SIZE]
-        logger.info("Processing batch of %d objectives (batch %d/%d)", 
-                   len(batch), 
-                   (i // OPTIMAL_BATCH_SIZE) + 1,
-                   (len(research_objectives) + OPTIMAL_BATCH_SIZE - 1) // OPTIMAL_BATCH_SIZE)
-        
+
+
+    for i in range(0, len(research_objectives), optimal_batch_size):
+        batch = research_objectives[i:i + optimal_batch_size]
+        logger.info("Processing batch of %d objectives (batch %d/%d)",
+                   len(batch),
+                   (i // optimal_batch_size) + 1,
+                   (len(research_objectives) + optimal_batch_size - 1) // optimal_batch_size)
+
         if len(batch) == 1:
-            # For single objectives, use individual enrichment
+
             response = await handle_enrich_objective(
                 application_id=application_id,
                 research_objective=batch[0],
@@ -93,7 +93,7 @@ async def generate_work_plan_text(
             )
             enrichment_responses.append(response)
         else:
-            # For multiple objectives, use batch enrichment
+
             batch_responses = await handle_batch_enrich_objectives(
                 application_id=application_id,
                 grant_section=work_plan_section,
@@ -163,7 +163,7 @@ async def generate_work_plan_text(
 
     total_objectives = len(research_objectives)
 
-    # Group objectives with their tasks for parallel processing
+
     objective_task_groups = []
     for count in range(1, total_objectives + 1):
         objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
@@ -177,12 +177,12 @@ async def generate_work_plan_text(
         notification_type="info",
     )
 
-    # Process all objectives in parallel
+
     async def generate_objective_with_tasks(
         objective: ResearchComponentGenerationDTO,
         tasks: list[ResearchComponentGenerationDTO]
     ) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
-        # Generate objective text
+
         research_objective_text = await generate_work_plan_component_text(
             application_id=application_id,
             component=objective,
@@ -190,7 +190,7 @@ async def generate_work_plan_text(
             form_inputs=form_inputs,
         )
 
-        # Generate all task texts in parallel
+
         research_task_texts = await gather(
             *[
                 generate_work_plan_component_text(
@@ -203,11 +203,11 @@ async def generate_work_plan_text(
             ]
         )
 
-        # Return objective and tasks with their generated text
+
         task_results = list(zip(tasks, research_task_texts, strict=True))
         return objective, research_objective_text, task_results
 
-    # Execute all objectives in parallel
+
     objective_results = await gather(
         *[
             generate_objective_with_tasks(objective, tasks)
@@ -215,7 +215,7 @@ async def generate_work_plan_text(
         ]
     )
 
-    # Assemble results in correct order
+
     for objective, objective_text, task_results in objective_results:
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
 
