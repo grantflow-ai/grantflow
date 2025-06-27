@@ -1,9 +1,0 @@
-{
-  "test_name": "test_embedding_generation_smoke",
-  "test_category": "smoke",
-  "performance": {
-    "execution_time": 2.283968210220337,
-    "within_threshold": true
-  },
-  "timestamp": "2025-06-19T14:46:22.358529+00:00"
-}
