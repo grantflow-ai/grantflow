@@ -90,18 +90,11 @@ export function ApplicationStructureFilePreview({
 
 export default function ApplicationStructureLeftPane() {
 	const application = useApplicationStore((state) => state.application);
-	const retrieveApplication = useApplicationStore((state) => state.retrieveApplication);
-	const checkForRagJobId = useWizardStore((state) => state.checkForRagJobId);
-	const checkTemplateRagJobStatus = useWizardStore((state) => state.checkTemplateRagJobStatus);
-	const grantTemplateRagJobData = useWizardStore((state) => state.grantTemplateRagJobData);
-	const polling = useWizardStore((state) => state.polling);
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 
 	const [visibleSteps, setVisibleSteps] = useState(0);
 
 	const parentId = application?.grant_template?.id;
-
-	const isGeneratingTemplate =
-		grantTemplateRagJobData?.status === "PROCESSING" || grantTemplateRagJobData?.status === "PENDING";
 
 	const templateFiles: FileWithId[] = useMemo(
 		() =>
@@ -121,25 +114,6 @@ export default function ApplicationStructureLeftPane() {
 				.map((source) => source.url!),
 		[application?.grant_template?.rag_sources],
 	);
-
-	useEffect(() => {
-		if (application?.grant_template?.rag_job_id) {
-			void checkTemplateRagJobStatus();
-		} else if (
-			application?.grant_template &&
-			!application.grant_template.grant_sections.length &&
-			!polling.isActive
-		) {
-			// Poll for rag_job_id if we have a grant template but no sections and no job ID yet
-			void checkForRagJobId();
-		}
-	}, [application?.grant_template, polling.isActive, checkTemplateRagJobStatus, checkForRagJobId]);
-
-	useEffect(() => {
-		if (grantTemplateRagJobData?.status === "COMPLETED" && application) {
-			void retrieveApplication(application.project_id, application.id);
-		}
-	}, [grantTemplateRagJobData?.status, application, retrieveApplication]);
 
 	usePollingCleanup();
 

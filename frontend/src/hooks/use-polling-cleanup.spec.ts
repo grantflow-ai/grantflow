@@ -14,6 +14,7 @@ describe("usePollingCleanup", () => {
 				start: vi.fn(),
 				stop: vi.fn(),
 			},
+			setGeneratingTemplate: vi.fn(),
 		});
 	});
 
@@ -27,26 +28,34 @@ describe("usePollingCleanup", () => {
 
 	it("should call stop on unmount", () => {
 		const stopSpy = vi.spyOn(useWizardStore.getState().polling, "stop");
+		const setGeneratingTemplateSpy = vi.spyOn(useWizardStore.getState(), "setGeneratingTemplate");
 		const { unmount } = renderHook(() => usePollingCleanup());
 
 		expect(stopSpy).not.toHaveBeenCalled();
+		expect(setGeneratingTemplateSpy).not.toHaveBeenCalled();
 
 		unmount();
 
 		expect(stopSpy).toHaveBeenCalledTimes(1);
+		expect(setGeneratingTemplateSpy).toHaveBeenCalledTimes(1);
+		expect(setGeneratingTemplateSpy).toHaveBeenCalledWith(false);
 	});
 
 	it("should handle multiple instances", () => {
 		const stopSpy = vi.spyOn(useWizardStore.getState().polling, "stop");
+		const setGeneratingTemplateSpy = vi.spyOn(useWizardStore.getState(), "setGeneratingTemplate");
 		const { unmount: unmount1 } = renderHook(() => usePollingCleanup());
 		const { unmount: unmount2 } = renderHook(() => usePollingCleanup());
 
 		expect(stopSpy).not.toHaveBeenCalled();
+		expect(setGeneratingTemplateSpy).not.toHaveBeenCalled();
 
 		unmount1();
 		expect(stopSpy).toHaveBeenCalledTimes(1);
+		expect(setGeneratingTemplateSpy).toHaveBeenCalledTimes(1);
 
 		unmount2();
 		expect(stopSpy).toHaveBeenCalledTimes(2);
+		expect(setGeneratingTemplateSpy).toHaveBeenCalledTimes(2);
 	});
 });

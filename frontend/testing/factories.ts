@@ -42,6 +42,7 @@ export const IdResponseFactory = new Factory<API.CreateProject.Http201.ResponseB
 }));
 
 export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.ResponseBody[0]>((factory) => ({
+	applications_count: factory.number.int({ max: 10, min: 0 }),
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	id: factory.string.uuid(),
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,

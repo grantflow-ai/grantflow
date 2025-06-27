@@ -23,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
+import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
@@ -40,6 +41,7 @@ export default function Login() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
+	const { setUser } = useUserStore();
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",
@@ -49,9 +51,19 @@ export default function Login() {
 		setSocialSignInError(null);
 
 		try {
-			const { idToken, isNewUser } = await signInMethod();
+			const { idToken, isNewUser, user } = await signInMethod();
 
 			if (!isNewUser) {
+				// Store user info in the user store
+				setUser({
+					displayName: user.displayName,
+					email: user.email,
+					emailVerified: user.emailVerified,
+					photoURL: user.photoURL,
+					providerId: user.providerData[0]?.providerId,
+					uid: user.uid,
+				});
+
 				await login(idToken);
 				return;
 			}
