@@ -15,7 +15,7 @@ export enum WizardStep {
 
 export const WIZARD_STEP_TITLES = [
 	WizardStep.APPLICATION_DETAILS,
-	WizardStep.APPLICATION_STRUCTURE,
+	WizardStep.PREVIEW_AND_APPROVE,
 	WizardStep.KNOWLEDGE_BASE,
 	WizardStep.RESEARCH_PLAN,
 	WizardStep.RESEARCH_DEEP_DIVE,

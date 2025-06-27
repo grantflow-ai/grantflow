@@ -52,7 +52,7 @@ export function UrlInput({ parentId }: { parentId?: string }) {
 	return (
 		<AppInput
 			errorMessage={urlError}
-			icon={<IconGlobe />}
+			icon={<IconGlobe className="text-input-icon" />}
 			id="url-input"
 			label="URL"
 			onChange={(e) => {
