@@ -13,14 +13,6 @@ export enum WizardStep {
 	RESEARCH_PLAN = "Research Plan",
 }
 
-export const WIZARD_STEP_TITLES = [
-	WizardStep.APPLICATION_DETAILS,
-	WizardStep.PREVIEW_AND_APPROVE,
-	WizardStep.KNOWLEDGE_BASE,
-	WizardStep.RESEARCH_PLAN,
-	WizardStep.RESEARCH_DEEP_DIVE,
-	WizardStep.GENERATE_AND_COMPLETE,
-] as const;
 export const PROGRESS_BAR_STEPS = [
 	WizardStep.APPLICATION_DETAILS,
 	WizardStep.PREVIEW_AND_APPROVE,
