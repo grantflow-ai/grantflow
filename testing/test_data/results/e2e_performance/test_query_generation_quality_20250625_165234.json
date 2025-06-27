@@ -1,9 +1,0 @@
-{
-  "test_name": "test_query_generation_quality",
-  "test_category": "quality_assessment",
-  "performance": {
-    "execution_time": 6.166004180908203,
-    "within_threshold": true
-  },
-  "timestamp": "2025-06-25T16:52:34.422494+00:00"
-}
