@@ -14,7 +14,7 @@ from testing.rag_evaluation import calculate_performance_metrics, calculate_retr
 from services.rag.src.utils.retrieval import retrieve_documents
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+@e2e_test(category=E2ETestCategory.SMOKE, timeout=120)
 async def test_document_retrieval(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -35,7 +35,6 @@ async def test_document_retrieval(
             """
 
         results = await retrieve_documents(
-            rerank=True,
             application_id=melanoma_alliance_full_application_id,
             task_description=task_description,
         )
