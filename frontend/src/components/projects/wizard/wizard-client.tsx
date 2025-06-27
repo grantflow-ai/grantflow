@@ -47,9 +47,9 @@ export function WizardClientComponent({ application: initialApplication, project
 				key="Application Details"
 			/>
 		),
-		"Application Structure": <ApplicationStructureStep key="Application Structure" />,
 		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
+		"Preview and Approve": <ApplicationStructureStep key="Preview and Approve" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
 		"Research Plan": <ResearchPlanStep key="Research Plan" />,
 	};

@@ -17,7 +17,6 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
-	WizardStep.APPLICATION_STRUCTURE,
 	WizardStep.PREVIEW_AND_APPROVE,
 	WizardStep.KNOWLEDGE_BASE,
 	WizardStep.RESEARCH_PLAN,
@@ -43,7 +42,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 		);
 	}
 
-	const lineClass = type === "done" ? "bg-primary" : "bg-muted";
+	const lineClass = type === "done" ? "bg-action-primary" : "bg-app-gray-300";
 
 	return (
 		<div className="relative flex w-full flex-row items-center" data-testid={`step-${type}`}>
@@ -64,11 +63,11 @@ export function WizardFooter() {
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const disabled = !validateStepNext();
-	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
+	const backDisabled = currentStep === WizardStep.PREVIEW_AND_APPROVE && isGeneratingTemplate;
 
 	return (
 		<footer
-			className="border-app-lavender-gray relative flex h-auto w-full items-center justify-between border-t bg-white p-6"
+			className="relative flex h-auto w-full items-center justify-between border-t border-border-primary bg-surface-primary p-6"
 			data-testid="wizard-footer"
 		>
 			{showBack ? (
@@ -113,6 +112,7 @@ export function WizardHeader() {
 	const reset = useWizardStore((state) => state.reset);
 	const application = useApplicationStore((state) => state.application);
 	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
+	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
 
 	const handleExit = () => {
 		reset();
@@ -124,12 +124,15 @@ export function WizardHeader() {
 	};
 
 	return (
-		<header className="w-full border-b border-solid border-app-gray-100 p-4 sm:p-6" data-testid="wizard-header">
+		<header className="w-full border-b border-solid border-border-primary p-4 sm:p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
 					{showHeaderInfo ? (
 						<>
-							<h1 className="text-sm sm:text-base text-nowrap font-medium" data-testid="app-name">
+							<h1
+								className="text-sm sm:text-base text-nowrap font-medium text-text-primary"
+								data-testid="app-name"
+							>
 								{application?.title}
 							</h1>
 							<Deadline />
@@ -139,13 +142,13 @@ export function WizardHeader() {
 					)}
 				</div>
 				<AppButton
-					className="py-0 text-sm sm:text-base text-primary"
+					className="py-0 text-sm sm:text-base text-action-primary"
 					data-testid="exit-button"
 					onClick={handleExit}
 					size="lg"
 					variant="link"
 				>
-					Exit
+					{isFirstStep ? "Exit" : "Save and Exit"}
 				</AppButton>
 			</div>
 			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
@@ -196,10 +199,10 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 											aria-hidden="true"
 											className={`font-heading text-center text-xs max-w-full truncate ${(() => {
 												if (index < currentStepIndex) {
-													return "text-secondary";
+													return "text-text-secondary";
 												}
 												if (index === currentStepIndex) {
-													return "text-primary";
+													return "text-action-primary";
 												}
 												return "text-app-gray-400";
 											})()}`}
@@ -222,7 +225,7 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 function Deadline() {
 	return (
 		<div
-			className="rounded-xs bg-app-lavender-gray relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm"
+			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
 			data-testid="deadline-component"
 		>
 			<IconDeadline />
@@ -237,7 +240,7 @@ function Deadline() {
 }
 
 function generateFooterRightButtonProps(currentStep: WizardStep) {
-	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
+	const isApproveStep = currentStep === WizardStep.PREVIEW_AND_APPROVE;
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	return {
