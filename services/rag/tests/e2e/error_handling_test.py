@@ -1,3 +1,4 @@
+import importlib.util
 import logging
 from typing import Any
 from uuid import uuid4
@@ -126,6 +127,9 @@ async def test_search_query_generation_edge_cases(logger: logging.Logger) -> Non
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=120)
+@pytest.mark.skipif(
+    not any(importlib.util.find_spec(mod) for mod in ["psutil"]), reason="psutil not available in CI environment"
+)
 async def test_memory_usage_with_large_retrieval(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],

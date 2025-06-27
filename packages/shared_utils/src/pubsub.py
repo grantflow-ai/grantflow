@@ -84,7 +84,10 @@ def get_pubsub_credentials() -> Credentials | None:
 def get_publisher_client() -> pubsub.PublisherClient:
     if not client_ref.value:
         credentials = get_pubsub_credentials()
-        client = pubsub.PublisherClient(credentials=credentials)
+        if credentials:
+            client = pubsub.PublisherClient(credentials=credentials)
+        else:
+            client = pubsub.PublisherClient()
         client_ref.value = client
 
     return client_ref.value
@@ -93,7 +96,10 @@ def get_publisher_client() -> pubsub.PublisherClient:
 def get_subscriber_client() -> pubsub.SubscriberClient:
     if not subscriber_client_ref.value:
         credentials = get_pubsub_credentials()
-        client = pubsub.SubscriberClient(credentials=credentials)
+        if credentials:
+            client = pubsub.SubscriberClient(credentials=credentials)
+        else:
+            client = pubsub.SubscriberClient()
         subscriber_client_ref.value = client
 
     return subscriber_client_ref.value
