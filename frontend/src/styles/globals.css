@@ -61,6 +61,15 @@
 	--color-app-gray-700: var(--app-gray-700);
 	--color-app-lavender-gray: var(--app-lavender-gray);
 
+	/* Semantic color mappings for Tailwind */
+	--color-surface-primary: var(--app-surface-primary);
+	--color-surface-secondary: var(--app-surface-secondary);
+	--color-text-primary: var(--app-text-primary);
+	--color-text-secondary: var(--app-text-secondary);
+	--color-border-primary: var(--app-border-primary);
+	--color-action-primary: var(--app-action-primary);
+	--color-action-secondary: var(--app-action-secondary);
+
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -114,6 +123,15 @@
 	--app-lavender-gray: oklch(0.9462 0.0254 268.85); /* #E6EDFF */
 	--app-popup-cover: oklch(41.33% 0.07 278.62deg); /* #3F3B67 */
 	--app-light-gray: oklch(0.9609 0.012 247.95); /* #ecf3fa */
+
+	/* Application semantic colors */
+	--app-surface-primary: oklch(1 0 0); /* #FFFFFF - white surfaces */
+	--app-surface-secondary: oklch(0.9661 0.0067 268.43); /* #F6F5F9 - light background surfaces */
+	--app-text-primary: oklch(0.3 0.0161 290.5); /* #2E2D36 - primary text */
+	--app-text-secondary: oklch(0.5 0.0237 291.64); /* #636170 - secondary text */
+	--app-border-primary: oklch(0.9087 0.0163 293.73); /* #E1DFEB - primary borders */
+	--app-action-primary: oklch(0.46 0.2976 266.95); /* #1E13F8 - primary action buttons */
+	--app-action-secondary: oklch(0.51 0.1638 275.91); /* #4945B8 - secondary action buttons */
 
 	--background-dark: var(--app-dark-blue);
 	--background-light: oklch(1 0 0);
