@@ -199,6 +199,7 @@ async def handle_batch_enrich_objectives(
     grant_section: GrantLongFormSection,
     research_objectives: list[ResearchObjective],
     form_inputs: ResearchDeepDive,
+    enrichment_rag_results: str | None = None,
 ) -> list[ObjectiveEnrichmentDTO]:
     """Batch enrich all objectives in a single LLM call with shared retrieval."""
 
@@ -216,14 +217,17 @@ async def handle_batch_enrich_objectives(
     )
 
 
-    logger.info("Starting batch retrieval for %d objectives", len(research_objectives))
-    enrichment_rag_results = await retrieve_documents(
-        application_id=application_id,
-        search_queries=grant_section["search_queries"],
-        task_description=str(enrichment_prompt),
-        max_tokens=2000,
-    )
-    logger.info("Retrieved %d documents for batch enrichment", len(enrichment_rag_results))
+    if enrichment_rag_results is None:
+        logger.info("Starting batch retrieval for %d objectives", len(research_objectives))
+        enrichment_rag_results = await retrieve_documents(
+            application_id=application_id,
+            search_queries=grant_section["search_queries"],
+            task_description=str(enrichment_prompt),
+            max_tokens=2000,
+        )
+        logger.info("Retrieved %d documents for batch enrichment", len(enrichment_rag_results))
+    else:
+        logger.info("Using pre-retrieved results for batch enrichment")
 
 
     prompt_with_rag = enrichment_prompt.to_string(rag_results=enrichment_rag_results)

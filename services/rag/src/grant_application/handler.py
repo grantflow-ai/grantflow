@@ -21,11 +21,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
-from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
-from services.rag.src.grant_application.enrich_research_objective import handle_enrich_objective
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
+from services.rag.src.grant_application.optimized_batch_enrichment import handle_optimized_batch_enrichment
 from services.rag.src.grant_application.utils import (
     create_dependencies_text,
     create_generation_groups,
@@ -71,36 +70,13 @@ async def generate_work_plan_text(
     )
 
 
-    optimal_batch_size = 3
-
-    enrichment_responses = []
-
-
-    for i in range(0, len(research_objectives), optimal_batch_size):
-        batch = research_objectives[i:i + optimal_batch_size]
-        logger.info("Processing batch of %d objectives (batch %d/%d)",
-                   len(batch),
-                   (i // optimal_batch_size) + 1,
-                   (len(research_objectives) + optimal_batch_size - 1) // optimal_batch_size)
-
-        if len(batch) == 1:
-
-            response = await handle_enrich_objective(
-                application_id=application_id,
-                research_objective=batch[0],
-                grant_section=work_plan_section,
-                form_inputs=form_inputs,
-            )
-            enrichment_responses.append(response)
-        else:
-
-            batch_responses = await handle_batch_enrich_objectives(
-                application_id=application_id,
-                grant_section=work_plan_section,
-                research_objectives=batch,
-                form_inputs=form_inputs,
-            )
-            enrichment_responses.extend(batch_responses)
+    
+    enrichment_responses = await handle_optimized_batch_enrichment(
+        application_id=application_id,
+        grant_section=work_plan_section,
+        research_objectives=research_objectives,
+        form_inputs=form_inputs,
+    )
 
     await job_manager.add_notification(
         parent_id=UUID(application_id),
