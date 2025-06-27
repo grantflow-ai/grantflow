@@ -21,40 +21,37 @@ export function DashboardHeader({ onCreateProject, onInviteCollaborators }: Dash
 		<div className="relative h-[73px] w-full shrink-0">
 			<div className="relative flex size-full flex-row items-center justify-end px-6">
 				<div className="relative flex h-[73px] w-full flex-row items-center justify-end gap-6 py-6">
-					<div className="relative flex shrink-0 flex-row items-center justify-start gap-1">
+					<div className="relative flex shrink-0 flex-row items-center justify-start gap-3">
+						<button
+							className="flex h-12 items-center gap-2 rounded-lg bg-action-secondary px-4 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-action-secondary/90 font-button"
+							onClick={onInviteCollaborators}
+							type="button"
+						>
+							Invite collaborators
+						</button>
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<button
-									className="relative shrink-0 size-8 rounded-sm bg-[#f6f5f9]"
+									className="relative shrink-0 size-8 rounded-sm bg-surface-secondary flex items-center justify-center"
 									onClick={onInviteCollaborators}
 									type="button"
 								>
-									<div className="flex size-full flex-row items-center justify-center">
-										<div className="flex size-8 flex-row items-center justify-center gap-1 p-1">
-											<div className="relative shrink-0 size-4">
-												<Plus className="size-4" />
-											</div>
-										</div>
-									</div>
+									<Plus className="size-4 text-text-secondary" />
 								</button>
 							</TooltipTrigger>
 							<TooltipContent>
-								<p>Invite collaborators</p>
+								<p>Add collaborator</p>
 							</TooltipContent>
 						</Tooltip>
 						<AvatarGroup size="md" users={teamMembers} />
 					</div>
-					<button className="relative shrink-0 rounded bg-[#1e13f8]" onClick={onCreateProject} type="button">
-						<div className="flex size-full flex-row items-center justify-center">
-							<div className="flex flex-row items-center justify-center gap-1 px-4 py-2">
-								<div className="relative shrink-0 size-4">
-									<Plus className="size-4 text-white" />
-								</div>
-								<div className="relative flex shrink-0 flex-col justify-center whitespace-nowrap text-[16px] font-normal leading-[0] text-white font-['Sora']">
-									<p className="block whitespace-pre leading-[22px]">New Research Project</p>
-								</div>
-							</div>
-						</div>
+					<button
+						className="flex h-12 items-center gap-2 rounded-lg bg-action-primary px-4 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-action-primary/90 font-button"
+						onClick={onCreateProject}
+						type="button"
+					>
+						<Plus className="size-4 text-white" />
+						New Research Project
 					</button>
 				</div>
 			</div>

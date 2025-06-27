@@ -1,0 +1,80 @@
+{
+  "test_name": "enrichment_baseline_smoke",
+  "test_category": "optimization",
+  "timestamp": "2025-06-28T00:31:29.064716",
+  "test_id": "25372326-d9f1-4085-854c-4abf48115db8",
+  "configuration": {
+    "test_type": "smoke",
+    "objectives_count": 2
+  },
+  "total_duration_seconds": 0.050389,
+  "total_duration_minutes": 0.0008398166666666667,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 71.2,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 0,
+    "total_words": 0,
+    "total_lines": 1,
+    "section_count": 1,
+    "avg_chars_per_section": 0.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": false,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [],
+    "content_richness_score": 0.0,
+    "structure_quality_score": 0.0,
+    "completeness_score": 20.0,
+    "overall_quality_score": 4.0,
+    "meets_min_length": false,
+    "meets_min_sections": false,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "optimization"
+  },
+  "errors_encountered": [
+    "DBAPIError: (sqlalchemy.dialects.postgresql.asyncpg.Error) <class 'asyncpg.exceptions.DataError'>: invalid input for query argument $1: 'smoke-test' (invalid UUID 'smoke-test': length must be between 32..36 characters, got 10)\n[SQL: SELECT text_vectors.chunk, text_vectors.embedding, text_vectors.rag_source_id, text_vectors.id, text_vectors.created_at, text_vectors.updated_at \nFROM text_vectors JOIN rag_sources ON text_vectors.rag_source_id = rag_sources.id JOIN grant_application_rag_sources ON rag_sources.id = grant_application_rag_sources.rag_source_id \nWHERE grant_application_rag_sources.grant_application_id = $1::UUID AND (text_vectors.embedding <=> $2) <= $3::FLOAT ORDER BY least(text_vectors.embedding <=> $4) \n LIMIT $5::INTEGER]\n[parameters: ('smoke-test', '[0.06714054942131042,0.09696823358535767,-0.05328105017542839,0.009602534584701061,-0.08235880732536316,0.03494792804121971,0.03034139983355999,-0.00 ... (7735 characters truncated) ... 03,-0.04491265118122101,-0.027338150888681412,-0.012680076994001865,0.0862622931599617,0.011456895619630814,-0.06779883801937103,0.02941635064780712]', 0.4, '[0.06714054942131042,0.09696823358535767,-0.05328105017542839,0.009602534584701061,-0.08235880732536316,0.03494792804121971,0.03034139983355999,-0.00 ... (7735 characters truncated) ... 03,-0.04491265118122101,-0.027338150888681412,-0.012680076994001865,0.0862622931599617,0.011456895619630814,-0.06779883801937103,0.02941635064780712]', 100)]\n(Background on this error at: https://sqlalche.me/e/20/dbapi)"
+  ],
+  "warnings": []
+}

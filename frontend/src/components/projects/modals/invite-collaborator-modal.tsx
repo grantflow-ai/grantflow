@@ -46,18 +46,18 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				{/* Header */}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<h2 className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]">
+						<h2 className="font-heading font-medium text-[24px] leading-[30px] text-text-primary">
 							Invite New Collaborator
 						</h2>
 						<button
-							className="absolute right-4 top-4 flex size-4 items-center justify-center text-[#636170] hover:text-[#2e2d36]"
+							className="absolute right-4 top-4 flex size-4 items-center justify-center text-text-secondary hover:text-text-primary"
 							onClick={handleClose}
 							type="button"
 						>
 							<X className="size-4" />
 						</button>
 					</div>
-					<p className="font-['Source_Sans_Pro'] text-[16px] leading-[20px] text-[#636170] w-[360px]">
+					<p className="font-body text-[16px] leading-[20px] text-text-secondary w-[360px]">
 						Invite new collaborator and set up collaborator role.
 					</p>
 				</div>
@@ -67,14 +67,14 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 					{/* Email Input */}
 					<div className="flex flex-col gap-1">
 						<label
-							className="font-['Source_Sans_Pro'] text-[12px] leading-[14px] text-[#aaa8b9]"
+							className="font-body text-[12px] leading-[14px] text-app-gray-400"
 							htmlFor="collaborator-email"
 						>
 							Email address
 						</label>
 						<div className="relative flex items-center">
 							<input
-								className="w-full h-10 pl-3 pr-10 border border-[#e1dfeb] rounded bg-white font-['Source_Sans_Pro'] text-[14px] text-[#636170] placeholder-[#aaa8b9] outline-none focus:border-[#1e13f8]"
+								className="w-full h-10 pl-3 pr-10 border border-border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary placeholder-app-gray-400 outline-none focus:border-action-primary"
 								id="collaborator-email"
 								onChange={(e) => {
 									setEmail(e.target.value);
@@ -83,21 +83,21 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 								type="email"
 								value={email}
 							/>
-							<Mail className="absolute right-3 size-4 text-[#aaa8b9]" />
+							<Mail className="absolute right-3 size-4 text-app-gray-400" />
 						</div>
 					</div>
 
 					{/* Permission Dropdown */}
 					<div className="flex flex-col gap-1">
 						<label
-							className="font-['Source_Sans_Pro'] text-[12px] leading-[14px] text-[#aaa8b9]"
+							className="font-body text-[12px] leading-[14px] text-app-gray-400"
 							htmlFor="collaborator-permission"
 						>
 							Permission
 						</label>
 						<div className="relative">
 							<button
-								className="w-full h-10 px-3 border border-[#1e13f8] rounded bg-white font-['Source_Sans_Pro'] text-[14px] text-[#636170] text-left flex items-center justify-between outline-none"
+								className="w-full h-10 px-3 border border-action-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary text-left flex items-center justify-between outline-none"
 								id="collaborator-permission"
 								onClick={() => {
 									setIsDropdownOpen(!isDropdownOpen);
@@ -110,17 +110,17 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 										: "Admin (can access all research projects)"}
 								</span>
 								{isDropdownOpen ? (
-									<ChevronUp className="size-4 text-[#636170]" />
+									<ChevronUp className="size-4 text-text-secondary" />
 								) : (
-									<ChevronDown className="size-4 text-[#636170]" />
+									<ChevronDown className="size-4 text-text-secondary" />
 								)}
 							</button>
 
 							{/* Dropdown Menu */}
 							{isDropdownOpen && (
-								<div className="absolute top-full left-0 right-0 mt-[-1px] bg-white border border-[#e1dfeb] rounded shadow-lg z-10">
+								<div className="absolute top-full left-0 right-0 mt-[-1px] bg-surface-primary border border-border-primary rounded shadow-lg z-10">
 									<button
-										className="w-full px-3 py-3 text-left font-['Source_Sans_Pro'] text-[16px] leading-[20px] text-[#2e2d36] hover:bg-[#faf9fb] transition-colors"
+										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-text-primary hover:bg-surface-secondary transition-colors"
 										onClick={() => {
 											setPermission("admin");
 											setIsDropdownOpen(false);
@@ -130,7 +130,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 										Admin (can access all research projects)
 									</button>
 									<button
-										className="w-full px-3 py-3 text-left font-['Source_Sans_Pro'] text-[16px] leading-[20px] text-[#2e2d36] hover:bg-[#faf9fb] transition-colors"
+										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-text-primary hover:bg-surface-secondary transition-colors"
 										onClick={() => {
 											setPermission("collaborator");
 											setIsDropdownOpen(false);
@@ -148,14 +148,14 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				{/* Buttons */}
 				<div className="flex items-center justify-between">
 					<button
-						className="px-4 py-2 border border-[#1e13f8] rounded bg-white font-['Sora'] text-[16px] leading-[22px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors"
+						className="px-4 py-2 border border-action-primary rounded bg-surface-primary font-button text-[16px] leading-[22px] text-action-primary hover:bg-surface-secondary transition-colors"
 						onClick={handleClose}
 						type="button"
 					>
 						Cancel
 					</button>
 					<button
-						className="px-4 py-2 bg-[#1e13f8] rounded font-['Sora'] text-[16px] leading-[22px] text-white hover:bg-[#1710d4] transition-colors disabled:opacity-50"
+						className="px-4 py-2 bg-action-primary rounded font-button text-[16px] leading-[22px] text-white hover:bg-action-primary/90 transition-colors disabled:opacity-50"
 						disabled={!email || isSubmitting}
 						onClick={handleSubmit}
 						type="button"
