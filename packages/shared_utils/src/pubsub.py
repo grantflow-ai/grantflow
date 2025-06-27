@@ -6,6 +6,7 @@ import google.cloud.pubsub_v1 as pubsub
 import msgspec
 from google.api_core.exceptions import AlreadyExists
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
+from google.oauth2.service_account import Credentials
 
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.shared_utils.src.env import get_env
@@ -67,9 +68,23 @@ class WebsocketMessage[T](TypedDict):
     data: T
 
 
+def get_pubsub_credentials() -> Credentials | None:
+    """Get credentials for Pub/Sub clients."""
+    try:
+        credentials_json = get_env("LLM_SERVICE_ACCOUNT_CREDENTIALS", fallback=None)
+        if not credentials_json:
+            return None
+
+        credentials_data = deserialize(credentials_json, dict[str, Any])
+        return Credentials.from_service_account_info(credentials_data)  # type: ignore[no-any-return, no-untyped-call]
+    except Exception:
+        return None
+
+
 def get_publisher_client() -> pubsub.PublisherClient:
     if not client_ref.value:
-        client = pubsub.PublisherClient()
+        credentials = get_pubsub_credentials()
+        client = pubsub.PublisherClient(credentials=credentials)
         client_ref.value = client
 
     return client_ref.value
@@ -77,7 +92,8 @@ def get_publisher_client() -> pubsub.PublisherClient:
 
 def get_subscriber_client() -> pubsub.SubscriberClient:
     if not subscriber_client_ref.value:
-        client = pubsub.SubscriberClient()
+        credentials = get_pubsub_credentials()
+        client = pubsub.SubscriberClient(credentials=credentials)
         subscriber_client_ref.value = client
 
     return subscriber_client_ref.value
