@@ -79,8 +79,7 @@ export default function WelcomeModal() {
 												>
 													<Check className="size-[7px] stroke-[5] text-white" />
 												</motion.div>
-											) : // eslint-disable-next-line sonarjs/no-nested-conditional
-											index === step ? (
+											) : index === step ? (
 												<motion.div
 													animate="active"
 													className="size-[3.5px] rounded-full bg-primary"
@@ -111,8 +110,7 @@ export default function WelcomeModal() {
 													key={`line-${index}`}
 													transition={{ duration: 0.8, ease: "easeInOut" }}
 												/>
-											) : // eslint-disable-next-line sonarjs/no-nested-conditional
-											index < step - 1 ? (
+											) : index < step - 1 ? (
 												<div className="absolute left-0 top-0 size-full bg-primary" />
 											) : null}
 										</div>
@@ -128,8 +126,7 @@ export default function WelcomeModal() {
 									className={`text-[11px] font-semibold ${
 										index < step - 1
 											? "text-app-dark-blue"
-											: // eslint-disable-next-line sonarjs/no-nested-conditional
-												index === step - 1
+											: index === step - 1
 												? "text-primary"
 												: "text-gray-400"
 									}`}
@@ -172,10 +169,22 @@ export default function WelcomeModal() {
 					</DialogDescription>
 				</section>
 				<footer className="flex w-full items-center justify-between px-10">
-					<AppButton variant="secondary" onClick={() => setOpen(false)} className="w-28  px-4 py-2 ">
+					<AppButton
+						className="w-28  px-4 py-2 "
+						onClick={() => {
+							setOpen(false);
+						}}
+						variant="secondary"
+					>
 						Later
 					</AppButton>
-					<AppButton className="  px-4 py-2 " variant="primary" onClick={() => setOpen(false)}>
+					<AppButton
+						className="  px-4 py-2 "
+						onClick={() => {
+							setOpen(false);
+						}}
+						variant="primary"
+					>
 						Start New Application
 					</AppButton>
 				</footer>
