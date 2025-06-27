@@ -22,7 +22,7 @@ import {
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
-import { logError } from "@/utils/logging";
+import { logError, logTrace } from "@/utils/logging";
 import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
@@ -311,19 +311,31 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		assertIsNotNullish(application, {
 			message: "Application should not be null when calling generateTemplate",
 		});
+
 		try {
-			await withRetry(() => generateGrantTemplate(application.project_id, application.id, templateId), {
-				initialDelay: 1000,
-				maxRetries: 3,
-				retryCondition: (error: unknown) => {
-					if (error instanceof HTTPError) {
-						const { status } = error.response;
-						// Don't retry on validation errors (422) or other client errors
-						// But do retry on server errors (500+)
-						return status >= 500;
-					}
-					return true;
+			const correlationId = await withRetry(
+				() => generateGrantTemplate(application.project_id, application.id, templateId),
+				{
+					initialDelay: 1000,
+					maxRetries: 3,
+					retryCondition: (error: unknown) => {
+						if (error instanceof HTTPError) {
+							const { status } = error.response;
+							// Don't retry on validation errors (422) or other client errors
+							// But do retry on server errors (500+)
+							return status >= 500;
+						}
+						return true;
+					},
 				},
+			);
+
+			// Log correlation ID for tracking across services
+			logTrace("info", "Grant template generation initiated", {
+				application_id: application.id,
+				correlation_id: correlationId,
+				project_id: application.project_id,
+				template_id: templateId,
 			});
 		} catch (error: unknown) {
 			if (error instanceof HTTPError && error.response.status === 422) {

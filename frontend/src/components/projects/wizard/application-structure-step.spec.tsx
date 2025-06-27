@@ -204,6 +204,7 @@ describe("ApplicationStructureStep", () => {
 
 			useWizardStore.setState({
 				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+				isGeneratingTemplate: true,
 			});
 
 			render(<ApplicationStructureStep />);
@@ -220,6 +221,7 @@ describe("ApplicationStructureStep", () => {
 
 			useWizardStore.setState({
 				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PENDING" }),
+				isGeneratingTemplate: true,
 			});
 
 			render(<ApplicationStructureStep />);
@@ -236,6 +238,7 @@ describe("ApplicationStructureStep", () => {
 
 			useWizardStore.setState({
 				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
+				isGeneratingTemplate: false,
 			});
 
 			render(<ApplicationStructureStep />);
@@ -247,6 +250,7 @@ describe("ApplicationStructureStep", () => {
 		it("changes description text during generation", () => {
 			useWizardStore.setState({
 				grantTemplateRagJobData: RagJobResponseFactory.build({ status: "PROCESSING" }),
+				isGeneratingTemplate: true,
 			});
 
 			render(<ApplicationStructureStep />);
@@ -257,6 +261,10 @@ describe("ApplicationStructureStep", () => {
 		});
 
 		it("shows normal description text when not generating", () => {
+			useWizardStore.setState({
+				isGeneratingTemplate: false,
+			});
+
 			render(<ApplicationStructureStep />);
 
 			const description = screen.getByTestId("application-structure-description");

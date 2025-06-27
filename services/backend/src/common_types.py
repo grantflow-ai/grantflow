@@ -12,6 +12,7 @@ class TableIdResponse(TypedDict):
 
 class APIRequestState(State):
     session_maker: async_sessionmaker[Any]
+    correlation_id: str | None = None
 
 
 APIRequest = Request[UserRoleEnum | None, str | None, APIRequestState]

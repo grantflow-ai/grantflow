@@ -68,6 +68,7 @@ interface WizardActions {
 	removeTask: (objectiveNumber: number, taskNumber: number) => void;
 	reorderObjectives: (objectives: Objective[]) => void;
 	reset: () => void;
+	setGeneratingTemplate: (isGenerating: boolean) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	validateStepNext: () => boolean;
@@ -76,12 +77,14 @@ interface WizardActions {
 interface WizardState {
 	currentStep: WizardStep;
 	grantTemplateRagJobData: API.RetrieveRagJob.Http200.ResponseBody | null;
+	isGeneratingTemplate: boolean;
 	polling: PollingState;
 }
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
 	grantTemplateRagJobData: null,
+	isGeneratingTemplate: false,
 	polling: {
 		intervalId: null,
 		isActive: false,
@@ -387,11 +390,19 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					set({
 						currentStep: initialWizardState.currentStep,
 						grantTemplateRagJobData: initialWizardState.grantTemplateRagJobData,
+						isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
 						polling: {
 							...currentState.polling,
 							...initialWizardState.polling,
 						},
 					});
+				},
+
+				setGeneratingTemplate: (isGenerating: boolean) => {
+					set((state) => ({
+						...state,
+						isGeneratingTemplate: isGenerating,
+					}));
 				},
 
 				toNextStep: () => {
@@ -420,8 +431,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				toPreviousStep: () => {
-					const { currentStep, polling } = get();
+					const { currentStep, isGeneratingTemplate, polling } = get();
 					const currentIndex = WIZARD_STEP_TITLES.indexOf(currentStep);
+
+					// Prevent going back during template generation
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
+						return;
+					}
 
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
@@ -434,10 +450,15 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				validateStepNext: (): boolean => {
-					const { currentStep } = get();
+					const { currentStep, isGeneratingTemplate } = get();
 					const { application } = useApplicationStore.getState();
 
 					if (!application) {
+						return false;
+					}
+
+					// Disable navigation during template generation for APPLICATION_STRUCTURE step
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return false;
 					}
 

@@ -28,7 +28,17 @@ class JobManager:
 
     async def create_grant_template_job(self, grant_template_id: UUID, total_stages: int) -> GrantTemplateGenerationJob:
         """Create a new grant template generation job or return existing one."""
+        logger.debug(
+            "Attempting to create grant template job",
+            template_id=str(grant_template_id),
+            total_stages=total_stages,
+        )
+
         async with self.session_maker() as session:
+            logger.debug(
+                "Checking for existing job",
+                template_id=str(grant_template_id),
+            )
             existing_job_result = await session.execute(
                 select(GrantTemplateGenerationJob).where(
                     GrantTemplateGenerationJob.grant_template_id == grant_template_id
@@ -41,9 +51,32 @@ class JobManager:
                     "Job already exists for template, returning existing job",
                     template_id=str(grant_template_id),
                     job_id=str(existing_job.id),
+                    job_status=existing_job.status.value,
                 )
                 self.job_id = existing_job.id
                 return existing_job
+
+            logger.debug(
+                "Verifying grant template exists before creating job",
+                template_id=str(grant_template_id),
+            )
+            template_result = await session.execute(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
+            template = template_result.scalar_one_or_none()
+
+            if template is None:
+                logger.warning(
+                    "Grant template not found, cannot create job - template may have been deleted",
+                    template_id=str(grant_template_id),
+                )
+                msg = f"Grant template {grant_template_id} not found"
+                raise ValueError(msg)
+
+            logger.debug(
+                "Grant template found, proceeding with job creation",
+                template_id=str(grant_template_id),
+                template_grant_application_id=str(template.grant_application_id),
+                template_existing_rag_job_id=str(template.rag_job_id) if template.rag_job_id else None,
+            )
 
             job = GrantTemplateGenerationJob(
                 grant_template_id=grant_template_id,
@@ -52,13 +85,26 @@ class JobManager:
                 current_stage=0,
                 retry_count=0,
             )
+            logger.debug(
+                "Adding job to session",
+                template_id=str(grant_template_id),
+                job_id=str(job.id),
+            )
             session.add(job)
             await session.flush()
 
-            result = await session.execute(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
-            template = result.scalar_one()
+            logger.debug(
+                "Updating template with job ID",
+                template_id=str(grant_template_id),
+                job_id=str(job.id),
+            )
             template.rag_job_id = job.id
 
+            logger.debug(
+                "Committing job creation transaction",
+                template_id=str(grant_template_id),
+                job_id=str(job.id),
+            )
             await session.commit()
             self.job_id = job.id
             logger.info("Created new job for template", template_id=str(grant_template_id), job_id=str(job.id))

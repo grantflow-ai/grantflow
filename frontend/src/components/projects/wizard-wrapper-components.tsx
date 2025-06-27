@@ -45,10 +45,11 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const { currentStep, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
+	const { currentStep, isGeneratingTemplate, toNextStep, toPreviousStep, validateStepNext } = useWizardStore();
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const disabled = !validateStepNext();
+	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
 
 	return (
 		<footer
@@ -58,6 +59,7 @@ export function WizardFooter() {
 			{showBack ? (
 				<AppButton
 					data-testid="back-button"
+					disabled={backDisabled}
 					leftIcon={<IconGoBack />}
 					onClick={toPreviousStep}
 					size="lg"

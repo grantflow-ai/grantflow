@@ -28,6 +28,7 @@ services:
             - all
             - gcs
             - e2e
+            - services
         image: fsouza/fake-gcs-server:latest
         restart: always
         ports:
