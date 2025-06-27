@@ -185,13 +185,15 @@ function WaitListFormItem({
 			name={name === "email" ? "email" : "name"}
 			render={({ field }) => (
 				<FormItem className={className}>
-					<FormLabel className="font-heading text-xl font-light md:text-base">{label}</FormLabel>
+					<FormLabel className="text-app-black font-heading font-semibold">{label}</FormLabel>
 					<FormControl className="mt-3 h-auto w-full">
 						<AppInput
 							placeholder={placeholder}
 							type={type}
 							{...field}
-							className={"form-input rounded-sm bg-white p-3 text-gray-600"}
+							className={
+								"form-input text-app-black rounded-sm bg-white p-3 text-sm placeholder:text-gray-400"
+							}
 							testId={testId}
 						/>
 					</FormControl>

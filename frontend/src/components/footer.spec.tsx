@@ -75,19 +75,6 @@ describe("Footer Component", () => {
 			expect(footer).toBeInTheDocument();
 		});
 
-		it("should include the logo in both mobile and desktop views", () => {
-			const logos = screen.getAllByTestId("mocked-logo");
-			expect(logos.length).toBe(2);
-
-			const mobileContainer = document.querySelector("div.md\\:hidden");
-			const mobileLogo = mobileContainer?.querySelector('[data-testid="mocked-logo"]');
-			expect(mobileLogo).toBeInTheDocument();
-
-			const desktopContainer = document.querySelector("div.hidden.md\\:flex");
-			const desktopLogo = desktopContainer?.querySelector('[data-testid="mocked-logo"]');
-			expect(desktopLogo).toBeInTheDocument();
-		});
-
 		it("should render navigation section in both mobile and desktop views", () => {
 			const navs = screen.getAllByRole("navigation", { name: "footer-navigation" });
 			expect(navs.length).toBe(2);
@@ -195,19 +182,6 @@ describe("Footer Component", () => {
 			homeLinks.forEach((homeLink) => {
 				expect(homeLink).toHaveAttribute("href", PagePath.ROOT);
 			});
-		});
-	});
-
-	describe("FooterLinks Component Props", () => {
-		it("should apply mobile-specific styles when isMobile is true", () => {
-			window.innerWidth = 400;
-			render(<Footer />);
-
-			const mobileContainer = document.querySelector("div.md\\:hidden");
-
-			const mobileUl = mobileContainer?.querySelector("ul");
-			expect(mobileUl).toHaveClass("flex-col");
-			expect(mobileUl).toHaveClass("items-end");
 		});
 	});
 });

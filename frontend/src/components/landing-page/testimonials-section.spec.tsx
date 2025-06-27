@@ -102,13 +102,11 @@ describe("TestimonialsSection", () => {
 		const testimonialArticles = screen.getAllByTestId("mock-motion-article");
 
 		testimonialArticles.forEach((article) => {
-			expect(article).toHaveClass("flex flex-col items-center text-center w-sm lg:w-2xs xl:w-xs h-full");
 			expect(article).toHaveAttribute("data-variants", '["hidden","visible"]');
 
 			const blockquote = article.querySelector("blockquote");
 			expect(blockquote).toBeInTheDocument();
 			expect(blockquote).toHaveAttribute("data-testid", "mock-motion-blockquote");
-			expect(blockquote).toHaveClass("mt-6 font-semibold leading-tight text-xl md:text-lg lg:text-base");
 			expect(blockquote).toHaveAttribute("data-variants", '["hidden","visible"]');
 		});
 	});

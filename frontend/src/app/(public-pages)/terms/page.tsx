@@ -1,4 +1,5 @@
 import { LegalPageContainer, TitledLegalSection, UntitledLegalSection } from "@/components/info-legal-page-components";
+import { NavHeader } from "@/components/nav-header";
 
 const terms = [
 	{
@@ -93,14 +94,17 @@ const terms = [
 
 export default function TermsPage() {
 	return (
-		<LegalPageContainer title="Terms of Use">
-			{terms.map((term, index) =>
-				term.title ? (
-					<TitledLegalSection clause={term.clause} key={index} title={term.title} />
-				) : (
-					<UntitledLegalSection clause={term.clause} key={index} />
-				),
-			)}
-		</LegalPageContainer>
+		<div className="flex min-h-screen w-full flex-col bg-white">
+			<NavHeader />
+			<LegalPageContainer title="Terms of Use">
+				{terms.map((term, index) =>
+					term.title ? (
+						<TitledLegalSection clause={term.clause} key={index} title={term.title} />
+					) : (
+						<UntitledLegalSection clause={term.clause} key={index} />
+					),
+				)}
+			</LegalPageContainer>
+		</div>
 	);
 }
