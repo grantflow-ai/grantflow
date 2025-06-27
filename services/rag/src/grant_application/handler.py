@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
+from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.enrich_research_objective import handle_enrich_objective
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import generate_section_text
@@ -69,17 +70,37 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    enrichment_responses = await gather(
-        *[
-            handle_enrich_objective(
+    # Use batch enrichment with optimal batch size for better performance
+    OPTIMAL_BATCH_SIZE = 3  # Testing with 3 objectives per batch
+    
+    enrichment_responses = []
+    
+    # Process objectives in batches
+    for i in range(0, len(research_objectives), OPTIMAL_BATCH_SIZE):
+        batch = research_objectives[i:i + OPTIMAL_BATCH_SIZE]
+        logger.info("Processing batch of %d objectives (batch %d/%d)", 
+                   len(batch), 
+                   (i // OPTIMAL_BATCH_SIZE) + 1,
+                   (len(research_objectives) + OPTIMAL_BATCH_SIZE - 1) // OPTIMAL_BATCH_SIZE)
+        
+        if len(batch) == 1:
+            # For single objectives, use individual enrichment
+            response = await handle_enrich_objective(
                 application_id=application_id,
-                research_objective=research_objective,
+                research_objective=batch[0],
                 grant_section=work_plan_section,
                 form_inputs=form_inputs,
             )
-            for research_objective in research_objectives
-        ]
-    )
+            enrichment_responses.append(response)
+        else:
+            # For multiple objectives, use batch enrichment
+            batch_responses = await handle_batch_enrich_objectives(
+                application_id=application_id,
+                grant_section=work_plan_section,
+                research_objectives=batch,
+                form_inputs=form_inputs,
+            )
+            enrichment_responses.extend(batch_responses)
 
     await job_manager.add_notification(
         parent_id=UUID(application_id),
@@ -141,19 +162,27 @@ async def generate_work_plan_text(
     )
 
     total_objectives = len(research_objectives)
-    count = 0
-    while count != total_objectives:
-        count += 1
+
+    # Group objectives with their tasks for parallel processing
+    objective_task_groups = []
+    for count in range(1, total_objectives + 1):
         objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
         tasks: list[ResearchComponentGenerationDTO] = [t for t in dtos if t["number"].startswith(f"{count}.")]
+        objective_task_groups.append((objective, tasks))
 
-        await job_manager.add_notification(
-            parent_id=UUID(application_id),
-            event=NotificationEvents.GENERATING_OBJECTIVE,
-            message=f"Generating text for Objective {objective['number']}: {objective['title']}...",
-            notification_type="info",
-        )
+    await job_manager.add_notification(
+        parent_id=UUID(application_id),
+        event=NotificationEvents.GENERATING_OBJECTIVE,
+        message=f"Generating text for all {total_objectives} objectives in parallel...",
+        notification_type="info",
+    )
 
+    # Process all objectives in parallel
+    async def generate_objective_with_tasks(
+        objective: ResearchComponentGenerationDTO,
+        tasks: list[ResearchComponentGenerationDTO]
+    ) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
+        # Generate objective text
         research_objective_text = await generate_work_plan_component_text(
             application_id=application_id,
             component=objective,
@@ -161,15 +190,7 @@ async def generate_work_plan_text(
             form_inputs=form_inputs,
         )
 
-        work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{research_objective_text}"
-
-        await job_manager.add_notification(
-            parent_id=UUID(application_id),
-            event=NotificationEvents.GENERATING_TASKS,
-            message=f"Generating text for {len(tasks)} tasks under Objective {objective['number']}...",
-            notification_type="info",
-        )
-
+        # Generate all task texts in parallel
         research_task_texts = await gather(
             *[
                 generate_work_plan_component_text(
@@ -182,7 +203,23 @@ async def generate_work_plan_text(
             ]
         )
 
-        for research_task, research_task_text in zip(tasks, research_task_texts, strict=True):
+        # Return objective and tasks with their generated text
+        task_results = list(zip(tasks, research_task_texts, strict=True))
+        return objective, research_objective_text, task_results
+
+    # Execute all objectives in parallel
+    objective_results = await gather(
+        *[
+            generate_objective_with_tasks(objective, tasks)
+            for objective, tasks in objective_task_groups
+        ]
+    )
+
+    # Assemble results in correct order
+    for objective, objective_text, task_results in objective_results:
+        work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
+
+        for research_task, research_task_text in task_results:
             work_plan_text += f"\n\n#### {research_task['number']}: {research_task['title']}\n{research_task_text}"
 
         await job_manager.add_notification(
@@ -193,8 +230,8 @@ async def generate_work_plan_text(
             data={
                 "objective_number": objective["number"],
                 "objective_title": objective["title"],
-                "tasks_completed": len(tasks),
-                "progress": f"{count}/{total_objectives}",
+                "tasks_completed": len(task_results),
+                "progress": f"{objective['number']}/{total_objectives}",
             },
         )
 
