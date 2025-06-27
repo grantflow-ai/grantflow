@@ -30,7 +30,7 @@ const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 
 export function TemplateFileUploader({ parentId }: { parentId?: string }) {
-	const { addFile } = useApplicationStore();
+	const addFile = useApplicationStore((state) => state.addFile);
 
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
