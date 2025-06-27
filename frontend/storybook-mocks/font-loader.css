@@ -1,0 +1,15 @@
+/* Load Google Fonts for Storybook */
+@import url("https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600&family=Sora:wght@100;200;300;400;500&family=Source+Sans+3:wght@400;500;600&display=swap");
+
+/* Apply font families to Tailwind utilities */
+.font-body {
+	font-family: "Source Sans 3", sans-serif;
+}
+
+.font-heading {
+	font-family: "Cabin", sans-serif;
+}
+
+.font-button {
+	font-family: "Sora", sans-serif;
+}

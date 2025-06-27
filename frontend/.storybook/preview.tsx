@@ -1,16 +1,17 @@
 import "@/styles/globals.css";
+import "../storybook-mocks/storybook-theme.css";
+import "../storybook-mocks/font-loader.css";
 
 import type { Preview } from "@storybook/react-vite";
 import { getEnv } from "@/utils/env";
-import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
 getEnv();
 
 const preview: Preview = {
 	decorators: [
 		(Story) => (
-			<div className={`${fontSourceSans.variable} ${fontCabin.variable} ${fontSora.variable}`}>
-				<div className="bg-background text-foreground min-h-screen">
+			<div className="font-body">
+				<div className="min-h-screen bg-background text-foreground">
 					<Story />
 				</div>
 			</div>
