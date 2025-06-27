@@ -9,6 +9,7 @@ import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { logTrace } from "@/utils/logging";
 import { generateInitials } from "@/utils/user";
+import { EditPermissionModal } from "./edit-permission-modal";
 
 interface ProjectMember {
 	email: string;
@@ -81,10 +82,11 @@ const handleRemoveMember = (memberId: string) => {
 	logTrace("info", "Remove member not implemented yet", { memberId });
 };
 
-const handleChangeRole = (memberId: string, newRole: UserRole) => {
+const handleUpdateRole = (memberId: string, newRole: UserRole, projectAccess?: string[]) => {
 	// Implementation will be added when backend is ready
-	// This will call API to change member role
-	logTrace("info", "Change role not implemented yet", { memberId, newRole });
+	// This will call API to update member role and project access
+	logTrace("info", "Update role not implemented yet", { memberId, newRole, projectAccess });
+	return Promise.resolve();
 };
 
 export function ProjectSettingsMembers({
@@ -94,6 +96,7 @@ export function ProjectSettingsMembers({
 	projectName,
 }: ProjectSettingsMembersProps) {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+	const [editingMember, setEditingMember] = useState<null | ProjectMember>(null);
 	const { user } = useUserStore();
 
 	const handleInvite = async (email: string, permission: "admin" | "collaborator") => {
@@ -203,7 +206,9 @@ export function ProjectSettingsMembers({
 									<MemberActionMenu
 										currentUserRole={currentUserRole}
 										member={member}
-										onChangeRole={handleChangeRole}
+										onEditPermissions={(member) => {
+											setEditingMember(member);
+										}}
 										onRemoveMember={handleRemoveMember}
 									/>
 								</div>
@@ -262,6 +267,17 @@ export function ProjectSettingsMembers({
 					onInvite={handleInvite}
 				/>
 			)}
+
+			{/* Edit Permission Modal */}
+			<EditPermissionModal
+				currentUserRole={currentUserRole}
+				isOpen={editingMember !== null}
+				member={editingMember}
+				onClose={() => {
+					setEditingMember(null);
+				}}
+				onUpdateRole={handleUpdateRole}
+			/>
 		</div>
 	);
 }
@@ -269,12 +285,12 @@ export function ProjectSettingsMembers({
 function MemberActionMenu({
 	currentUserRole,
 	member,
-	onChangeRole,
+	onEditPermissions,
 	onRemoveMember,
 }: {
 	currentUserRole: UserRole;
 	member: ProjectMember;
-	onChangeRole: (memberId: string, newRole: UserRole) => void;
+	onEditPermissions: (member: ProjectMember) => void;
 	onRemoveMember: (memberId: string) => void;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
@@ -324,15 +340,12 @@ function MemberActionMenu({
 								<button
 									className="w-full px-4 py-2 text-left text-sm text-[#2e2d36] hover:bg-[#f5f5f5] transition-colors"
 									onClick={() => {
-										onChangeRole(
-											member.id,
-											member.role === UserRole.ADMIN ? UserRole.MEMBER : UserRole.ADMIN,
-										);
+										onEditPermissions(member);
 										setIsOpen(false);
 									}}
 									type="button"
 								>
-									{member.role === UserRole.ADMIN ? "Change to Member" : "Change to Admin"}
+									Edit permissions
 								</button>
 								<hr className="my-1 border-[#e1dfeb]" />
 							</>
