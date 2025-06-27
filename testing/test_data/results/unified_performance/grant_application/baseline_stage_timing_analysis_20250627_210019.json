@@ -1,0 +1,81 @@
+{
+  "test_name": "baseline_stage_timing_analysis",
+  "test_category": "grant_application",
+  "timestamp": "2025-06-27T21:00:19.784923",
+  "test_id": "76daea09-8e54-4285-be29-f8e86431613e",
+  "configuration": {
+    "test_type": "stage_timing_analysis",
+    "num_objectives": 5,
+    "focus": "optimization_planning"
+  },
+  "total_duration_seconds": 4.813082,
+  "total_duration_minutes": 0.08021803333333333,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.501091,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 10.41102146192398
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 1.505118,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 31.271397412302555
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 2.005425,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 41.66612993503954
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.80122,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 16.64671410127648
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 93.0,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 2093,
+    "total_words": 242,
+    "total_lines": 50,
+    "section_count": 6,
+    "avg_chars_per_section": 348.8333333333333,
+    "has_objectives": true,
+    "has_work_plan": true,
+    "has_methodology": true,
+    "has_timeline": true,
+    "objective_count": 5,
+    "task_count": 30,
+    "key_terms_found": [],
+    "content_richness_score": 41.86,
+    "structure_quality_score": 100.0,
+    "completeness_score": 100,
+    "overall_quality_score": 76.744,
+    "meets_min_length": true,
+    "meets_min_sections": true,
+    "meets_content_requirements": true
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "grant_application"
+  },
+  "errors_encountered": [
+    "AssertionError: Performance result is None - test framework error"
+  ],
+  "warnings": []
+}

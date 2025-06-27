@@ -1,0 +1,9 @@
+{
+  "test_name": "test_baseline_stage_timing_analysis",
+  "test_category": "smoke",
+  "performance": {
+    "execution_time": 4.816161155700684,
+    "within_threshold": true
+  },
+  "timestamp": "2025-06-27T19:04:10.751029+00:00"
+}
