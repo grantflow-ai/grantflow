@@ -9,8 +9,8 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/projects/shared/icons";
-import { DevAutofillButton } from "@/components/projects/wizard/dev-autofill-button";
-import { DevResetButton } from "@/components/projects/wizard/dev-reset-button";
+import { DevAutofillButton } from "@/components/projects/wizard/dev-tools/dev-autofill-button";
+import { DevResetButton } from "@/components/projects/wizard/dev-tools/dev-reset-button";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -223,6 +223,37 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 }
 
 function Deadline() {
+	const application = useApplicationStore((state) => state.application);
+	const submissionDate = application?.grant_template?.submission_date;
+
+	const getTimeRemaining = () => {
+		if (!submissionDate) {
+			return "Deadline not set";
+		}
+
+		const now = new Date();
+		const deadline = new Date(submissionDate);
+		const diffTime = deadline.getTime() - now.getTime();
+
+		if (diffTime <= 0) {
+			return "Deadline passed";
+		}
+
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		const weeks = Math.floor(diffDays / 7);
+		const days = diffDays % 7;
+
+		if (weeks > 0 && days > 0) {
+			return `${weeks} week${weeks === 1 ? "" : "s"} and ${days} day${days === 1 ? "" : "s"} to the deadline`;
+		}
+		if (weeks > 0) {
+			return `${weeks} week${weeks === 1 ? "" : "s"} to the deadline`;
+		}
+		return `${days} day${days === 1 ? "" : "s"} to the deadline`;
+	};
+
+	const timeRemaining = getTimeRemaining();
+
 	return (
 		<div
 			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
@@ -230,10 +261,7 @@ function Deadline() {
 		>
 			<IconDeadline />
 			<div className="leading-[18px]">
-				<span className="font-semibold">4</span>
-				<span> weeks and </span>
-				<span className="font-semibold">3</span>
-				<span> days to the deadline</span>
+				{submissionDate ? <span>{timeRemaining}</span> : <span>Deadline not set</span>}
 			</div>
 		</div>
 	);
