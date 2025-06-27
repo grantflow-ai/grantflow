@@ -33,7 +33,7 @@ export const EmptyState: Story = {
 					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
-					currentStep: WizardStep.PREVIEW_AND_APPROVE,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			}, []);
 			return <Story />;
@@ -58,7 +58,7 @@ export const WithApplicationTitle: Story = {
 					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
-					currentStep: WizardStep.PREVIEW_AND_APPROVE,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			}, []);
 			return <Story />;
@@ -78,7 +78,7 @@ export const WithGeneratedSections: Story = {
 					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
-					currentStep: WizardStep.PREVIEW_AND_APPROVE,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			}, []);
 			return <Story />;
