@@ -13,8 +13,8 @@ export function DevResetButton() {
 
 	const handleReset = async () => {
 		try {
-			if (currentStep !== WizardStep.APPLICATION_STRUCTURE) {
-				toast.info("Reset is only available for Step 2: Application Structure");
+			if (currentStep !== WizardStep.PREVIEW_AND_APPROVE) {
+				toast.info("Reset is only available for Step 2: Preview and Approve");
 				return;
 			}
 
@@ -29,7 +29,7 @@ export function DevResetButton() {
 		return null;
 	}
 
-	if (currentStep !== WizardStep.APPLICATION_STRUCTURE) {
+	if (currentStep !== WizardStep.PREVIEW_AND_APPROVE) {
 		return null;
 	}
 

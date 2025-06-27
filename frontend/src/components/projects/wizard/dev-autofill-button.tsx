@@ -80,7 +80,44 @@ export function DevAutofillButton() {
 
 					break;
 				}
-				case WizardStep.APPLICATION_STRUCTURE: {
+				case WizardStep.GENERATE_AND_COMPLETE: {
+					toast.success("🎉 Application is ready for generation! Click 'Generate Application' to proceed.");
+
+					break;
+				}
+				case WizardStep.KNOWLEDGE_BASE: {
+					const knowledgeUrls = [
+						"https://example.com/research-paper-1",
+						"https://example.com/research-paper-2",
+					];
+
+					for (const url of knowledgeUrls) {
+						if (application?.id) {
+							await addUrl(url, application.id);
+						}
+					}
+
+					const knowledgeFiles = [
+						{ name: "research-paper.pdf", type: "application/pdf" },
+						{
+							name: "lab-results.docx",
+							type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+						},
+					];
+
+					for (const fileInfo of knowledgeFiles) {
+						if (!application?.id) continue;
+						const fileWithId = FileWithIdFactory.build({
+							name: fileInfo.name,
+							type: fileInfo.type,
+						});
+						await addFile(fileWithId, application.id);
+					}
+
+					toast.success("🎉 Knowledge base populated!");
+					break;
+				}
+				case WizardStep.PREVIEW_AND_APPROVE: {
 					if (!application?.grant_template?.id) {
 						toast.error("No grant template found. Complete Application Details step first.");
 						break;
@@ -126,43 +163,6 @@ export function DevAutofillButton() {
 					await updateGrantSections(mockSections);
 					toast.success("🎉 Application structure populated with 3 sections and 6 subsections!");
 
-					break;
-				}
-				case WizardStep.GENERATE_AND_COMPLETE: {
-					toast.success("🎉 Application is ready for generation! Click 'Generate Application' to proceed.");
-
-					break;
-				}
-				case WizardStep.KNOWLEDGE_BASE: {
-					const knowledgeUrls = [
-						"https://example.com/research-paper-1",
-						"https://example.com/research-paper-2",
-					];
-
-					for (const url of knowledgeUrls) {
-						if (application?.id) {
-							await addUrl(url, application.id);
-						}
-					}
-
-					const knowledgeFiles = [
-						{ name: "research-paper.pdf", type: "application/pdf" },
-						{
-							name: "lab-results.docx",
-							type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-						},
-					];
-
-					for (const fileInfo of knowledgeFiles) {
-						if (!application?.id) continue;
-						const fileWithId = FileWithIdFactory.build({
-							name: fileInfo.name,
-							type: fileInfo.type,
-						});
-						await addFile(fileWithId, application.id);
-					}
-
-					toast.success("🎉 Knowledge base populated!");
 					break;
 				}
 				case WizardStep.RESEARCH_DEEP_DIVE: {

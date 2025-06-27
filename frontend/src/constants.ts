@@ -5,7 +5,6 @@ export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 export enum WizardStep {
 	APPLICATION_DETAILS = "Application Details",
-	APPLICATION_STRUCTURE = "Application Structure",
 	GENERATE_AND_COMPLETE = "Generate and Complete",
 	KNOWLEDGE_BASE = "Knowledge Base",
 	PREVIEW_AND_APPROVE = "Preview and Approve",
