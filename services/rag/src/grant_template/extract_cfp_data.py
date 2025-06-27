@@ -37,136 +37,44 @@ class RagSourceData(TypedDict):
     chunks: list[str]
 
 
-TEMPERATURE: Final[float] = 0.2
+TEMPERATURE: Final[float] = 0.1
 
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
-You are a specialized system designed to analyze and extract information from STEM funding opportunity announcements (CFPs).
-Your primary goal is to maintain the structural integrity of the CFP while extracting all relevant requirements and guidelines.
-Focus on preserving the hierarchical organization and explicit requirements of the document.
-
-You will be working with content from multiple sources including:
-- Direct CFP documents (PDFs, Word docs)
-- Crawled website content
-- Related funding organization materials
-
-Synthesize information from all sources while prioritizing official CFP documents over supplementary materials.
+You analyze funding opportunity announcements to extract structured requirements.
+Prioritize official CFP documents over supplementary materials.
+Focus on explicit requirements, page limits, section structures, and evaluation criteria.
 """
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_cfp_data_multi_source",
     template="""
-    # CFP Data Extraction from Multiple Sources
-
-    Your task is to analyze and extract the most relevant application guidelines and requirements from multiple funding opportunity sources while maintaining structural integrity:
-
-    ## Sources
-
-    ### Primary CFP Content
-    The following content comes from multiple RAG sources (files and URLs) related to this funding opportunity:
+    Extract funding opportunity requirements from these sources:
 
     <rag_sources>
     ${rag_sources}
     </rag_sources>
 
-    ### Organization Mapping
-    The following JSON object maps organization IDs (in our database) to their names and abbreviations:
-
     <organization_mapping>
     ${organization_mapping}
     </organization_mapping>
 
-    ## Source Prioritization:
-    1. **Primary Sources**: Official CFP documents, announcements, and guidelines
-    2. **Secondary Sources**: Organization websites, supplementary materials
-    3. **Supporting Sources**: Related documents and contextual information
+    ## Instructions:
 
-    When conflicts arise between sources, prioritize official CFP documents over website content.
+    1. **Organization**: Match funding org to organization_mapping ID or return null
 
-    ## Extraction Steps:
+    2. **CFP Subject**: One-sentence summary with funding type, audience, objectives, and focus areas
 
-    1. **Determine Organization**
-       - Identify which organization, if any, from the provided **organization mapping** the CFP announcement belongs to.
-       - Cross-reference across all sources for consistency.
-       - If an explicit mention is found, return the corresponding organization ID.
-       - If no match is found, return `null` for `organization_id`.
+    3. **Submission Date**: Extract deadline in YYYY-MM-DD format
 
-    2. **Content Synthesis**
-       - Combine information from all sources to create a comprehensive view
-       - Resolve conflicts by prioritizing official CFP documents
-       - Ensure no critical requirements are missed due to information being split across sources
+    4. **Content Sections**: Extract hierarchical structure:
+       - Main sections: title + "- Title only"
+       - Subsections: title only (no descriptions)
+       - Include page limits, character limits
+       - Preserve numbering (e.g., "1a.i")
 
-    3. **Formatting Requirements**
-       - Extract all explicit formatting requirements from any source including:
-         - Font specifications (type, size)
-         - Margin requirements
-         - Line spacing rules
-         - Page limits and exclusions
-       - Present these as separate, clear statements
+    5. **Filter Out**: URLs, Grants.gov instructions, eRA Commons, addresses, general submission steps
 
-    4. **Structural Analysis**
-       - Identify and preserve the hierarchical structure of the CFP across all sources
-       - Merge section information when complementary
-       - For each section:
-         - Include the full section title with page limits (if specified)
-         - Add "- Title only" for main sections
-         - Include subsection titles without "- Title only"
-         - Subsection: Do not include description of the section, only the title summarized to highlight the main topic of the section
-       - Maintain the exact numbering scheme (e.g., "1a.i", "1b.ii")
-       - Preserve the original section order
-
-    5. **Requirements Extraction**
-       - Extract all explicit requirements from all sources including:
-         - Character limits (e.g., for abstracts)
-         - Language requirements
-         - Content restrictions
-         - Supporting documentation needs
-       - Present these as clear, concise, grouped statements
-       - Ensure completeness by checking all sources
-
-    6. **CFP Subject Identification**
-       - Generate a comprehensive summary using information from all sources that captures:
-         - The type of funding opportunity
-         - The target audience/researchers
-         - The key objectives and expected outcomes
-         - The scope and scale of the project
-         - Any specific focus areas or themes
-       - Ensure the summary is rich in domain-specific details
-
-    7. **Administrative Details Filtering**
-       - Aggressively remove any content that does not directly impact submission format or requirements
-       - Retain only **application-related** details that impact **submission format**.
-       - **Exclude** general grant submission instructions (e.g., Grants.gov steps, eRA Commons login).
-       - URLs and external references.
-       - Forms, addresses, bureaucratic details etc.
-
-    8. **Submission Date Extraction**
-       - Check all sources for submission deadlines
-       - Identify the final full application submission deadline explicitly mentioned in any CFP content.
-       - Only extract a date if it specifies a day, month, and year (no vague dates like "July 2025").
-       - If multiple dates are mentioned across sources:
-         - Prefer the earliest final submission deadline for application submission (not internal reviews, LOIs, drafts, etc.).
-         - Ensure consistency across sources
-       - Accept dates in any format (e.g., "July 1, 2025", "07/01/2025", "2025-07-01"), but standardize the output to the YYYY-MM-DD format.
-       - If no explicit submission date is found, return null.
-
-    ## Task Output:
-    Extract and synthesize the CFP information according to the steps above. Focus on preserving structural integrity while filtering out administrative details.
-
-    ## Guidelines - Do NOT skip any step:
-    - Synthesize information from all available sources
-    - Preserve the exact hierarchical structure of the CFP
-    - Include, summarize, and **group** all explicit requirements and constraints while representing each requirement as a separate, clear statement
-    - Maintain section relationships and dependencies
-    - For each section title add "- Title only" if it is a main section
-    - Keep section and subsection names unchanged
-    - Section are not to be divided into multiple sections
-    - **Important**: For each section extract subsections and present each in a single, clear statement
-    - Ensure the extracted content is machine-processable while maintaining readability
-    - **Important**: Remove only truly administrative details (URL, reference)
-    - The core meaning MUST be maintained and no other information should be added or removed
-    - Skip repeated escape sequences in your output (such as \n or \r)
-    - If there is content in a language other than English, make sure to translate it to English before processing the input
-    - When sources conflict, prioritize official CFP documents over supplementary materials
+    6. **Prioritize**: Official CFP docs > websites > supplementary materials
     """,
 )
 
@@ -351,7 +259,7 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
         system_prompt=EXTRACT_CFP_DATA_SYSTEM_PROMPT,
         temperature=TEMPERATURE,
         model=REASONING_MODEL,
-        top_p=0.95,
+        top_p=0.9,
     )
 
 
@@ -388,15 +296,16 @@ async def handle_extract_cfp_data_from_rag_sources(
         prompt=EXTRACT_CFP_DATA_USER_PROMPT.to_string(
             rag_sources=formatted_sources, organization_mapping=organization_mapping
         ),
-        increment=5,
-        retries=5,
-        passing_score=90,
+        increment=10,
+        retries=3,
+        passing_score=80,
         criteria=[
             EvaluationCriterion(
                 name="Multi-Source Synthesis",
                 evaluation_instructions="""
                 Assess whether information from all available sources has been properly synthesized and conflicts resolved appropriately.
                 """,
+                weight=0.8,
             ),
             EvaluationCriterion(
                 name="Correctness",
@@ -409,12 +318,14 @@ async def handle_extract_cfp_data_from_rag_sources(
                 evaluation_instructions="""
                 Ensure extracted content includes necessary structural details such as required sections, page limits, and evaluation criteria from all relevant sources.
                 """,
+                weight=0.9,
             ),
             EvaluationCriterion(
                 name="Filtering Accuracy",
                 evaluation_instructions="""
                 Validate that unnecessary general instructions (e.g., Grants.gov, eRA Commons, URLs) are removed while keeping essential information from all sources.
                 """,
+                weight=0.7,
             ),
         ],
     )
