@@ -139,14 +139,26 @@ rules:
 
       ### Running Tests
 
+      **IMPORTANT**: Always run tests from the repository root with PYTHONPATH set:
+
       ```bash
       # Development workflow
       task test                                    # Run all unit tests
       E2E_TESTS=1 task test                       # Run all tests including e2e
 
-      # Specific services
-      pytest services/indexer/tests/             # Just indexer unit tests
-      pytest services/crawler/tests/             # Just crawler unit tests
+      # Running tests manually (always from root directory)
+      PYTHONPATH=. uv run pytest services/indexer/tests/             # Just indexer unit tests
+      PYTHONPATH=. uv run pytest services/crawler/tests/             # Just crawler unit tests
+      PYTHONPATH=. uv run pytest services/rag/tests/                 # Just RAG unit tests
+
+      # Running specific test files or tests
+      PYTHONPATH=. uv run pytest services/rag/tests/e2e/retrieval_test.py::test_document_retrieval
+
+      # With E2E tests enabled
+      PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/e2e/ -m "smoke"
+
+      # Running with specific markers
+      PYTHONPATH=. E2E_TESTS=1 uv run pytest -m "quality_assessment" services/rag/tests/
       E2E_TESTS=1 pytest services/indexer/tests/ # Indexer unit + e2e tests
       E2E_TESTS=1 pytest services/crawler/tests/ # Crawler unit + e2e tests
 
