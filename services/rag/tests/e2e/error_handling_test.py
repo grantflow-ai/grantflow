@@ -44,7 +44,9 @@ async def test_cfp_extraction_with_empty_sources(
     async_session_maker: async_sessionmaker[Any],
     organization_mapping: dict[str, dict[str, str]],
 ) -> None:
-    with pytest.raises(ValueError, match="empty|no sources"):
+    from packages.shared_utils.src.exceptions import ValidationError
+
+    with pytest.raises(ValidationError, match="No RAG sources found"):
         await handle_extract_cfp_data_from_rag_sources(
             source_ids=[],
             organization_mapping=organization_mapping,
@@ -69,7 +71,6 @@ async def test_retrieval_with_malformed_task_description(
     for desc in malformed_descriptions:
         try:
             results = await retrieve_documents(
-                rerank=True,
                 application_id=melanoma_alliance_full_application_id,
                 task_description=desc,
             )
