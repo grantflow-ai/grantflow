@@ -11,9 +11,19 @@ import {
 } from "@/components/projects/shared/icons";
 import { DevAutofillButton } from "@/components/projects/wizard/dev-autofill-button";
 import { DevResetButton } from "@/components/projects/wizard/dev-reset-button";
-import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+
+const WIZARD_STEP_ORDER: WizardStep[] = [
+	WizardStep.APPLICATION_DETAILS,
+	WizardStep.APPLICATION_STRUCTURE,
+	WizardStep.PREVIEW_AND_APPROVE,
+	WizardStep.KNOWLEDGE_BASE,
+	WizardStep.RESEARCH_PLAN,
+	WizardStep.RESEARCH_DEEP_DIVE,
+	WizardStep.GENERATE_AND_COMPLETE,
+];
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
 	let IconComponent: React.ComponentType;
@@ -138,18 +148,12 @@ export function WizardHeader() {
 					Exit
 				</AppButton>
 			</div>
-			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_TITLES} />
+			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
 		</header>
 	);
 }
 
-function ApplicationProgressBar({
-	currentStep,
-	stepTitles,
-}: {
-	currentStep: (typeof WIZARD_STEP_TITLES)[number];
-	stepTitles: typeof WIZARD_STEP_TITLES;
-}) {
+function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: WizardStep; stepTitles: WizardStep[] }) {
 	return (
 		<div className="flex justify-center">
 			<div
@@ -162,7 +166,7 @@ function ApplicationProgressBar({
 				role="progressbar"
 			>
 				<div className="relative flex w-full justify-center px-4 sm:px-20">
-					{stepTitles.map((title, index) => {
+					{stepTitles.map((title: WizardStep, index: number) => {
 						const isLastStep = index === stepTitles.length - 1;
 						const currentStepIndex = stepTitles.indexOf(currentStep);
 

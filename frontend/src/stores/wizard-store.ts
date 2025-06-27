@@ -2,7 +2,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
+import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
@@ -11,6 +11,16 @@ import { logError } from "@/utils/logging";
 const DEBOUNCE_DELAY_MS = 500;
 const POLLING_INTERVAL_DURATION = 2000;
 export const MIN_TITLE_LENGTH = 10;
+
+const WIZARD_STEP_ORDER: WizardStep[] = [
+	WizardStep.APPLICATION_DETAILS,
+	WizardStep.APPLICATION_STRUCTURE,
+	WizardStep.PREVIEW_AND_APPROVE,
+	WizardStep.KNOWLEDGE_BASE,
+	WizardStep.RESEARCH_PLAN,
+	WizardStep.RESEARCH_DEEP_DIVE,
+	WizardStep.GENERATE_AND_COMPLETE,
+];
 
 export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
 
@@ -414,7 +424,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						}));
 					}
 
-					const nextStep = WIZARD_STEP_TITLES[WIZARD_STEP_TITLES.indexOf(currentStep) + 1];
+					const nextStep = WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1];
 
 					set((state) => ({
 						...state,
@@ -444,7 +454,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 				toPreviousStep: () => {
 					const { currentStep, isGeneratingTemplate, polling } = get();
-					const currentIndex = WIZARD_STEP_TITLES.indexOf(currentStep);
+					const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
 
 					// Prevent going back during template generation
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
@@ -461,20 +471,15 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 					set((state) => ({
 						...state,
-						currentStep: WIZARD_STEP_TITLES[Math.max(0, currentIndex - 1)],
+						currentStep: WIZARD_STEP_ORDER[Math.max(0, currentIndex - 1)],
 					}));
 				},
 
 				validateStepNext: (): boolean => {
-					const { currentStep, isGeneratingTemplate } = get();
+					const { currentStep } = get();
 					const { application } = useApplicationStore.getState();
 
 					if (!application) {
-						return false;
-					}
-
-					// Disable navigation during template generation for APPLICATION_STRUCTURE step
-					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return false;
 					}
 
@@ -500,6 +505,12 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								!!application.rag_sources.length &&
 								application.rag_sources.every((source) => source.status !== "FAILED")
 							);
+						}
+						case WizardStep.PREVIEW_AND_APPROVE: {
+							return true;
+						}
+						default: {
+							return false;
 						}
 					}
 				},
