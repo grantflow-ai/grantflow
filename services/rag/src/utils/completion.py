@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 from functools import partial
 from textwrap import dedent
 from typing import Any, Final, TypedDict
@@ -101,7 +102,7 @@ async def select_best_response[T](
 async def make_google_completions_request[T](
     *,
     model: str = GENERATION_MODEL,
-    prompt_identifier: str,  # noqa: ARG001
+    prompt_identifier: str,
     response_type: type[T],
     system_prompt: str,
     response_schema: dict[str, Any] | None = None,
@@ -152,11 +153,34 @@ async def make_google_completions_request[T](
     )
 
     content = "\n".join(message_parts)
+    start_time = datetime.now(UTC)
     response = await client._aio.models.generate_content(  # noqa: SLF001
         model=model,
         contents=content,
         config=config,
     )
+    elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
+
+    # Log performance metrics
+    usage_metadata = getattr(response, "usage_metadata", None)
+    if usage_metadata:
+        logger.info(
+            "Gemini completion",
+            prompt_identifier=prompt_identifier,
+            model=model,
+            elapsed_ms=round(elapsed_ms, 2),
+            prompt_tokens=getattr(usage_metadata, "prompt_token_count", None),
+            completion_tokens=getattr(usage_metadata, "candidates_token_count", None),
+            total_tokens=getattr(usage_metadata, "total_token_count", None),
+        )
+    else:
+        logger.info(
+            "Gemini completion",
+            prompt_identifier=prompt_identifier,
+            model=model,
+            elapsed_ms=round(elapsed_ms, 2),
+        )
+
     if not candidate_count:
         return deserialize(response.text or "", response_type)
 
@@ -192,6 +216,7 @@ async def make_anthropic_completions_request[T](
 ) -> T:
     anthropic_client = get_anthropic_client()
 
+    start_time = datetime.now(UTC)
     response = await anthropic_client.messages.create(
         model=model,
         max_tokens=8192,
@@ -208,6 +233,18 @@ async def make_anthropic_completions_request[T](
         top_p=top_p or NOT_GIVEN,
         top_k=top_k or NOT_GIVEN,
     )
+    elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
+
+    # Log performance metrics
+    logger.info(
+        "Anthropic completion",
+        model=model,
+        elapsed_ms=round(elapsed_ms, 2),
+        input_tokens=response.usage.input_tokens,
+        output_tokens=response.usage.output_tokens,
+        total_tokens=response.usage.input_tokens + response.usage.output_tokens,
+    )
+
     tool_blocks = [block for block in response.content if isinstance(block, ToolUseBlock)]
     if not tool_blocks:
         raise ValidationError("The response does not contain a tool use blocks.")

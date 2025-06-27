@@ -568,6 +568,7 @@ export namespace API {
 	export namespace ListProjects {
 	export namespace Http200 {
 	export type ResponseBody = {
+	applications_count: number;
 	description: null | string;
 	id: string;
 	logo_url: null | string;
@@ -799,18 +800,18 @@ export namespace API {
 	created_at: string;
 	current_stage: number;
 	error_details?: {
-
+	
 };
 	error_message?: string;
 	extracted_metadata?: {
-
+	
 };
 	extracted_sections?: {
-
+	
 }[];
 	failed_at?: string;
 	generated_sections?: {
-
+	
 };
 	grant_application_id?: string;
 	grant_template_id?: string;
@@ -822,7 +823,7 @@ export namespace API {
 	total_stages: number;
 	updated_at: string;
 	validation_results?: {
-
+	
 };
 };
 };
@@ -939,7 +940,7 @@ export namespace API {
 
 	export type RequestBody = {
 	form_inputs: {
-
+	
 };
 	research_objectives: {
 	description?: string;

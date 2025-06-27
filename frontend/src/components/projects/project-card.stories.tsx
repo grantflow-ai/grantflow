@@ -1,4 +1,4 @@
-import { ProjectFactory } from "::testing/factories";
+import { ProjectListItemFactory } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ProjectCard } from "./project-card";
 
@@ -22,7 +22,7 @@ type Story = StoryObj<typeof ProjectCard>;
 
 export const OwnerRole: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "A project for climate change research grant applications",
 			id: "1",
 			name: "Climate Research Grants",
@@ -33,7 +33,7 @@ export const OwnerRole: Story = {
 
 export const AdminRole: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "Collaborative space for NSF grant proposals and submissions",
 			id: "2",
 			name: "NSF Proposals",
@@ -44,7 +44,7 @@ export const AdminRole: Story = {
 
 export const MemberRole: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "Team project for medical research grant applications",
 			id: "3",
 			name: "Medical Research Grants",
@@ -55,7 +55,7 @@ export const MemberRole: Story = {
 
 export const LongName: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "A project with a very long name to test text truncation",
 			id: "4",
 			name: "International Collaborative Research Initiative for Sustainable Environmental Solutions",
@@ -67,7 +67,7 @@ export const LongName: Story = {
 
 export const LongDescription: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description:
 				"This is a very long description that should be truncated after two lines. It contains detailed information about the project purpose, objectives, team members, current projects, deadlines, and various other details that would normally not fit in the card layout.",
 			id: "5",
@@ -80,7 +80,7 @@ export const LongDescription: Story = {
 
 export const NoDescription: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "",
 			id: "6",
 			name: "Empty Description Project",
@@ -91,7 +91,7 @@ export const NoDescription: Story = {
 
 export const ShortContent: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "Brief.",
 			id: "7",
 			name: "Short",
@@ -103,7 +103,7 @@ export const ShortContent: Story = {
 
 export const SpecialCharacters: Story = {
 	args: {
-		project: ProjectFactory.build({
+		project: ProjectListItemFactory.build({
 			description: "Research & Development / Innovation <Lab>",
 			id: "8",
 			name: "R&D / Tech <Innovation>",
@@ -118,7 +118,7 @@ export const GridLayout: Story = {
 		() => (
 			<div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
 				<ProjectCard
-					project={ProjectFactory.build({
+					project={ProjectListItemFactory.build({
 						description: "Climate change research grants",
 						id: "1",
 						name: "Climate Research",
@@ -126,7 +126,7 @@ export const GridLayout: Story = {
 					})}
 				/>
 				<ProjectCard
-					project={ProjectFactory.build({
+					project={ProjectListItemFactory.build({
 						description: "National Science Foundation proposals",
 						id: "2",
 						name: "NSF Grants",
@@ -134,7 +134,7 @@ export const GridLayout: Story = {
 					})}
 				/>
 				<ProjectCard
-					project={ProjectFactory.build({
+					project={ProjectListItemFactory.build({
 						description: "Medical research funding opportunities",
 						id: "3",
 						name: "Medical Grants",
@@ -142,7 +142,7 @@ export const GridLayout: Story = {
 					})}
 				/>
 				<ProjectCard
-					project={ProjectFactory.build({
+					project={ProjectListItemFactory.build({
 						description: "Technology innovation grants",
 						id: "4",
 						name: "Tech Innovation",
@@ -150,7 +150,7 @@ export const GridLayout: Story = {
 					})}
 				/>
 				<ProjectCard
-					project={ProjectFactory.build({
+					project={ProjectListItemFactory.build({
 						description: "Educational program funding",
 						id: "5",
 						name: "Education Grants",
@@ -158,7 +158,7 @@ export const GridLayout: Story = {
 					})}
 				/>
 				<ProjectCard
-					project={ProjectFactory.build({
+					project={ProjectListItemFactory.build({
 						description: "Community development projects",
 						id: "6",
 						name: "Community Projects",
@@ -181,7 +181,7 @@ export const HoverStates: Story = {
 				<div>
 					<p className="text-muted-foreground mb-2 text-sm">Normal state:</p>
 					<ProjectCard
-						project={ProjectFactory.build({
+						project={ProjectListItemFactory.build({
 							description: "Hover over this card to see the transition effects",
 							id: "1",
 							name: "Interactive Card",
