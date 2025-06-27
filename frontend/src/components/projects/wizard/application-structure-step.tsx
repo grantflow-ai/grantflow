@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useCallback } from "react";
 import { AppButton } from "@/components/app-button";
-import { IconPreviewLogo } from "@/components/projects/icons";
+import { IconPreviewLogo } from "@/components/projects/shared/icons";
 import ApplicationStructureLeftPane from "@/components/projects/wizard/application-structure-left-pane";
 import { DragDropSectionManager } from "@/components/projects/wizard/drag-drop-section-manager";
 import { ScrollArea } from "@/components/ui/scroll-area";

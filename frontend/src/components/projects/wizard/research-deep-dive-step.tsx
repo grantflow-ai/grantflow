@@ -1,7 +1,7 @@
 "use client";
 
 import { AppButton } from "@/components/app-button";
-import { IconPreviewLogo } from "@/components/projects/icons";
+import { IconPreviewLogo } from "@/components/projects/shared/icons";
 
 export function ResearchDeepDiveStep() {
 	return (

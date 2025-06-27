@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { NotificationHandler } from "@/components/projects/notification-handler";
+import { NotificationHandler } from "@/components/projects/shared/notification-handler";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,

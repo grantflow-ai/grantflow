@@ -1,5 +1,5 @@
 import { Link } from "lucide-react";
-import { IconClose } from "@/components/projects/icons";
+import { IconClose } from "@/components/projects/shared/icons";
 import { Button } from "@/components/ui/button";
 import { useApplicationStore } from "@/stores/application-store";
 
