@@ -12,6 +12,7 @@ import { ProjectSidebar } from "../detail/project-sidebar";
 import { ProjectSettingsAccount } from "./project-settings-account";
 import { ProjectSettingsLayout } from "./project-settings-layout";
 import { ProjectSettingsMembers } from "./project-settings-members";
+import { ProjectSettingsNotifications } from "./project-settings-notifications";
 
 interface ProjectSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications";
@@ -74,7 +75,7 @@ export function ProjectSettingsClient({ activeTab, initialProject }: ProjectSett
 				);
 			}
 			case "notifications": {
-				return <div>Notifications content coming soon...</div>;
+				return <ProjectSettingsNotifications projectId={project.id} />;
 			}
 			default: {
 				return null;
