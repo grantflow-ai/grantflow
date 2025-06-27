@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { NotificationHandler } from "@/components/projects/notification-handler";
 import {
@@ -22,7 +22,6 @@ import {
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { logDebug } from "@/utils/logging";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;
@@ -30,45 +29,30 @@ interface WizardClientComponentProps {
 }
 
 export function WizardClientComponent({ application: initialApplication, projectId }: WizardClientComponentProps) {
-	logDebug("WizardClientComponent render", { initialApplication: initialApplication.id, projectId });
-
-	const { currentStep, setGeneratingTemplate } = useWizardStore((state) => {
-		logDebug("useWizardStore selector called", { currentStep: state.currentStep });
-		return {
-			currentStep: state.currentStep,
-			setGeneratingTemplate: state.setGeneratingTemplate,
-		};
-	});
-	const { ragJobState, retrieveApplication } = useApplicationStore((state) => {
-		logDebug("useApplicationStore selector called", { ragJobState: state.ragJobState });
-		return {
-			ragJobState: state.ragJobState,
-			retrieveApplication: state.retrieveApplication,
-		};
-	});
+	const currentStep = useWizardStore((state) => state.currentStep);
+	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
+	const ragJobState = useApplicationStore((state) => state.ragJobState);
+	const retrieveApplication = useApplicationStore((state) => state.retrieveApplication);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
 		projectId,
 	});
 
-	const stepComponents: Record<string, React.ReactElement> = useMemo(() => {
-		logDebug("stepComponents memo recalculating", { connectionStatus, connectionStatusColor });
-		return {
-			"Application Details": (
-				<ApplicationDetailsStep
-					connectionStatus={connectionStatus}
-					connectionStatusColor={connectionStatusColor}
-					key="Application Details"
-				/>
-			),
-			"Application Structure": <ApplicationStructureStep key="Application Structure" />,
-			"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
-			"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
-			"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
-			"Research Plan": <ResearchPlanStep key="Research Plan" />,
-		};
-	}, [connectionStatus, connectionStatusColor]);
+	const stepComponents: Record<string, React.ReactElement> = {
+		"Application Details": (
+			<ApplicationDetailsStep
+				connectionStatus={connectionStatus}
+				connectionStatusColor={connectionStatusColor}
+				key="Application Details"
+			/>
+		),
+		"Application Structure": <ApplicationStructureStep key="Application Structure" />,
+		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
+		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
+		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
+		"Research Plan": <ResearchPlanStep key="Research Plan" />,
+	};
 
 	useEffect(() => {
 		useApplicationStore.getState().reset();
