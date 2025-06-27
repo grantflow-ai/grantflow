@@ -3,7 +3,7 @@
 import React from "react";
 
 import AppInput from "@/components/input-field";
-import { IconGlobe } from "@/components/projects/icons";
+import { IconGlobe } from "@/components/projects/shared/icons";
 import { useApplicationStore } from "@/stores/application-store";
 import { isValidUrl } from "@/utils/validation";
 

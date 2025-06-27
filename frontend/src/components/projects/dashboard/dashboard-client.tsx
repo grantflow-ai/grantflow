@@ -5,16 +5,16 @@ import useSWR from "swr";
 
 import { getProjects } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { DashboardCreateProjectModal } from "@/components/projects/dashboard-create-project-modal";
-import { DashboardHeader } from "@/components/projects/dashboard-header";
-import { DashboardProjectCard } from "@/components/projects/dashboard-project-card";
-import { DashboardStats } from "@/components/projects/dashboard-stats";
-import { DeleteProjectModal } from "@/components/projects/delete-project-modal";
-import { InviteCollaboratorModal } from "@/components/projects/invite-collaborator-modal";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
+import { DeleteProjectModal } from "../modals/delete-project-modal";
+import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
+import { DashboardCreateProjectModal } from "./dashboard-create-project-modal";
+import { DashboardHeader } from "./dashboard-header";
+import { DashboardProjectCard } from "./dashboard-project-card";
+import { DashboardStats } from "./dashboard-stats";
 
 interface DashboardClientProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;

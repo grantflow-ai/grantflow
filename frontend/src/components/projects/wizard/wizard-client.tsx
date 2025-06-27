@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { NotificationHandler } from "@/components/projects/notification-handler";
+import { NotificationHandler } from "@/components/projects/shared/notification-handler";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -11,7 +11,7 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/projects/wizard";
-import { WizardFooter, WizardHeader } from "@/components/projects/wizard-wrapper-components";
+import { WizardFooter, WizardHeader } from "@/components/wizard/wizard-wrapper-components";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	isRagProcessingStatusMessage,
