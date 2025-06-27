@@ -1,0 +1,11 @@
+{
+  "test_name": "test_enrichment_baseline_smoke",
+  "test_category": "smoke",
+  "status": "success",
+  "performance": {
+    "execution_time": 60.43231225013733,
+    "within_threshold": true,
+    "timeout_utilization": 0.3357350680563185
+  },
+  "timestamp": "2025-06-27T22:33:04.195127+00:00"
+}

@@ -63,46 +63,56 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 			}}
 			open={open}
 		>
-			<WelcomeModalContent className="flex max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-primary bg-white px-0 pb-8 pt-0">
-				<header className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-preview-bg">
-					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_var(--color-primary)_0%,_transparent_70%)] opacity-80" />
+			<WelcomeModalContent className="flex max-w-[1080px] flex-col overflow-hidden rounded-lg border border-border-primary bg-surface-primary">
+				<header className="relative flex h-[152px] w-full items-center justify-center overflow-hidden bg-surface-secondary">
+					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_var(--color-action-primary)_0%,_transparent_70%)] opacity-30" />
 					<ProgressBar currentStep={step} />
 				</header>
-				<section className="flex w-full justify-between px-10">
-					<DialogTitle>
-						<h2 className="text-4xl font-medium text-app-black font-heading">
-							Welcome to <br /> GrantFlow!
+				<section className="flex w-full justify-between px-16 py-16">
+					<DialogTitle className="flex-shrink-0">
+						<h2 className="text-[48px] font-medium leading-[58px] text-text-primary font-heading">
+							Welcome to
+							<br />
+							GrantFlow!
 						</h2>
 					</DialogTitle>
 
 					<DialogDescription className="flex w-[597px] flex-col gap-10">
-						<div className="flex flex-col gap-4">
-							<p className="text-base font-normal text-app-black font-body">
+						<div className="flex flex-col gap-6">
+							<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
 								<span className="font-semibold">GrantFlow</span> was built for researchers, designed to
 								save dozens of hours and bring you closer to submission, quickly and efficiently.
 							</p>
-							<p className="text-base font-normal text-app-black font-body">
+							<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
 								Powered by AI, the system will generate a draft application tailored to your needs based
 								on the materials and information you provide. The more accurate and detailed your input,
 								the closer the result will be to what you need.
 							</p>
 						</div>
-						<article className="flex gap-1 rounded-lg border border-app-slate-blue bg-light-gray p-2">
-							<div className="size-4">
-								<AlertCircle className="text-app-gray-700 size-4" />
+						<article className="flex gap-3 rounded-lg border border-action-primary bg-surface-secondary p-4">
+							<div className="size-5 flex-shrink-0 mt-0.5">
+								<AlertCircle className="size-5 text-action-primary" />
 							</div>
-							<p className="text-sm font-normal text-app-black font-body">
+							<p className="text-[14px] font-normal leading-[21px] text-text-primary font-body">
 								Keep in mind that AI has limitations and may occasionally make mistakes. Always review
 								and refine the output using the editor.
 							</p>
 						</article>
 					</DialogDescription>
 				</section>
-				<footer className="flex w-full items-center justify-between px-10">
-					<AppButton className="w-28 px-4 py-2" onClick={handleClose} variant="secondary">
+				<footer className="flex w-full items-center justify-between px-16 pb-16">
+					<AppButton
+						className="h-12 w-[112px] rounded-[6px] border border-border-primary bg-transparent px-6 py-3 text-[16px] font-medium leading-[22px] text-text-primary hover:bg-surface-secondary font-button"
+						onClick={handleClose}
+						variant="secondary"
+					>
 						Later
 					</AppButton>
-					<AppButton className="px-4 py-2" onClick={handleStartApplication} variant="primary">
+					<AppButton
+						className="h-12 rounded-[6px] bg-action-primary px-6 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-action-primary/90 font-button"
+						onClick={handleStartApplication}
+						variant="primary"
+					>
 						Start New Application
 					</AppButton>
 				</footer>
