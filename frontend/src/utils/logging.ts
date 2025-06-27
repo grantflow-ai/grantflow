@@ -1,5 +1,7 @@
 /**
  * Temporary debug logging function - TO BE REMOVED LATER
+ * @param message - The debug message
+ * @param data - Optional data to log
  */
 export function logDebug(message: string, data?: unknown): void {
 	// eslint-disable-next-line no-console

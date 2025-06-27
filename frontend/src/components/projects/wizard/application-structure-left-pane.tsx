@@ -89,18 +89,12 @@ export function ApplicationStructureFilePreview({
 }
 
 export default function ApplicationStructureLeftPane() {
-	const { application, retrieveApplication } = useApplicationStore((state) => ({
-		application: state.application,
-		retrieveApplication: state.retrieveApplication,
-	}));
-	const { checkForRagJobId, checkTemplateRagJobStatus, grantTemplateRagJobData, polling } = useWizardStore(
-		(state) => ({
-			checkForRagJobId: state.checkForRagJobId,
-			checkTemplateRagJobStatus: state.checkTemplateRagJobStatus,
-			grantTemplateRagJobData: state.grantTemplateRagJobData,
-			polling: state.polling,
-		}),
-	);
+	const application = useApplicationStore((state) => state.application);
+	const retrieveApplication = useApplicationStore((state) => state.retrieveApplication);
+	const checkForRagJobId = useWizardStore((state) => state.checkForRagJobId);
+	const checkTemplateRagJobStatus = useWizardStore((state) => state.checkTemplateRagJobStatus);
+	const grantTemplateRagJobData = useWizardStore((state) => state.grantTemplateRagJobData);
+	const polling = useWizardStore((state) => state.polling);
 
 	const [visibleSteps, setVisibleSteps] = useState(0);
 

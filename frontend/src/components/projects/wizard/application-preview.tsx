@@ -1,13 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { IconApplication, IconPreviewLogo } from "@/components/projects/icons";
 import { ThemeBadge } from "@/components/projects/theme-badge";
 import FilePreviewCard from "@/components/projects/wizard/file-preview-card";
 import LinkPreviewItem from "@/components/projects/wizard/link-preview-item";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
+import { logDebug } from "@/utils/logging";
 
 export function ApplicationPreview({
 	connectionStatus,
@@ -18,20 +19,27 @@ export function ApplicationPreview({
 	connectionStatusColor?: string;
 	parentId?: string;
 }) {
-	const { application } = useApplicationStore((state) => ({
-		application: state.application,
-	}));
+	logDebug("ApplicationPreview render", { parentId });
+	const application = useApplicationStore((state) => state.application);
 
-	const templateFiles: FileWithId[] = (application?.grant_template?.rag_sources ?? [])
-		.filter((source) => source.filename)
-		.map((source) => {
-			const file = new File([], source.filename!, { type: "application/octet-stream" });
-			return Object.assign(file, { id: source.sourceId });
-		});
+	const templateFiles: FileWithId[] = useMemo(
+		() =>
+			(application?.grant_template?.rag_sources ?? [])
+				.filter((source) => source.filename)
+				.map((source) => {
+					const file = new File([], source.filename!, { type: "application/octet-stream" });
+					return Object.assign(file, { id: source.sourceId });
+				}),
+		[application?.grant_template?.rag_sources],
+	);
 
-	const templateUrls = (application?.grant_template?.rag_sources ?? [])
-		.filter((source) => source.url)
-		.map((source) => source.url!);
+	const templateUrls = useMemo(
+		() =>
+			(application?.grant_template?.rag_sources ?? [])
+				.filter((source) => source.url)
+				.map((source) => source.url!),
+		[application?.grant_template?.rag_sources],
+	);
 
 	const isEmpty = !application?.title && templateFiles.length === 0 && templateUrls.length === 0;
 
@@ -62,7 +70,7 @@ export function ApplicationPreview({
 						</h3>
 					</div>
 
-					<ScrollArea className="flex-1">
+					<div className="flex-1 overflow-y-auto">
 						<div className="space-y-5">
 							{templateFiles.length > 0 && (
 								<Card
@@ -100,7 +108,7 @@ export function ApplicationPreview({
 								</Card>
 							)}
 						</div>
-					</ScrollArea>
+					</div>
 				</>
 			)}
 		</div>
