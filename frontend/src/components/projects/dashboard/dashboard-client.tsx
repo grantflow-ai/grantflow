@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import { getProjects } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
+import { WelcomeModal } from "@/components/welcome/welcome-modal";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
@@ -140,6 +141,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 	return (
 		<div className="relative size-full">
+			<WelcomeModal onStartApplication={() => setShowCreateModal(true)} />
 			<div className="flex size-full flex-col items-center">
 				<div className="flex size-full flex-col items-center justify-start pb-6 pl-0 pr-0 pt-0">
 					<DashboardHeader

@@ -12,6 +12,8 @@ interface UserInfo {
 
 interface UserStore {
 	clearUser: () => void;
+	dismissWelcomeModal: () => void;
+	hasSeenWelcomeModal: boolean;
 	isAuthenticated: boolean;
 	setUser: (user: null | UserInfo) => void;
 	user: null | UserInfo;
@@ -23,10 +25,15 @@ export const useUserStore = create<UserStore>()(
 			(set) => ({
 				clearUser: () => {
 					set({
+						hasSeenWelcomeModal: false,
 						isAuthenticated: false,
 						user: null,
 					});
 				},
+				dismissWelcomeModal: () => {
+					set({ hasSeenWelcomeModal: true });
+				},
+				hasSeenWelcomeModal: false,
 				isAuthenticated: false,
 				setUser: (user) => {
 					set({
