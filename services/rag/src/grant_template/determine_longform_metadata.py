@@ -15,99 +15,46 @@ from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGME
 logger = get_logger(__name__)
 
 GENERATE_GRANT_TEMPLATE_SYSTEM_PROMPT: Final[str] = """
-You are a specialized system designed to analyze grant application requirements and generate structured specifications.
-You excel at interpreting funding opportunity documentation and determining appropriate content parameters and constraints
-for successful grant applications. Your expertise includes technical, scientific, and academic writing across multiple disciplines.
+You generate structured metadata for grant application sections.
+Focus on word counts, keywords, search queries, and dependencies.
+Be concise and specific.
 """
 
 GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="grant_template_generation",
     template=r"""
-    # Grant Template Metadata Generation System
-
-    Your task is to add detailed metadata for long-form sections in a grant application. These metadata will guide content
-    generation for each section, ensuring compliance with requirements and maximizing quality. Use the sources provided
-    to determine appropriate parameters for each section.
-
-    ## Sources
+    Generate metadata for these grant application sections:
 
     ${organization_guidelines}
 
-    This is the text extracted from the funding opportunity announcement:
+    <cfp_subject>${cfp_subject}</cfp_subject>
+    <cfp_content>${cfp_content}</cfp_content>
+    <sections>${long_form_sections}</sections>
 
-    ### Announcement Content:
+    For each section, provide:
 
-    #### The announcement subject is:
+    1. **Word Count**: Based on page limits (415 words/page TNR 11pt, 500/page Arial 11pt)
+       - Research plan gets 50-66% unless specified
+       - Reduce total by 12.5% for figures
 
-    <cfp_subject>
-    ${cfp_subject}
-    </cfp_subject>
+    2. **Keywords**: 5-15 specific domain terms
 
-    #### And these are the requirements and guidelines extracted from the announcement:
+    3. **Topics**: 3-8 key areas to address
 
-    <cfp_content>
-    ${cfp_content}
-    </cfp_content>
+    4. **Generation Instructions**: 100-500 words explaining:
+       - Section purpose
+       - Required content
+       - Writing style
+       - Common pitfalls
 
-    ## Sections to Process
+    5. **Search Queries**: 3-10 specific queries for evidence retrieval
 
-    Based on previous analysis, these are the long-form sections that require metadata:
+    6. **Dependencies**: List section IDs this depends on
 
-    <section_data>
-    ${long_form_sections}
-    </section_data>
-
-    ## Instructions
-
-    1. Length Analysis and Word Count Allocation:
-       - Identify total application length limits from sources
-       - Convert all measurements to word counts using these guidelines:
-         * Page count: 415 words/page (TNR 11pt), 500 words/page (Arial 11pt)
-         * Characters: divide by 7 for word count
-         * Lines: multiply by 10-12 depending on line spacing
-       - Reduce total by 12.5% to account for figures, tables, and diagrams
-       - Distribute words across sections based on strategic importance:
-         * Research plan or research_plan should receive 50-66% of total words unless specified otherwise
-         * Give more words to technically complex sections
-         * Give fewer words to standard/boilerplate sections
-       - Respect any explicit section word limits found in the guidelines
-
-    2. Writing Guidance Integration:
-       - For each section, assign 5-15 specific keywords that ground content in relevant concepts
-       - Identify 3-8 topical areas that each section must address
-       - Write detailed, actionable generation instructions (100-500 words) that explain:
-         * The purpose of the section within the overall application
-         * Required content components and their relative importance
-         * Stylistic and tone requirements
-         * Section-specific formatting needs
-         * Common pitfalls to avoid
-
-    3. Search Query Generation:
-       - For each section, create 3-10 focused search queries that will retrieve relevant information
-       - Craft queries that:
-         * Target section-specific evidence needs
-         * Use terminology relevant to the scientific domain
-         * Are specific enough to retrieve high-quality content
-         * Cover diverse aspects of the section topic
-         * Would retrieve information that strengthens the application
-
-    4. Section Dependencies:
-       - Identify logical dependencies between sections
-       - A section depends on another if:
-         * It references content that should appear in the other section
-         * It builds upon concepts introduced in the other section
-         * It provides supporting evidence for claims in the other section
-
-    ## Task Completion
-
-    For EACH section in the provided section list, generate comprehensive metadata following the analysis steps above.
-
-    IMPORTANT:
-    - Every section ID in your output MUST exactly match one of the section IDs provided in the input
-    - Do not add new sections or modify the structure
-    - If you cannot determine appropriate metadata for any section, return an error instead of guessing
-    - Make sure the sum of all section word counts equals the total application word count minus the allocation for figures
-    - Generation instructions must be specific enough to produce content that satisfies grant reviewers
+    Requirements:
+    - Match all input section IDs exactly
+    - Word counts must sum to total minus figure allocation
+    - Instructions must be actionable and specific
     """,
 )
 
@@ -375,9 +322,9 @@ async def generate_grant_template(
         response_type=TemplateSectionsResponse,
         validator=partial(validate_template_sections, input_sections=input_sections),
         system_prompt=GENERATE_GRANT_TEMPLATE_SYSTEM_PROMPT,
-        temperature=0.2,
-        top_p=0.7,
-        candidate_count=3,
+        temperature=0.1,
+        top_p=0.9,
+        candidate_count=2,
     )
 
 
@@ -385,62 +332,32 @@ evaluation_criteria = [
     EvaluationCriterion(
         name="Word Count Analysis",
         evaluation_instructions="""
-        Evaluate the accuracy and quality of the word count analysis:
-            - Word limits are realistically based on source documents
-            - Page-to-word conversions are accurate and appropriate for the format
-            - Word distributions align with section importance and typical grant structure
-            - Adjustments for figures/tables are reasonable (~10-15%)
-            - Word allocations are practical and balanced across sections
-            - The research_plan has appropriate priority in word allocation
+        Check word count allocations:
+        - Total matches source page limits
+        - Research plan gets 50-66% of words
+        - Distribution reflects section importance
         """,
+        weight=0.8,
     ),
     EvaluationCriterion(
         name="Content Guidance Quality",
         evaluation_instructions="""
-        Assess the quality and usefulness of content guidance:
-            - Keywords are relevant and specific to each section
-            - Topics effectively capture required content areas with minimal overlap
-            - Generation instructions are clear, specific, and actionable
-            - Instructions align with grant writing best practices
-            - Context-specific requirements are appropriately incorporated
-            - Instructions enable generation of high-quality content
+        Check content guidance:
+        - Keywords are specific and relevant
+        - Instructions are clear and actionable
+        - Search queries retrieve useful evidence
         """,
+        weight=0.9,
     ),
     EvaluationCriterion(
-        name="Search Query Effectiveness",
+        name="Dependencies and Structure",
         evaluation_instructions="""
-        Evaluate the effectiveness of the search queries:
-            - Queries are focused and specific to each section
-            - Diverse range of queries covers different aspects of the section
-            - Terminology is appropriate for the scientific domain
-            - Queries target specific evidence needed for the section
-            - Queries are well-formed and likely to retrieve relevant content
-            - Appropriate number of queries for each section (3-10)
+        Verify dependencies:
+        - No circular dependencies
+        - Logical content flow
+        - All sections properly connected
         """,
-    ),
-    EvaluationCriterion(
-        name="Structural Coherence",
-        evaluation_instructions="""
-        Assess the structural coherence of the template:
-            - Section dependencies are logical and correctly identified
-            - The overall structure forms a coherent narrative
-            - Research Plan is properly integrated with related sections
-            - Section relationships support a natural content flow
-            - Content allocations follow standard scientific writing patterns
-            - Structure supports the specific type of grant application
-        """,
-    ),
-    EvaluationCriterion(
-        name="Technical/Scientific Rigor",
-        evaluation_instructions="""
-        Assess technical and scientific rigor in content requirements:
-            - Template emphasizes evidence-based content where appropriate
-            - Requirements for methodology sections ensure technical adequacy
-            - Appropriate emphasis on data analysis and interpretation
-            - Content guidance supports scientifically sound propositions
-            - Appropriate standards for the specific scientific domain
-            - Balance between innovation and feasibility in content requirements
-        """,
+        weight=0.7,
     ),
 ]
 
@@ -486,14 +403,12 @@ async def handle_generate_grant_template(
             EvaluationCriterion(
                 name="Organizational Compliance",
                 evaluation_instructions="""
-            Evaluate adherence to organizational guidelines:
-                - Template respects specific organizational formatting requirements
-                - Section naming conventions match organizational preferences
-                - Word count limits align with organizational guidelines
-                - Content requirements specific to the organization are addressed
-                - Structure follows organization-specific templates where provided
-                - Balance between sections matches organizational preferences
-            """,
+                Check org guidelines:
+                - Formatting matches requirements
+                - Section names follow conventions
+                - Word limits align with org specs
+                """,
+                weight=0.8,
             )
         )
 
@@ -503,8 +418,9 @@ async def handle_generate_grant_template(
         prompt=prompt.to_string(
             organization_guidelines=organization_guidelines,
         ),
-        increment=5,
-        retries=5,
+        increment=15,
+        retries=3,
         criteria=criteria,
+        passing_score=70,
     )
     return result["sections"]
