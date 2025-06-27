@@ -11,6 +11,7 @@ import type { UserRole } from "@/types/user";
 import { ProjectSidebar } from "../detail/project-sidebar";
 import { ProjectSettingsAccount } from "./project-settings-account";
 import { ProjectSettingsLayout } from "./project-settings-layout";
+import { ProjectSettingsMembers } from "./project-settings-members";
 
 interface ProjectSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications";
@@ -64,7 +65,13 @@ export function ProjectSettingsClient({ activeTab, initialProject }: ProjectSett
 				return <div>Billing & Payments content coming soon...</div>;
 			}
 			case "members": {
-				return <div>Members content coming soon...</div>;
+				return (
+					<ProjectSettingsMembers
+						currentUserRole={project.role as UserRole}
+						projectId={project.id}
+						projectName={project.name}
+					/>
+				);
 			}
 			case "notifications": {
 				return <div>Notifications content coming soon...</div>;
