@@ -90,7 +90,7 @@ export function ApplicationStructureFilePreview({
 
 export default function ApplicationStructureLeftPane() {
 	const { application, retrieveApplication } = useApplicationStore();
-	const { checkTemplateRagJobStatus, grantTemplateRagJobData } = useWizardStore();
+	const { checkForRagJobId, checkTemplateRagJobStatus, grantTemplateRagJobData, polling } = useWizardStore();
 
 	const [visibleSteps, setVisibleSteps] = useState(0);
 
@@ -121,8 +121,15 @@ export default function ApplicationStructureLeftPane() {
 	useEffect(() => {
 		if (application?.grant_template?.rag_job_id) {
 			void checkTemplateRagJobStatus();
+		} else if (
+			application?.grant_template &&
+			!application.grant_template.grant_sections.length &&
+			!polling.isActive
+		) {
+			// Poll for rag_job_id if we have a grant template but no sections and no job ID yet
+			void checkForRagJobId();
 		}
-	}, [application?.grant_template?.rag_job_id, checkTemplateRagJobStatus]);
+	}, [application?.grant_template, polling.isActive, checkTemplateRagJobStatus, checkForRagJobId]);
 
 	useEffect(() => {
 		if (grantTemplateRagJobData?.status === "COMPLETED" && application) {

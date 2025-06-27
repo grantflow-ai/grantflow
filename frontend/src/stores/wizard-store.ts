@@ -58,6 +58,7 @@ interface WizardActions {
 	addNextObjective: () => void;
 	addObjective: (objective: Objective) => void;
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
+	checkForRagJobId: () => Promise<void>;
 	checkTemplateRagJobStatus: () => Promise<void>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
@@ -164,6 +165,57 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					void updateApplication({ research_objectives: updatedObjectives });
 				},
 
+				checkForRagJobId: async () => {
+					const { application, retrieveApplication } = useApplicationStore.getState();
+					const { polling } = get();
+
+					if (!application) {
+						return;
+					}
+
+					// Set generating template to true when we start polling for rag_job_id
+					set((state) => ({
+						...state,
+						isGeneratingTemplate: true,
+					}));
+
+					try {
+						await retrieveApplication(application.project_id, application.id);
+
+						const { application: updatedApplication } = useApplicationStore.getState();
+
+						// If we now have a rag_job_id, start the template status polling
+						if (updatedApplication?.grant_template?.rag_job_id) {
+							polling.stop();
+							// Keep isGeneratingTemplate true, checkTemplateRagJobStatus will manage it
+							void get().checkTemplateRagJobStatus();
+							return;
+						}
+
+						// If we have grant sections, template generation is complete
+						if (updatedApplication?.grant_template?.grant_sections.length) {
+							polling.stop();
+							set((state) => ({
+								...state,
+								isGeneratingTemplate: false,
+							}));
+							return;
+						}
+
+						// Continue polling if still no rag_job_id or grant sections
+						if (!polling.isActive) {
+							polling.start(get().checkForRagJobId, POLLING_INTERVAL_DURATION, false);
+						}
+					} catch (error) {
+						logError({ error, identifier: "checkForRagJobId" });
+						polling.stop();
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: false,
+						}));
+					}
+				},
+
 				checkTemplateRagJobStatus: async () => {
 					const { application } = useApplicationStore.getState();
 					const { polling } = get();
@@ -189,8 +241,18 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 						if (isComplete) {
 							polling.stop();
+							set((state) => ({
+								...state,
+								isGeneratingTemplate: false,
+							}));
 							return;
 						}
+
+						// Set generating template to true when we have an active job
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: jobData.status === "PROCESSING" || jobData.status === "PENDING",
+						}));
 
 						if (!polling.isActive) {
 							polling.start(get().checkTemplateRagJobStatus, POLLING_INTERVAL_DURATION, false);
@@ -406,10 +468,19 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				toNextStep: () => {
-					const { currentStep } = get();
+					const { currentStep, polling } = get();
 
 					if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 						return;
+					}
+
+					// Clean up polling when leaving APPLICATION_STRUCTURE
+					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
+						polling.stop();
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: false,
+						}));
 					}
 
 					const nextStep = WIZARD_STEP_TITLES[WIZARD_STEP_TITLES.indexOf(currentStep) + 1];
@@ -441,6 +512,10 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: false,
+						}));
 					}
 
 					set((state) => ({

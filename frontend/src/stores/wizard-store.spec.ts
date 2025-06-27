@@ -276,6 +276,115 @@ describe("wizard store", () => {
 		});
 	});
 
+	describe("checkForRagJobId", () => {
+		it("should set isGeneratingTemplate to true when starting polling", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+			const template = GrantTemplateFactory.build({ grant_sections: [], rag_job_id: undefined });
+			application.grant_template = template;
+
+			// Mock the application store to return same application (no rag_job_id found yet)
+			const mockRetrieveApplication = vi.fn().mockImplementation(() => {
+				useApplicationStore.setState({ application });
+			});
+			useApplicationStore.setState({
+				application,
+				retrieveApplication: mockRetrieveApplication,
+			});
+
+			const { checkForRagJobId } = useWizardStore.getState();
+			await checkForRagJobId();
+
+			expect(mockRetrieveApplication).toHaveBeenCalledWith(application.project_id, application.id);
+
+			// Verify that isGeneratingTemplate is set to true when starting polling
+			const stateAfterStart = useWizardStore.getState();
+			expect(stateAfterStart.isGeneratingTemplate).toBe(true);
+		});
+
+		it("should stop polling when grant sections are found", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+			const template = GrantTemplateFactory.build({
+				grant_sections: [GrantSectionBaseFactory.build()],
+				rag_job_id: undefined,
+			});
+			application.grant_template = template;
+
+			const updatedApplication = { ...application, grant_template: template };
+
+			const mockRetrieveApplication = vi.fn().mockImplementation(() => {
+				useApplicationStore.setState({ application: updatedApplication });
+			});
+			useApplicationStore.setState({
+				application,
+				retrieveApplication: mockRetrieveApplication,
+			});
+
+			const { checkForRagJobId } = useWizardStore.getState();
+			await checkForRagJobId();
+
+			expect(mockRetrieveApplication).toHaveBeenCalledWith(application.project_id, application.id);
+
+			const state = useWizardStore.getState();
+			expect(state.polling.isActive).toBe(false);
+			expect(state.isGeneratingTemplate).toBe(false);
+		});
+
+		it("should continue polling when no rag_job_id or grant sections found", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+			const template = GrantTemplateFactory.build({ grant_sections: [], rag_job_id: undefined });
+			application.grant_template = template;
+
+			const updatedApplication = { ...application, grant_template: template };
+
+			const mockRetrieveApplication = vi.fn().mockImplementation(() => {
+				useApplicationStore.setState({ application: updatedApplication });
+			});
+			useApplicationStore.setState({
+				application,
+				retrieveApplication: mockRetrieveApplication,
+			});
+
+			const { checkForRagJobId } = useWizardStore.getState();
+			await checkForRagJobId();
+
+			expect(mockRetrieveApplication).toHaveBeenCalledWith(application.project_id, application.id);
+		});
+
+		it("should handle API errors gracefully", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+			const template = GrantTemplateFactory.build({ grant_sections: [], rag_job_id: undefined });
+			application.grant_template = template;
+
+			const mockRetrieveApplication = vi.fn().mockRejectedValue(new Error("Network error"));
+			useApplicationStore.setState({
+				application,
+				retrieveApplication: mockRetrieveApplication,
+			});
+
+			const { checkForRagJobId } = useWizardStore.getState();
+			await checkForRagJobId();
+
+			expect(mockRetrieveApplication).toHaveBeenCalledWith(application.project_id, application.id);
+
+			const state = useWizardStore.getState();
+			expect(state.polling.isActive).toBe(false);
+			expect(state.isGeneratingTemplate).toBe(false);
+		});
+
+		it("should not proceed when no application is available", async () => {
+			const mockRetrieveApplication = vi.fn();
+			useApplicationStore.setState({
+				application: null,
+				retrieveApplication: mockRetrieveApplication,
+			});
+
+			const { checkForRagJobId } = useWizardStore.getState();
+			await checkForRagJobId();
+
+			expect(mockRetrieveApplication).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("polling", () => {
 		it("should start polling with immediate call", async () => {
 			const mockApiFunction = vi.fn().mockResolvedValue(undefined);
