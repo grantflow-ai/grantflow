@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useApplicationStore } from "@/stores/application-store";
 
 export default function LinkPreviewItem({ parentId, url }: { parentId?: string; url: string }) {
-	const { removeUrl } = useApplicationStore();
+	const removeUrl = useApplicationStore((state) => state.removeUrl);
 
 	const handleRemove = async () => {
 		if (!parentId) return;
