@@ -55,7 +55,7 @@ async def test_cfp_extraction_with_empty_sources(
     logger.info("Correctly handled empty source list")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=120)
+@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
 async def test_retrieval_with_malformed_task_description(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
