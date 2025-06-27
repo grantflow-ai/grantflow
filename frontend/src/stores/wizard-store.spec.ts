@@ -89,7 +89,7 @@ describe("wizard store", () => {
 	});
 
 	describe("toNextStep", () => {
-		it("should start template generation when entering APPLICATION_STRUCTURE", () => {
+		it("should start template generation when entering PREVIEW_AND_APPROVE", () => {
 			const mockGenerateTemplate = vi.fn();
 			const mockStart = vi.fn();
 
@@ -112,7 +112,7 @@ describe("wizard store", () => {
 
 			useWizardStore.getState().toNextStep();
 
-			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_STRUCTURE);
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.PREVIEW_AND_APPROVE);
 			expect(mockGenerateTemplate).toHaveBeenCalledWith("template-id");
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(true);
 			expect(mockStart).toHaveBeenCalled();
@@ -160,7 +160,7 @@ describe("wizard store", () => {
 			expect(useWizardStore.getState().validateStepNext()).toBe(false);
 		});
 
-		it("should require grant sections for APPLICATION_STRUCTURE", () => {
+		it("should require grant sections for PREVIEW_AND_APPROVE", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
@@ -168,7 +168,7 @@ describe("wizard store", () => {
 			});
 
 			useApplicationStore.setState({ application });
-			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
+			useWizardStore.setState({ currentStep: WizardStep.PREVIEW_AND_APPROVE });
 
 			expect(useWizardStore.getState().validateStepNext()).toBe(false);
 		});
