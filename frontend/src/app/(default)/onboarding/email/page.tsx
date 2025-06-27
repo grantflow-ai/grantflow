@@ -10,11 +10,13 @@ import { toast } from "sonner";
 import { login } from "@/actions/login";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
+import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { logError } from "@/utils/logging";
 
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
+	const { setUser } = useUserStore();
 
 	useEffect(() => {
 		const finalizeSignIn = async () => {
@@ -30,6 +32,17 @@ export default function FinalizeEmailLogin() {
 
 			try {
 				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
+
+				// Store user info in the user store
+				setUser({
+					displayName: cred.user.displayName,
+					email: cred.user.email,
+					emailVerified: cred.user.emailVerified,
+					photoURL: cred.user.photoURL,
+					providerId: cred.user.providerData[0]?.providerId,
+					uid: cred.user.uid,
+				});
+
 				const idToken = await cred.user.getIdToken();
 				await login(idToken);
 			} catch (error) {
@@ -44,7 +57,7 @@ export default function FinalizeEmailLogin() {
 		};
 
 		void finalizeSignIn();
-	}, [router]);
+	}, [router, setUser]);
 
 	return (
 		<div

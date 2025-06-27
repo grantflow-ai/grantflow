@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app-button";
 import { IconGoAhead, IconGoBack } from "@/components/icons";
 import {
@@ -97,9 +98,21 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
+	const router = useRouter();
 	const currentStep = useWizardStore((state) => state.currentStep);
+	const reset = useWizardStore((state) => state.reset);
 	const application = useApplicationStore((state) => state.application);
 	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
+
+	const handleExit = () => {
+		reset();
+		if (application?.project_id) {
+			router.push(`/projects/${application.project_id}`);
+		} else {
+			router.push("/projects");
+		}
+	};
+
 	return (
 		<header className="w-full border-b border-solid border-app-gray-100 p-4 sm:p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
@@ -118,6 +131,7 @@ export function WizardHeader() {
 				<AppButton
 					className="py-0 text-sm sm:text-base text-primary"
 					data-testid="exit-button"
+					onClick={handleExit}
 					size="lg"
 					variant="link"
 				>

@@ -23,6 +23,7 @@ import { SocialSigninButton } from "@/components/social-signin-buttons";
 import { Card, CardContent } from "@/components/ui/card";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
+import { useUserStore } from "@/stores/user-store";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
@@ -31,6 +32,7 @@ export default function SignIn() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
+	const { setUser } = useUserStore();
 
 	const handleSocialSignUp = async (
 		provider: "google" | "orcid",
@@ -40,10 +42,21 @@ export default function SignIn() {
 		setSocialSignInError(null);
 
 		try {
-			const { idToken, isNewUser } = await signupMethod();
+			const { idToken, isNewUser, user } = await signupMethod();
 
 			if (isNewUser) {
 				toast.success("Account created successfully!");
+
+				// Store user info in the user store
+				setUser({
+					displayName: user.displayName,
+					email: user.email,
+					emailVerified: user.emailVerified,
+					photoURL: user.photoURL,
+					providerId: user.providerData[0]?.providerId,
+					uid: user.uid,
+				});
+
 				await login(idToken);
 				return;
 			}

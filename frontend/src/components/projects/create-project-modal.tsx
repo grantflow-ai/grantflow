@@ -3,9 +3,8 @@
 import { PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import { BaseModal } from "@/components/ui/base-modal";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PagePath } from "@/enums";
 
 import { CreateProjectForm } from "./create-project-form";
@@ -16,17 +15,26 @@ export function CreateProjectModal() {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<Dialog onOpenChange={setIsOpen} open={isOpen}>
-			<DialogTrigger asChild={true}>
-				<Button className="flex items-center gap-1" data-testid="create-project-button" size="sm">
-					<PlusCircle className="size-3.5" />
-					<span>New Project</span>
-				</Button>
-			</DialogTrigger>
-			<DialogContent aria-describedby="New project Dialog">
-				<DialogHeader>
-					<DialogTitle>New Project</DialogTitle>
-				</DialogHeader>
+		<>
+			<Button
+				className="flex items-center gap-1"
+				data-testid="create-project-button"
+				onClick={() => {
+					setIsOpen(true);
+				}}
+				size="sm"
+			>
+				<PlusCircle className="size-3.5" />
+				<span>New Project</span>
+			</Button>
+
+			<BaseModal
+				isOpen={isOpen}
+				onClose={() => {
+					setIsOpen(false);
+				}}
+				title="New Project"
+			>
 				<CreateProjectForm
 					closeModal={(projectId) => {
 						setIsOpen(false);
@@ -35,7 +43,7 @@ export function CreateProjectModal() {
 						}
 					}}
 				/>
-			</DialogContent>
-		</Dialog>
+			</BaseModal>
+		</>
 	);
 }

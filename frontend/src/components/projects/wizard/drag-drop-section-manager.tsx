@@ -1,33 +1,17 @@
-import {
-	closestCenter,
-	DndContext,
-	type DragEndEvent,
-	type DragOverEvent,
-	DragOverlay,
-	type DragStartEvent,
-	KeyboardSensor,
-	PointerSensor,
-	useSensor,
-	useSensors,
-} from "@dnd-kit/core";
-import {
-	arrayMove,
-	SortableContext,
-	sortableKeyboardCoordinates,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { arrayMove } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { SortableSection } from "@/components/projects/wizard/grant-sections";
 import { SectionIconButton } from "@/components/projects/wizard/section-icon-button";
+import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 
 interface SectionListProps {
 	expandedSections: Set<string>;
-	grantSections: GrantSection[];
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
@@ -49,10 +33,44 @@ export function DragDropSectionManager({
 }) {
 	const application = useApplicationStore((state) => state.application);
 	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
-	const [activeId, setActiveId] = useState<null | string>(null);
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
+
+	// Helper function to check if a section would create invalid nesting
+	const wouldCreateInvalidNesting = useCallback(
+		(activeSection: GrantSection, overSection: GrantSection) => {
+			// If dropping a section with children under a subsection, that would create 3 levels
+			if (overSection.parent_id !== null && activeSection.parent_id === null) {
+				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
+				if (hasChildren) {
+					return true;
+				}
+			}
+
+			return false;
+		},
+		[grantSections],
+	);
+
+	// Helper function to determine the new parent_id based on drop target
+	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
+		const activeIsChild = activeSection.parent_id !== null;
+		const overIsChild = overSection.parent_id !== null;
+
+		// If dropping on a child section, make the active section a sibling (same parent)
+		if (overIsChild) {
+			return overSection.parent_id;
+		}
+
+		// If dropping a child section on a parent section, make it a child of that parent
+		if (activeIsChild) {
+			return overSection.id;
+		}
+
+		// If dropping a parent section on another parent section, make it a top-level section
+		return null;
+	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
 		setExpandedSections((prev) => {
@@ -73,13 +91,6 @@ export function DragDropSectionManager({
 			return newSet;
 		});
 	}, []);
-
-	const sensors = useSensors(
-		useSensor(PointerSensor),
-		useSensor(KeyboardSensor, {
-			coordinateGetter: sortableKeyboardCoordinates,
-		}),
-	);
 
 	const handleUpdateSection = useCallback(
 		async (sectionId: string, updates: Partial<GrantSection>) => {
@@ -112,78 +123,54 @@ export function DragDropSectionManager({
 		[onAddSection],
 	);
 
-	const handleDragStart = useCallback((event: DragStartEvent) => {
-		setActiveId(event.active.id as string);
-	}, []);
+	// Define drag and drop handlers specific to grant sections
+	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
+		() => ({
+			onDragOver: async (_event, activeSection, overSection) => {
+				if (!(activeSection && overSection)) {
+					return;
+				}
 
-	const handleDragEnd = useCallback(
-		async (event: DragEndEvent) => {
-			const { active, over } = event;
-			setActiveId(null);
+				// Check for invalid nesting before allowing the change
+				if (wouldCreateInvalidNesting(activeSection, overSection)) {
+					toast.error("Cannot create more than 2 levels of nesting");
+					return;
+				}
 
-			if (!over || active.id === over.id) {
-				return;
-			}
+				const newParentId = determineNewParentId(activeSection, overSection);
 
-			const sections = [...grantSections];
-			const activeSection = sections.find((s) => s.id === active.id);
-			const overSection = sections.find((s) => s.id === over.id);
+				// Only update if the parent relationship would actually change
+				if (activeSection.parent_id !== newParentId) {
+					const updatedSections = grantSections.map((section) => {
+						if (section.id === activeSection.id) {
+							return {
+								...section,
+								parent_id: newParentId,
+							};
+						}
+						return section;
+					});
 
-			if (!(activeSection && overSection)) {
-				return;
-			}
+					await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
+				}
+			},
+			onReorder: async (sections, oldIndex, newIndex) => {
+				const reorderedSections = arrayMove(sections, oldIndex, newIndex);
 
-			const oldIndex = sections.findIndex((s) => s.id === active.id);
-			const newIndex = sections.findIndex((s) => s.id === over.id);
+				const updatedSections = reorderedSections.map((section, index) => ({
+					...section,
+					order: index,
+					parent_id: section.parent_id ?? null,
+				}));
 
-			const reorderedSections = arrayMove(sections, oldIndex, newIndex);
-
-			const updatedSections = reorderedSections.map((section, index) => ({
-				...section,
-				order: index,
-				parent_id: section.parent_id ?? null,
-			}));
-
-			await updateGrantSections(updatedSections.map(toUpdateGrantSection));
-		},
-		[grantSections, updateGrantSections, toUpdateGrantSection],
+				await updateGrantSections(updatedSections.map(toUpdateGrantSection));
+			},
+		}),
+		[grantSections, updateGrantSections, toUpdateGrantSection, wouldCreateInvalidNesting, determineNewParentId],
 	);
 
-	const handleDragOver = useCallback(
-		async (event: DragOverEvent) => {
-			const { active, over } = event;
-
-			if (!over || active.id === over.id) {
-				return;
-			}
-
-			const sections = [...grantSections];
-			const activeSection = sections.find((s) => s.id === active.id);
-			const overSection = sections.find((s) => s.id === over.id);
-
-			if (!(activeSection && overSection)) {
-				return;
-			}
-
-			const activeIsChild = activeSection.parent_id !== null;
-			const overIsChild = overSection.parent_id !== null;
-
-			if (activeIsChild !== overIsChild) {
-				const updatedSections = sections.map((section) => {
-					if (section.id === activeSection.id) {
-						return {
-							...section,
-							parent_id: overIsChild ? overSection.parent_id : null,
-						};
-					}
-					return section;
-				});
-
-				await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
-			}
-		},
-		[grantSections, updateGrantSections],
-	);
+	// Use the drag and drop hook
+	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
 
 	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
 
@@ -203,21 +190,22 @@ export function DragDropSectionManager({
 		[sortedSections],
 	);
 
-	const activeSection = useMemo(() => grantSections.find((s) => s.id === activeId), [grantSections, activeId]);
+	// Render drag overlay for active section
+	const renderDragOverlay = useCallback(
+		(activeSection: GrantSection | undefined) => {
+			if (!activeSection) return null;
+
+			return <SectionDragOverlay activeSection={activeSection} isDetailedSection={isDetailedSection} />;
+		},
+		[isDetailedSection],
+	);
 
 	return (
-		<DndContext
-			collisionDetection={closestCenter}
-			onDragEnd={handleDragEnd}
-			onDragOver={handleDragOver}
-			onDragStart={handleDragStart}
-			sensors={sensors}
-		>
+		<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
 			<div className="mb-3 space-y-2 p-2">
 				{grantSections.length > 0 && (
 					<SectionList
 						expandedSections={expandedSections}
-						grantSections={grantSections}
 						handleAddNewSection={handleAddNewSection}
 						handleDeleteSection={handleDeleteSection}
 						handleUpdateSection={handleUpdateSection}
@@ -229,28 +217,17 @@ export function DragDropSectionManager({
 					/>
 				)}
 			</div>
-			<SectionDragOverlay
-				activeId={activeId}
-				activeSection={activeSection}
-				isDetailedSection={isDetailedSection}
-			/>
-		</DndContext>
+		</DragDropWrapper>
 	);
 }
 
 function SectionDragOverlay({
-	activeId,
 	activeSection,
 	isDetailedSection,
 }: {
-	activeId: null | string;
-	activeSection: GrantSection | undefined;
+	activeSection: GrantSection;
 	isDetailedSection: (section: GrantSection) => boolean;
 }) {
-	if (!(activeId && activeSection)) {
-		return <DragOverlay />;
-	}
-
 	const isSubsection = activeSection.parent_id !== null;
 	const detailedSection = isDetailedSection(activeSection) ? activeSection : null;
 	const maxWords =
@@ -259,49 +236,46 @@ function SectionDragOverlay({
 			: null;
 
 	return (
-		<DragOverlay>
-			<div
-				className={`flex items-center justify-start gap-5 rounded bg-white shadow-lg outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
-			>
-				<div className="relative size-6 cursor-move ">
-					<GripVertical className="size-6 text-gray-400" />
-				</div>
+		<div
+			className={`flex items-center justify-start gap-5 rounded bg-white shadow-lg outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
+		>
+			<div className="relative size-6 cursor-move ">
+				<GripVertical className="size-6 text-gray-400" />
+			</div>
 
-				<div className="flex flex-1 items-center justify-between ">
-					<div className="flex flex-1 flex-col items-start justify-start ">
-						<div className="flex w-full items-center justify-start gap-2 ">
-							<h3 className=" text-base font-medium text-gray-900">{activeSection.title}</h3>
-							{maxWords && (
-								<span className=" text-sm font-normal text-gray-500">
-									{maxWords.toLocaleString()} Max words
-								</span>
-							)}
-						</div>
-					</div>
-					<div className="flex items-center justify-end ">
-						<SectionIconButton>
-							<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
-						</SectionIconButton>
-
-						{!isSubsection && (
-							<SectionIconButton className="ml-1">
-								<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
-							</SectionIconButton>
+			<div className="flex flex-1 items-center justify-between ">
+				<div className="flex flex-1 flex-col items-start justify-start ">
+					<div className="flex w-full items-center justify-start gap-2 ">
+						<h3 className=" text-base font-medium text-gray-900">{activeSection.title}</h3>
+						{maxWords && (
+							<span className=" text-sm font-normal text-gray-500">
+								{maxWords.toLocaleString()} Max words
+							</span>
 						)}
-
-						<SectionIconButton className="ml-5">
-							<Image alt="Expand" height={22} src="/icons/chevron-down.svg" width={22} />
-						</SectionIconButton>
 					</div>
+				</div>
+				<div className="flex items-center justify-end ">
+					<SectionIconButton>
+						<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
+					</SectionIconButton>
+
+					{!isSubsection && (
+						<SectionIconButton className="ml-1">
+							<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+						</SectionIconButton>
+					)}
+
+					<SectionIconButton className="ml-5">
+						<Image alt="Expand" height={22} src="/icons/chevron-down.svg" width={22} />
+					</SectionIconButton>
 				</div>
 			</div>
-		</DragOverlay>
+		</div>
 	);
 }
 
 function SectionList({
 	expandedSections,
-	grantSections,
 	handleAddNewSection,
 	handleDeleteSection,
 	handleUpdateSection,
@@ -311,10 +285,8 @@ function SectionList({
 	toggleSectionExpanded,
 	toUpdateGrantSection,
 }: SectionListProps) {
-	const sortableContextItems = useMemo(() => grantSections.map((s) => s.id), [grantSections]);
-
 	return (
-		<SortableContext items={sortableContextItems} strategy={verticalListSortingStrategy}>
+		<>
 			{mainSections.map((section) => (
 				<div className="space-y-2" key={section.id}>
 					<SortableSection
@@ -346,6 +318,6 @@ function SectionList({
 					))}
 				</div>
 			))}
-		</SortableContext>
+		</>
 	);
 }
