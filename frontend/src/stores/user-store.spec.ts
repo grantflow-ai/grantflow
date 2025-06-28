@@ -2,7 +2,6 @@ import { act, renderHook } from "@testing-library/react";
 
 import { useUserStore } from "./user-store";
 
-
 vi.mock("zustand/middleware", () => ({
 	devtools: (fn: any) => fn,
 	persist: (fn: any, _options: any) => fn,
@@ -19,7 +18,6 @@ const mockUser = {
 
 describe("useUserStore", () => {
 	beforeEach(() => {
-		
 		act(() => {
 			useUserStore.getState().clearUser();
 		});
@@ -42,13 +40,12 @@ describe("useUserStore", () => {
 
 		expect(result.current.user).toEqual(mockUser);
 		expect(result.current.isAuthenticated).toBe(true);
-		expect(result.current.hasSeenWelcomeModal).toBe(false); 
+		expect(result.current.hasSeenWelcomeModal).toBe(false);
 	});
 
 	it("clears user and resets authentication state", () => {
 		const { result } = renderHook(() => useUserStore());
 
-		
 		act(() => {
 			result.current.setUser(mockUser);
 			result.current.dismissWelcomeModal();
@@ -58,27 +55,24 @@ describe("useUserStore", () => {
 		expect(result.current.isAuthenticated).toBe(true);
 		expect(result.current.hasSeenWelcomeModal).toBe(true);
 
-		
 		act(() => {
 			result.current.clearUser();
 		});
 
 		expect(result.current.user).toBeNull();
 		expect(result.current.isAuthenticated).toBe(false);
-		expect(result.current.hasSeenWelcomeModal).toBe(false); 
+		expect(result.current.hasSeenWelcomeModal).toBe(false);
 	});
 
 	it("handles null user when setting", () => {
 		const { result } = renderHook(() => useUserStore());
 
-		
 		act(() => {
 			result.current.setUser(mockUser);
 		});
 
 		expect(result.current.isAuthenticated).toBe(true);
 
-		
 		act(() => {
 			result.current.setUser(null);
 		});
@@ -102,7 +96,6 @@ describe("useUserStore", () => {
 	it("maintains welcome modal state independently of user state", () => {
 		const { result } = renderHook(() => useUserStore());
 
-		
 		act(() => {
 			result.current.dismissWelcomeModal();
 		});
@@ -111,7 +104,6 @@ describe("useUserStore", () => {
 		expect(result.current.isAuthenticated).toBe(false);
 		expect(result.current.user).toBeNull();
 
-		
 		act(() => {
 			result.current.setUser(mockUser);
 		});
@@ -143,16 +135,13 @@ describe("useUserStore", () => {
 	it("authentication state reflects user presence", () => {
 		const { result } = renderHook(() => useUserStore());
 
-		
 		expect(result.current.isAuthenticated).toBe(false);
 
-		
 		act(() => {
 			result.current.setUser(mockUser);
 		});
 		expect(result.current.isAuthenticated).toBe(true);
 
-		
 		act(() => {
 			result.current.setUser({
 				displayName: null,
@@ -164,7 +153,6 @@ describe("useUserStore", () => {
 		});
 		expect(result.current.isAuthenticated).toBe(true);
 
-		
 		act(() => {
 			result.current.setUser(null);
 		});
@@ -175,9 +163,8 @@ describe("useUserStore", () => {
 		const { result } = renderHook(() => useUserStore());
 
 		act(() => {
-			
 			result.current.setUser(mockUser);
-			
+
 			result.current.dismissWelcomeModal();
 		});
 
@@ -186,21 +173,19 @@ describe("useUserStore", () => {
 		expect(result.current.hasSeenWelcomeModal).toBe(true);
 
 		act(() => {
-			
 			result.current.setUser({ ...mockUser, displayName: "Jane Smith" });
 		});
 
 		expect(result.current.user?.displayName).toBe("Jane Smith");
 		expect(result.current.isAuthenticated).toBe(true);
-		expect(result.current.hasSeenWelcomeModal).toBe(true); 
+		expect(result.current.hasSeenWelcomeModal).toBe(true);
 
 		act(() => {
-			
 			result.current.clearUser();
 		});
 
 		expect(result.current.user).toBeNull();
 		expect(result.current.isAuthenticated).toBe(false);
-		expect(result.current.hasSeenWelcomeModal).toBe(false); 
+		expect(result.current.hasSeenWelcomeModal).toBe(false);
 	});
 });

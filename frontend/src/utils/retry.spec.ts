@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { withRetry } from "./retry";
 
-
 const createMockHTTPError = (status: number, message = `HTTP ${status}`) => ({
 	constructor: HTTPError,
 	message,
@@ -39,15 +38,12 @@ describe("withRetry", () => {
 
 		const resultPromise = withRetry(mockFn, { initialDelay: 1000, maxRetries: 3 });
 
-		
 		await vi.advanceTimersByTimeAsync(0);
 		expect(mockFn).toHaveBeenCalledTimes(1);
 
-		
 		await vi.advanceTimersByTimeAsync(1100);
 		expect(mockFn).toHaveBeenCalledTimes(2);
 
-		
 		await vi.advanceTimersByTimeAsync(2200);
 		expect(mockFn).toHaveBeenCalledTimes(3);
 
@@ -83,22 +79,17 @@ describe("withRetry", () => {
 		const serverError = createMockHTTPError(500);
 		const mockFn = vi.fn().mockRejectedValue(serverError);
 
-		
 		const resultPromise = withRetry(mockFn, { initialDelay: 100, maxRetries: 2 }).catch((error: unknown) => error);
 
-		
 		await vi.advanceTimersByTimeAsync(0);
 		expect(mockFn).toHaveBeenCalledTimes(1);
 
-		
 		await vi.advanceTimersByTimeAsync(200);
 		expect(mockFn).toHaveBeenCalledTimes(2);
 
-		
 		await vi.advanceTimersByTimeAsync(400);
 		expect(mockFn).toHaveBeenCalledTimes(3);
 
-		
 		const finalError = await resultPromise;
 		expect(finalError).toBe(serverError);
 		expect(mockFn).toHaveBeenCalledTimes(3);
@@ -125,7 +116,6 @@ describe("withRetry", () => {
 		const serverError = createMockHTTPError(500);
 		const mockFn = vi.fn().mockRejectedValue(serverError);
 
-		
 		const resultPromise = withRetry(mockFn, {
 			backoffMultiplier: 3,
 			initialDelay: 1000,
@@ -136,15 +126,12 @@ describe("withRetry", () => {
 		await vi.advanceTimersByTimeAsync(0);
 		expect(mockFn).toHaveBeenCalledTimes(1);
 
-		
 		await vi.advanceTimersByTimeAsync(1200);
 		expect(mockFn).toHaveBeenCalledTimes(2);
 
-		
 		await vi.advanceTimersByTimeAsync(1700);
 		expect(mockFn).toHaveBeenCalledTimes(3);
 
-		
 		const finalError = await resultPromise;
 		expect(finalError).toBe(serverError);
 	});

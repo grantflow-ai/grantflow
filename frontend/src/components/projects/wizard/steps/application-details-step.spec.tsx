@@ -328,8 +328,6 @@ describe("ApplicationDetailsStep", () => {
 	it("passes connection status props to ApplicationPreview", () => {
 		render(<ApplicationDetailsStep connectionStatus="Connected" connectionStatusColor="bg-green-500" />);
 
-		
-		
 		expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 	});
 

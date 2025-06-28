@@ -1,8 +1,7 @@
 import { AnalyticsBrowser } from "@segment/analytics-next";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getEnv } from "./env";
-import { analyticsIdentify, getAnalytics } from "./segment";
-
+import { analytics, analyticsIdentify, getAnalytics } from "./segment";
 
 vi.mock("@segment/analytics-next", () => ({
 	AnalyticsBrowser: {
@@ -27,20 +26,18 @@ describe("Segment Analytics", () => {
 		vi.clearAllMocks();
 		vi.mocked(AnalyticsBrowser.load).mockReturnValue(mockAnalytics as any);
 
- 	
- 	(globalThis as any).window = undefined;
+		analytics.value = null;
+		(globalThis as any).window = undefined;
 	});
 
 	describe("getAnalytics", () => {
 		it("should return null when window is undefined (SSR)", () => {
-			
 			const result = getAnalytics();
 			expect(result).toBeNull();
 			expect(AnalyticsBrowser.load).not.toHaveBeenCalled();
 		});
 
 		it("should load analytics when window is available", () => {
-			
 			(globalThis as any).window = {};
 
 			const result = getAnalytics();
@@ -75,7 +72,6 @@ describe("Segment Analytics", () => {
 		it("should identify user when analytics is available", async () => {
 			(globalThis as any).window = {};
 
-			
 			getAnalytics();
 
 			await analyticsIdentify("user-123", mockUserData);
@@ -84,15 +80,12 @@ describe("Segment Analytics", () => {
 		});
 
 		it("should handle SSR environment gracefully", async () => {
-			
 			await analyticsIdentify("user-123", mockUserData);
 
-			
 			expect(mockAnalytics.identify).not.toHaveBeenCalled();
 		});
 
 		it("should handle null analytics gracefully", async () => {
-			
 			await expect(analyticsIdentify("user-123", mockUserData)).resolves.toBeUndefined();
 		});
 	});
@@ -107,7 +100,6 @@ describe("Segment Analytics", () => {
 		});
 
 		it("should not load in SSR environment", () => {
-			
 			const analytics = getAnalytics();
 			expect(analytics).toBeNull();
 			expect(AnalyticsBrowser.load).not.toHaveBeenCalled();

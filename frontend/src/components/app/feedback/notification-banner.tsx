@@ -9,7 +9,7 @@ export interface NotificationData {
 	message: string;
 	projectName: string;
 	title: string;
-	type?: "deadline" | "info" | "success" | "warning" | "error";
+	type?: "deadline" | "error" | "info" | "success" | "warning";
 }
 
 interface NotificationBannerProps {
@@ -41,7 +41,12 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 							type === "success" && "bg-[#47ff97]",
 						)}
 					/>
-					<h3 className="font-body font-semibold text-[14px] leading-[18px] text-text-primary" data-testid="notification-title">{title}</h3>
+					<h3
+						className="font-body font-semibold text-[14px] leading-[18px] text-text-primary"
+						data-testid="notification-title"
+					>
+						{title}
+					</h3>
 				</div>
 				{onClose && (
 					<button
@@ -60,8 +65,14 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 
 			{}
 			<div className="flex flex-col gap-1">
-				<p className="font-body text-[12px] leading-[16px] text-text-secondary" data-testid="notification-message">
-					Your project <span className="font-semibold text-text-primary" data-testid="notification-project-name">&ldquo;{projectName}&rdquo;</span>{" "}
+				<p
+					className="font-body text-[12px] leading-[16px] text-text-secondary"
+					data-testid="notification-message"
+				>
+					Your project{" "}
+					<span className="font-semibold text-text-primary" data-testid="notification-project-name">
+						&ldquo;{projectName}&rdquo;
+					</span>{" "}
 					{message}
 				</p>
 			</div>

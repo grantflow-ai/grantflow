@@ -55,7 +55,6 @@ describe("NotificationBanner", () => {
 			const notification = { ...mockNotification, type };
 			const { unmount } = render(<NotificationBanner notification={notification} />);
 
-			
 			expect(screen.getByTestId("notification-title")).toBeInTheDocument();
 			unmount();
 		});
@@ -66,7 +65,6 @@ describe("NotificationBanner", () => {
 
 		render(<NotificationBanner notification={notificationWithoutType} />);
 
-		
 		expect(screen.getByTestId("notification-title")).toBeInTheDocument();
 	});
 
@@ -80,7 +78,6 @@ describe("NotificationBanner", () => {
 	it("formats project name with quotes", () => {
 		render(<NotificationBanner notification={mockNotification} />);
 
-		
 		const projectNameElement = screen.getByTestId("notification-project-name");
 		expect(projectNameElement).toBeInTheDocument();
 		expect(projectNameElement.textContent).toContain("Research Project");

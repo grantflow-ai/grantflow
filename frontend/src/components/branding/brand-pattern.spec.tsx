@@ -30,11 +30,10 @@ describe("BrandPattern Component", () => {
 		render(<BrandPattern data-testid="brand-pattern" />);
 		const svg = screen.getByTestId("brand-pattern");
 
-		
 		expect(svg).toHaveAttribute("viewBox");
-		
+
 		expect(svg).toHaveAttribute("preserveAspectRatio");
-		
+
 		expect(svg.querySelector("path")).toBeInTheDocument();
 	});
 });

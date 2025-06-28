@@ -17,10 +17,8 @@ export async function deleteProject(projectId: string) {
 }
 
 export async function duplicateProject(projectId: string) {
-	
 	const originalProject = await getProject(projectId);
 
-	
 	const duplicateData: API.CreateProject.RequestBody = {
 		description: originalProject.description,
 		logo_url: originalProject.logo_url,

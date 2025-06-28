@@ -24,14 +24,14 @@ describe("User Utilities", () => {
 
 			it("should handle names with extra whitespace", () => {
 				expect(generateInitials("  John   Doe  ")).toBe("JD");
-				expect(generateInitials("\tJane\t\tSmith\t")).toBe("JA"); 
-				expect(generateInitials("\n Alice \n Johnson \n")).toBe("AJ"); 
+				expect(generateInitials("\tJane\t\tSmith\t")).toBe("JA");
+				expect(generateInitials("\n Alice \n Johnson \n")).toBe("AJ");
 			});
 
 			it("should handle empty or whitespace-only names", () => {
 				expect(generateInitials("")).toBe("??");
-				expect(generateInitials("   ")).toBe(""); 
-				expect(generateInitials("\t\n")).toBe(""); 
+				expect(generateInitials("   ")).toBe("");
+				expect(generateInitials("\t\n")).toBe("");
 			});
 
 			it("should convert to uppercase", () => {
@@ -70,7 +70,7 @@ describe("User Utilities", () => {
 
 			it("should use email when full name is empty", () => {
 				expect(generateInitials("", "john@example.com")).toBe("JO");
-				expect(generateInitials("   ", "jane@company.org")).toBe(""); 
+				expect(generateInitials("   ", "jane@company.org")).toBe("");
 			});
 
 			it("should handle very short emails", () => {
@@ -88,11 +88,11 @@ describe("User Utilities", () => {
 			it("should return ?? when both name and email are empty", () => {
 				expect(generateInitials()).toBe("??");
 				expect(generateInitials("", "")).toBe("??");
-				expect(generateInitials("   ", "   ")).toBe(""); 
+				expect(generateInitials("   ", "   ")).toBe("");
 			});
 
 			it("should return ?? when both name and email are null", () => {
-				expect(generateInitials(undefined, undefined)).toBe("??");
+				expect(generateInitials()).toBe("??");
 			});
 		});
 
@@ -127,7 +127,6 @@ describe("User Utilities", () => {
 		});
 
 		it("should return Collaborator as default for unknown roles", () => {
-			
 			expect(getRoleLabel("UNKNOWN" as UserRole)).toBe("Collaborator");
 			expect(getRoleLabel("INVALID" as UserRole)).toBe("Collaborator");
 			expect(getRoleLabel(null as unknown as UserRole)).toBe("Collaborator");
@@ -135,13 +134,12 @@ describe("User Utilities", () => {
 		});
 
 		it("should handle all valid UserRole enum values", () => {
-			
 			const roles = Object.values(UserRole);
 			const labels = roles.map((role) => getRoleLabel(role));
 			expect(labels).toContain("Owner");
 			expect(labels).toContain("Admin");
 			expect(labels).toContain("Collaborator");
-			
+
 			expect(labels.every((label) => typeof label === "string" && label.length > 0)).toBe(true);
 		});
 

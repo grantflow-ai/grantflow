@@ -103,25 +103,21 @@ export function WizardClientComponent({ application: initialApplication, project
 		}
 	}, [latestRagNotification, ragJobState.restoredJob]);
 
-	
 	useEffect(() => {
 		if (!latestRagNotification) return;
 
 		const { event } = latestRagNotification.data;
 
-		
 		if (event === "grant_template_generation_started") {
 			setGeneratingTemplate(true);
 		}
 
-		
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
-			
+
 			void retrieveApplication(projectId, initialApplication.id);
 		}
 
-		
 		if (event === "generation_error" || event === "pipeline_error") {
 			setGeneratingTemplate(false);
 		}

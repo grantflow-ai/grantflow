@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 
 import SharedLayout from "./shared-layout";
 
-
 vi.mock("next-themes", () => ({
 	ThemeProvider: ({ attribute, children, defaultTheme, enableSystem }: any) => (
 		<div
@@ -16,11 +15,9 @@ vi.mock("next-themes", () => ({
 	),
 }));
 
-
 vi.mock("@/components/shared/toast-listener", () => ({
 	ToastListener: () => <div data-testid="toast-listener" />,
 }));
-
 
 vi.mock("@/components/ui/sonner", () => ({
 	Toaster: () => <div data-testid="toaster" />,
@@ -107,11 +104,9 @@ describe("SharedLayout", () => {
 			</SharedLayout>,
 		);
 
-		
 		const container = screen.getByTestId("theme-provider");
 		const children = [...container.children];
 
-		
 		expect(children).toHaveLength(3);
 		expect(screen.getByTestId("content")).toBeInTheDocument();
 		expect(screen.getByTestId("toaster")).toBeInTheDocument();

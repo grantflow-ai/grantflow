@@ -7,7 +7,6 @@ import { UserRole } from "@/types/user";
 
 import { ProjectSettingsMembers } from "./project-settings-members";
 
-
 vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),
 }));
@@ -33,7 +32,6 @@ vi.mock("@/utils/user", () => ({
 	}),
 }));
 
-
 vi.mock("../modals/invite-collaborator-modal", () => ({
 	InviteCollaboratorModal: ({ isOpen, onClose, onInvite }: any) =>
 		isOpen ? (
@@ -51,7 +49,6 @@ vi.mock("../modals/invite-collaborator-modal", () => ({
 			</div>
 		) : null,
 }));
-
 
 vi.mock("./edit-permission-modal", () => ({
 	EditPermissionModal: ({ isOpen, member, onClose, onUpdateRole }: any) =>
@@ -134,12 +131,10 @@ describe("ProjectSettingsMembers", () => {
 		expect(screen.getByText("Team Members")).toBeInTheDocument();
 		expect(screen.getByText("Manage who has access to this project and their permissions.")).toBeInTheDocument();
 
-		
 		expect(screen.getByTestId("member-row-1")).toBeInTheDocument();
 		expect(screen.getByTestId("member-row-2")).toBeInTheDocument();
 		expect(screen.getByTestId("member-row-3")).toBeInTheDocument();
 
-		
 		expect(screen.getByText("Owner User")).toBeInTheDocument();
 		expect(screen.getByText("owner@example.com")).toBeInTheDocument();
 		expect(screen.getByText("Admin User")).toBeInTheDocument();
@@ -173,11 +168,9 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
 		const allBadges = screen.getAllByText("All");
 		expect(allBadges).toHaveLength(2);
 
-		
 		expect(screen.getByText("Application 1")).toBeInTheDocument();
 		expect(screen.getByText("Application 2")).toBeInTheDocument();
 		expect(screen.getByText("Application 3")).toBeInTheDocument();
@@ -195,7 +188,7 @@ describe("ProjectSettingsMembers", () => {
 		);
 
 		expect(screen.getByTestId("total-members-count")).toHaveTextContent("3");
-		expect(screen.getByTestId("admins-count")).toHaveTextContent("2"); 
+		expect(screen.getByTestId("admins-count")).toHaveTextContent("2");
 		expect(screen.getByTestId("collaborators-count")).toHaveTextContent("1");
 	});
 
@@ -279,12 +272,10 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
-		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument(); 
-		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument(); 
-		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument(); 
+		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument();
+		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument();
+		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument();
 
-		
 		await user.click(screen.getByTestId("member-action-menu-2"));
 
 		expect(screen.getByTestId("member-action-dropdown-2")).toBeInTheDocument();
@@ -303,15 +294,12 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
-		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument(); 
-		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument(); 
-		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument(); 
+		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument();
+		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument();
+		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument();
 
-		
 		await user.click(screen.getByTestId("member-action-menu-3"));
 
-		
 		expect(screen.queryByTestId("edit-permissions-3")).not.toBeInTheDocument();
 		expect(screen.getByTestId("remove-member-3")).toBeInTheDocument();
 	});
@@ -327,7 +315,6 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
 		await user.click(screen.getByTestId("member-action-menu-2"));
 		await user.click(screen.getByTestId("edit-permissions-2"));
 
@@ -346,11 +333,9 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
 		await user.click(screen.getByTestId("member-action-menu-2"));
 		expect(screen.getByTestId("member-action-dropdown-2")).toBeInTheDocument();
 
-		
 		await user.click(document.body);
 
 		await waitFor(() => {
@@ -388,13 +373,11 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
 		expect(screen.getByText("Application 1")).toBeInTheDocument();
 		expect(screen.getByText("Application 2")).toBeInTheDocument();
 		expect(screen.getByText("Application 3")).toBeInTheDocument();
 		expect(screen.getByText("Application 4")).toBeInTheDocument();
 
-		
 		expect(screen.getByText("+ 2")).toBeInTheDocument();
 	});
 
@@ -436,7 +419,6 @@ describe("ProjectSettingsMembers", () => {
 			expect(inviteCollaborator).toHaveBeenCalled();
 		});
 
-		
 		expect(screen.getByTestId("invite-collaborator-modal")).toBeInTheDocument();
 	});
 
@@ -456,7 +438,6 @@ describe("ProjectSettingsMembers", () => {
 		await user.click(screen.getByTestId("invite-button"));
 		await user.click(screen.getByTestId("mock-invite-submit"));
 
-		
 		expect(inviteCollaborator).not.toHaveBeenCalled();
 	});
 
@@ -470,7 +451,6 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		
 		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("member-action-menu-2")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("member-action-menu-3")).not.toBeInTheDocument();

@@ -358,7 +358,7 @@ describe("DragDropSectionManager", () => {
 					expect.objectContaining({
 						depends_on: [],
 						generation_instructions: "",
-						id: expect.stringMatching(/^section-/), 
+						id: expect.stringMatching(/^section-/),
 						is_clinical_trial: null,
 						is_detailed_research_plan: null,
 						keywords: [],
@@ -395,7 +395,7 @@ describe("DragDropSectionManager", () => {
 				expect(mockUpdateGrantSections).toHaveBeenCalledWith([
 					expect.objectContaining({
 						parent_id: null,
-						title: "Category Name", 
+						title: "Category Name",
 					}),
 				]);
 			});
@@ -428,11 +428,11 @@ describe("DragDropSectionManager", () => {
 			await waitFor(() => {
 				expect(mockUpdateGrantSections).toHaveBeenCalled();
 				const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-				expect(calledWith).toHaveLength(4); 
-				
+				expect(calledWith).toHaveLength(4);
+
 				expect(calledWith[3]).toEqual(
 					expect.objectContaining({
-						order: 3, 
+						order: 3,
 					}),
 				);
 			});
@@ -469,7 +469,7 @@ describe("DragDropSectionManager", () => {
 
 			await waitFor(() => {
 				const [[calledWith]] = mockUpdateGrantSections.mock.calls;
-				expect(calledWith).toHaveLength(3); 
+				expect(calledWith).toHaveLength(3);
 				expect(calledWith[0]).toEqual(
 					expect.objectContaining({
 						id: "keep-1",

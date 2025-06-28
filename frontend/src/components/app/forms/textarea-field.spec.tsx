@@ -90,9 +90,8 @@ describe("AppTextarea Component", () => {
 			await user.type(textarea, "Hello");
 			expect(charCount).toHaveTextContent("5");
 
-			
 			await user.type(textarea, "{Enter}World");
-			expect(charCount).toHaveTextContent("11"); 
+			expect(charCount).toHaveTextContent("11");
 		});
 
 		it("enforces maxLength when character limit is set", async () => {
@@ -103,7 +102,7 @@ describe("AppTextarea Component", () => {
 			expect(textarea).toHaveAttribute("maxLength", "10");
 
 			await user.type(textarea, "Hello World and more");
-			expect(textarea).toHaveValue("Hello Worl"); 
+			expect(textarea).toHaveValue("Hello Worl");
 		});
 
 		it("shows max character count when limit is set", () => {
@@ -127,12 +126,10 @@ describe("AppTextarea Component", () => {
 			await user.type(textarea, "Hello World");
 			expect(wordCount).toHaveTextContent("2");
 
-			
 			await user.clear(textarea);
 			await user.type(textarea, "   multiple   spaces   ");
 			expect(wordCount).toHaveTextContent("2");
 
-			
 			await user.clear(textarea);
 			await user.type(textarea, "Line one{Enter}Line two{Enter}Line three");
 			expect(wordCount).toHaveTextContent("6");

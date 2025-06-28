@@ -51,7 +51,6 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 	const [activeId, setActiveId] = useState<null | string>(null);
 
-	
 	const pointerSensor = useSensor(PointerSensor);
 	const keyboardSensor = useSensor(KeyboardSensor, {
 		coordinateGetter: sortableKeyboardCoordinates,
@@ -66,12 +65,10 @@ export function useDragAndDrop<T extends DragDropItem>(
 	}
 	const sensors = useSensors(...sensorArray);
 
-	
 	const isItemDragging = useCallback((itemId: string) => activeId === itemId, [activeId]);
 
-	
 	const DragDropWrapper = useCallback(
-		({
+		function DragDropWrapper({
 			children,
 			items,
 			renderDragOverlay,
@@ -79,8 +76,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 			children: React.ReactNode;
 			items: T[];
 			renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
-		}) => {
-			
+		}) {
 			const handleDragStart = (event: DragStartEvent) => {
 				const draggedItem = items.find((item) => item.id === event.active.id);
 				setActiveId(event.active.id as string);
@@ -128,7 +124,6 @@ export function useDragAndDrop<T extends DragDropItem>(
 					await handleReorder(activeItem, overItem);
 				}
 
-				
 				if (onDragEnd) {
 					await onDragEnd(event, activeItem, overItem);
 				}
@@ -156,7 +151,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 	);
 
 	return {
-		activeItem: undefined, 
+		activeItem: undefined,
 		DragDropWrapper,
 		isItemDragging,
 	};

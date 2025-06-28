@@ -47,11 +47,9 @@ describe("BaseModal", () => {
 			</BaseModal>,
 		);
 
-		
 		expect(screen.getByText("Modal")).toBeInTheDocument();
 		expect(screen.getByText("Modal dialog")).toBeInTheDocument();
 
-		
 		const visibleHeadings = screen
 			.queryAllByRole("heading")
 			.filter((heading) => !heading.classList.contains("sr-only"));
@@ -67,8 +65,6 @@ describe("BaseModal", () => {
 			</BaseModal>,
 		);
 
-		
-		
 		await user.keyboard("{Escape}");
 
 		await waitFor(() => {
@@ -99,11 +95,9 @@ describe("BaseModal", () => {
 			</BaseModal>,
 		);
 
-		
 		expect(screen.getByText("Accessible Modal")).toBeInTheDocument();
 		expect(screen.getByText("Accessible Modal modal dialog")).toBeInTheDocument();
 
-		
 		const dialog = screen.getByRole("dialog");
 		expect(dialog).toBeInTheDocument();
 	});

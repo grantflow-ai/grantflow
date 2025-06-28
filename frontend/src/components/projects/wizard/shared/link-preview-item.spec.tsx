@@ -5,7 +5,6 @@ import { useApplicationStore } from "@/stores/application-store";
 
 import { LinkPreviewItem } from "./link-preview-item";
 
-
 vi.mock("@/stores/application-store", () => ({
 	useApplicationStore: vi.fn(),
 }));
@@ -164,7 +163,6 @@ describe("LinkPreviewItem", () => {
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			expect(removeIcon).toBeInTheDocument();
 
-			
 			fireEvent.click(removeIcon);
 			expect(mockRemoveUrl).toHaveBeenCalled();
 		});
@@ -213,13 +211,10 @@ describe("LinkPreviewItem", () => {
 
 			const { rerender } = render(<LinkPreviewItem parentId={parentId} url={url} />);
 
-			
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 
-			
 			rerender(<LinkPreviewItem parentId={parentId} url={url} />);
 
-			
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 			fireEvent.click(screen.getByTestId("link-remove-icon"));
 			expect(mockRemoveUrl).toHaveBeenCalledWith(url, parentId);

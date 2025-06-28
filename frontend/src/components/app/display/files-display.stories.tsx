@@ -13,9 +13,7 @@ const meta: Meta<typeof FilesDisplay> = {
 export default meta;
 type Story = StoryObj<typeof FilesDisplay>;
 
-
 const createMockFile = (name: string, size: number, type: string): File => {
-	
 	const content = Array.from({ length: size }, () => "a").join("");
 	const blob = new Blob([content], { type });
 	return new File([blob], name, { lastModified: Date.now(), type });
@@ -107,7 +105,6 @@ export const DuplicateNames: Story = {
 	name: "Files with Duplicate Names",
 };
 
-
 export const IndividualFileCard: Story = {
 	name: "Individual File Cards",
 	render: () => (
@@ -144,7 +141,6 @@ export const SpecialCharacters: Story = {
 	},
 	name: "Files with Special Characters",
 };
-
 
 import { useState } from "react";
 
