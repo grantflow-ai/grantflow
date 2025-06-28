@@ -14,15 +14,7 @@ vi.mock("firebase/auth", () => ({
 }));
 
 vi.mock("./env", () => ({
-	getEnv: vi.fn(() => ({
-		NEXT_PUBLIC_FIREBASE_API_KEY: "test-api-key",
-		NEXT_PUBLIC_FIREBASE_APP_ID: "test-app-id",
-		NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "test-auth-domain",
-		NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "test-measurement-id",
-		NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: "test-sender-id",
-		NEXT_PUBLIC_FIREBASE_PROJECT_ID: "test-project-id",
-		NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "test-storage-bucket",
-	})),
+	getEnv: vi.fn(),
 }));
 
 describe("Firebase Utilities", () => {
@@ -35,6 +27,17 @@ describe("Firebase Utilities", () => {
 		vi.mocked(getAuth).mockReturnValue(mockAuth as any);
 		vi.mocked(setPersistence).mockResolvedValue();
 
+		// Use environment variables from global setup
+		vi.mocked(getEnv).mockReturnValue({
+			NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
+			NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
+			NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "acmetech-dev.firebaseapp.com",
+			NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "G-XYZ123ABC4",
+			NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: "847362514908",
+			NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
+			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
+		} as any);
+
 		// Reset the instance ref by requiring a fresh module
 		vi.resetModules();
 	});
@@ -46,13 +49,13 @@ describe("Firebase Utilities", () => {
 			const app = getFirebaseApp();
 
 			expect(initializeApp).toHaveBeenCalledWith({
-				apiKey: "test-api-key",
-				appId: "test-app-id",
-				authDomain: "test-auth-domain",
-				measurementId: "test-measurement-id",
-				messagingSenderId: "test-sender-id",
-				projectId: "test-project-id",
-				storageBucket: "test-storage-bucket",
+				apiKey: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
+				appId: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
+				authDomain: "acmetech-dev.firebaseapp.com",
+				measurementId: "G-XYZ123ABC4",
+				messagingSenderId: "847362514908",
+				projectId: "acmetech-dev",
+				storageBucket: "acmetech-dev.appspot.com",
 			});
 			expect(app).toBe(mockFirebaseApp);
 		});
@@ -191,13 +194,13 @@ describe("Firebase Utilities", () => {
 			const authInstance = getFirebaseAuth();
 
 			expect(initializeApp).toHaveBeenCalledWith({
-				apiKey: "test-api-key",
-				appId: "test-app-id",
-				authDomain: "test-auth-domain",
-				measurementId: "test-measurement-id",
-				messagingSenderId: "test-sender-id",
-				projectId: "test-project-id",
-				storageBucket: "test-storage-bucket",
+				apiKey: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
+				appId: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
+				authDomain: "acmetech-dev.firebaseapp.com",
+				measurementId: "G-XYZ123ABC4",
+				messagingSenderId: "847362514908",
+				projectId: "acmetech-dev",
+				storageBucket: "acmetech-dev.appspot.com",
 			});
 			expect(getAuth).toHaveBeenCalledWith(mockFirebaseApp);
 			expect(setPersistence).toHaveBeenCalledWith(mockAuth, "session");

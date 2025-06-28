@@ -1,9 +1,11 @@
 export function Logo({ height = 200, width = 200, ...props }: React.HTMLProps<SVGSVGElement>) {
 	return (
 		<svg
+			aria-label="GrantFlow logo"
 			data-testid="logo"
 			fill="none"
 			height={height}
+			role="img"
 			viewBox="0 0 229 57"
 			width={width}
 			xmlns="http://www.w3.org/2000/svg"

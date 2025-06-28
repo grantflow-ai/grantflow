@@ -88,7 +88,7 @@ class PerformanceTestContext:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.logger.info("Entering __exit__ method")
+        self.logger.info("Entering __exit__ method - exc_type: %s", exc_type)
         if not self.start_time:
             self.logger.error("No start_time - returning early")
             return
@@ -146,13 +146,21 @@ class PerformanceTestContext:
                     total_words=0,
                     total_lines=0,
                     section_count=0,
-                    avg_chars_per_section=0,
-                    content_density=0.0,
-                    pattern_matches=0,
-                    pattern_coverage=0.0,
+                    avg_chars_per_section=0.0,
+                    has_objectives=False,
+                    has_work_plan=False,
+                    has_methodology=False,
+                    has_timeline=False,
+                    objective_count=0,
+                    task_count=0,
+                    key_terms_found=[],
+                    content_richness_score=0.0,
+                    structure_quality_score=0.0,
+                    completeness_score=0.0,
                     overall_quality_score=0.0,
-                    meets_content_requirements=False,
-                    content_insights=[]
+                    meets_min_length=False,
+                    meets_min_sections=False,
+                    meets_content_requirements=False
                 ),
                 optimization_metrics=None,
                 environment_info={"test_framework": "unified_performance"},
@@ -397,7 +405,7 @@ async def grant_template_test(
     **kwargs
 ):
     """Async context manager for grant template performance testing."""
-    with create_performance_context(
+    with PerformanceTestContext(
         test_name=test_name,
         test_category=TestCategory.GRANT_TEMPLATE,
         logger=logger,

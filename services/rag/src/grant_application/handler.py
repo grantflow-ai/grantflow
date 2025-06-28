@@ -20,12 +20,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
+from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
-from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
-from services.rag.src.grant_application.optimized_batch_enrichment import handle_optimized_batch_enrichment
-from services.rag.src.grant_application.optimized_section_generation import (
-    optimized_generate_grant_section_texts,
+from services.rag.src.grant_application.generate_section_text import (
+    generate_sections_with_shared_retrieval,
 )
+from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
 from services.rag.src.grant_application.utils import (
     generate_application_text,
     is_grant_long_form_section,
@@ -70,7 +70,7 @@ async def generate_work_plan_text(
 
 
 
-    enrichment_responses = await handle_optimized_batch_enrichment(
+    enrichment_responses = await handle_batch_enrich_objectives(
         application_id=application_id,
         grant_section=work_plan_section,
         research_objectives=research_objectives,
@@ -233,7 +233,7 @@ async def generate_grant_section_texts(
     job_manager: JobManager,
 ) -> dict[str, str]:
 
-    return await optimized_generate_grant_section_texts(
+    return await generate_sections_with_shared_retrieval(
         application_id=application_id,
         form_inputs=form_inputs,
         grant_sections=grant_sections,

@@ -33,8 +33,16 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     For each section, provide:
 
-    1. **Word Count**: Based on page limits (415 words/page TNR 11pt, 500/page Arial 11pt)
-       - Research plan gets 50-66% unless specified
+    1. **Word Count**: 
+       - If page limits are provided in CFP content: Use 415 words/page TNR 11pt or 500/page Arial 11pt
+       - If page limits are NOT provided: Use these defaults:
+         * Project Summary: 300 words
+         * Background/Significance: 800 words  
+         * Specific Aims: 500 words
+         * Research Plan: 2000 words (50-66% of total)
+         * Expected Outcomes: 400 words
+         * Timeline/Milestones: 600 words
+         * Other sections: 500-800 words based on importance
        - Reduce total by 12.5% for figures
 
     2. **Keywords**: 5-15 specific domain terms
@@ -333,9 +341,11 @@ evaluation_criteria = [
         name="Word Count Analysis",
         evaluation_instructions="""
         Check word count allocations:
-        - Total matches source page limits
-        - Research plan gets 50-66% of words
+        - If page limits provided: Total should match source page limits
+        - If page limits missing: Use reasonable defaults (300-2000 words per section)
+        - Research plan gets 50-66% of words when possible
         - Distribution reflects section importance
+        - All sections have minimum 50 words, maximum 10000 words
         """,
         weight=0.8,
     ),
