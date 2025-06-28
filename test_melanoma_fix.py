@@ -8,12 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from testing.db_test_plugin import get_test_session_maker
 from testing.factories import ProjectFactory
+from testing.test_utils import create_grant_application_data
 
 
-async def test_melanoma_fixture():
+async def test_melanoma_fixture() -> None:
     """Test that the melanoma alliance fixture has a grant template."""
     session_maker = await get_test_session_maker()
-
 
     async with session_maker() as session:
         project = ProjectFactory.build()
@@ -21,9 +21,6 @@ async def test_melanoma_fixture():
         await session.flush()
         await session.commit()
         await session.refresh(project)
-
-
-
 
     research_objs = [
         {
@@ -50,9 +47,6 @@ async def test_melanoma_fixture():
         }
     ]
 
-
-    from testing.test_utils import create_grant_application_data
-
     form_inputs = {
         "background_context": "Brain metastases (BMs) occur in almost 50% of patients with metastatic melanoma, resulting in a dismal prognosis with a poor overall survival for most patients.",
         "hypothesis": "Our hypothesis is that using our advanced single cell technologies...",
@@ -62,7 +56,7 @@ async def test_melanoma_fixture():
         "preliminary_data": "As part of our previous research, we demonstrated the synergistic potential...",
         "research_feasibility": "We plan to systematically analyse the BM TME...",
         "impact": "Brain metastases (BMs) occur in almost 50% of patients...",
-        "scientific_infrastructure": "Our lab is equipped with the state-of-the-art single cell..."
+        "scientific_infrastructure": "Our lab is equipped with the state-of-the-art single cell...",
     }
 
     application_id = await create_grant_application_data(
@@ -75,7 +69,6 @@ async def test_melanoma_fixture():
         source_file_names=["MRA-2023-2024-RFP-Final.pdf"],
     )
 
-
     async with session_maker() as session:
         result = await session.execute(
             select(GrantApplication)
@@ -84,27 +77,21 @@ async def test_melanoma_fixture():
         )
         app = result.scalar_one()
 
-
         if app.grant_template:
-
-
             work_plan_sections = [
-                s for s in (app.grant_template.grant_sections or [])
-                if s.get("is_detailed_research_plan")
+                s for s in (app.grant_template.grant_sections or []) if s.get("is_detailed_research_plan")
             ]
 
             if work_plan_sections:
                 pass
 
-
-
         has_template = app.grant_template is not None
         has_objectives = app.research_objectives is not None
-        has_work_plan = any(
-            s.get("is_detailed_research_plan")
-            for s in (app.grant_template.grant_sections or [])
-        ) if app.grant_template else False
-
+        has_work_plan = (
+            any(s.get("is_detailed_research_plan") for s in (app.grant_template.grant_sections or []))
+            if app.grant_template
+            else False
+        )
 
         return has_template and has_objectives and has_work_plan
 

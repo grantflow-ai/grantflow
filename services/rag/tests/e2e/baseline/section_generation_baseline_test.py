@@ -38,11 +38,9 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
             "sections_count": 3,
             "real_api_calls": True,
         },
-        expected_patterns=["section", "generation", "baseline", "cancer", "car-t", "therapy"]
+        expected_patterns=["section", "generation", "baseline", "cancer", "car-t", "therapy"],
     ) as perf_ctx:
-
         logger.info("=== SECTION GENERATION REAL BASELINE TEST ===")
-
 
         application_id = "550e8400-e29b-41d4-a716-446655440030"
 
@@ -50,7 +48,6 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
             "project_title": "Enhanced CAR-T Cell Therapy for Solid Tumors",
             "project_summary": "Developing next-generation CAR-T cells with improved persistence and reduced toxicity",
         }
-
 
         research_plan_text = """
         # Research Work Plan
@@ -74,7 +71,6 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
         Establish comprehensive quality control measures.
         """
 
-
         test_sections = [
             {
                 "section": {
@@ -89,10 +85,10 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                     "search_queries": [
                         "CAR-T cell therapy solid tumors challenges",
                         "immunotherapy resistance mechanisms",
-                        "next-generation CAR-T cells"
-                    ]
+                        "next-generation CAR-T cells",
+                    ],
                 },
-                "section_type": "background"
+                "section_type": "background",
             },
             {
                 "section": {
@@ -107,10 +103,10 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                     "search_queries": [
                         "CAR-T cell engineering methods",
                         "lentiviral vector design protocols",
-                        "T cell expansion techniques"
-                    ]
+                        "T cell expansion techniques",
+                    ],
                 },
-                "section_type": "methodology"
+                "section_type": "methodology",
             },
             {
                 "section": {
@@ -125,16 +121,15 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                     "search_queries": [
                         "innovative CAR-T cell designs",
                         "next-generation cellular therapies",
-                        "cancer immunotherapy breakthroughs"
-                    ]
+                        "cancer immunotherapy breakthroughs",
+                    ],
                 },
-                "section_type": "innovation"
-            }
+                "section_type": "innovation",
+            },
         ]
 
         section_results = []
         total_generation_time = 0
-
 
         for test_item in test_sections:
             section = test_item["section"]
@@ -146,7 +141,6 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                 section_start = datetime.now(UTC)
 
                 try:
-
                     section_text = await generate_section_text(
                         application_id=application_id,
                         grant_section=section,
@@ -158,26 +152,26 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                     section_duration = (datetime.now(UTC) - section_start).total_seconds()
                     total_generation_time += section_duration
 
-
                     perf_ctx.add_llm_call(1)
-
 
                     text_length = len(section_text)
                     word_count = len(section_text.split())
                     estimated_tokens = estimate_token_count(section_text)
 
-                    section_results.append({
-                        "section_type": section_type,
-                        "duration": section_duration,
-                        "success": True,
-                        "text_length": text_length,
-                        "word_count": word_count,
-                        "estimated_tokens": estimated_tokens,
-                        "words_per_second": word_count / section_duration if section_duration > 0 else 0,
-                        "tokens_per_second": estimated_tokens / section_duration if section_duration > 0 else 0,
-                        "requested_max_words": section["max_words"],
-                        "word_compliance": word_count <= section["max_words"]
-                    })
+                    section_results.append(
+                        {
+                            "section_type": section_type,
+                            "duration": section_duration,
+                            "success": True,
+                            "text_length": text_length,
+                            "word_count": word_count,
+                            "estimated_tokens": estimated_tokens,
+                            "words_per_second": word_count / section_duration if section_duration > 0 else 0,
+                            "tokens_per_second": estimated_tokens / section_duration if section_duration > 0 else 0,
+                            "requested_max_words": section["max_words"],
+                            "word_compliance": word_count <= section["max_words"],
+                        }
+                    )
 
                     logger.info(
                         "Section generated successfully",
@@ -192,22 +186,28 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                     section_duration = (datetime.now(UTC) - section_start).total_seconds()
                     total_generation_time += section_duration
 
-                    section_results.append({
-                        "section_type": section_type,
-                        "duration": section_duration,
-                        "success": False,
-                        "error": str(e),
-                    })
+                    section_results.append(
+                        {
+                            "section_type": section_type,
+                            "duration": section_duration,
+                            "success": False,
+                            "error": str(e),
+                        }
+                    )
 
                     logger.error("Section generation failed", exc_info=e)
 
-
         successful_sections = [r for r in section_results if r["success"]]
-        avg_section_time = sum(r["duration"] for r in successful_sections) / len(successful_sections) if successful_sections else 0
+        avg_section_time = (
+            sum(r["duration"] for r in successful_sections) / len(successful_sections) if successful_sections else 0
+        )
         total_words = sum(r.get("word_count", 0) for r in successful_sections)
         total_tokens = sum(r.get("estimated_tokens", 0) for r in successful_sections)
-        avg_words_per_second = sum(r.get("words_per_second", 0) for r in successful_sections) / len(successful_sections) if successful_sections else 0
-
+        avg_words_per_second = (
+            sum(r.get("words_per_second", 0) for r in successful_sections) / len(successful_sections)
+            if successful_sections
+            else 0
+        )
 
         performance_grade = "A" if avg_section_time < 45 else "B" if avg_section_time < 90 else "C"
         throughput_grade = "High" if avg_words_per_second > 15 else "Medium" if avg_words_per_second > 8 else "Low"
@@ -218,7 +218,7 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
         ## Test Configuration
         - Application ID: {application_id}
         - Sections Tested: {len(test_sections)}
-        - Section Types: {', '.join(s['section_type'] for s in test_sections)}
+        - Section Types: {", ".join(s["section_type"] for s in test_sections)}
         - Domain: CAR-T Cell Therapy for Solid Tumors
         - Real API Calls: Yes
 
@@ -231,47 +231,97 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
         - **LLM API Calls**: {len(test_sections)}
 
         ## Section-by-Section Performance
-        {chr(10).join([
-            f"### {r['section_type'].capitalize()} Section" + chr(10) +
-            f"- Duration: {r['duration']:.2f}s" + chr(10) +
-            f"- Words: {r.get('word_count', 0):,} (max: {r.get('requested_max_words', 'N/A')})" + chr(10) +
-            f"- Tokens: {r.get('estimated_tokens', 0):,}" + chr(10) +
-            f"- Generation Rate: {r.get('words_per_second', 0):.1f} words/sec" + chr(10) +
-            f"- Word Limit Compliance: {'✅ Yes' if r.get('word_compliance', False) else '❌ Exceeded' if 'word_compliance' in r else 'N/A'}" + chr(10) +
-            f"- Status: {'✅ Success' if r['success'] else '❌ Failed'}"
-            for r in section_results
-        ])}
+        {
+            chr(10).join(
+                [
+                    f"### {r['section_type'].capitalize()} Section"
+                    + chr(10)
+                    + f"- Duration: {r['duration']:.2f}s"
+                    + chr(10)
+                    + f"- Words: {r.get('word_count', 0):,} (max: {r.get('requested_max_words', 'N/A')})"
+                    + chr(10)
+                    + f"- Tokens: {r.get('estimated_tokens', 0):,}"
+                    + chr(10)
+                    + f"- Generation Rate: {r.get('words_per_second', 0):.1f} words/sec"
+                    + chr(10)
+                    + f"- Word Limit Compliance: {'✅ Yes' if r.get('word_compliance', False) else '❌ Exceeded' if 'word_compliance' in r else 'N/A'}"
+                    + chr(10)
+                    + f"- Status: {'✅ Success' if r['success'] else '❌ Failed'}"
+                    for r in section_results
+                ]
+            )
+        }
 
         ## Performance Analysis
         - **Average Generation Rate**: {avg_words_per_second:.1f} words/second
-        - **Token Processing**: {total_tokens / total_generation_time if total_generation_time > 0 else 0:.1f} tokens/second
+        - **Token Processing**: {
+            total_tokens / total_generation_time if total_generation_time > 0 else 0:.1f} tokens/second
         - **Throughput Grade**: {throughput_grade}
         - **Overall Performance**: {performance_grade}
 
         ## Quality Metrics
-        - **Word Compliance Rate**: {sum(1 for r in successful_sections if r.get('word_compliance', False)) / len(successful_sections) * 100 if successful_sections else 0:.1f}%
-        - **Average Word Efficiency**: {sum(r.get('word_count', 0) / r.get('requested_max_words', 1) for r in successful_sections) / len(successful_sections) * 100 if successful_sections else 0:.1f}%
-        - **Content Richness**: {'High' if total_words > 2000 else 'Medium' if total_words > 1000 else 'Low'}
+        - **Word Compliance Rate**: {
+            sum(1 for r in successful_sections if r.get("word_compliance", False)) / len(successful_sections) * 100
+            if successful_sections
+            else 0:.1f}%
+        - **Average Word Efficiency**: {
+            sum(r.get("word_count", 0) / r.get("requested_max_words", 1) for r in successful_sections)
+            / len(successful_sections)
+            * 100
+            if successful_sections
+            else 0:.1f}%
+        - **Content Richness**: {"High" if total_words > 2000 else "Medium" if total_words > 1000 else "Low"}
 
         ## Bottleneck Analysis
-        - **Slowest Section**: {max(successful_sections, key=lambda x: x['duration'])['section_type'] if successful_sections else 'N/A'} ({max([r['duration'] for r in successful_sections]) if successful_sections else 0:.2f}s)
-        - **Fastest Section**: {min(successful_sections, key=lambda x: x['duration'])['section_type'] if successful_sections else 'N/A'} ({min([r['duration'] for r in successful_sections]) if successful_sections else 0:.2f}s)
-        - **Performance Variance**: {max([r['duration'] for r in successful_sections]) - min([r['duration'] for r in successful_sections]) if len(successful_sections) > 1 else 0:.2f}s spread
-        - **Primary Bottleneck**: {'LLM API latency' if avg_section_time > 60 else 'Token generation' if avg_section_time > 30 else 'Acceptable performance'}
+        - **Slowest Section**: {
+            max(successful_sections, key=lambda x: x["duration"])["section_type"] if successful_sections else "N/A"
+        } ({max([r["duration"] for r in successful_sections]) if successful_sections else 0:.2f}s)
+        - **Fastest Section**: {
+            min(successful_sections, key=lambda x: x["duration"])["section_type"] if successful_sections else "N/A"
+        } ({min([r["duration"] for r in successful_sections]) if successful_sections else 0:.2f}s)
+        - **Performance Variance**: {
+            max([r["duration"] for r in successful_sections]) - min([r["duration"] for r in successful_sections])
+            if len(successful_sections) > 1
+            else 0:.2f}s spread
+        - **Primary Bottleneck**: {
+            "LLM API latency"
+            if avg_section_time > 60
+            else "Token generation"
+            if avg_section_time > 30
+            else "Acceptable performance"
+        }
 
         ## Real-World Performance Targets
         - **Target per Section**: < 60s (Current: {avg_section_time:.1f}s)
         - **Target Throughput**: > 12 words/second (Current: {avg_words_per_second:.1f})
-        - **Meets Performance Goals**: {'✅ Yes' if avg_section_time < 60 and avg_words_per_second > 12 else '❌ Optimization needed'}
+        - **Meets Performance Goals**: {
+            "✅ Yes" if avg_section_time < 60 and avg_words_per_second > 12 else "❌ Optimization needed"
+        }
 
         ## Optimization Opportunities
-        - **Prompt Efficiency**: {'Optimize prompt length' if total_tokens / len(successful_sections) > 2000 else 'Current prompts efficient'}
-        - **Parallel Processing**: {'High value' if total_generation_time > 150 else 'Medium value' if total_generation_time > 90 else 'Low priority'}
-        - **Caching Strategy**: {'Implement retrieval caching' if avg_section_time > 45 else 'Current approach adequate'}
+        - **Prompt Efficiency**: {
+            "Optimize prompt length" if total_tokens / len(successful_sections) > 2000 else "Current prompts efficient"
+        }
+        - **Parallel Processing**: {
+            "High value"
+            if total_generation_time > 150
+            else "Medium value"
+            if total_generation_time > 90
+            else "Low priority"
+        }
+        - **Caching Strategy**: {
+            "Implement retrieval caching" if avg_section_time > 45 else "Current approach adequate"
+        }
 
         ## Next Steps
-        - **Focus Area**: {'Prompt optimization' if avg_section_time > 60 else 'Parallel processing' if len(test_sections) > 3 else 'Fine-tuning'}
-        - **Expected Improvement**: {'30-40% with optimization' if avg_section_time > 60 else '15-25% with fine-tuning'}
+        - **Focus Area**: {
+            "Prompt optimization"
+            if avg_section_time > 60
+            else "Parallel processing"
+            if len(test_sections) > 3
+            else "Fine-tuning"
+        }
+        - **Expected Improvement**: {"30-40% with optimization" if avg_section_time > 60 else "15-25% with fine-tuning"}
         """
 
         section_analysis = [
@@ -283,11 +333,10 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
             "Bottleneck Analysis",
             "Real-World Performance Targets",
             "Optimization Opportunities",
-            "Next Steps"
+            "Next Steps",
         ]
 
         perf_ctx.set_content(analysis_content, section_analysis)
-
 
         if avg_section_time > 90:
             perf_ctx.add_warning(f"Slow section generation: {avg_section_time:.1f}s average")

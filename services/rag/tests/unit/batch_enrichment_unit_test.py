@@ -18,7 +18,6 @@ logger = get_logger(__name__)
 async def test_batch_enrichment_calls_single_llm_request() -> None:
     """Test that batch enrichment makes a single LLM call instead of multiple."""
 
-
     mock_objectives: list[ResearchObjective] = [
         {
             "number": 1,
@@ -26,15 +25,15 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
             "research_tasks": [
                 {"number": 1, "title": "Task 1.1"},
                 {"number": 2, "title": "Task 1.2"},
-            ]
+            ],
         },
         {
             "number": 2,
             "title": "Objective 2",
             "research_tasks": [
                 {"number": 1, "title": "Task 2.1"},
-            ]
-        }
+            ],
+        },
     ]
 
     mock_grant_section: GrantLongFormSection = {
@@ -53,7 +52,6 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
     }
 
     mock_form_inputs: ResearchDeepDive = {}
-
 
     mock_batch_response = {
         "objectives": [
@@ -77,8 +75,8 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
                         "description": "Test description for task 1.2",
                         "guiding_questions": ["Q1", "Q2", "Q3"],
                         "search_queries": ["query1", "query2", "query3"],
-                    }
-                ]
+                    },
+                ],
             },
             {
                 "objective_number": 2,
@@ -95,18 +93,17 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
                         "guiding_questions": ["Q1", "Q2", "Q3"],
                         "search_queries": ["query1", "query2", "query3"],
                     }
-                ]
-            }
+                ],
+            },
         ]
     }
 
-
-    with patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve, \
-         patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation") as mock_evaluation:
-
+    with (
+        patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve,
+        patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation") as mock_evaluation,
+    ):
         mock_retrieve.return_value = "Mock retrieval results"
         mock_evaluation.return_value = mock_batch_response
-
 
         result = await handle_batch_enrich_objectives(
             application_id="test-app-id",
@@ -115,15 +112,14 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
             form_inputs=mock_form_inputs,
         )
 
-
         assert mock_retrieve.call_count == 1, "Should make exactly one retrieval call"
         assert mock_evaluation.call_count == 1, "Should make exactly one LLM evaluation call"
 
-
         assert len(result) == 2, "Should return enrichment for both objectives"
         assert all(isinstance(r, dict) for r in result), "Results should be dictionaries"
-        assert all("research_objective" in r and "research_tasks" in r for r in result), "Each result should have required keys"
-
+        assert all("research_objective" in r and "research_tasks" in r for r in result), (
+            "Each result should have required keys"
+        )
 
         assert len(result[0]["research_tasks"]) == 2, "First objective should have 2 tasks"
         assert len(result[1]["research_tasks"]) == 1, "Second objective should have 1 task"
@@ -134,7 +130,6 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
 @pytest.mark.asyncio
 async def test_batch_enrichment_vs_individual_calls() -> None:
     """Compare batch enrichment to individual enrichment calls."""
-
 
     individual_calls = 3
     batch_calls = 1

@@ -19,13 +19,15 @@ def estimate_performance_improvement(baseline_time: float, objectives_count: int
     Returns:
         Estimated percentage improvement
     """
-    # Simple model: more objectives = more potential for improvement
-    # Base improvement of 30% plus 5% per objective
+
     base_improvement = 30.0
     per_objective_improvement = 5.0
 
-    # Cap at 80% improvement
-    return min(base_improvement + (objectives_count * per_objective_improvement), 80.0)
+    time_factor = min(baseline_time / 10.0, 1.0)
+
+    improvement = base_improvement * time_factor + (objectives_count * per_objective_improvement)
+
+    return min(improvement, 80.0)
 
 
 @lru_cache(maxsize=2000)
@@ -39,7 +41,6 @@ async def batch_count_tokens(texts: list[str]) -> list[int]:
     if not texts:
         return []
 
-
     return [cached_estimate_token_count(text) for text in texts]
 
 
@@ -47,7 +48,6 @@ async def optimized_count_tokens(text: str) -> int:
     """Optimized single token counting with caching."""
     if not text:
         return 0
-
 
     return cached_estimate_token_count(text)
 
@@ -69,19 +69,15 @@ class SentenceInfo(TypedDict):
 
 
 async def smart_parse_documents_with_batched_tokens(
-    sentence_infos: list[SentenceInfo],
-    max_tokens: int
+    sentence_infos: list[SentenceInfo], max_tokens: int
 ) -> tuple[list[str], int]:
     """Parse documents with batched token counting for efficiency."""
     if not sentence_infos:
         return [], 0
 
-
     sentences = [info["text"] for info in sentence_infos]
 
-
     token_counts = await batch_count_tokens(sentences)
-
 
     doc_contents: dict[int, list[str]] = {}
     total_tokens = 0
@@ -99,14 +95,13 @@ async def smart_parse_documents_with_batched_tokens(
         doc_contents[doc_idx].append(sentence)
         total_tokens += token_count
 
-
     final_docs = [" ".join(sentences).strip() for sentences in doc_contents.values() if sentences]
 
     logger.debug(
         "Smart document parsing: %d sentences processed, %d tokens used, %d final docs",
         len([s for s, t in zip(sentences, token_counts, strict=False) if total_tokens >= t]),
         total_tokens,
-        len(final_docs)
+        len(final_docs),
     )
 
     return final_docs, total_tokens

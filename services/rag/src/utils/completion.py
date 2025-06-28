@@ -161,7 +161,6 @@ async def make_google_completions_request[T](
     )
     elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
 
-
     usage_metadata = getattr(response, "usage_metadata", None)
     if usage_metadata:
         logger.info(
@@ -234,7 +233,6 @@ async def make_anthropic_completions_request[T](
         top_k=top_k or NOT_GIVEN,
     )
     elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
-
 
     logger.info(
         "Anthropic completion",
