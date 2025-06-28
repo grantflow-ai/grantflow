@@ -235,9 +235,7 @@ async def apply_semantic_ranking(sentences: list[str], query: str) -> dict[str, 
     return {sentences[i]: similarities[i] for i in range(len(sentences))}
 
 
-async def parse_documents(
-    *, sentence_infos: list[SentenceInfo], max_tokens: int, model: str
-) -> list[str]:
+async def parse_documents(*, sentence_infos: list[SentenceInfo], max_tokens: int, model: str) -> list[str]:
     """Legacy function - use smart_parse_documents_with_batched_tokens for better performance."""
     _ = model
     processed_docs, _ = await smart_parse_documents_with_batched_tokens(

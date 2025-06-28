@@ -28,7 +28,6 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
 
     application_id = "6a87a3b6-b87e-4506-85c8-bd3de97b5f5b"
 
-
     class MockGrantApplication:
         def __init__(self) -> None:
             self.research_objectives = [
@@ -63,14 +62,12 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
 
     grant_application = MockGrantApplication()
 
-
     research_plan_text = """
     ## Research Objectives
     1. Develop novel CAR constructs targeting solid tumor antigens
     2. Engineer T cells to overcome immunosuppressive tumor microenvironment
     3. Validate therapeutic efficacy in preclinical models
     """
-
 
     test_sections: list[GrantLongFormSection] = [
         {
@@ -80,7 +77,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
             "search_queries": [
                 "CAR-T cell therapy solid tumors challenges",
                 "tumor microenvironment immunosuppression",
-                "next-generation CAR-T engineering strategies"
+                "next-generation CAR-T engineering strategies",
             ],
             "topics": ["immunotherapy", "solid tumors", "CAR-T cells"],
             "keywords": ["CAR-T", "solid tumor", "immunosuppression"],
@@ -94,7 +91,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
             "search_queries": [
                 "CAR-T cell therapy solid tumors challenges",
                 "novel CAR-T engineering approaches",
-                "tumor microenvironment modulation strategies"
+                "tumor microenvironment modulation strategies",
             ],
             "topics": ["innovation", "CAR-T engineering", "tumor targeting"],
             "keywords": ["novel", "breakthrough", "engineering"],
@@ -108,7 +105,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
             "search_queries": [
                 "CAR-T cell manufacturing protocols",
                 "tumor microenvironment immunosuppression",
-                "preclinical CAR-T testing models"
+                "preclinical CAR-T testing models",
             ],
             "topics": ["methodology", "experimental design", "validation"],
             "keywords": ["approach", "methods", "validation"],
@@ -128,7 +125,6 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
             "shared_queries": 2,
             "total_unique_queries": 7,
         }
-
 
         logger.info("Starting BASELINE section generation (sequential)")
         baseline_start = datetime.now(UTC)
@@ -152,11 +148,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
                     "word_count": len(section_text.split()),
                 }
 
-                logger.info(
-                    "Baseline: Generated %s in %.2fs",
-                    section["title"],
-                    section_duration
-                )
+                logger.info("Baseline: Generated %s in %.2fs", section["title"], section_duration)
             except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                 logger.error("Baseline section generation failed: %s", e)
                 baseline_results[section["id"]] = {
@@ -166,13 +158,12 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
 
         baseline_total = (datetime.now(UTC) - baseline_start).total_seconds()
 
-
         logger.info("Starting OPTIMIZED section generation (shared retrieval)")
         optimized_start = datetime.now(UTC)
 
         try:
-
             from services.rag.src.utils.retrieval import retrieve_documents
+
             if hasattr(retrieve_documents, "cache_clear"):
                 retrieve_documents.cache_clear()
 
@@ -185,7 +176,6 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
 
             optimized_total = (datetime.now(UTC) - optimized_start).total_seconds()
             optimized_success = True
-
 
             optimized_sections = {}
             for section_id, text in optimized_results.items():
@@ -200,13 +190,11 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
             optimized_success = False
             optimized_sections = {}
 
-
         baseline_successful = sum(1 for r in baseline_results.values() if r.get("success", False))
         baseline_avg_time = baseline_total / len(test_sections) if test_sections else 0
 
         improvement_pct = ((baseline_total - optimized_total) / baseline_total * 100) if baseline_total > 0 else 0
         speedup_factor = baseline_total / optimized_total if optimized_total > 0 else 0
-
 
         analysis_content = f"""
         # Section Generation Optimization Results
@@ -227,7 +215,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
 
         ### Optimized (Shared Retrieval)
         - **Total Time**: {optimized_total:.2f} seconds
-        - **Success**: {'✅ Yes' if optimized_success else '❌ Failed'}
+        - **Success**: {"✅ Yes" if optimized_success else "❌ Failed"}
         - **Shared Retrievals**: 1 (batch retrieval)
         - **Cache Hits Expected**: 2+ (for shared queries)
 
@@ -235,7 +223,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
         - **Time Reduction**: {baseline_total - optimized_total:.2f} seconds
         - **Improvement**: {improvement_pct:.1f}%
         - **Speedup Factor**: {speedup_factor:.2f}x
-        - **Per-Section Savings**: {(baseline_avg_time - optimized_total/len(test_sections)):.2f}s
+        - **Per-Section Savings**: {(baseline_avg_time - optimized_total / len(test_sections)):.2f}s
 
         ## Optimization Breakdown
         - **Retrieval Deduplication**: Eliminated {len(test_sections) - 1} redundant retrievals
@@ -244,7 +232,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
         - **Token Optimization**: Reduced prompt overhead
 
         ## Quality Comparison
-        - **Word Count Consistency**: {'✅ Maintained' if optimized_success else '❌ N/A'}
+        - **Word Count Consistency**: {"✅ Maintained" if optimized_success else "❌ N/A"}
         - **Content Quality**: Preserved (same evaluation criteria)
         - **Dependencies Handled**: ✅ Yes
 
@@ -260,34 +248,34 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
         - **Throughput Increase**: {speedup_factor:.1f}-{speedup_factor * 1.3:.1f}x capacity
 
         ## Optimization Success Metrics
-        - **Target Met**: {'✅ Yes' if improvement_pct > 25 else '⚠️ Partial' if improvement_pct > 10 else '❌ No'}
-        - **Performance Grade**: {'A' if improvement_pct > 40 else 'B' if improvement_pct > 25 else 'C'}
-        - **Ready for Production**: {'✅ Yes' if optimized_success and improvement_pct > 20 else '❌ Needs work'}
+        - **Target Met**: {"✅ Yes" if improvement_pct > 25 else "⚠️ Partial" if improvement_pct > 10 else "❌ No"}
+        - **Performance Grade**: {"A" if improvement_pct > 40 else "B" if improvement_pct > 25 else "C"}
+        - **Ready for Production**: {"✅ Yes" if optimized_success and improvement_pct > 20 else "❌ Needs work"}
         """
 
-        perf_ctx.set_content(analysis_content, [
-            "Test Configuration",
-            "Performance Comparison",
-            "Performance Improvement",
-            "Optimization Breakdown",
-            "Quality Comparison",
-            "Bottleneck Analysis",
-            "Production Impact Estimate",
-            "Optimization Success Metrics"
-        ])
-
+        perf_ctx.set_content(
+            analysis_content,
+            [
+                "Test Configuration",
+                "Performance Comparison",
+                "Performance Improvement",
+                "Optimization Breakdown",
+                "Quality Comparison",
+                "Bottleneck Analysis",
+                "Production Impact Estimate",
+                "Optimization Success Metrics",
+            ],
+        )
 
         perf_ctx.stage_times["baseline_total"] = baseline_total
         perf_ctx.stage_times["optimized_total"] = optimized_total
         perf_ctx.configuration["improvement_percentage"] = improvement_pct
         perf_ctx.configuration["speedup_factor"] = speedup_factor
 
-
         if improvement_pct < 20:
             perf_ctx.add_warning(f"Low optimization impact: {improvement_pct:.1f}% improvement")
         if not optimized_success:
             perf_ctx.add_error("Optimized generation failed")
-
 
     assert optimized_success, "Optimized generation should succeed"
     assert improvement_pct > 15, f"Should see >15% improvement, got {improvement_pct:.1f}%"

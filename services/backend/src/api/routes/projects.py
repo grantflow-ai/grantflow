@@ -112,7 +112,7 @@ async def handle_retrieve_projects(
                 select(Project)
                 .options(
                     selectinload(Project.project_users),
-                    selectinload(Project.grant_applications)
+                    selectinload(Project.grant_applications),
                 )
                 .join(ProjectUser)
                 .where(ProjectUser.firebase_uid == request.auth)

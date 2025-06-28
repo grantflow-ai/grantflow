@@ -139,7 +139,6 @@ def e2e_test[F: Callable[..., Any]](
                 end_time = time.time()
                 execution_time = end_time - start_time
 
-
                 if save_results and logger:
                     error_results = {
                         "test_name": func.__name__,
@@ -164,7 +163,6 @@ def e2e_test[F: Callable[..., Any]](
                         "timestamp": datetime.now(UTC).isoformat(),
                     }
 
-
                     failure_path = (
                         RESULTS_FOLDER
                         / "e2e_failures"
@@ -179,7 +177,6 @@ def e2e_test[F: Callable[..., Any]](
                         (execution_time / test_timeout) * 100,
                         str(e),
                     )
-
 
                     logger.info(
                         "📊 Diagnostic info saved to: %s",
@@ -314,7 +311,6 @@ class ProgressReporter:
         current_time = time.time()
         elapsed = current_time - self.start_time
 
-
         if self.step_times:
             avg_step_time = sum(self.step_times) / len(self.step_times)
             remaining_steps = self.total_steps - self.current_step
@@ -340,7 +336,6 @@ class ProgressReporter:
         if details:
             for key, value in details.items():
                 self.logger.info("   📋 %s: %s", key, value)
-
 
         if len(self.step_times) > 0:
             step_duration = current_time - self.last_step_time

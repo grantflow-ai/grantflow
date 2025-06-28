@@ -36,24 +36,33 @@ def ttl_lru_cache(
             # Expensive operation here
             return result
     """
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
 
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
         cached_func = lru_cache(maxsize=maxsize, typed=typed)(func)
 
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
-
-
-            hashable_args = tuple(str(arg) if not isinstance(arg, (str, int, float, bool, type(None))) else arg for arg in args)
-            hashable_kwargs = frozenset((k, str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v) for k, v in kwargs.items())
+            hashable_args = tuple(
+                str(arg)
+                if not isinstance(arg, (str, int, float, bool, type(None)))
+                else arg
+                for arg in args
+            )
+            hashable_kwargs = frozenset(
+                (
+                    k,
+                    str(v)
+                    if not isinstance(v, (str, int, float, bool, type(None)))
+                    else v,
+                )
+                for k, v in kwargs.items()
+            )
             cache_key = (func, hashable_args, hashable_kwargs)
             current_time = time.time()
-
 
             if cache_key in _cache_timestamps:
                 cache_age = current_time - _cache_timestamps[cache_key]
                 if cache_age >= ttl_seconds:
-
                     logger.debug(
                         "Cache entry expired",
                         function=func.__name__,
@@ -64,10 +73,8 @@ def ttl_lru_cache(
                     cached_func.cache_clear()
                     _cache_timestamps.clear()
 
-
             try:
                 result = await cached_func(*args, **kwargs)
-
 
                 if cache_key not in _cache_timestamps:
                     _cache_timestamps[cache_key] = current_time
@@ -84,15 +91,16 @@ def ttl_lru_cache(
 
                 return result
             except Exception:
-
                 cached_func.cache_clear()
                 _cache_timestamps.clear()
                 result = await func(*args, **kwargs)
                 _cache_timestamps[cache_key] = current_time
                 return result
 
-
-        wrapper.cache_clear = lambda: (cached_func.cache_clear(), _cache_timestamps.clear())
+        wrapper.cache_clear = lambda: (
+            cached_func.cache_clear(),
+            _cache_timestamps.clear(),
+        )
         wrapper.cache_info = cached_func.cache_info
 
         return wrapper
@@ -113,7 +121,6 @@ def create_content_hash(*args: Any, **kwargs: Any) -> str:
     """
     import hashlib
     import json
-
 
     key_data = {
         "args": [str(arg) for arg in args],
@@ -144,13 +151,11 @@ def cached_with_ttl(
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> T:
-
         key_parts = [cache_key] if cache_key else [func.__name__]
         key_parts.append(create_content_hash(*args, **kwargs))
         full_key = ":".join(key_parts)
 
         current_time = time.time()
-
 
         if full_key in cache_storage:
             result, timestamp = cache_storage[full_key]
@@ -163,9 +168,7 @@ def cached_with_ttl(
                 )
                 return result
             else:
-
                 del cache_storage[full_key]
-
 
         logger.debug(
             "TTL cache miss",
