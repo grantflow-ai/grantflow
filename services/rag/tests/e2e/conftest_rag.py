@@ -1,7 +1,7 @@
 """Simplified conftest for RAG e2e tests with real application data."""
 
 import json
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 import pytest
@@ -31,9 +31,11 @@ async def melanoma_application_data(async_session_maker: async_sessionmaker[Any]
             "application_id": MELANOMA_APPLICATION_ID,
             "application": application,
             "grant_template": application.grant_template,
-            "research_objectives": application.research_deep_dive.research_objectives,
-            "grant_sections": application.grant_template.grant_sections,
-            "organization_id": application.grant_template.funding_organization_id,
+            "research_objectives": application.research_objectives or {},
+            "grant_sections": application.grant_template.grant_sections if application.grant_template else [],
+            "organization_id": application.grant_template.funding_organization_id
+            if application.grant_template
+            else None,
         }
 
 
@@ -128,7 +130,7 @@ def load_grant_template_fixture(application_id: str) -> dict[str, Any]:
     """Load grant template from test fixtures."""
     template_path = FIXTURES_FOLDER / application_id / "grant_template.json"
     if template_path.exists():
-        return json.loads(template_path.read_text())
+        return cast("dict[str, Any]", json.loads(template_path.read_text()))
     raise FileNotFoundError(f"Grant template not found for {application_id}")
 
 

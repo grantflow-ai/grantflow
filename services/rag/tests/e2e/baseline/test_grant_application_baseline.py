@@ -4,7 +4,6 @@ Uses unified performance measurement framework for comprehensive analysis.
 """
 
 import asyncio
-import contextlib
 import logging
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -53,7 +52,7 @@ async def test_baseline_full_application_generation(
         expected_timeout_minutes=30,
     )
 
-    async with grant_application_test(
+    with grant_application_test(
         test_name="baseline_full_application_generation",
         logger=logger,
         configuration={
@@ -147,6 +146,7 @@ async def test_baseline_full_application_generation(
             )
 
         except Exception as e:
+            logger.error(f"Error during grant application generation: {e}")
             progress.report_final_status(
                 False,
                 {
@@ -158,8 +158,8 @@ async def test_baseline_full_application_generation(
             )
             raise
         finally:
-            with contextlib.suppress(Exception):
-                await job_manager.close()
+            # JobManager doesn't have a close method
+            pass
 
     assert_performance_targets(perf_ctx.result, min_grade="C")
     assert_quality_targets(perf_ctx.result, min_score=60.0)

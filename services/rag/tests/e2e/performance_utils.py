@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from functools import wraps
 from pathlib import Path
 from types import TracebackType
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 from uuid import uuid4
 
 from .performance_framework import (
@@ -139,7 +139,7 @@ class PerformanceTestContext:
         """Get a timer for a specific pipeline stage."""
         return StageTimer(stage_name, self.stage_times)
 
-    def set_content(self, content: str, section_texts: list[str] | None = None) -> None:
+    def set_content(self, content: str, section_texts: dict[str, str] | None = None) -> None:
         """Set the generated content for quality analysis."""
         self.generated_content = content
         if section_texts:
@@ -250,7 +250,7 @@ def performance_test(
             ) as perf_ctx:
                 return await func(*args, **kwargs, performance_context=perf_ctx)
 
-        return wrapper
+        return cast("F", wrapper)
 
     return decorator
 
@@ -289,7 +289,7 @@ def quick_performance_analysis(
     total_time: float,
     content: str,
     stage_times: dict[str, float] | None = None,
-    section_texts: list[str] | None = None,
+    section_texts: dict[str, str] | None = None,
 ) -> PerformanceResult:
     """Quick performance analysis without full context management."""
     analyzer = PerformanceAnalyzer(test_category)
@@ -331,30 +331,24 @@ async def timed_stage(stage_name: str, stage_times: dict[str, float], logger: lo
             logger.debug("Completed stage %s in %.2fs", stage_name, duration)
 
 
-@contextlib.asynccontextmanager
-async def grant_template_test(
-    test_name: str, logger: logging.Logger | None = None, **kwargs: Any
-) -> contextlib.AbstractAsyncContextManager[PerformanceTestContext]:
+def grant_template_test(test_name: str, logger: logging.Logger | None = None, **kwargs: Any) -> PerformanceTestContext:
     """Async context manager for grant template performance testing."""
-    async with PerformanceTestContext(
+    return PerformanceTestContext(
         test_name=test_name, test_category=TestCategory.GRANT_TEMPLATE, logger=logger, **kwargs
-    ) as ctx:
-        yield ctx
+    )
 
 
-@contextlib.asynccontextmanager
-async def grant_application_test(
+def grant_application_test(
     test_name: str, logger: logging.Logger | None = None, baseline_test_name: str | None = None, **kwargs: Any
-) -> contextlib.AbstractAsyncContextManager[PerformanceTestContext]:
+) -> PerformanceTestContext:
     """Async context manager for grant application performance testing."""
-    async with create_performance_context(
+    return PerformanceTestContext(
         test_name=test_name,
         test_category=TestCategory.GRANT_APPLICATION,
         logger=logger,
         baseline_test_name=baseline_test_name,
         **kwargs,
-    ) as ctx:
-        yield ctx
+    )
 
 
 def assert_performance_targets(result: PerformanceResult | None, min_grade: str = "C") -> None:
