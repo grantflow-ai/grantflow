@@ -19,7 +19,10 @@ export default function LinkPreviewItem({ parentId, url }: { parentId?: string; 
 					data-testid="link-remove-icon"
 					onClick={handleRemove}
 				/>
-				<Link className="text-primary absolute opacity-100 transition-opacity group-hover:opacity-0" />
+				<Link
+					className="text-primary absolute opacity-100 transition-opacity group-hover:opacity-0"
+					data-testid="link-icon"
+				/>
 			</div>
 			<Button asChild className="h-auto justify-start p-0.5 text-primary hover:text-accent" variant="link">
 				<a

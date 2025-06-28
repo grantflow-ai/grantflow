@@ -49,7 +49,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
 			const delay = Math.min(config.initialDelay * config.backoffMultiplier ** attempt, config.maxDelay);
 
 			// Add jitter to prevent thundering herd
-			// eslint-disable-next-line sonarjs/pseudo-random
+
 			const jitteredDelay = delay + Math.random() * 0.1 * delay;
 
 			await new Promise((resolve) => setTimeout(resolve, jitteredDelay));
