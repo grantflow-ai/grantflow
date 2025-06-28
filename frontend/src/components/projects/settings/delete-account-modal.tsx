@@ -41,9 +41,11 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose}>
-			<div className="relative w-full max-w-[464px] rounded-lg bg-white p-8">
+			<div className="relative w-full max-w-[464px] rounded-lg bg-white p-8" data-testid="delete-account-modal">
 				<button
+					aria-label="Close modal"
 					className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+					data-testid="close-button"
 					onClick={onClose}
 					type="button"
 				>
@@ -63,11 +65,18 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 					</div>
 
 					<div className="flex flex-row items-end justify-between">
-						<Button className="w-[90px]" disabled={isDeleting} onClick={onClose} variant="outline">
+						<Button
+							className="w-[90px]"
+							data-testid="cancel-button"
+							disabled={isDeleting}
+							onClick={onClose}
+							variant="outline"
+						>
 							Cancel
 						</Button>
 						<Button
 							className="bg-[#1e13f8] hover:bg-[#1e13f8]/90"
+							data-testid="delete-button"
 							disabled={isDeleting}
 							onClick={handleDelete}
 							variant="default"

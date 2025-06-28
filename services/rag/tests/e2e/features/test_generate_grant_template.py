@@ -10,7 +10,7 @@ from packages.shared_utils.src.serialization import serialize
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.src.grant_template.handler import extract_and_enrich_sections
 from services.rag.src.utils.job_manager import JobManager
-from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
+from services.rag.tests.e2e.test_utils import create_rag_sources_from_cfp_file
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test

@@ -5,6 +5,8 @@ import logging
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+from testing.e2e_utils import E2ETestCategory, e2e_test
+
 from services.rag.src.utils.post_processing import post_process_documents
 from services.rag.tests.e2e.performance_framework import TestCategory
 from services.rag.tests.e2e.performance_utils import (
@@ -13,7 +15,6 @@ from services.rag.tests.e2e.performance_utils import (
     assert_quality_targets,
     create_performance_context,
 )
-from testing.e2e_utils import E2ETestCategory, e2e_test
 
 if TYPE_CHECKING:
     from services.rag.src.dto import DocumentDTO
