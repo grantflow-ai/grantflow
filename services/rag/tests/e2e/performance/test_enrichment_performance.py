@@ -13,13 +13,14 @@ Tests include:
 import logging
 from typing import TYPE_CHECKING, Any
 
+from packages.shared_utils.src.ai import estimate_token_count
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.factories import ResearchObjectiveFactory
 
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.enrich_research_objective import handle_enrich_objective
-from services.rag.src.utils.token_optimization import estimate_performance_improvement, estimate_token_count
+from services.rag.src.utils.token_optimization import estimate_performance_improvement
 from services.rag.tests.e2e.performance_framework import TestCategory
 from services.rag.tests.e2e.performance_utils import (
     assert_performance_targets,

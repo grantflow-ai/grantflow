@@ -7,14 +7,14 @@ from packages.db.src.tables import FundingOrganization
 from packages.shared_utils.src.serialization import serialize
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.e2e_utils import e2e_test
 
 from services.rag.src.grant_template.determine_application_sections import handle_extract_sections
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.tests.e2e.test_utils import create_rag_sources_from_cfp_file
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@e2e_test(timeout=180)
 async def test_extract_sections_melanoma_alliance_cfp(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -55,7 +55,7 @@ async def test_extract_sections_melanoma_alliance_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@e2e_test(timeout=180)
 async def test_extract_sections_erc_cfp(
     logger: logging.Logger,
     erc_organization: FundingOrganization,
@@ -97,7 +97,7 @@ async def test_extract_sections_erc_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@e2e_test(timeout=180)
 async def test_extract_sections_standard_awards_cfp(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -138,7 +138,7 @@ async def test_extract_sections_standard_awards_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@e2e_test(timeout=180)
 async def test_extract_sections_nih_cfp(
     logger: logging.Logger,
     nih_organization: FundingOrganization,
@@ -180,7 +180,7 @@ async def test_extract_sections_nih_cfp(
     logger.info("Completed section extraction in %.2f seconds with %d sections", elapsed_time, len(sections))
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@e2e_test(timeout=180)
 async def test_extract_sections_ics_cfp(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],

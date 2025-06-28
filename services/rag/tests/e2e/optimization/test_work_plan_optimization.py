@@ -1,6 +1,5 @@
 """Test work plan generation optimization using unified performance framework."""
 
-import contextlib
 import logging
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -34,7 +33,7 @@ async def test_work_plan_optimization_validation(
     logger: logging.Logger,
     melanoma_alliance_full_application_id: str,
     async_session_maker: async_sessionmaker[Any],
-) -> None:
+) -> Any:
     """Test work plan parallelization optimization using unified performance framework."""
 
     application_uuid = UUID(melanoma_alliance_full_application_id)
@@ -66,55 +65,47 @@ async def test_work_plan_optimization_validation(
 
         job_manager = await create_job_manager_for_optimization(async_session_maker, application_uuid)
 
-        try:
-            with perf_ctx.stage_timer("pipeline_initialization"):
-                pass
+        with perf_ctx.stage_timer("pipeline_initialization"):
+            pass
 
-            with perf_ctx.stage_timer("objective_extraction"):
-                pass
+        with perf_ctx.stage_timer("objective_extraction"):
+            pass
 
-            with perf_ctx.stage_timer("objective_enrichment"):
-                full_text, section_texts = await grant_application_text_generation_pipeline_handler(
-                    grant_application_id=application_uuid,
-                    session_maker=async_session_maker,
-                    job_manager=job_manager,
-                )
-
-                estimated_objectives = max(5, full_text.count("### Objective"))
-
-                perf_ctx.add_llm_call(estimated_objectives // 2 + 3)
-
-            with perf_ctx.stage_timer("work_plan_generation"):
-                pass
-
-            with perf_ctx.stage_timer("final_generation"):
-                pass
-
-            perf_ctx.set_content(full_text, section_texts)
-
-            objective_count = full_text.count("### Objective")
-            task_count = full_text.count("#### ")
-
-            logger.info(
-                "Work plan optimization completed",
-                sections_generated=len(section_texts),
-                total_characters=len(full_text),
-                objectives_found=objective_count,
-                tasks_found=task_count,
-                llm_calls_optimized=perf_ctx.llm_calls_made,
+        with perf_ctx.stage_timer("objective_enrichment"):
+            full_text, section_texts = await grant_application_text_generation_pipeline_handler(
+                grant_application_id=application_uuid,
+                session_maker=async_session_maker,
+                job_manager=job_manager,
             )
 
-        except Exception as e:
-            perf_ctx.add_error(f"Pipeline execution failed: {e!s}")
-            raise
-        finally:
-            with contextlib.suppress(Exception):
-                await job_manager.close()
+            estimated_objectives = max(5, full_text.count("### Objective"))
+
+            perf_ctx.add_llm_call(estimated_objectives // 2 + 3)
+
+        with perf_ctx.stage_timer("work_plan_generation"):
+            pass
+
+        with perf_ctx.stage_timer("final_generation"):
+            pass
+
+        perf_ctx.set_content(full_text, section_texts)
+
+        objective_count = full_text.count("### Objective")
+        task_count = full_text.count("#### ")
+
+        logger.info(
+            "Work plan optimization metrics: %d sections, %d characters, %d objectives, %d tasks, %d LLM calls",
+            len(section_texts),
+            len(full_text),
+            objective_count,
+            task_count,
+            perf_ctx.llm_calls_made,
+        )
 
         assert_performance_targets(perf_ctx.result, min_grade="C")
         assert_quality_targets(perf_ctx.result, min_score=70.0)
 
-        if perf_ctx.result.optimization_metrics:
+        if perf_ctx.result and perf_ctx.result.optimization_metrics:
             assert_optimization_success(perf_ctx.result, min_improvement=30.0)
 
         assert len(section_texts) >= 2, f"Only {len(section_texts)} sections generated"
