@@ -5,7 +5,7 @@
  */
 
 import { getEnv } from "./env";
-import { logError } from "./logging";
+import { log } from "./logger";
 
 const INDEXER_URL = "http://localhost:8001";
 const RETRY_DELAY = 1000;
@@ -34,7 +34,7 @@ export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 			return decodeURIComponent(pathMatch[1]);
 		}
 	} catch (error) {
-		logError({ error, identifier: "[Dev Indexing Patch] Failed to parse URL" });
+		log.error("[Dev Indexing Patch] Failed to parse URL", error);
 	}
 
 	return null;
@@ -55,8 +55,7 @@ export async function triggerDevIndexing(objectPath: string): Promise<void> {
 		return;
 	}
 
-	// eslint-disable-next-line no-console
-	console.log("[Dev Indexing Patch] Triggering indexing for:", objectPath);
+	log.info("[Dev Indexing Patch] Triggering indexing for:", { objectPath });
 
 	const eventData: GCSEventData = {
 		bucket: "grantflow-uploads",
@@ -89,18 +88,14 @@ export async function triggerDevIndexing(objectPath: string): Promise<void> {
 			});
 
 			if (response.ok) {
-				// eslint-disable-next-line no-console
-				console.log("[Dev Indexing Patch] Successfully triggered indexing");
+				log.info("[Dev Indexing Patch] Successfully triggered indexing");
 				return;
 			}
 
 			const errorText = await response.text();
-			logError({
-				error: new Error(errorText),
-				identifier: `[Dev Indexing Patch] Indexer returned ${response.status}`,
-			});
+			log.error(`[Dev Indexing Patch] Indexer returned ${response.status}`, new Error(errorText));
 		} catch (error) {
-			logError({ error, identifier: `[Dev Indexing Patch] Attempt ${attempt} failed` });
+			log.error(`[Dev Indexing Patch] Attempt ${attempt} failed`, error);
 		}
 
 		if (attempt < MAX_RETRIES) {
@@ -108,6 +103,5 @@ export async function triggerDevIndexing(objectPath: string): Promise<void> {
 		}
 	}
 
-	// eslint-disable-next-line no-console
-	console.warn("[Dev Indexing Patch] Failed to trigger indexing after all retries");
+	log.warn("[Dev Indexing Patch] Failed to trigger indexing after all retries");
 }

@@ -142,7 +142,7 @@ resource "google_sql_database_instance" "main" {
     }
 
     ip_configuration {
-      # For security, we're limiting authorized networks to only those explicitly defined
+      
       dynamic "authorized_networks" {
         for_each = var.authorized_networks
         content {
@@ -151,20 +151,20 @@ resource "google_sql_database_instance" "main" {
         }
       }
 
-      # Enable private path for Google Cloud services
+      
       enable_private_path_for_google_cloud_services = true
 
-      # For production, we recommend setting ipv4_enabled to false and using private IP instead
-      # For now, keeping public IP for development purposes but with restricted access
+      
+      
       ipv4_enabled = true
 
-      # Using Google-managed CA for certificates
+      
       server_ca_mode = "GOOGLE_MANAGED_INTERNAL_CA"
 
-      # Make SSL optional for development purposes
+      
       ssl_mode = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
 
-      # Add private network configuration
+      
       private_network = var.network_id
     }
 

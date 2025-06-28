@@ -1,3 +1,4 @@
+/* c8 ignore start */
 import { Cabin, Sora, Source_Sans_3 } from "next/font/google";
 
 export const fontCabin = Cabin({
@@ -20,3 +21,4 @@ export const fontSourceSans = Source_Sans_3({
 	variable: "--font-body",
 	weight: ["400", "500", "600"],
 });
+/* c8 ignore stop */

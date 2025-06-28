@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { withRetry } from "./retry";
 
-// Helper to create mock HTTPError-like objects without triggering rejections
 const createMockHTTPError = (status: number, message = `HTTP ${status}`) => ({
 	constructor: HTTPError,
 	message,
@@ -39,15 +38,12 @@ describe("withRetry", () => {
 
 		const resultPromise = withRetry(mockFn, { initialDelay: 1000, maxRetries: 3 });
 
-		// First attempt fails immediately
 		await vi.advanceTimersByTimeAsync(0);
 		expect(mockFn).toHaveBeenCalledTimes(1);
 
-		// Wait for first retry (1000ms + jitter)
 		await vi.advanceTimersByTimeAsync(1100);
 		expect(mockFn).toHaveBeenCalledTimes(2);
 
-		// Wait for second retry (2000ms + jitter)
 		await vi.advanceTimersByTimeAsync(2200);
 		expect(mockFn).toHaveBeenCalledTimes(3);
 
@@ -83,22 +79,17 @@ describe("withRetry", () => {
 		const serverError = createMockHTTPError(500);
 		const mockFn = vi.fn().mockRejectedValue(serverError);
 
-		// Start the retry process and immediately handle the rejection
 		const resultPromise = withRetry(mockFn, { initialDelay: 100, maxRetries: 2 }).catch((error: unknown) => error);
 
-		// First attempt
 		await vi.advanceTimersByTimeAsync(0);
 		expect(mockFn).toHaveBeenCalledTimes(1);
 
-		// First retry
 		await vi.advanceTimersByTimeAsync(200);
 		expect(mockFn).toHaveBeenCalledTimes(2);
 
-		// Second retry
 		await vi.advanceTimersByTimeAsync(400);
 		expect(mockFn).toHaveBeenCalledTimes(3);
 
-		// Wait for the final result
 		const finalError = await resultPromise;
 		expect(finalError).toBe(serverError);
 		expect(mockFn).toHaveBeenCalledTimes(3);
@@ -125,7 +116,6 @@ describe("withRetry", () => {
 		const serverError = createMockHTTPError(500);
 		const mockFn = vi.fn().mockRejectedValue(serverError);
 
-		// Start the retry process and immediately handle the rejection
 		const resultPromise = withRetry(mockFn, {
 			backoffMultiplier: 3,
 			initialDelay: 1000,
@@ -136,15 +126,12 @@ describe("withRetry", () => {
 		await vi.advanceTimersByTimeAsync(0);
 		expect(mockFn).toHaveBeenCalledTimes(1);
 
-		// First retry: min(1000 * 3^0, 1500) = 1000ms + jitter
 		await vi.advanceTimersByTimeAsync(1200);
 		expect(mockFn).toHaveBeenCalledTimes(2);
 
-		// Second retry: min(1000 * 3^1, 1500) = 1500ms (capped) + jitter
 		await vi.advanceTimersByTimeAsync(1700);
 		expect(mockFn).toHaveBeenCalledTimes(3);
 
-		// Wait for the final result
 		const finalError = await resultPromise;
 		expect(finalError).toBe(serverError);
 	});

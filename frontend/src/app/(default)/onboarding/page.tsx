@@ -8,8 +8,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { login } from "@/actions/login";
-import { AppButton } from "@/components/app-button";
-import { LogoDark } from "@/components/logo";
+import { AppCard, AppCardContent } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { SeparatorWithText } from "@/components/app/display/separator-with-text";
+import { LogoDark } from "@/components/branding/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
 	OnboardingGradientBackgroundBottom,
@@ -18,11 +20,10 @@ import {
 } from "@/components/onboarding/backgrounds";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 import { SigninForm } from "@/components/onboarding/signin-form";
-import { SeparatorWithText } from "@/components/separator-with-text";
-import { SocialSigninButton } from "@/components/social-signin-buttons";
-import { Card, CardContent } from "@/components/ui/card";
+import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
+import { useUserStore } from "@/stores/user-store";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
@@ -31,6 +32,7 @@ export default function SignIn() {
 	const auth = getFirebaseAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
+	const { setUser } = useUserStore();
 
 	const handleSocialSignUp = async (
 		provider: "google" | "orcid",
@@ -40,10 +42,20 @@ export default function SignIn() {
 		setSocialSignInError(null);
 
 		try {
-			const { idToken, isNewUser } = await signupMethod();
+			const { idToken, isNewUser, user } = await signupMethod();
 
 			if (isNewUser) {
 				toast.success("Account created successfully!");
+
+				setUser({
+					displayName: user.displayName,
+					email: user.email,
+					emailVerified: user.emailVerified,
+					photoURL: user.photoURL,
+					providerId: user.providerData[0]?.providerId,
+					uid: user.uid,
+				});
+
 				await login(idToken);
 				return;
 			}
@@ -135,9 +147,9 @@ export default function SignIn() {
 				</div>
 
 				<div className="z-20 flex-1 justify-start">
-					<Card className="border-primary mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9 md:w-4/5">
+					<AppCard className="border-primary mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9 md:w-4/5">
 						<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
-						<CardContent>
+						<AppCardContent>
 							<SigninForm
 								isLoading={isLoading}
 								onSubmit={async ({ email }) => {
@@ -168,8 +180,8 @@ export default function SignIn() {
 									<Link href={PagePath.LOGIN}>Login</Link>
 								</AppButton>
 							</div>
-						</CardContent>
-					</Card>
+						</AppCardContent>
+					</AppCard>
 				</div>
 			</div>
 		</div>

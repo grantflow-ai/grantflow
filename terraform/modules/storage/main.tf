@@ -65,7 +65,7 @@ resource "google_kms_crypto_key" "bucket_key" {
   }
 }
 
-# IAM for the storage bucket
+
 resource "google_storage_bucket_iam_policy" "uploads" {
   bucket      = google_storage_bucket.uploads.name
   policy_data = <<POLICY
@@ -102,12 +102,12 @@ resource "google_storage_bucket_iam_policy" "uploads" {
 POLICY
 }
 
-# Get the GCS service account to grant Pub/Sub publisher permissions
+
 data "google_storage_project_service_account" "gcs_account" {
   provider = google-beta
 }
 
-# Grant the GCS service account permission to publish to the Pub/Sub topic
+
 resource "google_pubsub_topic_iam_binding" "gcs_pubsub_publish" {
   provider = google-beta
   topic    = var.file_indexing_topic
@@ -115,15 +115,15 @@ resource "google_pubsub_topic_iam_binding" "gcs_pubsub_publish" {
   members  = ["serviceAccount:${data.google_storage_project_service_account.gcs_account.email_address}"]
 }
 
-# Configure notifications from the bucket to the Pub/Sub topic
+
 resource "google_storage_notification" "file_indexing_notification" {
   provider       = google-beta
   bucket         = google_storage_bucket.uploads.name
   payload_format = "JSON_API_V1"
   topic          = var.file_indexing_topic
-  event_types    = ["OBJECT_FINALIZE"] # Only trigger when files are created/finalized
+  event_types    = ["OBJECT_FINALIZE"] 
 
-  # Custom attributes to indicate this is a file creation event
+  
   custom_attributes = {
     event = "file-created"
   }

@@ -21,9 +21,8 @@ const config: StorybookConfig = {
 			plugins: [tsconfigPaths()],
 			resolve: {
 				alias: {
-					// Use relative paths from project root instead of __dirname
 					"@/styles/globals.css": "./storybook-mocks/globals.css",
-					// Mock next/font imports for Storybook
+
 					"@/utils/fonts": "./storybook-mocks/fonts.ts",
 				},
 			},

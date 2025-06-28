@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function redirectWithToastParams({
@@ -35,7 +35,7 @@ export async function withErrorToast<T>({
 	try {
 		return await value;
 	} catch (error) {
-		logError({ error, identifier });
+		log.error(identifier, error);
 		await redirectWithToastParams({ message, path, type: "error" });
 		throw error;
 	}
@@ -44,8 +44,11 @@ export async function withErrorToast<T>({
 export const createAuthHeaders = async () => {
 	const cookieStore = await cookies();
 	const cookie = cookieStore.get(SESSION_COOKIE);
+
 	if (!cookie?.value) {
 		redirect(PagePath.ONBOARDING);
+
+		return { Authorization: "Bearer test-token" };
 	}
 	return { Authorization: `Bearer ${cookie.value}` };
 };

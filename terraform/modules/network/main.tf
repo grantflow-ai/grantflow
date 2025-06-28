@@ -51,7 +51,7 @@ resource "google_compute_subnetwork" "default" {
   }
 }
 
-# Allocate an IP range for private service connection
+
 resource "google_compute_global_address" "private_ip_address" {
   name          = "private-service-access"
   purpose       = "VPC_PEERING"
@@ -61,7 +61,7 @@ resource "google_compute_global_address" "private_ip_address" {
   project       = var.project_id
 }
 
-# Create a private connection
+
 resource "google_service_networking_connection" "private_vpc_connection" {
   network                 = google_compute_network.default.id
   service                 = "servicenetworking.googleapis.com"
