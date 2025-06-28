@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 
-import { AvatarGroup } from "@/components/ui/avatar";
+import { AvatarGroup } from "@/components/app";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DashboardHeaderProps {

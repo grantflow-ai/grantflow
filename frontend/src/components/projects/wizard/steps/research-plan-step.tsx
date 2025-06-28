@@ -19,10 +19,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
-
+import { AppCard } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useApplicationStore } from "@/stores/application-store";
 import { MAX_OBJECTIVES, type Objective, useWizardStore } from "@/stores/wizard-store";
 
@@ -80,7 +78,7 @@ export function ResearchPlanStep() {
 						</AppButton>
 
 						{objectives.length >= MAX_OBJECTIVES && (
-							<Card className="border-app-border-primary bg-app-surface-secondary p-3 flex items-start gap-3">
+							<AppCard className="border-app-border-primary bg-app-surface-secondary p-3 flex items-start gap-3">
 								<div className="bg-app-surface-secondary text-app-action-primary flex size-6 shrink-0 items-center justify-center rounded-full">
 									<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
 										<path
@@ -94,7 +92,7 @@ export function ResearchPlanStep() {
 									You&apos;ve reached the maximum of {MAX_OBJECTIVES} objectives. Please edit or
 									remove an existing objective before adding a new one.
 								</p>
-							</Card>
+							</AppCard>
 						)}
 					</div>
 				</div>
@@ -208,7 +206,7 @@ function SortableObjectiveCard({
 	};
 
 	return (
-		<Card
+		<AppCard
 			className="cursor-grab border border-gray-200 bg-white p-4 transition-colors hover:border-gray-300 active:cursor-grabbing"
 			ref={setNodeRef}
 			style={style}
@@ -227,7 +225,7 @@ function SortableObjectiveCard({
 							<GripVertical size={20} />
 						</button>
 					</div>
-					<Button
+					<AppButton
 						className="size-8 text-gray-400 hover:text-gray-600"
 						onClick={onRemove}
 						size="sm"
@@ -235,7 +233,7 @@ function SortableObjectiveCard({
 						variant="ghost"
 					>
 						<MoreHorizontal size={16} />
-					</Button>
+					</AppButton>
 				</div>
 				<div className="space-y-1">
 					<h4 className="line-clamp-2 font-medium text-gray-900">{objective.title}</h4>
@@ -243,6 +241,6 @@ function SortableObjectiveCard({
 				</div>
 				<div className="text-xs text-gray-500">Tasks</div>
 			</div>
-		</Card>
+		</AppCard>
 	);
 }

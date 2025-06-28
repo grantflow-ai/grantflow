@@ -1,6 +1,6 @@
 import { FileTextIcon, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/app";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatBytes } from "@/utils/format";
 
@@ -25,17 +25,17 @@ export function FileCard({ file, handleRemoveFile }: { file: File; handleRemoveF
 					</span>
 				</div>
 			</div>
-			<Button
+			<AppButton
 				aria-label={`Remove ${file.name}`}
 				className="absolute right-1 top-1"
 				data-testid="remove-file-button"
 				onClick={handleRemoveFile}
-				size="icon"
+				size="sm"
 				variant="ghost"
 			>
 				<X className="size-4" />
 				<span className="sr-only">Remove file</span>
-			</Button>
+			</AppButton>
 		</div>
 	);
 }

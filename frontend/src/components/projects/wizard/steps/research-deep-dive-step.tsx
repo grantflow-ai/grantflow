@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 
@@ -129,7 +128,7 @@ function AnswerArea({
 	answer,
 	onAnswerChange,
 	question,
-	wordCount,
+	wordCount: _wordCount,
 }: {
 	answer: string;
 	onAnswerChange: (answer: string) => void;
@@ -138,17 +137,17 @@ function AnswerArea({
 }) {
 	return (
 		<div className="h-full flex flex-col">
-			<div className="mb-4">
-				<h3 className="font-medium text-app-text-primary mb-2">{question}</h3>
-				<p className="text-sm text-app-text-secondary">{wordCount}/1000</p>
-			</div>
-
-			<Textarea
+			<TextareaField
 				className="flex-1 min-h-0 resize-none border-app-border-primary focus:border-app-action-primary"
+				countType="words"
+				label={question}
+				maxCount={1000}
 				onChange={(e) => {
 					onAnswerChange(e.target.value);
 				}}
 				placeholder="Context and background of your research"
+				showCount={true}
+				testId="research-deep-dive-answer"
 				value={answer}
 			/>
 
@@ -178,7 +177,7 @@ function QuestionCard({
 	question: string;
 }) {
 	return (
-		<Card
+		<AppCard
 			className={`p-4 cursor-pointer transition-colors border-2 ${
 				isSelected
 					? "border-app-action-primary bg-app-surface-secondary"
@@ -202,6 +201,6 @@ function QuestionCard({
 					{question}
 				</p>
 			</div>
-		</Card>
+		</AppCard>
 	);
 }

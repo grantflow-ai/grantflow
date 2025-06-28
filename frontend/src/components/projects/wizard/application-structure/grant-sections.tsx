@@ -4,9 +4,8 @@ import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { AppButton, InputField } from "@/components/app";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { SectionIconButton } from "./section-icon-button";
@@ -198,14 +197,13 @@ function SectionEditForm({
 
 				<div className="space-y-4">
 					<div>
-						<Label htmlFor={`section-name-${section.id}`}>Section name</Label>
-						<Input
-							className="mt-1"
-							id={`section-name-${section.id}`}
+						<InputField
+							label="Section name"
 							onChange={(e) => {
 								setFormData({ ...formData, title: e.target.value });
 							}}
 							placeholder="Type a name that encapsulates the essence of this section."
+							testId={`section-name-${section.id}`}
 							value={formData.title}
 						/>
 					</div>
@@ -218,11 +216,7 @@ function SectionEditForm({
 						</p>
 						<div className="mt-2 flex gap-4">
 							<div className="flex-1">
-								<Label className="sr-only" htmlFor={`max-count-${section.id}`}>
-									Max count
-								</Label>
-								<Input
-									id={`max-count-${section.id}`}
+								<InputField
 									onChange={(e) => {
 										setFormData({
 											...formData,
@@ -230,6 +224,7 @@ function SectionEditForm({
 										});
 									}}
 									placeholder="3,000"
+									testId={`max-count-${section.id}`}
 									type="number"
 									value={formData.max_words}
 								/>
@@ -269,12 +264,12 @@ function SectionEditForm({
 					</div>
 
 					<div className="flex justify-between gap-2">
-						<Button data-testid="cancel-button" onClick={onCancel} variant="outline">
+						<AppButton data-testid="cancel-button" onClick={onCancel} variant="secondary">
 							Cancel
-						</Button>
-						<Button data-testid="save-button" onClick={onSave}>
+						</AppButton>
+						<AppButton data-testid="save-button" onClick={onSave}>
 							Save
-						</Button>
+						</AppButton>
 					</div>
 				</div>
 			</div>

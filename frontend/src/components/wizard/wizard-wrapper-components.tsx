@@ -222,6 +222,12 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 	);
 }
 
+function calculateTimeDifference(submissionDate: string): number {
+	const now = new Date();
+	const deadline = new Date(submissionDate);
+	return deadline.getTime() - now.getTime();
+}
+
 function Deadline() {
 	const application = useApplicationStore((state) => state.application);
 	const submissionDate = application?.grant_template?.submission_date;
@@ -231,25 +237,13 @@ function Deadline() {
 			return "Deadline not set";
 		}
 
-		const now = new Date();
-		const deadline = new Date(submissionDate);
-		const diffTime = deadline.getTime() - now.getTime();
+		const diffTime = calculateTimeDifference(submissionDate);
 
 		if (diffTime <= 0) {
 			return "Deadline passed";
 		}
 
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-		const weeks = Math.floor(diffDays / 7);
-		const days = diffDays % 7;
-
-		if (weeks > 0 && days > 0) {
-			return `${weeks} week${weeks === 1 ? "" : "s"} and ${days} day${days === 1 ? "" : "s"} to the deadline`;
-		}
-		if (weeks > 0) {
-			return `${weeks} week${weeks === 1 ? "" : "s"} to the deadline`;
-		}
-		return `${days} day${days === 1 ? "" : "s"} to the deadline`;
+		return formatTimeRemaining(diffTime);
 	};
 
 	const timeRemaining = getTimeRemaining();
@@ -265,6 +259,20 @@ function Deadline() {
 			</div>
 		</div>
 	);
+}
+
+function formatTimeRemaining(diffTime: number): string {
+	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+	const weeks = Math.floor(diffDays / 7);
+	const days = diffDays % 7;
+
+	if (weeks > 0 && days > 0) {
+		return `${weeks} week${weeks === 1 ? "" : "s"} and ${days} day${days === 1 ? "" : "s"} to the deadline`;
+	}
+	if (weeks > 0) {
+		return `${weeks} week${weeks === 1 ? "" : "s"} to the deadline`;
+	}
+	return `${days} day${days === 1 ? "" : "s"} to the deadline`;
 }
 
 function generateFooterRightButtonProps(currentStep: WizardStep) {

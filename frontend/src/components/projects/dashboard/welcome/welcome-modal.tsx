@@ -4,8 +4,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppDialogDescription, AppDialogTitle } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { PROGRESS_BAR_STEPS } from "@/constants";
 import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
@@ -69,15 +69,15 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 					<ProgressBar currentStep={step} />
 				</header>
 				<section className="flex w-full justify-between px-16 py-16">
-					<DialogTitle className="flex-shrink-0">
+					<AppDialogTitle className="flex-shrink-0">
 						<h2 className="text-[48px] font-medium leading-[58px] text-text-primary font-heading">
 							Welcome to
 							<br />
 							GrantFlow!
 						</h2>
-					</DialogTitle>
+					</AppDialogTitle>
 
-					<DialogDescription className="flex w-[597px] flex-col gap-10">
+					<AppDialogDescription className="flex w-[597px] flex-col gap-10">
 						<div className="flex flex-col gap-6">
 							<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
 								<span className="font-semibold">GrantFlow</span> was built for researchers, designed to
@@ -98,7 +98,7 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 								and refine the output using the editor.
 							</p>
 						</article>
-					</DialogDescription>
+					</AppDialogDescription>
 				</section>
 				<footer className="flex w-full items-center justify-between px-16 pb-16">
 					<AppButton

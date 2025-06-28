@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { logError } from "@/utils/logging";
 
@@ -30,7 +30,7 @@ export function CreateApplicationButton({ className, projectId }: CreateApplicat
 	};
 
 	return (
-		<Button
+		<AppButton
 			className={className}
 			data-testid="create-application-button"
 			disabled={isCreating}
@@ -38,6 +38,6 @@ export function CreateApplicationButton({ className, projectId }: CreateApplicat
 			size="sm"
 		>
 			{isCreating ? "Creating..." : "New Application"}
-		</Button>
+		</AppButton>
 	);
 }

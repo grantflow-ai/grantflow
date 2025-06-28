@@ -1,8 +1,8 @@
+import { ProjectFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
-import { ProjectFactory } from "::testing/factories";
 
 import { ProjectSettingsAccount } from "./project-settings-account";
 
@@ -13,7 +13,8 @@ vi.mock("@/stores/user-store", () => ({
 
 // Mock next/image
 vi.mock("next/image", () => ({
-	default: ({ alt, src, fill, ...props }: any) => (
+	default: ({ alt, fill, src, ...props }: any) => (
+		// eslint-disable-next-line @next/next/no-img-element
 		<img alt={alt} data-fill={fill} src={src} {...props} />
 	),
 }));
@@ -58,7 +59,7 @@ describe("ProjectSettingsAccount", () => {
 		expect(screen.getByText("Name")).toBeInTheDocument();
 		expect(screen.getByText("Email address")).toBeInTheDocument();
 		expect(screen.getByText("Role")).toBeInTheDocument();
-		
+
 		// Check user data is displayed
 		expect(screen.getByTestId("name-input")).toHaveValue("John Doe");
 		expect(screen.getByTestId("email-input")).toHaveValue("john.doe@example.com");
@@ -74,7 +75,7 @@ describe("ProjectSettingsAccount", () => {
 
 	it("displays user photo when photo URL exists", () => {
 		vi.mocked(useUserStore).mockReturnValue({ user: mockUserWithPhoto } as any);
-		
+
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 
 		const profileImage = screen.getByAltText("Profile");
@@ -83,10 +84,10 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("uses email initials when no display name", () => {
-		vi.mocked(useUserStore).mockReturnValue({ 
-			user: { ...mockUser, displayName: null } 
+		vi.mocked(useUserStore).mockReturnValue({
+			user: { ...mockUser, displayName: null },
 		} as any);
-		
+
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 
 		const profileContainer = screen.getByTestId("profile-image-container");
@@ -98,7 +99,7 @@ describe("ProjectSettingsAccount", () => {
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 
 		const infoButton = screen.getByTestId("email-info-button");
-		
+
 		// Initially no tooltip
 		expect(screen.queryByTestId("email-tooltip")).not.toBeInTheDocument();
 
@@ -119,11 +120,11 @@ describe("ProjectSettingsAccount", () => {
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 
 		const nameInput = screen.getByTestId("name-input");
-		
+
 		// Clear and type new name
 		await user.clear(nameInput);
 		await user.type(nameInput, "Jane Smith");
-		
+
 		expect(nameInput).toHaveValue("Jane Smith");
 	});
 
@@ -136,9 +137,7 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("displays correct role badges", () => {
-		const { rerender } = render(
-			<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />
-		);
+		const { rerender } = render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 		expect(screen.getByTestId("role-badge")).toHaveTextContent("Collaborator");
 
 		rerender(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.ADMIN} />);
@@ -149,9 +148,7 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("shows delete account button only for owners", () => {
-		const { rerender } = render(
-			<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />
-		);
+		const { rerender } = render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 		expect(screen.queryByTestId("delete-account-button")).not.toBeInTheDocument();
 
 		rerender(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.ADMIN} />);
@@ -166,7 +163,7 @@ describe("ProjectSettingsAccount", () => {
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.OWNER} />);
 
 		const deleteButton = screen.getByTestId("delete-account-button");
-		
+
 		// Initially no modal
 		expect(screen.queryByTestId("delete-account-modal")).not.toBeInTheDocument();
 
@@ -176,7 +173,7 @@ describe("ProjectSettingsAccount", () => {
 
 		// Click close button
 		await user.click(screen.getByTestId("mock-close-delete-modal"));
-		
+
 		await waitFor(() => {
 			expect(screen.queryByTestId("delete-account-modal")).not.toBeInTheDocument();
 		});
@@ -198,7 +195,7 @@ describe("ProjectSettingsAccount", () => {
 
 	it("handles missing user data gracefully", () => {
 		vi.mocked(useUserStore).mockReturnValue({ user: null } as any);
-		
+
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 
 		expect(screen.getByTestId("name-input")).toHaveValue("");

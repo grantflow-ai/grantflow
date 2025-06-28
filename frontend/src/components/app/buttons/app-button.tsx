@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import React from "react";
 
-import { Button, buttonVariants, type ButtonProps as ShadcnButtonProps } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const appButtonVariants = cva(
@@ -35,6 +35,7 @@ const appButtonVariants = cva(
 				light: "text-white",
 			},
 			variant: {
+				ghost: "bg-transparent hover:bg-accent hover:text-accent-foreground",
 				link: "hover:text-link-hover-dark rounded-none bg-transparent font-normal hover:no-underline",
 				primary: "hover:bg-accent disabled:bg-muted disabled:opacity-100",
 				secondary:
@@ -45,16 +46,18 @@ const appButtonVariants = cva(
 );
 
 export interface AppButtonProps
-	extends Omit<ShadcnButtonProps, "size" | "variant">,
+	extends Omit<React.ComponentProps<"button">, "size" | "variant">,
 		VariantProps<typeof appButtonVariants> {
+	asChild?: boolean;
 	leftIcon?: React.ReactNode;
 	rightIcon?: React.ReactNode;
 	size?: "lg" | "md" | "sm";
 	theme?: "dark" | "light";
-	variant?: "link" | "primary" | "secondary";
+	variant?: "ghost" | "link" | "primary" | "secondary";
 }
 
 export function AppButton({
+	asChild,
 	children,
 	className,
 	leftIcon,
@@ -64,17 +67,23 @@ export function AppButton({
 	variant,
 	...props
 }: AppButtonProps) {
+	const getButtonVariant = () => {
+		if (variant === "primary") return "default";
+		if (variant === "ghost") return "ghost";
+		return variant;
+	};
+
 	const combinedClassNames = cn(
 		buttonVariants({
 			size: size === "md" ? "default" : size,
-			variant: variant === "primary" ? "default" : variant,
+			variant: getButtonVariant(),
 		}),
 		appButtonVariants({ size, theme, variant }),
 		className,
 	);
 
 	return (
-		<Button className={combinedClassNames} {...props}>
+		<Button asChild={asChild} className={combinedClassNames} {...props}>
 			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
 			{children}
 			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon)}</span>}

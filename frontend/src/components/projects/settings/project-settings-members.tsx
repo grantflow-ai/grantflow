@@ -3,7 +3,7 @@
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { Avatar } from "@/components/ui/avatar";
+import { AppAvatar } from "@/components/app";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { logTrace } from "@/utils/logging";
@@ -185,7 +185,7 @@ export function ProjectSettingsMembers({
 							<div className="grid grid-cols-5 gap-4 items-center">
 								{/* Name with Avatar */}
 								<div className="flex items-center gap-3">
-									<Avatar initials={generateInitials(member.fullName, member.email)} size="sm" />
+									<AppAvatar initials={generateInitials(member.fullName, member.email)} size="sm" />
 									<span className="text-[16px] text-text-primary truncate font-body">
 										{member.fullName ?? "Name name"}
 									</span>

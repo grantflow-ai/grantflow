@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { AppCard } from "@/components/app";
 import { IconApplication, IconPreviewLogo } from "@/components/projects/shared/icons";
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
-import { Card } from "@/components/ui/card";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { logDebug } from "@/utils/logging";
@@ -73,7 +73,7 @@ export function ApplicationPreview({
 					<div className="flex-1 overflow-y-auto">
 						<div className="space-y-5">
 							{templateFiles.length > 0 && (
-								<Card
+								<AppCard
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-documents"
 								>
@@ -89,11 +89,11 @@ export function ApplicationPreview({
 											/>
 										))}
 									</div>
-								</Card>
+								</AppCard>
 							)}
 
 							{templateUrls.length > 0 && (
-								<Card
+								<AppCard
 									className="border-app-gray-100 border p-5 shadow-none"
 									data-testid="application-links"
 								>
@@ -107,7 +107,7 @@ export function ApplicationPreview({
 											/>
 										))}
 									</div>
-								</Card>
+								</AppCard>
 							)}
 						</div>
 					</div>

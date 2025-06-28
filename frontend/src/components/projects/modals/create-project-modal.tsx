@@ -3,8 +3,8 @@
 import { PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AppButton } from "@/components/app";
 import { BaseModal } from "@/components/app/feedback/base-modal";
-import { Button } from "@/components/ui/button";
 import { PagePath } from "@/enums";
 
 import { CreateProjectForm } from "../forms/create-project-form";
@@ -16,7 +16,7 @@ export function CreateProjectModal() {
 
 	return (
 		<>
-			<Button
+			<AppButton
 				className="flex items-center gap-1"
 				data-testid="create-project-button"
 				onClick={() => {
@@ -26,7 +26,7 @@ export function CreateProjectModal() {
 			>
 				<PlusCircle className="size-3.5" />
 				<span>New Project</span>
-			</Button>
+			</AppButton>
 
 			<BaseModal
 				isOpen={isOpen}
