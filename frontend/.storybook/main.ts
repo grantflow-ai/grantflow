@@ -1,4 +1,6 @@
+import { storybookEnv } from "::storybook/mocks/env";
 import type { StorybookConfig } from "@storybook/react-vite";
+import react from "@vitejs/plugin-react";
 import { mergeConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -18,15 +20,13 @@ const config: StorybookConfig = {
 	},
 	viteFinal(config) {
 		return mergeConfig(config, {
-			plugins: [tsconfigPaths()],
-			resolve: {
-				alias: {
-					// Use relative paths from project root instead of __dirname
-					"@/styles/globals.css": "./storybook-mocks/globals.css",
-					// Mock next/font imports for Storybook
-					"@/utils/fonts": "./storybook-mocks/fonts.ts",
-				},
+			define: {
+				"process.env": JSON.stringify({
+					NODE_ENV: "development",
+					...Object.fromEntries(Object.entries(storybookEnv).map(([key, value]) => [key, value.toString()])),
+				}),
 			},
+			plugins: [react(), tsconfigPaths()],
 		});
 	},
 };

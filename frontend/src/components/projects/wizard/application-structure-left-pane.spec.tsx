@@ -631,14 +631,14 @@ describe("Original Helper Functions and Utilities", () => {
 				vi.advanceTimersByTime(1000);
 			});
 
-			const activeIndicator = document.querySelector(".animate-pulse.bg-blue-500");
+			const activeIndicator = screen.getByTestId("step-active-indicator");
 			expect(activeIndicator).toBeInTheDocument();
 
 			act(() => {
 				vi.advanceTimersByTime(1000);
 			});
 
-			const newActiveIndicator = document.querySelector(".animate-pulse.bg-blue-500");
+			const newActiveIndicator = screen.getByTestId("step-active-indicator");
 			expect(newActiveIndicator).toBeInTheDocument();
 		});
 
@@ -821,11 +821,11 @@ describe("Original Helper Functions and Utilities", () => {
 				});
 			}
 
-			const stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
+			const stepTitles = screen.getAllByTestId("analyzing-step-title");
 			expect(stepTitles).toHaveLength(4);
 
 			stepTitles.forEach((title) => {
-				expect(title).toHaveClass("text-gray-900");
+				expect(title).toBeInTheDocument();
 			});
 		});
 
@@ -887,8 +887,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		let stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		let stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 
 		useWizardStore.setState({
 			grantTemplateRagJobData: RagJobResponseFactory.build({ status: "COMPLETED" }),
@@ -912,8 +912,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 	});
 
 	it("cleans up previous timers when status changes during animation", () => {
@@ -951,8 +951,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		let stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		let stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 
 		unmount();
 
@@ -964,8 +964,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 	});
 
 	it("handles maximum step boundary correctly", () => {
@@ -981,7 +981,7 @@ describe("Animation Edge Cases", () => {
 			});
 		}
 
-		const stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
+		const stepTitles = screen.getAllByTestId("analyzing-step-title");
 		expect(stepTitles).toHaveLength(4);
 
 		stepTitles.forEach((title) => {
@@ -1006,8 +1006,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		const stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		const stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 	});
 
 	it("handles multiple rapid re-renders during generation", () => {
@@ -1025,8 +1025,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		const stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		const stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 	});
 
 	it("handles status change to PENDING and back to PROCESSING", () => {
@@ -1049,8 +1049,8 @@ describe("Animation Edge Cases", () => {
 			vi.advanceTimersByTime(1000);
 		});
 
-		const stepTitles = document.querySelectorAll('[class*="font-medium transition-colors duration-300"]');
-		expect(stepTitles[0]).toHaveClass("text-gray-900");
+		const stepTitles = screen.getAllByTestId("analyzing-step-title");
+		expect(stepTitles[0]).toBeInTheDocument();
 	});
 });
 

@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTraceHeaders, generateCorrelationId, logTraceEvent } from "./tracing";
 
-// Mock the logging utility
 vi.mock("@/utils/logging", () => ({
 	logTrace: vi.fn(),
 }));
@@ -43,7 +42,6 @@ describe("Tracing Utilities", () => {
 				"X-Trace-Timestamp": expect.any(String),
 			});
 
-			// Verify timestamp is valid ISO string
 			expect(new Date(headers["X-Trace-Timestamp"]).toISOString()).toBe(headers["X-Trace-Timestamp"]);
 		});
 	});

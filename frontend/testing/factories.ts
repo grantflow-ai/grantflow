@@ -3,8 +3,7 @@ import { Factory } from "interface-forge";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 
-// Common HTTP Error Response type used by all endpoints
-type HttpErrorResponse = API.Login.Http400.ResponseBody; // All error responses have the same shape
+type HttpErrorResponse = API.Login.Http400.ResponseBody;
 
 export const ErrorResponseFactory = new Factory<HttpErrorResponse>((factory) => ({
 	detail: factory.lorem.sentence(),
@@ -12,7 +11,6 @@ export const ErrorResponseFactory = new Factory<HttpErrorResponse>((factory) => 
 	status_code: factory.helpers.arrayElement([400, 401, 403, 404, 422, 500]),
 }));
 
-// Generic response factories for common patterns
 export const TokenResponseFactory = new Factory<API.AcceptInvitation.Http200.ResponseBody>((factory) => ({
 	token: factory.string.alphanumeric(64),
 }));
@@ -33,19 +31,16 @@ export const OtpResponseFactory = new Factory<API.GenerateOtp.Http200.ResponseBo
 	otp: factory.string.numeric(6),
 }));
 
-// Organization factories using API types
 export const OrganizationFactory = new Factory<API.CreateOrganization.Http201.ResponseBody>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
 	full_name: factory.company.name(),
 	id: factory.string.uuid(),
 }));
 
-// Common ID response factory
 export const IdResponseFactory = new Factory<API.CreateProject.Http201.ResponseBody>((factory) => ({
 	id: factory.string.uuid(),
 }));
 
-// Project list item factory
 export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.ResponseBody[0]>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	id: factory.string.uuid(),
@@ -71,7 +66,6 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 }));
 
 type IndexingStatus = RagSource["status"];
-// Use the RAG source type from the API
 type RagSource = NonNullable<API.CreateApplication.Http201.ResponseBody["rag_sources"]>[0];
 
 export const RagSourceFactory = new Factory<RagSource>((factory) => {
@@ -88,7 +82,6 @@ export const RagSourceFactory = new Factory<RagSource>((factory) => {
 	};
 });
 
-// Funding organization type from API
 type FundingOrganization = NonNullable<
 	API.CreateApplication.Http201.ResponseBody["grant_template"]
 >["funding_organization"];
@@ -101,7 +94,6 @@ export const FundingOrganizationFactory = new Factory<NonNullable<FundingOrganiz
 	updated_at: factory.date.recent().toISOString(),
 }));
 
-// Research objectives and tasks from API
 type ResearchObjective = NonNullable<API.CreateApplication.Http201.ResponseBody["research_objectives"]>[0];
 type ResearchTask = ResearchObjective["research_tasks"][0];
 
@@ -118,7 +110,6 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 	title: factory.lorem.sentence(),
 }));
 
-// Form inputs from API
 type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
 export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
@@ -138,7 +129,6 @@ type GrantSectionBase = Extract<
 	{ id: string; order: number; parent_id: null | string; title: string }
 >;
 type GrantSectionDetailed = Extract<GrantSections[0], { depends_on: string[] }>;
-// Grant sections from API - they come in two forms in the union type
 type GrantSections = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["grant_sections"];
 
 export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) => ({
@@ -171,7 +161,6 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 	}),
 }));
 
-// Grant template type from API
 type GrantTemplate = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
 
 export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
@@ -210,7 +199,6 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 }));
 
 type RagSourceFile = Extract<RagSourceResponse, { filename: string }>;
-// RAG source types from API - these are union types for files vs URLs
 type RagSourceResponse = API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[0];
 type RagSourceUrl = Extract<RagSourceResponse, { url: string }>;
 
@@ -237,16 +225,13 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 	size: factory.number.int({ max: 10_485_760, min: 1024 }),
 }));
 
-// User role type used across the API
 type UserRole = API.CreateInvitationRedirectUrl.RequestBody["role"];
 
-// Invitation request factory
 export const InvitationFactory = new Factory<API.CreateInvitationRedirectUrl.RequestBody>((factory) => ({
 	email: factory.internet.email(),
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
 }));
 
-// Title request factory
 export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
 	title: factory.lorem.sentence(),
 }));
@@ -260,7 +245,6 @@ export const UpdateApplicationRequestFactory = new Factory<API.UpdateApplication
 	title: factory.lorem.sentence(),
 }));
 
-// Project request factories
 export const ProjectRequestFactory = new Factory<API.CreateProject.RequestBody>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
@@ -274,7 +258,6 @@ export const UpdateProjectRequestFactory = new Factory<API.UpdateProject.Request
 	name: factory.company.name(),
 }));
 
-// Organization request factories
 export const OrganizationRequestFactory = new Factory<API.CreateOrganization.RequestBody>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
 	full_name: factory.company.name(),
@@ -290,7 +273,6 @@ export const LoginRequestFactory = new Factory<API.Login.RequestBody>((factory) 
 	id_token: factory.string.alphanumeric(256),
 }));
 
-// URL request factories
 export const UrlRequestFactory = new Factory<API.CrawlGrantApplicationUrl.RequestBody>((factory) => ({
 	url: factory.internet.url(),
 }));
@@ -299,7 +281,6 @@ export const CrawlUrlRequestFactory = UrlRequestFactory;
 
 export const CreateInvitationRequestFactory = InvitationFactory;
 
-// Role request factory
 export const RoleRequestFactory = new Factory<API.UpdateInvitationRole.RequestBody>((factory) => ({
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
 }));
@@ -344,7 +325,6 @@ export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRe
 	topics: [],
 }));
 
-// WebSocket notification types - these are not API types but internal frontend types
 interface SourceProcessingNotification {
 	identifier: string;
 	indexing_status: IndexingStatus;
@@ -430,7 +410,6 @@ export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Ra
 	};
 });
 
-// Application list item type from API
 type ApplicationListItem = API.GetProject.Http200.ResponseBody["grant_applications"][0];
 
 export const ApplicationListItemFactory = new Factory<ApplicationListItem>((factory) => ({
