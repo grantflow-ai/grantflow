@@ -157,14 +157,16 @@ export function EditPermissionModal({
 
 	return (
 		<BaseModal isOpen={isOpen} onClose={handleClose}>
-			<div className="flex flex-col gap-6 p-8 w-[464px]">
+			<div className="flex flex-col gap-6 p-8 w-[464px]" data-testid="edit-permission-modal">
 				{/* Header */}
 				<div className="flex items-center justify-between">
 					<h2 className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]">
 						Edit Permission
 					</h2>
 					<button
+						aria-label="Close modal"
 						className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors"
+						data-testid="close-button"
 						onClick={handleClose}
 						type="button"
 					>
@@ -185,6 +187,7 @@ export function EditPermissionModal({
 						</label>
 						<input
 							className="w-full px-3 py-2 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#2e2d36] bg-[#f5f5f5] cursor-not-allowed"
+							data-testid="name-input"
 							disabled
 							id="member-name"
 							type="text"
@@ -200,6 +203,7 @@ export function EditPermissionModal({
 						<div className="relative">
 							<input
 								className="w-full px-3 py-2 pr-10 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#636170] bg-[#f5f5f5] cursor-not-allowed"
+								data-testid="email-input"
 								disabled
 								id="member-email"
 								type="email"

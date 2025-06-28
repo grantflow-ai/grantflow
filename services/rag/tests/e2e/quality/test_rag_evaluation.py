@@ -9,11 +9,6 @@ from uuid import uuid4
 import pytest
 from packages.db.src.utils import retrieve_application
 from pytest_mock import MockerFixture
-from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
-from services.rag.src.grant_template.handler import extract_and_enrich_sections
-from services.rag.src.utils.retrieval import retrieve_documents
-from services.rag.src.utils.search_queries import handle_create_search_queries
-from services.rag.tests.e2e.utils import create_rag_sources_from_cfp_file
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test
@@ -30,6 +25,12 @@ from testing.rag_evaluation import (
     save_evaluation_results,
     validate_cfp_extraction_structure,
 )
+
+from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
+from services.rag.src.grant_template.handler import extract_and_enrich_sections
+from services.rag.src.utils.retrieval import retrieve_documents
+from services.rag.src.utils.search_queries import handle_create_search_queries
+from services.rag.tests.e2e.test_utils import create_rag_sources_from_cfp_file
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=180)
