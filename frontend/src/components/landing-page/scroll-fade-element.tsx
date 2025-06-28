@@ -16,8 +16,8 @@ export const ScrollFadeElement: React.FC<{
 		target: elementRef,
 	});
 
-	const opacity = useTransform(scrollYProgress, [0, threshold, threshold + 0.1, 0.75, 1], [1, 1, 0.8, 1, 0.8]);
-	const y = useTransform(scrollYProgress, [0, threshold, threshold + 0.1, 0.75, 1], [0, 10, 0, 0, -20]);
+	const opacity = useTransform(scrollYProgress, [0, threshold, threshold + 0.1, 0.75, 1], [0, 0, 0.8, 1, 0]);
+	const y = useTransform(scrollYProgress, [0, threshold, threshold + 0.1, 0.75, 1], [20, 10, 0, 0, -20]);
 
 	return (
 		<motion.div
