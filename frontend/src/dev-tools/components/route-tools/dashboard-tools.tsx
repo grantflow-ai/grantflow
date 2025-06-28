@@ -32,7 +32,7 @@ export function DashboardTools() {
 		const currentUser = useUserStore.getState().user;
 		if (currentUser) {
 			// Mock updating user role directly (dev-only) - note: user doesn't have role field in real store
-			useUserStore.setState({ user: { ...currentUser, role } as any });
+			useUserStore.setState({ user: { ...currentUser, role } as { role: string } & typeof currentUser });
 			console.log(`[Dev Tools] Updated user role to: ${role}`);
 		}
 	};

@@ -24,7 +24,7 @@ class MockAPIClient {
 		}
 	}
 
-	async intercept<T>(path: string, options?: RequestInit): Promise<T> {
+	async intercept<T>(path: string, options?: { body?: string; method?: string }): Promise<T> {
 		const handler = this.findHandler(path);
 		if (!handler) {
 			throw new Error(`No mock handler registered for path: ${path}`);
@@ -36,7 +36,15 @@ class MockAPIClient {
 			throw new Error("Simulated network error");
 		}
 
-		const body = options?.body ? JSON.parse(options.body as string) : undefined;
+		let body: unknown;
+		if (options?.body) {
+			try {
+				body = JSON.parse(options.body) as unknown;
+			} catch {
+				body = options.body;
+			}
+		}
+
 		const url = new URL(path, "http://mock");
 		const params = this.extractPathParams(path);
 

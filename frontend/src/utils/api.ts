@@ -10,8 +10,14 @@ let mockHandlersRegistered = false;
 const ONE_MINUTE_IN_MS = 60 * 1000;
 
 // Lazy load mock API modules only when needed
+interface MockAPIModule {
+	getMockAPIClient: () => {
+		intercept: <T>(path: string, options?: { body?: string; method?: string }) => Promise<T>;
+	};
+	isMockAPIEnabled: () => boolean;
+}
 
-let mockAPIModule: any = null;
+let mockAPIModule: MockAPIModule | null = null;
 
 export function getClient(): KyInstance {
 	clientRef.value ??= ky.create({
@@ -85,17 +91,14 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 	}
 
 	// Lazy load mock API modules
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const mockAPI = await loadMockAPI();
 	if (!mockAPI) {
 		return undefined;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const { getMockAPIClient, isMockAPIEnabled } = mockAPI;
 
 	// Double check mock is enabled
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 	if (!isMockAPIEnabled()) {
 		return undefined;
 	}
@@ -130,10 +133,8 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		}
 
 		// Call mock handler
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 		const mockClient = getMockAPIClient();
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-		const result = await mockClient.intercept(path, {
+		const result = await mockClient.intercept<unknown>(path, {
 			body: body ? JSON.stringify(body) : undefined,
 			method: request.method,
 		});
@@ -152,8 +153,13 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 	}
 }
 
-async function loadMockAPI() {
-	mockAPIModule ??= await import("@/dev-tools/mock-api/client").catch(() => null);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+async function loadMockAPI(): Promise<MockAPIModule | null> {
+	if (mockAPIModule === null) {
+		try {
+			mockAPIModule = (await import("@/dev-tools/mock-api/client")) as MockAPIModule;
+		} catch {
+			mockAPIModule = null;
+		}
+	}
 	return mockAPIModule;
 }

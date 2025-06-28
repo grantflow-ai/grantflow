@@ -25,7 +25,7 @@ export function ProjectTools() {
 
 		// Mock updating project role directly (dev-only) - role is not part of the real project
 		useProjectStore.setState({
-			project: { ...project, role } as any,
+			project: { ...project, role } as { role: string } & typeof project,
 		});
 		console.log(`[Dev Tools] Changed user role in project to: ${role}`);
 	};
