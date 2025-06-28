@@ -126,7 +126,7 @@ async def generate_section_text(
     application_id: str,
     dependencies: dict[str, str],
     grant_section: GrantLongFormSection,
-    form_input: ResearchDeepDive,
+    form_inputs: ResearchDeepDive,
     research_plan_text: str,
 ) -> str:
     start_time = time.time()
@@ -163,7 +163,7 @@ async def generate_section_text(
         application_id=application_id,
         task_description=prompt,
         search_queries=grant_section.get("search_queries"),
-        form_inputs=form_input,
+        form_inputs=form_inputs,
     )
     retrieval_duration = time.time() - retrieval_start
 
@@ -179,7 +179,7 @@ async def generate_section_text(
     if source_validation_error := await handle_source_validation(
         task_description=str(prompt),
         max_length=grant_section["max_words"],
-        sources={"rag_results": rag_results, "form_inputs": form_input, "research_plan_text": research_plan_text},
+        sources={"rag_results": rag_results, "form_inputs": form_inputs, "research_plan_text": research_plan_text},
     ):
         validation_duration = time.time() - validation_start
         logger.warning(
@@ -205,7 +205,7 @@ async def generate_section_text(
         prompt_handler=handle_section_text_generation,
         prompt_identifier="generate_section_text",
         rag_results=rag_results,
-        form_inputs=form_input,
+        form_inputs=form_inputs,
         research_plan_text=research_plan_text,
         passing_score=80,
         increment=10,
