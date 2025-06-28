@@ -15,9 +15,20 @@ import {
 // Mock the ui/dialog components
 vi.mock("@/components/ui/dialog", () => ({
 	Dialog: ({ children, onOpenChange, open }: any) => (
-		<button data-open={open} data-testid="dialog" onClick={() => onOpenChange?.(!open)} type="button">
+		<div
+			data-open={open}
+			data-testid="dialog"
+			onClick={() => onOpenChange?.(!open)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					onOpenChange?.(!open);
+				}
+			}}
+			role="button"
+			tabIndex={0}
+		>
 			{children}
-		</button>
+		</div>
 	),
 	DialogContent: ({ children, className, showCloseButton, ...props }: any) => (
 		<div className={className} data-show-close-button={showCloseButton} data-testid="dialog-content" {...props}>

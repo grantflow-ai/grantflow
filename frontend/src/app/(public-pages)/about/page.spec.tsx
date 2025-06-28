@@ -41,7 +41,7 @@ vi.mock("@/components/branding/brand-pattern", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: vi.fn().mockImplementation(({ alt, className, src, priority, height, width, ...props }) => (
+	default: vi.fn().mockImplementation(({ alt, className, height, priority, src, width, ...props }) => (
 		<div
 			alt={alt}
 			aria-label={alt ?? "Image"}

@@ -116,7 +116,7 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 function FileContent({ extension, fileName }: { extension: string; fileName: string }) {
 	return (
 		<>
-			<div className="flex h-14 w-12 items-center justify-center">
+			<div className="flex h-14 w-12 items-center justify-center" data-testid="file-icon">
 				{extension in FILE_ICON_MAP
 					? FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]
 					: FILE_ICON_MAP.unknown}

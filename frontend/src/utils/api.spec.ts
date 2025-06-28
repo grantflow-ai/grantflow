@@ -72,7 +72,7 @@ describe("API Utils", () => {
 		it("should provide consistent client instance", () => {
 			// Test that multiple calls return the same instance (singleton behavior)
 			const instances = Array.from({ length: 5 }, () => getClient());
-			const firstInstance = instances[0];
+			const [firstInstance] = instances;
 
 			// All instances should be the same reference
 			for (const instance of instances) {
