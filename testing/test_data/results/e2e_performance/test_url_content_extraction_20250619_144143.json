@@ -1,9 +1,0 @@
-{
-  "test_name": "test_url_content_extraction",
-  "test_category": "e2e_full",
-  "performance": {
-    "execution_time": 0.4188058376312256,
-    "within_threshold": true
-  },
-  "timestamp": "2025-06-19T14:41:43.282935+00:00"
-}

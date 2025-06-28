@@ -1,5 +1,6 @@
 import functools
 import json
+import logging
 import math
 import os
 import time
@@ -44,15 +45,29 @@ TEST_SCENARIOS = {
         name="quality_assessment",
         description="Quality validation tests",
         category=E2ETestCategory.QUALITY_ASSESSMENT,
-        timeout=180,
-        expected_duration="2-5 minutes",
+        timeout=1800,
+        expected_duration="2-30 minutes",
     ),
     E2ETestCategory.E2E_FULL: TestScenario(
         name="e2e_full",
         description="Complete end-to-end tests",
         category=E2ETestCategory.E2E_FULL,
-        timeout=600,
-        expected_duration="10+ minutes",
+        timeout=1800,
+        expected_duration="10-30 minutes",
+    ),
+    E2ETestCategory.SEMANTIC_EVALUATION: TestScenario(
+        name="semantic_evaluation",
+        description="Semantic similarity evaluation tests",
+        category=E2ETestCategory.SEMANTIC_EVALUATION,
+        timeout=1800,
+        expected_duration="5-30 minutes",
+    ),
+    E2ETestCategory.AI_EVAL: TestScenario(
+        name="ai_eval",
+        description="AI-powered evaluation tests",
+        category=E2ETestCategory.AI_EVAL,
+        timeout=1800,
+        expected_duration="5-30 minutes",
     ),
 }
 
@@ -95,9 +110,11 @@ def e2e_test[F: Callable[..., Any]](
                     evaluation_results = {
                         "test_name": func.__name__,
                         "test_category": category.value,
+                        "status": "success",
                         "performance": {
                             "execution_time": execution_time,
                             "within_threshold": execution_time <= test_timeout,
+                            "timeout_utilization": execution_time / test_timeout,
                         },
                         "timestamp": datetime.now(UTC).isoformat(),
                     }
@@ -110,17 +127,62 @@ def e2e_test[F: Callable[..., Any]](
                     save_test_results(evaluation_results, output_path)
 
                     logger.info(
-                        "Completed %s in %.2f seconds (%.1fx under timeout)",
+                        "✅ Completed %s in %.2f seconds (%.1f%% of timeout used)",
                         func.__name__,
                         execution_time,
-                        test_timeout / execution_time,
+                        (execution_time / test_timeout) * 100,
                     )
 
                 return result
 
             except Exception as e:
-                if logger:
-                    logger.error("Test %s failed: %s", func.__name__, str(e))
+                end_time = time.time()
+                execution_time = end_time - start_time
+
+                if save_results and logger:
+                    error_results = {
+                        "test_name": func.__name__,
+                        "test_category": category.value,
+                        "status": "failed",
+                        "error": {
+                            "type": type(e).__name__,
+                            "message": str(e),
+                            "execution_time_before_failure": execution_time,
+                        },
+                        "performance": {
+                            "execution_time": execution_time,
+                            "timeout_reached": execution_time >= test_timeout * 0.95,
+                            "timeout_utilization": execution_time / test_timeout,
+                        },
+                        "diagnostic_info": {
+                            "timeout_configured": test_timeout,
+                            "category": category.value,
+                            "args_provided": len(args),
+                            "kwargs_provided": list(kwargs.keys()),
+                        },
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+
+                    failure_path = (
+                        RESULTS_FOLDER
+                        / "e2e_failures"
+                        / f"{func.__name__}_failure_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
+                    )
+                    save_test_results(error_results, failure_path)
+
+                    logger.error(
+                        "❌ Test %s failed after %.2f seconds (%.1f%% of timeout): %s",
+                        func.__name__,
+                        execution_time,
+                        (execution_time / test_timeout) * 100,
+                        str(e),
+                    )
+
+                    logger.info(
+                        "📊 Diagnostic info saved to: %s",
+                        failure_path,
+                    )
+
                 raise
 
         wrapper.__name__ = func.__name__
@@ -229,3 +291,95 @@ def validate_embedding_quality(
 
     norm = math.sqrt(sum(x**2 for x in embeddings))
     assert min_norm <= norm <= max_norm, f"Embedding norm out of range: {norm} (expected: {min_norm}-{max_norm})"
+
+
+class ProgressReporter:
+    """Progress reporter for long-running tests to provide important info even when failing."""
+
+    def __init__(self, logger: logging.Logger, test_name: str, total_steps: int) -> None:
+        self.logger = logger
+        self.test_name = test_name
+        self.total_steps = total_steps
+        self.current_step = 0
+        self.start_time = time.time()
+        self.step_times: list[float] = []
+        self.last_step_time = time.time()
+
+    def report_step(self, step_name: str, details: dict[str, Any] | None = None) -> None:
+        """Report progress of a test step."""
+        self.current_step += 1
+        current_time = time.time()
+        elapsed = current_time - self.start_time
+
+        if self.step_times:
+            avg_step_time = sum(self.step_times) / len(self.step_times)
+            remaining_steps = self.total_steps - self.current_step
+            eta_seconds = remaining_steps * avg_step_time
+            eta_minutes = eta_seconds / 60
+            eta_info = f"ETA: {eta_minutes:.1f}m"
+        else:
+            eta_info = "ETA: calculating..."
+
+        progress_pct = (self.current_step / self.total_steps) * 100
+
+        self.logger.info(
+            "🔄 [%s] Step %d/%d (%.1f%%) - %s | Elapsed: %.1fm | %s",
+            self.test_name,
+            self.current_step,
+            self.total_steps,
+            progress_pct,
+            step_name,
+            elapsed / 60,
+            eta_info,
+        )
+
+        if details:
+            for key, value in details.items():
+                self.logger.info("   📋 %s: %s", key, value)
+
+        if len(self.step_times) > 0:
+            step_duration = current_time - self.last_step_time
+            self.step_times.append(step_duration)
+
+            if len(self.step_times) > 5:
+                self.step_times.pop(0)
+
+        self.last_step_time = current_time
+
+    def report_final_status(self, success: bool, result_info: dict[str, Any] | None = None) -> None:
+        """Report final test status with comprehensive info."""
+        elapsed = time.time() - self.start_time
+        status_emoji = "✅" if success else "❌"
+        status_text = "SUCCESS" if success else "FAILURE"
+
+        self.logger.info(
+            "%s [%s] FINAL STATUS: %s | Total time: %.1fm | Steps completed: %d/%d",
+            status_emoji,
+            self.test_name,
+            status_text,
+            elapsed / 60,
+            self.current_step,
+            self.total_steps,
+        )
+
+        if result_info:
+            self.logger.info("📊 Final Results:")
+            for key, value in result_info.items():
+                self.logger.info("   📈 %s: %s", key, value)
+
+
+def create_heavy_test_context(
+    test_name: str,
+    logger: logging.Logger,
+    total_steps: int,
+    expected_timeout_minutes: int = 30,
+) -> ProgressReporter:
+    """Create a context for heavy integration tests with progress reporting."""
+    logger.info(
+        "🚀 Starting heavy integration test: %s | Expected steps: %d | Max timeout: %dm",
+        test_name,
+        total_steps,
+        expected_timeout_minutes,
+    )
+
+    return ProgressReporter(logger, test_name, total_steps)

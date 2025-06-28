@@ -1,9 +1,0 @@
-{
-  "test_name": "test_document_retrieval",
-  "test_category": "smoke",
-  "performance": {
-    "execution_time": 37.48006200790405,
-    "within_threshold": true
-  },
-  "timestamp": "2025-06-27T07:14:48.095431+00:00"
-}

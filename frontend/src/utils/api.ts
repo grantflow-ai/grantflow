@@ -1,7 +1,7 @@
 import ky, { type KyInstance } from "ky";
 
 import { getEnv } from "@/utils/env";
-import { logTrace } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
 
 const clientRef = new Ref<KyInstance>();
@@ -13,8 +13,7 @@ export function getClient(): KyInstance {
 		hooks: {
 			afterResponse: [
 				(request, _options, response) => {
-					// Log the response
-					logTrace("info", `API ${request.method} ${request.url} - ${response.status}`, {
+					log.info(`API ${request.method} ${request.url} - ${response.status}`, {
 						correlation_id: request.headers.get("X-Correlation-ID"),
 						method: request.method,
 						operation: request.headers.get("X-Operation"),
@@ -27,8 +26,7 @@ export function getClient(): KyInstance {
 			],
 			beforeError: [
 				(error) => {
-					// Log API errors
-					logTrace("error", `API ERROR ${error.request.method} ${error.request.url}`, {
+					log.error(`API ERROR ${error.request.method} ${error.request.url}`, undefined, {
 						correlation_id: error.request.headers.get("X-Correlation-ID"),
 						error: error.message,
 						method: error.request.method,
@@ -42,9 +40,7 @@ export function getClient(): KyInstance {
 			],
 			beforeRequest: [
 				(request) => {
-					// Log the request
-					logTrace("info", `API ${request.method} ${request.url}`, {
-						// Headers will include any correlation IDs added by the action layer
+					log.info(`API ${request.method} ${request.url}`, {
 						correlation_id: request.headers.get("X-Correlation-ID"),
 						method: request.method,
 						operation: request.headers.get("X-Operation"),

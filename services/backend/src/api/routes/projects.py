@@ -43,6 +43,10 @@ class ProjectBaseResponse(TableIdResponse):
     role: UserRoleEnum
 
 
+class ProjectListItemResponse(ProjectBaseResponse):
+    applications_count: int
+
+
 class ProjectResponse(ProjectBaseResponse):
     grant_applications: list["BaseApplicationResponse"]
 
@@ -100,25 +104,29 @@ async def handle_create_project(
 @get("/projects", operation_id="ListProjects")
 async def handle_retrieve_projects(
     request: APIRequest, session_maker: async_sessionmaker[Any]
-) -> list[ProjectBaseResponse]:
+) -> list[ProjectListItemResponse]:
     logger.info("Retrieving projects for user", uid=request.auth)
     async with session_maker() as session:
         projects = list(
             await session.scalars(
                 select(Project)
-                .options(selectinload(Project.project_users))
+                .options(
+                    selectinload(Project.project_users),
+                    selectinload(Project.grant_applications),
+                )
                 .join(ProjectUser)
                 .where(ProjectUser.firebase_uid == request.auth)
             )
         )
 
     return [
-        ProjectBaseResponse(
+        ProjectListItemResponse(
             id=str(project.id),
             name=project.name,
             description=project.description,
             logo_url=project.logo_url,
             role=project.project_users[0].role,
+            applications_count=len(project.grant_applications),
         )
         for project in projects
     ]

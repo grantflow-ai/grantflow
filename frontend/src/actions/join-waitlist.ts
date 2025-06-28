@@ -5,11 +5,14 @@ import path from "node:path";
 
 import Mailgun from "mailgun.js";
 import type { z } from "zod";
-import { getWaitlistEmailTemplateHtml, waitlistEmailTemplateText } from "@/components/waitlist-email-template";
+import {
+	getWaitlistEmailTemplateHtml,
+	waitlistEmailTemplateText,
+} from "@/components/email-templates/waitlist-email-template";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import type { waitlistSchema } from "@/schemas/waitlist-schema";
 import { getEnv } from "@/utils/env";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const DOMAIN = "grantflow.ai";
 const WAITING_LIST_NAME = `waiting-list@${DOMAIN}`;
@@ -32,10 +35,10 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 }> {
 	const getOrCreateMailingListError = await getOrCreateMailingList();
 	if (getOrCreateMailingListError) {
-		logError({
-			error: `Failed to get or create mailing list: ${getOrCreateMailingListError.message}`,
-			identifier: "addToWaitlist",
-		});
+		log.error(
+			"addToWaitlist",
+			new Error(`Failed to get or create mailing list: ${getOrCreateMailingListError.message}`),
+		);
 
 		return {
 			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
@@ -45,10 +48,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	const addToWaitingListError = await addUserToMailingList(formData);
 
 	if (addToWaitingListError) {
-		logError({
-			error: `Failed to add user to mailing list: ${addToWaitingListError.message}`,
-			identifier: "addToWaitlist",
-		});
+		log.error("addToWaitlist", new Error(`Failed to add user to mailing list: ${addToWaitingListError.message}`));
 
 		return {
 			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
@@ -58,10 +58,7 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	const emailDeliveryError = await sendConfirmationEmail(formData);
 
 	if (emailDeliveryError) {
-		logError({
-			error: `Failed to send confirmation email: ${emailDeliveryError.message}`,
-			identifier: "addToWaitlist",
-		});
+		log.error("addToWaitlist", new Error(`Failed to send confirmation email: ${emailDeliveryError.message}`));
 
 		return {
 			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,

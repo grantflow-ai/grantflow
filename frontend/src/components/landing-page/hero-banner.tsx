@@ -1,9 +1,9 @@
 import Image from "next/image";
-import { BrandPattern } from "@/components/brand-pattern";
-import { IconGoAhead } from "@/components/icons";
+import { BrandPattern } from "@/components/branding/brand-pattern";
+import { IconGoAhead } from "@/components/branding/icons";
 import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
-import { NavHeader } from "@/components/nav-header";
-import { ScrollButton } from "../scroll-button";
+import { NavHeader } from "./nav-header";
+import { LandingPageScrollButton } from "./scroll-button";
 
 export function HeroBanner() {
 	return (
@@ -21,14 +21,14 @@ export function HeroBanner() {
 						Where Research Meets Funding, Seamlessly.
 					</h1>
 					<div className="mt-10">
-						<ScrollButton
+						<LandingPageScrollButton
 							aria-label="Go to Waitlist Form"
 							desktopTargetId="waitlist"
 							rightIcon={<IconGoAhead />}
 							size="lg"
 						>
 							Secure Priority Access
-						</ScrollButton>
+						</LandingPageScrollButton>
 					</div>
 				</div>
 				<div className="hidden lg:block">

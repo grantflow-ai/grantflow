@@ -2,16 +2,24 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { retrieveRagJob } from "@/actions/rag-jobs";
-import { WIZARD_STEP_TITLES, WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
+import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const DEBOUNCE_DELAY_MS = 500;
-const POLLING_INTERVAL_DURATION = 3000;
+const POLLING_INTERVAL_DURATION = 2000;
 export const MIN_TITLE_LENGTH = 10;
+
+const WIZARD_STEP_ORDER: WizardStep[] = [
+	WizardStep.APPLICATION_DETAILS,
+	WizardStep.APPLICATION_STRUCTURE,
+	WizardStep.KNOWLEDGE_BASE,
+	WizardStep.RESEARCH_PLAN,
+	WizardStep.RESEARCH_DEEP_DIVE,
+	WizardStep.GENERATE_AND_COMPLETE,
+];
 
 export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
 
@@ -58,8 +66,7 @@ interface WizardActions {
 	addNextObjective: () => void;
 	addObjective: (objective: Objective) => void;
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
-	checkForRagJobId: () => Promise<void>;
-	checkTemplateRagJobStatus: () => Promise<void>;
+	checkTemplateGeneration: () => Promise<void>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
@@ -77,14 +84,12 @@ interface WizardActions {
 
 interface WizardState {
 	currentStep: WizardStep;
-	grantTemplateRagJobData: API.RetrieveRagJob.Http200.ResponseBody | null;
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
 }
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
-	grantTemplateRagJobData: null,
 	isGeneratingTemplate: false,
 	polling: {
 		intervalId: null,
@@ -165,7 +170,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					void updateApplication({ research_objectives: updatedObjectives });
 				},
 
-				checkForRagJobId: async () => {
+				checkTemplateGeneration: async () => {
 					const { application, retrieveApplication } = useApplicationStore.getState();
 					const { polling } = get();
 
@@ -173,26 +178,11 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					// Set generating template to true when we start polling for rag_job_id
-					set((state) => ({
-						...state,
-						isGeneratingTemplate: true,
-					}));
-
 					try {
 						await retrieveApplication(application.project_id, application.id);
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
-						// If we now have a rag_job_id, start the template status polling
-						if (updatedApplication?.grant_template?.rag_job_id) {
-							polling.stop();
-							// Keep isGeneratingTemplate true, checkTemplateRagJobStatus will manage it
-							void get().checkTemplateRagJobStatus();
-							return;
-						}
-
-						// If we have grant sections, template generation is complete
 						if (updatedApplication?.grant_template?.grant_sections.length) {
 							polling.stop();
 							set((state) => ({
@@ -201,65 +191,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							}));
 							return;
 						}
-
-						// Continue polling if still no rag_job_id or grant sections
-						if (!polling.isActive) {
-							polling.start(get().checkForRagJobId, POLLING_INTERVAL_DURATION, false);
-						}
 					} catch (error) {
-						logError({ error, identifier: "checkForRagJobId" });
+						log.error("checkTemplateGeneration", error);
 						polling.stop();
 						set((state) => ({
 							...state,
 							isGeneratingTemplate: false,
 						}));
-					}
-				},
-
-				checkTemplateRagJobStatus: async () => {
-					const { application } = useApplicationStore.getState();
-					const { polling } = get();
-
-					if (!application?.grant_template?.rag_job_id) {
-						return;
-					}
-
-					const ragJobId = application.grant_template.rag_job_id;
-
-					try {
-						const jobData = await retrieveRagJob(application.project_id, ragJobId);
-
-						set((state) => ({
-							...state,
-							grantTemplateRagJobData: jobData,
-						}));
-
-						const isComplete =
-							jobData.status === "COMPLETED" ||
-							jobData.status === "FAILED" ||
-							jobData.status === "CANCELLED";
-
-						if (isComplete) {
-							polling.stop();
-							set((state) => ({
-								...state,
-								isGeneratingTemplate: false,
-							}));
-							return;
-						}
-
-						// Set generating template to true when we have an active job
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: jobData.status === "PROCESSING" || jobData.status === "PENDING",
-						}));
-
-						if (!polling.isActive) {
-							polling.start(get().checkTemplateRagJobStatus, POLLING_INTERVAL_DURATION, false);
-						}
-					} catch (error) {
-						logError({ error, identifier: "checkTemplateRagJobStatus" });
-						polling.stop();
 					}
 				},
 
@@ -368,6 +306,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							polling: {
 								...polling,
 								intervalId,
+								isActive: true,
 							},
 						}));
 					},
@@ -451,7 +390,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 					set({
 						currentStep: initialWizardState.currentStep,
-						grantTemplateRagJobData: initialWizardState.grantTemplateRagJobData,
 						isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
 						polling: {
 							...currentState.polling,
@@ -474,7 +412,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					// Clean up polling when leaving APPLICATION_STRUCTURE
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
 						set((state) => ({
@@ -483,14 +420,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						}));
 					}
 
-					const nextStep = WIZARD_STEP_TITLES[WIZARD_STEP_TITLES.indexOf(currentStep) + 1];
+					const nextStep = WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1];
 
 					set((state) => ({
 						...state,
 						currentStep: nextStep,
 					}));
 
-					// Trigger template generation when entering APPLICATION_STRUCTURE if no sections exist
 					const { application, generateTemplate } = useApplicationStore.getState();
 					if (
 						nextStep === WizardStep.APPLICATION_STRUCTURE &&
@@ -498,14 +434,20 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						!application.grant_template.grant_sections.length
 					) {
 						void generateTemplate(application.grant_template.id);
+
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: true,
+						}));
+
+						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
 					}
 				},
 
 				toPreviousStep: () => {
 					const { currentStep, isGeneratingTemplate, polling } = get();
-					const currentIndex = WIZARD_STEP_TITLES.indexOf(currentStep);
+					const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
 
-					// Prevent going back during template generation
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return;
 					}
@@ -520,20 +462,15 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 					set((state) => ({
 						...state,
-						currentStep: WIZARD_STEP_TITLES[Math.max(0, currentIndex - 1)],
+						currentStep: WIZARD_STEP_ORDER[Math.max(0, currentIndex - 1)],
 					}));
 				},
 
 				validateStepNext: (): boolean => {
-					const { currentStep, isGeneratingTemplate } = get();
+					const { currentStep } = get();
 					const { application } = useApplicationStore.getState();
 
 					if (!application) {
-						return false;
-					}
-
-					// Disable navigation during template generation for APPLICATION_STRUCTURE step
-					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return false;
 					}
 
@@ -543,7 +480,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								return false;
 							}
 
-							// Only require that grant template sources exist (don't require indexing completion)
 							return (application.grant_template?.rag_sources.length ?? 0) > 0;
 						}
 						case WizardStep.APPLICATION_STRUCTURE: {
@@ -559,6 +495,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								!!application.rag_sources.length &&
 								application.rag_sources.every((source) => source.status !== "FAILED")
 							);
+						}
+						default: {
+							return false;
 						}
 					}
 				},

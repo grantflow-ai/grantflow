@@ -16,6 +16,18 @@ export async function deleteProject(projectId: string) {
 	await withAuthRedirect(getClient().delete(`projects/${projectId}`, { headers: await createAuthHeaders() }));
 }
 
+export async function duplicateProject(projectId: string) {
+	const originalProject = await getProject(projectId);
+
+	const duplicateData: API.CreateProject.RequestBody = {
+		description: originalProject.description,
+		logo_url: originalProject.logo_url,
+		name: `Copy of ${originalProject.name}`,
+	};
+
+	return createProject(duplicateData);
+}
+
 export async function getProject(projectId: string) {
 	return withAuthRedirect(
 		getClient()
