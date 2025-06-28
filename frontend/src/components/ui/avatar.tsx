@@ -1,71 +1,38 @@
 "use client";
 
+import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import type * as React from "react";
+
 import { cn } from "@/lib/utils";
 
-interface AvatarProps {
-	backgroundColor?: string;
-	className?: string;
-	initials: string;
-	size?: "lg" | "md" | "sm";
-}
-
-const sizeClasses = {
-	lg: "h-12 w-12 text-base",
-	md: "h-8 w-8 text-sm",
-	sm: "h-6 w-6 text-xs",
-};
-
-const defaultColors = [
-	"#369e94", // Teal
-	"#9e366f", // Pink
-	"#9747ff", // Purple
-	"#5179fc", // Blue
-];
-
-interface AvatarGroupProps {
-	className?: string;
-	maxVisible?: number;
-	size?: "lg" | "md" | "sm";
-	users: AvatarUser[];
-}
-
-interface AvatarUser {
-	backgroundColor?: string;
-	initials: string;
-}
-
-export function Avatar({ backgroundColor, className, initials, size = "md" }: AvatarProps) {
+function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
 	return (
-		<div
-			className={cn(
-				"relative flex shrink-0 flex-row items-center justify-center gap-2.5 rounded p-0",
-				sizeClasses[size],
-				className,
-			)}
-			style={{ backgroundColor: backgroundColor ?? "#369e94" }}
-		>
-			<div className="flex size-full flex-col justify-center font-semibold not-italic leading-[0] text-center text-white font-['Source_Sans_Pro']">
-				<p className="block leading-[20px]">{initials}</p>
-			</div>
-		</div>
+		<AvatarPrimitive.Root
+			data-slot="avatar"
+			className={cn("relative flex size-8 shrink-0 overflow-hidden rounded-full", className)}
+			{...props}
+		/>
 	);
 }
 
-export function AvatarGroup({ className, maxVisible = 4, size = "md", users }: AvatarGroupProps) {
-	const visibleUsers = users.slice(0, maxVisible);
-	const remainingCount = users.length - maxVisible;
-
+function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
 	return (
-		<div className={cn("flex flex-row items-center gap-1", className)}>
-			{visibleUsers.map((user, index) => (
-				<Avatar
-					backgroundColor={user.backgroundColor ?? defaultColors[index % defaultColors.length]}
-					initials={user.initials}
-					key={`${user.initials}-${index}`}
-					size={size}
-				/>
-			))}
-			{remainingCount > 0 && <Avatar backgroundColor="#636170" initials={`+${remainingCount}`} size={size} />}
-		</div>
+		<AvatarPrimitive.Image
+			data-slot="avatar-image"
+			className={cn("aspect-square size-full", className)}
+			{...props}
+		/>
 	);
 }
+
+function AvatarFallback({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+	return (
+		<AvatarPrimitive.Fallback
+			data-slot="avatar-fallback"
+			className={cn("bg-muted flex size-full items-center justify-center rounded-full", className)}
+			{...props}
+		/>
+	);
+}
+
+export { Avatar, AvatarImage, AvatarFallback };
