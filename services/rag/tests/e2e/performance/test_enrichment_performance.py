@@ -108,7 +108,7 @@ async def test_enrichment_baseline_smoke(logger: logging.Logger) -> None:
         if enrichment_time > 300:
             perf_ctx.add_warning(f"Enrichment took {enrichment_time:.1f}s - target is <300s")
 
-        logger.info(f"Smoke test completed: {enrichment_time:.2f}s for {len(enriched_objectives)} objectives")
+        logger.info("Smoke test completed: %.2fs for %d objectives", enrichment_time, len(enriched_objectives))
 
         assert_performance_targets(perf_ctx.result, min_grade="C")
         assert_quality_targets(perf_ctx.result, min_score=60.0)
@@ -181,10 +181,10 @@ async def test_enrichment_baseline_vs_optimized_comparison(logger: logging.Logge
         speedup_factor = baseline_time / batch_time if batch_time > 0 else 0
 
         logger.info("Performance comparison:")
-        logger.info(f"  Baseline (single): {baseline_time:.2f}s")
-        logger.info(f"  Optimized (batch): {batch_time:.2f}s")
-        logger.info(f"  Improvement: {improvement_percentage:.1f}%")
-        logger.info(f"  Speedup factor: {speedup_factor:.2f}x")
+        logger.info("  Baseline (single): %.2fs", baseline_time)
+        logger.info("  Optimized (batch): %.2fs", batch_time)
+        logger.info("  Improvement: %.1f%%", improvement_percentage)
+        logger.info("  Speedup factor: %.2fx", speedup_factor)
 
 
         "\n".join([f"## {obj['title']}\n{obj['description']}" for obj in baseline_results])

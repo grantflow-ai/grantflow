@@ -153,10 +153,12 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
                 }
 
                 logger.info(
-                    f"Baseline: Generated {section['title']} in {section_duration:.2f}s"
+                    "Baseline: Generated %s in %.2fs",
+                    section["title"],
+                    section_duration
                 )
             except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
-                logger.error(f"Baseline section generation failed: {e}")
+                logger.error("Baseline section generation failed: %s", e)
                 baseline_results[section["id"]] = {
                     "success": False,
                     "error": str(e),
@@ -193,7 +195,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
                 }
 
         except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
-            logger.error(f"Optimized generation failed: {e}")
+            logger.error("Optimized generation failed: %s", e)
             optimized_total = (datetime.now(UTC) - optimized_start).total_seconds()
             optimized_success = False
             optimized_sections = {}

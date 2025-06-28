@@ -234,9 +234,9 @@ async def test_batch_size_2_specifically(logger: logging.Logger) -> None:
             "max_words": 1000,
         }
 
-        with perf_ctx.stage_timer("batch_enrichment"):
-            with patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve, \
-                 patch("services.rag.src.grant_application.batch_enrich_objectives.with_prompt_evaluation") as mock_eval:
+        with perf_ctx.stage_timer("batch_enrichment"), \
+             patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve, \
+             patch("services.rag.src.grant_application.batch_enrich_objectives.with_prompt_evaluation") as mock_eval:
 
                 mock_retrieve.return_value = "Mock retrieval"
                 mock_eval.return_value = await mock_llm_response(2)
@@ -382,9 +382,9 @@ async def test_batch_size_3_specific(logger: logging.Logger) -> None:
                 ]
             }
 
-        with perf_ctx.stage_timer("batch_enrichment_3"):
-            with patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve, \
-                 patch("services.rag.src.grant_application.batch_enrich_objectives.with_prompt_evaluation") as mock_eval:
+        with perf_ctx.stage_timer("batch_enrichment_3"), \
+             patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve, \
+             patch("services.rag.src.grant_application.batch_enrich_objectives.with_prompt_evaluation") as mock_eval:
 
                 mock_retrieve.return_value = "Mock retrieval results with relevant melanoma research papers"
                 mock_eval.return_value = await mock_llm_response_size_3()

@@ -116,7 +116,7 @@ def baseline_performance_targets() -> dict[str, float]:
 
 
 @pytest.fixture
-def mock_job_manager():
+def mock_job_manager() -> Any:
     """Mock job manager for testing."""
     from services.rag.src.utils.job_manager import JobManager
 
