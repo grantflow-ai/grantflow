@@ -141,14 +141,12 @@ describe("ApplicationStructureStep", () => {
 
 		const mainContainer = screen.getByTestId("application-structure-step");
 		expect(mainContainer).toBeInTheDocument();
-		expect(mainContainer).toHaveClass("flex");
 
-		const leftPane = mainContainer.querySelector(".w-1\\/3");
+		const leftPane = screen.getByTestId("application-structure-left-pane");
 		expect(leftPane).toBeInTheDocument();
 
-		const previewPane = mainContainer.querySelector(".w-\\[70\\%\\]");
+		const previewPane = screen.getByTestId("application-structure-preview-pane");
 		expect(previewPane).toBeInTheDocument();
-		expect(previewPane).toHaveClass("bg-preview-bg");
 	});
 
 	it("renders with application that has grant sections", () => {

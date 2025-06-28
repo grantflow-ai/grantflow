@@ -106,6 +106,7 @@ export default function FilePreviewCard({ file, parentId }: { file: FileWithId; 
 					<DropdownMenuItem
 						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-app-red hover:bg-app-gray-100"
 						data-testid="file-menu-remove"
+						disabled={!parentId}
 						onClick={handleRemove}
 					>
 						<Trash2 className="size-4" />
@@ -125,7 +126,11 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 					? FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]
 					: FILE_ICON_MAP.unknown}
 			</div>
-			<span className="mt-1 max-w-20 truncate text-center text-[10px] leading-[13px]" title={fileName}>
+			<span
+				className="mt-1 max-w-20 truncate text-center text-[10px] leading-[13px]"
+				data-testid="file-name"
+				title={fileName}
+			>
 				{fileName}
 			</span>
 		</>

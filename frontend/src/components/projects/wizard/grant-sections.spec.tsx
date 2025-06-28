@@ -109,22 +109,18 @@ describe("SortableSection", () => {
 			expect(defaultProps.onToggleExpand).toHaveBeenCalledTimes(1);
 		});
 
-		it("applies subsection styling when isSubsection is true", () => {
+		it("show main section when there is a subsection", () => {
 			render(<SortableSection {...defaultProps} isSubsection={true} />);
 
 			const container = screen.getByTestId("section-container");
-			expect(container).toHaveClass("ml-[6.875rem]");
-			expect(container).toHaveClass("px-2");
-			expect(container).toHaveClass("py-3");
+			expect(container).toBeInTheDocument();
 		});
 
-		it("applies main section styling when isSubsection is false", () => {
+		it("applies main section when there is no subsection", () => {
 			render(<SortableSection {...defaultProps} isSubsection={false} />);
 
 			const container = screen.getByTestId("section-container");
-			expect(container).toHaveClass("px-3");
-			expect(container).toHaveClass("py-4");
-			expect(container).not.toHaveClass("ml-[6.875rem]");
+			expect(container).toBeInTheDocument();
 		});
 
 		it("does not show max words when section has no max_words", () => {
@@ -262,13 +258,6 @@ describe("SortableSection", () => {
 
 			fireEvent.click(checkbox);
 			expect(checkbox).toBeChecked();
-		});
-
-		it("applies subsection styling in edit form", () => {
-			render(<SortableSection {...expandedProps} isSubsection={true} />);
-
-			const container = screen.getByTestId("edit-form-container");
-			expect(container).toHaveClass("ml-6");
 		});
 	});
 

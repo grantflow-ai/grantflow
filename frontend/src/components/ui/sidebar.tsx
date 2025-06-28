@@ -568,7 +568,6 @@ function SidebarMenuSkeleton({
 	showIcon?: boolean;
 } & React.ComponentProps<"div">) {
 	const width = React.useMemo(() => {
-		// eslint-disable-next-line sonarjs/pseudo-random
 		return `${Math.floor(Math.random() * 40) + 50}%`;
 	}, []);
 
