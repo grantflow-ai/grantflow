@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import React from "react";
 
-import { Button, buttonVariants, type ButtonProps as ShadcnButtonProps } from "@/components/ui/button";
+import { buttonVariants, Button as UIButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const landingPageButtonVariants = cva(
@@ -46,8 +46,9 @@ const landingPageButtonVariants = cva(
 );
 
 export interface LandingPageButtonProps
-	extends Omit<ShadcnButtonProps, "size" | "variant">,
+	extends Omit<React.ComponentProps<"button">, "size">,
 		VariantProps<typeof landingPageButtonVariants> {
+	asChild?: boolean;
 	leftIcon?: React.ReactNode;
 	rightIcon?: React.ReactNode;
 	size?: "lg" | "md" | "sm";
@@ -82,11 +83,11 @@ export function LandingPageButton({
 	);
 
 	return (
-		<Button asChild={asChild} className={combinedClassNames} {...props}>
+		<UIButton asChild={asChild} className={combinedClassNames} {...props}>
 			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
 			{children}
 			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon)}</span>}
-		</Button>
+		</UIButton>
 	);
 }
 
