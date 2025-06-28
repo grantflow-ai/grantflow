@@ -113,7 +113,8 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 
 	try {
 		const url = new URL(request.url);
-		const path = url.pathname.replace(getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL, "");
+		// Extract path from the URL, removing any leading slash
+		const path = url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname;
 
 		log.info(`[Mock API] Intercepting ${request.method} ${path}`);
 
