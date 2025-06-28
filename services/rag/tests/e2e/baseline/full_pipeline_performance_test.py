@@ -12,11 +12,8 @@ Tests comprehensive end-to-end performance across all pipeline stages:
 import logging
 from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
-from packages.db.src.tables import GrantApplication, GrantTemplate
-from packages.db.src.utils import retrieve_application
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.performance_framework import TestCategory
@@ -224,7 +221,7 @@ async def test_full_pipeline_baseline_performance(
 
         with perf_ctx.stage_timer("pipeline_initialization"):
             job_manager = JobManager(async_session_maker)
-            initialization_start = datetime.now(UTC)
+            datetime.now(UTC)
 
         with perf_ctx.stage_timer("full_pipeline_execution"):
             pipeline_start = datetime.now(UTC)
@@ -562,8 +559,6 @@ async def test_pipeline_stage_breakdown_analysis(
                 work_plan_duration = (datetime.now(UTC) - stage_start).total_seconds()
                 stage_timings["work_plan_generation"] = work_plan_duration
                 pipeline_success = False
-                application_text = ""
-                section_texts = {}
                 logger.error("Pipeline stage analysis failed", error=str(e), exc_info=e)
 
 

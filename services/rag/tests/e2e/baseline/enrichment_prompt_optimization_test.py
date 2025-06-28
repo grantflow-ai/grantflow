@@ -134,7 +134,7 @@ async def test_enrichment_prompt_baseline_performance(
                 success = True
 
 
-                for i, (objective, response) in enumerate(zip(research_objectives, enrichment_responses)):
+                for i, (objective, response) in enumerate(zip(research_objectives, enrichment_responses, strict=False)):
                     objective_enrichment = response["research_objective"]
                     tasks_enrichment = response["research_tasks"]
 
@@ -189,14 +189,13 @@ async def test_enrichment_prompt_baseline_performance(
         total_tasks = sum(len(obj["research_tasks"]) for obj in research_objectives)
 
         if successful_enrichments:
-            avg_enrichment_time = total_enrichment_time / len(successful_enrichments)
+            total_enrichment_time / len(successful_enrichments)
             total_tokens = sum(r["total_tokens"] for r in successful_enrichments)
             avg_tokens_per_objective = total_tokens / len(successful_enrichments)
             avg_tokens_per_task = sum(r["total_task_tokens"] for r in successful_enrichments) / sum(r["task_count"] for r in successful_enrichments)
             tokens_per_second = total_tokens / total_enrichment_time if total_enrichment_time > 0 else 0
             objectives_per_minute = (len(successful_enrichments) / total_enrichment_time) * 60 if total_enrichment_time > 0 else 0
         else:
-            avg_enrichment_time = 0
             total_tokens = 0
             avg_tokens_per_objective = 0
             avg_tokens_per_task = 0
@@ -490,7 +489,7 @@ async def test_enrichment_prompt_variation_impact(
                     })
 
                     logger.info(
-                        f"Enrichment variant completed",
+                        "Enrichment variant completed",
                         variant=variant_name,
                         optimized_duration=optimized_duration,
                         optimized_tokens=optimized_tokens,
@@ -506,7 +505,7 @@ async def test_enrichment_prompt_variation_impact(
                         "success": False,
                         "error": str(e),
                     })
-                    logger.error(f"Enrichment variant failed", variant=variant_name, error=str(e), exc_info=e)
+                    logger.error("Enrichment variant failed", variant=variant_name, error=str(e), exc_info=e)
 
 
         successful_variants = [r for r in variation_results if r["success"]]

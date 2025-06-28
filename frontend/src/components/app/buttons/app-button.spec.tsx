@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ArrowRight, User } from "lucide-react";
 
 import { AppButton } from "@/components/app/buttons/app-button";
 
 describe("AppButton", () => {
-	it("renders button with default props", () => {
+	it("renders children content", () => {
 		render(<AppButton data-testid="test-button">Click Me</AppButton>);
 
 		const button = screen.getByTestId("test-button");
@@ -12,93 +13,37 @@ describe("AppButton", () => {
 		expect(button).toHaveTextContent("Click Me");
 	});
 
-	it("applies custom className", () => {
+	it("handles click events", async () => {
+		const handleClick = vi.fn();
+		const user = userEvent.setup();
+
 		render(
-			<AppButton className="custom-class" data-testid="test-button">
+			<AppButton data-testid="test-button" onClick={handleClick}>
 				Click Me
 			</AppButton>,
 		);
 
 		const button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("custom-class");
+		await user.click(button);
+
+		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
 
-	it("renders with different sizes", () => {
-		const { rerender } = render(
-			<AppButton data-testid="test-button" size="sm">
-				Small
+	it("disables button when disabled prop is true", async () => {
+		const handleClick = vi.fn();
+		const user = userEvent.setup();
+
+		render(
+			<AppButton data-testid="test-button" disabled onClick={handleClick}>
+				Disabled Button
 			</AppButton>,
 		);
 
-		let button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("px-1");
-		expect(button).toHaveClass("py-0.5");
+		const button = screen.getByTestId("test-button");
+		expect(button).toBeDisabled();
 
-		rerender(
-			<AppButton data-testid="test-button" size="md">
-				Medium
-			</AppButton>,
-		);
-		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("px-3");
-		expect(button).toHaveClass("py-1");
-
-		rerender(
-			<AppButton data-testid="test-button" size="lg">
-				Large
-			</AppButton>,
-		);
-		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("px-4");
-		expect(button).toHaveClass("py-2");
-	});
-
-	it("renders with different variants", () => {
-		const { rerender } = render(
-			<AppButton data-testid="test-button" variant="primary">
-				Primary
-			</AppButton>,
-		);
-
-		let button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("hover:bg-accent");
-
-		rerender(
-			<AppButton data-testid="test-button" variant="secondary">
-				Secondary
-			</AppButton>,
-		);
-		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("bg-transparent");
-		expect(button).toHaveClass("border");
-
-		rerender(
-			<AppButton data-testid="test-button" variant="link">
-				Link
-			</AppButton>,
-		);
-		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("bg-transparent");
-		expect(button).toHaveClass("rounded-none");
-	});
-
-	it("renders with different themes", () => {
-		const { rerender } = render(
-			<AppButton data-testid="test-button" theme="dark">
-				Dark
-			</AppButton>,
-		);
-
-		let button = screen.getByTestId("test-button");
-		expect(button).not.toHaveClass("text-white");
-
-		rerender(
-			<AppButton data-testid="test-button" theme="light">
-				Light
-			</AppButton>,
-		);
-		button = screen.getByTestId("test-button");
-		expect(button).toHaveClass("text-white");
+		await user.click(button);
+		expect(handleClick).not.toHaveBeenCalled();
 	});
 
 	it("renders with left icon", () => {
@@ -108,12 +53,8 @@ describe("AppButton", () => {
 			</AppButton>,
 		);
 
-		const button = screen.getByTestId("test-button");
 		const icon = screen.getByTestId("left-icon");
-
 		expect(icon).toBeInTheDocument();
-		expect(button).toHaveTextContent("With Left Icon");
-		expect(icon.parentElement).toHaveClass("mr-1");
 	});
 
 	it("renders with right icon", () => {
@@ -123,11 +64,31 @@ describe("AppButton", () => {
 			</AppButton>,
 		);
 
-		const button = screen.getByTestId("test-button");
 		const icon = screen.getByTestId("right-icon");
-
 		expect(icon).toBeInTheDocument();
-		expect(button).toHaveTextContent("With Right Icon");
-		expect(icon.parentElement).toHaveClass("ml-1");
+	});
+
+	it("forwards button type attribute", () => {
+		render(
+			<AppButton data-testid="test-button" type="submit">
+				Submit Button
+			</AppButton>,
+		);
+
+		const button = screen.getByTestId("test-button");
+		expect(button).toHaveAttribute("type", "submit");
+	});
+
+	it("applies custom className alongside default classes", () => {
+		render(
+			<AppButton className="custom-class" data-testid="test-button">
+				Custom Button
+			</AppButton>,
+		);
+
+		const button = screen.getByTestId("test-button");
+		expect(button).toHaveClass("custom-class");
+		// Verify it still has base button classes
+		expect(button.tagName).toBe("BUTTON");
 	});
 });

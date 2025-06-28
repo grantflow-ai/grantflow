@@ -6,6 +6,7 @@ from packages.db.src.tables import FundingOrganizationRagSource, GrantApplicatio
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.ttl_cache import ttl_lru_cache
 from sqlalchemy import func, or_, select
 
 from services.rag.src.dto import DocumentDTO
@@ -202,6 +203,7 @@ async def handle_retrieval(
     )
 
 
+@ttl_lru_cache(maxsize=128, ttl_seconds=300)
 async def retrieve_documents(
     *,
     application_id: str | None = None,
