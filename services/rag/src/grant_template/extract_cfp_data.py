@@ -1,4 +1,6 @@
+import hashlib
 import re
+import time
 from collections import defaultdict
 from typing import Any, Final, NotRequired, TypedDict
 
@@ -37,51 +39,73 @@ class RagSourceData(TypedDict):
     chunks: list[str]
 
 
+# In-memory cache for CFP extraction results
+# Key: content hash, Value: (result, timestamp)
+_cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
+CFP_CACHE_TTL_SECONDS = 3600  # 1 hour
+
+
+def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dict[str, str]]) -> str:
+    """Create a stable cache key from source IDs and organization mapping."""
+    cache_data = {
+        "source_ids": sorted(source_ids),
+        "organizations": {k: v for k, v in sorted(organization_mapping.items())},
+    }
+    cache_str = str(cache_data)
+    return hashlib.sha256(cache_str.encode()).hexdigest()[:16]
+
+
+def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
+    """Get cached CFP extraction result if still valid."""
+    if cache_key not in _cfp_extraction_cache:
+        return None
+    
+    result, timestamp = _cfp_extraction_cache[cache_key]
+    current_time = time.time()
+    
+    if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
+        # Expired, remove from cache
+        del _cfp_extraction_cache[cache_key]
+        logger.debug("CFP cache entry expired", cache_key=cache_key)
+        return None
+    
+    logger.debug("CFP cache hit", cache_key=cache_key, age_seconds=current_time - timestamp)
+    return result
+
+
+def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
+    """Cache CFP extraction result."""
+    _cfp_extraction_cache[cache_key] = (result, time.time())
+    logger.debug("CFP result cached", cache_key=cache_key, cache_size=len(_cfp_extraction_cache))
+
+
 TEMPERATURE: Final[float] = 0.1
 
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
-You analyze funding opportunity announcements to extract structured requirements.
-Prioritize official CFP documents over supplementary materials.
-Focus on explicit requirements, page limits, section structures, and evaluation criteria.
+Extract structured requirements from funding announcements.
+Prioritize official CFP docs over supplementary materials.
 """
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="extract_cfp_data_multi_source",
     template="""
-    Extract funding opportunity requirements from these sources:
+    Extract from: <rag_sources>${rag_sources}</rag_sources>
+    Organizations: <orgs>${organization_mapping}</orgs>
 
-    <rag_sources>
-    ${rag_sources}
-    </rag_sources>
-
-    <organization_mapping>
-    ${organization_mapping}
-    </organization_mapping>
-
-    ## Instructions:
-
-    1. **Organization**: Match funding org to organization_mapping ID or return null
-
-    2. **CFP Subject**: One-sentence summary with funding type, audience, objectives, and focus areas
-
-    3. **Submission Date**: Extract deadline in YYYY-MM-DD format
-
-    4. **Content Sections**: Extract hierarchical structure:
-       - Main sections: title + "- Title only"
-       - Subsections: title only (no descriptions)
-       - Include page limits, character limits
-       - Preserve numbering (e.g., "1a.i")
-
-    5. **Filter Out**: URLs, Grants.gov instructions, eRA Commons, addresses, general submission steps
-
-    6. **Prioritize**: Official CFP docs > websites > supplementary materials
+    Extract:
+    1. Organization ID from mapping (or null)
+    2. CFP subject (one sentence: type, audience, focus)
+    3. Deadline (YYYY-MM-DD)
+    4. Section structure (titles, page limits, preserve numbering)
+    
+    Exclude: URLs, Grants.gov steps, addresses, admin details
     """,
 )
 
 
 async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessionmaker[Any]) -> list[RagSourceData]:
     """
-    Retrieve text content and chunks from multiple RAG sources.
+    Retrieve text content and chunks from multiple RAG sources with optimized batch processing.
 
     Args:
         source_ids: List of RAG source IDs to retrieve
@@ -91,6 +115,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         List of RagSourceData containing content and chunks for each source
     """
     async with session_maker() as session:
+        # Execute queries sequentially to avoid session conflicts
         sources_result = await session.execute(
             select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
         )
@@ -99,22 +124,24 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks_result = await session.execute(
             select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
         )
+        
+        # Process chunks efficiently
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
-
         for source_id, chunk in chunks_result:
             chunk_content = chunk.get("content", "")
-            chunks_by_source[source_id].append(chunk_content)
+            if chunk_content:  # Only include non-empty chunks
+                chunks_by_source[source_id].append(chunk_content)
 
-    rag_sources_data = []
-    for source_id, source_type, text_content in sources:
-        rag_sources_data.append(
-            RagSourceData(
-                source_id=str(source_id),
-                source_type=source_type,
-                text_content=text_content or "",
-                chunks=chunks_by_source.get(source_id, []),
-            )
+    # Build result list with optimized comprehension
+    rag_sources_data = [
+        RagSourceData(
+            source_id=str(source_id),
+            source_type=source_type,
+            text_content=text_content or "",
+            chunks=chunks_by_source.get(source_id, []),
         )
+        for source_id, source_type, text_content in sources
+    ]
 
     return rag_sources_data
 
@@ -268,6 +295,7 @@ async def handle_extract_cfp_data_from_rag_sources(
 ) -> ExtractedCFPData:
     """
     Extract CFP data from multiple RAG sources (files and URLs).
+    Uses intelligent caching to avoid redundant LLM calls.
 
     Args:
         source_ids: List of RAG source IDs to use for extraction
@@ -277,6 +305,13 @@ async def handle_extract_cfp_data_from_rag_sources(
     Returns:
         Extracted CFP data synthesized from all sources
     """
+    # Check cache first
+    cache_key = _create_cache_key(source_ids, organization_mapping)
+    cached_result = _get_cached_cfp_result(cache_key)
+    if cached_result is not None:
+        logger.info("Using cached CFP extraction result", cache_key=cache_key)
+        return cached_result
+
     rag_sources = await get_rag_sources_data(source_ids, session_maker)
 
     if not rag_sources:
@@ -288,9 +323,10 @@ async def handle_extract_cfp_data_from_rag_sources(
         "Extracting CFP data from multiple sources",
         source_count=len(rag_sources),
         source_types=[s["source_type"] for s in rag_sources],
+        cache_key=cache_key,
     )
 
-    return await with_prompt_evaluation(
+    result = await with_prompt_evaluation(
         prompt_identifier="extract_cfp_data_multi_source",
         prompt_handler=extract_cfp_data_multi_source,
         prompt=EXTRACT_CFP_DATA_USER_PROMPT.to_string(
@@ -329,3 +365,9 @@ async def handle_extract_cfp_data_from_rag_sources(
             ),
         ],
     )
+    
+    # Cache the result for future use
+    _cache_cfp_result(cache_key, result)
+    logger.info("CFP extraction completed and cached", cache_key=cache_key)
+    
+    return result
