@@ -6,12 +6,12 @@ import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { addToWaitlist } from "@/actions/join-waitlist";
-import AppInput from "@/components/input-field";
-import { SubmitButton } from "@/components/submit-button";
+import { LandingPageSubmitButton } from "@/components/landing-page/components/landing-page-submit-button";
+import LandingPageInput from "@/components/landing-page/components/landing-page-input-field";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { analyticsIdentify } from "@/utils/segment";
 
 const getStatusTextColor = (status: string) => {
@@ -58,7 +58,7 @@ export function WaitlistForm() {
 				lastName: values.name.split(" ").at(-1) ?? "",
 			});
 		} catch (error) {
-			logError({ error, identifier: "waitlist-form: onSubmit" });
+			log.error("waitlist-form: onSubmit", error);
 		}
 
 		const result = await addToWaitlist(values);
@@ -99,12 +99,12 @@ export function WaitlistForm() {
 				/>
 
 				<div className="mb-2 mt-8 flex justify-end px-2">
-					<SubmitButton
+					<LandingPageSubmitButton
 						data-testid="waitlist-form-submit-button"
 						disabled={!form.formState.isValid || formState.status === "loading"}
 					>
 						Join now
-					</SubmitButton>
+					</LandingPageSubmitButton>
 				</div>
 
 				<div
@@ -187,7 +187,7 @@ function WaitListFormItem({
 				<FormItem className={className}>
 					<FormLabel className="text-app-black font-heading font-semibold">{label}</FormLabel>
 					<FormControl className="mt-3 h-auto w-full">
-						<AppInput
+						<LandingPageInput
 							placeholder={placeholder}
 							type={type}
 							{...field}
