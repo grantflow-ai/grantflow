@@ -244,12 +244,16 @@ export function EditPermissionModal({
 							</button>
 
 							{isDropdownOpen && canEdit && (
-								<div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10">
+								<div
+									className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10"
+									data-testid="permission-dropdown-menu"
+								>
 									{PERMISSION_OPTIONS.map((option) => (
 										<button
 											className={`w-full px-3 py-3 text-left hover:bg-[#f5f5f5] transition-colors border-b border-[#e1dfeb] last:border-b-0 ${
 												selectedRole === option.value ? "bg-[#f0f0ff]" : ""
 											}`}
+											data-testid={`permission-option-${option.value}`}
 											key={option.value}
 											onClick={() => {
 												setSelectedRole(option.value);
@@ -287,12 +291,15 @@ export function EditPermissionModal({
 									{selectedProjects.map((projectId) => (
 										<div
 											className="flex items-center gap-2 px-3 py-1 bg-[#1e13f8] text-white rounded-full font-['Source_Sans_Pro'] text-[14px]"
+											data-testid={`selected-project-${projectId}`}
 											key={projectId}
 										>
 											<span>{getProjectName(projectId)}</span>
 											{canEdit && (
 												<button
+													aria-label={`Remove ${getProjectName(projectId)}`}
 													className="p-0.5 hover:bg-white/20 rounded-full transition-colors"
+													data-testid={`remove-project-${projectId}`}
 													onClick={() => {
 														removeProject(projectId);
 													}}
@@ -312,6 +319,7 @@ export function EditPermissionModal({
 									<div className="relative">
 										<input
 											className="w-full px-3 py-2 pr-10 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#2e2d36] placeholder:text-[#aaa8b9]"
+											data-testid="project-search-input"
 											onChange={(e) => {
 												setSearchQuery(e.target.value);
 												setIsProjectSearchOpen(true);
@@ -328,10 +336,14 @@ export function EditPermissionModal({
 
 									{/* Search Results */}
 									{isProjectSearchOpen && filteredProjects.length > 0 && (
-										<div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+										<div
+											className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10 max-h-48 overflow-y-auto"
+											data-testid="project-search-results"
+										>
 											{filteredProjects.map((project) => (
 												<button
 													className="w-full px-3 py-2 text-left hover:bg-[#f5f5f5] transition-colors font-['Source_Sans_Pro'] text-[14px] text-[#2e2d36]"
+													data-testid={`project-option-${project.id}`}
 													key={project.id}
 													onClick={() => {
 														addProject(project.id);
@@ -374,6 +386,7 @@ export function EditPermissionModal({
 				<div className="flex items-center gap-3 pt-2">
 					<button
 						className="px-4 py-2 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#636170] hover:bg-[#f5f5f5] transition-colors"
+						data-testid="cancel-button"
 						onClick={handleClose}
 						type="button"
 					>
@@ -385,6 +398,7 @@ export function EditPermissionModal({
 								? "bg-[#1e13f8] hover:bg-[#1710d4]"
 								: "bg-[#aaa8b9] cursor-not-allowed"
 						}`}
+						data-testid="update-button"
 						disabled={!canEdit || isSubmitting}
 						onClick={handleSubmit}
 						type="button"
