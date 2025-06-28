@@ -14,6 +14,10 @@ from datetime import UTC, datetime
 from typing import Any
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.factories import ResearchObjectiveFactory
+
 from services.rag.src.grant_application.handler import generate_work_plan_text
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.tests.e2e.performance_framework import TestCategory
@@ -21,9 +25,6 @@ from services.rag.tests.e2e.performance_utils import (
     assert_performance_targets,
     create_performance_context,
 )
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.e2e_utils import E2ETestCategory, e2e_test
-from testing.factories import ResearchObjectiveFactory
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=1800)

@@ -13,10 +13,7 @@ vi.mock("@/stores/user-store", () => ({
 
 // Mock next/image
 vi.mock("next/image", () => ({
-	default: ({ alt, fill, src, ...props }: any) => (
-		// eslint-disable-next-line @next/next/no-img-element
-		<img alt={alt} data-fill={fill} src={src} {...props} />
-	),
+	default: ({ alt, fill, src, ...props }: any) => <div data-alt={alt} data-fill={fill} data-src={src} {...props} />,
 }));
 
 // Mock DeleteAccountModal

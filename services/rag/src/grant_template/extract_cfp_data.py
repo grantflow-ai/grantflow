@@ -49,7 +49,7 @@ def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dic
     """Create a stable cache key from source IDs and organization mapping."""
     cache_data = {
         "source_ids": sorted(source_ids),
-        "organizations": {k: v for k, v in sorted(organization_mapping.items())},
+        "organizations": dict(sorted(organization_mapping.items())),
     }
     cache_str = str(cache_data)
     return hashlib.sha256(cache_str.encode()).hexdigest()[:16]
@@ -59,16 +59,16 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
     """Get cached CFP extraction result if still valid."""
     if cache_key not in _cfp_extraction_cache:
         return None
-    
+
     result, timestamp = _cfp_extraction_cache[cache_key]
     current_time = time.time()
-    
+
     if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
         # Expired, remove from cache
         del _cfp_extraction_cache[cache_key]
         logger.debug("CFP cache entry expired", cache_key=cache_key)
         return None
-    
+
     logger.debug("CFP cache hit", cache_key=cache_key, age_seconds=current_time - timestamp)
     return result
 
@@ -97,7 +97,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     2. CFP subject (one sentence: type, audience, focus)
     3. Deadline (YYYY-MM-DD)
     4. Section structure (titles, page limits, preserve numbering)
-    
+
     Exclude: URLs, Grants.gov steps, addresses, admin details
     """,
 )
@@ -124,7 +124,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         chunks_result = await session.execute(
             select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
         )
-        
+
         # Process chunks efficiently
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
         for source_id, chunk in chunks_result:
@@ -133,7 +133,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
                 chunks_by_source[source_id].append(chunk_content)
 
     # Build result list with optimized comprehension
-    rag_sources_data = [
+    return [
         RagSourceData(
             source_id=str(source_id),
             source_type=source_type,
@@ -143,7 +143,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         for source_id, source_type, text_content in sources
     ]
 
-    return rag_sources_data
 
 
 def sanitize_text_content(text: str) -> str:
@@ -365,9 +364,9 @@ async def handle_extract_cfp_data_from_rag_sources(
             ),
         ],
     )
-    
+
     # Cache the result for future use
     _cache_cfp_result(cache_key, result)
     logger.info("CFP extraction completed and cached", cache_key=cache_key)
-    
+
     return result

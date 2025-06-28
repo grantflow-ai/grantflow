@@ -176,6 +176,8 @@ async def handle_long_form_text_generation(
             response_type=LongFormToolResponse,
             model=model,
             system_prompt=LONG_FORM_GENERATION_SYSTEM_PROMPT,
+            temperature=0.4,  # Increased for more creative, detailed content
+            top_p=0.9,        # Better sampling diversity
         )
 
         result = concatenate_segments_with_spacy_coherence([result, response["text"]])

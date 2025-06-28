@@ -55,7 +55,7 @@ async def test_enrichment_baseline_smoke(logger: logging.Logger) -> None:
 
         logger.info("=== ENRICHMENT BASELINE SMOKE TEST ===")
 
-        
+
         research_objectives: list[ResearchObjective] = [
             {
                 "id": "obj-1",
@@ -90,15 +90,15 @@ async def test_enrichment_baseline_smoke(logger: logging.Logger) -> None:
             "expected_outcomes": "Novel therapeutic strategies for melanoma patients",
         }
 
-        
+
         with perf_ctx.stage_timer("batch_enrichment"):
             enriched_objectives = await handle_optimized_batch_enrichment(
                 objectives=research_objectives,
                 form_inputs=form_inputs,
             )
-            perf_ctx.add_llm_call(1)  
+            perf_ctx.add_llm_call(1)
 
-        
+
         enriched_content = "\n".join([
             f"## {obj['title']}\n{obj['description']}\n{obj['methodology']}"
             for obj in enriched_objectives
@@ -106,7 +106,7 @@ async def test_enrichment_baseline_smoke(logger: logging.Logger) -> None:
 
         perf_ctx.set_content(enriched_content, [obj["title"] for obj in enriched_objectives])
 
-        
+
         enrichment_time = perf_ctx.stage_times.get("batch_enrichment", 0)
         if enrichment_time > 300:
             perf_ctx.add_warning(f"Enrichment took {enrichment_time:.1f}s - target is <300s")
@@ -141,7 +141,7 @@ async def test_enrichment_baseline_vs_optimized_comparison(logger: logging.Logge
 
         logger.info("=== ENRICHMENT BASELINE VS OPTIMIZED COMPARISON ===")
 
-        
+
         research_objectives: list[ResearchObjective] = [
             ResearchObjectiveFactory.build()
             for _ in range(5)
@@ -154,7 +154,7 @@ async def test_enrichment_baseline_vs_optimized_comparison(logger: logging.Logge
             "expected_outcomes": "Breakthrough therapeutic advances",
         }
 
-        
+
         logger.info("Testing baseline single enrichment...")
         with perf_ctx.stage_timer("single_enrichment"):
             baseline_results = []
@@ -168,18 +168,18 @@ async def test_enrichment_baseline_vs_optimized_comparison(logger: logging.Logge
 
         baseline_time = perf_ctx.stage_times["single_enrichment"]
 
-        
+
         logger.info("Testing optimized batch enrichment...")
         with perf_ctx.stage_timer("batch_enrichment"):
             optimized_results = await handle_optimized_batch_enrichment(
                 objectives=research_objectives,
                 form_inputs=form_inputs,
             )
-            perf_ctx.add_llm_call(1)  
+            perf_ctx.add_llm_call(1)
 
         batch_time = perf_ctx.stage_times["batch_enrichment"]
 
-        
+
         improvement_percentage = ((baseline_time - batch_time) / baseline_time) * 100
         speedup_factor = baseline_time / batch_time if batch_time > 0 else 0
 
@@ -189,19 +189,19 @@ async def test_enrichment_baseline_vs_optimized_comparison(logger: logging.Logge
         logger.info(f"  Improvement: {improvement_percentage:.1f}%")
         logger.info(f"  Speedup factor: {speedup_factor:.2f}x")
 
-        
+
         "\n".join([f"## {obj['title']}\n{obj['description']}" for obj in baseline_results])
         optimized_content = "\n".join([f"## {obj['title']}\n{obj['description']}" for obj in optimized_results])
 
-        
+
         perf_ctx.set_content(optimized_content, [obj["title"] for obj in optimized_results])
 
-        
+
         assert improvement_percentage > 30, f"Should achieve >30% improvement, got {improvement_percentage:.1f}%"
         assert speedup_factor > 1.4, f"Should achieve >1.4x speedup, got {speedup_factor:.2f}x"
         assert len(baseline_results) == len(optimized_results), "Results count should match"
 
-        
+
         assert_performance_targets(perf_ctx.result, min_grade="C")
         assert_quality_targets(perf_ctx.result, min_score=50.0)
 
@@ -230,7 +230,7 @@ async def test_enrichment_quality_preservation(
 
         logger.info("=== ENRICHMENT QUALITY PRESERVATION TEST ===")
 
-        
+
         research_objectives: list[ResearchObjective] = [
             {
                 "id": f"qual-obj-{i+1}",
@@ -250,7 +250,7 @@ async def test_enrichment_quality_preservation(
             "expected_outcomes": "Breakthrough therapeutic innovations with clinical translation potential",
         }
 
-        
+
         with perf_ctx.stage_timer("quality_enrichment"):
             enriched_objectives = await handle_optimized_batch_enrichment(
                 objectives=research_objectives,
@@ -258,7 +258,7 @@ async def test_enrichment_quality_preservation(
             )
             perf_ctx.add_llm_call(1)
 
-        
+
         total_content = []
         for obj in enriched_objectives:
             content = f"""
@@ -279,7 +279,7 @@ async def test_enrichment_quality_preservation(
 
         perf_ctx.set_content(full_content, section_titles)
 
-        
+
         estimated_tokens = estimate_token_count(full_content)
         token_efficiency = len(full_content) / estimated_tokens if estimated_tokens > 0 else 0
 
@@ -289,7 +289,7 @@ async def test_enrichment_quality_preservation(
         logger.info(f"  Estimated tokens: {estimated_tokens}")
         logger.info(f"  Token efficiency: {token_efficiency:.2f} chars/token")
 
-        
+
         enrichment_time = perf_ctx.stage_times.get("quality_enrichment", 0)
         per_objective_time = enrichment_time / len(enriched_objectives) if enriched_objectives else 0
 
@@ -298,7 +298,7 @@ async def test_enrichment_quality_preservation(
         assert all(len(obj["methodology"]) > 50 for obj in enriched_objectives), "Methodologies should be detailed"
         assert per_objective_time < 30, f"Per-objective time should be <30s, got {per_objective_time:.1f}s"
 
-        
+
         assert_performance_targets(perf_ctx.result, min_grade="B")
         assert_quality_targets(perf_ctx.result, min_score=70.0)
 
@@ -327,7 +327,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
 
         logger.info("=== ENRICHMENT TOKEN OPTIMIZATION ANALYSIS ===")
 
-        
+
         simple_objectives: list[ResearchObjective] = [
             {"id": "simple-1", "title": "Basic research", "description": "Simple study", "methodology": "Standard approach", "expected_outcomes": "Results", "tasks": []},
             {"id": "simple-2", "title": "Direct analysis", "description": "Clear objectives", "methodology": "Proven methods", "expected_outcomes": "Outcomes", "tasks": []},
@@ -359,7 +359,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
             "expected_outcomes": "Optimized token usage patterns",
         }
 
-        
+
         with perf_ctx.stage_timer("simple_enrichment"):
             simple_results = await handle_optimized_batch_enrichment(
                 objectives=simple_objectives,
@@ -367,7 +367,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
             )
             perf_ctx.add_llm_call(1)
 
-        
+
         with perf_ctx.stage_timer("complex_enrichment"):
             complex_results = await handle_optimized_batch_enrichment(
                 objectives=complex_objectives,
@@ -375,7 +375,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
             )
             perf_ctx.add_llm_call(1)
 
-        
+
         simple_content = "\n".join([f"{obj['title']}: {obj['description']}" for obj in simple_results])
         complex_content = "\n".join([f"{obj['title']}: {obj['description']}" for obj in complex_results])
 
@@ -385,7 +385,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
         simple_time = perf_ctx.stage_times.get("simple_enrichment", 0)
         complex_time = perf_ctx.stage_times.get("complex_enrichment", 0)
 
-        
+
         simple_efficiency = simple_tokens / simple_time if simple_time > 0 else 0
         complex_efficiency = complex_tokens / complex_time if complex_time > 0 else 0
 
@@ -393,13 +393,13 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
         logger.info(f"  Simple objectives: {simple_tokens} tokens in {simple_time:.2f}s ({simple_efficiency:.1f} tokens/s)")
         logger.info(f"  Complex objectives: {complex_tokens} tokens in {complex_time:.2f}s ({complex_efficiency:.1f} tokens/s)")
 
-        
+
         combined_content = f"# Simple Objectives\n{simple_content}\n\n# Complex Objectives\n{complex_content}"
         all_titles = [obj["title"] for obj in simple_results + complex_results]
 
         perf_ctx.set_content(combined_content, all_titles)
 
-        
+
         estimated_improvement = estimate_performance_improvement(
             baseline_time=simple_time + complex_time,
             objectives_count=len(simple_objectives + complex_objectives),
@@ -407,12 +407,12 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
 
         logger.info(f"Estimated improvement potential: {estimated_improvement:.1f}%")
 
-        
+
         assert simple_tokens > 0 and complex_tokens > 0, "Should generate token estimates"
         assert len(simple_results) == 2 and len(complex_results) == 2, "Should process all objectives"
         assert complex_tokens > simple_tokens, "Complex objectives should use more tokens"
 
-        
+
         assert_performance_targets(perf_ctx.result, min_grade="C")
         assert_quality_targets(perf_ctx.result, min_score=60.0)
 

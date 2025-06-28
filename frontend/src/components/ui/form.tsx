@@ -17,21 +17,15 @@ import { cn } from "@/lib/utils";
 
 const Form = FormProvider;
 
-interface FormFieldContextValue<
-	TFieldValues extends FieldValues = FieldValues,
-	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> {
-	name: TName;
+interface FormFieldContextValue<T extends FieldValues = FieldValues, U extends FieldPath<T> = FieldPath<T>> {
+	name: U;
 }
 
 const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue);
 
-const FormField = <
-	TFieldValues extends FieldValues = FieldValues,
-	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
->({
+const FormField = <T extends FieldValues = FieldValues, U extends FieldPath<T> = FieldPath<T>>({
 	...props
-}: ControllerProps<TFieldValues, TName>) => {
+}: ControllerProps<T, U>) => {
 	return (
 		<FormFieldContext.Provider value={{ name: props.name }}>
 			<Controller {...props} />
@@ -42,13 +36,14 @@ const FormField = <
 const useFormField = () => {
 	const fieldContext = React.useContext(FormFieldContext);
 	const itemContext = React.useContext(FormItemContext);
-	const { getFieldState } = useFormContext();
-	const formState = useFormState({ name: fieldContext.name });
-	const fieldState = getFieldState(fieldContext.name, formState);
 
 	if (!fieldContext) {
 		throw new Error("useFormField should be used within <FormField>");
 	}
+
+	const { getFieldState } = useFormContext();
+	const formState = useFormState({ name: fieldContext.name });
+	const fieldState = getFieldState(fieldContext.name, formState);
 
 	const { id } = itemContext;
 
@@ -121,7 +116,7 @@ function FormLabel({ className, ...props }: React.ComponentProps<typeof LabelPri
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 	const { error, formMessageId } = useFormField();
-	const body = error ? String(error?.message ?? "") : props.children;
+	const body = error ? String(error.message ?? "") : props.children;
 
 	if (!body) {
 		return null;

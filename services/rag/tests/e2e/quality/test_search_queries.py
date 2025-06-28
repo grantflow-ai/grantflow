@@ -5,11 +5,12 @@ from datetime import UTC, datetime
 import pytest
 from anyio import Path
 from packages.shared_utils.src.serialization import serialize
-from services.rag.src.utils.search_queries import handle_create_search_queries
 from testing import RESULTS_FOLDER, TEST_DATA_SOURCES
 from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.rag_ai_evaluation import evaluate_query_generation_quality
 from testing.rag_evaluation import assess_query_quality, calculate_performance_metrics, save_evaluation_results
+
+from services.rag.src.utils.search_queries import handle_create_search_queries
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
