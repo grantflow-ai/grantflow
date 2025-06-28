@@ -8,8 +8,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { login } from "@/actions/login";
-import { AppButton } from "@/components/app-button";
-import { LogoDark } from "@/components/logo";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { SeparatorWithText } from "@/components/app/display/separator-with-text";
+import { LogoDark } from "@/components/branding/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
 	OnboardingGradientBackgroundBottom,
@@ -18,8 +19,7 @@ import {
 } from "@/components/onboarding/backgrounds";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 import { SigninForm } from "@/components/onboarding/signin-form";
-import { SeparatorWithText } from "@/components/separator-with-text";
-import { SocialSigninButton } from "@/components/social-signin-buttons";
+import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { Card, CardContent } from "@/components/ui/card";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";

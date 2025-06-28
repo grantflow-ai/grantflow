@@ -5,7 +5,10 @@ import path from "node:path";
 
 import Mailgun from "mailgun.js";
 import type { z } from "zod";
-import { getWaitlistEmailTemplateHtml, waitlistEmailTemplateText } from "@/components/waitlist-email-template";
+import {
+	getWaitlistEmailTemplateHtml,
+	waitlistEmailTemplateText,
+} from "@/components/email-templates/waitlist-email-template";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import type { waitlistSchema } from "@/schemas/waitlist-schema";
 import { getEnv } from "@/utils/env";

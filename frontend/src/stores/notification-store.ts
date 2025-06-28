@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import type { NotificationData } from "@/components/ui/notification-banner";
+import type { NotificationData } from "@/components/app/feedback/notification-banner";
 
 interface NotificationActions {
 	addNotification: (notification: Omit<NotificationData, "id">) => void;

@@ -1,8 +1,8 @@
 import Image from "next/image";
 
 import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/about/icons";
-import { LegalPageContainer } from "@/components/info-legal-page-components";
-import { NavHeader } from "@/components/nav-header";
+import { NavHeader } from "@/components/layout/navigation/nav-header";
+import { LegalPageContainer } from "@/components/shared/info-legal-page-components";
 import { cn } from "@/lib/utils";
 
 const subHeadingClasses = "font-heading font-medium text-3xl md:text-4xl";

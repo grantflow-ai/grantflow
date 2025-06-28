@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
-import { AppButton } from "@/components/app-button";
-import { IconGoAhead, IconGoBack } from "@/components/icons";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { IconGoAhead, IconGoBack } from "@/components/branding/icons";
 import {
 	IconApplicationStepActive,
 	IconApplicationStepDone,

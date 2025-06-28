@@ -4,8 +4,8 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { deleteAccount } from "@/actions/user";
+import { Modal } from "@/components/app/feedback/modal";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
 import { useUserStore } from "@/stores/user-store";
 import { logError } from "@/utils/logging";
 

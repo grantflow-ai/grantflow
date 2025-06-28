@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 
-import { LegalPageContainer, TitledLegalSection, UntitledLegalSection } from "@/components/info-legal-page-components";
+import {
+	LegalPageContainer,
+	TitledLegalSection,
+	UntitledLegalSection,
+} from "@/components/shared/info-legal-page-components";
 
 describe("LegalPageContainer", () => {
 	describe("Default Props", () => {

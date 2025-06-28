@@ -9,7 +9,7 @@ vi.mock("@/components/about/icons", () => ({
 	IconRefine: vi.fn().mockImplementation(() => <div data-testid="mock-icon-refine" />),
 }));
 
-vi.mock("@/components/info-legal-page-components", () => ({
+vi.mock("@/components/shared/info-legal-page-components", () => ({
 	LegalPageContainer: vi.fn().mockImplementation(({ backgroundStack, children, ...props }) => (
 		<div
 			data-background={props.background}
@@ -27,7 +27,7 @@ vi.mock("@/components/info-legal-page-components", () => ({
 	)),
 }));
 
-vi.mock("@/components/brand-pattern", () => ({
+vi.mock("@/components/branding/brand-pattern", () => ({
 	BrandPattern: vi
 		.fn()
 		.mockImplementation((props) => (
