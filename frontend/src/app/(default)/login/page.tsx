@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { login } from "@/actions/login";
+import { AppCard, AppCardContent } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
@@ -19,7 +20,6 @@ import { LogoDark } from "@/components/branding/logo";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
-import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
@@ -151,12 +151,12 @@ export default function Login() {
 			>
 				<div className="z-10 flex w-full flex-col items-center justify-center" data-testid="login-card-wrapper">
 					<div className="relative" data-testid="login-card-container">
-						<Card
+						<AppCard
 							className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9"
 							data-testid="login-card"
 						>
 							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
-							<CardContent data-testid="login-card-content">
+							<AppCardContent data-testid="login-card-content">
 								<LoginForm
 									isLoading={isLoading}
 									onSubmit={({ email }) => handleEmailSignin(email)}
@@ -204,8 +204,8 @@ export default function Login() {
 										</Link>
 									</AppButton>
 								</div>
-							</CardContent>
-						</Card>
+							</AppCardContent>
+						</AppCard>
 					</div>
 				</div>
 			</div>

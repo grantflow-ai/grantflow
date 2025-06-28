@@ -19,7 +19,7 @@ async function resetShadcnComponents() {
 			.map((file) => file.replace(".tsx", ""))
 			.sort();
 		console.log(`✅ Found ${existingComponents.length} components: ${existingComponents.join(", ")}\n`);
-	} catch (error) {
+	} catch {
 		console.log("⚠️  UI directory doesn't exist or couldn't be read\n");
 		return;
 	}

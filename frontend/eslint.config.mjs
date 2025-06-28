@@ -132,6 +132,47 @@ export default eslintTS.config(
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
 			"no-console": "warn",
+			"no-restricted-imports": [
+				"error",
+				{
+					"paths": [
+						{
+							"message": "Please use @/components/app (AppAvatar, AvatarGroup) instead.",
+							"name": "@/components/ui/avatar"
+						},
+						{
+							"message": "Please use @/components/app (AppButton, SubmitButton) instead.",
+							"name": "@/components/ui/button"
+						},
+						{
+							"message": "Please use @/components/app (AppCard, AppCardAction, etc.) instead.",
+							"name": "@/components/ui/card"
+						},
+						{
+							"message": "Please use @/components/app (AppDialog, AppDialogContent, etc.) instead.",
+							"name": "@/components/ui/dialog"
+						},
+						{
+							"message": "Please use @/components/app (AppDropdownMenu, AppDropdownMenuItem, etc.) instead.",
+							"name": "@/components/ui/dropdown-menu"
+						},
+						{
+							"message": "Please use @/components/app (AppInput) instead.",
+							"name": "@/components/ui/input"
+						},
+						{
+							"message": "Please use @/components/app (AppTextarea) instead.",
+							"name": "@/components/ui/textarea"
+						}
+					],
+					"patterns": [
+						{
+							"group": ["@/components/ui/avatar", "@/components/ui/button", "@/components/ui/card", "@/components/ui/dialog", "@/components/ui/dropdown-menu", "@/components/ui/input", "@/components/ui/textarea"],
+							"message": "Please use the corresponding components from @/components/app instead."
+						}
+					]
+				}
+			],
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
 			"paths/alias": "error",
@@ -190,6 +231,18 @@ export default eslintTS.config(
 		ignores: ["**/coverage"],
 		rules: {
 			"@typescript-eslint/no-misused-promises": "off",
+		},
+	},
+	{
+		files: ["**/src/components/app/**/*.{ts,tsx}"],
+		rules: {
+			"no-restricted-imports": "off",
+		},
+	},
+	{
+		files: ["**/*.spec.{ts,tsx}", "**/*.test.{ts,tsx}", "**/scripts/**/*.ts", "**/src/components/ui/**/*.{ts,tsx}"],
+		rules: {
+			"no-restricted-imports": "off",
 		},
 	},
 	{

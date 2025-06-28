@@ -4,11 +4,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createProject } from "@/actions/project";
+import { AppCard, AppCardContent, AppInput, AppTextarea } from "@/components/app";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { logError } from "@/utils/logging";
 
 const projectSchema = z.object({
@@ -36,8 +34,8 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 	};
 
 	return (
-		<Card className="mx-auto w-full max-w-2xl">
-			<CardContent className="p-6">
+		<AppCard className="mx-auto w-full max-w-2xl">
+			<AppCardContent className="p-6">
 				<Form {...form}>
 					<form
 						className="space-y-6"
@@ -51,7 +49,7 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 								<FormItem>
 									<FormLabel>Name *</FormLabel>
 									<FormControl>
-										<Input
+										<AppInput
 											{...field}
 											className="w-full"
 											data-testid="create-project-name-input"
@@ -68,7 +66,7 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 								<FormItem>
 									<FormLabel>Description</FormLabel>
 									<FormControl>
-										<Textarea
+										<AppTextarea
 											{...field}
 											className="min-h-[100px] w-full"
 											data-testid="create-project-description-textarea"
@@ -88,7 +86,7 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 						</SubmitButton>
 					</form>
 				</Form>
-			</CardContent>
-		</Card>
+			</AppCardContent>
+		</AppCard>
 	);
 }

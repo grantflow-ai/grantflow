@@ -1,8 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-
+import { AppCard, AppCardContent } from "@/components/app";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { PagePath } from "@/enums";
 
 import type { API } from "@/types/api-types";
@@ -19,8 +18,8 @@ export function ProjectCard({ project }: { project: API.ListProjects.Http200.Res
 
 	return (
 		<Link className="block" data-testid={`project-link-${project.id}`} href={url}>
-			<Card className="hover:bg-muted/50 group overflow-hidden transition-all duration-300 hover:shadow-md">
-				<CardContent className="p-4">
+			<AppCard className="hover:bg-muted/50 group overflow-hidden transition-all duration-300 hover:shadow-md">
+				<AppCardContent className="p-4">
 					<div className="flex items-start justify-between gap-4">
 						<div className="grow">
 							<h3 className="mb-1 line-clamp-1 text-base font-semibold">{project.name}</h3>
@@ -36,8 +35,8 @@ export function ProjectCard({ project }: { project: API.ListProjects.Http200.Res
 					<div className="mt-2 flex items-center justify-end">
 						<ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-all duration-300 group-hover:translate-x-1" />
 					</div>
-				</CardContent>
-			</Card>
+				</AppCardContent>
+			</AppCard>
 		</Link>
 	);
 }
