@@ -30,7 +30,13 @@ export function CreateApplicationButton({ className, projectId }: CreateApplicat
 	};
 
 	return (
-		<Button className={className} disabled={isCreating} onClick={handleCreateApplication} size="sm">
+		<Button
+			className={className}
+			data-testid="create-application-button"
+			disabled={isCreating}
+			onClick={handleCreateApplication}
+			size="sm"
+		>
 			{isCreating ? "Creating..." : "New Application"}
 		</Button>
 	);
