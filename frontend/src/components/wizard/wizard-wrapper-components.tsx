@@ -9,8 +9,8 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/projects/shared/icons";
-import { DevPanel } from "@/components/projects/wizard/dev-tools/dev-panel";
 import { WizardStep } from "@/constants";
+import { DevPanel } from "@/dev-tools/components/dev-panel";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
