@@ -70,7 +70,7 @@ describe("api", () => {
 			expect(ky.create).toHaveBeenCalledWith({
 				hooks: expect.any(Object),
 				prefixUrl: "https://api.example.com",
-				timeout: 600000, // 10 minutes
+				timeout: 600_000, // 10 minutes
 			});
 
 			expect(client).toBe(mockKyInstance);
@@ -87,8 +87,9 @@ describe("api", () => {
 		it("should configure afterResponse hook correctly", () => {
 			getClient();
 
-			const createCall = vi.mocked(ky.create).mock.calls[0][0];
-			const afterResponseHook = createCall.hooks?.afterResponse?.[0];
+			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
+			expect(createCall).toBeDefined();
+			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
 
 			if (afterResponseHook) {
 				const result = afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
@@ -108,8 +109,9 @@ describe("api", () => {
 		it("should configure beforeError hook correctly", () => {
 			getClient();
 
-			const createCall = vi.mocked(ky.create).mock.calls[0][0];
-			const beforeErrorHook = createCall.hooks?.beforeError?.[0];
+			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
+			expect(createCall).toBeDefined();
+			const beforeErrorHook = createCall!.hooks?.beforeError?.[0];
 
 			if (beforeErrorHook) {
 				const mockError = {
@@ -136,11 +138,12 @@ describe("api", () => {
 		it("should configure beforeRequest hook correctly", () => {
 			getClient();
 
-			const createCall = vi.mocked(ky.create).mock.calls[0][0];
-			const beforeRequestHook = createCall.hooks?.beforeRequest?.[0];
+			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
+			expect(createCall).toBeDefined();
+			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
 
 			if (beforeRequestHook) {
-				beforeRequestHook(mockRequest as any);
+				beforeRequestHook(mockRequest as any, {} as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test", {
 					correlation_id: "test-correlation-id",
@@ -154,8 +157,9 @@ describe("api", () => {
 		it("should handle missing headers gracefully", () => {
 			getClient();
 
-			const createCall = vi.mocked(ky.create).mock.calls[0][0];
-			const afterResponseHook = createCall.hooks?.afterResponse?.[0];
+			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
+			expect(createCall).toBeDefined();
+			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
 
 			const requestWithNoHeaders = {
 				...mockRequest,
@@ -180,8 +184,9 @@ describe("api", () => {
 		it("should handle different HTTP methods", () => {
 			getClient();
 
-			const createCall = vi.mocked(ky.create).mock.calls[0][0];
-			const beforeRequestHook = createCall.hooks?.beforeRequest?.[0];
+			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
+			expect(createCall).toBeDefined();
+			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
 
 			const methods = ["POST", "PUT", "DELETE", "PATCH"];
 
@@ -189,7 +194,7 @@ describe("api", () => {
 				const request = { ...mockRequest, method };
 
 				if (beforeRequestHook) {
-					beforeRequestHook(request as any);
+					beforeRequestHook(request as any, {} as any);
 
 					expect(log.info).toHaveBeenCalledWith(
 						`API ${method} https://api.example.com/test`,
@@ -204,8 +209,9 @@ describe("api", () => {
 		it("should handle different response statuses", () => {
 			getClient();
 
-			const createCall = vi.mocked(ky.create).mock.calls[0][0];
-			const afterResponseHook = createCall.hooks?.afterResponse?.[0];
+			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
+			expect(createCall).toBeDefined();
+			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
 
 			const statuses = [201, 204, 301, 400, 401, 403, 404, 500];
 
@@ -230,7 +236,7 @@ describe("api", () => {
 
 			expect(ky.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					timeout: 600000, // 10 minutes (60 * 1000 * 10)
+					timeout: 600_000, // 10 minutes (60 * 1000 * 10)
 				}),
 			);
 		});
