@@ -125,12 +125,12 @@ async def test_work_plan_generation_baseline(
                 }
 
                 logger.info(
-                    "Work plan generation completed",
-                    duration_seconds=generation_duration,
-                    text_length=text_length,
-                    word_count=word_count,
-                    objectives_count=len(research_objectives),
-                    words_per_second=baseline_results["words_per_second"],
+                    "Work plan generation completed in %.2f seconds, %d characters, %d words, %d objectives, %.2f words/second",
+                    generation_duration,
+                    text_length,
+                    word_count,
+                    len(research_objectives),
+                    baseline_results["words_per_second"],
                 )
 
             except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:

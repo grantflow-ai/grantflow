@@ -7,10 +7,10 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from packages.shared_utils.src.ai import estimate_token_count
 from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.grant_application.generate_section_text import generate_section_text
-from services.rag.src.utils.token_optimization import estimate_token_count
 from services.rag.tests.e2e.performance_framework import TestCategory
 from services.rag.tests.e2e.performance_utils import (
     assert_performance_targets,

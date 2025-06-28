@@ -100,7 +100,7 @@ async def test_grant_template_performance_basic(
 
     with perf_ctx.stage_timer("metadata_generation"):
         await asyncio.sleep(0.2)
-        perf_ctx.add_llm_call(1)
+        perf_ctx.add_llm_call()
 
     section_content = []
     full_content = ""
@@ -169,7 +169,7 @@ async def test_grant_template_performance_basic(
 
     assert len(section_content) >= 5, f"Expected at least 5 sections, got {len(section_content)}"
 
-    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_performance_targets(perf_ctx.result)
     assert_quality_targets(perf_ctx.result, min_score=60.0)
 
 
@@ -201,7 +201,7 @@ async def test_grant_template_component_performance(
 
     with perf_ctx.stage_timer("cfp_extraction"):
         await asyncio.sleep(0.3)
-        perf_ctx.add_llm_call(1)
+        perf_ctx.add_llm_call()
 
     with perf_ctx.stage_timer("section_extraction"):
         await asyncio.sleep(0.4)
@@ -209,7 +209,7 @@ async def test_grant_template_component_performance(
 
     with perf_ctx.stage_timer("metadata_generation"):
         await asyncio.sleep(0.1)
-        perf_ctx.add_llm_call(1)
+        perf_ctx.add_llm_call()
 
     mock_template_content = """
     # Grant Template: Component Performance Test
@@ -256,10 +256,10 @@ async def test_grant_template_component_performance(
     logger.info("Component performance test completed with unified framework")
 
     assert_performance_targets(perf_ctx.result, min_grade="B")
-    assert_quality_targets(perf_ctx.result, min_score=70.0)
+    assert_quality_targets(perf_ctx.result)
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
+@e2e_test(timeout=300)
 @patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock)
 async def test_grant_template_baseline_performance(
     mock_publish: AsyncMock,
@@ -346,7 +346,6 @@ async def test_grant_template_baseline_performance(
         if hasattr(section, "title"):
             title = cast("dict[str, Any]", section).get("title", "")
 
-            content = ""
             if hasattr(section, "generation_instructions"):
                 content = f"Instructions: {cast('dict[str, Any]', section).get('generation_instructions', '')[:200]}..."
             elif hasattr(section, "content"):
@@ -385,11 +384,11 @@ async def test_grant_template_baseline_performance(
     assert perf_ctx.llm_calls_made > 0, "Should have made LLM API calls"
     assert len(section_content) >= 5, "Should have substantial section content"
 
-    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_performance_targets(perf_ctx.result)
     assert_quality_targets(perf_ctx.result, min_score=60.0)
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
+@e2e_test(timeout=300)
 @patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock)
 async def test_grant_template_stage_breakdown_analysis(
     mock_publish: AsyncMock,
@@ -486,5 +485,5 @@ async def test_grant_template_stage_breakdown_analysis(
     assert processing_time > 0, "Should have positive processing time"
     assert per_section_time < 60, f"Per-section time should be reasonable: {per_section_time:.1f}s"
 
-    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_performance_targets(perf_ctx.result)
     assert_quality_targets(perf_ctx.result, min_score=50.0)

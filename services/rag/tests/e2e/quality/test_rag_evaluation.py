@@ -67,7 +67,7 @@ async def test_retrieval_smoke(
     )
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
+@e2e_test(timeout=600)
 async def test_retrieval_quality_assessment(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -165,7 +165,7 @@ async def test_retrieval_semantic_evaluation(
     logger.info("Semantic evaluation completed with AI relevance: %.2f", ai_evaluation.get("avg_relevance", 0))
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
+@e2e_test(timeout=600)
 @pytest.mark.parametrize("cfp_name", ["melanoma_alliance", "nih"])
 async def test_query_generation_quality(
     logger: logging.Logger,
@@ -219,7 +219,7 @@ async def test_query_generation_quality(
     logger.info("Query generation quality test completed for %s with %d queries", cfp_name, len(queries))
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
+@e2e_test(timeout=600)
 @pytest.mark.parametrize("cfp_name", ["melanoma_alliance", "standard_awards"])
 async def test_cfp_extraction_quality(
     logger: logging.Logger,

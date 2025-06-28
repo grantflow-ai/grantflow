@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.e2e_utils import e2e_test
 
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.src.grant_template.handler import extract_and_enrich_sections
@@ -32,7 +32,7 @@ async def create_job_manager_for_test(session_maker: Any, grant_application_id: 
     return job_manager
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=600)
+@e2e_test(timeout=600)
 @patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock)
 async def test_optimization_cache_effectiveness(
     mock_publish: AsyncMock,
@@ -48,7 +48,7 @@ async def test_optimization_cache_effectiveness(
     template_id_1 = str(uuid4())
     template_id_2 = str(uuid4())
 
-    async with grant_template_test(
+    with grant_template_test(
         test_name="optimization_cache_effectiveness",
         logger=logger,
         configuration={
@@ -130,11 +130,11 @@ async def test_optimization_cache_effectiveness(
 
         assert cfp_result_1 == cfp_result_2, "Cached result should be identical to original"
 
-    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_performance_targets(perf_ctx.result)
     assert_quality_targets(perf_ctx.result, min_score=60.0)
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=900)
+@e2e_test(timeout=900)
 @patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock)
 async def test_end_to_end_pipeline_optimization(
     mock_publish: AsyncMock,
@@ -149,7 +149,7 @@ async def test_end_to_end_pipeline_optimization(
     """
     template_id = str(uuid4())
 
-    async with grant_template_test(
+    with grant_template_test(
         test_name="end_to_end_pipeline_optimization",
         logger=logger,
         configuration={
@@ -206,7 +206,7 @@ async def test_end_to_end_pipeline_optimization(
         - **Total Time**: {total_time:.2f}s
         - **Sections Generated**: {len(sections)}
         - **LLM Calls**: {perf_ctx.llm_calls_made}
-        - **Performance Grade**: {perf_ctx.result.performance_grade if hasattr(perf_ctx.result, "performance_grade") else "N/A"}
+        - **Performance Grade**: {perf_ctx.result.performance_grade if perf_ctx.result and hasattr(perf_ctx.result, "performance_grade") else "N/A"}
 
         ## Stage Breakdown
         - **RAG Setup**: {rag_time:.2f}s ({rag_time / total_time * 100:.1f}%)
@@ -214,11 +214,11 @@ async def test_end_to_end_pipeline_optimization(
         - **Section Processing**: {section_time:.2f}s ({section_time / total_time * 100:.1f}%)
 
         ## Optimization Features Active
-        ✓ Intelligent CFP extraction caching
-        ✓ Batch metadata generation
-        ✓ Optimized prompt templates (reduced tokens)
-        ✓ Parallel database query execution
-        ✓ Empty chunk filtering
+        Intelligent CFP extraction caching
+        Batch metadata generation
+        Optimized prompt templates (reduced tokens)
+        Parallel database query execution
+        Empty chunk filtering
 
         ## Quality Metrics
         - Sections with valid titles: {sum(1 for s in sections if hasattr(s, "title"))}
@@ -245,5 +245,5 @@ async def test_end_to_end_pipeline_optimization(
         assert total_time > 0, "Pipeline should take positive time"
         assert perf_ctx.llm_calls_made > 0, "Should make LLM calls"
 
-    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_performance_targets(perf_ctx.result)
     assert_quality_targets(perf_ctx.result, min_score=60.0)
