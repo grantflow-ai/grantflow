@@ -105,10 +105,10 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 
 	// Register mock handlers once
 	if (!mockHandlersRegistered) {
-		const { registerMockHandlers } = await import("@/dev-tools/mock-api/register");
-		registerMockHandlers();
+		const { initializeMockAPI } = await import("@/dev-tools/mock-api/init");
+		initializeMockAPI();
 		mockHandlersRegistered = true;
-		log.info("[Mock API] Mock handlers registered");
+		log.info("[Mock API] Mock API initialized");
 	}
 
 	try {
