@@ -1,5 +1,5 @@
-import { IconGoAhead } from "@/components/icons";
-import { ScrollButton } from "@/components/scroll-button";
+import { IconGoAhead } from "@/components/branding/icons";
+import { ScrollButton } from "@/components/layout/navigation/scroll-button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PaymentRecurrence } from "./payment-plan.types";
