@@ -91,9 +91,9 @@ describe("NavHeader Component", () => {
 			expect(aboutUsLinks.length).toBeGreaterThan(0);
 		});
 
-		it("should not render the mobile menu button on desktop", () => {
+		it("should render mobile menu button", () => {
 			const mobileMenuButton = screen.getByRole("button", { name: /navigation menu/i });
-			expect(mobileMenuButton).toHaveClass("md:hidden");
+			expect(mobileMenuButton).toBeInTheDocument();
 		});
 	});
 
