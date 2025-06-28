@@ -248,13 +248,13 @@ describe("FilePreviewCard", () => {
 			expect(cardElement).toHaveClass("hover:bg-app-gray-100");
 		});
 
-		it("renders file icon with correct dimensions", () => {
+		it("renders file icon container", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			const iconContainerDiv = button.querySelector("div.mb-1 div.flex");
-			expect(iconContainerDiv).toHaveClass("flex");
+			const fileIcon = screen.getByTestId("file-icon");
+			expect(fileIcon).toBeInTheDocument();
+			expect(fileIcon).toHaveClass("flex", "h-14", "w-12", "items-center", "justify-center");
 		});
 	});
 

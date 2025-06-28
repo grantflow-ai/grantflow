@@ -32,7 +32,7 @@ describe("SWRProvider", () => {
 		);
 
 		const swrConfig = screen.getByTestId("swr-config");
-		const configData = JSON.parse(swrConfig.dataset.swrConfig || "{}");
+		const configData = JSON.parse(swrConfig.dataset.swrConfig ?? "{}");
 
 		expect(configData).toEqual({
 			dedupingInterval: 2000,
@@ -80,7 +80,7 @@ describe("SWRProvider", () => {
 			</SWRProvider>,
 		);
 
-		const initialConfig = JSON.parse(screen.getByTestId("swr-config").dataset.swrConfig || "{}");
+		const initialConfig = JSON.parse(screen.getByTestId("swr-config").dataset.swrConfig ?? "{}");
 
 		rerender(
 			<SWRProvider>
@@ -88,7 +88,7 @@ describe("SWRProvider", () => {
 			</SWRProvider>,
 		);
 
-		const updatedConfig = JSON.parse(screen.getByTestId("swr-config").dataset.swrConfig || "{}");
+		const updatedConfig = JSON.parse(screen.getByTestId("swr-config").dataset.swrConfig ?? "{}");
 
 		expect(initialConfig).toEqual(updatedConfig);
 	});

@@ -93,7 +93,7 @@ describe("LinkPreviewItem", () => {
 		it("calls store removeUrl when remove icon is clicked and parentId is provided", async () => {
 			const url = "https://example.com";
 			const parentId = "parent-123";
-			render(<LinkPreviewItem url={url} parentId={parentId} />);
+			render(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			fireEvent.click(removeIcon);
@@ -116,13 +116,13 @@ describe("LinkPreviewItem", () => {
 			const url2 = "https://example2.com";
 			const parentId = "parent-456";
 
-			const { rerender } = render(<LinkPreviewItem url={url1} parentId={parentId} />);
+			const { rerender } = render(<LinkPreviewItem parentId={parentId} url={url1} />);
 			fireEvent.click(screen.getByTestId("link-remove-icon"));
 			expect(mockRemoveUrl).toHaveBeenCalledWith(url1, parentId);
 
 			mockRemoveUrl.mockClear();
 
-			rerender(<LinkPreviewItem url={url2} parentId={parentId} />);
+			rerender(<LinkPreviewItem parentId={parentId} url={url2} />);
 			fireEvent.click(screen.getByTestId("link-remove-icon"));
 			expect(mockRemoveUrl).toHaveBeenCalledWith(url2, parentId);
 		});
@@ -159,7 +159,7 @@ describe("LinkPreviewItem", () => {
 		it("has clickable remove icon", () => {
 			const url = "https://example.com";
 			const parentId = "parent-123";
-			render(<LinkPreviewItem url={url} parentId={parentId} />);
+			render(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			expect(removeIcon).toBeInTheDocument();
@@ -211,13 +211,13 @@ describe("LinkPreviewItem", () => {
 			const url = "https://example.com";
 			const parentId = "parent-123";
 
-			const { rerender } = render(<LinkPreviewItem url={url} parentId={parentId} />);
+			const { rerender } = render(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			// Verify initial render
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 
 			// Re-render with same props
-			rerender(<LinkPreviewItem url={url} parentId={parentId} />);
+			rerender(<LinkPreviewItem parentId={parentId} url={url} />);
 
 			// Should still work
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
