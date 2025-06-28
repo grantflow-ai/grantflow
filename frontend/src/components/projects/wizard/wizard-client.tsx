@@ -103,25 +103,20 @@ export function WizardClientComponent({ application: initialApplication, project
 		}
 	}, [latestRagNotification, ragJobState.restoredJob]);
 
-	// Track grant template generation state
 	useEffect(() => {
 		if (!latestRagNotification) return;
 
 		const { event } = latestRagNotification.data;
 
-		// Start generating state
 		if (event === "grant_template_generation_started") {
 			setGeneratingTemplate(true);
 		}
 
-		// End generating state and refresh application
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
-			// Refresh application data to get updated grant sections
 			void retrieveApplication(projectId, initialApplication.id);
 		}
 
-		// Handle errors
 		if (event === "generation_error" || event === "pipeline_error") {
 			setGeneratingTemplate(false);
 		}
@@ -134,7 +129,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				{stepComponents[currentStep]}
 			</section>
 			<WizardFooter />
-			{/* Show latest RAG notification in toast */}
+
 			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
 		</div>
 	);

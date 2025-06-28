@@ -16,8 +16,8 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"paths": {
-			"::testing/*": ["testing/*"],
 			"::storybook/*": [".storybook/*"],
+			"::testing/*": ["testing/*"],
 			"@/*": ["src/*"]
 		},
 		"plugins": [
