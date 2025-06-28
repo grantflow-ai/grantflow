@@ -1,0 +1,96 @@
+{
+  "test_name": "post_processing_pipeline_performance",
+  "test_category": "optimization",
+  "timestamp": "2025-06-28T01:44:08.346071",
+  "test_id": "c773c7f0-ea43-42c5-b189-f6353d43f9ac",
+  "configuration": {
+    "test_type": "cpu_intensive_performance",
+    "operation": "document_post_processing",
+    "document_sizes": [
+      "small",
+      "medium",
+      "large"
+    ],
+    "processing_steps": [
+      "spacy_nlp",
+      "bm25_ranking",
+      "semantic_similarity"
+    ]
+  },
+  "total_duration_seconds": 0.000929,
+  "total_duration_minutes": 1.5483333333333335e-05,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 83.7,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 1946,
+    "total_words": 229,
+    "total_lines": 57,
+    "section_count": 7,
+    "avg_chars_per_section": 278.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": true,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [
+      "post",
+      "processing",
+      "nlp",
+      "ranking",
+      "performance"
+    ],
+    "content_richness_score": 38.92,
+    "structure_quality_score": 25.0,
+    "completeness_score": 100,
+    "overall_quality_score": 45.568,
+    "meets_min_length": true,
+    "meets_min_sections": true,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "optimization"
+  },
+  "errors_encountered": [],
+  "warnings": [
+    "Low processing rate: 0.0 docs/second"
+  ]
+}

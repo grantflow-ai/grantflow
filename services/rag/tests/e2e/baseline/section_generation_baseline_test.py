@@ -198,13 +198,7 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                         "error": str(e),
                     })
 
-                    logger.error(
-                        "Section generation failed",
-                        section_type=section_type,
-                        duration_seconds=section_duration,
-                        error=str(e),
-                        exc_info=e
-                    )
+                    logger.error("Section generation failed", exc_info=e)
 
 
         successful_sections = [r for r in section_results if r["success"]]

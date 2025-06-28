@@ -1,0 +1,25 @@
+{
+  "test_name": "test_prompt_optimization_impact",
+  "test_category": "quality_assessment",
+  "status": "failed",
+  "error": {
+    "type": "ValueError",
+    "message": "min() iterable argument is empty",
+    "execution_time_before_failure": 0.0030090808868408203
+  },
+  "performance": {
+    "execution_time": 0.0030090808868408203,
+    "timeout_reached": false,
+    "timeout_utilization": 3.3434232076009115e-06
+  },
+  "diagnostic_info": {
+    "timeout_configured": 900,
+    "category": "quality_assessment",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "async_session_maker",
+      "logger"
+    ]
+  },
+  "timestamp": "2025-06-28T00:12:49.843315+00:00"
+}

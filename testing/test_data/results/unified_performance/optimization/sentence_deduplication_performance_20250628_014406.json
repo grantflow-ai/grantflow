@@ -1,0 +1,84 @@
+{
+  "test_name": "sentence_deduplication_performance",
+  "test_category": "optimization",
+  "timestamp": "2025-06-28T01:44:06.498515",
+  "test_id": "f9f9cf59-3721-41b8-9cbb-436bfb236976",
+  "configuration": {
+    "test_type": "deduplication_performance",
+    "operation": "sentence_similarity_analysis",
+    "complexity": "quadratic_n_squared"
+  },
+  "total_duration_seconds": 0.064196,
+  "total_duration_minutes": 0.0010699333333333333,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 84.2,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 2184,
+    "total_words": 252,
+    "total_lines": 64,
+    "section_count": 7,
+    "avg_chars_per_section": 312.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": true,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [
+      "deduplication",
+      "similarity",
+      "embedding",
+      "performance"
+    ],
+    "content_richness_score": 43.68,
+    "structure_quality_score": 25.0,
+    "completeness_score": 100,
+    "overall_quality_score": 47.472,
+    "meets_min_length": true,
+    "meets_min_sections": true,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "optimization"
+  },
+  "errors_encountered": [],
+  "warnings": []
+}

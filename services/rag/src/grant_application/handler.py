@@ -14,7 +14,6 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.sync import batched_gather
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -22,12 +21,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
-from services.rag.src.grant_application.generate_section_text import generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
 from services.rag.src.grant_application.optimized_batch_enrichment import handle_optimized_batch_enrichment
+from services.rag.src.grant_application.optimized_section_generation import (
+    optimized_generate_grant_section_texts,
+)
 from services.rag.src.grant_application.utils import (
-    create_dependencies_text,
-    create_generation_groups,
     generate_application_text,
     is_grant_long_form_section,
 )
@@ -233,50 +232,14 @@ async def generate_grant_section_texts(
     research_objectives: list[ResearchObjective],
     job_manager: JobManager,
 ) -> dict[str, str]:
-    section_texts: dict[str, str] = {}
-    research_plan_section = next(
-        s for s in grant_sections if is_grant_long_form_section(s) and s.get("is_detailed_research_plan")
-    )
-    research_plan_text = await generate_work_plan_text(
+
+    return await optimized_generate_grant_section_texts(
         application_id=application_id,
-        work_plan_section=research_plan_section,
-        research_objectives=research_objectives,
         form_inputs=form_inputs,
+        grant_sections=grant_sections,
+        research_objectives=research_objectives,
         job_manager=job_manager,
     )
-    section_texts[research_plan_section["id"]] = research_plan_text
-
-    long_form_sections = [
-        s for s in grant_sections if is_grant_long_form_section(s) and not s.get("is_detailed_research_plan")
-    ]
-    for section in long_form_sections:
-        # we inject the research_plan text into all sections regardless of dependencies ~keep
-        section["depends_on"] = [v for v in section["depends_on"] if v != research_plan_section["id"]]
-
-    generation_groups = create_generation_groups(sections=long_form_sections)
-    for generation_group in generation_groups:
-        results = await batched_gather(
-            *[
-                (
-                    generate_section_text(
-                        application_id=application_id,
-                        grant_section=section,
-                        dependencies=create_dependencies_text(
-                            depends_on=section["depends_on"],
-                            texts=section_texts,
-                        ),
-                        form_inputs=form_inputs,
-                        research_plan_text=research_plan_text,
-                    )
-                )
-                for section in generation_group
-            ],
-            batch_size=3,
-        )
-        section_texts.update({section["id"]: result for section, result in zip(generation_group, results, strict=True)})
-        logger.debug("Generated texts for sections.", keys=[section["id"] for section in generation_group])
-
-    return section_texts
 
 
 async def grant_application_text_generation_pipeline_handler(

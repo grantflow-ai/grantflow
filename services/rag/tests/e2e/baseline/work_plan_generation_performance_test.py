@@ -2,7 +2,7 @@
 Performance tests for work plan generation pipeline.
 
 Tests critical performance bottlenecks in work plan generation:
-1. Relationship extraction performance 
+1. Relationship extraction performance
 2. Text generation parallelization opportunities
 3. Shared retrieval vs individual retrieval calls
 4. Prompt optimization potential
@@ -13,20 +13,17 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.e2e_utils import E2ETestCategory, e2e_test
-from testing.factories import ResearchObjectiveFactory
-
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
 from services.rag.src.grant_application.handler import generate_work_plan_text
-from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
 from services.rag.src.utils.retrieval import retrieve_documents
-from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.performance_framework import TestCategory
 from services.rag.tests.e2e.performance_utils import (
     assert_performance_targets,
     create_performance_context,
 )
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.factories import ResearchObjectiveFactory
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=1800)
@@ -54,9 +51,9 @@ async def test_work_plan_generation_baseline(
 
         logger.info("=== WORK PLAN GENERATION BASELINE TEST ===")
 
-        # Create test data
+
         application_id = "550e8400-e29b-41d4-a716-446655440020"
-        
+
         form_inputs = ResearchDeepDive(
             research_domain="Melanoma Immunotherapy",
             research_question="How can we overcome resistance mechanisms in melanoma immunotherapy?",
@@ -64,7 +61,7 @@ async def test_work_plan_generation_baseline(
             innovation_aspects="Novel resistance pathway identification and targeted intervention",
             expected_outcomes="Improved patient response rates and treatment durability"
         )
-        
+
         research_objectives = [
             ResearchObjectiveFactory.build(
                 title=f"Research Objective {i+1}",
@@ -73,34 +70,34 @@ async def test_work_plan_generation_baseline(
             )
             for i, focus_area in enumerate([
                 "resistance mechanism identification",
-                "biomarker discovery", 
+                "biomarker discovery",
                 "combination therapy development",
                 "treatment optimization",
                 "patient stratification"
             ])
         ]
-        
+
         work_plan_section = GrantLongFormSection(
             title="Research Work Plan",
             description="Detailed research methodology and timeline",
             order=3
         )
 
-        # Mock job manager for test
+
         class MockJobManager:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.session_maker = async_session_maker
                 self.job_id = None
-                
-            async def add_notification(self, *args, **kwargs):
+
+            async def add_notification(self, *args, **kwargs) -> None:
                 return None
-                
+
             async def create_job(self, *args, **kwargs):
                 return {"id": "mock-job-id", "status": "completed"}
 
         job_manager = MockJobManager()
 
-        # Measure complete work plan generation
+
         with perf_ctx.stage_timer("complete_work_plan_generation"):
             generation_start = datetime.now(UTC)
 
@@ -115,10 +112,10 @@ async def test_work_plan_generation_baseline(
 
                 generation_duration = (datetime.now(UTC) - generation_start).total_seconds()
 
-                # Analyze generated content
+
                 text_length = len(work_plan_text)
                 word_count = len(work_plan_text.split())
-                section_count = work_plan_text.count('\n\n')
+                section_count = work_plan_text.count("\n\n")
 
                 baseline_results = {
                     "duration": generation_duration,
@@ -150,7 +147,7 @@ async def test_work_plan_generation_baseline(
                 }
                 logger.error("Work plan generation failed", exc_info=e)
 
-        # Performance analysis
+
         performance_grade = "A" if generation_duration < 300 else "B" if generation_duration < 600 else "C"
         throughput_analysis = "High" if baseline_results.get("words_per_second", 0) > 5 else "Medium" if baseline_results.get("words_per_second", 0) > 2 else "Low"
 
@@ -199,7 +196,7 @@ async def test_work_plan_generation_baseline(
 
         section_analysis = [
             "Test Configuration",
-            "Performance Results", 
+            "Performance Results",
             "Throughput Analysis",
             "Bottleneck Analysis",
             "Optimization Recommendations",
@@ -209,7 +206,7 @@ async def test_work_plan_generation_baseline(
 
         perf_ctx.set_content(analysis_content, section_analysis)
 
-        # Add warnings for poor performance
+
         if generation_duration > 600:
             perf_ctx.add_warning(f"Very slow work plan generation: {generation_duration:.1f}s")
         if baseline_results.get("words_per_second", 0) < 1:
@@ -225,7 +222,7 @@ async def test_work_plan_generation_baseline(
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=1200)
 async def test_work_plan_parallel_text_generation(
-    async_session_maker: async_sessionmaker[Any], 
+    async_session_maker: async_sessionmaker[Any],
     logger: logging.Logger,
 ) -> None:
     """
@@ -247,9 +244,8 @@ async def test_work_plan_parallel_text_generation(
 
         logger.info("=== WORK PLAN PARALLEL TEXT GENERATION TEST ===")
 
-        application_id = "550e8400-e29b-41d4-a716-446655440021"
-        
-        form_inputs = ResearchDeepDive(
+
+        ResearchDeepDive(
             research_domain="Cancer Biomarker Discovery",
             research_question="Can we identify predictive biomarkers for immunotherapy response?",
             methodology_approach="Biomarker discovery and validation",
@@ -257,7 +253,7 @@ async def test_work_plan_parallel_text_generation(
             expected_outcomes="Improved treatment predictions"
         )
 
-        # Create test components for generation
+
         test_components = [
             {"title": f"Research Objective {i+1}", "description": f"Detailed objective {i+1} for biomarker discovery"}
             for i in range(4)
@@ -266,28 +262,27 @@ async def test_work_plan_parallel_text_generation(
             for i in range(4)
         ]
 
-        work_plan_text = "This is a preliminary work plan for biomarker discovery research."
 
-        # Test sequential text generation
+
         with perf_ctx.stage_timer("sequential_text_generation"):
             sequential_start = datetime.now(UTC)
 
             sequential_results = []
             for component in test_components:
                 component_start = datetime.now(UTC)
-                
+
                 try:
-                    # Simulate component text generation
+
                     component_text = f"Generated text for {component['title']}: {component['description']} " * 50
                     component_duration = (datetime.now(UTC) - component_start).total_seconds()
-                    
+
                     sequential_results.append({
                         "title": component["title"],
                         "duration": component_duration,
                         "text_length": len(component_text),
                         "success": True
                     })
-                    
+
                 except Exception as e:
                     sequential_results.append({
                         "title": component["title"],
@@ -298,18 +293,18 @@ async def test_work_plan_parallel_text_generation(
 
             sequential_total = (datetime.now(UTC) - sequential_start).total_seconds()
 
-        # Simulate parallel text generation timing
+
         with perf_ctx.stage_timer("parallel_text_generation_simulation"):
-            parallel_start = datetime.now(UTC)
-            
-            # In parallel processing, duration would be max of individual components
-            # rather than sum (assuming sufficient LLM concurrency)
+            datetime.now(UTC)
+
+
+
             max_component_duration = max(r["duration"] for r in sequential_results if r["success"])
-            parallel_estimated = max_component_duration * 1.2  # Add 20% overhead for coordination
-            
+            parallel_estimated = max_component_duration * 1.2
+
             parallel_total = parallel_estimated
 
-        # Analysis
+
         successful_components = [r for r in sequential_results if r["success"]]
         avg_component_time = sum(r["duration"] for r in successful_components) / len(successful_components) if successful_components else 0
         parallelization_improvement = (sequential_total - parallel_total) / sequential_total * 100 if sequential_total > 0 else 0
@@ -362,7 +357,7 @@ async def test_work_plan_parallel_text_generation(
         section_analysis = [
             "Test Configuration",
             "Sequential Processing Results",
-            "Parallel Processing Simulation", 
+            "Parallel Processing Simulation",
             "Parallelization Analysis",
             "Implementation Feasibility",
             "Optimization Recommendations",
@@ -371,7 +366,7 @@ async def test_work_plan_parallel_text_generation(
 
         perf_ctx.set_content(analysis_content, section_analysis)
 
-        # Add warnings for poor parallelization potential
+
         if parallelization_improvement < 30:
             perf_ctx.add_warning(f"Low parallelization benefit: {parallelization_improvement:.1f}%")
         if len(successful_components) < len(test_components):
@@ -409,7 +404,7 @@ async def test_work_plan_shared_retrieval_optimization(
 
         application_id = "550e8400-e29b-41d4-a716-446655440022"
         task_description = "Develop novel immunotherapy approaches for melanoma treatment resistance"
-        
+
         search_queries = [
             "melanoma immunotherapy resistance mechanisms",
             "combination therapy development",
@@ -419,14 +414,14 @@ async def test_work_plan_shared_retrieval_optimization(
             "therapeutic target validation"
         ]
 
-        # Test individual retrieval calls (current approach)
+
         with perf_ctx.stage_timer("individual_retrieval_calls"):
             individual_start = datetime.now(UTC)
-            
+
             individual_results = []
-            for i, query in enumerate(search_queries):
+            for _i, query in enumerate(search_queries):
                 retrieval_start = datetime.now(UTC)
-                
+
                 try:
                     documents = await retrieve_documents(
                         application_id=application_id,
@@ -434,9 +429,9 @@ async def test_work_plan_shared_retrieval_optimization(
                         task_description=task_description,
                         max_tokens=2000,
                     )
-                    
+
                     retrieval_duration = (datetime.now(UTC) - retrieval_start).total_seconds()
-                    
+
                     individual_results.append({
                         "query": query,
                         "duration": retrieval_duration,
@@ -444,7 +439,7 @@ async def test_work_plan_shared_retrieval_optimization(
                         "total_length": sum(len(doc) for doc in documents),
                         "success": True
                     })
-                    
+
                 except Exception as e:
                     individual_results.append({
                         "query": query,
@@ -455,27 +450,27 @@ async def test_work_plan_shared_retrieval_optimization(
 
             individual_total = (datetime.now(UTC) - individual_start).total_seconds()
 
-        # Test shared retrieval call (optimized approach)
+
         with perf_ctx.stage_timer("shared_retrieval_call"):
             shared_start = datetime.now(UTC)
-            
+
             try:
                 shared_documents = await retrieve_documents(
                     application_id=application_id,
                     search_queries=search_queries,
                     task_description=task_description,
-                    max_tokens=8000,  # Larger token limit for combined queries
+                    max_tokens=8000,
                 )
-                
+
                 shared_duration = (datetime.now(UTC) - shared_start).total_seconds()
-                
+
                 shared_results = {
                     "duration": shared_duration,
                     "document_count": len(shared_documents),
                     "total_length": sum(len(doc) for doc in shared_documents),
                     "success": True
                 }
-                
+
             except Exception as e:
                 shared_duration = (datetime.now(UTC) - shared_start).total_seconds()
                 shared_results = {
@@ -484,10 +479,10 @@ async def test_work_plan_shared_retrieval_optimization(
                     "success": False
                 }
 
-        # Analysis
+
         successful_individual = [r for r in individual_results if r["success"]]
         avg_individual_time = sum(r["duration"] for r in successful_individual) / len(successful_individual) if successful_individual else 0
-        
+
         if shared_results["success"] and successful_individual:
             time_savings = individual_total - shared_duration
             efficiency_improvement = (time_savings / individual_total) * 100 if individual_total > 0 else 0
@@ -553,7 +548,7 @@ async def test_work_plan_shared_retrieval_optimization(
             "Test Configuration",
             "Individual Retrieval Results",
             "Shared Retrieval Results",
-            "Optimization Analysis", 
+            "Optimization Analysis",
             "Content Quality Analysis",
             "Implementation Recommendations",
             "Performance Targets",
@@ -562,7 +557,7 @@ async def test_work_plan_shared_retrieval_optimization(
 
         perf_ctx.set_content(analysis_content, section_analysis)
 
-        # Add warnings for poor optimization results
+
         if efficiency_improvement < 20:
             perf_ctx.add_warning(f"Low retrieval optimization benefit: {efficiency_improvement:.1f}%")
         if not shared_results["success"]:

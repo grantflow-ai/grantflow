@@ -1,0 +1,88 @@
+{
+  "test_name": "section_generation_real_baseline",
+  "test_category": "baseline",
+  "timestamp": "2025-06-28T09:14:49.096004",
+  "test_id": "e813347b-a070-488e-833f-654c65caf1fd",
+  "configuration": {
+    "test_type": "real_baseline_measurement",
+    "operation": "section_text_generation",
+    "sections_count": 3,
+    "real_api_calls": true
+  },
+  "total_duration_seconds": 43.917066,
+  "total_duration_minutes": 0.7319511,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 87.6,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 2327,
+    "total_words": 283,
+    "total_lines": 72,
+    "section_count": 9,
+    "avg_chars_per_section": 258.55555555555554,
+    "has_objectives": true,
+    "has_work_plan": false,
+    "has_methodology": true,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [
+      "section",
+      "generation",
+      "baseline",
+      "car-t",
+      "therapy"
+    ],
+    "content_richness_score": 46.54,
+    "structure_quality_score": 50.0,
+    "completeness_score": 100,
+    "overall_quality_score": 58.616,
+    "meets_min_length": true,
+    "meets_min_sections": true,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "baseline"
+  },
+  "errors_encountered": [],
+  "warnings": [
+    "Low throughput: 7.3 words/second"
+  ]
+}

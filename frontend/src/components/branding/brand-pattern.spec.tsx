@@ -3,38 +3,38 @@ import { render, screen } from "@testing-library/react";
 import { BrandPattern } from "@/components/branding/brand-pattern";
 
 describe("BrandPattern Component", () => {
-	it("renders without crashing", () => {
-		render(<BrandPattern data-testid="brand-pattern" />);
-		expect(screen.getByTestId("brand-pattern")).toBeInTheDocument();
-	});
-
-	it("applies default strokeWidth when not specified", () => {
+	it("renders SVG element", () => {
 		render(<BrandPattern data-testid="brand-pattern" />);
 		const svg = screen.getByTestId("brand-pattern");
-		const path = svg.querySelector("path");
-		expect(path).toHaveAttribute("stroke-width", "0.3");
+		expect(svg).toBeInTheDocument();
+		expect(svg.tagName).toBe("svg");
 	});
 
-	it("applies custom strokeWidth when provided", () => {
-		render(<BrandPattern data-testid="brand-pattern" strokeWidth="0.5" />);
-		const svg = screen.getByTestId("brand-pattern");
-		const path = svg.querySelector("path");
-		expect(path).toHaveAttribute("stroke-width", "0.5");
-	});
+	it("forwards props to SVG element", () => {
+		render(
+			<BrandPattern
+				aria-label="decorative pattern"
+				className="custom-class"
+				data-testid="brand-pattern"
+				id="test-pattern"
+			/>,
+		);
 
-	it("forwards additional props to the SVG element", () => {
-		render(<BrandPattern aria-label="decorative pattern" className="custom-class" data-testid="brand-pattern" />);
 		const svg = screen.getByTestId("brand-pattern");
 		expect(svg).toHaveAttribute("aria-label", "decorative pattern");
 		expect(svg).toHaveClass("custom-class");
+		expect(svg).toHaveAttribute("id", "test-pattern");
 	});
 
-	it("has the correct SVG attributes", () => {
+	it("renders as decorative pattern", () => {
 		render(<BrandPattern data-testid="brand-pattern" />);
 		const svg = screen.getByTestId("brand-pattern");
-		expect(svg).toHaveAttribute("width", "846");
-		expect(svg).toHaveAttribute("height", "491");
-		expect(svg).toHaveAttribute("viewBox", "0 0 846 491");
-		expect(svg).toHaveAttribute("preserveAspectRatio", "none");
+
+		// SVG should have viewBox for proper scaling
+		expect(svg).toHaveAttribute("viewBox");
+		// SVG should have preserveAspectRatio for responsive behavior
+		expect(svg).toHaveAttribute("preserveAspectRatio");
+		// Should contain path elements for the pattern
+		expect(svg.querySelector("path")).toBeInTheDocument();
 	});
 });

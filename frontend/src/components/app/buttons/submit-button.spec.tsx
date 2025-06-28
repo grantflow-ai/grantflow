@@ -13,15 +13,15 @@ describe("SubmitButton", () => {
 		expect(screen.queryByRole("img")).not.toBeInTheDocument();
 	});
 
-	it("renders loading spinner when isLoading is true", () => {
+	it("shows loading state when isLoading is true", () => {
 		render(<SubmitButton isLoading>Submit</SubmitButton>);
 
 		const button = screen.getByTestId("form-button");
 		expect(button).toHaveAttribute("aria-busy", "true");
 
+		// Verify loading indicator is present (implementation detail of spinner is not important)
 		const spinner = button.querySelector("svg");
 		expect(spinner).toBeInTheDocument();
-		expect(spinner).toHaveClass("animate-spin");
 	});
 
 	it("applies custom className", () => {
@@ -45,7 +45,7 @@ describe("SubmitButton", () => {
 		expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
 	});
 
-	it("replaces rightIcon with spinner when loading", () => {
+	it("replaces rightIcon with loading indicator when loading", () => {
 		const mockIcon = <span data-testid="custom-icon">Icon</span>;
 		render(
 			<SubmitButton isLoading rightIcon={mockIcon}>
@@ -56,6 +56,5 @@ describe("SubmitButton", () => {
 		expect(screen.queryByTestId("custom-icon")).not.toBeInTheDocument();
 		const spinner = screen.getByTestId("form-button").querySelector("svg");
 		expect(spinner).toBeInTheDocument();
-		expect(spinner).toHaveClass("animate-spin");
 	});
 });

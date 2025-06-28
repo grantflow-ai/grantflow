@@ -1,0 +1,82 @@
+{
+  "test_name": "section_generation_real_baseline",
+  "test_category": "baseline",
+  "timestamp": "2025-06-28T09:13:19.816480",
+  "test_id": "985fd668-da0d-4148-9c3b-704eab46e83f",
+  "configuration": {
+    "test_type": "real_baseline_measurement",
+    "operation": "section_text_generation",
+    "sections_count": 3,
+    "real_api_calls": true
+  },
+  "total_duration_seconds": 0.000333,
+  "total_duration_minutes": 5.55e-06,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 71.2,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 0,
+    "total_words": 0,
+    "total_lines": 1,
+    "section_count": 1,
+    "avg_chars_per_section": 0.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": false,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [],
+    "content_richness_score": 0.0,
+    "structure_quality_score": 0.0,
+    "completeness_score": 20.0,
+    "overall_quality_score": 4.0,
+    "meets_min_length": false,
+    "meets_min_sections": false,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "baseline"
+  },
+  "errors_encountered": [
+    "TypeError: Logger._log() got an unexpected keyword argument 'section_type'"
+  ],
+  "warnings": []
+}
