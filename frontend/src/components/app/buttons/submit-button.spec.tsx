@@ -19,7 +19,6 @@ describe("SubmitButton", () => {
 		const button = screen.getByTestId("form-button");
 		expect(button).toHaveAttribute("aria-busy", "true");
 
-		
 		const spinner = button.querySelector("svg");
 		expect(spinner).toBeInTheDocument();
 	});

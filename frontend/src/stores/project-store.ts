@@ -46,9 +46,9 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		set({ areOperationsInProgress: true });
 		try {
 			const response = await handleCreateProject(data);
-			
+
 			await get().getProject(response.id);
-			
+
 			await mutate("projects");
 			toast.success("Project created successfully");
 		} catch (error: unknown) {
@@ -67,7 +67,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				project: state.project?.id === projectId ? null : state.project,
 				projects: state.projects.filter((p) => p.id !== projectId),
 			}));
-			
+
 			await mutate("projects");
 			toast.success("Project deleted successfully");
 		} catch (error: unknown) {
@@ -81,7 +81,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		set({ areOperationsInProgress: true });
 		try {
 			await handleDuplicateProject(projectId);
-			
+
 			await mutate("projects");
 			toast.success("Project duplicated successfully");
 			set({ areOperationsInProgress: false });
@@ -139,9 +139,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 
 		try {
 			await handleUpdateProject(projectId, data);
-			
+
 			await get().getProject(projectId);
-			
+			await get().getProjects();
+
 			await mutate("projects");
 			toast.success("Project updated successfully");
 		} catch (error: unknown) {

@@ -1,5 +1,3 @@
-
-
 export { CreateApplicationButton } from "./applications/create-application-button";
 export { DeleteApplicationModal } from "./applications/delete-application-modal";
 export { GrantApplicationCard } from "./applications/grant-application-card";
@@ -8,7 +6,6 @@ export { DashboardCreateProjectModal } from "./dashboard/dashboard-create-projec
 export { DashboardHeader } from "./dashboard/dashboard-header";
 export { DashboardProjectCard } from "./dashboard/dashboard-project-card";
 export { DashboardStats } from "./dashboard/dashboard-stats";
-
 
 export { ProjectDetailClient } from "./detail/project-detail-client";
 export { ProjectSidebar } from "./detail/project-sidebar";
@@ -31,6 +28,5 @@ export { NotificationHandler } from "./shared/notification-handler";
 
 export { ProjectCard } from "./shared/project-card";
 export { ThemeBadge } from "./shared/theme-badge";
-
 
 export * from "./wizard";

@@ -71,7 +71,7 @@ describe("NotificationProgress", () => {
 		const stagesElement = screen.getByTestId("notification-progress-stages");
 		expect(stagesElement).toBeInTheDocument();
 		expect(stagesElement.textContent).toContain("0 / 10");
-		
+
 		const percentageElement = screen.getByTestId("notification-progress-percentage");
 		expect(percentageElement).toBeInTheDocument();
 		expect(percentageElement.textContent).toContain("0% complete");
@@ -90,7 +90,7 @@ describe("NotificationProgress", () => {
 		const stagesElement = screen.getByTestId("notification-progress-stages");
 		expect(stagesElement).toBeInTheDocument();
 		expect(stagesElement.textContent).toContain("10 / 10");
-		
+
 		const percentageElement = screen.getByTestId("notification-progress-percentage");
 		expect(percentageElement).toBeInTheDocument();
 		expect(percentageElement.textContent).toContain("100% complete");

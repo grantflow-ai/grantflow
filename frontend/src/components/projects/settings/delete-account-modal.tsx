@@ -21,13 +21,10 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 		try {
 			setIsDeleting(true);
 
-			
 			await deleteAccount();
 
-			
 			clearUser();
 
-			
 			router.push("/login?message=account-deleted");
 		} catch (error) {
 			logError({ error, identifier: "DeleteAccountModal.handleDelete" });

@@ -12,7 +12,6 @@ import {
 	ConfirmDialog,
 } from "./app-dialog";
 
-
 vi.mock("@/components/ui/dialog", () => ({
 	Dialog: ({ children, onOpenChange, open }: any) => (
 		<button
@@ -216,7 +215,6 @@ describe("ConfirmDialog", () => {
 
 		await user.click(screen.getByTestId("confirm-dialog-cancel"));
 
-		
 		expect(defaultProps.onOpenChange).toHaveBeenCalledWith(false);
 	});
 

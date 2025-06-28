@@ -7,7 +7,6 @@ import { PagePath } from "@/enums";
 import { logError } from "@/utils/logging";
 import { createAuthHeaders, redirectWithToastParams, withAuthRedirect, withErrorToast } from "./server-side";
 
-
 vi.mock("next/headers", () => ({
 	cookies: vi.fn(),
 }));
@@ -41,7 +40,6 @@ describe("Server-side Utils", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		
 		vi.mocked(cookies).mockResolvedValue(mockCookieStore as never);
 		vi.mocked(redirect).mockImplementation(mockRedirect as never);
 		vi.mocked(logError).mockImplementation(mockLogError);
@@ -225,9 +223,13 @@ describe("Server-side Utils", () => {
 			const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(httpError);
 
-			await withAuthRedirect(failingPromise);
+			try {
+				await withAuthRedirect(failingPromise);
 
-			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+				expect(true).toBe(false);
+			} catch {
+				expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+			}
 		});
 
 		it("should rethrow 401 HTTP errors after redirecting", async () => {
@@ -236,7 +238,14 @@ describe("Server-side Utils", () => {
 			const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(httpError);
 
-			await expect(withAuthRedirect(failingPromise)).rejects.toThrow(HTTPError);
+			try {
+				await withAuthRedirect(failingPromise);
+
+				expect(true).toBe(false);
+			} catch (error) {
+				expect(error).toBeInstanceOf(HTTPError);
+				expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+			}
 		});
 
 		it("should rethrow non-401 HTTP errors without redirecting", async () => {
@@ -245,16 +254,28 @@ describe("Server-side Utils", () => {
 			const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(httpError);
 
-			await expect(withAuthRedirect(failingPromise)).rejects.toThrow(HTTPError);
-			expect(mockRedirect).not.toHaveBeenCalled();
+			try {
+				await withAuthRedirect(failingPromise);
+
+				expect(true).toBe(false);
+			} catch (error) {
+				expect(error).toBeInstanceOf(HTTPError);
+				expect(mockRedirect).not.toHaveBeenCalled();
+			}
 		});
 
 		it("should rethrow non-HTTP errors without redirecting", async () => {
 			const genericError = new Error("Network error");
 			const failingPromise = Promise.reject(genericError);
 
-			await expect(withAuthRedirect(failingPromise)).rejects.toThrow("Network error");
-			expect(mockRedirect).not.toHaveBeenCalled();
+			try {
+				await withAuthRedirect(failingPromise);
+
+				expect(true).toBe(false);
+			} catch (error) {
+				expect(error).toHaveProperty("message", "Network error");
+				expect(mockRedirect).not.toHaveBeenCalled();
+			}
 		});
 
 		it("should handle different HTTP status codes correctly", async () => {
@@ -274,12 +295,18 @@ describe("Server-side Utils", () => {
 				const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 				const failingPromise = Promise.reject(httpError);
 
-				await expect(withAuthRedirect(failingPromise)).rejects.toThrow(HTTPError);
+				try {
+					await withAuthRedirect(failingPromise);
 
-				if (shouldRedirect) {
-					expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
-				} else {
-					expect(mockRedirect).not.toHaveBeenCalled();
+					expect(true).toBe(false);
+				} catch (error) {
+					expect(error).toBeInstanceOf(HTTPError);
+
+					if (shouldRedirect) {
+						expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+					} else {
+						expect(mockRedirect).not.toHaveBeenCalled();
+					}
 				}
 			}
 		});

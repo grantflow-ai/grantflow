@@ -114,6 +114,7 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
+
 			void retrieveApplication(projectId, initialApplication.id);
 		}
 

@@ -8,6 +8,5 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 	const project = await getProject(projectId);
 
-	
 	return <ProjectDetailClient initialProject={project} />;
 }

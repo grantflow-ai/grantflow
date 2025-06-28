@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 
 import { SWRProvider } from "./swr-provider";
 
-
 vi.mock("swr", () => ({
 	SWRConfig: ({ children, value }: any) => (
 		<div data-swr-config={JSON.stringify(value)} data-testid="swr-config">

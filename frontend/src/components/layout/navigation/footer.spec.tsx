@@ -87,7 +87,6 @@ describe("Footer Component", () => {
 			const privacyLinks = screen.getAllByText("Privacy Policy");
 			const imprintLinks = screen.getAllByText("Imprint");
 
-			
 			expect(termsLinks.length).toBeGreaterThanOrEqual(1);
 			expect(privacyLinks.length).toBeGreaterThanOrEqual(1);
 			expect(imprintLinks.length).toBeGreaterThanOrEqual(1);

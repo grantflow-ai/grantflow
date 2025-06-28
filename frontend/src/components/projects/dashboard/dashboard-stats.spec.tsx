@@ -40,7 +40,6 @@ describe("DashboardStats", () => {
 
 		render(<DashboardStats initialProjects={mockProjects} />);
 
-		
 		expect(screen.getByTestId("application-count")).toHaveTextContent("4");
 		expect(screen.getByText("Applications")).toBeInTheDocument();
 	});
@@ -52,7 +51,6 @@ describe("DashboardStats", () => {
 
 		render(<DashboardStats initialProjects={mockProjects} />);
 
-		
 		expect(screen.getByTestId("project-count")).toHaveTextContent("3");
 		expect(screen.getByTestId("application-count")).toHaveTextContent("4");
 	});
@@ -81,8 +79,8 @@ describe("DashboardStats", () => {
 
 		render(<DashboardStats initialProjects={projectsWithNoApps} />);
 
-		expect(screen.getByTestId("project-count")).toHaveTextContent("2"); 
-		expect(screen.getByTestId("application-count")).toHaveTextContent("0"); 
+		expect(screen.getByTestId("project-count")).toHaveTextContent("2");
+		expect(screen.getByTestId("application-count")).toHaveTextContent("0");
 	});
 
 	it("configures SWR with correct options", () => {

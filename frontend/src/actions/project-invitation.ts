@@ -46,7 +46,6 @@ export async function inviteCollaborator({
 	success: boolean;
 }> {
 	try {
-		
 		const response = await withAuthRedirect(
 			getClient()
 				.post(`projects/${projectId}/create-invitation-redirect-url`, {
@@ -63,11 +62,9 @@ export async function inviteCollaborator({
 			throw new Error("Failed to create invitation token");
 		}
 
-		
 		const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.grantflow.ai";
 		const invitationUrl = `${baseUrl}/invite?token=${response.token}`;
 
-		
 		const emailError = await sendInvitationEmail({
 			email,
 			invitationUrl,
@@ -81,8 +78,6 @@ export async function inviteCollaborator({
 				identifier: "inviteCollaborator",
 			});
 
-			
-			
 			return {
 				error: "Invitation created but email delivery failed. Please share the invitation link manually.",
 				invitationId: invitationUrl,
@@ -124,7 +119,7 @@ async function sendInvitationEmail({
 		const response = await client.messages.create(DOMAIN, {
 			from: "noreply@grantflow.ai",
 			html: getInvitationEmailTemplateHtml(inviterName, projectName, invitationUrl),
-			inline: [logo], 
+			inline: [logo],
 			subject: "Invitation to Collaborate on a Research Project in GrantFlow",
 			text: invitationEmailTemplateText(inviterName, projectName, invitationUrl),
 			to: email,

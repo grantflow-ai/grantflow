@@ -19,7 +19,6 @@ interface ProjectSettingsClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
 
-
 const mockApplications = [
 	{
 		id: "1",

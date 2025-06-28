@@ -8,7 +8,7 @@ describe("Modal", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		
+
 		document.body.style.overflow = "";
 	});
 
@@ -117,10 +117,8 @@ describe("Modal", () => {
 			</Modal>,
 		);
 
-		
 		expect(container.firstChild).toBeNull();
 
-		
 		expect(document.body.querySelector('[role="dialog"]')).toBeInTheDocument();
 	});
 
