@@ -68,7 +68,6 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "D",
   "N815",
   "PLC0415",
-  "PLR",
   "PT006",
   "PT007",
   "PT012",
@@ -118,7 +117,7 @@ lint.pylint.max-statements = 100
 
 [tool.codespell]
 ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw,afterAll,beforeAll"
-skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml,**/*.spec.*,**/*.test.*,**/tests/**/*"
+skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml"
 
 [tool.pyproject-fmt]
 keep_full_version = true
