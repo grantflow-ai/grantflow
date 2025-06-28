@@ -14,10 +14,10 @@ from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive,
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
+from services.rag.src.grant_application.dto import EnrichObjectiveInputDTO
 from services.rag.src.grant_application.enrich_research_objective import (
     handle_enrich_objective,
 )
-from rag.src.grant_application.dto import EnrichObjectiveInputDTO
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.token_optimization import estimate_prompt_tokens
 
@@ -45,7 +45,6 @@ def calculate_optimal_batching(
     if len(research_objectives) <= 2:
         return [research_objectives]
 
-
     tokens_per_objective = 4000
     available_tokens = int((MAX_TOTAL_TOKENS - estimated_context_tokens) * SAFETY_MARGIN)
 
@@ -54,10 +53,9 @@ def calculate_optimal_batching(
     if max_objectives_per_batch >= len(research_objectives):
         return [research_objectives]
 
-
     batches = []
     for i in range(0, len(research_objectives), max_objectives_per_batch):
-        batch = research_objectives[i:i + max_objectives_per_batch]
+        batch = research_objectives[i : i + max_objectives_per_batch]
         batches.append(batch)
 
     logger.info(
@@ -95,22 +93,23 @@ async def perform_shared_retrieval(
     - Optimized token usage
     """
 
-
-    combined_context = "\n\n".join([
-        f"Research Objective {obj['number']}: {obj['title']}\n"
-        f"Research Objective {obj['number']}: {obj['title']}"
-        for obj in research_objectives
-    ])
-
+    combined_context = "\n\n".join(
+        [
+            f"Research Objective {obj['number']}: {obj['title']}\nResearch Objective {obj['number']}: {obj['title']}"
+            for obj in research_objectives
+        ]
+    )
 
     search_queries = list(grant_section["search_queries"])
 
-
     for obj in research_objectives:
         title_words = obj["title"].lower().split()
-        key_terms = [w for w in title_words if len(w) > 3 and w not in {"research", "objective", "study", "investigate", "analysis", "development"}]
+        key_terms = [
+            w
+            for w in title_words
+            if len(w) > 3 and w not in {"research", "objective", "study", "investigate", "analysis", "development"}
+        ]
         if key_terms:
-
             search_queries.append(" ".join(key_terms[:3]))
 
             if len(key_terms) > 1:
@@ -122,7 +121,6 @@ async def perform_shared_retrieval(
         search_queries_count=len(search_queries),
         max_tokens=MAX_RETRIEVAL_TOKENS,
     )
-
 
     retrieval_result = await retrieve_documents(
         application_id=application_id,
@@ -138,7 +136,6 @@ async def perform_shared_retrieval(
     )
 
     return retrieval_result
-
 
 
 async def handle_batch_enrich_objectives(
@@ -174,13 +171,9 @@ async def handle_batch_enrich_objectives(
         section_title=grant_section.get("title", "Unknown"),
     )
 
-
-    shared_context = await perform_shared_retrieval(
-        research_objectives, grant_section, application_id
-    )
+    shared_context = await perform_shared_retrieval(research_objectives, grant_section, application_id)
     estimated_context_tokens = estimate_prompt_tokens(shared_context)
     objective_batches = calculate_optimal_batching(research_objectives, estimated_context_tokens)
-
 
     all_deep_dives = []
 
@@ -191,7 +184,6 @@ async def handle_batch_enrich_objectives(
             batch_size=len(batch),
             total_batches=len(objective_batches),
         )
-
 
         batch_coroutines = [
             handle_enrich_objective(
@@ -207,7 +199,6 @@ async def handle_batch_enrich_objectives(
             )
             for obj in batch
         ]
-
 
         batch_results = await batched_gather(*batch_coroutines, batch_size=min(3, len(batch_coroutines)))
         all_deep_dives.extend(batch_results)

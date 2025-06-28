@@ -39,8 +39,6 @@ class RagSourceData(TypedDict):
     chunks: list[str]
 
 
-
-
 _cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
 CFP_CACHE_TTL_SECONDS = 3600
 
@@ -64,7 +62,6 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
     current_time = time.time()
 
     if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
-
         del _cfp_extraction_cache[cache_key]
         logger.debug("CFP cache entry expired", cache_key=cache_key)
         return None
@@ -115,7 +112,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         List of RagSourceData containing content and chunks for each source
     """
     async with session_maker() as session:
-
         sources_result = await session.execute(
             select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
         )
@@ -125,13 +121,11 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
         )
 
-
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
         for source_id, chunk in chunks_result:
             chunk_content = chunk.get("content", "")
             if chunk_content:
                 chunks_by_source[source_id].append(chunk_content)
-
 
     return [
         RagSourceData(
@@ -142,7 +136,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         )
         for source_id, source_type, text_content in sources
     ]
-
 
 
 def sanitize_text_content(text: str) -> str:
@@ -364,7 +357,6 @@ async def handle_extract_cfp_data_from_rag_sources(
             ),
         ],
     )
-
 
     _cache_cfp_result(cache_key, result)
     logger.info("CFP extraction completed and cached", cache_key=cache_key)

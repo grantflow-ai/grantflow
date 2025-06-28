@@ -49,7 +49,6 @@ async def mock_completion_handler(prompt: str, **kwargs: Any) -> dict[str, Any]:
     """Mock completion handler that simulates different response qualities."""
     await asyncio.sleep(0.1)
 
-
     if "high quality" in prompt.lower():
         return {
             "sections": [
@@ -97,7 +96,6 @@ async def test_evaluation_framework_baseline_performance(
     Measures current performance characteristics under normal conditions.
     """
     logger.info("=== EVALUATION FRAMEWORK BASELINE PERFORMANCE ===")
-
 
     criteria = [
         EvaluationCriterion(
@@ -151,42 +149,38 @@ async def test_evaluation_framework_baseline_performance(
     start_time = time.time()
 
     for i, test_prompt in enumerate(test_prompts):
-        logger.info("Testing prompt %s/%s: %s...", i+1, len(test_prompts), test_prompt[:50])
+        logger.info("Testing prompt %s/%s: %s...", i + 1, len(test_prompts), test_prompt[:50])
 
         time.time()
 
         try:
-
             for passing_score in [90, 75, 60]:
                 eval_iteration_start = time.time()
 
                 with patch("services.rag.src.utils.llm_evaluation.evaluate_prompt_output") as mock_eval:
-
                     call_count = 0
 
-                    async def mock_evaluate(*args: Any, **kwargs: Any) -> dict[str, Any]:
-                        nonlocal call_count, i
+                    async def mock_evaluate(loop_i: int = i, *args: Any, **kwargs: Any) -> dict[str, Any]:
+                        nonlocal call_count
                         call_count += 1
-
 
                         await asyncio.sleep(0.05)
 
-
-                        base_score = 50 + (call_count * 15) + (i * 10)
+                        base_score = 50 + (call_count * 15) + (loop_i * 10)
 
                         return {
                             "criteria": {
                                 "Content Quality": {
                                     "score": min(100, base_score + 5),
-                                    "instructions": "Improve content depth and detail."
+                                    "instructions": "Improve content depth and detail.",
                                 },
                                 "Completeness": {
                                     "score": min(100, base_score),
-                                    "instructions": "Add missing required sections."
+                                    "instructions": "Add missing required sections.",
                                 },
                                 "Accuracy": {
                                     "score": min(100, base_score + 10),
-                                    "instructions": "Verify factual accuracy."
+                                    "instructions": "Verify factual accuracy.",
                                 },
                             }
                         }
@@ -211,9 +205,10 @@ async def test_evaluation_framework_baseline_performance(
                         total_retries += max(0, call_count - 1)
                         successful_evaluations += 1
 
-
                         final_eval = await mock_evaluate()
-                        avg_score = sum(score["score"] for score in final_eval["criteria"].values()) / len(final_eval["criteria"])
+                        avg_score = sum(score["score"] for score in final_eval["criteria"].values()) / len(
+                            final_eval["criteria"]
+                        )
                         evaluation_scores.append(avg_score)
 
                         logger.info(
@@ -234,18 +229,16 @@ async def test_evaluation_framework_baseline_performance(
                         total_retries += call_count
 
         except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
-            logger.error("Test prompt %s failed: %s", i+1, e)
+            logger.error("Test prompt %s failed: %s", i + 1, e)
 
     total_test_duration = time.time() - start_time
-
 
     success_rate = successful_evaluations / total_evaluations if total_evaluations > 0 else 0.0
     average_score = sum(evaluation_scores) / len(evaluation_scores) if evaluation_scores else 0.0
 
-
     if len(evaluation_scores) > 1:
         variance = sum((score - average_score) ** 2 for score in evaluation_scores) / len(evaluation_scores)
-        consistency_score = max(0, 100 - (variance ** 0.5))
+        consistency_score = max(0, 100 - (variance**0.5))
     else:
         consistency_score = 100.0
 
@@ -263,21 +256,25 @@ async def test_evaluation_framework_baseline_performance(
     )
 
     logger.info("=== EVALUATION FRAMEWORK BASELINE RESULTS ===")
-    logger.info(f"Total test duration: {total_test_duration:.2f}s")
-    logger.info(f"Total evaluation duration: {metrics.total_duration_seconds:.2f}s")
-    logger.info(f"Average time per evaluation: {metrics.total_duration_seconds / max(1, metrics.evaluation_calls):.2f}s")
-    logger.info(f"LLM calls made: {metrics.llm_calls_made}")
-    logger.info(f"Average LLM calls per evaluation: {metrics.llm_calls_made / max(1, metrics.evaluation_calls):.1f}")
-    logger.info(f"Retry attempts: {metrics.retry_attempts}")
-    logger.info(f"Success rate: {metrics.success_rate:.1%}")
-    logger.info(f"Average evaluation score: {metrics.average_score:.1f}")
-    logger.info(f"Score consistency: {metrics.consistency_score:.1f}")
-
+    logger.info("Total test duration: %.2fs", total_test_duration)
+    logger.info("Total evaluation duration: %.2fs", metrics.total_duration_seconds)
+    logger.info(
+        "Average time per evaluation: %.2fs",
+        metrics.total_duration_seconds / max(1, metrics.evaluation_calls),
+    )
+    logger.info("LLM calls made: %d", metrics.llm_calls_made)
+    logger.info(
+        "Average LLM calls per evaluation: %.1f",
+        metrics.llm_calls_made / max(1, metrics.evaluation_calls),
+    )
+    logger.info("Retry attempts: %d", metrics.retry_attempts)
+    logger.info("Success rate: %.1f%%", metrics.success_rate * 100)
+    logger.info("Average evaluation score: %.1f", metrics.average_score)
+    logger.info("Score consistency: %.1f", metrics.consistency_score)
 
     assert metrics.success_rate > 0.7, f"Success rate too low: {metrics.success_rate:.1%}"
     assert metrics.average_score > 60, f"Average score too low: {metrics.average_score:.1f}"
     assert metrics.total_duration_seconds < 60, f"Total evaluation time too high: {metrics.total_duration_seconds:.1f}s"
-
 
     baseline_data = {
         "timestamp": time.time(),
@@ -296,7 +293,7 @@ async def test_evaluation_framework_baseline_performance(
             "criteria_count": len(criteria),
             "passing_scores_tested": [90, 75, 60],
             "max_retries": 3,
-        }
+        },
     }
 
     logger.info("Baseline metrics captured for future optimization comparison")
@@ -313,7 +310,6 @@ async def test_evaluation_framework_accuracy_consistency(
     """
     logger.info("=== EVALUATION FRAMEWORK ACCURACY & CONSISTENCY ===")
 
-
     criterion = EvaluationCriterion(
         name="Content Quality",
         evaluation_instructions="""
@@ -327,23 +323,18 @@ async def test_evaluation_framework_accuracy_consistency(
         weight=1.0,
     )
 
-
     test_cases = [
         {
             "content": "This is a comprehensive, detailed research plan with clear objectives, rigorous methodology, expected outcomes, timeline, and risk assessment. The approach is innovative and well-justified with extensive literature review.",
             "expected_range": (85, 100),
-            "label": "high_quality"
+            "label": "high_quality",
         },
         {
             "content": "A research plan with basic structure. Includes objectives and methodology. Some details provided but limited depth.",
             "expected_range": (60, 80),
-            "label": "medium_quality"
+            "label": "medium_quality",
         },
-        {
-            "content": "Brief plan. Limited detail.",
-            "expected_range": (20, 50),
-            "label": "low_quality"
-        },
+        {"content": "Brief plan. Limited detail.", "expected_range": (20, 50), "label": "low_quality"},
     ]
 
     consistency_results = []
@@ -352,30 +343,25 @@ async def test_evaluation_framework_accuracy_consistency(
     for test_case in test_cases:
         scores_for_case = []
 
-
         for trial in range(3):
             with patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request:
-
                 mock_request.return_value = {
                     "criteria": {
                         "Content Quality": {
-                            "score": test_case["expected_range"][0] +
-                                   ((test_case["expected_range"][1] - test_case["expected_range"][0]) // 2) +
-                                   (trial * 2),
-                            "instructions": f"Content assessed for {test_case['label']} case"
+                            "score": test_case["expected_range"][0]
+                            + ((test_case["expected_range"][1] - test_case["expected_range"][0]) // 2)
+                            + (trial * 2),
+                            "instructions": f"Content assessed for {test_case['label']} case",
                         }
                     }
                 }
 
                 result = await evaluate_prompt_output(
-                    criteria=[criterion],
-                    prompt="Evaluate this content quality",
-                    model_output=test_case["content"]
+                    criteria=[criterion], prompt="Evaluate this content quality", model_output=test_case["content"]
                 )
 
                 score = result["criteria"]["Content Quality"]["score"]
                 scores_for_case.append(score)
-
 
                 in_range = test_case["expected_range"][0] <= score <= test_case["expected_range"][1]
                 accuracy_results.append(in_range)
@@ -389,11 +375,10 @@ async def test_evaluation_framework_accuracy_consistency(
                     in_range=in_range,
                 )
 
-
         if len(scores_for_case) > 1:
             mean_score = sum(scores_for_case) / len(scores_for_case)
             variance = sum((score - mean_score) ** 2 for score in scores_for_case) / len(scores_for_case)
-            std_dev = variance ** 0.5
+            std_dev = variance**0.5
             consistency_results.append(std_dev)
 
             logger.info(
@@ -404,15 +389,13 @@ async def test_evaluation_framework_accuracy_consistency(
                 std_dev=std_dev,
             )
 
-
     accuracy_rate = sum(accuracy_results) / len(accuracy_results) if accuracy_results else 0.0
     avg_consistency = sum(consistency_results) / len(consistency_results) if consistency_results else 0.0
 
     logger.info("=== ACCURACY & CONSISTENCY RESULTS ===")
-    logger.info(f"Accuracy rate: {accuracy_rate:.1%} (scores within expected ranges)")
-    logger.info(f"Average score standard deviation: {avg_consistency:.1f} (lower = more consistent)")
-    logger.info(f"Consistency grade: {max(0, 100 - (avg_consistency * 10)):.1f}/100")
-
+    logger.info("Accuracy rate: %.1f%% (scores within expected ranges)", accuracy_rate * 100)
+    logger.info("Average score standard deviation: %.1f (lower = more consistent)", avg_consistency)
+    logger.info("Consistency grade: %.1f/100", max(0, 100 - (avg_consistency * 10)))
 
     assert accuracy_rate > 0.6, f"Accuracy rate too low: {accuracy_rate:.1%}"
     assert avg_consistency < 15, f"Consistency too low (high variance): {avg_consistency:.1f}"
@@ -440,7 +423,6 @@ async def test_evaluation_framework_timeout_behavior(
         weight=1.0,
     )
 
-
     timeout_scenarios = [
         {"delay": 0.1, "label": "fast_response"},
         {"delay": 1.0, "label": "normal_response"},
@@ -461,16 +443,16 @@ async def test_evaluation_framework_timeout_behavior(
             with patch("services.rag.src.utils.llm_evaluation.evaluate_prompt_output") as mock_eval:
                 mock_eval.return_value = {
                     "criteria": {
-                        "Stress Test": {
-                            "score": 75,
-                            "instructions": f"Processed {scenario['label']} scenario"
-                        }
+                        "Stress Test": {"score": 75, "instructions": f"Processed {scenario['label']} scenario"}
                     }
                 }
 
+                def create_handler(s: dict[str, Any]) -> Any:
+                    return lambda p, **k: delayed_completion_handler(p, s["delay"], **k)
+
                 result = await with_prompt_evaluation(
                     prompt_identifier=f"timeout_test_{scenario['label']}",
-                    prompt_handler=lambda p, **k: delayed_completion_handler(p, scenario["delay"], **k),
+                    prompt_handler=create_handler(scenario),
                     prompt="Test prompt for timeout scenario",
                     criteria=[criterion],
                     passing_score=70,
@@ -479,12 +461,14 @@ async def test_evaluation_framework_timeout_behavior(
                 )
 
                 duration = time.time() - start_time
-                timeout_results.append({
-                    "scenario": scenario["label"],
-                    "delay": scenario["delay"],
-                    "duration": duration,
-                    "success": True,
-                })
+                timeout_results.append(
+                    {
+                        "scenario": scenario["label"],
+                        "delay": scenario["delay"],
+                        "duration": duration,
+                        "success": True,
+                    }
+                )
 
                 logger.info(
                     "Timeout scenario completed",
@@ -496,13 +480,15 @@ async def test_evaluation_framework_timeout_behavior(
 
         except (TimeoutError, ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
             duration = time.time() - start_time
-            timeout_results.append({
-                "scenario": scenario["label"],
-                "delay": scenario["delay"],
-                "duration": duration,
-                "success": False,
-                "error": str(e),
-            })
+            timeout_results.append(
+                {
+                    "scenario": scenario["label"],
+                    "delay": scenario["delay"],
+                    "duration": duration,
+                    "success": False,
+                    "error": str(e),
+                }
+            )
 
             logger.warning(
                 "Timeout scenario failed",
@@ -512,13 +498,12 @@ async def test_evaluation_framework_timeout_behavior(
                 error=str(e),
             )
 
-
     successful_scenarios = [r for r in timeout_results if r["success"]]
     failed_scenarios = [r for r in timeout_results if not r["success"]]
 
     logger.info("=== TIMEOUT & LOAD TEST RESULTS ===")
-    logger.info(f"Successful scenarios: {len(successful_scenarios)}/{len(timeout_results)}")
-    logger.info(f"Failed scenarios: {len(failed_scenarios)}")
+    logger.info("Successful scenarios: %d/%d", len(successful_scenarios), len(timeout_results))
+    logger.info("Failed scenarios: %d", len(failed_scenarios))
 
     for result in timeout_results:
         logger.info(
@@ -529,13 +514,12 @@ async def test_evaluation_framework_timeout_behavior(
             configured_delay=f"{result['delay']:.1f}s",
         )
 
-
     if len(successful_scenarios) > 1:
         min_duration = min(r["duration"] for r in successful_scenarios)
         max_duration = max(r["duration"] for r in successful_scenarios)
         degradation_factor = max_duration / min_duration if min_duration > 0 else 1.0
 
-        logger.info(f"Performance degradation factor: {degradation_factor:.1f}x")
+        logger.info("Performance degradation factor: %.1fx", degradation_factor)
 
         assert degradation_factor < 10, f"Performance degradation too high: {degradation_factor:.1f}x"
 
