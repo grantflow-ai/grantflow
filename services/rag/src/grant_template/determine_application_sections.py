@@ -692,9 +692,9 @@ async def handle_extract_sections(
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         criteria=criteria,
-        passing_score=90,
-        increment=10,
-        retries=5,
+        passing_score=75,
+        increment=15,
+        retries=3,
     )
 
     return await filter_extracted_sections(result["sections"])
