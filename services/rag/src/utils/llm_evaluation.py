@@ -162,6 +162,14 @@ async def with_prompt_evaluation[T, **P](
     failures: list[dict[str, EvaluationScore]] = []
 
     while iteration <= retries:
+        logger.info(
+            "Evaluation attempt",
+            prompt_identifier=prompt_identifier,
+            iteration=iteration,
+            max_retries=retries,
+            passing_score=min_passing_score,
+        )
+
         model_output = await prompt_handler(current_prompt, **kwargs)  # type: ignore[arg-type]
         evaluation_result = await evaluate_prompt_output(
             prompt=current_prompt, model_output=cast("dict[str, Any] | str", model_output), criteria=criteria
@@ -174,7 +182,21 @@ async def with_prompt_evaluation[T, **P](
         }
 
         if not failing_criteria:
+            logger.info(
+                "Evaluation passed",
+                prompt_identifier=prompt_identifier,
+                iteration=iteration,
+                all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+            )
             return model_output
+
+        logger.warning(
+            "Evaluation failed",
+            prompt_identifier=prompt_identifier,
+            iteration=iteration,
+            failing_criteria={k: v["score"] for k, v in failing_criteria.items()},
+            all_scores={k: v["score"] for k, v in evaluation_result["criteria"].items()},
+        )
 
         failures.append(failing_criteria)
 
