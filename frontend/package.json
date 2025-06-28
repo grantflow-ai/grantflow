@@ -117,7 +117,8 @@
 		"test:coverage": "cross-env NODE_NO_WARNINGS=1 pnpm run test --coverage",
 		"test:watch": "cross-env NODE_NO_WARNINGS=1 vitest watch --coverage",
 		"typecheck": "tsc --noEmit",
-		"ui": "pnpm dlx shadcn@latest"
+		"ui": "pnpm dlx shadcn@latest",
+		"reset-shadcn": "tsx scripts/reset-shadcn.ts"
 	},
 	"version": "0.1.0"
 }
