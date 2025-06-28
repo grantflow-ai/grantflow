@@ -6,13 +6,13 @@ import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { addToWaitlist } from "@/actions/join-waitlist";
-import { LandingPageSubmitButton } from "@/components/landing-page/components/landing-page-submit-button";
-import LandingPageInput from "@/components/landing-page/components/landing-page-input-field";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { log } from "@/utils/logger";
 import { analyticsIdentify } from "@/utils/segment";
+import LandingPageInput from "./input-field";
+import { LandingPageSubmitButton } from "./submit-button";
 
 const getStatusTextColor = (status: string) => {
 	if (status === "success") return "text-success";

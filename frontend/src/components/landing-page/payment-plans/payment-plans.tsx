@@ -1,7 +1,7 @@
 import { IconGoAhead } from "@/components/branding/icons";
-import { ScrollButton } from "@/components/layout/navigation/scroll-button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LandingPageScrollButton } from "../scroll-button";
 import type { PaymentRecurrence } from "./payment-plan.types";
 import { PaymentPlanCard } from "./payment-plan-card";
 import { PaymentPlansList } from "./payment-plans.constants";
@@ -46,7 +46,7 @@ export function PaymentPlans() {
 				<TabsContent value="yearly">{renderPlans("yearly")}</TabsContent>
 			</Tabs>
 
-			<ScrollButton
+			<LandingPageScrollButton
 				aria-label="Go to Waitlist Form"
 				className="mx-6 mt-10 w-full md:w-fit"
 				desktopTargetId="waitlist"
@@ -55,7 +55,7 @@ export function PaymentPlans() {
 				size="lg"
 			>
 				Secure Priority Access
-			</ScrollButton>
+			</LandingPageScrollButton>
 		</div>
 	);
 }

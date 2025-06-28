@@ -4,14 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppButton } from "@/components/app/buttons/app-button";
 import { IconGoAhead } from "@/components/branding/icons";
 import { LogoDark } from "@/components/branding/logo";
 import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
-import { ScrollButton } from "@/components/layout/navigation/scroll-button";
 import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { disableScroll, enableScroll } from "@/utils/window";
+import { LandingPageButton } from "./button";
+import { LandingPageScrollButton } from "./scroll-button";
 
 const BREAKPOINT_MD = 768;
 
@@ -36,7 +36,7 @@ const NavLink = ({
 	};
 
 	return (
-		<AppButton
+		<LandingPageButton
 			aria-label={`Go to ${label} Page`}
 			className={cn(getActiveClass(), className)}
 			size="lg"
@@ -46,7 +46,7 @@ const NavLink = ({
 			<Link href={href} onClick={onClick}>
 				{label}
 			</Link>
-		</AppButton>
+		</LandingPageButton>
 	);
 };
 
@@ -112,7 +112,7 @@ export function NavHeader() {
 						theme="light"
 					/>
 					{isHomePage && (
-						<ScrollButton
+						<LandingPageScrollButton
 							aria-label="Prices"
 							desktopTargetId="payment-plans"
 							mobileTargetId="payment-plans"
@@ -123,11 +123,11 @@ export function NavHeader() {
 							variant="link"
 						>
 							Prices
-						</ScrollButton>
+						</LandingPageScrollButton>
 					)}
 					<NavLink href={PagePath.ABOUT_US} isActive={false} label="About us" theme="dark" />
 					{isHomePage && (
-						<ScrollButton
+						<LandingPageScrollButton
 							aria-label="Go to Waitlist Form"
 							className="ms-6"
 							desktopTargetId="waitlist"
@@ -135,10 +135,10 @@ export function NavHeader() {
 							size="lg"
 						>
 							Secure Priority Access
-						</ScrollButton>
+						</LandingPageScrollButton>
 					)}
 				</div>
-				<AppButton
+				<LandingPageButton
 					aria-label={isMobileMenuOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
 					className={`relative bg-transparent transition-colors duration-300 hover:bg-transparent md:hidden ${isMobileMenuOpen ? "text-primary" : "text-white"}`}
 					onClick={() => {
@@ -159,7 +159,7 @@ export function NavHeader() {
 						height={30}
 						width={30}
 					/>
-				</AppButton>
+				</LandingPageButton>
 			</div>
 			{isMobileMenuOpen && (
 				<button
@@ -199,7 +199,7 @@ export function NavHeader() {
 					theme="light"
 				/>
 				{isHomePage && (
-					<ScrollButton
+					<LandingPageScrollButton
 						aria-label="Prices"
 						mobileTargetId="payment-plans"
 						onClick={() => {
@@ -209,7 +209,7 @@ export function NavHeader() {
 						variant="link"
 					>
 						Prices
-					</ScrollButton>
+					</LandingPageScrollButton>
 				)}
 				<NavLink
 					href={PagePath.ABOUT_US}
@@ -221,7 +221,7 @@ export function NavHeader() {
 					theme="dark"
 				/>
 				{isHomePage && (
-					<ScrollButton
+					<LandingPageScrollButton
 						aria-label="Go to Waitlist Form"
 						className="mt-auto w-full"
 						mobileTargetId="waitlist-form-container"
@@ -233,7 +233,7 @@ export function NavHeader() {
 						size="lg"
 					>
 						Secure Priority Access
-					</ScrollButton>
+					</LandingPageScrollButton>
 				)}
 			</div>
 		</header>

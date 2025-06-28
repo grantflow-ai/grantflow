@@ -1,7 +1,6 @@
 import { Loader2 } from "lucide-react";
-
-import { LandingPageButton, type LandingPageButtonProps } from "@/components/landing-page/components/landing-page-button";
 import { cn } from "@/lib/utils";
+import { LandingPageButton, type LandingPageButtonProps } from "./button";
 
 export function LandingPageSubmitButton({
 	children,
