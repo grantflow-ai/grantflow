@@ -21,7 +21,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
 
 import { AppButton } from "@/components/app-button";
-import { IconPreviewLogo } from "@/components/projects/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useApplicationStore } from "@/stores/application-store";
@@ -45,13 +44,27 @@ export function ResearchPlanStep() {
 		<div className="flex size-full" data-testid="research-plan-step">
 			<div className="w-1/3 overflow-y-auto p-6">
 				<div className="space-y-6">
-					<div>
-						<h2 className="font-heading text-2xl font-medium" data-testid="research-plan-header">
-							Research plan
-						</h2>
-						<p className="text-muted-foreground-dark mt-1 text-sm" data-testid="research-plan-description">
-							Define key objectives and break them into tasks. This structure is the backbone of your app.
-						</p>
+					<div className="flex items-start justify-between">
+						<div>
+							<h2 className="font-heading text-2xl font-medium" data-testid="research-plan-header">
+								Research plan
+							</h2>
+							<p
+								className="text-muted-foreground-dark mt-1 text-sm"
+								data-testid="research-plan-description"
+							>
+								Define your key objectives and break them into actionable tasks. This structure forms
+								the backbone of your application.
+							</p>
+						</div>
+						<AppButton
+							className="bg-app-surface-secondary text-app-action-primary border-app-border-primary shrink-0"
+							data-testid="ai-try-button"
+							leftIcon={<span>✨</span>}
+							variant="secondary"
+						>
+							Let the AI Try!
+						</AppButton>
 					</div>
 
 					<div className="space-y-4">
@@ -67,10 +80,19 @@ export function ResearchPlanStep() {
 						</AppButton>
 
 						{objectives.length >= MAX_OBJECTIVES && (
-							<Card className="border-warning-200 bg-warning-50 p-3">
-								<p className="text-warning-800 text-sm">
-									You&apos;ve reached the maximum of {MAX_OBJECTIVES} objectives. Please refine
-									existing objectives before adding a new one.
+							<Card className="border-app-border-primary bg-app-surface-secondary p-3 flex items-start gap-3">
+								<div className="bg-app-surface-secondary text-app-action-primary flex size-6 shrink-0 items-center justify-center rounded-full">
+									<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
+										<path
+											clipRule="evenodd"
+											d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+											fillRule="evenodd"
+										/>
+									</svg>
+								</div>
+								<p className="text-app-text-primary text-sm">
+									You&apos;ve reached the maximum of {MAX_OBJECTIVES} objectives. Please edit or
+									remove an existing objective before adding a new one.
 								</p>
 							</Card>
 						)}
@@ -136,13 +158,30 @@ function ResearchPlanPreview({
 				</>
 			) : (
 				<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
-					<IconPreviewLogo height={180} width={180} />
-					<p
-						className="text-muted-foreground-dark mt-6 text-center text-sm"
-						data-testid="empty-state-message"
-					>
-						Add your first research objective to get started
-					</p>
+					<div className="relative">
+						<div className="flex size-96 items-center justify-center">
+							<div className="relative">
+								{/* Central analyzing animation */}
+								<div className="bg-gray-100 animate-pulse flex size-24 items-center justify-center rounded-full">
+									<div className="bg-gray-200 size-12 rounded-full" />
+								</div>
+
+								{/* Orbiting elements */}
+								<div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
+									<div className="bg-blue-100 absolute -top-4 left-1/2 size-8 -translate-x-1/2 rounded-full" />
+								</div>
+								<div
+									className="absolute inset-0 animate-spin"
+									style={{ animationDirection: "reverse", animationDuration: "4s" }}
+								>
+									<div className="bg-purple-100 absolute -bottom-4 left-1/2 size-6 -translate-x-1/2 rounded-full" />
+								</div>
+								<div className="absolute inset-0 animate-spin" style={{ animationDuration: "5s" }}>
+									<div className="bg-green-100 absolute -left-4 top-1/2 size-4 -translate-y-1/2 rounded-full" />
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			)}
 		</div>
