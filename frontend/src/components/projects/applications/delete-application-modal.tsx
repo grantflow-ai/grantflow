@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 
-import { BaseModal } from "@/components/ui/base-modal";
+import { BaseModal } from "@/components/app/feedback/base-modal";
 
 interface DeleteApplicationModalProps {
 	isOpen: boolean;

@@ -4,7 +4,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import Mailgun from "mailgun.js";
-import { getInvitationEmailTemplateHtml, invitationEmailTemplateText } from "@/components/invitation-email-template";
+import {
+	getInvitationEmailTemplateHtml,
+	invitationEmailTemplateText,
+} from "@/components/email-templates/invitation-email-template";
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { getEnv } from "@/utils/env";

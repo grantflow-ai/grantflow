@@ -1,10 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
-
-import { IconGoAhead } from "@/components/icons";
-import AppInput from "@/components/input-field";
-import { SubmitButton } from "@/components/submit-button";
+import { SubmitButton } from "@/components/app/buttons/submit-button";
+import AppInput from "@/components/app/forms/input-field";
+import { IconGoAhead } from "@/components/branding/icons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 const signInFormSchema = z.object({

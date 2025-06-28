@@ -10,7 +10,7 @@ import { Wand2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { crawlTemplateUrl } from "@/actions/sources";
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";

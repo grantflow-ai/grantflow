@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronUp, Mail, X } from "lucide-react";
 import { useState } from "react";
 
-import { BaseModal } from "@/components/ui/base-modal";
+import { BaseModal } from "@/components/app/feedback/base-modal";
 
 interface InviteCollaboratorModalProps {
 	isOpen: boolean;

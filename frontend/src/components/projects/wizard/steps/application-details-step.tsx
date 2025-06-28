@@ -1,6 +1,6 @@
 "use client";
 
-import AppTextArea from "@/components/textarea-field";
+import AppTextArea from "@/components/app/forms/textarea-field";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";

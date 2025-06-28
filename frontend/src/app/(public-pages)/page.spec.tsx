@@ -26,7 +26,7 @@ vi.mock("@/components/landing-page/testimonials-section", () => ({
 	TestimonialsSection: () => <div data-testid="mock-testimonials-section" />,
 }));
 
-vi.mock("@/components/logo", () => ({
+vi.mock("@/components/branding/logo", () => ({
 	LogoDark: ({ className, height, width }: { className?: string; height: number; width: number }) => (
 		<div className={className} data-height={height} data-testid="mock-logo-dark" data-width={width} />
 	),
