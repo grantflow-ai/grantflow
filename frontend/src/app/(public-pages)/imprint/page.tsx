@@ -1,5 +1,5 @@
-import { LegalPageContainer } from "@/components/info-legal-page-components";
-import { NavHeader } from "@/components/nav-header";
+import { NavHeader } from "@/components/landing-page/nav-header";
+import { LegalPageContainer } from "@/components/shared/info-legal-page-components";
 
 export default function ImprintPage() {
 	return (

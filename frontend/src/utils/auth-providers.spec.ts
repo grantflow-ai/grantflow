@@ -29,8 +29,12 @@ vi.mock("@/utils/firebase", () => ({
 	getFirebaseAuth: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 vi.mock("next/dist/client/components/redirect-error", () => ({

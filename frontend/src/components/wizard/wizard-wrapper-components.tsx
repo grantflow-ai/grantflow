@@ -1,5 +1,6 @@
-import { AppButton } from "@/components/app-button";
-import { IconGoAhead, IconGoBack } from "@/components/icons";
+import { useRouter } from "next/navigation";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { IconGoAhead, IconGoBack } from "@/components/branding/icons";
 import {
 	IconApplicationStepActive,
 	IconApplicationStepDone,
@@ -7,12 +8,20 @@ import {
 	IconApprove,
 	IconButtonLogo,
 	IconDeadline,
-} from "@/components/projects/icons";
-import { DevAutofillButton } from "@/components/projects/wizard/dev-autofill-button";
-import { DevResetButton } from "@/components/projects/wizard/dev-reset-button";
-import { WIZARD_STEP_TITLES, WizardStep } from "@/constants";
+} from "@/components/projects/shared/icons";
+import { DevPanel } from "@/components/projects/wizard/dev-tools/dev-panel";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+
+const WIZARD_STEP_ORDER: WizardStep[] = [
+	WizardStep.APPLICATION_DETAILS,
+	WizardStep.APPLICATION_STRUCTURE,
+	WizardStep.KNOWLEDGE_BASE,
+	WizardStep.RESEARCH_PLAN,
+	WizardStep.RESEARCH_DEEP_DIVE,
+	WizardStep.GENERATE_AND_COMPLETE,
+];
 
 export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
 	let IconComponent: React.ComponentType;
@@ -32,7 +41,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 		);
 	}
 
-	const lineClass = type === "done" ? "bg-primary" : "bg-muted";
+	const lineClass = type === "done" ? "bg-action-primary" : "bg-app-gray-300";
 
 	return (
 		<div className="relative flex w-full flex-row items-center" data-testid={`step-${type}`}>
@@ -57,7 +66,7 @@ export function WizardFooter() {
 
 	return (
 		<footer
-			className="border-app-lavender-gray relative flex h-auto w-full items-center justify-between border-t bg-white p-6"
+			className="relative flex h-auto w-full items-center justify-between border-t border-border-primary bg-surface-primary p-6"
 			data-testid="wizard-footer"
 		>
 			{showBack ? (
@@ -75,10 +84,7 @@ export function WizardFooter() {
 			) : (
 				<div />
 			)}
-			<div className="absolute left-1/2 flex -translate-x-1/2 flex-col gap-2">
-				<DevAutofillButton />
-				<DevResetButton />
-			</div>
+			<DevPanel />
 			<AppButton
 				data-testid="continue-button"
 				disabled={disabled}
@@ -97,16 +103,32 @@ export function WizardFooter() {
 }
 
 export function WizardHeader() {
+	const router = useRouter();
 	const currentStep = useWizardStore((state) => state.currentStep);
+	const reset = useWizardStore((state) => state.reset);
 	const application = useApplicationStore((state) => state.application);
 	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
+	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
+
+	const handleExit = () => {
+		reset();
+		if (application?.project_id) {
+			router.push(`/projects/${application.project_id}`);
+		} else {
+			router.push("/projects");
+		}
+	};
+
 	return (
-		<header className="w-full border-b border-solid border-app-gray-100 p-4 sm:p-6" data-testid="wizard-header">
+		<header className="w-full border-b border-solid border-border-primary p-4 sm:p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
 					{showHeaderInfo ? (
 						<>
-							<h1 className="text-sm sm:text-base text-nowrap font-medium" data-testid="app-name">
+							<h1
+								className="text-sm sm:text-base text-nowrap font-medium text-text-primary"
+								data-testid="app-name"
+							>
 								{application?.title}
 							</h1>
 							<Deadline />
@@ -116,26 +138,21 @@ export function WizardHeader() {
 					)}
 				</div>
 				<AppButton
-					className="py-0 text-sm sm:text-base text-primary"
+					className="py-0 text-sm sm:text-base text-action-primary"
 					data-testid="exit-button"
+					onClick={handleExit}
 					size="lg"
 					variant="link"
 				>
-					Exit
+					{isFirstStep ? "Exit" : "Save and Exit"}
 				</AppButton>
 			</div>
-			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_TITLES} />
+			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
 		</header>
 	);
 }
 
-function ApplicationProgressBar({
-	currentStep,
-	stepTitles,
-}: {
-	currentStep: (typeof WIZARD_STEP_TITLES)[number];
-	stepTitles: typeof WIZARD_STEP_TITLES;
-}) {
+function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: WizardStep; stepTitles: WizardStep[] }) {
 	return (
 		<div className="flex justify-center">
 			<div
@@ -148,7 +165,7 @@ function ApplicationProgressBar({
 				role="progressbar"
 			>
 				<div className="relative flex w-full justify-center px-4 sm:px-20">
-					{stepTitles.map((title, index) => {
+					{stepTitles.map((title: WizardStep, index: number) => {
 						const isLastStep = index === stepTitles.length - 1;
 						const currentStepIndex = stepTitles.indexOf(currentStep);
 
@@ -178,10 +195,10 @@ function ApplicationProgressBar({
 											aria-hidden="true"
 											className={`font-heading text-center text-xs max-w-full truncate ${(() => {
 												if (index < currentStepIndex) {
-													return "text-secondary";
+													return "text-text-secondary";
 												}
 												if (index === currentStepIndex) {
-													return "text-primary";
+													return "text-action-primary";
 												}
 												return "text-app-gray-400";
 											})()}`}
@@ -201,21 +218,57 @@ function ApplicationProgressBar({
 	);
 }
 
+function calculateTimeDifference(submissionDate: string): number {
+	const now = new Date();
+	const deadline = new Date(submissionDate);
+	return deadline.getTime() - now.getTime();
+}
+
 function Deadline() {
+	const application = useApplicationStore((state) => state.application);
+	const submissionDate = application?.grant_template?.submission_date;
+
+	const getTimeRemaining = () => {
+		if (!submissionDate) {
+			return "Deadline not set";
+		}
+
+		const diffTime = calculateTimeDifference(submissionDate);
+
+		if (diffTime <= 0) {
+			return "Deadline passed";
+		}
+
+		return formatTimeRemaining(diffTime);
+	};
+
+	const timeRemaining = getTimeRemaining();
+
 	return (
 		<div
-			className="rounded-xs bg-app-lavender-gray relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm"
+			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
 			data-testid="deadline-component"
 		>
 			<IconDeadline />
 			<div className="leading-[18px]">
-				<span className="font-semibold">4</span>
-				<span> weeks and </span>
-				<span className="font-semibold">3</span>
-				<span> days to the deadline</span>
+				{submissionDate ? <span>{timeRemaining}</span> : <span>Deadline not set</span>}
 			</div>
 		</div>
 	);
+}
+
+function formatTimeRemaining(diffTime: number): string {
+	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+	const weeks = Math.floor(diffDays / 7);
+	const days = diffDays % 7;
+
+	if (weeks > 0 && days > 0) {
+		return `${weeks} week${weeks === 1 ? "" : "s"} and ${days} day${days === 1 ? "" : "s"} to the deadline`;
+	}
+	if (weeks > 0) {
+		return `${weeks} week${weeks === 1 ? "" : "s"} to the deadline`;
+	}
+	return `${days} day${days === 1 ? "" : "s"} to the deadline`;
 }
 
 function generateFooterRightButtonProps(currentStep: WizardStep) {

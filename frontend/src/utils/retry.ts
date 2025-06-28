@@ -16,11 +16,10 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
 	retryCondition: (error: unknown) => {
 		if (error instanceof HTTPError) {
 			const { status } = error.response;
-			// Retry on 500, 502, 503, 504 errors (server errors)
-			// Don't retry on 400-level errors (client errors) except 408 (timeout)
+
 			return status >= 500 || status === 408;
 		}
-		// Retry on network errors
+
 		return true;
 	},
 };
@@ -35,21 +34,16 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
 		} catch (error: unknown) {
 			lastError = error;
 
-			// Don't retry if this is the last attempt
 			if (attempt === config.maxRetries) {
 				break;
 			}
 
-			// Check if we should retry this error
 			if (!config.retryCondition(error)) {
 				break;
 			}
 
-			// Calculate delay with exponential backoff
 			const delay = Math.min(config.initialDelay * config.backoffMultiplier ** attempt, config.maxDelay);
 
-			// Add jitter to prevent thundering herd
-			// eslint-disable-next-line sonarjs/pseudo-random
 			const jitteredDelay = delay + Math.random() * 0.1 * delay;
 
 			await new Promise((resolve) => setTimeout(resolve, jitteredDelay));

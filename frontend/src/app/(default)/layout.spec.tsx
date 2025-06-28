@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 
 import DefaultLayout from "@/app/(default)/layout";
 
-vi.mock("@/components/shared-layout", () => ({
+vi.mock("@/components/layout/shared-layout", () => ({
 	default: vi.fn().mockImplementation(({ children }) => <div data-testid="mock-shared-layout">{children}</div>),
 }));
 

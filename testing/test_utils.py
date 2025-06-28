@@ -11,6 +11,7 @@ from packages.db.src.tables import (
     FundingOrganizationRagSource,
     GrantApplication,
     GrantApplicationRagSource,
+    GrantTemplate,
     Project,
     RagFile,
     RagSource,
@@ -349,6 +350,163 @@ async def process_application_files(
         await session.commit()
 
 
+async def create_grant_template_for_application(
+    application_id: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    """Create a grant template with the required sections for testing."""
+    grant_sections = [
+        {
+            "id": "abstract",
+            "title": "Abstract",
+            "order": 1,
+            "parent_id": None,
+            "keywords": ["research goals", "objectives", "impact", "melanoma", "treatment", "diagnosis", "prevention"],
+            "topics": ["project_summary", "technical_abstract"],
+            "generation_instructions": "Provide a concise summary of the proposed research project, including the project's goals, objectives, and significance. The abstract should be written in a clear and accessible style, as it will be read by a broad audience of scientists and administrators.",
+            "depends_on": ["research_strategy"],
+            "max_words": 285,
+            "search_queries": [
+                "melanoma research objectives methodology impact",
+                "project goals innovation significance melanoma",
+                "technical approach outcomes melanoma research",
+                "melanoma detection diagnosis treatment",
+                "melanoma prevention research",
+                "melanoma immunotherapy",
+                "melanoma biomarker discovery",
+                "melanoma clinical trials",
+            ],
+            "is_detailed_research_plan": False,
+            "is_clinical_trial": False,
+        },
+        {
+            "id": "research_strategy",
+            "title": "Research Strategy",
+            "order": 2,
+            "parent_id": "narrative",
+            "keywords": [
+                "methodology",
+                "experimental design",
+                "data analysis",
+                "melanoma",
+                "immunotherapy",
+                "targeted therapy",
+                "biomarkers",
+            ],
+            "topics": [
+                "background_context",
+                "hypothesis",
+                "methodology",
+                "expected_outcomes",
+                "research_objectives",
+            ],
+            "generation_instructions": "Describe the overall research strategy, methodology, and analyses to be used to accomplish the specific aims of the project. Discuss potential problems and alternative strategies.",
+            "depends_on": [],
+            "max_words": 1806,
+            "search_queries": [
+                "melanoma research methodology experimental design protocols",
+                "data collection analysis methods melanoma",
+                "melanoma experimental approach techniques",
+                "research strategy implementation melanoma",
+                "melanoma immunotherapy research",
+                "melanoma targeted therapy research",
+                "melanoma biomarker discovery research",
+                "melanoma clinical trial design",
+            ],
+            "is_detailed_research_plan": True,
+            "is_clinical_trial": False,
+        },
+        {
+            "id": "preliminary_results",
+            "title": "Preliminary Results",
+            "order": 1,
+            "parent_id": "research_strategy",
+            "keywords": [
+                "data",
+                "analysis",
+                "interpretation",
+                "melanoma",
+                "research",
+                "findings",
+            ],
+            "topics": ["preliminary_data", "research_feasibility"],
+            "generation_instructions": "Present any preliminary data that is relevant to the proposed research project. Discuss the significance of the data and how it supports the feasibility of the project.",
+            "depends_on": ["research_strategy"],
+            "max_words": 361,
+            "search_queries": [
+                "melanoma preliminary data results analysis",
+                "research feasibility interpretation melanoma",
+                "data significance relevance melanoma",
+                "melanoma research findings",
+                "melanoma preliminary experimental data",
+            ],
+            "is_detailed_research_plan": False,
+            "is_clinical_trial": False,
+        },
+        {
+            "id": "risks_and_mitigations",
+            "title": "Risks and Mitigations",
+            "order": 3,
+            "parent_id": "narrative",
+            "keywords": [
+                "risk assessment",
+                "contingency plan",
+                "mitigation strategies",
+                "melanoma",
+                "research",
+            ],
+            "topics": ["risks_and_mitigations", "research_feasibility"],
+            "generation_instructions": "Describe potential risks associated with the proposed research project, and explain the proposed mitigation strategies to address these risks.",
+            "depends_on": ["research_strategy"],
+            "max_words": 361,
+            "search_queries": [
+                "melanoma research risks assessment",
+                "contingency planning research melanoma",
+                "mitigation strategies in melanoma research",
+                "challenges in melanoma research",
+                "feasibility of melanoma research",
+            ],
+            "is_detailed_research_plan": False,
+            "is_clinical_trial": False,
+        },
+        {
+            "id": "impact",
+            "title": "Potential Impact",
+            "order": 4,
+            "parent_id": "narrative",
+            "keywords": [
+                "clinical impact",
+                "translational research",
+                "melanoma",
+                "treatment",
+                "diagnosis",
+                "prevention",
+            ],
+            "topics": ["impact", "knowledge_translation"],
+            "generation_instructions": "Describe the potential clinical and translational impact of the proposed research project. Explain how the project could improve the lives of patients with melanoma.",
+            "depends_on": ["research_strategy"],
+            "max_words": 361,
+            "search_queries": [
+                "melanoma clinical impact research",
+                "translational research in melanoma",
+                "melanoma treatment improvements",
+                "melanoma diagnosis and detection",
+                "melanoma prevention strategies",
+            ],
+            "is_detailed_research_plan": False,
+            "is_clinical_trial": False,
+        },
+    ]
+
+    async with async_session_maker() as session, session.begin():
+        template = GrantTemplate(
+            grant_application_id=application_id,
+            grant_sections=grant_sections,
+        )
+        session.add(template)
+        await session.commit()
+
+
 async def create_grant_application_data(
     project: Project,
     research_objectives: list[ResearchObjective],
@@ -362,6 +520,8 @@ async def create_grant_application_data(
     application_id = await create_funding_application(
         async_session_maker, fixture_id, str(project.id), title, research_objectives, form_inputs
     )
+
+    await create_grant_template_for_application(application_id, async_session_maker)
 
     cfp_content_file = FIXTURES_FOLDER / "cfps" / cfp_markdown_file_name
     cfp_source_file = SOURCES_FOLDER / "cfps" / source_file_names[0]

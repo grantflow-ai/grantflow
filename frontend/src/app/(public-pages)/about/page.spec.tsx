@@ -9,7 +9,7 @@ vi.mock("@/components/about/icons", () => ({
 	IconRefine: vi.fn().mockImplementation(() => <div data-testid="mock-icon-refine" />),
 }));
 
-vi.mock("@/components/info-legal-page-components", () => ({
+vi.mock("@/components/shared/info-legal-page-components", () => ({
 	LegalPageContainer: vi.fn().mockImplementation(({ backgroundStack, children, ...props }) => (
 		<div
 			data-background={props.background}
@@ -27,7 +27,7 @@ vi.mock("@/components/info-legal-page-components", () => ({
 	)),
 }));
 
-vi.mock("@/components/brand-pattern", () => ({
+vi.mock("@/components/branding/brand-pattern", () => ({
 	BrandPattern: vi
 		.fn()
 		.mockImplementation((props) => (
@@ -41,18 +41,19 @@ vi.mock("@/components/brand-pattern", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: vi.fn().mockImplementation(({ alt, className, src, ...props }) => (
+	default: vi.fn().mockImplementation(({ alt, className, height, priority, src, width, ...props }) => (
 		<div
 			alt={alt}
 			aria-label={alt ?? "Image"}
 			className={className}
 			data-alt={alt}
+			data-priority={priority ? "true" : "false"}
 			data-src={typeof src === "object" ? "/mocked-image-path.jpg" : src}
 			data-testid="mock-image"
 			role="img"
 			style={{
-				height: props.height ? `${props.height}px` : "auto",
-				width: props.width ? `${props.width}px` : "auto",
+				height: height ? `${height}px` : "auto",
+				width: width ? `${width}px` : "auto",
 			}}
 			{...props}
 		/>
