@@ -55,14 +55,14 @@ export function ProjectSettingsAccount({
 
 	return (
 		<>
-			<div className="flex flex-col gap-6 px-6 max-w-[340px]">
+			<div className="flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
 				{/* Profile Image */}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
 						Profile Image
 					</h3>
 					<div className="flex items-end gap-3">
-						<div className="size-[93px] rounded bg-[#369e94] flex items-center justify-center relative overflow-hidden">
+						<div className="size-[93px] rounded bg-[#369e94] flex items-center justify-center relative overflow-hidden" data-testid="profile-image-container">
 							{user?.photoURL ? (
 								<Image alt="Profile" className="rounded object-cover" fill src={user.photoURL} />
 							) : (
@@ -74,12 +74,13 @@ export function ProjectSettingsAccount({
 						<div className="flex gap-1">
 							<button
 								className="flex items-center gap-1 px-1 py-0.5 border border-[#1e13f8] rounded bg-white text-[#1e13f8] font-['Sora'] text-[14px] hover:bg-[#1e13f8] hover:text-white transition-colors"
+								data-testid="upload-photo-button"
 								type="button"
 							>
 								<Plus className="size-4" />
 								Upload
 							</button>
-							<button className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors" type="button">
+							<button className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors" data-testid="delete-photo-button" type="button">
 								<Trash2 className="size-4 text-[#ff456d]" />
 							</button>
 						</div>
@@ -94,6 +95,7 @@ export function ProjectSettingsAccount({
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Name</h3>
 					<input
 						className="w-full h-10 px-3 border border-[#636170] rounded bg-white text-[14px] font-['Source_Sans_Pro'] text-[#636170] focus:outline-none focus:border-[#1e13f8]"
+						data-testid="name-input"
 						onChange={(e) => {
 							setName(e.target.value);
 						}}
@@ -111,6 +113,7 @@ export function ProjectSettingsAccount({
 						</h3>
 						<button
 							className="relative"
+							data-testid="email-info-button"
 							onMouseEnter={() => {
 								setShowEmailTooltip(true);
 							}}
@@ -122,7 +125,7 @@ export function ProjectSettingsAccount({
 							<Info className="size-3 text-[#636170]" />
 						</button>
 						{showEmailTooltip && (
-							<div className="absolute left-0 top-6 z-10 w-[300px]">
+							<div className="absolute left-0 top-6 z-10 w-[300px]" data-testid="email-tooltip">
 								<div className="bg-[#211968] text-white text-[14px] font-['Source_Sans_Pro'] px-3 py-1 rounded-sm">
 									The main email address cannot be edited.
 									<br />
@@ -137,6 +140,7 @@ export function ProjectSettingsAccount({
 					<div className="relative">
 						<input
 							className="w-full h-10 px-3 pr-10 border border-[#636170] rounded bg-white text-[14px] font-['Source_Sans_Pro'] text-[#636170] cursor-not-allowed"
+							data-testid="email-input"
 							disabled
 							type="email"
 							value={user?.email ?? "Email@address.com"}
@@ -149,7 +153,7 @@ export function ProjectSettingsAccount({
 				<div className="flex flex-col gap-3">
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Role</h3>
 					<div className="inline-flex">
-						<span className="px-2 py-0 bg-[#e1dfeb] rounded-[20px] text-[12px] font-['Source_Sans_Pro'] text-[#211968]">
+						<span className="px-2 py-0 bg-[#e1dfeb] rounded-[20px] text-[12px] font-['Source_Sans_Pro'] text-[#211968]" data-testid="role-badge">
 							{getRoleLabel(userRole)}
 						</span>
 					</div>
@@ -163,6 +167,7 @@ export function ProjectSettingsAccount({
 						</h3>
 						<button
 							className="flex items-center gap-1 px-1 py-0.5 border border-[#ff456d] rounded bg-white text-[#ff456d] font-['Sora'] text-[14px] hover:bg-[#ff456d] hover:text-white transition-colors self-start"
+							data-testid="delete-account-button"
 							onClick={() => {
 								setShowDeleteModal(true);
 							}}

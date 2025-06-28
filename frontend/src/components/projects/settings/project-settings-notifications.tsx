@@ -14,6 +14,7 @@ interface ProjectSettingsNotificationsProps {
 
 interface ToggleSwitchProps {
 	checked: boolean;
+	"data-testid"?: string;
 	onChange: () => void;
 }
 
@@ -33,7 +34,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 	};
 
 	return (
-		<div className="w-full">
+		<div className="w-full" data-testid="project-settings-notifications">
 			<div className="mb-8">
 				<h2 className="text-[24px] font-medium text-text-primary font-heading mb-2">
 					General Email Notifications
@@ -53,6 +54,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.emailNotifications}
+						data-testid="email-notifications-toggle"
 						onChange={() => {
 							handleToggle("emailNotifications");
 						}}
@@ -69,6 +71,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.deadlineReminders}
+						data-testid="deadline-reminders-toggle"
 						onChange={() => {
 							handleToggle("deadlineReminders");
 						}}
@@ -92,6 +95,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.collaborationActivity}
+						data-testid="collaboration-activity-toggle"
 						onChange={() => {
 							handleToggle("collaborationActivity");
 						}}
@@ -102,13 +106,16 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 	);
 }
 
-function ToggleSwitch({ checked, onChange }: ToggleSwitchProps) {
+function ToggleSwitch({ checked, "data-testid": dataTestId, onChange }: ToggleSwitchProps) {
 	return (
 		<button
+			aria-checked={checked}
 			className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary focus:ring-offset-2 ${
 				checked ? "bg-action-primary" : "bg-app-gray-300"
 			}`}
+			data-testid={dataTestId}
 			onClick={onChange}
+			role="switch"
 			type="button"
 		>
 			<span
