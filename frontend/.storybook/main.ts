@@ -1,8 +1,8 @@
+import { storybookEnv } from "::storybook/mocks/env";
 import type { StorybookConfig } from "@storybook/react-vite";
 import react from "@vitejs/plugin-react";
 import { mergeConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { storybookEnv } from "../storybook-mocks/env";
 
 const config: StorybookConfig = {
 	addons: ["@storybook/addon-docs"],

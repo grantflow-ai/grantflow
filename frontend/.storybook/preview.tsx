@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
-import "../storybook-mocks/storybook-theme.css";
-import "../storybook-mocks/font-loader.css";
+import "::storybook/mocks/storybook-theme.css";
+import "::storybook/mocks/font-loader.css";
 
 import type { Preview } from "@storybook/react-vite";
 import { getEnv } from "@/utils/env";

@@ -17,6 +17,7 @@
 		"noUnusedParameters": true,
 		"paths": {
 			"::testing/*": ["testing/*"],
+			"::storybook/*": [".storybook/*"],
 			"@/*": ["src/*"]
 		},
 		"plugins": [

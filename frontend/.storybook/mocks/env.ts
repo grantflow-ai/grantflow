@@ -1,6 +1,3 @@
-// Mock environment variables for Storybook
-// Based on testing/global-mocks.ts but without Vitest dependencies
-
 import type { Env } from "@/types/env-types";
 
 export const storybookEnv = {
@@ -14,6 +11,7 @@ export const storybookEnv = {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
+	NEXT_PUBLIC_GCS_EMULATOR_URL: "http://localhost:9199",
 	NEXT_PUBLIC_MAILGUN_API_KEY: "mailgun_key_test_1234567890",
 	NEXT_PUBLIC_SEGMENT_WRITE_KEY: "sk_test_1234567890abcdef",
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
