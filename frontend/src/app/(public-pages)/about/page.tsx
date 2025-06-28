@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/about/icons";
-import { NavHeader } from "@/components/layout/navigation/nav-header";
+import { NavHeader } from "@/components/landing-page/nav-header";
 import { LegalPageContainer } from "@/components/shared/info-legal-page-components";
 import { cn } from "@/lib/utils";
 

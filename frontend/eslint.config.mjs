@@ -242,7 +242,7 @@ export default eslintTS.config(
 		},
 	},
 	{
-		files: ["**/src/components/app/**/*.{ts,tsx}"],
+		files: ["**/src/components/app/**/*.{ts,tsx}", "**/src/components/landing-page/**/*.{ts,tsx}"],
 		rules: {
 			"no-restricted-imports": "off",
 		},
