@@ -1,4 +1,4 @@
-import SharedLayout from "@/components/shared-layout";
+import SharedLayout from "@/components/layout/shared-layout";
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
 	return (

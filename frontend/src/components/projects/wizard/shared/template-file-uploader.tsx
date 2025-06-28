@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { IconUpload } from "@/components/projects/shared/icons";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";

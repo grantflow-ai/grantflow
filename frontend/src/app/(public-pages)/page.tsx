@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import { AppButton } from "@/components/app-button";
-import { IconGoAhead } from "@/components/icons";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { IconGoAhead } from "@/components/branding/icons";
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
@@ -11,7 +11,7 @@ import { EarlyAccessSection } from "@/components/landing-page/early-access-secti
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { PaymentPlans } from "@/components/landing-page/payment-plans/payment-plans";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import { ScrollButton } from "@/components/scroll-button";
+import { ScrollButton } from "@/components/layout/navigation/scroll-button";
 
 const CONTENT_CTA_SECTION = {
 	description:
