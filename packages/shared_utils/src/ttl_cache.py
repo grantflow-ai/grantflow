@@ -5,7 +5,7 @@ Provides a decorator for adding time-based expiration to Python's lru_cache.
 
 import time
 from functools import lru_cache, wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, Awaitable, cast
 
 from packages.shared_utils.src.logger import get_logger
 
@@ -14,14 +14,16 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
-_cache_timestamps: dict[tuple[Callable, tuple, frozenset], float] = {}
+_cache_timestamps: dict[
+    tuple[Callable[..., Any], tuple[Any, ...], frozenset[tuple[str, Any]]], float
+] = {}
 
 
 def ttl_lru_cache(
     maxsize: int = 128,
     ttl_seconds: int = 300,
     typed: bool = False,
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
     """
     Decorator that combines LRU cache with TTL (time-to-live) functionality.
 
@@ -37,8 +39,10 @@ def ttl_lru_cache(
             return result
     """
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
-        cached_func = lru_cache(maxsize=maxsize, typed=typed)(func)
+    def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
+        @lru_cache(maxsize=maxsize, typed=typed)
+        def sync_cached_func(*args: Any, **kwargs: Any) -> Awaitable[T]:
+            return func(*args, **kwargs)
 
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -70,16 +74,16 @@ def ttl_lru_cache(
                         ttl_seconds=ttl_seconds,
                     )
 
-                    cached_func.cache_clear()
+                    sync_cached_func.cache_clear()
                     _cache_timestamps.clear()
 
             try:
-                result = await cached_func(*args, **kwargs)
+                result = await sync_cached_func(*args, **kwargs)
 
                 if cache_key not in _cache_timestamps:
                     _cache_timestamps[cache_key] = current_time
 
-                cache_info = cached_func.cache_info()
+                cache_info = sync_cached_func.cache_info()
                 if cache_info.hits > 0:
                     logger.debug(
                         "Cache hit",
@@ -91,19 +95,20 @@ def ttl_lru_cache(
 
                 return result
             except Exception:
-                cached_func.cache_clear()
+                sync_cached_func.cache_clear()
                 _cache_timestamps.clear()
                 result = await func(*args, **kwargs)
                 _cache_timestamps[cache_key] = current_time
                 return result
 
-        wrapper.cache_clear = lambda: (
-            cached_func.cache_clear(),
-            _cache_timestamps.clear(),
-        )
-        wrapper.cache_info = cached_func.cache_info
+        def cache_clear() -> None:
+            sync_cached_func.cache_clear()
+            _cache_timestamps.clear()
 
-        return wrapper
+        wrapper.cache_clear = cache_clear  # type: ignore[attr-defined]
+        wrapper.cache_info = sync_cached_func.cache_info  # type: ignore[attr-defined]
+
+        return cast(Callable[..., Awaitable[T]], wrapper)
 
     return decorator
 
@@ -131,10 +136,10 @@ def create_content_hash(*args: Any, **kwargs: Any) -> str:
 
 
 def cached_with_ttl(
-    func: Callable[..., T],
+    func: Callable[..., Awaitable[T]],
     ttl_seconds: int = 300,
     cache_key: str | None = None,
-) -> Callable[..., T]:
+) -> Callable[..., Awaitable[T]]:
     """
     Create a cached version of a function with TTL.
 
@@ -166,7 +171,7 @@ def cached_with_ttl(
                     key=full_key[:20],
                     age_seconds=round(current_time - timestamp, 2),
                 )
-                return result
+                return cast(T, result)
             else:
                 del cache_storage[full_key]
 
@@ -181,7 +186,7 @@ def cached_with_ttl(
 
         return result
 
-    wrapper.cache_clear = lambda: cache_storage.clear()
-    wrapper.cache_size = lambda: len(cache_storage)
+    wrapper.cache_clear = lambda: cache_storage.clear()  # type: ignore[attr-defined]
+    wrapper.cache_size = lambda: len(cache_storage)  # type: ignore[attr-defined]
 
-    return wrapper
+    return cast(Callable[..., Awaitable[T]], wrapper)
