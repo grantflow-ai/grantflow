@@ -18,7 +18,7 @@ interface ProjectMember {
 	id: string;
 	joinedAt: string;
 	photoUrl?: string;
-	projectAccess?: string[]; 
+	projectAccess?: string[];
 	role: UserRole;
 	status: "active" | "pending";
 }
@@ -42,7 +42,6 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
-
 const mockMembers: ProjectMember[] = [
 	{
 		email: "test@gmail.com",
@@ -52,7 +51,7 @@ const mockMembers: ProjectMember[] = [
 		joinedAt: "2025-01-15T10:00:00Z",
 		projectAccess: [],
 		role: UserRole.OWNER,
-		status: "active", 
+		status: "active",
 	},
 	{
 		email: "test@gmail.com",
@@ -62,7 +61,7 @@ const mockMembers: ProjectMember[] = [
 		joinedAt: "2025-01-20T10:00:00Z",
 		projectAccess: [],
 		role: UserRole.ADMIN,
-		status: "active", 
+		status: "active",
 	},
 	{
 		email: "test@gmail.com",
@@ -72,19 +71,15 @@ const mockMembers: ProjectMember[] = [
 		joinedAt: "2025-01-25T10:00:00Z",
 		projectAccess: ["app1", "app2", "app3", "app4"],
 		role: UserRole.MEMBER,
-		status: "active", 
+		status: "active",
 	},
 ];
 
 const handleRemoveMember = (memberId: string) => {
-	
-	
 	logTrace("info", "Remove member not implemented yet", { memberId });
 };
 
 const handleUpdateRole = (memberId: string, newRole: UserRole, projectAccess?: string[]) => {
-	
-	
 	logTrace("info", "Update role not implemented yet", { memberId, newRole, projectAccess });
 	return Promise.resolve();
 };
@@ -116,12 +111,9 @@ export function ProjectSettingsMembers({
 
 			if (!result.success) {
 				logTrace("error", "Failed to invite collaborator", { email, error: result.error });
-				
+
 				return;
 			}
-
-			
-			
 		} catch (error) {
 			logTrace("error", "Error inviting collaborator", {
 				email,
@@ -168,9 +160,7 @@ export function ProjectSettingsMembers({
 						<div className="font-semibold text-[14px] text-text-secondary font-body">
 							Research Projects Access
 						</div>
-						<div className="font-semibold text-[14px] text-text-secondary font-body">
-							{}
-						</div>
+						<div className="font-semibold text-[14px] text-text-secondary font-body">{}</div>
 					</div>
 				</div>
 
@@ -336,7 +326,6 @@ function MemberActionMenu({
 		};
 	}, [isOpen]);
 
-	
 	const canModify =
 		member.role !== UserRole.OWNER && (currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN);
 
@@ -398,7 +387,6 @@ function MemberActionMenu({
 }
 
 function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: string[]; role: UserRole }) {
-	
 	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
 		return (
 			<div className="flex items-center gap-2">
@@ -407,7 +395,6 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 		);
 	}
 
-	
 	if (projectAccess.length === 0) {
 		return (
 			<div className="flex items-center gap-2">

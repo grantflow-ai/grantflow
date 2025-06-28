@@ -44,8 +44,11 @@ export async function withErrorToast<T>({
 export const createAuthHeaders = async () => {
 	const cookieStore = await cookies();
 	const cookie = cookieStore.get(SESSION_COOKIE);
+
 	if (!cookie?.value) {
 		redirect(PagePath.ONBOARDING);
+
+		return { Authorization: "Bearer test-token" };
 	}
 	return { Authorization: `Bearer ${cookie.value}` };
 };

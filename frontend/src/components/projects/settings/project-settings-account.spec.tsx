@@ -6,16 +6,13 @@ import { UserRole } from "@/types/user";
 
 import { ProjectSettingsAccount } from "./project-settings-account";
 
-
 vi.mock("@/stores/user-store", () => ({
 	useUserStore: vi.fn(),
 }));
 
-
 vi.mock("next/image", () => ({
 	default: ({ alt, fill, src, ...props }: any) => <div data-alt={alt} data-fill={fill} data-src={src} {...props} />,
 }));
-
 
 vi.mock("./delete-account-modal", () => ({
 	DeleteAccountModal: ({ isOpen, onClose }: any) =>
@@ -57,7 +54,6 @@ describe("ProjectSettingsAccount", () => {
 		expect(screen.getByText("Email address")).toBeInTheDocument();
 		expect(screen.getByText("Role")).toBeInTheDocument();
 
-		
 		expect(screen.getByTestId("name-input")).toHaveValue("John Doe");
 		expect(screen.getByTestId("email-input")).toHaveValue("john.doe@example.com");
 		expect(screen.getByTestId("role-badge")).toHaveTextContent("Collaborator");
@@ -77,8 +73,6 @@ describe("ProjectSettingsAccount", () => {
 
 		const profileContainer = screen.getByTestId("profile-image-container");
 		expect(profileContainer).toBeInTheDocument();
-		
-		
 	});
 
 	it("uses email initials when no display name", () => {
@@ -98,17 +92,14 @@ describe("ProjectSettingsAccount", () => {
 
 		const infoButton = screen.getByTestId("email-info-button");
 
-		
 		expect(screen.queryByTestId("email-tooltip")).not.toBeInTheDocument();
 
-		
 		await user.hover(infoButton);
 		const tooltip = screen.getByTestId("email-tooltip");
 		expect(tooltip).toBeInTheDocument();
 		expect(tooltip).toHaveTextContent("The main email address cannot be edited.");
 		expect(tooltip).toHaveTextContent("To change it, please contact our support team.");
 
-		
 		await user.unhover(infoButton);
 		expect(screen.queryByTestId("email-tooltip")).not.toBeInTheDocument();
 	});
@@ -119,7 +110,6 @@ describe("ProjectSettingsAccount", () => {
 
 		const nameInput = screen.getByTestId("name-input");
 
-		
 		await user.clear(nameInput);
 		await user.type(nameInput, "Jane Smith");
 
@@ -162,14 +152,11 @@ describe("ProjectSettingsAccount", () => {
 
 		const deleteButton = screen.getByTestId("delete-account-button");
 
-		
 		expect(screen.queryByTestId("delete-account-modal")).not.toBeInTheDocument();
 
-		
 		await user.click(deleteButton);
 		expect(screen.getByTestId("delete-account-modal")).toBeInTheDocument();
 
-		
 		await user.click(screen.getByTestId("mock-close-delete-modal"));
 
 		await waitFor(() => {

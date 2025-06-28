@@ -140,7 +140,7 @@ const uploadFileInDevelopment = async (
 	}
 
 	const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-	
+
 	setTimeout(() => {
 		void triggerDevIndexing(objectPath);
 	}, 500);
@@ -321,8 +321,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					retryCondition: (error: unknown) => {
 						if (error instanceof HTTPError) {
 							const { status } = error.response;
-							
-							
+
 							return status >= 500;
 						}
 						return true;
@@ -330,7 +329,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			);
 
-			
 			logTrace("info", "Grant template generation initiated", {
 				application_id: application.id,
 				correlation_id: correlationId,
@@ -477,7 +475,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		
 		const updatedApplication: NonNullable<ApplicationType> = {
 			...application,
 			grant_template: {

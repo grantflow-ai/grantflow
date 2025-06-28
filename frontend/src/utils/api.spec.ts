@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getClient } from "./api";
 
-
 vi.mock("ky", () => ({
 	default: {
 		create: vi.fn(() => ({
@@ -45,7 +44,6 @@ describe("API Utils", () => {
 		it("should return a client with HTTP methods", () => {
 			const client = getClient();
 
-			
 			expect(client).toHaveProperty("get");
 			expect(client).toHaveProperty("post");
 			expect(client).toHaveProperty("put");
@@ -55,14 +53,11 @@ describe("API Utils", () => {
 
 	describe("Client Configuration", () => {
 		it("should configure client with environment variables", () => {
-			
-			
 			const client = getClient();
 			expect(client).toBeDefined();
 		});
 
 		it("should handle different environment configurations", () => {
-			
 			const client = getClient();
 			expect(client).toBeDefined();
 		});
@@ -70,11 +65,9 @@ describe("API Utils", () => {
 
 	describe("Client Behavior", () => {
 		it("should provide consistent client instance", () => {
-			
 			const instances = Array.from({ length: 5 }, () => getClient());
 			const [firstInstance] = instances;
 
-			
 			for (const instance of instances) {
 				expect(instance).toBe(firstInstance);
 			}
@@ -83,7 +76,6 @@ describe("API Utils", () => {
 		it("should return a functional client", () => {
 			const client = getClient();
 
-			
 			expect(typeof client).toBe("object");
 			expect(client).not.toBeNull();
 		});
@@ -91,7 +83,6 @@ describe("API Utils", () => {
 
 	describe("Error Handling", () => {
 		it("should handle client creation gracefully", () => {
-			
 			expect(() => getClient()).not.toThrow();
 		});
 

@@ -15,7 +15,6 @@ interface ProjectSettingsLayoutProps {
 export function ProjectSettingsLayout({ children, projectId, userRole = UserRole.MEMBER }: ProjectSettingsLayoutProps) {
 	const pathname = usePathname();
 
-	
 	const allTabs = [
 		{ href: `/projects/${projectId}/settings/account`, label: "Account Settings" },
 		{
@@ -31,7 +30,6 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 		{ href: `/projects/${projectId}/settings/notifications`, label: "Notifications" },
 	];
 
-	
 	const tabs = allTabs.filter((tab) => {
 		if (!tab.requiresRole) return true;
 		return tab.requiresRole.includes(userRole);

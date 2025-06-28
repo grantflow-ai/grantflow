@@ -42,7 +42,6 @@ describe("DeleteApplicationModal", () => {
 		const user = userEvent.setup();
 		render(<DeleteApplicationModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
-		
 		const closeButton = screen.getByTestId("close-modal-button");
 		await user.click(closeButton);
 
@@ -64,8 +63,6 @@ describe("DeleteApplicationModal", () => {
 	it("calls onClose when backdrop is clicked", async () => {
 		render(<DeleteApplicationModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
-		
-		
 		expect(mockOnClose).not.toHaveBeenCalled();
 	});
 
@@ -75,7 +72,6 @@ describe("DeleteApplicationModal", () => {
 
 		await user.keyboard("{Escape}");
 
-		
 		expect(mockOnClose).toHaveBeenCalled();
 	});
 });

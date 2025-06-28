@@ -13,19 +13,16 @@ describe("ProjectSettingsNotifications", () => {
 		expect(screen.getByTestId("project-settings-notifications")).toBeInTheDocument();
 		expect(screen.getByText("General Email Notifications")).toBeInTheDocument();
 
-		
 		expect(screen.getByText("Receive important email notifications")).toBeInTheDocument();
 		expect(
 			screen.getByText("Get notified about deadlines, collaborator activity, and grant updates."),
 		).toBeInTheDocument();
 		expect(screen.getByTestId("email-notifications-toggle")).toBeInTheDocument();
 
-		
 		expect(screen.getByText("Deadline Reminders")).toBeInTheDocument();
 		expect(screen.getByText("Get notified 6 days and 1 day before a grant deadline.")).toBeInTheDocument();
 		expect(screen.getByTestId("deadline-reminders-toggle")).toBeInTheDocument();
 
-		
 		expect(screen.getByText("Collaboration Activity")).toBeInTheDocument();
 		expect(screen.getByText("Notify me when someone comments or edits")).toBeInTheDocument();
 		expect(screen.getByText("Stay updated on changes and suggestions from your team.")).toBeInTheDocument();
@@ -50,14 +47,11 @@ describe("ProjectSettingsNotifications", () => {
 
 		const emailToggle = screen.getByTestId("email-notifications-toggle");
 
-		
 		expect(emailToggle).toHaveAttribute("aria-checked", "true");
 
-		
 		await user.click(emailToggle);
 		expect(emailToggle).toHaveAttribute("aria-checked", "false");
 
-		
 		await user.click(emailToggle);
 		expect(emailToggle).toHaveAttribute("aria-checked", "true");
 	});
@@ -68,14 +62,11 @@ describe("ProjectSettingsNotifications", () => {
 
 		const deadlineToggle = screen.getByTestId("deadline-reminders-toggle");
 
-		
 		expect(deadlineToggle).toHaveAttribute("aria-checked", "true");
 
-		
 		await user.click(deadlineToggle);
 		expect(deadlineToggle).toHaveAttribute("aria-checked", "false");
 
-		
 		await user.click(deadlineToggle);
 		expect(deadlineToggle).toHaveAttribute("aria-checked", "true");
 	});
@@ -86,14 +77,11 @@ describe("ProjectSettingsNotifications", () => {
 
 		const collaborationToggle = screen.getByTestId("collaboration-activity-toggle");
 
-		
 		expect(collaborationToggle).toHaveAttribute("aria-checked", "true");
 
-		
 		await user.click(collaborationToggle);
 		expect(collaborationToggle).toHaveAttribute("aria-checked", "false");
 
-		
 		await user.click(collaborationToggle);
 		expect(collaborationToggle).toHaveAttribute("aria-checked", "true");
 	});
@@ -106,19 +94,16 @@ describe("ProjectSettingsNotifications", () => {
 		const deadlineToggle = screen.getByTestId("deadline-reminders-toggle");
 		const collaborationToggle = screen.getByTestId("collaboration-activity-toggle");
 
-		
 		await user.click(emailToggle);
 		expect(emailToggle).toHaveAttribute("aria-checked", "false");
 		expect(deadlineToggle).toHaveAttribute("aria-checked", "true");
 		expect(collaborationToggle).toHaveAttribute("aria-checked", "true");
 
-		
 		await user.click(deadlineToggle);
 		expect(emailToggle).toHaveAttribute("aria-checked", "false");
 		expect(deadlineToggle).toHaveAttribute("aria-checked", "false");
 		expect(collaborationToggle).toHaveAttribute("aria-checked", "true");
 
-		
 		await user.click(collaborationToggle);
 		expect(emailToggle).toHaveAttribute("aria-checked", "false");
 		expect(deadlineToggle).toHaveAttribute("aria-checked", "false");
@@ -147,10 +132,8 @@ describe("ProjectSettingsNotifications", () => {
 
 		const emailToggle = screen.getByTestId("email-notifications-toggle");
 
-		
 		expect(emailToggle).toHaveClass("bg-action-primary");
 
-		
 		await user.click(emailToggle);
 		expect(emailToggle).toHaveClass("bg-app-gray-300");
 		expect(emailToggle).not.toHaveClass("bg-action-primary");
@@ -162,15 +145,12 @@ describe("ProjectSettingsNotifications", () => {
 
 		const emailToggle = screen.getByTestId("email-notifications-toggle");
 
-		
 		for (let i = 0; i < 5; i++) {
 			await user.click(emailToggle);
 		}
 
-		
 		expect(emailToggle).toHaveAttribute("aria-checked", "false");
 
-		
 		await user.click(emailToggle);
 		expect(emailToggle).toHaveAttribute("aria-checked", "true");
 	});

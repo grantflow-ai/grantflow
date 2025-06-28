@@ -25,7 +25,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 			setPermission("collaborator");
 			onClose();
 		} catch {
-			
 		} finally {
 			setIsSubmitting(false);
 		}

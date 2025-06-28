@@ -14,7 +14,6 @@ interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
 
-
 const mockApplications = [
 	{
 		deadline: "4 weeks and 3 days to the deadline",

@@ -17,12 +17,7 @@ const sizeClasses = {
 	sm: "h-6 w-6 text-xs",
 };
 
-const defaultColors = [
-	"#369e94", 
-	"#9e366f", 
-	"#9747ff", 
-	"#5179fc", 
-];
+const defaultColors = ["#369e94", "#9e366f", "#9747ff", "#5179fc"];
 
 interface AvatarGroupProps {
 	className?: string;

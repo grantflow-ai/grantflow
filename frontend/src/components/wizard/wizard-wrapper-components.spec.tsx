@@ -12,7 +12,6 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
-
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
 	useParams: () => ({
@@ -222,11 +221,9 @@ describe("WizardHeader", () => {
 			const exitButton = screen.getByTestId("exit-button");
 			fireEvent.click(exitButton);
 
-			
 			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(false);
 
-			
 			expect(mockPush).toHaveBeenCalledWith("/projects/test-project-id");
 		});
 

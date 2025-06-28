@@ -9,7 +9,7 @@ import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
  */
 export async function deleteAccount() {
 	// NOTE: Replace with actual API endpoint when backend is implemented
-	
+
 	return withAuthRedirect(
 		getClient()
 			.delete("user/account", {

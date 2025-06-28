@@ -64,8 +64,6 @@ export function AppDialogTitle({ className, ...props }: React.ComponentProps<typ
 	return <DialogTitle className={className} {...props} />;
 }
 
-
-
 export function AppDialogTrigger({ ...props }: React.ComponentProps<typeof DialogTrigger>) {
 	return <DialogTrigger {...props} />;
 }

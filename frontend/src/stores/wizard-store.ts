@@ -183,7 +183,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
-						
 						if (updatedApplication?.grant_template?.grant_sections.length) {
 							polling.stop();
 							set((state) => ({
@@ -192,8 +191,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							}));
 							return;
 						}
-
-						
 					} catch (error) {
 						logError({ error, identifier: "checkTemplateGeneration" });
 						polling.stop();
@@ -309,6 +306,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							polling: {
 								...polling,
 								intervalId,
+								isActive: true,
 							},
 						}));
 					},
@@ -414,7 +412,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
 						set((state) => ({
@@ -430,23 +427,19 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						currentStep: nextStep,
 					}));
 
-					
 					const { application, generateTemplate } = useApplicationStore.getState();
 					if (
 						nextStep === WizardStep.APPLICATION_STRUCTURE &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
-						
 						void generateTemplate(application.grant_template.id);
 
-						
 						set((state) => ({
 							...state,
 							isGeneratingTemplate: true,
 						}));
 
-						
 						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
 					}
 				},
@@ -455,7 +448,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					const { currentStep, isGeneratingTemplate, polling } = get();
 					const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
 
-					
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return;
 					}
@@ -488,7 +480,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								return false;
 							}
 
-							
 							return (application.grant_template?.rag_sources.length ?? 0) > 0;
 						}
 						case WizardStep.APPLICATION_STRUCTURE: {

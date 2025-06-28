@@ -67,8 +67,6 @@ export function AppCardHeader({ className, ...props }: AppCardHeaderProps) {
 	);
 }
 
-
-
 export function AppCardTitle({ ...props }: AppCardTitleProps) {
 	return <CardTitle data-testid="app-card-title" {...props} />;
 }

@@ -7,13 +7,11 @@ describe("ResearchDeepDiveStep", () => {
 	it("renders step content", () => {
 		render(<ResearchDeepDiveStep />);
 
-		
 		expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
 		expect(screen.getByTestId("research-deep-dive-header")).toBeInTheDocument();
 		expect(screen.getByTestId("research-deep-dive-description")).toBeInTheDocument();
 		expect(screen.getByTestId("ai-try-button")).toBeInTheDocument();
-		
-		
+
 		expect(screen.getAllByTestId("app-card").length).toBeGreaterThan(0);
 	});
 });

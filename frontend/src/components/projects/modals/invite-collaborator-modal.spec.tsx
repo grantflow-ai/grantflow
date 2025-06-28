@@ -53,16 +53,13 @@ describe("InviteCollaboratorModal", () => {
 
 		const dropdown = screen.getByTestId("permission-dropdown");
 
-		
 		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 
-		
 		await user.click(dropdown);
 		expect(screen.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
 		expect(screen.getByTestId("admin-option")).toBeInTheDocument();
 		expect(screen.getByTestId("collaborator-option")).toBeInTheDocument();
 
-		
 		await user.click(dropdown);
 		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 	});
@@ -71,13 +68,10 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.click(screen.getByTestId("permission-dropdown"));
 
-		
 		await user.click(screen.getByTestId("admin-option"));
 
-		
 		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent("Admin (can access all research projects)");
 		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 	});
@@ -86,15 +80,12 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("admin-option"));
 
-		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("collaborator-option"));
 
-		
 		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent(
 			"Collaborator (can access applications within this project)",
 		);
@@ -126,14 +117,11 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.type(screen.getByTestId("email-input"), "test@example.com");
 
-		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("admin-option"));
 
-		
 		await user.click(screen.getByTestId("send-invitation-button"));
 
 		expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin");
@@ -145,7 +133,6 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.type(screen.getByTestId("email-input"), "test@example.com");
 		await user.click(screen.getByTestId("send-invitation-button"));
 
@@ -160,20 +147,17 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		const emailInput = screen.getByTestId("email-input");
 		await user.type(emailInput, "test@example.com");
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("admin-option"));
 
-		
 		await user.click(screen.getByTestId("send-invitation-button"));
 
 		await waitFor(() => {
 			expect(mockOnClose).toHaveBeenCalled();
 		});
 
-		
 		expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin");
 	});
 
@@ -187,14 +171,11 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.type(screen.getByTestId("email-input"), "test@example.com");
 		await user.click(screen.getByTestId("send-invitation-button"));
 
-		
 		expect(screen.getByTestId("send-invitation-button")).toBeDisabled();
 
-		
 		resolvePromise!();
 
 		await waitFor(() => {
@@ -208,11 +189,9 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.type(screen.getByTestId("email-input"), "test@example.com");
 		await user.click(screen.getByTestId("send-invitation-button"));
 
-		
 		await waitFor(() => {
 			expect(screen.getByTestId("send-invitation-button")).not.toBeDisabled();
 		});
@@ -243,23 +222,19 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.type(screen.getByTestId("email-input"), "test@example.com");
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("admin-option"));
 
-		
 		await user.click(screen.getByTestId("cancel-button"));
 
 		expect(mockOnClose).toHaveBeenCalled();
-		
 	});
 
 	it("prevents submission when email is empty", async () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		
 		await user.click(screen.getByTestId("send-invitation-button"));
 
 		expect(mockOnInvite).not.toHaveBeenCalled();

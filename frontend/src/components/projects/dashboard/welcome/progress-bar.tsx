@@ -102,14 +102,12 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 		return "var(--color-app-gray-200)";
 	};
 
-	
 	const getAnimationState = () => {
 		if (isActive) return "active";
 		if (isCurrent) return "next";
 		return "inactive";
 	};
 
-	
 	const renderStepIndicator = () => {
 		if (isActive) {
 			return (

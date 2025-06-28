@@ -26,12 +26,9 @@ describe("AppAvatar", () => {
 	it("renders avatar with image URL prop", () => {
 		render(<AppAvatar imageUrl="https://example.com/avatar.jpg" initials="JD" />);
 
-		
 		const avatar = screen.getByTestId("app-avatar");
 		expect(avatar).toBeInTheDocument();
 
-		
-		
 		expect(screen.getByTestId("app-avatar-fallback")).toHaveTextContent("JD");
 	});
 
@@ -91,9 +88,8 @@ describe("AvatarGroup", () => {
 		render(<AvatarGroup maxVisible={3} users={mockUsers} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
-		expect(avatars).toHaveLength(4); 
+		expect(avatars).toHaveLength(4);
 
-		
 		const fallbacks = screen.getAllByTestId("app-avatar-fallback");
 		const overflowFallback = fallbacks.find((fallback) => fallback.textContent === "+3");
 		expect(overflowFallback).toBeInTheDocument();
@@ -103,14 +99,14 @@ describe("AvatarGroup", () => {
 		render(<AvatarGroup users={mockUsers} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
-		expect(avatars).toHaveLength(5); 
+		expect(avatars).toHaveLength(5);
 	});
 
 	it("doesn't show overflow when users count is within limit", () => {
 		render(<AvatarGroup maxVisible={4} users={mockUsers.slice(0, 3)} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
-		expect(avatars).toHaveLength(3); 
+		expect(avatars).toHaveLength(3);
 	});
 
 	it("applies default colors to users without backgroundColor", () => {
@@ -120,13 +116,12 @@ describe("AvatarGroup", () => {
 
 		const fallbacks = screen.getAllByTestId("app-avatar-fallback");
 
-		
 		expect(fallbacks[0]).toHaveStyle({ backgroundColor: "#369e94" });
-		
+
 		expect(fallbacks[1]).toHaveStyle({ backgroundColor: "#9e366f" });
-		
+
 		expect(fallbacks[2]).toHaveStyle({ backgroundColor: "#9747ff" });
-		
+
 		expect(fallbacks[3]).toHaveStyle({ backgroundColor: "#5179fc" });
 	});
 

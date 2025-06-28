@@ -11,7 +11,6 @@ export default async function ProjectSettingsMembersPage({ params }: { params: P
 
 	const project = await getProject(projectId);
 
-	
 	if (project.role === UserRole.MEMBER) {
 		redirect(`/projects/${projectId}/settings/account`);
 	}
