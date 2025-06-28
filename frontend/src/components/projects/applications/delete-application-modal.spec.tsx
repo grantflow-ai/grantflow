@@ -42,7 +42,7 @@ describe("DeleteApplicationModal", () => {
 		const user = userEvent.setup();
 		render(<DeleteApplicationModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
-		// Find the X button (close button)
+		
 		const closeButton = screen.getByTestId("close-modal-button");
 		await user.click(closeButton);
 
@@ -64,8 +64,8 @@ describe("DeleteApplicationModal", () => {
 	it("calls onClose when backdrop is clicked", async () => {
 		render(<DeleteApplicationModal isOpen={true} onClose={mockOnClose} onConfirm={mockOnConfirm} />);
 
-		// This test would need to check BaseModal's backdrop behavior
-		// For now, we expect BaseModal handles backdrop clicks properly
+		
+		
 		expect(mockOnClose).not.toHaveBeenCalled();
 	});
 
@@ -75,7 +75,7 @@ describe("DeleteApplicationModal", () => {
 
 		await user.keyboard("{Escape}");
 
-		// BaseModal should handle Escape key - this depends on BaseModal implementation
+		
 		expect(mockOnClose).toHaveBeenCalled();
 	});
 });

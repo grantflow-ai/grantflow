@@ -7,13 +7,14 @@ from uuid import uuid4
 import pytest
 from packages.db.src.tables import FundingOrganization, GrantApplication
 from packages.shared_utils.src.serialization import serialize
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing import RESULTS_FOLDER
+from testing.e2e_utils import E2ETestCategory, e2e_test
+
 from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from services.rag.src.grant_template.handler import extract_and_enrich_sections
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.test_utils import create_rag_sources_from_cfp_file
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing import RESULTS_FOLDER
-from testing.e2e_utils import E2ETestCategory, e2e_test
 
 
 async def create_mock_job_manager_for_e2e(session_maker: Any, grant_application_id: str) -> JobManager:

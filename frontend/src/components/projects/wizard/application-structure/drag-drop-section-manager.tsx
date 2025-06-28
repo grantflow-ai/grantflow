@@ -37,10 +37,10 @@ export function DragDropSectionManager({
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 
-	// Helper function to check if a section would create invalid nesting
+	
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
-			// If dropping a section with children under a subsection, that would create 3 levels
+			
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
 				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
 				if (hasChildren) {
@@ -53,22 +53,22 @@ export function DragDropSectionManager({
 		[grantSections],
 	);
 
-	// Helper function to determine the new parent_id based on drop target
+	
 	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
 		const activeIsChild = activeSection.parent_id !== null;
 		const overIsChild = overSection.parent_id !== null;
 
-		// If dropping on a child section, make the active section a sibling (same parent)
+		
 		if (overIsChild) {
 			return overSection.parent_id;
 		}
 
-		// If dropping a child section on a parent section, make it a child of that parent
+		
 		if (activeIsChild) {
 			return overSection.id;
 		}
 
-		// If dropping a parent section on another parent section, make it a top-level section
+		
 		return null;
 	}, []);
 
@@ -123,7 +123,7 @@ export function DragDropSectionManager({
 		[onAddSection],
 	);
 
-	// Define drag and drop handlers specific to grant sections
+	
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
 			onDragOver: async (_event, activeSection, overSection) => {
@@ -131,7 +131,7 @@ export function DragDropSectionManager({
 					return;
 				}
 
-				// Check for invalid nesting before allowing the change
+				
 				if (wouldCreateInvalidNesting(activeSection, overSection)) {
 					toast.error("Cannot create more than 2 levels of nesting");
 					return;
@@ -139,7 +139,7 @@ export function DragDropSectionManager({
 
 				const newParentId = determineNewParentId(activeSection, overSection);
 
-				// Only update if the parent relationship would actually change
+				
 				if (activeSection.parent_id !== newParentId) {
 					const updatedSections = grantSections.map((section) => {
 						if (section.id === activeSection.id) {
@@ -169,7 +169,7 @@ export function DragDropSectionManager({
 		[grantSections, updateGrantSections, toUpdateGrantSection, wouldCreateInvalidNesting, determineNewParentId],
 	);
 
-	// Use the drag and drop hook
+	
 	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
 
 	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
@@ -190,7 +190,7 @@ export function DragDropSectionManager({
 		[sortedSections],
 	);
 
-	// Render drag overlay for active section
+	
 	const renderDragOverlay = useCallback(
 		(activeSection: GrantSection | undefined) => {
 			if (!activeSection) return null;

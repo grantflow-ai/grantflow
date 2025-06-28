@@ -8,7 +8,7 @@ describe("Modal", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Reset body overflow style
+		
 		document.body.style.overflow = "";
 	});
 
@@ -117,10 +117,10 @@ describe("Modal", () => {
 			</Modal>,
 		);
 
-		// Container should be empty as content is portalled
+		
 		expect(container.firstChild).toBeNull();
 
-		// Content should be in document.body
+		
 		expect(document.body.querySelector('[role="dialog"]')).toBeInTheDocument();
 	});
 

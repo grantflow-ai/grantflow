@@ -181,7 +181,7 @@ async def test_grant_template_performance_basic(
 
         assert len(section_content) >= 5, f"Expected at least 5 sections, got {len(section_content)}"
 
-    # Assert performance targets after context manager exit
+
     assert_performance_targets(perf_ctx.result, min_grade="C")
     assert_quality_targets(perf_ctx.result, min_score=60.0)
 
@@ -267,7 +267,7 @@ async def test_grant_template_component_performance(
 
         logger.info("Component performance test completed with unified framework")
 
-    # Assert performance targets after context manager exit
+
     assert_performance_targets(perf_ctx.result, min_grade="B")
     assert_quality_targets(perf_ctx.result, min_score=70.0)
 
@@ -399,7 +399,7 @@ async def test_grant_template_baseline_performance(
         assert perf_ctx.llm_calls_made > 0, "Should have made LLM API calls"
         assert len(section_content) >= 5, "Should have substantial section content"
 
-    # Assert performance targets after context manager exit
+
     assert_performance_targets(perf_ctx.result, min_grade="C")
     assert_quality_targets(perf_ctx.result, min_score=60.0)
 
@@ -508,6 +508,6 @@ async def test_grant_template_stage_breakdown_analysis(
         assert processing_time > 0, "Should have positive processing time"
         assert per_section_time < 60, f"Per-section time should be reasonable: {per_section_time:.1f}s"
 
-    # Assert performance targets after context manager exit
+
     assert_performance_targets(perf_ctx.result, min_grade="C")
     assert_quality_targets(perf_ctx.result, min_score=50.0)

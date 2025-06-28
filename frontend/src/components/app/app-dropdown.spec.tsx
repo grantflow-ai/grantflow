@@ -18,7 +18,7 @@ import {
 	DangerMenuItem,
 } from "./app-dropdown";
 
-// Mock the ui/dropdown-menu components
+
 vi.mock("@/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children, ...props }: any) => (
 		<div data-testid="dropdown-menu" {...props}>

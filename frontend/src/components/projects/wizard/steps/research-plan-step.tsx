@@ -159,12 +159,12 @@ function ResearchPlanPreview({
 					<div className="relative">
 						<div className="flex size-96 items-center justify-center">
 							<div className="relative">
-								{/* Central analyzing animation */}
+								{}
 								<div className="bg-gray-100 animate-pulse flex size-24 items-center justify-center rounded-full">
 									<div className="bg-gray-200 size-12 rounded-full" />
 								</div>
 
-								{/* Orbiting elements */}
+								{}
 								<div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
 									<div className="bg-blue-100 absolute -top-4 left-1/2 size-8 -translate-x-1/2 rounded-full" />
 								</div>
@@ -179,6 +179,9 @@ function ResearchPlanPreview({
 								</div>
 							</div>
 						</div>
+						<p className="text-center mt-6 text-muted-foreground" data-testid="empty-state-message">
+							Add your first objective to get started
+						</p>
 					</div>
 				</div>
 			)}

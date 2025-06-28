@@ -183,7 +183,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
-						// If we have grant sections, template generation is complete
+						
 						if (updatedApplication?.grant_template?.grant_sections.length) {
 							polling.stop();
 							set((state) => ({
@@ -193,7 +193,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							return;
 						}
 
-						// Continue waiting for sections to be generated
+						
 					} catch (error) {
 						logError({ error, identifier: "checkTemplateGeneration" });
 						polling.stop();
@@ -414,7 +414,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					// Clean up polling when leaving APPLICATION_STRUCTURE
+					
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
 						polling.stop();
 						set((state) => ({
@@ -430,23 +430,23 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						currentStep: nextStep,
 					}));
 
-					// Trigger template generation when entering APPLICATION_STRUCTURE if no sections exist
+					
 					const { application, generateTemplate } = useApplicationStore.getState();
 					if (
 						nextStep === WizardStep.APPLICATION_STRUCTURE &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
-						// Start template generation
+						
 						void generateTemplate(application.grant_template.id);
 
-						// Set generating state and start polling immediately
+						
 						set((state) => ({
 							...state,
 							isGeneratingTemplate: true,
 						}));
 
-						// Start polling for grant sections
+						
 						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
 					}
 				},
@@ -455,7 +455,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					const { currentStep, isGeneratingTemplate, polling } = get();
 					const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
 
-					// Prevent going back during template generation
+					
 					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
 						return;
 					}
@@ -488,7 +488,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								return false;
 							}
 
-							// Only require that grant template sources exist (don't require indexing completion)
+							
 							return (application.grant_template?.rag_sources.length ?? 0) > 0;
 						}
 						case WizardStep.APPLICATION_STRUCTURE: {

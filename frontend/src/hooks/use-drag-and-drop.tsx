@@ -51,7 +51,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 	const [activeId, setActiveId] = useState<null | string>(null);
 
-	// Configure sensors - hooks must be called unconditionally
+	
 	const pointerSensor = useSensor(PointerSensor);
 	const keyboardSensor = useSensor(KeyboardSensor, {
 		coordinateGetter: sortableKeyboardCoordinates,
@@ -66,10 +66,10 @@ export function useDragAndDrop<T extends DragDropItem>(
 	}
 	const sensors = useSensors(...sensorArray);
 
-	// Check if item is currently being dragged
+	
 	const isItemDragging = useCallback((itemId: string) => activeId === itemId, [activeId]);
 
-	// DragDropWrapper component that takes items as props
+	
 	const DragDropWrapper = useCallback(
 		({
 			children,
@@ -80,7 +80,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 			items: T[];
 			renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
 		}) => {
-			// Create handlers that work with current items
+			
 			const handleDragStart = (event: DragStartEvent) => {
 				const draggedItem = items.find((item) => item.id === event.active.id);
 				setActiveId(event.active.id as string);
@@ -128,7 +128,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 					await handleReorder(activeItem, overItem);
 				}
 
-				// Call custom drag end handler
+				
 				if (onDragEnd) {
 					await onDragEnd(event, activeItem, overItem);
 				}
@@ -156,7 +156,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 	);
 
 	return {
-		activeItem: undefined, // activeItem is calculated inside DragDropWrapper
+		activeItem: undefined, 
 		DragDropWrapper,
 		isItemDragging,
 	};

@@ -323,6 +323,6 @@ export default eslintTS.config(
 			"sonarjs/pseudo-random": "off",
 		},
 	},
-	// Add biome config to disable ESLint rules that Biome handles
+	
 	biomeConfig,
 );

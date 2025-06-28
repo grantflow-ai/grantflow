@@ -1,4 +1,3 @@
-// Application wizard step components
 export { ApplicationDetailsStep } from "./application-details-step";
 export { GenerateCompleteStep } from "./generate-complete-step";
 export { KnowledgeBaseStep } from "./knowledge-base-step";

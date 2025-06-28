@@ -97,7 +97,7 @@ describe("AppInput Component", () => {
 			expect(input).toHaveAttribute("maxLength", "5");
 
 			await user.type(input, "Hello World");
-			expect(input).toHaveValue("Hello"); // Only first 5 characters
+			expect(input).toHaveValue("Hello"); 
 		});
 
 		it("shows max character count when limit is set", () => {

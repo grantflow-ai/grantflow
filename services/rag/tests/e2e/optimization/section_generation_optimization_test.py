@@ -9,12 +9,12 @@ from typing import TYPE_CHECKING
 
 from testing.e2e_utils import E2ETestCategory, e2e_test
 
+from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.generate_section_text import generate_section_text
-from services.rag.src.grant_application.optimized_section_generation import generate_sections_with_shared_retrieval
 from services.rag.tests.e2e.performance_utils import TestCategory, create_performance_context
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
+    from packages.db.src.json_objects import GrantLongFormSection
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +29,39 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
     application_id = "6a87a3b6-b87e-4506-85c8-bd3de97b5f5b"
 
 
-    form_inputs: ResearchDeepDive = {
-        "title": "CAR-T Cell Therapy for Solid Tumors",
-        "project_summary": "Developing next-generation CAR-T cell therapies targeting solid tumors using novel antigen discovery and tumor microenvironment modulation strategies.",
-        "key_personnel": [
-            {
-                "name": "Dr. Emily Chen",
-                "role": "Principal Investigator",
-                "expertise": "CAR-T cell engineering and immunotherapy"
+    class MockGrantApplication:
+        def __init__(self) -> None:
+            self.research_objectives = [
+                {
+                    "number": 1,
+                    "title": "Develop novel CAR constructs targeting solid tumor antigens",
+                    "research_tasks": [
+                        {"number": 1, "title": "Identify novel tumor-associated antigens"},
+                        {"number": 2, "title": "Design and synthesize CAR constructs"},
+                    ],
+                },
+                {
+                    "number": 2,
+                    "title": "Engineer T cells to overcome immunosuppressive tumor microenvironment",
+                    "research_tasks": [
+                        {"number": 1, "title": "Evaluate T cell exhaustion markers"},
+                        {"number": 2, "title": "Develop strategies to enhance T cell persistence"},
+                    ],
+                },
+            ]
+            self.form_inputs = {
+                "title": "CAR-T Cell Therapy for Solid Tumors",
+                "project_summary": "Developing next-generation CAR-T cell therapies targeting solid tumors using novel antigen discovery and tumor microenvironment modulation strategies.",
+                "key_personnel": [
+                    {
+                        "name": "Dr. Emily Chen",
+                        "role": "Principal Investigator",
+                        "expertise": "CAR-T cell engineering and immunotherapy",
+                    }
+                ],
             }
-        ],
-    }
+
+    grant_application = MockGrantApplication()
 
 
     research_plan_text = """
@@ -118,7 +140,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
                 section_text = await generate_section_text(
                     application_id=application_id,
                     grant_section=section,
-                    form_inputs=form_inputs,
+                    form_inputs=grant_application.form_inputs,
                     dependencies={},
                     research_plan_text=research_plan_text,
                 )
@@ -133,7 +155,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
                 logger.info(
                     f"Baseline: Generated {section['title']} in {section_duration:.2f}s"
                 )
-            except Exception as e:
+            except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                 logger.error(f"Baseline section generation failed: {e}")
                 baseline_results[section["id"]] = {
                     "success": False,
@@ -152,12 +174,11 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
             if hasattr(retrieve_documents, "cache_clear"):
                 retrieve_documents.cache_clear()
 
-            optimized_results = await generate_sections_with_shared_retrieval(
+            optimized_results = await handle_batch_enrich_objectives(
+                research_objectives=grant_application.research_objectives,
+                grant_section=test_sections[0],
                 application_id=application_id,
-                sections=test_sections,
-                dependencies_map={},
-                form_inputs=form_inputs,
-                research_plan_text=research_plan_text,
+                form_inputs=grant_application.form_inputs,
             )
 
             optimized_total = (datetime.now(UTC) - optimized_start).total_seconds()
@@ -171,7 +192,7 @@ async def test_section_generation_optimization_comparison(logger: logging.Logger
                     "word_count": len(text.split()),
                 }
 
-        except Exception as e:
+        except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
             logger.error(f"Optimized generation failed: {e}")
             optimized_total = (datetime.now(UTC) - optimized_start).total_seconds()
             optimized_success = False

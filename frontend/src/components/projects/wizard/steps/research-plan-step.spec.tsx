@@ -11,6 +11,6 @@ describe("ResearchPlanStep", () => {
 		expect(screen.getByTestId("research-plan-header")).toBeInTheDocument();
 		expect(screen.getByTestId("research-plan-description")).toBeInTheDocument();
 		expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
-		expect(screen.getByTestId("empty-state-message")).toBeInTheDocument();
+		expect(screen.getByTestId("empty-state")).toBeInTheDocument();
 	});
 });

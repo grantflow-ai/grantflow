@@ -28,7 +28,7 @@ interface ProgressBarStepProps {
 export function ProgressBar({ currentStep }: ProgressBarProps) {
 	return (
 		<figure className="flex flex-col items-center justify-center gap-4">
-			{/* Progress Bar */}
+			{}
 			<main className="flex items-center">
 				{PROGRESS_BAR_STEPS.map((_, index) => (
 					<ProgressBarStep
@@ -40,7 +40,7 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
 				))}
 			</main>
 
-			{/* Labels */}
+			{}
 			<main className="flex w-[839px] items-center justify-between">
 				{PROGRESS_BAR_STEPS.map((label, index) => (
 					<ProgressBarLabel currentStep={currentStep} index={index} key={index} label={label} />
@@ -102,10 +102,62 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 		return "var(--color-app-gray-200)";
 	};
 
+	
+	const getAnimationState = () => {
+		if (isActive) return "active";
+		if (isCurrent) return "next";
+		return "inactive";
+	};
+
+	
+	const renderStepIndicator = () => {
+		if (isActive) {
+			return (
+				<motion.div
+					animate="active"
+					className="flex items-center justify-center"
+					exit="hidden"
+					initial="hidden"
+					key={`check-${index}`}
+					style={{ transform: "translate(-0.5px, -0.5px)" }}
+					transition={{ delay: 0.3, duration: 0.3 }}
+					variants={{
+						active: { opacity: 1, scale: 1 },
+						hidden: { opacity: 0, scale: 0 },
+					}}
+				>
+					<Check className="size-[7px] stroke-[5] text-white" />
+				</motion.div>
+			);
+		}
+
+		if (isCurrent) {
+			return (
+				<motion.div
+					animate="active"
+					className="size-[3.5px] rounded-full bg-primary"
+					exit="hidden"
+					initial="hidden"
+					key={`dot-${index}`}
+					style={{
+						transform: "translate(0, -0.5px)",
+					}}
+					transition={{ duration: 0.5 }}
+					variants={{
+						active: { opacity: 1, scale: 1 },
+						hidden: { opacity: 0, scale: 0 },
+					}}
+				/>
+			);
+		}
+
+		return null;
+	};
+
 	return (
 		<div className={`${isLast ? "" : "w-[145px]"} flex items-center`}>
 			<motion.div
-				animate={isActive ? "active" : isCurrent ? "next" : "inactive"}
+				animate={getAnimationState()}
 				className="size-[11px] rounded-full flex justify-center items-center border"
 				initial="inactive"
 				style={{
@@ -118,44 +170,10 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 					next: { backgroundColor: "transparent", scale: 1 },
 				}}
 			>
-								<AnimatePresence mode="wait">
-					{isActive ? (
-						<motion.div
-							animate="active"
-							className="flex items-center justify-center"
-							exit="hidden"
-							initial="hidden"
-							key={`check-${index}`}
-							style={{ transform: "translate(-0.5px, -0.5px)" }}
-							transition={{ delay: 0.3, duration: 0.3 }}
-							variants={{
-								active: { opacity: 1, scale: 1 },
-								hidden: { opacity: 0, scale: 0 },
-							}}
-						>
-							<Check className="size-[7px] stroke-[5] text-white" />
-						</motion.div>
-					) : isCurrent ? (
-						<motion.div
-							animate="active"
-							className="size-[3.5px] rounded-full bg-primary"
-							exit="hidden"
-							initial="hidden"
-							key={`dot-${index}`}
-							style={{
-								transform: "translate(0, -0.5px)",
-							}}
-							transition={{ duration: 0.5 }}
-							variants={{
-								active: { opacity: 1, scale: 1 },
-								hidden: { opacity: 0, scale: 0 },
-							}}
-						/>
-					) : null}
-				</AnimatePresence>
+				<AnimatePresence mode="wait">{renderStepIndicator()}</AnimatePresence>
 			</motion.div>
 
-			{/* Animated Line */}
+			{}
 			{!isLast && <ProgressBarLine currentStep={currentStep} index={index} />}
 		</div>
 	);

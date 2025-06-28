@@ -12,10 +12,10 @@ import {
 	ConfirmDialog,
 } from "./app-dialog";
 
-// Mock the ui/dialog components
+
 vi.mock("@/components/ui/dialog", () => ({
 	Dialog: ({ children, onOpenChange, open }: any) => (
-		<div
+		<button
 			data-open={open}
 			data-testid="dialog"
 			onClick={() => onOpenChange?.(!open)}
@@ -24,11 +24,10 @@ vi.mock("@/components/ui/dialog", () => ({
 					onOpenChange?.(!open);
 				}
 			}}
-			role="button"
-			tabIndex={0}
+			type="button"
 		>
 			{children}
-		</div>
+		</button>
 	),
 	DialogContent: ({ children, className, showCloseButton, ...props }: any) => (
 		<div className={className} data-show-close-button={showCloseButton} data-testid="dialog-content" {...props}>
@@ -217,7 +216,7 @@ describe("ConfirmDialog", () => {
 
 		await user.click(screen.getByTestId("confirm-dialog-cancel"));
 
-		// Should not throw and should still call onOpenChange
+		
 		expect(defaultProps.onOpenChange).toHaveBeenCalledWith(false);
 	});
 

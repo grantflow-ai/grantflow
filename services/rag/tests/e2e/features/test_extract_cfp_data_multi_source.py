@@ -5,11 +5,12 @@ from typing import Any
 from packages.db.src.tables import GrantTemplateRagSource
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.serialization import serialize
-from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test
+
+from services.rag.src.grant_template.extract_cfp_data import handle_extract_cfp_data_from_rag_sources
 
 TEST_GRANT_TEMPLATE_ID = get_env(key="TEST_GRANT_TEMPLATE_ID", fallback="2fb8fb60-4972-4a7e-ad9d-691121409d19")
 

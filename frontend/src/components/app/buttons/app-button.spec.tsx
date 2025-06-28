@@ -88,7 +88,7 @@ describe("AppButton", () => {
 
 		const button = screen.getByTestId("test-button");
 		expect(button).toHaveClass("custom-class");
-		// Verify it still has base button classes
+		
 		expect(button.tagName).toBe("BUTTON");
 	});
 });

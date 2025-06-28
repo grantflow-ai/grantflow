@@ -1,4 +1,3 @@
-// Application structure step components and related functionality
 
 export { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 export { ApplicationStructureStep } from "./application-structure-step";

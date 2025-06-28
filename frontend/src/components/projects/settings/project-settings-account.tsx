@@ -56,7 +56,7 @@ export function ProjectSettingsAccount({
 	return (
 		<>
 			<div className="flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
-				{/* Profile Image */}
+				{}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
 						Profile Image
@@ -97,7 +97,7 @@ export function ProjectSettingsAccount({
 					</p>
 				</div>
 
-				{/* Name */}
+				{}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Name</h3>
 					<input
@@ -112,7 +112,7 @@ export function ProjectSettingsAccount({
 					/>
 				</div>
 
-				{/* Email */}
+				{}
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center gap-1 relative">
 						<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
@@ -156,7 +156,7 @@ export function ProjectSettingsAccount({
 					</div>
 				</div>
 
-				{/* Role */}
+				{}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Role</h3>
 					<div className="inline-flex">
@@ -169,7 +169,7 @@ export function ProjectSettingsAccount({
 					</div>
 				</div>
 
-				{/* Delete Account - Only show for owners */}
+				{}
 				{userRole === UserRole.OWNER && (
 					<div className="flex flex-col gap-3">
 						<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">

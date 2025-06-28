@@ -25,7 +25,7 @@ const meta: Meta<typeof FilePreviewCard> = {
 export default meta;
 type Story = StoryObj<typeof FilePreviewCard>;
 
-// Mock file creator helper
+
 const createMockFile = (name: string, type = "application/pdf"): FileWithId => {
 	const file = new File(["mock content"], name, { type });
 	return Object.assign(file, { id: crypto.randomUUID() });

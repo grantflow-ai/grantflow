@@ -17,12 +17,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.factories import ResearchObjectiveFactory
 
+from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
 from services.rag.src.grant_application.enrich_research_objective import handle_enrich_objective
-from services.rag.src.grant_application.optimized_batch_enrichment import (
-    estimate_performance_improvement,
-    handle_optimized_batch_enrichment,
-)
-from services.rag.src.utils.token_optimization import estimate_token_count
+from services.rag.src.utils.token_optimization import estimate_performance_improvement, estimate_token_count
 from services.rag.tests.e2e.performance_framework import TestCategory
 from services.rag.tests.e2e.performance_utils import (
     assert_performance_targets,
@@ -92,7 +89,7 @@ async def test_enrichment_baseline_smoke(logger: logging.Logger) -> None:
 
 
         with perf_ctx.stage_timer("batch_enrichment"):
-            enriched_objectives = await handle_optimized_batch_enrichment(
+            enriched_objectives = await handle_batch_enrich_objectives(
                 objectives=research_objectives,
                 form_inputs=form_inputs,
             )
@@ -171,7 +168,7 @@ async def test_enrichment_baseline_vs_optimized_comparison(logger: logging.Logge
 
         logger.info("Testing optimized batch enrichment...")
         with perf_ctx.stage_timer("batch_enrichment"):
-            optimized_results = await handle_optimized_batch_enrichment(
+            optimized_results = await handle_batch_enrich_objectives(
                 objectives=research_objectives,
                 form_inputs=form_inputs,
             )
@@ -252,7 +249,7 @@ async def test_enrichment_quality_preservation(
 
 
         with perf_ctx.stage_timer("quality_enrichment"):
-            enriched_objectives = await handle_optimized_batch_enrichment(
+            enriched_objectives = await handle_batch_enrich_objectives(
                 objectives=research_objectives,
                 form_inputs=form_inputs,
             )
@@ -361,7 +358,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
 
 
         with perf_ctx.stage_timer("simple_enrichment"):
-            simple_results = await handle_optimized_batch_enrichment(
+            simple_results = await handle_batch_enrich_objectives(
                 objectives=simple_objectives,
                 form_inputs=form_inputs,
             )
@@ -369,7 +366,7 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
 
 
         with perf_ctx.stage_timer("complex_enrichment"):
-            complex_results = await handle_optimized_batch_enrichment(
+            complex_results = await handle_batch_enrich_objectives(
                 objectives=complex_objectives,
                 form_inputs=form_inputs,
             )
@@ -405,11 +402,12 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
             objectives_count=len(simple_objectives + complex_objectives),
         )
 
-        logger.info(f"Estimated improvement potential: {estimated_improvement:.1f}%")
+        logger.info("Estimated improvement potential: %.1f%%", estimated_improvement)
 
 
         assert simple_tokens > 0 and complex_tokens > 0, "Should generate token estimates"
-        assert len(simple_results) == 2 and len(complex_results) == 2, "Should process all objectives"
+        assert len(simple_results) == 2, "Should process all objectives"
+        assert len(complex_results) == 2, "Should process all objectives"
         assert complex_tokens > simple_tokens, "Complex objectives should use more tokens"
 
 

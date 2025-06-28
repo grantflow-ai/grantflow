@@ -65,7 +65,8 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		expect(screen.getByText("Review and customize the structure of your grant application.")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-header")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-description")).toBeInTheDocument();
 	});
 
 	it("shows files when template has file sources", () => {
