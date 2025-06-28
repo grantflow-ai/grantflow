@@ -213,7 +213,7 @@ export function ApplicationStructureLeftPane() {
 	const descriptionText = useMemo(() => {
 		return isGeneratingTemplate
 			? "Analyzing your knowledge base to generate the optimal structure..."
-			: "Review and customize the structure of your grant application.";
+			: "Organize Your Application Structure. Drag and drop sections to reorder your application.\nYou can also edit, remove, or add new sections as needed. Once everything looks good, click Approve and Continue.";
 	}, [isGeneratingTemplate]);
 
 	const hasTemplateFiles = useMemo(() => templateFiles.length > 0, [templateFiles.length]);
@@ -230,11 +230,39 @@ export function ApplicationStructureLeftPane() {
 						Application Structure
 					</h2>
 					<p
-						className="text-muted-foreground-dark leading-tight"
+						className="text-muted-foreground-dark leading-tight whitespace-pre-line"
 						data-testid="application-structure-description"
 					>
 						{descriptionText}
 					</p>
+				</div>
+
+				{/* AI Limitations Banner */}
+				<div className="bg-blue-50 border-blue-200 text-blue-700 flex gap-3 rounded-lg border p-4">
+					<div className="bg-blue-100 text-blue-600 flex size-6 shrink-0 items-center justify-center rounded-full">
+						<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
+							<path
+								clipRule="evenodd"
+								d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+								fillRule="evenodd"
+							/>
+						</svg>
+					</div>
+					<div className="text-sm">
+						<p>
+							Keep in mind that AI has limitations and may occasionally make mistakes. Always review and
+							refine the output.
+						</p>
+					</div>
+					<button className="text-blue-400 hover:text-blue-600 ml-auto shrink-0" type="button">
+						<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
+							<path
+								clipRule="evenodd"
+								d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+								fillRule="evenodd"
+							/>
+						</svg>
+					</button>
 				</div>
 
 				{isGeneratingTemplate ? (
