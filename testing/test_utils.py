@@ -521,7 +521,7 @@ async def create_grant_application_data(
         async_session_maker, fixture_id, str(project.id), title, research_objectives, form_inputs
     )
 
-    
+
     await create_grant_template_for_application(application_id, async_session_maker)
 
     cfp_content_file = FIXTURES_FOLDER / "cfps" / cfp_markdown_file_name

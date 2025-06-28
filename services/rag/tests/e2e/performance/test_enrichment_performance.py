@@ -281,10 +281,10 @@ async def test_enrichment_quality_preservation(
         token_efficiency = len(full_content) / estimated_tokens if estimated_tokens > 0 else 0
 
         logger.info("Quality analysis:")
-        logger.info(f"  Objectives processed: {len(enriched_objectives)}")
-        logger.info(f"  Total content length: {len(full_content)} chars")
-        logger.info(f"  Estimated tokens: {estimated_tokens}")
-        logger.info(f"  Token efficiency: {token_efficiency:.2f} chars/token")
+        logger.info("  Objectives processed: %s", len(enriched_objectives))
+        logger.info("  Total content length: %s chars", len(full_content))
+        logger.info("  Estimated tokens: %s", estimated_tokens)
+        logger.info("  Token efficiency: %.2f chars/token", token_efficiency)
 
 
         enrichment_time = perf_ctx.stage_times.get("quality_enrichment", 0)
@@ -387,8 +387,8 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
         complex_efficiency = complex_tokens / complex_time if complex_time > 0 else 0
 
         logger.info("Token optimization analysis:")
-        logger.info(f"  Simple objectives: {simple_tokens} tokens in {simple_time:.2f}s ({simple_efficiency:.1f} tokens/s)")
-        logger.info(f"  Complex objectives: {complex_tokens} tokens in {complex_time:.2f}s ({complex_efficiency:.1f} tokens/s)")
+        logger.info("  Simple objectives: %s tokens in %.2fs (%.1f tokens/s)", simple_tokens, simple_time, simple_efficiency)
+        logger.info("  Complex objectives: %s tokens in %.2fs (%.1f tokens/s)", complex_tokens, complex_time, complex_efficiency)
 
 
         combined_content = f"# Simple Objectives\n{simple_content}\n\n# Complex Objectives\n{complex_content}"
@@ -405,7 +405,8 @@ async def test_enrichment_token_optimization_analysis(logger: logging.Logger) ->
         logger.info("Estimated improvement potential: %.1f%%", estimated_improvement)
 
 
-        assert simple_tokens > 0 and complex_tokens > 0, "Should generate token estimates"
+        assert simple_tokens > 0, "Should generate token estimates for simple objectives"
+        assert complex_tokens > 0, "Should generate token estimates for complex objectives"
         assert len(simple_results) == 2, "Should process all objectives"
         assert len(complex_results) == 2, "Should process all objectives"
         assert complex_tokens > simple_tokens, "Complex objectives should use more tokens"

@@ -1,0 +1,24 @@
+{
+  "test_name": "test_work_plan_optimization_quick_validation",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "AssertionError",
+    "message": "Performance result is None - test framework error",
+    "execution_time_before_failure": 0.0015301704406738281
+  },
+  "performance": {
+    "execution_time": 0.0015301704406738281,
+    "timeout_reached": false,
+    "timeout_utilization": 5.100568135579427e-06
+  },
+  "diagnostic_info": {
+    "timeout_configured": 300,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-06-28T11:17:17.387184+00:00"
+}

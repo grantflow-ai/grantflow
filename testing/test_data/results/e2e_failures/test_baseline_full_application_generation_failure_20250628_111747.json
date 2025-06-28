@@ -1,0 +1,26 @@
+{
+  "test_name": "test_baseline_full_application_generation",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "TypeError",
+    "message": "generate_sections_with_shared_retrieval() got an unexpected keyword argument 'form_inputs'",
+    "execution_time_before_failure": 1.4315977096557617
+  },
+  "performance": {
+    "execution_time": 1.4315977096557617,
+    "timeout_reached": false,
+    "timeout_utilization": 0.02385996182759603
+  },
+  "diagnostic_info": {
+    "timeout_configured": 60,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "async_session_maker",
+      "logger",
+      "melanoma_alliance_full_application_id"
+    ]
+  },
+  "timestamp": "2025-06-28T11:17:47.717271+00:00"
+}

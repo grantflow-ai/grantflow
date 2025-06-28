@@ -1,0 +1,11 @@
+{
+  "test_name": "test_handle_create_search_queries",
+  "test_category": "smoke",
+  "status": "success",
+  "performance": {
+    "execution_time": 5.602836608886719e-05,
+    "within_threshold": true,
+    "timeout_utilization": 9.338061014811198e-07
+  },
+  "timestamp": "2025-06-28T11:52:44.523939+00:00"
+}

@@ -338,7 +338,7 @@ def create_performance_context(
     test_name: str,
     test_category: TestCategory,
     logger: logging.Logger | None = None,
-    **kwargs
+    **kwargs: Any
 ) -> PerformanceTestContext:
     """Create a performance context for manual usage."""
     return PerformanceTestContext(
@@ -402,8 +402,8 @@ async def timed_stage(stage_name: str, stage_times: dict[str, float], logger: lo
 async def grant_template_test(
     test_name: str,
     logger: logging.Logger | None = None,
-    **kwargs
-):
+    **kwargs: Any
+) -> contextlib.AbstractAsyncContextManager[PerformanceTestContext]:
     """Async context manager for grant template performance testing."""
     with PerformanceTestContext(
         test_name=test_name,
@@ -419,8 +419,8 @@ async def grant_application_test(
     test_name: str,
     logger: logging.Logger | None = None,
     baseline_test_name: str | None = None,
-    **kwargs
-):
+    **kwargs: Any
+) -> contextlib.AbstractAsyncContextManager[PerformanceTestContext]:
     """Async context manager for grant application performance testing."""
     with create_performance_context(
         test_name=test_name,
