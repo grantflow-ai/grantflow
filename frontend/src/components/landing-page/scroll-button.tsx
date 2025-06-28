@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { LandingPageButton, type LandingPageButtonProps } from "@/components/landing-page/components/landing-page-button";
+import { LandingPageButton, type LandingPageButtonProps } from "./button";
 
 const BREAKPOINT_MD = 768;
 
