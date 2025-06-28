@@ -19,9 +19,7 @@ function GradientBackground({
 		return (
 			<div
 				className={className}
-				style={{
-					background: "radial-gradient(100% 60% at 50% 100%, var(--color-primary) -70%, transparent 100%)",
-				}}
+				style={{ background: "radial-gradient(100% 60% at 50% 100%, var(--primary) -70%, transparent 100%)" }}
 				{...rest}
 			/>
 		);
@@ -30,7 +28,7 @@ function GradientBackground({
 		<div
 			className={className}
 			style={{
-				background: `radial-gradient(50% 100% at ${centerX} ${centerY}, var(--color-primary) 0%, transparent 100%)`,
+				background: `radial-gradient(50% 100% at ${centerX} ${centerY}, var(--primary) 0%, transparent 100%)`,
 			}}
 			{...rest}
 		/>

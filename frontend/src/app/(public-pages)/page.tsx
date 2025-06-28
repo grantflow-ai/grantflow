@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import { AppButton } from "@/components/app/buttons/app-button";
-import { IconGoAhead } from "@/components/branding/icons";
+import { AppButton } from "@/components/app-button";
+import { IconGoAhead } from "@/components/icons";
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
@@ -11,7 +11,7 @@ import { EarlyAccessSection } from "@/components/landing-page/early-access-secti
 import { HeroBanner } from "@/components/landing-page/hero-banner";
 import { PaymentPlans } from "@/components/landing-page/payment-plans/payment-plans";
 import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
-import { ScrollButton } from "@/components/layout/navigation/scroll-button";
+import { ScrollButton } from "@/components/scroll-button";
 
 const CONTENT_CTA_SECTION = {
 	description:
@@ -39,7 +39,7 @@ function CTASection() {
 		<section aria-label="cta-section" className="relative w-full bg-white" data-testid="cta-section">
 			<GradientBackground className="absolute inset-0 z-0" position="bottom-center" />
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center justify-between gap-10 px-6 py-8 md:flex-row md:p-10 lg:p-20">
-				<div className="flex w-fit flex-1 flex-col">
+				<div className="flex w-fit flex-1 flex-col text-white">
 					<h2
 						aria-label="cta-heading"
 						className="font-heading text-app-black text-xl font-medium md:text-[1.75rem] md:leading-none"
