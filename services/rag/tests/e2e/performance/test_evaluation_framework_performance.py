@@ -151,7 +151,7 @@ async def test_evaluation_framework_baseline_performance(
     start_time = time.time()
 
     for i, test_prompt in enumerate(test_prompts):
-        logger.info(f"Testing prompt {i+1}/{len(test_prompts)}: {test_prompt[:50]}...")
+        logger.info("Testing prompt %s/%s: %s...", i+1, len(test_prompts), test_prompt[:50])
 
         time.time()
 
@@ -164,8 +164,8 @@ async def test_evaluation_framework_baseline_performance(
 
                     call_count = 0
 
-                    async def mock_evaluate(*args, **kwargs):
-                        nonlocal call_count
+                    async def mock_evaluate(*args: Any, **kwargs: Any) -> dict[str, Any]:
+                        nonlocal call_count, i
                         call_count += 1
 
 
@@ -226,7 +226,7 @@ async def test_evaluation_framework_baseline_performance(
                         )
 
                     except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
-                        logger.warning(f"Evaluation failed: {e}")
+                        logger.warning("Evaluation failed: %s", e)
                         eval_duration = time.time() - eval_iteration_start
                         total_duration += eval_duration
                         total_evaluations += 1
@@ -234,7 +234,7 @@ async def test_evaluation_framework_baseline_performance(
                         total_retries += call_count
 
         except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
-            logger.error(f"Test prompt {i+1} failed: {e}")
+            logger.error("Test prompt %s failed: %s", i+1, e)
 
     total_test_duration = time.time() - start_time
 
