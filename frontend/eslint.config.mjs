@@ -338,6 +338,32 @@ export default eslintTS.config(
 			"no-console": "off",
 		},
 	},
+	{
+		files: ["**/src/dev-tools/**/*.{ts,tsx}"],
+		rules: {
+			"@typescript-eslint/no-base-to-string": "off",
+			"@typescript-eslint/no-unnecessary-condition": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			// Allow any types in dev tools for flexibility in mock data
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			"@typescript-eslint/require-await": "off",
+			// Allow console statements in dev tools since they're for development debugging
+			"no-console": "off",
+			// Allow react issues in dev tools
+			"react/no-unescaped-entities": "off",
+			"sonarjs/function-return-type": "off",
+			"sonarjs/no-clear-text-protocols": "off",
+			// Allow sonar issues in dev tools
+			"sonarjs/no-nested-functions": "off",
+			"sonarjs/no-useless-intersection": "off",
+			// Allow functions to be defined in component scope for dev tools
+			"unicorn/consistent-function-scoping": "off",
+		},
+	},
 
 	biomeConfig,
 );
