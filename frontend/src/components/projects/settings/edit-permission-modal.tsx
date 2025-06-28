@@ -230,6 +230,7 @@ export function EditPermissionModal({
 										? "border-[#e1dfeb] text-[#2e2d36] hover:border-[#1e13f8] cursor-pointer"
 										: "border-[#e1dfeb] text-[#636170] bg-[#f5f5f5] cursor-not-allowed"
 								}`}
+								data-testid="permission-dropdown"
 								disabled={!canEdit}
 								id="member-permission"
 								onClick={() => {

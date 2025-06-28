@@ -1,78 +1,45 @@
 import { exec } from "node:child_process";
-import { rmSync } from "node:fs";
+import { readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
 const execAsync = promisify(exec);
-
-const SHADCN_COMPONENTS = [
-	"accordion",
-	"alert-dialog",
-	"alert",
-	"aspect-ratio",
-	"avatar",
-	"badge",
-	"breadcrumb",
-	"button",
-	"calendar",
-	"card",
-	"carousel",
-	"chart",
-	"checkbox",
-	"collapsible",
-	"command",
-	"context-menu",
-	"data-table",
-	"date-picker",
-	"dialog",
-	"drawer",
-	"dropdown-menu",
-	"form",
-	"hover-card",
-	"input-otp",
-	"input",
-	"label",
-	"menubar",
-	"navigation-menu",
-	"pagination",
-	"popover",
-	"progress",
-	"radio-group",
-	"resizable",
-	"scroll-area",
-	"select",
-	"separator",
-	"sheet",
-	"sidebar",
-	"skeleton",
-	"slider",
-	"sonner",
-	"switch",
-	"table",
-	"tabs",
-	"textarea",
-	"toast",
-	"toggle-group",
-	"toggle",
-	"tooltip",
-];
 
 async function resetShadcnComponents() {
 	console.log("🔄 Starting shadcn components reset...\n");
 
 	const uiPath = join(process.cwd(), "src", "components", "ui");
 
+	let existingComponents: string[] = [];
+	try {
+		console.log("📋 Detecting existing components...");
+		const files = readdirSync(uiPath);
+		existingComponents = files
+			.filter((file) => file.endsWith(".tsx"))
+			.map((file) => file.replace(".tsx", ""))
+			.sort();
+		console.log(`✅ Found ${existingComponents.length} components: ${existingComponents.join(", ")}\n`);
+	} catch (error) {
+		console.log("⚠️  UI directory doesn't exist or couldn't be read\n");
+		return;
+	}
+
+	if (existingComponents.length === 0) {
+		console.log("❌ No components found to reset\n");
+		return;
+	}
+
 	try {
 		console.log("🗑️  Removing existing UI components directory...");
 		rmSync(uiPath, { force: true, recursive: true });
 		console.log("✅ UI components directory removed\n");
 	} catch {
-		console.log("⚠️  UI directory doesn't exist or couldn't be removed\n");
+		console.log("⚠️  UI directory couldn't be removed\n");
 	}
 
-	console.log("📦 Installing all shadcn components...\n");
+	console.log("📦 Re-installing shadcn components...\n");
 
-	for (const component of SHADCN_COMPONENTS) {
+	for (const component of existingComponents) {
 		process.stdout.write(`Installing ${component}... `);
 		try {
 			await execAsync(`pnpm dlx shadcn@latest add ${component} --yes --overwrite`, {
