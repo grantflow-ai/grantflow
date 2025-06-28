@@ -6,6 +6,21 @@ import { registerMockHandlers } from "./register";
 
 let mockHandlersRegistered = false;
 
+interface MockResponse {
+	arrayBuffer: () => Promise<ArrayBuffer>;
+	blob: () => Promise<Blob>;
+	formData: () => Promise<FormData>;
+	json: <T = unknown>() => Promise<T>;
+	text: () => Promise<string>;
+}
+
+interface RequestOptions {
+	body?: string;
+	headers?: Record<string, string>;
+	json?: unknown;
+	method?: string;
+}
+
 class MockKyWrapper {
 	private mockClient = getMockAPIClient();
 	private realClient: KyInstance;
@@ -19,45 +34,46 @@ class MockKyWrapper {
 		}
 	}
 
-	create(_options?: any): any {
+	create(_options?: unknown): this {
 		return this;
 	}
 
-	delete(url: string, options?: any): any {
-		return this.request(url, { ...options, method: "DELETE" }).then(() => undefined);
+	delete(url: string | URL, options?: RequestOptions): Promise<void> {
+		return this.request(url.toString(), { ...options, method: "DELETE" }).then(() => undefined);
 	}
 
-	extend(_options?: any): any {
+	extend(_options?: unknown): this {
 		return this;
 	}
 
-	get(url: string, options?: any): any {
-		return this.request(url, { ...options, method: "GET" });
+	get(url: string | URL, options?: RequestOptions): Promise<MockResponse> {
+		return this.request(url.toString(), { ...options, method: "GET" });
 	}
 
-	head(url: string, options?: any): any {
-		return this.realClient.head(url, options);
+	head(url: string | URL, options?: RequestOptions): Promise<MockResponse> {
+		// For HEAD requests, use the real client as they don't typically need mocking
+		return this.realClient.head(url, options) as Promise<MockResponse>;
 	}
 
-	patch(url: string, options?: any): any {
-		return this.request(url, { ...options, method: "PATCH" });
+	patch(url: string | URL, options?: RequestOptions): Promise<MockResponse> {
+		return this.request(url.toString(), { ...options, method: "PATCH" });
 	}
 
-	post(url: string, options?: any): any {
-		return this.request(url, { ...options, method: "POST" });
+	post(url: string | URL, options?: RequestOptions): Promise<MockResponse> {
+		return this.request(url.toString(), { ...options, method: "POST" });
 	}
 
-	put(url: string, options?: any): any {
-		return this.request(url, { ...options, method: "PUT" });
+	put(url: string | URL, options?: RequestOptions): Promise<MockResponse> {
+		return this.request(url.toString(), { ...options, method: "PUT" });
 	}
 
-	async request(url: string, options?: any): Promise<any> {
+	async request(url: string, options?: RequestOptions): Promise<MockResponse> {
 		const path = this.extractPath(url);
-		console.log(`[Mock API] Intercepting request: ${options?.method || "GET"} ${path}`);
+		console.log(`[Mock API] Intercepting request: ${options?.method ?? "GET"} ${path}`);
 
-		const result = await this.mockClient.intercept(path, {
+		const result = await this.mockClient.intercept<unknown>(path, {
 			body: options?.json ? JSON.stringify(options.json) : options?.body,
-			method: options?.method || "GET",
+			method: options?.method ?? "GET",
 		});
 
 		return createMockResponse(result);
@@ -84,19 +100,30 @@ class MockKyWrapper {
 }
 
 // Simple mock response that provides the minimal interface we need
-function createMockResponse(data: unknown): any {
+function createMockResponse(data: unknown): MockResponse {
+	const jsonData = JSON.stringify(data);
 	return {
-		arrayBuffer: async () => new TextEncoder().encode(JSON.stringify(data)).buffer,
-		blob: async () => new Blob([JSON.stringify(data)]),
-		formData: async () => new FormData(),
-		json: async () => data,
-		text: async () => JSON.stringify(data),
+		async arrayBuffer(): Promise<ArrayBuffer> {
+			return new TextEncoder().encode(jsonData).buffer as ArrayBuffer;
+		},
+		async blob(): Promise<Blob> {
+			return new Blob([jsonData]);
+		},
+		async formData(): Promise<FormData> {
+			return new FormData();
+		},
+		async json<T = unknown>(): Promise<T> {
+			return data as T;
+		},
+		async text(): Promise<string> {
+			return jsonData;
+		},
 	};
 }
 
 let mockClientInstance: MockKyWrapper | null = null;
 
-export function getMockClient(): any {
+export function getMockClient(): KyInstance | MockKyWrapper {
 	if (!isMockAPIEnabled()) {
 		return getClient();
 	}

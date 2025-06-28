@@ -71,12 +71,12 @@ export const applicationHandlers = {
 
 		const updatedApplication = {
 			...application,
-			form_inputs: FormInputsFactory.build() as any, // Factory returns correct type but TS inference issue
+			form_inputs: FormInputsFactory.build() as unknown, // Factory returns correct type but TS inference issue
 			research_objectives: ResearchObjectiveFactory.batch(3),
 			status: "IN_PROGRESS" as const,
 			text: generatedText,
 		};
-		applicationStore.set(applicationId, updatedApplication);
+		applicationStore.set(applicationId, updatedApplication as Parameters<typeof applicationStore.set>[1]);
 
 		return undefined;
 	},
@@ -143,7 +143,7 @@ export const applicationHandlers = {
 			...requestBody,
 			updated_at: new Date().toISOString(),
 		};
-		applicationStore.set(applicationId, updatedApplication as any);
+		applicationStore.set(applicationId, updatedApplication as Parameters<typeof applicationStore.set>[1]);
 
 		// Return the full updated application
 		return updatedApplication as API.UpdateApplication.Http200.ResponseBody;
