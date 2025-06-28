@@ -6,7 +6,7 @@ let mockHandlersRegistered = false;
 export async function withMockAPI<T>(
 	realAction: () => Promise<T>,
 	endpoint: string,
-	options?: RequestInit,
+	options?: { body?: string; method?: string },
 ): Promise<T> {
 	if (!isMockAPIEnabled()) {
 		return realAction();
