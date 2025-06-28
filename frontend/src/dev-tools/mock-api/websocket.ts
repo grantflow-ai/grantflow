@@ -3,6 +3,7 @@ import {
 	SourceProcessingNotificationMessageFactory,
 	WebSocketMessageFactory,
 } from "::testing/factories";
+import { getEnv } from "@/utils/env";
 import { isMockAPIEnabled } from "./client";
 
 interface WebSocketScenario {
@@ -347,11 +348,71 @@ export class MockWebSocket implements WebSocket {
 	}
 }
 
-// Export a factory function for creating mock WebSocket instances
+// Export a factory function for creating mock WebSocket instances (for testing)
 export function createMockWebSocket(url: string | URL, protocols?: string | string[]): WebSocket {
 	if (!isMockAPIEnabled()) {
 		// Return real WebSocket in non-mock mode
 		return new WebSocket(url, protocols);
 	}
 	return new MockWebSocket(url, protocols);
+}
+
+/**
+ * Get the WebSocket URL for the current environment
+ * In mock mode, returns a mock WebSocket server URL
+ * In production, returns the real backend WebSocket URL
+ */
+export function getWebSocketUrl(path: string): string {
+	if (isMockAPIEnabled()) {
+		// Return mock WebSocket URL that will be handled by our mock implementation
+		return `ws://localhost:3001${path}`;
+	}
+
+	// Convert backend API URL to WebSocket URL
+	const backendUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
+	const wsUrl = backendUrl.replace(/^https?:\/\//, "ws://").replace(/^http:\/\//, "ws://");
+	return `${wsUrl}${path}`;
+}
+
+/**
+ * Initialize WebSocket mocking for development
+ * This should be called in development setup to override the global WebSocket constructor
+ */
+export function initializeWebSocketMocking(): void {
+	if (!isMockAPIEnabled()) {
+		return;
+	}
+
+	console.log("[Mock API] Initializing WebSocket mocking");
+
+	// Store original WebSocket constructor
+	const OriginalWebSocket = globalThis.WebSocket;
+
+	// Create a constructor function that proxies to the appropriate implementation
+	function WebSocketProxy(this: any, url: string | URL, protocols?: string | string[]) {
+		// Check if this is a mock URL
+		const urlString = url.toString();
+		if (urlString.includes("localhost:3001") || isMockAPIEnabled()) {
+			const mockWs = new MockWebSocket(url, protocols);
+			// Copy properties to this instance
+			Object.setPrototypeOf(this, Object.getPrototypeOf(mockWs));
+			return Object.assign(this, mockWs);
+		}
+		// For non-mock URLs, use original WebSocket
+		const realWs = new OriginalWebSocket(url, protocols);
+		Object.setPrototypeOf(this, Object.getPrototypeOf(realWs));
+		return Object.assign(this, realWs);
+	}
+
+	// Set up the prototype chain
+	WebSocketProxy.prototype = MockWebSocket.prototype;
+
+	// Replace the WebSocket constructor
+	globalThis.WebSocket = WebSocketProxy as any;
+
+	// Copy static properties
+	Object.defineProperty(globalThis.WebSocket, "CONNECTING", { value: 0 });
+	Object.defineProperty(globalThis.WebSocket, "OPEN", { value: 1 });
+	Object.defineProperty(globalThis.WebSocket, "CLOSING", { value: 2 });
+	Object.defineProperty(globalThis.WebSocket, "CLOSED", { value: 3 });
 }
