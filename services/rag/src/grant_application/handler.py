@@ -70,7 +70,7 @@ async def generate_work_plan_text(
     )
 
 
-    
+
     enrichment_responses = await handle_optimized_batch_enrichment(
         application_id=application_id,
         grant_section=work_plan_section,
@@ -265,7 +265,7 @@ async def generate_grant_section_texts(
                             depends_on=section["depends_on"],
                             texts=section_texts,
                         ),
-                        form_input=form_inputs,
+                        form_inputs=form_inputs,
                         research_plan_text=research_plan_text,
                     )
                 )
