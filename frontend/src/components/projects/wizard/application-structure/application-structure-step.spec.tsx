@@ -8,7 +8,7 @@ import { ApplicationStructureStep } from "./application-structure-step";
 
 // Mock the child components
 vi.mock("./application-structure-left-pane", () => ({
-	default: () => <div data-testid="application-structure-left-pane">Left Pane</div>,
+	ApplicationStructureLeftPane: () => <div data-testid="application-structure-left-pane">Left Pane</div>,
 }));
 
 vi.mock("./drag-drop-section-manager", () => ({
@@ -52,7 +52,7 @@ describe("ApplicationStructureStep", () => {
 		render(<ApplicationStructureStep />);
 
 		expect(screen.getByTestId("empty-state")).toBeInTheDocument();
-		expect(screen.getByText("Configure your application structure to see a preview")).toBeInTheDocument();
+		expect(screen.getByTestId("empty-state-message")).toHaveTextContent("Loading, analyzing...");
 	});
 
 	it("shows generating loader when template is generating", () => {

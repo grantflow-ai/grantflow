@@ -427,15 +427,21 @@ describe("useDragAndDrop", () => {
 			const { result } = renderHook(() => useDragAndDrop(handlers));
 			const items = createTestItems();
 
+			render(
+				<result.current.DragDropWrapper items={items}>
+					<div>Async drag over content</div>
+				</result.current.DragDropWrapper>,
+			);
+
+			const dragOverHandler = (globalThis as any).testDragOver;
+			expect(dragOverHandler).toBeDefined();
+
+			const event = { active: { id: "item-1" }, over: { id: "item-2" } };
 			await act(async () => {
-				render(
-					<result.current.DragDropWrapper items={items}>
-						<div>Async drag over content</div>
-					</result.current.DragDropWrapper>,
-				);
+				await dragOverHandler(event);
 			});
 
-			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
+			expect(mockOnDragOver).toHaveBeenCalledWith(event);
 		});
 
 		it("should support async onDragEnd handler", async () => {
@@ -450,15 +456,21 @@ describe("useDragAndDrop", () => {
 			const { result } = renderHook(() => useDragAndDrop(handlers));
 			const items = createTestItems();
 
+			render(
+				<result.current.DragDropWrapper items={items}>
+					<div>Async drag end content</div>
+				</result.current.DragDropWrapper>,
+			);
+
+			const dragEndHandler = (globalThis as any).testDragEnd;
+			expect(dragEndHandler).toBeDefined();
+
+			const event = { active: { id: "item-1" }, over: { id: "item-2" } };
 			await act(async () => {
-				render(
-					<result.current.DragDropWrapper items={items}>
-						<div>Async drag end content</div>
-					</result.current.DragDropWrapper>,
-				);
+				await dragEndHandler(event);
 			});
 
-			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
+			expect(mockOnDragEnd).toHaveBeenCalledWith(event);
 		});
 	});
 

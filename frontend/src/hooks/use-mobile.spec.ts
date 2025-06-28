@@ -102,7 +102,7 @@ describe("useIsMobile", () => {
 		expect(mockMediaQueryList.addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
 	});
 
-	it("should update state when media query changes", () => {
+			it("should update state when media query changes", () => {
 		const { result } = renderHook(() => useIsMobile());
 
 		// Initially desktop
@@ -116,7 +116,7 @@ describe("useIsMobile", () => {
 		});
 
 		// Get the change handler and call it
-		const changeHandler = mockMediaQueryList.addEventListener.mock.calls[0][1];
+		const [, changeHandler] = mockMediaQueryList.addEventListener.mock.calls[0];
 		act(() => {
 			changeHandler();
 		});
@@ -145,7 +145,7 @@ describe("useIsMobile", () => {
 		});
 
 		// Get the change handler and call it
-		const changeHandler = mockMediaQueryList.addEventListener.mock.calls[0][1];
+		const [, changeHandler] = mockMediaQueryList.addEventListener.mock.calls[0];
 		act(() => {
 			changeHandler();
 		});
@@ -163,7 +163,7 @@ describe("useIsMobile", () => {
 		unmount();
 
 		// Verify listener was removed with the same function
-		const addedHandler = mockMediaQueryList.addEventListener.mock.calls[0][1];
+		const [, addedHandler] = mockMediaQueryList.addEventListener.mock.calls[0];
 		expect(mockMediaQueryList.removeEventListener).toHaveBeenCalledWith("change", addedHandler);
 	});
 
@@ -257,11 +257,11 @@ describe("useIsMobile", () => {
 		// Test that the breakpoint used in matchMedia matches the one used in window.innerWidth check
 		renderHook(() => useIsMobile());
 
-		const mediaQuery = mockMatchMedia.mock.calls[0][0];
+		const [mediaQuery] = mockMatchMedia.mock.calls[0];
 		expect(mediaQuery).toBe("(max-width: 767px)");
 
 		// Verify that 767 is exactly one less than the 768 breakpoint used in the code
-		const breakpointFromQuery = Number.parseInt(mediaQuery.match(/\d+/)?.[0] || "0", 10);
+		const breakpointFromQuery = Number.parseInt(mediaQuery.match(/\d+/)?.[0] ?? "0", 10);
 		expect(breakpointFromQuery).toBe(767);
 	});
 });
