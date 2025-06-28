@@ -12,7 +12,6 @@ from testing import FIXTURES_FOLDER
 MELANOMA_APPLICATION_ID = "43b4aed5-8549-461f-9290-5ee9a630ac9a"
 TEST_APPLICATIONS = {
     "melanoma_alliance": MELANOMA_APPLICATION_ID,
-
 }
 
 
@@ -26,10 +25,7 @@ def real_application_ids() -> dict[str, str]:
 async def melanoma_application_data(async_session_maker: async_sessionmaker[Any]) -> dict[str, Any]:
     """Get the real melanoma alliance application data from database."""
     async with async_session_maker() as session:
-        application = await retrieve_application(
-            application_id=MELANOMA_APPLICATION_ID,
-            session=session
-        )
+        application = await retrieve_application(application_id=MELANOMA_APPLICATION_ID, session=session)
 
         return {
             "application_id": MELANOMA_APPLICATION_ID,
@@ -62,8 +58,8 @@ def simple_test_objectives() -> list[dict[str, Any]]:
                     "number": 2,
                     "title": "In vitro validation",
                     "description": "Test CAR-T cell efficacy in models",
-                }
-            ]
+                },
+            ],
         },
         {
             "id": "obj-2",
@@ -82,8 +78,8 @@ def simple_test_objectives() -> list[dict[str, Any]]:
                     "number": 2,
                     "title": "Biomarker analysis",
                     "description": "Identify predictive biomarkers",
-                }
-            ]
+                },
+            ],
         },
         {
             "id": "obj-3",
@@ -97,8 +93,8 @@ def simple_test_objectives() -> list[dict[str, Any]]:
                     "title": "Dose optimization",
                     "description": "Determine optimal cell dose",
                 }
-            ]
-        }
+            ],
+        },
     ]
 
 
@@ -122,10 +118,7 @@ def mock_job_manager() -> Any:
 
     async def create_mock_job_manager(session_maker: Any, application_id: UUID) -> JobManager:
         job_manager = JobManager(session_maker)
-        await job_manager.create_grant_application_job(
-            grant_application_id=application_id,
-            total_stages=5
-        )
+        await job_manager.create_grant_application_job(grant_application_id=application_id, total_stages=5)
         return job_manager
 
     return create_mock_job_manager
@@ -140,9 +133,7 @@ def load_grant_template_fixture(application_id: str) -> dict[str, Any]:
 
 
 def analyze_pipeline_timing(
-    total_time: float,
-    stage_timings: dict[str, float],
-    targets: dict[str, float]
+    total_time: float, stage_timings: dict[str, float], targets: dict[str, float]
 ) -> dict[str, Any]:
     """Analyze pipeline performance against targets."""
 
@@ -154,49 +145,48 @@ def analyze_pipeline_timing(
         "optimization_opportunities": [],
     }
 
-
     if total_time > 0:
         for stage, time_val in stage_timings.items():
             percentage = (time_val / total_time) * 100
             analysis["stage_breakdown"][f"{stage}_percentage"] = round(percentage, 1)
 
-
             if percentage > 25:
-                analysis["bottlenecks"].append({
-                    "stage": stage,
-                    "time": time_val,
-                    "percentage": percentage
-                })
-
+                analysis["bottlenecks"].append({"stage": stage, "time": time_val, "percentage": percentage})
 
     analysis["performance_vs_targets"] = {
         "total_time_score": max(0, 100 - (total_time / targets["total_time_limit"]) * 100),
         "within_limits": total_time < targets["total_time_limit"],
         "efficiency_grade": (
-            "A" if total_time < targets["total_time_limit"] * 0.5 else
-            "B" if total_time < targets["total_time_limit"] * 0.75 else
-            "C" if total_time < targets["total_time_limit"] else
-            "F"
-        )
+            "A"
+            if total_time < targets["total_time_limit"] * 0.5
+            else "B"
+            if total_time < targets["total_time_limit"] * 0.75
+            else "C"
+            if total_time < targets["total_time_limit"]
+            else "F"
+        ),
     }
-
 
     work_plan_time = stage_timings.get("work_plan_generation", 0)
     if work_plan_time > targets.get("work_plan_time_limit", 300):
-        analysis["optimization_opportunities"].append({
-            "type": "work_plan_parallelization",
-            "current_time": work_plan_time,
-            "target_time": targets["work_plan_time_limit"],
-            "potential_improvement": "60-80% reduction via parallelization"
-        })
+        analysis["optimization_opportunities"].append(
+            {
+                "type": "work_plan_parallelization",
+                "current_time": work_plan_time,
+                "target_time": targets["work_plan_time_limit"],
+                "potential_improvement": "60-80% reduction via parallelization",
+            }
+        )
 
     enrichment_time = stage_timings.get("objective_enrichment", 0)
     if enrichment_time > targets.get("enrichment_time_limit", 180):
-        analysis["optimization_opportunities"].append({
-            "type": "batch_enrichment",
-            "current_time": enrichment_time,
-            "target_time": targets["enrichment_time_limit"],
-            "potential_improvement": "70% reduction via batch processing"
-        })
+        analysis["optimization_opportunities"].append(
+            {
+                "type": "batch_enrichment",
+                "current_time": enrichment_time,
+                "target_time": targets["enrichment_time_limit"],
+                "potential_improvement": "70% reduction via batch processing",
+            }
+        )
 
     return analysis

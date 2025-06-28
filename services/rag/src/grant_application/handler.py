@@ -68,8 +68,6 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-
-
     enrichment_responses = await handle_batch_enrich_objectives(
         application_id=application_id,
         grant_section=work_plan_section,
@@ -138,7 +136,6 @@ async def generate_work_plan_text(
 
     total_objectives = len(research_objectives)
 
-
     objective_task_groups = []
     for count in range(1, total_objectives + 1):
         objective: ResearchComponentGenerationDTO = next(d for d in dtos if str(d["number"]) == str(count))
@@ -152,19 +149,15 @@ async def generate_work_plan_text(
         notification_type="info",
     )
 
-
     async def generate_objective_with_tasks(
-        objective: ResearchComponentGenerationDTO,
-        tasks: list[ResearchComponentGenerationDTO]
+        objective: ResearchComponentGenerationDTO, tasks: list[ResearchComponentGenerationDTO]
     ) -> tuple[ResearchComponentGenerationDTO, str, list[tuple[ResearchComponentGenerationDTO, str]]]:
-
         research_objective_text = await generate_work_plan_component_text(
             application_id=application_id,
             component=objective,
             work_plan_text=work_plan_text,
             form_inputs=form_inputs,
         )
-
 
         research_task_texts = await gather(
             *[
@@ -178,18 +171,12 @@ async def generate_work_plan_text(
             ]
         )
 
-
         task_results = list(zip(tasks, research_task_texts, strict=True))
         return objective, research_objective_text, task_results
 
-
     objective_results = await gather(
-        *[
-            generate_objective_with_tasks(objective, tasks)
-            for objective, tasks in objective_task_groups
-        ]
+        *[generate_objective_with_tasks(objective, tasks) for objective, tasks in objective_task_groups]
     )
-
 
     for objective, objective_text, task_results in objective_results:
         work_plan_text += f"\n\n### Objective {objective['number']}: {objective['title']}\n{objective_text}"
@@ -232,7 +219,6 @@ async def generate_grant_section_texts(
     research_objectives: list[ResearchObjective],
     job_manager: JobManager,
 ) -> dict[str, str]:
-
     return await generate_sections_with_shared_retrieval(
         application_id=application_id,
         form_inputs=form_inputs,
@@ -397,7 +383,7 @@ async def grant_application_text_generation_pipeline_handler(
         section_texts = await generate_sections_with_shared_retrieval(
             application_id=str(application_id),
             sections=grant_template.grant_sections,
-            form_inputs=grant_application.form_inputs or {},
+            research_deep_dives=grant_application.research_objectives or [],
         )
 
         await job_manager.add_notification(

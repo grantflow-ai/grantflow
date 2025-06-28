@@ -1,6 +1,6 @@
 from typing import Literal, NotRequired, TypedDict
 
-from src.json_objects import GrantLongFormSection, ResearchObjective, ResearchDeepDive
+from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
 
 
 class ResearchComponentGenerationDTO(TypedDict):
