@@ -67,9 +67,9 @@ function ProgressBarLine({ currentStep, index }: ProgressBarLineProps) {
 	const isAnimating = index === currentStep - 1;
 	const isCompleted = index < currentStep - 1;
 
-	return (
-		<div className="relative h-px w-full overflow-hidden bg-app-gray-200">
-			{isAnimating ? (
+	const getLineContent = () => {
+		if (isAnimating) {
+			return (
 				<motion.div
 					animate={{ width: "100%" }}
 					className="absolute left-0 top-0 h-full bg-primary"
@@ -77,16 +77,30 @@ function ProgressBarLine({ currentStep, index }: ProgressBarLineProps) {
 					key={`line-${index}`}
 					transition={{ duration: 0.8, ease: "easeInOut" }}
 				/>
-			) : isCompleted ? (
-				<div className="absolute left-0 top-0 size-full bg-primary" />
-			) : null}
-		</div>
-	);
+			);
+		}
+		if (isCompleted) {
+			return <div className="absolute left-0 top-0 size-full bg-primary" />;
+		}
+		return null;
+	};
+
+	return <div className="relative h-px w-full overflow-hidden bg-app-gray-200">{getLineContent()}</div>;
 }
 
 function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 	const isActive = index < currentStep;
 	const isCurrent = index === currentStep;
+
+	const getBorderColor = () => {
+		if (isCurrent) {
+			return "var(--color-primary)";
+		}
+		if (isActive) {
+			return "transparent";
+		}
+		return "var(--color-app-gray-200)";
+	};
 
 	return (
 		<div className={`${isLast ? "" : "w-[145px]"} flex items-center`}>
@@ -95,11 +109,7 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 				className="size-[11px] rounded-full flex justify-center items-center border"
 				initial="inactive"
 				style={{
-					borderColor: isCurrent
-						? "var(--color-primary)"
-						: isActive
-							? "transparent"
-							: "var(--color-app-gray-200)",
+					borderColor: getBorderColor(),
 				}}
 				transition={{ duration: 0.5 }}
 				variants={{
@@ -108,7 +118,7 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 					next: { backgroundColor: "transparent", scale: 1 },
 				}}
 			>
-				<AnimatePresence mode="wait">
+								<AnimatePresence mode="wait">
 					{isActive ? (
 						<motion.div
 							animate="active"

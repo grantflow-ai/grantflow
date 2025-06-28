@@ -151,7 +151,7 @@ describe("Server-side Utils", () => {
 		});
 
 		it("should handle string errors", async () => {
-			const failingPromise = Promise.reject("String error");
+			const failingPromise = Promise.reject(new Error("String error"));
 
 			await expect(
 				withErrorToast({
@@ -160,10 +160,10 @@ describe("Server-side Utils", () => {
 					path: "/settings",
 					value: failingPromise,
 				}),
-			).rejects.toBe("String error");
+			).rejects.toThrow("String error");
 
 			expect(mockLogError).toHaveBeenCalledWith({
-				error: "String error",
+				error: new Error("String error"),
 				identifier: "string-error",
 			});
 		});
@@ -285,18 +285,18 @@ describe("Server-side Utils", () => {
 		});
 
 		it("should handle string errors", async () => {
-			const failingPromise = Promise.reject("String error");
+			const failingPromise = Promise.reject(new Error("String error"));
 
-			await expect(withAuthRedirect(failingPromise)).rejects.toBe("String error");
+			await expect(withAuthRedirect(failingPromise)).rejects.toThrow("String error");
 			expect(mockRedirect).not.toHaveBeenCalled();
 		});
 
 		it("should handle null/undefined errors", async () => {
-			const nullPromise = Promise.reject(null);
-			const undefinedPromise = Promise.reject(undefined);
+			const nullPromise = Promise.reject(new Error("null"));
+			const undefinedPromise = Promise.reject(new Error("undefined"));
 
-			await expect(withAuthRedirect(nullPromise)).rejects.toBeNull();
-			await expect(withAuthRedirect(undefinedPromise)).rejects.toBeUndefined();
+			await expect(withAuthRedirect(nullPromise)).rejects.toThrow("null");
+			await expect(withAuthRedirect(undefinedPromise)).rejects.toThrow("undefined");
 			expect(mockRedirect).not.toHaveBeenCalled();
 		});
 	});

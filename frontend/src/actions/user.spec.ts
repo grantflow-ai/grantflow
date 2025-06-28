@@ -75,7 +75,7 @@ describe("User Actions", () => {
 			await deleteAccount();
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const wrappedPromise = mockWithAuthRedirect.mock.calls[0][0];
+			const [wrappedPromise] = mockWithAuthRedirect.mock.calls[0];
 			expect(wrappedPromise).toBeDefined();
 		});
 	});
@@ -141,7 +141,7 @@ describe("User Actions", () => {
 			await restoreAccount(mockToken);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const wrappedPromise = mockWithAuthRedirect.mock.calls[0][0];
+			const [wrappedPromise] = mockWithAuthRedirect.mock.calls[0];
 			expect(wrappedPromise).toBeDefined();
 		});
 
