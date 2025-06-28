@@ -1,4 +1,4 @@
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AppCardDescription, AppCardHeader, AppCardTitle } from "@/components/app";
 
 export function AuthCardHeader({
 	description,
@@ -12,13 +12,13 @@ export function AuthCardHeader({
 	titleTestId?: string;
 }) {
 	return (
-		<CardHeader data-testid="auth-card-header">
-			<CardTitle className="font-heading text-4xl font-medium" data-testid={titleTestId}>
+		<AppCardHeader data-testid="auth-card-header">
+			<AppCardTitle className="font-heading text-4xl font-medium" data-testid={titleTestId}>
 				{title}
-			</CardTitle>
-			<CardDescription className="text-app-gray-600" data-testid={descriptionTestId}>
+			</AppCardTitle>
+			<AppCardDescription className="text-app-gray-600" data-testid={descriptionTestId}>
 				{description}
-			</CardDescription>
-		</CardHeader>
+			</AppCardDescription>
+		</AppCardHeader>
 	);
 }

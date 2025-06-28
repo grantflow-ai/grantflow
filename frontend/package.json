@@ -112,14 +112,14 @@
 		"knip:production": "knip --production",
 		"lint": "biome lint --write . && eslint . --fix",
 		"preinstall": "npx only-allow pnpm",
+		"reset-shadcn": "tsx scripts/reset-shadcn.ts",
 		"start": "cross-env NODE_NO_WARNINGS=1 next start",
 		"storybook": "cross-env storybook dev -p 6006",
 		"test": "cross-env NODE_NO_WARNINGS=1 vitest run",
 		"test:coverage": "cross-env NODE_NO_WARNINGS=1 pnpm run test --coverage",
 		"test:watch": "cross-env NODE_NO_WARNINGS=1 vitest watch --coverage",
 		"typecheck": "tsc --noEmit",
-		"ui": "pnpm dlx shadcn@latest",
-		"reset-shadcn": "tsx scripts/reset-shadcn.ts"
+		"ui": "pnpm dlx shadcn@latest"
 	},
 	"version": "0.1.0"
 }

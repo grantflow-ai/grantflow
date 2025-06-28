@@ -6,9 +6,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { deleteApplication } from "@/actions/grant-applications";
+import { AppButton, AppCard, AppCardContent } from "@/components/app";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { PagePath } from "@/enums";
 
 import type { API } from "@/types/api-types";
@@ -51,8 +50,8 @@ export function GrantApplicationCard({
 
 	return (
 		<Link className="block" data-testid={`application-draft-link-${application.id}`} href={url}>
-			<Card className="hover:bg-muted/50 group overflow-hidden transition-all duration-300 hover:shadow-md">
-				<CardContent className="p-4">
+			<AppCard className="hover:bg-muted/50 group overflow-hidden transition-all duration-300 hover:shadow-md">
+				<AppCardContent className="p-4">
 					<div className="flex items-start justify-between gap-4">
 						<div className="grow">
 							<h3 className="mb-1 line-clamp-1 flex items-center space-x-2 text-base font-semibold">
@@ -69,7 +68,7 @@ export function GrantApplicationCard({
 									{application.completed_at}
 								</Badge>
 							)}
-							<Button
+							<AppButton
 								className="opacity-0 transition-opacity group-hover:opacity-100"
 								disabled={isDeleting}
 								onClick={handleDelete}
@@ -77,14 +76,14 @@ export function GrantApplicationCard({
 								variant="ghost"
 							>
 								<Trash2 className="text-destructive size-4" />
-							</Button>
+							</AppButton>
 						</div>
 					</div>
 					<div className="mt-2 flex items-center justify-end">
 						<ChevronRight className="text-muted-foreground group-hover:text-foreground size-4 transition-all duration-300 group-hover:translate-x-1" />
 					</div>
-				</CardContent>
-			</Card>
+				</AppCardContent>
+			</AppCard>
 		</Link>
 	);
 }

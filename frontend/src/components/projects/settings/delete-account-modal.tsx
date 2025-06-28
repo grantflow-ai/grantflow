@@ -4,8 +4,8 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { deleteAccount } from "@/actions/user";
+import { AppButton } from "@/components/app";
 import { Modal } from "@/components/app/feedback/modal";
-import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/stores/user-store";
 import { logError } from "@/utils/logging";
 
@@ -65,24 +65,24 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 					</div>
 
 					<div className="flex flex-row items-end justify-between">
-						<Button
+						<AppButton
 							className="w-[90px]"
 							data-testid="cancel-button"
 							disabled={isDeleting}
 							onClick={onClose}
-							variant="outline"
+							variant="secondary"
 						>
 							Cancel
-						</Button>
-						<Button
+						</AppButton>
+						<AppButton
 							className="bg-[#1e13f8] hover:bg-[#1e13f8]/90"
 							data-testid="delete-button"
 							disabled={isDeleting}
 							onClick={handleDelete}
-							variant="default"
+							variant="primary"
 						>
 							{isDeleting ? "Deleting..." : "Delete and log out"}
-						</Button>
+						</AppButton>
 					</div>
 				</div>
 			</div>

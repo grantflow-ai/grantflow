@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { AppCard } from "@/components/app";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
@@ -141,7 +141,7 @@ function KnowledgeBasePreview() {
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
 			<ScrollArea className="flex-1">
 				{hasFilesOrUrls && (
-					<Card
+					<AppCard
 						className="border-app-gray-100 border bg-white p-5 shadow-none"
 						data-testid="knowledge-base-container"
 					>
@@ -150,7 +150,7 @@ function KnowledgeBasePreview() {
 							<Separator className="my-8 bg-gray-200" data-testid="knowledge-base-separator" />
 						)}
 						<LinksSection parentId={applicationId} urls={knowledgeBaseUrls} />
-					</Card>
+					</AppCard>
 				)}
 			</ScrollArea>
 		</div>

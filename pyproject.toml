@@ -117,7 +117,7 @@ lint.pylint.max-statements = 100
 
 [tool.codespell]
 ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw,afterAll,beforeAll"
-skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml"
+skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml,**/*.spec.*,**/*.test.*,**/tests/**/*"
 
 [tool.pyproject-fmt]
 keep_full_version = true

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface BaseModalProps {
 	children: ReactNode;
@@ -14,12 +14,13 @@ interface BaseModalProps {
 export function BaseModal({ children, isOpen, onClose, title }: BaseModalProps) {
 	return (
 		<Dialog onOpenChange={onClose} open={isOpen}>
-			<DialogContent aria-describedby={title ? `${title} Dialog` : "Dialog"}>
-				{title && (
-					<DialogHeader>
-						<DialogTitle>{title}</DialogTitle>
-					</DialogHeader>
-				)}
+			<DialogContent>
+				<DialogHeader>
+					{title ? <DialogTitle>{title}</DialogTitle> : <DialogTitle className="sr-only">Modal</DialogTitle>}
+					<DialogDescription className="sr-only">
+						{title ? `${title} modal dialog` : "Modal dialog"}
+					</DialogDescription>
+				</DialogHeader>
 				{children}
 			</DialogContent>
 		</Dialog>

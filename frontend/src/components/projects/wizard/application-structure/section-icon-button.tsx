@@ -1,5 +1,5 @@
 import type React from "react";
-import { Button } from "@/components/ui/button";
+import { AppButton } from "@/components/app";
 
 export function SectionIconButton({
 	children,
@@ -13,15 +13,15 @@ export function SectionIconButton({
 	onClick?: () => void;
 }) {
 	return (
-		<Button
+		<AppButton
 			className={`size-6 cursor-pointer rounded-none hover:bg-gray-50 ${className}`}
 			data-testid={dataTestId}
 			onClick={onClick}
-			size="icon"
+			size="sm"
 			type="button"
 			variant="ghost"
 		>
 			{children}
-		</Button>
+		</AppButton>
 	);
 }

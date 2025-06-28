@@ -3,7 +3,7 @@
 import { Copy, List, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { AvatarGroup } from "@/components/ui/avatar";
+import { AvatarGroup } from "@/components/app";
 import type { API } from "@/types/api-types";
 
 interface DashboardProjectCardProps {
