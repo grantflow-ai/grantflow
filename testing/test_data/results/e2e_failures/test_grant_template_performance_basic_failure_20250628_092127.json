@@ -1,0 +1,27 @@
+{
+  "test_name": "test_grant_template_performance_basic",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "TypeError",
+    "message": "handle_extract_cfp_data_from_rag_sources() got an unexpected keyword argument 'logger'",
+    "execution_time_before_failure": 0.22656488418579102
+  },
+  "performance": {
+    "execution_time": 0.22656488418579102,
+    "timeout_reached": false,
+    "timeout_utilization": 0.0012586938010321724
+  },
+  "diagnostic_info": {
+    "timeout_configured": 180,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger",
+      "async_session_maker",
+      "organization_mapping",
+      "melanoma_alliance_full_application_id"
+    ]
+  },
+  "timestamp": "2025-06-28T09:21:27.755648+00:00"
+}

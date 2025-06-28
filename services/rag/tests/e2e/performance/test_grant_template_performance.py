@@ -88,7 +88,6 @@ async def test_grant_template_performance_basic(
                 source_ids=source_ids,
                 organization_mapping=organization_mapping,
                 session_maker=async_session_maker,
-                logger=logger,
             )
             perf_ctx.add_llm_call(2)
 
@@ -310,7 +309,7 @@ async def test_grant_template_baseline_performance(
         logger.info("=== GRANT TEMPLATE BASELINE PERFORMANCE ===")
         logger.info("Establishing baseline with real API calls for optimization targets")
 
-        
+
         logger.info("Stage 1: Setting up RAG sources")
         with perf_ctx.stage_timer("rag_setup"):
             source_ids = await create_rag_sources_from_cfp_file(
@@ -322,7 +321,7 @@ async def test_grant_template_baseline_performance(
 
         logger.info(f"RAG setup completed: {len(source_ids)} sources created")
 
-        
+
         logger.info("Stage 2: Extracting CFP data")
         with perf_ctx.stage_timer("cfp_extraction"):
             cfp_result = await handle_extract_cfp_data_from_rag_sources(
@@ -330,11 +329,11 @@ async def test_grant_template_baseline_performance(
                 organization_mapping=organization_mapping,
                 session_maker=async_session_maker,
             )
-            perf_ctx.add_llm_call(2)  
+            perf_ctx.add_llm_call(2)
 
-        logger.info(f"CFP extraction completed: {len(cfp_result)} content items")
+        logger.info(f"CFP extraction completed: {len(cfp_result.get('content', []))} content items")
 
-        
+
         logger.info("Stage 3: Extracting and enriching sections")
         job_manager = None
         sections = []
@@ -345,29 +344,27 @@ async def test_grant_template_baseline_performance(
 
             with perf_ctx.stage_timer("section_extraction"):
                 sections = await extract_and_enrich_sections(
-                    cfp_content=cfp_result,
-                    cfp_subject="Melanoma Alliance Grant Baseline Test",
+                    cfp_content=cfp_result["content"],
+                    cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Grant Baseline Test"),
                     organization=None,
-                    parent_id=template_id,
+                    parent_id=UUID(template_id),
                     job_manager=job_manager,
                 )
-                perf_ctx.add_llm_call(len(sections))  
+                perf_ctx.add_llm_call(len(sections))
 
         finally:
-            if job_manager:
-                with contextlib.suppress(Exception):
-                    await job_manager.close()
+            pass
 
         logger.info(f"Section extraction completed: {len(sections)} sections generated")
 
-        
+
         section_content = []
         full_content = "# Grant Template: Melanoma Alliance Baseline\n\n"
 
         for section in sections:
             if hasattr(section, "title"):
                 title = section.title
-                
+
                 content = ""
                 if hasattr(section, "generation_instructions"):
                     content = f"Instructions: {section.generation_instructions[:200]}..."
@@ -381,7 +378,7 @@ async def test_grant_template_baseline_performance(
 
         perf_ctx.set_content(full_content, section_content)
 
-        
+
         total_time = sum(perf_ctx.stage_times.values())
         rag_time = perf_ctx.stage_times.get("rag_setup", 0)
         cfp_time = perf_ctx.stage_times.get("cfp_extraction", 0)
@@ -395,7 +392,7 @@ async def test_grant_template_baseline_performance(
         logger.info(f"Sections generated: {len(sections)}")
         logger.info(f"LLM calls made: {perf_ctx.llm_calls_made}")
 
-        
+
         if total_time > 300:
             perf_ctx.add_warning(f"Total pipeline time exceeds 5 minutes: {total_time:.1f}s")
         if section_time > 180:
@@ -403,13 +400,13 @@ async def test_grant_template_baseline_performance(
         if len(sections) < 5:
             perf_ctx.add_warning(f"Low section count: {len(sections)} sections")
 
-        
+
         assert len(sections) >= 5, f"Expected at least 5 sections for valid baseline, got {len(sections)}"
         assert total_time > 0, "Pipeline time should be positive"
         assert perf_ctx.llm_calls_made > 0, "Should have made LLM API calls"
         assert len(section_content) >= 5, "Should have substantial section content"
 
-        
+
         assert_performance_targets(perf_ctx.result, min_grade="C")
         assert_quality_targets(perf_ctx.result, min_score=60.0)
 
@@ -442,7 +439,7 @@ async def test_grant_template_stage_breakdown_analysis(
 
         logger.info("=== GRANT TEMPLATE STAGE BREAKDOWN ANALYSIS ===")
 
-        
+
         with perf_ctx.stage_timer("setup"):
             source_ids = await create_rag_sources_from_cfp_file(
                 cfp_file_name="melanoma_alliance.md",
@@ -457,26 +454,26 @@ async def test_grant_template_stage_breakdown_analysis(
                 session_maker=async_session_maker,
             )
 
-        
+
         job_manager = await create_job_manager_for_performance(
             async_session_maker, melanoma_alliance_full_application_id
         )
 
         try:
-            
+
             with perf_ctx.stage_timer("section_processing"):
                 sections = await extract_and_enrich_sections(
-                    cfp_content=cfp_result,
-                    cfp_subject="Melanoma Alliance Stage Breakdown Analysis",
+                    cfp_content=cfp_result["content"],
+                    cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Stage Breakdown Analysis"),
                     organization=None,
-                    parent_id=template_id,
+                    parent_id=UUID(template_id),
                     job_manager=job_manager,
                 )
 
             section_time = perf_ctx.stage_times["section_processing"]
             per_section_time = section_time / len(sections) if sections else 0
 
-            
+
             breakdown_content = f"""
             # Grant Template Stage Breakdown Analysis
 
@@ -508,9 +505,9 @@ async def test_grant_template_stage_breakdown_analysis(
             logger.info(f"Per-section average: {per_section_time:.2f}s")
 
         finally:
-            await job_manager.close()
+            pass
 
-        
+
         perf_ctx.stage_times.get("setup", 0)
         processing_time = perf_ctx.stage_times.get("section_processing", 0)
 
@@ -519,11 +516,11 @@ async def test_grant_template_stage_breakdown_analysis(
         if per_section_time > 30:
             perf_ctx.add_warning(f"Per-section time high: {per_section_time:.1f}s")
 
-        
+
         assert len(sections) >= 3, "Should extract meaningful number of sections"
         assert processing_time > 0, "Should have positive processing time"
         assert per_section_time < 60, f"Per-section time should be reasonable: {per_section_time:.1f}s"
 
-        
+
         assert_performance_targets(perf_ctx.result, min_grade="C")
         assert_quality_targets(perf_ctx.result, min_score=50.0)
