@@ -1,9 +1,9 @@
 import Image from "next/image";
-import { BrandPattern } from "@/components/brand-pattern";
-import { IconGoAhead } from "@/components/icons";
+import { BrandPattern } from "@/components/branding/brand-pattern";
+import { IconGoAhead } from "@/components/branding/icons";
 import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
-import { NavHeader } from "@/components/nav-header";
-import { ScrollButton } from "../scroll-button";
+import { NavHeader } from "@/components/layout/navigation/nav-header";
+import { ScrollButton } from "@/components/layout/navigation/scroll-button";
 
 export function HeroBanner() {
 	return (
