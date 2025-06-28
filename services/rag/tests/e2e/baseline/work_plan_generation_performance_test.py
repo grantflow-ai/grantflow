@@ -90,10 +90,10 @@ async def test_work_plan_generation_baseline(
                 self.session_maker = async_session_maker
                 self.job_id = None
 
-            async def add_notification(self, *args, **kwargs) -> None:
+            async def add_notification(self, *args: Any, **kwargs: Any) -> None:
                 return None
 
-            async def create_job(self, *args, **kwargs):
+            async def create_job(self, *args: Any, **kwargs: Any) -> dict[str, str]:
                 return {"id": "mock-job-id", "status": "completed"}
 
         job_manager = MockJobManager()
