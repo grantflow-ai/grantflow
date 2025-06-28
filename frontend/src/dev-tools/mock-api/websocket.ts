@@ -162,7 +162,7 @@ export class MockWebSocket implements WebSocket {
 		// Echo back for testing
 		setTimeout(() => {
 			const echoMessage = {
-				data: { message: `Echo: ${String(data)}` },
+				data: { message: `Echo: ${typeof data === "string" ? data : JSON.stringify(data)}` },
 				event: "echo",
 				parent_id: crypto.randomUUID(),
 				type: "info" as const,
