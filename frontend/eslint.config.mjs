@@ -124,7 +124,6 @@ export default eslintTS.config(
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"@typescript-eslint/switch-exhaustiveness-check": "warn",
 			"curly": "error",
-			"custom/no-console-use-logger": "error",
 			"eqeqeq": "error",
 			"import-x/no-duplicates": "error",
 			"import-x/no-named-as-default-member": "off",
@@ -132,7 +131,7 @@ export default eslintTS.config(
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
-			"no-console": "off",
+			"no-console": "error",
 			"no-restricted-imports": [
 				"error",
 				{

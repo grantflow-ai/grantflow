@@ -2,15 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { log } from "./logger";
 
 describe("Logger", () => {
-	const originalEnv = process.env.NODE_ENV;
 	const consoleSpy: {
 		error: MockInstance;
 		info: MockInstance;
 		warn: MockInstance;
 	} = {
-		error: vi.spyOn(console, "error").mockImplementation(),
-		info: vi.spyOn(console, "info").mockImplementation(),
-		warn: vi.spyOn(console, "warn").mockImplementation(),
+		error: vi.spyOn(console, "error").mockImplementation(() => {}),
+		info: vi.spyOn(console, "info").mockImplementation(() => {}),
+		warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
 	};
 
 	beforeEach(() => {
@@ -18,12 +17,12 @@ describe("Logger", () => {
 	});
 
 	afterEach(() => {
-		process.env.NODE_ENV = originalEnv;
+		vi.unstubAllEnvs();
 	});
 
 	describe("in development mode", () => {
 		beforeEach(() => {
-			process.env.NODE_ENV = "development";
+			vi.stubEnv("NODE_ENV", "development");
 		});
 
 		it("should log error messages with context", () => {
@@ -64,7 +63,7 @@ describe("Logger", () => {
 
 			log.error("An error occurred", errorString);
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "An error occurred", { rawError: errorString });
+			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "An error occurred", { error: errorString });
 		});
 
 		it("should include correlation ID when provided", () => {
@@ -81,7 +80,7 @@ describe("Logger", () => {
 
 	describe("in production mode", () => {
 		beforeEach(() => {
-			process.env.NODE_ENV = "production";
+			vi.stubEnv("NODE_ENV", "production");
 		});
 
 		it("should not log any messages in production", () => {
@@ -115,7 +114,7 @@ describe("Logger", () => {
 
 	describe("in test mode", () => {
 		beforeEach(() => {
-			process.env.NODE_ENV = "test";
+			vi.stubEnv("NODE_ENV", "test");
 		});
 
 		it("should not log messages in test mode", () => {
@@ -131,7 +130,7 @@ describe("Logger", () => {
 
 	describe("edge cases", () => {
 		beforeEach(() => {
-			process.env.NODE_ENV = "development";
+			vi.stubEnv("NODE_ENV", "development");
 		});
 
 		it("should handle undefined error gracefully", () => {

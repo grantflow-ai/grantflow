@@ -8,7 +8,7 @@ type LogLevel = "error" | "info" | "warn";
 class Logger {
 	private isDevelopment = process.env.NODE_ENV === "development";
 
-	error(message: string, error?: Error, context?: LogContext): void {
+	error(message: string, error?: unknown, context?: LogContext): void {
 		const errorContext: LogContext = { ...context };
 
 		if (error instanceof Error) {
@@ -35,9 +35,7 @@ class Logger {
 	private formatMessage(level: LogLevel, message: string, context?: LogContext): void {
 		if (!this.isDevelopment) return;
 
-		const timestamp = new Date().toISOString();
-		const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
-
+		const prefix = `[${level.toUpperCase()}]`;
 		const contextData = context ? { ...context } : {};
 
 		switch (level) {
@@ -46,7 +44,7 @@ class Logger {
 				break;
 			}
 			case "info": {
-				console.log(prefix, message, contextData);
+				console.info(prefix, message, contextData);
 				break;
 			}
 			case "warn": {
