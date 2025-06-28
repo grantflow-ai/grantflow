@@ -11,7 +11,7 @@ import {
 	updateProject as handleUpdateProject,
 } from "@/actions/project";
 import type { API } from "@/types/api-types";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 export type ProjectsListType = API.ListProjects.Http200.ResponseBody;
 export type ProjectType = API.GetProject.Http200.ResponseBody | null;
@@ -52,7 +52,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			await mutate("projects");
 			toast.success("Project created successfully");
 		} catch (error: unknown) {
-			logError({ error, identifier: "createProject" });
+			log.error("createProject", error);
 			toast.error("Failed to create project");
 			set({ areOperationsInProgress: false });
 		}
@@ -71,7 +71,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			await mutate("projects");
 			toast.success("Project deleted successfully");
 		} catch (error: unknown) {
-			logError({ error, identifier: "deleteProject" });
+			log.error("deleteProject", error);
 			toast.error("Failed to delete project");
 			set({ areOperationsInProgress: false });
 		}
@@ -86,7 +86,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			toast.success("Project duplicated successfully");
 			set({ areOperationsInProgress: false });
 		} catch (error: unknown) {
-			logError({ error, identifier: "duplicateProject" });
+			log.error("duplicateProject", error);
 			toast.error("Failed to duplicate project");
 			set({ areOperationsInProgress: false });
 		}
@@ -101,7 +101,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				project: response,
 			});
 		} catch (error: unknown) {
-			logError({ error, identifier: "getProject" });
+			log.error("getProject", error);
 			toast.error("Failed to retrieve project");
 			set({ areOperationsInProgress: false });
 		}
@@ -116,7 +116,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				projects: response,
 			});
 		} catch (error: unknown) {
-			logError({ error, identifier: "getProjects" });
+			log.error("getProjects", error);
 			toast.error("Failed to retrieve projects");
 			set({ areOperationsInProgress: false });
 		}
@@ -151,7 +151,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				project: previousProject,
 				projects: previousProjects,
 			});
-			logError({ error, identifier: "updateProject" });
+			log.error("updateProject", error);
 			toast.error("Failed to update project");
 		}
 	},

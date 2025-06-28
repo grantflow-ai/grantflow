@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { createAuthHeaders, redirectWithToastParams, withAuthRedirect, withErrorToast } from "./server-side";
 
 vi.mock("next/headers", () => ({
@@ -15,8 +15,12 @@ vi.mock("next/navigation", () => ({
 	redirect: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 vi.mock("@/constants", () => ({
@@ -35,14 +39,12 @@ describe("Server-side Utils", () => {
 		get: vi.fn(),
 	};
 	const mockRedirect = vi.fn();
-	const mockLogError = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 
 		vi.mocked(cookies).mockResolvedValue(mockCookieStore as never);
 		vi.mocked(redirect).mockImplementation(mockRedirect as never);
-		vi.mocked(logError).mockImplementation(mockLogError);
 	});
 
 	describe("redirectWithToastParams", () => {
@@ -102,7 +104,7 @@ describe("Server-side Utils", () => {
 			});
 
 			expect(result).toEqual(expectedValue);
-			expect(mockLogError).not.toHaveBeenCalled();
+			expect(vi.mocked(log.error)).not.toHaveBeenCalled();
 			expect(mockRedirect).not.toHaveBeenCalled();
 		});
 
@@ -119,10 +121,7 @@ describe("Server-side Utils", () => {
 				}),
 			).rejects.toThrow("Something went wrong");
 
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: testError,
-				identifier: "create-user",
-			});
+			expect(vi.mocked(log.error)).toHaveBeenCalledWith("create-user", testError);
 
 			expect(mockRedirect).toHaveBeenCalledWith("/dashboard?toastType=error&toastContent=Failed to create user");
 		});
@@ -142,10 +141,7 @@ describe("Server-side Utils", () => {
 				}),
 			).rejects.toThrow();
 
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: customError,
-				identifier: "api-call",
-			});
+			expect(vi.mocked(log.error)).toHaveBeenCalledWith("api-call", customError);
 		});
 
 		it("should handle string errors", async () => {
@@ -160,10 +156,7 @@ describe("Server-side Utils", () => {
 				}),
 			).rejects.toThrow("String error");
 
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: new Error("String error"),
-				identifier: "string-error",
-			});
+			expect(vi.mocked(log.error)).toHaveBeenCalledWith("string-error", new Error("String error"));
 		});
 	});
 

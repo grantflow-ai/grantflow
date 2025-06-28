@@ -6,7 +6,7 @@ import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppAvatar } from "@/components/app";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
-import { logTrace } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { generateInitials } from "@/utils/user";
 import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
 import { EditPermissionModal } from "./edit-permission-modal";
@@ -76,11 +76,11 @@ const mockMembers: ProjectMember[] = [
 ];
 
 const handleRemoveMember = (memberId: string) => {
-	logTrace("info", "Remove member not implemented yet", { memberId });
+	log.info("Remove member not implemented yet", { memberId });
 };
 
 const handleUpdateRole = (memberId: string, newRole: UserRole, projectAccess?: string[]) => {
-	logTrace("info", "Update role not implemented yet", { memberId, newRole, projectAccess });
+	log.info("Update role not implemented yet", { memberId, newRole, projectAccess });
 	return Promise.resolve();
 };
 
@@ -96,7 +96,7 @@ export function ProjectSettingsMembers({
 
 	const handleInvite = async (email: string, permission: "admin" | "collaborator") => {
 		if (!user?.displayName) {
-			logTrace("error", "User display name not available for invitation", { email, permission });
+			log.error("User display name not available for invitation", undefined, { email, permission });
 			return;
 		}
 
@@ -110,12 +110,12 @@ export function ProjectSettingsMembers({
 			});
 
 			if (!result.success) {
-				logTrace("error", "Failed to invite collaborator", { email, error: result.error });
+				log.error("Failed to invite collaborator", new Error(result.error), { email });
 
 				return;
 			}
 		} catch (error) {
-			logTrace("error", "Error inviting collaborator", {
+			log.error("Error inviting collaborator", error, {
 				email,
 				error: error instanceof Error ? error.message : "Unknown error",
 			});

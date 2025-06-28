@@ -7,7 +7,7 @@ import { createProject } from "@/actions/project";
 import { AppCard, AppCardContent, AppInput, AppTextarea } from "@/components/app";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const projectSchema = z.object({
 	description: z.string(),
@@ -27,7 +27,7 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 			const { id: projectId } = await createProject(values);
 			closeModal(projectId);
 		} catch (error) {
-			logError({ error, identifier: "createProject" });
+			log.error("createProject", error);
 			toast.error("An error occurred while creating the project.");
 			closeModal();
 		}
