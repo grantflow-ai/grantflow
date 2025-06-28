@@ -30,7 +30,10 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 		project.description ?? "Description of research project goes here.Description of research project goes here.";
 
 	return (
-		<div className="relative h-[300px] w-[413px] shrink-0 rounded-lg bg-surface-primary border border-border-primary">
+		<div
+			className="relative h-[300px] w-[413px] shrink-0 rounded-lg bg-surface-primary border border-border-primary"
+			data-testid="dashboard-project-card"
+		>
 			<div className="relative size-full overflow-clip">
 				<div className="relative flex h-[300px] w-[413px] flex-col items-start justify-between p-6">
 					<div className="relative flex shrink-0 flex-col items-start justify-start gap-4">
@@ -59,7 +62,9 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 						</div>
 					</div>
 					<button
+						aria-label="More options"
 						className="absolute right-4 top-4 size-6 flex items-center justify-center"
+						data-testid="more-options-button"
 						onClick={() => {
 							setShowDropdown(!showDropdown);
 						}}
@@ -71,9 +76,13 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 			</div>
 
 			{showDropdown && (
-				<div className="absolute right-4 top-12 z-10 flex w-[150px] flex-col items-start justify-start rounded-lg bg-surface-primary border border-border-primary shadow-lg">
+				<div
+					className="absolute right-4 top-12 z-10 flex w-[150px] flex-col items-start justify-start rounded-lg bg-surface-primary border border-border-primary shadow-lg"
+					data-testid="dropdown-menu"
+				>
 					<button
 						className="relative flex h-[40px] w-full shrink-0 flex-row items-center justify-start hover:bg-surface-secondary first:rounded-t-lg"
+						data-testid="delete-project-button"
 						onClick={() => {
 							onDelete?.(project.id);
 							setShowDropdown(false);
@@ -89,6 +98,7 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 					</button>
 					<button
 						className="relative flex h-[40px] w-full shrink-0 flex-row items-center justify-start hover:bg-surface-secondary last:rounded-b-lg"
+						data-testid="duplicate-project-button"
 						onClick={() => {
 							onDuplicate?.(project.id);
 							setShowDropdown(false);

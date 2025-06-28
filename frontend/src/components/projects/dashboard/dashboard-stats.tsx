@@ -22,10 +22,13 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 	);
 
 	return (
-		<div className="flex w-full flex-row items-start justify-start gap-8">
+		<div className="flex w-full flex-row items-start justify-start gap-8" data-testid="dashboard-stats">
 			<div className="relative flex-1 rounded-lg bg-surface-primary border border-border-primary">
 				<div className="flex flex-col items-start justify-start gap-2.5 px-8 py-6">
-					<div className="text-[48px] font-semibold leading-[58px] text-text-primary font-heading">
+					<div
+						className="text-[48px] font-semibold leading-[58px] text-text-primary font-heading"
+						data-testid="project-count"
+					>
 						{projectCount}
 					</div>
 					<div className="text-[20px] font-normal leading-[30px] text-text-secondary font-body">
@@ -35,7 +38,10 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 			</div>
 			<div className="relative flex-1 rounded-lg bg-surface-primary border border-border-primary">
 				<div className="flex flex-col items-start justify-start gap-2.5 px-8 py-6">
-					<div className="text-[48px] font-semibold leading-[58px] text-text-primary font-heading">
+					<div
+						className="text-[48px] font-semibold leading-[58px] text-text-primary font-heading"
+						data-testid="application-count"
+					>
 						{applicationCount}
 					</div>
 					<div className="text-[20px] font-normal leading-[30px] text-text-secondary font-body">
