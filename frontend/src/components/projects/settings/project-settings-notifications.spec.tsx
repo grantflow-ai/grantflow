@@ -1,6 +1,6 @@
+import { ProjectFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ProjectFactory } from "::testing/factories";
 
 import { ProjectSettingsNotifications } from "./project-settings-notifications";
 
@@ -15,7 +15,9 @@ describe("ProjectSettingsNotifications", () => {
 
 		// Email notifications
 		expect(screen.getByText("Receive important email notifications")).toBeInTheDocument();
-		expect(screen.getByText("Get notified about deadlines, collaborator activity, and grant updates.")).toBeInTheDocument();
+		expect(
+			screen.getByText("Get notified about deadlines, collaborator activity, and grant updates."),
+		).toBeInTheDocument();
 		expect(screen.getByTestId("email-notifications-toggle")).toBeInTheDocument();
 
 		// Deadline reminders

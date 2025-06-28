@@ -1,6 +1,6 @@
 import { Link } from "lucide-react";
+import { AppButton } from "@/components/app";
 import { IconClose } from "@/components/projects/shared/icons";
-import { Button } from "@/components/ui/button";
 import { useApplicationStore } from "@/stores/application-store";
 
 export function LinkPreviewItem({ parentId, url }: { parentId?: string; url: string }) {
@@ -24,7 +24,7 @@ export function LinkPreviewItem({ parentId, url }: { parentId?: string; url: str
 					data-testid="link-icon"
 				/>
 			</div>
-			<Button asChild className="h-auto justify-start p-0.5 text-primary hover:text-accent" variant="link">
+			<AppButton asChild className="h-auto justify-start p-0.5 text-primary hover:text-accent" variant="link">
 				<a
 					className="text-sm leading-[18px]"
 					data-testid="link-url"
@@ -34,7 +34,7 @@ export function LinkPreviewItem({ parentId, url }: { parentId?: string; url: str
 				>
 					{url}
 				</a>
-			</Button>
+			</AppButton>
 		</div>
 	);
 }

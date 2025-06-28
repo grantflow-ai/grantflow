@@ -62,7 +62,10 @@ export function ProjectSettingsAccount({
 						Profile Image
 					</h3>
 					<div className="flex items-end gap-3">
-						<div className="size-[93px] rounded bg-[#369e94] flex items-center justify-center relative overflow-hidden" data-testid="profile-image-container">
+						<div
+							className="size-[93px] rounded bg-[#369e94] flex items-center justify-center relative overflow-hidden"
+							data-testid="profile-image-container"
+						>
 							{user?.photoURL ? (
 								<Image alt="Profile" className="rounded object-cover" fill src={user.photoURL} />
 							) : (
@@ -80,7 +83,11 @@ export function ProjectSettingsAccount({
 								<Plus className="size-4" />
 								Upload
 							</button>
-							<button className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors" data-testid="delete-photo-button" type="button">
+							<button
+								className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors"
+								data-testid="delete-photo-button"
+								type="button"
+							>
 								<Trash2 className="size-4 text-[#ff456d]" />
 							</button>
 						</div>
@@ -153,7 +160,10 @@ export function ProjectSettingsAccount({
 				<div className="flex flex-col gap-3">
 					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Role</h3>
 					<div className="inline-flex">
-						<span className="px-2 py-0 bg-[#e1dfeb] rounded-[20px] text-[12px] font-['Source_Sans_Pro'] text-[#211968]" data-testid="role-badge">
+						<span
+							className="px-2 py-0 bg-[#e1dfeb] rounded-[20px] text-[12px] font-['Source_Sans_Pro'] text-[#211968]"
+							data-testid="role-badge"
+						>
 							{getRoleLabel(userRole)}
 						</span>
 					</div>

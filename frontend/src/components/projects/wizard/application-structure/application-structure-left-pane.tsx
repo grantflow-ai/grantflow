@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { AppCard } from "@/components/app";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -55,7 +55,7 @@ export function ApplicationStructureFilePreview({
 }) {
 	return (
 		<div className="space-y-4">
-			<Card className="border-app-gray-100 border p-4 shadow-none" data-testid="application-documents-card">
+			<AppCard className="border-app-gray-100 border p-4 shadow-none" data-testid="application-documents-card">
 				<h3 className="font-heading mb-2 text-base font-semibold" data-testid="application-documents-title">
 					Application Documents
 				</h3>
@@ -70,10 +70,10 @@ export function ApplicationStructureFilePreview({
 						No documents uploaded yet.
 					</p>
 				)}
-			</Card>
+			</AppCard>
 
 			{hasTemplateUrls && (
-				<Card className="border-app-gray-100 border p-4 shadow-none">
+				<AppCard className="border-app-gray-100 border p-4 shadow-none">
 					<h3 className="font-heading mb-2 text-base font-semibold" data-testid="template-links-title">
 						Links
 					</h3>
@@ -82,7 +82,7 @@ export function ApplicationStructureFilePreview({
 							<LinkPreviewItem key={url + index.toString()} parentId={parentId} url={url} />
 						))}
 					</div>
-				</Card>
+				</AppCard>
 			)}
 		</div>
 	);

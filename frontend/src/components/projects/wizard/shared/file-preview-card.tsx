@@ -1,5 +1,6 @@
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
 import {
 	IconFileCsv,
 	IconFileDoc,
@@ -10,12 +11,6 @@ import {
 	IconFilePpt,
 	IconFilePptx,
 } from "@/components/projects/shared/icons";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useApplicationStore } from "@/stores/application-store";
 
 import type { FileWithId } from "@/types/files";
@@ -85,16 +80,16 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 				</div>
 			)}
 
-			<DropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
-				<DropdownMenuTrigger className="sr-only" disabled>
+			<AppDropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
+				<AppDropdownMenuTrigger className="sr-only" disabled>
 					<span>File options</span>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent
+				</AppDropdownMenuTrigger>
+				<AppDropdownMenuContent
 					align="start"
 					className="w-40 border-app-gray-100 bg-white p-1"
 					data-testid="file-context-menu"
 				>
-					<DropdownMenuItem
+					<AppDropdownMenuItem
 						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
 						data-testid="file-menu-open"
 						disabled={!canOpenInBrowser}
@@ -102,8 +97,8 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 					>
 						<ExternalLink className="size-4 text-app-gray-600" />
 						Open
-					</DropdownMenuItem>
-					<DropdownMenuItem
+					</AppDropdownMenuItem>
+					<AppDropdownMenuItem
 						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-app-red hover:bg-app-gray-100"
 						data-testid="file-menu-remove"
 						disabled={!parentId}
@@ -111,9 +106,9 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 					>
 						<Trash2 className="size-4" />
 						Remove
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+					</AppDropdownMenuItem>
+				</AppDropdownMenuContent>
+			</AppDropdownMenu>
 		</div>
 	);
 }

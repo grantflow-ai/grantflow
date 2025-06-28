@@ -9,7 +9,6 @@ import { IconGoAhead } from "@/components/branding/icons";
 import { LogoDark } from "@/components/branding/logo";
 import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
 import { ScrollButton } from "@/components/layout/navigation/scroll-button";
-import { Button } from "@/components/ui/button";
 import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { disableScroll, enableScroll } from "@/utils/window";
@@ -132,13 +131,14 @@ export function NavHeader() {
 						</ScrollButton>
 					)}
 				</div>
-				<Button
+				<AppButton
 					aria-label={isMobileMenuOpen ? "Close Navigation Menu" : "Open Navigation Menu"}
 					className={`relative bg-transparent transition-colors duration-300 hover:bg-transparent md:hidden ${isMobileMenuOpen ? "text-primary" : "text-white"}`}
 					onClick={() => {
 						setIsMobileMenuOpen(!isMobileMenuOpen);
 					}}
-					size="icon"
+					size="sm"
+					variant="ghost"
 				>
 					<IconHamburger
 						className={`text-app-black absolute transition-all duration-300 ease-in-out ${isMobileMenuOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"} `}
@@ -152,7 +152,7 @@ export function NavHeader() {
 						height={30}
 						width={30}
 					/>
-				</Button>
+				</AppButton>
 			</div>
 			{isMobileMenuOpen && (
 				<button
