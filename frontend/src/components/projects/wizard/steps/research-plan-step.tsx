@@ -20,7 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
 
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useApplicationStore } from "@/stores/application-store";

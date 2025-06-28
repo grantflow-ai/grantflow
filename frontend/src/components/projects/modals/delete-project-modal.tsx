@@ -1,6 +1,6 @@
 "use client";
 
-import { BaseModal } from "@/components/ui/base-modal";
+import { BaseModal } from "@/components/app/feedback/base-modal";
 
 interface DeleteProjectModalProps {
 	isOpen: boolean;

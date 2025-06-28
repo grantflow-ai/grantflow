@@ -2,7 +2,7 @@
 
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";

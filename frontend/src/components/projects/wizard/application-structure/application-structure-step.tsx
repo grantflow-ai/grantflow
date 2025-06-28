@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useCallback } from "react";
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";

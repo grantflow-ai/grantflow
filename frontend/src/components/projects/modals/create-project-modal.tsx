@@ -3,7 +3,7 @@
 import { PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { BaseModal } from "@/components/ui/base-modal";
+import { BaseModal } from "@/components/app/feedback/base-modal";
 import { Button } from "@/components/ui/button";
 import { PagePath } from "@/enums";
 

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createProject } from "@/actions/project";
-import { SubmitButton } from "@/components/submit-button";
+import { SubmitButton } from "@/components/app/buttons/submit-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

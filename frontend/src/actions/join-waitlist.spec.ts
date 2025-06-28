@@ -47,7 +47,7 @@ vi.mock("@/utils/env", () => ({
 	}),
 }));
 
-vi.mock("@/components/waitlist-email-template", () => ({
+vi.mock("@/components/email-templates/waitlist-email-template", () => ({
 	getWaitlistEmailTemplateHtml: vi.fn().mockReturnValue("<p>Mock HTML template</p>"),
 	waitlistEmailTemplateText: vi.fn().mockReturnValue("Mock text template"),
 }));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AppButton } from "@/components/app-button";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useApplicationStore } from "@/stores/application-store";
