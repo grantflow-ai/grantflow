@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getClient } from "./api";
 
-// Mock dependencies - we'll test behavior rather than implementation
+
 vi.mock("ky", () => ({
 	default: {
 		create: vi.fn(() => ({
@@ -45,7 +45,7 @@ describe("API Utils", () => {
 		it("should return a client with HTTP methods", () => {
 			const client = getClient();
 
-			// Verify the client has the expected methods
+			
 			expect(client).toHaveProperty("get");
 			expect(client).toHaveProperty("post");
 			expect(client).toHaveProperty("put");
@@ -55,14 +55,14 @@ describe("API Utils", () => {
 
 	describe("Client Configuration", () => {
 		it("should configure client with environment variables", () => {
-			// This test verifies that the client is created successfully
-			// which means the environment variables are being used correctly
+			
+			
 			const client = getClient();
 			expect(client).toBeDefined();
 		});
 
 		it("should handle different environment configurations", () => {
-			// Test that the client creation doesn't fail with different configs
+			
 			const client = getClient();
 			expect(client).toBeDefined();
 		});
@@ -70,11 +70,11 @@ describe("API Utils", () => {
 
 	describe("Client Behavior", () => {
 		it("should provide consistent client instance", () => {
-			// Test that multiple calls return the same instance (singleton behavior)
+			
 			const instances = Array.from({ length: 5 }, () => getClient());
 			const [firstInstance] = instances;
 
-			// All instances should be the same reference
+			
 			for (const instance of instances) {
 				expect(instance).toBe(firstInstance);
 			}
@@ -83,7 +83,7 @@ describe("API Utils", () => {
 		it("should return a functional client", () => {
 			const client = getClient();
 
-			// Verify the client has the expected structure
+			
 			expect(typeof client).toBe("object");
 			expect(client).not.toBeNull();
 		});
@@ -91,7 +91,7 @@ describe("API Utils", () => {
 
 	describe("Error Handling", () => {
 		it("should handle client creation gracefully", () => {
-			// Test that client creation doesn't throw
+			
 			expect(() => getClient()).not.toThrow();
 		});
 

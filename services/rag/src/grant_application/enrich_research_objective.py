@@ -8,7 +8,14 @@ from packages.shared_utils.src.exceptions import ValidationError
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
-from services.rag.src.utils.retrieval import retrieve_documents
+
+
+class EnrichObjectiveInputDTO(TypedDict):
+    application_id: str
+    grant_section: GrantLongFormSection
+    research_objective: ResearchObjective
+    form_inputs: ResearchDeepDive
+    retrieval_context: str
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
@@ -335,31 +342,19 @@ criteria: list[EvaluationCriterion] = [
 ]
 
 
-async def handle_enrich_objective(
-    *,
-    application_id: str,
-    grant_section: GrantLongFormSection,
-    research_objective: ResearchObjective,
-    form_inputs: ResearchDeepDive,
-) -> ObjectiveEnrichmentDTO:
+async def handle_enrich_objective(dto: EnrichObjectiveInputDTO) -> ObjectiveEnrichmentDTO:
     enrichment_prompt = ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT.substitute(
-        objective_and_tasks=research_objective,
-        keywords=grant_section["keywords"],
-        topics=grant_section["topics"],
-        form_inputs=form_inputs,
-    )
-
-    enrichment_rag_results = await retrieve_documents(
-        application_id=application_id,
-        search_queries=grant_section["search_queries"],
-        task_description=str(enrichment_prompt),
+        objective_and_tasks=dto.research_objective,
+        keywords=dto.grant_section["keywords"],
+        topics=dto.grant_section["topics"],
+        form_inputs=dto.form_inputs,
     )
 
     return await with_prompt_evaluation(
         prompt_identifier="enrich_objective",
         prompt_handler=enrich_objective_generation,
-        prompt=enrichment_prompt.to_string(rag_results=enrichment_rag_results),
-        input_objective=research_objective,
+        prompt=enrichment_prompt.to_string(rag_results=dto.retrieval_context),
+        input_objective=dto.research_objective,
         criteria=criteria,
         passing_score=80,
         increment=10,

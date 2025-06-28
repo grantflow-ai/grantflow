@@ -47,11 +47,11 @@ describe("BaseModal", () => {
 			</BaseModal>,
 		);
 
-		// Should have hidden accessibility title
+		
 		expect(screen.getByText("Modal")).toBeInTheDocument();
 		expect(screen.getByText("Modal dialog")).toBeInTheDocument();
 
-		// But no visible heading
+		
 		const visibleHeadings = screen
 			.queryAllByRole("heading")
 			.filter((heading) => !heading.classList.contains("sr-only"));
@@ -67,8 +67,8 @@ describe("BaseModal", () => {
 			</BaseModal>,
 		);
 
-		// Use keyboard to test the close functionality instead of clicking outside
-		// since the pointer events are disabled in the test environment
+		
+		
 		await user.keyboard("{Escape}");
 
 		await waitFor(() => {
@@ -99,11 +99,11 @@ describe("BaseModal", () => {
 			</BaseModal>,
 		);
 
-		// Check that title and description exist for screen readers
+		
 		expect(screen.getByText("Accessible Modal")).toBeInTheDocument();
 		expect(screen.getByText("Accessible Modal modal dialog")).toBeInTheDocument();
 
-		// Check that dialog has proper role
+		
 		const dialog = screen.getByRole("dialog");
 		expect(dialog).toBeInTheDocument();
 	});

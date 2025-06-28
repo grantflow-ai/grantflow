@@ -8,7 +8,7 @@ import { logError } from "@/utils/logging";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { inviteCollaborator } from "./project-invitation";
 
-// Mock dependencies
+
 vi.mock("node:fs/promises", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("node:fs/promises")>();
 	return {
@@ -87,7 +87,7 @@ describe("Project Invitation Actions", () => {
 		mockGetInvitationEmailTemplateHtml.mockReturnValue("<html>Mock HTML</html>");
 		mockInvitationEmailTemplateText.mockReturnValue("Mock text email");
 
-		// Set environment variables
+		
 		process.env.NEXT_PUBLIC_APP_URL = "https://test.grantflow.ai";
 	});
 
@@ -116,7 +116,7 @@ describe("Project Invitation Actions", () => {
 		});
 
 		it("should handle missing token in API response", async () => {
-			const mockApiResponse = {}; // No token
+			const mockApiResponse = {}; 
 			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
 			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
 			mockClient.post = mockPost;

@@ -58,16 +58,16 @@ describe("DashboardProjectCard", () => {
 
 		const moreButton = screen.getByTestId("more-options-button");
 
-		// Initially dropdown should not be visible
+		
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 
-		// Click to open dropdown
+		
 		await user.click(moreButton);
 		expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
 		expect(screen.getByTestId("delete-project-button")).toBeInTheDocument();
 		expect(screen.getByTestId("duplicate-project-button")).toBeInTheDocument();
 
-		// Click again to close dropdown
+		
 		await user.click(moreButton);
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 	});
@@ -78,16 +78,16 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
 
-		// Open dropdown
+		
 		await user.click(screen.getByTestId("more-options-button"));
 
-		// Click delete button
+		
 		await user.click(screen.getByTestId("delete-project-button"));
 
 		expect(mockOnDelete).toHaveBeenCalledWith(project.id);
 		expect(mockOnDelete).toHaveBeenCalledTimes(1);
 
-		// Dropdown should close after action
+		
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 	});
 
@@ -97,16 +97,16 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
 
-		// Open dropdown
+		
 		await user.click(screen.getByTestId("more-options-button"));
 
-		// Click duplicate button
+		
 		await user.click(screen.getByTestId("duplicate-project-button"));
 
 		expect(mockOnDuplicate).toHaveBeenCalledWith(project.id);
 		expect(mockOnDuplicate).toHaveBeenCalledTimes(1);
 
-		// Dropdown should close after action
+		
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 	});
 
@@ -115,7 +115,7 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard project={project} />);
 
-		// Component should render without errors even when no callbacks are provided
+		
 		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
 		expect(screen.getByTestId("more-options-button")).toBeInTheDocument();
 	});
@@ -125,8 +125,8 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard project={project} />);
 
-		// AvatarGroup should be rendered (we're not testing AvatarGroup internals here)
-		// Just verify the card renders without errors
+		
+		
 		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
 	});
 });

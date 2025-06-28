@@ -8,7 +8,7 @@ interface NotificationProgressProps {
 export function NotificationProgress({ notification }: NotificationProgressProps) {
 	const { current_pipeline_stage, event, message, total_pipeline_stages } = notification;
 
-	if (!(current_pipeline_stage && total_pipeline_stages)) {
+	if (current_pipeline_stage === undefined || total_pipeline_stages === undefined) {
 		return null;
 	}
 
@@ -28,16 +28,16 @@ export function NotificationProgress({ notification }: NotificationProgressProps
 	return (
 		<div className="space-y-2" data-testid="notification-progress">
 			<div className="flex items-center justify-between text-sm">
-				<p className="text-muted-foreground flex items-center gap-2">
+				<p className="text-muted-foreground flex items-center gap-2" data-testid="notification-progress-message">
 					<span>{getStatusIndicator()}</span>
 					<span>{message}</span>
 				</p>
-				<span className="text-muted-foreground tabular-nums">
+				<span className="text-muted-foreground tabular-nums" data-testid="notification-progress-stages">
 					{current_pipeline_stage} / {total_pipeline_stages}
 				</span>
 			</div>
 			<Progress value={progressPercentage} />
-			<p className="text-muted-foreground text-xs">{progressPercentage}% complete</p>
+			<p className="text-muted-foreground text-xs" data-testid="notification-progress-percentage">{progressPercentage}% complete</p>
 		</div>
 	);
 }

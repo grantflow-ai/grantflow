@@ -8,6 +8,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 	const project = await getProject(projectId);
 
-	// The ProjectDetailClient now includes its own layout with sidebar
+	
 	return <ProjectDetailClient initialProject={project} />;
 }

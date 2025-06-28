@@ -19,7 +19,7 @@ describe("SubmitButton", () => {
 		const button = screen.getByTestId("form-button");
 		expect(button).toHaveAttribute("aria-busy", "true");
 
-		// Verify loading indicator is present (implementation detail of spinner is not important)
+		
 		const spinner = button.querySelector("svg");
 		expect(spinner).toBeInTheDocument();
 	});

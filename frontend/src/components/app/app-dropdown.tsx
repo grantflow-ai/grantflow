@@ -80,7 +80,7 @@ export function AppDropdownMenuTrigger({ ...props }: React.ComponentProps<typeof
 	return <DropdownMenuTrigger {...props} />;
 }
 
-// Semantic dropdown menu item components
+
 
 export function DangerMenuItem({ children, className, ...props }: Omit<AppDropdownMenuItemProps, "variant">) {
 	return (

@@ -328,8 +328,8 @@ describe("ApplicationDetailsStep", () => {
 	it("passes connection status props to ApplicationPreview", () => {
 		render(<ApplicationDetailsStep connectionStatus="Connected" connectionStatusColor="bg-green-500" />);
 
-		// The ApplicationPreview component should receive and render these props
-		// This test verifies the props are passed down correctly
+		
+		
 		expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 	});
 

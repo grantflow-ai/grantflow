@@ -7,14 +7,13 @@ describe("ResearchDeepDiveStep", () => {
 	it("renders step content", () => {
 		render(<ResearchDeepDiveStep />);
 
+		
 		expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
-		expect(screen.getByText("Research Deep Dive")).toBeInTheDocument();
-		expect(
-			screen.getByText(
-				"Conduct comprehensive research to strengthen your grant application with evidence-based insights.",
-			),
-		).toBeInTheDocument();
-		expect(screen.getByText("Let the AI try")).toBeInTheDocument();
-		expect(screen.getByText("Start your research deep dive to see analysis and insights")).toBeInTheDocument();
+		expect(screen.getByTestId("research-deep-dive-header")).toBeInTheDocument();
+		expect(screen.getByTestId("research-deep-dive-description")).toBeInTheDocument();
+		expect(screen.getByTestId("ai-try-button")).toBeInTheDocument();
+		
+		
+		expect(screen.getAllByTestId("app-card").length).toBeGreaterThan(0);
 	});
 });

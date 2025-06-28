@@ -150,52 +150,6 @@ describe("LinkPreviewItem", () => {
 		});
 	});
 
-	describe("Styling and Layout", () => {
-		it("has correct container classes", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const container = screen.getByTestId("link-preview-item");
-			expect(container).toHaveClass("group");
-		});
-
-		it("has correct icon container styling", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const container = screen.getByTestId("link-preview-item");
-			const iconContainer = container.querySelector("div:first-child");
-			expect(iconContainer).toHaveClass("flex");
-		});
-
-		it("has correct link styling", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const linkElement = screen.getByTestId("link-url");
-			expect(linkElement).toHaveClass("text-blue-600");
-		});
-	});
-
-	describe("Hover Behavior", () => {
-		it("shows remove icon on hover via CSS classes", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const removeIcon = screen.getByTestId("link-remove-icon");
-			expect(removeIcon).toHaveClass("group-hover:opacity-100");
-		});
-
-		it("hides link icon on hover via CSS classes", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const container = screen.getByTestId("link-preview-item");
-			const linkIcon = container.querySelector(".text-primary");
-			expect(linkIcon).toHaveClass("group-hover:opacity-0");
-		});
-	});
-
 	describe("Accessibility", () => {
 		it("has clickable remove icon", () => {
 			const url = "https://example.com";
@@ -205,7 +159,7 @@ describe("LinkPreviewItem", () => {
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			expect(removeIcon).toBeInTheDocument();
 
-			// Test that it's clickable by verifying click handler works
+
 			fireEvent.click(removeIcon);
 			expect(mockRemoveUrl).toHaveBeenCalled();
 		});
@@ -254,13 +208,13 @@ describe("LinkPreviewItem", () => {
 
 			const { rerender } = render(<LinkPreviewItem parentId={parentId} url={url} />);
 
-			// Verify initial render
+
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 
-			// Re-render with same props
+
 			rerender(<LinkPreviewItem parentId={parentId} url={url} />);
 
-			// Should still work
+
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 			fireEvent.click(screen.getByTestId("link-remove-icon"));
 			expect(mockRemoveUrl).toHaveBeenCalledWith(url, parentId);

@@ -1,5 +1,3 @@
-"use client";
-
 import { ChevronDown, Mail, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -41,7 +39,7 @@ const PERMISSION_OPTIONS = [
 	},
 ];
 
-// Mock available projects for now
+
 const mockAvailableProjects = [
 	{ id: "1", name: "Research Neural Networks" },
 	{ id: "2", name: "Research Machine Learning" },
@@ -68,7 +66,7 @@ export function EditPermissionModal({
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLDivElement>(null);
 
-	// Initialize state when member changes
+	
 	useEffect(() => {
 		if (member) {
 			setSelectedRole(member.role);
@@ -76,7 +74,7 @@ export function EditPermissionModal({
 		}
 	}, [member]);
 
-	// Click outside handlers
+	
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (dropdownRef.current && event.target && !dropdownRef.current.contains(event.target as Node)) {
@@ -118,7 +116,7 @@ export function EditPermissionModal({
 			);
 			handleClose();
 		} catch (error) {
-			// Error handling will be implemented with proper notifications
+			
 			// eslint-disable-next-line no-console
 			console.error("Failed to update permissions:", error);
 		} finally {
@@ -151,14 +149,14 @@ export function EditPermissionModal({
 
 	if (!member) return null;
 
-	// Check if current user can edit this member
+	
 	const canEdit =
 		currentUserRole === UserRole.OWNER || (currentUserRole === UserRole.ADMIN && member.role !== UserRole.OWNER);
 
 	return (
 		<BaseModal isOpen={isOpen} onClose={handleClose}>
 			<div className="flex flex-col gap-6 p-8 w-[464px]" data-testid="edit-permission-modal">
-				{/* Header */}
+				{}
 				<div className="flex items-center justify-between">
 					<h2 className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]">
 						Edit Permission
@@ -178,9 +176,9 @@ export function EditPermissionModal({
 					Control access and permission levels across research projects.
 				</p>
 
-				{/* Form Fields */}
+				{}
 				<div className="flex flex-col gap-4">
-					{/* Name Field */}
+					{}
 					<div className="flex flex-col gap-2">
 						<label className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]" htmlFor="member-name">
 							Name
@@ -195,7 +193,7 @@ export function EditPermissionModal({
 						/>
 					</div>
 
-					{/* Email Field */}
+					{}
 					<div className="flex flex-col gap-2">
 						<label className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]" htmlFor="member-email">
 							Email address
@@ -213,7 +211,7 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{/* Permission Dropdown */}
+					{}
 					<div className="flex flex-col gap-2">
 						<label
 							className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]"
@@ -259,7 +257,7 @@ export function EditPermissionModal({
 											onClick={() => {
 												setSelectedRole(option.value);
 												setIsDropdownOpen(false);
-												// Reset project selection when switching to Admin
+												
 												if (option.value === UserRole.ADMIN) {
 													setSelectedProjects([]);
 												}
@@ -279,14 +277,14 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{/* Research Project Access - Only show for Collaborator role */}
+					{}
 					{selectedRole === UserRole.MEMBER && (
 						<div className="flex flex-col gap-3">
 							<span className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]">
 								Research Project Access
 							</span>
 
-							{/* Selected Projects */}
+							{}
 							{selectedProjects.length > 0 && (
 								<div className="flex flex-wrap gap-2">
 									{selectedProjects.map((projectId) => (
@@ -314,7 +312,7 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{/* Project Search */}
+							{}
 							{canEdit && (
 								<div className="relative" ref={searchRef}>
 									<div className="relative">
@@ -335,7 +333,7 @@ export function EditPermissionModal({
 										<Search className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-[#636170]" />
 									</div>
 
-									{/* Search Results */}
+									{}
 									{isProjectSearchOpen && filteredProjects.length > 0 && (
 										<div
 											className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10 max-h-48 overflow-y-auto"
@@ -359,7 +357,7 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{/* Warning Message */}
+							{}
 							{selectedProjects.length > 0 && (
 								<div className="flex items-start gap-2 p-3 bg-[#fff8e1] border border-[#f9cc33] rounded-md">
 									<div className="size-4 mt-0.5">
@@ -383,7 +381,7 @@ export function EditPermissionModal({
 					)}
 				</div>
 
-				{/* Actions */}
+				{}
 				<div className="flex items-center gap-3 pt-2">
 					<button
 						className="px-4 py-2 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#636170] hover:bg-[#f5f5f5] transition-colors"

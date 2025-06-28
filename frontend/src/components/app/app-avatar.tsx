@@ -18,10 +18,10 @@ const sizeClasses = {
 };
 
 const defaultColors = [
-	"#369e94", // Teal
-	"#9e366f", // Pink
-	"#9747ff", // Purple
-	"#5179fc", // Blue
+	"#369e94", 
+	"#9e366f", 
+	"#9747ff", 
+	"#5179fc", 
 ];
 
 interface AvatarGroupProps {

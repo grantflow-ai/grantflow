@@ -1,5 +1,3 @@
-"use client";
-
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,13 +21,13 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 		try {
 			setIsDeleting(true);
 
-			// Call the delete account API
+			
 			await deleteAccount();
 
-			// Clear user from store
+			
 			clearUser();
 
-			// Redirect to login page with message
+			
 			router.push("/login?message=account-deleted");
 		} catch (error) {
 			logError({ error, identifier: "DeleteAccountModal.handleDelete" });

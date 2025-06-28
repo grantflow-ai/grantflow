@@ -3,11 +3,11 @@ import { vi } from "vitest";
 
 import { type DragDropConfig, type DragDropHandlers, type DragDropItem, useDragAndDrop } from "./use-drag-and-drop";
 
-// Mock @dnd-kit/core
+
 vi.mock("@dnd-kit/core", () => ({
 	closestCenter: vi.fn(),
 	DndContext: ({ children, onDragEnd, onDragOver, onDragStart }: any) => {
-		// Store handlers for testing access but don't set as DOM attributes
+		
 		if (onDragEnd) {
 			(globalThis as any).testDragEnd = onDragEnd;
 		}
@@ -26,7 +26,7 @@ vi.mock("@dnd-kit/core", () => ({
 	useSensors: vi.fn((...sensors) => sensors),
 }));
 
-// Mock @dnd-kit/sortable
+
 vi.mock("@dnd-kit/sortable", () => ({
 	SortableContext: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="sortable-context">{children}</div>
@@ -51,7 +51,7 @@ const createTestItems = (): TestItem[] => [
 describe("useDragAndDrop", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// Clear global test handlers
+		
 		(globalThis as any).testDragEnd = undefined;
 		(globalThis as any).testDragOver = undefined;
 		(globalThis as any).testDragStart = undefined;
@@ -109,14 +109,14 @@ describe("useDragAndDrop", () => {
 			const { result } = renderHook(() => useDragAndDrop());
 			const items = createTestItems();
 
-			// Render the wrapper to trigger internal state
+			
 			render(
 				<result.current.DragDropWrapper items={items}>
 					<div>Test content</div>
 				</result.current.DragDropWrapper>,
 			);
 
-			// Simulate drag start by calling isItemDragging with different IDs
+			
 			expect(result.current.isItemDragging("item-1")).toBe(false);
 			expect(result.current.isItemDragging("nonexistent")).toBe(false);
 		});
@@ -148,7 +148,7 @@ describe("useDragAndDrop", () => {
 			);
 
 			render(
-				<result.current.DragDropWrapper items={items} renderDragOverlay={customOverlay}>
+				<result.current.DragDropWrapper items={items} renderDragOverlay={customOverlay as never}>
 					<div>Test content</div>
 				</result.current.DragDropWrapper>,
 			);
@@ -187,10 +187,10 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			// Verify context is rendered
+			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 
-			// Check that drag start handler was registered
+			
 			expect((globalThis as any).testDragStart).toBeDefined();
 		});
 
@@ -209,7 +209,7 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			// Verify context is rendered and handler is set
+			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect((globalThis as any).testDragOver).toBeDefined();
 		});
@@ -229,7 +229,7 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			// Verify wrapper is rendered and context is set up
+			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
@@ -250,7 +250,7 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			// Verify context is rendered and drag end handler is set
+			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect((globalThis as any).testDragEnd).toBeDefined();
 		});
@@ -272,7 +272,7 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			// Verify context is set up (actual event simulation is complex with dnd-kit)
+			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
@@ -296,7 +296,7 @@ describe("useDragAndDrop", () => {
 
 		it("should handle missing onReorder handler gracefully", () => {
 			const handlers: DragDropHandlers<TestItem> = {
-				// No onReorder handler
+				
 			};
 
 			const { result } = renderHook(() => useDragAndDrop(handlers));
@@ -375,7 +375,7 @@ describe("useDragAndDrop", () => {
 
 		it("should handle items with undefined parent_id", () => {
 			const itemsWithUndefinedParent: TestItem[] = [
-				{ id: "item-1", name: "Item 1", order: 1 }, // parent_id is undefined
+				{ id: "item-1", name: "Item 1", order: 1 }, 
 				{ id: "item-2", name: "Item 2", order: 2, parent_id: null },
 			];
 
@@ -482,11 +482,17 @@ describe("useDragAndDrop", () => {
 
 			const firstWrapper = result.current.DragDropWrapper;
 
-			// Re-render with same empty handlers object (new reference)
+			
+			expect(typeof firstWrapper).toBe("function");
+			expect(firstWrapper.name).toBe("DragDropWrapper");
+
+			
 			rerender({ handlers: {} });
 
-			// The wrapper gets recreated due to useCallback dependencies
+			
 			expect(result.current.DragDropWrapper).not.toBe(firstWrapper);
+			expect(typeof result.current.DragDropWrapper).toBe("function");
+			expect(result.current.DragDropWrapper.name).toBe("DragDropWrapper");
 		});
 
 		it("should update when handlers change", () => {
@@ -499,10 +505,25 @@ describe("useDragAndDrop", () => {
 
 			const firstWrapper = result.current.DragDropWrapper;
 
+			
+			expect(typeof firstWrapper).toBe("function");
+			expect(firstWrapper.name).toBe("DragDropWrapper");
+
+			
+			const initialResult = { ...result.current };
+
+			
 			rerender({ handlers: { onDragStart: mockHandler2 } });
 
-			// Should get new wrapper when handlers change
+			
 			expect(result.current.DragDropWrapper).not.toBe(firstWrapper);
+
+			
+			expect(typeof result.current.DragDropWrapper).toBe("function");
+			expect(result.current.DragDropWrapper.name).toBe("DragDropWrapper");
+
+			// @ts-expect-error, mocking
+			expect(result.current.sensors).toEqual(initialResult.sensors);
 		});
 	});
 });

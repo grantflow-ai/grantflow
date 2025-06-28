@@ -13,9 +13,9 @@ const meta: Meta<typeof FilesDisplay> = {
 export default meta;
 type Story = StoryObj<typeof FilesDisplay>;
 
-// Helper function to create mock File objects
+
 const createMockFile = (name: string, size: number, type: string): File => {
-	// Create a blob with content of the specified size
+	
 	const content = Array.from({ length: size }, () => "a").join("");
 	const blob = new Blob([content], { type });
 	return new File([blob], name, { lastModified: Date.now(), type });
@@ -107,7 +107,7 @@ export const DuplicateNames: Story = {
 	name: "Files with Duplicate Names",
 };
 
-// Story for individual FileCard component
+
 export const IndividualFileCard: Story = {
 	name: "Individual File Cards",
 	render: () => (
@@ -145,7 +145,7 @@ export const SpecialCharacters: Story = {
 	name: "Files with Special Characters",
 };
 
-// Import useState for the interactive demo
+
 import { useState } from "react";
 
 export const InteractiveDemo: Story = {

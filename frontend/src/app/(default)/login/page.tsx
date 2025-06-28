@@ -54,7 +54,7 @@ export default function Login() {
 			const { idToken, isNewUser, user } = await signInMethod();
 
 			if (!isNewUser) {
-				// Store user info in the user store
+				
 				setUser({
 					displayName: user.displayName,
 					email: user.email,

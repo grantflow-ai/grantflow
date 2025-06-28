@@ -13,7 +13,7 @@ variable "project_id" {
   type        = string
 }
 
-# Backend Service Secrets
+
 resource "google_secret_manager_secret" "database_connection_string" {
   secret_id = "DATABASE_CONNECTION_STRING"
   project   = var.project_id
@@ -68,7 +68,7 @@ resource "google_secret_manager_secret" "anthropic_api_key" {
   }
 }
 
-# Shared for Indexer and Crawler
+
 resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   secret_id = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
   project   = var.project_id
@@ -78,7 +78,7 @@ resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   }
 }
 
-# KMS Key for encrypting secrets
+
 resource "google_kms_key_ring" "secrets_keyring" {
   name     = "secrets-keyring"
   location = "global"
@@ -94,10 +94,10 @@ resource "google_kms_crypto_key" "secrets_key" {
   }
 }
 
-# IAM bindings for service accounts to access secrets - using individual resources instead of for_each
-# to avoid the "values derived from resource attributes that cannot be determined until apply" error
 
-# Database Connection String
+
+
+
 resource "google_secret_manager_secret_iam_binding" "database_connection_string_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.database_connection_string.secret_id
@@ -107,7 +107,7 @@ resource "google_secret_manager_secret_iam_binding" "database_connection_string_
   ]
 }
 
-# Firebase Service Account Credentials
+
 resource "google_secret_manager_secret_iam_binding" "firebase_credentials_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.firebase_service_account_credentials.secret_id
@@ -117,7 +117,7 @@ resource "google_secret_manager_secret_iam_binding" "firebase_credentials_access
   ]
 }
 
-# LLM Service Account Credentials
+
 resource "google_secret_manager_secret_iam_binding" "llm_credentials_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.llm_service_account_credentials.secret_id
@@ -127,7 +127,7 @@ resource "google_secret_manager_secret_iam_binding" "llm_credentials_access" {
   ]
 }
 
-# JWT Secret
+
 resource "google_secret_manager_secret_iam_binding" "jwt_secret_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.jwt_secret.secret_id
@@ -137,7 +137,7 @@ resource "google_secret_manager_secret_iam_binding" "jwt_secret_access" {
   ]
 }
 
-# Admin Access Code
+
 resource "google_secret_manager_secret_iam_binding" "admin_access_code_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.admin_access_code.secret_id
@@ -147,7 +147,7 @@ resource "google_secret_manager_secret_iam_binding" "admin_access_code_access" {
   ]
 }
 
-# Anthropic API Key
+
 resource "google_secret_manager_secret_iam_binding" "anthropic_api_key_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.anthropic_api_key.secret_id
@@ -157,7 +157,7 @@ resource "google_secret_manager_secret_iam_binding" "anthropic_api_key_access" {
   ]
 }
 
-# GCS Service Account Credentials
+
 resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.gcs_service_account_credentials.secret_id

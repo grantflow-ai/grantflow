@@ -2,7 +2,7 @@ import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { deleteAccount, restoreAccount } from "./user";
 
-// Mock dependencies
+
 vi.mock("@/utils/api", () => ({
 	getClient: vi.fn(() => ({
 		delete: vi.fn(),
@@ -75,7 +75,7 @@ describe("User Actions", () => {
 			await deleteAccount();
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const [wrappedPromise] = mockWithAuthRedirect.mock.calls[0];
+			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;
 			expect(wrappedPromise).toBeDefined();
 		});
 	});
@@ -141,7 +141,7 @@ describe("User Actions", () => {
 			await restoreAccount(mockToken);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const [wrappedPromise] = mockWithAuthRedirect.mock.calls[0];
+			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;
 			expect(wrappedPromise).toBeDefined();
 		});
 

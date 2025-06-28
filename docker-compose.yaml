@@ -218,7 +218,7 @@ services:
         volumes:
             - ./frontend:/app:cached
         environment:
-            # backend is the alias for the backend service in the docker network
+            
             NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
         env_file:
             - ./frontend/.env

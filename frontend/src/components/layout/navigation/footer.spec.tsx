@@ -87,7 +87,7 @@ describe("Footer Component", () => {
 			const privacyLinks = screen.getAllByText("Privacy Policy");
 			const imprintLinks = screen.getAllByText("Imprint");
 
-			// Mobile and desktop views should each have the links
+			
 			expect(termsLinks.length).toBeGreaterThanOrEqual(1);
 			expect(privacyLinks.length).toBeGreaterThanOrEqual(1);
 			expect(imprintLinks.length).toBeGreaterThanOrEqual(1);

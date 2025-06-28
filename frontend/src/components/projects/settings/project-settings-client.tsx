@@ -19,7 +19,7 @@ interface ProjectSettingsClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
 
-// Mock applications for sidebar
+
 const mockApplications = [
 	{
 		id: "1",
@@ -93,7 +93,7 @@ export function ProjectSettingsClient({ activeTab, initialProject }: ProjectSett
 
 			<div className="flex-1 bg-[#faf9fb]">
 				<div className="flex flex-col h-full">
-					{/* Header */}
+					{}
 					<div className="h-[73px] flex items-center justify-end px-6 bg-[#faf9fb]">
 						<div className="flex items-center gap-1">
 							<button className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors" type="button">
@@ -114,7 +114,7 @@ export function ProjectSettingsClient({ activeTab, initialProject }: ProjectSett
 						</div>
 					</div>
 
-					{/* Main Content */}
+					{}
 					<div className="flex-1 bg-white rounded-lg mx-6 mb-6 border border-[#e1dfeb] overflow-hidden">
 						<ProjectSettingsLayout projectId={project.id} userRole={project.role as UserRole}>
 							{renderContent()}

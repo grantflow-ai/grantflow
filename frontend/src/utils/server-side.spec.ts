@@ -1,4 +1,4 @@
-import { HTTPError } from "ky";
+import { HTTPError, type NormalizedOptions } from "ky";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -7,7 +7,7 @@ import { PagePath } from "@/enums";
 import { logError } from "@/utils/logging";
 import { createAuthHeaders, redirectWithToastParams, withAuthRedirect, withErrorToast } from "./server-side";
 
-// Mock dependencies
+
 vi.mock("next/headers", () => ({
 	cookies: vi.fn(),
 }));
@@ -41,9 +41,9 @@ describe("Server-side Utils", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Setup mocks
-		vi.mocked(cookies).mockResolvedValue(mockCookieStore as any);
-		vi.mocked(redirect).mockImplementation(mockRedirect);
+		
+		vi.mocked(cookies).mockResolvedValue(mockCookieStore as never);
+		vi.mocked(redirect).mockImplementation(mockRedirect as never);
 		vi.mocked(logError).mockImplementation(mockLogError);
 	});
 
@@ -132,7 +132,7 @@ describe("Server-side Utils", () => {
 		it("should handle different error types", async () => {
 			const mockRequest = { method: "POST", url: "https://api.test.com/users" };
 			const mockResponse = new Response("", { status: 500 });
-			const customError = new HTTPError(mockResponse, mockRequest as any, {});
+			const customError = new HTTPError(mockResponse, mockRequest as never, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(customError);
 
 			await expect(
@@ -222,7 +222,7 @@ describe("Server-side Utils", () => {
 		it("should redirect to onboarding on 401 HTTP errors", async () => {
 			const mockRequest = { method: "GET", url: "https://api.test.com/users" };
 			const response = new Response("Unauthorized", { status: 401 });
-			const httpError = new HTTPError(response, mockRequest as any, {});
+			const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(httpError);
 
 			await withAuthRedirect(failingPromise);
@@ -233,7 +233,7 @@ describe("Server-side Utils", () => {
 		it("should rethrow 401 HTTP errors after redirecting", async () => {
 			const mockRequest = { method: "GET", url: "https://api.test.com/users" };
 			const response = new Response("Unauthorized", { status: 401 });
-			const httpError = new HTTPError(response, mockRequest as any, {});
+			const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(httpError);
 
 			await expect(withAuthRedirect(failingPromise)).rejects.toThrow(HTTPError);
@@ -242,7 +242,7 @@ describe("Server-side Utils", () => {
 		it("should rethrow non-401 HTTP errors without redirecting", async () => {
 			const mockRequest = { method: "GET", url: "https://api.test.com/users" };
 			const response = new Response("Server Error", { status: 500 });
-			const httpError = new HTTPError(response, mockRequest as any, {});
+			const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 			const failingPromise = Promise.reject(httpError);
 
 			await expect(withAuthRedirect(failingPromise)).rejects.toThrow(HTTPError);
@@ -271,7 +271,7 @@ describe("Server-side Utils", () => {
 
 				const mockRequest = { method: "GET", url: "https://api.test.com/test" };
 				const response = new Response("Error", { status });
-				const httpError = new HTTPError(response, mockRequest as any, {});
+				const httpError = new HTTPError(response, mockRequest as any, {} as NormalizedOptions);
 				const failingPromise = Promise.reject(httpError);
 
 				await expect(withAuthRedirect(failingPromise)).rejects.toThrow(HTTPError);

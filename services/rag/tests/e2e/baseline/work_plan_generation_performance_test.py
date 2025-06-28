@@ -138,7 +138,7 @@ async def test_work_plan_generation_baseline(
                     words_per_second=baseline_results["words_per_second"],
                 )
 
-            except Exception as e:
+            except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                 generation_duration = (datetime.now(UTC) - generation_start).total_seconds()
                 baseline_results = {
                     "duration": generation_duration,
@@ -284,7 +284,7 @@ async def test_work_plan_parallel_text_generation(
                         "success": True
                     })
 
-                except Exception as e:
+                except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                     sequential_results.append({
                         "title": component["title"],
                         "duration": (datetime.now(UTC) - component_start).total_seconds(),
@@ -441,7 +441,7 @@ async def test_work_plan_shared_retrieval_optimization(
                         "success": True
                     })
 
-                except Exception as e:
+                except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                     individual_results.append({
                         "query": query,
                         "duration": (datetime.now(UTC) - retrieval_start).total_seconds(),
@@ -472,7 +472,7 @@ async def test_work_plan_shared_retrieval_optimization(
                     "success": True
                 }
 
-            except Exception as e:
+            except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                 shared_duration = (datetime.now(UTC) - shared_start).total_seconds()
                 shared_results = {
                     "duration": shared_duration,

@@ -39,10 +39,10 @@ class RagSourceData(TypedDict):
     chunks: list[str]
 
 
-# In-memory cache for CFP extraction results
-# Key: content hash, Value: (result, timestamp)
+
+
 _cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
-CFP_CACHE_TTL_SECONDS = 3600  # 1 hour
+CFP_CACHE_TTL_SECONDS = 3600
 
 
 def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dict[str, str]]) -> str:
@@ -64,7 +64,7 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
     current_time = time.time()
 
     if current_time - timestamp > CFP_CACHE_TTL_SECONDS:
-        # Expired, remove from cache
+
         del _cfp_extraction_cache[cache_key]
         logger.debug("CFP cache entry expired", cache_key=cache_key)
         return None
@@ -115,7 +115,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
         List of RagSourceData containing content and chunks for each source
     """
     async with session_maker() as session:
-        # Execute queries sequentially to avoid session conflicts
+
         sources_result = await session.execute(
             select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
         )
@@ -125,14 +125,14 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             select(TextVector.rag_source_id, TextVector.chunk).where(TextVector.rag_source_id.in_(source_ids))
         )
 
-        # Process chunks efficiently
+
         chunks_by_source: defaultdict[str, list[str]] = defaultdict(list)
         for source_id, chunk in chunks_result:
             chunk_content = chunk.get("content", "")
-            if chunk_content:  # Only include non-empty chunks
+            if chunk_content:
                 chunks_by_source[source_id].append(chunk_content)
 
-    # Build result list with optimized comprehension
+
     return [
         RagSourceData(
             source_id=str(source_id),
@@ -304,7 +304,7 @@ async def handle_extract_cfp_data_from_rag_sources(
     Returns:
         Extracted CFP data synthesized from all sources
     """
-    # Check cache first
+
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:
@@ -365,7 +365,7 @@ async def handle_extract_cfp_data_from_rag_sources(
         ],
     )
 
-    # Cache the result for future use
+
     _cache_cfp_result(cache_key, result)
     logger.info("CFP extraction completed and cached", cache_key=cache_key)
 

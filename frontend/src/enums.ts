@@ -1,7 +1,8 @@
 export enum PagePath {
 	ABOUT_US = "/about",
 	APPLICATION_DETAIL = "/projects/:projectId/applications/:applicationId",
-	APPLICATION_WIZARD = "/projects/:projectId/applications/:applicationId/wizard",
+	APPLICATION_WIZARD = "/projects/:projectId/applications/:applicationId/new",
+	DASHBOARD = "/dashboard",
 	FINISH_EMAIL_SIGNIN = "/onboarding/email",
 	IMPRINT = "/imprint",
 	LOGIN = "/login",

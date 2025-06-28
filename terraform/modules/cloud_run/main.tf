@@ -26,7 +26,7 @@ variable "database_connection_name" {
 }
 
 
-# Backend service deployment
+
 resource "google_cloud_run_v2_service" "backend" {
   name                = "backend"
   location            = var.region
@@ -73,13 +73,13 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "grantflow-uploads"
       }
 
-      # Database connection name for the Cloud SQL Auth Proxy
+      
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      # Secret env variables
+      
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -140,14 +140,14 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "rag-processing"
       }
 
-      # Mount the Cloud SQL volume
+      
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    # Define the Cloud SQL volume
+    
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -171,7 +171,7 @@ resource "google_cloud_run_v2_service" "backend" {
   }
 }
 
-# Crawler service deployment
+
 resource "google_cloud_run_v2_service" "crawler" {
   name                = "crawler"
   location            = var.region
@@ -218,13 +218,13 @@ resource "google_cloud_run_v2_service" "crawler" {
         value = "grantflow-uploads"
       }
 
-      # Database connection name for the Cloud SQL Auth Proxy
+      
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      # Secret env variables
+      
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -245,14 +245,14 @@ resource "google_cloud_run_v2_service" "crawler" {
         }
       }
 
-      # Mount the Cloud SQL volume
+      
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    # Define the Cloud SQL volume
+    
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -276,7 +276,7 @@ resource "google_cloud_run_v2_service" "crawler" {
   }
 }
 
-# Indexer service deployment
+
 resource "google_cloud_run_v2_service" "indexer" {
   name                = "indexer"
   location            = var.region
@@ -323,13 +323,13 @@ resource "google_cloud_run_v2_service" "indexer" {
         value = "grantflow-uploads"
       }
 
-      # Database connection name for the Cloud SQL Auth Proxy
+      
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      # Secret env variables
+      
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -350,14 +350,14 @@ resource "google_cloud_run_v2_service" "indexer" {
         }
       }
 
-      # Mount the Cloud SQL volume
+      
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    # Define the Cloud SQL volume
+    
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -381,7 +381,7 @@ resource "google_cloud_run_v2_service" "indexer" {
   }
 }
 
-# RAG service deployment
+
 resource "google_cloud_run_v2_service" "rag" {
   name                = "rag"
   location            = var.region
@@ -428,13 +428,13 @@ resource "google_cloud_run_v2_service" "rag" {
         value = "frontend-notifications"
       }
 
-      # Database connection name for the Cloud SQL Auth Proxy
+      
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      # Secret env variables
+      
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -465,14 +465,14 @@ resource "google_cloud_run_v2_service" "rag" {
         }
       }
 
-      # Mount the Cloud SQL volume
+      
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    # Define the Cloud SQL volume
+    
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -485,7 +485,7 @@ resource "google_cloud_run_v2_service" "rag" {
       min_instance_count = 0
     }
 
-    timeout = "1800s" # 30 minutes for long-running RAG tasks
+    timeout = "1800s" 
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -496,21 +496,21 @@ resource "google_cloud_run_v2_service" "rag" {
   }
 }
 
-# Create a service account for the Pub/Sub subscription to invoke the indexer
+
 resource "google_service_account" "pubsub_invoker" {
   account_id   = "pubsub-invoker"
   display_name = "Pub/Sub Invoker Service Account"
   description  = "Service account for Pub/Sub to invoke the indexer service"
 }
 
-# Allow Pub/Sub to create authentication tokens specifically for this service account
+
 resource "google_service_account_iam_member" "pubsub_token_creator" {
   service_account_id = google_service_account.pubsub_invoker.name
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
 
-# Allow the Pub/Sub service account to invoke the indexer service
+
 resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_indexer" {
   location = var.region
   name     = google_cloud_run_v2_service.indexer.name
@@ -518,7 +518,7 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_indexer" {
   member   = "serviceAccount:${google_service_account.pubsub_invoker.email}"
 }
 
-# Allow the Pub/Sub service account to invoke the crawler service
+
 resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_crawler" {
   location = var.region
   name     = google_cloud_run_v2_service.crawler.name
@@ -526,7 +526,7 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_crawler" {
   member   = "serviceAccount:${google_service_account.pubsub_invoker.email}"
 }
 
-# Allow the Pub/Sub service account to invoke the RAG service
+
 resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_rag" {
   location = var.region
   name     = google_cloud_run_v2_service.rag.name
@@ -534,10 +534,10 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_rag" {
   member   = "serviceAccount:${google_service_account.pubsub_invoker.email}"
 }
 
-# Data source for project information
+
 data "google_project" "project" {}
 
-# Output the service account email for PubSub
+
 output "pubsub_invoker_service_account_email" {
   value       = google_service_account.pubsub_invoker.email
   description = "Email address of the service account used for Pub/Sub to invoke Cloud Run"

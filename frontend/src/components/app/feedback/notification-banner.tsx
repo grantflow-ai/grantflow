@@ -9,7 +9,7 @@ export interface NotificationData {
 	message: string;
 	projectName: string;
 	title: string;
-	type?: "deadline" | "info" | "success" | "warning";
+	type?: "deadline" | "info" | "success" | "warning" | "error";
 }
 
 interface NotificationBannerProps {
@@ -28,10 +28,10 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 				className,
 			)}
 		>
-			{/* Header with indicator and close button */}
+			{}
 			<div className="flex items-start justify-between">
 				<div className="flex items-center gap-2">
-					{/* Dot indicator */}
+					{}
 					<div
 						className={cn(
 							"size-2 rounded-full shrink-0",
@@ -41,12 +41,13 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 							type === "success" && "bg-[#47ff97]",
 						)}
 					/>
-					<h3 className="font-body font-semibold text-[14px] leading-[18px] text-text-primary">{title}</h3>
+					<h3 className="font-body font-semibold text-[14px] leading-[18px] text-text-primary" data-testid="notification-title">{title}</h3>
 				</div>
 				{onClose && (
 					<button
 						aria-label="Close notification"
 						className="flex size-4 items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
+						data-testid="notification-close-button"
 						onClick={() => {
 							onClose(id);
 						}}
@@ -57,10 +58,10 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 				)}
 			</div>
 
-			{/* Content */}
+			{}
 			<div className="flex flex-col gap-1">
-				<p className="font-body text-[12px] leading-[16px] text-text-secondary">
-					Your project <span className="font-semibold text-text-primary">&ldquo;{projectName}&rdquo;</span>{" "}
+				<p className="font-body text-[12px] leading-[16px] text-text-secondary" data-testid="notification-message">
+					Your project <span className="font-semibold text-text-primary" data-testid="notification-project-name">&ldquo;{projectName}&rdquo;</span>{" "}
 					{message}
 				</p>
 			</div>

@@ -16,7 +16,7 @@ describe("Tracing Utilities", () => {
 			const correlationId = generateCorrelationId();
 
 			expect(correlationId).toEqual(expect.any(String));
-			expect(correlationId.length).toBe(36); // UUID format: 8-4-4-4-12
+			expect(correlationId.length).toBe(36);
 			expect(correlationId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		});
 

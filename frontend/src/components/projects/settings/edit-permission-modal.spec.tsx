@@ -4,7 +4,7 @@ import { UserRole } from "@/types/user";
 
 import { EditPermissionModal } from "./edit-permission-modal";
 
-// Mock the generateInitials function
+
 vi.mock("@/utils/user", () => ({
 	generateInitials: vi.fn((fullName: string | undefined, email: string) => {
 		if (fullName) {
@@ -14,12 +14,12 @@ vi.mock("@/utils/user", () => ({
 				.join("")
 				.toUpperCase();
 		}
-		// Generate initials from email - just take first character
+		
 		return email[0].toUpperCase();
 	}),
 }));
 
-// Mock data
+
 const mockProjects = [
 	{ id: "1", name: "Research Neural Networks" },
 	{ id: "2", name: "Research Machine Learning" },
@@ -62,7 +62,7 @@ describe("EditPermissionModal", () => {
 		expect(screen.getByText("Edit Permission")).toBeInTheDocument();
 		expect(screen.getByText("Control access and permission levels across research projects.")).toBeInTheDocument();
 
-		// Check member data is displayed
+		
 		expect(screen.getByTestId("name-input")).toHaveValue("Test User");
 		expect(screen.getByTestId("email-input")).toHaveValue("test@example.com");
 		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent(
@@ -188,19 +188,19 @@ describe("EditPermissionModal", () => {
 
 		const dropdown = screen.getByTestId("permission-dropdown");
 
-		// Initially dropdown should not be visible
+		
 		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 
-		// Click to open dropdown
+		
 		await user.click(dropdown);
 		expect(screen.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
 		expect(screen.getByTestId("permission-option-MEMBER")).toBeInTheDocument();
 		expect(screen.getByTestId("permission-option-ADMIN")).toBeInTheDocument();
 
-		// Select admin role
+		
 		await user.click(screen.getByTestId("permission-option-ADMIN"));
 
-		// Dropdown should close and admin should be selected
+		
 		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 		expect(dropdown).toHaveTextContent("Admin (can access all research projects)");
 	});
@@ -218,15 +218,15 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Initially has projects selected
+		
 		expect(screen.getByTestId("selected-project-1")).toBeInTheDocument();
 		expect(screen.getByTestId("selected-project-2")).toBeInTheDocument();
 
-		// Switch to admin role
+		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("permission-option-ADMIN"));
 
-		// Projects should be cleared
+		
 		expect(screen.queryByTestId("selected-project-1")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("selected-project-2")).not.toBeInTheDocument();
 	});
@@ -260,14 +260,14 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Initially should show project search for member role
+		
 		expect(screen.getByTestId("project-search-input")).toBeInTheDocument();
 
-		// Switch to admin role
+		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("permission-option-ADMIN"));
 
-		// Project search should be hidden
+		
 		expect(screen.queryByTestId("project-search-input")).not.toBeInTheDocument();
 		expect(screen.queryByText("Research Project Access")).not.toBeInTheDocument();
 	});
@@ -287,20 +287,20 @@ describe("EditPermissionModal", () => {
 
 		const searchInput = screen.getByTestId("project-search-input");
 
-		// Type to search
+		
 		await user.type(searchInput, "Quantum");
 
-		// Search results should appear
+		
 		expect(screen.getByTestId("project-search-results")).toBeInTheDocument();
 		expect(screen.getByTestId("project-option-3")).toBeInTheDocument();
 		expect(screen.getByTestId("project-option-3")).toHaveTextContent("Research Quantum Computing");
 
-		// Click to add project
+		
 		await user.click(screen.getByTestId("project-option-3"));
 
-		// Project should be added
+		
 		expect(screen.getByTestId("selected-project-3")).toBeInTheDocument();
-		// Search should be cleared
+		
 		expect(searchInput).toHaveValue("");
 	});
 
@@ -319,14 +319,14 @@ describe("EditPermissionModal", () => {
 
 		const searchInput = screen.getByTestId("project-search-input");
 
-		// Focus to show all available projects
+		
 		await user.click(searchInput);
 
-		// Should only show unselected project (project 3)
+		
 		expect(screen.getByTestId("project-search-results")).toBeInTheDocument();
-		expect(screen.queryByTestId("project-option-1")).not.toBeInTheDocument(); // Already selected
-		expect(screen.queryByTestId("project-option-2")).not.toBeInTheDocument(); // Already selected
-		expect(screen.getByTestId("project-option-3")).toBeInTheDocument(); // Not selected
+		expect(screen.queryByTestId("project-option-1")).not.toBeInTheDocument(); 
+		expect(screen.queryByTestId("project-option-2")).not.toBeInTheDocument(); 
+		expect(screen.getByTestId("project-option-3")).toBeInTheDocument(); 
 	});
 
 	it("allows removing selected projects", async () => {
@@ -342,14 +342,14 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Initially has 2 projects
+		
 		expect(screen.getByTestId("selected-project-1")).toBeInTheDocument();
 		expect(screen.getByTestId("selected-project-2")).toBeInTheDocument();
 
-		// Remove project 1
+		
 		await user.click(screen.getByTestId("remove-project-1"));
 
-		// Project 1 should be removed
+		
 		expect(screen.queryByTestId("selected-project-1")).not.toBeInTheDocument();
 		expect(screen.getByTestId("selected-project-2")).toBeInTheDocument();
 	});
@@ -381,14 +381,14 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Name and email should always be disabled
+		
 		expect(screen.getByTestId("name-input")).toBeDisabled();
 		expect(screen.getByTestId("email-input")).toBeDisabled();
 
-		// Permission dropdown should be disabled for members
+		
 		expect(screen.getByTestId("permission-dropdown")).toBeDisabled();
 
-		// Project search should not be shown when can't edit
+		
 		expect(screen.queryByTestId("project-search-input")).not.toBeInTheDocument();
 	});
 
@@ -407,11 +407,11 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Add a new project
+		
 		await user.click(screen.getByTestId("project-search-input"));
 		await user.click(screen.getByTestId("project-option-3"));
 
-		// Submit
+		
 		await user.click(screen.getByTestId("update-button"));
 
 		expect(mockOnUpdateRole).toHaveBeenCalledWith("member123", UserRole.MEMBER, ["1", "2", "3"]);
@@ -432,11 +432,11 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Switch to admin
+		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("permission-option-ADMIN"));
 
-		// Submit
+		
 		await user.click(screen.getByTestId("update-button"));
 
 		expect(mockOnUpdateRole).toHaveBeenCalledWith("member123", UserRole.ADMIN, undefined);
@@ -461,14 +461,14 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Submit
+		
 		await user.click(screen.getByTestId("update-button"));
 
-		// Should show loading state
+		
 		expect(screen.getByTestId("update-button")).toHaveTextContent("Updating...");
 		expect(screen.getByTestId("update-button")).toBeDisabled();
 
-		// Resolve the promise
+		
 		resolvePromise!();
 
 		await waitFor(() => {
@@ -492,14 +492,14 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Submit
+		
 		await user.click(screen.getByTestId("update-button"));
 
 		await waitFor(() => {
 			expect(consoleSpy).toHaveBeenCalledWith("Failed to update permissions:", expect.any(Error));
 		});
 
-		// Should reset loading state but not close modal
+		
 		expect(screen.getByTestId("update-button")).toHaveTextContent("Update");
 		expect(screen.getByTestId("update-button")).not.toBeDisabled();
 		expect(mockOnClose).not.toHaveBeenCalled();
@@ -558,18 +558,18 @@ describe("EditPermissionModal", () => {
 			/>,
 		);
 
-		// Make some changes - type in search first (while member role is selected)
+		
 		await user.type(screen.getByTestId("project-search-input"), "test search");
 
-		// Then switch to admin role
+		
 		await user.click(screen.getByTestId("permission-dropdown"));
 		await user.click(screen.getByTestId("permission-option-ADMIN"));
 
-		// Close modal
+		
 		await user.click(screen.getByTestId("cancel-button"));
 
 		expect(mockOnClose).toHaveBeenCalled();
-		// Form state should be reset in handleClose
+		
 	});
 
 	it("handles member without fullName by using generateInitials", () => {

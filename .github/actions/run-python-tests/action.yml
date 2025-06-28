@@ -28,7 +28,7 @@ runs:
         - name: Install Dependencies for Target
           shell: bash
           # TODO: temporary fix, we need to handle dependencies for each target better ~keep
-          # run: uv sync --package ${{ inputs.target }} --all-extras --dev
+          
           run: uv sync --all-packages --all-extras --dev --upgrade
 
         - name: Run Tests

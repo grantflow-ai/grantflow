@@ -394,12 +394,10 @@ async def grant_application_text_generation_pipeline_handler(
             total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
-        section_texts = await generate_grant_section_texts(
+        section_texts = await generate_sections_with_shared_retrieval(
             application_id=str(application_id),
-            grant_sections=grant_template.grant_sections,
+            sections=grant_template.grant_sections,
             form_inputs=grant_application.form_inputs or {},
-            research_objectives=grant_application.research_objectives,
-            job_manager=job_manager,
         )
 
         await job_manager.add_notification(
