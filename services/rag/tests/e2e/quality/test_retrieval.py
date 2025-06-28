@@ -5,12 +5,13 @@ from typing import Any
 
 from packages.db.src.utils import retrieve_application
 from packages.shared_utils.src.serialization import serialize
-from services.rag.src.utils.retrieval import retrieve_documents
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.rag_ai_evaluation import evaluate_retrieval_relevance
 from testing.rag_evaluation import calculate_performance_metrics, calculate_retrieval_diversity, save_evaluation_results
+
+from services.rag.src.utils.retrieval import retrieve_documents
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=120)

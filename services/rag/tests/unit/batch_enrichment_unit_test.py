@@ -102,7 +102,7 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
 
 
     with patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve, \
-         patch("services.rag.src.grant_application.batch_enrich_objectives.with_prompt_evaluation") as mock_evaluation:
+         patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation") as mock_evaluation:
 
         mock_retrieve.return_value = "Mock retrieval results"
         mock_evaluation.return_value = mock_batch_response

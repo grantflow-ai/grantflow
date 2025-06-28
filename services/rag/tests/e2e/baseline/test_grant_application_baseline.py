@@ -10,6 +10,9 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.e2e_utils import E2ETestCategory, create_heavy_test_context, e2e_test
+
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.performance_framework import TestCategory
@@ -19,8 +22,6 @@ from services.rag.tests.e2e.performance_utils import (
     create_performance_context,
     grant_application_test,
 )
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.e2e_utils import E2ETestCategory, create_heavy_test_context, e2e_test
 
 
 async def create_job_manager_for_baseline(

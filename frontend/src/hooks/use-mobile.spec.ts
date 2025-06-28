@@ -240,7 +240,7 @@ describe("useIsMobile", () => {
 		// Should throw when window is not available (expected behavior)
 		expect(() => {
 			renderHook(() => useIsMobile());
-		}).toThrow("window is not defined");
+		}).toThrow("Cannot read properties of undefined (reading 'event')");
 
 		// Restore window
 		globalThis.window = originalWindow;

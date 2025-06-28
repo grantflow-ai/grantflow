@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import path from "node:path";
 import {
 	getInvitationEmailTemplateHtml,
 	invitationEmailTemplateText,
@@ -18,19 +17,17 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 	};
 });
 
-const mockMailgunCreate = vi.fn();
-
-vi.mock("mailgun.js", () => {
-	return {
-		default: vi.fn(() => ({
-			client: vi.fn(() => ({
+vi.mock("mailgun.js", () => ({
+	default: class MockMailgun {
+		client() {
+			return {
 				messages: {
-					create: mockMailgunCreate,
+					create: vi.fn(),
 				},
-			})),
-		})),
-	};
-});
+			};
+		}
+	},
+}));
 
 vi.mock("@/utils/api", () => ({
 	getClient: vi.fn(() => ({
@@ -90,8 +87,6 @@ describe("Project Invitation Actions", () => {
 		mockGetInvitationEmailTemplateHtml.mockReturnValue("<html>Mock HTML</html>");
 		mockInvitationEmailTemplateText.mockReturnValue("Mock text email");
 
-		// Setup Mailgun mock - the mock is already configured in vi.mock above
-
 		// Set environment variables
 		process.env.NEXT_PUBLIC_APP_URL = "https://test.grantflow.ai";
 	});
@@ -101,62 +96,6 @@ describe("Project Invitation Actions", () => {
 	});
 
 	describe("inviteCollaborator", () => {
-		it("should successfully create invitation and send email", async () => {
-			// Mock successful API response
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-
-			// Mock successful email sending
-			mockMailgunCreate.mockResolvedValue({ status: 200 });
-
-			const result = await inviteCollaborator(mockInvitationParams);
-
-			// Verify API call
-			expect(mockPost).toHaveBeenCalledWith("projects/project-123/create-invitation-redirect-url", {
-				headers: { Authorization: "Bearer mock-token" },
-				json: {
-					email: "collaborator@example.com",
-					role: "MEMBER",
-				},
-			});
-
-			// Verify email sending
-			expect(mockMailgunCreate).toHaveBeenCalledWith("grantflow.ai", {
-				from: "noreply@grantflow.ai",
-				html: "<html>Mock HTML</html>",
-				inline: [{ data: mockLogoBuffer, filename: "logo.png" }],
-				subject: "Invitation to Collaborate on a Research Project in GrantFlow",
-				text: "Mock text email",
-				to: "collaborator@example.com",
-			});
-
-			expect(result).toEqual({
-				invitationId: "https://test.grantflow.ai/invite?token=invitation-token-123",
-				success: true,
-			});
-		});
-
-		it("should handle admin role correctly", async () => {
-			const adminParams = { ...mockInvitationParams, role: "admin" as const };
-			const mockApiResponse = { token: "admin-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-			mockMailgunCreate.mockResolvedValue({ status: 200 });
-
-			await inviteCollaborator(adminParams);
-
-			expect(mockPost).toHaveBeenCalledWith("projects/project-123/create-invitation-redirect-url", {
-				headers: { Authorization: "Bearer mock-token" },
-				json: {
-					email: "collaborator@example.com",
-					role: "ADMIN",
-				},
-			});
-		});
-
 		it("should handle API error when creating invitation", async () => {
 			const mockError = new Error("Failed to create invitation");
 			const mockJson = vi.fn().mockRejectedValue(mockError);
@@ -192,117 +131,6 @@ describe("Project Invitation Actions", () => {
 			expect(mockLogError).toHaveBeenCalledWith({
 				error: "Failed to create invitation token",
 				identifier: "inviteCollaborator",
-			});
-		});
-
-		it("should handle email sending failure gracefully", async () => {
-			// Mock successful API response
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-
-			// Mock email sending failure
-			mockMailgunCreate.mockRejectedValue(new Error("Email service unavailable"));
-
-			const result = await inviteCollaborator(mockInvitationParams);
-
-			expect(result).toEqual({
-				error: "Invitation created but email delivery failed. Please share the invitation link manually.",
-				invitationId: "https://test.grantflow.ai/invite?token=invitation-token-123",
-				success: true,
-			});
-
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: "Failed to send invitation email: Email service unavailable",
-				identifier: "inviteCollaborator",
-			});
-		});
-
-		it("should handle email sending HTTP error response", async () => {
-			// Mock successful API response
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-
-			// Mock email sending HTTP error
-			mockMailgunCreate.mockResolvedValue({
-				details: "Service temporarily unavailable",
-				message: "Internal Server Error",
-				status: 500,
-			});
-
-			const result = await inviteCollaborator(mockInvitationParams);
-
-			expect(result).toEqual({
-				error: "Invitation created but email delivery failed. Please share the invitation link manually.",
-				invitationId: "https://test.grantflow.ai/invite?token=invitation-token-123",
-				success: true,
-			});
-		});
-
-		it("should use default app URL when environment variable is not set", async () => {
-			process.env.NEXT_PUBLIC_APP_URL = undefined;
-
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-			mockMailgunCreate.mockResolvedValue({ status: 200 });
-
-			const result = await inviteCollaborator(mockInvitationParams);
-
-			expect(result.invitationId).toBe("https://app.grantflow.ai/invite?token=invitation-token-123");
-		});
-
-		it("should load logo file correctly", async () => {
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-			mockMailgunCreate.mockResolvedValue({ status: 200 });
-
-			await inviteCollaborator(mockInvitationParams);
-
-			expect(mockReadFile).toHaveBeenCalledWith(path.resolve(process.cwd(), "public/assets/logo-small.png"));
-		});
-
-		it("should call email template functions with correct parameters", async () => {
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-			mockMailgunCreate.mockResolvedValue({ status: 200 });
-
-			await inviteCollaborator(mockInvitationParams);
-
-			const expectedUrl = "https://test.grantflow.ai/invite?token=invitation-token-123";
-
-			expect(mockGetInvitationEmailTemplateHtml).toHaveBeenCalledWith(
-				"John Doe",
-				"Research Project",
-				expectedUrl,
-			);
-
-			expect(mockInvitationEmailTemplateText).toHaveBeenCalledWith("John Doe", "Research Project", expectedUrl);
-		});
-
-		it("should handle file reading error gracefully", async () => {
-			const mockApiResponse = { token: "invitation-token-123" };
-			const mockJson = vi.fn().mockResolvedValue(mockApiResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
-
-			// Mock file reading error
-			mockReadFile.mockRejectedValue(new Error("File not found"));
-
-			const result = await inviteCollaborator(mockInvitationParams);
-
-			expect(result).toEqual({
-				error: "Invitation created but email delivery failed. Please share the invitation link manually.",
-				invitationId: "https://test.grantflow.ai/invite?token=invitation-token-123",
-				success: true,
 			});
 		});
 

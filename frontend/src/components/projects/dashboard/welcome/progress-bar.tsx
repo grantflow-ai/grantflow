@@ -54,15 +54,13 @@ function ProgressBarLabel({ currentStep, index, label }: ProgressBarLabelProps) 
 	const isCompleted = index < currentStep - 1;
 	const isCurrent = index === currentStep - 1;
 
-	return (
-		<h5
-			className={`text-[11px] font-semibold font-heading ${
-				isCompleted ? "text-app-dark-blue" : isCurrent ? "text-primary" : "text-app-gray-400"
-			}`}
-		>
-			{label}
-		</h5>
-	);
+	const getLabelColor = () => {
+		if (isCompleted) return "text-app-dark-blue";
+		if (isCurrent) return "text-primary";
+		return "text-app-gray-400";
+	};
+
+	return <h5 className={`text-[11px] font-semibold font-heading ${getLabelColor()}`}>{label}</h5>;
 }
 
 function ProgressBarLine({ currentStep, index }: ProgressBarLineProps) {

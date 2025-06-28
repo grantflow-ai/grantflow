@@ -59,7 +59,7 @@ async def test_optimization_cache_effectiveness(
     ) as perf_ctx:
 
         logger.info("=== CACHE EFFECTIVENESS TEST ===")
-        
+
         # Run 1: Cold cache baseline
         with perf_ctx.stage_timer("run1_setup"):
             source_ids_1 = await create_rag_sources_from_cfp_file(
@@ -100,7 +100,7 @@ async def test_optimization_cache_effectiveness(
 
         # Calculate cache effectiveness
         if run1_time > 0:
-            cache_speedup = run1_time / run2_time if run2_time > 0 else float('inf')
+            cache_speedup = run1_time / run2_time if run2_time > 0 else float("inf")
             cache_improvement = ((run1_time - run2_time) / run1_time * 100) if run1_time > 0 else 0
         else:
             cache_speedup = 1.0
@@ -109,43 +109,37 @@ async def test_optimization_cache_effectiveness(
         # Test content for quality analysis
         cache_report = f"""
         # Cache Effectiveness Analysis
-        
+
         ## Performance Results
         - **Cold Cache (Run 1)**: {run1_time:.3f}s
         - **Warm Cache (Run 2)**: {run2_time:.3f}s
         - **Cache Speedup**: {cache_speedup:.1f}x faster
         - **Performance Improvement**: {cache_improvement:.1f}%
-        
+
         ## Quality Validation
         - Content consistency: {"✓ Passed" if cfp_result_1 == cfp_result_2 else "✗ Failed"}
         - CFP Subject match: {"✓ Passed" if cfp_result_1.get("cfp_subject") == cfp_result_2.get("cfp_subject") else "✗ Failed"}
         - Content sections: {len(cfp_result_1.get("content", []))} vs {len(cfp_result_2.get("content", []))}
-        
+
         ## Cache Status
         - Expected behavior: Cache hit on second run with identical source content
         - Actual behavior: {"Cache working" if cache_speedup > 2 else "Cache not effective"}
         """
-        
+
         perf_ctx.set_content(cache_report, ["Cache Analysis", "Performance Results", "Quality Validation"])
 
         logger.info("=== CACHE RESULTS ===")
         logger.info(f"Cold cache: {run1_time:.3f}s")
-        logger.info(f"Warm cache: {run2_time:.3f}s") 
+        logger.info(f"Warm cache: {run2_time:.3f}s")
         logger.info(f"Cache speedup: {cache_speedup:.1f}x")
         logger.info(f"Content identical: {cfp_result_1 == cfp_result_2}")
 
         # Assertions
         assert cfp_result_1 == cfp_result_2, "Cached result should be identical to original"
-        
-        # Performance targets
-        assert_performance_targets(perf_ctx.result, min_grade="C")
-        assert_quality_targets(perf_ctx.result, min_score=60.0)
-        
-        # Cache effectiveness warnings
-        if cache_speedup < 2:
-            perf_ctx.add_warning(f"Cache speedup only {cache_speedup:.1f}x (expected >2x)")
-        if cache_improvement < 50:
-            perf_ctx.add_warning(f"Cache improvement only {cache_improvement:.1f}% (expected >50%)")
+
+    # Performance targets - assert after context manager exit
+    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_quality_targets(perf_ctx.result, min_score=60.0)
 
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=900)
@@ -170,7 +164,7 @@ async def test_end_to_end_pipeline_optimization(
             "test_type": "full_pipeline_optimized",
             "optimizations": [
                 "intelligent_caching",
-                "batch_metadata_generation", 
+                "batch_metadata_generation",
                 "optimized_prompts",
                 "parallel_db_queries",
             ],
@@ -179,7 +173,7 @@ async def test_end_to_end_pipeline_optimization(
     ) as perf_ctx:
 
         logger.info("=== OPTIMIZED PIPELINE TEST ===")
-        
+
         # Full optimized pipeline run
         with perf_ctx.stage_timer("rag_setup"):
             source_ids = await create_rag_sources_from_cfp_file(
@@ -221,31 +215,31 @@ async def test_end_to_end_pipeline_optimization(
         section_titles = [getattr(s, "title", f"Section {i+1}") for i, s in enumerate(sections)]
         optimization_report = f"""
         # Optimized Pipeline Performance Report
-        
+
         ## Total Performance
         - **Total Time**: {total_time:.2f}s
         - **Sections Generated**: {len(sections)}
         - **LLM Calls**: {perf_ctx.llm_calls_made}
         - **Performance Grade**: {perf_ctx.result.performance_grade if hasattr(perf_ctx.result, 'performance_grade') else 'N/A'}
-        
+
         ## Stage Breakdown
         - **RAG Setup**: {rag_time:.2f}s ({rag_time/total_time*100:.1f}%)
         - **CFP Extraction**: {cfp_time:.2f}s ({cfp_time/total_time*100:.1f}%)
         - **Section Processing**: {section_time:.2f}s ({section_time/total_time*100:.1f}%)
-        
+
         ## Optimization Features Active
         ✓ Intelligent CFP extraction caching
-        ✓ Batch metadata generation  
+        ✓ Batch metadata generation
         ✓ Optimized prompt templates (reduced tokens)
         ✓ Parallel database query execution
         ✓ Empty chunk filtering
-        
+
         ## Quality Metrics
         - Sections with valid titles: {sum(1 for s in sections if hasattr(s, 'title'))}
         - Content consistency: Maintained
         - Structure preservation: Verified
         """
-        
+
         perf_ctx.set_content(optimization_report, section_titles)
 
         logger.info("=== OPTIMIZED PIPELINE SUMMARY ===")
@@ -254,15 +248,6 @@ async def test_end_to_end_pipeline_optimization(
         logger.info(f"LLM calls: {perf_ctx.llm_calls_made}")
         logger.info(f"RAG: {rag_time:.2f}s, CFP: {cfp_time:.2f}s, Sections: {section_time:.2f}s")
 
-        # Assertions
-        assert len(sections) >= 5, f"Expected at least 5 sections, got {len(sections)}"
-        assert total_time > 0, "Pipeline should take positive time"
-        assert perf_ctx.llm_calls_made > 0, "Should make LLM calls"
-        
-        # Performance and quality targets
-        assert_performance_targets(perf_ctx.result, min_grade="C")
-        assert_quality_targets(perf_ctx.result, min_score=60.0)
-        
         # Performance warnings based on expected targets
         if total_time > 180:
             perf_ctx.add_warning(f"Total time {total_time:.1f}s exceeds 3min target")
@@ -270,3 +255,12 @@ async def test_end_to_end_pipeline_optimization(
             perf_ctx.add_warning(f"Section processing {section_time:.1f}s exceeds 2min target")
         if cfp_time > 60:
             perf_ctx.add_warning(f"CFP extraction {cfp_time:.1f}s exceeds 1min target")
+
+        # Assertions
+        assert len(sections) >= 5, f"Expected at least 5 sections, got {len(sections)}"
+        assert total_time > 0, "Pipeline should take positive time"
+        assert perf_ctx.llm_calls_made > 0, "Should make LLM calls"
+
+    # Performance and quality targets - assert after context manager exit
+    assert_performance_targets(perf_ctx.result, min_grade="C")
+    assert_quality_targets(perf_ctx.result, min_score=60.0)

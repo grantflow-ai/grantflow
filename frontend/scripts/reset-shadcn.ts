@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
 import { exec } from "node:child_process";
 import { readdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import path from "node:path";
 import { promisify } from "node:util";
 
 const execAsync = promisify(exec);
@@ -8,7 +9,7 @@ const execAsync = promisify(exec);
 async function resetShadcnComponents() {
 	console.log("🔄 Starting shadcn components reset...\n");
 
-	const uiPath = join(process.cwd(), "src", "components", "ui");
+	const uiPath = path.join(process.cwd(), "src", "components", "ui");
 
 	let existingComponents: string[] = [];
 	try {
@@ -17,7 +18,7 @@ async function resetShadcnComponents() {
 		existingComponents = files
 			.filter((file) => file.endsWith(".tsx"))
 			.map((file) => file.replace(".tsx", ""))
-			.sort();
+			.sort((a: string, b: string) => a.localeCompare(b));
 		console.log(`✅ Found ${existingComponents.length} components: ${existingComponents.join(", ")}\n`);
 	} catch {
 		console.log("⚠️  UI directory doesn't exist or couldn't be read\n");
@@ -57,7 +58,9 @@ async function resetShadcnComponents() {
 	console.log("\n💡 You may want to run 'pnpm lint:biome' to format the new components");
 }
 
-resetShadcnComponents().catch((error) => {
+try {
+	await resetShadcnComponents();
+} catch (error: unknown) {
 	console.error("❌ Error resetting shadcn components:", error);
-	process.exit(1);
-});
+	throw error;
+}
