@@ -42,7 +42,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 
 	return (
 		<BaseModal isOpen={isOpen} onClose={handleClose}>
-			<div className="flex flex-col gap-8 p-8 w-[464px]">
+			<div className="flex flex-col gap-8 p-8 w-[464px]" data-testid="invite-collaborator-modal">
 				{/* Header */}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
@@ -50,7 +50,9 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							Invite New Collaborator
 						</h2>
 						<button
+							aria-label="Close modal"
 							className="absolute right-4 top-4 flex size-4 items-center justify-center text-text-secondary hover:text-text-primary"
+							data-testid="close-button"
 							onClick={handleClose}
 							type="button"
 						>
@@ -75,6 +77,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						<div className="relative flex items-center">
 							<input
 								className="w-full h-10 pl-3 pr-10 border border-border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary placeholder-app-gray-400 outline-none focus:border-action-primary"
+								data-testid="email-input"
 								id="collaborator-email"
 								onChange={(e) => {
 									setEmail(e.target.value);
@@ -98,6 +101,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						<div className="relative">
 							<button
 								className="w-full h-10 px-3 border border-action-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary text-left flex items-center justify-between outline-none"
+								data-testid="permission-dropdown"
 								id="collaborator-permission"
 								onClick={() => {
 									setIsDropdownOpen(!isDropdownOpen);
@@ -118,9 +122,13 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 
 							{/* Dropdown Menu */}
 							{isDropdownOpen && (
-								<div className="absolute top-full left-0 right-0 mt-[-1px] bg-surface-primary border border-border-primary rounded shadow-lg z-10">
+								<div
+									className="absolute top-full left-0 right-0 mt-[-1px] bg-surface-primary border border-border-primary rounded shadow-lg z-10"
+									data-testid="permission-dropdown-menu"
+								>
 									<button
 										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-text-primary hover:bg-surface-secondary transition-colors"
+										data-testid="admin-option"
 										onClick={() => {
 											setPermission("admin");
 											setIsDropdownOpen(false);
@@ -131,6 +139,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 									</button>
 									<button
 										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-text-primary hover:bg-surface-secondary transition-colors"
+										data-testid="collaborator-option"
 										onClick={() => {
 											setPermission("collaborator");
 											setIsDropdownOpen(false);
@@ -149,6 +158,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				<div className="flex items-center justify-between">
 					<button
 						className="px-4 py-2 border border-action-primary rounded bg-surface-primary font-button text-[16px] leading-[22px] text-action-primary hover:bg-surface-secondary transition-colors"
+						data-testid="cancel-button"
 						onClick={handleClose}
 						type="button"
 					>
@@ -156,6 +166,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 					</button>
 					<button
 						className="px-4 py-2 bg-action-primary rounded font-button text-[16px] leading-[22px] text-white hover:bg-action-primary/90 transition-colors disabled:opacity-50"
+						data-testid="send-invitation-button"
 						disabled={!email || isSubmitting}
 						onClick={handleSubmit}
 						type="button"
