@@ -80,7 +80,7 @@ async def generate_sections_with_shared_retrieval(
 
     start_time = time.time()
 
-    # Step 1: Prepare combined search queries for shared retrieval
+
     all_search_queries = []
     all_keywords = []
 
@@ -88,13 +88,13 @@ async def generate_sections_with_shared_retrieval(
         all_search_queries.extend(section.get("search_queries", []))
         all_keywords.extend(section.get("keywords", []))
 
-    # Add research objective titles as additional search terms
+
     for deep_dive in research_deep_dives:
         if "research_objective" in deep_dive and "title" in deep_dive["research_objective"]:
             title = deep_dive["research_objective"]["title"]
             all_search_queries.append(title)
 
-    # Deduplicate and limit queries
+
     unique_queries = list(dict.fromkeys(all_search_queries))[:12]
 
     logger.info(
@@ -103,7 +103,7 @@ async def generate_sections_with_shared_retrieval(
         total_original_queries=len(all_search_queries),
     )
 
-    # Step 2: Single shared retrieval call
+
     combined_task_description = f"Generate content for {len(sections)} grant application sections: " + \
                               ", ".join([s.get("title", f"Section {i}") for i, s in enumerate(sections)])
 
@@ -111,7 +111,7 @@ async def generate_sections_with_shared_retrieval(
         application_id=application_id,
         search_queries=unique_queries,
         task_description=combined_task_description,
-        max_tokens=12000,  # Increased for better quality
+        max_tokens=12000,
     )
 
     retrieval_time = time.time() - start_time
@@ -121,7 +121,7 @@ async def generate_sections_with_shared_retrieval(
         context_length=len(shared_context),
     )
 
-    # Step 3: Generate sections in parallel using batched_gather
+
     generation_coroutines = [
         _generate_single_section_with_context(
             section, research_deep_dives, shared_context
@@ -129,10 +129,10 @@ async def generate_sections_with_shared_retrieval(
         for section in sections
     ]
 
-    # Use batched_gather for controlled parallel execution
+
     section_results = await batched_gather(*generation_coroutines, batch_size=3)
 
-    # Step 4: Create result mapping
+
     results = {}
     for section, result in zip(sections, section_results, strict=False):
         section_id = section.get("id", section.get("title", f"section_{len(results)}"))
@@ -175,28 +175,26 @@ async def _generate_single_section_with_context(
         shared_context_length=len(shared_context),
     )
 
-    # Enhanced research context combination for better quality
+
     research_context_parts = []
-    for dive in research_deep_dives:
-        if "research_objective" in dive:
-            obj = dive["research_objective"]
-            context_part = f"""## Research Objective {obj['number']}: {obj['title']}
+    for research_objective in form_inputs.get("research_objectives", []):
+        context_part = f"""## Research Objective {research_objective['number']}: {research_objective['title']}
 
 **Objective Details:**
-{obj.get('description', obj['title'])}
+{research_objective.get('description', research_objective['title'])}
 
 **Research Context:**
-{dive.get('enriched_text', 'No additional context available.')}
+{research_objective.get('enriched_text', 'No additional context available.')}
 
 **Key Elements:**
-- Research Focus: {obj.get('focus_area', 'Not specified')}
-- Methodology: {obj.get('methodology', 'To be determined')}
-- Expected Outcomes: {obj.get('expected_outcomes', 'Detailed outcomes to be defined')}"""
-            research_context_parts.append(context_part)
-    
+- Research Focus: {research_objective.get('focus_area', 'Not specified')}
+- Methodology: {research_objective.get('methodology', 'To be determined')}
+- Expected Outcomes: {research_objective.get('expected_outcomes', 'Detailed outcomes to be defined')}"""
+        research_context_parts.append(context_part)
+
     research_context = "\n\n".join(research_context_parts)
-    
-    # Create comprehensive combined context with consistent markdown formatting
+
+
     combined_context = f"""# Grant Application Context
 
 {shared_context}
@@ -214,10 +212,10 @@ This section should integrate the above context to create comprehensive, detaile
 5. Innovation and feasibility
 6. Professional academic writing quality"""
 
-    # Validate sources
+
     validated_context = await handle_source_validation(
         content=combined_context,
-        application_id="temp",  # Not used for validation
+        application_id="temp",
         required_match_ratio=MIN_WORDS_RATIO,
     )
 
@@ -227,14 +225,14 @@ This section should integrate the above context to create comprehensive, detaile
         context=validated_context,
     )
 
-    # Generate with enhanced evaluation for quality assurance
+
     result = await with_prompt_evaluation(
         prompt_identifier="optimized_section_generation",
         prompt_handler=generate_long_form_text,
         prompt=prompt,
-        increment=15,  # Higher increment for better quality
-        retries=3,     # More retries for quality
-        passing_score=80,  # Higher quality threshold
+        increment=15,
+        retries=3,
+        passing_score=80,
         criteria=[
             EvaluationCriterion(
                 name="Content Depth and Detail",
@@ -353,5 +351,5 @@ async def generate_section_text(
     return results.get(section_id, "")
 
 
-# Alias for optimized function name (backward compatibility)
+
 optimized_generate_grant_section_texts = generate_sections_with_shared_retrieval

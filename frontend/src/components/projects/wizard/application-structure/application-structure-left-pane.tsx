@@ -237,7 +237,7 @@ export function ApplicationStructureLeftPane() {
 					</p>
 				</div>
 
-				{/* AI Limitations Banner */}
+				{}
 				<div className="bg-blue-50 border-blue-200 text-blue-700 flex gap-3 rounded-lg border p-4">
 					<div className="bg-blue-100 text-blue-600 flex size-6 shrink-0 items-center justify-center rounded-full">
 						<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">

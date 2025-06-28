@@ -1,6 +1,7 @@
 """Debug test to check prompt sizes."""
 
 from packages.db.src.json_objects import ResearchObjective
+
 from services.rag.src.grant_application.batch_enrich_objectives import BATCH_ENRICH_OBJECTIVES_USER_PROMPT
 
 

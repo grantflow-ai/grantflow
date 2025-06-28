@@ -3,12 +3,12 @@ import { usePathname } from "next/navigation";
 
 import { Sidebar } from "./sidebar";
 
-// Mock Next.js navigation
+
 vi.mock("next/navigation", () => ({
 	usePathname: vi.fn(),
 }));
 
-// Mock Next.js Link component
+
 vi.mock("next/link", () => ({
 	default: ({ children, className, href, title, ...props }: any) => (
 		<a className={className} href={href} title={title} {...props}>
@@ -135,30 +135,30 @@ describe("Sidebar", () => {
 	it("displays all icons correctly", () => {
 		render(<Sidebar />);
 
-		// Check that SVG icons are present (Lucide icons render as SVGs)
-		// They have aria-hidden="true" so we search by element type
+		
+		
 		const container = screen.getByTestId("sidebar");
 		const svgs = container.querySelectorAll("svg");
 		expect(svgs.length).toBeGreaterThan(0);
 
-		// Should have icons for dashboard, applications, settings, help, and logout
+		
 		expect(svgs.length).toBe(5);
 	});
 
 	it("handles different pathname formats", () => {
-		// Test with trailing slash
+		
 		vi.mocked(usePathname).mockReturnValue("/applications/");
 		const { rerender } = render(<Sidebar />);
 
 		let applicationsLink = screen.getByTestId("nav-link-applications");
-		expect(applicationsLink).toHaveClass("text-[#636170]"); // Should not match
+		expect(applicationsLink).toHaveClass("text-[#636170]"); 
 
-		// Test exact match
+		
 		vi.mocked(usePathname).mockReturnValue("/applications");
 		rerender(<Sidebar />);
 
 		applicationsLink = screen.getByTestId("nav-link-applications");
-		expect(applicationsLink).toHaveClass("text-[#1e13f8]"); // Should match
+		expect(applicationsLink).toHaveClass("text-[#1e13f8]"); 
 	});
 
 	it("maintains consistent styling across different states", () => {
@@ -168,7 +168,7 @@ describe("Sidebar", () => {
 			vi.mocked(usePathname).mockReturnValue(pathname);
 			const { rerender } = render(<Sidebar />);
 
-			// Sidebar structure should remain consistent
+			
 			expect(screen.getByTestId("sidebar")).toBeInTheDocument();
 			expect(screen.getByTestId("logo")).toBeInTheDocument();
 			expect(screen.getByTestId("main-nav-dashboard")).toBeInTheDocument();

@@ -6,7 +6,7 @@ vars:
 
 tasks:
     # ==============================================================================
-    # MAIN COMMANDS - Primary developer workflows
+    
     # ==============================================================================
 
     setup:
@@ -91,9 +91,9 @@ tasks:
             - uv run ai-rulez generate --recursive
 
 
-    # ==============================================================================
-    # DATABASE COMMANDS
-    # ==============================================================================
+    
+    
+    
 
     db:up:
         desc: Start the local PostgreSQL database container if not already running
@@ -152,7 +152,7 @@ tasks:
               vars:
                   SECONDS: "2"
             - echo "Dropping the development database..."
-            # Terminate existing connections
+            
             - cmd: |
                   docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "
                     SELECT pg_terminate_backend(pid)
@@ -160,11 +160,11 @@ tasks:
                     WHERE datname = '{{.DB_NAME}}' AND pid <> pg_backend_pid();
                   " || true
               ignore_error: true
-            # Drop the database
+            
             - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "DROP DATABASE IF EXISTS {{.DB_NAME}};"
-            # Recreate the database
+            
             - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "CREATE DATABASE {{.DB_NAME}} OWNER {{.DB_USER}};"
-            # Create required extensions
+            
             - echo "Creating database extensions..."
             - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
             - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
@@ -177,9 +177,9 @@ tasks:
             - task: db:migrate
             - echo "✅ Database reset complete!"
 
-    # ==============================================================================
-    # FRONTEND COMMANDS
-    # ==============================================================================
+    
+    
+    
 
     frontend:install:
         desc: Install frontend dependencies using pnpm
@@ -231,9 +231,9 @@ tasks:
         cmds:
             - pnpm run storybook
 
-    # ==============================================================================
-    # BACKEND COMMANDS
-    # ==============================================================================
+    
+    
+    
 
     backend:install:
         desc: Install services dependencies using uv
@@ -262,9 +262,9 @@ tasks:
             - task: service:rag:test
             - task: _packages:test
 
-    # ==============================================================================
-    # SERVICE COMMANDS - Individual service management
-    # ==============================================================================
+    
+    
+    
 
     service:backend:dev:
         desc: Start the backend API service in development mode with hot-reloading
@@ -472,9 +472,9 @@ tasks:
         cmds:
             - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
-    # ==============================================================================
-    # EMULATOR COMMANDS - Standalone emulator management
-    # ==============================================================================
+    
+    
+    
 
     emulator:pubsub:up:
         desc: Start the Google Cloud Pub/Sub emulator for local development
@@ -486,9 +486,9 @@ tasks:
         cmds:
             - docker compose --profile gcs up
 
-    # ==============================================================================
-    # LINTING COMMANDS - Code quality and formatting
-    # ==============================================================================
+    
+    
+    
 
     lint:all:
         desc: Run all linters and formatters on all files
@@ -545,7 +545,7 @@ tasks:
         cmds:
             - pnpm typecheck
 
-    # Terraform linting tasks (specialized - not included in lint:all)
+    
     lint:terraform:
         desc: Run all Terraform linters (tofu validate, tflint, trivy)
         deps:
@@ -590,9 +590,9 @@ tasks:
             - echo "Running trivy on terraform directory..."
             - trivy config ./terraform
 
-    # ==============================================================================
-    # INTERNAL TASKS - Not intended for direct use
-    # ==============================================================================
+    
+    
+    
 
     _dev:check:
         internal: true

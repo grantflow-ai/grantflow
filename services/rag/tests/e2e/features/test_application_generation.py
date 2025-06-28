@@ -6,11 +6,12 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 from packages.shared_utils.src.serialization import serialize
-from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
-from services.rag.src.utils.job_manager import JobManager
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import RESULTS_FOLDER
 from testing.e2e_utils import E2ETestCategory, e2e_test
+
+from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
+from services.rag.src.utils.job_manager import JobManager
 
 
 async def create_mock_job_manager_for_e2e(session_maker: Any, grant_application_id: UUID) -> JobManager:

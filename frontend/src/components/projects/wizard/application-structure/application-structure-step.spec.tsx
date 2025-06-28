@@ -6,7 +6,7 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { ApplicationStructureStep } from "./application-structure-step";
 
-// Mock the child components
+
 vi.mock("./application-structure-left-pane", () => ({
 	ApplicationStructureLeftPane: () => <div data-testid="application-structure-left-pane">Left Pane</div>,
 }));

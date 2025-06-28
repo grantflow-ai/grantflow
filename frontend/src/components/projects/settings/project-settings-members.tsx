@@ -18,7 +18,7 @@ interface ProjectMember {
 	id: string;
 	joinedAt: string;
 	photoUrl?: string;
-	projectAccess?: string[]; // Array of application IDs the user has access to
+	projectAccess?: string[]; 
 	role: UserRole;
 	status: "active" | "pending";
 }
@@ -42,7 +42,7 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
-// Mock data for now - will be replaced with real API data
+
 const mockMembers: ProjectMember[] = [
 	{
 		email: "test@gmail.com",
@@ -52,7 +52,7 @@ const mockMembers: ProjectMember[] = [
 		joinedAt: "2025-01-15T10:00:00Z",
 		projectAccess: [],
 		role: UserRole.OWNER,
-		status: "active", // Owner has access to all
+		status: "active", 
 	},
 	{
 		email: "test@gmail.com",
@@ -62,7 +62,7 @@ const mockMembers: ProjectMember[] = [
 		joinedAt: "2025-01-20T10:00:00Z",
 		projectAccess: [],
 		role: UserRole.ADMIN,
-		status: "active", // Admin has access to all
+		status: "active", 
 	},
 	{
 		email: "test@gmail.com",
@@ -72,19 +72,19 @@ const mockMembers: ProjectMember[] = [
 		joinedAt: "2025-01-25T10:00:00Z",
 		projectAccess: ["app1", "app2", "app3", "app4"],
 		role: UserRole.MEMBER,
-		status: "active", // Specific application access
+		status: "active", 
 	},
 ];
 
 const handleRemoveMember = (memberId: string) => {
-	// Implementation will be added when backend is ready
-	// This will call API to remove member from project
+	
+	
 	logTrace("info", "Remove member not implemented yet", { memberId });
 };
 
 const handleUpdateRole = (memberId: string, newRole: UserRole, projectAccess?: string[]) => {
-	// Implementation will be added when backend is ready
-	// This will call API to update member role and project access
+	
+	
 	logTrace("info", "Update role not implemented yet", { memberId, newRole, projectAccess });
 	return Promise.resolve();
 };
@@ -116,12 +116,12 @@ export function ProjectSettingsMembers({
 
 			if (!result.success) {
 				logTrace("error", "Failed to invite collaborator", { email, error: result.error });
-				// In a real app, you'd show a toast notification here
+				
 				return;
 			}
 
-			// Success - in a real app, you'd show a success toast
-			// and possibly refresh the members list
+			
+			
 		} catch (error) {
 			logTrace("error", "Error inviting collaborator", {
 				email,
@@ -134,7 +134,7 @@ export function ProjectSettingsMembers({
 
 	return (
 		<div className="w-full" data-testid="project-settings-members">
-			{/* Header with Invite Button */}
+			{}
 			<div className="flex items-center justify-between mb-6">
 				<div>
 					<h2 className="text-[24px] font-medium text-text-primary mb-2 font-heading">Team Members</h2>
@@ -157,9 +157,9 @@ export function ProjectSettingsMembers({
 				)}
 			</div>
 
-			{/* Members Table */}
+			{}
 			<div className="bg-surface-primary border border-border-primary rounded-lg overflow-hidden">
-				{/* Table Header */}
+				{}
 				<div className="bg-surface-secondary border-b border-border-primary px-6 py-4">
 					<div className="grid grid-cols-5 gap-4">
 						<div className="font-semibold text-[14px] text-text-secondary font-body">Name</div>
@@ -169,12 +169,12 @@ export function ProjectSettingsMembers({
 							Research Projects Access
 						</div>
 						<div className="font-semibold text-[14px] text-text-secondary font-body">
-							{/* Actions column */}
+							{}
 						</div>
 					</div>
 				</div>
 
-				{/* Table Body */}
+				{}
 				<div className="divide-y divide-border-primary">
 					{members.map((member) => (
 						<div
@@ -183,7 +183,7 @@ export function ProjectSettingsMembers({
 							key={member.id}
 						>
 							<div className="grid grid-cols-5 gap-4 items-center">
-								{/* Name with Avatar */}
+								{}
 								<div className="flex items-center gap-3">
 									<AppAvatar initials={generateInitials(member.fullName, member.email)} size="sm" />
 									<span className="text-[16px] text-text-primary truncate font-body">
@@ -191,20 +191,20 @@ export function ProjectSettingsMembers({
 									</span>
 								</div>
 
-								{/* Email */}
+								{}
 								<div className="text-[14px] text-text-secondary truncate font-body">{member.email}</div>
 
-								{/* Role Badge */}
+								{}
 								<div>
 									<RoleBadge role={member.role} />
 								</div>
 
-								{/* Project Access */}
+								{}
 								<div>
 									<ProjectAccessBadges projectAccess={member.projectAccess} role={member.role} />
 								</div>
 
-								{/* Actions */}
+								{}
 								<div className="flex justify-end">
 									<MemberActionMenu
 										currentUserRole={currentUserRole}
@@ -220,7 +220,7 @@ export function ProjectSettingsMembers({
 					))}
 				</div>
 
-				{/* Empty State */}
+				{}
 				{members.length === 0 && (
 					<div className="px-6 py-12 text-center" data-testid="empty-state">
 						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
@@ -241,7 +241,7 @@ export function ProjectSettingsMembers({
 				)}
 			</div>
 
-			{/* Team Stats */}
+			{}
 			<div className="mt-6 grid grid-cols-3 gap-4">
 				<div
 					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
@@ -281,7 +281,7 @@ export function ProjectSettingsMembers({
 				</div>
 			</div>
 
-			{/* Invite Modal */}
+			{}
 			{isInviteModalOpen && (
 				<InviteCollaboratorModal
 					isOpen={isInviteModalOpen}
@@ -292,7 +292,7 @@ export function ProjectSettingsMembers({
 				/>
 			)}
 
-			{/* Edit Permission Modal */}
+			{}
 			<EditPermissionModal
 				currentUserRole={currentUserRole}
 				isOpen={editingMember !== null}
@@ -336,7 +336,7 @@ function MemberActionMenu({
 		};
 	}, [isOpen]);
 
-	// Can't modify owner, can't modify if you're not owner/admin
+	
 	const canModify =
 		member.role !== UserRole.OWNER && (currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN);
 
@@ -398,7 +398,7 @@ function MemberActionMenu({
 }
 
 function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: string[]; role: UserRole }) {
-	// Owner and Admin have access to all projects
+	
 	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
 		return (
 			<div className="flex items-center gap-2">
@@ -407,7 +407,7 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 		);
 	}
 
-	// Members have specific application access
+	
 	if (projectAccess.length === 0) {
 		return (
 			<div className="flex items-center gap-2">

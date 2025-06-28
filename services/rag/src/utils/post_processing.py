@@ -239,7 +239,7 @@ async def parse_documents(
     *, sentence_infos: list[SentenceInfo], max_tokens: int, model: str
 ) -> list[str]:
     """Legacy function - use smart_parse_documents_with_batched_tokens for better performance."""
-    _ = model  # Unused but kept for legacy API
+    _ = model
     processed_docs, _ = await smart_parse_documents_with_batched_tokens(
         sentence_infos=sentence_infos, max_tokens=max_tokens
     )

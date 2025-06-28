@@ -7,7 +7,7 @@ import { UserRole } from "@/types/user";
 
 import { ProjectSettingsMembers } from "./project-settings-members";
 
-// Mock dependencies
+
 vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),
 }));
@@ -33,7 +33,7 @@ vi.mock("@/utils/user", () => ({
 	}),
 }));
 
-// Mock InviteCollaboratorModal component
+
 vi.mock("../modals/invite-collaborator-modal", () => ({
 	InviteCollaboratorModal: ({ isOpen, onClose, onInvite }: any) =>
 		isOpen ? (
@@ -52,7 +52,7 @@ vi.mock("../modals/invite-collaborator-modal", () => ({
 		) : null,
 }));
 
-// Mock EditPermissionModal component
+
 vi.mock("./edit-permission-modal", () => ({
 	EditPermissionModal: ({ isOpen, member, onClose, onUpdateRole }: any) =>
 		isOpen ? (
@@ -134,12 +134,12 @@ describe("ProjectSettingsMembers", () => {
 		expect(screen.getByText("Team Members")).toBeInTheDocument();
 		expect(screen.getByText("Manage who has access to this project and their permissions.")).toBeInTheDocument();
 
-		// Check all members are displayed
+		
 		expect(screen.getByTestId("member-row-1")).toBeInTheDocument();
 		expect(screen.getByTestId("member-row-2")).toBeInTheDocument();
 		expect(screen.getByTestId("member-row-3")).toBeInTheDocument();
 
-		// Check member details
+		
 		expect(screen.getByText("Owner User")).toBeInTheDocument();
 		expect(screen.getByText("owner@example.com")).toBeInTheDocument();
 		expect(screen.getByText("Admin User")).toBeInTheDocument();
@@ -173,11 +173,11 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Owner and Admin should show "All" access
+		
 		const allBadges = screen.getAllByText("All");
 		expect(allBadges).toHaveLength(2);
 
-		// Member should show specific applications
+		
 		expect(screen.getByText("Application 1")).toBeInTheDocument();
 		expect(screen.getByText("Application 2")).toBeInTheDocument();
 		expect(screen.getByText("Application 3")).toBeInTheDocument();
@@ -195,7 +195,7 @@ describe("ProjectSettingsMembers", () => {
 		);
 
 		expect(screen.getByTestId("total-members-count")).toHaveTextContent("3");
-		expect(screen.getByTestId("admins-count")).toHaveTextContent("2"); // Owner + Admin
+		expect(screen.getByTestId("admins-count")).toHaveTextContent("2"); 
 		expect(screen.getByTestId("collaborators-count")).toHaveTextContent("1");
 	});
 
@@ -279,12 +279,12 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Should show action menu for admin and member, but not owner
-		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument(); // Owner
-		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument(); // Admin
-		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument(); // Member
+		
+		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument(); 
+		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument(); 
+		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument(); 
 
-		// Click action menu for admin
+		
 		await user.click(screen.getByTestId("member-action-menu-2"));
 
 		expect(screen.getByTestId("member-action-dropdown-2")).toBeInTheDocument();
@@ -303,15 +303,15 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Admin can modify members and other admins, but not owners
-		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument(); // Owner
-		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument(); // Admin
-		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument(); // Member
+		
+		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument(); 
+		expect(screen.getByTestId("member-action-menu-2")).toBeInTheDocument(); 
+		expect(screen.getByTestId("member-action-menu-3")).toBeInTheDocument(); 
 
-		// Click action menu for member
+		
 		await user.click(screen.getByTestId("member-action-menu-3"));
 
-		// Admin should not see edit permissions option
+		
 		expect(screen.queryByTestId("edit-permissions-3")).not.toBeInTheDocument();
 		expect(screen.getByTestId("remove-member-3")).toBeInTheDocument();
 	});
@@ -327,7 +327,7 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Open action menu for admin
+		
 		await user.click(screen.getByTestId("member-action-menu-2"));
 		await user.click(screen.getByTestId("edit-permissions-2"));
 
@@ -346,11 +346,11 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Open action menu
+		
 		await user.click(screen.getByTestId("member-action-menu-2"));
 		expect(screen.getByTestId("member-action-dropdown-2")).toBeInTheDocument();
 
-		// Click outside
+		
 		await user.click(document.body);
 
 		await waitFor(() => {
@@ -388,13 +388,13 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Should show first 4 applications
+		
 		expect(screen.getByText("Application 1")).toBeInTheDocument();
 		expect(screen.getByText("Application 2")).toBeInTheDocument();
 		expect(screen.getByText("Application 3")).toBeInTheDocument();
 		expect(screen.getByText("Application 4")).toBeInTheDocument();
 
-		// Should show +2 more
+		
 		expect(screen.getByText("+ 2")).toBeInTheDocument();
 	});
 
@@ -436,7 +436,7 @@ describe("ProjectSettingsMembers", () => {
 			expect(inviteCollaborator).toHaveBeenCalled();
 		});
 
-		// Modal should still be open (error handling would show toast in real app)
+		
 		expect(screen.getByTestId("invite-collaborator-modal")).toBeInTheDocument();
 	});
 
@@ -456,7 +456,7 @@ describe("ProjectSettingsMembers", () => {
 		await user.click(screen.getByTestId("invite-button"));
 		await user.click(screen.getByTestId("mock-invite-submit"));
 
-		// Should not call inviteCollaborator
+		
 		expect(inviteCollaborator).not.toHaveBeenCalled();
 	});
 
@@ -470,7 +470,7 @@ describe("ProjectSettingsMembers", () => {
 			/>,
 		);
 
-		// Members can't modify anyone
+		
 		expect(screen.queryByTestId("member-action-menu-1")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("member-action-menu-2")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("member-action-menu-3")).not.toBeInTheDocument();

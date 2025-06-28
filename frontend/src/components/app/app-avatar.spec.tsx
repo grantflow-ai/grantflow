@@ -26,12 +26,12 @@ describe("AppAvatar", () => {
 	it("renders avatar with image URL prop", () => {
 		render(<AppAvatar imageUrl="https://example.com/avatar.jpg" initials="JD" />);
 
-		// Avatar component renders even when image is provided
+		
 		const avatar = screen.getByTestId("app-avatar");
 		expect(avatar).toBeInTheDocument();
 
-		// Both image and fallback elements are rendered, image may not load in test environment
-		// This ensures the component accepts and passes through the imageUrl prop
+		
+		
 		expect(screen.getByTestId("app-avatar-fallback")).toHaveTextContent("JD");
 	});
 
@@ -91,9 +91,9 @@ describe("AvatarGroup", () => {
 		render(<AvatarGroup maxVisible={3} users={mockUsers} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
-		expect(avatars).toHaveLength(4); // 3 visible + 1 overflow
+		expect(avatars).toHaveLength(4); 
 
-		// Check for overflow indicator
+		
 		const fallbacks = screen.getAllByTestId("app-avatar-fallback");
 		const overflowFallback = fallbacks.find((fallback) => fallback.textContent === "+3");
 		expect(overflowFallback).toBeInTheDocument();
@@ -103,14 +103,14 @@ describe("AvatarGroup", () => {
 		render(<AvatarGroup users={mockUsers} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
-		expect(avatars).toHaveLength(5); // 4 visible + 1 overflow
+		expect(avatars).toHaveLength(5); 
 	});
 
 	it("doesn't show overflow when users count is within limit", () => {
 		render(<AvatarGroup maxVisible={4} users={mockUsers.slice(0, 3)} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
-		expect(avatars).toHaveLength(3); // No overflow avatar
+		expect(avatars).toHaveLength(3); 
 	});
 
 	it("applies default colors to users without backgroundColor", () => {
@@ -120,13 +120,13 @@ describe("AvatarGroup", () => {
 
 		const fallbacks = screen.getAllByTestId("app-avatar-fallback");
 
-		// First user should get first default color
+		
 		expect(fallbacks[0]).toHaveStyle({ backgroundColor: "#369e94" });
-		// Second user should get second default color
+		
 		expect(fallbacks[1]).toHaveStyle({ backgroundColor: "#9e366f" });
-		// Third user should get third default color
+		
 		expect(fallbacks[2]).toHaveStyle({ backgroundColor: "#9747ff" });
-		// Fourth user should get fourth default color
+		
 		expect(fallbacks[3]).toHaveStyle({ backgroundColor: "#5179fc" });
 	});
 

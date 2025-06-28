@@ -121,8 +121,8 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 					? FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]
 					: FILE_ICON_MAP.unknown}
 			</div>
-			<span 
-				className="mt-1 max-w-20 truncate text-center text-[10px] leading-[13px]" 
+			<span
+				className="mt-1 max-w-20 truncate text-center text-[10px] leading-[13px]"
 				data-testid="file-name"
 				title={fileName}
 			>

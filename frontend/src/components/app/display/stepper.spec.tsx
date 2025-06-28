@@ -35,7 +35,7 @@ describe("Stepper", () => {
 		const user = userEvent.setup();
 		render(<Stepper currentStep={0} onStepClick={mockOnStepClick} steps={mockSteps} />);
 
-		// Click on different steps
+		
 		await user.click(screen.getByTestId("step-button-2"));
 		expect(mockOnStepClick).toHaveBeenCalledWith(2);
 
@@ -54,7 +54,7 @@ describe("Stepper", () => {
 			expect(screen.getByText(step)).toBeInTheDocument();
 		});
 
-		// Verify all step buttons are rendered
+		
 		for (let i = 0; i < moreSteps.length; i++) {
 			expect(screen.getByTestId(`step-button-${i}`)).toBeInTheDocument();
 		}
@@ -63,7 +63,7 @@ describe("Stepper", () => {
 	it("provides visual indicators for each step", () => {
 		render(<Stepper currentStep={1} onStepClick={mockOnStepClick} steps={mockSteps} />);
 
-		// Verify indicators exist for each step
+		
 		mockSteps.forEach((_, index) => {
 			expect(screen.getByTestId(`step-indicator-${index}`)).toBeInTheDocument();
 		});
@@ -73,7 +73,7 @@ describe("Stepper", () => {
 		render(<Stepper currentStep={0} onStepClick={mockOnStepClick} steps={[]} />);
 
 		expect(screen.getByTestId("stepper")).toBeInTheDocument();
-		// Should not have any step buttons
+		
 		expect(screen.queryByTestId("step-button-0")).not.toBeInTheDocument();
 	});
 });

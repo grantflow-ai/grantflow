@@ -30,7 +30,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 			...prev,
 			[key]: !prev[key],
 		}));
-		// Save to backend will be implemented when API is ready
+		
 	};
 
 	return (
@@ -42,7 +42,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 			</div>
 
 			<div className="space-y-6">
-				{/* Receive important email notifications */}
+				{}
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
 						<h3 className="text-[16px] font-normal text-text-primary font-body mb-1">
@@ -61,7 +61,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					/>
 				</div>
 
-				{/* Deadline Reminders */}
+				{}
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
 						<h3 className="text-[16px] font-normal text-text-primary font-body mb-1">Deadline Reminders</h3>
@@ -78,7 +78,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					/>
 				</div>
 
-				{/* Collaboration Activity */}
+				{}
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
 						<h3 className="text-[16px] font-normal text-text-primary font-body mb-1">

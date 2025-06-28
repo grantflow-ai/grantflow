@@ -28,7 +28,7 @@ variable "environment" {
   default     = "prod"
 }
 
-# Database specific variables
+
 variable "database_zone" {
   description = "The zone for the Cloud SQL database"
   type        = string

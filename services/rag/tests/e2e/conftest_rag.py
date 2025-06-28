@@ -9,11 +9,10 @@ from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 
-# Real application IDs with complete data
 MELANOMA_APPLICATION_ID = "43b4aed5-8549-461f-9290-5ee9a630ac9a"
 TEST_APPLICATIONS = {
     "melanoma_alliance": MELANOMA_APPLICATION_ID,
-    # Add more real applications as needed
+
 }
 
 
@@ -107,12 +106,12 @@ def simple_test_objectives() -> list[dict[str, Any]]:
 def baseline_performance_targets() -> dict[str, float]:
     """Performance targets for baseline testing."""
     return {
-        "total_time_limit": 900,        # 15 minutes max
-        "work_plan_time_limit": 300,    # 5 minutes max
-        "section_gen_time_limit": 600,  # 10 minutes max
-        "enrichment_time_limit": 180,   # 3 minutes max
-        "min_sections": 3,              # At least 3 sections
-        "min_characters": 1000,         # At least 1k characters
+        "total_time_limit": 900,
+        "work_plan_time_limit": 300,
+        "section_gen_time_limit": 600,
+        "enrichment_time_limit": 180,
+        "min_sections": 3,
+        "min_characters": 1000,
     }
 
 
@@ -155,13 +154,13 @@ def analyze_pipeline_timing(
         "optimization_opportunities": [],
     }
 
-    # Calculate performance vs targets
+
     if total_time > 0:
         for stage, time_val in stage_timings.items():
             percentage = (time_val / total_time) * 100
             analysis["stage_breakdown"][f"{stage}_percentage"] = round(percentage, 1)
 
-            # Identify bottlenecks (>25% of total time)
+
             if percentage > 25:
                 analysis["bottlenecks"].append({
                     "stage": stage,
@@ -169,7 +168,7 @@ def analyze_pipeline_timing(
                     "percentage": percentage
                 })
 
-    # Performance scoring
+
     analysis["performance_vs_targets"] = {
         "total_time_score": max(0, 100 - (total_time / targets["total_time_limit"]) * 100),
         "within_limits": total_time < targets["total_time_limit"],
@@ -181,7 +180,7 @@ def analyze_pipeline_timing(
         )
     }
 
-    # Optimization opportunities
+
     work_plan_time = stage_timings.get("work_plan_generation", 0)
     if work_plan_time > targets.get("work_plan_time_limit", 300):
         analysis["optimization_opportunities"].append({

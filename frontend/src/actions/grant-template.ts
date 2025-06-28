@@ -10,7 +10,7 @@ export async function generateGrantTemplate(
 	applicationId: string,
 	templateId: string,
 ): Promise<string> {
-	// Generate correlation ID for distributed tracing
+	
 	const correlationId = generateCorrelationId();
 	const operation = "grant_template_generation";
 
@@ -33,7 +33,7 @@ export async function generateGrantTemplate(
 
 		logTraceEvent(correlationId, operation, "action_success");
 
-		// Return correlation ID for tracking across services
+		
 		return correlationId;
 	} catch (error) {
 		logTraceEvent(correlationId, operation, "action_failed", {

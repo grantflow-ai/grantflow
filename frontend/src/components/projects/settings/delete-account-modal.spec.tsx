@@ -78,14 +78,14 @@ describe("DeleteAccountModal", () => {
 
 	it("handles successful account deletion", async () => {
 		const user = userEvent.setup();
-		vi.mocked(deleteAccount).mockResolvedValue(undefined);
+		vi.mocked(deleteAccount).mockResolvedValue({ message: "Account deleted", success: true });
 
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
 		const deleteButton = screen.getByTestId("delete-button");
 		await user.click(deleteButton);
 
-		// Verify all actions were called in order
+		
 		await waitFor(() => {
 			expect(vi.mocked(deleteAccount)).toHaveBeenCalledTimes(1);
 		});
@@ -97,30 +97,31 @@ describe("DeleteAccountModal", () => {
 	it("shows loading state during deletion", async () => {
 		const user = userEvent.setup();
 		let resolvePromise: () => void;
-		const deletePromise = new Promise<void>((resolve) => {
-			resolvePromise = resolve;
-		});
-		vi.mocked(deleteAccount).mockReturnValue(deletePromise);
+		vi.mocked(deleteAccount).mockResolvedValue({ message: "Account deleted", success: true });
 
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
 		const deleteButton = screen.getByTestId("delete-button");
 		const cancelButton = screen.getByTestId("cancel-button");
 
-		// Initially not disabled
-		expect(deleteButton).not.toBeDisabled();
-		expect(cancelButton).not.toBeDisabled();
+		
+		expect(deleteButton).not.toHaveAttribute('disabled');
+		expect(cancelButton).not.toHaveAttribute('disabled');
 		expect(deleteButton).toHaveTextContent("Delete and log out");
 
-		// Click delete
+		
 		await user.click(deleteButton);
 
-		// Should show loading state
-		expect(deleteButton).toBeDisabled();
-		expect(cancelButton).toBeDisabled();
-		expect(deleteButton).toHaveTextContent("Deleting...");
+		
+		await waitFor(() => {
+			expect(screen.getByTestId("delete-button")).toHaveTextContent("Deleting...");
+		});
+		
+		
+		expect(screen.getByTestId("delete-button")).toHaveAttribute('disabled');
+		expect(screen.getByTestId("cancel-button")).toHaveAttribute('disabled');
 
-		// Resolve the promise
+		
 		resolvePromise!();
 
 		await waitFor(() => {
@@ -145,12 +146,12 @@ describe("DeleteAccountModal", () => {
 			});
 		});
 
-		// Should not clear user or redirect on error
+		
 		expect(mockClearUser).not.toHaveBeenCalled();
 		expect(mockPush).not.toHaveBeenCalled();
 
-		// Should reset loading state
-		expect(screen.getByTestId("delete-button")).not.toBeDisabled();
+		
+		expect(screen.getByTestId("delete-button")).not.toHaveAttribute('disabled');
 		expect(screen.getByTestId("delete-button")).toHaveTextContent("Delete and log out");
 	});
 
@@ -176,7 +177,7 @@ describe("DeleteAccountModal", () => {
 		const cancelButton = screen.getByTestId("cancel-button");
 		const deleteButton = screen.getByTestId("delete-button");
 
-		// Check for Button component classes
+		
 		expect(cancelButton).toHaveClass("w-[90px]");
 		expect(deleteButton).toHaveClass("bg-[#1e13f8]");
 	});

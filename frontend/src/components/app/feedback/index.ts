@@ -1,4 +1,3 @@
-// App-specific feedback components
 export { BaseModal } from "./base-modal";
 export { Modal } from "./modal";
 export type { NotificationData } from "./notification-banner";

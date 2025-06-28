@@ -15,7 +15,7 @@ interface ProjectSettingsLayoutProps {
 export function ProjectSettingsLayout({ children, projectId, userRole = UserRole.MEMBER }: ProjectSettingsLayoutProps) {
 	const pathname = usePathname();
 
-	// Define all tabs
+	
 	const allTabs = [
 		{ href: `/projects/${projectId}/settings/account`, label: "Account Settings" },
 		{
@@ -31,7 +31,7 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 		{ href: `/projects/${projectId}/settings/notifications`, label: "Notifications" },
 	];
 
-	// Filter tabs based on user role
+	
 	const tabs = allTabs.filter((tab) => {
 		if (!tab.requiresRole) return true;
 		return tab.requiresRole.includes(userRole);
@@ -40,11 +40,11 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 	return (
 		<div className="flex size-full flex-col items-start">
 			<div className="flex size-full flex-col items-start justify-start px-10 py-14 gap-14">
-				{/* Header */}
+				{}
 				<div className="flex w-full flex-col gap-8">
 					<h1 className="font-medium text-[36px] leading-[42px] text-text-primary font-heading">Settings</h1>
 
-					{/* Tabs */}
+					{}
 					<div className="flex items-center gap-6">
 						{tabs.map((tab) => (
 							<Link
@@ -63,7 +63,7 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 					</div>
 				</div>
 
-				{/* Content */}
+				{}
 				<div className="w-full">{children}</div>
 			</div>
 		</div>
