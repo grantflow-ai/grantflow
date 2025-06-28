@@ -80,7 +80,7 @@ export function TestimonialsSection() {
 						<MotionArticle
 							className="w-sm lg:w-2xs xl:w-xs flex h-full flex-col items-center px-5 text-center xl:px-0"
 							data-testid={"mock-motion-article"}
-							initial="hidden"
+							initial="visible"
 							key={i}
 							variants={articleVariants}
 							viewport={{ amount: 0.3, once: true }}
