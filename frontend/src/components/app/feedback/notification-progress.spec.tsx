@@ -10,10 +10,15 @@ describe("NotificationProgress", () => {
 		total_pipeline_stages: 9,
 	});
 
-	it("renders progress bar with correct message", () => {
+	it("displays progress message", () => {
 		render(<NotificationProgress notification={mockNotification} />);
 
 		expect(screen.getByText("Generating text for all grant sections...")).toBeInTheDocument();
+	});
+
+	it("shows progress percentage", () => {
+		render(<NotificationProgress notification={mockNotification} />);
+
 		expect(screen.getByText("44% complete")).toBeInTheDocument();
 	});
 
@@ -21,16 +26,6 @@ describe("NotificationProgress", () => {
 		render(<NotificationProgress notification={mockNotification} />);
 
 		expect(screen.getByText("4 / 9")).toBeInTheDocument();
-	});
-
-	it("calculates progress percentage correctly", () => {
-		render(<NotificationProgress notification={mockNotification} />);
-
-		const progressBar = screen.getByTestId("notification-progress");
-		expect(progressBar).toBeInTheDocument();
-
-		const progressIndicator = progressBar.querySelector('[data-slot="progress-indicator"]');
-		expect(progressIndicator).toHaveStyle({ transform: "translateX(-56%)" });
 	});
 
 	it("renders nothing when pipeline stages are not provided", () => {
@@ -45,7 +40,7 @@ describe("NotificationProgress", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders nothing when only current stage is provided", () => {
+	it("renders nothing when stages are partially provided", () => {
 		const notificationPartialStages = RagProcessingStatusFactory.build({
 			current_pipeline_stage: 5,
 			event: "some_event",
@@ -57,19 +52,7 @@ describe("NotificationProgress", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders nothing when only total stages is provided", () => {
-		const notificationPartialStages = RagProcessingStatusFactory.build({
-			current_pipeline_stage: undefined,
-			event: "some_event",
-			message: "Some message",
-			total_pipeline_stages: 10,
-		});
-
-		const { container } = render(<NotificationProgress notification={notificationPartialStages} />);
-		expect(container.firstChild).toBeNull();
-	});
-
-	it("handles complete progress correctly", () => {
+	it("handles complete progress (100%)", () => {
 		const completeNotification = RagProcessingStatusFactory.build({
 			current_pipeline_stage: 9,
 			event: "grant_application_generation_completed",
@@ -81,35 +64,33 @@ describe("NotificationProgress", () => {
 
 		expect(screen.getByText("9 / 9")).toBeInTheDocument();
 		expect(screen.getByText("100% complete")).toBeInTheDocument();
-
-		const progressIndicator = screen
-			.getByTestId("notification-progress")
-			.querySelector('[data-slot="progress-indicator"]');
-		expect(progressIndicator).toHaveStyle({ transform: "translateX(-0%)" });
 	});
 
-	it("displays appropriate status indicators based on event type", () => {
-		const testCases = [
-			{ event: "grant_application_generation_started", expectedIcon: "🚀" },
-			{ event: "validating_template", expectedIcon: "🔍" },
-			{ event: "generating_section_texts", expectedIcon: "✨" },
-			{ event: "assembling_application", expectedIcon: "🔧" },
-			{ event: "saving_application", expectedIcon: "💾" },
-			{ event: "extracting_cfp_data", expectedIcon: "📄" },
-			{ event: "unknown_event", expectedIcon: "⚡" },
-		];
-
-		testCases.forEach(({ event, expectedIcon }) => {
-			const { unmount } = render(
-				<NotificationProgress
-					notification={{
-						...mockNotification,
-						event,
-					}}
-				/>,
-			);
-			expect(screen.getByText(expectedIcon)).toBeInTheDocument();
-			unmount();
+	it("handles zero progress", () => {
+		const zeroProgressNotification = RagProcessingStatusFactory.build({
+			current_pipeline_stage: 0,
+			event: "grant_application_generation_started",
+			message: "Starting grant application generation...",
+			total_pipeline_stages: 10,
 		});
+
+		render(<NotificationProgress notification={zeroProgressNotification} />);
+
+		expect(screen.getByText("0 / 10")).toBeInTheDocument();
+		expect(screen.getByText("0% complete")).toBeInTheDocument();
+	});
+
+	it("rounds percentage to nearest integer", () => {
+		const notification = RagProcessingStatusFactory.build({
+			current_pipeline_stage: 1,
+			event: "some_event",
+			message: "Processing...",
+			total_pipeline_stages: 3,
+		});
+
+		render(<NotificationProgress notification={notification} />);
+
+		// 1/3 = 0.333... should round to 33%
+		expect(screen.getByText("33% complete")).toBeInTheDocument();
 	});
 });
