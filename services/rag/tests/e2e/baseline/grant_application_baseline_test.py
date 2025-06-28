@@ -158,7 +158,7 @@ async def test_baseline_full_application_generation(
             )
             raise
         finally:
-            
+
             pass
 
     assert_performance_targets(perf_ctx.result, min_grade="C")
