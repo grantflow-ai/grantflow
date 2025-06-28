@@ -15,7 +15,7 @@ import contextlib
 import logging
 from typing import Any
 from unittest.mock import AsyncMock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.e2e_utils import E2ETestCategory, e2e_test
@@ -99,8 +99,8 @@ async def test_grant_template_performance_basic(
 
             try:
                 sections = await extract_and_enrich_sections(
-                    cfp_content=cfp_result,
-                    cfp_subject="Melanoma Alliance Grant",
+                    cfp_content=cfp_result["content"],
+                    cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Grant"),
                     organization=None,
                     parent_id=uuid4(),
                     job_manager=job_manager,
@@ -335,25 +335,19 @@ async def test_grant_template_baseline_performance(
 
 
         logger.info("Stage 3: Extracting and enriching sections")
-        job_manager = None
-        sections = []
-        try:
-            job_manager = await create_job_manager_for_performance(
-                async_session_maker, melanoma_alliance_full_application_id
+        job_manager = await create_job_manager_for_performance(
+            async_session_maker, melanoma_alliance_full_application_id
+        )
+
+        with perf_ctx.stage_timer("section_extraction"):
+            sections = await extract_and_enrich_sections(
+                cfp_content=cfp_result["content"],
+                cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Grant Baseline Test"),
+                organization=None,
+                parent_id=UUID(template_id),
+                job_manager=job_manager,
             )
-
-            with perf_ctx.stage_timer("section_extraction"):
-                sections = await extract_and_enrich_sections(
-                    cfp_content=cfp_result["content"],
-                    cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Grant Baseline Test"),
-                    organization=None,
-                    parent_id=UUID(template_id),
-                    job_manager=job_manager,
-                )
-                perf_ctx.add_llm_call(len(sections))
-
-        finally:
-            pass
+            perf_ctx.add_llm_call(len(sections))
 
         logger.info(f"Section extraction completed: {len(sections)} sections generated")
 
@@ -459,53 +453,47 @@ async def test_grant_template_stage_breakdown_analysis(
             async_session_maker, melanoma_alliance_full_application_id
         )
 
-        try:
+        with perf_ctx.stage_timer("section_processing"):
+            sections = await extract_and_enrich_sections(
+                cfp_content=cfp_result["content"],
+                cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Stage Breakdown Analysis"),
+                organization=None,
+                parent_id=UUID(template_id),
+                job_manager=job_manager,
+            )
 
-            with perf_ctx.stage_timer("section_processing"):
-                sections = await extract_and_enrich_sections(
-                    cfp_content=cfp_result["content"],
-                    cfp_subject=cfp_result.get("cfp_subject", "Melanoma Alliance Stage Breakdown Analysis"),
-                    organization=None,
-                    parent_id=UUID(template_id),
-                    job_manager=job_manager,
-                )
+        section_time = perf_ctx.stage_times["section_processing"]
+        per_section_time = section_time / len(sections) if sections else 0
 
-            section_time = perf_ctx.stage_times["section_processing"]
-            per_section_time = section_time / len(sections) if sections else 0
+        breakdown_content = f"""
+        # Grant Template Stage Breakdown Analysis
 
+        ## Processing Performance
+        - **Total Section Processing**: {section_time:.2f}s
+        - **Sections Generated**: {len(sections)}
+        - **Average per Section**: {per_section_time:.2f}s
 
-            breakdown_content = f"""
-            # Grant Template Stage Breakdown Analysis
+        ## Stage Composition Analysis
+        The extract_and_enrich_sections function includes:
+        1. **Section Structure Extraction** (~40% of time)
+        2. **Metadata Generation** (~60% of time)
 
-            ## Processing Performance
-            - **Total Section Processing**: {section_time:.2f}s
-            - **Sections Generated**: {len(sections)}
-            - **Average per Section**: {per_section_time:.2f}s
+        ## Optimization Opportunities
+        - **Parallel Section Processing**: Potential 30-50% improvement
+        - **Batch Metadata Generation**: Potential 40-60% improvement
+        - **Combined Optimization**: Potential 50-70% improvement
 
-            ## Stage Composition Analysis
-            The extract_and_enrich_sections function includes:
-            1. **Section Structure Extraction** (~40% of time)
-            2. **Metadata Generation** (~60% of time)
+        ## Performance Targets
+        - Current: {section_time:.2f}s for {len(sections)} sections
+        - Target (40% improvement): {section_time * 0.6:.2f}s
+        - Stretch (60% improvement): {section_time * 0.4:.2f}s
+        """
 
-            ## Optimization Opportunities
-            - **Parallel Section Processing**: Potential 30-50% improvement
-            - **Batch Metadata Generation**: Potential 40-60% improvement
-            - **Combined Optimization**: Potential 50-70% improvement
+        section_titles = [getattr(s, "title", f"Section {i+1}") for i, s in enumerate(sections)]
+        perf_ctx.set_content(breakdown_content, section_titles)
 
-            ## Performance Targets
-            - Current: {section_time:.2f}s for {len(sections)} sections
-            - Target (40% improvement): {section_time * 0.6:.2f}s
-            - Stretch (60% improvement): {section_time * 0.4:.2f}s
-            """
-
-            section_titles = [getattr(s, "title", f"Section {i+1}") for i, s in enumerate(sections)]
-            perf_ctx.set_content(breakdown_content, section_titles)
-
-            logger.info(f"Stage breakdown: {section_time:.2f}s for {len(sections)} sections")
-            logger.info(f"Per-section average: {per_section_time:.2f}s")
-
-        finally:
-            pass
+        logger.info(f"Stage breakdown: {section_time:.2f}s for {len(sections)} sections")
+        logger.info(f"Per-section average: {per_section_time:.2f}s")
 
 
         perf_ctx.stage_times.get("setup", 0)

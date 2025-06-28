@@ -67,6 +67,7 @@ async def extract_and_enrich_sections(
         total_pipeline_stages=GRANT_TEMPLATE_PIPELINE_STAGES,
     )
 
+    
     section_metadata = await handle_generate_grant_template(
         cfp_content=concat_extracted_cfp_content(content_list),
         cfp_subject=cfp_subject,
