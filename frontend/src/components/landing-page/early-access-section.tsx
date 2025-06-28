@@ -171,7 +171,7 @@ export function EarlyAccessSection() {
 			aria-label="early-access-section"
 			className="relative bg-white"
 			id="waitlist"
-			initial="visible"
+			initial="hidden"
 			variants={sectionVariants}
 			viewport={{ amount: 0.1, once: true }}
 			whileInView="visible"

@@ -92,7 +92,7 @@ export function HowItWorksCard({
 				"w-full h-auto flex px-5 lg:px-10 py-5 lg:py-15 flex-col items-center justify-center",
 				className,
 			)}
-			initial="visible"
+			initial="hidden"
 			variants={containerVariants}
 			whileInView="visible"
 		>
