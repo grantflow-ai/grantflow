@@ -18,7 +18,7 @@ GENERATION_MODEL: Final[str] = get_env(
     "GENERATION_MODEL", fallback="gemini-2.5-flash"
 )
 ANTHROPIC_SONNET_MODEL: Final[str] = get_env(
-    "ANTHROPIC_SONNET_MODEL", fallback="claude-sonnet-4@20250514"
+    "ANTHROPIC_SONNET_MODEL", fallback="claude-sonnet-4-20250514"
 )
 REASONING_MODEL: Final[str] = get_env(
     "REASONING_MODEL", fallback="gemini-2.5-flash"
