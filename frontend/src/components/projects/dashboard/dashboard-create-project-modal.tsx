@@ -13,7 +13,6 @@ export function DashboardCreateProjectModal({ isOpen, onClose }: DashboardCreate
 			<CreateProjectForm
 				closeModal={(_projectId) => {
 					onClose();
-					
 				}}
 			/>
 		</BaseModal>

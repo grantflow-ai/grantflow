@@ -33,7 +33,6 @@ export default function FinalizeEmailLogin() {
 			try {
 				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
 
-				
 				setUser({
 					displayName: cred.user.displayName,
 					email: cred.user.email,

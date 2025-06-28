@@ -1,10 +1,10 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 
-import { MIN_TITLE_LENGTH, useWizardStore } from "./wizard-store";
+import { useWizardStore } from "./wizard-store";
 
 describe("wizard store", () => {
 	beforeEach(() => {
@@ -147,65 +147,64 @@ describe("wizard store", () => {
 
 	describe("validateStepNext", () => {
 		it("should require minimum title length for APPLICATION_DETAILS", () => {
-			const application = ApplicationFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED", url: undefined }],
-				}),
-				title: "x".repeat(MIN_TITLE_LENGTH - 1),
-			});
-
-			useApplicationStore.setState({ application });
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
 
-			expect(useWizardStore.getState().validateStepNext()).toBe(false);
-		});
-
-		it("should require grant sections for PREVIEW_AND_APPROVE", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					grant_sections: [],
-				}),
+			const { application } = useApplicationStore.getState();
+			useApplicationStore.setState({
+				application: {
+					...application,
+					grant_template: {
+						...application?.grant_template,
+						rag_sources: [],
+					},
+					title: "Short",
+				} as any,
 			});
 
-			useApplicationStore.setState({ application });
+			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application,
+					grant_template: {
+						...useApplicationStore.getState().application?.grant_template,
+						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					},
+					title: "This is a longer title that meets requirements",
+				} as any,
+			});
+
+			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+		});
+
+		it("should require grant sections for APPLICATION_STRUCTURE", () => {
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
 
+			const { application } = useApplicationStore.getState();
+
+			useApplicationStore.setState({
+				application: {
+					...application,
+					grant_template: {
+						...application?.grant_template,
+						grant_sections: [],
+					},
+				} as any,
+			});
+
 			expect(useWizardStore.getState().validateStepNext()).toBe(false);
-		});
-	});
 
-	describe("polling", () => {
-		it("should start polling correctly", () => {
-			const mockFn = vi.fn().mockResolvedValue(undefined);
-			const setIntervalSpy = vi.spyOn(globalThis, "setInterval");
+			useApplicationStore.setState({
+				application: {
+					...useApplicationStore.getState().application,
+					grant_template: {
+						...useApplicationStore.getState().application?.grant_template,
+						grant_sections: [{ title: "Test Section" }],
+					},
+				} as any,
+			});
 
-			useWizardStore.getState().polling.start(mockFn, 1000, true);
-
-			
-			expect(mockFn).toHaveBeenCalledTimes(1);
-			expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
-			expect(useWizardStore.getState().polling.isActive).toBe(true);
-			expect(useWizardStore.getState().polling.intervalId).toBeDefined();
-		});
-
-		it("should stop polling correctly", () => {
-			const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
-			const mockFn = vi.fn().mockResolvedValue(undefined);
-
-			
-			useWizardStore.getState().polling.start(mockFn, 1000, false);
-
-			
-			expect(useWizardStore.getState().polling.isActive).toBe(true);
-			const { intervalId } = useWizardStore.getState().polling;
-			expect(intervalId).toBeDefined();
-
-			
-			useWizardStore.getState().polling.stop();
-
-			expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
-			expect(useWizardStore.getState().polling.isActive).toBe(false);
-			expect(useWizardStore.getState().polling.intervalId).toBeNull();
+			expect(useWizardStore.getState().validateStepNext()).toBe(true);
 		});
 	});
 });

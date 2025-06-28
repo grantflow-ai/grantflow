@@ -78,15 +78,12 @@ describe("CreateApplicationButton", () => {
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
 
-		
 		expect(screen.getByTestId("create-application-button")).toHaveTextContent("Creating...");
 		expect(screen.getByTestId("create-application-button")).toBeDisabled();
 
-		
 		const mockApplication = ApplicationFactory.build();
 		resolvePromise!(mockApplication);
 
-		
 		await waitFor(() => {
 			expect(mockPush).toHaveBeenCalledWith(
 				`/projects/${mockProjectId}/applications/${mockApplication.id}/wizard`,
@@ -108,7 +105,6 @@ describe("CreateApplicationButton", () => {
 			expect(toast.error).toHaveBeenCalledWith("Failed to create application");
 		});
 
-		
 		expect(screen.getByTestId("create-application-button")).toHaveTextContent("New Application");
 		expect(screen.getByTestId("create-application-button")).not.toBeDisabled();
 		expect(mockPush).not.toHaveBeenCalled();

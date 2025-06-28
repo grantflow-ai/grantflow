@@ -30,7 +30,6 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 			...prev,
 			[key]: !prev[key],
 		}));
-		
 	};
 
 	return (

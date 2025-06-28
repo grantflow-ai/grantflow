@@ -2,7 +2,6 @@ import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { deleteAccount, restoreAccount } from "./user";
 
-
 vi.mock("@/utils/api", () => ({
 	getClient: vi.fn(() => ({
 		delete: vi.fn(),

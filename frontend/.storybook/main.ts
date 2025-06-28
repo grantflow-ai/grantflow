@@ -21,9 +21,8 @@ const config: StorybookConfig = {
 			plugins: [tsconfigPaths()],
 			resolve: {
 				alias: {
-					
 					"@/styles/globals.css": "./storybook-mocks/globals.css",
-					
+
 					"@/utils/fonts": "./storybook-mocks/fonts.ts",
 				},
 			},

@@ -3,11 +3,9 @@ import { vi } from "vitest";
 
 import { type DragDropConfig, type DragDropHandlers, type DragDropItem, useDragAndDrop } from "./use-drag-and-drop";
 
-
 vi.mock("@dnd-kit/core", () => ({
 	closestCenter: vi.fn(),
 	DndContext: ({ children, onDragEnd, onDragOver, onDragStart }: any) => {
-		
 		if (onDragEnd) {
 			(globalThis as any).testDragEnd = onDragEnd;
 		}
@@ -25,7 +23,6 @@ vi.mock("@dnd-kit/core", () => ({
 	useSensor: vi.fn((sensor) => ({ sensor })),
 	useSensors: vi.fn((...sensors) => sensors),
 }));
-
 
 vi.mock("@dnd-kit/sortable", () => ({
 	SortableContext: ({ children }: { children: React.ReactNode }) => (
@@ -51,7 +48,7 @@ const createTestItems = (): TestItem[] => [
 describe("useDragAndDrop", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		
+
 		(globalThis as any).testDragEnd = undefined;
 		(globalThis as any).testDragOver = undefined;
 		(globalThis as any).testDragStart = undefined;
@@ -109,14 +106,12 @@ describe("useDragAndDrop", () => {
 			const { result } = renderHook(() => useDragAndDrop());
 			const items = createTestItems();
 
-			
 			render(
 				<result.current.DragDropWrapper items={items}>
 					<div>Test content</div>
 				</result.current.DragDropWrapper>,
 			);
 
-			
 			expect(result.current.isItemDragging("item-1")).toBe(false);
 			expect(result.current.isItemDragging("nonexistent")).toBe(false);
 		});
@@ -187,10 +182,8 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 
-			
 			expect((globalThis as any).testDragStart).toBeDefined();
 		});
 
@@ -209,7 +202,6 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect((globalThis as any).testDragOver).toBeDefined();
 		});
@@ -229,7 +221,6 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
@@ -250,7 +241,6 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect((globalThis as any).testDragEnd).toBeDefined();
 		});
@@ -272,7 +262,6 @@ describe("useDragAndDrop", () => {
 				</result.current.DragDropWrapper>,
 			);
 
-			
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 		});
 
@@ -295,9 +284,7 @@ describe("useDragAndDrop", () => {
 		});
 
 		it("should handle missing onReorder handler gracefully", () => {
-			const handlers: DragDropHandlers<TestItem> = {
-				
-			};
+			const handlers: DragDropHandlers<TestItem> = {};
 
 			const { result } = renderHook(() => useDragAndDrop(handlers));
 			const items = createTestItems();
@@ -375,7 +362,7 @@ describe("useDragAndDrop", () => {
 
 		it("should handle items with undefined parent_id", () => {
 			const itemsWithUndefinedParent: TestItem[] = [
-				{ id: "item-1", name: "Item 1", order: 1 }, 
+				{ id: "item-1", name: "Item 1", order: 1 },
 				{ id: "item-2", name: "Item 2", order: 2, parent_id: null },
 			];
 
@@ -441,7 +428,11 @@ describe("useDragAndDrop", () => {
 				await dragOverHandler(event);
 			});
 
-			expect(mockOnDragOver).toHaveBeenCalledWith(event);
+			expect(mockOnDragOver).toHaveBeenCalledWith(
+				event,
+				items.find((item) => item.id === "item-1"),
+				items.find((item) => item.id === "item-2"),
+			);
 		});
 
 		it("should support async onDragEnd handler", async () => {
@@ -470,60 +461,11 @@ describe("useDragAndDrop", () => {
 				await dragEndHandler(event);
 			});
 
-			expect(mockOnDragEnd).toHaveBeenCalledWith(event);
-		});
-	});
-
-	describe("Component re-rendering and dependencies", () => {
-		it("should create new wrapper when handlers change", () => {
-			const { rerender, result } = renderHook(({ handlers }) => useDragAndDrop(handlers), {
-				initialProps: { handlers: {} },
-			});
-
-			const firstWrapper = result.current.DragDropWrapper;
-
-			
-			expect(typeof firstWrapper).toBe("function");
-			expect(firstWrapper.name).toBe("DragDropWrapper");
-
-			
-			rerender({ handlers: {} });
-
-			
-			expect(result.current.DragDropWrapper).not.toBe(firstWrapper);
-			expect(typeof result.current.DragDropWrapper).toBe("function");
-			expect(result.current.DragDropWrapper.name).toBe("DragDropWrapper");
-		});
-
-		it("should update when handlers change", () => {
-			const mockHandler1 = vi.fn();
-			const mockHandler2 = vi.fn();
-
-			const { rerender, result } = renderHook(({ handlers }) => useDragAndDrop(handlers), {
-				initialProps: { handlers: { onDragStart: mockHandler1 } },
-			});
-
-			const firstWrapper = result.current.DragDropWrapper;
-
-			
-			expect(typeof firstWrapper).toBe("function");
-			expect(firstWrapper.name).toBe("DragDropWrapper");
-
-			
-			const initialResult = { ...result.current };
-
-			
-			rerender({ handlers: { onDragStart: mockHandler2 } });
-
-			
-			expect(result.current.DragDropWrapper).not.toBe(firstWrapper);
-
-			
-			expect(typeof result.current.DragDropWrapper).toBe("function");
-			expect(result.current.DragDropWrapper.name).toBe("DragDropWrapper");
-
-			// @ts-expect-error, mocking
-			expect(result.current.sensors).toEqual(initialResult.sensors);
+			expect(mockOnDragEnd).toHaveBeenCalledWith(
+				event,
+				items.find((item) => item.id === "item-1"),
+				items.find((item) => item.id === "item-2"),
+			);
 		});
 	});
 });

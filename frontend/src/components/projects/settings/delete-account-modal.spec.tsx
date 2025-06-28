@@ -85,7 +85,6 @@ describe("DeleteAccountModal", () => {
 		const deleteButton = screen.getByTestId("delete-button");
 		await user.click(deleteButton);
 
-		
 		await waitFor(() => {
 			expect(vi.mocked(deleteAccount)).toHaveBeenCalledTimes(1);
 		});
@@ -96,33 +95,35 @@ describe("DeleteAccountModal", () => {
 
 	it("shows loading state during deletion", async () => {
 		const user = userEvent.setup();
-		let resolvePromise: () => void;
-		vi.mocked(deleteAccount).mockResolvedValue({ message: "Account deleted", success: true });
+		let resolvePromise: (value: { message: string; success: boolean }) => void;
+
+		const deletePromise = new Promise<{ message: string; success: boolean }>((resolve) => {
+			resolvePromise = resolve;
+		});
+
+		vi.mocked(deleteAccount).mockReturnValue(deletePromise);
 
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
 		const deleteButton = screen.getByTestId("delete-button");
 		const cancelButton = screen.getByTestId("cancel-button");
 
-		
-		expect(deleteButton).not.toHaveAttribute('disabled');
-		expect(cancelButton).not.toHaveAttribute('disabled');
+		expect(deleteButton).not.toHaveAttribute("disabled");
+		expect(cancelButton).not.toHaveAttribute("disabled");
 		expect(deleteButton).toHaveTextContent("Delete and log out");
 
-		
 		await user.click(deleteButton);
 
-		
 		await waitFor(() => {
 			expect(screen.getByTestId("delete-button")).toHaveTextContent("Deleting...");
 		});
-		
-		
-		expect(screen.getByTestId("delete-button")).toHaveAttribute('disabled');
-		expect(screen.getByTestId("cancel-button")).toHaveAttribute('disabled');
 
-		
-		resolvePromise!();
+		const updatedDeleteButton = screen.getByTestId("delete-button");
+		const updatedCancelButton = screen.getByTestId("cancel-button");
+		expect(updatedDeleteButton).toHaveAttribute("disabled");
+		expect(updatedCancelButton).toHaveAttribute("disabled");
+
+		resolvePromise!({ message: "Account deleted", success: true });
 
 		await waitFor(() => {
 			expect(mockPush).toHaveBeenCalled();
@@ -146,12 +147,10 @@ describe("DeleteAccountModal", () => {
 			});
 		});
 
-		
 		expect(mockClearUser).not.toHaveBeenCalled();
 		expect(mockPush).not.toHaveBeenCalled();
 
-		
-		expect(screen.getByTestId("delete-button")).not.toHaveAttribute('disabled');
+		expect(screen.getByTestId("delete-button")).not.toHaveAttribute("disabled");
 		expect(screen.getByTestId("delete-button")).toHaveTextContent("Delete and log out");
 	});
 
@@ -177,7 +176,6 @@ describe("DeleteAccountModal", () => {
 		const cancelButton = screen.getByTestId("cancel-button");
 		const deleteButton = screen.getByTestId("delete-button");
 
-		
 		expect(cancelButton).toHaveClass("w-[90px]");
 		expect(deleteButton).toHaveClass("bg-[#1e13f8]");
 	});

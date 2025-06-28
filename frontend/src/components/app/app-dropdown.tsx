@@ -80,8 +80,6 @@ export function AppDropdownMenuTrigger({ ...props }: React.ComponentProps<typeof
 	return <DropdownMenuTrigger {...props} />;
 }
 
-
-
 export function DangerMenuItem({ children, className, ...props }: Omit<AppDropdownMenuItemProps, "variant">) {
 	return (
 		<AppDropdownMenuItem

@@ -2,7 +2,7 @@ import { AnalyticsBrowser } from "@segment/analytics-next";
 
 import { getEnv } from "./env";
 
-const analytics: { value: AnalyticsBrowser | null } = {
+export const analytics: { value: AnalyticsBrowser | null } = {
 	value: null,
 };
 

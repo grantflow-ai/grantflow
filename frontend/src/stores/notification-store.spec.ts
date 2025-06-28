@@ -18,7 +18,6 @@ const mockErrorNotification = {
 
 describe("useNotificationStore", () => {
 	beforeEach(() => {
-		
 		act(() => {
 			useNotificationStore.getState().clearAllNotifications();
 		});
@@ -61,7 +60,6 @@ describe("useNotificationStore", () => {
 	it("removes specific notification by id", () => {
 		const { result } = renderHook(() => useNotificationStore());
 
-		
 		act(() => {
 			result.current.addNotification(mockNotification);
 			result.current.addNotification(mockErrorNotification);
@@ -71,7 +69,6 @@ describe("useNotificationStore", () => {
 
 		const firstNotificationId = result.current.notifications[0].id;
 
-		
 		act(() => {
 			result.current.removeNotification(firstNotificationId);
 		});
@@ -83,14 +80,12 @@ describe("useNotificationStore", () => {
 	it("does nothing when removing non-existent notification", () => {
 		const { result } = renderHook(() => useNotificationStore());
 
-		
 		act(() => {
 			result.current.addNotification(mockNotification);
 		});
 
 		expect(result.current.notifications).toHaveLength(1);
 
-		
 		act(() => {
 			result.current.removeNotification("non-existent-id");
 		});
@@ -102,7 +97,6 @@ describe("useNotificationStore", () => {
 	it("clears all notifications", () => {
 		const { result } = renderHook(() => useNotificationStore());
 
-		
 		act(() => {
 			result.current.addNotification(mockNotification);
 			result.current.addNotification(mockErrorNotification);
@@ -111,7 +105,6 @@ describe("useNotificationStore", () => {
 
 		expect(result.current.notifications).toHaveLength(3);
 
-		
 		act(() => {
 			result.current.clearAllNotifications();
 		});
@@ -137,10 +130,10 @@ describe("useNotificationStore", () => {
 		};
 
 		act(() => {
-			result.current.addNotification(mockNotification); 
-			result.current.addNotification(mockErrorNotification); 
-			result.current.addNotification(infoNotification); 
-			result.current.addNotification(warningNotification); 
+			result.current.addNotification(mockNotification);
+			result.current.addNotification(mockErrorNotification);
+			result.current.addNotification(infoNotification);
+			result.current.addNotification(warningNotification);
 		});
 
 		expect(result.current.notifications).toHaveLength(4);
@@ -204,7 +197,6 @@ describe("useNotificationStore", () => {
 
 		const secondId = result.current.notifications[1].id;
 
-		
 		const firstNum = Number.parseInt(firstId.replace("notification-", ""));
 		const secondNum = Number.parseInt(secondId.replace("notification-", ""));
 
@@ -214,7 +206,6 @@ describe("useNotificationStore", () => {
 	it("can perform complex notification management scenarios", () => {
 		const { result } = renderHook(() => useNotificationStore());
 
-		
 		act(() => {
 			result.current.addNotification({ ...mockNotification, message: "First" });
 			result.current.addNotification({ ...mockNotification, message: "Second" });
@@ -223,7 +214,6 @@ describe("useNotificationStore", () => {
 
 		expect(result.current.notifications).toHaveLength(3);
 
-		
 		const secondId = result.current.notifications[1].id;
 		act(() => {
 			result.current.removeNotification(secondId);
@@ -233,7 +223,6 @@ describe("useNotificationStore", () => {
 		expect(result.current.notifications[0].message).toBe("First");
 		expect(result.current.notifications[1].message).toBe("Third");
 
-		
 		act(() => {
 			result.current.addNotification({ ...mockNotification, message: "Fourth" });
 		});
@@ -241,7 +230,6 @@ describe("useNotificationStore", () => {
 		expect(result.current.notifications).toHaveLength(3);
 		expect(result.current.notifications[2].message).toBe("Fourth");
 
-		
 		act(() => {
 			result.current.clearAllNotifications();
 		});

@@ -3,15 +3,13 @@ import { Factory } from "interface-forge";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 
-
-type HttpErrorResponse = API.Login.Http400.ResponseBody; 
+type HttpErrorResponse = API.Login.Http400.ResponseBody;
 
 export const ErrorResponseFactory = new Factory<HttpErrorResponse>((factory) => ({
 	detail: factory.lorem.sentence(),
 	extra: factory.datatype.boolean() ? { error: factory.lorem.word() } : null,
 	status_code: factory.helpers.arrayElement([400, 401, 403, 404, 422, 500]),
 }));
-
 
 export const TokenResponseFactory = new Factory<API.AcceptInvitation.Http200.ResponseBody>((factory) => ({
 	token: factory.string.alphanumeric(64),
@@ -33,18 +31,15 @@ export const OtpResponseFactory = new Factory<API.GenerateOtp.Http200.ResponseBo
 	otp: factory.string.numeric(6),
 }));
 
-
 export const OrganizationFactory = new Factory<API.CreateOrganization.Http201.ResponseBody>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
 	full_name: factory.company.name(),
 	id: factory.string.uuid(),
 }));
 
-
 export const IdResponseFactory = new Factory<API.CreateProject.Http201.ResponseBody>((factory) => ({
 	id: factory.string.uuid(),
 }));
-
 
 export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.ResponseBody[0]>((factory) => ({
 	applications_count: factory.number.int({ max: 10, min: 0 }),
@@ -89,7 +84,6 @@ export const RagSourceFactory = new Factory<RagSource>((factory) => {
 	};
 });
 
-
 type FundingOrganization = NonNullable<
 	API.CreateApplication.Http201.ResponseBody["grant_template"]
 >["funding_organization"];
@@ -101,7 +95,6 @@ export const FundingOrganizationFactory = new Factory<NonNullable<FundingOrganiz
 	id: factory.string.uuid(),
 	updated_at: factory.date.recent().toISOString(),
 }));
-
 
 type ResearchObjective = NonNullable<API.CreateApplication.Http201.ResponseBody["research_objectives"]>[0];
 type ResearchTask = ResearchObjective["research_tasks"][0];
@@ -118,7 +111,6 @@ export const ResearchObjectiveFactory = new Factory<ResearchObjective>((factory)
 	research_tasks: ResearchTaskFactory.batch(factory.number.int({ max: 4, min: 1 })),
 	title: factory.lorem.sentence(),
 }));
-
 
 type FormInputs = NonNullable<API.CreateApplication.Http201.ResponseBody["form_inputs"]>;
 
@@ -171,7 +163,6 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 		count: { max: 5, min: 1 },
 	}),
 }));
-
 
 type GrantTemplate = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
 
@@ -238,15 +229,12 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 	size: factory.number.int({ max: 10_485_760, min: 1024 }),
 }));
 
-
 type UserRole = API.CreateInvitationRedirectUrl.RequestBody["role"];
-
 
 export const InvitationFactory = new Factory<API.CreateInvitationRedirectUrl.RequestBody>((factory) => ({
 	email: factory.internet.email(),
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
 }));
-
 
 export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
 	title: factory.lorem.sentence(),
@@ -261,7 +249,6 @@ export const UpdateApplicationRequestFactory = new Factory<API.UpdateApplication
 	title: factory.lorem.sentence(),
 }));
 
-
 export const ProjectRequestFactory = new Factory<API.CreateProject.RequestBody>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
@@ -274,7 +261,6 @@ export const UpdateProjectRequestFactory = new Factory<API.UpdateProject.Request
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
 	name: factory.company.name(),
 }));
-
 
 export const OrganizationRequestFactory = new Factory<API.CreateOrganization.RequestBody>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
@@ -291,7 +277,6 @@ export const LoginRequestFactory = new Factory<API.Login.RequestBody>((factory) 
 	id_token: factory.string.alphanumeric(256),
 }));
 
-
 export const UrlRequestFactory = new Factory<API.CrawlGrantApplicationUrl.RequestBody>((factory) => ({
 	url: factory.internet.url(),
 }));
@@ -299,7 +284,6 @@ export const UrlRequestFactory = new Factory<API.CrawlGrantApplicationUrl.Reques
 export const CrawlUrlRequestFactory = UrlRequestFactory;
 
 export const CreateInvitationRequestFactory = InvitationFactory;
-
 
 export const RoleRequestFactory = new Factory<API.UpdateInvitationRole.RequestBody>((factory) => ({
 	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
@@ -344,7 +328,6 @@ export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRe
 	title: "Category Name",
 	topics: [],
 }));
-
 
 interface SourceProcessingNotification {
 	identifier: string;
@@ -430,7 +413,6 @@ export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Ra
 		type: "data",
 	};
 });
-
 
 type ApplicationListItem = API.GetProject.Http200.ResponseBody["grant_applications"][0];
 

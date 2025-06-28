@@ -10,7 +10,6 @@ export async function generateGrantTemplate(
 	applicationId: string,
 	templateId: string,
 ): Promise<string> {
-	
 	const correlationId = generateCorrelationId();
 	const operation = "grant_template_generation";
 
@@ -33,7 +32,6 @@ export async function generateGrantTemplate(
 
 		logTraceEvent(correlationId, operation, "action_success");
 
-		
 		return correlationId;
 	} catch (error) {
 		logTraceEvent(correlationId, operation, "action_failed", {

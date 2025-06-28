@@ -88,7 +88,7 @@ describe("AppButton", () => {
 
 		const button = screen.getByTestId("test-button");
 		expect(button).toHaveClass("custom-class");
-		
+
 		expect(button.tagName).toBe("BUTTON");
 	});
 });

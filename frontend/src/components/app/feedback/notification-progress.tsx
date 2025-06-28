@@ -28,7 +28,10 @@ export function NotificationProgress({ notification }: NotificationProgressProps
 	return (
 		<div className="space-y-2" data-testid="notification-progress">
 			<div className="flex items-center justify-between text-sm">
-				<p className="text-muted-foreground flex items-center gap-2" data-testid="notification-progress-message">
+				<p
+					className="text-muted-foreground flex items-center gap-2"
+					data-testid="notification-progress-message"
+				>
 					<span>{getStatusIndicator()}</span>
 					<span>{message}</span>
 				</p>
@@ -37,7 +40,9 @@ export function NotificationProgress({ notification }: NotificationProgressProps
 				</span>
 			</div>
 			<Progress value={progressPercentage} />
-			<p className="text-muted-foreground text-xs" data-testid="notification-progress-percentage">{progressPercentage}% complete</p>
+			<p className="text-muted-foreground text-xs" data-testid="notification-progress-percentage">
+				{progressPercentage}% complete
+			</p>
 		</div>
 	);
 }

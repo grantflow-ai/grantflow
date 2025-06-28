@@ -37,9 +37,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		await duplicateProject(projectId);
 	};
 
-	
 	useEffect(() => {
-		
 		const timeouts = [
 			setTimeout(() => {
 				addNotification({
@@ -153,7 +151,6 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 							setShowCreateModal(true);
 						}}
 						onInviteCollaborators={() => {
-							
 							if (projects.length > 0) {
 								setSelectedProjectForInvite(projects[0]);
 								setShowInviteModal(true);

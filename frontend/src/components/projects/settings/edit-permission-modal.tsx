@@ -39,7 +39,6 @@ const PERMISSION_OPTIONS = [
 	},
 ];
 
-
 const mockAvailableProjects = [
 	{ id: "1", name: "Research Neural Networks" },
 	{ id: "2", name: "Research Machine Learning" },
@@ -66,7 +65,6 @@ export function EditPermissionModal({
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLDivElement>(null);
 
-	
 	useEffect(() => {
 		if (member) {
 			setSelectedRole(member.role);
@@ -74,7 +72,6 @@ export function EditPermissionModal({
 		}
 	}, [member]);
 
-	
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (dropdownRef.current && event.target && !dropdownRef.current.contains(event.target as Node)) {
@@ -116,7 +113,6 @@ export function EditPermissionModal({
 			);
 			handleClose();
 		} catch (error) {
-			
 			// eslint-disable-next-line no-console
 			console.error("Failed to update permissions:", error);
 		} finally {
@@ -149,7 +145,6 @@ export function EditPermissionModal({
 
 	if (!member) return null;
 
-	
 	const canEdit =
 		currentUserRole === UserRole.OWNER || (currentUserRole === UserRole.ADMIN && member.role !== UserRole.OWNER);
 
@@ -257,7 +252,7 @@ export function EditPermissionModal({
 											onClick={() => {
 												setSelectedRole(option.value);
 												setIsDropdownOpen(false);
-												
+
 												if (option.value === UserRole.ADMIN) {
 													setSelectedProjects([]);
 												}

@@ -13,7 +13,6 @@ export function getClient(): KyInstance {
 		hooks: {
 			afterResponse: [
 				(request, _options, response) => {
-					
 					logTrace("info", `API ${request.method} ${request.url} - ${response.status}`, {
 						correlation_id: request.headers.get("X-Correlation-ID"),
 						method: request.method,
@@ -27,7 +26,6 @@ export function getClient(): KyInstance {
 			],
 			beforeError: [
 				(error) => {
-					
 					logTrace("error", `API ERROR ${error.request.method} ${error.request.url}`, {
 						correlation_id: error.request.headers.get("X-Correlation-ID"),
 						error: error.message,
@@ -42,9 +40,7 @@ export function getClient(): KyInstance {
 			],
 			beforeRequest: [
 				(request) => {
-					
 					logTrace("info", `API ${request.method} ${request.url}`, {
-						
 						correlation_id: request.headers.get("X-Correlation-ID"),
 						method: request.method,
 						operation: request.headers.get("X-Operation"),

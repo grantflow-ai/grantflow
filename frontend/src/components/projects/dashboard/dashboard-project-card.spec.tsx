@@ -58,16 +58,13 @@ describe("DashboardProjectCard", () => {
 
 		const moreButton = screen.getByTestId("more-options-button");
 
-		
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 
-		
 		await user.click(moreButton);
 		expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
 		expect(screen.getByTestId("delete-project-button")).toBeInTheDocument();
 		expect(screen.getByTestId("duplicate-project-button")).toBeInTheDocument();
 
-		
 		await user.click(moreButton);
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 	});
@@ -78,16 +75,13 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
 
-		
 		await user.click(screen.getByTestId("more-options-button"));
 
-		
 		await user.click(screen.getByTestId("delete-project-button"));
 
 		expect(mockOnDelete).toHaveBeenCalledWith(project.id);
 		expect(mockOnDelete).toHaveBeenCalledTimes(1);
 
-		
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 	});
 
@@ -97,16 +91,13 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
 
-		
 		await user.click(screen.getByTestId("more-options-button"));
 
-		
 		await user.click(screen.getByTestId("duplicate-project-button"));
 
 		expect(mockOnDuplicate).toHaveBeenCalledWith(project.id);
 		expect(mockOnDuplicate).toHaveBeenCalledTimes(1);
 
-		
 		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
 	});
 
@@ -115,7 +106,6 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard project={project} />);
 
-		
 		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
 		expect(screen.getByTestId("more-options-button")).toBeInTheDocument();
 	});
@@ -125,8 +115,6 @@ describe("DashboardProjectCard", () => {
 
 		render(<DashboardProjectCard project={project} />);
 
-		
-		
 		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
 	});
 });
