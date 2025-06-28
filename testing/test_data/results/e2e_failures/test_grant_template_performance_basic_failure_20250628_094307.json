@@ -1,0 +1,27 @@
+{
+  "test_name": "test_grant_template_performance_basic",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "TypeError",
+    "message": "string indices must be integers, not 'str'",
+    "execution_time_before_failure": 56.2311851978302
+  },
+  "performance": {
+    "execution_time": 56.2311851978302,
+    "timeout_reached": false,
+    "timeout_utilization": 0.31239547332127887
+  },
+  "diagnostic_info": {
+    "timeout_configured": 180,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger",
+      "async_session_maker",
+      "organization_mapping",
+      "melanoma_alliance_full_application_id"
+    ]
+  },
+  "timestamp": "2025-06-28T09:43:07.486118+00:00"
+}

@@ -1,0 +1,82 @@
+{
+  "test_name": "grant_template_performance_basic",
+  "test_category": "grant_template",
+  "timestamp": "2025-06-28T11:43:07.485677",
+  "test_id": "4248236f-d67c-4000-8302-6ac93b2dabc1",
+  "configuration": {
+    "template_id": "853fd83d-bb68-4410-91ba-cb7088bbaf97",
+    "application_id": "43b4aed5-8549-461f-9290-5ee9a630ac9a",
+    "cfp_source": "melanoma_alliance",
+    "funding_agency": "Melanoma Alliance"
+  },
+  "total_duration_seconds": 56.229619,
+  "total_duration_minutes": 0.9371603166666667,
+  "stage_metrics": [
+    {
+      "stage_name": "rag_creation",
+      "duration_seconds": 0.166981,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.2969627092796058
+    },
+    {
+      "stage_name": "cfp_extraction",
+      "duration_seconds": 55.983194,
+      "meets_target": true,
+      "target_seconds": 60,
+      "bottleneck": false,
+      "percentage_of_total": 99.56175232131663
+    },
+    {
+      "stage_name": "section_extraction",
+      "duration_seconds": 0.079401,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.14120849725124404
+    },
+    {
+      "stage_name": "metadata_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 71.2,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 0,
+    "total_words": 0,
+    "total_lines": 1,
+    "section_count": 1,
+    "avg_chars_per_section": 0.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": false,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [],
+    "content_richness_score": 0.0,
+    "structure_quality_score": 0.0,
+    "completeness_score": 20.0,
+    "overall_quality_score": 4.0,
+    "meets_min_length": false,
+    "meets_min_sections": false,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "grant_template"
+  },
+  "errors_encountered": [
+    "TypeError: string indices must be integers, not 'str'"
+  ],
+  "warnings": []
+}

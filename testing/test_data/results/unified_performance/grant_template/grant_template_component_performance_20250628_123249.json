@@ -1,0 +1,84 @@
+{
+  "test_name": "grant_template_component_performance",
+  "test_category": "grant_template",
+  "timestamp": "2025-06-28T12:32:49.714957",
+  "test_id": "405719d8-9076-4858-87fb-0ec81ce4ca9c",
+  "configuration": {
+    "test_type": "component_validation",
+    "components": [
+      "rag_creation",
+      "cfp_extraction",
+      "section_extraction",
+      "metadata_generation"
+    ],
+    "mock_data": true
+  },
+  "total_duration_seconds": 1.00499,
+  "total_duration_minutes": 0.016749833333333335,
+  "stage_metrics": [
+    {
+      "stage_name": "rag_creation",
+      "duration_seconds": 0.201152,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 20.015323535557567
+    },
+    {
+      "stage_name": "cfp_extraction",
+      "duration_seconds": 0.301223,
+      "meets_target": true,
+      "target_seconds": 60,
+      "bottleneck": false,
+      "percentage_of_total": 29.972736047124847
+    },
+    {
+      "stage_name": "section_extraction",
+      "duration_seconds": 0.401191,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 39.91989970049453
+    },
+    {
+      "stage_name": "metadata_generation",
+      "duration_seconds": 0.101225,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 10.07223952477139
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 89.9,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 801,
+    "total_words": 85,
+    "total_lines": 25,
+    "section_count": 7,
+    "avg_chars_per_section": 114.42857142857143,
+    "has_objectives": true,
+    "has_work_plan": true,
+    "has_methodology": true,
+    "has_timeline": true,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [],
+    "content_richness_score": 16.02,
+    "structure_quality_score": 100.0,
+    "completeness_score": 100,
+    "overall_quality_score": 66.408,
+    "meets_min_length": false,
+    "meets_min_sections": true,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "grant_template"
+  },
+  "errors_encountered": [],
+  "warnings": []
+}

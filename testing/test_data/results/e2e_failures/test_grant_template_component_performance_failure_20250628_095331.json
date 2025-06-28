@@ -1,0 +1,24 @@
+{
+  "test_name": "test_grant_template_component_performance",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "TypeError",
+    "message": "'_AsyncGeneratorContextManager' object does not support the context manager protocol",
+    "execution_time_before_failure": 5.602836608886719e-05
+  },
+  "performance": {
+    "execution_time": 5.602836608886719e-05,
+    "timeout_reached": false,
+    "timeout_utilization": 9.338061014811198e-07
+  },
+  "diagnostic_info": {
+    "timeout_configured": 60,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-06-28T09:53:31.778860+00:00"
+}
