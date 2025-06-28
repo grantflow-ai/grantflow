@@ -57,7 +57,7 @@ export function AnimatedFeatureArticle({
 		<motion.article
 			className={className}
 			id="feature-item"
-			initial="hidden"
+			initial="visible"
 			variants={featureArticleVariants}
 			viewport={{ amount: 0.2, once: true }}
 			whileInView="visible"
