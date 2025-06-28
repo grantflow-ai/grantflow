@@ -1,0 +1,27 @@
+{
+  "test_name": "test_optimization_cache_effectiveness",
+  "test_category": "quality_assessment",
+  "status": "failed",
+  "error": {
+    "type": "IllegalStateChangeError",
+    "message": "Method 'close()' can't be called here; method '_connection_for_bind()' is already in progress and this would cause an unexpected state change to <SessionTransactionState.CLOSED: 5> (Background on this error at: https://sqlalche.me/e/20/isce)",
+    "execution_time_before_failure": 0.174821138381958
+  },
+  "performance": {
+    "execution_time": 0.174821138381958,
+    "timeout_reached": false,
+    "timeout_utilization": 0.00029136856396993
+  },
+  "diagnostic_info": {
+    "timeout_configured": 600,
+    "category": "quality_assessment",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger",
+      "async_session_maker",
+      "organization_mapping",
+      "melanoma_alliance_full_application_id"
+    ]
+  },
+  "timestamp": "2025-06-28T09:48:57.404681+00:00"
+}

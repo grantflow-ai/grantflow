@@ -1,0 +1,24 @@
+{
+  "test_name": "test_grant_template_component_performance",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "AssertionError",
+    "message": "Performance result is None - test framework error",
+    "execution_time_before_failure": 1.009739875793457
+  },
+  "performance": {
+    "execution_time": 1.009739875793457,
+    "timeout_reached": false,
+    "timeout_utilization": 0.01682899792989095
+  },
+  "diagnostic_info": {
+    "timeout_configured": 60,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-06-28T09:59:33.305796+00:00"
+}
