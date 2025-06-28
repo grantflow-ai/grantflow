@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-nested-conditional */
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -33,110 +32,7 @@ export default function WelcomeModal() {
 			<DialogContent className="flex w-full max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-[#1f13f8cf] bg-white px-0 pb-8 pt-0">
 				<DialogHeader className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-[#FAF9FB]">
 					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_#1E13F8_0%,_transparent_70%)] opacity-80" />
-					<figure className="flex flex-col items-center justify-center gap-4">
-						{/* Progress Bar */}
-						<main className="flex items-center">
-							{PROGRESS_BAR_STEPS.map((_, index) => (
-								<div
-									className={`${
-										index < PROGRESS_BAR_STEPS.length - 1 ? "w-[145px]" : ""
-									} flex items-center`}
-									key={index}
-								>
-									<motion.div
-										animate={index < step ? "active" : index === step ? "next" : "inactive"}
-										className="size-[11px] rounded-full flex justify-center items-center border"
-										initial="inactive"
-										style={{
-											borderColor:
-												index === step
-													? "var(--app-primary-blue)"
-													: index < step
-														? "transparent"
-														: "#E5E7EB",
-										}}
-										transition={{ duration: 0.5 }}
-										variants={{
-											active: { backgroundColor: "var(--app-primary-blue)", scale: 1.1 },
-											inactive: { backgroundColor: "transparent", scale: 1 },
-											next: { backgroundColor: "transparent", scale: 1 },
-										}}
-									>
-										<AnimatePresence mode="wait">
-											{index < step ? (
-												<motion.div
-													animate="active"
-													className="flex items-center justify-center"
-													exit="hidden"
-													initial="hidden"
-													key={`check-${index}`}
-													style={{ transform: "translate(-0.5px, -0.5px)" }}
-													transition={{ delay: 0.3, duration: 0.3 }}
-													variants={{
-														active: { opacity: 1, scale: 1 },
-														hidden: { opacity: 0, scale: 0 },
-													}}
-												>
-													<Check className="size-[7px] stroke-[5] text-white" />
-												</motion.div>
-											) : index === step ? (
-												<motion.div
-													animate="active"
-													className="size-[3.5px] rounded-full bg-primary"
-													exit="hidden"
-													initial="hidden"
-													key={`dot-${index}`}
-													style={{
-														transform: "translate(0, -0.5px)",
-													}}
-													transition={{ duration: 0.5 }}
-													variants={{
-														active: { opacity: 1, scale: 1 },
-														hidden: { opacity: 0, scale: 0 },
-													}}
-												/>
-											) : null}
-										</AnimatePresence>
-									</motion.div>
-
-									{/* Animated Line */}
-									{index < PROGRESS_BAR_STEPS.length - 1 && (
-										<div className="relative h-px w-full overflow-hidden bg-gray-200">
-											{index === step - 1 ? (
-												<motion.div
-													animate={{ width: "100%" }}
-													className="absolute left-0 top-0 h-full bg-primary"
-													initial={{ width: 0 }}
-													key={`line-${index}`}
-													transition={{ duration: 0.8, ease: "easeInOut" }}
-												/>
-											) : index < step - 1 ? (
-												<div className="absolute left-0 top-0 size-full bg-primary" />
-											) : null}
-										</div>
-									)}
-								</div>
-							))}
-						</main>
-
-						{/* Labels */}
-						<main className="flex w-[839px] items-center justify-between">
-							{PROGRESS_BAR_STEPS.map((label, index) => (
-								<h5
-									className={`text-[11px] font-semibold ${
-										index < step - 1
-											? "text-app-dark-blue"
-											: index === step - 1
-												? "text-primary"
-												: "text-gray-400"
-									}`}
-									key={index}
-								>
-									{label}
-								</h5>
-							))}
-						</main>
-					</figure>
+					<ProgressBar step={step} />
 				</DialogHeader>
 				<section className=" flex w-full justify-between px-10">
 					<DialogTitle>
@@ -191,4 +87,135 @@ export default function WelcomeModal() {
 			</DialogContent>
 		</Dialog>
 	);
+}
+
+function ProgressBar({ step }: { step: number }) {
+	return (
+		<figure className="flex flex-col items-center justify-center gap-4">
+			<main className="flex items-center">
+				{PROGRESS_BAR_STEPS.map((_, index) => (
+					<ProgressStep index={index} key={index} step={step} />
+				))}
+			</main>
+			<main className="flex w-[839px] items-center justify-between">
+				{PROGRESS_BAR_STEPS.map((label, index) => (
+					<ProgressLabel index={index} key={index} label={label} step={step} />
+				))}
+			</main>
+		</figure>
+	);
+}
+
+function ProgressLabel({ index, label, step }: { index: number; label: string; step: number }) {
+	const getTextColor = () => {
+		if (index < step - 1) return "text-app-dark-blue";
+		if (index === step - 1) return "text-primary";
+		return "text-gray-400";
+	};
+
+	return <h5 className={`text-[11px] font-semibold ${getTextColor()}`}>{label}</h5>;
+}
+
+function ProgressLine({ index, step }: { index: number; step: number }) {
+	if (index >= PROGRESS_BAR_STEPS.length - 1) return null;
+
+	const renderLineContent = () => {
+		if (index === step - 1) {
+			return (
+				<motion.div
+					animate={{ width: "100%" }}
+					className="absolute left-0 top-0 h-full bg-primary"
+					initial={{ width: 0 }}
+					key={`line-${index}`}
+					transition={{ duration: 0.8, ease: "easeInOut" }}
+				/>
+			);
+		}
+		if (index < step - 1) {
+			return <div className="absolute left-0 top-0 size-full bg-primary" />;
+		}
+		return null;
+	};
+
+	return <div className="relative h-px w-full overflow-hidden bg-gray-200">{renderLineContent()}</div>;
+}
+
+function ProgressStep({ index, step }: { index: number; step: number }) {
+	return (
+		<div className={`${index < PROGRESS_BAR_STEPS.length - 1 ? "w-[145px]" : ""} flex items-center`}>
+			<ProgressStepIcon index={index} step={step} />
+			<ProgressLine index={index} step={step} />
+		</div>
+	);
+}
+
+function ProgressStepIcon({ index, step }: { index: number; step: number }) {
+	const getAnimationState = () => {
+		if (index < step) return "active";
+		if (index === step) return "next";
+		return "inactive";
+	};
+
+	const getBorderColor = () => {
+		if (index === step) return "var(--app-primary-blue)";
+		if (index < step) return "transparent";
+		return "#E5E7EB";
+	};
+
+	return (
+		<motion.div
+			animate={getAnimationState()}
+			className="size-[11px] rounded-full flex justify-center items-center border"
+			initial="inactive"
+			style={{ borderColor: getBorderColor() }}
+			transition={{ duration: 0.5 }}
+			variants={{
+				active: { backgroundColor: "var(--app-primary-blue)", scale: 1.1 },
+				inactive: { backgroundColor: "transparent", scale: 1 },
+				next: { backgroundColor: "transparent", scale: 1 },
+			}}
+		>
+			<AnimatePresence mode="wait">{renderIconContent(index, step)}</AnimatePresence>
+		</motion.div>
+	);
+}
+
+function renderIconContent(index: number, step: number) {
+	if (index < step) {
+		return (
+			<motion.div
+				animate="active"
+				className="flex items-center justify-center"
+				exit="hidden"
+				initial="hidden"
+				key={`check-${index}`}
+				style={{ transform: "translate(-0.5px, -0.5px)" }}
+				transition={{ delay: 0.3, duration: 0.3 }}
+				variants={{
+					active: { opacity: 1, scale: 1 },
+					hidden: { opacity: 0, scale: 0 },
+				}}
+			>
+				<Check className="size-[7px] stroke-[5] text-white" />
+			</motion.div>
+		);
+	}
+	if (index === step) {
+		return (
+			<motion.div
+				animate="active"
+				className="size-[3.5px] rounded-full bg-primary"
+				exit="hidden"
+				initial="hidden"
+				key={`dot-${index}`}
+				style={{ transform: "translate(0, -0.5px)" }}
+				transition={{ duration: 0.5 }}
+				variants={{
+					active: { opacity: 1, scale: 1 },
+					hidden: { opacity: 0, scale: 0 },
+				}}
+			/>
+		);
+	}
+	return null;
 }

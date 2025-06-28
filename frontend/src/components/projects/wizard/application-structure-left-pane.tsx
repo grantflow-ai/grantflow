@@ -276,9 +276,17 @@ export default function ApplicationStructureLeftPane() {
 										<div className={getStepNumberClassName(sectionIndex)}>
 											<span className="text-xs font-medium">{sectionIndex + 1}</span>
 										</div>
-										<h4 className={getStepTitleClassName(sectionIndex)}>{section.title}</h4>
+										<h4
+											className={getStepTitleClassName(sectionIndex)}
+											data-testid="analyzing-step-title"
+										>
+											{section.title}
+										</h4>
 										{isStepActive(sectionIndex) && (
-											<div className="ml-2 size-2 animate-pulse rounded-full bg-blue-500" />
+											<div
+												className="ml-2 size-2 animate-pulse rounded-full bg-blue-500"
+												data-testid="step-active-indicator"
+											/>
 										)}
 									</div>
 

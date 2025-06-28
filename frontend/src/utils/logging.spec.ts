@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import { logError, logTrace } from "./logging";
 
-// Mock console methods
 const mockConsoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 const mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -46,7 +45,6 @@ describe("Logging Utilities", () => {
 				}),
 			);
 
-			// Verify timestamp is a valid ISO string
 			const [, logData] = mockConsoleLog.mock.calls[0] as [string, Record<string, unknown>];
 			expect(new Date(logData.timestamp as string).toISOString()).toBe(logData.timestamp);
 		});

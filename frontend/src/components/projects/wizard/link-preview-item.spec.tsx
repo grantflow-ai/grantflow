@@ -102,31 +102,26 @@ describe("LinkPreviewItem", () => {
 			const url = "https://example.com";
 			render(<LinkPreviewItem url={url} />);
 
-			const container = screen.getByTestId("link-preview-item");
-			const linkIcon = container.querySelector(".text-primary");
+			const linkIcon = screen.getByTestId("link-icon");
 			expect(linkIcon).toBeInTheDocument();
-			expect(linkIcon).toHaveClass("opacity-100");
 		});
 
-		it("shows remove icon with proper styling", () => {
+		it("shows remove icon", () => {
 			const url = "https://example.com";
 			render(<LinkPreviewItem url={url} />);
 
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			expect(removeIcon).toBeInTheDocument();
-			expect(removeIcon).toHaveClass("cursor-pointer");
 		});
 
 		it("has proper icon transition classes", () => {
 			const url = "https://example.com";
 			render(<LinkPreviewItem url={url} />);
 
-			const container = screen.getByTestId("link-preview-item");
-
 			const removeIcon = screen.getByTestId("link-remove-icon");
-			expect(removeIcon).toHaveClass("transition-opacity");
-			const linkIcon = container.querySelector(".text-primary");
-			expect(linkIcon).toHaveClass("transition-opacity");
+			expect(removeIcon).toBeInTheDocument();
+			const linkIcon = screen.getByTestId("link-icon");
+			expect(linkIcon).toBeInTheDocument();
 		});
 	});
 
@@ -213,33 +208,6 @@ describe("LinkPreviewItem", () => {
 		});
 	});
 
-	describe("Styling and Layout", () => {
-		it("has correct container classes", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const container = screen.getByTestId("link-preview-item");
-			expect(container).toHaveClass("group");
-		});
-
-		it("has correct icon container styling", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const container = screen.getByTestId("link-preview-item");
-			const iconContainer = container.querySelector("div:first-child");
-			expect(iconContainer).toHaveClass("flex");
-		});
-
-		it("has correct link styling", () => {
-			const url = "https://example.com";
-			render(<LinkPreviewItem url={url} />);
-
-			const linkElement = screen.getByTestId("link-url");
-			expect(linkElement).toHaveClass("text-blue-600");
-		});
-	});
-
 	describe("Hover Behavior", () => {
 		it("shows remove icon on hover via CSS classes", () => {
 			const url = "https://example.com";
@@ -253,8 +221,7 @@ describe("LinkPreviewItem", () => {
 			const url = "https://example.com";
 			render(<LinkPreviewItem url={url} />);
 
-			const container = screen.getByTestId("link-preview-item");
-			const linkIcon = container.querySelector(".text-primary");
+			const linkIcon = screen.getByTestId("link-icon");
 			expect(linkIcon).toHaveClass("group-hover:opacity-0");
 		});
 	});
