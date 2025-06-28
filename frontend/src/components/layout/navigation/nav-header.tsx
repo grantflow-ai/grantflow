@@ -29,22 +29,26 @@ const NavLink = ({
 	label: string;
 	onClick?: () => void;
 	theme?: "dark" | "light";
-}) => (
-	<AppButton
-		aria-label={`Go to ${label} Page`}
-		className={cn(
-			isActive ? (theme === "light" ? "text-link-hover-light" : "text-link-hover-dark") : "",
-			className,
-		)}
-		size="lg"
-		theme={theme}
-		variant="link"
-	>
-		<Link href={href} onClick={onClick}>
-			{label}
-		</Link>
-	</AppButton>
-);
+}) => {
+	const getActiveClass = () => {
+		if (!isActive) return "";
+		return theme === "light" ? "text-link-hover-light" : "text-link-hover-dark";
+	};
+
+	return (
+		<AppButton
+			aria-label={`Go to ${label} Page`}
+			className={cn(getActiveClass(), className)}
+			size="lg"
+			theme={theme}
+			variant="link"
+		>
+			<Link href={href} onClick={onClick}>
+				{label}
+			</Link>
+		</AppButton>
+	);
+};
 
 const LogoSection = () => (
 	<Link aria-label="Go to homepage" href={PagePath.ROOT}>

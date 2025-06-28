@@ -18,8 +18,8 @@ export function ScaleElement({
 		offset: ["start end", "center center"],
 		target: elementRef,
 	});
-	const opacity = useTransform(scrollYProgress, [0, 0.3, 0.5], [0, 0.8, 1]);
-	const scale = useTransform(scrollYProgress, [0, 0.3, 0.5], [0.95, 0.98, 1]);
+	const opacity = useTransform(scrollYProgress, [0, 0.3, 0.5], [1, 0.8, 1]);
+	const scale = useTransform(scrollYProgress, [0, 0.3, 0.5], [1, 0.98, 1]);
 
 	return (
 		<motion.div
