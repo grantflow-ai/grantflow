@@ -43,6 +43,7 @@ class TestCategory(Enum):
     GRANT_APPLICATION = "grant_application"
     OPTIMIZATION = "optimization"
     BASELINE = "baseline"
+    EVALUATION = "evaluation"
 
 
 class PerformanceGrade(Enum):
@@ -214,7 +215,7 @@ class PerformanceAnalyzer:
         """Get performance targets based on test category."""
         if category == TestCategory.GRANT_TEMPLATE:
             return self.GRANT_TEMPLATE_TARGETS
-        if category in [TestCategory.GRANT_APPLICATION, TestCategory.BASELINE, TestCategory.OPTIMIZATION]:
+        if category in [TestCategory.GRANT_APPLICATION, TestCategory.BASELINE, TestCategory.OPTIMIZATION, TestCategory.EVALUATION]:
             return self.GRANT_APPLICATION_TARGETS
 
         return self.GRANT_APPLICATION_TARGETS
@@ -239,7 +240,8 @@ class PerformanceAnalyzer:
 
         return stage_metrics
 
-    def analyze_content_quality(self, **kwargs: Any) -> QualityMetrics:
+    @staticmethod
+    def analyze_content_quality(**kwargs: Any) -> QualityMetrics:
         """Analyze content quality with comprehensive metrics."""
         content = kwargs.get("content", "")
         section_texts = kwargs.get("section_texts")
@@ -317,7 +319,8 @@ class PerformanceAnalyzer:
 
         return round(composite_score, 1)
 
-    def analyze_optimization(self, **kwargs: Any) -> OptimizationMetrics:
+    @staticmethod
+    def analyze_optimization(**kwargs: Any) -> OptimizationMetrics:
         """Analyze optimization performance vs baseline."""
         current_time = kwargs["current_time"]
         baseline_time = kwargs.get("baseline_time")
