@@ -16,7 +16,7 @@ export function DeleteProjectModal({ isOpen, onClose, onConfirm }: DeleteProject
 
 	return (
 		<BaseModal isOpen={isOpen} onClose={onClose}>
-			<div className="flex flex-col gap-6">
+			<div className="flex flex-col gap-6" data-testid="delete-project-modal">
 				{/* Title */}
 				<h2 className="font-body font-semibold text-[18px] leading-[24px] text-text-primary">
 					Are you sure you want to delete this research project?
@@ -32,6 +32,7 @@ export function DeleteProjectModal({ isOpen, onClose, onConfirm }: DeleteProject
 				<div className="flex justify-end gap-3">
 					<button
 						className="px-4 py-2 rounded-md border border-action-primary bg-surface-primary text-action-primary font-button font-medium text-[14px] leading-[20px] hover:bg-surface-secondary transition-colors"
+						data-testid="cancel-button"
 						onClick={onClose}
 						type="button"
 					>
@@ -39,6 +40,7 @@ export function DeleteProjectModal({ isOpen, onClose, onConfirm }: DeleteProject
 					</button>
 					<button
 						className="px-4 py-2 rounded-md bg-action-primary text-white font-button font-medium text-[14px] leading-[20px] hover:bg-action-primary/90 transition-colors"
+						data-testid="delete-button"
 						onClick={handleDelete}
 						type="button"
 					>
