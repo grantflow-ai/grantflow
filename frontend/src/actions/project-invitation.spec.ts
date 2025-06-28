@@ -4,7 +4,7 @@ import {
 	invitationEmailTemplateText,
 } from "@/components/email-templates/invitation-email-template";
 import { getClient } from "@/utils/api";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { inviteCollaborator } from "./project-invitation";
 
@@ -45,8 +45,12 @@ vi.mock("@/utils/env", () => ({
 	})),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 vi.mock("@/components/email-templates/invitation-email-template", () => ({
@@ -62,7 +66,6 @@ describe("Project Invitation Actions", () => {
 	const mockCreateAuthHeaders = vi.mocked(createAuthHeaders);
 	const mockWithAuthRedirect = vi.mocked(withAuthRedirect);
 	const mockGetClient = vi.mocked(getClient);
-	const mockLogError = vi.mocked(logError);
 	const mockReadFile = vi.mocked(readFile);
 	const mockGetInvitationEmailTemplateHtml = vi.mocked(getInvitationEmailTemplateHtml);
 	const mockInvitationEmailTemplateText = vi.mocked(invitationEmailTemplateText);
@@ -107,10 +110,7 @@ describe("Project Invitation Actions", () => {
 				success: false,
 			});
 
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: "Failed to create invitation",
-				identifier: "inviteCollaborator",
-			});
+			expect(log.error).toHaveBeenCalledWith("inviteCollaborator", expect.any(Error));
 		});
 
 		it("should handle missing token in API response", async () => {
@@ -126,10 +126,7 @@ describe("Project Invitation Actions", () => {
 				success: false,
 			});
 
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: "Failed to create invitation token",
-				identifier: "inviteCollaborator",
-			});
+			expect(log.error).toHaveBeenCalledWith("inviteCollaborator", expect.any(Error));
 		});
 
 		it("should handle non-Error exceptions", async () => {
@@ -145,10 +142,7 @@ describe("Project Invitation Actions", () => {
 				success: false,
 			});
 
-			expect(mockLogError).toHaveBeenCalledWith({
-				error: "Failed to invite collaborator",
-				identifier: "inviteCollaborator",
-			});
+			expect(log.error).toHaveBeenCalledWith("inviteCollaborator", "String error");
 		});
 	});
 });

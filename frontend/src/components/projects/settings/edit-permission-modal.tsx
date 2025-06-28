@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { BaseModal } from "@/components/app/feedback/base-modal";
 import { UserRole } from "@/types/user";
+import { log } from "@/utils/logger";
 import { generateInitials } from "@/utils/user";
 
 interface EditPermissionModalProps {
@@ -113,8 +114,7 @@ export function EditPermissionModal({
 			);
 			handleClose();
 		} catch (error) {
-			// eslint-disable-next-line no-console
-			console.error("Failed to update permissions:", error);
+			log.error("Failed to update permissions:", error);
 		} finally {
 			setIsSubmitting(false);
 		}

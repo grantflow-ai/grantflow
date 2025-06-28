@@ -11,7 +11,7 @@ import {
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { getEnv } from "@/utils/env";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 const DOMAIN = "grantflow.ai";
@@ -73,10 +73,7 @@ export async function inviteCollaborator({
 		});
 
 		if (emailError) {
-			logError({
-				error: `Failed to send invitation email: ${emailError.message}`,
-				identifier: "inviteCollaborator",
-			});
+			log.error("inviteCollaborator", new Error(`Failed to send invitation email: ${emailError.message}`));
 
 			return {
 				error: "Invitation created but email delivery failed. Please share the invitation link manually.",
@@ -90,10 +87,7 @@ export async function inviteCollaborator({
 			success: true,
 		};
 	} catch (error) {
-		logError({
-			error: error instanceof Error ? error.message : "Failed to invite collaborator",
-			identifier: "inviteCollaborator",
-		});
+		log.error("inviteCollaborator", error);
 
 		return {
 			error: error instanceof Error ? error.message : "Failed to invite collaborator",

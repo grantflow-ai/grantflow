@@ -14,7 +14,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const TEST_FILES = [
 	{
@@ -61,7 +61,7 @@ export function DevAutofillButton() {
 								await addUrl(url, application.grant_template.id);
 							}
 						} catch (error) {
-							logError({ error, identifier: "dev-autofill-crawlTemplateUrl" });
+							log.error("dev-autofill-crawlTemplateUrl", error);
 							toast.error(`Failed to add URL: ${url}`);
 						}
 					}

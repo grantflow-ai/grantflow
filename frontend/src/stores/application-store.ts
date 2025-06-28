@@ -22,7 +22,7 @@ import {
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
-import { logError, logTrace } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
@@ -57,10 +57,7 @@ const validateStateForRagSource = (application: ApplicationType, parentId: strin
 	const isTemplateParent = parentId === application.grant_template?.id;
 
 	if (!(isApplicationParent || isTemplateParent)) {
-		logError({
-			error: `Invalid parentId: ${parentId}. Must be application.id or grant_template.id`,
-			identifier: actionName,
-		});
+		log.error(actionName, new Error(`Invalid parentId: ${parentId}. Must be application.id or grant_template.id`));
 		return false;
 	}
 
@@ -190,7 +187,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success(`File ${file.name} uploaded successfully`);
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
-			logError({ error, identifier: "addFile" });
+			log.error("addFile", error);
 			toast.error("Failed to upload file. Please try again.");
 		}
 	},
@@ -210,7 +207,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success("URL added successfully");
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
-			logError({ error, identifier: "addUrl" });
+			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
 		}
 	},
@@ -276,7 +273,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					restoredJob: null,
 				},
 			}));
-			logError({ error, identifier: "checkAndRestoreJobState" });
+			log.error("checkAndRestoreJobState", error);
 		}
 	},
 
@@ -299,7 +296,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				areAppOperationsInProgress: false,
 			});
 		} catch (e: unknown) {
-			logError({ error: e, identifier: "createApplication" });
+			log.error("createApplication", e);
 			toast.error("Failed to initialize application");
 			set({ areAppOperationsInProgress: false });
 		}
@@ -329,7 +326,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			);
 
-			logTrace("info", "Grant template generation initiated", {
+			log.info("Grant template generation initiated", {
 				application_id: application.id,
 				correlation_id: correlationId,
 				project_id: application.project_id,
@@ -366,7 +363,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success(`File ${fileToRemove.name} removed`);
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
-			logError({ error, identifier: "removeFile" });
+			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
 		}
 	},
@@ -396,7 +393,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success("URL removed successfully");
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
-			logError({ error, identifier: "removeUrl" });
+			log.error("removeUrl", error);
 			toast.error("Failed to remove URL. Please try again.");
 		}
 	},
@@ -414,7 +411,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				areAppOperationsInProgress: false,
 			});
 		} catch (e: unknown) {
-			logError({ error: e, identifier: "retrieveApplication" });
+			log.error("retrieveApplication", e);
 			toast.error("Failed to retrieve application");
 			set({ areAppOperationsInProgress: false });
 		}
@@ -446,7 +443,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			set({ application: response });
 		} catch (e) {
 			set({ application: existingApplication });
-			logError({ error: `Failed to update application: ${e}`, identifier: "updateApplication" });
+			log.error("updateApplication", new Error(`Failed to update application: ${e}`));
 			toast.error("Failed to update application");
 		} finally {
 			set({ areAppOperationsInProgress: false });
@@ -462,7 +459,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			set({ application: response });
 		} catch (error) {
 			set({ application: previousApplication });
-			logError({ error, identifier: "updateApplicationTitle" });
+			log.error("updateApplicationTitle", error);
 			toast.error("Failed to update application title");
 		}
 	},
@@ -498,7 +495,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			};
 			set({ application: restoredApplication });
-			logError({ error, identifier: "updateGrantSections" });
+			log.error("updateGrantSections", error);
 			toast.error("Failed to update grant sections");
 		}
 	},

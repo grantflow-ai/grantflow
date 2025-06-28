@@ -39,7 +39,7 @@ function CTASection() {
 		<section aria-label="cta-section" className="relative w-full bg-white" data-testid="cta-section">
 			<GradientBackground className="absolute inset-0 z-0" position="bottom-center" />
 			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center justify-between gap-10 px-6 py-8 md:flex-row md:p-10 lg:p-20">
-				<div className="flex w-fit flex-1 flex-col text-white">
+				<div className="flex w-fit flex-1 flex-col">
 					<h2
 						aria-label="cta-heading"
 						className="font-heading text-app-black text-xl font-medium md:text-[1.75rem] md:leading-none"

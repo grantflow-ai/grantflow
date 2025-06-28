@@ -11,7 +11,7 @@ import AppInput from "@/components/app/forms/input-field";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { analyticsIdentify } from "@/utils/segment";
 
 const getStatusTextColor = (status: string) => {
@@ -58,7 +58,7 @@ export function WaitlistForm() {
 				lastName: values.name.split(" ").at(-1) ?? "",
 			});
 		} catch (error) {
-			logError({ error, identifier: "waitlist-form: onSubmit" });
+			log.error("waitlist-form: onSubmit", error);
 		}
 
 		const result = await addToWaitlist(values);

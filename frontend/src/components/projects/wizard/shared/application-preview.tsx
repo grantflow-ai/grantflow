@@ -6,7 +6,7 @@ import { IconApplication, IconPreviewLogo } from "@/components/projects/shared/i
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
-import { logDebug } from "@/utils/logging";
+import { log } from "@/utils/logger";
 import { FilePreviewCard } from "./file-preview-card";
 import { LinkPreviewItem } from "./link-preview-item";
 
@@ -19,7 +19,7 @@ export function ApplicationPreview({
 	connectionStatusColor?: string;
 	parentId?: string;
 }) {
-	logDebug("ApplicationPreview render", { parentId });
+	log.info("ApplicationPreview render", { parentId });
 	const application = useApplicationStore((state) => state.application);
 
 	const templateFiles: FileWithId[] = useMemo(

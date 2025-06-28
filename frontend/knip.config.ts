@@ -22,8 +22,9 @@ const config: KnipConfig = {
 		"postcss.config.mjs",
 		"components.json",
 		"tailwind.config.ts",
+		"scripts/migrate-to-new-logger.ts",
 	],
-	ignoreBinaries: ["only-allow"],
+	ignoreBinaries: ["only-allow", "tsx"],
 	ignoreDependencies: ["@next/eslint-plugin-next", "eslint-plugin-react-hooks", "@commitlint/cli", "tailwindcss"],
 	project: ["**/*.{ts,tsx,js,jsx}"],
 };

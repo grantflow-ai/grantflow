@@ -20,6 +20,8 @@ export default defineConfig({
 				"src/components/ui/*",
 				"**/mocks/**",
 				"src/utils/dev-indexing-patch.ts",
+				"**/index.ts",
+				"**/index.tsx",
 			],
 			include: ["src"],
 			provider: "v8",
