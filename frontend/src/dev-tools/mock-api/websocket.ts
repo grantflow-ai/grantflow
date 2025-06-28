@@ -396,12 +396,12 @@ export function initializeWebSocketMocking(): void {
 			const mockWs = new MockWebSocket(url, protocols);
 			// Copy properties to this instance
 			Object.setPrototypeOf(this, Object.getPrototypeOf(mockWs));
-			return Object.assign(this, mockWs);
+			return Object.assign(this, mockWs) as WebSocket;
 		}
 		// For non-mock URLs, use original WebSocket
 		const realWs = new OriginalWebSocket(url, protocols);
 		Object.setPrototypeOf(this, Object.getPrototypeOf(realWs));
-		return Object.assign(this, realWs);
+		return Object.assign(this, realWs) as WebSocket;
 	}
 
 	// Set up the prototype chain
