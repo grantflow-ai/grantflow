@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { deleteAccount } from "@/actions/user";
 import { useUserStore } from "@/stores/user-store";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 import { DeleteAccountModal } from "./delete-account-modal";
 
@@ -19,8 +19,12 @@ vi.mock("@/stores/user-store", () => ({
 	useUserStore: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 describe("DeleteAccountModal", () => {
@@ -66,11 +70,12 @@ describe("DeleteAccountModal", () => {
 		expect(vi.mocked(deleteAccount)).not.toHaveBeenCalled();
 	});
 
-	it("calls onClose when X button is clicked", async () => {
+	it("calls onClose when close button is clicked", async () => {
 		const user = userEvent.setup();
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
-		await user.click(screen.getByTestId("close-button"));
+		const closeButton = screen.getByRole("button", { name: "Close" });
+		await user.click(closeButton);
 
 		expect(mockOnClose).toHaveBeenCalledTimes(1);
 		expect(vi.mocked(deleteAccount)).not.toHaveBeenCalled();
@@ -141,10 +146,7 @@ describe("DeleteAccountModal", () => {
 		await user.click(deleteButton);
 
 		await waitFor(() => {
-			expect(vi.mocked(logError)).toHaveBeenCalledWith({
-				error,
-				identifier: "DeleteAccountModal.handleDelete",
-			});
+			expect(vi.mocked(log.error)).toHaveBeenCalledWith("DeleteAccountModal.handleDelete", error);
 		});
 
 		expect(mockClearUser).not.toHaveBeenCalled();
@@ -183,8 +185,12 @@ describe("DeleteAccountModal", () => {
 	it("has proper accessibility attributes", () => {
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
-		const closeButton = screen.getByTestId("close-button");
-		expect(closeButton).toHaveAttribute("aria-label", "Close modal");
-		expect(screen.getByText("Close")).toHaveClass("sr-only");
+		const dialog = screen.getByRole("dialog");
+		expect(dialog).toHaveAttribute("aria-labelledby");
+		expect(dialog).toHaveAttribute("aria-describedby");
+
+		// The close button is provided by DialogContent
+		const closeButton = screen.getByRole("button", { name: "Close" });
+		expect(closeButton).toBeInTheDocument();
 	});
 });

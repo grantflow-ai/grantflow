@@ -2,7 +2,7 @@
  * Distributed tracing utilities for API layer
  */
 
-import { logTrace } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 /**
  * Create trace headers for API requests
@@ -32,7 +32,7 @@ export function logTraceEvent(
 	step: string,
 	metadata?: Record<string, unknown>,
 ): void {
-	logTrace("info", `${correlationId} | ${operation} | ${step}`, {
+	log.info(`${correlationId} | ${operation} | ${step}`, {
 		correlation_id: correlationId,
 		operation,
 		service: "frontend",

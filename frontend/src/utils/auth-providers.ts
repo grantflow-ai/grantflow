@@ -1,8 +1,8 @@
 import type { FirebaseError } from "firebase/app";
-import { getAdditionalUserInfo, GoogleAuthProvider, OAuthProvider, signInWithPopup, type User } from "firebase/auth";
+import { GoogleAuthProvider, getAdditionalUserInfo, OAuthProvider, signInWithPopup, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { getFirebaseAuth } from "@/utils/firebase";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const auth = getFirebaseAuth();
 const googleProvider = new GoogleAuthProvider();
@@ -33,7 +33,7 @@ const handleFirebaseAuthError = (error: unknown, identifier: string): never => {
 		}
 
 		case "auth/operation-not-allowed": {
-			logError({ error, identifier });
+			log.error(identifier, error);
 			throw new Error("Sign-in is not enabled for this application");
 		}
 
@@ -54,7 +54,7 @@ const handleFirebaseAuthError = (error: unknown, identifier: string): never => {
 		}
 
 		default: {
-			logError({ error, identifier });
+			log.error(identifier, error);
 			throw new Error("Sign-in failed. Please try again later");
 		}
 	}
@@ -81,7 +81,7 @@ const handleAuth = async (
 			user: result.user,
 		};
 	} catch (error) {
-		logError({ error, identifier });
+		log.error(identifier, error);
 		return handleFirebaseAuthError(error, identifier);
 	}
 };
