@@ -111,26 +111,39 @@ pre-commit:
             glob: "{packages,services}/*/tests/**/*.py"
             exclude: "completion|utils|test_utils|factories"
             run: |
+                renamed_files=""
                 for file in {staged_files}; do
                   basename=$(basename "$file")
+                  dir=$(dirname "$file")
+
                   # Skip __init__.py files and other special files
                   case "$basename" in
                     __init__.py|conftest.py|*_utils.py|*_helpers.py|*_fixtures.py) continue ;;
                   esac
-                  # Check if file has "test_" in its name
+
+                  # Check if file starts with test_ and needs renaming
                   case "$basename" in
-                    *test_*)
-                      # File contains "test_", it should end with _test.py
-                      case "$basename" in
-                        *_test.py) ;;
-                        *)
-                          echo "Error: Test file '$file' does not follow naming convention (should end with '_test.py', not start with 'test_')"
-                          exit 1
-                          ;;
-                      esac
+                    test_*.py)
+                      # Extract the part after test_
+                      name_without_test="${basename#test_}"
+                      # Remove .py extension
+                      name_without_ext="${name_without_test%.py}"
+                      # Create new name ending with _test.py
+                      new_name="${name_without_ext}_test.py"
+                      new_path="$dir/$new_name"
+
+                      echo "Renaming test file: $file -> $new_path"
+                      git mv "$file" "$new_path"
+                      renamed_files="$renamed_files $new_path"
                       ;;
                   esac
                 done
+
+                # If we renamed any files, stage them
+                if [ -n "$renamed_files" ]; then
+                  git add $renamed_files
+                fi
+            stage_fixed: true
 
         tofu-fmt:
             glob: "**/*.tf"
