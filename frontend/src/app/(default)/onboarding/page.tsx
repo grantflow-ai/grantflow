@@ -47,7 +47,7 @@ export default function SignIn() {
 			if (isNewUser) {
 				toast.success("Account created successfully!");
 
-				// Store user info in the user store
+				
 				setUser({
 					displayName: user.displayName,
 					email: user.email,

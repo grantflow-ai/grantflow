@@ -60,7 +60,7 @@ async def test_optimization_cache_effectiveness(
 
         logger.info("=== CACHE EFFECTIVENESS TEST ===")
 
-        # Run 1: Cold cache baseline
+
         with perf_ctx.stage_timer("run1_setup"):
             source_ids_1 = await create_rag_sources_from_cfp_file(
                 cfp_file_name="melanoma_alliance.md",
@@ -79,7 +79,7 @@ async def test_optimization_cache_effectiveness(
             run1_time = asyncio.get_event_loop().time() - start_time
             perf_ctx.add_llm_call(2)
 
-        # Run 2: Warm cache (should use same sources, triggering cache)
+
         with perf_ctx.stage_timer("run2_setup"):
             source_ids_2 = await create_rag_sources_from_cfp_file(
                 cfp_file_name="melanoma_alliance.md",
@@ -96,9 +96,9 @@ async def test_optimization_cache_effectiveness(
                 session_maker=async_session_maker,
             )
             run2_time = asyncio.get_event_loop().time() - start_time
-            # Should be cached, no additional LLM calls
 
-        # Calculate cache effectiveness
+
+
         if run1_time > 0:
             cache_speedup = run1_time / run2_time if run2_time > 0 else float("inf")
             cache_improvement = ((run1_time - run2_time) / run1_time * 100) if run1_time > 0 else 0
@@ -106,7 +106,7 @@ async def test_optimization_cache_effectiveness(
             cache_speedup = 1.0
             cache_improvement = 0
 
-        # Test content for quality analysis
+
         cache_report = f"""
         # Cache Effectiveness Analysis
 
@@ -134,10 +134,10 @@ async def test_optimization_cache_effectiveness(
         logger.info(f"Cache speedup: {cache_speedup:.1f}x")
         logger.info(f"Content identical: {cfp_result_1 == cfp_result_2}")
 
-        # Assertions
+
         assert cfp_result_1 == cfp_result_2, "Cached result should be identical to original"
 
-    # Performance targets - assert after context manager exit
+
     assert_performance_targets(perf_ctx.result, min_grade="C")
     assert_quality_targets(perf_ctx.result, min_score=60.0)
 
@@ -174,7 +174,7 @@ async def test_end_to_end_pipeline_optimization(
 
         logger.info("=== OPTIMIZED PIPELINE TEST ===")
 
-        # Full optimized pipeline run
+
         with perf_ctx.stage_timer("rag_setup"):
             source_ids = await create_rag_sources_from_cfp_file(
                 cfp_file_name="melanoma_alliance.md",
@@ -205,13 +205,13 @@ async def test_end_to_end_pipeline_optimization(
             )
             perf_ctx.add_llm_call(len(sections))
 
-        # Calculate performance metrics
+
         total_time = sum(perf_ctx.stage_times.values())
         rag_time = perf_ctx.stage_times.get("rag_setup", 0)
         cfp_time = perf_ctx.stage_times.get("cfp_extraction", 0)
         section_time = perf_ctx.stage_times.get("section_processing", 0)
 
-        # Create content for analysis
+
         section_titles = [getattr(s, "title", f"Section {i+1}") for i, s in enumerate(sections)]
         optimization_report = f"""
         # Optimized Pipeline Performance Report
@@ -248,7 +248,7 @@ async def test_end_to_end_pipeline_optimization(
         logger.info(f"LLM calls: {perf_ctx.llm_calls_made}")
         logger.info(f"RAG: {rag_time:.2f}s, CFP: {cfp_time:.2f}s, Sections: {section_time:.2f}s")
 
-        # Performance warnings based on expected targets
+
         if total_time > 180:
             perf_ctx.add_warning(f"Total time {total_time:.1f}s exceeds 3min target")
         if section_time > 120:
@@ -256,11 +256,11 @@ async def test_end_to_end_pipeline_optimization(
         if cfp_time > 60:
             perf_ctx.add_warning(f"CFP extraction {cfp_time:.1f}s exceeds 1min target")
 
-        # Assertions
+
         assert len(sections) >= 5, f"Expected at least 5 sections, got {len(sections)}"
         assert total_time > 0, "Pipeline should take positive time"
         assert perf_ctx.llm_calls_made > 0, "Should make LLM calls"
 
-    # Performance and quality targets - assert after context manager exit
+
     assert_performance_targets(perf_ctx.result, min_grade="C")
     assert_quality_targets(perf_ctx.result, min_score=60.0)

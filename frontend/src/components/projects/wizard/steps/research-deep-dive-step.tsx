@@ -53,7 +53,7 @@ export function ResearchDeepDiveStep() {
 
 	return (
 		<div className="flex size-full" data-testid="research-deep-dive-step">
-			{/* Header with title, description and AI button */}
+			{}
 			<div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-100 p-6">
 				<div className="flex items-start justify-between">
 					<div>
@@ -82,9 +82,9 @@ export function ResearchDeepDiveStep() {
 				</div>
 			</div>
 
-			{/* Main content area */}
+			{}
 			<div className="flex size-full pt-32">
-				{/* Left pane - Questions list */}
+				{}
 				<div className="w-1/2 overflow-y-auto p-6">
 					<div className="space-y-3">
 						{RESEARCH_QUESTIONS.map((item, index) => (
@@ -102,11 +102,11 @@ export function ResearchDeepDiveStep() {
 					</div>
 				</div>
 
-				{/* Right pane - Answer area */}
+				{}
 				<div className="w-1/2 border-l border-gray-100 p-6">
 					{selectedQuestion === null ? (
-						<div className="flex h-full items-center justify-center">
-							<p className="text-muted-foreground-dark text-center">
+						<div className="flex h-full items-center justify-center" data-testid="empty-state-container">
+							<p className="text-muted-foreground-dark text-center" data-testid="empty-state-message">
 								Select a question to start answering
 							</p>
 						</div>

@@ -5,7 +5,7 @@ import { useApplicationStore } from "@/stores/application-store";
 
 import { LinkPreviewItem } from "./link-preview-item";
 
-// Mock the store
+
 vi.mock("@/stores/application-store", () => ({
 	useApplicationStore: vi.fn(),
 }));
@@ -164,7 +164,7 @@ describe("LinkPreviewItem", () => {
 			const removeIcon = screen.getByTestId("link-remove-icon");
 			expect(removeIcon).toBeInTheDocument();
 
-			// Test that it's clickable by verifying click handler works
+			
 			fireEvent.click(removeIcon);
 			expect(mockRemoveUrl).toHaveBeenCalled();
 		});
@@ -213,13 +213,13 @@ describe("LinkPreviewItem", () => {
 
 			const { rerender } = render(<LinkPreviewItem parentId={parentId} url={url} />);
 
-			// Verify initial render
+			
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 
-			// Re-render with same props
+			
 			rerender(<LinkPreviewItem parentId={parentId} url={url} />);
 
-			// Should still work
+			
 			expect(screen.getByTestId("link-url")).toHaveTextContent(url);
 			fireEvent.click(screen.getByTestId("link-remove-icon"));
 			expect(mockRemoveUrl).toHaveBeenCalledWith(url, parentId);

@@ -1,5 +1,3 @@
-"use client";
-
 import type * as React from "react";
 import {
 	Dialog,
@@ -66,7 +64,7 @@ export function AppDialogTitle({ className, ...props }: React.ComponentProps<typ
 	return <DialogTitle className={className} {...props} />;
 }
 
-// Semantic dialog components for common use cases
+
 
 export function AppDialogTrigger({ ...props }: React.ComponentProps<typeof DialogTrigger>) {
 	return <DialogTrigger {...props} />;

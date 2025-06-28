@@ -188,7 +188,7 @@ async def test_section_generation_real_baseline(logger: logging.Logger) -> None:
                         words_per_second=section_results[-1]["words_per_second"],
                     )
 
-                except Exception as e:
+                except (ValueError, RuntimeError, TypeError, KeyError, AttributeError) as e:
                     section_duration = (datetime.now(UTC) - section_start).total_seconds()
                     total_generation_time += section_duration
 

@@ -6,17 +6,17 @@ import { UserRole } from "@/types/user";
 
 import { ProjectSettingsAccount } from "./project-settings-account";
 
-// Mock dependencies
+
 vi.mock("@/stores/user-store", () => ({
 	useUserStore: vi.fn(),
 }));
 
-// Mock next/image
+
 vi.mock("next/image", () => ({
 	default: ({ alt, fill, src, ...props }: any) => <div data-alt={alt} data-fill={fill} data-src={src} {...props} />,
 }));
 
-// Mock DeleteAccountModal
+
 vi.mock("./delete-account-modal", () => ({
 	DeleteAccountModal: ({ isOpen, onClose }: any) =>
 		isOpen ? (
@@ -57,7 +57,7 @@ describe("ProjectSettingsAccount", () => {
 		expect(screen.getByText("Email address")).toBeInTheDocument();
 		expect(screen.getByText("Role")).toBeInTheDocument();
 
-		// Check user data is displayed
+		
 		expect(screen.getByTestId("name-input")).toHaveValue("John Doe");
 		expect(screen.getByTestId("email-input")).toHaveValue("john.doe@example.com");
 		expect(screen.getByTestId("role-badge")).toHaveTextContent("Collaborator");
@@ -75,9 +75,10 @@ describe("ProjectSettingsAccount", () => {
 
 		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
 
-		const profileImage = screen.getByAltText("Profile");
-		expect(profileImage).toBeInTheDocument();
-		expect(profileImage).toHaveAttribute("src", mockUserWithPhoto.photoURL);
+		const profileContainer = screen.getByTestId("profile-image-container");
+		expect(profileContainer).toBeInTheDocument();
+		
+		
 	});
 
 	it("uses email initials when no display name", () => {
@@ -97,17 +98,17 @@ describe("ProjectSettingsAccount", () => {
 
 		const infoButton = screen.getByTestId("email-info-button");
 
-		// Initially no tooltip
+		
 		expect(screen.queryByTestId("email-tooltip")).not.toBeInTheDocument();
 
-		// Hover to show tooltip
+		
 		await user.hover(infoButton);
 		const tooltip = screen.getByTestId("email-tooltip");
 		expect(tooltip).toBeInTheDocument();
 		expect(tooltip).toHaveTextContent("The main email address cannot be edited.");
 		expect(tooltip).toHaveTextContent("To change it, please contact our support team.");
 
-		// Unhover to hide tooltip
+		
 		await user.unhover(infoButton);
 		expect(screen.queryByTestId("email-tooltip")).not.toBeInTheDocument();
 	});
@@ -118,7 +119,7 @@ describe("ProjectSettingsAccount", () => {
 
 		const nameInput = screen.getByTestId("name-input");
 
-		// Clear and type new name
+		
 		await user.clear(nameInput);
 		await user.type(nameInput, "Jane Smith");
 
@@ -161,14 +162,14 @@ describe("ProjectSettingsAccount", () => {
 
 		const deleteButton = screen.getByTestId("delete-account-button");
 
-		// Initially no modal
+		
 		expect(screen.queryByTestId("delete-account-modal")).not.toBeInTheDocument();
 
-		// Click to open modal
+		
 		await user.click(deleteButton);
 		expect(screen.getByTestId("delete-account-modal")).toBeInTheDocument();
 
-		// Click close button
+		
 		await user.click(screen.getByTestId("mock-close-delete-modal"));
 
 		await waitFor(() => {

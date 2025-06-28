@@ -72,7 +72,7 @@ export function ProjectSidebar({
 
 	return (
 		<div className="flex h-full w-[240px] flex-col bg-[#faf9fb] border-r border-[#e1dfeb]">
-			{/* Logo */}
+			{}
 			<div className="flex items-center justify-between px-4 py-4">
 				<div className="flex items-center gap-2">
 					<div className="size-8 rounded bg-[#1e13f8] flex items-center justify-center">
@@ -91,7 +91,7 @@ export function ProjectSidebar({
 				)}
 			</div>
 
-			{/* New Application Button */}
+			{}
 			<div className="px-4 pb-4">
 				<Link
 					className="flex items-center justify-center gap-2 w-full rounded bg-[#1e13f8] px-4 py-2 text-white font-['Source_Sans_Pro'] text-[14px] hover:bg-[#1710d4] transition-colors"
@@ -102,9 +102,9 @@ export function ProjectSidebar({
 				</Link>
 			</div>
 
-			{/* Navigation */}
+			{}
 			<nav className="flex-1 overflow-y-auto">
-				{/* Dashboard Link */}
+				{}
 				<Link
 					className={cn(
 						"flex items-center gap-3 px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors",
@@ -116,7 +116,7 @@ export function ProjectSidebar({
 					<span className="font-['Source_Sans_Pro'] text-[16px]">Dashboard</span>
 				</Link>
 
-				{/* Recent Applications */}
+				{}
 				<div className="mt-4">
 					<button
 						className="flex w-full items-center justify-between px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors"
@@ -158,7 +158,7 @@ export function ProjectSidebar({
 					)}
 				</div>
 
-				{/* Settings */}
+				{}
 				<div className="mt-4">
 					<button
 						className="flex w-full items-center justify-between px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors"
@@ -221,7 +221,7 @@ export function ProjectSidebar({
 				</div>
 			</nav>
 
-			{/* Bottom Section */}
+			{}
 			<div className="border-t border-[#e1dfeb] p-4 space-y-3">
 				<button
 					className="flex w-full items-center gap-3 text-[#636170] hover:text-[#2e2d36] transition-colors"
@@ -246,7 +246,7 @@ export function ProjectSidebar({
 function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: CollapsedSidebarProps) {
 	return (
 		<div className="flex h-full w-16 flex-col bg-[#faf9fb] border-r border-[#e1dfeb]">
-			{/* Logo with Expand Button */}
+			{}
 			<div className="flex items-center justify-center px-4 py-4">
 				<button
 					className="p-1 rounded hover:bg-[#e1dfeb] transition-colors"
@@ -263,7 +263,7 @@ function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: Collapsed
 				</button>
 			</div>
 
-			{/* New Application Button */}
+			{}
 			<div className="px-2 pb-4">
 				<Link
 					className="flex items-center justify-center w-full rounded bg-[#1e13f8] p-2 text-white hover:bg-[#1710d4] transition-colors"
@@ -274,9 +274,9 @@ function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: Collapsed
 				</Link>
 			</div>
 
-			{/* Navigation Icons */}
+			{}
 			<nav className="flex-1 flex flex-col items-center gap-4">
-				{/* Dashboard */}
+				{}
 				<Link
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
@@ -290,7 +290,7 @@ function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: Collapsed
 					<Grid2X2 className="size-6" />
 				</Link>
 
-				{/* Recent Applications */}
+				{}
 				<div
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
@@ -301,7 +301,7 @@ function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: Collapsed
 					<FileText className="size-6" />
 				</div>
 
-				{/* Settings */}
+				{}
 				<Link
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
@@ -316,7 +316,7 @@ function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: Collapsed
 				</Link>
 			</nav>
 
-			{/* Bottom Section */}
+			{}
 			<div className="border-t border-[#e1dfeb] p-2 flex flex-col items-center gap-3">
 				<button
 					className="flex items-center justify-center p-2 rounded text-[#636170] hover:text-[#2e2d36] hover:bg-[#e1dfeb] transition-colors"

@@ -1,5 +1,3 @@
-"use client";
-
 import { ChevronDown, ChevronUp, Mail, X } from "lucide-react";
 import { useState } from "react";
 
@@ -27,7 +25,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 			setPermission("collaborator");
 			onClose();
 		} catch {
-			// Error handling will be implemented with proper error notifications
+			
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -43,7 +41,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 	return (
 		<BaseModal isOpen={isOpen} onClose={handleClose}>
 			<div className="flex flex-col gap-8 p-8 w-[464px]" data-testid="invite-collaborator-modal">
-				{/* Header */}
+				{}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
 						<h2 className="font-heading font-medium text-[24px] leading-[30px] text-text-primary">
@@ -64,9 +62,9 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 					</p>
 				</div>
 
-				{/* Form */}
+				{}
 				<div className="flex flex-col gap-6 w-full">
-					{/* Email Input */}
+					{}
 					<div className="flex flex-col gap-1">
 						<label
 							className="font-body text-[12px] leading-[14px] text-app-gray-400"
@@ -90,7 +88,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</div>
 					</div>
 
-					{/* Permission Dropdown */}
+					{}
 					<div className="flex flex-col gap-1">
 						<label
 							className="font-body text-[12px] leading-[14px] text-app-gray-400"
@@ -120,7 +118,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 								)}
 							</button>
 
-							{/* Dropdown Menu */}
+							{}
 							{isDropdownOpen && (
 								<div
 									className="absolute top-full left-0 right-0 mt-[-1px] bg-surface-primary border border-border-primary rounded shadow-lg z-10"
@@ -154,7 +152,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 					</div>
 				</div>
 
-				{/* Buttons */}
+				{}
 				<div className="flex items-center justify-between">
 					<button
 						className="px-4 py-2 border border-action-primary rounded bg-surface-primary font-button text-[16px] leading-[22px] text-action-primary hover:bg-surface-secondary transition-colors"

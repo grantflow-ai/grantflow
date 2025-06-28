@@ -14,7 +14,7 @@ interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
 
-// Mock application data for demonstration
+
 const mockApplications = [
 	{
 		deadline: "4 weeks and 3 days to the deadline",
@@ -104,7 +104,7 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 
 	return (
 		<div className="relative flex flex-col gap-4 rounded-lg bg-white border border-[#e1dfeb] p-6">
-			{/* Status Badge and Menu */}
+			{}
 			<div className="flex items-start justify-between">
 				<div className={`flex items-center gap-2 rounded px-2 py-1 ${status.color}`}>
 					<div className="size-2 rounded-full bg-white" />
@@ -148,7 +148,7 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 				</div>
 			</div>
 
-			{/* Avatar and Title */}
+			{}
 			<div className="flex items-center gap-3">
 				<AvatarGroup maxVisible={1} size="sm" users={applicationCardUsers} />
 				<h3 className="font-['Source_Sans_Pro'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
@@ -156,12 +156,12 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 				</h3>
 			</div>
 
-			{/* Description */}
+			{}
 			<p className="font-['Source_Sans_Pro'] text-[14px] leading-[20px] text-[#636170]">
 				{application.description}
 			</p>
 
-			{/* Deadline if exists */}
+			{}
 			{application.deadline && (
 				<div className="flex items-center gap-2 text-[#636170]">
 					<span className="text-[14px]">⏰</span>
@@ -169,7 +169,7 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 				</div>
 			)}
 
-			{/* Open Button */}
+			{}
 			<button
 				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors"
 				type="button"
@@ -218,7 +218,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 
 	return (
 		<div className="flex h-screen bg-[#f6f5f9]">
-			{/* Sidebar */}
+			{}
 			<ProjectSidebar
 				applications={applications.map((app) => ({
 					id: app.id,
@@ -229,9 +229,9 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				userRole={initialProject.role as UserRole}
 			/>
 
-			{/* Main Content */}
+			{}
 			<div className="flex-1 flex flex-col">
-				{/* Top Bar */}
+				{}
 				<div className="flex items-center justify-between bg-white px-6 py-4 border-b border-[#e1dfeb]">
 					<div className="flex items-center gap-3">
 						<button className="text-[#636170] hover:text-[#2e2d36]" type="button">
@@ -274,7 +274,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					<AvatarGroup size="md" users={teamMembers} />
 				</div>
 
-				{/* Search and New Application */}
+				{}
 				<div className="flex items-center justify-between px-6 py-4">
 					<div className="relative flex-1 max-w-2xl">
 						<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#636170]" />
@@ -296,7 +296,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					</Link>
 				</div>
 
-				{/* Applications Grid or Empty State */}
+				{}
 				<div className="flex-1 overflow-auto px-6 pb-6">
 					{filteredApplications.length > 0 ? (
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -326,7 +326,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				</div>
 			</div>
 
-			{/* Delete Application Modal */}
+			{}
 			<DeleteApplicationModal
 				isOpen={showDeleteModal}
 				onClose={() => {

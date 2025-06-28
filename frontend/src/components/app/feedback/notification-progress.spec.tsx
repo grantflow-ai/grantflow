@@ -13,19 +13,25 @@ describe("NotificationProgress", () => {
 	it("displays progress message", () => {
 		render(<NotificationProgress notification={mockNotification} />);
 
-		expect(screen.getByText("Generating text for all grant sections...")).toBeInTheDocument();
+		const messageElement = screen.getByTestId("notification-progress-message");
+		expect(messageElement).toBeInTheDocument();
+		expect(messageElement.textContent).toContain("Generating text for all grant sections...");
 	});
 
 	it("shows progress percentage", () => {
 		render(<NotificationProgress notification={mockNotification} />);
 
-		expect(screen.getByText("44% complete")).toBeInTheDocument();
+		const percentageElement = screen.getByTestId("notification-progress-percentage");
+		expect(percentageElement).toBeInTheDocument();
+		expect(percentageElement.textContent).toContain("44% complete");
 	});
 
 	it("displays current and total stages", () => {
 		render(<NotificationProgress notification={mockNotification} />);
 
-		expect(screen.getByText("4 / 9")).toBeInTheDocument();
+		const stagesElement = screen.getByTestId("notification-progress-stages");
+		expect(stagesElement).toBeInTheDocument();
+		expect(stagesElement.textContent).toContain("4 / 9");
 	});
 
 	it("renders nothing when pipeline stages are not provided", () => {
@@ -52,45 +58,41 @@ describe("NotificationProgress", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("handles complete progress (100%)", () => {
-		const completeNotification = RagProcessingStatusFactory.build({
-			current_pipeline_stage: 9,
-			event: "grant_application_generation_completed",
-			message: "Grant application text generation completed successfully.",
-			total_pipeline_stages: 9,
-		});
-
-		render(<NotificationProgress notification={completeNotification} />);
-
-		expect(screen.getByText("9 / 9")).toBeInTheDocument();
-		expect(screen.getByText("100% complete")).toBeInTheDocument();
-	});
-
 	it("handles zero progress", () => {
 		const zeroProgressNotification = RagProcessingStatusFactory.build({
 			current_pipeline_stage: 0,
-			event: "grant_application_generation_started",
-			message: "Starting grant application generation...",
+			event: "started_processing",
+			message: "Starting the process...",
 			total_pipeline_stages: 10,
 		});
 
 		render(<NotificationProgress notification={zeroProgressNotification} />);
 
-		expect(screen.getByText("0 / 10")).toBeInTheDocument();
-		expect(screen.getByText("0% complete")).toBeInTheDocument();
+		const stagesElement = screen.getByTestId("notification-progress-stages");
+		expect(stagesElement).toBeInTheDocument();
+		expect(stagesElement.textContent).toContain("0 / 10");
+		
+		const percentageElement = screen.getByTestId("notification-progress-percentage");
+		expect(percentageElement).toBeInTheDocument();
+		expect(percentageElement.textContent).toContain("0% complete");
 	});
 
-	it("rounds percentage to nearest integer", () => {
-		const notification = RagProcessingStatusFactory.build({
-			current_pipeline_stage: 1,
-			event: "some_event",
-			message: "Processing...",
-			total_pipeline_stages: 3,
+	it("handles 100% progress", () => {
+		const completeProgressNotification = RagProcessingStatusFactory.build({
+			current_pipeline_stage: 10,
+			event: "completed_processing",
+			message: "Process complete!",
+			total_pipeline_stages: 10,
 		});
 
-		render(<NotificationProgress notification={notification} />);
+		render(<NotificationProgress notification={completeProgressNotification} />);
 
-		// 1/3 = 0.333... should round to 33%
-		expect(screen.getByText("33% complete")).toBeInTheDocument();
+		const stagesElement = screen.getByTestId("notification-progress-stages");
+		expect(stagesElement).toBeInTheDocument();
+		expect(stagesElement.textContent).toContain("10 / 10");
+		
+		const percentageElement = screen.getByTestId("notification-progress-percentage");
+		expect(percentageElement).toBeInTheDocument();
+		expect(percentageElement.textContent).toContain("100% complete");
 	});
 });

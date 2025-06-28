@@ -78,15 +78,15 @@ describe("CreateApplicationButton", () => {
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
 
-		// Should show loading state
+		
 		expect(screen.getByTestId("create-application-button")).toHaveTextContent("Creating...");
 		expect(screen.getByTestId("create-application-button")).toBeDisabled();
 
-		// Resolve the promise
+		
 		const mockApplication = ApplicationFactory.build();
 		resolvePromise!(mockApplication);
 
-		// Wait for navigation to be called (which happens after successful creation)
+		
 		await waitFor(() => {
 			expect(mockPush).toHaveBeenCalledWith(
 				`/projects/${mockProjectId}/applications/${mockApplication.id}/wizard`,
@@ -108,7 +108,7 @@ describe("CreateApplicationButton", () => {
 			expect(toast.error).toHaveBeenCalledWith("Failed to create application");
 		});
 
-		// Should reset loading state on error
+		
 		expect(screen.getByTestId("create-application-button")).toHaveTextContent("New Application");
 		expect(screen.getByTestId("create-application-button")).not.toBeDisabled();
 		expect(mockPush).not.toHaveBeenCalled();

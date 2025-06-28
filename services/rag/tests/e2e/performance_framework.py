@@ -495,7 +495,7 @@ class PerformanceResultManager:
 
 
                 results.append(data)
-            except Exception:
+            except (ValueError, json.JSONDecodeError, FileNotFoundError, PermissionError):
                 pass
 
         return results

@@ -140,7 +140,7 @@ const uploadFileInDevelopment = async (
 	}
 
 	const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-	// Add a delay to ensure the database transaction has committed
+	
 	setTimeout(() => {
 		void triggerDevIndexing(objectPath);
 	}, 500);
@@ -321,8 +321,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					retryCondition: (error: unknown) => {
 						if (error instanceof HTTPError) {
 							const { status } = error.response;
-							// Don't retry on validation errors (422) or other client errors
-							// But do retry on server errors (500+)
+							
+							
 							return status >= 500;
 						}
 						return true;
@@ -330,7 +330,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			);
 
-			// Log correlation ID for tracking across services
+			
 			logTrace("info", "Grant template generation initiated", {
 				application_id: application.id,
 				correlation_id: correlationId,
@@ -477,7 +477,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			return;
 		}
 
-		// optimistically assume the update will succeed
+		
 		const updatedApplication: NonNullable<ApplicationType> = {
 			...application,
 			grant_template: {

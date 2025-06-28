@@ -37,9 +37,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		await duplicateProject(projectId);
 	};
 
-	// Add sample notifications when dashboard loads
+	
 	useEffect(() => {
-		// Add deadline notifications with delay for demonstration
+		
 		const timeouts = [
 			setTimeout(() => {
 				addNotification({
@@ -153,7 +153,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 							setShowCreateModal(true);
 						}}
 						onInviteCollaborators={() => {
-							// Set the first project as default for invitation
+							
 							if (projects.length > 0) {
 								setSelectedProjectForInvite(projects[0]);
 								setShowInviteModal(true);

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTraceHeaders, generateCorrelationId, logTraceEvent } from "./tracing";
 
-// Mock the logging utility
+
 vi.mock("@/utils/logging", () => ({
 	logTrace: vi.fn(),
 }));
@@ -17,7 +17,7 @@ describe("Tracing Utilities", () => {
 			const correlationId = generateCorrelationId();
 
 			expect(correlationId).toEqual(expect.any(String));
-			expect(correlationId.length).toBe(36); // UUID format: 8-4-4-4-12
+			expect(correlationId.length).toBe(36); 
 			expect(correlationId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		});
 
@@ -43,7 +43,7 @@ describe("Tracing Utilities", () => {
 				"X-Trace-Timestamp": expect.any(String),
 			});
 
-			// Verify timestamp is valid ISO string
+			
 			expect(new Date(headers["X-Trace-Timestamp"]).toISOString()).toBe(headers["X-Trace-Timestamp"]);
 		});
 	});

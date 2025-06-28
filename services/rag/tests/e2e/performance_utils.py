@@ -123,7 +123,7 @@ class PerformanceTestContext:
                 errors=self.errors,
                 warnings=self.warnings
             )
-        except Exception as result_error:
+        except (ValueError, TypeError, KeyError, AttributeError) as result_error:
             self.logger.error("Failed to create performance result: %s", result_error)
 
             from .performance_framework import PerformanceGrade, PerformanceResult, QualityMetrics
@@ -173,7 +173,7 @@ class PerformanceTestContext:
             subfolder = self.test_category.value
             saved_path = result_manager.save_result(self.result, subfolder)
             self.logger.info("Performance result saved to: %s", saved_path)
-        except Exception as e:
+        except (ValueError, TypeError, KeyError, AttributeError, OSError) as e:
             self.logger.error("Failed to save performance result: %s", e)
 
 

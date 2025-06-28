@@ -67,7 +67,7 @@ export function AppCardHeader({ className, ...props }: AppCardHeaderProps) {
 	);
 }
 
-// Semantic card components for common use cases
+
 
 export function AppCardTitle({ ...props }: AppCardTitleProps) {
 	return <CardTitle data-testid="app-card-title" {...props} />;

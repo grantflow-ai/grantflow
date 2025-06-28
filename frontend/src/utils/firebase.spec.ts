@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { browserSessionPersistence, getAuth, setPersistence } from "firebase/auth";
 import { getEnv } from "./env";
 
-// Mock Firebase
+
 vi.mock("firebase/app", () => ({
 	initializeApp: vi.fn(),
 }));
@@ -27,7 +27,7 @@ describe("Firebase Utilities", () => {
 		vi.mocked(getAuth).mockReturnValue(mockAuth as any);
 		vi.mocked(setPersistence).mockResolvedValue();
 
-		// Use environment variables from global setup
+		
 		vi.mocked(getEnv).mockReturnValue({
 			NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
 			NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
@@ -38,7 +38,7 @@ describe("Firebase Utilities", () => {
 			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
 		} as any);
 
-		// Reset the instance ref by requiring a fresh module
+		
 		vi.resetModules();
 	});
 
@@ -180,7 +180,7 @@ describe("Firebase Utilities", () => {
 
 			const { getFirebaseAuth } = await import("./firebase");
 
-			// Should not throw - setPersistence is called with void
+			
 			expect(() => getFirebaseAuth()).not.toThrow();
 			expect(setPersistence).toHaveBeenCalled();
 		});
@@ -211,9 +211,9 @@ describe("Firebase Utilities", () => {
 		it("should reuse app instance when getting auth", async () => {
 			const { getFirebaseApp, getFirebaseAuth } = await import("./firebase");
 
-			// Get app first
+			
 			const app = getFirebaseApp();
-			// Then get auth - should reuse the same app
+			
 			const authInstance = getFirebaseAuth();
 
 			expect(initializeApp).toHaveBeenCalledTimes(1);
@@ -224,7 +224,7 @@ describe("Firebase Utilities", () => {
 		it("should handle auth initialization before app", async () => {
 			const { getFirebaseAuth } = await import("./firebase");
 
-			// Get auth first - should initialize app internally
+			
 			const authInstance = getFirebaseAuth();
 
 			expect(initializeApp).toHaveBeenCalledTimes(1);
@@ -271,11 +271,11 @@ describe("Firebase Utilities", () => {
 
 			const authInstance = getFirebaseAuth();
 
-			// Auth should be returned immediately, but persistence is set async
+			
 			expect(authInstance).toBe(mockAuth);
 			expect(setPersistence).toHaveBeenCalled();
 
-			// Resolve the persistence promise
+			
 			persistenceResolve!();
 			await persistencePromise;
 		});
@@ -285,7 +285,7 @@ describe("Firebase Utilities", () => {
 		it("should maintain singleton across different access patterns", async () => {
 			const { getFirebaseApp, getFirebaseAuth } = await import("./firebase");
 
-			// Various access patterns
+			
 			const app1 = getFirebaseApp();
 			const auth1 = getFirebaseAuth();
 			const app2 = getFirebaseApp();

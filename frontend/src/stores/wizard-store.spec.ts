@@ -181,7 +181,7 @@ describe("wizard store", () => {
 
 			useWizardStore.getState().polling.start(mockFn, 1000, true);
 
-			// Should call immediately when callImmediately is true
+			
 			expect(mockFn).toHaveBeenCalledTimes(1);
 			expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
 			expect(useWizardStore.getState().polling.isActive).toBe(true);
@@ -192,15 +192,15 @@ describe("wizard store", () => {
 			const clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
 			const mockFn = vi.fn().mockResolvedValue(undefined);
 
-			// Start polling first
-			useWizardStore.getState().polling.start(mockFn, 1000, false);
 			
-			// Verify it's active
+			useWizardStore.getState().polling.start(mockFn, 1000, false);
+
+			
 			expect(useWizardStore.getState().polling.isActive).toBe(true);
-			const {intervalId} = useWizardStore.getState().polling;
+			const { intervalId } = useWizardStore.getState().polling;
 			expect(intervalId).toBeDefined();
 
-			// Stop polling
+			
 			useWizardStore.getState().polling.stop();
 
 			expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);

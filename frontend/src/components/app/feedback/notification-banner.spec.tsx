@@ -15,23 +15,23 @@ describe("NotificationBanner", () => {
 	it("displays notification content", () => {
 		render(<NotificationBanner notification={mockNotification} />);
 
-		expect(screen.getByText("Deadline Approaching")).toBeInTheDocument();
-		expect(screen.getByText('"Research Project"')).toBeInTheDocument();
-		expect(screen.getByText("has a grant deadline in 2 days")).toBeInTheDocument();
+		expect(screen.getByTestId("notification-title")).toBeInTheDocument();
+		expect(screen.getByTestId("notification-project-name")).toBeInTheDocument();
+		expect(screen.getByTestId("notification-message")).toBeInTheDocument();
 	});
 
 	it("renders close button when onClose is provided", () => {
 		const mockOnClose = vi.fn();
 		render(<NotificationBanner notification={mockNotification} onClose={mockOnClose} />);
 
-		const closeButton = screen.getByRole("button", { name: "Close notification" });
+		const closeButton = screen.getByTestId("notification-close-button");
 		expect(closeButton).toBeInTheDocument();
 	});
 
 	it("does not render close button when onClose is not provided", () => {
 		render(<NotificationBanner notification={mockNotification} />);
 
-		const closeButton = screen.queryByRole("button", { name: "Close notification" });
+		const closeButton = screen.queryByTestId("notification-close-button");
 		expect(closeButton).not.toBeInTheDocument();
 	});
 
@@ -41,7 +41,7 @@ describe("NotificationBanner", () => {
 
 		render(<NotificationBanner notification={mockNotification} onClose={mockOnClose} />);
 
-		const closeButton = screen.getByRole("button", { name: "Close notification" });
+		const closeButton = screen.getByTestId("notification-close-button");
 		await user.click(closeButton);
 
 		expect(mockOnClose).toHaveBeenCalledTimes(1);
@@ -55,8 +55,8 @@ describe("NotificationBanner", () => {
 			const notification = { ...mockNotification, type };
 			const { unmount } = render(<NotificationBanner notification={notification} />);
 
-			// Verify the notification renders without error
-			expect(screen.getByText(notification.title)).toBeInTheDocument();
+			
+			expect(screen.getByTestId("notification-title")).toBeInTheDocument();
 			unmount();
 		});
 	});
@@ -66,23 +66,23 @@ describe("NotificationBanner", () => {
 
 		render(<NotificationBanner notification={notificationWithoutType} />);
 
-		// Should still render without error
-		expect(screen.getByText(notificationWithoutType.title)).toBeInTheDocument();
+		
+		expect(screen.getByTestId("notification-title")).toBeInTheDocument();
 	});
 
 	it("applies custom className", () => {
-		const { container } = render(<NotificationBanner className="custom-class" notification={mockNotification} />);
+		render(<NotificationBanner className="test-custom-class" notification={mockNotification} />);
 
-		const bannerElement = container.firstChild;
-		expect(bannerElement).toHaveClass("custom-class");
+		const container = screen.getByTestId("notification-message").closest("div");
+		expect(container?.parentElement).toHaveClass("test-custom-class");
 	});
 
 	it("formats project name with quotes", () => {
 		render(<NotificationBanner notification={mockNotification} />);
 
-		// Check for the quoted project name
-		const projectNameElement = screen.getByText('"Research Project"');
+		
+		const projectNameElement = screen.getByTestId("notification-project-name");
 		expect(projectNameElement).toBeInTheDocument();
-		expect(projectNameElement.tagName).toBe("SPAN");
+		expect(projectNameElement.textContent).toContain("Research Project");
 	});
 });

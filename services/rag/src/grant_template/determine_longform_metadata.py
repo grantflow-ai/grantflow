@@ -33,11 +33,11 @@ GENERATE_GRANT_TEMPLATE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     For each section, provide:
 
-    1. **Word Count**: 
+    1. **Word Count**:
        - If page limits are provided in CFP content: Use 415 words/page TNR 11pt or 500/page Arial 11pt
        - If page limits are NOT provided: Use these defaults:
          * Project Summary: 300 words
-         * Background/Significance: 800 words  
+         * Background/Significance: 800 words
          * Specific Aims: 500 words
          * Research Plan: 2000 words (50-66% of total)
          * Expected Outcomes: 400 words

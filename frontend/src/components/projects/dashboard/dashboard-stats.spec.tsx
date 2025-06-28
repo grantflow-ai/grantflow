@@ -40,7 +40,7 @@ describe("DashboardStats", () => {
 
 		render(<DashboardStats initialProjects={mockProjects} />);
 
-		// Total applications: 3 + 1 + 0 = 4
+		
 		expect(screen.getByTestId("application-count")).toHaveTextContent("4");
 		expect(screen.getByText("Applications")).toBeInTheDocument();
 	});
@@ -52,7 +52,7 @@ describe("DashboardStats", () => {
 
 		render(<DashboardStats initialProjects={mockProjects} />);
 
-		// Should use initialProjects as fallback
+		
 		expect(screen.getByTestId("project-count")).toHaveTextContent("3");
 		expect(screen.getByTestId("application-count")).toHaveTextContent("4");
 	});
@@ -81,8 +81,8 @@ describe("DashboardStats", () => {
 
 		render(<DashboardStats initialProjects={projectsWithNoApps} />);
 
-		expect(screen.getByTestId("project-count")).toHaveTextContent("2"); // 2 projects
-		expect(screen.getByTestId("application-count")).toHaveTextContent("0"); // 0 applications
+		expect(screen.getByTestId("project-count")).toHaveTextContent("2"); 
+		expect(screen.getByTestId("application-count")).toHaveTextContent("0"); 
 	});
 
 	it("configures SWR with correct options", () => {
