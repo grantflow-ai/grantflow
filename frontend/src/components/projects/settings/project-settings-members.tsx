@@ -133,7 +133,7 @@ export function ProjectSettingsMembers({
 	const canInvite = currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN;
 
 	return (
-		<div className="w-full">
+		<div className="w-full" data-testid="project-settings-members">
 			{/* Header with Invite Button */}
 			<div className="flex items-center justify-between mb-6">
 				<div>
@@ -145,6 +145,7 @@ export function ProjectSettingsMembers({
 				{canInvite && (
 					<button
 						className="flex items-center gap-2 px-4 py-2 bg-action-primary text-white rounded-md hover:bg-action-primary/90 transition-colors text-[14px] font-body"
+						data-testid="invite-button"
 						onClick={() => {
 							setIsInviteModalOpen(true);
 						}}
@@ -176,7 +177,11 @@ export function ProjectSettingsMembers({
 				{/* Table Body */}
 				<div className="divide-y divide-border-primary">
 					{members.map((member) => (
-						<div className="px-6 py-4 hover:bg-surface-secondary transition-colors" key={member.id}>
+						<div
+							className="px-6 py-4 hover:bg-surface-secondary transition-colors"
+							data-testid={`member-row-${member.id}`}
+							key={member.id}
+						>
 							<div className="grid grid-cols-5 gap-4 items-center">
 								{/* Name with Avatar */}
 								<div className="flex items-center gap-3">
@@ -217,11 +222,12 @@ export function ProjectSettingsMembers({
 
 				{/* Empty State */}
 				{members.length === 0 && (
-					<div className="px-6 py-12 text-center">
+					<div className="px-6 py-12 text-center" data-testid="empty-state">
 						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
 						{canInvite && (
 							<button
 								className="flex items-center gap-2 px-4 py-2 bg-action-primary text-white rounded-md hover:bg-action-primary/90 transition-colors text-[14px] mx-auto font-body"
+								data-testid="invite-first-member-button"
 								onClick={() => {
 									setIsInviteModalOpen(true);
 								}}
@@ -237,19 +243,39 @@ export function ProjectSettingsMembers({
 
 			{/* Team Stats */}
 			<div className="mt-6 grid grid-cols-3 gap-4">
-				<div className="bg-surface-secondary border border-border-primary rounded-lg p-4">
+				<div
+					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
+					data-testid="total-members-stat"
+				>
 					<div className="text-[14px] text-text-secondary mb-1 font-body">Total Members</div>
-					<div className="text-[24px] font-semibold text-text-primary font-heading">{members.length}</div>
+					<div
+						className="text-[24px] font-semibold text-text-primary font-heading"
+						data-testid="total-members-count"
+					>
+						{members.length}
+					</div>
 				</div>
-				<div className="bg-surface-secondary border border-border-primary rounded-lg p-4">
+				<div
+					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
+					data-testid="admins-stat"
+				>
 					<div className="text-[14px] text-text-secondary mb-1 font-body">Admins</div>
-					<div className="text-[24px] font-semibold text-text-primary font-heading">
+					<div
+						className="text-[24px] font-semibold text-text-primary font-heading"
+						data-testid="admins-count"
+					>
 						{members.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
 					</div>
 				</div>
-				<div className="bg-surface-secondary border border-border-primary rounded-lg p-4">
+				<div
+					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
+					data-testid="collaborators-stat"
+				>
 					<div className="text-[14px] text-text-secondary mb-1 font-body">Collaborators</div>
-					<div className="text-[24px] font-semibold text-text-primary font-heading">
+					<div
+						className="text-[24px] font-semibold text-text-primary font-heading"
+						data-testid="collaborators-count"
+					>
 						{members.filter((m) => m.role === UserRole.MEMBER).length}
 					</div>
 				</div>
@@ -322,6 +348,7 @@ function MemberActionMenu({
 		<div className="relative" ref={menuRef}>
 			<button
 				className="p-2 hover:bg-surface-secondary rounded-md transition-colors"
+				data-testid={`member-action-menu-${member.id}`}
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
@@ -331,12 +358,16 @@ function MemberActionMenu({
 			</button>
 
 			{isOpen && (
-				<div className="absolute right-0 top-full mt-1 w-48 bg-surface-primary border border-border-primary rounded-md shadow-lg z-10">
+				<div
+					className="absolute right-0 top-full mt-1 w-48 bg-surface-primary border border-border-primary rounded-md shadow-lg z-10"
+					data-testid={`member-action-dropdown-${member.id}`}
+				>
 					<div className="py-1">
 						{currentUserRole === UserRole.OWNER && (
 							<>
 								<button
 									className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-surface-secondary transition-colors"
+									data-testid={`edit-permissions-${member.id}`}
 									onClick={() => {
 										onEditPermissions(member);
 										setIsOpen(false);
@@ -350,6 +381,7 @@ function MemberActionMenu({
 						)}
 						<button
 							className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+							data-testid={`remove-member-${member.id}`}
 							onClick={() => {
 								onRemoveMember(member.id);
 								setIsOpen(false);
