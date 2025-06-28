@@ -1,0 +1,11 @@
+{
+  "test_name": "test_retrieval_pipeline_performance",
+  "test_category": "quality_assessment",
+  "status": "success",
+  "performance": {
+    "execution_time": 0.5127449035644531,
+    "within_threshold": true,
+    "timeout_utilization": 0.0008545748392740886
+  },
+  "timestamp": "2025-06-27T23:44:06.742580+00:00"
+}

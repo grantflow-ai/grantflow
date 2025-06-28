@@ -1,0 +1,11 @@
+{
+  "test_name": "test_completion_smoke_performance",
+  "test_category": "smoke",
+  "status": "success",
+  "performance": {
+    "execution_time": 1.7906990051269531,
+    "within_threshold": true,
+    "timeout_utilization": 0.014922491709391276
+  },
+  "timestamp": "2025-06-27T23:44:08.265115+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "test_name": "test_prompt_optimization_impact",
+  "test_category": "quality_assessment",
+  "status": "failed",
+  "error": {
+    "type": "UnboundLocalError",
+    "message": "cannot access local variable 'baseline_variant' where it is not associated with a value",
+    "execution_time_before_failure": 0.002640247344970703
+  },
+  "performance": {
+    "execution_time": 0.002640247344970703,
+    "timeout_reached": false,
+    "timeout_utilization": 2.933608161078559e-06
+  },
+  "diagnostic_info": {
+    "timeout_configured": 900,
+    "category": "quality_assessment",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "async_session_maker",
+      "logger"
+    ]
+  },
+  "timestamp": "2025-06-28T00:09:36.962534+00:00"
+}

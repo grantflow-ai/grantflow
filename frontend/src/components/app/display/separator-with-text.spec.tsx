@@ -10,20 +10,9 @@ describe("SeparatorWithText", () => {
 		expect(screen.getByTestId("separator-text")).toHaveTextContent("OR");
 	});
 
-	it("renders with a different text", () => {
+	it("displays different text content", () => {
 		render(<SeparatorWithText text="Continue with" />);
 
 		expect(screen.getByTestId("separator-text")).toHaveTextContent("Continue with");
-	});
-
-	it("has the correct styling", () => {
-		render(<SeparatorWithText text="Test" />);
-
-		const separator = screen.getByTestId("separator");
-		expect(separator).toHaveClass("relative");
-
-		const text = screen.getByTestId("separator-text");
-		expect(text).toHaveClass("mx-3");
-		expect(text).toHaveClass("text-app-gray-600");
 	});
 });

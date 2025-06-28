@@ -159,6 +159,7 @@ async def generate_section_text(
     )
 
     retrieval_start = time.time()
+
     rag_results = await retrieve_documents(
         application_id=application_id,
         task_description=prompt,
