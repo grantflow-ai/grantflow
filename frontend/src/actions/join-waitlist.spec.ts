@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 import { addToWaitlist } from "./join-waitlist";
 
@@ -37,8 +37,12 @@ vi.mock("node:fs/promises", async () => {
 	};
 });
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 vi.mock("@/utils/env", () => ({
@@ -69,7 +73,7 @@ describe("join-waitlist actions", () => {
 			name: "Test User",
 		});
 
-		expect(logError).toHaveBeenCalledTimes(1);
+		expect(log.error).toHaveBeenCalledTimes(1);
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
@@ -82,7 +86,7 @@ describe("join-waitlist actions", () => {
 			name: "Test User",
 		});
 
-		expect(logError).toHaveBeenCalledTimes(1);
+		expect(log.error).toHaveBeenCalledTimes(1);
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
@@ -96,7 +100,7 @@ describe("join-waitlist actions", () => {
 			name: "Test User",
 		});
 
-		expect(logError).toHaveBeenCalledTimes(1);
+		expect(log.error).toHaveBeenCalledTimes(1);
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
@@ -115,7 +119,7 @@ describe("join-waitlist actions", () => {
 			name: "Test User",
 		});
 
-		expect(logError).toHaveBeenCalledTimes(1);
+		expect(log.error).toHaveBeenCalledTimes(1);
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
@@ -166,7 +170,7 @@ describe("join-waitlist actions", () => {
 
 		const result = await addToWaitlist(validFormData);
 
-		expect(logError).not.toHaveBeenCalled();
+		expect(log.error).not.toHaveBeenCalled();
 		expect(result).toEqual({
 			code: WAITING_LIST_RESPONSE_CODES.SUCCESS,
 		});

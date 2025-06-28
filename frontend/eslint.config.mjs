@@ -124,6 +124,7 @@ export default eslintTS.config(
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"@typescript-eslint/switch-exhaustiveness-check": "warn",
 			"curly": "error",
+			"custom/no-console-use-logger": "error",
 			"eqeqeq": "error",
 			"import-x/no-duplicates": "error",
 			"import-x/no-named-as-default-member": "off",
@@ -131,7 +132,7 @@ export default eslintTS.config(
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
-			"no-console": "warn",
+			"no-console": "off",
 			"no-restricted-imports": [
 				"error",
 				{
@@ -163,12 +164,20 @@ export default eslintTS.config(
 						{
 							"message": "Please use @/components/app (AppTextarea) instead.",
 							"name": "@/components/ui/textarea"
+						},
+						{
+							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
+							"name": "@/utils/logging"
 						}
 					],
 					"patterns": [
 						{
 							"group": ["@/components/ui/avatar", "@/components/ui/button", "@/components/ui/card", "@/components/ui/dialog", "@/components/ui/dropdown-menu", "@/components/ui/input", "@/components/ui/textarea"],
 							"message": "Please use the corresponding components from @/components/app instead."
+						},
+						{
+							"group": ["*/utils/logging", "*/logging"],
+							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error()."
 						}
 					]
 				}
@@ -323,6 +332,13 @@ export default eslintTS.config(
 			"sonarjs/pseudo-random": "off",
 		},
 	},
-	
+	{
+		files: ["**/utils/logger.ts", "**/utils/logging.ts", "**/scripts/migrate-to-new-logger.ts"],
+		rules: {
+			"custom/no-console-use-logger": "off",
+			"no-console": "off",
+		},
+	},
+
 	biomeConfig,
 );

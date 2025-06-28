@@ -32,7 +32,10 @@ const NavLink = ({
 }) => (
 	<AppButton
 		aria-label={`Go to ${label} Page`}
-		className={cn(isActive ? `text-link-hover-${theme}` : "", className)}
+		className={cn(
+			isActive ? (theme === "light" ? "text-link-hover-light" : "text-link-hover-dark") : "",
+			className,
+		)}
 		size="lg"
 		theme={theme}
 		variant="link"

@@ -12,7 +12,7 @@ import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 export default function FinalizeEmailLogin() {
 	const router = useRouter();
@@ -46,7 +46,7 @@ export default function FinalizeEmailLogin() {
 				await login(idToken);
 			} catch (error) {
 				if (!isRedirectError(error)) {
-					logError({ error, identifier: "finalizeSignIn" });
+					log.error("finalizeSignIn", error);
 					toast.error("Failed to sign in with email link");
 					router.replace(PagePath.LOGIN);
 				}

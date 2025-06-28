@@ -7,15 +7,15 @@ import * as firebase from "@/utils/firebase";
 import { handleGoogleLogin, handleOrcidLogin, handleOrcidSignup } from "./auth-providers";
 
 vi.mock("firebase/auth", () => ({
+	GoogleAuthProvider: Object.assign(
+		vi.fn(() => ({})),
+		{ credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }) },
+	),
 	getAdditionalUserInfo: vi.fn(() => ({
 		isNewUser: false,
 		profile: null,
 		providerId: null,
 	})),
-	GoogleAuthProvider: Object.assign(
-		vi.fn(() => ({})),
-		{ credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }) },
-	),
 	OAuthProvider: vi.fn(() => {
 		const provider = {
 			setCustomParameters: vi.fn(),
@@ -29,8 +29,12 @@ vi.mock("@/utils/firebase", () => ({
 	getFirebaseAuth: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 vi.mock("next/dist/client/components/redirect-error", () => ({

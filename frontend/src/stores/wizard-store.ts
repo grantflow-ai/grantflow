@@ -6,7 +6,7 @@ import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const DEBOUNCE_DELAY_MS = 500;
 const POLLING_INTERVAL_DURATION = 2000;
@@ -192,7 +192,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							return;
 						}
 					} catch (error) {
-						logError({ error, identifier: "checkTemplateGeneration" });
+						log.error("checkTemplateGeneration", error);
 						polling.stop();
 						set((state) => ({
 							...state,

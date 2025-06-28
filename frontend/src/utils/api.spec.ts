@@ -1,95 +1,257 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import ky from "ky";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getEnv } from "@/utils/env";
+import { log } from "@/utils/logger";
+import { Ref } from "@/utils/state";
 import { getClient } from "./api";
 
-vi.mock("ky", () => ({
-	default: {
-		create: vi.fn(() => ({
-			delete: vi.fn(),
-			get: vi.fn(),
-			post: vi.fn(),
-			put: vi.fn(),
-		})),
+vi.mock("ky");
+vi.mock("@/utils/env");
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
 	},
 }));
-
-vi.mock("@/utils/env", () => ({
-	getEnv: vi.fn(() => ({
-		NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.test.com",
-	})),
-}));
-
-vi.mock("@/utils/logging", () => ({
-	logTrace: vi.fn(),
-}));
-
 vi.mock("@/utils/state");
 
-describe("API Utils", () => {
+describe("api", () => {
+	const mockKyInstance = {
+		delete: vi.fn(),
+		extend: vi.fn(),
+		get: vi.fn(),
+		patch: vi.fn(),
+		post: vi.fn(),
+		put: vi.fn(),
+	};
+
+	const mockHeaders = new Map([
+		["X-Correlation-ID", "test-correlation-id"],
+		["X-Operation", "test-operation"],
+	]);
+
+	const mockRequest = {
+		headers: {
+			get: (key: string) => mockHeaders.get(key),
+		},
+		method: "GET",
+		url: "https://api.example.com/test",
+	};
+
+	const mockResponse = {
+		ok: true,
+		status: 200,
+		statusText: "OK",
+	};
+
+	const mockEnv = {
+		NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.example.com",
+	};
+
 	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.mocked(getEnv).mockReturnValue(mockEnv as any);
+		vi.mocked(ky.create).mockReturnValue(mockKyInstance as any);
+
+		// Reset the Ref value to ensure fresh client creation
+		const RefConstructor = vi.mocked(Ref);
+		RefConstructor.prototype.value = undefined;
+	});
+
+	afterEach(() => {
 		vi.clearAllMocks();
 	});
 
 	describe("getClient", () => {
-		it("should return a client instance", () => {
+		it("should create a ky instance with correct configuration", () => {
 			const client = getClient();
-			expect(client).toBeDefined();
+
+			expect(ky.create).toHaveBeenCalledWith({
+				hooks: expect.any(Object),
+				prefixUrl: "https://api.example.com",
+				timeout: 600000, // 10 minutes
+			});
+
+			expect(client).toBe(mockKyInstance);
 		});
 
-		it("should return the same client instance on multiple calls", () => {
+		it("should reuse the same client instance on subsequent calls", () => {
 			const client1 = getClient();
 			const client2 = getClient();
+
+			expect(ky.create).toHaveBeenCalledTimes(1);
 			expect(client1).toBe(client2);
 		});
 
-		it("should return a client with HTTP methods", () => {
-			const client = getClient();
+		it("should configure afterResponse hook correctly", () => {
+			getClient();
 
-			expect(client).toHaveProperty("get");
-			expect(client).toHaveProperty("post");
-			expect(client).toHaveProperty("put");
-			expect(client).toHaveProperty("delete");
-		});
-	});
+			const createCall = vi.mocked(ky.create).mock.calls[0][0];
+			const afterResponseHook = createCall.hooks?.afterResponse?.[0];
 
-	describe("Client Configuration", () => {
-		it("should configure client with environment variables", () => {
-			const client = getClient();
-			expect(client).toBeDefined();
-		});
+			if (afterResponseHook) {
+				const result = afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
 
-		it("should handle different environment configurations", () => {
-			const client = getClient();
-			expect(client).toBeDefined();
-		});
-	});
+				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
+					correlation_id: "test-correlation-id",
+					method: "GET",
+					operation: "test-operation",
+					status: 200,
+					url: "https://api.example.com/test",
+				});
 
-	describe("Client Behavior", () => {
-		it("should provide consistent client instance", () => {
-			const instances = Array.from({ length: 5 }, () => getClient());
-			const [firstInstance] = instances;
-
-			for (const instance of instances) {
-				expect(instance).toBe(firstInstance);
+				expect(result).toBe(mockResponse);
 			}
 		});
 
-		it("should return a functional client", () => {
-			const client = getClient();
+		it("should configure beforeError hook correctly", () => {
+			getClient();
 
-			expect(typeof client).toBe("object");
-			expect(client).not.toBeNull();
+			const createCall = vi.mocked(ky.create).mock.calls[0][0];
+			const beforeErrorHook = createCall.hooks?.beforeError?.[0];
+
+			if (beforeErrorHook) {
+				const mockError = {
+					message: "Network error",
+					request: mockRequest,
+					response: { status: 500 },
+				};
+
+				const result = beforeErrorHook(mockError as any);
+
+				expect(log.error).toHaveBeenCalledWith("API ERROR GET https://api.example.com/test", undefined, {
+					correlation_id: "test-correlation-id",
+					error: "Network error",
+					method: "GET",
+					operation: "test-operation",
+					status: 500,
+					url: "https://api.example.com/test",
+				});
+
+				expect(result).toBe(mockError);
+			}
 		});
-	});
 
-	describe("Error Handling", () => {
-		it("should handle client creation gracefully", () => {
-			expect(() => getClient()).not.toThrow();
+		it("should configure beforeRequest hook correctly", () => {
+			getClient();
+
+			const createCall = vi.mocked(ky.create).mock.calls[0][0];
+			const beforeRequestHook = createCall.hooks?.beforeRequest?.[0];
+
+			if (beforeRequestHook) {
+				beforeRequestHook(mockRequest as any);
+
+				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test", {
+					correlation_id: "test-correlation-id",
+					method: "GET",
+					operation: "test-operation",
+					url: "https://api.example.com/test",
+				});
+			}
 		});
 
-		it("should return a valid client even with mocked dependencies", () => {
-			const client = getClient();
-			expect(client).toBeDefined();
-			expect(typeof client).toBe("object");
+		it("should handle missing headers gracefully", () => {
+			getClient();
+
+			const createCall = vi.mocked(ky.create).mock.calls[0][0];
+			const afterResponseHook = createCall.hooks?.afterResponse?.[0];
+
+			const requestWithNoHeaders = {
+				...mockRequest,
+				headers: {
+					get: () => null,
+				},
+			};
+
+			if (afterResponseHook) {
+				afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any);
+
+				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
+					correlation_id: null,
+					method: "GET",
+					operation: null,
+					status: 200,
+					url: "https://api.example.com/test",
+				});
+			}
+		});
+
+		it("should handle different HTTP methods", () => {
+			getClient();
+
+			const createCall = vi.mocked(ky.create).mock.calls[0][0];
+			const beforeRequestHook = createCall.hooks?.beforeRequest?.[0];
+
+			const methods = ["POST", "PUT", "DELETE", "PATCH"];
+
+			methods.forEach((method) => {
+				const request = { ...mockRequest, method };
+
+				if (beforeRequestHook) {
+					beforeRequestHook(request as any);
+
+					expect(log.info).toHaveBeenCalledWith(
+						`API ${method} https://api.example.com/test`,
+						expect.objectContaining({
+							method,
+						}),
+					);
+				}
+			});
+		});
+
+		it("should handle different response statuses", () => {
+			getClient();
+
+			const createCall = vi.mocked(ky.create).mock.calls[0][0];
+			const afterResponseHook = createCall.hooks?.afterResponse?.[0];
+
+			const statuses = [201, 204, 301, 400, 401, 403, 404, 500];
+
+			statuses.forEach((status) => {
+				const response = { ...mockResponse, status };
+
+				if (afterResponseHook) {
+					afterResponseHook(mockRequest as any, {} as any, response as any);
+
+					expect(log.info).toHaveBeenCalledWith(
+						`API GET https://api.example.com/test - ${status}`,
+						expect.objectContaining({
+							status,
+						}),
+					);
+				}
+			});
+		});
+
+		it("should use correct timeout value", () => {
+			getClient();
+
+			expect(ky.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					timeout: 600000, // 10 minutes (60 * 1000 * 10)
+				}),
+			);
+		});
+
+		it("should use environment variable for prefixUrl", () => {
+			const customEnv = {
+				NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://custom-api.example.com",
+			};
+			vi.mocked(getEnv).mockReturnValue(customEnv as any);
+
+			// Reset the client to force recreation
+			const RefConstructor = vi.mocked(Ref);
+			RefConstructor.prototype.value = undefined;
+
+			getClient();
+
+			expect(ky.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					prefixUrl: "https://custom-api.example.com",
+				}),
+			);
 		});
 	});
 });

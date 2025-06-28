@@ -2,13 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTraceHeaders, generateCorrelationId, logTraceEvent } from "./tracing";
 
-vi.mock("@/utils/logging", () => ({
-	logTrace: vi.fn(),
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
-import { logTrace } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
-const mockLogTrace = vi.mocked(logTrace);
+const mockLog = vi.mocked(log);
 
 describe("Tracing Utilities", () => {
 	describe("generateCorrelationId", () => {
@@ -59,7 +63,7 @@ describe("Tracing Utilities", () => {
 
 			logTraceEvent(correlationId, operation, step, metadata);
 
-			expect(mockLogTrace).toHaveBeenCalledWith("info", `${correlationId} | ${operation} | ${step}`, {
+			expect(mockLog.info).toHaveBeenCalledWith(`${correlationId} | ${operation} | ${step}`, {
 				correlation_id: correlationId,
 				operation,
 				service: "frontend",
@@ -75,7 +79,7 @@ describe("Tracing Utilities", () => {
 
 			logTraceEvent(correlationId, operation, step);
 
-			expect(mockLogTrace).toHaveBeenCalledWith("info", `${correlationId} | ${operation} | ${step}`, {
+			expect(mockLog.info).toHaveBeenCalledWith(`${correlationId} | ${operation} | ${step}`, {
 				correlation_id: correlationId,
 				operation,
 				service: "frontend",

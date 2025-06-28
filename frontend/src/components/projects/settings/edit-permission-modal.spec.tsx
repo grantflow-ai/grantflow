@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UserRole } from "@/types/user";
+import { log } from "@/utils/logger";
 
 import { EditPermissionModal } from "./edit-permission-modal";
 
@@ -16,6 +17,14 @@ vi.mock("@/utils/user", () => ({
 
 		return email[0].toUpperCase();
 	}),
+}));
+
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
 }));
 
 const mockProjects = [
@@ -446,7 +455,6 @@ describe("EditPermissionModal", () => {
 
 	it("handles update error gracefully", async () => {
 		const user = userEvent.setup();
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		mockOnUpdateRole.mockRejectedValue(new Error("Update failed"));
 
 		render(
@@ -463,14 +471,12 @@ describe("EditPermissionModal", () => {
 		await user.click(screen.getByTestId("update-button"));
 
 		await waitFor(() => {
-			expect(consoleSpy).toHaveBeenCalledWith("Failed to update permissions:", expect.any(Error));
+			expect(log.error).toHaveBeenCalledWith("Failed to update permissions:", expect.any(Error));
 		});
 
 		expect(screen.getByTestId("update-button")).toHaveTextContent("Update");
 		expect(screen.getByTestId("update-button")).not.toBeDisabled();
 		expect(mockOnClose).not.toHaveBeenCalled();
-
-		consoleSpy.mockRestore();
 	});
 
 	it("calls onClose when cancel button is clicked", async () => {
