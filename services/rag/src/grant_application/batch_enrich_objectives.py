@@ -15,9 +15,9 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.grant_application.enrich_research_objective import (
-    EnrichObjectiveInputDTO,
     handle_enrich_objective,
 )
+from rag.src.grant_application.dto import EnrichObjectiveInputDTO
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.token_optimization import estimate_prompt_tokens
 
@@ -26,8 +26,6 @@ logger = get_logger(__name__)
 MAX_TOTAL_TOKENS: Final[int] = 180000
 MAX_RETRIEVAL_TOKENS: Final[int] = 10000
 SAFETY_MARGIN: Final[float] = 0.85
-
-
 
 
 def calculate_optimal_batching(
@@ -142,6 +140,7 @@ async def perform_shared_retrieval(
     return retrieval_result
 
 
+
 async def handle_batch_enrich_objectives(
     research_objectives: list[ResearchObjective],
     grant_section: GrantLongFormSection,
@@ -179,10 +178,7 @@ async def handle_batch_enrich_objectives(
     shared_context = await perform_shared_retrieval(
         research_objectives, grant_section, application_id
     )
-
     estimated_context_tokens = estimate_prompt_tokens(shared_context)
-
-
     objective_batches = calculate_optimal_batching(research_objectives, estimated_context_tokens)
 
 
@@ -205,6 +201,8 @@ async def handle_batch_enrich_objectives(
                     application_id=application_id,
                     form_inputs=form_inputs,
                     retrieval_context=shared_context,
+                    keywords=grant_section["keywords"],
+                    topics=grant_section["topics"],
                 )
             )
             for obj in batch
