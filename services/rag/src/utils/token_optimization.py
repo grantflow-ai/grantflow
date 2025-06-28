@@ -9,6 +9,25 @@ from packages.shared_utils.src.logger import get_logger
 logger = get_logger(__name__)
 
 
+def estimate_performance_improvement(baseline_time: float, objectives_count: int) -> float:
+    """Estimate potential performance improvement based on baseline time and objectives count.
+
+    Args:
+        baseline_time: The baseline processing time in seconds
+        objectives_count: The number of objectives processed
+
+    Returns:
+        Estimated percentage improvement
+    """
+    # Simple model: more objectives = more potential for improvement
+    # Base improvement of 30% plus 5% per objective
+    base_improvement = 30.0
+    per_objective_improvement = 5.0
+
+    # Cap at 80% improvement
+    return min(base_improvement + (objectives_count * per_objective_improvement), 80.0)
+
+
 @lru_cache(maxsize=2000)
 def cached_estimate_token_count(text: str) -> int:
     """Cached local token estimation - much faster than API calls."""

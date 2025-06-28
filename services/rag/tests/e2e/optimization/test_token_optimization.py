@@ -69,9 +69,8 @@ async def test_token_optimization_performance(logger: logging.Logger) -> None:
             await asyncio.sleep(0.1)
 
 
-        with perf_ctx.stage_timer("token_optimization"):
-
-            with patch("services.rag.src.utils.post_processing.post_process_documents") as mock_post_process:
+        with perf_ctx.stage_timer("token_optimization"), \
+             patch("services.rag.src.utils.post_processing.post_process_documents") as mock_post_process:
 
                 mock_post_process.return_value = [
                     {
