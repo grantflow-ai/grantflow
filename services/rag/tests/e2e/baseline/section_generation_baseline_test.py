@@ -7,6 +7,8 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from testing.e2e_utils import E2ETestCategory, e2e_test
+
 from services.rag.src.grant_application.generate_section_text import generate_section_text
 from services.rag.src.utils.token_optimization import estimate_token_count
 from services.rag.tests.e2e.performance_framework import TestCategory
@@ -14,7 +16,6 @@ from services.rag.tests.e2e.performance_utils import (
     assert_performance_targets,
     create_performance_context,
 )
-from testing.e2e_utils import E2ETestCategory, e2e_test
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchDeepDive
