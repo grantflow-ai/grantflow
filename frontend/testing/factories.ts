@@ -23,11 +23,14 @@ export const UrlResponseFactory = new Factory<{ url: string }>((factory) => ({
 	url: factory.internet.url(),
 }));
 
-export const JwtResponseFactory = new Factory<API.Login.Http201.ResponseBody>(() => ({
+export const JwtResponseFactory = new Factory<API.Login.Http201.ResponseBody>(() => {
 	// Mock JWT token with proper structure: header.payload.signature
-	jwt_token:
-		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1vY2sgVXNlciIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxODkzNDU2MDAwfQ.4Adcj3UFYzPUVaVF43FmMab6RlaQD8A9V8wFzzht-KQ",
-}));
+	const mockToken =
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1vY2sgVXNlciIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxODkzNDU2MDAwfQ.4Adcj3UFYzPUVaVF43FmMab6RlaQD8A9V8wFzzht-KQ";
+	return {
+		jwt_token: mockToken,
+	};
+});
 
 export const OtpResponseFactory = new Factory<API.GenerateOtp.Http200.ResponseBody>((factory) => ({
 	otp: factory.string.numeric(6),

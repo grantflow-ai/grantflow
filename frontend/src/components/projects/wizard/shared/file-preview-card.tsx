@@ -1,3 +1,5 @@
+"use client";
+
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";

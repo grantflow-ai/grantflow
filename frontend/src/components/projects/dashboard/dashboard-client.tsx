@@ -38,7 +38,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	// Commented out test notifications that were interfering with integration tests
-	// TODO: Add a feature flag for dev-only notifications
+	// Feature flag for dev-only notifications would be helpful here
 	// useEffect(() => {
 	// 	const timeouts = [
 	// 		setTimeout(() => {
