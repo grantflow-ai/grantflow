@@ -214,17 +214,21 @@ async def generate_work_plan_text(
 
 async def generate_grant_section_texts(
     application_id: str,
-    form_inputs: ResearchDeepDive,
+    form_inputs: ResearchDeepDive,  # noqa: ARG001
     grant_sections: list[GrantElement | GrantLongFormSection],
     research_objectives: list[ResearchObjective],
-    job_manager: JobManager,
+    job_manager: JobManager,  # noqa: ARG001
 ) -> dict[str, str]:
+    long_form_sections: list[GrantLongFormSection] = [
+        s
+        for s in grant_sections
+        if isinstance(s, dict) and s.get("is_detailed_research_plan") is not None  # type: ignore[misc]
+    ]
+
     return await generate_sections_with_shared_retrieval(
+        sections=long_form_sections,
+        research_deep_dives=research_objectives,
         application_id=application_id,
-        form_inputs=form_inputs,
-        grant_sections=grant_sections,
-        research_objectives=research_objectives,
-        job_manager=job_manager,
     )
 
 
@@ -382,7 +386,7 @@ async def grant_application_text_generation_pipeline_handler(
 
         section_texts = await generate_sections_with_shared_retrieval(
             application_id=str(application_id),
-            sections=grant_template.grant_sections,
+            sections=grant_template.grant_sections,  # type: ignore[arg-type]
             research_deep_dives=grant_application.research_objectives or [],
         )
 

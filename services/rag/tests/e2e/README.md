@@ -4,153 +4,137 @@ Organized test suite for the RAG (Retrieval-Augmented Generation) service, focus
 
 ## Test Organization
 
-### 📁 `baseline/`
-Baseline performance tests to establish reference metrics for optimization efforts.
+The tests have been reorganized into logical groups for better maintainability:
 
-- **`test_grant_application_baseline.py`** - Comprehensive baseline tests for grant application generation
-  - Full application generation baseline (SMOKE: 600s)
-  - Work plan timing analysis (QUALITY_ASSESSMENT: 1800s)
-  - Simple metrics for planning (SMOKE: 300s)
-  - Real application testing (QUALITY_ASSESSMENT: 900s)
+### Core Test Files
 
-### 📁 `performance/`
-Performance tests focusing on timing and throughput optimization.
+- **`test_evaluation_performance.py`** - Comprehensive evaluation framework tests
+  - Baseline performance measurements
+  - Evaluation consistency tests
+  - Optimization performance (caching, routing, adaptive timeouts)
+  - Content complexity analysis
+  - Smart evaluation routing
+  - Edge case handling
 
-- **`test_grant_template_performance.py`** - Grant template generation performance tests
-  - Basic performance with strict timing (SMOKE: 150s)
-  - Quality + performance analysis (QUALITY_ASSESSMENT: 300s)
-  - Component-level quick tests (SMOKE: 120s)
-  - Comprehensive cross-source testing (E2E_FULL: 600s)
+- **`test_grant_application_pipeline.py`** - Grant application generation tests
+  - Baseline performance tests
+  - Smoke tests for quick validation
+  - Optimization strategy comparisons
+  - Quality metrics assessment
+  - Template extraction and enrichment
 
-### 📁 `optimization/`
-Optimization tests for specific performance improvements.
+- **`test_retrieval_and_search.py`** - Document retrieval and search tests
+  - Retrieval smoke tests
+  - Quality assessment with diversity metrics
+  - Semantic evaluation of relevance
+  - Search query generation
+  - Integration tests for complete flow
 
-- **`test_work_plan_optimization.py`** - Parallel vs sequential work plan processing
-- **`test_batch_enrichment_optimization.py`** - Batch vs individual objective enrichment
-- **`test_batch_size_optimization.py`** - Optimal batch size determination (includes batch size 3 validation)
-- **`test_token_optimization.py`** - Token usage optimization testing
+- **`test_performance_optimizations.py`** - Performance optimization tests
+  - Token optimization effectiveness
+  - Batch processing performance
+  - Work plan generation optimizations
+  - Comprehensive optimization comparisons
 
-### 📁 `features/`
-Feature-specific functional tests.
+### Support Files
 
-- **`test_application_generation.py`** - Full grant application text generation
-- **`test_extract_cfp_data_multi_source.py`** - Multi-source CFP data extraction
-- **`test_generate_grant_template.py`** - Grant template generation for different organizations
-
-### 📁 `quality/`
-Quality assessment and validation tests.
-
-- **`test_extract_sections.py`** - Section extraction quality validation
-- **`test_rag_evaluation.py`** - RAG retrieval and generation quality
-- **`test_retrieval.py`** - Document retrieval accuracy
-- **`test_search_queries.py`** - Search query generation and effectiveness
-
-### 📁 Root Level
-Specialized tests and legacy compatibility.
-
-- **`test_asaf_erc.py`** - Specific ERC grant testing (Asaf's research)
-- **`test_lampel_erc.py`** - Specific ERC grant testing (Lampel's research)
-- **`test_error_handling.py`** - Error handling and edge cases
-- **`test_genai_integration_smoke.py`** - GenAI integration smoke tests
+- **`performance_framework.py`** - Unified performance measurement framework
+- **`performance_utils.py`** - Utilities for performance testing
+- **`test_utils.py`** - Common test utilities
+- **`conftest_rag.py`** - Pytest fixtures specific to RAG tests
 
 ## Test Categories
 
-Tests are organized using pytest markers for different execution contexts:
+Tests are marked with categories for selective execution:
 
-### By Duration
-- **`smoke`** - Quick validation tests (< 5 minutes)
-- **`quality_assessment`** - Moderate quality validation (5-30 minutes)
-- **`e2e_full`** - Comprehensive integration tests (30+ minutes)
-
-### By Purpose
-- **`baseline`** - Establish reference performance metrics
-- **`optimization`** - Test specific performance improvements
-- **`quality`** - Validate output quality and accuracy
-- **`feature`** - Test specific functionality
+- `@e2e_test(category=E2ETestCategory.SMOKE)` - Quick validation tests (< 5 min)
+- `@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT)` - Quality checks (5-10 min)
+- `@e2e_test(category=E2ETestCategory.E2E_FULL)` - Full integration tests (10+ min)
+- `@e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION)` - AI-powered evaluation
+- `@e2e_test(category=E2ETestCategory.AI_EVAL)` - Advanced AI evaluation tests
 
 ## Running Tests
 
-### Quick Smoke Tests
+### Run all E2E tests
 ```bash
-# All smoke tests (< 5 minutes total)
-E2E_TESTS=1 pytest services/rag/tests/e2e/ -m "smoke"
-
-# Specific test category
-E2E_TESTS=1 pytest services/rag/tests/e2e/baseline/ -m "smoke"
+E2E_TESTS=1 pytest tests/e2e/
 ```
 
-### Quality Assessment
+### Run specific test file
 ```bash
-# Quality assessment tests (5-30 minutes)
-E2E_TESTS=1 pytest services/rag/tests/e2e/ -m "quality_assessment"
-
-# Specific optimization tests
-E2E_TESTS=1 pytest services/rag/tests/e2e/optimization/
+E2E_TESTS=1 pytest tests/e2e/test_evaluation_performance.py
 ```
 
-### Full Test Suite
+### Run by category
 ```bash
-# Complete e2e test suite (30+ minutes)
-E2E_TESTS=1 pytest services/rag/tests/e2e/ -m "e2e_full"
-```
-
-### By Test Category
-```bash
-# Baseline tests only
-E2E_TESTS=1 pytest services/rag/tests/e2e/baseline/
-
-# Performance optimization tests
-E2E_TESTS=1 pytest services/rag/tests/e2e/optimization/
-
-# Feature validation tests
-E2E_TESTS=1 pytest services/rag/tests/e2e/features/
+# Quick smoke tests
+E2E_TESTS=1 pytest -m "smoke"
 
 # Quality assessment tests
-E2E_TESTS=1 pytest services/rag/tests/e2e/quality/
+E2E_TESTS=1 pytest -m "quality_assessment"
+
+# Full integration tests
+E2E_TESTS=1 pytest -m "e2e_full"
 ```
 
-## Performance Targets
+### Run specific test
+```bash
+E2E_TESTS=1 pytest tests/e2e/test_evaluation_performance.py::test_evaluation_framework_baseline
+```
 
-### Baseline Targets (from `conftest_rag.py`)
-- **Excellent**: < 180s
-- **Good**: < 300s
-- **Acceptable**: < 600s
-- **Poor**: < 1200s
+## Performance Testing
 
-### Optimization Goals
-- **Batch Processing**: 60-80% time reduction vs sequential
-- **Parallel Work Plans**: 2-4x speedup depending on objective count
-- **Token Optimization**: 20-40% token usage reduction
+All performance tests use the unified `PerformanceTestContext` which provides:
 
-## Result Storage
+- Automatic timing of test stages
+- LLM call tracking
+- Content quality analysis
+- Performance metrics collection
+- Result persistence for analysis
 
-Test results are automatically saved to:
-- `testing/test_data/results/baseline_performance/` - Baseline test results
-- `testing/test_data/results/performance/` - Performance test results
-- `testing/test_data/results/quality_performance/` - Quality + performance results
-- `testing/test_data/results/optimization_results/` - Optimization test results
+Example usage:
+```python
+with PerformanceTestContext(
+    test_name="my_test",
+    test_category=TestCategory.EVALUATION,
+    logger=logger,
+) as perf_ctx:
+    with perf_ctx.stage_timer("stage_1"):
+        # Test code here
+        pass
+```
 
-## Configuration Files
+## Test Data
 
-- **`conftest_rag.py`** - RAG-specific test fixtures and configuration
-- **`utils.py`** - Shared utilities for RAG e2e tests
+Tests use fixtures from `conftest_rag.py` including:
+- `melanoma_alliance_full_application_id` - Sample application ID
+- `async_session_maker` - Database session factory
+- `organization_mapping` - Organization data mapping
 
-## Key Improvements Made
+## Best Practices
 
-### Consolidation
-- **Baseline Tests**: 4 files → 1 comprehensive file
-- **Performance Tests**: 3 files → 1 comprehensive file
-- **Batch Size Tests**: 2 files → 1 comprehensive file
+1. **Use appropriate timeouts** - Set realistic timeouts based on test complexity
+2. **Mock external services** - Use mocks for LLM calls in unit-style tests
+3. **Measure performance** - Use PerformanceTestContext for all performance tests
+4. **Assert quality** - Include quality assertions, not just performance
+5. **Log meaningful metrics** - Log key metrics for debugging and analysis
 
-### Organization
-- Clear separation by test purpose (baseline, performance, optimization, features, quality)
-- Consistent `test_` naming convention
-- Logical folder structure for easy navigation
+## Recent Improvements
 
-### Enhanced Testing
-- Multi-level performance testing (component, pipeline, comprehensive)
-- Quality scoring with detailed analysis
-- Flexible test execution based on markers
-- Comprehensive result tracking and persistence
+### Test Consolidation
+- Evaluation tests: 5 files → 1 comprehensive file (`test_evaluation_performance.py`)
+- Grant application tests: Multiple files → 1 file (`test_grant_application_pipeline.py`)
+- Retrieval tests: Multiple files → 1 file (`test_retrieval_and_search.py`)
+- Optimization tests: Multiple files → 1 file (`test_performance_optimizations.py`)
 
-This organization supports both development workflows (quick smoke tests) and comprehensive validation (full quality assessment) while maintaining clear separation of concerns.
+### Better Organization
+- Removed deeply nested directory structure
+- Consolidated related tests into logical groups
+- Clear naming convention for test files
+- Comprehensive documentation in each test file
+
+This reorganization makes it easier to:
+- Find and run specific tests
+- Understand test coverage
+- Maintain and update tests
+- Add new tests in the appropriate location

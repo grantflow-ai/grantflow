@@ -132,9 +132,7 @@ async def test_parse_documents(
     mock_count_tokens = mocker.patch("services.rag.src.utils.post_processing.count_tokens")
     mock_count_tokens.side_effect = lambda text, **_: len(text.split())
 
-    result = await parse_documents(
-        sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model"
-    )
+    result = await parse_documents(sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model")
 
     assert len(result) == 3
     assert "The quick brown fox jumps over the lazy dog." in result

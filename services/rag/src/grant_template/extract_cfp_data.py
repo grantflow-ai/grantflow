@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = get_logger(__name__)
