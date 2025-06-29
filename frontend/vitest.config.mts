@@ -14,6 +14,7 @@ export default defineConfig({
 		coverage: {
 			exclude: [
 				"**/*.spec.*",
+				"**/*.spec.integration.*",
 				"**/*.stories.*",
 				"**/*.d.ts",
 				"src/types/*",
@@ -30,6 +31,7 @@ export default defineConfig({
 		},
 		environment: "jsdom",
 		globals: true,
+		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
