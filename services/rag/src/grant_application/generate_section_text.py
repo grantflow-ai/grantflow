@@ -6,12 +6,12 @@ Preserves quality while improving speed through intelligent batching and caching
 import time
 from typing import Final
 
-from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive
+from packages.db.src.json_objects import GrantLongFormSection, ResearchObjective
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.constants import MIN_WORDS_RATIO
-from services.rag.src.utils.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -52,7 +52,7 @@ ${context}
 
 async def generate_sections_with_shared_retrieval(
     sections: list[GrantLongFormSection],
-    research_deep_dives: list[ResearchDeepDive],
+    research_deep_dives: list[ResearchObjective],
     application_id: str,
 ) -> dict[str, str]:
     """
@@ -144,7 +144,7 @@ async def generate_sections_with_shared_retrieval(
 
 async def _generate_single_section_with_context(
     section: GrantLongFormSection,
-    research_deep_dives: list[ResearchDeepDive],
+    research_deep_dives: list[ResearchObjective],
     shared_context: str,
 ) -> str:
     """
@@ -337,7 +337,7 @@ This section should integrate the above context to create comprehensive, detaile
 
 async def generate_section_text(
     section: GrantLongFormSection,
-    research_deep_dives: list[ResearchDeepDive],
+    research_deep_dives: list[ResearchObjective],
     application_id: str,
 ) -> str:
     """

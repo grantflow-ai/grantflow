@@ -118,7 +118,9 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
         logger.info("Actual result structure", result=result)
         logger.info("Result length", length=len(result))
         if result:
-            logger.info("First result keys", keys=list(result[0].keys()) if isinstance(result[0], dict) else "Not a dict")
+            logger.info(
+                "First result keys", keys=list(result[0].keys()) if isinstance(result[0], dict) else "Not a dict"
+            )
 
         assert len(result) == 2, "Should return enrichment for both objectives"
         assert all(isinstance(r, dict) for r in result), "Results should be dictionaries"
