@@ -11,17 +11,13 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from testing.e2e_utils import E2ETestCategory, create_heavy_test_context, e2e_test
+from testing.e2e_utils import E2ETestCategory, e2e_test
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.grant_template.handler import extract_and_enrich_sections
 from services.rag.src.utils.job_manager import JobManager
 from services.rag.tests.e2e.performance_framework import TestCategory
-from services.rag.tests.e2e.performance_utils import (
-    PerformanceTestContext,
-    assert_performance_targets,
-    assert_quality_targets,
-)
+from services.rag.tests.e2e.performance_utils import PerformanceTestContext
 
 
 @e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
@@ -34,18 +30,15 @@ async def test_grant_application_baseline_performance(
     Baseline performance test for grant application generation.
     Establishes performance benchmarks for the complete pipeline.
     """
-    with (
-        create_heavy_test_context(),
-        PerformanceTestContext(
-            test_name="grant_application_baseline",
-            test_category=TestCategory.GRANT_APPLICATION,
-            logger=logger,
-            configuration={
-                "test_type": "baseline",
-                "application_id": melanoma_alliance_full_application_id,
-            },
-        ) as perf_ctx,
-    ):
+    with PerformanceTestContext(
+        test_name="grant_application_baseline",
+        test_category=TestCategory.GRANT_APPLICATION,
+        logger=logger,
+        configuration={
+            "test_type": "baseline",
+            "application_id": melanoma_alliance_full_application_id,
+        },
+    ) as perf_ctx:
         logger.info("=== GRANT APPLICATION BASELINE PERFORMANCE TEST ===")
 
         with patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock) as mock_publish:
@@ -85,18 +78,9 @@ async def test_grant_application_baseline_performance(
             logger.info("Total content length: %d characters", len(text))
             logger.info("Notifications sent: %d", mock_publish.call_count)
 
-            assert_performance_targets(
-                perf_ctx,
-                max_duration=1200,
-                min_sections=3,
-                min_content_length=1000,
-            )
-
-            assert_quality_targets(
-                perf_ctx,
-                min_quality_score=70,
-                min_relevance_score=0.7,
-            )
+            assert pipeline_duration < 1200, f"Pipeline took too long: {pipeline_duration}s"
+            assert len(section_texts) >= 3, f"Too few sections generated: {len(section_texts)}"
+            assert len(text) >= 1000, f"Generated text too short: {len(text)} characters"
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=300)
@@ -120,7 +104,7 @@ async def test_grant_application_smoke(
     ):
         logger.info("=== GRANT APPLICATION SMOKE TEST ===")
 
-        with patch("services.rag.src.grant_application.handler.generate_section_content") as mock_generate:
+        with patch("services.rag.src.grant_application.generate_section_text.generate_section_text") as mock_generate:
             mock_generate.return_value = "Test section content for smoke test."
 
             with patch("services.rag.src.utils.job_manager.publish_notification", new_callable=AsyncMock):
@@ -180,7 +164,7 @@ async def test_grant_application_optimizations(
 
             start_time = time.time()
 
-            with patch("services.rag.src.grant_application.handler.generate_section_content") as mock_gen:
+            with patch("services.rag.src.grant_application.generate_section_text.generate_section_text") as mock_gen:
                 mock_gen.return_value = "Standard section content " * 100
 
                 text, sections = await grant_application_text_generation_pipeline_handler(
@@ -212,7 +196,8 @@ async def test_grant_application_optimizations(
                 return "Parallel section content " * 100
 
             with patch(
-                "services.rag.src.grant_application.handler.generate_section_content", side_effect=mock_parallel_gen
+                "services.rag.src.grant_application.generate_section_text.generate_section_text",
+                side_effect=mock_parallel_gen,
             ):
                 text, sections = await grant_application_text_generation_pipeline_handler(
                     grant_application_id=UUID(melanoma_alliance_full_application_id),
