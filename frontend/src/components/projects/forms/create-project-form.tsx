@@ -24,10 +24,15 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 
 	const onSubmit = async (values: ProjectFormValues) => {
 		try {
+			log.info("[CreateProjectForm] Submitting project", {
+				hasDescription: !!values.description,
+				name: values.name,
+			});
 			const { id: projectId } = await createProject(values);
+			log.info("[CreateProjectForm] Project created successfully", { projectId });
 			closeModal(projectId);
 		} catch (error) {
-			log.error("createProject", error);
+			log.error("[CreateProjectForm] Failed to create project", error);
 			toast.error("An error occurred while creating the project.");
 			closeModal();
 		}

@@ -2,10 +2,15 @@
 
 import { Edit, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { createApplication } from "@/actions/grant-applications";
 import { AvatarGroup } from "@/components/app";
+import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
+import { log } from "@/utils/logger";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
 
 import { ProjectSidebar } from "./project-sidebar";
@@ -182,12 +187,14 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 const teamMembers = [{ backgroundColor: "#369e94", initials: "NH" }];
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
+	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [projectTitle, setProjectTitle] = useState(initialProject.name);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [applications, setApplications] = useState(mockApplications);
+	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 
 	const filteredApplications = applications.filter(
@@ -209,6 +216,18 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		}
 	};
 
+	const handleCreateApplication = async () => {
+		setIsCreatingApplication(true);
+		try {
+			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
+			router.push(`/projects/${initialProject.id}/applications/${application.id}/wizard`);
+		} catch (error) {
+			log.error("create-application-button", error);
+			toast.error("Failed to create application");
+			setIsCreatingApplication(false);
+		}
+	};
+
 	useEffect(() => {
 		if (isEditingTitle && titleInputRef.current) {
 			titleInputRef.current.focus();
@@ -224,6 +243,8 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					name: app.name,
 					status: app.status,
 				}))}
+				isCreatingApplication={isCreatingApplication}
+				onCreateApplication={handleCreateApplication}
 				projectId={initialProject.id}
 				userRole={initialProject.role as UserRole}
 			/>
@@ -286,13 +307,15 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 							value={searchQuery}
 						/>
 					</div>
-					<Link
+					<button
 						className="flex items-center gap-2 rounded bg-[#1e13f8] px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-white hover:bg-[#1710d4] transition-colors ml-4"
-						href={`/projects/${initialProject.id}/applications/new`}
+						disabled={isCreatingApplication}
+						onClick={handleCreateApplication}
+						type="button"
 					>
 						<Plus className="size-4" />
-						New Application
-					</Link>
+						{isCreatingApplication ? "Creating..." : "New Application"}
+					</button>
 				</div>
 
 				{}

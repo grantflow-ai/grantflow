@@ -96,10 +96,23 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 
 	try {
 		const url = new URL(request.url);
-		// Extract path from the URL, removing any leading slash
-		const path = url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname;
+		const baseUrl = new URL(getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
 
-		log.info(`[Mock API] Intercepting ${request.method} ${path}`);
+		// Remove the base URL prefix to get just the API path
+		let path = url.pathname;
+		if (path.startsWith(baseUrl.pathname)) {
+			path = path.slice(baseUrl.pathname.length);
+		}
+		// Ensure path starts with /
+		if (!path.startsWith("/")) {
+			path = `/${path}`;
+		}
+
+		log.info(`[Mock API] Intercepting ${request.method} ${path}`, {
+			baseUrlPath: baseUrl.pathname,
+			extractedPath: path,
+			fullUrl: request.url,
+		});
 
 		// Get request body if present
 		let body: unknown;
@@ -131,7 +144,18 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		});
 	} catch (error) {
 		log.error("[Mock API] Error handling request", error);
-		// Return undefined to let the request proceed normally
-		return undefined;
+		// Return error response instead of letting request proceed to backend
+		return new Response(
+			JSON.stringify({
+				detail: "Mock API failed to handle request",
+				error: error instanceof Error ? error.message : "Mock API error",
+			}),
+			{
+				headers: {
+					"Content-Type": "application/json",
+				},
+				status: 500,
+			},
+		);
 	}
 }
