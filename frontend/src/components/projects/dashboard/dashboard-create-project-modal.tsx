@@ -2,6 +2,7 @@ import { useRouter } from "next/navigation";
 
 import { BaseModal } from "@/components/app/feedback/base-modal";
 import { PagePath } from "@/enums";
+import { log } from "@/utils/logger";
 
 import { CreateProjectForm } from "../forms/create-project-form";
 
@@ -17,9 +18,12 @@ export function DashboardCreateProjectModal({ isOpen, onClose }: DashboardCreate
 		<BaseModal isOpen={isOpen} onClose={onClose} title="New Research Project">
 			<CreateProjectForm
 				closeModal={(projectId) => {
+					log.info("[DashboardCreateProjectModal] closeModal called", { projectId });
 					onClose();
 					if (projectId) {
-						router.push(PagePath.PROJECT_DETAIL.replace(":projectId", projectId));
+						const path = PagePath.PROJECT_DETAIL.replace(":projectId", projectId);
+						log.info("[DashboardCreateProjectModal] Navigating to project", { path, projectId });
+						router.push(path);
 					}
 				}}
 			/>

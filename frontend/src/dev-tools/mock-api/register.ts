@@ -5,32 +5,43 @@ export function registerMockHandlers(): void {
 	const client = getMockAPIClient();
 
 	// Auth endpoints
-	client.register("/login", mockHandlers.auth.login);
-	client.register("/auth/login", mockHandlers.auth.login); // Keep for compatibility
-	client.register("/auth/otp", mockHandlers.auth.generateOtp);
+	client.register("/login", mockHandlers.auth.login, "POST");
+	client.register("/auth/login", mockHandlers.auth.login, "POST"); // Keep for compatibility
+	client.register("/auth/otp", mockHandlers.auth.generateOtp, "POST");
 
 	// Project endpoints
-	client.register("/projects", mockHandlers.projects.listProjects);
-	client.register("/projects/:project_id", mockHandlers.projects.getProject);
-	client.register("/projects", mockHandlers.projects.createProject);
-	client.register("/projects/:project_id", mockHandlers.projects.updateProject);
-	client.register("/projects/:project_id", mockHandlers.projects.deleteProject);
+	client.register("/projects", mockHandlers.projects.listProjects, "GET");
+	client.register("/projects/:project_id", mockHandlers.projects.getProject, "GET");
+	client.register("/projects", mockHandlers.projects.createProject, "POST");
+	client.register("/projects/:project_id", mockHandlers.projects.updateProject, "PUT");
+	client.register("/projects/:project_id", mockHandlers.projects.deleteProject, "DELETE");
 
 	// Application endpoints
-	client.register("/projects/:project_id/applications", mockHandlers.applications.createApplication);
+	client.register("/projects/:project_id/applications", mockHandlers.applications.createApplication, "POST");
 	client.register(
 		"/projects/:project_id/applications/:application_id",
 		mockHandlers.applications.retrieveApplication,
+		"GET",
 	);
-	client.register("/projects/:project_id/applications/:application_id", mockHandlers.applications.updateApplication);
-	client.register("/projects/:project_id/applications/:application_id", mockHandlers.applications.deleteApplication);
+	client.register(
+		"/projects/:project_id/applications/:application_id",
+		mockHandlers.applications.updateApplication,
+		"PUT",
+	);
+	client.register(
+		"/projects/:project_id/applications/:application_id",
+		mockHandlers.applications.deleteApplication,
+		"DELETE",
+	);
 	client.register(
 		"/projects/:project_id/applications/:application_id/rag-sources",
 		mockHandlers.applications.getRagSources,
+		"GET",
 	);
 	client.register(
 		"/projects/:project_id/applications/:application_id/generate",
 		mockHandlers.applications.generateApplication,
+		"POST",
 	);
 
 	// Organization endpoints
