@@ -1,16 +1,11 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import { DevMenuWrapper } from "@/components/dev-menu-wrapper";
 import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
-
-// Lazy load DevMenu only in development
-const DevMenu = dynamic(() => import("@/dev-tools").then((mod) => mod.DevMenu), {
-	ssr: false,
-});
 
 export const metadata = {
 	alternates: {
@@ -74,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				suppressHydrationWarning
 			>
 				{children}
-				{process.env.NODE_ENV === "development" && <DevMenu />}
+				<DevMenuWrapper />
 			</body>
 		</html>
 	);
