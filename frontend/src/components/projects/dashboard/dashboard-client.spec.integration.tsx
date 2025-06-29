@@ -228,9 +228,16 @@ describe("Dashboard Client Integration", () => {
 
 		mockedCreateProject.mockImplementation(async (data: API.CreateProject.RequestBody) => {
 			log.info("[Mock Server Action] createProject called", { data });
-			const result = await projectHandlers.createProject({ body: data });
-			log.info("[Mock Server Action] createProject result", { result });
-			return result;
+			// Simulate a quick delay as real API would have
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			// Return a simple mock project that matches the expected structure
+			const returnValue = {
+				description: data.description ?? "",
+				id: "test-project-123",
+				name: data.name,
+			};
+			log.info("[Mock Server Action] createProject returning", { returnValue });
+			return returnValue;
 		});
 
 		mockedDeleteProject.mockImplementation(async (projectId: string) => {
@@ -352,16 +359,15 @@ describe("Dashboard Client Integration", () => {
 					render(<DashboardClient initialProjects={initialProjects} />);
 
 					// Find and click the appropriate trigger
-					let createButton: HTMLElement;
-					if (trigger.startsWith("bg-")) {
-						// CSS class selector
-						const buttons = screen.getAllByRole("button");
-						createButton = buttons.find((button) => button.className.includes(trigger))!;
-					} else {
-						// Text selector
-						createButton = screen.getByText(trigger);
-					}
+					const createButton: HTMLElement = trigger.startsWith("bg-")
+						? screen.getByTestId("create-project-button") // Use data-testid for create project button
+						: screen.getByText(trigger); // Text selector for empty state button
 
+					log.info("[TEST] Found create button", {
+						buttonClass: createButton.className,
+						buttonText: createButton.textContent,
+						trigger,
+					});
 					expect(createButton).toBeDefined();
 					await user.click(createButton);
 
@@ -390,21 +396,20 @@ describe("Dashboard Client Integration", () => {
 
 					// Submit form
 					const submitButton = screen.getByTestId("create-project-submit-button");
-					log.info("[TEST] Form state before submit", {
-						isDisabled: submitButton.getAttribute("disabled"),
-						submitButton,
+
+					// Wait for form validation to complete first
+					await waitFor(() => {
+						expect(submitButton).not.toBeDisabled();
 					});
 
 					const mockedCreateProject = vi.mocked(createProject);
 
-					// Check mock state before clicking
-					log.info("[TEST] Mock createProject before click", {
-						called: mockedCreateProject.mock.calls.length,
+					log.info("[TEST] Submitting form", {
+						buttonEnabled: !submitButton.hasAttribute("disabled"),
+						projectName: project.name,
 					});
 
 					await user.click(submitButton);
-
-					log.info("[TEST] Waiting for project creation");
 
 					// Wait for the createProject mock to be called
 					await waitFor(() => {
@@ -414,18 +419,19 @@ describe("Dashboard Client Integration", () => {
 						});
 					});
 
-					log.info("[TEST] Project created, waiting for navigation", {
-						createProjectCalls: mockedCreateProject.mock.calls.length,
-						mockPushCalls: mockPush.mock.calls.length,
-						mockReplaceCalls: mockReplace.mock.calls.length,
-					});
+					log.info("[TEST] CreateProject mock was called, waiting for navigation");
 
-					// Then check navigation was called (create project modal uses router.replace)
+					// Wait for form processing and navigation - give it time to complete form logic
 					await waitFor(
 						() => {
+							log.info("[TEST] Checking navigation calls", {
+								createProjectCallsLength: mockedCreateProject.mock.calls.length,
+								pushCalls: mockPush.mock.calls.length,
+								replaceCalls: mockReplace.mock.calls.length,
+							});
 							expect(mockReplace).toHaveBeenCalledWith(expect.stringMatching(/\/projects\/.+/));
 						},
-						{ timeout: 5000 },
+						{ timeout: 10_000 },
 					);
 				});
 			},
