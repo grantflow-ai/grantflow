@@ -142,7 +142,7 @@ describe("Logger", () => {
 		it("should handle null context", () => {
 			log.info("Message with null context", null as any);
 
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Message with null context", null);
+			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Message with null context", {});
 		});
 
 		it("should handle empty context", () => {
