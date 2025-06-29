@@ -14,7 +14,7 @@ from sentence_transformers import SentenceTransformer, util
 from services.rag.src.grant_template.extract_cfp_data import Content
 from services.rag.src.grant_template.utils import detect_cycle
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
@@ -692,9 +692,9 @@ async def handle_extract_sections(
         prompt_handler=extract_sections,
         prompt=prompt.to_string(organization_guidelines=organization_guidelines),
         criteria=criteria,
-        passing_score=90,
-        increment=10,
-        retries=5,
+        passing_score=75,
+        increment=15,
+        retries=3,
     )
 
     return await filter_extracted_sections(result["sections"])

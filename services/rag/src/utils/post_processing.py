@@ -1,7 +1,5 @@
-from asyncio import gather
 from typing import Final, TypedDict
 
-from packages.shared_utils.src.ai import count_tokens
 from packages.shared_utils.src.embeddings import get_embedding_model
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.nlp import get_spacy_model
@@ -11,6 +9,12 @@ from spacy.language import Language
 from spacy.tokens import Span
 
 from services.rag.src.dto import DocumentDTO
+from services.rag.src.utils.token_optimization import (
+    optimized_count_tokens as count_tokens,
+)
+from services.rag.src.utils.token_optimization import (
+    smart_parse_documents_with_batched_tokens,
+)
 
 logger = get_logger(__name__)
 
@@ -64,7 +68,7 @@ async def post_process_documents(
     *,
     documents: list[DocumentDTO],
     max_tokens: int = DEFAULT_MAX_TOKENS,
-    model: str,
+    model: str,  # noqa: ARG001
     query: str,
     task_description: str,
 ) -> list[str]:
@@ -120,11 +124,11 @@ async def post_process_documents(
     filtered_sentences.sort(key=lambda s: s["relevance_score"], reverse=True)
 
     adjusted_max_tokens = max_tokens - await count_tokens(task_description)
-    processed_docs = await parse_documents(
-        original_docs=documents, sentence_infos=filtered_sentences, max_tokens=adjusted_max_tokens, model=model
+    processed_docs, actual_token_count = await smart_parse_documents_with_batched_tokens(
+        sentence_infos=filtered_sentences, max_tokens=adjusted_max_tokens
     )
 
-    token_count = sum(await gather(*[count_tokens(text=doc, model=model) for doc in processed_docs]))
+    token_count = actual_token_count
 
     logger.info(
         "Post-processing complete",
@@ -231,22 +235,10 @@ async def apply_semantic_ranking(sentences: list[str], query: str) -> dict[str, 
     return {sentences[i]: similarities[i] for i in range(len(sentences))}
 
 
-async def parse_documents(
-    *, original_docs: list[DocumentDTO], sentence_infos: list[SentenceInfo], max_tokens: int, model: str
-) -> list[str]:
-    doc_contents: dict[int, list[str]] = {i: [] for i in range(len(original_docs))}
-    token_count = 0
-
-    for sent_info in sentence_infos:
-        doc_idx = sent_info["doc_idx"]
-        sentence = sent_info["text"]
-
-        sentence_tokens = await count_tokens(text=sentence, model=model)
-
-        if token_count + sentence_tokens > max_tokens:
-            break
-
-        doc_contents[doc_idx].append(sentence)
-        token_count += sentence_tokens
-
-    return [" ".join(sent_list).strip() for sent_list in doc_contents.values() if sent_list]
+async def parse_documents(*, sentence_infos: list[SentenceInfo], max_tokens: int, model: str) -> list[str]:
+    """Legacy function - use smart_parse_documents_with_batched_tokens for better performance."""
+    _ = model
+    processed_docs, _ = await smart_parse_documents_with_batched_tokens(
+        sentence_infos=sentence_infos, max_tokens=max_tokens
+    )
+    return processed_docs

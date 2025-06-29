@@ -132,9 +132,7 @@ async def test_parse_documents(
     mock_count_tokens = mocker.patch("services.rag.src.utils.post_processing.count_tokens")
     mock_count_tokens.side_effect = lambda text, **_: len(text.split())
 
-    result = await parse_documents(
-        original_docs=sample_documents, sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model"
-    )
+    result = await parse_documents(sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model")
 
     assert len(result) == 3
     assert "The quick brown fox jumps over the lazy dog." in result
@@ -162,9 +160,9 @@ async def test_post_process_documents_integration(sample_documents: list[Documen
     mock_semantic = mocker.patch("services.rag.src.utils.post_processing.apply_semantic_ranking")
     mock_semantic.return_value = {"Sentence 1": 0.7, "Sentence 2": 0.6}
 
-    mock_parse = mocker.patch("services.rag.src.utils.post_processing.parse_documents")
+    mock_parse = mocker.patch("services.rag.src.utils.post_processing.smart_parse_documents_with_batched_tokens")
     processed_docs = ["Processed content 1", "Processed content 2"]
-    mock_parse.return_value = processed_docs
+    mock_parse.return_value = (processed_docs, 100)
 
     mock_count_tokens = mocker.patch("services.rag.src.utils.post_processing.count_tokens")
     mock_count_tokens.return_value = 10
