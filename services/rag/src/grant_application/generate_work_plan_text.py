@@ -7,7 +7,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.dto import ResearchComponentGenerationDTO
-from services.rag.src.utils.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.long_form import generate_long_form_text
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents

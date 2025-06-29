@@ -7,7 +7,7 @@ from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_template.determine_application_sections import ExtractedSectionDTO
 from services.rag.src.utils.completion import handle_completions_request
-from services.rag.src.utils.llm_evaluation import EvaluationCriterion, with_prompt_evaluation
+from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.shared_prompts import ORGANIZATION_GUIDELINES_FRAGMENT
