@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
-import { getClient } from "./api";
+// Note: getClient will be dynamically imported in tests due to module reset
 
 vi.mock("ky");
 vi.mock("@/utils/env");
@@ -14,7 +14,20 @@ vi.mock("@/utils/logger", () => ({
 		warn: vi.fn(),
 	},
 }));
-vi.mock("@/utils/state");
+vi.mock("@/utils/state", () => ({
+	Ref: vi.fn(() => ({
+		value: undefined,
+	})),
+}));
+
+vi.mock("@/dev-tools/mock-api/client", () => ({
+	getMockAPIClient: vi.fn(() => ({ intercept: vi.fn() })),
+	isMockAPIEnabled: vi.fn(() => false),
+}));
+
+vi.mock("@/dev-tools/mock-api/init", () => ({
+	initializeMockAPI: vi.fn(),
+}));
 
 describe("api", () => {
 	const mockKyInstance = {
@@ -47,16 +60,19 @@ describe("api", () => {
 
 	const mockEnv = {
 		NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.example.com",
+		// NEXT_PUBLIC_MOCK_API: undefined, // Disable mock API to test actual logging behavior
 	};
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.resetModules(); // Reset module cache to ensure fresh imports
 		vi.mocked(getEnv).mockReturnValue(mockEnv as any);
 		vi.mocked(ky.create).mockReturnValue(mockKyInstance as any);
 
-		// Reset the Ref value to ensure fresh client creation
-		const RefConstructor = vi.mocked(Ref);
-		RefConstructor.prototype.value = undefined;
+		// Reset the Ref mock to ensure fresh client creation
+		vi.mocked(Ref).mockReturnValue({
+			value: undefined,
+		} as any);
 	});
 
 	afterEach(() => {
@@ -64,7 +80,8 @@ describe("api", () => {
 	});
 
 	describe("getClient", () => {
-		it("should create a ky instance with correct configuration", () => {
+		it("should create a ky instance with correct configuration", async () => {
+			const { getClient } = await import("./api");
 			const client = getClient();
 
 			expect(ky.create).toHaveBeenCalledWith({
@@ -76,7 +93,8 @@ describe("api", () => {
 			expect(client).toBe(mockKyInstance);
 		});
 
-		it("should reuse the same client instance on subsequent calls", () => {
+		it("should reuse the same client instance on subsequent calls", async () => {
+			const { getClient } = await import("./api");
 			const client1 = getClient();
 			const client2 = getClient();
 
@@ -84,7 +102,8 @@ describe("api", () => {
 			expect(client1).toBe(client2);
 		});
 
-		it("should configure afterResponse hook correctly", () => {
+		it("should configure afterResponse hook correctly", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -106,7 +125,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should configure beforeError hook correctly", () => {
+		it("should configure beforeError hook correctly", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -135,7 +155,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should configure beforeRequest hook correctly", () => {
+		it("should configure beforeRequest hook correctly", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -143,7 +164,7 @@ describe("api", () => {
 			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
 
 			if (beforeRequestHook) {
-				beforeRequestHook(mockRequest as any, {} as any);
+				await beforeRequestHook(mockRequest as any, {} as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test", {
 					correlation_id: "test-correlation-id",
@@ -154,7 +175,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should handle missing headers gracefully", () => {
+		it("should handle missing headers gracefully", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -181,7 +203,8 @@ describe("api", () => {
 			}
 		});
 
-		it("should handle different HTTP methods", () => {
+		it("should handle different HTTP methods", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -190,11 +213,11 @@ describe("api", () => {
 
 			const methods = ["POST", "PUT", "DELETE", "PATCH"];
 
-			methods.forEach((method) => {
+			for (const method of methods) {
 				const request = { ...mockRequest, method };
 
 				if (beforeRequestHook) {
-					beforeRequestHook(request as any, {} as any);
+					await beforeRequestHook(request as any, {} as any);
 
 					expect(log.info).toHaveBeenCalledWith(
 						`API ${method} https://api.example.com/test`,
@@ -203,10 +226,11 @@ describe("api", () => {
 						}),
 					);
 				}
-			});
+			}
 		});
 
-		it("should handle different response statuses", () => {
+		it("should handle different response statuses", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -231,7 +255,8 @@ describe("api", () => {
 			});
 		});
 
-		it("should use correct timeout value", () => {
+		it("should use correct timeout value", async () => {
+			const { getClient } = await import("./api");
 			getClient();
 
 			expect(ky.create).toHaveBeenCalledWith(
@@ -241,7 +266,7 @@ describe("api", () => {
 			);
 		});
 
-		it("should use environment variable for prefixUrl", () => {
+		it("should use environment variable for prefixUrl", async () => {
 			const customEnv = {
 				NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://custom-api.example.com",
 			};
@@ -251,6 +276,7 @@ describe("api", () => {
 			const RefConstructor = vi.mocked(Ref);
 			RefConstructor.prototype.value = undefined;
 
+			const { getClient } = await import("./api");
 			getClient();
 
 			expect(ky.create).toHaveBeenCalledWith(
