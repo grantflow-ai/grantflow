@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-
+import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
@@ -67,7 +67,7 @@ export function ProjectSidebar({
 
 	const handleLogout = () => {
 		clearUser();
-		router.push("/login");
+		router.push(PagePath.LOGIN);
 	};
 
 	if (isCollapsed) {
@@ -123,9 +123,9 @@ export function ProjectSidebar({
 				<Link
 					className={cn(
 						"flex items-center gap-3 px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors",
-						pathname === `/projects/${projectId}` && "bg-[#e1dfeb]",
+						pathname === PagePath.PROJECT_DETAIL.replace(":projectId", projectId) && "bg-[#e1dfeb]",
 					)}
-					href={`/projects/${projectId}`}
+					href={PagePath.PROJECT_DETAIL.replace(":projectId", projectId)}
 				>
 					<Grid2X2 className="size-5" />
 					<span className="font-['Source_Sans_Pro'] text-[16px]">Dashboard</span>
@@ -150,20 +150,25 @@ export function ProjectSidebar({
 					{isRecentAppsOpen && (
 						<div className="mt-2 space-y-1">
 							{applications.length > 0 ? (
-								applications.map((app) => (
-									<Link
-										className={cn(
-											"flex items-center gap-2 px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#636170] hover:bg-[#e1dfeb] transition-colors",
-											pathname === `/projects/${projectId}/applications/${app.id}` &&
-												"bg-[#e1dfeb]",
-										)}
-										href={`/projects/${projectId}/applications/${app.id}`}
-										key={app.id}
-									>
-										<div className={cn("size-2 rounded-full", statusColors[app.status])} />
-										<span className="truncate">{app.name}</span>
-									</Link>
-								))
+								applications.map((app) => {
+									const appPath = PagePath.APPLICATION_DETAIL.replace(
+										":projectId",
+										projectId,
+									).replace(":applicationId", app.id);
+									return (
+										<Link
+											className={cn(
+												"flex items-center gap-2 px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#636170] hover:bg-[#e1dfeb] transition-colors",
+												pathname === appPath && "bg-[#e1dfeb]",
+											)}
+											href={appPath}
+											key={app.id}
+										>
+											<div className={cn("size-2 rounded-full", statusColors[app.status])} />
+											<span className="truncate">{app.name}</span>
+										</Link>
+									);
+								})
 							) : (
 								<div className="px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#aaa8b9]">
 									No applications yet
@@ -194,9 +199,10 @@ export function ProjectSidebar({
 							<Link
 								className={cn(
 									"flex items-center gap-3 px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#636170] hover:bg-[#e1dfeb] transition-colors",
-									pathname === `/projects/${projectId}/settings/account` && "bg-[#e1dfeb]",
+									pathname === PagePath.PROJECT_SETTINGS_ACCOUNT.replace(":projectId", projectId) &&
+										"bg-[#e1dfeb]",
 								)}
-								href={`/projects/${projectId}/settings/account`}
+								href={PagePath.PROJECT_SETTINGS_ACCOUNT.replace(":projectId", projectId)}
 							>
 								Account Setting
 							</Link>
@@ -205,18 +211,22 @@ export function ProjectSidebar({
 									<Link
 										className={cn(
 											"flex items-center gap-3 px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#636170] hover:bg-[#e1dfeb] transition-colors",
-											pathname === `/projects/${projectId}/settings/billing` && "bg-[#e1dfeb]",
+											pathname ===
+												PagePath.PROJECT_SETTINGS_BILLING.replace(":projectId", projectId) &&
+												"bg-[#e1dfeb]",
 										)}
-										href={`/projects/${projectId}/settings/billing`}
+										href={PagePath.PROJECT_SETTINGS_BILLING.replace(":projectId", projectId)}
 									>
 										Billing and payments
 									</Link>
 									<Link
 										className={cn(
 											"flex items-center gap-3 px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#636170] hover:bg-[#e1dfeb] transition-colors",
-											pathname === `/projects/${projectId}/settings/members` && "bg-[#e1dfeb]",
+											pathname ===
+												PagePath.PROJECT_SETTINGS_MEMBERS.replace(":projectId", projectId) &&
+												"bg-[#e1dfeb]",
 										)}
-										href={`/projects/${projectId}/settings/members`}
+										href={PagePath.PROJECT_SETTINGS_MEMBERS.replace(":projectId", projectId)}
 									>
 										Members
 									</Link>
@@ -225,9 +235,11 @@ export function ProjectSidebar({
 							<Link
 								className={cn(
 									"flex items-center gap-3 px-8 py-2 text-[14px] font-['Source_Sans_Pro'] text-[#636170] hover:bg-[#e1dfeb] transition-colors",
-									pathname === `/projects/${projectId}/settings/notifications` && "bg-[#e1dfeb]",
+									pathname ===
+										PagePath.PROJECT_SETTINGS_NOTIFICATIONS.replace(":projectId", projectId) &&
+										"bg-[#e1dfeb]",
 								)}
-								href={`/projects/${projectId}/settings/notifications`}
+								href={PagePath.PROJECT_SETTINGS_NOTIFICATIONS.replace(":projectId", projectId)}
 							>
 								Notifications
 							</Link>
@@ -304,11 +316,11 @@ function CollapsedSidebar({
 				<Link
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
-						pathname === `/projects/${projectId}`
+						pathname === PagePath.PROJECT_DETAIL.replace(":projectId", projectId)
 							? "bg-[#e1dfeb] text-[#1e13f8]"
 							: "text-[#636170] hover:bg-[#e1dfeb]",
 					)}
-					href={`/projects/${projectId}`}
+					href={PagePath.PROJECT_DETAIL.replace(":projectId", projectId)}
 					title="Dashboard"
 				>
 					<Grid2X2 className="size-6" />
@@ -333,7 +345,7 @@ function CollapsedSidebar({
 							? "bg-[#e1dfeb] text-[#1e13f8]"
 							: "text-[#636170] hover:bg-[#e1dfeb]",
 					)}
-					href={`/projects/${projectId}/settings/account`}
+					href={PagePath.PROJECT_SETTINGS_ACCOUNT.replace(":projectId", projectId)}
 					title="Settings"
 				>
 					<Settings className="size-6" />
