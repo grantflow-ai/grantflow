@@ -20,13 +20,14 @@ const config: StorybookConfig = {
 	},
 	viteFinal(config) {
 		return mergeConfig(config, {
-			define: {
-				"process.env": JSON.stringify({
-					NODE_ENV: "development",
-					...Object.fromEntries(Object.entries(storybookEnv).map(([key, value]) => [key, value.toString()])),
-				}),
+			plugins: [tsconfigPaths()],
+			resolve: {
+				alias: {
+					"@/styles/globals.css": "./storybook-mocks/globals.css",
+
+					"@/utils/fonts": "./storybook-mocks/fonts.ts",
+				},
 			},
-			plugins: [react(), tsconfigPaths()],
 		});
 	},
 };

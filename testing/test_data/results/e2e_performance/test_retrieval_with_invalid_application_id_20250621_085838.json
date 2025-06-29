@@ -1,9 +1,0 @@
-{
-  "test_name": "test_retrieval_with_invalid_application_id",
-  "test_category": "smoke",
-  "performance": {
-    "execution_time": 5.6846301555633545,
-    "within_threshold": true
-  },
-  "timestamp": "2025-06-21T08:58:38.495620+00:00"
-}

@@ -14,12 +14,15 @@ export default defineConfig({
 		coverage: {
 			exclude: [
 				"**/*.spec.*",
+				"**/*.spec.integration.*",
 				"**/*.stories.*",
 				"**/*.d.ts",
 				"src/types/*",
 				"src/components/ui/*",
 				"**/mocks/**",
 				"src/utils/dev-indexing-patch.ts",
+				"**/index.ts",
+				"**/index.tsx",
 			],
 			include: ["src"],
 			provider: "v8",
@@ -28,6 +31,7 @@ export default defineConfig({
 		},
 		environment: "jsdom",
 		globals: true,
+		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},

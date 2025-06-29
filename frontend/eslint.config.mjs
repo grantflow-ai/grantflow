@@ -131,7 +131,56 @@ export default eslintTS.config(
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
-			"no-console": "warn",
+			"no-console": "error",
+			"no-restricted-imports": [
+				"error",
+				{
+					"paths": [
+						{
+							"message": "Please use @/components/app (AppAvatar, AvatarGroup) instead.",
+							"name": "@/components/ui/avatar"
+						},
+						{
+							"message": "Please use @/components/app (AppButton, SubmitButton) instead.",
+							"name": "@/components/ui/button"
+						},
+						{
+							"message": "Please use @/components/app (AppCard, AppCardAction, etc.) instead.",
+							"name": "@/components/ui/card"
+						},
+						{
+							"message": "Please use @/components/app (AppDialog, AppDialogContent, etc.) instead.",
+							"name": "@/components/ui/dialog"
+						},
+						{
+							"message": "Please use @/components/app (AppDropdownMenu, AppDropdownMenuItem, etc.) instead.",
+							"name": "@/components/ui/dropdown-menu"
+						},
+						{
+							"message": "Please use @/components/app (AppInput) instead.",
+							"name": "@/components/ui/input"
+						},
+						{
+							"message": "Please use @/components/app (AppTextarea) instead.",
+							"name": "@/components/ui/textarea"
+						},
+						{
+							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
+							"name": "@/utils/logging"
+						}
+					],
+					"patterns": [
+						{
+							"group": ["@/components/ui/avatar", "@/components/ui/button", "@/components/ui/card", "@/components/ui/dialog", "@/components/ui/dropdown-menu", "@/components/ui/input", "@/components/ui/textarea"],
+							"message": "Please use the corresponding components from @/components/app instead."
+						},
+						{
+							"group": ["*/utils/logging", "*/logging"],
+							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error()."
+						}
+					]
+				}
+			],
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
 			"paths/alias": "error",
@@ -190,6 +239,18 @@ export default eslintTS.config(
 		ignores: ["**/coverage"],
 		rules: {
 			"@typescript-eslint/no-misused-promises": "off",
+		},
+	},
+	{
+		files: ["**/src/components/app/**/*.{ts,tsx}", "**/src/components/landing-page/**/*.{ts,tsx}"],
+		rules: {
+			"no-restricted-imports": "off",
+		},
+	},
+	{
+		files: ["**/*.spec.{ts,tsx}", "**/*.test.{ts,tsx}", "**/scripts/**/*.ts", "**/src/components/ui/**/*.{ts,tsx}"],
+		rules: {
+			"no-restricted-imports": "off",
 		},
 	},
 	{
@@ -270,6 +331,39 @@ export default eslintTS.config(
 			"sonarjs/pseudo-random": "off",
 		},
 	},
-	// Add biome config to disable ESLint rules that Biome handles
+	{
+		files: ["**/utils/logger.ts", "**/utils/logging.ts", "**/scripts/migrate-to-new-logger.ts"],
+		rules: {
+			"custom/no-console-use-logger": "off",
+			"no-console": "off",
+		},
+	},
+	{
+		files: ["**/src/dev-tools/**/*.{ts,tsx}"],
+		rules: {
+			"@typescript-eslint/no-unnecessary-condition": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			// Allow dev-tools specific patterns
+			"@typescript-eslint/require-await": "off",
+			// Import warnings for development packages
+			"import-x/no-named-as-default": "off",
+			// Only allow console statements in dev tools since they're for development debugging
+			"no-console": "off",
+			"prefer-destructuring": "off",
+			// React dev tools specific
+			"react/no-unescaped-entities": "off",
+			"sonarjs/function-return-type": "off",
+			// Allow http in mock URLs since they're for testing
+			"sonarjs/no-clear-text-protocols": "off",
+			"sonarjs/no-nested-functions": "off",
+			"sonarjs/prefer-single-boolean-return": "off",
+			"unicorn/consistent-function-scoping": "off",
+			"unicorn/prefer-add-event-listener": "off",
+		},
+	},
+
 	biomeConfig,
 );

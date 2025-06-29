@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { NotificationHandler } from "@/components/projects/notification-handler";
+import { NotificationHandler } from "@/components/projects/shared/notification-handler";
 import {
 	ApplicationDetailsStep,
 	ApplicationStructureStep,
@@ -114,6 +114,7 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
+
 			void retrieveApplication(projectId, initialApplication.id);
 		}
 
@@ -129,7 +130,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				{stepComponents[currentStep]}
 			</section>
 			<WizardFooter />
-
+			{}
 			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
 		</div>
 	);

@@ -23,9 +23,14 @@ export const UrlResponseFactory = new Factory<{ url: string }>((factory) => ({
 	url: factory.internet.url(),
 }));
 
-export const JwtResponseFactory = new Factory<API.Login.Http201.ResponseBody>((factory) => ({
-	jwt_token: factory.string.alphanumeric(128),
-}));
+export const JwtResponseFactory = new Factory<API.Login.Http201.ResponseBody>(() => {
+	// Mock JWT with proper structure: header.payload.signature for testing
+	const testJwtValue =
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1vY2sgVXNlciIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxODkzNDU2MDAwfQ.4Adcj3UFYzPUVaVF43FmMab6RlaQD8A9V8wFzzht-KQ";
+	return {
+		jwt_token: testJwtValue,
+	};
+});
 
 export const OtpResponseFactory = new Factory<API.GenerateOtp.Http200.ResponseBody>((factory) => ({
 	otp: factory.string.numeric(6),
@@ -42,6 +47,7 @@ export const IdResponseFactory = new Factory<API.CreateProject.Http201.ResponseB
 }));
 
 export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.ResponseBody[0]>((factory) => ({
+	applications_count: factory.number.int({ max: 10, min: 0 }),
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	id: factory.string.uuid(),
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
@@ -66,6 +72,7 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 }));
 
 type IndexingStatus = RagSource["status"];
+
 type RagSource = NonNullable<API.CreateApplication.Http201.ResponseBody["rag_sources"]>[0];
 
 export const RagSourceFactory = new Factory<RagSource>((factory) => {
@@ -129,6 +136,7 @@ type GrantSectionBase = Extract<
 	{ id: string; order: number; parent_id: null | string; title: string }
 >;
 type GrantSectionDetailed = Extract<GrantSections[0], { depends_on: string[] }>;
+
 type GrantSections = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["grant_sections"];
 
 export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) => ({
@@ -199,6 +207,7 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 }));
 
 type RagSourceFile = Extract<RagSourceResponse, { filename: string }>;
+
 type RagSourceResponse = API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[0];
 type RagSourceUrl = Extract<RagSourceResponse, { url: string }>;
 

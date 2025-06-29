@@ -1,9 +1,0 @@
-{
-  "test_name": "test_handle_create_search_queries",
-  "test_category": "smoke",
-  "performance": {
-    "execution_time": 6.914138793945312e-05,
-    "within_threshold": true
-  },
-  "timestamp": "2025-06-25T16:45:06.882817+00:00"
-}

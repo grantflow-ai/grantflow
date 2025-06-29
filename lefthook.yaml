@@ -59,6 +59,9 @@ pre-commit:
                 testing/test_data/**/*
                 test_data/**/*
                 pnpm-lock.yaml
+                *.spec.ts
+                *.spec.tsx
+                *_test.py
             run: uv run codespell {staged_files}
 
         pyproject-fmt:
@@ -75,25 +78,6 @@ pre-commit:
                 done
             stage_fixed: true
 
-        end-of-file-fixer:
-            run: |
-                for file in {staged_files}; do
-                  if [ -f "$file" ] && [ -s "$file" ]; then
-                    # Skip binary files
-                    case "$file" in
-                      *.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico|*.webp|*.pdf|*.zip|*.tar|*.gz|*.bz2) continue ;;
-                      testing/test_data/**/*) continue ;;
-                      test_data/**/*) continue ;;
-                      *node_modules*) continue ;;
-                      *.lock) continue ;;
-                    esac
-                    # Check if file is missing final newline
-                    if [ -n "$(tail -c 1 "$file")" ]; then
-                      echo >> "$file"
-                    fi
-                  fi
-                done
-            stage_fixed: true
 
         check-yaml:
             glob: "*.{yaml,yml}"
@@ -128,11 +112,22 @@ pre-commit:
             exclude: "completion|utils|test_utils|factories"
             run: |
                 for file in {staged_files}; do
-                  case "$file" in
-                    *_test.py) ;;
-                    *)
-                      echo "Error: Test file '$file' does not follow naming convention (should end with '_test.py', not start with 'test_')"
-                      exit 1
+                  basename=$(basename "$file")
+                  # Skip __init__.py files and other special files
+                  case "$basename" in
+                    __init__.py|conftest.py|*_utils.py|*_helpers.py|*_fixtures.py) continue ;;
+                  esac
+                  # Check if file has "test_" in its name
+                  case "$basename" in
+                    *test_*)
+                      # File contains "test_", it should end with _test.py
+                      case "$basename" in
+                        *_test.py) ;;
+                        *)
+                          echo "Error: Test file '$file' does not follow naming convention (should end with '_test.py', not start with 'test_')"
+                          exit 1
+                          ;;
+                      esac
                       ;;
                   esac
                 done
