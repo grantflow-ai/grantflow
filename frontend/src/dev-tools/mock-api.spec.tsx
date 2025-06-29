@@ -83,9 +83,9 @@ describe("Mock API Core Integration", () => {
 			const { registerMockHandlers } = await import("@/dev-tools/mock-api/register");
 			registerMockHandlers();
 
-			expect(mockRegister).toHaveBeenCalledWith("/auth/login", expect.any(Function));
-			expect(mockRegister).toHaveBeenCalledWith("/projects", expect.any(Function));
-			expect(mockRegister).toHaveBeenCalledWith("/projects/:project_id/applications", expect.any(Function));
+			expect(mockRegister).toHaveBeenCalledWith("/auth/login", expect.any(Function), "POST");
+			expect(mockRegister).toHaveBeenCalledWith("/projects", expect.any(Function), "GET");
+			expect(mockRegister).toHaveBeenCalledWith("/projects/:project_id/applications", expect.any(Function), "POST");
 		});
 
 		it("should handle mock API client errors gracefully", async () => {
