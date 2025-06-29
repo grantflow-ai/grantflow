@@ -126,7 +126,7 @@ async def test_handle_rag_request_invalid_message() -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
@@ -139,7 +139,7 @@ async def test_handle_rag_request_missing_parent_type() -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
@@ -152,7 +152,7 @@ async def test_handle_rag_request_missing_parent_id() -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
@@ -168,7 +168,7 @@ async def test_handle_rag_request_invalid_parent_type() -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
@@ -205,7 +205,7 @@ async def test_handle_rag_request_invalid_base64() -> None:
     async with AsyncTestClient(app=app) as client:
         response = await client.post("/", json=msgspec.to_builtins(invalid_event))
 
-    assert response.status_code == 500
+    assert response.status_code == 400
     assert "Invalid pubsub message" in response.json()["detail"]
 
 
