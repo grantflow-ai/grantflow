@@ -317,8 +317,8 @@ async def test_generate_work_plan_text_with_mocked_llm(
             return_value=mock_relationships,
         ),
         patch(
-            "services.rag.src.grant_application.handler.handle_enrich_objective",
-            return_value=mock_enrichment_response,
+            "services.rag.src.grant_application.handler.handle_batch_enrich_objectives",
+            return_value=[mock_enrichment_response, mock_enrichment_response],
         ),
         patch(
             "services.rag.src.grant_application.handler.generate_work_plan_component_text",
@@ -347,7 +347,6 @@ async def test_generate_work_plan_text_with_mocked_llm(
     assert NotificationEvents.OBJECTIVES_ENRICHED in notification_events
     assert NotificationEvents.GENERATING_RESEARCH_PLAN in notification_events
     assert NotificationEvents.GENERATING_OBJECTIVE in notification_events
-    assert NotificationEvents.GENERATING_TASKS in notification_events
     assert NotificationEvents.OBJECTIVE_COMPLETED in notification_events
     assert NotificationEvents.RESEARCH_PLAN_COMPLETED in notification_events
 
@@ -366,8 +365,12 @@ async def test_generate_grant_section_texts_with_mocked_llm(
             return_value="Mocked work plan text.",
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_section_text",
-            return_value=mock_section_text,
+            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
+            return_value={
+                "abstract": mock_section_text,
+                "research_plan": mock_section_text,
+                "impact": mock_section_text,
+            },
         ),
     ):
         result = await generate_grant_section_texts(
@@ -406,7 +409,7 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_grant_section_texts",
+            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
             return_value=mocked_section_texts,
         ),
         patch(
@@ -540,7 +543,7 @@ async def test_pipeline_database_error_during_save(
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_grant_section_texts",
+            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
             return_value=mocked_section_texts,
         ),
         patch(
@@ -575,7 +578,7 @@ async def test_pipeline_backend_error_during_generation(
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_grant_section_texts",
+            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
             side_effect=BackendError("Insufficient context for generation"),
         ),
     ):
@@ -621,8 +624,8 @@ async def test_generate_work_plan_text_normalizes_markdown(
             return_value=mock_relationships,
         ),
         patch(
-            "services.rag.src.grant_application.handler.handle_enrich_objective",
-            return_value=mock_enrichment_response,
+            "services.rag.src.grant_application.handler.handle_batch_enrich_objectives",
+            return_value=[mock_enrichment_response, mock_enrichment_response],
         ),
         patch(
             "services.rag.src.grant_application.handler.generate_work_plan_component_text",
