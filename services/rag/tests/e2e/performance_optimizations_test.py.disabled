@@ -10,17 +10,9 @@ from typing import Any
 from unittest.mock import patch
 from uuid import UUID
 
-from packages.db.src.json_objects import WorkplanMetadata
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.e2e_utils import E2ETestCategory, e2e_test
 
-from services.rag.src.grant_application.batch_enrich_objectives import batch_enrich_research_objectives
-from services.rag.src.grant_application.dto import ObjectiveEnrichmentResult
-from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_section
-from services.rag.src.utils.token_optimization import (
-    TokenOptimizer,
-    optimize_for_token_limit,
-)
 from services.rag.tests.e2e.performance_framework import TestCategory
 from services.rag.tests.e2e.performance_utils import PerformanceTestContext
 
