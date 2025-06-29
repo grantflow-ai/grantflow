@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
 import { AppButton } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { PagePath } from "@/enums";
 import { log } from "@/utils/logger";
 
 interface CreateApplicationButtonProps {
@@ -21,7 +22,11 @@ export function CreateApplicationButton({ className, projectId }: CreateApplicat
 		setIsCreating(true);
 		try {
 			const application = await createApplication(projectId, { title: DEFAULT_APPLICATION_TITLE });
-			router.push(`/projects/${projectId}/applications/${application.id}/wizard`);
+			const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", projectId).replace(
+				":applicationId",
+				application.id,
+			);
+			router.push(wizardPath);
 		} catch (error) {
 			log.error("create-application-button", error);
 			toast.error("Failed to create application");
