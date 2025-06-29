@@ -69,35 +69,35 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 					<ProgressBar currentStep={step} />
 				</header>
 				<section className="flex w-full justify-between px-16 py-16">
-					<AppDialogTitle className="flex-shrink-0">
-						<h2 className="text-[48px] font-medium leading-[58px] text-text-primary font-heading">
-							Welcome to
-							<br />
-							GrantFlow!
-						</h2>
+					<AppDialogTitle className="flex-shrink-0 text-[48px] font-medium leading-[58px] text-text-primary font-heading">
+						Welcome to
+						<br />
+						GrantFlow!
 					</AppDialogTitle>
 
-					<AppDialogDescription className="flex w-[597px] flex-col gap-10">
-						<div className="flex flex-col gap-6">
-							<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
-								<span className="font-semibold">GrantFlow</span> was built for researchers, designed to
-								save dozens of hours and bring you closer to submission, quickly and efficiently.
-							</p>
-							<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
-								Powered by AI, the system will generate a draft application tailored to your needs based
-								on the materials and information you provide. The more accurate and detailed your input,
-								the closer the result will be to what you need.
-							</p>
-						</div>
-						<article className="flex gap-3 rounded-lg border border-action-primary bg-surface-secondary p-4">
-							<div className="size-5 flex-shrink-0 mt-0.5">
-								<AlertCircle className="size-5 text-action-primary" />
+					<AppDialogDescription asChild className="flex w-[597px] flex-col gap-10">
+						<div>
+							<div className="flex flex-col gap-6">
+								<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
+									<span className="font-semibold">GrantFlow</span> was built for researchers, designed
+									to save dozens of hours and bring you closer to submission, quickly and efficiently.
+								</p>
+								<p className="text-[16px] font-normal leading-[24px] text-text-primary font-body">
+									Powered by AI, the system will generate a draft application tailored to your needs
+									based on the materials and information you provide. The more accurate and detailed
+									your input, the closer the result will be to what you need.
+								</p>
 							</div>
-							<p className="text-[14px] font-normal leading-[21px] text-text-primary font-body">
-								Keep in mind that AI has limitations and may occasionally make mistakes. Always review
-								and refine the output using the editor.
-							</p>
-						</article>
+							<article className="flex gap-3 rounded-lg border border-action-primary bg-surface-secondary p-4">
+								<div className="size-5 flex-shrink-0 mt-0.5">
+									<AlertCircle className="size-5 text-action-primary" />
+								</div>
+								<p className="text-[14px] font-normal leading-[21px] text-text-primary font-body">
+									Keep in mind that AI has limitations and may occasionally make mistakes. Always
+									review and refine the output using the editor.
+								</p>
+							</article>
+						</div>
 					</AppDialogDescription>
 				</section>
 				<footer className="flex w-full items-center justify-between px-16 pb-16">

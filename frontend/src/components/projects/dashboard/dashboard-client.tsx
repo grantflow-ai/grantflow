@@ -114,7 +114,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 			if (result.success) {
 				addNotification({
-					message: result.error ?? `Invitation sent to ${email}`,
+					message: `Invitation sent successfully to ${email}`,
 					projectName: selectedProjectForInvite.name,
 					title: "Collaborator invited",
 					type: "success",

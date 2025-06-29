@@ -1,9 +1,11 @@
 "use client";
 
 import { Copy, List, MoreVertical, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { AvatarGroup } from "@/components/app";
+import { PagePath } from "@/enums";
 import type { API } from "@/types/api-types";
 
 interface DashboardProjectCardProps {
@@ -20,6 +22,7 @@ const projectTeamMembers = [
 
 export function DashboardProjectCard({ onDelete, onDuplicate, project }: DashboardProjectCardProps) {
 	const [showDropdown, setShowDropdown] = useState(false);
+	const router = useRouter();
 
 	const hasApplications = project.applications_count > 0;
 	const pluralSuffix = project.applications_count > 1 ? "s" : "";
@@ -29,12 +32,24 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 	const projectDescription =
 		project.description ?? "Description of research project goes here.Description of research project goes here.";
 
+	const handleCardClick = () => {
+		router.push(PagePath.PROJECT_DETAIL.replace(":projectId", project.id));
+	};
+
 	return (
 		<div
 			className="relative h-[300px] w-[413px] shrink-0 rounded-lg bg-surface-primary border border-border-primary"
 			data-testid="dashboard-project-card"
 		>
-			<div className="relative size-full overflow-clip">
+			<button
+				aria-label={`View project: ${project.name}`}
+				className="absolute inset-0 z-0"
+				onClick={handleCardClick}
+				type="button"
+			>
+				<span className="sr-only">View project details</span>
+			</button>
+			<div className="relative size-full overflow-clip pointer-events-none">
 				<div className="relative flex h-[300px] w-[413px] flex-col items-start justify-between p-6">
 					<div className="relative flex shrink-0 flex-col items-start justify-start gap-4">
 						<div className="relative shrink-0 rounded-full bg-action-primary px-3 py-1">
@@ -63,7 +78,7 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 					</div>
 					<button
 						aria-label="More options"
-						className="absolute right-4 top-4 size-6 flex items-center justify-center"
+						className="absolute right-4 top-4 size-6 flex items-center justify-center z-10 pointer-events-auto"
 						data-testid="more-options-button"
 						onClick={() => {
 							setShowDropdown(!showDropdown);
@@ -77,7 +92,7 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 
 			{showDropdown && (
 				<div
-					className="absolute right-4 top-12 z-10 flex w-[150px] flex-col items-start justify-start rounded-lg bg-surface-primary border border-border-primary shadow-lg"
+					className="absolute right-4 top-12 z-10 flex w-[150px] flex-col items-start justify-start rounded-lg bg-surface-primary border border-border-primary shadow-lg pointer-events-auto"
 					data-testid="dropdown-menu"
 				>
 					<button
