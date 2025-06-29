@@ -208,7 +208,8 @@ describe("Dashboard Client Integration", () => {
 
 		// Get mocked functions
 		mockRouter = vi.mocked(useRouter)();
-		mockPush = mockRouter.push as ReturnType<typeof vi.fn>;
+		mockPush = vi.fn(); // Create a separate spy instead of extracting the unbound method
+		mockRouter.push = mockPush;
 		const mockedCreateProject = vi.mocked(createProject);
 		const mockedDeleteProject = vi.mocked(deleteProject);
 		const mockedDuplicateProject = vi.mocked(duplicateProject);
