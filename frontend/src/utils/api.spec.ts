@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
+
 // Note: getClient will be dynamically imported in tests due to module reset
 
 vi.mock("ky");
