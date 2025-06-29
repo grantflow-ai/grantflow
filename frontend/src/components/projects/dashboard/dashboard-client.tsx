@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 
 import { getProjects } from "@/actions/project";
@@ -37,38 +37,40 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		await duplicateProject(projectId);
 	};
 
-	useEffect(() => {
-		const timeouts = [
-			setTimeout(() => {
-				addNotification({
-					message: "is due in 7 days. Make sure everything is ready for submission.",
-					projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
-					title: "7 days until grant deadline",
-					type: "deadline",
-				});
-			}, 1000),
-			setTimeout(() => {
-				addNotification({
-					message: "is due in 7 days. Make sure everything is ready for submission.",
-					projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
-					title: "7 days until grant deadline",
-					type: "deadline",
-				});
-			}, 2000),
-			setTimeout(() => {
-				addNotification({
-					message: "is due in 7 days. Make sure everything is ready for submission.",
-					projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
-					title: "7 days until grant deadline",
-					type: "deadline",
-				});
-			}, 3000),
-		];
+	// Commented out test notifications that were interfering with integration tests
+	// Feature flag for dev-only notifications would be helpful here
+	// useEffect(() => {
+	// 	const timeouts = [
+	// 		setTimeout(() => {
+	// 			addNotification({
+	// 				message: "is due in 7 days. Make sure everything is ready for submission.",
+	// 				projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
+	// 				title: "7 days until grant deadline",
+	// 				type: "deadline",
+	// 			});
+	// 		}, 1000),
+	// 		setTimeout(() => {
+	// 			addNotification({
+	// 				message: "is due in 7 days. Make sure everything is ready for submission.",
+	// 				projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
+	// 				title: "7 days until grant deadline",
+	// 				type: "deadline",
+	// 			});
+	// 		}, 2000),
+	// 		setTimeout(() => {
+	// 			addNotification({
+	// 				message: "is due in 7 days. Make sure everything is ready for submission.",
+	// 				projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
+	// 				title: "7 days until grant deadline",
+	// 				type: "deadline",
+	// 			});
+	// 		}, 3000),
+	// 	];
 
-		return () => {
-			timeouts.forEach(clearTimeout);
-		};
-	}, [addNotification]);
+	// 	return () => {
+	// 		timeouts.forEach(clearTimeout);
+	// 	};
+	// }, [addNotification]);
 
 	const { data: projects = initialProjects } = useSWR("projects", getProjects, {
 		fallbackData: initialProjects,
@@ -114,7 +116,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 			if (result.success) {
 				addNotification({
-					message: result.error ?? `Invitation sent to ${email}`,
+					message: `Invitation sent successfully to ${email}`,
 					projectName: selectedProjectForInvite.name,
 					title: "Collaborator invited",
 					type: "success",

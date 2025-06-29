@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
+import { DevMenuWrapper } from "@/components/dev-menu-wrapper";
 import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { getEnv } from "@/utils/env";
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				suppressHydrationWarning
 			>
 				{children}
+				<DevMenuWrapper />
 			</body>
 		</html>
 	);

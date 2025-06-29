@@ -1,0 +1,151 @@
+import {
+	ApplicationFactory,
+	ApplicationWithTemplateFactory,
+	FormInputsFactory,
+	RagSourceFileFactory,
+	RagSourceUrlFactory,
+	ResearchObjectiveFactory,
+} from "::testing/factories";
+import type { API } from "@/types/api-types";
+
+const applicationStore = new Map<string, API.RetrieveApplication.Http200.ResponseBody>();
+
+export const applicationHandlers = {
+	createApplication: async ({
+		body,
+		params,
+	}: {
+		body?: any;
+		params?: Record<string, string>;
+	}): Promise<API.CreateApplication.Http201.ResponseBody> => {
+		const requestBody = body as API.CreateApplication.RequestBody;
+		const projectId = params?.project_id;
+		if (!projectId) {
+			throw new Error("Project ID required");
+		}
+
+		console.log("[Mock API] Creating application:", requestBody.title);
+		const id = crypto.randomUUID();
+		const application = ApplicationFactory.build({
+			form_inputs: undefined,
+			grant_template: undefined,
+			id,
+			project_id: projectId,
+			research_objectives: undefined,
+			status: "DRAFT",
+			title: requestBody.title,
+		});
+		applicationStore.set(id, application);
+		return application;
+	},
+
+	deleteApplication: async ({ params }: { params?: Record<string, string> }): Promise<void> => {
+		const applicationId = params?.application_id;
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+
+		console.log("[Mock API] Deleting application:", applicationId);
+		applicationStore.delete(applicationId);
+	},
+
+	generateApplication: async ({
+		params,
+	}: {
+		params?: Record<string, string>;
+	}): Promise<API.GenerateApplication.Http201.ResponseBody> => {
+		const applicationId = params?.application_id;
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+
+		console.log("[Mock API] Generating application:", applicationId);
+
+		const application = applicationStore.get(applicationId);
+		if (!application) {
+			throw new Error("Application not found");
+		}
+
+		const generatedText =
+			"This is a mock generated application text. It would normally contain AI-generated content based on the template and sources.";
+
+		const updatedApplication = {
+			...application,
+			form_inputs: FormInputsFactory.build() as unknown, // Factory returns correct type but TS inference issue
+			research_objectives: ResearchObjectiveFactory.batch(3),
+			status: "IN_PROGRESS" as const,
+			text: generatedText,
+		};
+		applicationStore.set(applicationId, updatedApplication as Parameters<typeof applicationStore.set>[1]);
+
+		return undefined;
+	},
+
+	getRagSources: async ({
+		params,
+	}: {
+		params?: Record<string, string>;
+	}): Promise<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody> => {
+		const applicationId = params?.application_id;
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+
+		console.log("[Mock API] Getting RAG sources for application:", applicationId);
+
+		return [...RagSourceFileFactory.batch(2), ...RagSourceUrlFactory.batch(1)];
+	},
+
+	retrieveApplication: async ({
+		params,
+	}: {
+		params?: Record<string, string>;
+	}): Promise<API.RetrieveApplication.Http200.ResponseBody> => {
+		const applicationId = params?.application_id;
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+
+		console.log("[Mock API] Retrieving application:", applicationId);
+
+		if (!applicationStore.has(applicationId)) {
+			const application = ApplicationWithTemplateFactory.build({
+				id: applicationId,
+			});
+			applicationStore.set(applicationId, application);
+		}
+
+		return applicationStore.get(applicationId)!;
+	},
+
+	updateApplication: async ({
+		body,
+		params,
+	}: {
+		body?: any;
+		params?: Record<string, string>;
+	}): Promise<API.UpdateApplication.Http200.ResponseBody> => {
+		const requestBody = body as API.UpdateApplication.RequestBody;
+		const applicationId = params?.application_id;
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+
+		console.log("[Mock API] Updating application:", applicationId);
+
+		const existingApplication = applicationStore.get(applicationId);
+		if (!existingApplication) {
+			throw new Error("Application not found");
+		}
+
+		const updatedApplication = {
+			...existingApplication,
+			...requestBody,
+			updated_at: new Date().toISOString(),
+		};
+		applicationStore.set(applicationId, updatedApplication as Parameters<typeof applicationStore.set>[1]);
+
+		// Return the full updated application
+		return updatedApplication as API.UpdateApplication.Http200.ResponseBody;
+	},
+};

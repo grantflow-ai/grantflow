@@ -6,7 +6,9 @@ interface LogContext {
 type LogLevel = "error" | "info" | "warn";
 
 class Logger {
-	private isDevelopment = process.env.NODE_ENV === "development";
+	private get isDevelopment(): boolean {
+		return process.env.NODE_ENV === "development";
+	}
 
 	error(message: string, error?: unknown, context?: LogContext): void {
 		const errorContext: LogContext = { ...context };

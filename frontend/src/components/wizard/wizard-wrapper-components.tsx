@@ -9,8 +9,9 @@ import {
 	IconButtonLogo,
 	IconDeadline,
 } from "@/components/projects/shared/icons";
-import { DevPanel } from "@/components/projects/wizard/dev-tools/dev-panel";
 import { WizardStep } from "@/constants";
+import { DevPanel } from "@/dev-tools/components/dev-panel";
+import { PagePath } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
@@ -113,9 +114,10 @@ export function WizardHeader() {
 	const handleExit = () => {
 		reset();
 		if (application?.project_id) {
-			router.push(`/projects/${application.project_id}`);
+			const projectPath = PagePath.PROJECT_DETAIL.replace(":projectId", application.project_id);
+			router.push(projectPath);
 		} else {
-			router.push("/projects");
+			router.push(PagePath.PROJECTS);
 		}
 	};
 

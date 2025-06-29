@@ -1,11 +1,16 @@
 "use client";
 
 import { Edit, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { createApplication } from "@/actions/grant-applications";
 import { AvatarGroup } from "@/components/app";
+import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { PagePath } from "@/enums";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
+import { log } from "@/utils/logger";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
 
 import { ProjectSidebar } from "./project-sidebar";
@@ -182,12 +187,14 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 const teamMembers = [{ backgroundColor: "#369e94", initials: "NH" }];
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
+	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [projectTitle, setProjectTitle] = useState(initialProject.name);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [applications, setApplications] = useState(mockApplications);
+	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 
 	const filteredApplications = applications.filter(
@@ -209,6 +216,28 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		}
 	};
 
+	const getEmptyStateButtonText = () => {
+		if (searchQuery) return "No applications found";
+		if (isCreatingApplication) return "Creating...";
+		return "New Application";
+	};
+
+	const handleCreateApplication = async () => {
+		setIsCreatingApplication(true);
+		try {
+			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
+			const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", initialProject.id).replace(
+				":applicationId",
+				application.id,
+			);
+			router.push(wizardPath);
+		} catch (error) {
+			log.error("create-application-button", error);
+			toast.error("Failed to create application");
+			setIsCreatingApplication(false);
+		}
+	};
+
 	useEffect(() => {
 		if (isEditingTitle && titleInputRef.current) {
 			titleInputRef.current.focus();
@@ -224,6 +253,8 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					name: app.name,
 					status: app.status,
 				}))}
+				isCreatingApplication={isCreatingApplication}
+				onCreateApplication={handleCreateApplication}
 				projectId={initialProject.id}
 				userRole={initialProject.role as UserRole}
 			/>
@@ -286,13 +317,15 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 							value={searchQuery}
 						/>
 					</div>
-					<Link
+					<button
 						className="flex items-center gap-2 rounded bg-[#1e13f8] px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-white hover:bg-[#1710d4] transition-colors ml-4"
-						href={`/projects/${initialProject.id}/applications/new`}
+						disabled={isCreatingApplication}
+						onClick={handleCreateApplication}
+						type="button"
 					>
 						<Plus className="size-4" />
-						New Application
-					</Link>
+						{isCreatingApplication ? "Creating..." : "New Application"}
+					</button>
 				</div>
 
 				{}
@@ -309,17 +342,19 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 						</div>
 					) : (
 						<div className="flex items-center justify-center h-full">
-							<Link
+							<button
 								className="flex flex-col items-center justify-center w-[300px] h-[200px] bg-white rounded-lg border-2 border-dashed border-[#e1dfeb] hover:border-[#1e13f8] transition-colors cursor-pointer"
-								href={`/projects/${initialProject.id}/applications/new`}
+								disabled={isCreatingApplication}
+								onClick={handleCreateApplication}
+								type="button"
 							>
 								<div className="flex items-center justify-center size-12 mb-3">
 									<Plus className="size-8 text-[#1e13f8]" />
 								</div>
 								<span className="font-['Source_Sans_Pro'] text-[16px] text-[#636170]">
-									{searchQuery ? "No applications found" : "New Application"}
+									{getEmptyStateButtonText()}
 								</span>
-							</Link>
+							</button>
 						</div>
 					)}
 				</div>
