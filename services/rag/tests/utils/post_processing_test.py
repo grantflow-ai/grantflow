@@ -133,7 +133,7 @@ async def test_parse_documents(
     mock_count_tokens.side_effect = lambda text, **_: len(text.split())
 
     result = await parse_documents(
-        original_docs=sample_documents, sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model"
+        sentence_infos=sample_sentence_infos, max_tokens=100, model="test-model"
     )
 
     assert len(result) == 3

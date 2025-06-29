@@ -146,7 +146,7 @@ async def test_baseline_full_application_generation(
             )
 
         except Exception as e:
-            logger.error(f"Error during grant application generation: {e}")
+            logger.exception("Error during grant application generation")
             progress.report_final_status(
                 False,
                 {
@@ -158,7 +158,6 @@ async def test_baseline_full_application_generation(
             )
             raise
         finally:
-
             pass
 
     assert_performance_targets(perf_ctx.result, min_grade="C")

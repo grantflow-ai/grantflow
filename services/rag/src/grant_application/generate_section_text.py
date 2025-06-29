@@ -103,12 +103,13 @@ async def generate_sections_with_shared_retrieval(
         [s.get("title", f"Section {i}") for i, s in enumerate(sections)]
     )
 
-    shared_context = await retrieve_documents(
+    retrieval_results = await retrieve_documents(
         application_id=application_id,
         search_queries=unique_queries,
         task_description=combined_task_description,
         max_tokens=12000,
     )
+    shared_context = "\n".join(retrieval_results)
 
     retrieval_time = time.time() - start_time
     logger.info(
@@ -123,7 +124,7 @@ async def generate_sections_with_shared_retrieval(
 
     section_results = await batched_gather(*generation_coroutines, batch_size=3)
 
-    results = {}
+    results: dict[str, str] = {}
     for section, result in zip(sections, section_results, strict=False):
         section_id = section.get("id", section.get("title", f"section_{len(results)}"))
         results[section_id] = result
