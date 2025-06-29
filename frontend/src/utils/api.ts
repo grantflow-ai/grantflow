@@ -1,5 +1,7 @@
 import ky, { type KyInstance, type NormalizedOptions } from "ky";
 
+import { getMockAPIClient, isMockAPIEnabled } from "@/dev-tools/mock-api/client";
+import { initializeMockAPI } from "@/dev-tools/mock-api/init";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
@@ -8,16 +10,6 @@ const clientRef = new Ref<KyInstance>();
 let mockHandlersRegistered = false;
 
 const ONE_MINUTE_IN_MS = 60 * 1000;
-
-// Lazy load mock API modules only when needed
-interface MockAPIModule {
-	getMockAPIClient: () => {
-		intercept: <T>(path: string, options?: { body?: string; method?: string }) => Promise<T>;
-	};
-	isMockAPIEnabled: () => boolean;
-}
-
-let mockAPIModule: MockAPIModule | null = null;
 
 export function getClient(): KyInstance {
 	clientRef.value ??= ky.create({
@@ -90,14 +82,6 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		return undefined;
 	}
 
-	// Lazy load mock API modules
-	const mockAPI = await loadMockAPI();
-	if (!mockAPI) {
-		return undefined;
-	}
-
-	const { getMockAPIClient, isMockAPIEnabled } = mockAPI;
-
 	// Double check mock is enabled
 	if (!isMockAPIEnabled()) {
 		return undefined;
@@ -105,7 +89,6 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 
 	// Register mock handlers once
 	if (!mockHandlersRegistered) {
-		const { initializeMockAPI } = await import("@/dev-tools/mock-api/init");
 		initializeMockAPI();
 		mockHandlersRegistered = true;
 		log.info("[Mock API] Mock API initialized");
@@ -134,8 +117,7 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		}
 
 		// Call mock handler
-		const mockClient = getMockAPIClient();
-		const result = await mockClient.intercept<unknown>(path, {
+		const result = await getMockAPIClient().intercept<unknown>(path, {
 			body: body ? JSON.stringify(body) : undefined,
 			method: request.method,
 		});
@@ -152,15 +134,4 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		// Return undefined to let the request proceed normally
 		return undefined;
 	}
-}
-
-async function loadMockAPI(): Promise<MockAPIModule | null> {
-	if (mockAPIModule === null) {
-		try {
-			mockAPIModule = (await import("@/dev-tools/mock-api/client")) as MockAPIModule;
-		} catch {
-			mockAPIModule = null;
-		}
-	}
-	return mockAPIModule;
 }
