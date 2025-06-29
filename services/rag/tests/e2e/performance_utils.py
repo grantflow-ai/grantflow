@@ -77,7 +77,7 @@ class PerformanceTestContext:
         self.warnings: list[str] = []
 
         self.generated_content: str = ""
-        self.section_texts: list[str] = []
+        self.section_texts: list[str] | dict[str, str] = []
         self.llm_calls_made: int = 0
 
         self.result: PerformanceResult | None = None
@@ -139,11 +139,14 @@ class PerformanceTestContext:
         """Get a timer for a specific pipeline stage."""
         return StageTimer(stage_name, self.stage_times)
 
-    def set_content(self, content: str, section_texts: dict[str, str] | None = None) -> None:
+    def set_content(self, content: str, section_texts: dict[str, str] | list[str] | None = None) -> None:
         """Set the generated content for quality analysis."""
         self.generated_content = content
         if section_texts:
-            self.section_texts = section_texts
+            if isinstance(section_texts, dict):
+                self.section_texts = list(section_texts.values())
+            else:
+                self.section_texts = section_texts
 
     def add_llm_call(self, count: int = 1) -> None:
         """Track LLM calls made during the test."""

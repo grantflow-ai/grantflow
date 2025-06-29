@@ -16,6 +16,7 @@ from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.grant_application.dto import EnrichObjectiveInputDTO
 from services.rag.src.grant_application.enrich_research_objective import (
+    ObjectiveEnrichmentDTO,
     handle_enrich_objective,
 )
 from services.rag.src.utils.retrieval import retrieve_documents
@@ -131,11 +132,11 @@ async def perform_shared_retrieval(
 
     logger.info(
         "Optimized retrieval completed",
-        result_tokens=estimate_prompt_tokens(retrieval_result),
+        result_tokens=estimate_prompt_tokens("\n".join(retrieval_result)),
         result_length=len(retrieval_result),
     )
 
-    return retrieval_result
+    return "\n".join(retrieval_result)
 
 
 async def handle_batch_enrich_objectives(
@@ -143,7 +144,7 @@ async def handle_batch_enrich_objectives(
     grant_section: GrantLongFormSection,
     application_id: str,
     form_inputs: ResearchDeepDive,
-) -> list[ResearchDeepDive]:
+) -> list[ObjectiveEnrichmentDTO]:
     """
     Handle batch enrichment of research objectives with performance optimizations.
 
