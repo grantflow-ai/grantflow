@@ -216,6 +216,12 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		}
 	};
 
+	const getEmptyStateButtonText = () => {
+		if (searchQuery) return "No applications found";
+		if (isCreatingApplication) return "Creating...";
+		return "New Application";
+	};
+
 	const handleCreateApplication = async () => {
 		setIsCreatingApplication(true);
 		try {
@@ -346,9 +352,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 									<Plus className="size-8 text-[#1e13f8]" />
 								</div>
 								<span className="font-['Source_Sans_Pro'] text-[16px] text-[#636170]">
-									{searchQuery ? "No applications found" : (
-										isCreatingApplication ? "Creating..." : "New Application"
-									)}
+									{getEmptyStateButtonText()}
 								</span>
 							</button>
 						</div>
