@@ -130,6 +130,11 @@ async def test_make_anthropic_completions_request(mock_anthropic_api_response: M
     tool_use.input = {"key": "value"}
     mock_anthropic_api_response.content = [tool_use]
     mock_anthropic_api_response.model = ANTHROPIC_SONNET_MODEL
+
+    usage_mock = Mock()
+    usage_mock.input_tokens = 10
+    usage_mock.output_tokens = 5
+    mock_anthropic_api_response.usage = usage_mock
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
     result = await make_anthropic_completions_request(
         model=ANTHROPIC_SONNET_MODEL,
@@ -148,6 +153,11 @@ async def test_make_anthropic_completions_request_with_generation_params(mock_an
     tool_use.input = {"key": "value"}
     mock_anthropic_api_response.content = [tool_use]
     mock_anthropic_api_response.model = ANTHROPIC_SONNET_MODEL
+
+    usage_mock = Mock()
+    usage_mock.input_tokens = 15
+    usage_mock.output_tokens = 8
+    mock_anthropic_api_response.usage = usage_mock
     schema = {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}
     result = await make_anthropic_completions_request(
         model=ANTHROPIC_SONNET_MODEL,

@@ -215,7 +215,12 @@ class PerformanceAnalyzer:
         """Get performance targets based on test category."""
         if category == TestCategory.GRANT_TEMPLATE:
             return self.GRANT_TEMPLATE_TARGETS
-        if category in [TestCategory.GRANT_APPLICATION, TestCategory.BASELINE, TestCategory.OPTIMIZATION, TestCategory.EVALUATION]:
+        if category in [
+            TestCategory.GRANT_APPLICATION,
+            TestCategory.BASELINE,
+            TestCategory.OPTIMIZATION,
+            TestCategory.EVALUATION,
+        ]:
             return self.GRANT_APPLICATION_TARGETS
 
         return self.GRANT_APPLICATION_TARGETS
