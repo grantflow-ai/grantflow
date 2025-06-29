@@ -1,6 +1,6 @@
 """Unit test for batch enrichment to verify functionality."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 import pytest
@@ -53,10 +53,10 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
 
     mock_form_inputs: ResearchDeepDive = {}
 
-    mock_batch_response = {
-        "objectives": [
-            {
-                "objective_number": 1,
+    def mock_enrich_side_effect(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        input_obj = kwargs.get("input_objective")
+        if input_obj and input_obj.get("number") == 1:
+            return {
                 "research_objective": {
                     "instructions": "Test instructions for objective 1",
                     "description": "Test description for objective 1",
@@ -77,33 +77,30 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
                         "search_queries": ["query1", "query2", "query3"],
                     },
                 ],
+            }
+        return {
+            "research_objective": {
+                "instructions": "Test instructions for objective 2",
+                "description": "Test description for objective 2",
+                "guiding_questions": ["Q1", "Q2", "Q3"],
+                "search_queries": ["query1", "query2", "query3"],
             },
-            {
-                "objective_number": 2,
-                "research_objective": {
-                    "instructions": "Test instructions for objective 2",
-                    "description": "Test description for objective 2",
+            "research_tasks": [
+                {
+                    "instructions": "Test instructions for task 2.1",
+                    "description": "Test description for task 2.1",
                     "guiding_questions": ["Q1", "Q2", "Q3"],
                     "search_queries": ["query1", "query2", "query3"],
-                },
-                "research_tasks": [
-                    {
-                        "instructions": "Test instructions for task 2.1",
-                        "description": "Test description for task 2.1",
-                        "guiding_questions": ["Q1", "Q2", "Q3"],
-                        "search_queries": ["query1", "query2", "query3"],
-                    }
-                ],
-            },
-        ]
-    }
+                }
+            ],
+        }
 
     with (
         patch("services.rag.src.grant_application.batch_enrich_objectives.retrieve_documents") as mock_retrieve,
         patch("services.rag.src.grant_application.enrich_research_objective.with_prompt_evaluation") as mock_evaluation,
     ):
         mock_retrieve.return_value = "Mock retrieval results"
-        mock_evaluation.return_value = mock_batch_response
+        mock_evaluation.side_effect = mock_enrich_side_effect
 
         result = await handle_batch_enrich_objectives(
             application_id="test-app-id",
