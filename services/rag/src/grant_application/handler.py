@@ -220,9 +220,9 @@ async def generate_grant_section_texts(
     job_manager: JobManager,  # noqa: ARG001
 ) -> dict[str, str]:
     long_form_sections: list[GrantLongFormSection] = [
-        s
+        s  # type: ignore[misc]
         for s in grant_sections
-        if isinstance(s, dict) and s.get("is_detailed_research_plan") is not None  # type: ignore[misc]
+        if isinstance(s, dict) and s.get("is_detailed_research_plan") is not None
     ]
 
     return await generate_sections_with_shared_retrieval(
