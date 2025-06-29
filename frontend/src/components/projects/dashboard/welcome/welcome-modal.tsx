@@ -17,10 +17,16 @@ interface WelcomeModalProps {
 }
 
 export default function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
-	const [open, setOpen] = useState(true);
+	const [open, setOpen] = useState(false);
 	const [step, setStep] = useState(1);
 
 	useEffect(() => {
+		const hasVisited = localStorage.getItem("hasVisitedWelcomeModal");
+		if (!hasVisited) {
+			setOpen(true);
+			localStorage.setItem("hasVisitedWelcomeModal", "true");
+		}
+
 		const interval = setInterval(() => {
 			setStep((prev) => (prev < 5 ? prev + 1 : 1));
 		}, 2000);

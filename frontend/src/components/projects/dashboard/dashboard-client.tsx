@@ -24,6 +24,8 @@ import {
 import Image from "next/image";
 import { useState } from "react";
 import WelcomeModal from "./welcome/welcome-modal";
+import { Notification } from "./notification";
+
 
 export default function DashboardClient() {
   const [cards, setCards] = useState([
@@ -34,7 +36,21 @@ export default function DashboardClient() {
     },
   ]);
 
+  const handleDuplicate =(cardId) => {
+	setCards((prevCard)=>{
+		const cardToDuplicate = prevCard.find((c) => c.id === cardId)
+		if(!cardToDuplicate) return prevCard
+
+		return[
+			...prevCard, {...cardToDuplicate, id: Date.now()}
+		]
+	})
+  }
+  const handleDelete = (cardId) => {
+	setCards(prev => prev.filter(card => card.id !== cardId))
+  }
   return (
+
     <>
       <WelcomeModal
         onStartApplication={() => {
@@ -45,7 +61,7 @@ export default function DashboardClient() {
         <main className="w-[1368px] h-full">
           <header className=" h-[73px] w-[1368px] flex justify-end items-center gap-2">
             <div className="size-8 flex items-center justify-center">
-              <BellIcon className="size-4 text-black" />
+              <Notification/>
             </div>
             <div className="size-8 bg-[#369E94] rounded-sm flex items-center justify-center ">
               <p className="font-semibold text-base">NH</p>
@@ -88,7 +104,7 @@ export default function DashboardClient() {
 
               <article className="flex gap-8 items-center w-full mt-6">
                 <div className="w-full h-[130px]  border border-gray-200 rounded-sm px-6 py-6 flex flex-col gap-2.5">
-                  <h4 className="font-normal text-4xl text-black">1</h4>
+                  <h4 className="font-normal text-4xl text-black">{cards.length}</h4>
                   <p className="font-normal text-2xl text-gray-600">
                     Research projects
                   </p>
@@ -106,7 +122,7 @@ export default function DashboardClient() {
                 Research Projects
               </h3>
 
-              <main className="flex items-center justify-between mt-6">
+              <main className="flex items-center gap-4 flex-wrap mt-6">
                 {cards.map((card) => {
                   return (
                     <div
@@ -150,11 +166,11 @@ export default function DashboardClient() {
                             <MoreVertical className="size-4 text-gray-700 " />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-0">
-                            <DropdownMenuItem className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700">
+                            <DropdownMenuItem onClick={()=>handleDelete(card.id)}  className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700">
                               <Trash2 className="size-4 text-gray-700" />
                               Delete
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700">
+                            <DropdownMenuItem onClick={() => handleDuplicate(card.id)} className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700">
                               <Copy className="size-4 text-gray-700" />
                               Duplicate
                             </DropdownMenuItem>
