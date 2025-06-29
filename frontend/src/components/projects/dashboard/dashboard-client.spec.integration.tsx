@@ -3,6 +3,10 @@
  * Tests dashboard scenarios with real UI components and mocked server actions
  */
 
+/* eslint-disable sonarjs/no-nested-functions */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock Next.js navigation
@@ -290,7 +294,7 @@ describe("Dashboard Client Integration", () => {
 		mockProjectStore.updateProject.mockClear();
 
 		// Reset notification store state
-		mockNotificationStore.notifications = [];
+		mockNotificationStore.notifications.length = 0; // Clear array without reassignment
 		mockNotificationStore.addNotification.mockClear();
 		mockNotificationStore.clearNotifications.mockClear();
 		mockNotificationStore.removeNotification.mockClear();
@@ -429,7 +433,8 @@ describe("Dashboard Client Integration", () => {
 	});
 
 	describe.skip("Project Management Actions", () => {
-		describe.each(userManagementScenarios)("$description", ({ action, name, storeMethod }) => {
+		describe.each(userManagementScenarios)("$description", ({ action, expectedResult, name, storeMethod }) => {
+			// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex integration test with multiple scenarios
 			it(`should handle ${name} correctly`, async () => {
 				const projects = ProjectListItemFactory.batch(3);
 				render(<DashboardClient initialProjects={projects} />);
@@ -459,7 +464,7 @@ describe("Dashboard Client Integration", () => {
 						const confirmButton = screen.getByTestId("delete-button");
 						await user.click(confirmButton);
 
-						if (storeMethod) {
+						if (expectedResult === "store-call" && storeMethod) {
 							expect(mockProjectStore[storeMethod]).toHaveBeenCalledWith(projects[0].id);
 						}
 						break;
@@ -471,7 +476,7 @@ describe("Dashboard Client Integration", () => {
 						const duplicateButton = screen.getByTestId("duplicate-project-button");
 						await user.click(duplicateButton);
 
-						if (storeMethod) {
+						if (expectedResult === "store-call" && storeMethod) {
 							expect(mockProjectStore[storeMethod]).toHaveBeenCalledWith(projects[0].id);
 						}
 						break;
@@ -560,7 +565,7 @@ describe("Dashboard Client Integration", () => {
 	});
 
 	describe.sequential("Real-time and Data Features", () => {
-		it("should handle WebSocket notifications and SWR data", async () => {
+		it("should handle WebSocket notifications and SWR data", () => {
 			const projects = ProjectListItemFactory.batch(2);
 			render(<DashboardClient initialProjects={projects} />);
 
