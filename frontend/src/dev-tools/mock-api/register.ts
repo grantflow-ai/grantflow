@@ -5,7 +5,8 @@ export function registerMockHandlers(): void {
 	const client = getMockAPIClient();
 
 	// Auth endpoints
-	client.register("/auth/login", mockHandlers.auth.login);
+	client.register("/login", mockHandlers.auth.login);
+	client.register("/auth/login", mockHandlers.auth.login); // Keep for compatibility
 	client.register("/auth/otp", mockHandlers.auth.generateOtp);
 
 	// Project endpoints
