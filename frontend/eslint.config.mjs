@@ -338,6 +338,32 @@ export default eslintTS.config(
 			"no-console": "off",
 		},
 	},
+	{
+		files: ["**/src/dev-tools/**/*.{ts,tsx}"],
+		rules: {
+			"@typescript-eslint/no-unnecessary-condition": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/prefer-nullish-coalescing": "off",
+			// Allow dev-tools specific patterns
+			"@typescript-eslint/require-await": "off",
+			// Import warnings for development packages
+			"import-x/no-named-as-default": "off",
+			// Only allow console statements in dev tools since they're for development debugging
+			"no-console": "off",
+			"prefer-destructuring": "off",
+			// React dev tools specific
+			"react/no-unescaped-entities": "off",
+			"sonarjs/function-return-type": "off",
+			// Allow http in mock URLs since they're for testing
+			"sonarjs/no-clear-text-protocols": "off",
+			"sonarjs/no-nested-functions": "off",
+			"sonarjs/prefer-single-boolean-return": "off",
+			"unicorn/consistent-function-scoping": "off",
+			"unicorn/prefer-add-event-listener": "off",
+		},
+	},
 
 	biomeConfig,
 );
