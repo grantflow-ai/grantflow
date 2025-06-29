@@ -20,6 +20,8 @@ import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 
 interface CollapsedSidebarProps {
+	isCreatingApplication?: boolean;
+	onCreateApplication?: () => void;
 	onExpand?: () => void;
 	onLogout: () => void;
 	pathname: string;
@@ -33,7 +35,9 @@ interface ProjectSidebarProps {
 		status: "generating" | "in_progress" | "working_draft";
 	}[];
 	isCollapsed?: boolean;
+	isCreatingApplication?: boolean;
 	onCollapse?: () => void;
+	onCreateApplication?: () => void;
 	onExpand?: () => void;
 	projectId: string;
 	userRole?: UserRole;
@@ -42,7 +46,9 @@ interface ProjectSidebarProps {
 export function ProjectSidebar({
 	applications = [],
 	isCollapsed = false,
+	isCreatingApplication = false,
 	onCollapse,
+	onCreateApplication,
 	onExpand,
 	projectId,
 	userRole = UserRole.MEMBER,
@@ -66,7 +72,14 @@ export function ProjectSidebar({
 
 	if (isCollapsed) {
 		return (
-			<CollapsedSidebar onExpand={onExpand} onLogout={handleLogout} pathname={pathname} projectId={projectId} />
+			<CollapsedSidebar
+				isCreatingApplication={isCreatingApplication}
+				onCreateApplication={onCreateApplication}
+				onExpand={onExpand}
+				onLogout={handleLogout}
+				pathname={pathname}
+				projectId={projectId}
+			/>
 		);
 	}
 
@@ -93,13 +106,15 @@ export function ProjectSidebar({
 
 			{}
 			<div className="px-4 pb-4">
-				<Link
+				<button
 					className="flex items-center justify-center gap-2 w-full rounded bg-[#1e13f8] px-4 py-2 text-white font-['Source_Sans_Pro'] text-[14px] hover:bg-[#1710d4] transition-colors"
-					href={`/projects/${projectId}/applications/new`}
+					disabled={isCreatingApplication}
+					onClick={onCreateApplication}
+					type="button"
 				>
 					<span className="text-lg">+</span>
-					New Application
-				</Link>
+					{isCreatingApplication ? "Creating..." : "New Application"}
+				</button>
 			</div>
 
 			{}
@@ -243,7 +258,14 @@ export function ProjectSidebar({
 	);
 }
 
-function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: CollapsedSidebarProps) {
+function CollapsedSidebar({
+	isCreatingApplication,
+	onCreateApplication,
+	onExpand,
+	onLogout,
+	pathname,
+	projectId,
+}: CollapsedSidebarProps) {
 	return (
 		<div className="flex h-full w-16 flex-col bg-[#faf9fb] border-r border-[#e1dfeb]">
 			{}
@@ -265,13 +287,15 @@ function CollapsedSidebar({ onExpand, onLogout, pathname, projectId }: Collapsed
 
 			{}
 			<div className="px-2 pb-4">
-				<Link
+				<button
 					className="flex items-center justify-center w-full rounded bg-[#1e13f8] p-2 text-white hover:bg-[#1710d4] transition-colors"
-					href={`/projects/${projectId}/applications/new`}
-					title="New Application"
+					disabled={isCreatingApplication}
+					onClick={onCreateApplication}
+					title={isCreatingApplication ? "Creating..." : "New Application"}
+					type="button"
 				>
 					<Plus className="size-5" />
-				</Link>
+				</button>
 			</div>
 
 			{}

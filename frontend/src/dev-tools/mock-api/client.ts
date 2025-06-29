@@ -1,4 +1,5 @@
 import { getEnv } from "@/utils/env";
+import { log } from "@/utils/logger";
 
 interface MockAPIConfig {
 	delay?: number;
@@ -25,14 +26,28 @@ class MockAPIClient {
 	}
 
 	async intercept<T>(path: string, options?: { body?: string; method?: string }): Promise<T> {
-		const handler = this.findHandler(path);
+		const method = options?.method ?? "GET";
+		log.info("[MockAPIClient] Intercepting request", {
+			hasBody: !!options?.body,
+			method,
+			path,
+		});
+
+		const handler = this.findHandler(path, method);
 		if (!handler) {
-			throw new Error(`No mock handler registered for path: ${path}`);
+			log.error(`[MockAPIClient] No mock handler registered for ${method} ${path}`);
+			throw new Error(`No mock handler registered for ${method} ${path}`);
 		}
+
+		log.info("[MockAPIClient] Handler found, simulating delay", {
+			delay: this.config.delay,
+			path,
+		});
 
 		await this.simulateDelay();
 
 		if (this.shouldSimulateError()) {
+			log.warn("[MockAPIClient] Simulating network error", { path });
 			throw new Error("Simulated network error");
 		}
 
@@ -40,13 +55,26 @@ class MockAPIClient {
 		if (options?.body) {
 			try {
 				body = JSON.parse(options.body) as unknown;
+				log.info("[MockAPIClient] Parsed request body", {
+					bodyKeys: body && typeof body === "object" ? Object.keys(body) : [],
+					bodyType: typeof body,
+					path,
+				});
 			} catch {
 				body = options.body;
+				log.warn("[MockAPIClient] Failed to parse body as JSON", { path });
 			}
 		}
 
 		const url = new URL(path, "http://mock");
-		const params = this.extractPathParams(path);
+		const params = this.extractPathParams(path, method);
+
+		log.info("[MockAPIClient] Calling handler", {
+			hasQuery: url.searchParams.toString().length > 0,
+			method,
+			params,
+			path,
+		});
 
 		const response = await handler({
 			body,
@@ -54,11 +82,19 @@ class MockAPIClient {
 			query: url.searchParams,
 		});
 
+		log.info("[MockAPIClient] Handler returned response", {
+			path,
+			responseKeys: response && typeof response === "object" ? Object.keys(response) : [],
+			responseType: typeof response,
+		});
+
 		return response as T;
 	}
 
-	register(path: string, handler: MockHandler): void {
-		this.handlers.set(path, handler);
+	register(path: string, handler: MockHandler, method = "*"): void {
+		const key = `${method} ${path}`;
+		log.info("[MockAPIClient] Registering handler", { key, method, path });
+		this.handlers.set(key, handler);
 	}
 
 	setDelay(ms: number): void {
@@ -69,12 +105,22 @@ class MockAPIClient {
 		this.config.errorRate = Math.max(0, Math.min(100, rate));
 	}
 
-	private extractPathParams(path: string): Record<string, string> {
+	private extractPathParams(path: string, method: string): Record<string, string> {
 		const pathParts = path.split("/").filter(Boolean);
 		const params: Record<string, string> = {};
 
+		// Try to find matching pattern
+		const handler = this.findHandler(path, method);
+		if (!handler) {
+			return params;
+		}
+
+		// Find the pattern that matched
 		for (const [pattern] of this.handlers) {
-			const patternParts = pattern.split("/").filter(Boolean);
+			const [, ...patternPathParts] = pattern.split(" ");
+			const patternPath = patternPathParts.join(" ");
+			const patternParts = patternPath.split("/").filter(Boolean);
+
 			if (patternParts.length === pathParts.length) {
 				let matches = true;
 				patternParts.forEach((part, index) => {
@@ -93,18 +139,41 @@ class MockAPIClient {
 		return params;
 	}
 
-	private findHandler(path: string): MockHandler | undefined {
+	private findHandler(path: string, method: string): MockHandler | undefined {
+		// First try exact match with method
+		const exactKey = `${method} ${path}`;
 		for (const [pattern, handler] of this.handlers) {
-			if (this.matchPath(pattern, path)) {
+			if (this.matchPath(pattern, exactKey)) {
 				return handler;
 			}
 		}
+
+		// Then try wildcard method
+		const wildcardKey = `* ${path}`;
+		for (const [pattern, handler] of this.handlers) {
+			if (this.matchPath(pattern, wildcardKey)) {
+				return handler;
+			}
+		}
+
 		return undefined;
 	}
 
-	private matchPath(pattern: string, path: string): boolean {
-		const patternParts = pattern.split("/").filter(Boolean);
-		const pathParts = path.split("/").filter(Boolean);
+	private matchPath(pattern: string, key: string): boolean {
+		// Split the method and path
+		const [patternMethod, ...patternPathParts] = pattern.split(" ");
+		const [keyMethod, ...keyPathParts] = key.split(" ");
+
+		// Check if methods match (or pattern has wildcard)
+		if (patternMethod !== "*" && patternMethod !== keyMethod) {
+			return false;
+		}
+
+		const patternPath = patternPathParts.join(" ");
+		const keyPath = keyPathParts.join(" ");
+
+		const patternParts = patternPath.split("/").filter(Boolean);
+		const pathParts = keyPath.split("/").filter(Boolean);
 
 		if (patternParts.length !== pathParts.length) {
 			return false;
