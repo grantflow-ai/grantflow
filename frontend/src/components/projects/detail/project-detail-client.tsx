@@ -1,13 +1,13 @@
 "use client";
 
 import { Edit, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
 import { AvatarGroup } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { PagePath } from "@/enums";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
@@ -220,7 +220,11 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		setIsCreatingApplication(true);
 		try {
 			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
-			router.push(`/projects/${initialProject.id}/applications/${application.id}/wizard`);
+			const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", initialProject.id).replace(
+				":applicationId",
+				application.id,
+			);
+			router.push(wizardPath);
 		} catch (error) {
 			log.error("create-application-button", error);
 			toast.error("Failed to create application");
@@ -332,17 +336,21 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 						</div>
 					) : (
 						<div className="flex items-center justify-center h-full">
-							<Link
+							<button
 								className="flex flex-col items-center justify-center w-[300px] h-[200px] bg-white rounded-lg border-2 border-dashed border-[#e1dfeb] hover:border-[#1e13f8] transition-colors cursor-pointer"
-								href={`/projects/${initialProject.id}/applications/new`}
+								disabled={isCreatingApplication}
+								onClick={handleCreateApplication}
+								type="button"
 							>
 								<div className="flex items-center justify-center size-12 mb-3">
 									<Plus className="size-8 text-[#1e13f8]" />
 								</div>
 								<span className="font-['Source_Sans_Pro'] text-[16px] text-[#636170]">
-									{searchQuery ? "No applications found" : "New Application"}
+									{searchQuery ? "No applications found" : (
+										isCreatingApplication ? "Creating..." : "New Application"
+									)}
 								</span>
-							</Link>
+							</button>
 						</div>
 					)}
 				</div>
