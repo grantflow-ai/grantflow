@@ -498,7 +498,7 @@ async def evaluate_prompt_output(
 
     _evaluation_cache.put(prompt, model_output, criteria, result)
 
-    return cast("EvaluationToolResponse", result)
+    return result
 
 
 def analyze_content_complexity(content: str, criteria: list[EvaluationCriterion] | None = None) -> ComplexityAnalysis:
