@@ -365,6 +365,28 @@ rules:
       - **main**: Production environment (when ready)
       - All CI/CD workflows run on both branches
 
+      ### Frontend Deployment Environments
+
+      - **Staging**:
+        - URL: `https://staging--grantflow-staging.us-central1.hosted.app`
+        - Project: `grantflow-staging`
+        - Branch: `development`
+        - Config: `apphosting.staging.yaml`
+        - Mock API/Auth enabled by default
+      - **Production**:
+        - URL: `https://grantflow.ai`
+        - Project: `grantflow`
+        - Branch: `main`
+        - Config: `apphosting.production.yaml`
+        - Mock features disabled
+
+      ### Firebase App Hosting Configuration
+
+      - Environment-specific configs: `apphosting.{environment}.yaml`
+      - Set environment name in Firebase Console (Settings → Environment)
+      - Secrets use environment suffixes (e.g., `NEXT_PUBLIC_SITE_URL_STAGING`)
+      - Deploy with: `firebase deploy --project {project}`
+
       ### Docker Image Tagging
 
       - **Development branch**: `staging-{sha}`, `staging-latest`
@@ -374,7 +396,7 @@ rules:
       ### Deployment Architecture
 
       - **Backend Services**: Cloud Run (backend, crawler, indexer, rag)
-      - **Frontend**: Firebase Hosting (auto-deploys via GitHub integration)
+      - **Frontend**: Firebase App Hosting (branch-based deployments)
       - **Database**: Cloud SQL PostgreSQL
       - **Storage**: GCS buckets (staging uses `grantflow-staging-uploads`)
 
