@@ -200,6 +200,30 @@ Follow the official Ubuntu WSL guide here:
 Once WSL and Ubuntu are installed and configured, your environment is ready to mount and develop the repository using
 the instructions in the [Getting Started](#getting-started) section.
 
+## Deployment Environments
+
+### Frontend Deployments
+
+- **Staging**: https://staging--grantflow-staging.us-central1.hosted.app
+  - Firebase Project: `grantflow-staging`
+  - Branch: `development` (auto-deploys)
+  - Mock API/Auth enabled by default
+  - Configuration: `apphosting.staging.yaml`
+
+- **Production**: https://grantflow.ai
+  - Firebase Project: `grantflow`
+  - Branch: `main` (auto-deploys)
+  - Real API/Auth integration
+  - Configuration: `apphosting.production.yaml`
+
+### Backend Services
+
+Backend services are deployed to Cloud Run:
+- API: `https://api-staging.grantflow.ai` (staging)
+- Services: backend, indexer, crawler, rag
+- Database: Cloud SQL PostgreSQL
+- Storage: GCS buckets
+
 ## Code Quality and Linting
 
 This project uses multiple tools to ensure code quality:
