@@ -16,6 +16,7 @@ on:
     push:
         branches:
             - main
+            - development
         paths:
             - ".github/workflows/e2e-service-crawler.yaml"
             - ".github/actions/run-python-e2e-tests/**"
