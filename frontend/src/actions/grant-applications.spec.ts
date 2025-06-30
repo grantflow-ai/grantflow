@@ -14,7 +14,6 @@ import {
 	retrieveApplication,
 	updateApplication,
 } from "./grant-applications";
-import { updateGrantTemplate } from "./grant-template";
 
 const mockPost = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
 const mockPatch = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
@@ -201,60 +200,6 @@ describe("Grant Application Actions", () => {
 		});
 	});
 
-	describe("updateGrantTemplate", () => {
-		it("should call the API with correct parameters", async () => {
-			const updateData: API.UpdateGrantTemplate.RequestBody = {
-				grant_sections: [
-					{
-						depends_on: [],
-						generation_instructions: "Write an introduction",
-						id: "section1",
-						is_clinical_trial: false,
-						is_detailed_research_plan: false,
-						keywords: ["intro", "background"],
-						max_words: 500,
-						order: 1,
-						parent_id: null,
-						search_queries: ["introduction research"],
-						title: "Introduction",
-						topics: ["research background"],
-					},
-				],
-				submission_date: "2024-12-31",
-			};
-
-			await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, updateData);
-
-			expect(mockPatch).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
-				{
-					headers: mockAuthHeaders,
-					json: updateData,
-				},
-			);
-
-			expect(mockWithAuthRedirect).toHaveBeenCalled();
-		});
-
-		it("should handle submission date only update", async () => {
-			const updateData = {
-				submission_date: "2024-12-31",
-			} as API.UpdateGrantTemplate.RequestBody;
-
-			await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, updateData);
-
-			expect(mockPatch).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
-				{
-					headers: mockAuthHeaders,
-					json: updateData,
-				},
-			);
-
-			expect(mockWithAuthRedirect).toHaveBeenCalled();
-		});
-	});
-
 	describe("generateApplication", () => {
 		it("should call the API with correct parameters", async () => {
 			await generateApplication(mockProjectId, mockApplicationId);
@@ -421,15 +366,20 @@ describe("Grant Application Actions", () => {
 		});
 
 		it("should handle withAuthRedirect returning undefined for void functions", async () => {
-			mockWithAuthRedirect.mockResolvedValueOnce(undefined);
+			mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => {
+				return promise;
+			});
 
-			mockPatch.mockResolvedValueOnce(undefined);
+			mockPatch.mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
+			});
 
-			const result = await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, {
-				submission_date: "2024-12-31",
-			} as any);
+			const result = await updateApplication(mockProjectId, mockApplicationId, {
+				title: "Updated Title",
+			});
 
-			expect(result).toBeUndefined();
+			expect(result).toEqual(mockRetrieveApplicationResponse);
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 	});
 });

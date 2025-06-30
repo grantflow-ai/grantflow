@@ -24,7 +24,10 @@ vi.mock("@/utils/server-side", async () => {
 	return {
 		...actual,
 		createAuthHeaders: () => mockCreateAuthHeaders(),
-		withAuthRedirect: (promise: Promise<any>) => mockWithAuthRedirect(promise),
+		withAuthRedirect: (promise: Promise<any>) => {
+			mockWithAuthRedirect(promise);
+			return promise;
+		},
 	};
 });
 
@@ -39,8 +42,8 @@ beforeEach(() => {
 	mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
 	mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
-	mockPost.mockResolvedValue(undefined);
-	mockPatch.mockResolvedValue(undefined);
+	mockPost.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
+	mockPatch.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
 });
 
 afterEach(() => {
@@ -159,7 +162,6 @@ describe("Grant Template Actions", () => {
 			);
 
 			mockPatch.mockRejectedValue(mockError);
-			mockWithAuthRedirect.mockRejectedValue(mockError);
 
 			const updateData: Partial<API.UpdateGrantTemplate.RequestBody> = {
 				submission_date: "2024-12-31",
