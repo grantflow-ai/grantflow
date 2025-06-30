@@ -12,6 +12,7 @@ export interface Env {
 	NEXT_PUBLIC_GCS_EMULATOR_URL?: string;
 	NEXT_PUBLIC_MAILGUN_API_KEY: string;
 	NEXT_PUBLIC_MOCK_API?: boolean;
+	NEXT_PUBLIC_MOCK_AUTH?: boolean;
 	NEXT_PUBLIC_SEGMENT_WRITE_KEY: string;
 	NEXT_PUBLIC_SITE_URL: string;
 }
