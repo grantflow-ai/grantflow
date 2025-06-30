@@ -1,8 +1,29 @@
 import { ApplicationListItemFactory, ProjectFactory, ProjectListItemFactory } from "::testing/factories";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
+import { getMockAPIClient } from "../client";
+import { getScenario } from "../scenarios";
 
 const projectStore = new Map<string, API.GetProject.Http200.ResponseBody>();
+
+function populateStoreFromListItem(projectListItem: API.ListProjects.Http200.ResponseBody[0]): void {
+	const fullProject = ProjectFactory.build({
+		...projectListItem,
+		grant_applications: ApplicationListItemFactory.batch(projectListItem.applications_count),
+	});
+	projectStore.set(projectListItem.id, fullProject);
+}
+
+function toListProjectItem(project: API.GetProject.Http200.ResponseBody): API.ListProjects.Http200.ResponseBody[0] {
+	return {
+		applications_count: project.grant_applications.length,
+		description: project.description,
+		id: project.id,
+		logo_url: project.logo_url,
+		name: project.name,
+		role: project.role,
+	};
+}
 
 export const projectHandlers = {
 	createProject: async ({ body }: { body?: any }): Promise<API.CreateProject.Http201.ResponseBody> => {
@@ -56,16 +77,41 @@ export const projectHandlers = {
 
 		log.info("[Mock API] Getting project", { projectId });
 
-		if (!projectStore.has(projectId)) {
-			log.info("[Mock API] Project not found, creating new one", { projectId });
-			const project = ProjectFactory.build({
-				grant_applications: ApplicationListItemFactory.batch(3),
-				id: projectId,
+		const existingProject = projectStore.get(projectId);
+		if (existingProject) {
+			log.info("[Mock API] Returning project from store", {
+				applicationsCount: existingProject.grant_applications.length,
+				name: existingProject.name,
+				projectId,
 			});
-			projectStore.set(projectId, project);
+			return existingProject;
 		}
 
-		const project = projectStore.get(projectId)!;
+		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
+		const scenario = getScenario(currentScenarioName);
+		const scenarioProject = scenario?.data.projects.find((p) => p.id === projectId);
+
+		if (scenarioProject) {
+			log.info("[Mock API] Project not in store, creating from scenario", {
+				projectId,
+				scenario: currentScenarioName,
+			});
+			populateStoreFromListItem(scenarioProject);
+			const project = projectStore.get(projectId)!;
+			log.info("[Mock API] Returning project from scenario", {
+				applicationsCount: project.grant_applications.length,
+				name: project.name,
+				projectId,
+			});
+			return project;
+		}
+
+		log.info("[Mock API] Project not found in store or scenario, creating new one", { projectId });
+		const project = ProjectFactory.build({
+			grant_applications: ApplicationListItemFactory.batch(3),
+			id: projectId,
+		});
+		projectStore.set(projectId, project);
 		log.info("[Mock API] Returning project", {
 			applicationsCount: project.grant_applications.length,
 			name: project.name,
@@ -73,10 +119,33 @@ export const projectHandlers = {
 		});
 		return project;
 	},
+
 	listProjects: async (): Promise<API.ListProjects.Http200.ResponseBody> => {
 		log.info("[Mock API] Listing projects");
-		const projects = ProjectListItemFactory.batch(5);
-		log.info("[Mock API] Returning project list", { count: projects.length });
+
+		// Check if store has data
+		if (projectStore.size > 0) {
+			const projects = [...projectStore.values()].map(toListProjectItem);
+			log.info("[Mock API] Returning projects from store", { count: projects.length });
+			return projects;
+		}
+
+		// Store is empty, check scenario
+		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
+		const scenario = getScenario(currentScenarioName);
+
+		if (scenario?.data.projects && scenario.data.projects.length > 0) {
+			log.info("[Mock API] Store empty, populating from scenario", {
+				projectCount: scenario.data.projects.length,
+				scenario: currentScenarioName,
+			});
+
+			scenario.data.projects.forEach(populateStoreFromListItem);
+			return scenario.data.projects;
+		}
+
+		const projects = ProjectListItemFactory.batch(1);
+		log.info("[Mock API] No scenario data, returning factory-generated project list", { count: projects.length });
 		return projects;
 	},
 
