@@ -83,9 +83,15 @@ rules:
       task lint:terraform:trivy     # Security scan Terraform code
 
       # Database
-      task db:migrate         # Run migrations
+      task db:migrate         # Run migrations (local)
       task db:drop            # Drop and recreate DB (WARNING: destroys data)
       task db:reset           # Drop DB and re-run migrations
+
+      # Remote Database (Cloud SQL)
+      task db:proxy:start     # Start Cloud SQL Proxy
+      task db:proxy:stop      # Stop Cloud SQL Proxy
+      task db:proxy:status    # Check proxy status
+      task db:migrate:remote  # Run migrations on Cloud SQL (auto-starts proxy)
 
       # Other
       task generate:api-types # Generate TypeScript types from backend
@@ -350,6 +356,43 @@ rules:
       - Polymorphic SQLAlchemy models for flexible schemas
       - **Database**: Handle unique constraint violations gracefully with existence checks
 
+  - name: "GitOps and Deployment"
+    priority: 52
+    content: |
+      ### Branch Strategy
+
+      - **development**: Staging environment (auto-deploys)
+      - **main**: Production environment (when ready)
+      - All CI/CD workflows run on both branches
+
+      ### Docker Image Tagging
+
+      - **Development branch**: `staging-{sha}`, `staging-latest`
+      - **Main branch**: `{sha}`, `latest`
+      - **Releases**: `{release-tag}`
+
+      ### Deployment Architecture
+
+      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag)
+      - **Frontend**: Firebase Hosting (auto-deploys via GitHub integration)
+      - **Database**: Cloud SQL PostgreSQL
+      - **Storage**: GCS buckets (staging uses `grantflow-staging-uploads`)
+
+      ### Terraform Management
+
+      - Currently single environment (staging)
+      - Use `tofu` instead of `terraform` command
+      - Environment variable in `variables.tf` set to "staging"
+      - Services pull from `staging-latest` Docker tags
+      - Infrastructure as Code for all GCP resources
+
+      ### Cloud SQL Remote Access
+
+      - Use Cloud SQL Proxy for local connections
+      - Connection string conversion: Unix socket → TCP (127.0.0.1:5432)
+      - Always drop ENUMs and tables when resetting database
+      - Use `task db:migrate:remote` for remote migrations
+
   - name: "Key Learnings"
     priority: 50
     content: |
@@ -379,6 +422,8 @@ rules:
       - **Frontend**: `getEnv()` throws if missing required vars
       - **Backend**: `get_env()` with fallback values
       - **Build-time**: `process.env.NODE_ENV` in Next.js
+      - **Services**: Need both `GOOGLE_CLOUD_PROJECT` and `GCP_PROJECT_ID`
+      - **Bucket names**: Use environment-specific names (e.g., `grantflow-staging-uploads`)
 
   - name: "Security"
     priority: 45
@@ -411,6 +456,39 @@ rules:
       - Use real PostgreSQL for all tests
       - Mock external services, not internal components
       - Verify WebSocket integration with proper test clients
+
+  - name: "Common Pitfalls and Solutions"
+    priority: 37
+    content: |
+      ### YAML Syntax in Taskfile
+
+      - Colons in echo statements need quotes: `- 'echo "Key: value"'`
+      - Multi-line shell scripts use pipe: `|` after the command
+      - Environment variables with `sh:` need proper YAML formatting
+
+      ### Cloud SQL Connection Strings
+
+      - Cloud Run uses Unix socket: `/cloudsql/project:region:instance`
+      - Local development needs TCP: `127.0.0.1:5432`
+      - Always strip socket path and replace with TCP for local connections
+
+      ### Terraform State Issues
+
+      - Authentication errors: Run `gcloud auth application-default login`
+      - State lock issues: Check if another process is running
+      - Use `tofu` command, not `terraform`
+
+      ### Docker Build Failures
+
+      - Frontend needs build args for environment variables
+      - Use multi-stage builds to minimize image size
+      - Always use `lifecycle.ignore_changes` for image tags in Terraform
+
+      ### Database Migration Issues
+
+      - Drop ENUMs before dropping tables: `DROP TYPE IF EXISTS typename CASCADE`
+      - Check for existing alembic_version table
+      - Use `CASCADE` when dropping tables with foreign keys
 
   - name: "Important Instruction Reminders"
     priority: 35
