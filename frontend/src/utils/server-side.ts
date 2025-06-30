@@ -46,8 +46,8 @@ export const createAuthHeaders = async () => {
 	// Mock auth bypass for development
 	if (getEnv().NEXT_PUBLIC_MOCK_AUTH) {
 		// Use a mock JWT token that looks realistic for development
-		// eslint-disable-next-line sonarjs/no-hardcoded-secrets
 		const mockToken =
+			// eslint-disable-next-line sonarjs/no-hardcoded-secrets
 			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXVzZXItdWlkLTEyMyIsIm5hbWUiOiJUZXN0IFVzZXIiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3MzU1NTY0MDAsImV4cCI6MTczNjE2MTIwMH0.mock-signature";
 		return { Authorization: `Bearer ${mockToken}` };
 	}
