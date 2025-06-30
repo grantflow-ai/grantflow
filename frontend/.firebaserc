@@ -1,5 +1,9 @@
 {
   "projects": {
-    "default": "grantflow"
-  }
+    "default": "grantflow",
+    "production": "grantflow",
+    "staging": "grantflow-staging"
+  },
+  "targets": {},
+  "etags": {}
 }
