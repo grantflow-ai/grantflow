@@ -7,7 +7,7 @@ import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationStructureStep } from "./application-structure-step";
 
 vi.mock("./application-structure-left-pane", () => ({
-	ApplicationStructureLeftPane: () => <div data-testid="application-structure-left-pane">Left Pane</div>,
+	ApplicationStructureLeftPane: () => <div data-testid="application-structure-left-pane-content">Left Pane</div>,
 }));
 
 vi.mock("./drag-drop-section-manager", () => ({
