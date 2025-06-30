@@ -142,7 +142,7 @@ resource "google_sql_database_instance" "main" {
     }
 
     ip_configuration {
-      
+
       dynamic "authorized_networks" {
         for_each = var.authorized_networks
         content {
@@ -151,20 +151,20 @@ resource "google_sql_database_instance" "main" {
         }
       }
 
-      
+
       enable_private_path_for_google_cloud_services = true
 
-      
-      
+
+
       ipv4_enabled = true
 
-      
+
       server_ca_mode = "GOOGLE_MANAGED_INTERNAL_CA"
 
-      
+
       ssl_mode = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
 
-      
+
       private_network = var.network_id
     }
 

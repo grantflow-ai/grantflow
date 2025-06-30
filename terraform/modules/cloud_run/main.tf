@@ -25,6 +25,12 @@ variable "database_connection_name" {
   type        = string
 }
 
+variable "environment" {
+  description = "Environment (staging, prod)"
+  type        = string
+  default     = "staging"
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -34,7 +40,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:staging-latest"
 
       resources {
         limits = {
@@ -60,7 +66,12 @@ resource "google_cloud_run_v2_service" "backend" {
 
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
-        value = "grantflow"
+        value = var.project_id
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
       }
 
       env {
@@ -70,16 +81,16 @@ resource "google_cloud_run_v2_service" "backend" {
 
       env {
         name  = "GCS_BUCKET_NAME"
-        value = "grantflow-uploads"
+        value = "grantflow-staging-uploads"
       }
 
-      
+
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      
+
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -140,14 +151,14 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "rag-processing"
       }
 
-      
+
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    
+
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -179,7 +190,7 @@ resource "google_cloud_run_v2_service" "crawler" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:staging-latest"
 
       resources {
         limits = {
@@ -205,7 +216,12 @@ resource "google_cloud_run_v2_service" "crawler" {
 
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
-        value = "grantflow"
+        value = var.project_id
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
       }
 
       env {
@@ -215,16 +231,16 @@ resource "google_cloud_run_v2_service" "crawler" {
 
       env {
         name  = "GCS_BUCKET_NAME"
-        value = "grantflow-uploads"
+        value = "grantflow-staging-uploads"
       }
 
-      
+
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      
+
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -245,14 +261,14 @@ resource "google_cloud_run_v2_service" "crawler" {
         }
       }
 
-      
+
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    
+
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -284,7 +300,7 @@ resource "google_cloud_run_v2_service" "indexer" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:staging-latest"
 
       resources {
         limits = {
@@ -310,7 +326,12 @@ resource "google_cloud_run_v2_service" "indexer" {
 
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
-        value = "grantflow"
+        value = var.project_id
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
       }
 
       env {
@@ -320,16 +341,16 @@ resource "google_cloud_run_v2_service" "indexer" {
 
       env {
         name  = "GCS_BUCKET_NAME"
-        value = "grantflow-uploads"
+        value = "grantflow-staging-uploads"
       }
 
-      
+
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      
+
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -350,14 +371,14 @@ resource "google_cloud_run_v2_service" "indexer" {
         }
       }
 
-      
+
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    
+
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -389,7 +410,7 @@ resource "google_cloud_run_v2_service" "rag" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:staging-latest"
 
       resources {
         limits = {
@@ -415,7 +436,12 @@ resource "google_cloud_run_v2_service" "rag" {
 
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
-        value = "grantflow"
+        value = var.project_id
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
       }
 
       env {
@@ -428,13 +454,13 @@ resource "google_cloud_run_v2_service" "rag" {
         value = "frontend-notifications"
       }
 
-      
+
       env {
         name  = "INSTANCE_CONNECTION_NAME"
         value = var.database_connection_name
       }
 
-      
+
       env {
         name = "DATABASE_CONNECTION_STRING"
         value_source {
@@ -465,14 +491,14 @@ resource "google_cloud_run_v2_service" "rag" {
         }
       }
 
-      
+
       volume_mounts {
         name       = "cloudsql"
         mount_path = "/cloudsql"
       }
     }
 
-    
+
     volumes {
       name = "cloudsql"
       cloud_sql_instance {
@@ -485,7 +511,7 @@ resource "google_cloud_run_v2_service" "rag" {
       min_instance_count = 0
     }
 
-    timeout = "1800s" 
+    timeout = "1800s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"

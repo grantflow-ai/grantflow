@@ -121,9 +121,9 @@ resource "google_storage_notification" "file_indexing_notification" {
   bucket         = google_storage_bucket.uploads.name
   payload_format = "JSON_API_V1"
   topic          = var.file_indexing_topic
-  event_types    = ["OBJECT_FINALIZE"] 
+  event_types    = ["OBJECT_FINALIZE"]
 
-  
+
   custom_attributes = {
     event = "file-created"
   }

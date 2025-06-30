@@ -19,13 +19,13 @@ variable "zone" {
 variable "storage_bucket_name" {
   description = "The name of the main storage bucket"
   type        = string
-  default     = "grantflow-uploads"
+  default     = "grantflow-staging-uploads"
 }
 
 variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
-  default     = "prod"
+  default     = "staging"
 }
 
 
