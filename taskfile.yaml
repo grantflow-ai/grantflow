@@ -1,795 +1,796 @@
 version: "3"
 
 vars:
-    FRONTEND_DIR: frontend
-    PYTHON_PATH: "."
+  FRONTEND_DIR: frontend
+  PYTHON_PATH: "."
 
 tasks:
-    # ==============================================================================
-    # MAIN COMMANDS - Primary developer workflows
-    # ==============================================================================
+  # ==============================================================================
+  # MAIN COMMANDS - Primary developer workflows
+  # ==============================================================================
 
-    setup:
-        desc: Initial project setup - installs all dependencies and git hooks
-        cmds:
-            - task: frontend:install
-            - task: backend:install
-            - uv run lefthook install
-            - task: generate:ai-rules
+  setup:
+    desc: Initial project setup - installs all dependencies and git hooks
+    cmds:
+      - task: frontend:install
+      - task: backend:install
+      - uv run lefthook install
+      - task: generate:ai-rules
 
-    dev:
-        desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag)
-        deps:
-            - task: _dev:check
-            - task: db:migrate
-            - task: _dev:init-pubsub
-        cmds:
-            - echo "📝 Service URLs:"
-            - echo "  - Backend API{{":"}} http://localhost:8000"
-            - echo "  - Backend API Docs{{":"}} http://localhost:8000/schema/swagger"
-            - echo "  - Indexer{{":"}} http://localhost:8001"
-            - echo "  - Crawler{{":"}} http://localhost:8002"
-            - echo "  - RAG{{":"}} http://localhost:8003"
-            - echo "  - Pub/Sub Emulator{{":"}} http://localhost:8085"
-            - echo ""
-            - echo "Press Ctrl+C to stop all services"
-            - docker compose --profile services up
+  dev:
+    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag)
+    deps:
+      - task: _dev:check
+      - task: db:migrate
+      - task: _dev:init-pubsub
+    cmds:
+      - echo "📝 Service URLs:"
+      - echo "  - Backend API{{":"}} http://localhost:8000"
+      - echo "  - Backend API Docs{{":"}} http://localhost:8000/schema/swagger"
+      - echo "  - Indexer{{":"}} http://localhost:8001"
+      - echo "  - Crawler{{":"}} http://localhost:8002"
+      - echo "  - RAG{{":"}} http://localhost:8003"
+      - echo "  - Pub/Sub Emulator{{":"}} http://localhost:8085"
+      - echo ""
+      - echo "Press Ctrl+C to stop all services"
+      - docker compose --profile services up
 
-    dev:stop:
-        desc: Stop all development services
-        cmds:
-            - docker compose --profile services down
+  dev:stop:
+    desc: Stop all development services
+    cmds:
+      - docker compose --profile services down
 
-    test:
-        desc: Run all tests (backend services, packages, and frontend) - uses parallel execution by default
-        deps:
-            - task: backend:test
-            - task: frontend:test
+  test:
+    desc: Run all tests (backend services, packages, and frontend) - uses parallel execution by default
+    deps:
+      - task: backend:test
+      - task: frontend:test
 
-    test:serial:
-        desc: Run all tests in serial mode (no parallelization)
-        cmds:
-            - PYTHONPATH=. uv run pytest -n0
-            - task: frontend:test
+  test:serial:
+    desc: Run all tests in serial mode (no parallelization)
+    cmds:
+      - PYTHONPATH=. uv run pytest -n0
+      - task: frontend:test
 
-    test:ci:
-        desc: Run tests in CI mode (serial execution)
-        cmds:
-            - PYTHONPATH=. uv run pytest -c pytest-ci.ini
-            - task: frontend:test
+  test:ci:
+    desc: Run tests in CI mode (serial execution)
+    cmds:
+      - PYTHONPATH=. uv run pytest -c pytest-ci.ini
+      - task: frontend:test
 
-    test:e2e:
-        desc: Run all end-to-end tests
-        deps:
-            - task: service:backend:test:e2e
-            - task: service:indexer:test:e2e
-            - task: service:crawler:test:e2e
-            - task: service:rag:test:e2e
+  test:e2e:
+    desc: Run all end-to-end tests
+    deps:
+      - task: service:backend:test:e2e
+      - task: service:indexer:test:e2e
+      - task: service:crawler:test:e2e
+      - task: service:rag:test:e2e
 
-    lint:
-        desc: Run all linters and formatters
-        cmds:
-            - task: lint:all
+  lint:
+    desc: Run all linters and formatters
+    cmds:
+      - task: lint:all
 
-    update:
-        desc: Update all dependencies (frontend and backend) to latest versions
-        cmds:
-            - task: frontend:update
-            - task: backend:update
+  update:
+    desc: Update all dependencies (frontend and backend) to latest versions
+    cmds:
+      - task: frontend:update
+      - task: backend:update
 
-    generate:api-types:
-        desc: Generate TypeScript from backend API
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
-            - task: lint:frontend
+  generate:api-types:
+    desc: Generate TypeScript from backend API
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
+      - task: lint:frontend
 
-    generate:ai-rules:
-        desc: Generate AI assistant configuration files (CLAUDE.md, .windsurfrules, .cursorrules) from ai-rulez.yaml
-        cmds:
-            - uv run ai-rulez generate --recursive
+  generate:ai-rules:
+    desc: Generate AI assistant configuration files (CLAUDE.md, .windsurfrules, .cursorrules) from ai-rulez.yaml
+    cmds:
+      - uv run ai-rulez generate --recursive
 
+  # ==============================================================================
+  # DATABASE COMMANDS
+  # ==============================================================================
 
-    # ==============================================================================
-    # DATABASE COMMANDS
-    # ==============================================================================
+  db:up:
+    desc: Start the local PostgreSQL database container if not already running
+    cmds:
+      - docker compose up db --detach
+    status:
+      - docker ps --format "table {{.Names}}" | grep -q "^db$"
 
-    db:up:
-        desc: Start the local PostgreSQL database container if not already running
-        cmds:
-            - docker compose up db --detach
-        status:
-            - docker ps --format "table {{.Names}}" | grep -q "^db$"
+  db:down:
+    desc: Stop and remove the local database container
+    cmds:
+      - docker compose down db
 
-    db:down:
-        desc: Stop and remove the local database container
-        cmds:
-            - docker compose down db
+  db:migrate:
+    desc: Apply database migrations using Alembic
+    deps:
+      - task: db:up
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run alembic --config ./packages/db/alembic.ini upgrade head
 
-    db:migrate:
-        desc: Apply database migrations using Alembic
-        deps:
-            - task: db:up
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run alembic --config ./packages/db/alembic.ini upgrade head
+  db:proxy:start:
+    desc: Start Cloud SQL Proxy for remote database access
+    cmds:
+      - uv run python scripts/cloud_sql_proxy.py start
 
-    db:proxy:start:
-        desc: Start Cloud SQL Proxy for remote database access
-        cmds:
-            - uv run python scripts/cloud_sql_proxy.py start
+  db:proxy:stop:
+    desc: Stop Cloud SQL Proxy
+    cmds:
+      - uv run python scripts/cloud_sql_proxy.py stop
 
-    db:proxy:stop:
-        desc: Stop Cloud SQL Proxy
-        cmds:
-            - uv run python scripts/cloud_sql_proxy.py stop
+  db:proxy:status:
+    desc: Check Cloud SQL Proxy status
+    cmds:
+      - uv run python scripts/cloud_sql_proxy.py status
 
-    db:proxy:status:
-        desc: Check Cloud SQL Proxy status
-        cmds:
-            - uv run python scripts/cloud_sql_proxy.py status
+  db:proxy:restart:
+    desc: Restart Cloud SQL Proxy
+    cmds:
+      - uv run python scripts/cloud_sql_proxy.py restart
 
-    db:proxy:restart:
-        desc: Restart Cloud SQL Proxy
-        cmds:
-            - uv run python scripts/cloud_sql_proxy.py restart
+  db:migrate:remote:
+    desc: Apply database migrations to Cloud SQL (requires Cloud SQL Proxy running)
+    deps:
+      - task: db:proxy:start
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+      DB_CONNECTION_STRING:
+        sh: |
+          # Get the connection string and replace socket path with TCP connection
+          CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
+          if [ -n "$CONNECTION" ]; then
+            # Extract user and password from the connection string
+            # Format: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+            echo "$CONNECTION" | sed 's|@/|@127.0.0.1:5432/|' | sed 's|?host=/cloudsql/[^&]*||'
+          fi
+    cmds:
+      - |
+        if [ -z "$DB_CONNECTION_STRING" ]; then
+          echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets"
+          exit 1
+        fi
+      - 'echo "Running migrations on Cloud SQL..."'
+      - uv run alembic --config ./packages/db/alembic.ini upgrade head
 
-    db:migrate:remote:
-        desc: Apply database migrations to Cloud SQL (requires Cloud SQL Proxy running)
-        deps:
-            - task: db:proxy:start
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-            DB_CONNECTION_STRING:
-                sh: |
-                  # Get the connection string and replace socket path with TCP connection
-                  CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
-                  if [ -n "$CONNECTION" ]; then
-                    # Extract user and password from the connection string
-                    # Format: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
-                    echo "$CONNECTION" | sed 's|@/|@127.0.0.1:5432/|' | sed 's|?host=/cloudsql/[^&]*||'
-                  fi
-        cmds:
-            - |
-              if [ -z "$DB_CONNECTION_STRING" ]; then
-                echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets"
-                exit 1
-              fi
-            - 'echo "Running migrations on Cloud SQL..."'
-            - uv run alembic --config ./packages/db/alembic.ini upgrade head
-
-    db:create-migration:
-        desc: Generate a new database migration from schema changes
-        deps:
-            - task: db:up
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - task: _sleep
-              vars:
-                  SECONDS: "2"
-            - uv run alembic --config ./packages/db/alembic.ini revision --autogenerate -m "{{.CLI_ARGS}}"
-
-    db:seed:
-        desc: Populate database with initial seed data
-        deps:
-            - task: db:up
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - task: _sleep
-              vars:
-                  SECONDS: "2"
-            - uv run python scripts/seed_db.py
-
-    db:drop:
-        desc: "Drop and recreate the development database (WARNING: destroys all data)"
-        deps:
-            - task: db:up
+  db:create-migration:
+    desc: Generate a new database migration from schema changes
+    deps:
+      - task: db:up
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - task: _sleep
         vars:
-            DB_NAME: local
-            DB_USER: local
-        cmds:
-            - task: _sleep
-              vars:
-                  SECONDS: "2"
-            - echo "Dropping the development database..."
-            # Terminate existing connections
-            - cmd: |
-                  docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "
-                    SELECT pg_terminate_backend(pid)
-                    FROM pg_stat_activity
-                    WHERE datname = '{{.DB_NAME}}' AND pid <> pg_backend_pid();
-                  " || true
-              ignore_error: true
-            # Drop the database
-            - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "DROP DATABASE IF EXISTS {{.DB_NAME}};"
-            # Recreate the database
-            - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "CREATE DATABASE {{.DB_NAME}} OWNER {{.DB_USER}};"
-            # Create required extensions
-            - echo "Creating database extensions..."
-            - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
-            - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
-            - echo "✅ Database dropped and recreated successfully!"
+          SECONDS: "2"
+      - uv run alembic --config ./packages/db/alembic.ini revision --autogenerate -m "{{.CLI_ARGS}}"
 
-    db:reset:
-        desc: "Drop database and re-run migrations (WARNING: destroys all data)"
-        cmds:
-            - task: db:drop
-            - task: db:migrate
-            - echo "✅ Database reset complete!"
-
-    # ==============================================================================
-    # FRONTEND COMMANDS
-    # ==============================================================================
-
-    frontend:install:
-        desc: Install frontend dependencies using pnpm
-        cmds:
-            - pnpm install -r
-
-    frontend:update:
-        desc: Update frontend dependencies to latest versions
-        cmds:
-            - pnpm up -r --latest
-
-    frontend:dev:
-        desc: Start the frontend development server
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: [".env"]
-        cmds:
-            - pnpm dev
-
-    frontend:build:
-        desc: Build the frontend application for production
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm build
-
-    frontend:test:
-        desc: Run frontend tests (non-interactive mode)
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: [".env"]
-        cmds:
-            - pnpm test
-
-    frontend:test:watch:
-        desc: Run frontend tests (interactive mode)
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: [".env"]
-        cmds:
-            - pnpm test:watch
-
-    frontend:test:coverage:
-        desc: Run frontend tests with coverage reporting
-        dir: "{{.FRONTEND_DIR}}"
-        dotenv: [".env"]
-        cmds:
-            - pnpm test:coverage
-
-    frontend:storybook:
-        desc: Start the frontend Storybook server
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm run storybook
-
-    # ==============================================================================
-    # BACKEND COMMANDS
-    # ==============================================================================
-
-    backend:install:
-        desc: Install services dependencies using uv
-        cmds:
-            - uv sync --all-packages --all-extras --dev
-
-    backend:update:
-        desc: Update backend dependencies to latest versions
-        cmds:
-            - uv sync --upgrade --all-packages --all-extras
-            - uv run uv-bump --pyproject-toml ./pyproject.toml
-            - uv run uv-bump --pyproject-toml ./services/backend/pyproject.toml
-            - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
-            - uv run uv-bump --pyproject-toml ./services/crawler/pyproject.toml
-            - uv run uv-bump --pyproject-toml ./services/rag/pyproject.toml
-            - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
-            - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
-            - task: backend:install
-
-    backend:test:
-        desc: Run all backend tests (services and shared packages)
-        deps:
-            - task: service:backend:test
-            - task: service:indexer:test
-            - task: service:crawler:test
-            - task: service:rag:test
-            - task: _packages:test
-
-    # ==============================================================================
-    # SERVICE COMMANDS - Individual service management
-    # ==============================================================================
-
-    service:backend:dev:
-        desc: Start the backend API service in development mode with hot-reloading
-        deps:
-            - task: db:up
-        dotenv: ["services/backend/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run uvicorn services.backend.src.main:app --host 0.0.0.0 --port 8000 --log-level debug --reload --reload-dir services/backend/src
-
-    service:backend:test:
-        desc: Run backend service tests with detailed output
-        dotenv: ["services/backend/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/backend/tests -v
-
-    service:backend:test:e2e:
-        desc: Run backend service end-to-end tests
-        dotenv: ["services/backend/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/backend/tests -v
-
-    service:indexer:dev:
-        desc: Start the indexer service in development mode with hot-reloading
-        deps:
-            - task: db:up
-        dotenv: ["services/indexer/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run uvicorn services.indexer.src.main:app --host 0.0.0.0 --port 8001 --log-level debug --reload --reload-dir services/indexer/src
-
-    service:indexer:test:
-        desc: Run indexer service tests with detailed output
-        dotenv: ["services/indexer/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests -v
-
-    service:indexer:test:e2e:
-        desc: Run indexer service end-to-end tests
-        dotenv: ["services/indexer/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests -v
-
-    service:indexer:test:e2e:smoke:
-        desc: Run indexer e2e smoke tests (< 1 min)
-        dotenv: ["services/indexer/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests/e2e/ -m smoke -v
-
-    service:indexer:test:e2e:quality:
-        desc: Run indexer e2e quality assessment tests (2-5 min)
-        dotenv: ["services/indexer/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests/e2e/ -m quality_assessment -v
-
-    service:indexer:test:e2e:semantic:
-        desc: Run indexer e2e semantic evaluation tests
-        dotenv: ["services/indexer/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests/e2e/ -m semantic_evaluation -v
-
-    service:indexer:test:e2e:ai:
-        desc: Run indexer e2e AI-powered evaluation tests
-        dotenv: ["services/indexer/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests/e2e/ -m ai_eval -v
-
-    service:indexer:test:e2e:full:
-        desc: Run complete indexer e2e test suite (10+ min)
-        dotenv: ["services/indexer/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/indexer/tests/e2e/ -m e2e_full -v
-
-    service:crawler:dev:
-        desc: Start the crawler service in development mode with hot-reloading
-        deps:
-            - task: db:up
-        dotenv: ["services/crawler/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run uvicorn services.crawler.src.main:app --host 0.0.0.0 --port 8002 --log-level debug --reload --reload-dir services/crawler/src
-
-    service:crawler:test:
-        desc: Run crawler service tests with detailed output
-        dotenv: ["services/crawler/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/crawler/tests -v
-
-    service:crawler:test:e2e:
-        desc: Run crawler service end-to-end tests
-        dotenv: ["services/crawler/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/crawler/tests -v
-
-    service:rag:dev:
-        desc: Start the RAG service in development mode with hot-reloading
-        deps:
-            - task: db:up
-        dotenv: ["services/rag/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run uvicorn services.rag.src.main:app --host 0.0.0.0 --port 8003 --log-level debug --reload --reload-dir services/rag/src
-
-    service:rag:test:
-        desc: Run RAG service tests with detailed output (parallel execution)
-        dotenv: ["services/rag/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests -v
-
-    service:rag:test:serial:
-        desc: Run RAG service tests in serial mode (no parallelization)
-        dotenv: ["services/rag/.env"]
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests -v -n0
-
-    service:rag:test:e2e:
-        desc: Run RAG service end-to-end tests
-        dotenv: ["services/rag/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests -v
-
-    service:rag:test:e2e:smoke:
-        desc: Run RAG e2e smoke tests (< 1 min)
-        dotenv: ["services/rag/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests/e2e/ -m smoke -v
-
-    service:rag:test:e2e:quality:
-        desc: Run RAG e2e quality assessment tests (2-5 min)
-        dotenv: ["services/rag/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests/e2e/ -m quality_assessment -v
-
-    service:rag:test:e2e:semantic:
-        desc: Run RAG e2e semantic evaluation tests (5-10 min)
-        dotenv: ["services/rag/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests/e2e/ -m semantic_evaluation -v
-
-    service:rag:test:e2e:ai:
-        desc: Run RAG e2e AI evaluation tests (requires ANTHROPIC_API_KEY)
-        dotenv: ["services/rag/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests/e2e/ -m ai_eval -v
-
-    service:rag:test:e2e:full:
-        desc: Run complete RAG e2e test suite (10+ min)
-        dotenv: ["services/rag/.env"]
-        env:
-            E2E_TESTS: "1"
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
-
-    # ==============================================================================
-    # EMULATOR COMMANDS - Standalone emulator management
-    # ==============================================================================
-
-    emulator:pubsub:up:
-        desc: Start the Google Cloud Pub/Sub emulator for local development
-        cmds:
-            - gcloud beta emulators pubsub start --project=grantflow
-
-    emulator:gcs:up:
-        desc: Start the Google Cloud Storage emulator for local development
-        cmds:
-            - docker compose --profile gcs up
-
-    # ==============================================================================
-    # LINTING COMMANDS - Code quality and formatting
-    # ==============================================================================
-
-    lint:all:
-        desc: Run all linters and formatters on all files
-        deps:
-            - task: lint:frontend
-            - task: lint:python
-            - task: lint:codespell
-
-    lint:frontend:
-        desc: Run all frontend linters (Biome, ESLint, and TypeScript)
-        deps:
-            - task: lint:biome
-            - task: lint:eslint
-            - task: lint:typescript
-
-    lint:python:
-        desc: Run all Python linters (Ruff and MyPy)
-        deps:
-            - task: lint:ruff
-            - task: lint:mypy
-
-    lint:biome:
-        desc: Format and lint code with Biome
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm biome check --write .
-            - pnpm biome format --write .
-
-    lint:eslint:
-        desc: Lint JavaScript/TypeScript with ESLint
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
-
-    lint:ruff:
-        desc: Lint and format Python code with Ruff
-        cmds:
-            - uv run ruff check --fix --unsafe-fixes .
-            - uv run ruff format .
-
-    lint:mypy:
-        desc: Type check Python code with MyPy
-        cmds:
-            - uv run mypy .
-
-    lint:codespell:
-        desc: Check for common misspellings
-        cmds:
-            - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js"
-
-    lint:typescript:
-        desc: Type check TypeScript code
-        dir: "{{.FRONTEND_DIR}}"
-        cmds:
-            - pnpm typecheck
-
-    # Terraform linting tasks (specialized - not included in lint:all)
-    lint:terraform:
-        desc: Run all Terraform linters (tofu validate, tflint, trivy)
-        deps:
-            - task: lint:terraform:validate
-            - task: lint:terraform:tflint
-            - task: lint:terraform:trivy
-
-    lint:terraform:validate:
-        desc: Validate Terraform configuration using tofu validate
-        preconditions:
-            - sh: command -v tofu
-              msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
-        cmds:
-            - echo "Validating terraform configuration..."
-            - tofu -chdir=terraform init -backend=false
-            - tofu -chdir=terraform validate
-
-    lint:terraform:fmt:
-        desc: Format Terraform code using tofu fmt
-        preconditions:
-            - sh: command -v tofu
-              msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
-        cmds:
-            - echo "Formatting terraform code..."
-            - tofu fmt -recursive ./terraform
-
-    lint:terraform:tflint:
-        desc: Lint Terraform code with tflint
-        preconditions:
-            - sh: command -v tflint
-              msg: "tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
-        cmds:
-            - echo "Running tflint on terraform directory..."
-            - tflint --chdir=terraform
-
-    lint:terraform:trivy:
-        desc: Security scan Terraform code with trivy
-        preconditions:
-            - sh: command -v trivy
-              msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
-        cmds:
-            - echo "Running trivy on terraform directory..."
-            - trivy config ./terraform
-
-    # ==============================================================================
-    # INTERNAL TASKS - Not intended for direct use
-    # ==============================================================================
-
-    _dev:check:
-        internal: true
-        deps:
-            - task: _dev:check-tools
-            - task: _dev:check-env
-        cmds:
-            - echo "✅ Development environment is ready"
-
-    _dev:check-tools:
-        internal: true
-        preconditions:
-            - sh: command -v docker
-              msg: "Docker is required. Please install from https://docs.docker.com/get-docker/"
-            - sh: command -v docker-compose || command -v docker compose
-              msg: "Docker Compose is required. Please install Docker Desktop"
-            - sh: command -v uv
-              msg: "uv is required. Please install from https://github.com/astral-sh/uv"
-            - sh: command -v pnpm
-              msg: "pnpm is required. Please install from https://pnpm.io/installation"
-            - sh: command -v gcloud
-              msg: "gcloud CLI is required. Please install from https://cloud.google.com/sdk/docs/install"
-        silent: true
-
-    _dev:check-env:
-        internal: true
-        preconditions:
-            - sh: test -f frontend/.env
-              msg: |
-                  Missing frontend/.env file.
-                  Copy from example: cp frontend/.env.example frontend/.env
-            - sh: test -f services/backend/.env
-              msg: |
-                  Missing services/backend/.env file.
-                  Copy from example: cp services/backend/.env.example services/backend/.env
-            - sh: test -f services/indexer/.env
-              msg: |
-                  Missing services/indexer/.env file.
-                  Copy from example: cp services/indexer/.env.example services/indexer/.env
-            - sh: test -f services/crawler/.env
-              msg: |
-                  Missing services/crawler/.env file.
-                  Copy from example: cp services/crawler/.env.example services/crawler/.env
-            - sh: test -f services/rag/.env
-              msg: |
-                  Missing services/rag/.env file.
-                  Copy from example: cp services/rag/.env.example services/rag/.env
-        silent: true
-
-    _dev:init-pubsub:
-        internal: true
-        env:
-            PUBSUB_EMULATOR_HOST: localhost:8085
-            PUBSUB_PROJECT_ID: grantflow
-        cmds:
-            - docker compose --profile services up -d pubsub-emulator
-            - task: _dev:wait-for-service
-              vars:
-                  SERVICE_NAME: "Pub/Sub emulator"
-                  SERVICE_URL: "http://localhost:8085"
-                  MAX_RETRIES: "30"
-            - uv run python scripts/init-pubsub-emulator.py
-            - echo "✅ Pub/Sub emulator initialized"
-
-    _dev:init-gcs:
-        internal: true
-        env:
-            STORAGE_EMULATOR_HOST: http://localhost:4443
-        cmds:
-            - docker compose --profile services up -d gcs-emulator
-            - task: _dev:wait-for-service
-              vars:
-                  SERVICE_NAME: "GCS emulator"
-                  SERVICE_URL: "http://localhost:4443/storage/v1/b"
-                  MAX_RETRIES: "30"
-            - uv run python scripts/init-gcs-emulator.py
-            - echo "✅ GCS emulator initialized"
-
-    _dev:wait-for-service:
-        internal: true
+  db:seed:
+    desc: Populate database with initial seed data
+    deps:
+      - task: db:up
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - task: _sleep
         vars:
-            SERVICE_NAME: "{{.SERVICE_NAME}}"
-            SERVICE_URL: "{{.SERVICE_URL}}"
-            MAX_RETRIES: '{{.MAX_RETRIES | default "30"}}'
-        cmds:
-            - cmd: |
-                  echo "Waiting for {{.SERVICE_NAME}} to be ready..."
-                  for i in $(seq 1 {{.MAX_RETRIES}}); do
-                    if curl -sf {{.SERVICE_URL}} >/dev/null 2>&1; then
-                      echo "✅ {{.SERVICE_NAME}} is ready"
-                      exit 0
-                    fi
-                    printf "."
-                    sleep 1
-                  done
-                  echo ""
-                  echo "❌ {{.SERVICE_NAME}} failed to start after {{.MAX_RETRIES}} seconds"
-                  exit 1
-              platforms: [darwin, linux]
-            - cmd: |
-                  echo "Waiting for {{.SERVICE_NAME}} to be ready..."
-                  powershell -Command "
-                    for ($i = 1; $i -le {{.MAX_RETRIES}}; $i++) {
-                      try {
-                        Invoke-WebRequest -Uri '{{.SERVICE_URL}}' -UseBasicParsing -ErrorAction Stop | Out-Null
-                        Write-Host '✅ {{.SERVICE_NAME}} is ready'
-                        exit 0
-                      } catch {
-                        Write-Host -NoNewline '.'
-                        Start-Sleep -Seconds 1
-                      }
-                    }
-                    Write-Host ''
-                    Write-Host '❌ {{.SERVICE_NAME}} failed to start after {{.MAX_RETRIES}} seconds'
-                    exit 1
-                  "
-              platforms: [windows]
+          SECONDS: "2"
+      - uv run python scripts/seed_db.py
 
-    _dev:services:
-        internal: true
-        deps:
-            - task: service:backend:dev
-            - task: service:indexer:dev
-            - task: service:crawler:dev
-            - task: service:rag:dev
-            - task: frontend:dev
-
-    _packages:test:
-        internal: true
-        cmds:
-            - task: _package:db:test
-            - task: _package:shared-utils:test
-
-    _package:db:test:
-        internal: true
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest packages/db/tests -v
-
-    _package:shared-utils:test:
-        internal: true
-        env:
-            PYTHONPATH: "{{.PYTHON_PATH}}"
-        cmds:
-            - uv run pytest packages/shared_utils/tests -v
-
-    _sleep:
-        internal: true
+  db:drop:
+    desc: "Drop and recreate the development database (WARNING: destroys all data)"
+    deps:
+      - task: db:up
+    vars:
+      DB_NAME: local
+      DB_USER: local
+    cmds:
+      - task: _sleep
         vars:
-            SECONDS: '{{.SECONDS | default "2"}}'
-        cmds:
-            - cmd: sleep {{.SECONDS}}
-              platforms: [darwin, linux]
-            - cmd: timeout /t {{.SECONDS}} /nobreak > nul
-              platforms: [windows]
+          SECONDS: "2"
+      - echo "Dropping the development database..."
+      # Terminate existing connections
+      - cmd: |
+          docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{{.DB_NAME}}' AND pid <> pg_backend_pid();
+          " || true
+        ignore_error: true
+      # Drop the database
+      - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "DROP DATABASE IF EXISTS {{.DB_NAME}};"
+      # Recreate the database
+      - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "CREATE DATABASE {{.DB_NAME}} OWNER {{.DB_USER}};"
+      # Create required extensions
+      - echo "Creating database extensions..."
+      - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+      - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
+      - echo "✅ Database dropped and recreated successfully!"
+
+  db:reset:
+    desc: "Drop database and re-run migrations (WARNING: destroys all data)"
+    cmds:
+      - task: db:drop
+      - task: db:migrate
+      - echo "✅ Database reset complete!"
+
+  # ==============================================================================
+  # FRONTEND COMMANDS
+  # ==============================================================================
+
+  frontend:install:
+    desc: Install frontend dependencies using pnpm
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm install
+
+  frontend:update:
+    desc: Update frontend dependencies to latest versions
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm up --latest
+
+  frontend:dev:
+    desc: Start the frontend development server
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm dev
+
+  frontend:build:
+    desc: Build the frontend application for production
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm build
+
+  frontend:test:
+    desc: Run frontend tests (non-interactive mode)
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm test
+
+  frontend:test:watch:
+    desc: Run frontend tests (interactive mode)
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm test:watch
+
+  frontend:test:coverage:
+    desc: Run frontend tests with coverage reporting
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm test:coverage
+
+  frontend:storybook:
+    desc: Start the frontend Storybook server
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm run storybook
+
+  # ==============================================================================
+  # BACKEND COMMANDS
+  # ==============================================================================
+
+  backend:install:
+    desc: Install services dependencies using uv
+    cmds:
+      - uv sync --all-packages --all-extras --dev
+
+  backend:update:
+    desc: Update backend dependencies to latest versions
+    cmds:
+      - uv sync --upgrade --all-packages --all-extras
+      - uv run uv-bump --pyproject-toml ./pyproject.toml
+      - uv run uv-bump --pyproject-toml ./services/backend/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./services/crawler/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./services/rag/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
+      - task: backend:install
+
+  backend:test:
+    desc: Run all backend tests (services and shared packages)
+    deps:
+      - task: service:backend:test
+      - task: service:indexer:test
+      - task: service:crawler:test
+      - task: service:rag:test
+      - task: _packages:test
+
+  # ==============================================================================
+  # SERVICE COMMANDS - Individual service management
+  # ==============================================================================
+
+  service:backend:dev:
+    desc: Start the backend API service in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dotenv: ["services/backend/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run uvicorn services.backend.src.main:app --host 0.0.0.0 --port 8000 --log-level debug --reload --reload-dir services/backend/src
+
+  service:backend:test:
+    desc: Run backend service tests with detailed output
+    dotenv: ["services/backend/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/backend/tests -v
+
+  service:backend:test:e2e:
+    desc: Run backend service end-to-end tests
+    dotenv: ["services/backend/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/backend/tests -v
+
+  service:indexer:dev:
+    desc: Start the indexer service in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dotenv: ["services/indexer/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run uvicorn services.indexer.src.main:app --host 0.0.0.0 --port 8001 --log-level debug --reload --reload-dir services/indexer/src
+
+  service:indexer:test:
+    desc: Run indexer service tests with detailed output
+    dotenv: ["services/indexer/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests -v
+
+  service:indexer:test:e2e:
+    desc: Run indexer service end-to-end tests
+    dotenv: ["services/indexer/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests -v
+
+  service:indexer:test:e2e:smoke:
+    desc: Run indexer e2e smoke tests (< 1 min)
+    dotenv: ["services/indexer/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests/e2e/ -m smoke -v
+
+  service:indexer:test:e2e:quality:
+    desc: Run indexer e2e quality assessment tests (2-5 min)
+    dotenv: ["services/indexer/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests/e2e/ -m quality_assessment -v
+
+  service:indexer:test:e2e:semantic:
+    desc: Run indexer e2e semantic evaluation tests
+    dotenv: ["services/indexer/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests/e2e/ -m semantic_evaluation -v
+
+  service:indexer:test:e2e:ai:
+    desc: Run indexer e2e AI-powered evaluation tests
+    dotenv: ["services/indexer/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests/e2e/ -m ai_eval -v
+
+  service:indexer:test:e2e:full:
+    desc: Run complete indexer e2e test suite (10+ min)
+    dotenv: ["services/indexer/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/indexer/tests/e2e/ -m e2e_full -v
+
+  service:crawler:dev:
+    desc: Start the crawler service in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dotenv: ["services/crawler/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run uvicorn services.crawler.src.main:app --host 0.0.0.0 --port 8002 --log-level debug --reload --reload-dir services/crawler/src
+
+  service:crawler:test:
+    desc: Run crawler service tests with detailed output
+    dotenv: ["services/crawler/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/crawler/tests -v
+
+  service:crawler:test:e2e:
+    desc: Run crawler service end-to-end tests
+    dotenv: ["services/crawler/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/crawler/tests -v
+
+  service:rag:dev:
+    desc: Start the RAG service in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dotenv: ["services/rag/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run uvicorn services.rag.src.main:app --host 0.0.0.0 --port 8003 --log-level debug --reload --reload-dir services/rag/src
+
+  service:rag:test:
+    desc: Run RAG service tests with detailed output (parallel execution)
+    dotenv: ["services/rag/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests -v
+
+  service:rag:test:serial:
+    desc: Run RAG service tests in serial mode (no parallelization)
+    dotenv: ["services/rag/.env"]
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests -v -n0
+
+  service:rag:test:e2e:
+    desc: Run RAG service end-to-end tests
+    dotenv: ["services/rag/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests -v
+
+  service:rag:test:e2e:smoke:
+    desc: Run RAG e2e smoke tests (< 1 min)
+    dotenv: ["services/rag/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests/e2e/ -m smoke -v
+
+  service:rag:test:e2e:quality:
+    desc: Run RAG e2e quality assessment tests (2-5 min)
+    dotenv: ["services/rag/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests/e2e/ -m quality_assessment -v
+
+  service:rag:test:e2e:semantic:
+    desc: Run RAG e2e semantic evaluation tests (5-10 min)
+    dotenv: ["services/rag/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests/e2e/ -m semantic_evaluation -v
+
+  service:rag:test:e2e:ai:
+    desc: Run RAG e2e AI evaluation tests (requires ANTHROPIC_API_KEY)
+    dotenv: ["services/rag/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests/e2e/ -m ai_eval -v
+
+  service:rag:test:e2e:full:
+    desc: Run complete RAG e2e test suite (10+ min)
+    dotenv: ["services/rag/.env"]
+    env:
+      E2E_TESTS: "1"
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
+
+  # ==============================================================================
+  # EMULATOR COMMANDS - Standalone emulator management
+  # ==============================================================================
+
+  emulator:pubsub:up:
+    desc: Start the Google Cloud Pub/Sub emulator for local development
+    cmds:
+      - gcloud beta emulators pubsub start --project=grantflow
+
+  emulator:gcs:up:
+    desc: Start the Google Cloud Storage emulator for local development
+    cmds:
+      - docker compose --profile gcs up
+
+  # ==============================================================================
+  # LINTING COMMANDS - Code quality and formatting
+  # ==============================================================================
+
+  lint:all:
+    desc: Run all linters and formatters on all files
+    deps:
+      - task: lint:frontend
+      - task: lint:python
+      - task: lint:codespell
+
+  lint:frontend:
+    desc: Run all frontend linters (Biome, ESLint, and TypeScript)
+    deps:
+      - task: lint:biome
+      - task: lint:eslint
+      - task: lint:typescript
+
+  lint:python:
+    desc: Run all Python linters (Ruff and MyPy)
+    deps:
+      - task: lint:ruff
+      - task: lint:mypy
+
+  lint:biome:
+    desc: Format and lint code with Biome
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm biome check --write .
+      - pnpm biome format --write .
+
+  lint:eslint:
+    desc: Lint JavaScript/TypeScript with ESLint
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
+
+  lint:ruff:
+    desc: Lint and format Python code with Ruff
+    cmds:
+      - uv run ruff check --fix --unsafe-fixes .
+      - uv run ruff format .
+
+  lint:mypy:
+    desc: Type check Python code with MyPy
+    cmds:
+      - uv run mypy .
+
+  lint:codespell:
+    desc: Check for common misspellings
+    cmds:
+      - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js"
+
+  lint:typescript:
+    desc: Type check TypeScript code
+    dir: "{{.FRONTEND_DIR}}"
+    cmds:
+      - pnpm typecheck
+
+  # Terraform linting tasks (specialized - not included in lint:all)
+  lint:terraform:
+    desc: Run all Terraform linters (tofu validate, tflint, trivy)
+    deps:
+      - task: lint:terraform:validate
+      - task: lint:terraform:tflint
+      - task: lint:terraform:trivy
+
+  lint:terraform:validate:
+    desc: Validate Terraform configuration using tofu validate
+    preconditions:
+      - sh: command -v tofu
+        msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+    cmds:
+      - echo "Validating terraform configuration..."
+      - tofu -chdir=terraform init -backend=false
+      - tofu -chdir=terraform validate
+
+  lint:terraform:fmt:
+    desc: Format Terraform code using tofu fmt
+    preconditions:
+      - sh: command -v tofu
+        msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+    cmds:
+      - echo "Formatting terraform code..."
+      - tofu fmt -recursive ./terraform
+
+  lint:terraform:tflint:
+    desc: Lint Terraform code with tflint
+    preconditions:
+      - sh: command -v tflint
+        msg: "tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
+    cmds:
+      - echo "Running tflint on terraform directory..."
+      - tflint --chdir=terraform
+
+  lint:terraform:trivy:
+    desc: Security scan Terraform code with trivy
+    preconditions:
+      - sh: command -v trivy
+        msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
+    cmds:
+      - echo "Running trivy on terraform directory..."
+      - trivy config ./terraform
+
+  # ==============================================================================
+  # INTERNAL TASKS - Not intended for direct use
+  # ==============================================================================
+
+  _dev:check:
+    internal: true
+    deps:
+      - task: _dev:check-tools
+      - task: _dev:check-env
+    cmds:
+      - echo "✅ Development environment is ready"
+
+  _dev:check-tools:
+    internal: true
+    preconditions:
+      - sh: command -v docker
+        msg: "Docker is required. Please install from https://docs.docker.com/get-docker/"
+      - sh: command -v docker-compose || command -v docker compose
+        msg: "Docker Compose is required. Please install Docker Desktop"
+      - sh: command -v uv
+        msg: "uv is required. Please install from https://github.com/astral-sh/uv"
+      - sh: command -v pnpm
+        msg: "pnpm is required. Please install from https://pnpm.io/installation"
+      - sh: command -v gcloud
+        msg: "gcloud CLI is required. Please install from https://cloud.google.com/sdk/docs/install"
+    silent: true
+
+  _dev:check-env:
+    internal: true
+    preconditions:
+      - sh: test -f frontend/.env
+        msg: |
+          Missing frontend/.env file.
+          Copy from example: cp frontend/.env.example frontend/.env
+      - sh: test -f services/backend/.env
+        msg: |
+          Missing services/backend/.env file.
+          Copy from example: cp services/backend/.env.example services/backend/.env
+      - sh: test -f services/indexer/.env
+        msg: |
+          Missing services/indexer/.env file.
+          Copy from example: cp services/indexer/.env.example services/indexer/.env
+      - sh: test -f services/crawler/.env
+        msg: |
+          Missing services/crawler/.env file.
+          Copy from example: cp services/crawler/.env.example services/crawler/.env
+      - sh: test -f services/rag/.env
+        msg: |
+          Missing services/rag/.env file.
+          Copy from example: cp services/rag/.env.example services/rag/.env
+    silent: true
+
+  _dev:init-pubsub:
+    internal: true
+    env:
+      PUBSUB_EMULATOR_HOST: localhost:8085
+      PUBSUB_PROJECT_ID: grantflow
+    cmds:
+      - docker compose --profile services up -d pubsub-emulator
+      - task: _dev:wait-for-service
+        vars:
+          SERVICE_NAME: "Pub/Sub emulator"
+          SERVICE_URL: "http://localhost:8085"
+          MAX_RETRIES: "30"
+      - uv run python scripts/init-pubsub-emulator.py
+      - echo "✅ Pub/Sub emulator initialized"
+
+  _dev:init-gcs:
+    internal: true
+    env:
+      STORAGE_EMULATOR_HOST: http://localhost:4443
+    cmds:
+      - docker compose --profile services up -d gcs-emulator
+      - task: _dev:wait-for-service
+        vars:
+          SERVICE_NAME: "GCS emulator"
+          SERVICE_URL: "http://localhost:4443/storage/v1/b"
+          MAX_RETRIES: "30"
+      - uv run python scripts/init-gcs-emulator.py
+      - echo "✅ GCS emulator initialized"
+
+  _dev:wait-for-service:
+    internal: true
+    vars:
+      SERVICE_NAME: "{{.SERVICE_NAME}}"
+      SERVICE_URL: "{{.SERVICE_URL}}"
+      MAX_RETRIES: '{{.MAX_RETRIES | default "30"}}'
+    cmds:
+      - cmd: |
+          echo "Waiting for {{.SERVICE_NAME}} to be ready..."
+          for i in $(seq 1 {{.MAX_RETRIES}}); do
+            if curl -sf {{.SERVICE_URL}} >/dev/null 2>&1; then
+              echo "✅ {{.SERVICE_NAME}} is ready"
+              exit 0
+            fi
+            printf "."
+            sleep 1
+          done
+          echo ""
+          echo "❌ {{.SERVICE_NAME}} failed to start after {{.MAX_RETRIES}} seconds"
+          exit 1
+        platforms: [darwin, linux]
+      - cmd: |
+          echo "Waiting for {{.SERVICE_NAME}} to be ready..."
+          powershell -Command "
+            for ($i = 1; $i -le {{.MAX_RETRIES}}; $i++) {
+              try {
+                Invoke-WebRequest -Uri '{{.SERVICE_URL}}' -UseBasicParsing -ErrorAction Stop | Out-Null
+                Write-Host '✅ {{.SERVICE_NAME}} is ready'
+                exit 0
+              } catch {
+                Write-Host -NoNewline '.'
+                Start-Sleep -Seconds 1
+              }
+            }
+            Write-Host ''
+            Write-Host '❌ {{.SERVICE_NAME}} failed to start after {{.MAX_RETRIES}} seconds'
+            exit 1
+          "
+        platforms: [windows]
+
+  _dev:services:
+    internal: true
+    deps:
+      - task: service:backend:dev
+      - task: service:indexer:dev
+      - task: service:crawler:dev
+      - task: service:rag:dev
+      - task: frontend:dev
+
+  _packages:test:
+    internal: true
+    cmds:
+      - task: _package:db:test
+      - task: _package:shared-utils:test
+
+  _package:db:test:
+    internal: true
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest packages/db/tests -v
+
+  _package:shared-utils:test:
+    internal: true
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run pytest packages/shared_utils/tests -v
+
+  _sleep:
+    internal: true
+    vars:
+      SECONDS: '{{.SECONDS | default "2"}}'
+    cmds:
+      - cmd: sleep {{.SECONDS}}
+        platforms: [darwin, linux]
+      - cmd: timeout /t {{.SECONDS}} /nobreak > nul
+        platforms: [windows]

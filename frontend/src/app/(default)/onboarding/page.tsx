@@ -4,7 +4,8 @@ import { sendSignInLinkToEmail, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { login } from "@/actions/login";
@@ -22,17 +23,29 @@ import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 import { SigninForm } from "@/components/onboarding/signin-form";
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { initializeMockAuth, isMockAuthEnabled } from "@/dev-tools/mock-auth";
 import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { getFirebaseAuth } from "@/utils/firebase";
+import { log } from "@/utils/logger";
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
+	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
+
+	// Mock auth bypass - auto-redirect when mock auth is enabled
+	useEffect(() => {
+		if (isMockAuthEnabled()) {
+			log.info("Mock auth enabled - bypassing onboarding page", { page: "onboarding" });
+			initializeMockAuth();
+			router.push(PagePath.PROJECTS);
+		}
+	}, [router]);
 
 	const handleSocialSignUp = async (
 		provider: "google" | "orcid",
