@@ -11,6 +11,7 @@ on:
     push:
         branches:
             - main
+            - development
         paths:
             - "packages/db/**"
             - ".github/workflows/ci-package-db.yaml"

@@ -12,6 +12,7 @@ on:
     push:
         branches:
             - main
+            - development
         paths:
             - ".github/workflows/ci-service-crawler.yaml"
             - "packages/**"
