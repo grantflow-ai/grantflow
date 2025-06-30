@@ -153,20 +153,16 @@ pre-commit:
         tofu-validate:
             glob: "terraform/**/*.tf"
             run: |
-                case "{staged_files}" in
-                  *\.tf*)
+                if echo "{staged_files}" | grep -q "\.tf"; then
                     cd terraform && tofu init -backend=false && tofu validate
-                    ;;
-                esac
+                fi
 
         tflint:
             glob: "terraform/**/*.tf"
             run: |
-                case "{staged_files}" in
-                  *\.tf*)
+                if echo "{staged_files}" | grep -q "\.tf"; then
                     tflint --chdir=terraform
-                    ;;
-                esac
+                fi
 
 commit-msg:
     commands:
