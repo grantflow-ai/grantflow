@@ -36,6 +36,7 @@ module "cloud_run" {
   source                   = "./modules/cloud_run"
   project_id               = var.project_id
   region                   = var.region
+  environment              = var.environment
   database_connection_name = module.database.instance_connection_name
 }
 
@@ -74,6 +75,6 @@ module "database" {
   zone       = var.database_zone
   network_id = module.network.network_id
 
-  
+
   authorized_networks = var.database_authorized_networks
 }

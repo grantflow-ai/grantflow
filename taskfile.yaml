@@ -116,6 +116,50 @@ tasks:
         cmds:
             - uv run alembic --config ./packages/db/alembic.ini upgrade head
 
+    db:proxy:start:
+        desc: Start Cloud SQL Proxy for remote database access
+        cmds:
+            - uv run python scripts/cloud_sql_proxy.py start
+
+    db:proxy:stop:
+        desc: Stop Cloud SQL Proxy
+        cmds:
+            - uv run python scripts/cloud_sql_proxy.py stop
+
+    db:proxy:status:
+        desc: Check Cloud SQL Proxy status
+        cmds:
+            - uv run python scripts/cloud_sql_proxy.py status
+
+    db:proxy:restart:
+        desc: Restart Cloud SQL Proxy
+        cmds:
+            - uv run python scripts/cloud_sql_proxy.py restart
+
+    db:migrate:remote:
+        desc: Apply database migrations to Cloud SQL (requires Cloud SQL Proxy running)
+        deps:
+            - task: db:proxy:start
+        env:
+            PYTHONPATH: "{{.PYTHON_PATH}}"
+            DB_CONNECTION_STRING:
+                sh: |
+                  # Get the connection string and replace socket path with TCP connection
+                  CONNECTION=$(gcloud secrets versions access latest --secret="DATABASE_CONNECTION_STRING" 2>/dev/null || echo "")
+                  if [ -n "$CONNECTION" ]; then
+                    # Extract user and password from the connection string
+                    # Format: postgresql+asyncpg://user:pass@/database?host=/cloudsql/...
+                    echo "$CONNECTION" | sed 's|@/|@127.0.0.1:5432/|' | sed 's|?host=/cloudsql/[^&]*||'
+                  fi
+        cmds:
+            - |
+              if [ -z "$DB_CONNECTION_STRING" ]; then
+                echo "Error: Could not fetch DATABASE_CONNECTION_STRING from secrets"
+                exit 1
+              fi
+            - 'echo "Running migrations on Cloud SQL..."'
+            - uv run alembic --config ./packages/db/alembic.ini upgrade head
+
     db:create-migration:
         desc: Generate a new database migration from schema changes
         deps:
