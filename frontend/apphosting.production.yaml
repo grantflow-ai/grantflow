@@ -1,10 +1,8 @@
-# Base configuration - serves as fallback
-# Environment-specific configs in apphosting.staging.yaml and apphosting.production.yaml
 runConfig:
-    minInstances: 0
-    maxInstances: 10
-    cpu: 2
-    memoryMiB: 1024
+    minInstances: 1
+    maxInstances: 100
+    cpu: 4
+    memoryMiB: 2048
     concurrency: 100
 
 env:
@@ -32,7 +30,8 @@ env:
       secret: NEXT_PUBLIC_MAILGUN_API_KEY
     - variable: NEXT_PUBLIC_SEGMENT_WRITE_KEY
       secret: NEXT_PUBLIC_SEGMENT_WRITE_KEY
+    # Disable mock features for production
     - variable: NEXT_PUBLIC_MOCK_API
-      secret: NEXT_PUBLIC_MOCK_API
+      value: "false"
     - variable: NEXT_PUBLIC_MOCK_AUTH
-      secret: NEXT_PUBLIC_MOCK_AUTH
+      value: "false"
