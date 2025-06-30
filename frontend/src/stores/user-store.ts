@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-interface UserInfo {
+export interface UserInfo {
 	displayName: null | string;
 	email: null | string;
 	emailVerified: boolean;
