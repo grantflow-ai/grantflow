@@ -2,6 +2,7 @@ import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 
 interface MockAPIConfig {
+	currentScenario?: string;
 	delay?: number;
 	errorRate?: number;
 }
@@ -14,7 +15,8 @@ type MockHandler<T = unknown> = (options: {
 
 class MockAPIClient {
 	private config: MockAPIConfig = {
-		delay: 300,
+		currentScenario: "minimal",
+		delay: 3000,
 		errorRate: 0,
 	};
 	private handlers = new Map<string, MockHandler>();
@@ -23,6 +25,10 @@ class MockAPIClient {
 		if (!getEnv().NEXT_PUBLIC_MOCK_API) {
 			throw new Error("Mock API client initialized when NEXT_PUBLIC_MOCK_API is false");
 		}
+	}
+
+	getCurrentScenarioName(): string {
+		return this.config.currentScenario ?? "minimal";
 	}
 
 	async intercept<T>(path: string, options?: { body?: string; method?: string }): Promise<T> {
@@ -103,6 +109,11 @@ class MockAPIClient {
 
 	setErrorRate(rate: number): void {
 		this.config.errorRate = Math.max(0, Math.min(100, rate));
+	}
+
+	setScenario(scenarioName: string): void {
+		log.info("[MockAPIClient] Setting scenario", { scenarioName });
+		this.config.currentScenario = scenarioName;
 	}
 
 	private extractPathParams(path: string, method: string): Record<string, string> {
