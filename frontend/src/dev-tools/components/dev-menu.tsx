@@ -1,11 +1,17 @@
 "use client";
 
 import { Bug, Settings, Shuffle, Wifi, WifiOff, X } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { isMockAPIEnabled } from "@/dev-tools/mock-api/client";
+import { getMockAPIClient, isMockAPIEnabled } from "@/dev-tools/mock-api/client";
 import { getScenario, scenarios } from "@/dev-tools/mock-api/scenarios";
+import { useApplicationStore } from "@/stores/application-store";
+import { useNotificationStore } from "@/stores/notification-store";
+import { useProjectStore } from "@/stores/project-store";
+import { useUserStore } from "@/stores/user-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import { getEnv } from "@/utils/env";
+import { log } from "@/utils/logger";
 import { RouteSpecificTools } from "./route-tools/route-specific-tools";
 import { StoreInspector } from "./store-inspector";
 
@@ -18,6 +24,7 @@ export function DevMenu() {
 	const [errorRate, setErrorRate] = useState(0);
 	const [wsConnected, setWsConnected] = useState(false);
 	const pathname = usePathname();
+	const router = useRouter();
 
 	// Keyboard shortcut to toggle menu
 	useEffect(() => {
@@ -34,13 +41,36 @@ export function DevMenu() {
 		};
 	}, [isOpen]);
 
+	const clearAllStores = () => {
+		useApplicationStore.setState({ application: null });
+		useNotificationStore.getState().clearAllNotifications();
+		useProjectStore.setState({ projects: [] });
+		useWizardStore.getState().reset();
+	};
+
 	const loadScenario = (scenarioName: string) => {
 		const scenario = getScenario(scenarioName);
-		if (scenario) {
-			console.log(`[Dev Menu] Loading scenario: ${scenarioName}`, scenario);
-			setSelectedScenario(scenarioName);
-			// In a real implementation, this would update the mock API client's data
+		if (!scenario) {
+			log.error("Scenario not found", { scenarioName });
+			return;
 		}
+
+		log.info("Loading scenario", { scenarioName });
+
+		if (isMockAPIEnabled()) {
+			getMockAPIClient().setScenario(scenarioName);
+		}
+
+		clearAllStores();
+		setSelectedScenario(scenarioName);
+
+		log.info("Clearing user session and redirecting to /projects");
+		useUserStore.setState({ user: null });
+
+		setIsOpen(false);
+		router.push("/projects");
+
+		log.info("Scenario loaded successfully", { scenarioName });
 	};
 
 	// Hide in production

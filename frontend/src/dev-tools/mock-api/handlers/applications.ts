@@ -6,7 +6,10 @@ import {
 	RagSourceUrlFactory,
 	ResearchObjectiveFactory,
 } from "::testing/factories";
+import { getScenario } from "@/dev-tools";
 import type { API } from "@/types/api-types";
+import { log } from "@/utils/logger";
+import { getMockAPIClient } from "../client";
 
 const applicationStore = new Map<string, API.RetrieveApplication.Http200.ResponseBody>();
 
@@ -24,7 +27,7 @@ export const applicationHandlers = {
 			throw new Error("Project ID required");
 		}
 
-		console.log("[Mock API] Creating application:", requestBody.title);
+		log.info("[Mock API] Creating application", { title: requestBody.title });
 		const id = crypto.randomUUID();
 		const application = ApplicationFactory.build({
 			form_inputs: undefined,
@@ -45,7 +48,7 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		console.log("[Mock API] Deleting application:", applicationId);
+		log.info("[Mock API] Deleting application", { applicationId });
 		applicationStore.delete(applicationId);
 	},
 
@@ -59,7 +62,7 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		console.log("[Mock API] Generating application:", applicationId);
+		log.info("[Mock API] Generating application", { applicationId });
 
 		const application = applicationStore.get(applicationId);
 		if (!application) {
@@ -91,7 +94,7 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		console.log("[Mock API] Getting RAG sources for application:", applicationId);
+		log.info("[Mock API] Getting RAG sources for application", { applicationId });
 
 		return [...RagSourceFileFactory.batch(2), ...RagSourceUrlFactory.batch(1)];
 	},
@@ -106,16 +109,33 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		console.log("[Mock API] Retrieving application:", applicationId);
+		log.info("[Mock API] Retrieving application", { applicationId });
 
-		if (!applicationStore.has(applicationId)) {
-			const application = ApplicationWithTemplateFactory.build({
-				id: applicationId,
-			});
-			applicationStore.set(applicationId, application);
+		const existingApplication = applicationStore.get(applicationId);
+		if (existingApplication) {
+			log.info("[Mock API] Returning application from store", { applicationId });
+			return existingApplication;
 		}
 
-		return applicationStore.get(applicationId)!;
+		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
+		const scenario = getScenario(currentScenarioName);
+		const scenarioApplication = scenario?.data.applications.get(applicationId);
+
+		if (scenarioApplication) {
+			log.info("[Mock API] Application not in store, using scenario data", {
+				applicationId,
+				scenario: currentScenarioName,
+			});
+			applicationStore.set(applicationId, scenarioApplication);
+			return scenarioApplication;
+		}
+
+		log.info("[Mock API] Application not found in store or scenario, creating new one", { applicationId });
+		const application = ApplicationWithTemplateFactory.build({
+			id: applicationId,
+		});
+		applicationStore.set(applicationId, application);
+		return application;
 	},
 
 	updateApplication: async ({
@@ -131,7 +151,7 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		console.log("[Mock API] Updating application:", applicationId);
+		log.info("[Mock API] Updating application", { applicationId });
 
 		const existingApplication = applicationStore.get(applicationId);
 		if (!existingApplication) {

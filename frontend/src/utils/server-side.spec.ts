@@ -1,19 +1,11 @@
+import { mockCookies, mockEnv, mockRedirect } from "::testing/global-mocks";
 import { HTTPError, type NormalizedOptions } from "ky";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
 import { PagePath } from "@/enums";
+import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { createAuthHeaders, redirectWithToastParams, withAuthRedirect, withErrorToast } from "./server-side";
-
-vi.mock("next/headers", () => ({
-	cookies: vi.fn(),
-}));
-
-vi.mock("next/navigation", () => ({
-	redirect: vi.fn(),
-}));
 
 vi.mock("@/utils/logger", () => ({
 	log: {
@@ -23,28 +15,23 @@ vi.mock("@/utils/logger", () => ({
 	},
 }));
 
-vi.mock("@/constants", () => ({
-	SESSION_COOKIE: "test-session-cookie",
-}));
-
-vi.mock("@/enums", () => ({
-	PagePath: {
-		DASHBOARD: "/dashboard",
-		ONBOARDING: "/onboarding",
-	},
+vi.mock("@/utils/env", () => ({
+	getEnv: vi.fn(),
 }));
 
 describe("Server-side Utils", () => {
 	const mockCookieStore = {
 		get: vi.fn(),
 	};
-	const mockRedirect = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		vi.mocked(cookies).mockResolvedValue(mockCookieStore as never);
-		vi.mocked(redirect).mockImplementation(mockRedirect as never);
+		mockCookies.mockResolvedValue(mockCookieStore);
+		vi.mocked(getEnv).mockReturnValue({
+			...mockEnv,
+			NEXT_PUBLIC_MOCK_AUTH: false, // Disable mock auth to test real functions
+		});
 	});
 
 	describe("redirectWithToastParams", () => {
