@@ -4,6 +4,7 @@ on:
     push:
         branches:
             - main
+            - development
         paths:
             - ".github/workflows/deployment-service-rag.yaml"
             - "packages/**/src/**"
@@ -12,17 +13,27 @@ on:
         types: [published]
 
 jobs:
-    build-and-push-dev:
+    build-and-push-staging:
         uses: ./.github/workflows/deploy-service.yaml
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
         with:
             service-name: rag
-            image-tag: dev-${{ github.sha }}
+            image-tag: staging-${{ github.sha }}
         permissions:
             contents: read
             id-token: write
 
     build-and-push-prod:
+        uses: ./.github/workflows/deploy-service.yaml
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+            service-name: rag
+            image-tag: ${{ github.sha }}
+        permissions:
+            contents: read
+            id-token: write
+
+    build-and-push-release:
         uses: ./.github/workflows/deploy-service.yaml
         if: github.event_name == 'release'
         with:

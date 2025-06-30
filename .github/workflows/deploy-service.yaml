@@ -47,6 +47,15 @@ jobs:
                   password: ${{ steps.auth.outputs.access_token }}
                   registry: ${{ env.ARTIFACT_REGISTRY }}
 
+            - name: Set up environment tag
+              id: env-tag
+              run: |
+                  if [[ "${{ inputs.image-tag }}" == staging-* ]]; then
+                    echo "env_latest=staging-latest" >> $GITHUB_OUTPUT
+                  else
+                    echo "env_latest=latest" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Build and push ${{ inputs.service-name }}
               uses: docker/build-push-action@v6
               with:
@@ -57,5 +66,5 @@ jobs:
                   cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:buildcache
                   cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:buildcache,mode=max
                   tags: |
-                      ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:latest
+                      ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:${{ steps.env-tag.outputs.env_latest }}
                       ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:${{ inputs.image-tag }}
