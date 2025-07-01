@@ -1,6 +1,6 @@
 interface LogContext {
 	[key: string]: unknown;
-	correlationId?: string;
+	traceId?: string;
 }
 
 type LogLevel = "error" | "info" | "warn";

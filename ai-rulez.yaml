@@ -449,6 +449,69 @@ rules:
       - **Services**: Need both `GOOGLE_CLOUD_PROJECT` and `GCP_PROJECT_ID`
       - **Bucket names**: Use environment-specific names (e.g., `grantflow-staging-uploads`)
 
+  - name: "Monitoring and Observability"
+    priority: 48
+    content: |
+      ### OpenTelemetry Integration
+
+      The project uses OpenTelemetry for distributed tracing and monitoring across all services:
+
+      - **Trace ID System**: Uses `trace_id` (renamed from correlation_id) for request correlation
+      - **Structured Logging**: All logs include trace_id and span_id automatically via structlog
+      - **Distributed Tracing**: Full request traces from frontend → backend → services
+      - **Custom Metrics**: Business and infrastructure metrics using OpenTelemetry meters
+
+      ### Implementation
+
+      **Services Configuration**:
+      ```python
+      # All services call this on startup
+      from packages.shared_utils.src.otel import configure_otel
+      configure_otel("service-name")
+      ```
+
+      **Span Creation**:
+      ```python
+      from packages.shared_utils.src.tracing import start_span_with_trace_id
+
+      with start_span_with_trace_id("operation_name", trace_id=trace_id) as span:
+          span.set_attribute("key", "value")
+          # operation logic
+      ```
+
+      **Pub/Sub Tracing**:
+      - All Pub/Sub messages include trace context propagation
+      - Uses OpenTelemetry TraceContextTextMapPropagator
+      - Child spans automatically continue parent traces
+
+      ### Discord Alerting
+
+      **Alert Policies** (Terraform-managed):
+      - Service completely down (zero 2xx responses for 5+ minutes)
+      - Database disconnected (no connections for 3+ minutes)
+      - Scraper not running (no activity for 48+ hours)
+      - Pub/Sub dead (high undelivered messages for 20+ minutes)
+      - High error rate (>50% errors for 10+ minutes)
+
+      **Discord Webhook**: Set via `DISCORD_WEBHOOK_URL` environment variable in all services
+
+      ### Environment Variables
+
+      ```bash
+      # OpenTelemetry configuration
+      GOOGLE_CLOUD_PROJECT=grantflow
+      ENABLE_CLOUD_TRACE=1  # Optional: enable Cloud Trace export in development
+      DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...  # For monitoring alerts
+      ```
+
+      ### Key Files
+
+      - `packages/shared_utils/src/otel.py` - OpenTelemetry configuration
+      - `packages/shared_utils/src/tracing.py` - Span utilities and trace_id integration
+      - `packages/shared_utils/src/logger.py` - Enhanced with OTEL context
+      - `packages/shared_utils/src/metrics.py` - Custom business metrics
+      - `terraform/modules/monitoring/` - Alert policies and notification channels
+
   - name: "Security"
     priority: 45
     content: |

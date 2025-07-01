@@ -40,14 +40,14 @@ class CrawlingRequest(TypedDict):
     project_id: UUID | None
     parent_id: UUID
     url: str
-    correlation_id: NotRequired[str]
+    trace_id: NotRequired[str]
 
 
 class SourceProcessingResult(TypedDict):
     source_id: UUID
     indexing_status: SourceIndexingStatusEnum
     identifier: str
-    correlation_id: NotRequired[str]
+    trace_id: NotRequired[str]
 
 
 class RagProcessingStatus(TypedDict):
@@ -56,13 +56,13 @@ class RagProcessingStatus(TypedDict):
     data: NotRequired[dict[str, Any]]
     current_pipeline_stage: NotRequired[int]
     total_pipeline_stages: NotRequired[int]
-    correlation_id: NotRequired[str]
+    trace_id: NotRequired[str]
 
 
 class RagRequest(TypedDict):
     parent_type: Literal["grant_application", "grant_template"]
     parent_id: UUID
-    correlation_id: NotRequired[str]
+    trace_id: NotRequired[str]
 
 
 class WebsocketMessage[T](TypedDict):
@@ -70,7 +70,7 @@ class WebsocketMessage[T](TypedDict):
     parent_id: UUID
     event: str
     data: T
-    correlation_id: NotRequired[str]
+    trace_id: NotRequired[str]
 
 
 def get_pubsub_credentials() -> Credentials | None:
@@ -117,8 +117,10 @@ async def publish_url_crawling_task(
     source_id: str | UUID,
     project_id: str | UUID | None,
     parent_id: str | UUID,
-    correlation_id: str | None = None,
+    trace_id: str | None = None,
 ) -> str:
+    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
+
     client = get_publisher_client()
 
     data = CrawlingRequest(
@@ -128,8 +130,8 @@ async def publish_url_crawling_task(
         parent_id=UUID(str(parent_id)),
     )
 
-    if correlation_id:
-        data["correlation_id"] = correlation_id
+    if trace_id:
+        data["trace_id"] = trace_id
 
     try:
         message_data = serialize(data)
@@ -137,14 +139,27 @@ async def publish_url_crawling_task(
             project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
             topic=get_env("URL_CRAWLING_PUBSUB_TOPIC", fallback="url-crawling"),
         )
-        future = client.publish(topic=topic_path, data=message_data)
-        message_id = await run_sync(future.result)
+
+        with create_pubsub_publish_span(topic_path, "CrawlingRequest") as span:
+            span.set_attribute("url", url)
+            span.set_attribute("source_id", str(source_id))
+            if trace_id:
+                span.set_attribute("trace_id", trace_id)
+
+            attributes = {"trace_id": trace_id} if trace_id else {}
+            attributes = inject_trace_context(attributes)
+
+            future = client.publish(topic_path, message_data, **attributes)
+            message_id = await run_sync(future.result)
+
+            span.set_attribute("messaging.message.id", message_id)
+
         logger.info(
             "Published message to crawl URL",
             message_id=message_id,
             url=url,
             source_id=str(source_id),
-            correlation_id=correlation_id,
+            trace_id=trace_id,
         )
         return str(message_id)
     except MessageTooLargeError as e:
@@ -159,16 +174,17 @@ async def publish_rag_task(
     logger: "FilteringBoundLogger",
     parent_type: Literal["grant_application", "grant_template"],
     parent_id: str | UUID,
-    correlation_id: str | None = None,
+    trace_id: str | None = None,
 ) -> str:
     import time
+    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
 
     start_time = time.time()
     logger.debug(
         "Starting PubSub message publishing",
         parent_type=parent_type,
         parent_id=str(parent_id),
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     client = get_publisher_client()
@@ -178,8 +194,8 @@ async def publish_rag_task(
         parent_id=UUID(str(parent_id)),
     )
 
-    if correlation_id:
-        data["correlation_id"] = correlation_id
+    if trace_id:
+        data["trace_id"] = trace_id
 
     try:
         message_data = serialize(data)
@@ -202,8 +218,19 @@ async def publish_rag_task(
             topic_path=topic_path,
         )
 
-        future = client.publish(topic=topic_path, data=message_data)
-        message_id = await run_sync(future.result)
+        with create_pubsub_publish_span(topic_path, "RagRequest") as span:
+            span.set_attribute("parent_type", parent_type)
+            span.set_attribute("parent_id", str(parent_id))
+            if trace_id:
+                span.set_attribute("trace_id", trace_id)
+
+            attributes = {"trace_id": trace_id} if trace_id else {}
+            attributes = inject_trace_context(attributes)
+
+            future = client.publish(topic_path, message_data, **attributes)
+            message_id = await run_sync(future.result)
+
+            span.set_attribute("messaging.message.id", message_id)
 
         publish_duration = time.time() - start_time
         logger.info(
@@ -211,7 +238,7 @@ async def publish_rag_task(
             message_id=message_id,
             parent_type=parent_type,
             parent_id=str(parent_id),
-            correlation_id=correlation_id,
+            trace_id=trace_id,
             publish_duration_ms=round(publish_duration * 1000, 2),
         )
         return str(message_id)
@@ -254,8 +281,10 @@ async def publish_notification[T](
     parent_id: UUID,
     event: str,
     data: T,
-    correlation_id: str | None = None,
+    trace_id: str | None = None,
 ) -> str:
+    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
+
     client = get_publisher_client()
 
     topic_path = client.topic_path(
@@ -272,25 +301,33 @@ async def publish_notification[T](
             type="data",
         )
 
-        if correlation_id:
-            websocket_message["correlation_id"] = correlation_id
+        if trace_id:
+            websocket_message["trace_id"] = trace_id
 
         message_data = serialize(websocket_message)
-        future = client.publish(
-            topic=topic_path,
-            data=message_data,
-            attributes=serialize(
-                {
-                    "parent_id": str(parent_id),
-                }
-            ),
-        )
-        message_id = await run_sync(future.result)
+
+        with create_pubsub_publish_span(topic_path, "WebsocketMessage") as span:
+            span.set_attribute("event", event)
+            span.set_attribute("parent_id", str(parent_id))
+            if trace_id:
+                span.set_attribute("trace_id", trace_id)
+
+            attributes = {
+                "parent_id": str(parent_id),
+            }
+            if trace_id:
+                attributes["trace_id"] = trace_id
+            attributes = inject_trace_context(attributes)
+
+            future = client.publish(topic_path, message_data, **attributes)
+            message_id = await run_sync(future.result)
+
+            span.set_attribute("messaging.message.id", message_id)
 
         logger.info(
             "Published source processing message",
             message_id=message_id,
-            correlation_id=correlation_id,
+            trace_id=trace_id,
         )
         return str(message_id)
     except MessageTooLargeError as e:

@@ -3,17 +3,17 @@
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
-import { createTraceHeaders, generateCorrelationId, logTraceEvent } from "@/utils/tracing";
+import { createTraceHeaders, generateTraceId, logTraceEvent } from "@/utils/tracing";
 
 export async function generateGrantTemplate(
 	projectId: string,
 	applicationId: string,
 	templateId: string,
 ): Promise<string> {
-	const correlationId = generateCorrelationId();
+	const traceId = generateTraceId();
 	const operation = "grant_template_generation";
 
-	logTraceEvent(correlationId, operation, "action_start", {
+	logTraceEvent(traceId, operation, "action_start", {
 		application_id: applicationId,
 		initiated_by: "user_action",
 		project_id: projectId,
@@ -25,16 +25,16 @@ export async function generateGrantTemplate(
 			getClient().post(`projects/${projectId}/applications/${applicationId}/grant-template/${templateId}`, {
 				headers: {
 					...(await createAuthHeaders()),
-					...createTraceHeaders(correlationId, operation),
+					...createTraceHeaders(traceId, operation),
 				},
 			}),
 		);
 
-		logTraceEvent(correlationId, operation, "action_success");
+		logTraceEvent(traceId, operation, "action_success");
 
-		return correlationId;
+		return traceId;
 	} catch (error) {
-		logTraceEvent(correlationId, operation, "action_failed", {
+		logTraceEvent(traceId, operation, "action_failed", {
 			error: error instanceof Error ? error.message : String(error),
 		});
 		throw error;
