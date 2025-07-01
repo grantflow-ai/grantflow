@@ -170,7 +170,7 @@ describe("Mock API Core Integration", () => {
 			// Verify all essential endpoints are registered
 			const expectedPaths = [
 				"/auth/login",
-				"/auth/otp",
+				"/otp",
 				"/projects",
 				"/projects/:project_id",
 				"/projects/:project_id/applications",

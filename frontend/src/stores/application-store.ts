@@ -19,6 +19,7 @@ import {
 	deleteApplicationSource,
 	deleteTemplateSource,
 } from "@/actions/sources";
+import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
@@ -37,6 +38,76 @@ interface ApplicationState {
 		isRestoring: boolean;
 		restoredJob: API.RetrieveRagJob.Http200.ResponseBody | null;
 	};
+}
+
+function handleRagJobDataResponse(
+	jobData: API.RetrieveRagJob.Http200.ResponseBody,
+	_ragJobId: string,
+	set: (state: (state: ApplicationActions & ApplicationState) => ApplicationActions & ApplicationState) => void,
+): void {
+	const shouldRestore = jobData.status === "PROCESSING" || jobData.status === "PENDING";
+
+	if (shouldRestore) {
+		set((state) => ({
+			...state,
+			ragJobState: {
+				isRestoring: false,
+				restoredJob: jobData,
+			},
+		}));
+
+		const progressText =
+			jobData.current_stage && jobData.total_stages
+				? `Stage ${jobData.current_stage} of ${jobData.total_stages}`
+				: "In progress";
+
+		toast.info(`🔄 Restored progress: ${progressText}`, {
+			description: "Continuing from where you left off...",
+			duration: 4000,
+		});
+	} else {
+		set((state) => ({
+			...state,
+			ragJobState: {
+				isRestoring: false,
+				restoredJob: null,
+			},
+		}));
+	}
+}
+
+function validateJobRestoration(application: ApplicationType): {
+	isValid: boolean;
+	projectId?: string;
+	ragJobId?: string;
+} {
+	if (!application) {
+		return { isValid: false };
+	}
+
+	const ragJobId = application.rag_job_id ?? application.grant_template?.rag_job_id;
+
+	if (!ragJobId) {
+		log.error("checkAndRestoreJobState: No rag_job_id found");
+		return { isValid: false };
+	}
+
+	if (!application.project_id) {
+		log.error("checkAndRestoreJobState: No project_id in application context");
+		return { isValid: false };
+	}
+
+	const { project } = useProjectStore.getState();
+	if (project?.id && project.id !== application.project_id) {
+		log.warn("application-store: validateJobRestoration: Project ID mismatch detected", {
+			applicationProjectId: application.project_id,
+			currentProjectId: project.id,
+			ragJobId,
+		});
+		return { isValid: false };
+	}
+
+	return { isValid: true, projectId: application.project_id, ragJobId };
 }
 
 const initialState: ApplicationState = {
@@ -214,16 +285,27 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 	checkAndRestoreJobState: async () => {
 		const { application } = get();
+		const validationResult = validateJobRestoration(application);
 
-		if (!application) {
+		if (!validationResult.isValid) {
 			return;
 		}
 
-		const ragJobId = application.rag_job_id ?? application.grant_template?.rag_job_id;
+		const { projectId, ragJobId } = validationResult;
 
-		if (!ragJobId) {
-			return;
-		}
+		assertIsNotNullish(projectId, {
+			message: "projectId should be defined when validation passes",
+		});
+		assertIsNotNullish(ragJobId, {
+			message: "ragJobId should be defined when validation passes",
+		});
+
+		log.info("checkAndRestoreJobState: Attempting RAG job restoration", {
+			applicationId: application?.id,
+			projectId,
+			ragJobId,
+			timestamp: new Date().toISOString(),
+		});
 
 		set((state) => ({
 			...state,
@@ -234,37 +316,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 
 		try {
-			const jobData = await retrieveRagJob(application.project_id, ragJobId);
-
-			const shouldRestore = jobData.status === "PROCESSING" || jobData.status === "PENDING";
-
-			if (shouldRestore) {
-				set((state) => ({
-					...state,
-					ragJobState: {
-						isRestoring: false,
-						restoredJob: jobData,
-					},
-				}));
-
-				const progressText =
-					jobData.current_stage && jobData.total_stages
-						? `Stage ${jobData.current_stage} of ${jobData.total_stages}`
-						: "In progress";
-
-				toast.info(`🔄 Restored progress: ${progressText}`, {
-					description: "Continuing from where you left off...",
-					duration: 4000,
-				});
-			} else {
-				set((state) => ({
-					...state,
-					ragJobState: {
-						isRestoring: false,
-						restoredJob: null,
-					},
-				}));
-			}
+			const jobData = await retrieveRagJob(projectId, ragJobId);
+			handleRagJobDataResponse(jobData, ragJobId, set);
 		} catch (error) {
 			set((state) => ({
 				...state,
@@ -273,7 +326,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					restoredJob: null,
 				},
 			}));
-			log.error("checkAndRestoreJobState", error);
+			log.error("checkAndRestoreJobState: Failed to restore job state", error, {
+				projectId,
+				ragJobId,
+			});
 		}
 	},
 
