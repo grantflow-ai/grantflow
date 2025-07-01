@@ -19,6 +19,7 @@ import {
 	deleteApplicationSource,
 	deleteTemplateSource,
 } from "@/actions/sources";
+import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
@@ -28,8 +29,6 @@ import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
-
-export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 interface ApplicationState {
 	application: ApplicationType;
