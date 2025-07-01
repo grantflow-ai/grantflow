@@ -1,25 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
-from httpx import AsyncClient
+from httpx import AsyncClient, Timeout
+from packages.shared_utils.src.logger import get_logger
+from services.crawler.src.utils import sanitize_html as shared_sanitize_html
 
 if TYPE_CHECKING:
     from bs4 import BeautifulSoup
 
-HTML_TAGS_TO_DECOMPOSE: Final[set[str]] = {
-    "script",
-    "style",
-    "map",
-    "area",
-    "noscript",
-    "iframe",
-    "object",
-    "embed",
-    "applet",
-    "link",
-}
-HTML_ATTRIBUTES_TO_KEEP: Final[set[str]] = {"href", "alt", "desc", "description", "title", "value"}
+logger = get_logger(__name__)
+client = AsyncClient(timeout=Timeout(15))
 
 
 async def download_page_html(url: str) -> str:
@@ -31,32 +22,28 @@ async def download_page_html(url: str) -> str:
     Returns:
         The HTML content of the page.
     """
-    client = AsyncClient()
-    html = await client.get(url)
-    return html.text
+    response = await client.get(url, follow_redirects=True)
+    response.raise_for_status()
+
+    logger.debug(
+        "Downloaded page HTML",
+        url=url,
+        status_code=response.status_code,
+        content_type=response.headers.get("content-type", "unknown"),
+        content_length=len(response.content),
+    )
+
+    return response.text
 
 
 def sanitize_html(soup: BeautifulSoup) -> str:
-    """Sanitize the HTML markup.
+    """Sanitize the HTML markup using shared utilities.
 
     Args:
         soup: The BeautifulSoup object
-        markup: The markup to sanitize.
 
     Returns:
         The sanitized markup.
     """
-    from bs4 import Comment, Tag
-
-    for tag in [el for el in soup.find_all(recursive=True) if isinstance(el, Tag)]:
-        if tag.name in HTML_TAGS_TO_DECOMPOSE:
-            tag.decompose()
-            continue
-
-        for attr in [t for t in list(tag.attrs or []) if t not in HTML_ATTRIBUTES_TO_KEEP]:
-            del tag[attr]
-
-    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
-        comment.extract()
-
-    return soup.prettify()
+    sanitized_soup = shared_sanitize_html(soup)
+    return str(sanitized_soup.prettify())
