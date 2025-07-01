@@ -64,7 +64,7 @@ resource "google_monitoring_alert_policy" "service_down" {
       ])
 
       duration        = "300s" # 5 minutes
-      comparison      = "COMPARISON_EQUAL"
+      comparison      = "COMPARISON_EQ"
       threshold_value = 0 # Zero 2xx responses
 
       aggregations {
@@ -104,7 +104,7 @@ resource "google_monitoring_alert_policy" "database_disconnected" {
       ])
 
       duration        = "180s" # 3 minutes
-      comparison      = "COMPARISON_EQUAL"
+      comparison      = "COMPARISON_EQ"
       threshold_value = 0
 
       aggregations {
@@ -144,7 +144,7 @@ resource "google_monitoring_alert_policy" "scraper_not_running" {
       ])
 
       duration        = "172800s" # 48 hours
-      comparison      = "COMPARISON_EQUAL"
+      comparison      = "COMPARISON_EQ"
       threshold_value = 0
 
       aggregations {
@@ -182,7 +182,7 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
       ])
 
       duration        = "1200s" # 20 minutes
-      comparison      = "COMPARISON_GREATER_THAN"
+      comparison      = "COMPARISON_GT"
       threshold_value = 100 # More than 100 undelivered messages
 
       aggregations {
@@ -225,7 +225,7 @@ resource "google_monitoring_alert_policy" "high_error_rate" {
       ])
 
       duration        = "600s" # 10 minutes
-      comparison      = "COMPARISON_GREATER_THAN"
+      comparison      = "COMPARISON_GT"
       threshold_value = 0.5 # 50% error rate
 
       aggregations {

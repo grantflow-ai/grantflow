@@ -43,3 +43,15 @@ variable "database_authorized_networks" {
   }))
   default = []
 }
+
+variable "monthly_budget_amount" {
+  description = "Monthly budget amount in USD for cost alerts"
+  type        = string
+  default     = "500"
+}
+
+variable "discord_webhook_url" {
+  description = "Discord webhook URL for monitoring alerts"
+  type        = string
+  sensitive   = true
+}
