@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createTraceHeaders, generateCorrelationId, logTraceEvent } from "./tracing";
+import { createTraceHeaders, generateTraceId, logTraceEvent } from "./tracing";
 
 vi.mock("@/utils/logger", () => ({
 	log: {
@@ -15,18 +15,18 @@ import { log } from "@/utils/logger";
 const mockLog = vi.mocked(log);
 
 describe("Tracing Utilities", () => {
-	describe("generateCorrelationId", () => {
+	describe("generateTraceId", () => {
 		it("should generate a valid UUID", () => {
-			const correlationId = generateCorrelationId();
+			const traceId = generateTraceId();
 
-			expect(correlationId).toEqual(expect.any(String));
-			expect(correlationId.length).toBe(36);
-			expect(correlationId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+			expect(traceId).toEqual(expect.any(String));
+			expect(traceId.length).toBe(36);
+			expect(traceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		});
 
 		it("should generate unique IDs", () => {
-			const id1 = generateCorrelationId();
-			const id2 = generateCorrelationId();
+			const id1 = generateTraceId();
+			const id2 = generateTraceId();
 
 			expect(id1).not.toBe(id2);
 		});
@@ -34,15 +34,15 @@ describe("Tracing Utilities", () => {
 
 	describe("createTraceHeaders", () => {
 		it("should create correct trace headers", () => {
-			const correlationId = "test-correlation-id";
+			const traceId = "test-trace-id";
 			const operation = "test-operation";
 
-			const headers = createTraceHeaders(correlationId, operation);
+			const headers = createTraceHeaders(traceId, operation);
 
 			expect(headers).toEqual({
-				"X-Correlation-ID": correlationId,
 				"X-Operation": operation,
 				"X-Service": "frontend",
+				"X-Trace-ID": traceId,
 				"X-Trace-Timestamp": expect.any(String),
 			});
 
@@ -56,34 +56,34 @@ describe("Tracing Utilities", () => {
 		});
 
 		it("should call logTrace with correct parameters", () => {
-			const correlationId = "test-correlation-id";
+			const traceId = "test-trace-id";
 			const operation = "test-operation";
 			const step = "test-step";
 			const metadata = { key: "value" };
 
-			logTraceEvent(correlationId, operation, step, metadata);
+			logTraceEvent(traceId, operation, step, metadata);
 
-			expect(mockLog.info).toHaveBeenCalledWith(`${correlationId} | ${operation} | ${step}`, {
-				correlation_id: correlationId,
+			expect(mockLog.info).toHaveBeenCalledWith(`${traceId} | ${operation} | ${step}`, {
 				operation,
 				service: "frontend",
 				step,
+				trace_id: traceId,
 				...metadata,
 			});
 		});
 
 		it("should work without metadata", () => {
-			const correlationId = "test-correlation-id";
+			const traceId = "test-trace-id";
 			const operation = "test-operation";
 			const step = "test-step";
 
-			logTraceEvent(correlationId, operation, step);
+			logTraceEvent(traceId, operation, step);
 
-			expect(mockLog.info).toHaveBeenCalledWith(`${correlationId} | ${operation} | ${step}`, {
-				correlation_id: correlationId,
+			expect(mockLog.info).toHaveBeenCalledWith(`${traceId} | ${operation} | ${step}`, {
 				operation,
 				service: "frontend",
 				step,
+				trace_id: traceId,
 			});
 		});
 	});

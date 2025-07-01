@@ -233,7 +233,10 @@ async def test_generate_application_success(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     mock_publish_rag_task.assert_called_once_with(
-        logger=ANY, parent_type="grant_application", parent_id=grant_application.id
+        logger=ANY,
+        parent_type="grant_application",
+        parent_id=grant_application.id,
+        trace_id=ANY,
     )
 
 

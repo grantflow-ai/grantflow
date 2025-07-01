@@ -121,6 +121,22 @@ def error_detail_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
+def add_otel_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:
+    """Add OpenTelemetry context to log entries."""
+    try:
+        from opentelemetry import trace
+
+        span = trace.get_current_span()
+        if span.get_span_context().is_valid:
+            span_context = span.get_span_context()
+            event_dict["trace_id"] = format(span_context.trace_id, "032x")
+            event_dict["span_id"] = format(span_context.span_id, "016x")
+    except ImportError:
+        pass
+
+    return event_dict
+
+
 def get_logger(name: str) -> FilteringBoundLogger:
     if configured_ref.value is None:
         from structlog import (
@@ -147,6 +163,7 @@ def get_logger(name: str) -> FilteringBoundLogger:
             ),
             processors=[
                 merge_contextvars,
+                add_otel_context,
                 add_log_level,
                 format_exc_info,
                 TimeStamper(fmt="iso"),

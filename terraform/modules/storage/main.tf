@@ -130,3 +130,64 @@ resource "google_storage_notification" "file_indexing_notification" {
 
   depends_on = [google_pubsub_topic_iam_binding.gcs_pubsub_publish]
 }
+
+# Scraper-specific bucket for NIH grant data
+resource "google_storage_bucket" "scraper" {
+  name                        = "grantflow-scraper"
+  location                    = "US"
+  force_destroy               = false
+  storage_class               = "STANDARD"
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
+
+  soft_delete_policy {
+    retention_duration_seconds = 604800 # 7 days
+  }
+
+  encryption {
+    default_kms_key_name = google_kms_crypto_key.bucket_key.id
+  }
+
+  labels = {
+    environment = var.environment
+    service     = "scraper"
+    purpose     = "nih-grants"
+  }
+}
+
+# IAM policy for scraper bucket - similar to uploads bucket
+resource "google_storage_bucket_iam_policy" "scraper" {
+  bucket      = google_storage_bucket.scraper.name
+  policy_data = <<POLICY
+{
+  "bindings": [
+    {
+      "members": [
+        "projectEditor:grantflow",
+        "projectOwner:grantflow"
+      ],
+      "role": "roles/storage.legacyBucketOwner"
+    },
+    {
+      "members": [
+        "projectViewer:grantflow"
+      ],
+      "role": "roles/storage.legacyBucketReader"
+    },
+    {
+      "members": [
+        "projectEditor:grantflow",
+        "projectOwner:grantflow"
+      ],
+      "role": "roles/storage.legacyObjectOwner"
+    },
+    {
+      "members": [
+        "projectViewer:grantflow"
+      ],
+      "role": "roles/storage.legacyObjectReader"
+    }
+  ]
+}
+POLICY
+}

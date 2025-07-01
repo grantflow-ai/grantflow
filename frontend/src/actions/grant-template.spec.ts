@@ -60,9 +60,9 @@ describe("Grant Template Actions", () => {
 				{
 					headers: expect.objectContaining({
 						...mockAuthHeaders,
-						"X-Correlation-ID": expect.any(String),
 						"X-Operation": "grant_template_generation",
 						"X-Service": "frontend",
+						"X-Trace-ID": expect.any(String),
 						"X-Trace-Timestamp": expect.any(String),
 					}),
 				},
@@ -71,11 +71,11 @@ describe("Grant Template Actions", () => {
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 
-		it("should return a correlation ID", async () => {
-			const correlationId = await generateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId);
+		it("should return a trace ID", async () => {
+			const traceId = await generateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId);
 
-			expect(correlationId).toEqual(expect.any(String));
-			expect(correlationId.length).toBeGreaterThan(0);
+			expect(traceId).toEqual(expect.any(String));
+			expect(traceId.length).toBeGreaterThan(0);
 		});
 	});
 

@@ -322,6 +322,7 @@ async def test_create_signed_upload_url(
             version="v4",
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
+            headers=None,
         )
         assert url == expected_signed_url
 
@@ -361,6 +362,7 @@ async def test_create_signed_upload_url_with_uuids(
             version="v4",
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
+            headers=None,
         )
         assert url == expected_signed_url
 

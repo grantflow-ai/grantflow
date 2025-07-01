@@ -5,6 +5,7 @@ Tests baseline performance, optimizations, caching, complexity routing, and qual
 
 import logging
 import time
+from typing import Any
 from unittest.mock import patch
 
 from testing.e2e_utils import e2e_test
@@ -322,7 +323,7 @@ async def test_evaluation_optimization_performance(
             """,
         }
 
-        performance_results = {
+        performance_results: dict[str, Any] = {
             "cache_performance": {},
             "complexity_routing": {},
             "adaptive_timeout": {},
@@ -330,7 +331,7 @@ async def test_evaluation_optimization_performance(
 
         logger.info("Testing cache performance...")
         with perf_ctx.stage_timer("cache_performance_test"):
-            cache_times = {"first_call": [], "cached_call": []}
+            cache_times: dict[str, list[float]] = {"first_call": [], "cached_call": []}
 
             for content in test_contents.values():
                 start_time = time.time()
@@ -414,7 +415,7 @@ async def test_evaluation_optimization_performance(
 
         logger.info("Testing adaptive timeout learning...")
         with perf_ctx.stage_timer("adaptive_timeout_test"):
-            adaptive_results = {"before_learning": {}, "after_learning": {}}
+            adaptive_results: dict[str, dict[str, Any]] = {"before_learning": {}, "after_learning": {}}
 
             initial_stats = get_adaptive_timeout_stats()
             adaptive_results["before_learning"] = initial_stats

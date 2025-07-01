@@ -1,0 +1,20 @@
+[project]
+name = "scraper"
+version = "0.1.0"
+description = "NIH Grant Scraper Service"
+readme = "README.md"
+license = { text = "UNLICENSED" }
+authors = [ { name = "Na'aman Hirschfeld", email = "admin@grantflow.ai" } ]
+requires-python = "==3.13.*"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
+
+dependencies = [
+  "anyio>=4.6.2.post1",
+  "beautifulsoup4>=4.12.3",
+  "html-to-markdown>=0.1.10",
+  "httpx>=0.28.1",
+  "mdformat>=0.7.20",
+  "pandas>=2.2.3",
+  "playwright>=1.49.1",
+  "shared-utils[server,gcs]",
+]
