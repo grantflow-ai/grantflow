@@ -25,6 +25,7 @@ import Image from "next/image";
 import { useState } from "react";
 import WelcomeModal from "./welcome/welcome-modal";
 import { Notification } from "./notification";
+import { DeleteWarningModal } from "./delete-warning-modal";
 
 
 export default function DashboardClient() {
@@ -35,8 +36,10 @@ export default function DashboardClient() {
       description: "Create grants applications under this research.",
     },
   ]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
 
-  const handleDuplicate =(cardId) => {
+  const handleDuplicate =(cardId: number) => {
 	setCards((prevCard)=>{
 		const cardToDuplicate = prevCard.find((c) => c.id === cardId)
 		if(!cardToDuplicate) return prevCard
@@ -46,9 +49,23 @@ export default function DashboardClient() {
 		]
 	})
   }
-  const handleDelete = (cardId) => {
-	setCards(prev => prev.filter(card => card.id !== cardId))
+  const handleDelete = () => {
+    if (selectedCardId === null) return;
+	setCards(prev => prev.filter(card => card.id !== selectedCardId));
+    setIsDeleteModalOpen(false);
+    setSelectedCardId(null);
   }
+
+  const openDeleteModal = (cardId: number) => {
+    setSelectedCardId(cardId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedCardId(null);
+  };
+
   return (
 
     <>
@@ -56,11 +73,17 @@ export default function DashboardClient() {
         onStartApplication={() => {
         }}
       />
+      <DeleteWarningModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDelete}
+      />
       <section className="bg-preview-bg w-full h-full  flex">
     
-        <main className="w-[1368px] h-full">
-          <header className=" h-[73px] w-[1368px] flex justify-end items-center gap-2">
+        <main className="w-[95%] h-full">
+          <header className=" h-[73px] w-full flex justify-end items-center gap-2">
             <div className="size-8 flex items-center justify-center">
+     
               <Notification/>
             </div>
             <div className="size-8 bg-[#369E94] rounded-sm flex items-center justify-center ">
@@ -166,7 +189,7 @@ export default function DashboardClient() {
                             <MoreVertical className="size-4 text-gray-700 " />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-0">
-                            <DropdownMenuItem onClick={()=>handleDelete(card.id)}  className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700">
+                            <DropdownMenuItem  onClick={() => openDeleteModal(card.id)} className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700">
                               <Trash2 className="size-4 text-gray-700" />
                               Delete
                             </DropdownMenuItem>

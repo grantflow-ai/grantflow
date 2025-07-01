@@ -16,19 +16,19 @@ const notification = [
     id: 1,
     title: "7 days until grant deadline",
     description: "Your project “Neuroadaptive Interfaces – EIC Pathfinder” is due in 7 days. Make sure everything is ready for submission.",
-    dotColor: "bg-white",
+    dotColor: "bg-primary",
   },
   {
     id: 2,
     title: "7 days until grant deadline",
     description: "Your project “Neuroadaptive Interfaces – EIC Pathfinder” is due in 7 days. Make sure everything is ready for submission.",
-    dotColor: "bg-preview-bg",
+    dotColor: "bg-primary",
   },
   {
     id: 3,
     title: "7 days until grant deadline",
     description: "Your project “Neuroadaptive Interfaces – EIC Pathfinder” is due in 7 days. Make sure everything is ready for submission.",
-    dotColor: "bg-white",
+    dotColor: "bg-gray-200",
   },
 ]
 export function Notification({}: NotificationProps) {
@@ -46,9 +46,9 @@ export function Notification({}: NotificationProps) {
           className="w-[428px] rounded-sm bg-white border border-gray-200 shadow-none p-0 transition-all duration-300"
         >
     {notification.map((item)=>(
-		<DropdownMenuItem key={item.id} className={`p-4 font-normal gap-1 text-base text-gray-700 flex flex-col items-start data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700 ${item.dotColor}  hover:bg-gray-50 rounded-none border border-gray-200 cursor-pointer`}>
+		<DropdownMenuItem key={item.id} className={`p-4 font-normal gap-1 text-base text-gray-700 flex flex-col items-start data-[highlighted]:bg-preview-bg data-[highlighted]:text-gray-700  rounded-none border border-gray-200 cursor-pointer`}>
 			<div className="flex items-center justify-between w-full">
-				<div className={`bg-primary size-3 rounded-full ${item.dotColor}`}></div>
+				<div className={` size-3 rounded-full ${item.dotColor}`}></div>
 				<div>
 					<X className="size-3 text-gray-700" />
 				</div>
