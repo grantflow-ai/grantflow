@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from services.scraper.src.html_utils import download_page_html, sanitize_html
 from services.scraper.src.url_utils import get_identifier_from_nih_url
 
@@ -9,15 +8,18 @@ from services.scraper.src.url_utils import get_identifier_from_nih_url
 async def test_download_page_html() -> None:
     url = "http://example.com"
 
-    with patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+    with patch("services.scraper.src.html_utils.client.get", new_callable=AsyncMock) as mock_get:
         mock_response = AsyncMock()
         mock_response.text = "<html><body>Test Page</body></html>"
+        mock_response.status_code = 200
+        mock_response.headers = {"content-type": "text/html"}
+        mock_response.content = b"<html><body>Test Page</body></html>"
         mock_get.return_value = mock_response
 
         html = await download_page_html(url)
 
         assert html == "<html><body>Test Page</body></html>"
-        mock_get.assert_called_once_with(url)
+        mock_get.assert_called_once_with(url, follow_redirects=True)
 
 
 def test_sanitize_html() -> None:
