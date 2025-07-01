@@ -132,11 +132,11 @@ describe("ProjectSettingsNotifications", () => {
 
 		const emailToggle = screen.getByTestId("email-notifications-toggle");
 
-		expect(emailToggle).toHaveClass("bg-action-primary");
+		expect(emailToggle).toHaveClass("bg-primary");
 
 		await user.click(emailToggle);
 		expect(emailToggle).toHaveClass("bg-app-gray-300");
-		expect(emailToggle).not.toHaveClass("bg-action-primary");
+		expect(emailToggle).not.toHaveClass("bg-primary");
 	});
 
 	it("maintains state across multiple toggles", async () => {

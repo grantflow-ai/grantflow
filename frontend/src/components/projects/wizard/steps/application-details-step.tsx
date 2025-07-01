@@ -65,7 +65,7 @@ export function ApplicationDetailsStep({
 							handleInputChange(e.target.value);
 						}}
 						placeholder="Title of your grant application"
-						rows={4}
+						rows={16}
 						showCount
 						testId="application-title-textarea"
 						value={draftTitle}
