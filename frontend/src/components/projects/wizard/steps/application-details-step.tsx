@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AppTextArea from "@/components/app/forms/textarea-field";
 import { ApplicationPreview, TemplateFileUploader } from "@/components/projects";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
@@ -17,12 +18,24 @@ export function ApplicationDetailsStep({
 	connectionStatusColor?: string;
 }) {
 	const handleTitleChange = useWizardStore((state) => state.handleTitleChange);
-	const application = useApplicationStore((state) => state.application);
-	const applicationTitle = application?.title ?? "";
+
+	const applicationTitle = useApplicationStore((state) => state.application?.title);
+	const grantTemplateId = useApplicationStore((state) => state.application?.grant_template?.id);
+
+	const [draftTitle, setDraftTitle] = useState("");
+
+	useEffect(() => {
+		if (applicationTitle !== undefined) {
+			setDraftTitle(applicationTitle);
+		}
+	}, [applicationTitle]);
+
+	const handleInputChange = (value: string) => {
+		setDraftTitle(value);
+		handleTitleChange(value);
+	};
 
 	usePollingCleanup();
-
-	const parentId = application?.grant_template?.id;
 
 	return (
 		<div className="flex size-full" data-testid="application-details-step">
@@ -49,13 +62,13 @@ export function ApplicationDetailsStep({
 						label="Application Title"
 						maxCount={TITLE_MAX_LENGTH}
 						onChange={(e) => {
-							handleTitleChange(e.target.value);
+							handleInputChange(e.target.value);
 						}}
 						placeholder="Title of your grant application"
 						rows={4}
 						showCount
 						testId="application-title-textarea"
-						value={applicationTitle}
+						value={draftTitle}
 					/>
 				</div>
 
@@ -75,7 +88,7 @@ export function ApplicationDetailsStep({
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader parentId={parentId} />
+						<TemplateFileUploader parentId={grantTemplateId} />
 					</div>
 
 					<div>
@@ -85,7 +98,7 @@ export function ApplicationDetailsStep({
 							understand the funding requirements.
 						</p>
 
-						<UrlInput parentId={parentId} />
+						<UrlInput parentId={grantTemplateId} />
 					</div>
 				</div>
 			</div>
@@ -93,7 +106,8 @@ export function ApplicationDetailsStep({
 			<ApplicationPreview
 				connectionStatus={connectionStatus}
 				connectionStatusColor={connectionStatusColor}
-				parentId={parentId}
+				draftTitle={draftTitle}
+				parentId={grantTemplateId}
 			/>
 		</div>
 	);
