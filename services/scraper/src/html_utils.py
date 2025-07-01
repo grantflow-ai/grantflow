@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from httpx import AsyncClient, Timeout
+from packages.shared_utils.src.html import sanitize_html as shared_sanitize_html
 from packages.shared_utils.src.logger import get_logger
-from services.crawler.src.utils import sanitize_html as shared_sanitize_html
 
 if TYPE_CHECKING:
     from bs4 import BeautifulSoup
