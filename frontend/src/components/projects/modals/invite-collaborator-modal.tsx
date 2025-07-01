@@ -73,7 +73,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</label>
 						<div className="relative flex items-center">
 							<input
-								className="w-full h-10 pl-3 pr-10 border border-border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary placeholder-app-gray-400 outline-none focus:border-action-primary"
+								className="w-full h-10 pl-3 pr-10 border border-border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary placeholder-app-gray-400 outline-none focus:border-primary"
 								data-testid="email-input"
 								id="collaborator-email"
 								onChange={(e) => {
@@ -97,7 +97,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</label>
 						<div className="relative">
 							<button
-								className="w-full h-10 px-3 border border-action-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary text-left flex items-center justify-between outline-none"
+								className="w-full h-10 px-3 border border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary text-left flex items-center justify-between outline-none"
 								data-testid="permission-dropdown"
 								id="collaborator-permission"
 								onClick={() => {
@@ -154,7 +154,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				{}
 				<div className="flex items-center justify-between">
 					<button
-						className="px-4 py-2 border border-action-primary rounded bg-surface-primary font-button text-[16px] leading-[22px] text-action-primary hover:bg-surface-secondary transition-colors"
+						className="px-4 py-2 border border-primary rounded bg-surface-primary font-button text-[16px] leading-[22px] text-primary hover:bg-surface-secondary transition-colors"
 						data-testid="cancel-button"
 						onClick={handleClose}
 						type="button"
@@ -162,7 +162,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						Cancel
 					</button>
 					<button
-						className="px-4 py-2 bg-action-primary rounded font-button text-[16px] leading-[22px] text-white hover:bg-action-primary/90 transition-colors disabled:opacity-50"
+						className="px-4 py-2 bg-primary rounded font-button text-[16px] leading-[22px] text-white hover:bg-primary/90 transition-colors disabled:opacity-50"
 						data-testid="send-invitation-button"
 						disabled={!email || isSubmitting}
 						onClick={handleSubmit}
