@@ -51,7 +51,7 @@ describe("ApplicationPreview", () => {
 		expect(screen.getByTestId("application-title")).toHaveTextContent("Test Application");
 	});
 
-	it("renders untitled when no title", () => {
+	it("renders placeholder when no title", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
 				id: "template-id",
@@ -65,7 +65,7 @@ describe("ApplicationPreview", () => {
 			}),
 			id: "test-id",
 			project_id: "test-project-id",
-			title: undefined,
+			title: "",
 		});
 
 		useApplicationStore.setState({
@@ -75,7 +75,7 @@ describe("ApplicationPreview", () => {
 
 		render(<ApplicationPreview />);
 
-		expect(screen.getByTestId("application-title")).toHaveTextContent("Untitled Application");
+		expect(screen.getByTestId("application-title")).toHaveTextContent("");
 	});
 
 	it("renders uploaded files", () => {
