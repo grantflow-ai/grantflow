@@ -7,19 +7,19 @@ import { log } from "@/utils/logger";
 /**
  * Create trace headers for API requests
  */
-export function createTraceHeaders(correlationId: string, operation: string): Record<string, string> {
+export function createTraceHeaders(traceId: string, operation: string): Record<string, string> {
 	return {
-		"X-Correlation-ID": correlationId,
 		"X-Operation": operation,
 		"X-Service": "frontend",
+		"X-Trace-ID": traceId,
 		"X-Trace-Timestamp": new Date().toISOString(),
 	};
 }
 
 /**
- * Generate a correlation ID for tracing requests across services
+ * Generate a trace ID for tracing requests across services
  */
-export function generateCorrelationId(): string {
+export function generateTraceId(): string {
 	return crypto.randomUUID();
 }
 
@@ -27,16 +27,16 @@ export function generateCorrelationId(): string {
  * Log a structured trace event
  */
 export function logTraceEvent(
-	correlationId: string,
+	traceId: string,
 	operation: string,
 	step: string,
 	metadata?: Record<string, unknown>,
 ): void {
-	log.info(`${correlationId} | ${operation} | ${step}`, {
-		correlation_id: correlationId,
+	log.info(`${traceId} | ${operation} | ${step}`, {
 		operation,
 		service: "frontend",
 		step,
+		trace_id: traceId,
 		...metadata,
 	});
 }

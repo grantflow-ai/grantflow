@@ -185,6 +185,7 @@ members = [
   "services/crawler",
   "services/indexer",
   "services/rag",
+  "services/scraper",
 ]
 
 [tool.uv.sources]

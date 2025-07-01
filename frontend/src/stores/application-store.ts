@@ -310,7 +310,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		});
 
 		try {
-			const correlationId = await withRetry(
+			const traceId = await withRetry(
 				() => generateGrantTemplate(application.project_id, application.id, templateId),
 				{
 					initialDelay: 1000,
@@ -328,9 +328,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 			log.info("Grant template generation initiated", {
 				application_id: application.id,
-				correlation_id: correlationId,
 				project_id: application.project_id,
 				template_id: templateId,
+				trace_id: traceId,
 			});
 		} catch (error: unknown) {
 			if (error instanceof HTTPError && error.response.status === 422) {

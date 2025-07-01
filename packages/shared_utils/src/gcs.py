@@ -139,7 +139,7 @@ async def create_signed_upload_url(
     parent_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
-    correlation_id: str | None = None,
+    trace_id: str | None = None,
 ) -> str:
     blob_path = construct_object_uri(
         project_id=project_id,
@@ -181,8 +181,8 @@ async def create_signed_upload_url(
         blob = bucket.blob(blob_path)
 
         headers = {}
-        if correlation_id:
-            headers["x-goog-meta-correlation-id"] = correlation_id
+        if trace_id:
+            headers["x-goog-meta-trace-id"] = trace_id
 
         signed_url = await run_sync(
             lambda: blob.generate_signed_url(
@@ -196,7 +196,7 @@ async def create_signed_upload_url(
         logger.info(
             "Created signed upload URL",
             blob_name=blob_name,
-            correlation_id=correlation_id,
+            trace_id=trace_id,
         )
 
         return cast("str", signed_url)

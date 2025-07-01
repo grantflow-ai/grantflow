@@ -33,7 +33,7 @@ from packages.db.src.constants import RAG_URL, RAG_FILE
 from packages.shared_utils.src.exceptions import BackendError
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
-from services.backend.src.api.middleware import get_correlation_id
+from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 
 if TYPE_CHECKING:
@@ -437,14 +437,14 @@ async def handle_create_upload_url(
             "One of application_id, organization_id, or template_id must be provided"
         )
 
-    correlation_id = get_correlation_id(request)
+    trace_id = get_trace_id(request)
 
     url = await create_signed_upload_url(
         project_id=project_id,
         parent_id=parent_id,
         source_id=source_id,
         blob_name=blob_name,
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     return UploadUrlResponse(url=url, source_id=source_id)
@@ -468,13 +468,13 @@ async def handle_crawl_url(
     template_id: UUID | None = None,
     project_id: UUID | None = None,
 ) -> UrlCrawlingResponse:
-    correlation_id = get_correlation_id(request)
+    trace_id = get_trace_id(request)
     url = data["url"]
 
     logger.debug(
         "Starting URL crawl request",
         url=url,
-        correlation_id=correlation_id,
+        trace_id=trace_id,
         application_id=str(application_id) if application_id else None,
         organization_id=str(organization_id) if organization_id else None,
         template_id=str(template_id) if template_id else None,
@@ -509,14 +509,14 @@ async def handle_crawl_url(
         source_id=source_id,
         project_id=project_id,
         parent_id=parent_id,
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     logger.info(
         "Published URL crawling task",
         url=url,
         message_id=message_id,
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     return UrlCrawlingResponse(

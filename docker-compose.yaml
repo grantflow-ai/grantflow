@@ -6,6 +6,7 @@ services:
             - indexer
             - crawler
             - backend
+            - scraper
         image: pgvector/pgvector:pg17
         restart: always
         environment:
@@ -29,6 +30,7 @@ services:
             - gcs
             - e2e
             - services
+            - scraper
         image: fsouza/fake-gcs-server:latest
         restart: always
         ports:
@@ -66,6 +68,7 @@ services:
             - indexer
             - crawler
             - backend
+            - scraper
         image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
         restart: always
         ports:
@@ -225,6 +228,33 @@ services:
         command: "pnpm dev"
         depends_on:
             - backend
+
+    scraper:
+        profiles:
+            - all
+            - services
+            - scraper
+        build:
+            args:
+                service_name: scraper
+            dockerfile: ./services/Dockerfile
+        environment:
+            GOOGLE_CLOUD_PROJECT: grantflow
+            GOOGLE_CLOUD_REGION: us-central1
+            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+            SCRAPER_GCS_BUCKET_NAME: grantflow-scraper
+            DEBUG: "True"
+        env_file:
+            - ./services/scraper/.env
+        ports:
+            - "8004:8000"
+        volumes:
+            - ./services/scraper:/app/services/scraper:cached
+            - ./packages:/app/packages:cached
+        command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload"
+        depends_on:
+            gcs-emulator:
+                condition: service_healthy
 
 volumes:
     data:

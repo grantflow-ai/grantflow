@@ -15,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.sql.functions import count
 
-from services.backend.src.api.middleware import get_correlation_id
+from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
 
 logger = get_logger(__name__)
@@ -36,19 +36,19 @@ async def handle_generate_grant_template(
     session_maker: async_sessionmaker[Any],
     request: APIRequest,
 ) -> None:
-    correlation_id = get_correlation_id(request)
+    trace_id = get_trace_id(request)
 
     logger.info(
         "Creating grant template",
         grant_template_id=grant_template_id,
-        correlation_id=correlation_id,
+        trace_id=trace_id,
         operation="grant_template_generation_start",
     )
 
     logger.debug(
         "Starting grant template generation validation",
         grant_template_id=str(grant_template_id),
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     async with session_maker() as session:
@@ -105,7 +105,7 @@ async def handle_generate_grant_template(
                 logger=logger,
                 parent_type="grant_template",
                 parent_id=grant_template.id,
-                correlation_id=correlation_id,
+                trace_id=trace_id,
             )
 
             logger.debug(
@@ -133,13 +133,13 @@ async def handle_update_grant_template(
     session_maker: async_sessionmaker[Any],
     request: APIRequest,
 ) -> None:
-    correlation_id = get_correlation_id(request)
+    trace_id = get_trace_id(request)
 
     logger.info(
         "Updating grant template",
         grant_template_id=grant_template_id,
         data=data,
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     async with session_maker() as session, session.begin():
