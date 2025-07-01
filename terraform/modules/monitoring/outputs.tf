@@ -40,3 +40,18 @@ output "monitoring_summary" {
     environment        = var.environment
   }
 }
+
+output "budget_alert_topic" {
+  description = "The Pub/Sub topic for budget alerts"
+  value       = google_pubsub_topic.budget_alerts.id
+}
+
+output "budget_function_url" {
+  description = "The URL of the budget alert Cloud Function"
+  value       = google_cloudfunctions2_function.budget_to_discord.service_config[0].uri
+}
+
+output "monthly_budget_amount" {
+  description = "The configured monthly budget amount in USD"
+  value       = var.monthly_budget_amount
+}
