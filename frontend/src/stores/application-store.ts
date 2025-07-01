@@ -507,13 +507,24 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 	updateApplicationTitle: async (projectId: string, applicationId: string, title: string) => {
 		const { application } = get();
-		const previousApplication = application;
+
+		assertIsNotNullish(application, { message: "Application must exist to update title" });
+
+		const originalTitle = application.title;
 
 		try {
 			const response = await handleUpdateApplication(projectId, applicationId, { title });
 			set({ application: response });
 		} catch (error) {
-			set({ application: previousApplication });
+			const currentApplication = get().application;
+			if (currentApplication) {
+				set({
+					application: {
+						...currentApplication,
+						title: originalTitle,
+					},
+				});
+			}
 			log.error("updateApplicationTitle", error);
 			toast.error("Failed to update application title");
 		}
