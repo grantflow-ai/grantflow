@@ -45,12 +45,12 @@ jobs:
                 ports:
                     - 4443:4443
                 options: >-
-                    --health-cmd "curl -f http://localhost:4443"
+                    --health-cmd "curl -f -k https://localhost:4443"
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 3
         env:
-            STORAGE_EMULATOR_HOST: http://localhost:4443
+            STORAGE_EMULATOR_HOST: https://localhost:4443
             SCRAPER_GCS_BUCKET_NAME: grantflow-scraper-test
             DEBUG: "True"
         steps:
