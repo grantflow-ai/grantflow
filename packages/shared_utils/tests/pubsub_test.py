@@ -248,7 +248,7 @@ async def test_publish_url_crawling_task_with_none_project(
         mock_publisher_client.publish.assert_called_once()
 
         call_args = mock_publisher_client.publish.call_args
-        data_bytes = call_args.kwargs["data"]
+        data_bytes = call_args[0][1]
         published_data = deserialize(data_bytes, CrawlingRequest)
         assert published_data["project_id"] is None
 
@@ -306,8 +306,8 @@ async def test_publish_notification_with_url_identifier(
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
-        _, kwargs = mock_publisher_client.publish.call_args
-        assert b"https://example.com/guidelines" in kwargs["data"]
+        args, kwargs = mock_publisher_client.publish.call_args
+        assert b"https://example.com/guidelines" in args[1]
 
 
 async def test_publish_notification_failed_status(mock_publisher_client: Mock) -> None:
@@ -333,8 +333,8 @@ async def test_publish_notification_failed_status(mock_publisher_client: Mock) -
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
-        _, kwargs = mock_publisher_client.publish.call_args
-        assert b"FAILED" in kwargs["data"]
+        args, kwargs = mock_publisher_client.publish.call_args
+        assert b"FAILED" in args[1]
 
 
 async def test_publish_notification_too_large(mock_publisher_client: Mock) -> None:
