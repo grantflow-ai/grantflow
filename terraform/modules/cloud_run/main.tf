@@ -561,10 +561,123 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_rag" {
 }
 
 
+# Scraper Service - NIH grant scraping with Cloud Scheduler
+resource "google_cloud_run_v2_service" "scraper" {
+  name                = "scraper"
+  location            = var.region
+  deletion_protection = false
+
+  template {
+    containers {
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:staging-latest"
+
+      resources {
+        limits = {
+          cpu    = "1000m"
+          memory = "2Gi"  # Higher memory for Playwright browser automation
+        }
+      }
+
+      ports {
+        container_port = 8000
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/health"
+          port = 8000
+        }
+        initial_delay_seconds = 15
+        timeout_seconds       = 10
+        period_seconds        = 30
+        failure_threshold     = 3
+      }
+
+      # Standard environment variables
+      env {
+        name  = "GOOGLE_CLOUD_PROJECT"
+        value = var.project_id
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
+      }
+
+      env {
+        name  = "GOOGLE_CLOUD_REGION"
+        value = "us-central1"
+      }
+
+      # Scraper-specific bucket name
+      env {
+        name  = "SCRAPER_GCS_BUCKET_NAME"
+        value = "grantflow-scraper"
+      }
+
+      # GCS credentials from Secret Manager
+      env {
+        name = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
+        value_source {
+          secret_key_ref {
+            secret  = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
+            version = "latest"
+          }
+        }
+      }
+    }
+
+    scaling {
+      max_instance_count = 3   # Lower scaling - scheduler-driven, not high throughput
+      min_instance_count = 0   # Scale to zero when not in use
+    }
+
+    timeout = "1800s"  # 30 minutes - scraping can take time
+  }
+
+  ingress = "INGRESS_TRAFFIC_ALL"
+  
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+    ]
+  }
+}
+
+# Service account for Cloud Scheduler to invoke scraper
+resource "google_service_account" "scheduler_invoker" {
+  account_id   = "scheduler-invoker"
+  display_name = "Cloud Scheduler Service Account"
+  description  = "Service account used by Cloud Scheduler to invoke Cloud Run services"
+}
+
+# IAM binding for scheduler to invoke scraper service
+resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker_scraper" {
+  location = var.region
+  name     = google_cloud_run_v2_service.scraper.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.scheduler_invoker.email}"
+}
+
 data "google_project" "project" {}
 
 
 output "pubsub_invoker_service_account_email" {
   value       = google_service_account.pubsub_invoker.email
   description = "Email address of the service account used for Pub/Sub to invoke Cloud Run"
+}
+
+output "scheduler_invoker_service_account_email" {
+  value       = google_service_account.scheduler_invoker.email
+  description = "Email address of the service account used for Cloud Scheduler to invoke Cloud Run"
+}
+
+output "scraper_url" {
+  description = "The URL of the deployed scraper service"
+  value       = google_cloud_run_v2_service.scraper.uri
+}
+
+output "scraper_service_id" {
+  description = "The ID of the scraper service"
+  value       = google_cloud_run_v2_service.scraper.name
 }
