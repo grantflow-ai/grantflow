@@ -164,7 +164,6 @@ class GCSStorage(Storage):
             filenames = []
             for blob in blobs:
                 if blob.name.startswith(prefix):
-
                     filename = blob.name[len(prefix) :]
                     if filename:
                         filenames.append(filename)

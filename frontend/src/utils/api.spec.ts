@@ -115,10 +115,10 @@ describe("api", () => {
 				const result = afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
-					correlation_id: "test-correlation-id",
 					method: "GET",
 					operation: "test-operation",
 					status: 200,
+					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
 
@@ -144,11 +144,11 @@ describe("api", () => {
 				const result = beforeErrorHook(mockError as any);
 
 				expect(log.error).toHaveBeenCalledWith("API ERROR GET https://api.example.com/test", undefined, {
-					correlation_id: "test-correlation-id",
 					error: "Network error",
 					method: "GET",
 					operation: "test-operation",
 					status: 500,
+					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
 
@@ -168,9 +168,9 @@ describe("api", () => {
 				await beforeRequestHook(mockRequest as any, {} as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test", {
-					correlation_id: "test-correlation-id",
 					method: "GET",
 					operation: "test-operation",
+					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
 			}
@@ -195,10 +195,10 @@ describe("api", () => {
 				afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
-					correlation_id: null,
 					method: "GET",
 					operation: null,
 					status: 200,
+					trace_id: null,
 					url: "https://api.example.com/test",
 				});
 			}

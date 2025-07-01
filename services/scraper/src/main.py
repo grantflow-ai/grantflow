@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from litestar import post
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.server import create_litestar_app
 from services.scraper.src.grant_pages import download_grant_pages
 from services.scraper.src.search_data import DEFAULT_FROM_DATE, TODAY_DATE, download_search_data
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
     from datetime import date
 
     from services.scraper.src.storage import Storage
+
+configure_otel("scraper")
 
 logger = get_logger(__name__)
 
@@ -71,7 +74,6 @@ async def handle_scraper_request() -> dict[str, str]:
     logger.info("Received scraper request")
 
     try:
-
         if get_env("STORAGE_EMULATOR_HOST", fallback="") or get_env("DEBUG", fallback="False").lower() == "true":
             storage: Storage = SimpleFileStorage()
             logger.info("Using local file storage for development")

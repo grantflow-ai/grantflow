@@ -13,6 +13,7 @@ from litestar.types import Receive, Scope, Send
 from packages.db.src.tables import ProjectUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.tracing import start_span_with_trace_id
 from sqlalchemy import select
 
 from services.backend.src.common_types import APIRequestState
@@ -81,8 +82,8 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         raise NotAuthorizedException
 
 
-class CorrelationIdMiddleware(AbstractMiddleware):
-    """Middleware to extract or generate correlation IDs for request tracing."""
+class TraceIdMiddleware(AbstractMiddleware):
+    """Middleware to extract or generate trace IDs for request tracing and OpenTelemetry integration."""
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         scope_type = scope.get("type")
@@ -90,29 +91,41 @@ class CorrelationIdMiddleware(AbstractMiddleware):
             await self.app(scope, receive, send)
             return
 
-        correlation_id = None
+        trace_id = None
         for name, value in scope.get("headers", []):
-            if name.lower() == b"x-correlation-id":
-                correlation_id = value.decode("utf-8")
+            if name.lower() == b"x-trace-id":
+                trace_id = value.decode("utf-8")
                 break
 
-        if not correlation_id:
-            correlation_id = str(uuid4())
+        if not trace_id:
+            trace_id = str(uuid4())
 
         if "state" not in scope:
             scope["state"] = {}
-        scope["state"]["correlation_id"] = correlation_id
+        scope["state"]["trace_id"] = trace_id
 
         logger.debug(
-            "Request correlation ID set",
-            correlation_id=correlation_id,
+            "Request trace ID set",
+            trace_id=trace_id,
             method=scope.get("method"),
             path=scope.get("path"),
         )
 
-        await self.app(scope, receive, send)
+        method = scope.get("method", "UNKNOWN")
+        path = scope.get("path", "/")
+        span_name = f"{method} {path}"
+
+        with start_span_with_trace_id(
+            span_name=span_name,
+            trace_id=trace_id,
+            tracer_name="backend.middleware",
+            http_method=method,
+            http_url=path,
+            http_scheme=scope.get("scheme", "http"),
+        ):
+            await self.app(scope, receive, send)
 
 
-def get_correlation_id(request: Request[Any, Any, APIRequestState]) -> str | None:
-    """Get the correlation ID from the request state."""
-    return getattr(request.state, "correlation_id", None)
+def get_trace_id(request: Request[Any, Any, APIRequestState]) -> str | None:
+    """Get the trace ID from the request state."""
+    return getattr(request.state, "trace_id", None)

@@ -63,13 +63,11 @@ async def handle_download_excel_export(page: Page) -> list[GrantInfo]:
         await export_button.click()
         download = await page.wait_for_event("download")
 
-
         temp_dir = AsyncPath(tempfile.gettempdir())
         tmp_path = temp_dir / f"grants_export_{download.suggested_filename or 'data.xlsx'}"
         await download.save_as(str(tmp_path))
 
         data_frame = read_excel(str(tmp_path)).fillna("")
-
 
         await tmp_path.unlink(missing_ok=True)
         data_frame.columns = data_frame.columns.str.lower()

@@ -20,6 +20,5 @@ async def test_run_scraper(logger: Logger) -> None:
     await run_scraper(SimpleFileStorage())
     logger.info("Finished scraping")
 
-
     assert await Path("./.results").exists(), "The results folder should exist"
     assert await Path("./.results/grants_search_excel_09_06_2024.json").exists(), "The JSON file should exist"
