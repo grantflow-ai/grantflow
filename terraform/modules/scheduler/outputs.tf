@@ -10,5 +10,5 @@ output "scraper_job_schedule" {
 
 output "scraper_job_timezone" {
   description = "The timezone for the scraper job"
-  value       = google_cloud_scheduler_job.scraper_daily.timezone
+  value       = google_cloud_scheduler_job.scraper_daily.time_zone
 }
