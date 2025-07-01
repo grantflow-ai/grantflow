@@ -11,7 +11,7 @@ import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
 
-const applicationStore = new Map<string, API.RetrieveApplication.Http200.ResponseBody>();
+export const applicationStore = new Map<string, API.RetrieveApplication.Http200.ResponseBody>();
 
 export const applicationHandlers = {
 	createApplication: async ({

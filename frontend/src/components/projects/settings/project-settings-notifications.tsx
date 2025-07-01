@@ -109,8 +109,8 @@ function ToggleSwitch({ checked, "data-testid": dataTestId, onChange }: ToggleSw
 	return (
 		<button
 			aria-checked={checked}
-			className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary focus:ring-offset-2 ${
-				checked ? "bg-action-primary" : "bg-app-gray-300"
+			className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+				checked ? "bg-primary" : "bg-app-gray-300"
 			}`}
 			data-testid={dataTestId}
 			onClick={onChange}

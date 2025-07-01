@@ -65,7 +65,7 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 		>
 			<WelcomeModalContent className="flex max-w-[1080px] flex-col overflow-hidden rounded-lg border border-border-primary bg-surface-primary">
 				<header className="relative flex h-[152px] w-full items-center justify-center overflow-hidden bg-surface-secondary">
-					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_var(--color-action-primary)_0%,_transparent_70%)] opacity-30" />
+					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_var(--color-primary)_0%,_transparent_70%)] opacity-30" />
 					<ProgressBar currentStep={step} />
 				</header>
 				<section className="flex w-full justify-between px-16 py-16">
@@ -88,9 +88,9 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 									your input, the closer the result will be to what you need.
 								</p>
 							</div>
-							<article className="flex gap-3 rounded-lg border border-action-primary bg-surface-secondary p-4">
+							<article className="flex gap-3 rounded-lg border border-primary bg-surface-secondary p-4">
 								<div className="size-5 flex-shrink-0 mt-0.5">
-									<AlertCircle className="size-5 text-action-primary" />
+									<AlertCircle className="size-5 text-primary" />
 								</div>
 								<p className="text-[14px] font-normal leading-[21px] text-text-primary font-body">
 									Keep in mind that AI has limitations and may occasionally make mistakes. Always
@@ -109,7 +109,7 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 						Later
 					</AppButton>
 					<AppButton
-						className="h-12 rounded-[6px] bg-action-primary px-6 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-action-primary/90 font-button"
+						className="h-12 rounded-[6px] bg-primary px-6 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-primary/90 font-button"
 						onClick={handleStartApplication}
 						variant="primary"
 					>

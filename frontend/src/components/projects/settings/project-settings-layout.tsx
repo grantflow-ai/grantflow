@@ -49,7 +49,7 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 								className={cn(
 									"relative px-2 py-3 text-[16px] text-text-primary transition-all font-body",
 									pathname === tab.href
-										? "font-semibold border-b-[3px] border-action-primary font-heading"
+										? "font-semibold border-b-[3px] border-primary font-heading"
 										: "hover:text-text-secondary",
 								)}
 								href={tab.href}

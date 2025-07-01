@@ -42,7 +42,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 		);
 	}
 
-	const lineClass = type === "done" ? "bg-action-primary" : "bg-app-gray-300";
+	const lineClass = type === "done" ? "bg-primary" : "bg-app-gray-300";
 
 	return (
 		<div className="relative flex w-full flex-row items-center" data-testid={`step-${type}`}>
@@ -122,7 +122,7 @@ export function WizardHeader() {
 	};
 
 	return (
-		<header className="w-full border-b border-solid border-border-primary p-4 sm:p-6" data-testid="wizard-header">
+		<header className="w-full border-b-1 border-gray-100 p-4 sm:p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
 					{showHeaderInfo ? (
@@ -140,7 +140,7 @@ export function WizardHeader() {
 					)}
 				</div>
 				<AppButton
-					className="py-0 text-sm sm:text-base text-action-primary"
+					className="py-0 text-sm sm:text-base text-primary"
 					data-testid="exit-button"
 					onClick={handleExit}
 					size="lg"
@@ -149,27 +149,32 @@ export function WizardHeader() {
 					{isFirstStep ? "Exit" : "Save and Exit"}
 				</AppButton>
 			</div>
-			<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
+			<div className="space-y-2">
+				<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
+				<ProgressTitles currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
+			</div>
 		</header>
 	);
 }
 
 function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: WizardStep; stepTitles: WizardStep[] }) {
+	const currentStepIndex = stepTitles.indexOf(currentStep);
+
 	return (
 		<div className="flex justify-center">
 			<div
 				aria-label="Application wizard progress"
 				aria-valuemax={stepTitles.length}
 				aria-valuemin={1}
-				aria-valuenow={stepTitles.indexOf(currentStep) + 1}
-				className="flex w-full flex-col items-center px-4 sm:px-16"
+				aria-valuenow={currentStepIndex + 1}
+				className="flex w-full flex-col items-center px-16 sm:px-4"
 				data-testid="step-indicators"
 				role="progressbar"
 			>
 				<div className="relative flex w-full justify-center px-4 sm:px-20">
-					{stepTitles.map((title: WizardStep, index: number) => {
+					{stepTitles.map((_title: WizardStep, index: number) => {
 						const isLastStep = index === stepTitles.length - 1;
-						const currentStepIndex = stepTitles.indexOf(currentStep);
+						const indicatorType = getStepIndicatorType(index, currentStepIndex);
 
 						return (
 							<div
@@ -179,42 +184,12 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 								key={index}
 							>
 								<div className={`flex items-center ${isLastStep ? "" : "w-full"} relative`}>
-									{(() => {
-										if (index < currentStepIndex) {
-											return <StepIndicator isLastStep={isLastStep} type="done" />;
-										}
-										if (index === currentStepIndex) {
-											return <StepIndicator isLastStep={isLastStep} type="active" />;
-										}
-										return <StepIndicator isLastStep={isLastStep} type="inactive" />;
-									})()}
-
-									<div
-										className="absolute -bottom-8 flex w-full justify-center"
-										data-testid="step-title-container"
-									>
-										<span
-											aria-hidden="true"
-											className={`font-heading text-center text-xs max-w-full truncate ${(() => {
-												if (index < currentStepIndex) {
-													return "text-text-secondary";
-												}
-												if (index === currentStepIndex) {
-													return "text-action-primary";
-												}
-												return "text-app-gray-400";
-											})()}`}
-											data-testid={`step-title-${index}`}
-										>
-											{title}
-										</span>
-									</div>
+									<StepIndicator isLastStep={isLastStep} type={indicatorType} />
 								</div>
 							</div>
 						);
 					})}
 				</div>
-				<div className="h-8" />
 			</div>
 		</div>
 	);
@@ -298,4 +273,58 @@ function generateFooterRightButtonProps(currentStep: WizardStep) {
 		})(),
 		rightIcon: isGenerateStep ? undefined : <IconGoAhead />,
 	};
+}
+
+function getStepIndicatorType(index: number, currentStepIndex: number): "active" | "done" | "inactive" {
+	if (index < currentStepIndex) {
+		return "done";
+	}
+	if (index === currentStepIndex) {
+		return "active";
+	}
+	return "inactive";
+}
+
+function getStepTitleClass(index: number, currentStepIndex: number): string {
+	if (index < currentStepIndex) {
+		return "text-app-dark-blue";
+	}
+	if (index === currentStepIndex) {
+		return "text-primary";
+	}
+	return "text-app-gray-400";
+}
+
+function ProgressTitles({ currentStep, stepTitles }: { currentStep: WizardStep; stepTitles: WizardStep[] }) {
+	const currentStepIndex = stepTitles.indexOf(currentStep);
+
+	return (
+		<div className="flex justify-center mt-2">
+			<div className="flex w-full items-center">
+				<div className="relative flex w-full justify-between gap-0 lg:gap-4 xl:gap-25 ps-4 lg:ps-0">
+					{stepTitles.map((title: WizardStep, index: number) => {
+						const titleClass = getStepTitleClass(index, currentStepIndex);
+
+						return (
+							<div
+								className={"flex-1 relative flex flex-col items-center justify-stretch min-w-0"}
+								data-testid={`step-title-${index}`}
+								key={index}
+							>
+								<div className={"flex items-center relative justify-center w-full"}>
+									<span
+										aria-hidden="true"
+										className={`font-heading font-semibold text-center text-sm sm:text-base truncate max-w-10 md:max-w-15 lg:max-w-30 xl:max-w-full ${titleClass}`}
+										data-testid={`step-title-text-${index}`}
+									>
+										{title}
+									</span>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			</div>
+		</div>
+	);
 }
