@@ -574,7 +574,7 @@ resource "google_cloud_run_v2_service" "scraper" {
       resources {
         limits = {
           cpu    = "1000m"
-          memory = "2Gi"  # Higher memory for Playwright browser automation
+          memory = "2Gi" # Higher memory for Playwright browser automation
         }
       }
 
@@ -628,15 +628,15 @@ resource "google_cloud_run_v2_service" "scraper" {
     }
 
     scaling {
-      max_instance_count = 3   # Lower scaling - scheduler-driven, not high throughput
-      min_instance_count = 0   # Scale to zero when not in use
+      max_instance_count = 3 # Lower scaling - scheduler-driven, not high throughput
+      min_instance_count = 0 # Scale to zero when not in use
     }
 
-    timeout = "1800s"  # 30 minutes - scraping can take time
+    timeout = "1800s" # 30 minutes - scraping can take time
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
-  
+
   lifecycle {
     ignore_changes = [
       template[0].containers[0].image,
