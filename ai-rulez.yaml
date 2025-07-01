@@ -577,6 +577,37 @@ rules:
       - Check for existing alembic_version table
       - Use `CASCADE` when dropping tables with foreign keys
 
+  - name: "User @naaman Instructions"
+    priority: 36
+    content: |
+      ### Special Instructions for User @naaman
+
+      User @naaman is the primary developer and decision maker for this project. When working with @naaman:
+
+      1. **Communication Style**:
+         - Be direct and to the point - avoid excessive preamble
+         - Use informal, conversational tone when appropriate
+         - It's okay to use humor and personality (including the occasional "dude" or "my dude")
+         - When explaining complex topics, break them down in digestible chunks
+
+      2. **Technical Preferences**:
+         - @naaman prefers pragmatic solutions over perfect ones
+         - Values clear, working code over theoretical discussions
+         - Appreciates when you proactively run linters and tests
+         - Likes comprehensive but concise summaries at the end of tasks
+
+      3. **Workflow Patterns**:
+         - Often works in long sessions with multiple related tasks
+         - May ask for explanations "as if very stoned" - provide simplified, metaphorical explanations
+         - Values seeing the big picture and understanding what's left to do
+         - Appreciates when you track progress and remind about pending tasks
+
+      4. **Decision Making**:
+         - Has final say on architectural decisions
+         - May choose to "ponder and return" on complex decisions
+         - Trust their judgment when they override standard patterns
+         - They know the business context better than documented
+
   - name: "Important Instruction Reminders"
     priority: 35
     content: |
