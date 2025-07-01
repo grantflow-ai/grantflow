@@ -45,7 +45,7 @@ RUN if [ "$service_name" = "scraper" ]; then \
 
 COPY --chown=appuser:appuser --from=model-download ${MODEL_DIR} ${MODEL_DIR}
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
-COPY --chown=appuser:appuser services/ /app/services/
+COPY --chown=appuser:appuser services/${service_name}/src/ /app/services/${service_name}/src/
 COPY --chown=appuser:appuser packages /app/packages
 
 RUN if [ "$service_name" = "scraper" ]; then \

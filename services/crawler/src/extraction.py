@@ -16,6 +16,7 @@ from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
 )
+from packages.shared_utils.src.html import sanitize_html
 from packages.shared_utils.src.logger import get_logger
 from sklearn.metrics.pairwise import cosine_similarity
 from trafilatura import extract
@@ -25,7 +26,6 @@ from services.crawler.src.utils import (
     download_file,
     download_page_html,
     safe_filename_from_url,
-    sanitize_html,
 )
 
 logger = get_logger(__name__)
