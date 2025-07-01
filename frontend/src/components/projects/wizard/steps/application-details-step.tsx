@@ -1,22 +1,21 @@
 "use client";
 
 import AppTextArea from "@/components/app/forms/textarea-field";
+import { ApplicationPreview, TemplateFileUploader } from "@/components/projects";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import { ApplicationPreview } from "../shared/application-preview";
-import { TemplateFileUploader } from "../shared/template-file-uploader";
 import { UrlInput } from "../shared/url-input";
 
 const TITLE_MAX_LENGTH = 120;
 
-interface ApplicationDetailsStepProps {
+export function ApplicationDetailsStep({
+	connectionStatus,
+	connectionStatusColor,
+}: {
 	connectionStatus?: string;
 	connectionStatusColor?: string;
-}
-
-export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
+}) {
 	const handleTitleChange = useWizardStore((state) => state.handleTitleChange);
 	const application = useApplicationStore((state) => state.application);
 	const applicationTitle = application?.title ?? "";
