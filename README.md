@@ -14,6 +14,7 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [`/services/indexer`](./services/indexer/README.md) - Document indexing and extraction service
 - [`/services/crawler`](./services/crawler/README.md) - Website crawling and document extraction service
 - [`/services/rag`](./services/rag/README.md) - Retrieval Augmented Generation service
+- [`/services/scraper`](./services/scraper/README.md) - NIH grant data scraping service
 - [`/packages/db`](./packages/db/README.md) - Shared database models and migrations
 - [`/packages/shared_utils`](./packages/shared_utils/README.md) - Common utilities shared across services
 - [`/frontend`](./frontend/README.md) - NextJS frontend application
@@ -153,6 +154,7 @@ Available profiles:
 - `indexer`: Indexer service and its dependencies
 - `crawler`: Crawler service and its dependencies
 - `rag`: RAG service and its dependencies
+- `scraper`: Scraper service and its dependencies
 - `frontend`: Frontend service
 - `services`: All backend services
 
@@ -220,7 +222,7 @@ the instructions in the [Getting Started](#getting-started) section.
 
 Backend services are deployed to Cloud Run:
 - API: `https://api-staging.grantflow.ai` (staging)
-- Services: backend, indexer, crawler, rag
+- Services: backend, indexer, crawler, rag, scraper
 - Database: Cloud SQL PostgreSQL
 - Storage: GCS buckets
 
@@ -268,6 +270,7 @@ E2E_TESTS=1 pytest -m "ai_eval"           # AI-powered evaluation tests
 E2E_TESTS=1 pytest services/indexer/tests/e2e/
 E2E_TESTS=1 pytest services/crawler/tests/e2e/
 E2E_TESTS=1 pytest services/rag/tests/e2e/
+E2E_TESTS=1 pytest services/scraper/tests/
 
 # Skip expensive AI tests in CI
 E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)"

@@ -67,13 +67,13 @@ describe("Logger", () => {
 		});
 
 		it("should include correlation ID when provided", () => {
-			const context = { correlationId: "abc-123", data: "test" };
+			const context = { data: "test", traceId: "abc-123" };
 
 			log.info("Request processed", context);
 
 			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Request processed", {
-				correlationId: "abc-123",
 				data: "test",
+				traceId: "abc-123",
 			});
 		});
 	});
@@ -97,8 +97,8 @@ describe("Logger", () => {
 
 		it("should not log even with complex contexts in production", () => {
 			const complexContext = {
-				correlationId: "xyz-789",
 				metadata: { timestamp: Date.now() },
+				traceId: "xyz-789",
 				user: { id: "123", name: "Test" },
 			};
 

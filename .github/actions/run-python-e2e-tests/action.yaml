@@ -123,23 +123,33 @@ runs:
               FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC=frontend-notifications
               MODEL_DIR=$HOME/hf_models
               EOF
+              elif [[ "${{ inputs.service }}" == "scraper" ]]; then
+                cat > services/${{ inputs.service }}/.env << EOF
+              DEBUG=True
+              EOF
               fi
 
         - name: Setup database extensions
           shell: bash
           run: |
-              # Install required PostgreSQL extensions
-              PGPASSWORD=grantflow psql -h localhost -U grantflow -d grantflow -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
-              PGPASSWORD=grantflow psql -h localhost -U grantflow -d grantflow -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
+              # Skip database setup for scraper service
+              if [[ "${{ inputs.service }}" != "scraper" ]]; then
+                # Install required PostgreSQL extensions
+                PGPASSWORD=grantflow psql -h localhost -U grantflow -d grantflow -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+                PGPASSWORD=grantflow psql -h localhost -U grantflow -d grantflow -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
+              fi
 
         - name: Run database migrations
           shell: bash
           run: |
-              # Skip Docker database setup since GitHub services provide PostgreSQL
-              # Directly run Alembic migrations against the service database
-              export PYTHONPATH="."
-              export DB_CONNECTION_STRING="postgresql+asyncpg://grantflow:grantflow@localhost:5432/grantflow"
-              uv run alembic --config ./packages/db/alembic.ini upgrade head
+              # Skip database setup for scraper service
+              if [[ "${{ inputs.service }}" != "scraper" ]]; then
+                # Skip Docker database setup since GitHub services provide PostgreSQL
+                # Directly run Alembic migrations against the service database
+                export PYTHONPATH="."
+                export DB_CONNECTION_STRING="postgresql+asyncpg://grantflow:grantflow@localhost:5432/grantflow"
+                uv run alembic --config ./packages/db/alembic.ini upgrade head
+              fi
 
         - name: Run E2E Tests
           shell: bash

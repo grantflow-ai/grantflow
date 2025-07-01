@@ -10,6 +10,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import PubSubEvent, RagRequest
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
@@ -17,6 +18,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
+
+configure_otel("rag")
 
 logger = get_logger(__name__)
 
@@ -44,7 +47,7 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest:
             "PubSub message decoded successfully",
             parent_type=rag_request["parent_type"],
             parent_id=str(rag_request["parent_id"]),
-            correlation_id=rag_request.get("correlation_id"),
+            trace_id=rag_request.get("trace_id"),
             decode_duration_ms=round(decode_duration * 1000, 2),
         )
 
@@ -74,13 +77,13 @@ async def handle_rag_request(
     )
 
     rag_request = handle_pubsub_message(data)
-    correlation_id = rag_request.get("correlation_id")
+    trace_id = rag_request.get("trace_id")
 
     logger.debug(
         "Starting RAG processing pipeline",
         parent_type=rag_request["parent_type"],
         parent_id=str(rag_request["parent_id"]),
-        correlation_id=correlation_id,
+        trace_id=trace_id,
     )
 
     try:
@@ -90,7 +93,7 @@ async def handle_rag_request(
             logger.debug(
                 "Processing grant template",
                 grant_template_id=str(rag_request["parent_id"]),
-                correlation_id=correlation_id,
+                trace_id=trace_id,
             )
             await grant_template_generation_pipeline_handler(
                 grant_template_id=rag_request["parent_id"],
@@ -100,7 +103,7 @@ async def handle_rag_request(
             logger.debug(
                 "Processing grant application",
                 grant_application_id=str(rag_request["parent_id"]),
-                correlation_id=correlation_id,
+                trace_id=trace_id,
             )
             await grant_application_text_generation_pipeline_handler(
                 grant_application_id=rag_request["parent_id"],
@@ -114,7 +117,7 @@ async def handle_rag_request(
             "RAG processing completed successfully",
             parent_type=rag_request["parent_type"],
             parent_id=str(rag_request["parent_id"]),
-            correlation_id=correlation_id,
+            trace_id=trace_id,
             pipeline_duration_ms=round(pipeline_duration * 1000, 2),
             total_duration_ms=round(total_duration * 1000, 2),
         )
@@ -125,7 +128,7 @@ async def handle_rag_request(
             "Failed to process RAG request - parent entity may have been deleted",
             parent_type=rag_request["parent_type"],
             parent_id=str(rag_request["parent_id"]),
-            correlation_id=correlation_id,
+            trace_id=trace_id,
             error_type=type(e).__name__,
             error=str(e),
             error_duration_ms=round(error_duration * 1000, 2),
@@ -137,7 +140,7 @@ async def handle_rag_request(
             "Unexpected error during RAG processing",
             parent_type=rag_request["parent_type"],
             parent_id=str(rag_request["parent_id"]),
-            correlation_id=correlation_id,
+            trace_id=trace_id,
             error_type=type(e).__name__,
             error_duration_ms=round(error_duration * 1000, 2),
         )

@@ -31,7 +31,7 @@ rules:
     content: |
       - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
       - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
-      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing)
+      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing), scraper (grants)
       - **Database**: PostgreSQL with asyncpg, pgvector for embeddings
       - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
       - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
@@ -156,6 +156,7 @@ rules:
       PYTHONPATH=. uv run pytest services/indexer/tests/             # Just indexer unit tests
       PYTHONPATH=. uv run pytest services/crawler/tests/             # Just crawler unit tests
       PYTHONPATH=. uv run pytest services/rag/tests/                 # Just RAG unit tests
+      PYTHONPATH=. uv run pytest services/scraper/tests/             # Just scraper unit tests
 
       # Running specific test files or tests
       PYTHONPATH=. uv run pytest services/rag/tests/e2e/retrieval_test.py::test_document_retrieval
@@ -167,6 +168,7 @@ rules:
       PYTHONPATH=. E2E_TESTS=1 uv run pytest -m "quality_assessment" services/rag/tests/
       E2E_TESTS=1 pytest services/indexer/tests/ # Indexer unit + e2e tests
       E2E_TESTS=1 pytest services/crawler/tests/ # Crawler unit + e2e tests
+      E2E_TESTS=1 pytest services/scraper/tests/ # Scraper unit + e2e tests
 
       # CI-friendly patterns
       pytest                                      # Fast unit tests only
@@ -395,7 +397,7 @@ rules:
 
       ### Deployment Architecture
 
-      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag)
+      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag, scraper)
       - **Frontend**: Firebase App Hosting (branch-based deployments)
       - **Database**: Cloud SQL PostgreSQL
       - **Storage**: GCS buckets (staging uses `grantflow-staging-uploads`)
@@ -446,6 +448,69 @@ rules:
       - **Build-time**: `process.env.NODE_ENV` in Next.js
       - **Services**: Need both `GOOGLE_CLOUD_PROJECT` and `GCP_PROJECT_ID`
       - **Bucket names**: Use environment-specific names (e.g., `grantflow-staging-uploads`)
+
+  - name: "Monitoring and Observability"
+    priority: 48
+    content: |
+      ### OpenTelemetry Integration
+
+      The project uses OpenTelemetry for distributed tracing and monitoring across all services:
+
+      - **Trace ID System**: Uses `trace_id` (renamed from correlation_id) for request correlation
+      - **Structured Logging**: All logs include trace_id and span_id automatically via structlog
+      - **Distributed Tracing**: Full request traces from frontend → backend → services
+      - **Custom Metrics**: Business and infrastructure metrics using OpenTelemetry meters
+
+      ### Implementation
+
+      **Services Configuration**:
+      ```python
+      # All services call this on startup
+      from packages.shared_utils.src.otel import configure_otel
+      configure_otel("service-name")
+      ```
+
+      **Span Creation**:
+      ```python
+      from packages.shared_utils.src.tracing import start_span_with_trace_id
+
+      with start_span_with_trace_id("operation_name", trace_id=trace_id) as span:
+          span.set_attribute("key", "value")
+          # operation logic
+      ```
+
+      **Pub/Sub Tracing**:
+      - All Pub/Sub messages include trace context propagation
+      - Uses OpenTelemetry TraceContextTextMapPropagator
+      - Child spans automatically continue parent traces
+
+      ### Discord Alerting
+
+      **Alert Policies** (Terraform-managed):
+      - Service completely down (zero 2xx responses for 5+ minutes)
+      - Database disconnected (no connections for 3+ minutes)
+      - Scraper not running (no activity for 48+ hours)
+      - Pub/Sub dead (high undelivered messages for 20+ minutes)
+      - High error rate (>50% errors for 10+ minutes)
+
+      **Discord Webhook**: Set via `DISCORD_WEBHOOK_URL` environment variable in all services
+
+      ### Environment Variables
+
+      ```bash
+      # OpenTelemetry configuration
+      GOOGLE_CLOUD_PROJECT=grantflow
+      ENABLE_CLOUD_TRACE=1  # Optional: enable Cloud Trace export in development
+      DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...  # For monitoring alerts
+      ```
+
+      ### Key Files
+
+      - `packages/shared_utils/src/otel.py` - OpenTelemetry configuration
+      - `packages/shared_utils/src/tracing.py` - Span utilities and trace_id integration
+      - `packages/shared_utils/src/logger.py` - Enhanced with OTEL context
+      - `packages/shared_utils/src/metrics.py` - Custom business metrics
+      - `terraform/modules/monitoring/` - Alert policies and notification channels
 
   - name: "Security"
     priority: 45
@@ -511,6 +576,37 @@ rules:
       - Drop ENUMs before dropping tables: `DROP TYPE IF EXISTS typename CASCADE`
       - Check for existing alembic_version table
       - Use `CASCADE` when dropping tables with foreign keys
+
+  - name: "User @naaman Instructions"
+    priority: 36
+    content: |
+      ### Special Instructions for User @naaman
+
+      User @naaman is the primary developer and decision maker for this project. When working with @naaman:
+
+      1. **Communication Style**:
+         - Be direct and to the point - avoid excessive preamble
+         - Use informal, conversational tone when appropriate
+         - It's okay to use humor and personality (including the occasional "dude" or "my dude")
+         - When explaining complex topics, break them down in digestible chunks
+
+      2. **Technical Preferences**:
+         - @naaman prefers pragmatic solutions over perfect ones
+         - Values clear, working code over theoretical discussions
+         - Appreciates when you proactively run linters and tests
+         - Likes comprehensive but concise summaries at the end of tasks
+
+      3. **Workflow Patterns**:
+         - Often works in long sessions with multiple related tasks
+         - May ask for explanations "as if very stoned" - provide simplified, metaphorical explanations
+         - Values seeing the big picture and understanding what's left to do
+         - Appreciates when you track progress and remind about pending tasks
+
+      4. **Decision Making**:
+         - Has final say on architectural decisions
+         - May choose to "ponder and return" on complex decisions
+         - Trust their judgment when they override standard patterns
+         - They know the business context better than documented
 
   - name: "Important Instruction Reminders"
     priority: 35

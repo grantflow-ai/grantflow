@@ -22,10 +22,10 @@ export function getClient(): KyInstance {
 					}
 
 					log.info(`API ${request.method} ${request.url} - ${response.status}`, {
-						correlation_id: request.headers.get("X-Correlation-ID"),
 						method: request.method,
 						operation: request.headers.get("X-Operation"),
 						status: response.status,
+						trace_id: request.headers.get("X-Trace-ID"),
 						url: request.url,
 					});
 
@@ -40,11 +40,11 @@ export function getClient(): KyInstance {
 					}
 
 					log.error(`API ERROR ${error.request.method} ${error.request.url}`, undefined, {
-						correlation_id: error.request.headers.get("X-Correlation-ID"),
 						error: error.message,
 						method: error.request.method,
 						operation: error.request.headers.get("X-Operation"),
 						status: error.response.status,
+						trace_id: error.request.headers.get("X-Trace-ID"),
 						url: error.request.url,
 					});
 
@@ -61,9 +61,9 @@ export function getClient(): KyInstance {
 
 					// Continue with normal request logging
 					log.info(`API ${request.method} ${request.url}`, {
-						correlation_id: request.headers.get("X-Correlation-ID"),
 						method: request.method,
 						operation: request.headers.get("X-Operation"),
+						trace_id: request.headers.get("X-Trace-ID"),
 						url: request.url,
 					});
 				},

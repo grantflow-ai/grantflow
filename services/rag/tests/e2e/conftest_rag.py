@@ -139,7 +139,7 @@ def analyze_pipeline_timing(
 ) -> dict[str, Any]:
     """Analyze pipeline performance against targets."""
 
-    analysis = {
+    analysis: dict[str, Any] = {
         "total_time": total_time,
         "stage_breakdown": stage_timings,
         "performance_vs_targets": {},

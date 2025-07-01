@@ -22,20 +22,13 @@ from packages.shared_utils.src.ai import (
 
 
 async def test_model_constants() -> None:
+    assert os.environ.get("EVALUATION_MODEL", "gemini-2.5-flash") == EVALUATION_MODEL
+    assert os.environ.get("GENERATION_MODEL", "gemini-2.5-flash") == GENERATION_MODEL
     assert (
-        os.environ.get("EVALUATION_MODEL", "gemini-2.0-flash-001") == EVALUATION_MODEL
-    )
-    assert (
-        os.environ.get("GENERATION_MODEL", "gemini-2.0-flash-001") == GENERATION_MODEL
-    )
-    assert (
-        os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-3-5-sonnet-latest")
+        os.environ.get("ANTHROPIC_SONNET_MODEL", "claude-sonnet-4-20250514")
         == ANTHROPIC_SONNET_MODEL
     )
-    assert (
-        os.environ.get("REASONING_MODEL", "gemini-2.5-flash-preview-05-20")
-        == REASONING_MODEL
-    )
+    assert os.environ.get("REASONING_MODEL", "gemini-2.5-flash") == REASONING_MODEL
 
 
 async def test_get_vertex_credentials() -> None:
