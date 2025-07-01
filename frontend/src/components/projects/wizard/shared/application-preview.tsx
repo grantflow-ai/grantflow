@@ -13,10 +13,12 @@ import { LinkPreviewItem } from "./link-preview-item";
 export function ApplicationPreview({
 	connectionStatus,
 	connectionStatusColor,
+	draftTitle,
 	parentId,
 }: {
 	connectionStatus?: string;
 	connectionStatusColor?: string;
+	draftTitle: string;
 	parentId?: string;
 }) {
 	log.info("ApplicationPreview render", { parentId });
@@ -41,7 +43,8 @@ export function ApplicationPreview({
 		[application?.grant_template?.rag_sources],
 	);
 
-	const isEmpty = !application?.title && templateFiles.length === 0 && templateUrls.length === 0;
+	log.warn("draftTitle", { draftTitle });
+	const isEmpty = !draftTitle && templateFiles.length === 0 && templateUrls.length === 0;
 
 	return (
 		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-app-gray-100 p-5 md:p-7">
@@ -63,10 +66,10 @@ export function ApplicationPreview({
 							)}
 						</div>
 						<h3
-							className={`font-heading text-3xl font-medium leading-[34px] ${application?.title ? "" : "text-muted-foreground-dark/50"}`}
+							className={`font-heading text-3xl font-medium leading-[34px] ${draftTitle ? "" : "text-muted-foreground-dark/50"}`}
 							data-testid="application-title"
 						>
-							{application?.title ?? "Untitled Application"}
+							{draftTitle || "Untitled Application"}
 						</h3>
 					</div>
 

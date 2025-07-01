@@ -26,7 +26,7 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders empty state when no content", () => {
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="" />);
 
 		expect(screen.queryByTestId("application-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
@@ -45,7 +45,7 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="Test Application" />);
 
 		expect(screen.getByTestId("application-title")).toBeInTheDocument();
 		expect(screen.getByTestId("application-title")).toHaveTextContent("Test Application");
@@ -73,9 +73,9 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="" />);
 
-		expect(screen.getByTestId("application-title")).toHaveTextContent("");
+		expect(screen.getByTestId("application-title")).toHaveTextContent("Untitled Application");
 	});
 
 	it("renders uploaded files", () => {
@@ -99,7 +99,7 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="Test Application" />);
 
 		expect(screen.getByTestId("application-documents")).toBeInTheDocument();
 		expect(screen.getByTestId("file-collection")).toBeInTheDocument();
@@ -126,7 +126,7 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="Test Application" />);
 
 		expect(screen.getByTestId("application-links")).toBeInTheDocument();
 	});

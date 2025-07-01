@@ -97,16 +97,17 @@ const initialWizardState: WizardState = {
 	},
 };
 
+const debouncedUpdateTitle = createDebounce((title: string) => {
+	const { application, updateApplicationTitle } = useApplicationStore.getState();
+
+	if (application?.project_id && title !== application.title) {
+		void updateApplicationTitle(application.project_id, application.id, title);
+	}
+}, DEBOUNCE_DELAY_MS);
+
 export const useWizardStore = create<WizardActions & WizardState>()(
 	persist(
 		(set, get) => {
-			const debouncedUpdateTitle = createDebounce((title: string) => {
-				const { application, updateApplicationTitle } = useApplicationStore.getState();
-				if (application?.project_id && title.trim() && title !== application.title) {
-					void updateApplicationTitle(application.project_id, application.id, title);
-				}
-			}, DEBOUNCE_DELAY_MS);
-
 			return {
 				...initialWizardState,
 
@@ -268,10 +269,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				handleTitleChange: (title: string) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (application) {
-						void updateApplication({ title });
+					const { application } = useApplicationStore.getState();
 
+					if (application) {
 						debouncedUpdateTitle.call(title);
 					}
 				},
