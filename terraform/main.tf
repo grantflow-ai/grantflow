@@ -88,3 +88,11 @@ module "scheduler" {
   scraper_url                             = module.cloud_run.scraper_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
 }
+
+module "monitoring" {
+  source                = "./modules/monitoring"
+  project_id            = var.project_id
+  environment           = var.environment
+  discord_webhook_url   = var.discord_webhook_url
+  monthly_budget_amount = var.monthly_budget_amount
+}
