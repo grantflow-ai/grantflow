@@ -56,18 +56,23 @@ export function WizardClientComponent({ application: initialApplication, project
 
 	useEffect(() => {
 		useApplicationStore.getState().reset();
+		useWizardStore.getState().reset();
+
 		useApplicationStore.setState({
 			application: initialApplication,
 			areAppOperationsInProgress: false,
 		});
 
-		useWizardStore.getState().reset();
-
-		void useApplicationStore.getState().checkAndRestoreJobState();
+		// Add microtask delay to ensure state is fully set before restoration
+		const timeoutId = setTimeout(() => {
+			void useApplicationStore.getState().checkAndRestoreJobState();
+		}, 0);
 
 		return () => {
+			clearTimeout(timeoutId);
 			useWizardStore.getState().reset();
 			useApplicationStore.getState().clearRestoredJobState();
+			useApplicationStore.getState().reset();
 		};
 	}, [initialApplication]);
 

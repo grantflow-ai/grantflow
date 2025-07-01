@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { mutate } from "swr";
 import { create } from "zustand";
 
 import {
@@ -47,10 +46,19 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		try {
 			const response = await handleCreateProject(data);
 
-			await get().getProject(response.id);
+			const projectsResponse = await handleGetProjects();
 
-			await mutate("projects");
+			set({
+				areOperationsInProgress: false,
+				projects: projectsResponse,
+			});
+
 			toast.success("Project created successfully");
+
+			log.info("project-store.ts: createProject: ", {
+				message: "Project created successfully",
+				projectId: response.id,
+			});
 		} catch (error: unknown) {
 			log.error("createProject", error);
 			toast.error("Failed to create project");
@@ -68,7 +76,6 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				projects: state.projects.filter((p) => p.id !== projectId),
 			}));
 
-			await mutate("projects");
 			toast.success("Project deleted successfully");
 		} catch (error: unknown) {
 			log.error("deleteProject", error);
@@ -81,10 +88,14 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		set({ areOperationsInProgress: true });
 		try {
 			await handleDuplicateProject(projectId);
+			const projectsResponse = await handleGetProjects();
 
-			await mutate("projects");
+			set({
+				areOperationsInProgress: false,
+				projects: projectsResponse,
+			});
+
 			toast.success("Project duplicated successfully");
-			set({ areOperationsInProgress: false });
 		} catch (error: unknown) {
 			log.error("duplicateProject", error);
 			toast.error("Failed to duplicate project");
@@ -100,6 +111,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				areOperationsInProgress: false,
 				project: response,
 			});
+			log.info("project-store.ts: getProject: ", {
+				message: "Project retrieved successfully",
+				project: response,
+			});
 		} catch (error: unknown) {
 			log.error("getProject", error);
 			toast.error("Failed to retrieve project");
@@ -113,6 +128,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			const response = await handleGetProjects();
 			set({
 				areOperationsInProgress: false,
+				projects: response,
+			});
+			log.info("project-store.ts: getProjects: ", {
+				message: "Projects retrieved successfully",
 				projects: response,
 			});
 		} catch (error: unknown) {
@@ -140,10 +159,15 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		try {
 			await handleUpdateProject(projectId, data);
 
-			await get().getProject(projectId);
-			await get().getProjects();
+			const updatedProject = await handleGetProject(projectId);
+			const projectsResponse = await handleGetProjects();
 
-			await mutate("projects");
+			set({
+				areOperationsInProgress: false,
+				project: project?.id === projectId ? updatedProject : project,
+				projects: projectsResponse,
+			});
+
 			toast.success("Project updated successfully");
 		} catch (error: unknown) {
 			set({

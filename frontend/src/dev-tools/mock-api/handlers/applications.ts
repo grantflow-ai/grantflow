@@ -109,10 +109,18 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		log.info("[Mock API] Retrieving application", { applicationId });
+		const projectId = params?.project_id;
+		log.info("[Mock API] Retrieving application", { applicationId, projectId });
 
 		const existingApplication = applicationStore.get(applicationId);
 		if (existingApplication) {
+			if (projectId && existingApplication.project_id !== projectId) {
+				log.warn("[Mock API] Project ID mismatch", {
+					actualProjectId: existingApplication.project_id,
+					applicationId,
+					requestedProjectId: projectId,
+				});
+			}
 			log.info("[Mock API] Returning application from store", { applicationId });
 			return existingApplication;
 		}
@@ -151,7 +159,7 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		log.info("[Mock API] Updating application", { applicationId });
+		log.info("[Mock API] Updating application", { applicationId, body });
 
 		const existingApplication = applicationStore.get(applicationId);
 		if (!existingApplication) {
