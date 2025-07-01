@@ -213,7 +213,7 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
   # Configure exponential backoff for failed deliveries
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.rag_processing_dlq.id
-    max_delivery_attempts = 3 # Fewer retries for expensive RAG operations
+    max_delivery_attempts = 5 # Minimum required by GCP
   }
 }
 
