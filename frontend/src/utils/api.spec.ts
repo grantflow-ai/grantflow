@@ -41,8 +41,8 @@ describe("api", () => {
 	};
 
 	const mockHeaders = new Map([
-		["X-Correlation-ID", "test-correlation-id"],
 		["X-Operation", "test-operation"],
+		["X-Trace-ID", "test-trace-id"],
 	]);
 
 	const mockRequest = {

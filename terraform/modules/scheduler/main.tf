@@ -42,42 +42,42 @@ resource "google_project_service" "scheduler" {
   service = "cloudscheduler.googleapis.com"
 
   disable_dependent_services = false
-  disable_on_destroy        = false
+  disable_on_destroy         = false
 }
 
 # Daily NIH grant scraper job
 resource "google_cloud_scheduler_job" "scraper_daily" {
-  name     = "scraper-daily"
-  region   = var.region
-  schedule = "0 2 * * *"  # Daily at 2 AM UTC
-  timezone = "UTC"
-  
+  name      = "scraper-daily"
+  region    = var.region
+  schedule  = "0 2 * * *" # Daily at 2 AM UTC
+  time_zone = "UTC"
+
   description = "Daily NIH grant scraping job"
 
   http_target {
     uri         = var.scraper_url
     http_method = "POST"
-    
+
     headers = {
       "Content-Type" = "application/json"
     }
 
     body = base64encode(jsonencode({
-      source = "cloud-scheduler"
+      source   = "cloud-scheduler"
       job_name = "daily-scraper"
     }))
 
     oidc_token {
       service_account_email = var.scheduler_invoker_service_account_email
-      audience             = var.scraper_url
+      audience              = var.scraper_url
     }
   }
 
   retry_config {
     retry_count          = 3
-    max_retry_duration   = "900s"  # 15 minutes max retry
-    min_backoff_duration = "60s"   # 1 minute min backoff
-    max_backoff_duration = "300s"  # 5 minutes max backoff
+    max_retry_duration   = "900s" # 15 minutes max retry
+    min_backoff_duration = "60s"  # 1 minute min backoff
+    max_backoff_duration = "300s" # 5 minutes max backoff
     max_doublings        = 3
   }
 
