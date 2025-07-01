@@ -164,9 +164,19 @@ async def test_publish_url_crawling_task_message_too_large(
         "Message too large"
     )
 
-    with patch(
-        "packages.shared_utils.src.pubsub.get_publisher_client",
-        return_value=mock_publisher_client,
+    mock_span = Mock()
+    mock_span.__enter__ = Mock(return_value=mock_span)
+    mock_span.__exit__ = Mock(return_value=None)
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
+            return_value=mock_span,
+        ),
     ):
         with pytest.raises(BackendError) as exc_info:
             await publish_url_crawling_task(
@@ -183,9 +193,19 @@ async def test_publish_url_crawling_task_message_too_large(
 async def test_publish_url_crawling_task_with_string_ids(
     mock_publisher_client: Mock,
 ) -> None:
-    with patch(
-        "packages.shared_utils.src.pubsub.get_publisher_client",
-        return_value=mock_publisher_client,
+    mock_span = Mock()
+    mock_span.__enter__ = Mock(return_value=mock_span)
+    mock_span.__exit__ = Mock(return_value=None)
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
+            return_value=mock_span,
+        ),
     ):
         result = await publish_url_crawling_task(
             logger=logger,
@@ -202,9 +222,19 @@ async def test_publish_url_crawling_task_with_string_ids(
 async def test_publish_url_crawling_task_with_none_project(
     mock_publisher_client: Mock,
 ) -> None:
-    with patch(
-        "packages.shared_utils.src.pubsub.get_publisher_client",
-        return_value=mock_publisher_client,
+    mock_span = Mock()
+    mock_span.__enter__ = Mock(return_value=mock_span)
+    mock_span.__exit__ = Mock(return_value=None)
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
+            return_value=mock_span,
+        ),
     ):
         result = await publish_url_crawling_task(
             logger=logger,
