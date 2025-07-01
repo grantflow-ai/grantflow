@@ -2,22 +2,6 @@ import { RagJobResponseFactory } from "::testing/factories";
 import type { API } from "@/types/api-types";
 
 export const ragHandlers = {
-	crawlUrl: async ({
-		body,
-		params,
-	}: {
-		body?: any;
-		params?: Record<string, string>;
-	}): Promise<API.CrawlGrantApplicationUrl.Http201.ResponseBody> => {
-		const requestBody = body as API.CrawlGrantApplicationUrl.RequestBody;
-		const applicationId = params?.application_id;
-		if (!applicationId) {
-			throw new Error("Application ID required");
-		}
-
-		console.log("[Mock API] Crawling URL for application:", applicationId, requestBody.url);
-		return { source_id: crypto.randomUUID() };
-	},
 	getRagJob: async ({
 		params,
 	}: {
