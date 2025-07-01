@@ -55,7 +55,7 @@ describe("CreateApplicationButton", () => {
 		await user.click(button);
 
 		expect(createApplication).toHaveBeenCalledWith(mockProjectId, {
-			title: "Untitled Application",
+			title: "",
 		});
 
 		await waitFor(() => {
