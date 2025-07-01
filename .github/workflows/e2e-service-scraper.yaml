@@ -51,3 +51,5 @@ jobs:
                   service: scraper
                   test_markers: smoke
                   timeout: 300
+              env:
+                  E2E_TESTS: "1"
