@@ -40,3 +40,25 @@ output "database_ip_address" {
   description = "The IP address of the database instance"
   value       = module.database.instance_ip_address
 }
+
+# Scraper service outputs
+output "scraper_url" {
+  description = "The URL of the scraper service"
+  value       = module.cloud_run.scraper_url
+}
+
+output "scraper_bucket_name" {
+  description = "The scraper storage bucket name"
+  value       = module.storage.scraper_bucket_name
+}
+
+# Scheduler outputs
+output "scraper_job_name" {
+  description = "The name of the Cloud Scheduler job for scraper"
+  value       = module.scheduler.scraper_job_name
+}
+
+output "scraper_job_schedule" {
+  description = "The schedule for the scraper job"
+  value       = module.scheduler.scraper_job_schedule
+}

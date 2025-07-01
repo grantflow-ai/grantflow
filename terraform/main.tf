@@ -78,3 +78,13 @@ module "database" {
 
   authorized_networks = var.database_authorized_networks
 }
+
+
+module "scheduler" {
+  source                                = "./modules/scheduler"
+  project_id                            = var.project_id
+  region                                = var.region
+  environment                           = var.environment
+  scraper_url                          = module.cloud_run.scraper_url
+  scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+}
