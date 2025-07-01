@@ -17,6 +17,7 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.gcs import construct_object_uri, upload_blob
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import (
     CrawlingRequest,
     PubSubEvent,
@@ -36,6 +37,8 @@ from packages.db.src.tables import (
     FundingOrganizationRagSource,
 )
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
+
+configure_otel("crawler")
 
 logger = get_logger(__name__)
 
