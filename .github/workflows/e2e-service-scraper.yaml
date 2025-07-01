@@ -39,27 +39,15 @@ jobs:
     smoke-tests:
         runs-on: ubuntu-latest
         timeout-minutes: 15
-        services:
-            fake-gcs-server:
-                image: fsouza/fake-gcs-server:latest
-                ports:
-                    - 4443:4443
-                options: >-
-                    --health-cmd "curl -f -k https://localhost:4443"
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 3
         env:
-            STORAGE_EMULATOR_HOST: https://localhost:4443
-            SCRAPER_GCS_BUCKET_NAME: grantflow-scraper-test
             DEBUG: "True"
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Run E2E Tests
+            - name: Run Scraper E2E Tests (Smoke)
               uses: ./.github/actions/run-python-e2e-tests
               with:
-                  target: scraper
-                  test-markers: ${{ github.event.inputs.test_markers || 'smoke' }}
-                  chromium: true
+                  service: scraper
+                  test_markers: smoke
+                  timeout: 300
