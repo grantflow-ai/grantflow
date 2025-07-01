@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 configure_otel("scraper")
 
+
 logger = get_logger(__name__)
 
 
