@@ -84,9 +84,19 @@ def test_get_subscriber_client_creates_client_once() -> None:
 
 
 async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) -> None:
-    with patch(
-        "packages.shared_utils.src.pubsub.get_publisher_client",
-        return_value=mock_publisher_client,
+    mock_span = Mock()
+    mock_span.__enter__ = Mock(return_value=mock_span)
+    mock_span.__exit__ = Mock(return_value=None)
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
+            return_value=mock_span,
+        ),
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         project_id = UUID("223e4567-e89b-12d3-a456-426614174000")
@@ -105,17 +115,28 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
             project="grantflow", topic="url-crawling"
         )
         mock_publisher_client.publish.assert_called_once()
-        _, kwargs = mock_publisher_client.publish.call_args
-        assert kwargs["topic"] == "projects/test-project/topics/test-topic"
-        assert b"https://example.com" in kwargs["data"]
+        args, kwargs = mock_publisher_client.publish.call_args
+
+        assert args[0] == "projects/test-project/topics/test-topic"
+        assert b"https://example.com" in args[1]
 
 
 async def test_publish_url_crawling_task_with_all_params(
     mock_publisher_client: Mock,
 ) -> None:
-    with patch(
-        "packages.shared_utils.src.pubsub.get_publisher_client",
-        return_value=mock_publisher_client,
+    mock_span = Mock()
+    mock_span.__enter__ = Mock(return_value=mock_span)
+    mock_span.__exit__ = Mock(return_value=None)
+
+    with (
+        patch(
+            "packages.shared_utils.src.pubsub.get_publisher_client",
+            return_value=mock_publisher_client,
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
+            return_value=mock_span,
+        ),
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
         project_id = UUID("223e4567-e89b-12d3-a456-426614174000")
@@ -131,8 +152,9 @@ async def test_publish_url_crawling_task_with_all_params(
 
         assert result == "test-message-id"
         mock_publisher_client.publish.assert_called_once()
-        _, kwargs = mock_publisher_client.publish.call_args
-        assert b"project_id" in kwargs["data"]
+        args, kwargs = mock_publisher_client.publish.call_args
+
+        assert b"project_id" in args[1]
 
 
 async def test_publish_url_crawling_task_message_too_large(
