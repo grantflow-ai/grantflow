@@ -5,6 +5,7 @@ import { invitationHandlers } from "./invitations";
 import { organizationHandlers } from "./organizations";
 import { projectHandlers } from "./projects";
 import { ragHandlers } from "./rag";
+import { sourceHandlers } from "./sources";
 
 export const mockHandlers = {
 	applications: applicationHandlers,
@@ -14,4 +15,5 @@ export const mockHandlers = {
 	organizations: organizationHandlers,
 	projects: projectHandlers,
 	rag: ragHandlers,
+	sources: sourceHandlers,
 };
