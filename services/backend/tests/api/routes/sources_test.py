@@ -372,6 +372,7 @@ async def test_create_upload_url(
         parent_id=grant_application.id,
         source_id=ANY,
         blob_name=test_blob_name,
+        trace_id=ANY,
     )
 
 
@@ -403,6 +404,7 @@ async def test_create_organization_upload_url(
         parent_id=funding_organization.id,
         source_id=ANY,
         blob_name=test_blob_name,
+        trace_id=ANY,
     )
 
 
@@ -435,6 +437,7 @@ async def test_create_template_upload_url(
         parent_id=grant_template.id,
         source_id=ANY,
         blob_name=test_blob_name,
+        trace_id=ANY,
     )
 
 
