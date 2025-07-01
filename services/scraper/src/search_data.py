@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import tempfile
 from datetime import UTC, date, datetime
 from json import dumps
 from typing import TYPE_CHECKING, Final, cast
 
+from anyio import Path as AsyncPath
+from pandas import read_excel
+from playwright.async_api import async_playwright
 from services.scraper.src.exceptions import ScraperError
 
 if TYPE_CHECKING:
     from playwright.async_api import Page
-
     from services.scraper.src.dtos import GrantInfo
     from services.scraper.src.storage import Storage
 
@@ -29,18 +32,18 @@ def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TOD
     """
     qs = {
         "query": "empty",
-        "type": "all",  # ["active", "notices", "activenosis"],
+        "type": "all",
         "foa": "all",
-        "parent_orgs": "all",  # "NIH",
+        "parent_orgs": "all",
         "orgs": "all",
-        "ac": "all",  # ["R00", "R01", "R03", "R13", "R15", "R16"],
+        "ac": "all",
         "ct": "all",
         "pfoa": "all",
-        "date": f"{from_date.strftime("%m%d%Y")}-{to_date.strftime("%m%d%Y")}",
+        "date": f"{from_date.strftime('%m%d%Y')}-{to_date.strftime('%m%d%Y')}",
         "fields": "all",
         "spons": "true",
     }
-    # we don't use urlencode's doseq=True because we want dont want whitespace and escape characters in the query string
+
     return "&".join(f"{key}={','.join(value) if isinstance(value, list) else value}" for key, value in qs.items())
 
 
@@ -57,15 +60,18 @@ async def handle_download_excel_export(page: Page) -> list[GrantInfo]:
         ScraperError: If the export button is not found.
     """
     if export_button := await page.wait_for_selector("text=Export", state="visible"):
-        from aiofiles.tempfile import NamedTemporaryFile as AsyncNamedTemporaryFile
-        from pandas import read_excel
-
         await export_button.click()
         download = await page.wait_for_event("download")
-        async with AsyncNamedTemporaryFile(delete=False) as tmp_file:
-            await download.save_as(tmp_file.name)
 
-        data_frame = read_excel(tmp_file.name).fillna("")
+
+        temp_dir = AsyncPath(tempfile.gettempdir())
+        tmp_path = temp_dir / f"grants_export_{download.suggested_filename or 'data.xlsx'}"
+        await download.save_as(str(tmp_path))
+
+        data_frame = read_excel(str(tmp_path)).fillna("")
+
+
+        await tmp_path.unlink(missing_ok=True)
         data_frame.columns = data_frame.columns.str.lower()
 
         return cast("list[GrantInfo]", data_frame.to_dict(orient="records"))
@@ -90,16 +96,12 @@ async def download_search_data(
     Returns:
         The data as a list of dictionaries
     """
-    from playwright.async_api import async_playwright
-
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()
         context = await browser.new_context(accept_downloads=True)
         page = await context.new_page()
 
-        url = f"{NIH_GRANT_BASE_URL}?{create_query_string(
-            from_date=from_date, to_date=to_date
-        )}"
+        url = f"{NIH_GRANT_BASE_URL}?{create_query_string(from_date=from_date, to_date=to_date)}"
         await page.goto(url)
         await page.wait_for_timeout(3000)
 

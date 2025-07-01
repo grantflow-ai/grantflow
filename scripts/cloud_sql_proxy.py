@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Cloud SQL Proxy Manager - Start, stop, and check status of Cloud SQL Proxy
 """
@@ -42,15 +41,11 @@ def is_proxy_running() -> tuple[bool, int | None]:
             os.kill(pid, 0)
             return True, pid
         except (ValueError, OSError):
-
             PID_FILE.unlink(missing_ok=True)
-
 
     try:
         result = subprocess.run(
-            ["pgrep", "-f", f"cloud-sql-proxy.*{INSTANCE_CONNECTION}"],
-            check=False, capture_output=True,
-            text=True
+            ["pgrep", "-f", f"cloud-sql-proxy.*{INSTANCE_CONNECTION}"], check=False, capture_output=True, text=True
         )
         if result.returncode == 0:
             pid = int(result.stdout.strip().split("\n")[0])
@@ -71,19 +66,10 @@ def start_proxy() -> bool:
     if not proxy_path:
         return False
 
-
-
     with LOG_FILE.open("w") as log:
-        process = subprocess.Popen(
-            [proxy_path, INSTANCE_CONNECTION],
-            stdout=log,
-            stderr=log,
-            start_new_session=True
-        )
-
+        process = subprocess.Popen([proxy_path, INSTANCE_CONNECTION], stdout=log, stderr=log, start_new_session=True)
 
     PID_FILE.write_text(str(process.pid))
-
 
     time.sleep(2)
 
@@ -102,12 +88,10 @@ def stop_proxy() -> bool:
     if not is_running:
         return True
 
-
     try:
         if pid is not None:
             os.kill(pid, signal.SIGTERM)
             time.sleep(1)
-
 
             try:
                 os.kill(pid, 0)
@@ -127,9 +111,7 @@ def status_proxy() -> bool:
     is_running, pid = is_proxy_running()
 
     if is_running:
-
         if LOG_FILE.exists():
-
             result = subprocess.run(["tail", "-3", str(LOG_FILE)], check=False, capture_output=True, text=True)
             if result.stdout:
                 pass

@@ -31,7 +31,7 @@ rules:
     content: |
       - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
       - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
-      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing)
+      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing), scraper (grants)
       - **Database**: PostgreSQL with asyncpg, pgvector for embeddings
       - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
       - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
@@ -156,6 +156,7 @@ rules:
       PYTHONPATH=. uv run pytest services/indexer/tests/             # Just indexer unit tests
       PYTHONPATH=. uv run pytest services/crawler/tests/             # Just crawler unit tests
       PYTHONPATH=. uv run pytest services/rag/tests/                 # Just RAG unit tests
+      PYTHONPATH=. uv run pytest services/scraper/tests/             # Just scraper unit tests
 
       # Running specific test files or tests
       PYTHONPATH=. uv run pytest services/rag/tests/e2e/retrieval_test.py::test_document_retrieval
@@ -167,6 +168,7 @@ rules:
       PYTHONPATH=. E2E_TESTS=1 uv run pytest -m "quality_assessment" services/rag/tests/
       E2E_TESTS=1 pytest services/indexer/tests/ # Indexer unit + e2e tests
       E2E_TESTS=1 pytest services/crawler/tests/ # Crawler unit + e2e tests
+      E2E_TESTS=1 pytest services/scraper/tests/ # Scraper unit + e2e tests
 
       # CI-friendly patterns
       pytest                                      # Fast unit tests only
@@ -395,7 +397,7 @@ rules:
 
       ### Deployment Architecture
 
-      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag)
+      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag, scraper)
       - **Frontend**: Firebase App Hosting (branch-based deployments)
       - **Database**: Cloud SQL PostgreSQL
       - **Storage**: GCS buckets (staging uses `grantflow-staging-uploads`)

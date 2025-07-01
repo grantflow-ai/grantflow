@@ -1,0 +1,65 @@
+name: Scraper E2E Tests
+
+on:
+    pull_request:
+        branches:
+            - main
+            - development*
+        paths:
+            - ".github/workflows/e2e-service-scraper.yaml"
+            - ".github/actions/run-python-e2e-tests/**"
+            - "packages/**"
+            - "services/scraper/**"
+            - "testing/**"
+            - "pyproject.toml"
+            - "uv.lock"
+    push:
+        branches:
+            - main
+            - development
+        paths:
+            - ".github/workflows/e2e-service-scraper.yaml"
+            - ".github/actions/run-python-e2e-tests/**"
+            - "packages/**"
+            - "services/scraper/**"
+            - "testing/**"
+            - "pyproject.toml"
+            - "uv.lock"
+    workflow_dispatch:
+        inputs:
+            test_markers:
+                description: "Test markers to run (smoke)"
+                required: false
+                default: "smoke"
+                type: choice
+                options:
+                    - smoke
+
+jobs:
+    smoke-tests:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        services:
+            fake-gcs-server:
+                image: fsouza/fake-gcs-server:latest
+                ports:
+                    - 4443:4443
+                options: >-
+                    --health-cmd "curl -f http://localhost:4443"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 3
+        env:
+            STORAGE_EMULATOR_HOST: http://localhost:4443
+            SCRAPER_GCS_BUCKET_NAME: grantflow-scraper-test
+            DEBUG: "True"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Run E2E Tests
+              uses: ./.github/actions/run-python-e2e-tests
+              with:
+                  target: scraper
+                  test-markers: ${{ github.event.inputs.test_markers || 'smoke' }}
+                  chromium: true
