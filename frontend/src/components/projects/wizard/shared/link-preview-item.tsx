@@ -23,16 +23,17 @@ export function LinkPreviewItem({ parentId, url }: { parentId?: string; url: str
 					width={16}
 				/>
 				<Link
-					className="text-primary absolute opacity-100 transition-opacity group-hover:opacity-0"
+					className="text-primary absolute opacity-100 transition-opacity group-hover:opacity-0 size-3 cursor-pointer"
 					data-testid="link-icon"
 				/>
 			</div>
 			<a
-				className="h-auto justify-start p-0.5 text-primary hover:text-accent text-sm leading-[18px] hover:no-underline font-normal"
+				className="h-auto justify-start p-0.5 text-primary hover:text-accent text-sm leading-[18px] hover:no-underline font-normal block truncate max-w-full"
 				data-testid="link-url"
 				href={url}
 				rel="noopener noreferrer"
 				target="_blank"
+				title={url}
 			>
 				{url}
 			</a>
