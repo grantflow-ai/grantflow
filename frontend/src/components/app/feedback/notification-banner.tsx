@@ -35,7 +35,7 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 					<div
 						className={cn(
 							"size-2 rounded-full shrink-0",
-							type === "deadline" && "bg-action-primary",
+							type === "deadline" && "bg-primary",
 							type === "info" && "bg-action-secondary",
 							type === "warning" && "bg-[#ff9747]",
 							type === "success" && "bg-[#47ff97]",

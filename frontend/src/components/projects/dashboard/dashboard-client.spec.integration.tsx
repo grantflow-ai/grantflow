@@ -142,7 +142,7 @@ const projectCreationScenarios = [
 		name: "via header button",
 		projectData: () => ProjectRequestFactory.build({ name: "Header Project" }),
 		requiresEmptyState: false,
-		trigger: "bg-action-primary",
+		trigger: "bg-primary",
 	},
 	{
 		description: "creates project from empty state button",

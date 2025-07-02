@@ -61,16 +61,16 @@ describe("Project Store", () => {
 			const projectId = "test-project-id";
 			const projectData = { description: "Test description", logo_url: null, name: "Test Project" };
 			const createdProject = { id: projectId };
-			const fullProject = ProjectFactory.build({ id: projectId, name: "Test Project" });
+			const projectsList = [ProjectListItemFactory.build({ id: projectId, name: "Test Project" })];
 
 			vi.mocked(createProject).mockResolvedValue(createdProject);
-			vi.mocked(getProject).mockResolvedValue(fullProject);
+			vi.mocked(getProjects).mockResolvedValue(projectsList);
 
 			await useProjectStore.getState().createProject(projectData);
 
 			expect(createProject).toHaveBeenCalledWith(projectData);
-			expect(getProject).toHaveBeenCalledWith(projectId);
-			expect(useProjectStore.getState().project).toEqual(fullProject);
+			expect(getProjects).toHaveBeenCalled();
+			expect(useProjectStore.getState().projects).toEqual(projectsList);
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
 

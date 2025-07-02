@@ -56,18 +56,23 @@ export function WizardClientComponent({ application: initialApplication, project
 
 	useEffect(() => {
 		useApplicationStore.getState().reset();
+		useWizardStore.getState().reset();
+
 		useApplicationStore.setState({
 			application: initialApplication,
 			areAppOperationsInProgress: false,
 		});
 
-		useWizardStore.getState().reset();
-
-		void useApplicationStore.getState().checkAndRestoreJobState();
+		// Add microtask delay to ensure state is fully set before restoration
+		const timeoutId = setTimeout(() => {
+			void useApplicationStore.getState().checkAndRestoreJobState();
+		}, 0);
 
 		return () => {
+			clearTimeout(timeoutId);
 			useWizardStore.getState().reset();
 			useApplicationStore.getState().clearRestoredJobState();
+			useApplicationStore.getState().reset();
 		};
 	}, [initialApplication]);
 
@@ -123,7 +128,7 @@ export function WizardClientComponent({ application: initialApplication, project
 	}, [latestRagNotification, setGeneratingTemplate, retrieveApplication, projectId, initialApplication.id]);
 
 	return (
-		<div className="bg-light flex h-screen w-screen flex-col" data-testid="wizard-page">
+		<div className="bg-light flex size-full flex-col" data-testid="wizard-page">
 			<WizardHeader />
 			<section className="flex-1 overflow-auto" data-testid="step-content-container">
 				{stepComponents[currentStep]}

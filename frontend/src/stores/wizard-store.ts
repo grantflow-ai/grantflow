@@ -8,7 +8,7 @@ import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger";
 
-const DEBOUNCE_DELAY_MS = 500;
+const DEBOUNCE_DELAY_MS = 1000;
 const POLLING_INTERVAL_DURATION = 2000;
 export const MIN_TITLE_LENGTH = 10;
 
@@ -97,16 +97,17 @@ const initialWizardState: WizardState = {
 	},
 };
 
+const debouncedUpdateTitle = createDebounce((title: string) => {
+	const { application, updateApplicationTitle } = useApplicationStore.getState();
+
+	if (application?.project_id && title !== application.title) {
+		void updateApplicationTitle(application.project_id, application.id, title);
+	}
+}, DEBOUNCE_DELAY_MS);
+
 export const useWizardStore = create<WizardActions & WizardState>()(
 	persist(
 		(set, get) => {
-			const debouncedUpdateTitle = createDebounce((title: string) => {
-				const { application, updateApplicationTitle } = useApplicationStore.getState();
-				if (application?.project_id && title.trim() && title !== application.title) {
-					void updateApplicationTitle(application.project_id, application.id, title);
-				}
-			}, DEBOUNCE_DELAY_MS);
-
 			return {
 				...initialWizardState,
 
@@ -268,10 +269,9 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				handleTitleChange: (title: string) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (application) {
-						void updateApplication({ title });
+					const { application } = useApplicationStore.getState();
 
+					if (application) {
 						debouncedUpdateTitle.call(title);
 					}
 				},

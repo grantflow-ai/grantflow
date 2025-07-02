@@ -52,7 +52,7 @@ export function DashboardProjectCard({ onDelete, onDuplicate, project }: Dashboa
 			<div className="relative size-full overflow-clip pointer-events-none">
 				<div className="relative flex h-[300px] w-[413px] flex-col items-start justify-between p-6">
 					<div className="relative flex shrink-0 flex-col items-start justify-start gap-4">
-						<div className="relative shrink-0 rounded-full bg-action-primary px-3 py-1">
+						<div className="relative shrink-0 rounded-full bg-primary px-3 py-1">
 							<div className="relative flex size-full flex-row items-center">
 								<div className="relative flex flex-row items-center justify-start gap-1.5">
 									<List className="relative shrink-0 size-3 text-white" />
