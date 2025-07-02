@@ -64,11 +64,11 @@ export const PaymentPlansList: PaymentPlanCardProps[] = [
 		name: "Smart Institution",
 		pricing: {
 			monthly: {
-				classNames: "text-4.25xl",
+				classNames: "text-4-25xl mt-[17px]",
 				priceText: "Custom",
 			},
 			yearly: {
-				classNames: "text-4.25xl",
+				classNames: "text-4-25xl mt-[17px]",
 				priceText: "Custom",
 			},
 		},
