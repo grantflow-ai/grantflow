@@ -12,6 +12,16 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
+const TEST_DATES = {
+	fourDaysFromNow: "2024-01-05T00:00:00Z",
+	oneWeekAndTwoDaysFromNow: "2024-01-10T00:00:00Z",
+	oneWeekFromNow: "2024-01-08T00:00:00Z",
+	today: "2024-01-01T00:00:00Z",
+	tomorrow: "2024-01-02T00:00:00Z",
+	twoWeeksFromNow: "2024-01-15T00:00:00Z",
+	yesterday: "2023-12-31T23:59:59Z",
+};
+
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
 	useParams: () => ({
@@ -288,7 +298,7 @@ describe("Deadline Component", () => {
 		useWizardStore.getState().reset();
 
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
+		vi.setSystemTime(new Date(TEST_DATES.today));
 	});
 
 	afterEach(() => {
@@ -319,7 +329,7 @@ describe("Deadline Component", () => {
 	it("displays deadline passed when submission date is in the past", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				submission_date: "2023-12-31T23:59:59Z", // Yesterday
+				submission_date: TEST_DATES.yesterday,
 			}),
 		});
 
@@ -340,7 +350,7 @@ describe("Deadline Component", () => {
 	it("displays correct time remaining in days", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				submission_date: "2024-01-05T00:00:00Z", // 4 days from now
+				submission_date: TEST_DATES.fourDaysFromNow,
 			}),
 		});
 
@@ -361,7 +371,7 @@ describe("Deadline Component", () => {
 	it("displays correct time remaining in weeks and days", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				submission_date: "2024-01-10T00:00:00Z", // 1 week and 2 days from now
+				submission_date: TEST_DATES.oneWeekAndTwoDaysFromNow,
 			}),
 		});
 
@@ -382,7 +392,7 @@ describe("Deadline Component", () => {
 	it("displays correct time remaining in weeks only", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				submission_date: "2024-01-15T00:00:00Z", // Exactly 2 weeks from now
+				submission_date: TEST_DATES.twoWeeksFromNow,
 			}),
 		});
 
@@ -403,7 +413,7 @@ describe("Deadline Component", () => {
 	it("handles singular form for 1 day", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				submission_date: "2024-01-02T00:00:00Z", // 1 day from now
+				submission_date: TEST_DATES.tomorrow,
 			}),
 		});
 
@@ -424,7 +434,7 @@ describe("Deadline Component", () => {
 	it("handles singular form for 1 week", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				submission_date: "2024-01-08T00:00:00Z", // Exactly 1 week from now
+				submission_date: TEST_DATES.oneWeekFromNow,
 			}),
 		});
 
