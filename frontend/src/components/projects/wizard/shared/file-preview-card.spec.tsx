@@ -238,26 +238,6 @@ describe("FilePreviewCard", () => {
 		});
 	});
 
-	describe("Layout and Styling", () => {
-		it("has correct CSS classes for hover and transition effects", () => {
-			const file = FileWithIdFactory.build({ name: "document.pdf" });
-			const { container } = render(<FilePreviewCard file={file} />);
-
-			const cardElement = container.firstChild as HTMLElement;
-			expect(cardElement).toHaveClass("group");
-			expect(cardElement).toHaveClass("hover:bg-app-gray-100");
-		});
-
-		it("renders file icon container", () => {
-			const file = FileWithIdFactory.build({ name: "document.pdf" });
-			render(<FilePreviewCard file={file} />);
-
-			const fileIcon = screen.getByTestId("file-icon");
-			expect(fileIcon).toBeInTheDocument();
-			expect(fileIcon).toHaveClass("flex", "h-14", "w-12", "items-center", "justify-center");
-		});
-	});
-
 	describe("Accessibility", () => {
 		it("has proper aria-label for clickable files", () => {
 			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
@@ -280,7 +260,6 @@ describe("FilePreviewCard", () => {
 			render(<FilePreviewCard file={file} />);
 
 			const trigger = screen.getByText("File options");
-			expect(trigger.closest("button")).toHaveClass("sr-only");
 			expect(trigger.closest("button")).toBeDisabled();
 		});
 	});

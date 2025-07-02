@@ -1,0 +1,18 @@
+import type { Env } from "@/types/env-types";
+
+export const storybookEnv = {
+	NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",
+	NEXT_PUBLIC_DEBUG: true,
+	NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
+	NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",
+	NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "acmetech-dev.firebaseapp.com",
+	NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "G-XYZ123ABC4",
+	NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: "847362514908",
+	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
+	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
+	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
+	NEXT_PUBLIC_GCS_EMULATOR_URL: "http://localhost:9199",
+	NEXT_PUBLIC_MAILGUN_API_KEY: "mailgun_key_test_1234567890",
+	NEXT_PUBLIC_SEGMENT_WRITE_KEY: "sk_test_1234567890abcdef",
+	NEXT_PUBLIC_SITE_URL: "https://example.com",
+} satisfies Env;

@@ -42,8 +42,12 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 export function ApplicationStructureStep() {
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
-			<ApplicationStructureLeftPane />
-			<ApplicationStructurePreview />
+			<div data-testid="application-structure-left-pane">
+				<ApplicationStructureLeftPane />
+			</div>
+			<div data-testid="application-structure-preview-pane">
+				<ApplicationStructurePreview />
+			</div>
 		</div>
 	);
 }

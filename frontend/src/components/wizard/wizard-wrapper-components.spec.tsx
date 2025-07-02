@@ -84,7 +84,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 			expect(continueButton).toHaveTextContent("Approve and Continue");
 		});
 
-		it("displays generation action on final step", () => {
+		it("displays generation action on generate and complete step", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 			});
@@ -102,6 +102,15 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 			const continueButton = screen.getByTestId("continue-button");
 			expect(continueButton).toHaveTextContent("Next");
+		});
+
+		it("shows continue button on generate and complete step", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.GENERATE_AND_COMPLETE,
+			});
+			render(<WizardFooter />);
+
+			expect(screen.getByTestId("continue-button")).toBeInTheDocument();
 		});
 	});
 
