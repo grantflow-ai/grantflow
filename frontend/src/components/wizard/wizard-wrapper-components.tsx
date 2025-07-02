@@ -285,7 +285,7 @@ function getStepIndicatorType(index: number, currentStepIndex: number): "active"
 	return "inactive";
 }
 
-function getStepTitleClass(index: number, currentStepIndex: number): string {
+function getStepTitleClass(index: number, currentStepIndex: number) {
 	if (index < currentStepIndex) {
 		return "text-app-dark-blue";
 	}
