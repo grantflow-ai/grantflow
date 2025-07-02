@@ -55,7 +55,7 @@ export function ApplicationPreview({
 
 	return (
 		<div className="bg-preview-bg flex min-h-0 h-full w-1/2 md:w-2/3 lg:w-3/4 flex-col border-l border-app-gray-100">
-			<div className="flex-shrink-0 mb-6 flex flex-col items-start gap-2 px-5 md:px-7 pt-5 md:pt-7">
+			<div className="flex-shrink-0 mb-11 flex flex-col items-start gap-2 px-5 md:px-7 pt-5 md:pt-7">
 				<div className="flex items-center gap-2">
 					<ThemeBadge
 						color="light"
@@ -83,41 +83,62 @@ export function ApplicationPreview({
 				<div className="overflow-y-auto h-full px-5 md:px-7 pb-5 md:pb-7">
 					<div className="space-y-5">
 						{templateFiles.length > 0 && (
-							<AppCard
-								className="border-app-gray-100 border p-5 shadow-none"
-								data-testid="application-documents"
-							>
-								<h4 className="font-heading mb-8 text-base font-semibold leading-[22px]">
-									Application Documents
-								</h4>
-								<div className="flex flex-wrap gap-3" data-testid="file-collection">
-									{templateFiles.map((file, index) => (
-										<FilePreviewCard
-											file={file}
-											key={file.name + index.toString()}
-											parentId={parentId}
-										/>
-									))}
-								</div>
-							</AppCard>
+							<DocumentsCard parentId={parentId} templateFiles={templateFiles} />
 						)}
 
-						{templateUrls.length > 0 && (
-							<AppCard
-								className="border-app-gray-100 border p-5 shadow-none"
-								data-testid="application-links"
-							>
-								<h4 className="font-heading mb-8 text-base font-semibold leading-[22px]">Links</h4>
-								<div className="space-y-1">
-									{templateUrls.map((url, index) => (
-										<LinkPreviewItem key={url + index.toString()} parentId={parentId} url={url} />
-									))}
-								</div>
-							</AppCard>
-						)}
+						{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
 					</div>
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templateFiles: FileWithId[] }) {
+	return (
+		<PreviewCard data-testid="application-documents">
+			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Application Documents</h4>
+			<div className="flex flex-wrap gap-3" data-testid="file-collection">
+				{templateFiles.map((file, index) => (
+					<FilePreviewCard file={file} key={file.name + index.toString()} parentId={parentId} />
+				))}
+			</div>
+		</PreviewCard>
+	);
+}
+
+function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls: string[] }) {
+	return (
+		<PreviewCard data-testid="application-links">
+			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Links</h4>
+			<div className="grid grid-cols-2 gap-x-4">
+				<div className="space-y-1">
+					{templateUrls
+						.filter((_, index) => index % 2 === 0)
+						.map((url, originalIndex) => (
+							<LinkPreviewItem key={url + (originalIndex * 2).toString()} parentId={parentId} url={url} />
+						))}
+				</div>
+				<div className="space-y-1">
+					{templateUrls
+						.filter((_, index) => index % 2 === 1)
+						.map((url, originalIndex) => (
+							<LinkPreviewItem
+								key={url + (originalIndex * 2 + 1).toString()}
+								parentId={parentId}
+								url={url}
+							/>
+						))}
+				</div>
+			</div>
+		</PreviewCard>
+	);
+}
+
+function PreviewCard({ children, ...props }: { children: React.ReactNode } & React.ComponentProps<typeof AppCard>) {
+	return (
+		<AppCard className="border-app-gray-100 border p-5 shadow-none gap-8 rounded-sm" {...props}>
+			{children}
+		</AppCard>
 	);
 }
