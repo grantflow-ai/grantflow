@@ -24,7 +24,9 @@ configure_otel("scraper")
 logger = get_logger(__name__)
 
 
-async def run_scraper(storage: Storage, from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE) -> dict[str, int | float]:
+async def run_scraper(
+    storage: Storage, from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE
+) -> dict[str, int | float]:
     """Run the scraper.
 
     Args:
@@ -56,12 +58,11 @@ async def run_scraper(storage: Storage, from_date: date = DEFAULT_FROM_DATE, to_
 
     total_duration = time.time() - start_time
     total_duration_ms = round(total_duration * 1000, 2)
-    
-    # Calculate derived metrics
+
     search_results_count = len(search_results)
     existing_files_count = len(existing_file_identifiers)
     existing_files_skipped = search_results_count - new_files_downloaded
-    
+
     logger.info(
         "Scraper run completed",
         from_date=from_date.isoformat(),
@@ -72,7 +73,7 @@ async def run_scraper(storage: Storage, from_date: date = DEFAULT_FROM_DATE, to_
         existing_identifiers_count=existing_files_count,
         total_duration_ms=total_duration_ms,
     )
-    
+
     return {
         "search_results_count": search_results_count,
         "new_files_downloaded": new_files_downloaded,
@@ -91,19 +92,21 @@ async def handle_scraper_request() -> dict[str, str]:
     """
     start_time = time.time()
     logger.info("Received scraper request")
-    
-    # Get Discord webhook URL and environment
+
     discord_webhook_url = get_env("DISCORD_WEBHOOK_URL", raise_on_missing=False, fallback="")
-    environment = get_env("ENVIRONMENT", fallback="staging")
+    environment = get_env("ENVIRONMENT", raise_on_missing=False, fallback="staging")
 
     try:
-        if get_env("STORAGE_EMULATOR_HOST", fallback="") or get_env("DEBUG", fallback="False").lower() == "true":
+        if (
+            get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False, fallback="")
+            or get_env("DEBUG", raise_on_missing=False, fallback="False").lower() == "true"
+        ):
             storage: Storage = SimpleFileStorage()
             bucket_name = "local-storage"
             logger.info("Using local file storage for development")
         else:
             storage = GCSStorage()
-            bucket_name = get_env("SCRAPER_BUCKET_NAME", fallback="grantflow-scraper")
+            bucket_name = get_env("SCRAPER_GCS_BUCKET_NAME", raise_on_missing=False, fallback="grantflow-scraper")
             logger.info("Using GCS storage for production")
 
         metrics = await run_scraper(storage=storage)
@@ -114,25 +117,23 @@ async def handle_scraper_request() -> dict[str, str]:
             total_duration_ms=round(total_duration * 1000, 2),
         )
 
-        # Send Discord notification if webhook URL is configured
         if discord_webhook_url:
             try:
-                # Get total files count if using GCS storage
                 total_files_in_bucket = None
                 if isinstance(storage, GCSStorage):
                     try:
                         all_files = await storage.get_existing_file_identifiers()
                         total_files_in_bucket = len(all_files)
-                    except Exception:
-                        logger.warning("Could not get total file count from storage")
-                
+                    except (ValueError, RuntimeError, OSError) as ex:
+                        logger.warning("Could not get total file count from storage", error=str(ex))
+
                 await send_scraper_report(
                     webhook_url=discord_webhook_url,
                     environment=environment,
                     date_range=f"{DEFAULT_FROM_DATE.isoformat()} to {TODAY_DATE.isoformat()}",
-                    search_results_found=metrics["search_results_count"],
-                    new_files_downloaded=metrics["new_files_downloaded"],
-                    existing_files_skipped=metrics["existing_files_skipped"],
+                    search_results_found=int(metrics["search_results_count"]),
+                    new_files_downloaded=int(metrics["new_files_downloaded"]),
+                    existing_files_skipped=int(metrics["existing_files_skipped"]),
                     total_processing_time_ms=metrics["total_duration_ms"],
                     bucket_name=bucket_name,
                     total_files_in_bucket=total_files_in_bucket,
@@ -153,8 +154,7 @@ async def handle_scraper_request() -> dict[str, str]:
             error_type=type(e).__name__,
             error_duration_ms=round(error_duration * 1000, 2),
         )
-        
-        # Send failure notification to Discord if webhook URL is configured
+
         if discord_webhook_url:
             try:
                 await send_scraper_report(
@@ -172,7 +172,7 @@ async def handle_scraper_request() -> dict[str, str]:
                 logger.info("Discord failure notification sent")
             except Exception:
                 logger.exception("Failed to send Discord failure notification")
-        
+
         raise
 
 
