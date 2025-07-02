@@ -22,33 +22,20 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 	);
 
 	return (
-		<div className="flex w-full flex-row items-start justify-start gap-8" data-testid="dashboard-stats">
-			<div className="relative flex-1 rounded-lg bg-surface-primary border border-border-primary">
-				<div className="flex flex-col items-start justify-start gap-2.5 px-8 py-6">
-					<div
-						className="text-[48px] font-semibold leading-[58px] text-text-primary font-heading"
-						data-testid="project-count"
-					>
-						{projectCount}
-					</div>
-					<div className="text-[20px] font-normal leading-[30px] text-text-secondary font-body">
-						Research projects
-					</div>
-				</div>
-			</div>
-			<div className="relative flex-1 rounded-lg bg-surface-primary border border-border-primary">
-				<div className="flex flex-col items-start justify-start gap-2.5 px-8 py-6">
-					<div
-						className="text-[48px] font-semibold leading-[58px] text-text-primary font-heading"
-						data-testid="application-count"
-					>
-						{applicationCount}
-					</div>
-					<div className="text-[20px] font-normal leading-[30px] text-text-secondary font-body">
-						Applications
-					</div>
-				</div>
-			</div>
-		</div>
+	
+		   <article className="flex gap-8 items-center w-full mt-6">
+                <div className="w-full h-[130px]  border border-gray-200 rounded-sm px-6 py-6 flex flex-col gap-2.5">
+                  <h4 className="font-normal text-4xl text-black" data-testid="project-count">{projectCount}</h4>
+                  <p className="font-normal text-2xl text-gray-600">
+                    Research projects
+                  </p>
+                </div>
+                <div className="w-full h-[130px]  border border-gray-200 rounded-sm px-6 py-6 flex flex-col gap-2.5">
+                  <h4 className="font-normal text-4xl text-black" data-testid="application-count">{applicationCount}</h4>
+                  <p className="font-normal text-2xl text-gray-600">
+                    Applications
+                  </p>
+                </div>
+              </article>
 	);
 }
