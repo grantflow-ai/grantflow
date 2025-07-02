@@ -13,6 +13,10 @@ variable "project_id" {
   type        = string
 }
 
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
 
 resource "google_secret_manager_secret" "database_connection_string" {
   secret_id = "DATABASE_CONNECTION_STRING"
@@ -163,6 +167,7 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
   secret_id = google_secret_manager_secret.gcs_service_account_credentials.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
+    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
   ]
 }
