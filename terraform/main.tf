@@ -42,6 +42,7 @@ module "cloud_run" {
   region                   = var.region
   environment              = var.environment
   database_connection_name = module.database.instance_connection_name
+  discord_webhook_url      = var.discord_webhook_url
 }
 
 

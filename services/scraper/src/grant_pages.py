@@ -59,7 +59,7 @@ async def save_markdown_page(*, soup: BeautifulSoup, storage: Storage, result_na
 
 async def download_grant_pages(
     *, storage: Storage, search_results: list[GrantInfo], existing_file_identifiers: set[str]
-) -> None:
+) -> int:
     """Download grant pages from search results and save them as markdown files.
 
     Args:
@@ -68,7 +68,7 @@ async def download_grant_pages(
         existing_file_identifiers (set[str]): A set of existing identifiers already in storage.
 
     Returns:
-        None
+        Number of new files downloaded
     """
     all_urls = [result["url"] for result in search_results]
     logger.info("Found %d total search results", len(all_urls))
@@ -85,3 +85,5 @@ async def download_grant_pages(
 
     logger.info("Finished downloading")
     logger.info("Downloaded %d pages", len(search_result_item_urls))
+    
+    return len(search_result_item_urls)
