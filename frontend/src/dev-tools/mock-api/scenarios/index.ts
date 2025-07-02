@@ -139,6 +139,73 @@ export const scenarios: Scenario[] = [
 		data: {
 			applications: new Map([
 				[
+					"app-with-template",
+					ApplicationWithTemplateFactory.build({
+						grant_template: {
+							...ApplicationWithTemplateFactory.build().grant_template!,
+							rag_sources: [
+								{
+									filename: "research-proposal.pdf",
+									sourceId: "src-1",
+									status: "FINISHED",
+								},
+								{
+									filename: "project-guidelines.docx",
+									sourceId: "src-2",
+									status: "FINISHED",
+								},
+								{
+									filename: "application-requirements.txt",
+									sourceId: "src-3",
+									status: "FINISHED",
+								},
+								{
+									sourceId: "src-4",
+									status: "FINISHED",
+									url: "https://grants.nih.gov/grants/guide/pa-files/PA-23-149.html",
+								},
+								{
+									sourceId: "src-5",
+									status: "FINISHED",
+									url: "https://www.nsf.gov/publications/pub_summ.jsp?ods_key=nsf23609",
+								},
+								{
+									sourceId: "src-6",
+									status: "FINISHED",
+									url: "https://erc.europa.eu/apply-erc-grant/starting-grants",
+								},
+								{
+									sourceId: "src-7",
+									status: "FINISHED",
+									url: "https://example.org/very-long-url-that-should-be-truncated-in-the-ui-to-test-ellipsis-behavior",
+								},
+								{
+									sourceId: "src-8",
+									status: "FINISHED",
+									url: "https://research.example.com/funding/opportunities/2024/advanced-research-grants",
+								},
+							],
+						},
+						id: "app-with-template",
+						status: "DRAFT",
+						title: "Grant Application with Template Sources",
+					}),
+				],
+			]),
+			fundingOrganizations: FundingOrganizationFactory.batch(3),
+			organizations: OrganizationFactory.batch(1),
+			projects: ProjectListItemFactory.batch(1, {
+				applications_count: 1,
+				name: "Research Project with Sources",
+			}),
+		},
+		description: "Application with grant template containing multiple files and URLs for preview testing",
+		name: "template-with-sources",
+	},
+	{
+		data: {
+			applications: new Map([
+				[
 					"app-error-1",
 					ApplicationFactory.build({
 						id: "app-error-1",

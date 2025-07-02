@@ -115,7 +115,7 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 					: FILE_ICON_MAP.unknown}
 			</div>
 			<span
-				className="mt-1 max-w-20 truncate text-center text-[10px] leading-[13px]"
+				className="mt-1 max-w-10 truncate text-center text-app-gray-700 text-[10px] leading-3"
 				data-testid="file-name"
 				title={fileName}
 			>
