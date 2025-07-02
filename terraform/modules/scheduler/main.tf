@@ -47,6 +47,8 @@ resource "google_project_service" "scheduler" {
 
 # Daily NIH grant scraper job
 resource "google_cloud_scheduler_job" "scraper_daily" {
+  count = var.scraper_url != "" ? 1 : 0
+
   name      = "scraper-daily"
   region    = var.region
   schedule  = "0 2 * * *" # Daily at 2 AM UTC

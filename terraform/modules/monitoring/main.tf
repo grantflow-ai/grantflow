@@ -64,8 +64,8 @@ resource "google_monitoring_alert_policy" "service_down" {
       ])
 
       duration        = "300s" # 5 minutes
-      comparison      = "COMPARISON_EQ"
-      threshold_value = 0 # Zero 2xx responses
+      comparison      = "COMPARISON_LT"
+      threshold_value = 1 # Less than 1 successful response (i.e., zero)
 
       aggregations {
         alignment_period     = "300s"
@@ -98,14 +98,14 @@ resource "google_monitoring_alert_policy" "database_disconnected" {
 
     condition_threshold {
       filter = join(" AND ", [
-        "resource.type=\"cloud_sql_database\"",
-        "resource.label.project_id=\"${var.project_id}\"",
+        "resource.type=\"cloudsql_database\"",
+        "resource.label.database_id=\"${var.project_id}:grantflow\"",
         "metric.type=\"cloudsql.googleapis.com/database/network/connections\""
       ])
 
       duration        = "180s" # 3 minutes
-      comparison      = "COMPARISON_EQ"
-      threshold_value = 0
+      comparison      = "COMPARISON_LT"
+      threshold_value = 1
 
       aggregations {
         alignment_period     = "180s"
@@ -124,16 +124,16 @@ resource "google_monitoring_alert_policy" "database_disconnected" {
 
 # Alert Policy: Critical Job Failure (Scraper)
 resource "google_monitoring_alert_policy" "scraper_not_running" {
-  display_name = "Scraper Service Not Running for 48+ Hours"
+  display_name = "Scraper Service Not Running for 24+ Hours"
   combiner     = "OR"
   enabled      = true
 
   documentation {
-    content = "The scraper service hasn't had any successful requests in 48+ hours, indicating the scheduled job may be failing."
+    content = "The scraper service hasn't had any successful requests in 24+ hours, indicating the scheduled job may be failing."
   }
 
   conditions {
-    display_name = "No scraper activity for 48 hours"
+    display_name = "No scraper activity for 24 hours"
 
     condition_threshold {
       filter = join(" AND ", [
@@ -143,9 +143,9 @@ resource "google_monitoring_alert_policy" "scraper_not_running" {
         "metric.label.response_code_class=\"2xx\""
       ])
 
-      duration        = "172800s" # 48 hours
-      comparison      = "COMPARISON_EQ"
-      threshold_value = 0
+      duration        = "86400s" # 24 hours
+      comparison      = "COMPARISON_LT"
+      threshold_value = 1
 
       aggregations {
         alignment_period     = "3600s" # 1 hour
