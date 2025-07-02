@@ -1,10 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback } from "react";
 import { toast } from "sonner";
-
 import { AppButton } from "@/components/app/buttons/app-button";
-import { IconUpload } from "@/components/projects/shared/icons";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
@@ -71,7 +70,7 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 	);
 
 	return (
-		<div className="relative" data-testid="template-file-container">
+		<div className="relative mt-5" data-testid="template-file-container">
 			<input
 				accept={Object.keys(FILE_ACCEPTS).join(", ")}
 				className="sr-only"
@@ -89,7 +88,9 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 			<AppButton
 				className="text-sm font-normal leading-[22px]"
 				data-testid="upload-files-button"
-				leftIcon={<IconUpload className="text-primary" />}
+				leftIcon={
+					<Image alt="Upload" className="text-primary" height={16} src="/icons/upload.svg" width={16} />
+				}
 				variant="secondary"
 			>
 				<label className="cursor-pointer" htmlFor="file-upload-template-files">
