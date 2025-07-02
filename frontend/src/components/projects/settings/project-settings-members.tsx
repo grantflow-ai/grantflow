@@ -136,7 +136,7 @@ export function ProjectSettingsMembers({
 				</div>
 				{canInvite && (
 					<button
-						className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-[14px] font-body"
+						className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm font-body"
 						data-testid="invite-button"
 						onClick={() => {
 							setIsInviteModalOpen(true);
