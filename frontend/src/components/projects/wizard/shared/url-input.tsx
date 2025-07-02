@@ -1,9 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import React from "react";
 
 import AppInput from "@/components/app/forms/input-field";
-import { IconGlobe } from "@/components/projects/shared/icons";
 import { useApplicationStore } from "@/stores/application-store";
 import { isValidUrl } from "@/utils/validation";
 
@@ -53,7 +53,7 @@ export function UrlInput({ parentId }: { parentId?: string }) {
 	return (
 		<AppInput
 			errorMessage={urlError}
-			icon={<IconGlobe className="text-input-icon" />}
+			icon={<Image alt="Globe" className="text-input-icon" height={16} src="/icons/globe.svg" width={16} />}
 			id="url-input"
 			label="URL"
 			onChange={(e) => {

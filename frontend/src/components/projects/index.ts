@@ -23,7 +23,6 @@ export { ProjectSettingsClient } from "./settings/project-settings-client";
 export { ProjectSettingsLayout } from "./settings/project-settings-layout";
 export { ProjectSettingsMembers } from "./settings/project-settings-members";
 
-export * from "./shared/icons";
 export { NotificationHandler } from "./shared/notification-handler";
 
 export { ProjectCard } from "./shared/project-card";
