@@ -72,7 +72,6 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 }));
 
 type IndexingStatus = RagSource["status"];
-
 type RagSource = NonNullable<API.CreateApplication.Http201.ResponseBody["rag_sources"]>[0];
 
 export const RagSourceFactory = new Factory<RagSource>((factory) => {
@@ -136,7 +135,6 @@ type GrantSectionBase = Extract<
 	{ id: string; order: number; parent_id: null | string; title: string }
 >;
 type GrantSectionDetailed = Extract<GrantSections[0], { depends_on: string[] }>;
-
 type GrantSections = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["grant_sections"];
 
 export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) => ({
@@ -207,7 +205,6 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 }));
 
 type RagSourceFile = Extract<RagSourceResponse, { filename: string }>;
-
 type RagSourceResponse = API.RetrieveGrantApplicationRagSources.Http200.ResponseBody[0];
 type RagSourceUrl = Extract<RagSourceResponse, { url: string }>;
 

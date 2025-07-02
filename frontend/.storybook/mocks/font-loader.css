@@ -1,0 +1,13 @@
+@import url("https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600&family=Sora:wght@100;200;300;400;500&family=Source+Sans+3:wght@400;500;600&display=swap");
+
+.font-body {
+	font-family: "Source Sans 3", system-ui, sans-serif;
+}
+
+.font-heading {
+	font-family: "Cabin", system-ui, sans-serif;
+}
+
+.font-button {
+	font-family: "Sora", system-ui, sans-serif;
+}
