@@ -306,6 +306,7 @@ function SidebarProvider({
 			}
 
 			if (typeof document !== "undefined") {
+				// biome-ignore lint/suspicious/noDocumentCookie: Controlled cookie setter for sidebar state persistence
 				document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
 			}
 		},
