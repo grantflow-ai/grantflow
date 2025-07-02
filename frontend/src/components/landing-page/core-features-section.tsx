@@ -28,7 +28,7 @@ const CORE_FEATURES = [
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-label="core-features-section" className="relative w-full bg-white">
+		<section aria-label="core-features-section" className="relative w-full bg-white overflow-hidden">
 			<div className="absolute inset-0 z-0">
 				<Image
 					alt="background"
@@ -87,7 +87,10 @@ function FeatureArticle({
 	featureDescription,
 	featureTitle,
 	...props
-}: { featureDescription: string; featureTitle: string } & HTMLProps<HTMLElement>) {
+}: {
+	featureDescription: string;
+	featureTitle: string;
+} & HTMLProps<HTMLElement>) {
 	return (
 		<article className={className} id="feature-item" {...props}>
 			<div className="border-l-12 md:border-l-10 border-r-12 md:border-r-10 border-b-20 md:border-b-16 border-b-background size-0 border-x-transparent" />
