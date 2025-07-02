@@ -85,6 +85,10 @@ vi.mock("sonner", async (importOriginal) => {
 	};
 });
 
+vi.mock("@/utils/env", () => ({
+	getEnv: vi.fn().mockReturnValue(mockEnv),
+}));
+
 export {
 	mockCookies,
 	mockRedirect,

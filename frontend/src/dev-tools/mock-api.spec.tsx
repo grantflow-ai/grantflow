@@ -7,6 +7,9 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WS from "vitest-websocket-mock";
 
+// Unmock the env utils for this test file since we're testing environment behavior
+vi.unmock("@/utils/env");
+
 describe("Mock API Core Integration", () => {
 	let originalEnv: typeof process.env;
 

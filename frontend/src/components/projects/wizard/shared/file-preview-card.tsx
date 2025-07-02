@@ -1,33 +1,24 @@
 "use client";
 
 import { ExternalLink, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
-import {
-	IconFileCsv,
-	IconFileDoc,
-	IconFileDocX,
-	IconFileGeneral,
-	IconFileMarkdown,
-	IconFilePdf,
-	IconFilePpt,
-	IconFilePptx,
-} from "@/components/projects/shared/icons";
 import { useApplicationStore } from "@/stores/application-store";
 
 import type { FileWithId } from "@/types/files";
 
 const FILE_ICON_MAP = {
-	"": <IconFileGeneral height={56} width={48} />,
-	csv: <IconFileCsv height={56} width={48} />,
-	doc: <IconFileDoc height={56} width={48} />,
-	docx: <IconFileDocX height={56} width={48} />,
-	markdown: <IconFileMarkdown height={56} width={48} />,
-	md: <IconFileMarkdown height={56} width={48} />,
-	pdf: <IconFilePdf height={56} width={48} />,
-	ppt: <IconFilePpt height={56} width={48} />,
-	pptx: <IconFilePptx height={56} width={48} />,
-	unknown: <IconFileGeneral height={56} width={48} />,
+	"": <Image alt="General file" height={56} src="/icons/file-general.svg" width={48} />,
+	csv: <Image alt="CSV file" height={56} src="/icons/file-csv.svg" width={48} />,
+	doc: <Image alt="DOC file" height={56} src="/icons/file-doc.svg" width={48} />,
+	docx: <Image alt="DOCX file" height={56} src="/icons/file-docx.svg" width={48} />,
+	markdown: <Image alt="Markdown file" height={56} src="/icons/file-markdown.svg" width={48} />,
+	md: <Image alt="Markdown file" height={56} src="/icons/file-markdown.svg" width={48} />,
+	pdf: <Image alt="PDF file" height={56} src="/icons/file-pdf.svg" width={48} />,
+	ppt: <Image alt="PPT file" height={56} src="/icons/file-ppt.svg" width={48} />,
+	pptx: <Image alt="PPTX file" height={56} src="/icons/file-pptx.svg" width={48} />,
+	unknown: <Image alt="Unknown file" height={56} src="/icons/file-general.svg" width={48} />,
 } as const;
 
 export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId?: string }) {
