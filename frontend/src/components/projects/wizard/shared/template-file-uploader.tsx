@@ -71,7 +71,7 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 	);
 
 	return (
-		<div className="relative" data-testid="template-file-container">
+		<div className="relative mt-5" data-testid="template-file-container">
 			<input
 				accept={Object.keys(FILE_ACCEPTS).join(", ")}
 				className="sr-only"
