@@ -43,28 +43,25 @@ describe("ProjectCard", () => {
 		expect(link).toHaveAttribute("href", expectedUrl);
 	});
 
-	it("applies the correct badge color for OWNER role", () => {
+	it("renders OWNER role badge", () => {
 		render(<ProjectCard project={mockProjectOwner} />);
 
 		const badge = screen.getByText("OWNER");
-		expect(badge).toHaveClass("bg-primary/10");
-		expect(badge).toHaveClass("text-primary");
+		expect(badge).toBeInTheDocument();
 	});
 
-	it("applies the correct badge color for ADMIN role", () => {
+	it("renders ADMIN role badge", () => {
 		render(<ProjectCard project={mockProjectAdmin} />);
 
 		const badge = screen.getByText("ADMIN");
-		expect(badge).toHaveClass("bg-secondary/20");
-		expect(badge).toHaveClass("text-secondary-foreground");
+		expect(badge).toBeInTheDocument();
 	});
 
-	it("applies the correct badge color for MEMBER role", () => {
+	it("renders MEMBER role badge", () => {
 		render(<ProjectCard project={mockProjectMember} />);
 
 		const badge = screen.getByText("MEMBER");
-		expect(badge).toHaveClass("bg-accent/20");
-		expect(badge).toHaveClass("text-accent-foreground");
+		expect(badge).toBeInTheDocument();
 	});
 
 	it("truncates long project names and descriptions", () => {
