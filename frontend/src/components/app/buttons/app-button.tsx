@@ -5,7 +5,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const appButtonVariants = cva(
-	"font-button size-auto cursor-pointer rounded-sm text-base font-light hover:bg-transparent",
+	"font-button size-auto cursor-pointer rounded-sm text-base font-light hover:bg-transparent shadow-none",
 	{
 		compoundVariants: [
 			{

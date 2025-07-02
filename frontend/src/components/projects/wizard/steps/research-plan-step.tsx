@@ -56,7 +56,7 @@ export function ResearchPlanStep() {
 							</p>
 						</div>
 						<AppButton
-							className="bg-app-surface-secondary text-app-action-primary border-app-border-primary shrink-0"
+							className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
 							data-testid="ai-try-button"
 							leftIcon={<span>✨</span>}
 							variant="secondary"
@@ -79,7 +79,7 @@ export function ResearchPlanStep() {
 
 						{objectives.length >= MAX_OBJECTIVES && (
 							<AppCard className="border-app-border-primary bg-app-surface-secondary p-3 flex items-start gap-3">
-								<div className="bg-app-surface-secondary text-app-action-primary flex size-6 shrink-0 items-center justify-center rounded-full">
+								<div className="bg-app-surface-secondary text-app-primary flex size-6 shrink-0 items-center justify-center rounded-full">
 									<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
 										<path
 											clipRule="evenodd"

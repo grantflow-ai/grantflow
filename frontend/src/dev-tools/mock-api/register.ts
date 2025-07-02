@@ -7,7 +7,7 @@ export function registerMockHandlers(): void {
 	// Auth endpoints
 	client.register("/login", mockHandlers.auth.login, "POST");
 	client.register("/auth/login", mockHandlers.auth.login, "POST"); // Keep for compatibility
-	client.register("/auth/otp", mockHandlers.auth.generateOtp, "POST");
+	client.register("/otp", mockHandlers.auth.generateOtp, "GET");
 
 	// Project endpoints
 	client.register("/projects", mockHandlers.projects.listProjects, "GET");
@@ -27,6 +27,11 @@ export function registerMockHandlers(): void {
 		"/projects/:project_id/applications/:application_id",
 		mockHandlers.applications.updateApplication,
 		"PUT",
+	);
+	client.register(
+		"/projects/:project_id/applications/:application_id",
+		mockHandlers.applications.updateApplication,
+		"PATCH",
 	);
 	client.register(
 		"/projects/:project_id/applications/:application_id",
@@ -54,18 +59,46 @@ export function registerMockHandlers(): void {
 	client.register("/invitations/:invitation_id/accept", mockHandlers.invitations.acceptInvitation);
 	client.register("/invitations/:invitation_id/role", mockHandlers.invitations.updateInvitationRole);
 
-	// File endpoints
+	// File endpoints (kept for compatibility - non-source endpoints)
 	client.register("/projects/:project_id/applications/:application_id/rag-files", mockHandlers.files.uploadFile);
-	client.register(
-		"/projects/:project_id/applications/:application_id/rag-files/upload-url",
-		mockHandlers.files.getUploadUrl,
-	);
-	client.register("/rag-sources/:source_id", mockHandlers.files.deleteFile);
 
-	// RAG endpoints
+	// RAG endpoints (kept for compatibility - non-source endpoints)
 	client.register("/rag-jobs/:job_id", mockHandlers.rag.getRagJob);
-	client.register("/projects/:project_id/applications/:application_id/crawl", mockHandlers.rag.crawlUrl);
 	client.register("/projects/:project_id/grant-templates/:template_id", mockHandlers.rag.updateGrantTemplate);
+
+	// Source endpoints - Template
+	client.register(
+		"/projects/:project_id/grant_templates/:template_id/sources/upload-url",
+		mockHandlers.sources.createTemplateSourceUploadUrl,
+		"POST",
+	);
+	client.register(
+		"/projects/:project_id/grant_templates/:template_id/sources/crawl-url",
+		mockHandlers.sources.crawlTemplateUrl,
+		"POST",
+	);
+	client.register(
+		"/projects/:project_id/grant_templates/:template_id/sources/:source_id",
+		mockHandlers.sources.deleteTemplateSource,
+		"DELETE",
+	);
+
+	// Source endpoints - Application
+	client.register(
+		"/projects/:project_id/applications/:application_id/sources/upload-url",
+		mockHandlers.sources.createApplicationSourceUploadUrl,
+		"POST",
+	);
+	client.register(
+		"/projects/:project_id/applications/:application_id/sources/crawl-url",
+		mockHandlers.sources.crawlApplicationUrl,
+		"POST",
+	);
+	client.register(
+		"/projects/:project_id/applications/:application_id/sources/:source_id",
+		mockHandlers.sources.deleteApplicationSource,
+		"DELETE",
+	);
 
 	console.log("[Mock API] All handlers registered");
 }
