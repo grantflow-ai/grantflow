@@ -31,6 +31,12 @@ variable "environment" {
   default     = "staging"
 }
 
+variable "discord_webhook_url" {
+  description = "Discord webhook URL for notifications"
+  type        = string
+  default     = ""
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -613,6 +619,18 @@ resource "google_cloud_run_v2_service" "scraper" {
       env {
         name  = "SCRAPER_GCS_BUCKET_NAME"
         value = "grantflow-scraper"
+      }
+
+      # Environment name
+      env {
+        name  = "ENVIRONMENT"
+        value = var.environment
+      }
+
+      # Discord webhook URL for notifications
+      env {
+        name  = "DISCORD_WEBHOOK_URL"
+        value = var.discord_webhook_url
       }
 
       # GCS credentials from Secret Manager
