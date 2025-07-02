@@ -1,5 +1,5 @@
 import { Link } from "lucide-react";
-import { IconClose } from "@/components/projects/shared/icons";
+import Image from "next/image";
 import { useApplicationStore } from "@/stores/application-store";
 
 export function LinkPreviewItem({ parentId, url }: { parentId?: string; url: string }) {
@@ -13,10 +13,14 @@ export function LinkPreviewItem({ parentId, url }: { parentId?: string; url: str
 	return (
 		<div className="group relative flex items-center gap-2" data-testid="link-preview-item">
 			<div className="flex size-3.5 shrink-0 items-center justify-center">
-				<IconClose
+				<Image
+					alt="Remove link"
 					className="cursor-pointer text-primary opacity-0 transition-opacity group-hover:opacity-100"
 					data-testid="link-remove-icon"
+					height={16}
 					onClick={handleRemove}
+					src="/icons/close.svg"
+					width={16}
 				/>
 				<Link
 					className="text-primary absolute opacity-100 transition-opacity group-hover:opacity-0"
