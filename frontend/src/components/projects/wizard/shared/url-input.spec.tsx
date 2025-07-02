@@ -48,7 +48,7 @@ describe("UrlInput", () => {
 
 			const iconContainer = screen.getByTestId("url-input-icon");
 			expect(iconContainer).toBeInTheDocument();
-			expect(iconContainer.querySelector("svg")).toBeInTheDocument();
+			expect(iconContainer.querySelector("img")).toBeInTheDocument();
 		});
 	});
 

@@ -10,7 +10,7 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
-import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
+import { getStepIcon, StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const TEST_DATES = {
 	fourDaysFromNow: "2024-01-05T00:00:00Z",
@@ -289,6 +289,54 @@ describe("StepIndicator", () => {
 		render(<StepIndicator isLastStep={false} type="inactive" />);
 
 		expect(screen.getByTestId("step-inactive")).toBeInTheDocument();
+	});
+});
+
+describe("Test Indicator Status", () => {
+	it("returns done icon for done type", () => {
+		const icon = getStepIcon("done");
+
+		render(<div data-testid="icon-container">{icon}</div>);
+
+		const img = screen.getByRole("img");
+		expect(img).toHaveAttribute("alt", "Step done");
+		expect(img).toHaveAttribute("src", "/icons/application-step-done.svg");
+		expect(img).toHaveAttribute("width", "15");
+		expect(img).toHaveAttribute("height", "15");
+	});
+
+	it("returns active icon for active type", () => {
+		const icon = getStepIcon("active");
+
+		render(<div data-testid="icon-container">{icon}</div>);
+
+		const img = screen.getByRole("img");
+		expect(img).toHaveAttribute("alt", "Step active");
+		expect(img).toHaveAttribute("src", "/icons/application-step-active.svg");
+		expect(img).toHaveAttribute("width", "15");
+		expect(img).toHaveAttribute("height", "15");
+	});
+
+	it("returns inactive icon for inactive type", () => {
+		const icon = getStepIcon("inactive");
+
+		render(<div data-testid="icon-container">{icon}</div>);
+
+		const img = screen.getByRole("img");
+		expect(img).toHaveAttribute("alt", "Step inactive");
+		expect(img).toHaveAttribute("src", "/icons/application-step-inactive.svg");
+		expect(img).toHaveAttribute("width", "15");
+		expect(img).toHaveAttribute("height", "15");
+	});
+
+	it("returns inactive icon as default for any other type", () => {
+		const icon = getStepIcon("inactive");
+
+		render(<div data-testid="icon-container">{icon}</div>);
+
+		const img = screen.getByRole("img");
+		expect(img).toHaveAttribute("alt", "Step inactive");
+		expect(img).toHaveAttribute("src", "/icons/application-step-inactive.svg");
 	});
 });
 
