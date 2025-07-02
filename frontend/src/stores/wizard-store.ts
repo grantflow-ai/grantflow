@@ -8,7 +8,7 @@ import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger";
 
-const DEBOUNCE_DELAY_MS = 1000;
+const DEBOUNCE_DELAY_MS = 2000;
 const POLLING_INTERVAL_DURATION = 2000;
 export const MIN_TITLE_LENGTH = 10;
 

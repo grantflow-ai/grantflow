@@ -1,14 +1,6 @@
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { IconGoAhead, IconGoBack } from "@/components/branding/icons";
-import {
-	IconApplicationStepActive,
-	IconApplicationStepDone,
-	IconApplicationStepInActive,
-	IconApprove,
-	IconButtonLogo,
-	IconDeadline,
-} from "@/components/projects/shared/icons";
 import { WizardStep } from "@/constants";
 import { DevPanel } from "@/dev-tools/components/dev-panel";
 import { PagePath } from "@/enums";
@@ -24,20 +16,23 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.GENERATE_AND_COMPLETE,
 ];
 
-export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: "active" | "done" | "inactive" }) {
-	let IconComponent: React.ComponentType;
-	if (type === "done") {
-		IconComponent = IconApplicationStepDone;
-	} else if (type === "active") {
-		IconComponent = IconApplicationStepActive;
-	} else {
-		IconComponent = IconApplicationStepInActive;
-	}
+type IndicatorStatus = "active" | "done" | "inactive";
 
+export function getStepIcon(type: IndicatorStatus) {
+	if (type === "done") {
+		return <Image alt="Step done" height={15} src="/icons/application-step-done.svg" width={15} />;
+	}
+	if (type === "active") {
+		return <Image alt="Step active" height={15} src="/icons/application-step-active.svg" width={15} />;
+	}
+	return <Image alt="Step inactive" height={15} src="/icons/application-step-inactive.svg" width={15} />;
+}
+
+export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type: IndicatorStatus }) {
 	if (isLastStep) {
 		return (
 			<div className="relative flex flex-row items-start justify-start" data-testid={`step-${type}`}>
-				<IconComponent />
+				{getStepIcon(type)}
 			</div>
 		);
 	}
@@ -46,9 +41,7 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 
 	return (
 		<div className="relative flex w-full flex-row items-center" data-testid={`step-${type}`}>
-			<div className="relative flex justify-center">
-				<IconComponent />
-			</div>
+			<div className="relative flex justify-center">{getStepIcon(type)}</div>
 			<div className={`flex-1 ${lineClass} h-px`} />
 		</div>
 	);
@@ -67,14 +60,14 @@ export function WizardFooter() {
 
 	return (
 		<footer
-			className="relative flex h-auto w-full items-center justify-between border-t border-border-primary bg-surface-primary p-6"
+			className="relative flex h-auto w-full items-center justify-between border-t-1 border-gray-100 bg-surface-primary p-6"
 			data-testid="wizard-footer"
 		>
 			{showBack ? (
 				<AppButton
 					data-testid="back-button"
 					disabled={backDisabled}
-					leftIcon={<IconGoBack />}
+					leftIcon={<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />}
 					onClick={toPreviousStep}
 					size="lg"
 					theme="dark"
@@ -226,7 +219,7 @@ function Deadline() {
 			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
 			data-testid="deadline-component"
 		>
-			<IconDeadline />
+			<Image alt="Deadline" height={16} src="/icons/deadline.svg" width={16} />
 			<div className="leading-[18px]">
 				{submissionDate ? <span>{timeRemaining}</span> : <span>Deadline not set</span>}
 			</div>
@@ -255,10 +248,10 @@ function generateFooterRightButtonProps(currentStep: WizardStep) {
 	return {
 		leftIcon: (() => {
 			if (isApproveStep) {
-				return <IconApprove />;
+				return <Image alt="Approve" height={16} src="/icons/approve.svg" width={16} />;
 			}
 			if (isGenerateStep) {
-				return <IconButtonLogo />;
+				return <Image alt="Generate" height={16} src="/icons/button-logo.svg" width={16} />;
 			}
 			return undefined;
 		})(),
@@ -271,11 +264,13 @@ function generateFooterRightButtonProps(currentStep: WizardStep) {
 			}
 			return "Next";
 		})(),
-		rightIcon: isGenerateStep ? undefined : <IconGoAhead />,
+		rightIcon: isGenerateStep ? undefined : (
+			<Image alt="Go ahead" height={15} src="/icons/go-ahead.svg" width={15} />
+		),
 	};
 }
 
-function getStepIndicatorType(index: number, currentStepIndex: number): "active" | "done" | "inactive" {
+function getStepIndicatorType(index: number, currentStepIndex: number): IndicatorStatus {
 	if (index < currentStepIndex) {
 		return "done";
 	}

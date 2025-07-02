@@ -276,9 +276,10 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "" });
 			render(<FilePreviewCard file={file} />);
 
-			const filenameSpan = screen.getByRole("img").querySelector("span[title='']");
+			const filenameSpan = screen.getByTestId("file-name");
 			expect(filenameSpan).toBeInTheDocument();
 			expect(filenameSpan).toHaveTextContent("");
+			expect(filenameSpan).toHaveAttribute("title", "");
 		});
 
 		it("handles very long filenames", () => {

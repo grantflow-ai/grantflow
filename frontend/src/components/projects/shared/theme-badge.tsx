@@ -4,7 +4,7 @@ import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const themeBadgeVariants = cva("px-2 py-0.5 text-xs font-normal leading-none", {
+const themeBadgeVariants = cva("px-2 py-0.5 text-xs font-normal leading-none rounded-full", {
 	defaultVariants: {
 		color: "primary",
 		size: "default",
@@ -22,6 +22,12 @@ const themeBadgeVariants = cva("px-2 py-0.5 text-xs font-normal leading-none", {
 	},
 });
 
+const colorClasses = {
+	light: "hover:bg-badge hover:text-badge-foreground",
+	primary: "hover:bg-primary hover:text-primary-foreground",
+	secondary: "hover:bg-secondary hover:text-secondary-foreground",
+};
+
 export interface ThemeBadgeProps
 	extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
 		VariantProps<typeof themeBadgeVariants> {
@@ -31,11 +37,16 @@ export interface ThemeBadgeProps
 function ThemeBadge({ children, className, color, leftIcon, size, ...props }: ThemeBadgeProps) {
 	return (
 		<Badge
-			className={cn(themeBadgeVariants({ color, size }), "hover:bg-inherit hover:text-inherit", className)}
+			className={cn(
+				themeBadgeVariants({ color, size }),
+				"pointer-events-none [&>*]:pointer-events-auto",
+				color && colorClasses[color],
+				className,
+			)}
 			{...props}
 		>
 			{leftIcon && (
-				<span className={size === "sm" ? "mr-0.5" : "mr-1"}>
+				<span>
 					{React.isValidElement(leftIcon)
 						? React.cloneElement(leftIcon as React.ReactElement<React.SVGProps<SVGElement>>, {
 								...(size === "sm" && { height: 6, width: 6 }),
