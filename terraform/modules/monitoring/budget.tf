@@ -1,6 +1,8 @@
 # Budget Alert: Monthly Spend Threshold
 resource "google_billing_budget" "monthly_budget" {
-  billing_account = data.google_project.project.billing_account
+  count = var.enable_billing_budget ? 1 : 0
+
+  billing_account = "billingAccounts/0171C4-B36519-F474D3"
   display_name    = "Monthly Budget - ${title(var.environment)}"
 
   budget_filter {
@@ -45,6 +47,12 @@ resource "google_billing_budget" "monthly_budget" {
   all_updates_rule {
     pubsub_topic = google_pubsub_topic.budget_alerts.id
   }
+}
+
+variable "enable_billing_budget" {
+  description = "Whether to create billing budget alerts"
+  type        = bool
+  default     = false
 }
 
 # Pub/Sub topic for budget alerts
