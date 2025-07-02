@@ -1,29 +1,41 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AppTextArea from "@/components/app/forms/textarea-field";
+import { ApplicationPreview, TemplateFileUploader } from "@/components/projects";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import { ApplicationPreview } from "../shared/application-preview";
-import { TemplateFileUploader } from "../shared/template-file-uploader";
 import { UrlInput } from "../shared/url-input";
 
 const TITLE_MAX_LENGTH = 120;
 
-interface ApplicationDetailsStepProps {
+export function ApplicationDetailsStep({
+	connectionStatus,
+	connectionStatusColor,
+}: {
 	connectionStatus?: string;
 	connectionStatusColor?: string;
-}
-
-export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor }: ApplicationDetailsStepProps) {
+}) {
 	const handleTitleChange = useWizardStore((state) => state.handleTitleChange);
-	const application = useApplicationStore((state) => state.application);
-	const applicationTitle = application?.title ?? "";
+
+	const applicationTitle = useApplicationStore((state) => state.application?.title);
+	const grantTemplateId = useApplicationStore((state) => state.application?.grant_template?.id);
+
+	const [draftTitle, setDraftTitle] = useState("");
+
+	useEffect(() => {
+		if (applicationTitle !== undefined) {
+			setDraftTitle(applicationTitle);
+		}
+	}, [applicationTitle]);
+
+	const handleInputChange = (value: string) => {
+		setDraftTitle(value);
+		handleTitleChange(value);
+	};
 
 	usePollingCleanup();
-
-	const parentId = application?.grant_template?.id;
 
 	return (
 		<div className="flex size-full" data-testid="application-details-step">
@@ -50,13 +62,13 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 						label="Application Title"
 						maxCount={TITLE_MAX_LENGTH}
 						onChange={(e) => {
-							handleTitleChange(e.target.value);
+							handleInputChange(e.target.value);
 						}}
 						placeholder="Title of your grant application"
-						rows={4}
+						rows={16}
 						showCount
 						testId="application-title-textarea"
-						value={applicationTitle}
+						value={draftTitle}
 					/>
 				</div>
 
@@ -76,7 +88,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							Upload the official Call for Proposals or any relevant documents (PDF, Doc). We&apos;ll
 							analyze these to extract key requirements for your application.
 						</p>
-						<TemplateFileUploader parentId={parentId} />
+						<TemplateFileUploader parentId={grantTemplateId} />
 					</div>
 
 					<div>
@@ -86,7 +98,7 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 							understand the funding requirements.
 						</p>
 
-						<UrlInput parentId={parentId} />
+						<UrlInput parentId={grantTemplateId} />
 					</div>
 				</div>
 			</div>
@@ -94,7 +106,8 @@ export function ApplicationDetailsStep({ connectionStatus, connectionStatusColor
 			<ApplicationPreview
 				connectionStatus={connectionStatus}
 				connectionStatusColor={connectionStatusColor}
-				parentId={parentId}
+				draftTitle={draftTitle}
+				parentId={grantTemplateId}
 			/>
 		</div>
 	);

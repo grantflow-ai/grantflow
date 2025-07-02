@@ -46,7 +46,7 @@ export function DashboardHeader({ onCreateProject, onInviteCollaborators }: Dash
 						<AvatarGroup size="md" users={teamMembers} />
 					</div>
 					<button
-						className="flex h-12 items-center gap-2 rounded-lg bg-action-primary px-4 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-action-primary/90 font-button"
+						className="flex h-12 items-center gap-2 rounded-lg bg-primary px-4 py-3 text-[16px] font-medium leading-[22px] text-white hover:bg-primary/90 font-button"
 						data-testid="create-project-button"
 						onClick={onCreateProject}
 						type="button"

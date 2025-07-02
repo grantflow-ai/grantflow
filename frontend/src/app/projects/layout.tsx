@@ -8,7 +8,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return (
 		<SharedLayout>
 			<SWRProvider>
-				<div className="flex h-screen bg-[#faf9fb]">
+				<div className="flex h-screen w-full bg-[#faf9fb]">
 					<Sidebar />
 					<div className="flex flex-1 justify-center bg-[#faf9fb]">
 						<div className="grow">{children}</div>

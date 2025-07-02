@@ -33,7 +33,7 @@ interface ProjectSettingsMembersProps {
 const ROLE_COLORS = {
 	[UserRole.ADMIN]: "bg-[#9747ff] text-white",
 	[UserRole.MEMBER]: "bg-text-secondary text-white",
-	[UserRole.OWNER]: "bg-action-primary text-white",
+	[UserRole.OWNER]: "bg-primary text-white",
 };
 
 const ROLE_LABELS = {
@@ -136,7 +136,7 @@ export function ProjectSettingsMembers({
 				</div>
 				{canInvite && (
 					<button
-						className="flex items-center gap-2 px-4 py-2 bg-action-primary text-white rounded-md hover:bg-action-primary/90 transition-colors text-[14px] font-body"
+						className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm font-body"
 						data-testid="invite-button"
 						onClick={() => {
 							setIsInviteModalOpen(true);
@@ -216,7 +216,7 @@ export function ProjectSettingsMembers({
 						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
 						{canInvite && (
 							<button
-								className="flex items-center gap-2 px-4 py-2 bg-action-primary text-white rounded-md hover:bg-action-primary/90 transition-colors text-[14px] mx-auto font-body"
+								className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-[14px] mx-auto font-body"
 								data-testid="invite-first-member-button"
 								onClick={() => {
 									setIsInviteModalOpen(true);
@@ -390,7 +390,7 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
 		return (
 			<div className="flex items-center gap-2">
-				<span className="px-3 py-1 bg-action-primary text-white rounded-full text-sm font-medium">All</span>
+				<span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium">All</span>
 			</div>
 		);
 	}
@@ -411,7 +411,7 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 	return (
 		<div className="flex items-center gap-2 flex-wrap">
 			{displayedApps.map((appId, index) => (
-				<span className="px-3 py-1 bg-action-primary text-white rounded-full text-sm font-medium" key={appId}>
+				<span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium" key={appId}>
 					Application {index + 1}
 				</span>
 			))}

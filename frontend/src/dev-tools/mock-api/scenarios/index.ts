@@ -169,7 +169,7 @@ export const scenarios: Scenario[] = [
 ];
 
 export function getDefaultScenario(): Scenario {
-	return scenarios.find((s) => s.name === "minimal") ?? scenarios[0];
+	return scenarios.find((s) => s.name === "empty") ?? scenarios[0];
 }
 
 export function getScenario(name: string): Scenario | undefined {

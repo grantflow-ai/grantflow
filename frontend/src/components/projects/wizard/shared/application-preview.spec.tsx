@@ -26,7 +26,7 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders empty state when no content", () => {
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="" />);
 
 		expect(screen.queryByTestId("application-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("application-documents")).not.toBeInTheDocument();
@@ -45,13 +45,13 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="Test Application" />);
 
 		expect(screen.getByTestId("application-title")).toBeInTheDocument();
 		expect(screen.getByTestId("application-title")).toHaveTextContent("Test Application");
 	});
 
-	it("renders untitled when no title", () => {
+	it("renders placeholder when no title", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
 				id: "template-id",
@@ -65,7 +65,7 @@ describe("ApplicationPreview", () => {
 			}),
 			id: "test-id",
 			project_id: "test-project-id",
-			title: undefined,
+			title: "",
 		});
 
 		useApplicationStore.setState({
@@ -73,7 +73,7 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="" />);
 
 		expect(screen.getByTestId("application-title")).toHaveTextContent("Untitled Application");
 	});
@@ -99,7 +99,7 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="Test Application" />);
 
 		expect(screen.getByTestId("application-documents")).toBeInTheDocument();
 		expect(screen.getByTestId("file-collection")).toBeInTheDocument();
@@ -126,7 +126,7 @@ describe("ApplicationPreview", () => {
 			areAppOperationsInProgress: false,
 		});
 
-		render(<ApplicationPreview />);
+		render(<ApplicationPreview draftTitle="Test Application" />);
 
 		expect(screen.getByTestId("application-links")).toBeInTheDocument();
 	});

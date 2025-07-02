@@ -72,7 +72,7 @@ export function ResearchDeepDiveStep() {
 						</p>
 					</div>
 					<AppButton
-						className="bg-app-surface-secondary text-app-action-primary border-app-border-primary shrink-0"
+						className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
 						data-testid="ai-try-button"
 						leftIcon={<span>✨</span>}
 						variant="secondary"
@@ -138,7 +138,7 @@ function AnswerArea({
 	return (
 		<div className="h-full flex flex-col">
 			<TextareaField
-				className="flex-1 min-h-0 resize-none border-app-border-primary focus:border-app-action-primary"
+				className="flex-1 min-h-0 resize-none border-app-border-primary focus:border-app-primary"
 				countType="words"
 				label={question}
 				maxCount={1000}
@@ -180,7 +180,7 @@ function QuestionCard({
 		<AppCard
 			className={`p-4 cursor-pointer transition-colors border-2 ${
 				isSelected
-					? "border-app-action-primary bg-app-surface-secondary"
+					? "border-app-primary bg-app-surface-secondary"
 					: "border-app-border-primary bg-app-surface-primary hover:border-app-action-secondary"
 			}`}
 			onClick={onClick}
@@ -188,7 +188,7 @@ function QuestionCard({
 			<div className="flex items-start gap-3">
 				<div
 					className={`flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-						isAnswered || isSelected ? "bg-app-action-primary text-white" : "bg-gray-200 text-gray-600"
+						isAnswered || isSelected ? "bg-app-primary text-white" : "bg-gray-200 text-gray-600"
 					}`}
 				>
 					{isAnswered ? "✓" : index}
