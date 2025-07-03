@@ -4,7 +4,15 @@ import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
 import { getScenario } from "../scenarios";
 
-const projectStore = new Map<string, API.GetProject.Http200.ResponseBody>();
+// Use global to persist store across hot reloads in development
+interface GlobalStore {
+	__MOCK_PROJECT_STORE__?: Map<string, API.GetProject.Http200.ResponseBody>;
+}
+const globalStore = globalThis as unknown as GlobalStore;
+if (!globalStore.__MOCK_PROJECT_STORE__) {
+	globalStore.__MOCK_PROJECT_STORE__ = new Map<string, API.GetProject.Http200.ResponseBody>();
+}
+const projectStore: Map<string, API.GetProject.Http200.ResponseBody> = globalStore.__MOCK_PROJECT_STORE__;
 
 function populateStoreFromListItem(projectListItem: API.ListProjects.Http200.ResponseBody[0]): void {
 	const fullProject = ProjectFactory.build({
@@ -187,3 +195,9 @@ export const projectHandlers = {
 		return updatedProject;
 	},
 };
+
+// Function to clear the global project store when switching scenarios
+export function clearProjectStore(): void {
+	projectStore.clear();
+	log.info("[Mock API] Project store cleared");
+}

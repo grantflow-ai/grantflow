@@ -117,7 +117,8 @@ class MockAPIClient {
 	}
 
 	private extractPathParams(path: string, method: string): Record<string, string> {
-		const pathParts = path.split("/").filter(Boolean);
+		const pathWithoutQuery = path.split("?")[0];
+		const pathParts = pathWithoutQuery.split("/").filter(Boolean);
 		const params: Record<string, string> = {};
 
 		// Try to find matching pattern
@@ -151,8 +152,10 @@ class MockAPIClient {
 	}
 
 	private findHandler(path: string, method: string): MockHandler | undefined {
+		const pathWithoutQuery = path.split("?")[0];
+
 		// First try exact match with method
-		const exactKey = `${method} ${path}`;
+		const exactKey = `${method} ${pathWithoutQuery}`;
 		for (const [pattern, handler] of this.handlers) {
 			if (this.matchPath(pattern, exactKey)) {
 				return handler;
@@ -160,7 +163,7 @@ class MockAPIClient {
 		}
 
 		// Then try wildcard method
-		const wildcardKey = `* ${path}`;
+		const wildcardKey = `* ${pathWithoutQuery}`;
 		for (const [pattern, handler] of this.handlers) {
 			if (this.matchPath(pattern, wildcardKey)) {
 				return handler;
