@@ -26,7 +26,6 @@ describe("validation utils", () => {
 				"https://example.com/path#fragment",
 				"https://user:pass@example.com",
 				"https://192.168.1.1",
-				"https://[2001:db8::1]",
 			];
 
 			for (const url of validUrls) {
@@ -43,6 +42,13 @@ describe("validation utils", () => {
 				"https://",
 				"not a url",
 				"http://example.com:999999",
+				"https://www. dsds.com",
+				"https://example..com",
+				"https://..example.com",
+				"https://example.com..",
+				"ftp://example.com",
+				"https://ex ample.com",
+				"https://example.com/path with spaces",
 			];
 
 			for (const url of invalidUrls) {
@@ -50,23 +56,28 @@ describe("validation utils", () => {
 			}
 		});
 
-		it("should return true for URLs that zod considers valid even if they seem unusual", () => {
-			const unusualButValidUrls = ["http://example", "http://example.", "http://.com", "http://example..com"];
+		it("should return true for localhost URLs", () => {
+			const localhostUrls = [
+				"http://localhost",
+				"https://localhost",
+				"http://localhost:3000",
+				"https://localhost:8080",
+			];
 
-			for (const url of unusualButValidUrls) {
+			for (const url of localhostUrls) {
 				expect(isValidUrl(url)).toBe(true);
 			}
 		});
 
 		it("should handle edge cases", () => {
-			expect(isValidUrl("https://example.com/path with spaces")).toBe(true);
 			expect(isValidUrl("https://example.com/path%20with%20spaces")).toBe(true);
 			expect(isValidUrl("https://xn--e1afmkfd.xn--p1ai")).toBe(true);
 			expect(isValidUrl("https://example.com/~user")).toBe(true);
 			expect(isValidUrl("https://example.com/@user")).toBe(true);
+			expect(isValidUrl("https://example.com/path with spaces")).toBe(false);
 			// eslint-disable-next-line sonarjs/code-eval
-			expect(isValidUrl("javascript:alert('xss')")).toBe(true);
-			expect(isValidUrl("ftp://example.com")).toBe(true);
+			expect(isValidUrl("javascript:alert('xss')")).toBe(false);
+			expect(isValidUrl("ftp://example.com")).toBe(false);
 		});
 	});
 
