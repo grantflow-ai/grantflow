@@ -11,7 +11,16 @@ import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
 
-export const applicationStore = new Map<string, API.RetrieveApplication.Http200.ResponseBody>();
+// Use global to persist store across hot reloads in development
+interface GlobalStore {
+	__MOCK_APPLICATION_STORE__?: Map<string, API.RetrieveApplication.Http200.ResponseBody>;
+}
+const globalStore = globalThis as unknown as GlobalStore;
+if (!globalStore.__MOCK_APPLICATION_STORE__) {
+	globalStore.__MOCK_APPLICATION_STORE__ = new Map<string, API.RetrieveApplication.Http200.ResponseBody>();
+}
+export const applicationStore: Map<string, API.RetrieveApplication.Http200.ResponseBody> =
+	globalStore.__MOCK_APPLICATION_STORE__;
 
 export const applicationHandlers = {
 	createApplication: async ({
@@ -177,3 +186,9 @@ export const applicationHandlers = {
 		return updatedApplication as API.UpdateApplication.Http200.ResponseBody;
 	},
 };
+
+// Function to clear the global application store when switching scenarios
+export function clearApplicationStore(): void {
+	applicationStore.clear();
+	log.info("[Mock API] Application store cleared");
+}

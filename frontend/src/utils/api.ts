@@ -77,17 +77,14 @@ export function getClient(): KyInstance {
 }
 
 async function createMockResponse(request: Request, _options: NormalizedOptions): Promise<Response | undefined> {
-	// Check if mock mode is enabled via env
 	if (!getEnv().NEXT_PUBLIC_MOCK_API) {
 		return undefined;
 	}
 
-	// Double check mock is enabled
 	if (!isMockAPIEnabled()) {
 		return undefined;
 	}
 
-	// Register mock handlers once
 	if (!mockHandlersRegistered) {
 		initializeMockAPI();
 		mockHandlersRegistered = true;
@@ -98,14 +95,17 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		const url = new URL(request.url);
 		const baseUrl = new URL(getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
 
-		// Remove the base URL prefix to get just the API path
 		let path = url.pathname;
 		if (path.startsWith(baseUrl.pathname)) {
 			path = path.slice(baseUrl.pathname.length);
 		}
-		// Ensure path starts with /
+
 		if (!path.startsWith("/")) {
 			path = `/${path}`;
+		}
+
+		if (url.search) {
+			path += url.search;
 		}
 
 		log.info(`[Mock API] Intercepting ${request.method} ${path}`, {
@@ -114,7 +114,6 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 			fullUrl: request.url,
 		});
 
-		// Get request body if present
 		let body: unknown;
 		if (request.body) {
 			const clonedRequest = request.clone();
@@ -129,13 +128,11 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 			}
 		}
 
-		// Call mock handler
 		const result = await getMockAPIClient().intercept<unknown>(path, {
 			body: body ? JSON.stringify(body) : undefined,
 			method: request.method,
 		});
 
-		// Create mock response
 		return new Response(JSON.stringify(result), {
 			headers: {
 				"Content-Type": "application/json",
@@ -144,7 +141,6 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		});
 	} catch (error) {
 		log.error("[Mock API] Error handling request", error);
-		// Return error response instead of letting request proceed to backend
 		return new Response(
 			JSON.stringify({
 				detail: "Mock API failed to handle request",
