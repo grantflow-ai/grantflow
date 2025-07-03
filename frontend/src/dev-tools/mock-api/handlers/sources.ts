@@ -1,4 +1,3 @@
-import { RagSourceFactory } from "::testing/factories";
 import type { API } from "@/types/api-types";
 import { applicationStore } from "./applications";
 
@@ -26,11 +25,11 @@ export const sourceHandlers = {
 		const application = applicationStore.get(applicationId);
 		if (application) {
 			const sourceId = crypto.randomUUID();
-			const newSource = RagSourceFactory.build({
+			const newSource = {
 				sourceId,
-				status: "CREATED",
+				status: "CREATED" as const,
 				url: requestBody.url,
-			});
+			};
 
 			const updatedApplication = {
 				...application,
@@ -64,13 +63,12 @@ export const sourceHandlers = {
 
 		console.log("[Mock API] Crawling template URL:", templateId, requestBody.url);
 
-		// Find application with this template and update its grant_template.rag_sources
 		const sourceId = crypto.randomUUID();
-		const newSource = RagSourceFactory.build({
+		const newSource = {
 			sourceId,
-			status: "CREATED",
+			status: "CREATED" as const,
 			url: requestBody.url,
-		});
+		};
 
 		for (const [appId, application] of applicationStore.entries()) {
 			if (application.grant_template?.id === templateId) {
@@ -112,11 +110,11 @@ export const sourceHandlers = {
 		const application = applicationStore.get(applicationId);
 		if (application) {
 			const sourceId = crypto.randomUUID();
-			const newSource = RagSourceFactory.build({
+			const newSource = {
 				filename: fileName,
 				sourceId,
-				status: "CREATED",
-			});
+				status: "CREATED" as const,
+			};
 
 			const updatedApplication = {
 				...application,
@@ -126,14 +124,14 @@ export const sourceHandlers = {
 
 			return {
 				source_id: sourceId,
-				url: `https://mock-storage.example.com/applications/${applicationId}/${sourceId}`,
+				url: `https://mock-storage.example.com/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=applications/${applicationId}/${fileName}`,
 			};
 		}
 
 		const sourceId = crypto.randomUUID();
 		return {
 			source_id: sourceId,
-			url: `https://mock-storage.example.com/applications/${applicationId}/${sourceId}`,
+			url: `https://mock-storage.example.com/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=applications/${applicationId}/${fileName}`,
 		};
 	},
 
@@ -167,11 +165,11 @@ export const sourceHandlers = {
 		console.log("[Mock API] Creating template source upload URL:", templateId, fileName);
 
 		const sourceId = crypto.randomUUID();
-		const newSource = RagSourceFactory.build({
+		const newSource = {
 			filename: fileName,
 			sourceId,
-			status: "CREATED",
-		});
+			status: "CREATED" as const,
+		};
 
 		let foundApplication = false;
 		const applications = [...applicationStore.entries()];
@@ -206,7 +204,7 @@ export const sourceHandlers = {
 
 		return {
 			source_id: sourceId,
-			url: `https://mock-storage.example.com/templates/${templateId}/${sourceId}`,
+			url: `https://mock-storage.example.com/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=templates/${templateId}/${fileName}`,
 		};
 	},
 
