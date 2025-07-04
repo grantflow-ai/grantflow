@@ -36,3 +36,5 @@ env:
       secret: NEXT_PUBLIC_MOCK_API
     - variable: NEXT_PUBLIC_MOCK_AUTH
       secret: NEXT_PUBLIC_MOCK_AUTH
+    - variable: NEXT_PUBLIC_GA4_MEASUREMENT_ID
+      secret: NEXT_PUBLIC_GA4_MEASUREMENT_ID
