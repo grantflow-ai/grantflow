@@ -1,7 +1,30 @@
 import type { HTTPError } from "ky";
 import { z } from "zod";
 
-const urlSchema = z.string().url();
+const urlSchema = z
+	.string()
+	.url()
+	.refine(
+		(val) => {
+			if (val.includes(" ")) return false;
+			if (val.includes("..")) return false;
+
+			try {
+				const urlObj = new URL(val);
+				if (!["http:", "https:"].includes(urlObj.protocol)) return false;
+
+				const { hostname } = urlObj;
+				if (!hostname.includes(".") && hostname !== "localhost") return false;
+
+				if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) return false;
+
+				return !(hostname.startsWith(".") || hostname.endsWith(".") || hostname.includes(".."));
+			} catch {
+				return false;
+			}
+		},
+		{ message: "Please enter a valid URL" },
+	);
 
 export const isValidUrl = (url: string): boolean => {
 	const result = urlSchema.safeParse(url);
