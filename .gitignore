@@ -9,7 +9,7 @@
 *.tsbuildinfo
 *.user
 .claude/
-.coverage
+.coverage/
 .coverage*
 .DS_Store
 .env

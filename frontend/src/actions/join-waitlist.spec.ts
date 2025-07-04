@@ -1,63 +1,42 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
-import { log } from "@/utils/logger";
+import { logError } from "@/utils/logging";
 
 import { addToWaitlist } from "./join-waitlist";
 
-const { mockLists, mockMailgun, mockMessages } = vi.hoisted(() => {
-	const mockLists = {
-		create: vi.fn().mockResolvedValue({ name: "waiting-list" }),
-		list: vi.fn().mockResolvedValue({ items: [] }),
-		members: {
-			createMember: vi.fn().mockResolvedValue({ member: { address: "test@example.com" } }),
+const { mockResend } = vi.hoisted(() => {
+	const mockEmailsSend = vi.fn().mockResolvedValue({
+		data: { id: "email-id-123" },
+		error: null,
+	});
+
+	const mockResend = vi.fn().mockImplementation(() => ({
+		emails: {
+			send: mockEmailsSend,
 		},
-	};
-
-	const mockMessages = {
-		create: vi.fn().mockResolvedValue({ id: "mock-message-id", status: 200 }),
-	};
-
-	const mockMailgun = vi.fn(() => ({
-		client: () => ({
-			lists: mockLists,
-			messages: mockMessages,
-		}),
 	}));
 
-	return { mockLists, mockMailgun, mockMessages };
+	return { mockEmailsSend, mockResend };
 });
 
-vi.mock("node:fs/promises", async () => {
-	return {
-		default: {
-			readFile: vi.fn().mockResolvedValue(Buffer.from("fake-logo-data")),
-		},
-		readFile: vi.fn().mockResolvedValue(Buffer.from("fake-logo-data")),
-	};
-});
-
-vi.mock("@/utils/logger", () => ({
-	log: {
-		error: vi.fn(),
-		info: vi.fn(),
-		warn: vi.fn(),
-	},
+vi.mock("@/utils/logging", () => ({
+	logError: vi.fn(),
 }));
 
 vi.mock("@/utils/env", () => ({
 	getEnv: vi.fn().mockReturnValue({
-		NEXT_PUBLIC_MAILGUN_API_KEY: "mock-api-key",
+		NEXT_PUBLIC_SITE_URL: "https://example.com",
+		RESEND_API_KEY: "re_mock_api_key",
 	}),
 }));
 
-vi.mock("@/components/email-templates/waitlist-email-template", () => ({
-	getWaitlistEmailTemplateHtml: vi.fn().mockReturnValue("<p>Mock HTML template</p>"),
-	waitlistEmailTemplateText: vi.fn().mockReturnValue("Mock text template"),
+vi.mock("@/emails/waitlist-email", () => ({
+	WaitlistEmail: vi.fn().mockReturnValue("MockedWaitlistEmail"),
 }));
 
-vi.mock("mailgun.js", () => ({
-	default: mockMailgun,
+vi.mock("resend", () => ({
+	Resend: mockResend,
 }));
 
 describe("join-waitlist actions", () => {
@@ -65,114 +44,76 @@ describe("join-waitlist actions", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should handle mailing list creation error", async () => {
-		mockLists.list.mockRejectedValueOnce(new Error("Failed to fetch lists"));
-
+	it("should successfully send confirmation email with valid data", async () => {
 		const result = await addToWaitlist({
 			email: "test@example.com",
 			name: "Test User",
 		});
 
-		expect(log.error).toHaveBeenCalledTimes(1);
+		expect(logError).not.toHaveBeenCalled();
+		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SUCCESS);
+		expect(result.error).toBeUndefined();
+		expect(result.message).toBeUndefined();
+	});
+
+	it("should handle Resend API errors", async () => {
+		const mockResendInstance = new mockResend();
+		vi.mocked(mockResendInstance.emails.send).mockResolvedValueOnce({
+			data: null,
+			error: { message: "Invalid email address" },
+		});
+
+		const result = await addToWaitlist({
+			email: "invalid@example.com",
+			name: "Test User",
+		});
+
+		expect(logError).toHaveBeenCalledWith({
+			error: "Failed to send confirmation email: Failed to send confirmation email: Invalid email address",
+			identifier: "addToWaitlist",
+		});
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
-	it("should handle mailing list member creation error", async () => {
-		mockLists.list.mockResolvedValueOnce({ items: [{ name: "waiting-list" }] });
-		mockLists.members.createMember.mockRejectedValueOnce(new Error("Failed to create member"));
+	it("should handle Resend SDK exceptions", async () => {
+		const mockResendInstance = new mockResend();
+		vi.mocked(mockResendInstance.emails.send).mockRejectedValueOnce(new Error("Network error"));
 
 		const result = await addToWaitlist({
 			email: "test@example.com",
 			name: "Test User",
 		});
 
-		expect(log.error).toHaveBeenCalledTimes(1);
+		expect(logError).toHaveBeenCalledWith({
+			error: "Failed to send confirmation email: Network error",
+			identifier: "addToWaitlist",
+		});
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
 	});
 
-	it("should handle message creation error", async () => {
-		mockLists.list.mockResolvedValueOnce({ items: [{ name: "waiting-list" }] });
-		mockLists.members.createMember.mockResolvedValueOnce({ member: { address: "test@example.com" } });
-		mockMessages.create.mockRejectedValueOnce(new Error("Failed to send email"));
-
+	it("should handle empty name gracefully", async () => {
 		const result = await addToWaitlist({
 			email: "test@example.com",
-			name: "Test User",
-		});
-
-		expect(log.error).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
-	});
-
-	it("should handle message creation HTTP error", async () => {
-		mockLists.list.mockResolvedValueOnce({ items: [{ name: "waiting-list" }] });
-		mockLists.members.createMember.mockResolvedValueOnce({ member: { address: "test@example.com" } });
-		mockMessages.create.mockResolvedValueOnce({
-			details: "Something went wrong",
-			id: "mock-message-id",
-			message: "Bad Request",
-			status: 400,
-		});
-
-		const result = await addToWaitlist({
-			email: "test@example.com",
-			name: "Test User",
-		});
-
-		expect(log.error).toHaveBeenCalledTimes(1);
-		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SERVER_ERROR);
-	});
-
-	it("should create a new mailing list if one doesn't exist", async () => {
-		mockLists.list.mockResolvedValueOnce({ items: [] });
-		mockLists.create.mockResolvedValueOnce({ name: "waiting-list" });
-		mockLists.members.createMember.mockResolvedValueOnce({ member: { address: "test@example.com" } });
-		mockMessages.create.mockResolvedValueOnce({ id: "mock-message-id", status: 200 });
-
-		const result = await addToWaitlist({
-			email: "test@example.com",
-			name: "Test User",
+			name: "",
 		});
 
 		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SUCCESS);
 	});
 
-	it("should use an existing mailing list if one exists", async () => {
-		mockLists.list.mockResolvedValueOnce({
-			items: [{ name: "waiting-list" }],
-		});
-		mockLists.members.createMember.mockResolvedValueOnce({
-			member: { address: "test@example.com" },
-		});
-		mockMessages.create.mockResolvedValueOnce({
-			id: "mock-message-id",
-			status: 200,
+	it("should pass correct data to email API", async () => {
+		const mockResendInstance = new mockResend();
+		const mockSend = vi.mocked(mockResendInstance.emails.send);
+
+		await addToWaitlist({
+			email: "john@example.com",
+			name: "John Researcher",
 		});
 
-		const result = await addToWaitlist({
-			email: "test@example.com",
-			name: "Test User",
-		});
-
-		expect(mockLists.create).not.toHaveBeenCalled();
-		expect(result.code).toBe(WAITING_LIST_RESPONSE_CODES.SUCCESS);
-	});
-
-	it("should successfully process happy path where all APIs succeed", async () => {
-		mockLists.list.mockResolvedValueOnce({ items: [{ name: "waiting-list" }] });
-		mockLists.members.createMember.mockResolvedValueOnce({ member: { address: "success@example.com" } });
-		mockMessages.create.mockResolvedValueOnce({ id: "mock-email-id", status: 200 });
-
-		const validFormData = {
-			email: "success@example.com",
-			name: "Happy Path",
-		};
-
-		const result = await addToWaitlist(validFormData);
-
-		expect(log.error).not.toHaveBeenCalled();
-		expect(result).toEqual({
-			code: WAITING_LIST_RESPONSE_CODES.SUCCESS,
+		expect(mockSend).toHaveBeenCalledWith({
+			from: "noreply@grantflow.ai",
+			react: expect.any(String),
+			subject: "Confirmation: You've Joined the GrantFlow Waitlist",
+			to: "john@example.com",
 		});
 	});
 });

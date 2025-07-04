@@ -38,7 +38,7 @@ function LegalPageContainer({
 
 function TitledLegalSection({ clause, id, title }: { clause: React.ReactNode; id?: string; title: string }) {
 	return (
-		<section className="leading-tight" id={id}>
+		<section className="leading-tight mb-6" id={id}>
 			<h4 className="font-bold">{title}</h4>
 			{clause}
 		</section>
@@ -47,7 +47,7 @@ function TitledLegalSection({ clause, id, title }: { clause: React.ReactNode; id
 
 function UntitledLegalSection({ clause, id }: { clause: React.ReactNode; id?: string }) {
 	return (
-		<section className="leading-tight" id={id}>
+		<section className="leading-tight mb-6" id={id}>
 			{clause}
 		</section>
 	);
