@@ -4,6 +4,7 @@ import { Bug, Settings, Shuffle, Wifi, WifiOff, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getMockAPIClient, isMockAPIEnabled } from "@/dev-tools/mock-api/client";
+import { clearAllMockStores } from "@/dev-tools/mock-api/handlers";
 import { getScenario, scenarios } from "@/dev-tools/mock-api/scenarios";
 import { useApplicationStore } from "@/stores/application-store";
 import { useNotificationStore } from "@/stores/notification-store";
@@ -19,7 +20,9 @@ export function DevMenu() {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeTab, setActiveTab] = useState<"api" | "routes" | "scenarios" | "stores">("api");
 	const [mockEnabled, setMockEnabled] = useState(isMockAPIEnabled());
-	const [selectedScenario, setSelectedScenario] = useState("minimal");
+	const [selectedScenario, setSelectedScenario] = useState(() =>
+		isMockAPIEnabled() ? getMockAPIClient().getCurrentScenarioName() : "minimal",
+	);
 	const [networkDelay, setNetworkDelay] = useState(300);
 	const [errorRate, setErrorRate] = useState(0);
 	const [wsConnected, setWsConnected] = useState(false);
@@ -59,6 +62,8 @@ export function DevMenu() {
 
 		if (isMockAPIEnabled()) {
 			getMockAPIClient().setScenario(scenarioName);
+			// Clear the global mock stores so they use the new scenario data
+			clearAllMockStores();
 		}
 
 		clearAllStores();
