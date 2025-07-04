@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import AboutPage from "@/app/(public-pages)/about/page";
 
 vi.mock("@/hooks/use-mobile", () => ({
-	useIsMobile: ()=> false,
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/components/about/icons", () => ({

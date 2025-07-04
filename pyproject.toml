@@ -186,6 +186,7 @@ members = [
   "services/indexer",
   "services/rag",
   "services/scraper",
+  "daily-health-check",
 ]
 
 [tool.uv.sources]

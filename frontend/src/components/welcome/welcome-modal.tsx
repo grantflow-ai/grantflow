@@ -3,9 +3,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Check } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AppDialog, AppDialogContent, AppDialogDescription, AppDialogHeader, AppDialogTitle } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { PROGRESS_BAR_STEPS } from "@/constants";
-import { AppButton } from "../app-button";
 
 export default function WelcomeModal() {
 	const [open, setOpen] = useState(true);
@@ -28,20 +28,20 @@ export default function WelcomeModal() {
 	}, []);
 
 	return (
-		<Dialog onOpenChange={setOpen} open={open}>
-			<DialogContent className="flex w-full max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-[#1f13f8cf] bg-white px-0 pb-8 pt-0">
-				<DialogHeader className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-[#FAF9FB]">
+		<AppDialog onOpenChange={setOpen} open={open}>
+			<AppDialogContent className="flex w-full max-w-[954px] flex-col gap-16 overflow-hidden rounded-sm border border-[#1f13f8cf] bg-white px-0 pb-8 pt-0">
+				<AppDialogHeader className="relative flex h-[152px] w-full items-center justify-center overflow-hidden rounded-t-sm bg-[#FAF9FB]">
 					<div className="absolute -left-32 top-40 size-64 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_#1E13F8_0%,_transparent_70%)] opacity-80" />
 					<ProgressBar step={step} />
-				</DialogHeader>
+				</AppDialogHeader>
 				<section className=" flex w-full justify-between px-10">
-					<DialogTitle>
+					<AppDialogTitle>
 						<h2 className="text-4xl font-medium text-black ">
 							Welcome to <br /> GrantFlow!
 						</h2>
-					</DialogTitle>
+					</AppDialogTitle>
 
-					<DialogDescription className="flex w-[597px] flex-col gap-10">
+					<AppDialogDescription className="flex w-[597px] flex-col gap-10">
 						<div className="flex flex-col gap-4">
 							<p className="text-base font-normal text-black ">
 								<span className="font-semibold"> GrantFlow</span> was built for researchers, designed to
@@ -62,7 +62,7 @@ export default function WelcomeModal() {
 								and refine the output using the editor.
 							</p>
 						</article>
-					</DialogDescription>
+					</AppDialogDescription>
 				</section>
 				<footer className="flex w-full items-center justify-between px-10">
 					<AppButton
@@ -84,8 +84,8 @@ export default function WelcomeModal() {
 						Start New Application
 					</AppButton>
 				</footer>
-			</DialogContent>
-		</Dialog>
+			</AppDialogContent>
+		</AppDialog>
 	);
 }
 

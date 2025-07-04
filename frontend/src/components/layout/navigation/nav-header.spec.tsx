@@ -59,7 +59,7 @@ vi.mock("@/components/branding/logo", () => {
 });
 
 vi.mock("@/hooks/use-mobile", () => ({
-	useIsMobile: ()=> false,
+	useIsMobile: () => false,
 }));
 
 describe("NavHeader Component", () => {
