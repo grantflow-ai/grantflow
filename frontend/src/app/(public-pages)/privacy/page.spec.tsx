@@ -2,6 +2,10 @@ import { render, screen } from "@testing-library/react";
 
 import PrivacyPolicyPage from "@/app/(public-pages)/privacy/page";
 
+vi.mock("@/hooks/use-mobile", () => ({
+	useIsMobile: ()=> false,
+}));
+
 vi.mock("@/components/shared/info-legal-page-components", () => ({
 	LegalPageContainer: ({ children, title }: { children: React.ReactNode; title: string }) => (
 		<div data-testid="legal-container" data-title={title}>
