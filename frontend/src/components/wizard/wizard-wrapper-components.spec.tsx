@@ -10,17 +10,7 @@ import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
-import { getStepIcon, StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
-
-const TEST_DATES = {
-	fourDaysFromNow: "2024-01-05T00:00:00Z",
-	oneWeekAndTwoDaysFromNow: "2024-01-10T00:00:00Z",
-	oneWeekFromNow: "2024-01-08T00:00:00Z",
-	today: "2024-01-01T00:00:00Z",
-	tomorrow: "2024-01-02T00:00:00Z",
-	twoWeeksFromNow: "2024-01-15T00:00:00Z",
-	yesterday: "2023-12-31T23:59:59Z",
-};
+import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({

@@ -6,7 +6,7 @@ import { WaitlistEmail } from "@/emails/waitlist-email";
 import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import type { waitlistSchema } from "@/schemas/waitlist-schema";
 import { getEnv } from "@/utils/env";
-import { logError } from "@/utils/logging";
+import { log } from "@/utils/logger";
 
 const resend = new Resend(getEnv().RESEND_API_KEY);
 
@@ -18,9 +18,9 @@ export async function addToWaitlist(formData: z.infer<typeof waitlistSchema>): P
 	const emailDeliveryError = await sendConfirmationEmail(formData);
 
 	if (emailDeliveryError) {
-		logError({
-			identifier: "addToWaitlist",
+		log.error("Waitlist error", {
 			error: `Failed to send confirmation email: ${emailDeliveryError.message}`,
+			identifier: "addToWaitlist",
 		});
 
 		return {

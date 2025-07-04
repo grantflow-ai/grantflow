@@ -4,7 +4,7 @@ import { vi } from "vitest";
 import ImprintPage from "@/app/(public-pages)/imprint/page";
 
 vi.mock("@/hooks/use-mobile", () => ({
-	useIsMobile: ()=> false,
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/components/shared/info-legal-page-components", () => ({

@@ -4,7 +4,6 @@
  * @param data - Optional data to log
  */
 export function logDebug(message: string, data?: unknown): void {
-	// eslint-disable-next-line no-console
 	console.log(`[DEBUG] ${message}`, data ?? "");
 }
 
@@ -15,7 +14,7 @@ export function logDebug(message: string, data?: unknown): void {
  */
 export function logError({ error, identifier }: { error: unknown; identifier: string }): void {
 	const message = error instanceof Error ? error.message : JSON.stringify(error);
-	// eslint-disable-next-line no-console
+
 	console.error(`${identifier}: ${message}`);
 }
 
@@ -29,10 +28,8 @@ export function logTrace(level: "error" | "info", message: string, metadata: Rec
 	};
 
 	if (level === "error") {
-		// eslint-disable-next-line no-console
 		console.error(`[TRACE] ${message}`, logData);
 	} else {
-		// eslint-disable-next-line no-console
 		console.log(`[TRACE] ${message}`, logData);
 	}
 }

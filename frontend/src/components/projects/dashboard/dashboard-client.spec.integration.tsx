@@ -35,6 +35,10 @@ vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),
 }));
 
+vi.mock("@/actions/project-invitation", () => ({
+	inviteCollaborator: vi.fn(),
+}));
+
 import { ProjectListItemFactory, ProjectRequestFactory } from "::testing/factories";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
