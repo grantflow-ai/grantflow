@@ -3,7 +3,7 @@ skip_output:
     - summary
 
 pre-commit:
-    parallel: true
+    parallel: false
     commands:
         biome:
             glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"

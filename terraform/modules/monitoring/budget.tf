@@ -142,12 +142,12 @@ data "archive_file" "function" {
   output_path = "${path.module}/budget-function.zip"
 
   source {
-    content  = file("${path.module}/budget_function.py")
+    content  = file("${path.root}/../cloud_functions/budget_function.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("${path.module}/requirements.txt")
+    content  = file("${path.root}/../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }

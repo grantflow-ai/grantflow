@@ -19,6 +19,7 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [`/packages/shared_utils`](./packages/shared_utils/README.md) - Common utilities shared across services
 - [`/frontend`](./frontend/README.md) - NextJS frontend application
 - [`/terraform`](./terraform/README.md) - Terraform configuration for GCP infrastructure
+- [`/cloud_functions`](./cloud_functions/README.md) - Python Cloud Functions for monitoring and alerting
 
 ## Prerequisites
 
