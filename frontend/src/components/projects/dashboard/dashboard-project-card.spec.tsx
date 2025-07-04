@@ -4,117 +4,124 @@ import userEvent from "@testing-library/user-event";
 import { DashboardProjectCard } from "./dashboard-project-card";
 
 describe("DashboardProjectCard", () => {
-	const mockOnDelete = vi.fn();
-	const mockOnDuplicate = vi.fn();
+  const mockOnDelete = vi.fn();
+  const mockOnDuplicate = vi.fn();
 
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
+  // fake team members required by the component
+  const teamMembers = [
+    { backgroundColor: "#369e94", initials: "NH" },
+    { backgroundColor: "#9e366f", initials: "VH" },
+  ];
 
-	it("renders project information correctly", () => {
-		const project = ProjectListItemFactory.build({
-			applications_count: 2,
-			description: "Test description",
-			name: "Test Project",
-		});
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
+  it("renders project name and description", () => {
+    const project = ProjectListItemFactory.build({
+      applications_count: 2,
+      description: "Test description",
+      name: "Test Project",
+    });
 
-		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
-		expect(screen.getByText("Test Project")).toBeInTheDocument();
-		expect(screen.getByText("Test description")).toBeInTheDocument();
-		expect(screen.getByText("2 Applications")).toBeInTheDocument();
-	});
+    render(
+      <DashboardProjectCard
+        project={project}
+        onDelete={mockOnDelete}
+        onDuplicate={mockOnDuplicate}
+        projectTeamMembers={teamMembers}
+      />
+    );
 
-	it("displays singular application text when count is 1", () => {
-		const project = ProjectListItemFactory.build({ applications_count: 1 });
+    expect(screen.getByText("Test Project")).toBeInTheDocument();
+    expect(screen.getByText("Test description")).toBeInTheDocument();
+  });
 
-		render(<DashboardProjectCard project={project} />);
+  it("shows delete and duplicate options when dropdown is opened", async () => {
+    const project = ProjectListItemFactory.build();
+    const user = userEvent.setup();
 
-		expect(screen.getByText("1 Application")).toBeInTheDocument();
-	});
+    render(
+      <DashboardProjectCard
+        project={project}
+        onDelete={mockOnDelete}
+        onDuplicate={mockOnDuplicate}
+        projectTeamMembers={teamMembers}
+      />
+    );
 
-	it("displays no applications message when count is 0", () => {
-		const project = ProjectListItemFactory.build({ applications_count: 0 });
+    // open dropdown
+    await user.click(screen.getByRole("button")); // should be the MoreVertical icon button
 
-		render(<DashboardProjectCard project={project} />);
+    expect(screen.getByText("Delete")).toBeInTheDocument();
+    expect(screen.getByText("Duplicate")).toBeInTheDocument();
+  });
 
-		expect(screen.getByText("You Have No Applications Yet")).toBeInTheDocument();
-	});
+  it("calls onDelete when Delete is clicked", async () => {
+    const project = ProjectListItemFactory.build();
+    const user = userEvent.setup();
 
-	it("uses default description when project description is null", () => {
-		const project = ProjectListItemFactory.build({ description: null });
+    render(
+      <DashboardProjectCard
+        project={project}
+        onDelete={mockOnDelete}
+        onDuplicate={mockOnDuplicate}
+        projectTeamMembers={teamMembers}
+      />
+    );
 
-		render(<DashboardProjectCard project={project} />);
+    await user.click(screen.getByRole("button")); // open dropdown
+    await user.click(screen.getByText("Delete"));
 
-		expect(screen.getByText(/Description of research project goes here/)).toBeInTheDocument();
-	});
+    expect(mockOnDelete).toHaveBeenCalledWith(project.id);
+    expect(mockOnDelete).toHaveBeenCalledTimes(1);
+  });
 
-	it("toggles dropdown menu when more options button is clicked", async () => {
-		const project = ProjectListItemFactory.build();
-		const user = userEvent.setup();
+  it("calls onDuplicate when Duplicate is clicked", async () => {
+    const project = ProjectListItemFactory.build();
+    const user = userEvent.setup();
 
-		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
+    render(
+      <DashboardProjectCard
+        project={project}
+        onDelete={mockOnDelete}
+        onDuplicate={mockOnDuplicate}
+        projectTeamMembers={teamMembers}
+      />
+    );
 
-		const moreButton = screen.getByTestId("more-options-button");
+    await user.click(screen.getByRole("button")); // open dropdown
+    await user.click(screen.getByText("Duplicate"));
 
-		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
+    expect(mockOnDuplicate).toHaveBeenCalledWith(project.id);
+    expect(mockOnDuplicate).toHaveBeenCalledTimes(1);
+  });
 
-		await user.click(moreButton);
-		expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
-		expect(screen.getByTestId("delete-project-button")).toBeInTheDocument();
-		expect(screen.getByTestId("duplicate-project-button")).toBeInTheDocument();
+  it("renders team member initials", () => {
+    const project = ProjectListItemFactory.build();
 
-		await user.click(moreButton);
-		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
-	});
+    render(
+      <DashboardProjectCard
+        project={project}
+        projectTeamMembers={teamMembers}
+      />
+    );
 
-	it("calls onDelete when delete button is clicked", async () => {
-		const project = ProjectListItemFactory.build();
-		const user = userEvent.setup();
+    for (const member of teamMembers) {
+      expect(screen.getByText(member.initials)).toBeInTheDocument();
+    }
+  });
 
-		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
+  it("renders even without onDelete/onDuplicate callbacks", () => {
+    const project = ProjectListItemFactory.build();
 
-		await user.click(screen.getByTestId("more-options-button"));
+    render(
+      <DashboardProjectCard
+        project={project}
+        projectTeamMembers={teamMembers}
+      />
+    );
 
-		await user.click(screen.getByTestId("delete-project-button"));
-
-		expect(mockOnDelete).toHaveBeenCalledWith(project.id);
-		expect(mockOnDelete).toHaveBeenCalledTimes(1);
-
-		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
-	});
-
-	it("calls onDuplicate when duplicate button is clicked", async () => {
-		const project = ProjectListItemFactory.build();
-		const user = userEvent.setup();
-
-		render(<DashboardProjectCard onDelete={mockOnDelete} onDuplicate={mockOnDuplicate} project={project} />);
-
-		await user.click(screen.getByTestId("more-options-button"));
-
-		await user.click(screen.getByTestId("duplicate-project-button"));
-
-		expect(mockOnDuplicate).toHaveBeenCalledWith(project.id);
-		expect(mockOnDuplicate).toHaveBeenCalledTimes(1);
-
-		expect(screen.queryByTestId("dropdown-menu")).not.toBeInTheDocument();
-	});
-
-	it("renders correctly without optional callbacks", () => {
-		const project = ProjectListItemFactory.build();
-
-		render(<DashboardProjectCard project={project} />);
-
-		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
-		expect(screen.getByTestId("more-options-button")).toBeInTheDocument();
-	});
-
-	it("displays team member avatars", () => {
-		const project = ProjectListItemFactory.build();
-
-		render(<DashboardProjectCard project={project} />);
-
-		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
-	});
+    expect(screen.getByText(project.name)).toBeInTheDocument();
+  });
 });

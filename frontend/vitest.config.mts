@@ -35,6 +35,6 @@ export default defineConfig({
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
-		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts"],
+		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts", "./vitest.setup.ts"],
 	},
 });
