@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import PrivacyPolicyPage from "@/app/(public-pages)/privacy/page";
 
 vi.mock("@/hooks/use-mobile", () => ({
-	useIsMobile: ()=> false,
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/components/shared/info-legal-page-components", () => ({
