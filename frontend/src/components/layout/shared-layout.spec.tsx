@@ -13,14 +13,18 @@ vi.mock("next-themes", () => ({
 			{children}
 		</div>
 	),
+	useTheme: () => ({
+		setTheme: vi.fn(),
+		theme: "light",
+	}),
 }));
 
 vi.mock("@/components/shared/toast-listener", () => ({
 	ToastListener: () => <div data-testid="toast-listener" />,
 }));
 
-vi.mock("@/components/ui/sonner", () => ({
-	Toaster: () => <div data-testid="toaster" />,
+vi.mock("@/components/app/toaster", () => ({
+	AppToaster: () => <div data-testid="toaster" />,
 }));
 
 describe("SharedLayout", () => {
