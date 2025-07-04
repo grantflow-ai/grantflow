@@ -8,6 +8,7 @@ import { IconGoAhead } from "@/components/branding/icons";
 import { LogoDark } from "@/components/branding/logo";
 import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
 import { PagePath } from "@/enums";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { disableScroll, enableScroll } from "@/utils/window";
 import { LandingPageButton } from "./button";
@@ -50,15 +51,18 @@ const NavLink = ({
 	);
 };
 
-const LogoSection = () => (
-	<Link aria-label="Go to homepage" href={PagePath.ROOT}>
-		<LogoDark
-			className={
-				"sm:h-13 lg:h-15 my-1 h-12 w-auto transition-opacity duration-300 md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16"
-			}
-		/>
-	</Link>
-);
+const LogoSection = () => {
+	const isMobile = useIsMobile();
+	return (
+		<Link aria-label="Go to homepage" href={PagePath.ROOT}>
+			<LogoDark
+				className={"my-1 transition-opacity duration-300 md:my-2 lg:my-4 xl:my-6"}
+				height={isMobile ? 29 : 57}
+				width={isMobile ? 118 : 228}
+			/>
+		</Link>
+	);
+};
 
 export function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

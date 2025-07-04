@@ -58,6 +58,10 @@ vi.mock("@/components/branding/logo", () => {
 	};
 });
 
+vi.mock("@/hooks/use-mobile", () => ({
+	useIsMobile: ()=> false,
+}));
+
 describe("NavHeader Component", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
