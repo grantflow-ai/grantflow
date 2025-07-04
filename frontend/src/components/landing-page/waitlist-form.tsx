@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { addToWaitlist } from "@/actions/join-waitlist";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
+import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { log } from "@/utils/logger";
 import { analyticsIdentify } from "@/utils/segment";
@@ -17,7 +17,7 @@ import { LandingPageSubmitButton } from "./submit-button";
 const getStatusTextColor = (status: string) => {
 	if (status === "success") return "text-success";
 	if (status === "error") return "text-error";
-	return "text-gray-50";
+	return "text-app-black";
 };
 
 const showToast = (type: "error" | "success", message: string, description?: string) => {
@@ -64,11 +64,11 @@ export function WaitlistForm() {
 		const result = await addToWaitlist(values);
 		const message = responseMessages[result.code];
 
-		if (result.error) {
-			setFormState({ message, status: "error" });
-		} else {
+		if (result.code === WAITING_LIST_RESPONSE_CODES.SUCCESS) {
 			setFormState({ message, status: "success" });
 			showToast("success", message);
+		} else {
+			setFormState({ message, status: "error" });
 		}
 
 		form.reset();

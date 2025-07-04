@@ -6,7 +6,7 @@ import { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 
 const { mockAddToWaitlist, mockAnalyticsIdentify, mockError, mockSuccess } = vi.hoisted(() => {
 	return {
-		mockAddToWaitlist: vi.fn().mockResolvedValue({ code: "SUCCESS", error: null }),
+		mockAddToWaitlist: vi.fn().mockResolvedValue({ code: "SUCCESS" }),
 		mockAnalyticsIdentify: vi.fn().mockResolvedValue(undefined),
 		mockError: vi.fn(),
 		mockSuccess: vi.fn(),
@@ -112,7 +112,6 @@ describe("WaitlistForm", () => {
 	it("should handle server error response", async () => {
 		mockAddToWaitlist.mockResolvedValue({
 			code: WAITING_LIST_RESPONSE_CODES.SERVER_ERROR,
-			error: "Server error occurred",
 		});
 
 		const user = userEvent.setup();
