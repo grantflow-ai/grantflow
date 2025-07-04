@@ -162,26 +162,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
       />
       <section className="bg-preview-bg w-full h-full  flex">
         <main className="w-[98%] h-full">
-          <DashboardHeader
-            onCreateProject={() => {
-              setShowCreateModal(true);
-            }}
-            onInviteCollaborators={() => {
-              if (projects.length > 0) {
-                setSelectedProjectForInvite(projects[0]);
-                setShowInviteModal(true);
-              } else {
-                addNotification({
-                  message:
-                    "Create a project first before inviting collaborators",
-                  projectName: "",
-                  title: "No projects available",
-                  type: "info",
-                });
-              }
-            }}
-            projectTeamMembers={projectTeamMembers}
-          />
+          <DashboardHeader projectTeamMembers={projectTeamMembers} />
 
           <main className=" px-10 flex flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200">
             <main className="flex flex-col gap-8">
@@ -221,7 +202,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
               <DashboardStats initialProjects={projects} />
             </main>
             <main className="">
-                <h3 className="font-normal text-4xl text-black">
+              <h3 className="font-normal text-4xl text-black">
                 Research Projects
               </h3>
               <main className="flex items-center gap-4 flex-wrap mt-6">

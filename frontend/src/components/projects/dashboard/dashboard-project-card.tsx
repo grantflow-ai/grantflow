@@ -1,11 +1,9 @@
 "use client";
 
-import { Copy, List, MoreVertical, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Copy, MoreVertical, Trash2 } from "lucide-react";
 
 import { AvatarGroup } from "@/components/app";
-import { PagePath } from "@/enums";
+
 import type { API } from "@/types/api-types";
 import Image from "next/image";
 import {
@@ -19,7 +17,7 @@ interface DashboardProjectCardProps {
   onDelete?: (projectId: string) => void;
   onDuplicate?: (projectId: string) => void;
   project: API.ListProjects.Http200.ResponseBody[0];
-  projectTeamMembers: {
+  projectTeamMembers?: {
     backgroundColor: string;
     initials: string;
   }[];
@@ -31,21 +29,20 @@ export function DashboardProjectCard({
   project,
   projectTeamMembers,
 }: DashboardProjectCardProps) {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const router = useRouter();
+  // const router = useRouter();
 
-  const hasApplications = project.applications_count > 0;
-  const pluralSuffix = project.applications_count > 1 ? "s" : "";
-  const applicationText = hasApplications
-    ? `${project.applications_count} Application${pluralSuffix}`
-    : "You Have No Applications Yet";
-  const projectDescription =
-    project.description ??
-    "Description of research project goes here.Description of research project goes here.";
+  // const hasApplications = project.applications_count > 0;
+  // const pluralSuffix = project.applications_count > 1 ? "s" : "";
+  // const applicationText = hasApplications
+  //   ? `${project.applications_count} Application${pluralSuffix}`
+  //   : "You Have No Applications Yet";
+  // const projectDescription =
+  //   project.description ??
+  //   "Description of research project goes here.Description of research project goes here.";
 
-  const handleCardClick = () => {
-    router.push(PagePath.PROJECT_DETAIL.replace(":projectId", project.id));
-  };
+  // const handleCardClick = () => {
+  //   router.push(PagePath.PROJECT_DETAIL.replace(":projectId", project.id));
+  // };
 
   return (
     // <div
@@ -165,7 +162,7 @@ export function DashboardProjectCard({
         </div>
         <div className="flex items-end  h-full">
           <div className="flex items-center ">
-            <AvatarGroup size="md" users={projectTeamMembers} />
+            <AvatarGroup size="md" users={projectTeamMembers ?? []} />
           </div>
         </div>
       </div>
