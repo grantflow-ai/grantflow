@@ -89,6 +89,14 @@ vi.mock("@/utils/env", () => ({
 	getEnv: vi.fn().mockReturnValue(mockEnv),
 }));
 
+vi.mock("next-themes", () => ({
+	ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
+	useTheme: vi.fn().mockReturnValue({
+		setTheme: vi.fn(),
+		theme: "system",
+	}),
+}));
+
 export {
 	mockCookies,
 	mockRedirect,

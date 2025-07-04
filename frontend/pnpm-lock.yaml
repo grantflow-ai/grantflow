@@ -8719,6 +8719,7 @@ snapshots:
   eslint-plugin-n@17.21.0(eslint@9.30.1(jiti@2.4.2))(typescript@5.8.3):
     dependencies:
       '@eslint-community/eslint-utils': 4.7.0(eslint@9.30.1(jiti@2.4.2))
+      '@typescript-eslint/utils': 8.35.1(eslint@9.30.1(jiti@2.4.2))(typescript@5.8.3)
       enhanced-resolve: 5.18.2
       eslint: 9.30.1(jiti@2.4.2)
       eslint-plugin-es-x: 7.8.0(eslint@9.30.1(jiti@2.4.2))

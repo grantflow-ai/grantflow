@@ -15,10 +15,12 @@ import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { RouteSpecificTools } from "./route-tools/route-specific-tools";
 import { StoreInspector } from "./store-inspector";
+import { ToastTestButton } from "./toast-test-button";
+import { ToastTestPanel } from "./toast-test-panel";
 
 export function DevMenu() {
 	const [isOpen, setIsOpen] = useState(false);
-	const [activeTab, setActiveTab] = useState<"api" | "routes" | "scenarios" | "stores">("api");
+	const [activeTab, setActiveTab] = useState<"api" | "routes" | "scenarios" | "stores" | "toast">("api");
 	const [mockEnabled, setMockEnabled] = useState(isMockAPIEnabled());
 	const [selectedScenario, setSelectedScenario] = useState(() =>
 		isMockAPIEnabled() ? getMockAPIClient().getCurrentScenarioName() : "minimal",
@@ -26,6 +28,7 @@ export function DevMenu() {
 	const [networkDelay, setNetworkDelay] = useState(300);
 	const [errorRate, setErrorRate] = useState(0);
 	const [wsConnected, setWsConnected] = useState(false);
+	const [toastTestingEnabled, setToastTestingEnabled] = useState(false);
 	const pathname = usePathname();
 	const router = useRouter();
 
@@ -100,6 +103,9 @@ export function DevMenu() {
 				{mockEnabled && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-green-500" />}
 			</button>
 
+			{/* Toast Test Button */}
+			<ToastTestButton enabled={toastTestingEnabled} />
+
 			{/* Dev Menu Panel */}
 			{isOpen && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -128,7 +134,7 @@ export function DevMenu() {
 
 						{/* Tabs */}
 						<div className="flex border-b border-gray-700">
-							{(["api", "stores", "routes", "scenarios"] as const).map((tab) => (
+							{(["api", "stores", "routes", "scenarios", "toast"] as const).map((tab) => (
 								<button
 									className={`px-6 py-3 capitalize transition-colors ${
 										activeTab === tab
@@ -274,6 +280,10 @@ export function DevMenu() {
 										))}
 									</div>
 								</div>
+							)}
+
+							{activeTab === "toast" && (
+								<ToastTestPanel enabled={toastTestingEnabled} onToggle={setToastTestingEnabled} />
 							)}
 						</div>
 

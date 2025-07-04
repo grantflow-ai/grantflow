@@ -20,12 +20,10 @@ const getStatusTextColor = (status: string) => {
 	return "text-gray-50";
 };
 
-const showToast = (type: "error" | "success", message: string, description?: string) => {
-	if (type === "success") {
-		toast.success(message);
-	} else {
-		toast.error(message, { description: description ?? "Please try again or contact support." });
-	}
+const showToast = (type: "error" | "info" | "success" | "warning", message: string, description?: string) => {
+	toast[type](message, {
+		description: description ?? (type === "error" ? "Please try again or contact support." : undefined),
+	});
 };
 
 const responseMessages: Record<WAITING_LIST_RESPONSE_CODES, string> = {
