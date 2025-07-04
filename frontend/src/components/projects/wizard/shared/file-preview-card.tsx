@@ -9,16 +9,16 @@ import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 
 const FILE_ICON_MAP = {
-	"": <Image alt="General file" height={56} src="/icons/file-general.svg" width={48} />,
-	csv: <Image alt="CSV file" height={56} src="/icons/file-csv.svg" width={48} />,
-	doc: <Image alt="DOC file" height={56} src="/icons/file-doc.svg" width={48} />,
-	docx: <Image alt="DOCX file" height={56} src="/icons/file-docx.svg" width={48} />,
-	markdown: <Image alt="Markdown file" height={56} src="/icons/file-markdown.svg" width={48} />,
-	md: <Image alt="Markdown file" height={56} src="/icons/file-markdown.svg" width={48} />,
-	pdf: <Image alt="PDF file" height={56} src="/icons/file-pdf.svg" width={48} />,
-	ppt: <Image alt="PPT file" height={56} src="/icons/file-ppt.svg" width={48} />,
-	pptx: <Image alt="PPTX file" height={56} src="/icons/file-pptx.svg" width={48} />,
-	unknown: <Image alt="Unknown file" height={56} src="/icons/file-general.svg" width={48} />,
+	"": <Image alt="General file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
+	csv: <Image alt="CSV file" className="block" height={56} src="/icons/file-csv.svg" width={48} />,
+	doc: <Image alt="DOC file" className="block" height={56} src="/icons/file-doc.svg" width={48} />,
+	docx: <Image alt="DOCX file" className="block" height={56} src="/icons/file-docx.svg" width={48} />,
+	markdown: <Image alt="Markdown file" className="block" height={56} src="/icons/file-markdown.svg" width={48} />,
+	md: <Image alt="Markdown file" className="block" height={56} src="/icons/file-markdown.svg" width={48} />,
+	pdf: <Image alt="PDF file" className="block" height={56} src="/icons/file-pdf.svg" width={48} />,
+	ppt: <Image alt="PPT file" className="block" height={56} src="/icons/file-ppt.svg" width={48} />,
+	pptx: <Image alt="PPTX file" className="block" height={56} src="/icons/file-pptx.svg" width={48} />,
+	unknown: <Image alt="Unknown file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
 } as const;
 
 export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId?: string }) {
@@ -51,11 +51,11 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 	};
 
 	return (
-		<div className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-2 transition-all">
+		<div className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-1 transition-all w-14">
 			{canOpenInBrowser ? (
 				<button
 					aria-label={`Open ${file.name}`}
-					className="flex flex-col items-center justify-center focus:outline-none"
+					className="flex flex-col items-center justify-center focus:outline-none w-full"
 					onClick={handleOpen}
 					onContextMenu={handleContextMenu}
 					title="Click to open file"
@@ -66,6 +66,7 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 			) : (
 				<div
 					aria-label={`File ${file.name} - right click for options`}
+					className="w-full"
 					onContextMenu={handleContextMenu}
 					role="img"
 				>
@@ -108,20 +109,20 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 
 function FileContent({ extension, fileName }: { extension: string; fileName: string }) {
 	return (
-		<>
-			<div className="flex h-14 w-12 items-center justify-center" data-testid="file-icon">
+		<div className="flex flex-col items-center justify-center w-full">
+			<div className="flex items-center justify-center" data-testid="file-icon">
 				{extension in FILE_ICON_MAP
 					? FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]
 					: FILE_ICON_MAP.unknown}
 			</div>
 			<span
-				className="mt-1 max-w-10 truncate text-center text-app-gray-700 text-[10px] leading-3"
+				className="w-full max-w-full truncate text-center text-app-gray-700 text-[10px] leading-3"
 				data-testid="file-name"
 				title={fileName}
 			>
 				{fileName}
 			</span>
-		</>
+		</div>
 	);
 }
 
