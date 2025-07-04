@@ -11,9 +11,6 @@ const AppToaster = ({ ...props }: ToasterProps) => {
 		<>
 			{/* eslint-disable-next-line react/no-unknown-property */}
 			<style global jsx>{`
-				.toaster [data-icon] { margin-right: 4px; margin-top: 0; margin-bottom: 0; margin-left: 0; flex-shrink: 0; align-self: flex-start; }
-				.toaster [data-content] { flex: 1; margin: 0; }
-				.toaster [data-description] { color: var(--app-gray-400); }
 			`}</style>
 			<Sonner
 				closeButton={false}
@@ -29,9 +26,11 @@ const AppToaster = ({ ...props }: ToasterProps) => {
 				toastOptions={{
 					className: "flex flex-row items-start !rounded-sm border shadow-none",
 					classNames: {
+						description: "!text-app-gray-600",
 						error: "!bg-rose-50 !border-destructive",
 						info: "!bg-slate-100 !border-slate-400",
-						success: "!bg-app-dark-blue !border-app-dark-blue !text-white",
+						success:
+							"!bg-app-dark-blue !border-app-dark-blue !text-white [&_[data-description]]:!text-white/70",
 						warning: "!bg-orange-50 !border-amber-200",
 					},
 					style: {
