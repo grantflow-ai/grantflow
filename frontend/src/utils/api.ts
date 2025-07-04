@@ -76,57 +76,39 @@ export function getClient(): KyInstance {
 	return clientRef.value;
 }
 
+function createMockErrorResponse(error: unknown): Response {
+	return new Response(
+		JSON.stringify({
+			detail: "Mock API failed to handle request",
+			error: error instanceof Error ? error.message : "Mock API error",
+		}),
+		{
+			headers: {
+				"Content-Type": "application/json",
+			},
+			status: 500,
+		},
+	);
+}
+
 async function createMockResponse(request: Request, _options: NormalizedOptions): Promise<Response | undefined> {
-	if (!getEnv().NEXT_PUBLIC_MOCK_API) {
+	if (!shouldUseMockAPI()) {
 		return undefined;
 	}
 
-	if (!isMockAPIEnabled()) {
-		return undefined;
-	}
-
-	if (!mockHandlersRegistered) {
-		initializeMockAPI();
-		mockHandlersRegistered = true;
-		log.info("[Mock API] Mock API initialized");
-	}
+	ensureMockAPIInitialized();
 
 	try {
-		const url = new URL(request.url);
-		const baseUrl = new URL(getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
-
-		let path = url.pathname;
-		if (path.startsWith(baseUrl.pathname)) {
-			path = path.slice(baseUrl.pathname.length);
-		}
-
-		if (!path.startsWith("/")) {
-			path = `/${path}`;
-		}
-
-		if (url.search) {
-			path += url.search;
-		}
+		const baseUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
+		const path = extractRequestPath(request.url, baseUrl);
 
 		log.info(`[Mock API] Intercepting ${request.method} ${path}`, {
-			baseUrlPath: baseUrl.pathname,
+			baseUrlPath: new URL(baseUrl).pathname,
 			extractedPath: path,
 			fullUrl: request.url,
 		});
 
-		let body: unknown;
-		if (request.body) {
-			const clonedRequest = request.clone();
-			const contentType = request.headers.get("content-type");
-
-			if (contentType?.includes("application/json")) {
-				body = (await clonedRequest.json()) as unknown;
-			} else if (contentType?.includes("multipart/form-data")) {
-				body = (await clonedRequest.formData()) as unknown;
-			} else {
-				body = (await clonedRequest.text()) as unknown;
-			}
-		}
+		const body = await parseRequestBody(request);
 
 		const result = await getMockAPIClient().intercept<unknown>(path, {
 			body: body ? JSON.stringify(body) : undefined,
@@ -141,17 +123,57 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 		});
 	} catch (error) {
 		log.error("[Mock API] Error handling request", error);
-		return new Response(
-			JSON.stringify({
-				detail: "Mock API failed to handle request",
-				error: error instanceof Error ? error.message : "Mock API error",
-			}),
-			{
-				headers: {
-					"Content-Type": "application/json",
-				},
-				status: 500,
-			},
-		);
+		return createMockErrorResponse(error);
 	}
+}
+
+function ensureMockAPIInitialized(): void {
+	if (!mockHandlersRegistered) {
+		initializeMockAPI();
+		mockHandlersRegistered = true;
+		log.info("[Mock API] Mock API initialized");
+	}
+}
+
+function extractRequestPath(requestUrl: string, baseUrl: string): string {
+	const url = new URL(requestUrl);
+	const baseUrlObj = new URL(baseUrl);
+
+	let path = url.pathname;
+	if (path.startsWith(baseUrlObj.pathname)) {
+		path = path.slice(baseUrlObj.pathname.length);
+	}
+
+	if (!path.startsWith("/")) {
+		path = `/${path}`;
+	}
+
+	if (url.search) {
+		path += url.search;
+	}
+
+	return path;
+}
+
+async function parseRequestBody(request: Request): Promise<unknown> {
+	if (!request.body) {
+		return undefined;
+	}
+
+	const clonedRequest = request.clone();
+	const contentType = request.headers.get("content-type");
+
+	if (contentType?.includes("application/json")) {
+		return (await clonedRequest.json()) as unknown;
+	}
+
+	if (contentType?.includes("multipart/form-data")) {
+		return (await clonedRequest.formData()) as unknown;
+	}
+
+	return (await clonedRequest.text()) as unknown;
+}
+
+function shouldUseMockAPI(): boolean {
+	return Boolean(getEnv().NEXT_PUBLIC_MOCK_API) && isMockAPIEnabled();
 }
