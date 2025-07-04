@@ -55,6 +55,11 @@ const terms = [
 				We do not sell, rent, or trade your personal information. We may utilize trusted third-party services
 				for analytics or email communications. These third parties are obligated to protect your data and are
 				prohibited from using it for any other purposes.
+				<br />
+				We currently use Google Analytics to collect information about how visitors use our website. Google
+				Analytics helps us understand website traffic and usage patterns so we can improve our services. Google
+				may collect data such as your IP address and browsing behavior on our site. For more information on how
+				Google collects and processes data, please visit Google&apos;s Privacy & Terms.
 			</p>
 		),
 		title: "Third-Party Services",
