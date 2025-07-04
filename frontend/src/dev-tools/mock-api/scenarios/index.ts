@@ -36,8 +36,17 @@ export const scenarios: Scenario[] = [
 			applications: new Map([
 				[
 					"app-1",
-					ApplicationFactory.build({
-						grant_template: undefined,
+					ApplicationWithTemplateFactory.build({
+						grant_template: {
+							...ApplicationWithTemplateFactory.build().grant_template!,
+							rag_sources: [
+								{
+									filename: "grant-guidelines.pdf",
+									sourceId: "src-minimal-1",
+									status: "FINISHED",
+								},
+							],
+						},
 						id: "app-1",
 						status: "DRAFT",
 						title: "Draft Grant Application",
