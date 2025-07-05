@@ -41,14 +41,8 @@ jobs:
             - name: Install Dependencies
               run: cd frontend && pnpm install
 
-            - name: Deploy Storybook to GitHub Pages
-              id: build-publish
-              uses: bitovi/github-actions-storybook-to-github-pages@v1.0.3
-              with:
-                  path: frontend/storybook-static
-                  install_command: cd frontend && pnpm install
-                  build_command: cd frontend && pnpm build-storybook
-                  checkout: false
+            - name: Build Storybook
+              run: cd frontend && pnpm build-storybook
               env:
                   NEXT_PUBLIC_SITE_URL: https://grantflow-ai.github.io/monorepo
                   NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
@@ -64,3 +58,12 @@ jobs:
                   NEXT_PUBLIC_SEGMENT_WRITE_KEY: ${{ secrets.NEXT_PUBLIC_SEGMENT_WRITE_KEY }}
                   NEXT_PUBLIC_DEBUG: false
                   RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+            - name: Upload to GitHub Pages
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: frontend/storybook-static
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
