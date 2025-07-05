@@ -30,6 +30,10 @@ env:
       secret: NEXT_PUBLIC_MAILGUN_API_KEY_STAGING
     - variable: NEXT_PUBLIC_SEGMENT_WRITE_KEY
       secret: NEXT_PUBLIC_SEGMENT_WRITE_KEY_STAGING
+    - variable: NEXT_PUBLIC_GA4_MEASUREMENT_ID
+      secret: NEXT_PUBLIC_GA4_MEASUREMENT_ID_STAGING
+    - variable: RESEND_API_KEY
+      secret: RESEND_API_KEY_STAGING
     # Enable mock API and auth for staging by default
     - variable: NEXT_PUBLIC_MOCK_API
       value: "true"
