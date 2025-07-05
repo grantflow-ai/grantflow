@@ -1,6 +1,6 @@
 metadata:
   name: "GrantFlow.AI"
-  version: "1.0.0"
+  version: "1.1.0"
   description: "GrantFlow.AI Development Guide"
 
 outputs:
@@ -25,6 +25,30 @@ rules:
       1. First checking your memory for task names
       2. If needed, read the Taskfile.yaml to see all available commands
       3. Use `task --list` to see available commands with descriptions
+
+  - name: "Comment Preservation (~keep)"
+    priority: 95
+    content: |
+      ### ~keep Convention
+      
+      Comments marked with `~keep` are important documentation that should be preserved during:
+      - Code refactoring
+      - Automated updates
+      - AI-assisted modifications
+      - Linting or formatting
+      
+      Examples:
+      ```python
+      # ~keep This calculation must happen before validation due to race condition
+      result = calculate_important_value()
+      ```
+      
+      ```yaml
+      # ~keep Max instances limited by us-central1 CPU quota: 50 instances × 4 CPUs = 200 CPUs
+      maxInstances: 50
+      ```
+      
+      When you see a `~keep` comment, treat it as critical documentation that explains non-obvious constraints or decisions.
 
   - name: "Stack"
     priority: 90

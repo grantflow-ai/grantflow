@@ -1,0 +1,175 @@
+metadata:
+  name: "GrantFlow Frontend"
+  version: "1.0.0"
+  description: "Next.js frontend application conventions"
+
+outputs:
+  - file: "CLAUDE.md"
+  - file: "GEMINI.md"
+  - file: ".windsurfrules"
+  - file: ".cursorrules"
+
+rules:
+  - name: "Next.js 15 App Router"
+    priority: 95
+    content: |
+      ### App Router Conventions
+      
+      - Use App Router (not Pages Router)
+      - Server Components by default
+      - Client Components only when needed (use `"use client"`)
+      - Colocate components with routes
+      - Use route groups `(group)` for organization
+      
+      Route structure:
+      ```
+      app/
+      ├── (auth)/
+      │   ├── login/page.tsx
+      │   └── register/page.tsx
+      ├── (dashboard)/
+      │   ├── layout.tsx          # Dashboard layout
+      │   └── projects/page.tsx
+      └── layout.tsx              # Root layout
+      ```
+
+  - name: "Component Organization"
+    priority: 90
+    content: |
+      Component structure:
+      ```
+      src/components/
+      ├── ui/                     # Shadcn UI components
+      ├── forms/                  # Form components
+      ├── layouts/                # Layout components
+      └── features/               # Feature-specific components
+          ├── projects/
+          └── applications/
+      ```
+      
+      - Colocate related components
+      - Extract shared components to appropriate folders
+      - Keep components focused and single-purpose
+
+  - name: "State Management"
+    priority: 85
+    content: |
+      ### Zustand for Client State
+      
+      Use Zustand for complex client state:
+      ```typescript
+      // src/stores/application-store.ts
+      export const useApplicationStore = create<ApplicationStore>((set, get) => ({
+        applications: [],
+        isLoading: false,
+        
+        // Actions
+        fetchApplications: async () => {
+          set({ isLoading: true });
+          const applications = await getApplications();
+          set({ applications, isLoading: false });
+        },
+      }));
+      ```
+      
+      - NO mocking stores in tests
+      - Use real stores with setState
+      - Keep stores focused by domain
+
+  - name: "API Integration"
+    priority: 80
+    content: |
+      ### Server Actions and API Calls
+      
+      Server Actions for mutations:
+      ```typescript
+      "use server";
+      
+      export async function createProject(data: FormData) {
+        const validated = projectSchema.parse(data);
+        // API call with proper error handling
+        return { success: true, data: result };
+      }
+      ```
+      
+      Client-side API calls with Ky:
+      ```typescript
+      export async function getProjects() {
+        return withAuthRedirect(
+          getClient()
+            .get('projects')
+            .json<API.GetProjects.ResponseBody>()
+        );
+      }
+      ```
+
+  - name: "Type Safety"
+    priority: 75
+    content: |
+      ### Generated Types
+      
+      - Use generated types from `@/types/api-types`
+      - Run `task generate:api-types` after API changes
+      - Never manually edit generated types
+      - Use proper imports:
+      ```typescript
+      import type { API } from "@/types/api-types";
+      
+      const project: API.Project = { ... };
+      ```
+
+  - name: "Testing Patterns"
+    priority: 70
+    content: |
+      ### Frontend Testing Guidelines
+      
+      ```typescript
+      // src/components/Button.spec.tsx
+      import { render, screen } from "@testing-library/react";
+      import { userEvent } from "@testing-library/user-event";
+      
+      it("handles click events", async () => {
+        const user = userEvent.setup();
+        const onClick = vi.fn();
+        
+        render(<Button onClick={onClick}>Click me</Button>);
+        
+        await user.click(screen.getByRole("button"));
+        expect(onClick).toHaveBeenCalledOnce();
+      });
+      ```
+      
+      - Test user interactions, not implementation
+      - Use testing-library queries
+      - Mock API calls, not stores
+      - Use factories from `::testing/factories`
+
+  - name: "Styling Conventions"
+    priority: 65
+    content: |
+      ### Tailwind CSS
+      
+      - Use Tailwind classes for styling
+      - Use `cn()` helper for conditional classes
+      - Extract complex styles to component variants
+      - Follow mobile-first responsive design
+      
+      ```typescript
+      import { cn } from "@/lib/utils";
+      
+      <div className={cn(
+        "flex items-center gap-4",
+        "md:flex-row flex-col",
+        isActive && "bg-primary"
+      )} />
+      ```
+
+  - name: "Performance Patterns"
+    priority: 60
+    content: |
+      - Use React 19 features (use hook, Suspense)
+      - Implement proper loading states
+      - Use `dynamic()` for code splitting
+      - Optimize images with Next.js Image
+      - Memoize expensive computations
+      - Use server components for data fetching
