@@ -52,7 +52,7 @@
 		"*.ts",
 		"next-env.d.ts",
 		".next/types/**/*.ts",
-		".storybook/*.ts",
-		".storybook/*.tsx"
+		".storybook/**/*.ts",
+		".storybook/**/*.tsx"
 	]
 }

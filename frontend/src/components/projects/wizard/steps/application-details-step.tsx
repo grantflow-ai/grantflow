@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AppTextArea from "@/components/app/forms/textarea-field";
-import { ApplicationPreview, TemplateFileUploader } from "@/components/projects";
+import { ApplicationPreview, TemplateFileUploader } from "@/components/projects/wizard/shared";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/stores/application-store";
