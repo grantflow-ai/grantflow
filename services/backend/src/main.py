@@ -48,6 +48,12 @@ from services.backend.src.api.routes.projects import (
     handle_update_member_role,
     handle_update_project,
 )
+from services.backend.src.api.routes.user import (
+    delete_account,
+    get_account_status,
+    get_user_profile,
+    update_user_profile,
+)
 from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
@@ -66,12 +72,15 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_otp,
     handle_create_upload_url,
     handle_create_project,
+    delete_account,
     handle_delete_application,
     handle_delete_invitation,
     handle_delete_organization,
     handle_delete_rag_source,
     handle_delete_project,
     dismiss_notification,
+    get_account_status,
+    get_user_profile,
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
@@ -92,6 +101,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_update_member_role,
     handle_update_organization,
     handle_update_project,
+    update_user_profile,
 ]
 
 

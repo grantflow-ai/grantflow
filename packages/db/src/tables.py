@@ -73,6 +73,32 @@ class BaseWithUUIDPK(Base):
     id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True, insert_default=uuid4)
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    deletion_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    
+    preferences: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+    
+    project_users: Relationship[list["ProjectUser"]] = relationship(
+        "ProjectUser", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("idx_users_active", "firebase_uid", postgresql_where=text("deleted_at IS NULL")),
+        Index("idx_users_deletion_scheduled", "deletion_scheduled_at"),
+    )
+
+
 class Project(BaseWithUUIDPK):
     __tablename__ = "projects"
 
@@ -91,12 +117,15 @@ class Project(BaseWithUUIDPK):
 class ProjectUser(Base):
     __tablename__ = "project_users"
 
-    firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
+    firebase_uid: Mapped[str] = mapped_column(
+        String(128), ForeignKey("users.firebase_uid", ondelete="CASCADE"), primary_key=True
+    )
     role: Mapped[UserRoleEnum] = mapped_column(Enum(UserRoleEnum))
 
     project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
 
     project: Relationship["Project"] = relationship("Project", back_populates="project_users")
+    user: Relationship["User"] = relationship("User", back_populates="project_users")
 
 
 class UserProjectInvitation(BaseWithUUIDPK):
@@ -423,7 +452,7 @@ class Notification(BaseWithUUIDPK):
     type: Mapped[NotificationTypeEnum] = mapped_column(Enum(NotificationTypeEnum))
     title: Mapped[str] = mapped_column(String(255))
     message: Mapped[str] = mapped_column(Text)
-    project_name: Mapped[str | None] = mapped_column(String(255), nullable=True)  
+    project_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     read: Mapped[bool] = mapped_column(default=False)
     dismissed: Mapped[bool] = mapped_column(default=False)
