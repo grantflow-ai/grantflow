@@ -125,8 +125,12 @@ export function SortableSection({
 			ref={setNodeRef}
 			style={style}
 		>
-			<div {...attributes} {...listeners} className="relative size-6 cursor-move ">
-				<GripVertical className="size-6 text-gray-400" />
+			<div
+				{...attributes}
+				{...listeners}
+				className="relative size-6 cursor-grab hover:cursor-grab active:cursor-grabbing"
+			>
+				<GripVertical className="size-6 text-gray-400 hover:text-gray-600 transition-colors" />
 			</div>
 
 			<div className="flex flex-1 items-center justify-between ">

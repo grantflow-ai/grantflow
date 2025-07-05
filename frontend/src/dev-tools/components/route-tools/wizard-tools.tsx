@@ -8,7 +8,7 @@ import { DevResetButton } from "../dev-reset-button";
 
 export function WizardTools() {
 	const currentStep = useWizardStore((state) => state.currentStep);
-	// Use setState directly for dev tools since setCurrentStep doesn't exist
+
 	const setCurrentStep = (step: WizardStep) => {
 		useWizardStore.setState({ currentStep: step });
 	};
@@ -25,21 +25,16 @@ export function WizardTools() {
 
 	const skipToStep = (step: WizardStep) => {
 		setCurrentStep(step);
-		console.log(`[Dev Tools] Skipped to step: ${step}`);
 	};
 
 	const simulateError = () => {
-		// In a real implementation, this would trigger an error in the wizard
-		console.error("[Dev Tools] Simulated wizard error");
 		alert("Simulated error - check console");
 	};
 
 	const fillAllSteps = async () => {
-		console.log("[Dev Tools] Auto-filling all wizard steps...");
-		// This would sequentially fill all steps
 		for (const step of steps) {
 			setCurrentStep(step);
-			// Trigger autofill for each step
+
 			await new Promise((resolve) => setTimeout(resolve, 500));
 		}
 	};

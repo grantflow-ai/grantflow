@@ -7,7 +7,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DashboardClient } from "@/components/projects/dashboard/dashboard-client";
 
-// Enable mock API for tests
 vi.mock("@/utils/env", () => ({
 	getEnv: () => ({
 		NEXT_PUBLIC_BACKEND_API_BASE_URL: "http://localhost:8080",
@@ -60,10 +59,8 @@ describe("Dashboard Page", () => {
 		const mockProjects = ProjectListItemFactory.batch(2);
 		render(<DashboardClient initialProjects={mockProjects} />);
 
-		// Check main dashboard elements exist
 		expect(screen.getByTestId("dashboard-stats")).toBeInTheDocument();
 
-		// Check projects are displayed
 		await waitFor(() => {
 			mockProjects.forEach((project) => {
 				expect(screen.getByText(project.name)).toBeInTheDocument();

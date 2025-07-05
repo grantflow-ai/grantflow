@@ -30,7 +30,7 @@ describe("Server-side Utils", () => {
 		mockCookies.mockResolvedValue(mockCookieStore);
 		vi.mocked(getEnv).mockReturnValue({
 			...mockEnv,
-			NEXT_PUBLIC_MOCK_AUTH: false, // Disable mock auth to test real functions
+			NEXT_PUBLIC_MOCK_AUTH: false,
 		});
 	});
 

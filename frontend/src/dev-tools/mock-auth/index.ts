@@ -31,7 +31,6 @@ export function initializeMockAuth(): void {
 		return;
 	}
 
-	// Set mock user in store
 	const mockUser = createMockUser();
 	useUserStore.getState().setUser(mockUser);
 

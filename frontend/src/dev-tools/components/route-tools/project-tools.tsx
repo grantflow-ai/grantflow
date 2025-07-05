@@ -11,28 +11,22 @@ export function ProjectTools() {
 		if (!project) return;
 
 		ApplicationListItemFactory.batch(3);
-		// In a real implementation, this would update the project's applications
-		console.log("[Dev Tools] Added 3 mock applications to project");
 	};
 
 	const simulateInvitations = () => {
-		console.log("[Dev Tools] Simulating invitation flow");
-		// This would trigger invitation-related UI states
+		// ~keep Simulating invitation flow
 	};
 
 	const changeUserRole = (role: "ADMIN" | "MEMBER" | "OWNER") => {
 		if (!project) return;
 
-		// Mock updating project role directly (dev-only) - role is not part of the real project
 		useProjectStore.setState({
 			project: { ...project, role } as { role: string } & typeof project,
 		});
-		console.log(`[Dev Tools] Changed user role in project to: ${role}`);
 	};
 
 	const toggleProjectSettings = () => {
-		// In a real implementation, this would open project settings
-		console.log("[Dev Tools] Toggling project settings");
+		// ~keep Project settings toggled
 	};
 
 	return (

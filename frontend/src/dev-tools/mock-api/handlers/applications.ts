@@ -2,16 +2,18 @@ import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
 	FormInputsFactory,
+	RagSourceFactory,
 	RagSourceFileFactory,
 	RagSourceUrlFactory,
 	ResearchObjectiveFactory,
 } from "::testing/factories";
+import { addDays, addWeeks, subDays } from "date-fns";
 import { getScenario } from "@/dev-tools";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
+import { triggerWebSocketScenario } from "../websocket";
 
-// Use global to persist store across hot reloads in development
 interface GlobalStore {
 	__MOCK_APPLICATION_STORE__?: Map<string, API.RetrieveApplication.Http200.ResponseBody>;
 }
@@ -38,13 +40,45 @@ export const applicationHandlers = {
 
 		log.info("[Mock API] Creating application", { title: requestBody.title });
 		const id = crypto.randomUUID();
+		const grantTemplateId = crypto.randomUUID();
+
+		const deadlineScenarios = [
+			addWeeks(new Date(), 6),
+			addDays(new Date(), 10),
+			addDays(new Date(), 3),
+			subDays(new Date(), 5),
+			addWeeks(new Date(), 12),
+		];
+
+		const randomDeadline = deadlineScenarios[Math.floor(Math.random() * deadlineScenarios.length)];
+
+		const grantTemplate = {
+			created_at: new Date().toISOString(),
+			grant_application_id: id,
+			grant_sections: [],
+			id: grantTemplateId,
+			rag_sources: RagSourceFactory.batch(5).map((source, index) => ({
+				...source,
+
+				status: (["FINISHED", "FINISHED", "INDEXING", "CREATED", "FINISHED"] as const)[index],
+			})),
+			submission_date: randomDeadline.toISOString(),
+			updated_at: new Date().toISOString(),
+		};
+
 		const application = ApplicationFactory.build({
 			form_inputs: undefined,
-			grant_template: undefined,
+			grant_template: grantTemplate,
 			id,
 			project_id: projectId,
+			rag_sources: RagSourceFactory.batch(3).map((source, index) => ({
+				...source,
+
+				status: (["FINISHED", "INDEXING", "FINISHED"] as const)[index],
+			})),
 			research_objectives: undefined,
 			status: "DRAFT",
+			text: undefined,
 			title: requestBody.title,
 		});
 		applicationStore.set(id, application);
@@ -71,24 +105,161 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		log.info("[Mock API] Generating application", { applicationId });
+		log.info("[Mock API] Starting grant application generation", { applicationId });
+
+		log.info("[Mock API] Triggering grant application WebSocket scenario", {
+			applicationId,
+			scenarioName: "grant-application-generation",
+		});
+		triggerWebSocketScenario(applicationId, "grant-application-generation");
 
 		const application = applicationStore.get(applicationId);
 		if (!application) {
 			throw new Error("Application not found");
 		}
 
-		const generatedText =
-			"This is a mock generated application text. It would normally contain AI-generated content based on the template and sources.";
+		const ragJobId = crypto.randomUUID();
 
-		const updatedApplication = {
+		const processingApplication = {
 			...application,
-			form_inputs: FormInputsFactory.build() as unknown, // Factory returns correct type but TS inference issue
-			research_objectives: ResearchObjectiveFactory.batch(3),
+			rag_job_id: ragJobId,
 			status: "IN_PROGRESS" as const,
-			text: generatedText,
 		};
-		applicationStore.set(applicationId, updatedApplication as Parameters<typeof applicationStore.set>[1]);
+		applicationStore.set(applicationId, processingApplication as Parameters<typeof applicationStore.set>[1]);
+
+		const PIPELINE_DURATION_MS = 150_000;
+
+		setTimeout(() => {
+			const currentApp = applicationStore.get(applicationId);
+			if (!currentApp) return;
+
+			const generatedText = `# AI-Powered Early Cancer Detection Using Novel Biomarkers
+
+## Executive Summary
+
+This research proposal presents an innovative approach to early cancer detection through the integration of artificial intelligence and novel biomarker discovery. Our multidisciplinary team aims to develop a comprehensive diagnostic platform that combines machine learning algorithms with cutting-edge proteomics and genomics analysis to identify cancer at its earliest stages, when treatment is most effective.
+
+## Research Background
+
+Cancer remains one of the leading causes of mortality worldwide, with late-stage diagnosis being a primary factor in poor patient outcomes. Current diagnostic methods often fail to detect tumors until they have progressed significantly. Recent advances in AI and molecular biology present unprecedented opportunities to revolutionize cancer detection through the identification and analysis of novel biomarkers.
+
+Our preliminary research has identified several promising protein and genetic markers that show significant variation in early-stage cancer patients. By leveraging deep learning algorithms trained on large-scale clinical datasets, we propose to develop a diagnostic tool that can detect these subtle molecular changes with high accuracy and specificity.
+
+## Objectives and Hypotheses
+
+### Primary Objectives:
+1. Identify and validate a panel of novel biomarkers for early-stage cancer detection
+2. Develop AI algorithms capable of analyzing complex biomarker patterns
+3. Create an integrated diagnostic platform for clinical implementation
+4. Validate the platform through large-scale clinical trials
+
+### Central Hypothesis:
+We hypothesize that the combination of novel biomarker discovery and AI-driven pattern recognition will enable cancer detection at stages 0-1 with >95% accuracy, significantly improving patient outcomes through earlier intervention.
+
+## Methodology
+
+### Phase 1: Biomarker Discovery (Months 1-12)
+- Comprehensive proteomic and genomic analysis of patient samples
+- Identification of candidate biomarkers through differential expression analysis
+- Initial validation using independent sample cohorts
+
+### Phase 2: AI Development (Months 6-18)
+- Development of deep learning architectures for biomarker pattern recognition
+- Training on existing clinical datasets
+- Optimization of algorithms for sensitivity and specificity
+
+### Phase 3: Platform Integration (Months 12-24)
+- Integration of biomarker assays with AI analysis pipeline
+- Development of user-friendly clinical interface
+- Regulatory compliance and quality assurance
+
+### Phase 4: Clinical Validation (Months 18-36)
+- Multi-center clinical trials with diverse patient populations
+- Performance comparison with existing diagnostic methods
+- Long-term outcome tracking
+
+## Expected Outcomes
+
+We anticipate this research will result in:
+1. A validated panel of 15-20 novel cancer biomarkers
+2. AI algorithms with >95% accuracy in early cancer detection
+3. A clinically deployable diagnostic platform
+4. Published results in high-impact journals
+5. Patent applications for novel discoveries
+
+## Timeline and Milestones
+
+- Q1-Q2 Year 1: Complete initial biomarker discovery phase
+- Q3-Q4 Year 1: Develop preliminary AI models
+- Q1-Q2 Year 2: Begin platform integration
+- Q3-Q4 Year 2: Initiate clinical trials
+- Year 3: Complete validation and prepare for commercialization
+
+## Budget Justification
+
+Total Budget: $3.5 Million
+
+### Personnel (60%): $2.1M
+- Principal Investigator (20% effort)
+- Co-Investigators (3 @ 25% effort)
+- Postdoctoral Researchers (2 @ 100% effort)
+- Graduate Students (4 @ 50% effort)
+- Research Technicians (2 @ 100% effort)
+
+### Equipment and Supplies (25%): $875K
+- Mass spectrometry equipment
+- High-throughput sequencing
+- Computational infrastructure
+- Laboratory consumables
+
+### Other Direct Costs (15%): $525K
+- Clinical trial costs
+- Publication and dissemination
+- Travel and conferences
+- Consultant fees
+
+## Team and Resources
+
+Our multidisciplinary team brings together expertise in:
+- Cancer biology and oncology
+- Artificial intelligence and machine learning
+- Proteomics and genomics
+- Clinical trial design and implementation
+- Regulatory affairs and commercialization
+
+The research will be conducted at our state-of-the-art facilities, which include:
+- Advanced proteomics core facility
+- High-performance computing cluster
+- Clinical research center with biobanking capabilities
+- Established partnerships with major cancer centers
+
+## Conclusion
+
+This innovative research program represents a paradigm shift in cancer diagnostics, combining cutting-edge molecular biology with artificial intelligence to detect cancer at its earliest and most treatable stages. The successful completion of this project will not only advance scientific knowledge but also directly impact patient care by enabling earlier interventions and improved outcomes. We are confident that our experienced team, comprehensive approach, and robust methodology will deliver transformative results in the fight against cancer.`;
+
+			const finalApplication = {
+				...currentApp,
+				completed_at: new Date().toISOString(),
+				form_inputs: FormInputsFactory.build() as unknown,
+				research_objectives: ResearchObjectiveFactory.batch(3),
+				status: "COMPLETED" as const,
+				text: generatedText,
+			};
+
+			applicationStore.set(applicationId, finalApplication as Parameters<typeof applicationStore.set>[1]);
+
+			log.info("[Mock API] Grant application generation completed", {
+				applicationId,
+				duration: "2.5 minutes",
+				textLength: generatedText.length,
+			});
+		}, PIPELINE_DURATION_MS);
+
+		log.info("[Mock API] Grant application generation pipeline started", {
+			applicationId,
+			estimatedDuration: "2.5 minutes",
+			ragJobId,
+		});
 
 		return undefined;
 	},
@@ -150,6 +321,7 @@ export const applicationHandlers = {
 		log.info("[Mock API] Application not found in store or scenario, creating new one", { applicationId });
 		const application = ApplicationWithTemplateFactory.build({
 			id: applicationId,
+			text: undefined,
 		});
 		applicationStore.set(applicationId, application);
 		return application;
@@ -182,12 +354,10 @@ export const applicationHandlers = {
 		};
 		applicationStore.set(applicationId, updatedApplication as Parameters<typeof applicationStore.set>[1]);
 
-		// Return the full updated application
 		return updatedApplication as API.UpdateApplication.Http200.ResponseBody;
 	},
 };
 
-// Function to clear the global application store when switching scenarios
 export function clearApplicationStore(): void {
 	applicationStore.clear();
 	log.info("[Mock API] Application store cleared");
