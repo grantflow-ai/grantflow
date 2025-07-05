@@ -15,6 +15,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy import (
     UUID as SA_UUID,
@@ -30,7 +31,13 @@ from packages.db.src.constants import (
     RAG_FILE,
     RAG_URL,
 )
-from packages.db.src.enums import ApplicationStatusEnum, RagGenerationStatusEnum, SourceIndexingStatusEnum, UserRoleEnum
+from packages.db.src.enums import (
+    ApplicationStatusEnum,
+    NotificationTypeEnum,
+    RagGenerationStatusEnum,
+    SourceIndexingStatusEnum,
+    UserRoleEnum,
+)
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
 
 
@@ -403,3 +410,30 @@ class RagGenerationNotification(Base):
     rag_job: Relationship["RagGenerationJob"] = relationship("RagGenerationJob")
 
     __table_args__ = (Index("idx_rag_notifications_job_created", "rag_job_id", "created_at"),)
+
+
+class Notification(BaseWithUUIDPK):
+    __tablename__ = "notifications"
+
+    firebase_uid: Mapped[str] = mapped_column(String(128), index=True)
+    project_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+
+    type: Mapped[NotificationTypeEnum] = mapped_column(Enum(NotificationTypeEnum))
+    title: Mapped[str] = mapped_column(String(255))
+    message: Mapped[str] = mapped_column(Text)
+    project_name: Mapped[str | None] = mapped_column(String(255), nullable=True)  
+
+    read: Mapped[bool] = mapped_column(default=False)
+    dismissed: Mapped[bool] = mapped_column(default=False)
+
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    extra_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+    project: Relationship["Project"] = relationship("Project", viewonly=True)
+
+    __table_args__ = (
+        Index("idx_notifications_user_active", "firebase_uid", postgresql_where=text("dismissed = FALSE")),
+        Index("idx_notifications_user_created", "firebase_uid", "created_at"),
+    )
