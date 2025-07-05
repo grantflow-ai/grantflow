@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 
-export function NavMain() {
+export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
   return (
-    <>
-   <main className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center">
+    <nav {...props}>
+   <main data-testid="dashboard-section" className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center">
         <div className="size-4">
           <Image src="/icons/dashboard.svg" alt="logo" width={16} height={16} className="w-full h-full object-cover" />
         </div>
@@ -28,7 +28,7 @@ export function NavMain() {
         <Collapsible defaultOpen className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 ">
+                <SidebarMenuButton data-testid="recent-applications-trigger" className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 ">
                   <div className="size-4 flex-shrink-0">
                     <Image
                       src="/icons/note-stack-blue.svg"
@@ -43,10 +43,11 @@ export function NavMain() {
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
-                <div className="flex flex-col gap-4">
+                <div data-testid="recent-app-item"  className="flex flex-col gap-4">
                   <div className="relative">
                     <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
+                    data-testid="search-input"
                       placeholder="Search application"
                       className="px-3 rounded-sm border border-gray-100 bg-white placeholder:text-sm placeholder:font-normal placeholder:text-gray-400"
                     />
@@ -98,7 +99,7 @@ export function NavMain() {
           <Collapsible defaultOpen className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 ">
+                <SidebarMenuButton data-testid="settings-trigger" className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 ">
                   <Settings className="text-primary size-4 flex-shrink-0" />
                   <span className="group-data-[collapsible=icon]:hidden">Settings</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
@@ -106,16 +107,16 @@ export function NavMain() {
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
                 <main className="flex flex-col gap-4 px-3">
-                  <div className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
+                  <div data-testid="settings-account" className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
                     <p className="text-sm text-gray-700 font-normal">Account Setting</p>
                   </div>
-                  <div className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
+                  <div data-testid="settings-billing" className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
                     <p className="text-sm text-gray-700 font-normal">Billing and payments</p>
                   </div>
-                  <div className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
+                  <div data-testid="settings-members" className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
                     <p className="text-sm text-gray-700 font-normal">Members</p>
                   </div>
-                  <div className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
+                  <div data-testid="settings-notifications" className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors">
                     <p className="text-sm text-gray-700 font-normal">Notifications</p>
                   </div>
                 </main>
@@ -124,7 +125,7 @@ export function NavMain() {
           </Collapsible>
       </SidebarMenu>
     </SidebarGroup>
-    </>
+    </nav>
 
   );
 }
