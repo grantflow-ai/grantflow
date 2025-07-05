@@ -13,6 +13,10 @@ vi.mock("next-themes", () => ({
 			{children}
 		</div>
 	),
+	useTheme: () => ({
+		setTheme: vi.fn(),
+		theme: "light",
+	}),
 }));
 
 vi.mock("@/components/shared/toast-listener", () => ({
