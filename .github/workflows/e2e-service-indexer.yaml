@@ -1,30 +1,6 @@
 name: Indexer E2E Tests
 
 on:
-    pull_request:
-        branches:
-            - main
-            - development*
-        paths:
-            - ".github/workflows/e2e-service-indexer.yaml"
-            - ".github/actions/run-python-e2e-tests/**"
-            - "packages/**"
-            - "services/indexer/**"
-            - "testing/**"
-            - "pyproject.toml"
-            - "uv.lock"
-    push:
-        branches:
-            - main
-            - development
-        paths:
-            - ".github/workflows/e2e-service-indexer.yaml"
-            - ".github/actions/run-python-e2e-tests/**"
-            - "packages/**"
-            - "services/indexer/**"
-            - "testing/**"
-            - "pyproject.toml"
-            - "uv.lock"
     workflow_dispatch:
         inputs:
             test_markers:

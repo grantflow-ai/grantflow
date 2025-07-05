@@ -1,55 +1,33 @@
 name: Scraper E2E Tests
 
 on:
-    pull_request:
-        branches:
-            - main
-            - development*
-        paths:
-            - ".github/workflows/e2e-service-scraper.yaml"
-            - ".github/actions/run-python-e2e-tests/**"
-            - "packages/**"
-            - "services/scraper/**"
-            - "testing/**"
-            - "pyproject.toml"
-            - "uv.lock"
-    push:
-        branches:
-            - main
-            - development
-        paths:
-            - ".github/workflows/e2e-service-scraper.yaml"
-            - ".github/actions/run-python-e2e-tests/**"
-            - "packages/**"
-            - "services/scraper/**"
-            - "testing/**"
-            - "pyproject.toml"
-            - "uv.lock"
     workflow_dispatch:
         inputs:
             test_markers:
-                description: "Test markers to run (smoke)"
+                description: "Test markers to run"
                 required: false
                 default: "smoke"
                 type: choice
                 options:
                     - smoke
+                    - quality_assessment
+                    - e2e_full
 
 jobs:
-    smoke-tests:
+    e2e-tests:
         runs-on: ubuntu-latest
-        timeout-minutes: 15
+        timeout-minutes: 30
         env:
             DEBUG: "True"
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Run Scraper E2E Tests (Smoke)
+            - name: Run Scraper E2E Tests
               uses: ./.github/actions/run-python-e2e-tests
               with:
                   service: scraper
-                  test_markers: smoke
-                  timeout: 300
+                  test_markers: ${{ inputs.test_markers || 'smoke' }}
+                  timeout: 1800
               env:
                   E2E_TESTS: "1"
