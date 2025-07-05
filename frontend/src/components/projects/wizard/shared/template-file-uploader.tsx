@@ -11,8 +11,10 @@ import { formatBytes } from "@/utils/format";
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
 	"application/latex": [".latex"],
+	"application/msword": [".doc"],
 	"application/pdf": [".pdf"],
 	"application/rtf": [".rtf"],
+	"application/vnd.ms-powerpoint": [".ppt"],
 	"application/vnd.oasis.opendocument.text": [".odt"],
 	"application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
 	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
