@@ -78,6 +78,7 @@ lint.per-file-ignores."**/tests/**/*.*" = [
 lint.per-file-ignores."e2e/**/*.*" = [
   "ARG001",
   "D",
+  "EXE002",
   "N815",
   "PT006",
   "PT007",
