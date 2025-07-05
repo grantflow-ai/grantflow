@@ -54,8 +54,9 @@ async def test_client(
 
         # this is usually happening in the `before_server_start` hook, which we are patching above ~keep
         app.state.session_maker = async_session_maker
+        app.debug = True
 
-        async with AsyncTestClient(app=app) as client:
+        async with AsyncTestClient(app=app, raise_server_exceptions=True) as client:
             yield client
 
 

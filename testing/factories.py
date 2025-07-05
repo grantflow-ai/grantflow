@@ -62,6 +62,8 @@ class GrantSectionFactory(TypedDictFactory[GrantLongFormSection]):
 
 class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
     __model__ = GrantTemplate
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     rag_job_id = None
     grant_sections = Use(
         lambda: [
@@ -80,26 +82,36 @@ class GrantTemplateFactory(SQLAlchemyFactory[GrantTemplate]):
 
 class RagSourceFactory(SQLAlchemyFactory[RagSource]):
     __model__ = RagSource
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
 
 
 class RagFileFactory(SQLAlchemyFactory[RagFile]):
     __model__ = RagFile
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     source_type = RAG_FILE
 
 
 class RagUrlFactory(SQLAlchemyFactory[RagUrl]):
     __model__ = RagUrl
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     source_type = RAG_URL
 
 
 class GrantTemplateSourceFactory(SQLAlchemyFactory[GrantTemplateRagSource]):
     __model__ = GrantTemplateRagSource
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
     __model__ = TextVector
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     embedding = rng.random(EMBEDDING_DIMENSIONS).tolist()
 
     @classmethod
@@ -111,23 +123,33 @@ class TextVectorFactory(SQLAlchemyFactory[TextVector]):
 
 class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
     __model__ = FundingOrganization
+    __set_relationships__ = False
+    __set_association_proxy__ = False
 
 
 class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationRagSource]):
     __model__ = FundingOrganizationRagSource
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
 
 
 class ProjectFactory(SQLAlchemyFactory[Project]):
     __model__ = Project
+    __set_relationships__ = False
+    __set_association_proxy__ = False
 
 
 class ProjectUserFactory(SQLAlchemyFactory[ProjectUser]):
     __model__ = ProjectUser
+    __set_relationships__ = False
+    __set_association_proxy__ = False
 
 
 class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):
     __model__ = RagGenerationJob
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     total_stages = 5
     current_stage = 0
     retry_count = 0
@@ -137,6 +159,8 @@ class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):
 
 class GrantTemplateGenerationJobFactory(SQLAlchemyFactory[GrantTemplateGenerationJob]):
     __model__ = GrantTemplateGenerationJob
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     total_stages = 4
     current_stage = 0
     retry_count = 0
@@ -146,6 +170,8 @@ class GrantTemplateGenerationJobFactory(SQLAlchemyFactory[GrantTemplateGeneratio
 
 class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGenerationJob]):
     __model__ = GrantApplicationGenerationJob
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     total_stages = 5
     current_stage = 0
     retry_count = 0
@@ -155,6 +181,8 @@ class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGen
 
 class RagGenerationNotificationFactory(SQLAlchemyFactory[RagGenerationNotification]):
     __model__ = RagGenerationNotification
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     event = faker.word()
     message = faker.sentence()
     notification_type = "info"
@@ -162,11 +190,15 @@ class RagGenerationNotificationFactory(SQLAlchemyFactory[RagGenerationNotificati
 
 class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __model__ = GrantApplication
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     rag_job_id = None
 
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationRagSource]):
     __model__ = GrantApplicationRagSource
+    __set_relationships__ = False
+    __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
 
 

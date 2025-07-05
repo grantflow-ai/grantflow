@@ -6,10 +6,9 @@ from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import (
     AbstractAuthenticationMiddleware,
-    AbstractMiddleware,
     AuthenticationResult,
 )
-from litestar.types import Receive, Scope, Send
+from litestar.types import Receive, Scope, Send, ASGIApp
 from packages.db.src.tables import ProjectUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
@@ -82,8 +81,11 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         raise NotAuthorizedException
 
 
-class TraceIdMiddleware(AbstractMiddleware):
+class TraceIdMiddleware:
     """Middleware to extract or generate trace IDs for request tracing and OpenTelemetry integration."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         scope_type = scope.get("type")

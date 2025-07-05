@@ -128,7 +128,6 @@ max_supported_python = "3.13"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 timeout = 120
-plugins = [ "testing.xdist_config_plugin" ]
 markers = [
   "smoke: Quick smoke tests (< 1 min)",
   "quality_assessment: Quality assessment tests (2-5 min)",
@@ -145,6 +144,8 @@ filterwarnings = [
   "ignore::DeprecationWarning:fake_http_header.*",
   "ignore::DeprecationWarning:importlib.resources.*",
   "ignore::DeprecationWarning:tracerite.*",
+  "ignore::DeprecationWarning:spacy.*",
+  "ignore::DeprecationWarning:weasel.*",
 ]
 # Enable pytest-xdist for both local development and CI
 addopts = [
