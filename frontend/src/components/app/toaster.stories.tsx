@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ThemeProvider } from "next-themes";
 import { toast } from "sonner";
+import { Toaster } from "../ui/sonner";
 import { AppButton } from "./buttons/app-button";
-import { AppToaster } from "./toaster";
 
-const meta: Meta<typeof AppToaster> = {
-	component: AppToaster,
+const meta: Meta<typeof Toaster> = {
+	component: Toaster,
 	decorators: [
 		(Story) => (
 			<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
@@ -18,11 +18,11 @@ const meta: Meta<typeof AppToaster> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/AppToaster",
+	title: "Components/Toaster",
 };
 
 export default meta;
-type Story = StoryObj<typeof AppToaster>;
+type Story = StoryObj<typeof Toaster>;
 
 export const Success: Story = {
 	decorators: [

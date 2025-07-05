@@ -3,6 +3,7 @@
 import { Bug, Settings, Shuffle, Wifi, WifiOff, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { RouteSpecificTools, StoreInspector, ToastTestButton, ToastTestPanel } from "@/dev-tools";
 import { getMockAPIClient, isMockAPIEnabled } from "@/dev-tools/mock-api/client";
 import { clearAllMockStores } from "@/dev-tools/mock-api/handlers";
 import { getScenario, scenarios } from "@/dev-tools/mock-api/scenarios";
@@ -13,10 +14,22 @@ import { useUserStore } from "@/stores/user-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
-import { RouteSpecificTools } from "./route-tools/route-specific-tools";
-import { StoreInspector } from "./store-inspector";
-import { ToastTestButton } from "./toast-test-button";
-import { ToastTestPanel } from "./toast-test-panel";
+
+interface ApiConfigPanelProps {
+	errorRate: number;
+	mockEnabled: boolean;
+	networkDelay: number;
+	setErrorRate: (rate: number) => void;
+	setMockEnabled: (enabled: boolean) => void;
+	setNetworkDelay: (delay: number) => void;
+	setWsConnected: (connected: boolean) => void;
+	wsConnected: boolean;
+}
+
+interface ScenariosPanelProps {
+	loadScenario: (scenarioName: string) => void;
+	selectedScenario: string;
+}
 
 export function DevMenu() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -86,6 +99,37 @@ export function DevMenu() {
 		return null;
 	}
 
+	const renderTabContent = () => {
+		switch (activeTab) {
+			case "api": {
+				return (
+					<ApiConfigPanel
+						errorRate={errorRate}
+						mockEnabled={mockEnabled}
+						networkDelay={networkDelay}
+						setErrorRate={setErrorRate}
+						setMockEnabled={setMockEnabled}
+						setNetworkDelay={setNetworkDelay}
+						setWsConnected={setWsConnected}
+						wsConnected={wsConnected}
+					/>
+				);
+			}
+			case "routes": {
+				return <RouteSpecificTools pathname={pathname} />;
+			}
+			case "scenarios": {
+				return <ScenariosPanel loadScenario={loadScenario} selectedScenario={selectedScenario} />;
+			}
+			case "stores": {
+				return <StoreInspector />;
+			}
+			case "toast": {
+				return <ToastTestPanel enabled={toastTestingEnabled} onToggle={setToastTestingEnabled} />;
+			}
+		}
+	};
+
 	return (
 		<>
 			{/* Floating Action Button */}
@@ -153,139 +197,7 @@ export function DevMenu() {
 						</div>
 
 						{/* Content */}
-						<div className="h-[calc(100%-8rem)] overflow-y-auto p-6">
-							{activeTab === "api" && (
-								<div className="space-y-6">
-									<div>
-										<h3 className="mb-4 text-lg font-semibold">API Configuration</h3>
-										<div className="space-y-4">
-											<div className="flex items-center justify-between rounded-lg bg-gray-800 p-4">
-												<div>
-													<h4 className="font-medium">Mock API Mode</h4>
-													<p className="text-sm text-gray-400">
-														Use local mock data instead of real backend
-													</p>
-												</div>
-												<button
-													className={`relative h-6 w-11 rounded-full transition-colors ${
-														mockEnabled ? "bg-purple-600" : "bg-gray-600"
-													}`}
-													onClick={() => {
-														// This would require app restart in reality
-														setMockEnabled(!mockEnabled);
-														console.log(
-															`Mock API: ${mockEnabled ? "Disabled" : "Enabled"}`,
-														);
-													}}
-													type="button"
-												>
-													<span
-														className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-															mockEnabled ? "translate-x-5" : "translate-x-0.5"
-														}`}
-													/>
-												</button>
-											</div>
-
-											{mockEnabled && (
-												<>
-													<div className="rounded-lg bg-gray-800 p-4">
-														<h4 className="mb-2 font-medium">Network Delay (ms)</h4>
-														<input
-															className="w-full"
-															max="3000"
-															min="0"
-															onChange={(e) => {
-																setNetworkDelay(Number(e.target.value));
-															}}
-															type="range"
-															value={networkDelay}
-														/>
-														<span className="text-sm text-gray-400">{networkDelay}ms</span>
-													</div>
-
-													<div className="rounded-lg bg-gray-800 p-4">
-														<h4 className="mb-2 font-medium">Error Rate (%)</h4>
-														<input
-															className="w-full"
-															max="100"
-															min="0"
-															onChange={(e) => {
-																setErrorRate(Number(e.target.value));
-															}}
-															type="range"
-															value={errorRate}
-														/>
-														<span className="text-sm text-gray-400">{errorRate}%</span>
-													</div>
-												</>
-											)}
-										</div>
-									</div>
-
-									<div>
-										<h3 className="mb-4 text-lg font-semibold">WebSocket Status</h3>
-										<div className="flex items-center gap-3 rounded-lg bg-gray-800 p-4">
-											{wsConnected ? (
-												<WifiOff className="h-5 w-5 text-green-400" />
-											) : (
-												<Wifi className="h-5 w-5 text-red-400" />
-											)}
-											<span>{wsConnected ? "Connected" : "Disconnected"}</span>
-											{mockEnabled && (
-												<button
-													className="ml-auto rounded bg-purple-600 px-3 py-1 text-sm hover:bg-purple-700"
-													onClick={() => {
-														setWsConnected(!wsConnected);
-													}}
-													type="button"
-												>
-													Toggle Connection
-												</button>
-											)}
-										</div>
-									</div>
-								</div>
-							)}
-
-							{activeTab === "stores" && <StoreInspector />}
-
-							{activeTab === "routes" && <RouteSpecificTools pathname={pathname} />}
-
-							{activeTab === "scenarios" && (
-								<div className="space-y-6">
-									<h3 className="text-lg font-semibold">Data Scenarios</h3>
-									<div className="grid gap-4 md:grid-cols-2">
-										{scenarios.map((scenario) => (
-											<button
-												className={`rounded-lg p-4 text-left transition-colors ${
-													selectedScenario === scenario.name
-														? "bg-purple-600"
-														: "bg-gray-800 hover:bg-gray-700"
-												}`}
-												key={scenario.name}
-												onClick={() => {
-													loadScenario(scenario.name);
-												}}
-												type="button"
-											>
-												<div className="mb-1 flex items-center justify-between">
-													<h4 className="font-medium">{scenario.name}</h4>
-													{selectedScenario === scenario.name && (
-														<Shuffle className="h-4 w-4" />
-													)}
-												</div>
-												<p className="text-sm text-gray-300">{scenario.description}</p>
-											</button>
-										))}
-									</div>
-								</div>
-							)}
-
-							{activeTab === "toast" && (
-								<ToastTestPanel enabled={toastTestingEnabled} onToggle={setToastTestingEnabled} />
-							)}
-						</div>
+						<div className="h-[calc(100%-8rem)] overflow-y-auto p-6">{renderTabContent()}</div>
 
 						{/* Footer */}
 						<div className="absolute bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-800 p-3">
@@ -298,5 +210,133 @@ export function DevMenu() {
 				</div>
 			)}
 		</>
+	);
+}
+
+function ApiConfigPanel({
+	errorRate,
+	mockEnabled,
+	networkDelay,
+	setErrorRate,
+	setMockEnabled,
+	setNetworkDelay,
+	setWsConnected,
+	wsConnected,
+}: ApiConfigPanelProps) {
+	return (
+		<div className="space-y-6">
+			<div>
+				<h3 className="mb-4 text-lg font-semibold">API Configuration</h3>
+				<div className="space-y-4">
+					<div className="flex items-center justify-between rounded-lg bg-gray-800 p-4">
+						<div>
+							<h4 className="font-medium">Mock API Mode</h4>
+							<p className="text-sm text-gray-400">Use local mock data instead of real backend</p>
+						</div>
+						<button
+							className={`relative h-6 w-11 rounded-full transition-colors ${
+								mockEnabled ? "bg-purple-600" : "bg-gray-600"
+							}`}
+							onClick={() => {
+								setMockEnabled(!mockEnabled);
+								console.log(`Mock API: ${mockEnabled ? "Disabled" : "Enabled"}`);
+							}}
+							type="button"
+						>
+							<span
+								className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+									mockEnabled ? "translate-x-5" : "translate-x-0.5"
+								}`}
+							/>
+						</button>
+					</div>
+
+					{mockEnabled && (
+						<>
+							<div className="rounded-lg bg-gray-800 p-4">
+								<h4 className="mb-2 font-medium">Network Delay (ms)</h4>
+								<input
+									className="w-full"
+									max="3000"
+									min="0"
+									onChange={(e) => {
+										setNetworkDelay(Number(e.target.value));
+									}}
+									type="range"
+									value={networkDelay}
+								/>
+								<span className="text-sm text-gray-400">{networkDelay}ms</span>
+							</div>
+
+							<div className="rounded-lg bg-gray-800 p-4">
+								<h4 className="mb-2 font-medium">Error Rate (%)</h4>
+								<input
+									className="w-full"
+									max="100"
+									min="0"
+									onChange={(e) => {
+										setErrorRate(Number(e.target.value));
+									}}
+									type="range"
+									value={errorRate}
+								/>
+								<span className="text-sm text-gray-400">{errorRate}%</span>
+							</div>
+						</>
+					)}
+				</div>
+			</div>
+
+			<div>
+				<h3 className="mb-4 text-lg font-semibold">WebSocket Status</h3>
+				<div className="flex items-center gap-3 rounded-lg bg-gray-800 p-4">
+					{wsConnected ? (
+						<WifiOff className="h-5 w-5 text-green-400" />
+					) : (
+						<Wifi className="h-5 w-5 text-red-400" />
+					)}
+					<span>{wsConnected ? "Connected" : "Disconnected"}</span>
+					{mockEnabled && (
+						<button
+							className="ml-auto rounded bg-purple-600 px-3 py-1 text-sm hover:bg-purple-700"
+							onClick={() => {
+								setWsConnected(!wsConnected);
+							}}
+							type="button"
+						>
+							Toggle Connection
+						</button>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ScenariosPanel({ loadScenario, selectedScenario }: ScenariosPanelProps) {
+	return (
+		<div className="space-y-6">
+			<h3 className="text-lg font-semibold">Data Scenarios</h3>
+			<div className="grid gap-4 md:grid-cols-2">
+				{scenarios.map((scenario) => (
+					<button
+						className={`rounded-lg p-4 text-left transition-colors ${
+							selectedScenario === scenario.name ? "bg-purple-600" : "bg-gray-800 hover:bg-gray-700"
+						}`}
+						key={scenario.name}
+						onClick={() => {
+							loadScenario(scenario.name);
+						}}
+						type="button"
+					>
+						<div className="mb-1 flex items-center justify-between">
+							<h4 className="font-medium">{scenario.name}</h4>
+							{selectedScenario === scenario.name && <Shuffle className="h-4 w-4" />}
+						</div>
+						<p className="text-sm text-gray-300">{scenario.description}</p>
+					</button>
+				))}
+			</div>
+		</div>
 	);
 }

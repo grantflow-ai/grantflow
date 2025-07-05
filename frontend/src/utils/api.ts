@@ -99,11 +99,12 @@ async function createMockResponse(request: Request, _options: NormalizedOptions)
 	ensureMockAPIInitialized();
 
 	try {
-		const baseUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
-		const path = extractRequestPath(request.url, baseUrl);
+		const url = new URL(request.url);
+		const baseUrl = new URL(getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
+		const path = extractPathFromUrl(url, baseUrl);
 
 		log.info(`[Mock API] Intercepting ${request.method} ${path}`, {
-			baseUrlPath: new URL(baseUrl).pathname,
+			baseUrlPath: baseUrl.pathname,
 			extractedPath: path,
 			fullUrl: request.url,
 		});
@@ -135,13 +136,10 @@ function ensureMockAPIInitialized(): void {
 	}
 }
 
-function extractRequestPath(requestUrl: string, baseUrl: string): string {
-	const url = new URL(requestUrl);
-	const baseUrlObj = new URL(baseUrl);
-
+function extractPathFromUrl(url: URL, baseUrl: URL): string {
 	let path = url.pathname;
-	if (path.startsWith(baseUrlObj.pathname)) {
-		path = path.slice(baseUrlObj.pathname.length);
+	if (path.startsWith(baseUrl.pathname)) {
+		path = path.slice(baseUrl.pathname.length);
 	}
 
 	if (!path.startsWith("/")) {
@@ -175,5 +173,5 @@ async function parseRequestBody(request: Request): Promise<unknown> {
 }
 
 function shouldUseMockAPI(): boolean {
-	return Boolean(getEnv().NEXT_PUBLIC_MOCK_API) && isMockAPIEnabled();
+	return (getEnv().NEXT_PUBLIC_MOCK_API ?? false) && isMockAPIEnabled();
 }
