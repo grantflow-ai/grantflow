@@ -36,6 +36,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.sql.functions import count
 
+from services.backend.src.api.middleware import get_trace_id
+from services.backend.src.common_types import APIRequest
+
 logger = get_logger(__name__)
 
 
@@ -361,9 +364,12 @@ async def handle_delete_application(
     operation_id="GenerateApplication",
 )
 async def handle_generate_application(
-    application_id: UUID, session_maker: async_sessionmaker[Any]
+    application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
 ) -> None:
-    logger.info("Generating application", application_id=application_id)
+    trace_id = get_trace_id(request)
+    logger.info(
+        "Generating application", application_id=application_id, trace_id=trace_id
+    )
     async with session_maker() as session:
         try:
             application = await retrieve_application(
@@ -402,7 +408,10 @@ async def handle_generate_application(
 
         try:
             await publish_rag_task(
-                logger=logger, parent_type="grant_application", parent_id=application.id
+                logger=logger,
+                parent_type="grant_application",
+                parent_id=application.id,
+                trace_id=trace_id,
             )
         except BackendError as e:
             logger.error("Error initiating application generation", exc_info=e)
