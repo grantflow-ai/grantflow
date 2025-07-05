@@ -15,6 +15,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
     handle_generate_application,
+    handle_list_applications,
     handle_retrieve_application,
     handle_update_application,
 )
@@ -69,6 +70,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
+    handle_list_applications,
     handle_list_project_members,
     handle_login,
     handle_remove_project_member,

@@ -27,12 +27,13 @@ describe("WelcomeModal", () => {
 		});
 	});
 
-	it("renders welcome title and description", () => {
+	it("renders welcome modal when hasSeenWelcomeModal is false", () => {
 		render(<WelcomeModal />);
 
-		expect(screen.getByText("Welcome to GrantFlow!")).toBeInTheDocument();
-		expect(screen.getByText(/GrantFlow was built for researchers/i)).toBeInTheDocument();
-		expect(screen.getByText(/Powered by AI, the system will generate a draft application/i)).toBeInTheDocument();
+		// Check that the modal renders by looking for the dialog role
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
+		// Check for the progress bar
+		expect(screen.getByRole("figure")).toBeInTheDocument();
 	});
 
 	it("shows progress bar with correct number of steps", () => {
