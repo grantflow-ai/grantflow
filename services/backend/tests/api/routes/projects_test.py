@@ -18,6 +18,7 @@ from testing.factories import (
 from services.backend.src.api.routes.projects import (
     CreateInvitationRedirectUrlRequestBody,
     UpdateProjectRequestBody,
+    UpdateMemberRoleRequestBody,
 )
 from services.backend.tests.conftest import TestingClientType
 from services.backend.tests.factories import CreateProjectRequestBodyFactory
@@ -1088,3 +1089,425 @@ async def test_accept_invitation_wrong_user(
         "authenticated user does not match invitation email"
         in response.json()["detail"].lower()
     )
+
+
+
+
+
+async def test_list_project_members_success(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    
+    firebase_users = {
+        firebase_uid: {
+            "uid": firebase_uid,
+            "email": "owner@example.com",
+            "displayName": "Project Owner",
+            "photoURL": "https://example.com/photo1.jpg",
+        },
+        "admin_uid": {
+            "uid": "admin_uid",
+            "email": "admin@example.com",
+            "displayName": "Admin User",
+            "photoURL": "https://example.com/photo2.jpg",
+        },
+        "member_uid": {
+            "uid": "member_uid",
+            "email": "member@example.com",
+            "displayName": None,
+            "photoURL": None,
+        },
+    }
+    mocker.patch(
+        "services.backend.src.api.routes.projects.get_users",
+        return_value=firebase_users,
+    )
+
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.OWNER,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "admin_uid",
+                        "role": UserRoleEnum.ADMIN,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "member_uid",
+                        "role": UserRoleEnum.MEMBER,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/members",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    members = response.json()
+    assert len(members) == 3
+
+    
+    owner = next(m for m in members if m["firebase_uid"] == firebase_uid)
+    assert owner["email"] == "owner@example.com"
+    assert owner["display_name"] == "Project Owner"
+    assert owner["photo_url"] == "https://example.com/photo1.jpg"
+    assert owner["role"] == UserRoleEnum.OWNER.value
+
+    
+    admin = next(m for m in members if m["firebase_uid"] == "admin_uid")
+    assert admin["email"] == "admin@example.com"
+    assert admin["display_name"] == "Admin User"
+    assert admin["role"] == UserRoleEnum.ADMIN.value
+
+    
+    member = next(m for m in members if m["firebase_uid"] == "member_uid")
+    assert member["email"] == "member@example.com"
+    assert member["display_name"] is None
+    assert member["photo_url"] is None
+    assert member["role"] == UserRoleEnum.MEMBER.value
+
+
+async def test_list_project_members_no_access(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    other_project = ProjectFactory.build()
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(Project).values(
+                id=other_project.id,
+                name=other_project.name,
+                description=other_project.description,
+            )
+        )
+        
+        await session.execute(
+            insert(ProjectUser).values(
+                project_id=other_project.id,
+                firebase_uid="other_user_uid",
+                role=UserRoleEnum.OWNER,
+            )
+        )
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{other_project.id}/members",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert (
+        response.status_code == HTTPStatus.UNAUTHORIZED
+    )  
+
+
+async def test_update_member_role_success(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    
+    mocker.patch(
+        "services.backend.src.api.routes.projects.get_users",
+        return_value={
+            "member_uid": {
+                "uid": "member_uid",
+                "email": "member@example.com",
+                "displayName": "Member User",
+                "photoURL": None,
+            }
+        },
+    )
+
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.OWNER,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "member_uid",
+                        "role": UserRoleEnum.MEMBER,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
+    response = await test_client.patch(
+        f"/projects/{project.id}/members/member_uid",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    member = response.json()
+    assert member["firebase_uid"] == "member_uid"
+    assert member["role"] == UserRoleEnum.ADMIN.value
+
+    
+    async with async_session_maker() as session:
+        updated_member = await session.scalar(
+            select(ProjectUser)
+            .where(ProjectUser.project_id == project.id)
+            .where(ProjectUser.firebase_uid == "member_uid")
+        )
+        assert updated_member.role == UserRoleEnum.ADMIN
+
+
+async def test_update_member_role_cannot_modify_owner(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.OWNER,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "owner2_uid",
+                        "role": UserRoleEnum.OWNER,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
+    response = await test_client.patch(
+        f"/projects/{project.id}/members/owner2_uid",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "cannot modify owner role" in response.json()["detail"].lower()
+
+
+async def test_update_member_role_only_owner_can_promote_to_admin(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.ADMIN,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "member_uid",
+                        "role": UserRoleEnum.MEMBER,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
+    response = await test_client.patch(
+        f"/projects/{project.id}/members/member_uid",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert (
+        "only owner can promote members to admin" in response.json()["detail"].lower()
+    )
+
+
+async def test_update_member_role_member_not_found(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                project_id=project.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.OWNER,
+            )
+        )
+        await session.commit()
+
+    request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
+    response = await test_client.patch(
+        f"/projects/{project.id}/members/nonexistent_uid",
+        json=request_body,
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "member not found" in response.json()["detail"].lower()
+
+
+async def test_remove_project_member_success(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.OWNER,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "member_uid",
+                        "role": UserRoleEnum.MEMBER,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    response = await test_client.delete(
+        f"/projects/{project.id}/members/member_uid",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    
+    async with async_session_maker() as session:
+        removed_member = await session.scalar(
+            select(ProjectUser)
+            .where(ProjectUser.project_id == project.id)
+            .where(ProjectUser.firebase_uid == "member_uid")
+        )
+        assert removed_member is None
+
+
+async def test_remove_project_member_cannot_remove_owner(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.OWNER,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "owner2_uid",
+                        "role": UserRoleEnum.OWNER,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    response = await test_client.delete(
+        f"/projects/{project.id}/members/owner2_uid",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "cannot remove owner" in response.json()["detail"].lower()
+
+
+async def test_remove_project_member_only_owner_can_remove_admin(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                [
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": firebase_uid,
+                        "role": UserRoleEnum.ADMIN,
+                    },
+                    {
+                        "project_id": project.id,
+                        "firebase_uid": "admin2_uid",
+                        "role": UserRoleEnum.ADMIN,
+                    },
+                ]
+            )
+        )
+        await session.commit()
+
+    response = await test_client.delete(
+        f"/projects/{project.id}/members/admin2_uid",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "only owner can remove admin" in response.json()["detail"].lower()
+
+
+async def test_remove_project_member_not_found(
+    test_client: TestingClientType,
+    project: Project,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+) -> None:
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(ProjectUser).values(
+                project_id=project.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.OWNER,
+            )
+        )
+        await session.commit()
+
+    response = await test_client.delete(
+        f"/projects/{project.id}/members/nonexistent_uid",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "member not found" in response.json()["detail"].lower()
