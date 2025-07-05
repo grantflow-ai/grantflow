@@ -1,0 +1,150 @@
+metadata:
+  name: "GrantFlow Services"
+  version: "1.0.0"
+  description: "Python microservices conventions and patterns"
+
+outputs:
+  - file: "CLAUDE.md"
+  - file: "GEMINI.md"
+  - file: ".windsurfrules"
+  - file: ".cursorrules"
+
+rules:
+  - name: "Service Boundaries"
+    priority: 95
+    content: |
+      ### Service Independence
+      
+      **CRITICAL**: Services MUST NOT import from each other
+      - Each service is an independent deployable unit
+      - Services communicate via Pub/Sub or HTTP APIs only
+      - No direct database access between services
+      - Each service has its own database schema/tables
+      
+      **Allowed imports**:
+      - From `packages/` (shared utilities)
+      - From within the same service
+      - From Python standard library and pip packages
+      
+      **Example violation** (DO NOT DO):
+      ```python
+      # In services/indexer/src/main.py
+      from services.crawler.src.models import CrawledDocument  # ❌ WRONG
+      ```
+      
+      **Correct approach**:
+      ```python
+      # In services/indexer/src/main.py
+      from packages.shared_models.src.documents import Document  # ✅ Shared model
+      ```
+
+  - name: "Service Structure"
+    priority: 90
+    content: |
+      Each service follows this structure:
+      ```
+      services/{service_name}/
+      ├── pyproject.toml       # Service-specific dependencies
+      ├── src/
+      │   ├── main.py         # Litestar app entry point
+      │   ├── models.py       # SQLAlchemy models
+      │   ├── routes.py       # HTTP endpoints
+      │   ├── handlers.py     # Business logic
+      │   └── consumers.py    # Pub/Sub message handlers
+      └── tests/
+          ├── conftest.py     # Test configuration
+          └── *_test.py       # Test files
+      ```
+
+  - name: "Service Entry Points"
+    priority: 85
+    content: |
+      Each service must have a `main.py` with:
+      ```python
+      from litestar import Litestar
+      from packages.shared_utils.src.logger import logger
+      from packages.shared_utils.src.otel import configure_otel
+      
+      # Configure OpenTelemetry first
+      configure_otel("service-name")
+      
+      # Create Litestar app
+      app = Litestar(
+          route_handlers=[...],
+          on_startup=[setup_database, start_consumers],
+          middleware=[TraceIdMiddleware, ErrorHandlerMiddleware],
+      )
+      ```
+
+  - name: "Pub/Sub Communication"
+    priority: 80
+    content: |
+      Services communicate via Pub/Sub topics:
+      - `url-crawling` - URL discovery requests
+      - `file-indexing` - Document processing requests  
+      - `rag-processing` - RAG pipeline requests
+      - `frontend-notifications` - Real-time updates
+      
+      Message handling pattern:
+      ```python
+      async def handle_message(message: PubSubMessage) -> None:
+          trace_id = message.attributes.get("trace_id")
+          
+          # Check if already processed (idempotency)
+          if await is_processed(message.message_id):
+              return  # Return 200 to acknowledge
+          
+          # Process message
+          await process_message_logic(message)
+          
+          # Mark as processed
+          await mark_processed(message.message_id)
+      ```
+
+  - name: "Service Configuration"
+    priority: 75
+    content: |
+      Environment variables per service:
+      - `SERVICE_NAME` - For logging/tracing
+      - `DATABASE_URL` - Service-specific database
+      - `GOOGLE_CLOUD_PROJECT` - GCP project
+      - `DISCORD_WEBHOOK_URL` - Monitoring alerts
+      - Service-specific vars (API keys, etc.)
+      
+      Use `get_env()` with fallbacks:
+      ```python
+      from packages.shared_utils.src.env import get_env
+      
+      DATABASE_URL = get_env("DATABASE_URL", required=True)
+      MAX_RETRIES = int(get_env("MAX_RETRIES", "3"))
+      ```
+
+  - name: "Service Testing"
+    priority: 70
+    content: |
+      Each service has independent tests:
+      - Unit tests run without dependencies
+      - Integration tests use real PostgreSQL
+      - E2E tests validate full workflows
+      - No cross-service test dependencies
+      
+      Run service tests:
+      ```bash
+      # From repository root
+      PYTHONPATH=. uv run pytest services/backend/tests/
+      PYTHONPATH=. uv run pytest services/indexer/tests/
+      PYTHONPATH=. uv run pytest services/crawler/tests/
+      PYTHONPATH=. uv run pytest services/rag/tests/
+      PYTHONPATH=. uv run pytest services/scraper/tests/
+      ```
+
+  - name: "Service Deployment"
+    priority: 65
+    content: |
+      Each service deploys independently to Cloud Run:
+      - Separate Docker images per service
+      - Independent scaling configuration
+      - Service-specific resource limits
+      - Health check endpoints at `/health`
+      
+      Deployment happens via GitHub Actions on merge to main/development.

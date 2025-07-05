@@ -1,0 +1,115 @@
+metadata:
+  name: "GrantFlow Packages"
+  version: "1.0.0"
+  description: "Shared Python packages conventions"
+
+outputs:
+  - file: "CLAUDE.md"
+  - file: "GEMINI.md"
+  - file: ".windsurfrules"
+  - file: ".cursorrules"
+
+rules:
+  - name: "Package Purpose"
+    priority: 95
+    content: |
+      ### Shared Code Philosophy
+      
+      Packages contain code shared between services:
+      - **shared_models**: Common data models and schemas
+      - **shared_utils**: Utility functions and helpers
+      - **Testing utilities**: Factories, fixtures, helpers
+      
+      **Rules**:
+      - Packages MUST NOT depend on services
+      - Packages CAN depend on other packages
+      - Keep packages focused and cohesive
+      - Version packages independently if needed
+
+  - name: "Package Structure"
+    priority: 90
+    content: |
+      Standard package structure:
+      ```
+      packages/{package_name}/
+      ├── pyproject.toml      # Package metadata and dependencies
+      ├── src/
+      │   ├── __init__.py    # Package exports
+      │   └── *.py           # Package modules
+      └── tests/
+          └── *_test.py      # Package tests
+      ```
+      
+      Each package is independently installable via uv.
+
+  - name: "Shared Models"
+    priority: 85
+    content: |
+      The `shared_models` package contains:
+      - TypedDict definitions for API contracts
+      - Pydantic models for validation
+      - SQLAlchemy base models
+      - Common enums and constants
+      
+      Example:
+      ```python
+      # packages/shared_models/src/documents.py
+      from typing import NotRequired, TypedDict
+      
+      class DocumentMetadata(TypedDict):
+          title: str
+          source_url: NotRequired[str]
+          created_at: str  # ISO format
+          trace_id: NotRequired[str]
+      ```
+
+  - name: "Shared Utils"
+    priority: 80
+    content: |
+      The `shared_utils` package provides:
+      - Logging configuration (`logger.py`)
+      - Environment helpers (`env.py`)
+      - Database utilities (`database.py`)
+      - Pub/Sub helpers (`pubsub.py`)
+      - OpenTelemetry setup (`otel.py`, `tracing.py`)
+      - Common decorators and helpers
+      
+      Keep utilities generic and reusable.
+
+  - name: "Package Testing"
+    priority: 75
+    content: |
+      - Each package has its own test suite
+      - Tests must not depend on services
+      - Use mocks for external dependencies
+      - Run package tests independently:
+      ```bash
+      PYTHONPATH=. uv run pytest packages/shared_utils/tests/
+      PYTHONPATH=. uv run pytest packages/shared_models/tests/
+      ```
+
+  - name: "Import Patterns"
+    priority: 70
+    content: |
+      Services import from packages like:
+      ```python
+      # Clear, explicit imports
+      from packages.shared_utils.src.logger import logger
+      from packages.shared_utils.src.env import get_env
+      from packages.shared_models.src.documents import Document
+      
+      # NOT like this (avoid relative imports between packages)
+      from ..shared_utils.src.logger import logger  # ❌
+      ```
+
+  - name: "Breaking Changes"
+    priority: 65
+    content: |
+      When modifying packages:
+      - Consider impact on all services
+      - Use deprecation warnings for changes
+      - Update all services atomically
+      - Test changes across services
+      - Document migration steps
+      
+      Package changes affect multiple services!

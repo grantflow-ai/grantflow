@@ -1,0 +1,168 @@
+metadata:
+  name: "GrantFlow Cloud Functions"
+  version: "1.0.0"
+  description: "Serverless Python functions for event processing"
+
+outputs:
+  - file: "CLAUDE.md"
+  - file: "GEMINI.md"
+  - file: ".windsurfrules"
+  - file: ".cursorrules"
+
+rules:
+  - name: "Cloud Function Structure"
+    priority: 95
+    content: |
+      ### Function Organization
+      
+      Each function follows this structure:
+      ```
+      cloud_functions/{function_name}/
+      ├── main.py              # Entry point with handler
+      ├── requirements.txt     # Function dependencies
+      └── deploy.sh           # Deployment script
+      ```
+      
+      Entry point pattern:
+      ```python
+      import functions_framework
+      from google.cloud import secretmanager
+      import structlog
+      
+      logger = structlog.get_logger()
+      
+      @functions_framework.http
+      def main(request):
+          """HTTP Cloud Function entry point."""
+          try:
+              # Process request
+              return {"status": "success"}, 200
+          except Exception as e:
+              logger.exception("Function error", error=str(e))
+              return {"error": "Internal error"}, 500
+      ```
+
+  - name: "Function Types"
+    priority: 90
+    content: |
+      ### Supported Trigger Types
+      
+      **HTTP Functions**:
+      ```python
+      @functions_framework.http
+      def handle_webhook(request):
+          data = request.get_json()
+          # Process webhook
+      ```
+      
+      **Pub/Sub Functions**:
+      ```python
+      @functions_framework.cloud_event
+      def handle_message(cloud_event):
+          message = base64.b64decode(cloud_event.data["message"]["data"])
+          # Process message
+      ```
+      
+      **Storage Functions**:
+      ```python
+      @functions_framework.cloud_event  
+      def handle_file_upload(cloud_event):
+          bucket = cloud_event.data["bucket"]
+          name = cloud_event.data["name"]
+          # Process file
+      ```
+
+  - name: "Monitoring Integration"
+    priority: 85
+    content: |
+      Current monitoring functions:
+      - `app-hosting-alerts-to-discord` - Firebase App Hosting alerts
+      - `budget-alerts-to-discord` - Budget threshold notifications
+      
+      Discord webhook pattern:
+      ```python
+      import httpx
+      
+      async def send_discord_alert(webhook_url: str, message: dict):
+          async with httpx.AsyncClient() as client:
+              await client.post(webhook_url, json={
+                  "embeds": [message],
+                  "username": "GrantFlow Monitor"
+              })
+      ```
+
+  - name: "Secret Management"
+    priority: 80
+    content: |
+      Access secrets via Secret Manager:
+      ```python
+      from google.cloud import secretmanager
+      
+      def get_secret(secret_id: str, project_id: str) -> str:
+          client = secretmanager.SecretManagerServiceClient()
+          name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+          response = client.access_secret_version(request={"name": name})
+          return response.payload.data.decode("UTF-8")
+      
+      # Usage
+      DISCORD_WEBHOOK = get_secret("discord-webhook-url", "grantflow")
+      ```
+
+  - name: "Error Handling"
+    priority: 75
+    content: |
+      - Return appropriate HTTP status codes
+      - Log errors with context
+      - Never expose internal details
+      - Handle retries gracefully
+      - Use structured logging
+      
+      ```python
+      try:
+          result = process_request(data)
+          return {"result": result}, 200
+      except ValueError as e:
+          logger.warning("Invalid input", error=str(e))
+          return {"error": "Invalid input"}, 400
+      except Exception as e:
+          logger.exception("Unexpected error")
+          return {"error": "Internal error"}, 500
+      ```
+
+  - name: "Deployment"
+    priority: 70
+    content: |
+      Deploy functions via gcloud:
+      ```bash
+      gcloud functions deploy function-name \
+        --runtime python311 \
+        --trigger-http \
+        --entry-point main \
+        --region us-central1 \
+        --project grantflow-staging
+      ```
+      
+      Or use the deploy.sh script in each function directory.
+
+  - name: "Testing Functions"
+    priority: 65
+    content: |
+      Test locally with Functions Framework:
+      ```bash
+      pip install functions-framework
+      functions-framework --target main --debug
+      ```
+      
+      Test Pub/Sub functions:
+      ```python
+      # Create test event
+      test_event = CloudEvent({
+          "type": "google.cloud.pubsub.topic.v1.messagePublished",
+          "source": "test",
+          "data": {
+              "message": {
+                  "data": base64.b64encode(b"test data")
+              }
+          }
+      })
+      ```

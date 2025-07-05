@@ -1,0 +1,176 @@
+metadata:
+  name: "GrantFlow Infrastructure"
+  version: "1.0.0"
+  description: "Infrastructure as Code with OpenTofu"
+
+outputs:
+  - file: "CLAUDE.md"
+  - file: "GEMINI.md"
+  - file: ".windsurfrules"
+  - file: ".cursorrules"
+
+rules:
+  - name: "OpenTofu Usage"
+    priority: 100
+    content: |
+      ### IMPORTANT: Use OpenTofu (tofu) not Terraform
+      
+      - Always use `tofu` command, never `terraform`
+      - OpenTofu is our IaC tool of choice
+      - Compatible with Terraform syntax
+      - Run `tofu init` before any operations
+      - Use `tofu plan -out=tfplan` for plan files
+
+  - name: "Terraform Linting"
+    priority: 98
+    content: |
+      ### Required Linting and Security Checks
+      
+      Before applying any changes, run:
+      ```bash
+      task lint:terraform     # Run all checks
+      ```
+      
+      This includes:
+      1. `tofu fmt` - Format all files
+      2. `tofu validate` - Validate configuration
+      3. `tflint` - Lint for best practices
+      4. `trivy config .` - Security scanning
+
+  - name: "OpenTofu Workflow"
+    priority: 95
+    content: |
+      ### Standard IaC Workflow
+      
+      1. Make changes to `.tf` files
+      2. Run linting and validation:
+         ```bash
+         task lint:terraform
+         ```
+      3. Plan changes:
+         ```bash
+         tofu plan -out=tfplan
+         ```
+      4. Review plan carefully
+      5. Apply changes:
+         ```bash
+         tofu apply tfplan
+         ```
+      
+      Never apply without planning first!
+
+  - name: "Module Organization"
+    priority: 90
+    content: |
+      Current modules:
+      - `cloud_run/` - Service deployments
+      - `database/` - Cloud SQL instances
+      - `iam/` - Service accounts and permissions
+      - `monitoring/` - Alerts and dashboards
+      - `network/` - VPC and connectivity
+      - `pubsub/` - Topics and subscriptions
+      - `scheduler/` - Cloud Scheduler jobs
+      - `secrets/` - Secret Manager
+      - `storage/` - GCS buckets
+      
+      Each module is self-contained and reusable.
+
+  - name: "Environment Management"
+    priority: 85
+    content: |
+      Environment configuration:
+      - `staging.tfvars` - Staging environment
+      - `production.tfvars` - Production environment
+      - Use `environment` variable throughout
+      
+      Apply with environment:
+      ```bash
+      tofu plan -var-file=staging.tfvars -out=tfplan
+      tofu apply tfplan
+      ```
+
+  - name: "Resource Patterns"
+    priority: 80
+    content: |
+      ### Consistent Resource Patterns
+      
+      Service accounts:
+      ```hcl
+      resource "google_service_account" "service" {
+        account_id   = "${var.project_id}-${var.environment}-${var.service_name}-sa"
+        display_name = "${var.service_name} Service Account"
+      }
+      ```
+      
+      Cloud Run services:
+      ```hcl
+      resource "google_cloud_run_v2_service" "service" {
+        name     = var.service_name
+        location = var.region
+        
+        template {
+          service_account = google_service_account.service.email
+          
+          containers {
+            image = var.service_image
+            
+            env {
+              name  = "GOOGLE_CLOUD_PROJECT"
+              value = var.project_id
+            }
+          }
+        }
+      }
+      ```
+
+  - name: "Security Best Practices"
+    priority: 75
+    content: |
+      - Never hardcode secrets
+      - Use Secret Manager for sensitive data
+      - Apply least privilege IAM
+      - Enable audit logging
+      - Use service accounts, not user accounts
+      - Regularly run `trivy config .`
+
+  - name: "Import Existing Resources"
+    priority: 70
+    content: |
+      When importing existing resources:
+      ```bash
+      # Generate import configuration
+      tofu plan -generate-config-out=generated.tf
+      
+      # Import the resource
+      tofu import google_storage_bucket.uploads grantflow-staging-uploads
+      
+      # Verify import
+      tofu plan
+      ```
+      
+      Always verify imported state matches reality.
+
+  - name: "Common Terraform Issues"
+    priority: 65
+    content: |
+      ### Troubleshooting
+      
+      **State lock errors**:
+      ```bash
+      # Check who has lock
+      gsutil cat gs://grantflow-terraform-state/staging/default.tflock
+      
+      # Force unlock if needed (careful!)
+      tofu force-unlock LOCK_ID
+      ```
+      
+      **Authentication issues**:
+      ```bash
+      gcloud auth application-default login
+      gcloud config set project grantflow-staging
+      ```
+      
+      **Refresh state**:
+      ```bash
+      tofu refresh
+      ```
