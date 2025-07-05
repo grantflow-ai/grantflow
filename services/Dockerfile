@@ -48,13 +48,14 @@ COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/${service_name}/src/ /app/services/${service_name}/src/
 COPY --chown=appuser:appuser packages /app/packages
 
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    APP="services.${service_name}.src.main:app"
+
 RUN if [ "$service_name" = "scraper" ]; then \
         /app/.venv/bin/python -m playwright install chromium \
         && /app/.venv/bin/python -m playwright install-deps chromium; \
     fi
-ENV PYTHONUNBUFFERED=1 \
-    PATH="/app/.venv/bin:$PATH" \
-    APP="services.${service_name}.src.main:app"
 
 USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]
