@@ -47,8 +47,8 @@ pre-commit:
             stage_fixed: true
 
         ai-rulez:
-            glob: "ai_rulez.yaml"
-            run: uv run ai-rulez
+            glob: "**/ai-rulez.yaml"
+            run: uv run ai-rulez generate --recursive
             stage_fixed: true
 
         codespell:
