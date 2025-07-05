@@ -498,6 +498,7 @@ async def test_handle_crawl_url_grant_application(
         source_id=ANY,
         project_id=project.id,
         parent_id=grant_application.id,
+        trace_id=ANY,
     )
 
 
@@ -525,6 +526,7 @@ async def test_handle_crawl_url_funding_organization(
         source_id=ANY,
         project_id=None,
         parent_id=funding_organization.id,
+        trace_id=ANY,
     )
 
 
@@ -553,6 +555,7 @@ async def test_handle_crawl_url_grant_template(
         source_id=ANY,
         project_id=project.id,
         parent_id=grant_template.id,
+        trace_id=ANY,
     )
 
 
