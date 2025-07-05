@@ -2,8 +2,11 @@
 
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import useSWR, { mutate } from "swr";
+import { getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppAvatar } from "@/components/app";
+import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
@@ -14,10 +17,9 @@ import { EditPermissionModal } from "./edit-permission-modal";
 interface ProjectMember {
 	email: string;
 	firebaseUid: string;
-	fullName?: string;
-	id: string;
+	fullName?: null | string;
 	joinedAt: string;
-	photoUrl?: string;
+	photoUrl?: null | string;
 	projectAccess?: string[];
 	role: UserRole;
 	status: "active" | "pending";
@@ -25,7 +27,6 @@ interface ProjectMember {
 
 interface ProjectSettingsMembersProps {
 	currentUserRole: UserRole;
-	members?: ProjectMember[];
 	projectId: string;
 	projectName: string;
 }
@@ -42,57 +43,68 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
-const mockMembers: ProjectMember[] = [
-	{
-		email: "test@gmail.com",
-		firebaseUid: "firebase-uid-1",
-		fullName: "Name name",
-		id: "1",
-		joinedAt: "2025-01-15T10:00:00Z",
-		projectAccess: [],
-		role: UserRole.OWNER,
-		status: "active",
-	},
-	{
-		email: "test@gmail.com",
-		firebaseUid: "firebase-uid-2",
-		fullName: "Name name",
-		id: "2",
-		joinedAt: "2025-01-20T10:00:00Z",
-		projectAccess: [],
-		role: UserRole.ADMIN,
-		status: "active",
-	},
-	{
-		email: "test@gmail.com",
-		firebaseUid: "firebase-uid-3",
-		fullName: "Name name",
-		id: "3",
-		joinedAt: "2025-01-25T10:00:00Z",
-		projectAccess: ["app1", "app2", "app3", "app4"],
-		role: UserRole.MEMBER,
-		status: "active",
-	},
-];
-
-const handleRemoveMember = (memberId: string) => {
-	log.info("Remove member not implemented yet", { memberId });
-};
-
-const handleUpdateRole = (memberId: string, newRole: UserRole, projectAccess?: string[]) => {
-	log.info("Update role not implemented yet", { memberId, newRole, projectAccess });
-	return Promise.resolve();
-};
-
-export function ProjectSettingsMembers({
-	currentUserRole,
-	members = mockMembers,
-	projectId,
-	projectName,
-}: ProjectSettingsMembersProps) {
+export function ProjectSettingsMembers({ currentUserRole, projectId, projectName }: ProjectSettingsMembersProps) {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [editingMember, setEditingMember] = useState<null | ProjectMember>(null);
 	const { user } = useUserStore();
+	const { addNotification } = useNotificationStore();
+
+	// Fetch project members
+	const { data: members = [], isLoading } = useSWR(
+		`/projects/${projectId}/members`,
+		() => getProjectMembers(projectId),
+		{
+			revalidateOnFocus: false,
+		},
+	);
+
+	const handleRemoveMember = async (firebaseUid: string) => {
+		try {
+			await removeProjectMember(projectId, firebaseUid);
+
+			// Refresh the members list
+			await mutate(`/projects/${projectId}/members`);
+
+			addNotification({
+				message: "The member has been removed from the project",
+				projectName,
+				title: "Member removed",
+				type: "success",
+			});
+		} catch (error) {
+			log.error("Error removing member", error, { firebaseUid });
+			addNotification({
+				message: "Failed to remove member from the project",
+				projectName,
+				title: "Error",
+				type: "warning",
+			});
+		}
+	};
+
+	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole, _projectAccess?: string[]) => {
+		try {
+			await updateProjectMemberRole(projectId, firebaseUid, { role: newRole });
+
+			// Refresh the members list
+			await mutate(`/projects/${projectId}/members`);
+
+			addNotification({
+				message: `Member role has been updated to ${ROLE_LABELS[newRole]}`,
+				projectName,
+				title: "Role updated",
+				type: "success",
+			});
+		} catch (error) {
+			log.error("Error updating member role", error, { firebaseUid, newRole });
+			addNotification({
+				message: "Failed to update member role",
+				projectName,
+				title: "Error",
+				type: "warning",
+			});
+		}
+	};
 
 	const handleInvite = async (email: string, permission: "admin" | "collaborator") => {
 		if (!user?.displayName) {
@@ -111,18 +123,56 @@ export function ProjectSettingsMembers({
 
 			if (!result.success) {
 				log.error("Failed to invite collaborator", new Error(result.error), { email });
-
+				addNotification({
+					message: result.error ?? "Failed to send invitation",
+					projectName,
+					title: "Invitation failed",
+					type: "warning",
+				});
 				return;
 			}
+
+			addNotification({
+				message: `Invitation sent to ${email}`,
+				projectName,
+				title: "Invitation sent",
+				type: "success",
+			});
 		} catch (error) {
 			log.error("Error inviting collaborator", error, {
 				email,
 				error: error instanceof Error ? error.message : "Unknown error",
 			});
+			addNotification({
+				message: "Failed to send invitation",
+				projectName,
+				title: "Error",
+				type: "warning",
+			});
 		}
 	};
 
 	const canInvite = currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN;
+
+	// Map API response to component format
+	const mappedMembers: ProjectMember[] = members.map((member) => ({
+		email: member.email,
+		firebaseUid: member.firebase_uid,
+		fullName: member.display_name,
+		joinedAt: member.joined_at,
+		photoUrl: member.photo_url,
+		projectAccess: [],
+		role: member.role as UserRole,
+		status: "active" as const,
+	}));
+
+	if (isLoading) {
+		return (
+			<div className="w-full flex items-center justify-center py-12">
+				<p className="text-text-secondary">Loading members...</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className="w-full" data-testid="project-settings-members">
@@ -166,16 +216,19 @@ export function ProjectSettingsMembers({
 
 				{}
 				<div className="divide-y divide-border-primary">
-					{members.map((member) => (
+					{mappedMembers.map((member) => (
 						<div
 							className="px-6 py-4 hover:bg-surface-secondary transition-colors"
-							data-testid={`member-row-${member.id}`}
-							key={member.id}
+							data-testid={`member-row-${member.firebaseUid}`}
+							key={member.firebaseUid}
 						>
 							<div className="grid grid-cols-5 gap-4 items-center">
 								{}
 								<div className="flex items-center gap-3">
-									<AppAvatar initials={generateInitials(member.fullName, member.email)} size="sm" />
+									<AppAvatar
+										initials={generateInitials(member.fullName ?? undefined, member.email)}
+										size="sm"
+									/>
 									<span className="text-[16px] text-text-primary truncate font-body">
 										{member.fullName ?? "Name name"}
 									</span>
@@ -202,7 +255,7 @@ export function ProjectSettingsMembers({
 										onEditPermissions={(member) => {
 											setEditingMember(member);
 										}}
-										onRemoveMember={handleRemoveMember}
+										onRemoveMember={() => handleRemoveMember(member.firebaseUid)}
 									/>
 								</div>
 							</div>
@@ -211,7 +264,7 @@ export function ProjectSettingsMembers({
 				</div>
 
 				{}
-				{members.length === 0 && (
+				{mappedMembers.length === 0 && (
 					<div className="px-6 py-12 text-center" data-testid="empty-state">
 						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
 						{canInvite && (
@@ -242,7 +295,7 @@ export function ProjectSettingsMembers({
 						className="text-[24px] font-semibold text-text-primary font-heading"
 						data-testid="total-members-count"
 					>
-						{members.length}
+						{mappedMembers.length}
 					</div>
 				</div>
 				<div
@@ -254,7 +307,7 @@ export function ProjectSettingsMembers({
 						className="text-[24px] font-semibold text-text-primary font-heading"
 						data-testid="admins-count"
 					>
-						{members.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
+						{mappedMembers.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
 					</div>
 				</div>
 				<div
@@ -266,7 +319,7 @@ export function ProjectSettingsMembers({
 						className="text-[24px] font-semibold text-text-primary font-heading"
 						data-testid="collaborators-count"
 					>
-						{members.filter((m) => m.role === UserRole.MEMBER).length}
+						{mappedMembers.filter((m) => m.role === UserRole.MEMBER).length}
 					</div>
 				</div>
 			</div>
@@ -290,7 +343,9 @@ export function ProjectSettingsMembers({
 				onClose={() => {
 					setEditingMember(null);
 				}}
-				onUpdateRole={handleUpdateRole}
+				onUpdateRole={(firebaseUid, newRole, projectAccess) =>
+					handleUpdateRole(firebaseUid, newRole, projectAccess)
+				}
 			/>
 		</div>
 	);
@@ -305,7 +360,7 @@ function MemberActionMenu({
 	currentUserRole: UserRole;
 	member: ProjectMember;
 	onEditPermissions: (member: ProjectMember) => void;
-	onRemoveMember: (memberId: string) => void;
+	onRemoveMember: () => void;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
@@ -337,7 +392,7 @@ function MemberActionMenu({
 		<div className="relative" ref={menuRef}>
 			<button
 				className="p-2 hover:bg-surface-secondary rounded-md transition-colors"
-				data-testid={`member-action-menu-${member.id}`}
+				data-testid={`member-action-menu-${member.firebaseUid}`}
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
@@ -349,14 +404,14 @@ function MemberActionMenu({
 			{isOpen && (
 				<div
 					className="absolute right-0 top-full mt-1 w-48 bg-surface-primary border border-border-primary rounded-md shadow-lg z-10"
-					data-testid={`member-action-dropdown-${member.id}`}
+					data-testid={`member-action-dropdown-${member.firebaseUid}`}
 				>
 					<div className="py-1">
 						{currentUserRole === UserRole.OWNER && (
 							<>
 								<button
 									className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-surface-secondary transition-colors"
-									data-testid={`edit-permissions-${member.id}`}
+									data-testid={`edit-permissions-${member.firebaseUid}`}
 									onClick={() => {
 										onEditPermissions(member);
 										setIsOpen(false);
@@ -370,9 +425,9 @@ function MemberActionMenu({
 						)}
 						<button
 							className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-							data-testid={`remove-member-${member.id}`}
+							data-testid={`remove-member-${member.firebaseUid}`}
 							onClick={() => {
-								onRemoveMember(member.id);
+								onRemoveMember();
 								setIsOpen(false);
 							}}
 							type="button"

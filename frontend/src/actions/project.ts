@@ -36,6 +36,14 @@ export async function getProject(projectId: string) {
 	);
 }
 
+export async function getProjectMembers(projectId: string) {
+	return withAuthRedirect(
+		getClient()
+			.get(`projects/${projectId}/members`, { headers: await createAuthHeaders() })
+			.json<API.ListProjectMembers.Http200.ResponseBody>(),
+	);
+}
+
 export async function getProjects() {
 	return withAuthRedirect(
 		getClient()
@@ -44,10 +52,28 @@ export async function getProjects() {
 	);
 }
 
+export async function removeProjectMember(projectId: string, firebaseUid: string) {
+	await withAuthRedirect(
+		getClient().delete(`projects/${projectId}/members/${firebaseUid}`, { headers: await createAuthHeaders() }),
+	);
+}
+
 export async function updateProject(projectId: string, data: API.UpdateProject.RequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.patch(`projects/${projectId}`, { headers: await createAuthHeaders(), json: data })
 			.json<API.UpdateProject.Http200.ResponseBody>(),
+	);
+}
+
+export async function updateProjectMemberRole(
+	projectId: string,
+	firebaseUid: string,
+	data: API.UpdateProjectMemberRole.RequestBody,
+) {
+	return withAuthRedirect(
+		getClient()
+			.patch(`projects/${projectId}/members/${firebaseUid}`, { headers: await createAuthHeaders(), json: data })
+			.json<API.UpdateProjectMemberRole.Http200.ResponseBody>(),
 	);
 }
