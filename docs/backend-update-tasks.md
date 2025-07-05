@@ -10,126 +10,9 @@ This document outlines the backend API development tasks required to support the
 
 ## 🔥 **CRITICAL PRIORITY - Frontend Complete & Waiting**
 
-### Task 1: Project Members Management APIs
-
-**Status:** Frontend 100% complete, backend missing
-**Impact:** High - Core collaboration feature
-**Effort:** Medium
-
-#### **Required Endpoints:**
-
-**GET /projects/{project_id}/members**
-- **Purpose:** List all project members with Firebase user data
-- **Frontend:** ProjectSettingsMembers component
-- **Implementation:**
-  ```python
-  @get("/projects/{project_id}/members")
-  async def get_project_members(
-      project_id: UUID,
-      user: AuthenticatedUser,
-      session: AsyncSession = Depends(get_session)
-  ) -> list[ProjectMemberResponse]:
-      # 1. Verify user has OWNER or ADMIN role in project
-      # 2. Query ProjectUser table for all members
-      # 3. Use Firebase Admin SDK to fetch user data in batches
-      # 4. Merge project role data with Firebase user info
-      # 5. Return members with initials, names, roles, joined dates
-  ```
-
-**PATCH /projects/{project_id}/members/{firebase_uid}**
-- **Purpose:** Update member role (ADMIN ↔ MEMBER)
-- **Frontend:** EditPermissionModal component
-- **Business Rules:**
-  - Only OWNER can modify ADMIN roles
-  - OWNER/ADMIN can modify MEMBER roles
-  - Cannot modify OWNER role
-- **Implementation:**
-  ```python
-  @patch("/projects/{project_id}/members/{firebase_uid}")
-  async def update_member_role(
-      project_id: UUID,
-      firebase_uid: str,
-      data: UpdateMemberRoleRequest,
-      user: AuthenticatedUser,
-      session: AsyncSession = Depends(get_session)
-  ) -> UpdateMemberRoleResponse:
-      # 1. Validate requester permissions
-      # 2. Prevent OWNER role modifications
-      # 3. Update ProjectUser.role in database
-      # 4. Return updated member data
-  ```
-
-**DELETE /projects/{project_id}/members/{firebase_uid}**
-- **Purpose:** Remove member from project
-- **Frontend:** Member action menu
-- **Business Rules:**
-  - Cannot remove OWNER
-  - Only OWNER can remove ADMIN
-  - OWNER/ADMIN can remove MEMBER
-- **Implementation:**
-  ```python
-  @delete("/projects/{project_id}/members/{firebase_uid}")
-  async def remove_project_member(
-      project_id: UUID,
-      firebase_uid: str,
-      user: AuthenticatedUser,
-      session: AsyncSession = Depends(get_session)
-  ) -> RemoveMemberResponse:
-      # 1. Validate requester permissions
-      # 2. Prevent OWNER removal
-      # 3. Delete ProjectUser record
-      # 4. Return success with removed member info
-  ```
-
-#### **Dependencies:**
-- Firebase Admin SDK integration (see Task 2)
-- Enhanced error handling for permission violations
-- User data caching strategy
-
----
-
-### Task 2: Firebase Admin SDK Integration
-
-**Status:** Required for members management
-**Impact:** High - Enables real user data display
-**Effort:** Medium
-
-#### **Implementation Requirements:**
-
-**FirebaseUserService with Caching**
-```python
-class FirebaseUserService:
-    def __init__(self):
-        self._user_cache = {}  # Redis in production
-        self._cache_ttl = 900  # 15 minutes
-
-    async def get_users_data(self, firebase_uids: List[str]) -> Dict[str, dict]:
-        # 1. Check cache for existing user data
-        # 2. Batch fetch missing users from Firebase Admin SDK
-        # 3. Handle not found/disabled users gracefully
-        # 4. Generate initials from display_name or email
-        # 5. Cache results with TTL
-        # 6. Return merged user data
-```
-
-**Key Features:**
-- Batch user fetching (Firebase supports up to 100 users per request)
-- 15-minute cache TTL for user data
-- Initials generation from displayName or email
-- Error handling for deleted/disabled Firebase users
-- Redis caching for production environments
-
-**Integration Points:**
-- Project members listing
-- Application created_by user resolution
-- Avatar display in UI components
-- Invitation system enhancement
-
----
-
 ## 🚀 **HIGH PRIORITY - Core Features**
 
-### Task 3: Enhanced Application Management with Search
+### Task 1: Enhanced Application Management with Search
 
 **Status:** Backend partial, frontend expects search/filtering
 **Impact:** High - Core user workflow
@@ -190,7 +73,7 @@ ON grant_applications(project_id, created_by);
 
 ---
 
-### Task 4: Notification System
+### Task 2: Notification System
 
 **Status:** Missing core functionality
 **Impact:** High - User engagement and deadlines
@@ -241,7 +124,7 @@ ON notifications(user_id) WHERE dismissed = FALSE;
 
 ## 📊 **MEDIUM PRIORITY - Business Features**
 
-### Task 5: User Account Management
+### Task 3: User Account Management
 
 **Status:** Basic auth only, missing profile management
 **Impact:** Medium - User experience and compliance
@@ -290,7 +173,7 @@ CREATE TABLE account_restoration_tokens (
 
 ---
 
-### Task 6: Billing & Subscription Management (Stripe)
+### Task 4: Billing & Subscription Management (Stripe)
 
 **Status:** Not implemented
 **Impact:** High - Revenue generation
@@ -343,7 +226,7 @@ CREATE TABLE subscription_plans (
 
 ## 🔧 **LOW PRIORITY - Infrastructure & Polish**
 
-### Task 7: API Consistency & Documentation
+### Task 5: API Consistency & Documentation
 
 **Status:** Good foundation, needs standardization
 **Impact:** Medium - Developer experience
@@ -373,7 +256,7 @@ CREATE TABLE subscription_plans (
 
 ---
 
-### Task 8: Enhanced Security & Compliance
+### Task 6: Enhanced Security & Compliance
 
 **Status:** Basic security implemented
 **Impact:** Medium - Trust and compliance
@@ -410,7 +293,7 @@ CREATE TABLE audit_logs (
 
 ---
 
-### Task 9: Advanced Collaboration Features
+### Task 7: Advanced Collaboration Features
 
 **Status:** Not implemented
 **Impact:** Low - Nice to have
@@ -441,21 +324,20 @@ CREATE TABLE audit_logs (
 ## 📋 **Implementation Schedule**
 
 ### **Phase 1: Critical (Week 1-2)**
-1. ✅ **Task 1: Project Members Management APIs**
-2. ✅ **Task 2: Firebase Admin SDK Integration**
+✅ **Completed** - Project Members Management APIs and Firebase Integration
 
 ### **Phase 2: Core Features (Week 3-4)**
-3. **Task 3: Enhanced Application Management with Search**
-4. **Task 4: Notification System**
+1. **Task 1: Enhanced Application Management with Search**
+2. **Task 2: Notification System**
 
 ### **Phase 3: Business Features (Week 5-8)**
-5. **Task 5: User Account Management**
-6. **Task 6: Billing & Subscription Management**
+3. **Task 3: User Account Management**
+4. **Task 4: Billing & Subscription Management**
 
 ### **Phase 4: Polish & Infrastructure (Week 9-12)**
-7. **Task 7: API Consistency & Documentation**
-8. **Task 8: Enhanced Security & Compliance**
-9. **Task 9: Advanced Collaboration Features**
+5. **Task 5: API Consistency & Documentation**
+6. **Task 6: Enhanced Security & Compliance**
+7. **Task 7: Advanced Collaboration Features**
 
 ---
 

@@ -34,6 +34,39 @@ export async function generateApplication(projectId: string, applicationId: stri
 	);
 }
 
+export async function listApplications(
+	projectId: string,
+	params?: {
+		limit?: number;
+		offset?: number;
+		order?: string;
+		search?: string;
+		sort?: string;
+		status?: string;
+	},
+): Promise<API.ListApplications.Http200.ResponseBody> {
+	const searchParams = new URLSearchParams();
+
+	if (params?.search) searchParams.set("search", params.search);
+	if (params?.status) searchParams.set("status", params.status);
+	if (params?.sort) searchParams.set("sort", params.sort);
+	if (params?.order) searchParams.set("order", params.order);
+	if (params?.limit !== undefined) searchParams.set("limit", params.limit.toString());
+	if (params?.offset !== undefined) searchParams.set("offset", params.offset.toString());
+
+	const queryString = searchParams.toString();
+	const baseUrl = `projects/${projectId}/applications`;
+	const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+
+	return withAuthRedirect(
+		getClient()
+			.get(url, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.ListApplications.Http200.ResponseBody>(),
+	);
+}
+
 export async function retrieveApplication(
 	projectId: string,
 	applicationId: string,

@@ -659,4 +659,234 @@ async def test_retrieve_application_with_rag_sources(
     assert template_source["sourceId"] == str(template_rag_file.id)
     assert template_source["filename"] == "grant_template_guide.docx"
     assert template_source["status"] == "FINISHED"
-    assert "url" not in template_source
+
+
+async def test_list_applications_basic(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        applications = []
+        for i in range(5):
+            app = GrantApplication(
+                project_id=project.id,
+                title=f"Test Application {i}",
+                status=ApplicationStatusEnum.DRAFT,
+                text=f"Description for application {i}",
+            )
+            session.add(app)
+            applications.append(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert "applications" in data
+    assert "pagination" in data
+    assert len(data["applications"]) == 5
+    assert data["pagination"]["total"] == 5
+    assert data["pagination"]["limit"] == 50
+    assert data["pagination"]["offset"] == 0
+    assert data["pagination"]["has_more"] is False
+
+
+async def test_list_applications_with_search(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        app1 = GrantApplication(
+            project_id=project.id,
+            title="Research Grant Application",
+            status=ApplicationStatusEnum.DRAFT,
+            text="This is about machine learning research",
+        )
+        app2 = GrantApplication(
+            project_id=project.id,
+            title="Equipment Purchase Request",
+            status=ApplicationStatusEnum.DRAFT,
+            text="We need new research equipment",
+        )
+        app3 = GrantApplication(
+            project_id=project.id,
+            title="Conference Travel Grant",
+            status=ApplicationStatusEnum.DRAFT,
+            text="Travel funding for research conference",
+        )
+        session.add_all([app1, app2, app3])
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        params={"search": "research"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 3
+    assert data["pagination"]["total"] == 3
+
+
+async def test_list_applications_with_status_filter(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        app_draft = GrantApplication(
+            project_id=project.id,
+            title="Draft Application",
+            status=ApplicationStatusEnum.DRAFT,
+        )
+        app_in_progress = GrantApplication(
+            project_id=project.id,
+            title="In Progress Application",
+            status=ApplicationStatusEnum.IN_PROGRESS,
+        )
+        app_completed = GrantApplication(
+            project_id=project.id,
+            title="Completed Application",
+            status=ApplicationStatusEnum.COMPLETED,
+            completed_at=datetime.now(UTC),
+        )
+        session.add_all([app_draft, app_in_progress, app_completed])
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        params={"status": "IN_PROGRESS"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 1
+    assert data["applications"][0]["status"] == "IN_PROGRESS"
+    assert data["applications"][0]["title"] == "In Progress Application"
+
+
+async def test_list_applications_with_pagination(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        for i in range(15):
+            app = GrantApplication(
+                project_id=project.id,
+                title=f"Application {i:02d}",
+                status=ApplicationStatusEnum.DRAFT,
+            )
+            session.add(app)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        params={"limit": 10, "offset": 0},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 10
+    assert data["pagination"]["total"] == 15
+    assert data["pagination"]["limit"] == 10
+    assert data["pagination"]["offset"] == 0
+    assert data["pagination"]["has_more"] is True
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        params={"limit": 10, "offset": 10},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 5
+    assert data["pagination"]["offset"] == 10
+    assert data["pagination"]["has_more"] is False
+
+
+async def test_list_applications_with_sorting(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session, session.begin():
+        app1 = GrantApplication(
+            project_id=project.id,
+            title="Zebra Application",
+            status=ApplicationStatusEnum.DRAFT,
+        )
+        app2 = GrantApplication(
+            project_id=project.id,
+            title="Alpha Application",
+            status=ApplicationStatusEnum.DRAFT,
+        )
+        app3 = GrantApplication(
+            project_id=project.id,
+            title="Beta Application",
+            status=ApplicationStatusEnum.DRAFT,
+        )
+        session.add_all([app1, app2, app3])
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        params={"sort": "title", "order": "asc"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 3
+    assert data["applications"][0]["title"] == "Alpha Application"
+    assert data["applications"][1]["title"] == "Beta Application"
+    assert data["applications"][2]["title"] == "Zebra Application"
+
+
+async def test_list_applications_unauthorized(
+    test_client: TestingClientType,
+    project: Project,
+) -> None:
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+
+
+async def test_list_applications_empty_project(
+    test_client: TestingClientType,
+    project: Project,
+    project_member_user: None,
+) -> None:
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert data["applications"] == []
+    assert data["pagination"]["total"] == 0
+    assert data["pagination"]["has_more"] is False

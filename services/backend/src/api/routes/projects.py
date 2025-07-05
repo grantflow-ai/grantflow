@@ -534,7 +534,6 @@ async def handle_list_project_members(
 ) -> list[ProjectMemberResponse]:
     logger.info("Listing project members", project_id=project_id)
     async with session_maker() as session:
-        
         project_users = list(
             await session.scalars(
                 select(ProjectUser)
@@ -546,11 +545,9 @@ async def handle_list_project_members(
         if not project_users:
             return []
 
-        
         uids = [pu.firebase_uid for pu in project_users]
         firebase_users = await get_users(uids)
 
-        
         members: list[ProjectMemberResponse] = []
         for project_user in project_users:
             firebase_user = firebase_users.get(project_user.firebase_uid, {})
@@ -590,7 +587,6 @@ async def handle_update_member_role(
     )
     async with session_maker() as session, session.begin():
         try:
-            
             requester = await session.scalar(
                 select(ProjectUser)
                 .where(ProjectUser.project_id == project_id)
@@ -600,7 +596,6 @@ async def handle_update_member_role(
             if not requester:
                 raise ValidationException("Requester is not a member of this project")
 
-            
             target_member = await session.scalar(
                 select(ProjectUser)
                 .where(ProjectUser.project_id == project_id)
@@ -610,7 +605,6 @@ async def handle_update_member_role(
             if not target_member:
                 raise ValidationException("Member not found in project")
 
-            
             if target_member.role == UserRoleEnum.OWNER:
                 raise ValidationException("Cannot modify OWNER role")
 
@@ -626,11 +620,9 @@ async def handle_update_member_role(
             ):
                 raise ValidationException("Only OWNER can modify ADMIN roles")
 
-            
             target_member.role = data["role"]
             await session.commit()
 
-            
             firebase_user = await get_users([firebase_uid])
             user_data = firebase_user.get(firebase_uid, {})
 
@@ -669,7 +661,6 @@ async def handle_remove_project_member(
     )
     async with session_maker() as session, session.begin():
         try:
-            
             requester = await session.scalar(
                 select(ProjectUser)
                 .where(ProjectUser.project_id == project_id)
@@ -679,7 +670,6 @@ async def handle_remove_project_member(
             if not requester:
                 raise ValidationException("Requester is not a member of this project")
 
-            
             target_member = await session.scalar(
                 select(ProjectUser)
                 .where(ProjectUser.project_id == project_id)
@@ -689,7 +679,6 @@ async def handle_remove_project_member(
             if not target_member:
                 raise ValidationException("Member not found in project")
 
-            
             if target_member.role == UserRoleEnum.OWNER:
                 raise ValidationException("Cannot remove OWNER from project")
 
@@ -699,7 +688,6 @@ async def handle_remove_project_member(
             ):
                 raise ValidationException("Only OWNER can remove ADMIN members")
 
-            
             await session.execute(
                 sa_delete(ProjectUser)
                 .where(ProjectUser.project_id == project_id)
