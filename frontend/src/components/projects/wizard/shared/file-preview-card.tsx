@@ -9,16 +9,20 @@ import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 
 const FILE_ICON_MAP = {
-	"": <Image alt="General file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
 	csv: <Image alt="CSV file" className="block" height={56} src="/icons/file-csv.svg" width={48} />,
 	doc: <Image alt="DOC file" className="block" height={56} src="/icons/file-doc.svg" width={48} />,
 	docx: <Image alt="DOCX file" className="block" height={56} src="/icons/file-docx.svg" width={48} />,
+	latex: <Image alt="LaTeX file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
 	markdown: <Image alt="Markdown file" className="block" height={56} src="/icons/file-markdown.svg" width={48} />,
 	md: <Image alt="Markdown file" className="block" height={56} src="/icons/file-markdown.svg" width={48} />,
+	odt: <Image alt="ODT file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
 	pdf: <Image alt="PDF file" className="block" height={56} src="/icons/file-pdf.svg" width={48} />,
 	ppt: <Image alt="PPT file" className="block" height={56} src="/icons/file-ppt.svg" width={48} />,
 	pptx: <Image alt="PPTX file" className="block" height={56} src="/icons/file-pptx.svg" width={48} />,
-	unknown: <Image alt="Unknown file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
+	rst: <Image alt="RST file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
+	rtf: <Image alt="RTF file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
+	txt: <Image alt="TXT file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
+	xlsx: <Image alt="XLSX file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
 } as const;
 
 export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId?: string }) {
@@ -27,7 +31,7 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 
 	const extension = getFileExtension(file.name) ?? "";
 
-	const canOpenInBrowser = ["gif", "jpeg", "jpg", "pdf", "png", "svg", "webp"].includes(extension);
+	const canOpenInBrowser = ["md", "pdf"].includes(extension);
 
 	const handleOpen = () => {
 		if (canOpenInBrowser && file instanceof File) {
@@ -111,9 +115,7 @@ function FileContent({ extension, fileName }: { extension: string; fileName: str
 	return (
 		<div className="flex flex-col items-center justify-center w-full">
 			<div className="flex items-center justify-center" data-testid="file-icon">
-				{extension in FILE_ICON_MAP
-					? FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]
-					: FILE_ICON_MAP.unknown}
+				{FILE_ICON_MAP[extension as keyof typeof FILE_ICON_MAP]}
 			</div>
 			<span
 				className="w-full max-w-full truncate text-center text-app-gray-700 text-[10px] leading-3"

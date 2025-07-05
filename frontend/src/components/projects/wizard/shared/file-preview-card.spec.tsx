@@ -47,7 +47,7 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "readme.md" });
 			render(<FilePreviewCard file={file} />);
 
-			const iconContainer = screen.getByRole("img", { name: /File readme\.md - right click for options/i });
+			const iconContainer = screen.getByRole("img", { name: "Markdown file" });
 			expect(iconContainer).toBeInTheDocument();
 		});
 
@@ -55,7 +55,7 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "readme.markdown" });
 			render(<FilePreviewCard file={file} />);
 
-			const iconContainer = screen.getByRole("img", { name: /File readme\.markdown - right click for options/i });
+			const iconContainer = screen.getByRole("img", { name: "Markdown file" });
 			expect(iconContainer).toBeInTheDocument();
 		});
 
@@ -63,9 +63,7 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "presentation.ppt" });
 			render(<FilePreviewCard file={file} />);
 
-			const iconContainer = screen.getByRole("img", {
-				name: /File presentation\.ppt - right click for options/i,
-			});
+			const iconContainer = screen.getByRole("img", { name: "PPT file" });
 			expect(iconContainer).toBeInTheDocument();
 		});
 
@@ -164,10 +162,10 @@ describe("FilePreviewCard", () => {
 		});
 
 		it("enables Open option for browser-openable files", () => {
-			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
+			const file = FileWithIdFactory.build({ name: "document.pdf", type: "application/pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open image.png" });
+			const button = screen.getByRole("button", { name: "Open document.pdf" });
 			fireEvent.contextMenu(button);
 
 			const openMenuItem = screen.getByTestId("file-menu-open");
@@ -240,11 +238,11 @@ describe("FilePreviewCard", () => {
 
 	describe("Accessibility", () => {
 		it("has proper aria-label for clickable files", () => {
-			const file = FileWithIdFactory.build({ name: "image.png", type: "image/png" });
+			const file = FileWithIdFactory.build({ name: "document.pdf", type: "application/pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open image.png" });
-			expect(button).toHaveAttribute("aria-label", "Open image.png");
+			const button = screen.getByRole("button", { name: "Open document.pdf" });
+			expect(button).toHaveAttribute("aria-label", "Open document.pdf");
 		});
 
 		it("has proper aria-label for non-clickable files", () => {
