@@ -1,7 +1,7 @@
 runConfig:
     minInstances: 1
-    # Max instances limited by us-central1 CPU quota: 50 instances × 4 CPUs = 200 CPUs (quota limit)
-    # To increase, request quota increase at: https://cloud.google.com/run/quotas
+    # ~keep Max instances limited by us-central1 CPU quota: 50 instances × 4 CPUs = 200 CPUs (quota limit)
+    # ~keep To increase, request quota increase at: https://cloud.google.com/run/quotas
     maxInstances: 50
     cpu: 4
     memoryMiB: 2048
