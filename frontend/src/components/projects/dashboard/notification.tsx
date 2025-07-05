@@ -35,24 +35,24 @@ export function Notification() {
 	return (
 		<div className="size-8 flex items-center justify-center">
 			<DropdownMenu>
-				<DropdownMenuTrigger data-testid="notification-trigger" className="-mt-2 cursor-pointer relative">
+				<DropdownMenuTrigger className="-mt-2 cursor-pointer relative" data-testid="notification-trigger">
 					<BellIcon className="size-4 text-black" />
 					<div className="bg-red-500 size-1 rounded-full absolute top-0 left-2.5" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
+					align="end"
+					className="w-[428px] rounded-sm bg-white border border-gray-200 shadow-none p-0 transition-all duration-300"
 					data-testid="notification-dropdown"
 					side="top"
-					align="end"
 					sideOffset={10}
-					className="w-[428px] rounded-sm bg-white border border-gray-200 shadow-none p-0 transition-all duration-300"
 				>
 					{notification.map((item) => (
 						<DropdownMenuItem
-							data-testid={`notification-item-${item.id}`}
-							key={item.id}
 							className={
 								"p-4 font-normal gap-1 text-base text-gray-700 flex flex-col items-start data-[highlighted]:bg-preview-bg data-[highlighted]:text-gray-700  rounded-none border border-gray-200 cursor-pointer"
 							}
+							data-testid={`notification-item-${item.id}`}
+							key={item.id}
 						>
 							<div className="flex items-center justify-between w-full">
 								<div

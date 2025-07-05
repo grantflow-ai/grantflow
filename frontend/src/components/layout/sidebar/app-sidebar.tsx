@@ -23,12 +23,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<div className="flex items-center gap-2">
 						<div className=" size-[31px]">
 							<Image
-								src="/assets/logo-horizontal.svg"
 								alt="logo"
-								width={100}
-								height={100}
 								className="w-full h-full object-cover"
 								data-testid="sidebar-logo"
+								height={100}
+								src="/assets/logo-horizontal.svg"
+								width={100}
 							/>
 						</div>
 						<h2
@@ -61,15 +61,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarFooter>
 				<div className="flex flex-col gap-1">
 					<SidebarMenuButton
-						data-testid="support-button"
 						className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center"
+						data-testid="support-button"
 					>
 						<HelpCircle className="h-5 w-5 flex-shrink-0" />
 						<span className="group-data-[collapsible=icon]:hidden">Support</span>
 					</SidebarMenuButton>
 					<SidebarMenuButton
-						data-testid="logout-button"
 						className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center"
+						data-testid="logout-button"
 					>
 						<LogOut className="h-5 w-5 flex-shrink-0" />
 						<span className="group-data-[collapsible=icon]:hidden">Logout</span>

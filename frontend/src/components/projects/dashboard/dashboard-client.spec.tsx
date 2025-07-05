@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
 import { ProjectListItemFactory } from "::testing/factories";
+import { render, screen } from "@testing-library/react";
 import { useUserStore } from "@/stores/user-store";
 import { DashboardClient } from "./dashboard-client";
 
@@ -13,8 +13,8 @@ describe("DashboardClient", () => {
 	beforeEach(() => {
 		// Mock the user store to prevent welcome modal from showing
 		vi.mocked(useUserStore).mockReturnValue({
-			hasSeenWelcomeModal: true, // This prevents the modal from showing
-			dismissWelcomeModal: vi.fn(),
+			dismissWelcomeModal: vi.fn(), // This prevents the modal from showing
+			hasSeenWelcomeModal: true,
 		} as any);
 	});
 

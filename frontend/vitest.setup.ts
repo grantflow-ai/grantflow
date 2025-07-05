@@ -3,7 +3,7 @@ import { afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
 // Mock window.matchMedia
-window.matchMedia = vi.fn().mockImplementation((query) => ({
+globalThis.matchMedia = vi.fn().mockImplementation((query: string) => ({
 	addEventListener: vi.fn(),
 	addListener: vi.fn(),
 	dispatchEvent: vi.fn(() => false),
