@@ -34,20 +34,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 width={100}
                 height={100}
                 className="w-full h-full object-cover"
+                 data-testid="sidebar-logo"
               />
             </div>
-            <h2 className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
+            <h2 className="text-xl font-semibold group-data-[collapsible=icon]:hidden" data-testid="sidebar-title">
               GrantFlow
             </h2>
           </div>
 		   <div className="group-data-[collapsible=icon]:hidden">
-            <CustomSidebarTrigger />
+            <CustomSidebarTrigger data-testid="sidebar-trigger" />
           </div>
         </div>
 		 <div className="hidden group-data-[collapsible=icon]:flex justify-center mt-2">
-          <CustomSidebarTrigger />
+          <CustomSidebarTrigger   />
         </div>
-        <AppButton className="w-full justify-center gap-x-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2">
+        <AppButton className="w-full justify-center gap-x-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2 " data-testid="new-application-button">
           <Plus className="h-4 w-4" />
           <span className="group-data-[collapsible=icon]:hidden">
             New Application
@@ -56,17 +57,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent className="flex-grow gap-0  py-4">
-        <NavMain />
+        <NavMain data-testid="nav-main" />
        
       </SidebarContent>
 
       <SidebarFooter >
           <div className="flex flex-col gap-1">
-          <SidebarMenuButton className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center">
+          <SidebarMenuButton data-testid="support-button" className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center">
             <HelpCircle className="h-5 w-5 flex-shrink-0" />
             <span className="group-data-[collapsible=icon]:hidden">Support</span>
           </SidebarMenuButton>
-          <SidebarMenuButton className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center">
+          <SidebarMenuButton data-testid="logout-button" className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center">
             <LogOut className="h-5 w-5 flex-shrink-0" />
             <span className="group-data-[collapsible=icon]:hidden">Logout</span>
           </SidebarMenuButton>
