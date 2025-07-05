@@ -23,17 +23,17 @@ const mockApplications = [
 	{
 		id: "1",
 		name: "Application Name",
-		status: "generating" as const,
+		status: "COMPLETED" as const,
 	},
 	{
 		id: "2",
 		name: "Application Name",
-		status: "in_progress" as const,
+		status: "IN_PROGRESS" as const,
 	},
 	{
 		id: "3",
 		name: "Application Name",
-		status: "working_draft" as const,
+		status: "DRAFT" as const,
 	},
 ];
 

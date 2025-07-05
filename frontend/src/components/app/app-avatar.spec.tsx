@@ -153,12 +153,12 @@ describe("AvatarGroup", () => {
 		expect(screen.getByTestId("avatar-group")).toHaveClass("custom-group-class");
 	});
 
-	it("applies ring styling to avatars", () => {
+	it("applies correct styling to avatars", () => {
 		render(<AvatarGroup users={mockUsers.slice(0, 2)} />);
 
 		const avatars = screen.getAllByTestId("app-avatar");
 		avatars.forEach((avatar) => {
-			expect(avatar).toHaveClass("ring-2", "ring-background");
+			expect(avatar).toHaveClass("rounded-sm");
 		});
 	});
 

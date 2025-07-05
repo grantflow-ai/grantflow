@@ -1091,9 +1091,6 @@ async def test_accept_invitation_wrong_user(
     )
 
 
-
-
-
 async def test_list_project_members_success(
     test_client: TestingClientType,
     project: Project,
@@ -1101,7 +1098,6 @@ async def test_list_project_members_success(
     async_session_maker: async_sessionmaker[Any],
     mocker: MockerFixture,
 ) -> None:
-    
     firebase_users = {
         firebase_uid: {
             "uid": firebase_uid,
@@ -1127,7 +1123,6 @@ async def test_list_project_members_success(
         return_value=firebase_users,
     )
 
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1160,20 +1155,17 @@ async def test_list_project_members_success(
     members = response.json()
     assert len(members) == 3
 
-    
     owner = next(m for m in members if m["firebase_uid"] == firebase_uid)
     assert owner["email"] == "owner@example.com"
     assert owner["display_name"] == "Project Owner"
     assert owner["photo_url"] == "https://example.com/photo1.jpg"
     assert owner["role"] == UserRoleEnum.OWNER.value
 
-    
     admin = next(m for m in members if m["firebase_uid"] == "admin_uid")
     assert admin["email"] == "admin@example.com"
     assert admin["display_name"] == "Admin User"
     assert admin["role"] == UserRoleEnum.ADMIN.value
 
-    
     member = next(m for m in members if m["firebase_uid"] == "member_uid")
     assert member["email"] == "member@example.com"
     assert member["display_name"] is None
@@ -1187,7 +1179,6 @@ async def test_list_project_members_no_access(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     other_project = ProjectFactory.build()
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -1197,7 +1188,7 @@ async def test_list_project_members_no_access(
                 description=other_project.description,
             )
         )
-        
+
         await session.execute(
             insert(ProjectUser).values(
                 project_id=other_project.id,
@@ -1211,9 +1202,7 @@ async def test_list_project_members_no_access(
         f"/projects/{other_project.id}/members",
         headers={"Authorization": "Bearer some_token"},
     )
-    assert (
-        response.status_code == HTTPStatus.UNAUTHORIZED
-    )  
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 async def test_update_member_role_success(
@@ -1223,7 +1212,6 @@ async def test_update_member_role_success(
     async_session_maker: async_sessionmaker[Any],
     mocker: MockerFixture,
 ) -> None:
-    
     mocker.patch(
         "services.backend.src.api.routes.projects.get_users",
         return_value={
@@ -1236,7 +1224,6 @@ async def test_update_member_role_success(
         },
     )
 
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1267,7 +1254,6 @@ async def test_update_member_role_success(
     assert member["firebase_uid"] == "member_uid"
     assert member["role"] == UserRoleEnum.ADMIN.value
 
-    
     async with async_session_maker() as session:
         updated_member = await session.scalar(
             select(ProjectUser)
@@ -1283,7 +1269,6 @@ async def test_update_member_role_cannot_modify_owner(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1319,7 +1304,6 @@ async def test_update_member_role_only_owner_can_promote_to_admin(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1357,7 +1341,6 @@ async def test_update_member_role_member_not_found(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1384,7 +1367,6 @@ async def test_remove_project_member_success(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1410,7 +1392,6 @@ async def test_remove_project_member_success(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    
     async with async_session_maker() as session:
         removed_member = await session.scalar(
             select(ProjectUser)
@@ -1426,7 +1407,6 @@ async def test_remove_project_member_cannot_remove_owner(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1460,7 +1440,6 @@ async def test_remove_project_member_only_owner_can_remove_admin(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
@@ -1494,7 +1473,6 @@ async def test_remove_project_member_not_found(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(ProjectUser).values(
