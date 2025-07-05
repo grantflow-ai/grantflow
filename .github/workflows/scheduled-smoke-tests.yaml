@@ -1,0 +1,149 @@
+name: Scheduled Smoke Tests
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC (12 AM CST)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: false
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - main
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DEBUG: "True"
+      DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1389591048962969661/h7QTWNUUPRsL1HwrhfJx15VmiDKIU0mR_SgOvdTMEQbn9eyuZ0XO6mDtG0Q0p6iFYYyY"
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || 'development' }}
+
+      - name: Send Discord notification - Tests starting
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "🧪 Smoke Tests Starting",
+                   "description": "Daily smoke tests are beginning for the development environment",
+                   "color": 3447003,
+                   "fields": [
+                     {"name": "Branch", "value": "${{ inputs.branch || 'development' }}", "inline": true},
+                     {"name": "Trigger", "value": "${{ github.event_name }}", "inline": true},
+                     {"name": "Workflow", "value": "[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+                   ],
+                   "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"
+                 }]
+               }' \
+               "$DISCORD_WEBHOOK_URL"
+
+      - name: Run Scraper Smoke Tests
+        id: scraper_tests
+        uses: ./.github/actions/run-python-e2e-tests
+        with:
+          service: scraper
+          test_markers: smoke
+          timeout: 300
+        env:
+          E2E_TESTS: "1"
+        continue-on-error: true
+
+      - name: Run Indexer Smoke Tests
+        id: indexer_tests
+        uses: ./.github/actions/run-python-e2e-tests
+        with:
+          service: indexer
+          test_markers: smoke
+          timeout: 300
+        env:
+          E2E_TESTS: "1"
+        continue-on-error: true
+
+      - name: Run RAG Smoke Tests
+        id: rag_tests
+        uses: ./.github/actions/run-python-e2e-tests
+        with:
+          service: rag
+          test_markers: smoke
+          timeout: 300
+        env:
+          E2E_TESTS: "1"
+        continue-on-error: true
+
+      - name: Run Crawler Smoke Tests
+        id: crawler_tests
+        uses: ./.github/actions/run-python-e2e-tests
+        with:
+          service: crawler
+          test_markers: smoke
+          timeout: 300
+        env:
+          E2E_TESTS: "1"
+        continue-on-error: true
+
+      - name: Send Discord notification - Results
+        if: always()
+        run: |
+          # Determine overall status
+          scraper_status="${{ steps.scraper_tests.outcome }}"
+          indexer_status="${{ steps.indexer_tests.outcome }}"
+          rag_status="${{ steps.rag_tests.outcome }}"
+          crawler_status="${{ steps.crawler_tests.outcome }}"
+          
+          # Count failures
+          failures=0
+          if [ "$scraper_status" = "failure" ]; then failures=$((failures + 1)); fi
+          if [ "$indexer_status" = "failure" ]; then failures=$((failures + 1)); fi
+          if [ "$rag_status" = "failure" ]; then failures=$((failures + 1)); fi
+          if [ "$crawler_status" = "failure" ]; then failures=$((failures + 1)); fi
+          
+          # Set color and title based on results
+          if [ $failures -eq 0 ]; then
+            color=65280  # Green
+            title="✅ All Smoke Tests Passed"
+            description="All daily smoke tests completed successfully"
+          else
+            color=16711680  # Red
+            title="❌ Smoke Test Failures Detected"
+            description="$failures out of 4 smoke test suites failed"
+          fi
+          
+          # Create status indicators
+          scraper_icon="✅"; if [ "$scraper_status" = "failure" ]; then scraper_icon="❌"; fi
+          indexer_icon="✅"; if [ "$indexer_status" = "failure" ]; then indexer_icon="❌"; fi
+          rag_icon="✅"; if [ "$rag_status" = "failure" ]; then rag_icon="❌"; fi
+          crawler_icon="✅"; if [ "$crawler_status" = "failure" ]; then crawler_icon="❌"; fi
+          
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "'"$title"'",
+                   "description": "'"$description"'",
+                   "color": '"$color"',
+                   "fields": [
+                     {"name": "Branch", "value": "${{ inputs.branch || 'development' }}", "inline": true},
+                     {"name": "Total Failures", "value": "'"$failures"'/4", "inline": true},
+                     {"name": "Test Results", "value": "'"$scraper_icon"' Scraper\n'"$indexer_icon"' Indexer\n'"$rag_icon"' RAG\n'"$crawler_icon"' Crawler", "inline": false},
+                     {"name": "Action", "value": "[View Detailed Results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+                   ],
+                   "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"
+                 }]
+               }' \
+               "$DISCORD_WEBHOOK_URL"
+
+      # Fail the workflow if any tests failed
+      - name: Check test results
+        if: steps.scraper_tests.outcome == 'failure' || steps.indexer_tests.outcome == 'failure' || steps.rag_tests.outcome == 'failure' || steps.crawler_tests.outcome == 'failure'
+        run: |
+          echo "One or more smoke tests failed"
+          exit 1
