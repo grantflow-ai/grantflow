@@ -8,16 +8,16 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 	return (
 		<nav {...props}>
 			<main
-				data-testid="dashboard-section"
 				className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center"
+				data-testid="dashboard-section"
 			>
 				<div className="size-4">
 					<Image
-						src="/icons/dashboard.svg"
 						alt="logo"
-						width={16}
-						height={16}
 						className="w-full h-full object-cover"
+						height={16}
+						src="/icons/dashboard.svg"
+						width={16}
 					/>
 				</div>
 				<p className="text-black text-base font-normal ml-2 group-data-[collapsible=icon]:hidden">Dashboard</p>
@@ -25,20 +25,20 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 			<SidebarGroup>
 				<SidebarMenu>
 					{/* Recent Applications */}
-					<Collapsible defaultOpen className="group/collapsible">
+					<Collapsible className="group/collapsible" defaultOpen>
 						<SidebarMenuItem>
 							<CollapsibleTrigger asChild>
 								<SidebarMenuButton
-									data-testid="recent-applications-trigger"
 									className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 "
+									data-testid="recent-applications-trigger"
 								>
 									<div className="size-4 flex-shrink-0">
 										<Image
-											src="/icons/note-stack-blue.svg"
 											alt="Recent Applications"
-											width={16}
-											height={16}
 											className="w-full h-full object-cover"
+											height={16}
+											src="/icons/note-stack-blue.svg"
+											width={16}
 										/>
 									</div>
 									<span className="group-data-[collapsible=icon]:hidden">Recent Applications</span>
@@ -46,13 +46,13 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 								</SidebarMenuButton>
 							</CollapsibleTrigger>
 							<CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
-								<div data-testid="recent-app-item" className="flex flex-col gap-4">
+								<div className="flex flex-col gap-4" data-testid="recent-app-item">
 									<div className="relative">
 										<Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
 										<Input
+											className="px-3 rounded-sm border border-gray-100 bg-white placeholder:text-sm placeholder:font-normal placeholder:text-gray-400"
 											data-testid="search-input"
 											placeholder="Search application"
-											className="px-3 rounded-sm border border-gray-100 bg-white placeholder:text-sm placeholder:font-normal placeholder:text-gray-400"
 										/>
 									</div>
 									<main className="flex flex-col gap-4 h-[286px] overflow-y-scroll">
@@ -114,12 +114,12 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 					</Collapsible>
 
 					{/* Settings */}
-					<Collapsible defaultOpen className="group/collapsible">
+					<Collapsible className="group/collapsible" defaultOpen>
 						<SidebarMenuItem>
 							<CollapsibleTrigger asChild>
 								<SidebarMenuButton
-									data-testid="settings-trigger"
 									className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 "
+									data-testid="settings-trigger"
 								>
 									<Settings className="text-primary size-4 flex-shrink-0" />
 									<span className="group-data-[collapsible=icon]:hidden">Settings</span>
@@ -129,26 +129,26 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 							<CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
 								<main className="flex flex-col gap-4 px-3">
 									<div
-										data-testid="settings-account"
 										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
+										data-testid="settings-account"
 									>
 										<p className="text-sm text-gray-700 font-normal">Account Setting</p>
 									</div>
 									<div
-										data-testid="settings-billing"
 										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
+										data-testid="settings-billing"
 									>
 										<p className="text-sm text-gray-700 font-normal">Billing and payments</p>
 									</div>
 									<div
-										data-testid="settings-members"
 										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
+										data-testid="settings-members"
 									>
 										<p className="text-sm text-gray-700 font-normal">Members</p>
 									</div>
 									<div
-										data-testid="settings-notifications"
 										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
+										data-testid="settings-notifications"
 									>
 										<p className="text-sm text-gray-700 font-normal">Notifications</p>
 									</div>

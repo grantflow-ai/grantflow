@@ -63,7 +63,6 @@ async def handle_generate_grant_template(
             )
             raise ValidationException("Grant template not found")
 
-        
         if grant_template.grant_sections:
             logger.info(
                 "Grant template already has sections, skipping generation",

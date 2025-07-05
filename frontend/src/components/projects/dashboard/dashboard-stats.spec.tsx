@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
 import { ProjectListItemFactory } from "::testing/factories";
+import { render, screen } from "@testing-library/react";
 import { DashboardStats } from "./dashboard-stats";
 
 describe("DashboardStats", () => {

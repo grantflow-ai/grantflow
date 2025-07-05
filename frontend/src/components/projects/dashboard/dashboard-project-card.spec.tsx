@@ -1,6 +1,6 @@
+import { ProjectListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ProjectListItemFactory } from "::testing/factories";
 import { DashboardProjectCard } from "./dashboard-project-card";
 
 test("calls onDelete and onDuplicate handlers", async () => {
@@ -11,9 +11,9 @@ test("calls onDelete and onDuplicate handlers", async () => {
 
 	render(
 		<DashboardProjectCard
-			project={project}
 			onDelete={onDelete}
 			onDuplicate={onDuplicate}
+			project={project}
 			projectTeamMembers={[{ backgroundColor: "#369e94", initials: "NH" }]}
 		/>,
 	);

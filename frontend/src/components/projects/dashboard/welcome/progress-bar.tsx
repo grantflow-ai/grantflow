@@ -71,9 +71,9 @@ function ProgressBarLine({ currentStep, index }: ProgressBarLineProps) {
 		if (isAnimating) {
 			return (
 				<motion.div
-					data-testid="progress-bar-step"
 					animate={{ width: "100%" }}
 					className="absolute left-0 top-0 h-full bg-primary"
+					data-testid="progress-bar-step"
 					initial={{ width: 0 }}
 					key={`line-${index}`}
 					transition={{ duration: 0.8, ease: "easeInOut" }}

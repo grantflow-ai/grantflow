@@ -11,14 +11,14 @@ export function NavProjects() {
 					<SidebarMenuItem>
 						<CollapsibleTrigger asChild>
 							<SidebarMenuButton
-								data-testid="workspace-trigger"
 								className="bg-white text-blue-600 hover:bg-gray-100 hover:text-blue-700"
+								data-testid="workspace-trigger"
 							>
-								<div data-testid="workspace-icon" className="size-4 bg-red-500" />
+								<div className="size-4 bg-red-500" data-testid="workspace-icon" />
 								<span data-testid="workspace-label">My Workspace</span>
 								<ChevronRight
-									data-testid="workspace-chevron"
 									className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+									data-testid="workspace-chevron"
 								/>
 							</SidebarMenuButton>
 						</CollapsibleTrigger>

@@ -23,6 +23,12 @@ interface DashboardClientProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;
 }
 
+const projectTeamMembers = [
+	{ backgroundColor: "#369e94", initials: "NH" },
+	{ backgroundColor: "#9e366f", initials: "VH" },
+	{ backgroundColor: "#9747ff", initials: "AR" },
+];
+
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -105,11 +111,6 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 			});
 		}
 	};
-	const projectTeamMembers = [
-		{ backgroundColor: "#369e94", initials: "NH" },
-		{ backgroundColor: "#9e366f", initials: "VH" },
-		{ backgroundColor: "#9747ff", initials: "AR" },
-	];
 	return (
 		<div className="relative size-full">
 			<WelcomeModal
@@ -151,7 +152,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 											<AvatarGroup size="md" users={projectTeamMembers} />
 										</div>
 									</main>
-									<AppButton variant="primary" className="px-4 py-2">
+									<AppButton className="px-4 py-2" variant="primary">
 										<p className="font-normal text-base">+ New Research Project</p>
 									</AppButton>
 								</div>
@@ -165,11 +166,11 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 								{projects.length > 0 ? (
 									projects.map((project) => (
 										<DashboardProjectCard
+											data-testid="dashboard-project-card"
 											key={project.id}
 											onDelete={handleDeleteProject}
 											onDuplicate={handleDuplicateProject}
 											project={project}
-											data-testid="dashboard-project-card"
 											projectTeamMembers={projectTeamMembers}
 										/>
 									))
@@ -178,11 +179,11 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										<p className="text-[#636170] mb-4">You don&apos;t have any projects yet.</p>
 										<button
 											className="rounded bg-[#1e13f8] px-4 py-2 text-white"
+											data-testid="create-first-project-button"
 											onClick={() => {
 												setShowCreateModal(true);
 											}}
 											type="button"
-											data-testid="create-first-project-button"
 										>
 											Create Your First Project
 										</button>

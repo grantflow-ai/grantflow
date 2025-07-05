@@ -9,9 +9,9 @@ export function CustomSidebarTrigger(props: React.HTMLAttributes<HTMLButtonEleme
 
 	return (
 		<Button
-			variant="ghost"
-			size="icon"
 			onClick={toggleSidebar}
+			size="icon"
+			variant="ghost"
 			{...props}
 			className="h-8 w-8 cursor-pointer hover:bg-transparent hover:text-black  "
 		>
