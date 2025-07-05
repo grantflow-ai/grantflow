@@ -2,6 +2,7 @@
 Cost simulation tests using pytest to predict production costs.
 Run with: PYTHONPATH=. pytest services/tests/load/test_cost_simulation.py -v
 """
+
 import asyncio
 import time
 from dataclasses import dataclass, field
@@ -12,6 +13,7 @@ import pytest
 @dataclass
 class CostMetrics:
     """Track costs for different operations"""
+
     api_calls: int = 0
     documents_processed: int = 0
     pages_ocr: int = 0
@@ -37,6 +39,7 @@ class CostMetrics:
 @dataclass
 class UserSimulation:
     """Simulates a single user's behavior"""
+
     user_id: str
     actions_performed: list[str] = field(default_factory=list)
     start_time: float = field(default_factory=time.time)
@@ -45,7 +48,6 @@ class UserSimulation:
         """Simulate a realistic user session"""
         metrics = CostMetrics()
         session_end = time.time() + (duration_minutes * 60)
-
 
         while time.time() < session_end:
             action = self._choose_next_action()
@@ -74,7 +76,6 @@ class UserSimulation:
 
             self.actions_performed.append(action)
 
-
         session_duration_hours = (time.time() - self.start_time) / 3600
         metrics.compute_vcpu_hours = 0.25 * session_duration_hours
 
@@ -83,6 +84,7 @@ class UserSimulation:
     def _choose_next_action(self) -> str:
         """Weighted random action selection based on typical user behavior"""
         import random
+
         actions = [
             ("upload_document", 0.1),
             ("search_grants", 0.4),
@@ -113,7 +115,6 @@ class TestCostPrediction:
             if component != "total":
                 pass
 
-
         assert costs["total"] < 0.50, "Single user hourly cost exceeds $0.50"
 
     @pytest.mark.asyncio
@@ -124,10 +125,8 @@ class TestCostPrediction:
         for user_count in user_counts:
             users = [UserSimulation(user_id=f"user_{i}") for i in range(user_count)]
 
-
             tasks = [user.simulate_session(duration_minutes=60) for user in users]
             all_metrics = await asyncio.gather(*tasks)
-
 
             total_metrics = CostMetrics()
             for metrics in all_metrics:
@@ -141,13 +140,11 @@ class TestCostPrediction:
 
             total_metrics.calculate_cost()
 
-
     @pytest.mark.asyncio
     async def test_peak_load_scenario(self) -> None:
         """Test worst-case scenario with all users uploading simultaneously"""
         user_count = 50
         metrics = CostMetrics()
-
 
         metrics.documents_processed = user_count * 5
         metrics.pages_ocr = metrics.documents_processed * 20
@@ -158,20 +155,15 @@ class TestCostPrediction:
 
         costs = metrics.calculate_cost()
 
-
-
         assert costs["total"] < 50, "Peak hour cost exceeds $50"
 
     def test_monthly_projection(self) -> None:
         """Project monthly costs based on usage patterns"""
 
-
         daily_active_users = 100
         docs_per_user_per_month = 10
 
-
         fixed_monthly = 60
-
 
         monthly_api_calls = daily_active_users * 30 * 100
         monthly_documents = daily_active_users * docs_per_user_per_month
@@ -192,13 +184,11 @@ class TestCostPrediction:
         for _component, _cost in variable_costs.items():
             pass
 
-
         assert total_monthly < 1000, "Monthly costs exceed $1000 for 100 users"
 
     @pytest.mark.asyncio
     async def test_autoscaling_impact(self) -> None:
         """Test how autoscaling affects costs during traffic spikes"""
-
 
         timeline = [
             (10, 120),
@@ -209,7 +199,6 @@ class TestCostPrediction:
 
         total_compute_hours = 0.0
         for user_count, duration_minutes in timeline:
-
             instances_needed = max(1, user_count // 10)
             hours = duration_minutes / 60
             total_compute_hours += instances_needed * 0.25 * hours
@@ -217,12 +206,9 @@ class TestCostPrediction:
         total_compute_hours * 0.0000240 * 730
 
 
-
-
-
 if __name__ == "__main__":
-
     import sys
+
     if len(sys.argv) > 1 and sys.argv[1] == "quick":
         pytest.main([__file__, "-v", "-k", "test_single_user_cost"])
     else:

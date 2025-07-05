@@ -85,5 +85,5 @@ async def download_grant_pages(
 
     logger.info("Finished downloading")
     logger.info("Downloaded %d pages", len(search_result_item_urls))
-    
+
     return len(search_result_item_urls)
