@@ -23,6 +23,10 @@ from services.backend.src.api.routes.grant_template import (
     handle_generate_grant_template,
     handle_update_grant_template,
 )
+from services.backend.src.api.routes.notifications import (
+    dismiss_notification,
+    list_notifications,
+)
 from services.backend.src.api.routes.rag_jobs import handle_retrieve_rag_job
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
@@ -67,12 +71,14 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_delete_organization,
     handle_delete_rag_source,
     handle_delete_project,
+    dismiss_notification,
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
     handle_list_applications,
     handle_list_project_members,
     handle_login,
+    list_notifications,
     handle_remove_project_member,
     handle_retrieve_application,
     handle_retrieve_organizations,
