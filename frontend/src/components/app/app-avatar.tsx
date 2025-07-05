@@ -8,6 +8,7 @@ interface AvatarProps {
 	className?: string;
 	imageUrl?: string;
 	initials: string;
+	borderRadius?:string;
 	size?: "lg" | "md" | "sm";
 }
 
@@ -32,9 +33,9 @@ interface AvatarUser {
 	initials: string;
 }
 
-export function AppAvatar({ backgroundColor, className, imageUrl, initials, size = "md" }: AvatarProps) {
+export function AppAvatar({ backgroundColor, className, imageUrl, initials, size = "md", borderRadius }: AvatarProps) {
 	return (
-		<Avatar className={cn(sizeClasses[size], className)} data-testid="app-avatar">
+		<Avatar className={cn(sizeClasses[size], className)} data-testid="app-avatar" style={{borderRadius}}>
 			{imageUrl && <AvatarImage alt={initials} data-testid="app-avatar-image" src={imageUrl} />}
 			<AvatarFallback
 				className="font-semibold not-italic text-white"
@@ -52,22 +53,24 @@ export function AvatarGroup({ className, maxVisible = 4, size = "md", users }: A
 	const remainingCount = users.length - maxVisible;
 
 	return (
-		<div className={cn("flex flex-row items-center -space-x-2", className)} data-testid="avatar-group">
+		<div className={cn("flex flex-row items-center space-x-1", className)} data-testid="avatar-group">
 			{visibleUsers.map((user, index) => (
 				<AppAvatar
 					backgroundColor={user.backgroundColor ?? defaultColors[index % defaultColors.length]}
-					className="ring-2 ring-background"
+					className="rounded-sm"
 					imageUrl={user.imageUrl}
 					initials={user.initials}
 					key={`${user.initials}-${index}`}
+					borderRadius="4px"
 					size={size}
 				/>
 			))}
 			{remainingCount > 0 && (
 				<AppAvatar
 					backgroundColor="#636170"
-					className="ring-2 ring-background"
+					className="rounded-sm "
 					initials={`+${remainingCount}`}
+					borderRadius="4px"
 					size={size}
 				/>
 			)}
