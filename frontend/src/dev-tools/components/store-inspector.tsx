@@ -13,7 +13,6 @@ export function StoreInspector() {
 	const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 	const [selectedStore, setSelectedStore] = useState<string>("application");
 
-	// Get all store states
 	const stores = {
 		application: useApplicationStore.getState(),
 		notification: useNotificationStore.getState(),
@@ -87,7 +86,6 @@ export function StoreInspector() {
 	const clearStore = (storeName: string) => {
 		switch (storeName) {
 			case "application": {
-				// Mock clearing application directly (dev-only)
 				useApplicationStore.setState({ application: null });
 				break;
 			}
@@ -96,7 +94,6 @@ export function StoreInspector() {
 				break;
 			}
 			case "project": {
-				// Mock clearing projects directly (dev-only)
 				useProjectStore.setState({ projects: [] });
 				break;
 			}
@@ -105,12 +102,11 @@ export function StoreInspector() {
 				break;
 			}
 		}
-		// Force re-render
+
 		setExpandedNodes(new Set());
 	};
 
 	const refreshStores = () => {
-		// Force re-render to show latest state
 		setExpandedNodes(new Set());
 	};
 
@@ -129,7 +125,7 @@ export function StoreInspector() {
 			</div>
 
 			<div className="flex gap-4">
-				{/* Store List */}
+				{}
 				<div className="w-48 space-y-2">
 					{Object.keys(stores).map((storeName) => (
 						<button
@@ -149,7 +145,7 @@ export function StoreInspector() {
 					))}
 				</div>
 
-				{/* Store Content */}
+				{}
 				<div className="flex-1 rounded-lg bg-gray-800 p-4">
 					<div className="mb-4 flex items-center justify-between">
 						<h4 className="font-medium capitalize">{selectedStore} Store</h4>
@@ -177,7 +173,6 @@ export function StoreInspector() {
 					<button
 						className="rounded bg-blue-600 px-3 py-1 text-sm hover:bg-blue-700"
 						onClick={() => {
-							// Mock setting user directly (dev-only)
 							useUserStore.getState().setUser({
 								displayName: "Dev User",
 								email: "dev@example.com",
@@ -193,7 +188,6 @@ export function StoreInspector() {
 					<button
 						className="rounded bg-blue-600 px-3 py-1 text-sm hover:bg-blue-700"
 						onClick={() => {
-							// Mock setting projects directly (dev-only)
 							useProjectStore.setState({
 								projects: [
 									{
@@ -214,7 +208,6 @@ export function StoreInspector() {
 					<button
 						className="rounded bg-blue-600 px-3 py-1 text-sm hover:bg-blue-700"
 						onClick={() => {
-							// addNotification doesn't include id - that's generated internally
 							useNotificationStore.getState().addNotification({
 								message: "Test notification from dev tools",
 								projectName: "Dev Project",

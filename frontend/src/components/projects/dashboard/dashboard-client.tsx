@@ -44,11 +44,10 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
     await duplicateProject(projectId);
   };
 
-
-  const { data: projects = initialProjects } = useSWR("projects", getProjects, {
-    fallbackData: initialProjects,
-    revalidateOnFocus: false,
-  });
+	const { data: projects = initialProjects } = useSWR("projects", getProjects, {
+		fallbackData: initialProjects,
+		revalidateOnFocus: false,
+	});
 
   const handleDeleteProject = (projectId: string) => {
     setProjectToDelete(projectId);

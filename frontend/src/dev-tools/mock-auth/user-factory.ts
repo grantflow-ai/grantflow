@@ -26,7 +26,7 @@ export const mockUsers = {
 	emailUser: createMockUser({
 		displayName: "Email Test User",
 		email: "email.user@example.com",
-		photoURL: null, // Firebase email provider ID
+		photoURL: null,
 		providerId: "password",
 		uid: "email-mock-uid",
 	}),
@@ -42,7 +42,7 @@ export const mockUsers = {
 		email: "researcher@university.edu",
 		photoURL: null,
 		providerId: "oidc.orcid",
-		uid: "orcid-mock-uid", // ORCID users might not have photos
+		uid: "orcid-mock-uid",
 	}),
 };
 
@@ -50,7 +50,6 @@ export const mockUsers = {
  * Mock JWT token for development
  */
 export const createMockJwtToken = (): string => {
-	// This is a fake JWT for development only - not cryptographically valid
 	const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
 	const payload = btoa(
 		JSON.stringify({
@@ -58,7 +57,7 @@ export const createMockJwtToken = (): string => {
 			exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
 			iat: Math.floor(Date.now() / 1000),
 			name: "Test User",
-			sub: "mock-user-uid-123", // 7 days
+			sub: "mock-user-uid-123",
 		}),
 	);
 	const signature = "mock-signature";

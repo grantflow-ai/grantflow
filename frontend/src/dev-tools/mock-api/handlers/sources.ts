@@ -19,9 +19,6 @@ export const sourceHandlers = {
 			throw new Error("URL required");
 		}
 
-		console.log("[Mock API] Crawling application URL:", applicationId, requestBody.url);
-
-		// Update application store with new URL source
 		const application = applicationStore.get(applicationId);
 		if (application) {
 			const sourceId = crypto.randomUUID();
@@ -36,6 +33,19 @@ export const sourceHandlers = {
 				rag_sources: [...(application.rag_sources || []), newSource],
 			};
 			applicationStore.set(applicationId, updatedApplication);
+
+			setTimeout(() => {
+				const currentApp = applicationStore.get(applicationId);
+				if (currentApp) {
+					const updatedSources = currentApp.rag_sources.map((source) =>
+						source.sourceId === sourceId ? { ...source, status: "FINISHED" as const } : source,
+					);
+					applicationStore.set(applicationId, {
+						...currentApp,
+						rag_sources: updatedSources,
+					});
+				}
+			}, 3000);
 
 			return { source_id: sourceId };
 		}
@@ -61,8 +71,6 @@ export const sourceHandlers = {
 			throw new Error("URL required");
 		}
 
-		console.log("[Mock API] Crawling template URL:", templateId, requestBody.url);
-
 		const sourceId = crypto.randomUUID();
 		const newSource = {
 			sourceId,
@@ -80,6 +88,23 @@ export const sourceHandlers = {
 					},
 				};
 				applicationStore.set(appId, updatedApplication);
+
+				setTimeout(() => {
+					const currentApp = applicationStore.get(appId);
+					if (currentApp?.grant_template) {
+						const updatedSources = currentApp.grant_template.rag_sources.map((source) =>
+							source.sourceId === sourceId ? { ...source, status: "FINISHED" as const } : source,
+						);
+						applicationStore.set(appId, {
+							...currentApp,
+							grant_template: {
+								...currentApp.grant_template,
+								rag_sources: updatedSources,
+							},
+						});
+					}
+				}, 3000);
+
 				break;
 			}
 		}
@@ -104,9 +129,6 @@ export const sourceHandlers = {
 			throw new Error("File name required");
 		}
 
-		console.log("[Mock API] Creating application source upload URL:", applicationId, fileName);
-
-		// Create file source and add to application
 		const application = applicationStore.get(applicationId);
 		if (application) {
 			const sourceId = crypto.randomUUID();
@@ -154,15 +176,11 @@ export const sourceHandlers = {
 		});
 
 		if (!templateId) {
-			console.error("[Mock API] Template ID missing in params:", params);
 			throw new Error("Template ID required");
 		}
 		if (!fileName) {
-			console.error("[Mock API] File name missing in query:", query?.toString());
 			throw new Error("File name required");
 		}
-
-		console.log("[Mock API] Creating template source upload URL:", templateId, fileName);
 
 		const sourceId = crypto.randomUUID();
 		const newSource = {
@@ -219,9 +237,6 @@ export const sourceHandlers = {
 			throw new Error("Source ID required");
 		}
 
-		console.log("[Mock API] Deleting application source:", applicationId, sourceId);
-
-		// Remove source from application
 		const application = applicationStore.get(applicationId);
 		if (application) {
 			const updatedApplication = {
@@ -243,9 +258,6 @@ export const sourceHandlers = {
 			throw new Error("Source ID required");
 		}
 
-		console.log("[Mock API] Deleting template source:", templateId, sourceId);
-
-		// Remove source from template
 		for (const [appId, application] of applicationStore.entries()) {
 			if (application.grant_template?.id === templateId) {
 				const updatedApplication = {

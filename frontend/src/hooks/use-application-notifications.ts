@@ -3,8 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
+import { getMockWebSocketUrl, isDevModeWithMockAPI } from "@/dev-tools/utils/dev-helpers";
 import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
+import { log } from "@/utils/logger";
 
 export interface RagProcessingStatus {
 	current_pipeline_stage?: number;
@@ -88,20 +90,35 @@ export function useApplicationNotifications({
 			throw new Error("Project ID and Application ID are required");
 		}
 
+		if (isDevModeWithMockAPI()) {
+			const url = getMockWebSocketUrl(projectId, applicationId);
+			log.info("[useApplicationNotifications] Using mock WebSocket URL", {
+				applicationId,
+				projectId,
+				url,
+			});
+			return url;
+		}
+
 		const response = await getOtp();
 		const baseUrl = getEnv()
 			.NEXT_PUBLIC_BACKEND_API_BASE_URL.replace(/^https/, "wss")
 			.replace(/^http/, "ws");
-		return new URL(
+		const url = new URL(
 			`projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
 			baseUrl,
 		).toString();
+		return url;
 	}, [projectId, applicationId]);
 
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
 		projectId && applicationId ? getSocketUrl : null,
 		{
 			onOpen: () => {
+				log.info("[useApplicationNotifications] WebSocket opened", {
+					applicationId,
+					projectId,
+				});
 				reconnectAttemptRef.current = 0;
 			},
 			reconnectInterval: (attemptNumber) => {
@@ -117,10 +134,27 @@ export function useApplicationNotifications({
 	);
 
 	useEffect(() => {
+		log.info("[useApplicationNotifications] Received WebSocket message", {
+			applicationId,
+			isValidMessage: isWebsocketMessage(lastJsonMessage),
+			message: lastJsonMessage,
+			messageType: typeof lastJsonMessage,
+			projectId,
+		});
+
 		if (isWebsocketMessage(lastJsonMessage)) {
-			setNotifications((prev) => [...prev, lastJsonMessage]);
+			setNotifications((prev) => {
+				const newNotifications = [...prev, lastJsonMessage];
+				log.info("[useApplicationNotifications] Added message to notifications", {
+					applicationId,
+					messageEvent: lastJsonMessage.event,
+					projectId,
+					totalNotifications: newNotifications.length,
+				});
+				return newNotifications;
+			});
 		}
-	}, [lastJsonMessage]);
+	}, [lastJsonMessage, projectId, applicationId]);
 
 	const connectionStatus = CONNECTION_STATUS_MAP[readyState];
 	const connectionStatusColor = CONNECTION_STATUS_COLOR_MAP[readyState];

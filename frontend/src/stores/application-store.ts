@@ -3,9 +3,9 @@ import { deepmerge } from "deepmerge-ts";
 import ky, { HTTPError } from "ky";
 import { toast } from "sonner";
 import { create } from "zustand";
-
 import {
 	createApplication as handleCreateApplication,
+	generateApplication as handleGenerateApplication,
 	retrieveApplication as handleRetrieveApplication,
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
@@ -20,6 +20,7 @@ import {
 	deleteTemplateSource,
 } from "@/actions/sources";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { triggerMockWebSocketScenario } from "@/dev-tools/utils/dev-helpers";
 import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
@@ -87,7 +88,6 @@ function validateJobRestoration(application: ApplicationType): {
 	const ragJobId = application.rag_job_id ?? application.grant_template?.rag_job_id;
 
 	if (!ragJobId) {
-		log.error("checkAndRestoreJobState: No rag_job_id found");
 		return { isValid: false };
 	}
 
@@ -165,6 +165,7 @@ interface ApplicationActions {
 	checkAndRestoreJobState: () => Promise<void>;
 	clearRestoredJobState: () => void;
 	createApplication: (projectId: string) => Promise<void>;
+	generateApplication: (projectId: string, applicationId: string) => Promise<void>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
 	removeUrl: (url: string, parentId: string) => Promise<void>;
@@ -357,6 +358,32 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
+	generateApplication: async (projectId: string, applicationId: string) => {
+		try {
+			await withRetry(() => handleGenerateApplication(projectId, applicationId), {
+				initialDelay: 1000,
+				maxRetries: 3,
+				retryCondition: (error: unknown) => {
+					if (error instanceof HTTPError) {
+						const { status } = error.response;
+						return status >= 500;
+					}
+					return true;
+				},
+			});
+
+			log.info("Grant application generation initiated", {
+				application_id: applicationId,
+				project_id: projectId,
+			});
+		} catch (error: unknown) {
+			log.error("generateApplication", error);
+			toast.error("Failed to generate grant application", {
+				description: "An unexpected error occurred. Please try again.",
+			});
+		}
+	},
+
 	generateTemplate: async (templateId: string) => {
 		const { application } = get();
 
@@ -365,6 +392,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		});
 
 		try {
+			log.info("About to call generateGrantTemplate", {
+				applicationId: application.id,
+				projectId: application.project_id,
+				templateId,
+			});
+
 			const traceId = await withRetry(
 				() => generateGrantTemplate(application.project_id, application.id, templateId),
 				{
@@ -387,6 +420,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				template_id: templateId,
 				trace_id: traceId,
 			});
+
+			await triggerMockWebSocketScenario(application.id, "grant-template-generation");
 		} catch (error: unknown) {
 			if (error instanceof HTTPError && error.response.status === 422) {
 				await handleGrantTemplateValidationError(error);
@@ -534,7 +569,15 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const { application } = get();
 		const previousGrantSections = application?.grant_template?.grant_sections;
 
+		log.info("updateGrantSections: Starting", {
+			hasApplication: !!application,
+			hasGrantTemplate: !!application?.grant_template,
+			sectionCount: sections.length,
+			templateId: application?.grant_template?.id,
+		});
+
 		if (!application?.grant_template?.id) {
+			log.warn("updateGrantSections: No grant template ID found");
 			return;
 		}
 
@@ -546,12 +589,22 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			},
 		};
 
+		log.info("updateGrantSections: Optimistically updating state");
 		set({ application: updatedApplication });
 
 		try {
+			log.info("updateGrantSections: Calling API", {
+				applicationId: application.id,
+				projectId: application.project_id,
+				sectionCount: sections.length,
+				templateId: application.grant_template.id,
+			});
+
 			await updateGrantTemplate(application.project_id, application.id, application.grant_template.id, {
 				grant_sections: sections,
 			});
+
+			log.info("updateGrantSections: Success");
 		} catch (error) {
 			const restoredApplication: NonNullable<ApplicationType> = {
 				...application,
@@ -561,7 +614,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			};
 			set({ application: restoredApplication });
-			log.error("updateGrantSections", error);
+			log.error("updateGrantSections: Failed", error);
 			toast.error("Failed to update grant sections");
 		}
 	},

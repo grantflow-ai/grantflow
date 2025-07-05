@@ -249,7 +249,6 @@ export const LargeDatasetsWithTruncation: Story = {
 		(Story) => {
 			useEffect(() => {
 				const ragSources = [
-					// 20 files with various extensions and statuses
 					...Array.from({ length: 20 }, (_, i) => {
 						const extensions = ["pdf", "docx", "xlsx", "pptx", "txt", "csv", "json", "xml"];
 						const statuses = ["FINISHED", "INDEXING", "FAILED", "CREATED"] as const;
@@ -262,7 +261,7 @@ export const LargeDatasetsWithTruncation: Story = {
 							status,
 						});
 					}),
-					// 10 URLs with very long names
+
 					...Array.from({ length: 10 }, (_, i) => {
 						return RagSourceFactory.build({
 							sourceId: `url-${i + 1}`,

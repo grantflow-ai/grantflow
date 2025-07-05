@@ -4,6 +4,7 @@ import {
 	WebSocketMessageFactory,
 } from "::testing/factories";
 import { getEnv } from "@/utils/env";
+import { log } from "@/utils/logger";
 import { isMockAPIEnabled } from "./client";
 
 interface WebSocketScenario {
@@ -32,14 +33,17 @@ export class MockWebSocket implements WebSocket {
 	readyState: number = this.CONNECTING;
 	url: string;
 
-	// Getter for current scenario
+	get applicationId() {
+		return this._applicationId;
+	}
+
 	get currentScenario() {
 		return this._currentScenario;
 	}
-	private _currentScenario?: WebSocketScenario; // Store current scenario
+	private _applicationId?: string;
+	private _currentScenario?: WebSocketScenario;
 	private eventListeners = new Map<string, Set<EventListener>>();
 
-	// private messageQueue: MessageEvent[] = []; // unused for now
 	private intervalId?: NodeJS.Timeout;
 
 	constructor(url: string | URL, _protocols?: string | string[]) {
@@ -48,18 +52,44 @@ export class MockWebSocket implements WebSocket {
 		}
 
 		this.url = url.toString();
-		console.log(`[Mock WebSocket] Created for URL: ${this.url}`);
 
-		// Simulate connection opening
+		const urlPath = new URL(this.url).pathname;
+		const applicationMatch = /applications\/([^/]+)/.exec(urlPath);
+		if (applicationMatch) {
+			this._applicationId = applicationMatch[1];
+		}
+
 		setTimeout(() => {
+			log.info("[Mock WebSocket] About to open connection", {
+				applicationId: this._applicationId,
+				eventListenerCount: this.eventListeners.size,
+				hasOnOpenHandler: !!this.onopen,
+			});
+
 			this.readyState = this.OPEN;
 			const openEvent = new Event("open");
-			this.dispatchEvent(openEvent);
-			console.log("[Mock WebSocket] Connection opened");
 
-			// Start default scenario
-			this.startScenario("default");
-		}, 100);
+			log.info("[Mock WebSocket] Connection opened", {
+				applicationId: this._applicationId,
+				readyState: this.readyState,
+			});
+
+			this.dispatchEvent(openEvent);
+
+			if (this.onopen) {
+				log.info("[Mock WebSocket] Calling onopen handler", {
+					applicationId: this._applicationId,
+				});
+				try {
+					this.onopen.call(this, openEvent);
+				} catch (error) {
+					log.error("[Mock WebSocket] Error calling onopen handler", {
+						applicationId: this._applicationId,
+						error: error instanceof Error ? error.message : String(error),
+					});
+				}
+			}
+		}, 1000);
 	}
 
 	addEventListener<K extends keyof WebSocketEventMap>(
@@ -83,10 +113,8 @@ export class MockWebSocket implements WebSocket {
 			return;
 		}
 
-		console.log(`[Mock WebSocket] Closing connection. Code: ${code}, Reason: ${reason}`);
 		this.readyState = this.CLOSING;
 
-		// Clear any running scenarios
 		if (this.intervalId) {
 			clearInterval(this.intervalId);
 		}
@@ -102,7 +130,6 @@ export class MockWebSocket implements WebSocket {
 		}, 50);
 	}
 	dispatchEvent(event: Event): boolean {
-		// Call direct event handlers
 		switch (event.type) {
 			case "close": {
 				this.onclose?.(event as CloseEvent);
@@ -122,7 +149,6 @@ export class MockWebSocket implements WebSocket {
 			}
 		}
 
-		// Call addEventListener handlers
 		const listeners = this.eventListeners.get(event.type);
 		if (listeners) {
 			listeners.forEach((listener) => {
@@ -158,9 +184,6 @@ export class MockWebSocket implements WebSocket {
 			throw new Error("WebSocket is not open");
 		}
 
-		console.log("[Mock WebSocket] Sending data:", data);
-
-		// Echo back for testing
 		setTimeout(() => {
 			const echoMessage = {
 				data: { message: `Echo: ${typeof data === "string" ? data : JSON.stringify(data)}` },
@@ -172,9 +195,12 @@ export class MockWebSocket implements WebSocket {
 		}, 50);
 	}
 
-	// Mock-specific methods
 	sendMessage(data: unknown): void {
 		if (this.readyState !== this.OPEN) {
+			log.warn("[Mock WebSocket] Cannot send message - connection not open", {
+				applicationId: this._applicationId,
+				readyState: this.readyState,
+			});
 			return;
 		}
 
@@ -183,6 +209,12 @@ export class MockWebSocket implements WebSocket {
 			origin: this.url,
 		});
 
+		log.info("[Mock WebSocket] Sending message", {
+			applicationId: this._applicationId,
+			data,
+			messageType:
+				typeof data === "object" && data && "event" in data ? (data as { event: string }).event : "unknown",
+		});
 		this.dispatchEvent(messageEvent);
 	}
 
@@ -197,9 +229,12 @@ export class MockWebSocket implements WebSocket {
 	}
 
 	startScenario(scenarioName: string): void {
-		console.log(`[Mock WebSocket] Starting scenario: ${scenarioName}`);
+		log.info("[Mock WebSocket] Starting scenario", {
+			applicationId: this._applicationId,
+			connectionOpen: this.readyState === this.OPEN,
+			scenarioName,
+		});
 
-		// Clear existing scenario
 		if (this.intervalId) {
 			clearInterval(this.intervalId);
 		}
@@ -208,32 +243,47 @@ export class MockWebSocket implements WebSocket {
 		const scenario = scenarios.find((s) => s.name === scenarioName);
 
 		if (!scenario) {
-			console.warn(`[Mock WebSocket] Unknown scenario: ${scenarioName}`);
+			log.warn("[Mock WebSocket] Unknown scenario", {
+				applicationId: this._applicationId,
+				availableScenarios: scenarios.map((s) => s.name),
+				scenarioName,
+			});
 			return;
 		}
 
 		this._currentScenario = scenario;
-		let messageIndex = 0;
 
-		const sendNextMessage = () => {
-			if (messageIndex >= scenario.messages.length) {
-				// Restart scenario
-				messageIndex = 0;
-			}
+		log.info("[Mock WebSocket] Scenario loaded, scheduling messages", {
+			applicationId: this._applicationId,
+			delays: scenario.messages.map((m) => m.delay),
+			messageCount: scenario.messages.length,
+			scenarioName,
+		});
 
-			const { data, delay } = scenario.messages[messageIndex];
+		scenario.messages.forEach(({ data, delay }, index) => {
 			setTimeout(() => {
-				this.sendMessage(data);
+				if (this.readyState === this.OPEN) {
+					log.info("[Mock WebSocket] Sending scheduled message", {
+						applicationId: this._applicationId,
+						delay,
+						messageIndex: index,
+						messageType:
+							typeof data === "object" && data && "event" in data
+								? (data as { event: string }).event
+								: "unknown",
+						scenarioName,
+					});
+					this.sendMessage(data);
+				} else {
+					log.warn("[Mock WebSocket] Skipping message - connection not open", {
+						applicationId: this._applicationId,
+						messageIndex: index,
+						readyState: this.readyState,
+						scenarioName,
+					});
+				}
 			}, delay);
-
-			messageIndex++;
-		};
-
-		// Send first message immediately
-		sendNextMessage();
-
-		// Set up interval for subsequent messages
-		this.intervalId = setInterval(sendNextMessage, 5000);
+		});
 	}
 
 	stopScenario(): void {
@@ -242,7 +292,6 @@ export class MockWebSocket implements WebSocket {
 			this.intervalId = undefined;
 		}
 		this._currentScenario = undefined;
-		console.log("[Mock WebSocket] Stopped scenario");
 	}
 
 	private getScenarios(): WebSocketScenario[] {
@@ -294,9 +343,9 @@ export class MockWebSocket implements WebSocket {
 						data: RagProcessingStatusMessageFactory.build({
 							data: {
 								current_pipeline_stage: 1,
-								event: "grant_template_extraction",
-								message: "Starting template extraction...",
-								total_pipeline_stages: 5,
+								event: "grant_template_generation_started",
+								message: "Starting grant template generation pipeline...",
+								total_pipeline_stages: 6,
 							},
 						}),
 						delay: 0,
@@ -305,28 +354,212 @@ export class MockWebSocket implements WebSocket {
 						data: RagProcessingStatusMessageFactory.build({
 							data: {
 								current_pipeline_stage: 2,
-								data: { section_count: 8 },
-								event: "sections_extracted",
-								message: "Extracted 8 sections",
-								total_pipeline_stages: 5,
+								event: "extracting_cfp_data",
+								message: "Extracting data from CFP content...",
+								total_pipeline_stages: 6,
 							},
 						}),
-						delay: 3000,
+						delay: 8000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 3,
+								data: {
+									cfp_subject: "Advanced Research Grant",
+									content_sections: 12,
+									organization: "National Science Foundation",
+									submission_date: "2024-12-15",
+								},
+								event: "cfp_data_extracted",
+								message: "CFP data extracted successfully",
+								total_pipeline_stages: 6,
+							},
+						}),
+						delay: 18_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 4,
+								event: "grant_template_extraction",
+								message: "Extracting grant application sections from CFP content...",
+								total_pipeline_stages: 6,
+							},
+						}),
+						delay: 25_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 4,
+								data: { organization: "National Science Foundation", section_count: 8 },
+								event: "sections_extracted",
+								message: "Sections extracted successfully",
+								total_pipeline_stages: 6,
+							},
+						}),
+						delay: 35_000,
 					},
 					{
 						data: RagProcessingStatusMessageFactory.build({
 							data: {
 								current_pipeline_stage: 5,
-								data: { objective_count: 3, total_tasks: 12 },
-								event: "objectives_enriched",
-								message: "Enriched 3 objectives",
-								total_pipeline_stages: 5,
+								event: "grant_template_metadata",
+								message: "Generating metadata for grant template sections...",
+								total_pipeline_stages: 6,
 							},
 						}),
-						delay: 5000,
+						delay: 42_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 5,
+								data: { metadata_count: 8 },
+								event: "metadata_generated",
+								message: "Metadata generated successfully",
+								total_pipeline_stages: 6,
+							},
+						}),
+						delay: 50_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 6,
+								event: "saving_grant_template",
+								message: "Saving grant template to database...",
+								total_pipeline_stages: 6,
+							},
+						}),
+						delay: 55_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 6,
+								data: {
+									organization: "National Science Foundation",
+									section_count: 8,
+									template_id: "tpl-12345",
+								},
+								event: "grant_template_created",
+								message: "Grant template created successfully",
+								total_pipeline_stages: 6,
+							},
+						}),
+						delay: 60_000,
 					},
 				],
-				name: "rag-processing",
+				name: "grant-template-generation",
+			},
+			{
+				messages: [
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 1,
+								event: "grant_application_generation_started",
+								message: "Starting grant application text generation pipeline...",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 0,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 2,
+								event: "validating_template",
+								message: "Validating grant template structure...",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 8000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 3,
+								data: { research_objectives_count: 3, section_count: 8 },
+								event: "template_validated",
+								message: "Template validation complete",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 15_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 4,
+								event: "generating_section_texts",
+								message: "Generating text for all grant sections...",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 25_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 5,
+								data: { section_count: 8, total_words: 8750 },
+								event: "section_texts_generated",
+								message: "Section texts generated",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 95_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 6,
+								event: "assembling_application",
+								message: "Assembling complete grant application text...",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 115_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 7,
+								event: "saving_application",
+								message: "Saving grant application text to database...",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 125_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 8,
+								data: { application_id: "app-12345", section_count: 8, word_count: 11_590 },
+								event: "application_saved",
+								message: "Application saved successfully",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 135_000,
+					},
+					{
+						data: RagProcessingStatusMessageFactory.build({
+							data: {
+								current_pipeline_stage: 9,
+								event: "grant_application_generation_completed",
+								message: "Grant application text generation completed successfully.",
+								total_pipeline_stages: 9,
+							},
+						}),
+						delay: 150_000,
+					},
+				],
+				name: "grant-application-generation",
 			},
 			{
 				messages: [
@@ -348,14 +581,14 @@ export class MockWebSocket implements WebSocket {
 	}
 }
 
-// Export a factory function for creating mock WebSocket instances (for testing)
 export function createMockWebSocket(url: string | URL, protocols?: string | string[]): WebSocket {
 	if (!isMockAPIEnabled()) {
-		// Return real WebSocket in non-mock mode
 		return new WebSocket(url, protocols);
 	}
 	return new MockWebSocket(url, protocols);
 }
+
+const activeWebSockets = new Map<string, MockWebSocket>();
 
 /**
  * Get the WebSocket URL for the current environment
@@ -364,11 +597,9 @@ export function createMockWebSocket(url: string | URL, protocols?: string | stri
  */
 export function getWebSocketUrl(path: string): string {
 	if (isMockAPIEnabled()) {
-		// Return mock WebSocket URL that will be handled by our mock implementation
 		return `ws://localhost:3001${path}`;
 	}
 
-	// Convert backend API URL to WebSocket URL
 	const backendUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
 	const wsUrl = backendUrl.replace(/^https?:\/\//, "ws://").replace(/^http:\/\//, "ws://");
 	return `${wsUrl}${path}`;
@@ -383,36 +614,65 @@ export function initializeWebSocketMocking(): void {
 		return;
 	}
 
-	console.log("[Mock API] Initializing WebSocket mocking");
-
-	// Store original WebSocket constructor
 	const OriginalWebSocket = globalThis.WebSocket;
 
-	// Create a constructor function that proxies to the appropriate implementation
 	function WebSocketProxy(this: any, url: string | URL, protocols?: string | string[]) {
-		// Check if this is a mock URL
-		const urlString = url.toString();
-		if (urlString.includes("localhost:3001") || isMockAPIEnabled()) {
+		if (isMockAPIEnabled()) {
 			const mockWs = new MockWebSocket(url, protocols);
-			// Copy properties to this instance
-			Object.setPrototypeOf(this, Object.getPrototypeOf(mockWs));
-			return Object.assign(this, mockWs) as WebSocket;
+
+			if (mockWs.applicationId) {
+				activeWebSockets.set(mockWs.applicationId, mockWs);
+
+				const originalClose = mockWs.close.bind(mockWs);
+				mockWs.close = (code?: number, reason?: string) => {
+					if (mockWs.applicationId) {
+						activeWebSockets.delete(mockWs.applicationId);
+					}
+					originalClose(code, reason);
+				};
+			}
+
+			return mockWs as WebSocket;
 		}
-		// For non-mock URLs, use original WebSocket
-		const realWs = new OriginalWebSocket(url, protocols);
-		Object.setPrototypeOf(this, Object.getPrototypeOf(realWs));
-		return Object.assign(this, realWs) as WebSocket;
+
+		return new OriginalWebSocket(url, protocols);
 	}
 
-	// Set up the prototype chain
 	WebSocketProxy.prototype = MockWebSocket.prototype;
 
-	// Replace the WebSocket constructor
 	globalThis.WebSocket = WebSocketProxy as any;
 
-	// Copy static properties
-	Object.defineProperty(globalThis.WebSocket, "CONNECTING", { value: 0 });
-	Object.defineProperty(globalThis.WebSocket, "OPEN", { value: 1 });
-	Object.defineProperty(globalThis.WebSocket, "CLOSING", { value: 2 });
-	Object.defineProperty(globalThis.WebSocket, "CLOSED", { value: 3 });
+	Object.defineProperty(globalThis.WebSocket, "CONNECTING", { enumerable: true, value: 0 });
+	Object.defineProperty(globalThis.WebSocket, "OPEN", { enumerable: true, value: 1 });
+	Object.defineProperty(globalThis.WebSocket, "CLOSING", { enumerable: true, value: 2 });
+	Object.defineProperty(globalThis.WebSocket, "CLOSED", { enumerable: true, value: 3 });
+}
+
+export function triggerWebSocketScenario(applicationId: string, scenarioName: string): void {
+	const ws = activeWebSockets.get(applicationId);
+
+	log.info("[Mock WebSocket] Attempting to trigger scenario", {
+		activeApplicationIds: [...activeWebSockets.keys()],
+		activeConnectionCount: activeWebSockets.size,
+		applicationId,
+		connectionOpen: ws ? ws.readyState === ws.OPEN : false,
+		hasActiveConnection: !!ws,
+		scenarioName,
+	});
+
+	if (ws && ws.readyState === ws.OPEN) {
+		ws.startScenario(scenarioName);
+		log.info("[Mock WebSocket] Successfully triggered scenario", {
+			applicationId,
+			scenarioName,
+		});
+	} else {
+		log.warn("[Mock WebSocket] Cannot trigger scenario - no active connection", {
+			activeConnections: activeWebSockets.size,
+			applicationId,
+			hasConnection: !!ws,
+			readyState: ws?.readyState,
+			scenarioName,
+		});
+	}
 }

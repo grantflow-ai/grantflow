@@ -15,6 +15,7 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type React from "react";
 import { useCallback, useState } from "react";
+import { log } from "@/utils/logger";
 
 export interface DragDropConfig {
 	enableKeyboard?: boolean;
@@ -53,7 +54,13 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 	const [activeId, setActiveId] = useState<null | string>(null);
 
-	const pointerSensor = useSensor(PointerSensor);
+	const pointerSensor = useSensor(PointerSensor, {
+		activationConstraint: {
+			delay: 0,
+			distance: 2,
+			tolerance: 5,
+		},
+	});
 	const keyboardSensor = useSensor(KeyboardSensor, {
 		coordinateGetter: sortableKeyboardCoordinates,
 	});
@@ -80,6 +87,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 			renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
 		}) {
 			const handleDragStart = (event: DragStartEvent) => {
+				log.info("useDragAndDrop: handleDragStart", { activeId: event.active.id });
 				const draggedItem = items.find((item) => item.id === event.active.id);
 				setActiveId(event.active.id as string);
 				onDragStart?.(event, draggedItem);
@@ -101,10 +109,20 @@ export function useDragAndDrop<T extends DragDropItem>(
 			};
 
 			const handleReorder = async (activeItem: T, overItem: T) => {
-				if (!onReorder) return;
+				if (!onReorder) {
+					log.warn("useDragAndDrop: No onReorder handler provided");
+					return;
+				}
 
 				const oldIndex = items.findIndex((item) => item.id === activeItem.id);
 				const newIndex = items.findIndex((item) => item.id === overItem.id);
+
+				log.info("useDragAndDrop: handleReorder", {
+					activeId: activeItem.id,
+					newIndex,
+					oldIndex,
+					overId: overItem.id,
+				});
 
 				if (oldIndex !== -1 && newIndex !== -1) {
 					await onReorder(items, oldIndex, newIndex);
@@ -113,9 +131,16 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 			const handleDragEnd = async (event: DragEndEvent) => {
 				const { active, over } = event;
+				log.info("useDragAndDrop: handleDragEnd", {
+					activeId: active.id,
+					hasOver: !!over,
+					overId: over?.id,
+					sameItem: active.id === over?.id,
+				});
 				setActiveId(null);
 
 				if (!over || active.id === over.id) {
+					log.info("useDragAndDrop: Drag ended without change");
 					return;
 				}
 
@@ -123,16 +148,28 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const overItem = items.find((item) => item.id === over.id);
 
 				if (activeItem && overItem) {
+					log.info("useDragAndDrop: Calling handleReorder");
 					await handleReorder(activeItem, overItem);
+				} else {
+					log.warn("useDragAndDrop: Could not find items", {
+						activeFound: !!activeItem,
+						itemCount: items.length,
+						overFound: !!overItem,
+					});
 				}
 
 				if (onDragEnd) {
+					log.info("useDragAndDrop: Calling onDragEnd handler");
 					await onDragEnd(event, activeItem, overItem);
 				}
 			};
 
 			const activeItem = items.find((item) => item.id === activeId);
 			const sortableIds = items.map((item) => item.id);
+
+			if (activeId) {
+				log.info("DragDropWrapper: Active drag", { activeId, hasActiveItem: !!activeItem });
+			}
 
 			return (
 				<DndContext

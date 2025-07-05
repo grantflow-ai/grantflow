@@ -1,4 +1,3 @@
-// Dev Tools exports
 export * from "./components";
 export * from "./mock-api/client";
 export * from "./mock-api/scenarios";

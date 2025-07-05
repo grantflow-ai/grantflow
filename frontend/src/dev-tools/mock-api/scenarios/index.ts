@@ -5,6 +5,7 @@ import {
 	OrganizationFactory,
 	ProjectListItemFactory,
 } from "::testing/factories";
+import { addDays, addWeeks, subDays } from "date-fns";
 import type { API } from "@/types/api-types";
 
 export interface Scenario {
@@ -46,6 +47,7 @@ export const scenarios: Scenario[] = [
 									status: "FINISHED",
 								},
 							],
+							submission_date: addWeeks(new Date(), 4).toISOString(),
 						},
 						id: "app-1",
 						status: "DRAFT",
@@ -70,6 +72,10 @@ export const scenarios: Scenario[] = [
 					"app-1",
 					ApplicationWithTemplateFactory.build({
 						completed_at: new Date().toISOString(),
+						grant_template: {
+							...ApplicationWithTemplateFactory.build().grant_template!,
+							submission_date: subDays(new Date(), 10).toISOString(),
+						},
 						id: "app-1",
 						status: "COMPLETED",
 						title: "NIH R01 Grant Application",
@@ -78,6 +84,10 @@ export const scenarios: Scenario[] = [
 				[
 					"app-2",
 					ApplicationWithTemplateFactory.build({
+						grant_template: {
+							...ApplicationWithTemplateFactory.build().grant_template!,
+							submission_date: addDays(new Date(), 5).toISOString(),
+						},
 						id: "app-2",
 						status: "IN_PROGRESS",
 						title: "NSF CAREER Award",
@@ -194,6 +204,7 @@ export const scenarios: Scenario[] = [
 									url: "https://research.example.com/funding/opportunities/2024/advanced-research-grants",
 								},
 							],
+							submission_date: addWeeks(new Date(), 8).toISOString(),
 						},
 						id: "app-with-template",
 						status: "DRAFT",
