@@ -10,7 +10,7 @@ const meta: Meta<typeof ApplicationDetailsStep> = {
 	component: ApplicationDetailsStep,
 	decorators: [
 		(Story) => (
-			<div className="h-screen w-screen">
+			<div className="h-screen w-screen bg-light">
 				<Story />
 			</div>
 		),
@@ -74,7 +74,7 @@ export const WithTitle: Story = {
 	name: "With Application Title",
 };
 
-export const WithDocuments: Story = {
+export const OnlyDocuments: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -111,9 +111,10 @@ export const WithDocuments: Story = {
 			return <Story />;
 		},
 	],
+	name: "Only Documents - Title and Documents",
 };
 
-export const WithUrls: Story = {
+export const OnlyUrls: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -150,7 +151,7 @@ export const WithUrls: Story = {
 			return <Story />;
 		},
 	],
-	name: "With URLs",
+	name: "Only URLs - Title and URLs",
 };
 
 export const WithAllContent: Story = {
@@ -203,21 +204,32 @@ export const WithAllContent: Story = {
 	name: "Complete with Title, Documents and URLs",
 };
 
-export const WithConnectionStatus: Story = {
-	args: {
-		connectionStatus: "Connected",
-		connectionStatusColor: "green",
-	},
+export const NoTitleWithDocuments: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						filename: "call-for-proposals.pdf",
+						sourceId: "1",
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						sourceId: "2",
+						status: "FINISHED",
+						url: "https://example.com/funding-guidelines",
+					}),
+				];
+
 				const grantTemplate = GrantTemplateFactory.build({
-					rag_sources: [],
+					rag_sources: ragSources,
 				});
+
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
-					title: "Climate Change Research Grant Application",
+					title: "",
 				});
+
 				useApplicationStore.setState({
 					application,
 					areAppOperationsInProgress: false,
@@ -229,22 +241,49 @@ export const WithConnectionStatus: Story = {
 			return <Story />;
 		},
 	],
+	name: "No Title but with Documents and URLs",
 };
 
-export const ProcessingState: Story = {
+export const LargeDatasetsWithTruncation: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const ragSources = [
+					// 20 files with various extensions and statuses
+					...Array.from({ length: 20 }, (_, i) => {
+						const extensions = ["pdf", "docx", "xlsx", "pptx", "txt", "csv", "json", "xml"];
+						const statuses = ["FINISHED", "INDEXING", "FAILED", "CREATED"] as const;
+						const extension = extensions[i % extensions.length];
+						const status = statuses[i % statuses.length];
+
+						return RagSourceFactory.build({
+							filename: `very-long-document-name-for-testing-truncation-behavior-file-${i + 1}.${extension}`,
+							sourceId: `file-${i + 1}`,
+							status,
+						});
+					}),
+					// 10 URLs with very long names
+					...Array.from({ length: 10 }, (_, i) => {
+						return RagSourceFactory.build({
+							sourceId: `url-${i + 1}`,
+							status: "FINISHED",
+							url: `https://www.very-long-domain-name-for-testing-url-truncation-behavior.example.com/extremely/long/path/that/should/trigger/text/truncation/in/the/ui/components/page-${i + 1}?query=very-long-query-parameter-that-continues-for-a-while`,
+						});
+					}),
+				];
+
 				const grantTemplate = GrantTemplateFactory.build({
-					rag_sources: [],
+					rag_sources: ragSources,
 				});
+
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
-					title: "Climate Change Research Grant Application",
+					title: "Testing Large Datasets with Long Names and Truncation Behavior",
 				});
+
 				useApplicationStore.setState({
 					application,
-					areAppOperationsInProgress: true,
+					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.APPLICATION_DETAILS,
@@ -253,4 +292,5 @@ export const ProcessingState: Story = {
 			return <Story />;
 		},
 	],
+	name: "Large Dataset - 20 Files + 10 URLs with Truncation",
 };
