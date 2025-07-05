@@ -492,3 +492,16 @@ export const RagJobResponseFactory = new Factory<API.RetrieveRagJob.Http200.Resp
 		validation_results: isCompleted ? {} : undefined,
 	};
 });
+
+export const ProjectMemberFactory = new Factory<API.ListProjectMembers.Http200.ResponseBody[0]>((factory) => ({
+	display_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+	email: factory.internet.email(),
+	firebase_uid: factory.string.alphanumeric(28),
+	joined_at: factory.date.past().toISOString(),
+	photo_url: factory.datatype.boolean() ? factory.image.avatarGitHub() : null,
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+}));
+
+export const UpdateMemberRoleRequestFactory = new Factory<API.UpdateProjectMemberRole.RequestBody>((factory) => ({
+	role: factory.helpers.arrayElement(["ADMIN", "MEMBER"]),
+}));

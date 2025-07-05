@@ -565,6 +565,31 @@ export namespace API {
 };
 };
 
+	export namespace ListProjectMembers {
+	export namespace Http200 {
+	export type ResponseBody = {
+	display_name: null | string;
+	email: string;
+	firebase_uid: string;
+	joined_at: string;
+	photo_url: null | string;
+	role: "ADMIN" | "MEMBER" | "OWNER";
+}[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	project_id: string;
+};
+};
+
 	export namespace ListProjects {
 	export namespace Http200 {
 	export type ResponseBody = {
@@ -595,6 +620,25 @@ export namespace API {
 
 	export type RequestBody = {
 	id_token: string;
+};
+};
+
+	export namespace RemoveProjectMember {
+	export namespace Http204 {
+	export type ResponseBody = undefined;
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	firebase_uid: string;
+	project_id: string;
 };
 };
 
@@ -1075,6 +1119,36 @@ export namespace API {
 	description: null | string;
 	logo_url: null | string;
 	name: string;
+};
+};
+
+	export namespace UpdateProjectMemberRole {
+	export namespace Http200 {
+	export type ResponseBody = {
+	display_name: null | string;
+	email: string;
+	firebase_uid: string;
+	joined_at: string;
+	photo_url: null | string;
+	role: "ADMIN" | "MEMBER" | "OWNER";
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	firebase_uid: string;
+	project_id: string;
+};
+
+	export type RequestBody = {
+	role: "ADMIN" | "MEMBER" | "OWNER";
 };
 };
 };

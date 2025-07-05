@@ -42,7 +42,7 @@ async def verify_id_token(id_token: str) -> dict[str, Any]:
         ValueError,
         FirebaseError,
     ) as e:
-        logger.warning("Error verifying token.", exec_info=e)
+        logger.warning("Error verifying token.", exc_info=e)
         raise NotAuthorizedException("Invalid ID token") from e
 
 
@@ -56,3 +56,34 @@ async def get_user_by_email(email: str) -> dict[str, Any] | None:
             return None
         logger.warning("Error getting user by email.", exec_info=e)
         raise ExternalOperationError("Error getting user by email.") from e
+
+
+async def get_user(uid: str) -> dict[str, Any] | None:
+    from firebase_admin.auth import get_user
+
+    handler = as_async_callable(get_user)
+    try:
+        user = await handler(uid, app=get_firebase_app())
+        return cast("dict[str, Any]", user)
+    except FirebaseError as e:
+        if "USER_NOT_FOUND" in str(e):
+            return None
+        logger.warning("Error getting user by uid.", uid=uid, exec_info=e)
+        raise ExternalOperationError("Error getting user by uid.") from e
+
+
+async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
+    from firebase_admin.auth import get_users
+
+    if not uids:
+        return {}
+
+    handler = as_async_callable(get_users)
+    try:
+        identifiers = [{"uid": uid} for uid in uids]
+        result = await handler(identifiers, app=get_firebase_app())
+        users = cast("list[dict[str, Any]]", result.users)
+        return {user["uid"]: user for user in users}
+    except FirebaseError as e:
+        logger.warning("Error getting users by uids.", exec_info=e)
+        raise ExternalOperationError("Error getting users by uids.") from e
