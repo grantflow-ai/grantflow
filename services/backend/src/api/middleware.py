@@ -7,6 +7,7 @@ from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import (
     AbstractAuthenticationMiddleware,
     AuthenticationResult,
+    ASGIMiddleware,
 )
 from litestar.types import Receive, Scope, Send, ASGIApp
 from packages.db.src.tables import ProjectUser
@@ -81,16 +82,15 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         raise NotAuthorizedException
 
 
-class TraceIdMiddleware:
+class TraceIdMiddleware(ASGIMiddleware):
     """Middleware to extract or generate trace IDs for request tracing and OpenTelemetry integration."""
 
-    def __init__(self, app: ASGIApp) -> None:
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def handle(
+        self, scope: Scope, receive: Receive, send: Send, next_app: ASGIApp
+    ) -> None:
         scope_type = scope.get("type")
         if scope_type not in ("http", "websocket"):
-            await self.app(scope, receive, send)
+            await next_app(scope, receive, send)
             return
 
         trace_id = None
@@ -125,7 +125,7 @@ class TraceIdMiddleware:
             http_url=path,
             http_scheme=scope.get("scheme", "http"),
         ):
-            await self.app(scope, receive, send)
+            await next_app(scope, receive, send)
 
 
 def get_trace_id(request: Request[Any, Any, APIRequestState]) -> str | None:

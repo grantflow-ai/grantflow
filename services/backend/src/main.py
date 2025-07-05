@@ -100,6 +100,6 @@ app = create_litestar_app(
     logger=logger,
     route_handlers=api_routes,
     on_startup=[before_server_start],
-    middleware=[TraceIdMiddleware, AuthMiddleware],
+    middleware=[TraceIdMiddleware(), AuthMiddleware],
     plugins=plugins,
 )
