@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -17,42 +16,46 @@ async def send_discord_webhook(
     username: str | None = None,
 ) -> bool:
     """Send a message to Discord via webhook.
-    
+
     Args:
         webhook_url: Discord webhook URL
         content: Simple text content (optional)
         embed: Rich embed content (optional)
         username: Override webhook username (optional)
-        
+
     Returns:
         True if message was sent successfully, False otherwise
     """
     if not webhook_url:
         logger.warning("Discord webhook URL not provided")
         return False
-        
+
     payload: dict[str, Any] = {}
-    
+
     if content:
         payload["content"] = content
-        
+
     if embed:
         payload["embeds"] = [embed]
-        
+
     if username:
         payload["username"] = username
-        
+
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(webhook_url, json=payload)
-            
+
         if response.status_code == 204:
             logger.info("Discord webhook sent successfully")
             return True
         else:
-            logger.error("Discord webhook failed", status_code=response.status_code, response_text=response.text)
+            logger.error(
+                "Discord webhook failed",
+                status_code=response.status_code,
+                response_text=response.text,
+            )
             return False
-            
+
     except Exception:
         logger.exception("Failed to send Discord webhook")
         return False
@@ -72,7 +75,7 @@ def create_scraper_report_embed(
     error_message: str | None = None,
 ) -> dict[str, Any]:
     """Create a Discord embed for scraper run report.
-    
+
     Args:
         environment: Environment name (staging, prod)
         date_range: Date range that was scraped
@@ -84,11 +87,11 @@ def create_scraper_report_embed(
         total_files_in_bucket: Total files in bucket (optional)
         success: Whether the run was successful
         error_message: Error message if failed (optional)
-        
+
     Returns:
         Discord embed dictionary
     """
-    # Format processing time nicely
+
     if total_processing_time_ms < 1000:
         time_str = f"{total_processing_time_ms:.0f}ms"
     elif total_processing_time_ms < 60000:
@@ -97,19 +100,18 @@ def create_scraper_report_embed(
         minutes = int(total_processing_time_ms // 60000)
         seconds = int((total_processing_time_ms % 60000) // 1000)
         time_str = f"{minutes}m {seconds}s"
-    
-    # Choose emoji and color based on success
+
     if success:
         emoji = "🤖"
         status_emoji = "✅"
         status_text = "Completed Successfully"
-        color = 0x00FF00  # Green
+        color = 0x00FF00
     else:
         emoji = "🚨"
         status_emoji = "❌"
         status_text = "Failed"
-        color = 0xFF0000  # Red
-    
+        color = 0xFF0000
+
     embed = {
         "title": f"{emoji} NIH Grant Scraper Report - {environment.upper()}",
         "color": color,
@@ -123,28 +125,31 @@ def create_scraper_report_embed(
                     f"• **Existing Files Skipped**: {existing_files_skipped:,} grants\n"
                     f"• **Total Processing Time**: {time_str}"
                 ),
-                "inline": False
+                "inline": False,
             },
             {
                 "name": "📁 Storage Info",
                 "value": (
                     f"• **Bucket**: `{bucket_name}`\n"
-                    + (f"• **Total Files in Bucket**: {total_files_in_bucket:,} grants\n" if total_files_in_bucket is not None else "")
+                    + (
+                        f"• **Total Files in Bucket**: {total_files_in_bucket:,} grants\n"
+                        if total_files_in_bucket is not None
+                        else ""
+                    )
                 ),
-                "inline": False
+                "inline": False,
             },
             {
                 "name": f"{status_emoji} Status",
-                "value": status_text + (f"\n• **Error**: {error_message}" if error_message else ""),
-                "inline": False
-            }
+                "value": status_text
+                + (f"\n• **Error**: {error_message}" if error_message else ""),
+                "inline": False,
+            },
         ],
         "timestamp": datetime.utcnow().isoformat(),
-        "footer": {
-            "text": "GrantFlow AI - NIH Grant Scraper"
-        }
+        "footer": {"text": "GrantFlow AI - NIH Grant Scraper"},
     }
-    
+
     return embed
 
 
@@ -163,7 +168,7 @@ async def send_scraper_report(
     error_message: str | None = None,
 ) -> bool:
     """Send a scraper run report to Discord.
-    
+
     Args:
         webhook_url: Discord webhook URL
         environment: Environment name (staging, prod)
@@ -176,7 +181,7 @@ async def send_scraper_report(
         total_files_in_bucket: Total files in bucket (optional)
         success: Whether the run was successful
         error_message: Error message if failed (optional)
-        
+
     Returns:
         True if message was sent successfully, False otherwise
     """
@@ -192,5 +197,5 @@ async def send_scraper_report(
         success=success,
         error_message=error_message,
     )
-    
+
     return await send_discord_webhook(webhook_url, embed=embed)

@@ -69,16 +69,6 @@ pre-commit:
             run: uv run pyproject-fmt {staged_files}
             stage_fixed: true
 
-        trailing-whitespace:
-            run: |
-                for file in {staged_files}; do
-                  if [ -f "$file" ]; then
-                    python3 -c "import sys; content = open(sys.argv[1], 'r').read(); open(sys.argv[1], 'w').write('\\n'.join(line.rstrip() for line in content.splitlines()))" "$file"
-                  fi
-                done
-            stage_fixed: true
-
-
         check-yaml:
             glob: "*.{yaml,yml}"
             run: |
