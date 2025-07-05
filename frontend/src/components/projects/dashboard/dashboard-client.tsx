@@ -44,40 +44,6 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
     await duplicateProject(projectId);
   };
 
-  // Commented out test notifications that were interfering with integration tests
-  // Feature flag for dev-only notifications would be helpful here
-  // useEffect(() => {
-  // 	const timeouts = [
-  // 		setTimeout(() => {
-  // 			addNotification({
-  // 				message: "is due in 7 days. Make sure everything is ready for submission.",
-  // 				projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
-  // 				title: "7 days until grant deadline",
-  // 				type: "deadline",
-  // 			});
-  // 		}, 1000),
-  // 		setTimeout(() => {
-  // 			addNotification({
-  // 				message: "is due in 7 days. Make sure everything is ready for submission.",
-  // 				projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
-  // 				title: "7 days until grant deadline",
-  // 				type: "deadline",
-  // 			});
-  // 		}, 2000),
-  // 		setTimeout(() => {
-  // 			addNotification({
-  // 				message: "is due in 7 days. Make sure everything is ready for submission.",
-  // 				projectName: "Neuroadaptive Interfaces - EIC Pathfinder",
-  // 				title: "7 days until grant deadline",
-  // 				type: "deadline",
-  // 			});
-  // 		}, 3000),
-  // 	];
-
-  // 	return () => {
-  // 		timeouts.forEach(clearTimeout);
-  // 	};
-  // }, [addNotification]);
 
   const { data: projects = initialProjects } = useSWR("projects", getProjects, {
     fallbackData: initialProjects,
@@ -162,7 +128,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
       />
       <section className="bg-preview-bg w-full h-full  flex">
         <main className="w-[98%] h-full">
-          <DashboardHeader projectTeamMembers={projectTeamMembers} />
+          <DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
           <main className=" px-10 flex flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200">
             <main className="flex flex-col gap-8">
@@ -177,7 +143,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
                   <main className=" flex justify-end items-center gap-2">
                     <div className="size-8 flex items-center justify-center bg-gray-50 rounded-xs cursor-pointer">
                       <Tooltip>
-                        <TooltipTrigger className="cursor-pointer">
+                        <TooltipTrigger className="cursor-pointer" data-testid="invite-collaborators-button">
                           <Plus className="size-2.5 text-primary " />
                         </TooltipTrigger>
                         <TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-xs">
@@ -199,7 +165,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
                 </div>
               </article>
 
-              <DashboardStats initialProjects={projects} />
+              <DashboardStats initialProjects={projects}  data-testid="dashboard-stats" />
             </main>
             <main className="">
               <h3 className="font-normal text-4xl text-black">
@@ -213,6 +179,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
                       onDelete={handleDeleteProject}
                       onDuplicate={handleDuplicateProject}
                       project={project}
+                      data-testid="dashboard-project-card"
                       projectTeamMembers={projectTeamMembers}
                     />
                   ))
@@ -227,6 +194,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
                         setShowCreateModal(true);
                       }}
                       type="button"
+                      data-testid="create-first-project-button"
                     >
                       Create Your First Project
                     </button>

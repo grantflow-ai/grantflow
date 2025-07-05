@@ -1,44 +1,35 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen, fireEvent } from "@testing-library/react";
+import {  SidebarProvider } from "@/components/ui/sidebar";
 import { NavProjects } from "./nav-projects";
 
 describe("NavProjects", () => {
-  it("renders My Workspace section and menu items", () => {
-    render(<NavProjects />);
-    
-    // Section header
-    expect(screen.getByText("My Workspace")).toBeInTheDocument();
+  it("renders workspace trigger and items correctly", () => {
+    render(
+      <SidebarProvider >
+        <NavProjects />
+      </SidebarProvider>
+    );
 
-    // Menu items inside collapsible (should be visible by default if defaultOpen is true; here it isn’t)
-    expect(screen.queryByText("Account Setting")).not.toBeInTheDocument();
-    expect(screen.queryByText("Billing and payments")).not.toBeInTheDocument();
-    expect(screen.queryByText("Members")).not.toBeInTheDocument();
-    expect(screen.queryByText("Notifications")).not.toBeInTheDocument();
-  });
+    // click the workspace trigger
+  const trigger = screen.getByTestId("workspace-trigger");
+  fireEvent.click(trigger);
 
-  it("toggles collapsible content on click", async () => {
-    const user = userEvent.setup();
-    render(<NavProjects />);
+  // now assert the content appears
+  expect(screen.getByTestId("workspace-item-account")).toBeInTheDocument();
 
-    // Should be hidden initially
-    expect(screen.queryByText("Account Setting")).not.toBeInTheDocument();
+    // Top trigger
+    expect(screen.getByTestId("workspace-trigger")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-label")).toHaveTextContent("My Workspace");
+    expect(screen.getByTestId("workspace-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-chevron")).toBeInTheDocument();
 
-    // Click to expand
-    await user.click(screen.getByText("My Workspace"));
+    // Collapsible content
+    expect(screen.getByTestId("workspace-content")).toBeInTheDocument();
 
-    // Items should now appear
-    expect(screen.getByText("Account Setting")).toBeInTheDocument();
-    expect(screen.getByText("Billing and payments")).toBeInTheDocument();
-    expect(screen.getByText("Members")).toBeInTheDocument();
-    expect(screen.getByText("Notifications")).toBeInTheDocument();
-
-    // Click again to collapse
-    await user.click(screen.getByText("My Workspace"));
-
-    // Items should disappear again
-    expect(screen.queryByText("Account Setting")).not.toBeInTheDocument();
-    expect(screen.queryByText("Billing and payments")).not.toBeInTheDocument();
-    expect(screen.queryByText("Members")).not.toBeInTheDocument();
-    expect(screen.queryByText("Notifications")).not.toBeInTheDocument();
+    // Items inside
+    expect(screen.getByTestId("workspace-item-account")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-item-billing")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-item-members")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-item-notifications")).toBeInTheDocument();
   });
 });
