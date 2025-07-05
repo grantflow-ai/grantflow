@@ -23,6 +23,7 @@ tasks:
       - task: _dev:check
       - task: db:migrate
       - task: _dev:init-pubsub
+      - task: _dev:init-gcs
     cmds:
       - echo "📝 Service URLs:"
       - echo "  - Backend API{{":"}} http://localhost:8000"
@@ -31,6 +32,7 @@ tasks:
       - echo "  - Crawler{{":"}} http://localhost:8002"
       - echo "  - RAG{{":"}} http://localhost:8003"
       - echo "  - Pub/Sub Emulator{{":"}} http://localhost:8085"
+      - echo "  - GCS Emulator{{":"}} http://localhost:4443"
       - echo ""
       - echo "Press Ctrl+C to stop all services"
       - docker compose --profile services up
@@ -113,6 +115,7 @@ tasks:
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
+      - task: _db:wait-for-ready
       - uv run alembic --config ./packages/db/alembic.ini upgrade head
 
   db:proxy:start:
@@ -793,4 +796,39 @@ tasks:
       - cmd: sleep {{.SECONDS}}
         platforms: [darwin, linux]
       - cmd: timeout /t {{.SECONDS}} /nobreak > nul
+        platforms: [windows]
+
+  _db:wait-for-ready:
+    internal: true
+    cmds:
+      - cmd: |
+          echo "Waiting for database to be ready..."
+          for i in $(seq 1 30); do
+            if docker compose exec -T db pg_isready -U local -d local >/dev/null 2>&1; then
+              echo "✅ Database is ready"
+              exit 0
+            fi
+            printf "."
+            sleep 1
+          done
+          echo ""
+          echo "❌ Database failed to become ready after 30 seconds"
+          exit 1
+        platforms: [darwin, linux]
+      - cmd: |
+          echo "Waiting for database to be ready..."
+          powershell -Command "
+            for ($i = 1; $i -le 30; $i++) {
+              docker compose exec -T db pg_isready -U local -d local >$null 2>&1
+              if ($LASTEXITCODE -eq 0) {
+                Write-Host '✅ Database is ready'
+                exit 0
+              }
+              Write-Host -NoNewline '.'
+              Start-Sleep -Seconds 1
+            }
+            Write-Host ''
+            Write-Host '❌ Database failed to become ready after 30 seconds'
+            exit 1
+          "
         platforms: [windows]
