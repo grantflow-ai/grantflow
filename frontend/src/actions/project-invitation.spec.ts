@@ -1,12 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { inviteCollaborator } from "./project-invitation";
+
+const mockEmailsSend = vi.fn();
 
 // Mock Resend
 vi.mock("resend", () => ({
 	Resend: vi.fn(() => ({
 		emails: {
-			send: vi.fn(),
+			send: mockEmailsSend,
 		},
 	})),
 }));
@@ -19,12 +21,12 @@ vi.mock("@/utils/env", () => ({
 }));
 
 describe("inviteCollaborator", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
 	it("should send invitation email successfully", async () => {
-		const { Resend } = await import("resend");
-		const mockSend = vi.fn().mockResolvedValue({ error: null });
-		(Resend as any).mockImplementation(() => ({
-			emails: { send: mockSend },
-		}));
+		mockEmailsSend.mockResolvedValue({ error: null });
 
 		const result = await inviteCollaborator({
 			email: "test@example.com",
@@ -36,7 +38,7 @@ describe("inviteCollaborator", () => {
 
 		expect(result.success).toBe(true);
 		expect(result.invitationId).toBeDefined();
-		expect(mockSend).toHaveBeenCalledWith({
+		expect(mockEmailsSend).toHaveBeenCalledWith({
 			from: "noreply@grantflow.ai",
 			html: expect.stringContaining("John Doe"),
 			subject: "Invitation to collaborate on Test Project",
@@ -45,11 +47,7 @@ describe("inviteCollaborator", () => {
 	});
 
 	it("should handle email send failure", async () => {
-		const { Resend } = await import("resend");
-		const mockSend = vi.fn().mockResolvedValue({ error: { message: "Send failed" } });
-		(Resend as any).mockImplementation(() => ({
-			emails: { send: mockSend },
-		}));
+		mockEmailsSend.mockResolvedValue({ error: { message: "Send failed" } });
 
 		const result = await inviteCollaborator({
 			email: "test@example.com",
