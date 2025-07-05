@@ -38,7 +38,6 @@ export default function SignIn() {
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
 
-	// Mock auth bypass - auto-redirect when mock auth is enabled
 	useEffect(() => {
 		if (isMockAuthEnabled()) {
 			log.info("Mock auth enabled - bypassing onboarding page", { page: "onboarding" });

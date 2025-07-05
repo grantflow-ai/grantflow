@@ -6,7 +6,7 @@ const organizationStore = new Map<string, API.CreateOrganization.Http201.Respons
 export const organizationHandlers = {
 	createOrganization: async ({ body }: { body?: any }): Promise<API.CreateOrganization.Http201.ResponseBody> => {
 		const requestBody = body as API.CreateOrganization.RequestBody;
-		console.log("[Mock API] Creating organization:", requestBody.full_name);
+
 		const organization = OrganizationFactory.build({
 			abbreviation: requestBody.abbreviation,
 			full_name: requestBody.full_name,
@@ -18,7 +18,6 @@ export const organizationHandlers = {
 	listFundingOrganizations: async (): Promise<
 		NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["funding_organization"][]
 	> => {
-		console.log("[Mock API] Listing funding organizations");
 		return FundingOrganizationFactory.batch(5);
 	},
 
@@ -34,8 +33,6 @@ export const organizationHandlers = {
 		if (!organizationId) {
 			throw new Error("Organization ID required");
 		}
-
-		console.log("[Mock API] Updating organization:", organizationId);
 
 		const existingOrg = organizationStore.get(organizationId);
 		if (!existingOrg) {

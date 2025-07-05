@@ -23,6 +23,7 @@
 		"@tool-belt/type-predicates": "^1.4.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"date-fns": "^4.1.0",
 		"deepmerge-ts": "^7.1.5",
 		"firebase": "^11.10.0",
 		"framer-motion": "^12.23.0",

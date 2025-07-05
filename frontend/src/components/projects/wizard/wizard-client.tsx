@@ -63,7 +63,6 @@ export function WizardClientComponent({ application: initialApplication, project
 			areAppOperationsInProgress: false,
 		});
 
-		// Add microtask delay to ensure state is fully set before restoration
 		const timeoutId = setTimeout(() => {
 			void useApplicationStore.getState().checkAndRestoreJobState();
 		}, 0);

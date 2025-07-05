@@ -4,7 +4,6 @@ import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
 import { getScenario } from "../scenarios";
 
-// Use global to persist store across hot reloads in development
 interface GlobalStore {
 	__MOCK_PROJECT_STORE__?: Map<string, API.GetProject.Http200.ResponseBody>;
 }
@@ -131,14 +130,12 @@ export const projectHandlers = {
 	listProjects: async (): Promise<API.ListProjects.Http200.ResponseBody> => {
 		log.info("[Mock API] Listing projects");
 
-		// Check if store has data
 		if (projectStore.size > 0) {
 			const projects = [...projectStore.values()].map(toListProjectItem);
 			log.info("[Mock API] Returning projects from store", { count: projects.length });
 			return projects;
 		}
 
-		// Store is empty, check scenario
 		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
 		const scenario = getScenario(currentScenarioName);
 
@@ -196,7 +193,6 @@ export const projectHandlers = {
 	},
 };
 
-// Function to clear the global project store when switching scenarios
 export function clearProjectStore(): void {
 	projectStore.clear();
 	log.info("[Mock API] Project store cleared");

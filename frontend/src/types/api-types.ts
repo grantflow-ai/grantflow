@@ -953,6 +953,7 @@ export namespace API {
 	title: string;
 }[];
 	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	text: string;
 	title: string;
 };
 };
