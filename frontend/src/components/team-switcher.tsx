@@ -18,17 +18,13 @@ export function TeamSwitcher({
 	teams,
 }: {
 	teams: {
-		name: string;
 		logo: React.ElementType;
+		name: string;
 		plan: string;
 	}[];
 }) {
 	const { isMobile } = useSidebar();
 	const [activeTeam, setActiveTeam] = React.useState(teams[0]);
-
-	if (!activeTeam) {
-		return null;
-	}
 
 	return (
 		<SidebarMenu>
@@ -36,8 +32,8 @@ export function TeamSwitcher({
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<SidebarMenuButton
-							size="lg"
 							className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+							size="lg"
 						>
 							<div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
 								<activeTeam.logo className="size-4" />
@@ -50,14 +46,20 @@ export function TeamSwitcher({
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
-						className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
 						align="start"
+						className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
 						side={isMobile ? "bottom" : "right"}
 						sideOffset={4}
 					>
 						<DropdownMenuLabel className="text-muted-foreground text-xs">Teams</DropdownMenuLabel>
 						{teams.map((team, index) => (
-							<DropdownMenuItem key={team.name} onClick={() => setActiveTeam(team)} className="gap-2 p-2">
+							<DropdownMenuItem
+								className="gap-2 p-2"
+								key={team.name}
+								onClick={() => {
+									setActiveTeam(team);
+								}}
+							>
 								<div className="flex size-6 items-center justify-center rounded-md border">
 									<team.logo className="size-3.5 shrink-0" />
 								</div>

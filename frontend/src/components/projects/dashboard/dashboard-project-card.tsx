@@ -29,23 +29,23 @@ export function DashboardProjectCard({
 }: DashboardProjectCardProps) {
 	return (
 		<div
-			data-testid="dashboard-project-card"
 			className="w-[413px] h-[300px] rounded-sm p-6 border border-gray-200 bg-preview-bg flex"
+			data-testid="dashboard-project-card"
 		>
 			<div className="flex  flex-col w-full">
 				<div className="flex flex-col gap-3">
 					<figure
-						data-testid="project-card-figure"
 						className="px-2 gap-1 bg-gray-100 text-app-dark-blue w-fit items-center flex rounded-[20px]"
+						data-testid="project-card-figure"
 					>
 						<div className="size-3">
 							<Image
-								src="/icons/note_stack.svg"
 								alt="No projects"
-								width={100}
-								height={100}
 								className="w-full h-full object-cover"
 								data-testid="project-card-icon"
+								height={100}
+								src="/icons/note_stack.svg"
+								width={100}
 							/>
 						</div>
 						You have no applications yet
@@ -71,21 +71,21 @@ export function DashboardProjectCard({
 						<MoreVertical className="size-4 text-gray-700 " />
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
-						data-testid="project-card-menu"
 						className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-0"
+						data-testid="project-card-menu"
 					>
 						<DropdownMenuItem
-							onClick={() => onDelete?.(project.id)}
 							className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
 							data-testid="project-card-delete"
+							onClick={() => onDelete?.(project.id)}
 						>
 							<Trash2 className="size-4 text-gray-700" />
 							Delete
 						</DropdownMenuItem>
 						<DropdownMenuItem
-							onClick={() => onDuplicate?.(project.id)}
 							className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
 							data-testid="project-card-duplicate"
+							onClick={() => onDuplicate?.(project.id)}
 						>
 							<Copy className="size-4 text-gray-700" />
 							Duplicate

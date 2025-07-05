@@ -137,43 +137,11 @@ export default eslintTS.config(
 				{
 					"paths": [
 						{
-							"message": "Please use @/components/app (AppAvatar, AvatarGroup) instead.",
-							"name": "@/components/ui/avatar"
-						},
-						{
-							"message": "Please use @/components/app (AppButton, SubmitButton) instead.",
-							"name": "@/components/ui/button"
-						},
-						{
-							"message": "Please use @/components/app (AppCard, AppCardAction, etc.) instead.",
-							"name": "@/components/ui/card"
-						},
-						{
-							"message": "Please use @/components/app (AppDialog, AppDialogContent, etc.) instead.",
-							"name": "@/components/ui/dialog"
-						},
-						{
-							"message": "Please use @/components/app (AppDropdownMenu, AppDropdownMenuItem, etc.) instead.",
-							"name": "@/components/ui/dropdown-menu"
-						},
-						{
-							"message": "Please use @/components/app (AppInput) instead.",
-							"name": "@/components/ui/input"
-						},
-						{
-							"message": "Please use @/components/app (AppTextarea) instead.",
-							"name": "@/components/ui/textarea"
-						},
-						{
 							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
 							"name": "@/utils/logging"
 						}
 					],
 					"patterns": [
-						{
-							"group": ["@/components/ui/avatar", "@/components/ui/button", "@/components/ui/card", "@/components/ui/dialog", "@/components/ui/dropdown-menu", "@/components/ui/input", "@/components/ui/textarea"],
-							"message": "Please use the corresponding components from @/components/app instead."
-						},
 						{
 							"group": ["*/utils/logging", "*/logging"],
 							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error()."
