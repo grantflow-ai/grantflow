@@ -27,7 +27,7 @@ from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import with_polymorphic
+from sqlalchemy.orm import aliased, with_polymorphic
 
 from packages.db.src.constants import RAG_URL, RAG_FILE
 from packages.shared_utils.src.exceptions import BackendError
@@ -113,8 +113,9 @@ async def handle_create_rag_source(
 
     async with session_maker() as session, session.begin():
         try:
+            rag_url_alias = aliased(RagUrl)
             rag_source = await session.scalar(
-                select(RagSource).join(RagUrl).where(RagUrl.url == url)
+                select(RagSource).join(rag_url_alias).where(rag_url_alias.url == url)
             )
             if rag_source:
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
