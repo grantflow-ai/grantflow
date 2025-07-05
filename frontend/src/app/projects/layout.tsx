@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { NotificationContainer } from "@/components/app/feedback/notification-container";
 import SharedLayout from "@/components/layout/shared-layout";
-
-import { SWRProvider } from "@/components/providers/swr-provider";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
+import { SWRProvider } from "@/components/providers/swr-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
@@ -11,13 +10,12 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 		<SharedLayout>
 			<SWRProvider>
 				<SidebarProvider>
-				<AppSidebar />
+					<AppSidebar />
 					<SidebarInset>
-						
 						<div className="flex justify-center bg-[#faf9fb]">
-						<div className="w-full">{children}</div>
-						<NotificationContainer />
-					</div>
+							<div className="w-full">{children}</div>
+							<NotificationContainer />
+						</div>
 					</SidebarInset>
 				</SidebarProvider>
 			</SWRProvider>

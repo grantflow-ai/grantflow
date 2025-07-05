@@ -8,7 +8,7 @@ interface AvatarProps {
 	className?: string;
 	imageUrl?: string;
 	initials: string;
-	borderRadius?:string;
+	borderRadius?: string;
 	size?: "lg" | "md" | "sm";
 }
 
@@ -35,7 +35,7 @@ interface AvatarUser {
 
 export function AppAvatar({ backgroundColor, className, imageUrl, initials, size = "md", borderRadius }: AvatarProps) {
 	return (
-		<Avatar className={cn(sizeClasses[size], className)} data-testid="app-avatar" style={{borderRadius}}>
+		<Avatar className={cn(sizeClasses[size], className)} data-testid="app-avatar" style={{ borderRadius }}>
 			{imageUrl && <AvatarImage alt={initials} data-testid="app-avatar-image" src={imageUrl} />}
 			<AvatarFallback
 				className="font-semibold not-italic text-white"
