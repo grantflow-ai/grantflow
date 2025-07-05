@@ -185,74 +185,7 @@ CREATE TABLE subscription_plans (
 
 ## 🔧 **LOW PRIORITY - Infrastructure & Polish**
 
-### Task 5: API Consistency & Documentation
-
-**Status:** Good foundation, needs standardization
-**Impact:** Medium - Developer experience
-**Effort:** Medium
-
-#### **Improvements Needed:**
-
-**OpenAPI Documentation**
-- Auto-generated API docs
-- Request/response examples
-- Authentication documentation
-
-**API Versioning**
-- Version strategy (header vs URL)
-- Backward compatibility plan
-- Deprecation notices
-
-**Response Standardization**
-- Consistent error formats
-- Standardized success responses
-- Metadata inclusion (pagination, timestamps)
-
-**Rate Limiting**
-- Per-user rate limits
-- Endpoint-specific limits
-- Graceful degradation
-
----
-
-### Task 6: Enhanced Security & Compliance
-
-**Status:** Basic security implemented
-**Impact:** Medium - Trust and compliance
-**Effort:** Medium
-
-#### **Security Enhancements:**
-
-**Audit Logging**
-```sql
-CREATE TABLE audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    action VARCHAR(100) NOT NULL,
-    resource_type VARCHAR(50) NOT NULL,
-    resource_id UUID,
-    ip_address INET,
-    user_agent TEXT,
-    request_id VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
-
-**GDPR Compliance**
-- Data export endpoints
-- Data deletion confirmation
-- Privacy policy acceptance tracking
-- Cookie consent management
-
-**Enhanced Authentication**
-- Session management
-- Multi-factor authentication support
-- Login attempt monitoring
-- Suspicious activity detection
-
----
-
-### Task 7: Advanced Collaboration Features
+### Task 5: Advanced Collaboration Features
 
 **Status:** Not implemented
 **Impact:** Low - Nice to have
@@ -294,8 +227,7 @@ CREATE TABLE audit_logs (
 4. **Task 4: Billing & Subscription Management**
 
 ### **Phase 4: Polish & Infrastructure (Week 9-12)**
-5. **Task 6: Enhanced Security & Compliance**
-6. **Task 7: Advanced Collaboration Features**
+5. **Task 5: Advanced Collaboration Features**
 
 ---
 
