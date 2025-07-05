@@ -1,24 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { inviteCollaborator } from "./project-invitation";
-
-const mockEmailsSend = vi.fn();
-
-// Mock Resend
-vi.mock("resend", () => ({
-	Resend: vi.fn(() => ({
+const { mockResend, mockSend } = vi.hoisted(() => {
+	const mockSend = vi.fn();
+	const mockResend = vi.fn(() => ({
 		emails: {
-			send: mockEmailsSend,
+			send: mockSend,
 		},
-	})),
+	}));
+
+	return { mockResend, mockSend };
+});
+
+vi.mock("resend", () => ({
+	Resend: mockResend,
 }));
 
-// Mock env
-vi.mock("@/utils/env", () => ({
-	getEnv: () => ({
-		RESEND_API_KEY: "test-key",
-	}),
-}));
+import { inviteCollaborator } from "./project-invitation";
 
 describe("inviteCollaborator", () => {
 	beforeEach(() => {
@@ -26,7 +23,7 @@ describe("inviteCollaborator", () => {
 	});
 
 	it("should send invitation email successfully", async () => {
-		mockEmailsSend.mockResolvedValue({ error: null });
+		mockSend.mockResolvedValue({ error: null });
 
 		const result = await inviteCollaborator({
 			email: "test@example.com",
@@ -38,7 +35,7 @@ describe("inviteCollaborator", () => {
 
 		expect(result.success).toBe(true);
 		expect(result.invitationId).toBeDefined();
-		expect(mockEmailsSend).toHaveBeenCalledWith({
+		expect(mockSend).toHaveBeenCalledWith({
 			from: "noreply@grantflow.ai",
 			html: expect.stringContaining("John Doe"),
 			subject: "Invitation to collaborate on Test Project",
@@ -47,7 +44,7 @@ describe("inviteCollaborator", () => {
 	});
 
 	it("should handle email send failure", async () => {
-		mockEmailsSend.mockResolvedValue({ error: { message: "Send failed" } });
+		mockSend.mockResolvedValue({ error: { message: "Send failed" } });
 
 		const result = await inviteCollaborator({
 			email: "test@example.com",
