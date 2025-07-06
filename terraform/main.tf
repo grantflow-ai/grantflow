@@ -99,5 +99,6 @@ module "monitoring" {
   project_id            = var.project_id
   environment           = var.environment
   discord_webhook_url   = var.discord_webhook_url
+  discord_role_alerts   = var.discord_role_alerts
   monthly_budget_amount = var.monthly_budget_amount
 }

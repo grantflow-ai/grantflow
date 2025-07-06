@@ -21,7 +21,16 @@ resource "google_storage_bucket" "user_cleanup_functions" {
 data "archive_file" "user_cleanup_source" {
   type        = "zip"
   output_path = "${path.module}/user-cleanup-function.zip"
-  source_dir  = "${path.root}/../cloud_functions/user_cleanup"
+
+  source {
+    content  = file("${path.root}/../cloud_functions/src/user_cleanup/main.py")
+    filename = "main.py"
+  }
+
+  source {
+    content  = file("${path.root}/../cloud_functions/requirements.txt")
+    filename = "requirements.txt"
+  }
 }
 
 # Upload source to bucket

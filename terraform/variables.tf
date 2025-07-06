@@ -55,3 +55,10 @@ variable "discord_webhook_url" {
   type        = string
   sensitive   = true
 }
+
+variable "discord_role_alerts" {
+  description = "Discord role ID for alert mentions (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
