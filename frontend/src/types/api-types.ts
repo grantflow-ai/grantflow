@@ -493,6 +493,27 @@ export namespace API {
 };
 };
 
+	export namespace DismissNotification {
+	export namespace Http200 {
+	export type ResponseBody = {
+	notification_id: string;
+	success: boolean;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	notification_id: string;
+};
+};
+
 	export namespace GenerateApplication {
 	export namespace Http201 {
 	export type ResponseBody = undefined;
@@ -595,6 +616,41 @@ export namespace API {
 	search?: null | string;
 	sort?: string;
 	status?: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS" | null;
+};
+};
+
+	export namespace ListNotifications {
+	export namespace Http200 {
+	export type ResponseBody = {
+	notifications: {
+	created_at: string;
+	dismissed: boolean;
+	expires_at?: string;
+	extra_data?: {
+	
+};
+	id: string;
+	message: string;
+	project_id?: string;
+	project_name?: string;
+	read: boolean;
+	title: string;
+	type: string;
+}[];
+	total: number;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface QueryParameters {
+	include_read?: boolean;
 };
 };
 
