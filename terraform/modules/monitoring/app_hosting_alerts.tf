@@ -175,7 +175,7 @@ data "archive_file" "app_hosting_function" {
   output_path = "${path.module}/app-hosting-alert-function.zip"
 
   source {
-    content  = file("../cloud_functions/app_hosting_alert_function.py")
+    content  = file("../cloud_functions/src/app_hosting_alert_function.py")
     filename = "main.py"
   }
 
