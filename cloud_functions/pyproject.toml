@@ -1,0 +1,29 @@
+[project]
+name = "grantflow-cloud-functions"
+version = "0.1.0"
+description = "Cloud functions for GrantFlow.AI"
+authors = [
+  { name = "GrantFlow.AI Team", email = "team@grantflow.ai" },
+]
+requires-python = ">=3.13"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
+dependencies = [
+  "functions-framework>=3.5",
+  "httpx>=0.27",
+]
+
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]
+python_files = [ "*_test.py" ]
+python_functions = [ "test_*" ]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+
+[tool.uv]
+# Keep dependencies isolated from workspace
+dev-dependencies = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.24.0",
+  "pytest-mock>=3.12.0",
+  "httpx>=0.27.0",
+]

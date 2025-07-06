@@ -639,6 +639,37 @@ tasks:
       - trivy config ./terraform
 
   # ==============================================================================
+  # CLOUD FUNCTIONS - Cloud Functions development and deployment
+  # ==============================================================================
+
+  cloud-functions:generate-requirements:
+    desc: Generate requirements.txt files from pyproject.toml for cloud functions
+    cmds:
+      - echo "📦 Generating requirements.txt for root cloud functions..."
+      - cd cloud_functions && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
+      - echo "📦 Generating requirements.txt for user_cleanup function..."
+      - cd cloud_functions/user_cleanup && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
+      - echo "✅ All requirements.txt files generated successfully!"
+
+  cloud-functions:sync:
+    desc: Sync dependencies for cloud functions
+    cmds:
+      - echo "🔄 Syncing cloud functions dependencies..."
+      - cd cloud_functions && uv sync
+      - cd cloud_functions/user_cleanup && uv sync
+      - echo "✅ Cloud functions dependencies synced!"
+
+  cloud-functions:test:
+    desc: Run tests for cloud functions
+    deps:
+      - task: cloud-functions:sync
+    cmds:
+      - echo "🧪 Running cloud functions tests..."
+      - cd cloud_functions && uv run pytest tests/app_hosting_alert_function_test.py tests/budget_function_test.py -v
+      - cd cloud_functions/user_cleanup && uv run pytest ../tests/user_cleanup/main_test.py -v
+      - echo "✅ Cloud functions tests completed!"
+
+  # ==============================================================================
   # INTERNAL TASKS - Not intended for direct use
   # ==============================================================================
 

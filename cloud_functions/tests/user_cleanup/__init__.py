@@ -1,0 +1,1 @@
+"""User cleanup function tests."""
