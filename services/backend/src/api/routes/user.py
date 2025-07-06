@@ -31,7 +31,9 @@ async def delete_user(
     User will be removed from all projects immediately.
     Account will be permanently deleted after grace period.
     """
-    firebase_uid = request.state.firebase_uid
+    firebase_uid = request.auth
+    if not firebase_uid:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
         existing_deletion = await get_user_deletion_status(firebase_uid)
