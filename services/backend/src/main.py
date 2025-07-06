@@ -35,9 +35,12 @@ from services.backend.src.api.routes.projects import (
     handle_create_project,
     handle_delete_invitation,
     handle_delete_project,
+    handle_list_project_members,
+    handle_remove_project_member,
     handle_retrieve_project,
     handle_retrieve_projects,
     handle_update_invitation_role,
+    handle_update_member_role,
     handle_update_project,
 )
 from services.backend.src.api.sockets.grant_applications import (
@@ -66,7 +69,9 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
+    handle_list_project_members,
     handle_login,
+    handle_remove_project_member,
     handle_retrieve_application,
     handle_retrieve_organizations,
     handle_retrieve_rag_job,
@@ -76,6 +81,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_update_application,
     handle_update_grant_template,
     handle_update_invitation_role,
+    handle_update_member_role,
     handle_update_organization,
     handle_update_project,
 ]
