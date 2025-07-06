@@ -28,7 +28,7 @@ data "archive_file" "user_cleanup_source" {
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/user_cleanup/requirements.txt")
+    content  = file("${path.root}/../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }
