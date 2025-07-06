@@ -1,8 +1,8 @@
-"""
+"""'Add subscription billing tables'
 
-Revision ID: 631717d10500
-Revises: f8364f7ebdd3
-Create Date: 2025-07-06 07:59:53.280857
+Revision ID: 9320600ca6b3
+Revises: 9dbbdab85cde
+Create Date: 2025-07-06 09:42:21.165982
 
 """
 
@@ -11,111 +11,14 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "631717d10500"
-down_revision: str | None = "f8364f7ebdd3"
+revision: str = "9320600ca6b3"
+down_revision: str | None = "9dbbdab85cde"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-
-    op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
-
-    op.create_table(
-        "users",
-        sa.Column("firebase_uid", sa.String(length=128), nullable=False),
-        sa.Column("email", sa.String(length=255), nullable=True),
-        sa.Column("display_name", sa.String(length=255), nullable=True),
-        sa.Column("photo_url", sa.Text(), nullable=True),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("deletion_scheduled_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("preferences", sa.JSON(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.PrimaryKeyConstraint("firebase_uid"),
-    )
-    op.create_index(
-        "idx_users_active", "users", ["firebase_uid"], unique=False, postgresql_where=sa.text("deleted_at IS NULL")
-    )
-    op.create_index("idx_users_deletion_scheduled", "users", ["deletion_scheduled_at"], unique=False)
-    op.create_index(op.f("ix_users_created_at"), "users", ["created_at"], unique=False)
-    op.create_index(op.f("ix_users_deleted_at"), "users", ["deleted_at"], unique=False)
-    op.create_index(op.f("ix_users_email"), "users", ["email"], unique=False)
-
-    op.execute("""
-        INSERT INTO users (firebase_uid, created_at, updated_at)
-        SELECT DISTINCT firebase_uid, NOW(), NOW()
-        FROM project_users
-    """)
-
-    op.create_foreign_key(
-        "project_users_firebase_uid_fkey",
-        "project_users",
-        "users",
-        ["firebase_uid"],
-        ["firebase_uid"],
-        ondelete="CASCADE",
-    )
-
-    op.create_table(
-        "notifications",
-        sa.Column("firebase_uid", sa.String(length=128), nullable=False),
-        sa.Column("project_id", sa.UUID(), nullable=True),
-        sa.Column(
-            "type", sa.Enum("DEADLINE", "INFO", "WARNING", "SUCCESS", name="notificationtypeenum"), nullable=False
-        ),
-        sa.Column("title", sa.String(length=255), nullable=False),
-        sa.Column("message", sa.Text(), nullable=False),
-        sa.Column("project_name", sa.String(length=255), nullable=True),
-        sa.Column("read", sa.Boolean(), nullable=False),
-        sa.Column("dismissed", sa.Boolean(), nullable=False),
-        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("extra_data", sa.JSON(), nullable=True),
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        "idx_notifications_user_active",
-        "notifications",
-        ["firebase_uid"],
-        unique=False,
-        postgresql_where=sa.text("dismissed = FALSE"),
-    )
-    op.create_index("idx_notifications_user_created", "notifications", ["firebase_uid", "created_at"], unique=False)
-    op.create_index(op.f("ix_notifications_created_at"), "notifications", ["created_at"], unique=False)
-    op.create_index(op.f("ix_notifications_firebase_uid"), "notifications", ["firebase_uid"], unique=False)
-    op.create_index(op.f("ix_notifications_project_id"), "notifications", ["project_id"], unique=False)
-
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_grant_applications_title_fts
-        ON grant_applications
-        USING gin(to_tsvector('english', title))
-    """)
-
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_grant_applications_title_trgm
-        ON grant_applications
-        USING gin(title gin_trgm_ops)
-    """)
-
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_grant_applications_filtering
-        ON grant_applications (project_id, status, updated_at DESC)
-    """)
-
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_grant_applications_created_at
-        ON grant_applications (project_id, created_at DESC)
-    """)
-
-    op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_grant_applications_title_sort
-        ON grant_applications (project_id, title)
-    """)
 
     op.create_table(
         "subscription_plans",
@@ -140,6 +43,26 @@ def upgrade() -> None:
     op.create_index("idx_subscription_plans_active", "subscription_plans", ["active", "sort_order"], unique=False)
     op.create_index(op.f("ix_subscription_plans_created_at"), "subscription_plans", ["created_at"], unique=False)
     op.create_index(op.f("ix_subscription_plans_stripe_plan_id"), "subscription_plans", ["stripe_plan_id"], unique=True)
+    op.create_table(
+        "users",
+        sa.Column("firebase_uid", sa.String(length=128), nullable=False),
+        sa.Column("email", sa.String(length=255), nullable=True),
+        sa.Column("display_name", sa.String(length=255), nullable=True),
+        sa.Column("photo_url", sa.Text(), nullable=True),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("deletion_scheduled_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("preferences", sa.JSON(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.PrimaryKeyConstraint("firebase_uid"),
+    )
+    op.create_index(
+        "idx_users_active", "users", ["firebase_uid"], unique=False, postgresql_where=sa.text("deleted_at IS NULL")
+    )
+    op.create_index("idx_users_deletion_scheduled", "users", ["deletion_scheduled_at"], unique=False)
+    op.create_index(op.f("ix_users_created_at"), "users", ["created_at"], unique=False)
+    op.create_index(op.f("ix_users_deleted_at"), "users", ["deleted_at"], unique=False)
+    op.create_index(op.f("ix_users_email"), "users", ["email"], unique=False)
     op.create_table(
         "subscriptions",
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),
@@ -170,11 +93,50 @@ def upgrade() -> None:
     op.create_index(op.f("ix_subscriptions_plan_id"), "subscriptions", ["plan_id"], unique=False)
     op.create_index(op.f("ix_subscriptions_status"), "subscriptions", ["status"], unique=False)
     op.create_index(op.f("ix_subscriptions_stripe_customer_id"), "subscriptions", ["stripe_customer_id"], unique=False)
+    op.drop_index(op.f("idx_grant_applications_created_at"), table_name="grant_applications")
+    op.drop_index(op.f("idx_grant_applications_filtering"), table_name="grant_applications")
+    op.drop_index(op.f("idx_grant_applications_title_fts"), table_name="grant_applications", postgresql_using="gin")
+    op.drop_index(op.f("idx_grant_applications_title_sort"), table_name="grant_applications")
+    op.drop_index(op.f("idx_grant_applications_title_trgm"), table_name="grant_applications", postgresql_using="gin")
+    op.create_foreign_key(
+        "project_users_firebase_uid_fkey",
+        "project_users",
+        "users",
+        ["firebase_uid"],
+        ["firebase_uid"],
+        ondelete="CASCADE",
+    )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
 
+    op.drop_constraint("project_users_firebase_uid_fkey", "project_users", type_="foreignkey")
+    op.create_index(
+        op.f("idx_grant_applications_title_trgm"), "grant_applications", ["title"], unique=False, postgresql_using="gin"
+    )
+    op.create_index(
+        op.f("idx_grant_applications_title_sort"), "grant_applications", ["project_id", "title"], unique=False
+    )
+    op.create_index(
+        op.f("idx_grant_applications_title_fts"),
+        "grant_applications",
+        [sa.literal_column("to_tsvector('english'::regconfig, title)")],
+        unique=False,
+        postgresql_using="gin",
+    )
+    op.create_index(
+        op.f("idx_grant_applications_filtering"),
+        "grant_applications",
+        ["project_id", "status", sa.literal_column("updated_at DESC")],
+        unique=False,
+    )
+    op.create_index(
+        op.f("idx_grant_applications_created_at"),
+        "grant_applications",
+        ["project_id", sa.literal_column("created_at DESC")],
+        unique=False,
+    )
     op.drop_index(op.f("ix_subscriptions_stripe_customer_id"), table_name="subscriptions")
     op.drop_index(op.f("ix_subscriptions_status"), table_name="subscriptions")
     op.drop_index(op.f("ix_subscriptions_plan_id"), table_name="subscriptions")
@@ -184,6 +146,12 @@ def downgrade() -> None:
     op.drop_index("idx_subscriptions_stripe_customer", table_name="subscriptions")
     op.drop_index("idx_subscriptions_period_end", table_name="subscriptions")
     op.drop_table("subscriptions")
+    op.drop_index(op.f("ix_users_email"), table_name="users")
+    op.drop_index(op.f("ix_users_deleted_at"), table_name="users")
+    op.drop_index(op.f("ix_users_created_at"), table_name="users")
+    op.drop_index("idx_users_deletion_scheduled", table_name="users")
+    op.drop_index("idx_users_active", table_name="users", postgresql_where=sa.text("deleted_at IS NULL"))
+    op.drop_table("users")
     op.drop_index(op.f("ix_subscription_plans_stripe_plan_id"), table_name="subscription_plans")
     op.drop_index(op.f("ix_subscription_plans_created_at"), table_name="subscription_plans")
     op.drop_index("idx_subscription_plans_active", table_name="subscription_plans")
