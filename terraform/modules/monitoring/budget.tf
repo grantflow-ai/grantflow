@@ -142,7 +142,7 @@ data "archive_file" "function" {
   output_path = "${path.module}/budget-function.zip"
 
   source {
-    content  = file("../cloud_functions/budget_function.py")
+    content  = file("../cloud_functions/src/budget_function.py")
     filename = "main.py"
   }
 

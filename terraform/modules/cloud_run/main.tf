@@ -579,8 +579,8 @@ resource "google_cloud_run_v2_service" "scraper" {
 
       resources {
         limits = {
-          cpu    = "1000m"
-          memory = "2Gi" # Higher memory for Playwright browser automation
+          cpu    = "2000m"
+          memory = "4Gi" # Higher memory and CPU for Playwright browser automation and multiple concurrent processes
         }
       }
 
@@ -593,10 +593,10 @@ resource "google_cloud_run_v2_service" "scraper" {
           path = "/health"
           port = 8000
         }
-        initial_delay_seconds = 15
-        timeout_seconds       = 10
-        period_seconds        = 30
-        failure_threshold     = 3
+        initial_delay_seconds = 30
+        timeout_seconds       = 15
+        period_seconds        = 60
+        failure_threshold     = 5
       }
 
       # Standard environment variables
@@ -633,6 +633,17 @@ resource "google_cloud_run_v2_service" "scraper" {
         value = var.discord_webhook_url
       }
 
+      # Playwright configuration for browser automation
+      env {
+        name  = "PLAYWRIGHT_BROWSERS_PATH"
+        value = "/app/.cache/ms-playwright"
+      }
+
+      env {
+        name  = "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"
+        value = "0"
+      }
+
       # GCS credentials from Secret Manager
       env {
         name = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
@@ -646,11 +657,11 @@ resource "google_cloud_run_v2_service" "scraper" {
     }
 
     scaling {
-      max_instance_count = 3 # Lower scaling - scheduler-driven, not high throughput
+      max_instance_count = 1 # Only one instance needed - scheduled job, not concurrent
       min_instance_count = 0 # Scale to zero when not in use
     }
 
-    timeout = "1800s" # 30 minutes - scraping can take time
+    timeout = "3600s" # 60 minutes - browser automation can take significant time
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
