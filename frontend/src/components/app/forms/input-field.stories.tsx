@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Globe, Lock, Mail, Search, User } from "lucide-react";
+import Image from "next/image";
 import { action } from "storybook/actions";
 import AppInput from "./input-field";
 
@@ -42,7 +42,7 @@ export const WithValue: Story = {
 
 export const WithIcon: Story = {
 	args: {
-		icon: <Search />,
+		icon: <Image alt="Search" height={16} src="/icons/plus.svg" width={16} />,
 		label: "Search Input",
 		onChange: action("changed"),
 		placeholder: "Search...",
@@ -115,7 +115,7 @@ export const WithoutLabel: Story = {
 
 export const EmailInput: Story = {
 	args: {
-		icon: <Mail />,
+		icon: <Image alt="Email" height={16} src="/icons/plus.svg" width={16} />,
 		label: "Email Address",
 		onChange: action("changed"),
 		placeholder: "your@email.com",
@@ -126,7 +126,7 @@ export const EmailInput: Story = {
 
 export const PasswordInput: Story = {
 	args: {
-		icon: <Lock />,
+		icon: <Image alt="Password" height={16} src="/icons/close.svg" width={16} />,
 		label: "Password",
 		onChange: action("changed"),
 		placeholder: "Enter your password",
@@ -137,7 +137,7 @@ export const PasswordInput: Story = {
 
 export const UrlInput: Story = {
 	args: {
-		icon: <Globe />,
+		icon: <Image alt="URL" height={16} src="/icons/globe.svg" width={16} />,
 		label: "Website URL",
 		onChange: action("changed"),
 		placeholder: "https://example.com",
@@ -167,7 +167,7 @@ export const AllVariants: Story = {
 					testId="default"
 				/>
 				<AppInput
-					icon={<User />}
+					icon={<Image alt="User" height={16} src="/icons/dashboard.svg" width={16} />}
 					label="With Icon"
 					onChange={action("icon-changed")}
 					placeholder="Input with icon"
