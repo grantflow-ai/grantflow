@@ -11,6 +11,7 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 dependencies = [
   "db",
   "firebase-admin>=6.7",
+  "google-cloud-firestore>=2.16",
   "pyjwt>=2.10.1",
   "shared-utils[server,gcs,pubsub]",
 ]
