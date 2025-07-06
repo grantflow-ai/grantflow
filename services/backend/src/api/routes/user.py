@@ -1,9 +1,11 @@
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
-from litestar import delete
+from litestar import delete, get
 from litestar.exceptions import HTTPException
+from packages.db.src.enums import UserRoleEnum
+from packages.db.src.tables import Project, ProjectUser as ProjectMember
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.common_types import APIRequest
@@ -20,6 +22,22 @@ class DeleteUserResponse(TypedDict):
     scheduled_deletion_date: str
     grace_period_days: int
     restoration_info: str
+
+
+class SoleOwnedProject(TypedDict):
+    id: str
+    name: str
+
+
+class DeleteUserErrorDetail(TypedDict):
+    error: str
+    message: str
+    projects: NotRequired[list[SoleOwnedProject]]
+
+
+class GetSoleOwnedProjectsResponse(TypedDict):
+    projects: list[SoleOwnedProject]
+    count: int
 
 
 @delete("/user", operation_id="DeleteUser", status_code=200)
@@ -42,6 +60,43 @@ async def delete_user(
                 status_code=400,
                 detail="User account is already scheduled for deletion",
             )
+
+        async with session_maker() as session:
+            owner_projects = (
+                select(ProjectMember.project_id)
+                .where(ProjectMember.firebase_uid == firebase_uid)
+                .where(ProjectMember.role == UserRoleEnum.OWNER)
+                .subquery()
+            )
+
+            sole_owned_query = (
+                select(Project)
+                .join(owner_projects, Project.id == owner_projects.c.project_id)
+                .outerjoin(
+                    ProjectMember,
+                    (Project.id == ProjectMember.project_id)
+                    & (ProjectMember.role == UserRoleEnum.OWNER)
+                    & (ProjectMember.firebase_uid != firebase_uid),
+                )
+                .group_by(Project.id)
+                .having(func.count(ProjectMember.firebase_uid) == 0)
+            )
+
+            result = await session.execute(sole_owned_query)
+            sole_owned_projects = result.scalars().all()
+
+            if sole_owned_projects:
+                raise HTTPException(
+                    status_code=400,
+                    detail="You must transfer ownership of projects before deleting your account",
+                    extra={
+                        "error": "ownership_transfer_required",
+                        "projects": [
+                            {"id": str(p.id), "name": p.name}
+                            for p in sole_owned_projects
+                        ],
+                    },
+                )
 
         async with session_maker() as session, session.begin():
             result = await session.execute(
@@ -89,3 +144,47 @@ async def delete_user(
             status_code=500,
             detail="Failed to delete user account",
         ) from e
+
+
+@get("/user/sole-owned-projects", operation_id="GetSoleOwnedProjects")
+async def get_sole_owned_projects(
+    request: APIRequest, session_maker: async_sessionmaker[Any]
+) -> GetSoleOwnedProjectsResponse:
+    """
+    Get list of projects where the user is the sole owner.
+    These projects must be handled before account deletion.
+    """
+    firebase_uid = request.auth
+    if not firebase_uid:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    async with session_maker() as session:
+        owner_projects = (
+            select(ProjectMember.project_id)
+            .where(ProjectMember.firebase_uid == firebase_uid)
+            .where(ProjectMember.role == UserRoleEnum.OWNER)
+            .subquery()
+        )
+
+        sole_owned_query = (
+            select(Project)
+            .join(owner_projects, Project.id == owner_projects.c.project_id)
+            .outerjoin(
+                ProjectMember,
+                (Project.id == ProjectMember.project_id)
+                & (ProjectMember.role == UserRoleEnum.OWNER)
+                & (ProjectMember.firebase_uid != firebase_uid),
+            )
+            .group_by(Project.id)
+            .having(func.count(ProjectMember.firebase_uid) == 0)
+        )
+
+        result = await session.execute(sole_owned_query)
+        sole_owned_projects = result.scalars().all()
+
+        return {
+            "projects": [
+                {"id": str(p.id), "name": p.name} for p in sole_owned_projects
+            ],
+            "count": len(sole_owned_projects),
+        }

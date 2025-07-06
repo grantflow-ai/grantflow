@@ -503,6 +503,7 @@ export namespace API {
 };
 };
 };
+
 	export namespace DismissNotification {
 	export namespace Http200 {
 	export type ResponseBody = {
