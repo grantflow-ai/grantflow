@@ -7,7 +7,6 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WS from "vitest-websocket-mock";
 
-// Unmock the env utils for this test file since we're testing environment behavior
 vi.unmock("@/utils/env");
 
 describe("Mock API Core Integration", () => {
@@ -15,7 +14,7 @@ describe("Mock API Core Integration", () => {
 
 	beforeEach(() => {
 		originalEnv = { ...process.env };
-		// Clear any cached modules
+
 		vi.resetModules();
 		cleanup();
 	});
@@ -28,10 +27,8 @@ describe("Mock API Core Integration", () => {
 
 	describe("Environment Variable Toggle", () => {
 		it("should enable mock API when NEXT_PUBLIC_MOCK_API is true", async () => {
-			// Set environment variable
 			process.env.NEXT_PUBLIC_MOCK_API = "true";
 
-			// Dynamically import to get fresh module with new env
 			const { isMockAPIEnabled } = await import("@/dev-tools/mock-api/client");
 
 			expect(isMockAPIEnabled()).toBe(true);
@@ -73,7 +70,6 @@ describe("Mock API Core Integration", () => {
 		it("should register mock handlers on initialization", async () => {
 			const mockRegister = vi.fn();
 
-			// Mock the client to track registrations
 			vi.doMock("@/dev-tools/mock-api/client", () => ({
 				getMockAPIClient: () => ({
 					intercept: vi.fn(),
@@ -82,7 +78,6 @@ describe("Mock API Core Integration", () => {
 				isMockAPIEnabled: () => true,
 			}));
 
-			// Import and trigger registration
 			const { registerMockHandlers } = await import("@/dev-tools/mock-api/register");
 			registerMockHandlers();
 
@@ -96,7 +91,6 @@ describe("Mock API Core Integration", () => {
 		});
 
 		it("should handle mock API client errors gracefully", async () => {
-			// Mock client to throw error
 			vi.doMock("@/dev-tools/mock-api/client", () => ({
 				getMockAPIClient: () => {
 					throw new Error("Mock client initialization failed");
@@ -127,11 +121,9 @@ describe("Mock API Core Integration", () => {
 				isMockAPIEnabled: () => true,
 			}));
 
-			// Import and test the API integration
 			const { getClient } = await import("@/utils/api");
 			const client = getClient();
 
-			// We can't easily test the ky hook directly, but we can verify the client exists
 			expect(client).toBeDefined();
 			expect(typeof client.get).toBe("function");
 		});
@@ -142,7 +134,6 @@ describe("Mock API Core Integration", () => {
 			const { getClient } = await import("@/utils/api");
 			const client = getClient();
 
-			// In non-mock mode, should return the real ky client
 			expect(client).toBeDefined();
 			expect(typeof client.get).toBe("function");
 		});
@@ -170,7 +161,6 @@ describe("Mock API Core Integration", () => {
 			const { registerMockHandlers } = await import("@/dev-tools/mock-api/register");
 			registerMockHandlers();
 
-			// Verify all essential endpoints are registered
 			const expectedPaths = [
 				"/auth/login",
 				"/otp",
@@ -198,14 +188,12 @@ describe("Mock API Core Integration", () => {
 
 			const { registerMockHandlers } = await import("@/dev-tools/mock-api/register");
 
-			// Call registration multiple times
 			registerMockHandlers();
 			registerMockHandlers();
 			registerMockHandlers();
 
-			// Should only register once per path
 			const loginRegistrations = mockRegister.mock.calls.filter((call) => call[0] === "/auth/login");
-			expect(loginRegistrations).toHaveLength(3); // Called 3 times, but that's expected behavior
+			expect(loginRegistrations).toHaveLength(3);
 		});
 	});
 
@@ -217,7 +205,6 @@ describe("Mock API Core Integration", () => {
 		it("should generate mock responses using factories", async () => {
 			const { ApplicationFactory } = await import("::testing/factories");
 
-			// Test that factories work correctly
 			const mockApplication = ApplicationFactory.build();
 
 			expect(mockApplication).toMatchObject({
@@ -251,7 +238,7 @@ describe("Mock API Core Integration", () => {
 
 		beforeEach(async () => {
 			process.env.NEXT_PUBLIC_MOCK_API = "true";
-			// Create a mock WebSocket server
+
 			server = new WS("ws://localhost:3001");
 		});
 
@@ -267,31 +254,24 @@ describe("Mock API Core Integration", () => {
 		});
 
 		it("should provide real WebSocket URL when disabled", async () => {
-			// Test the WebSocket URL generation logic directly
-			// Since mocking is complex in this test environment, we'll test the URL transformation
 			const backendUrl = "https://api.example.com";
 			const path = "/projects/123/applications/456/notifications";
 
-			// This is what the function should do when mock is disabled
 			const expectedUrl = backendUrl.replace(/^https?:\/\//, "ws://") + path;
 
 			expect(expectedUrl).toBe("ws://api.example.com/projects/123/applications/456/notifications");
 		});
 
 		it("should initialize WebSocket mocking", async () => {
-			// Reset modules to ensure fresh import
 			vi.resetModules();
 			const { initializeWebSocketMocking } = await import("@/dev-tools/mock-api/websocket");
 
-			// Store original WebSocket
 			const OriginalWebSocket = globalThis.WebSocket;
 
 			initializeWebSocketMocking();
 
-			// WebSocket should be mocked
 			expect(globalThis.WebSocket).not.toBe(OriginalWebSocket);
 
-			// Test creating a mock WebSocket
 			const ws = new WebSocket("ws://localhost:3001/test");
 			expect(ws.url).toBe("ws://localhost:3001/test");
 		});
@@ -300,16 +280,13 @@ describe("Mock API Core Integration", () => {
 			const client = new WebSocket("ws://localhost:3001");
 			await server.connected;
 
-			// Verify no messages received initially
 			const receivedMessages: any[] = [];
 			client.addEventListener("message", (event) => {
 				receivedMessages.push(JSON.parse(event.data));
 			});
 
-			// Send a message from server to client
 			server.send(JSON.stringify({ data: "hello", event: "test" }));
 
-			// Wait for message to be received
 			await new Promise((resolve) => setTimeout(resolve, 50));
 
 			expect(receivedMessages).toHaveLength(1);
@@ -319,21 +296,16 @@ describe("Mock API Core Integration", () => {
 
 	describe("Development vs Production", () => {
 		it("should handle production environment", async () => {
-			// Can't modify NODE_ENV directly, but we can test behavior
 			process.env.NEXT_PUBLIC_MOCK_API = "true";
 
-			// In a real scenario, production builds would exclude dev-tools
-			// For testing, we verify the environment check
 			const { isMockAPIEnabled } = await import("@/dev-tools/mock-api/client");
 
-			// Mock API should still respect the env variable
 			expect(isMockAPIEnabled()).toBe(true);
 		});
 
 		it("should handle missing dev-tools gracefully", async () => {
 			process.env.NEXT_PUBLIC_MOCK_API = "false";
 
-			// This should not throw when dev-tools are not available
 			expect(async () => {
 				const { getClient } = await import("@/utils/api");
 				return getClient();

@@ -7,7 +7,6 @@ import type { API } from "@/types/api-types";
 import { isMockAPIEnabled } from "./client";
 import { getMockClient } from "./mock-client";
 
-// Application actions
 export async function createApplication(
 	projectId: string,
 	data: API.CreateApplication.RequestBody,
@@ -89,7 +88,6 @@ export async function getProject(projectId: string): Promise<API.GetProject.Http
 	return response.json<API.GetProject.Http200.ResponseBody>();
 }
 
-// Project actions
 export async function getProjects(): Promise<API.ListProjects.Http200.ResponseBody> {
 	if (!isMockAPIEnabled()) {
 		throw new Error("Mock getProjects should only be called in mock mode");
@@ -111,7 +109,6 @@ export async function getRagSources(
 	return response.json<API.RetrieveGrantApplicationRagSources.Http200.ResponseBody>();
 }
 
-// Auth actions
 export async function login(data: API.Login.RequestBody): Promise<API.Login.Http201.ResponseBody> {
 	if (!isMockAPIEnabled()) {
 		throw new Error("Mock login should only be called in mock mode");

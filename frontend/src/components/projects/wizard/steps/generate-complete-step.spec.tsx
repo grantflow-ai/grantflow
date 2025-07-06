@@ -9,6 +9,7 @@ describe("GenerateCompleteStep", () => {
 
 		expect(screen.getByTestId("generate-complete-step")).toBeInTheDocument();
 		expect(screen.getByText("Generate and Complete")).toBeInTheDocument();
-		expect(screen.getByText("Step 6: Finalize and complete your application")).toBeInTheDocument();
+		expect(screen.getByText("Ready to Generate")).toBeInTheDocument();
+		expect(screen.getByTestId("generate-application-button")).toBeInTheDocument();
 	});
 });

@@ -40,14 +40,19 @@ export function ApplicationPreview({
 		[templateSources],
 	);
 
-	log.warn("draftTitle", { draftTitle });
 	const isEmpty = !draftTitle && templateFiles.length === 0 && templateUrls.length === 0;
 
 	if (isEmpty) {
 		return (
 			<div className="bg-preview-bg flex min-h-0 h-full w-1/2 md:w-2/3 lg:w-3/4 flex-col border-l border-app-gray-100">
 				<div className="flex flex-1 items-center justify-center p-5 md:p-7">
-					<Image alt="Preview logo" height={180} src="/icons/preview-logo.svg" width={180} />
+					<Image
+						alt="Preview logo"
+						height={180}
+						src="/icons/preview-logo.svg"
+						style={{ height: "auto", maxHeight: 180 }}
+						width={180}
+					/>
 				</div>
 			</div>
 		);

@@ -50,6 +50,7 @@ class UpdateApplicationRequestBody(TypedDict):
     form_inputs: NotRequired[dict[str, str]]
     research_objectives: NotRequired[list[ResearchObjective]]
     status: NotRequired[ApplicationStatusEnum]
+    text: NotRequired[str]
     title: NotRequired[str]
 
 

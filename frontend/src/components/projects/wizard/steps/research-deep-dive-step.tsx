@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
@@ -27,7 +27,36 @@ export function ResearchDeepDiveStep() {
 	const application = useApplicationStore((state) => state.application);
 	const updateApplication = useApplicationStore((state) => state.updateApplication);
 
-	const formInputs = application?.form_inputs ?? ({} as Record<FormInputsKey, string>);
+	const formInputs = useMemo(
+		() => application?.form_inputs ?? ({} as Partial<Record<FormInputsKey, string>>),
+		[application?.form_inputs],
+	);
+
+	const [localAnswers, setLocalAnswers] = useState<Partial<Record<FormInputsKey, string>>>(() => {
+		const initialAnswers: Partial<Record<FormInputsKey, string>> = {};
+		RESEARCH_QUESTIONS.forEach((question) => {
+			if (formInputs[question.key]) {
+				initialAnswers[question.key] = formInputs[question.key];
+			}
+		});
+		return initialAnswers;
+	});
+
+	const [savedQuestions, setSavedQuestions] = useState<Set<FormInputsKey>>(new Set());
+
+	useEffect(() => {
+		setLocalAnswers((prev) => {
+			const updatedAnswers: Partial<Record<FormInputsKey, string>> = { ...prev };
+
+			RESEARCH_QUESTIONS.forEach((question) => {
+				if (formInputs[question.key] && !prev[question.key]) {
+					updatedAnswers[question.key] = formInputs[question.key];
+				}
+			});
+
+			return updatedAnswers;
+		});
+	}, [formInputs]);
 
 	const handleQuestionSelect = (index: number) => {
 		setSelectedQuestion(index);
@@ -36,16 +65,59 @@ export function ResearchDeepDiveStep() {
 	const handleAnswerChange = (answer: string) => {
 		if (selectedQuestion !== null) {
 			const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
-			void updateApplication({
+			setLocalAnswers((prev) => ({
+				...prev,
+				[questionKey]: answer,
+			}));
+		}
+	};
+
+	const handleSave = async () => {
+		if (selectedQuestion !== null) {
+			const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
+			const answer = localAnswers[questionKey] ?? "";
+
+			await updateApplication({
 				form_inputs: {
 					...formInputs,
 					[questionKey]: answer,
 				},
 			});
+
+			setSavedQuestions((prev) => new Set([questionKey, ...prev]));
+
+			if (selectedQuestion < RESEARCH_QUESTIONS.length - 1) {
+				setSelectedQuestion(selectedQuestion + 1);
+			}
 		}
 	};
 
-	const currentAnswer = selectedQuestion === null ? "" : formInputs[RESEARCH_QUESTIONS[selectedQuestion].key] || "";
+	const handleBack = () => {
+		if (selectedQuestion !== null && selectedQuestion > 0) {
+			setSelectedQuestion(selectedQuestion - 1);
+		}
+	};
+
+	const getCurrentAnswer = () => {
+		if (selectedQuestion === null) return "";
+		const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
+		return localAnswers[questionKey] ?? "";
+	};
+
+	const isQuestionAnswered = (key: FormInputsKey): boolean => {
+		const value = formInputs[key];
+		return savedQuestions.has(key) || Boolean(value && value.trim().length > 0);
+	};
+
+	const hasUnsavedChanges = (): boolean => {
+		if (selectedQuestion === null) return false;
+		const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
+		const currentValue = localAnswers[questionKey] ?? "";
+		const savedValue = formInputs[questionKey] ?? "";
+		return currentValue.trim() !== savedValue.trim();
+	};
+
+	const currentAnswer = getCurrentAnswer();
 	const wordCount = currentAnswer
 		.trim()
 		.split(/\s+/)
@@ -90,9 +162,9 @@ export function ResearchDeepDiveStep() {
 						{RESEARCH_QUESTIONS.map((item, index) => (
 							<QuestionCard
 								index={index + 1}
-								isAnswered={Boolean(formInputs[item.key] && formInputs[item.key].trim())}
+								isAnswered={isQuestionAnswered(item.key)}
 								isSelected={selectedQuestion === index}
-								key={index}
+								key={item.key}
 								onClick={() => {
 									handleQuestionSelect(index);
 								}}
@@ -113,7 +185,11 @@ export function ResearchDeepDiveStep() {
 					) : (
 						<AnswerArea
 							answer={currentAnswer}
+							hasChanges={hasUnsavedChanges()}
+							isFirstQuestion={selectedQuestion === 0}
 							onAnswerChange={handleAnswerChange}
+							onBack={handleBack}
+							onSave={handleSave}
 							question={RESEARCH_QUESTIONS[selectedQuestion].question}
 							wordCount={wordCount}
 						/>
@@ -126,12 +202,20 @@ export function ResearchDeepDiveStep() {
 
 function AnswerArea({
 	answer,
+	hasChanges,
+	isFirstQuestion,
 	onAnswerChange,
+	onBack,
+	onSave,
 	question,
 	wordCount: _wordCount,
 }: {
 	answer: string;
+	hasChanges: boolean;
+	isFirstQuestion: boolean;
 	onAnswerChange: (answer: string) => void;
+	onBack: () => void;
+	onSave: () => void;
 	question: string;
 	wordCount: number;
 }) {
@@ -152,10 +236,17 @@ function AnswerArea({
 			/>
 
 			<div className="mt-4 flex gap-3">
-				<AppButton className="flex-1" variant="secondary">
-					Back
-				</AppButton>
-				<AppButton className="flex-1" variant="primary">
+				{!isFirstQuestion && (
+					<AppButton className="flex-1" onClick={onBack} variant="secondary">
+						Back
+					</AppButton>
+				)}
+				<AppButton
+					className={isFirstQuestion ? "w-full" : "flex-1"}
+					disabled={!answer || answer.trim().length === 0 || !hasChanges}
+					onClick={onSave}
+					variant="primary"
+				>
 					Save
 				</AppButton>
 			</div>

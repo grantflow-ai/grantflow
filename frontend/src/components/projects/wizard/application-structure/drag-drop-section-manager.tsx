@@ -9,8 +9,8 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
-import type { API } from "@/types/api-types";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { log } from "@/utils/logger";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -123,33 +123,59 @@ export function DragDropSectionManager({
 
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
+			onDragEnd: (event, activeItem, overItem) => {
+				log.info("Drag ended", {
+					activeId: activeItem?.id,
+					activeTitle: activeItem?.title,
+					eventActive: event.active.id,
+					eventOver: event.over?.id,
+					overId: overItem?.id,
+					overTitle: overItem?.title,
+				});
+			},
 			onDragOver: async (_event, activeSection, overSection) => {
 				if (!(activeSection && overSection)) {
+					// log.warn("Drag over: Missing active or over section");
 					return;
 				}
 
 				if (wouldCreateInvalidNesting(activeSection, overSection)) {
+					log.warn("Drag over: Would create invalid nesting", {
+						activeId: activeSection.id,
+						overId: overSection.id,
+					});
 					toast.error("Cannot create more than 2 levels of nesting");
 					return;
 				}
 
 				const newParentId = determineNewParentId(activeSection, overSection);
+				log.info("Drag over: Determined new parent", {
+					activeId: activeSection.id,
+					newParentId,
+					oldParentId: activeSection.parent_id,
+				});
 
 				if (activeSection.parent_id !== newParentId) {
 					const updatedSections = grantSections.map((section) => {
 						if (section.id === activeSection.id) {
-							return {
+							return toUpdateGrantSection({
 								...section,
 								parent_id: newParentId,
-							};
+							});
 						}
-						return section;
+						return toUpdateGrantSection(section);
 					});
 
-					await updateGrantSections(updatedSections as API.UpdateGrantTemplate.RequestBody["grant_sections"]);
+					log.info("Drag over: Updating sections", { sectionCount: updatedSections.length });
+					await updateGrantSections(updatedSections);
 				}
 			},
+			onDragStart: (_event, item) => {
+				log.info("Drag started", { sectionId: item?.id, sectionTitle: item?.title });
+			},
 			onReorder: async (sections, oldIndex, newIndex) => {
+				log.info("Reordering sections", { newIndex, oldIndex, sectionCount: sections.length });
+
 				const reorderedSections = arrayMove(sections, oldIndex, newIndex);
 
 				const updatedSections = reorderedSections.map((section, index) => ({
@@ -158,6 +184,10 @@ export function DragDropSectionManager({
 					parent_id: section.parent_id ?? null,
 				}));
 
+				log.info("Reorder: Updating grant sections", {
+					sections: updatedSections.map((s) => ({ id: s.id, order: s.order, title: s.title })),
+					updatedCount: updatedSections.length,
+				});
 				await updateGrantSections(updatedSections.map(toUpdateGrantSection));
 			},
 		}),
@@ -230,9 +260,10 @@ function SectionDragOverlay({
 
 	return (
 		<div
-			className={`flex items-center justify-start gap-5 rounded bg-white shadow-lg outline-1 outline-offset-[-1px] outline-blue-500 hover:outline-2 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
+			className={`flex items-center justify-start gap-5 rounded bg-white shadow-2xl border-2 border-blue-500 opacity-90 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
+			style={{ minWidth: "300px" }}
 		>
-			<div className="relative size-6 cursor-move ">
+			<div className="relative size-6 cursor-grabbing">
 				<GripVertical className="size-6 text-gray-400" />
 			</div>
 

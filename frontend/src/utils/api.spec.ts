@@ -4,8 +4,6 @@ import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
 
-// Note: getClient will be dynamically imported in tests due to module reset
-
 vi.mock("ky");
 vi.mock("@/utils/env");
 vi.mock("@/utils/logger", () => ({
@@ -61,11 +59,10 @@ describe("api", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		vi.resetModules(); // Reset module cache to ensure fresh imports
+		vi.resetModules();
 		vi.mocked(getEnv).mockReturnValue(mockEnv as any);
 		vi.mocked(ky.create).mockReturnValue(mockKyInstance as any);
 
-		// Reset the Ref mock to ensure fresh client creation
 		vi.mocked(Ref).mockReturnValue({
 			value: undefined,
 		} as any);
@@ -83,7 +80,7 @@ describe("api", () => {
 			expect(ky.create).toHaveBeenCalledWith({
 				hooks: expect.any(Object),
 				prefixUrl: "https://api.example.com",
-				timeout: 600_000, // 10 minutes
+				timeout: 600_000,
 			});
 
 			expect(client).toBe(mockKyInstance);
@@ -273,7 +270,7 @@ describe("api", () => {
 
 			expect(ky.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					timeout: 600_000, // 10 minutes (60 * 1000 * 10)
+					timeout: 600_000,
 				}),
 			);
 		});
@@ -284,7 +281,6 @@ describe("api", () => {
 			};
 			vi.mocked(getEnv).mockReturnValue(customEnv as any);
 
-			// Reset the client to force recreation
 			const RefConstructor = vi.mocked(Ref);
 			RefConstructor.prototype.value = undefined;
 

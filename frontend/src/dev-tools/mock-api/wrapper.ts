@@ -15,7 +15,6 @@ export async function withMockAPI<T>(
 	if (!mockHandlersRegistered) {
 		registerMockHandlers();
 		mockHandlersRegistered = true;
-		console.log("[Mock API] Mock mode enabled");
 	}
 
 	const mockClient = getMockAPIClient();

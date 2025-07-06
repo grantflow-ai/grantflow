@@ -1,8 +1,8 @@
+import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { WizardStep } from "@/constants";
-import { DevPanel } from "@/dev-tools/components/dev-panel";
 import { PagePath } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -78,7 +78,6 @@ export function WizardFooter() {
 			) : (
 				<div />
 			)}
-			<DevPanel />
 			<AppButton
 				data-testid="continue-button"
 				disabled={disabled}
@@ -206,7 +205,9 @@ function Deadline() {
 		const diffTime = calculateTimeDifference(submissionDate);
 
 		if (diffTime <= 0) {
-			return "Deadline passed";
+			const deadline = new Date(submissionDate);
+			const formattedDate = format(deadline, "MM/dd/yyyy");
+			return `Deadline passed (${formattedDate})`;
 		}
 
 		return formatTimeRemaining(diffTime);

@@ -1,43 +1,46 @@
+import { ProjectListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
+import { useUserStore } from "@/stores/user-store";
 import { DashboardClient } from "./dashboard-client";
-;
+
+// Mock the user store
+vi.mock("@/stores/user-store");
 
 // Mock data for initialProjects
-const initialProjects = [
-  {
-    id: "project-1",
-    name: "AI Research Project",
-    description: "Exploring AI applications",
-  },
-];
+const initialProjects = [ProjectListItemFactory.build()];
 
 describe("DashboardClient", () => {
-  it("renders dashboard header and stats", () => {
-    render(<DashboardClient initialProjects={initialProjects} />);
+	beforeEach(() => {
+		// Mock the user store to prevent welcome modal from showing
+		vi.mocked(useUserStore).mockReturnValue({
+			dismissWelcomeModal: vi.fn(), // This prevents the modal from showing
+			hasSeenWelcomeModal: true,
+		} as any);
+	});
 
-    expect(screen.getByTestId("dashboard-header")).toBeInTheDocument();
-    expect(screen.getByTestId("dashboard-stats")).toBeInTheDocument();
-  });
+	it("renders dashboard header and stats", () => {
+		render(<DashboardClient initialProjects={initialProjects} />);
 
-  it("renders project cards when projects exist", () => {
-    render(<DashboardClient initialProjects={initialProjects} />);
+		expect(screen.getByTestId("dashboard-header")).toBeInTheDocument();
+		expect(screen.getByTestId("project-count")).toBeInTheDocument();
+		expect(screen.getByTestId("application-count")).toBeInTheDocument();
+	});
 
-    expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
-  });
+	it("renders project cards when projects exist", () => {
+		render(<DashboardClient initialProjects={initialProjects} />);
 
-  it("renders empty state when there are no projects", () => {
-    render(<DashboardClient initialProjects={[]} />);
+		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
+	});
 
-    expect(
-      screen.getByTestId("create-first-project-button")
-    ).toBeInTheDocument();
-  });
+	it("renders empty state when there are no projects", () => {
+		render(<DashboardClient initialProjects={[]} />);
 
-  it("renders invite collaborators button", () => {
-    render(<DashboardClient initialProjects={initialProjects} />);
+		expect(screen.getByTestId("create-first-project-button")).toBeInTheDocument();
+	});
 
-    expect(
-      screen.getByTestId("invite-collaborators-button")
-    ).toBeInTheDocument();
-  });
+	it("renders invite collaborators button", () => {
+		render(<DashboardClient initialProjects={initialProjects} />);
+
+		expect(screen.getByTestId("invite-collaborators-button")).toBeInTheDocument();
+	});
 });

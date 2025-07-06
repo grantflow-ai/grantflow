@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import Image from "next/image";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
@@ -40,6 +40,20 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 };
 
 export function ApplicationStructureStep() {
+	const application = useApplicationStore((state) => state.application);
+	const generateTemplate = useApplicationStore((state) => state.generateTemplate);
+	const checkTemplateGeneration = useWizardStore((state) => state.checkTemplateGeneration);
+	const polling = useWizardStore((state) => state.polling);
+	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
+
+	useEffect(() => {
+		if (application?.grant_template && !application.grant_template.grant_sections.length && !polling.isActive) {
+			void generateTemplate(application.grant_template.id);
+			setGeneratingTemplate(true);
+			polling.start(checkTemplateGeneration, 2000, false);
+		}
+	}, [application, generateTemplate, checkTemplateGeneration, polling, setGeneratingTemplate]);
+
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<div data-testid="application-structure-left-pane">

@@ -30,7 +30,6 @@ class MockKyWrapper {
 		if (!mockHandlersRegistered) {
 			registerMockHandlers();
 			mockHandlersRegistered = true;
-			console.log("[Mock API] Mock handlers registered");
 		}
 	}
 
@@ -51,7 +50,6 @@ class MockKyWrapper {
 	}
 
 	head(url: string | URL, options?: RequestOptions): Promise<MockResponse> {
-		// For HEAD requests, use the real client as they don't typically need mocking
 		return this.realClient.head(url, options) as Promise<MockResponse>;
 	}
 
@@ -69,7 +67,6 @@ class MockKyWrapper {
 
 	async request(url: string, options?: RequestOptions): Promise<MockResponse> {
 		const path = this.extractPath(url);
-		console.log(`[Mock API] Intercepting request: ${options?.method ?? "GET"} ${path}`);
 
 		const result = await this.mockClient.intercept<unknown>(path, {
 			body: options?.json ? JSON.stringify(options.json) : options?.body,
@@ -79,27 +76,24 @@ class MockKyWrapper {
 		return createMockResponse(result);
 	}
 
-	// Add the missing stop method
 	stop(): void {
-		// No-op for mock client
+		// ~keep Mock client cleanup - no resources to release
 	}
 
 	private extractPath(url: string): string {
-		// Remove the base URL if present
 		const baseUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
 		if (url.startsWith(baseUrl)) {
 			return url.slice(baseUrl.length);
 		}
-		// Handle relative URLs
+
 		if (url.startsWith("/")) {
 			return url;
 		}
-		// Prepend slash if missing
+
 		return `/${url}`;
 	}
 }
 
-// Simple mock response that provides the minimal interface we need
 function createMockResponse(data: unknown): MockResponse {
 	const jsonData = JSON.stringify(data);
 	return {
