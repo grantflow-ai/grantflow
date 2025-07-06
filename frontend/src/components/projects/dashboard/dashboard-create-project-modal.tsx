@@ -1,3 +1,5 @@
+"use client";
+
 import { useRouter } from "next/navigation";
 
 import { BaseModal } from "@/components/app/feedback/base-modal";
