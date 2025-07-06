@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 
 
-async def budget_alert_to_discord(request: Any) -> dict[str, Any]:
+async def budget_alert_to_discord(cloud_event: Any) -> dict[str, Any]:
     """Forward GCP budget alerts to Discord webhook."""
 
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
@@ -17,11 +17,8 @@ async def budget_alert_to_discord(request: Any) -> dict[str, Any]:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        pubsub_message = request.data
-        if isinstance(pubsub_message, str):
-            pubsub_message = json.loads(pubsub_message)
-
-        message_data = base64.b64decode(pubsub_message["message"]["data"]).decode("utf-8")
+        
+        message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
         budget_notification = json.loads(message_data)
 
         budget_name = budget_notification.get("budgetDisplayName", "Unknown Budget")
@@ -90,6 +87,6 @@ async def budget_alert_to_discord(request: Any) -> dict[str, Any]:
         return {"status": "error", "message": f"Unexpected error: {e!s}"}
 
 
-def budget_alert_to_discord_sync(request: Any) -> dict[str, Any]:
+def budget_alert_to_discord_sync(cloud_event: Any, context: Any = None) -> dict[str, Any]:  # noqa: ARG001
     """Synchronous wrapper for the async budget function (Cloud Functions entry point)."""
-    return asyncio.run(budget_alert_to_discord(request))
+    return asyncio.run(budget_alert_to_discord(cloud_event))
