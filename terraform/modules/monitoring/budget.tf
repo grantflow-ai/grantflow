@@ -112,6 +112,15 @@ resource "google_pubsub_topic_iam_member" "budget_function_subscriber" {
   member = "serviceAccount:${google_service_account.budget_function.email}"
 }
 
+# Allow the service account to invoke the Cloud Function
+resource "google_cloudfunctions2_function_iam_member" "budget_alerts_invoker" {
+  project        = google_cloudfunctions2_function.budget_to_discord.project
+  location       = google_cloudfunctions2_function.budget_to_discord.location
+  cloud_function = google_cloudfunctions2_function.budget_to_discord.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:${google_service_account.budget_function.email}"
+}
+
 # Storage bucket for Cloud Function source
 resource "google_storage_bucket" "function_source" {
   name     = "${var.project_id}-budget-functions-${var.environment}"
