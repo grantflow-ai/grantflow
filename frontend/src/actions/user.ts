@@ -19,6 +19,20 @@ export async function deleteAccount() {
 }
 
 /**
+ * Get list of projects where the user is the sole owner
+ * These must be handled before account deletion
+ */
+export async function getSoleOwnedProjects() {
+	return withAuthRedirect(
+		getClient()
+			.get("user/sole-owned-projects", {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.GetSoleOwnedProjects.Http200.ResponseBody>(),
+	);
+}
+
+/**
  * Restore a soft-deleted account within the grace period
  * @param token - Restoration token sent via email
  */
