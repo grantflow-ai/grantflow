@@ -34,10 +34,10 @@ describe("User Actions", () => {
 	describe("deleteAccount", () => {
 		it("should call the correct API endpoint with auth headers", async () => {
 			const mockResponse = {
-				message: "Account scheduled for deletion. You will be removed from all projects immediately.",
-				scheduled_deletion_date: "2025-08-05T10:00:00Z",
 				grace_period_days: 30,
+				message: "Account scheduled for deletion. You will be removed from all projects immediately.",
 				restoration_info: "Contact support within 30 days to restore your account",
+				scheduled_deletion_date: "2025-08-05T10:00:00Z",
 			};
 			const mockJson = vi.fn().mockResolvedValue(mockResponse);
 			const mockDelete = vi.fn().mockReturnValue({ json: mockJson });
@@ -72,10 +72,10 @@ describe("User Actions", () => {
 
 		it("should use withAuthRedirect wrapper", async () => {
 			const mockResponse = {
-				message: "Account scheduled for deletion. You will be removed from all projects immediately.",
-				scheduled_deletion_date: "2025-08-05T10:00:00Z",
 				grace_period_days: 30,
+				message: "Account scheduled for deletion. You will be removed from all projects immediately.",
 				restoration_info: "Contact support within 30 days to restore your account",
+				scheduled_deletion_date: "2025-08-05T10:00:00Z",
 			};
 			const mockJson = vi.fn().mockResolvedValue(mockResponse);
 			const mockDelete = vi.fn().mockReturnValue({ json: mockJson });
