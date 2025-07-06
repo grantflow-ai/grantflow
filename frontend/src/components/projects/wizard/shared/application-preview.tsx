@@ -116,7 +116,7 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 	return (
 		<PreviewCard data-testid="application-links">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Links</h4>
-			<div className="grid grid-cols-2 gap-x-4">
+			<div className="grid grid-cols-2 gap-x-11">
 				<div className="space-y-1">
 					{templateUrls
 						.filter((_, index) => index % 2 === 0)
