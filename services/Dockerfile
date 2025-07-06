@@ -40,6 +40,15 @@ RUN if [ "$service_name" = "scraper" ]; then \
         apt-get update && apt-get install -y --no-install-recommends \
         wget \
         gnupg \
+        # Playwright browser dependencies \
+        libnss3 \
+        libnspr4 \
+        libatk-bridge2.0-0 \
+        libdrm2 \
+        libxkbcommon0 \
+        libgtk-3-0 \
+        libgbm1 \
+        libasound2 \
         && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
     fi
 
@@ -50,10 +59,14 @@ COPY --chown=appuser:appuser packages /app/packages
 
 ENV PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
-    APP="services.${service_name}.src.main:app"
+    APP="services.${service_name}.src.main:app" \
+    PLAYWRIGHT_BROWSERS_PATH="/app/.cache/ms-playwright"
 
 RUN if [ "$service_name" = "scraper" ]; then \
-        /app/.venv/bin/python -m playwright install chromium \
+        mkdir -p /app/.cache/ms-playwright \
+        && chown -R appuser:appuser /app/.cache \
+        && export PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright \
+        && /app/.venv/bin/python -m playwright install chromium \
         && /app/.venv/bin/python -m playwright install-deps chromium; \
     fi
 
