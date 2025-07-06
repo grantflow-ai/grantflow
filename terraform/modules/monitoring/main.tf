@@ -25,6 +25,12 @@ variable "environment" {
   default     = "staging"
 }
 
+variable "discord_role_alerts" {
+  description = "Discord role ID for alert mentions"
+  type        = string
+  default     = ""
+}
+
 # Discord notification channel
 resource "google_monitoring_notification_channel" "discord" {
   display_name = "Discord Alerts - ${title(var.environment)}"
