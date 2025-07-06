@@ -18,7 +18,17 @@ async def budget_alert_to_discord(cloud_event: Any) -> dict[str, Any]:
 
     try:
         
-        message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
+        
+        if hasattr(cloud_event, "data") and isinstance(cloud_event.data, str):
+            
+            message_data = base64.b64decode(cloud_event.data).decode("utf-8")
+        elif hasattr(cloud_event, "data") and "message" in cloud_event.data:
+            
+            message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
+        else:
+            
+            message_data = base64.b64decode(cloud_event.data).decode("utf-8")
+
         budget_notification = json.loads(message_data)
 
         budget_name = budget_notification.get("budgetDisplayName", "Unknown Budget")
