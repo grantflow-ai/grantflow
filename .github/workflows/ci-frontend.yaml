@@ -37,6 +37,7 @@ jobs:
             NEXT_PUBLIC_MAILGUN_API_KEY: mock-mailgun-key
             NEXT_PUBLIC_SEGMENT_WRITE_KEY: mock-segment-key
             NEXT_PUBLIC_DEBUG: true
+            RESEND_API_KEY: mock-resend-api-key
         steps:
             - name: Checkout
               uses: actions/checkout@v4
