@@ -11,10 +11,10 @@ class TestDeleteUser:
         mocker: MockerFixture,
         firebase_uid: str,
     ) -> None:
-        from datetime import datetime, timedelta
+        from datetime import UTC, datetime, timedelta
         from google.cloud import firestore  # type: ignore[attr-defined]
 
-        deletion_date = datetime.utcnow() + timedelta(days=30)
+        deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30)
         mock_firestore_data = {
             "firebase_uid": firebase_uid,
             "status": "scheduled",
@@ -39,7 +39,7 @@ class TestDeleteUser:
             "/user", headers={"Authorization": "Bearer some_token"}
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
 
         result = response.json()
         expected_response: DeleteUserResponse = {
@@ -88,10 +88,10 @@ class TestDeleteUser:
         mocker: MockerFixture,
         firebase_uid: str,
     ) -> None:
-        from datetime import datetime
+        from datetime import UTC, datetime
         from google.cloud import firestore  # type: ignore[attr-defined]
 
-        deletion_date = datetime.utcnow()
+        deletion_date = datetime.now(UTC).replace(tzinfo=None)
         mock_firestore_data = {
             "firebase_uid": firebase_uid,
             "status": "scheduled",
@@ -116,7 +116,7 @@ class TestDeleteUser:
             "/user", headers={"Authorization": "Bearer some_token"}
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         result = response.json()
         assert result["grace_period_days"] == 0
         assert "removed from all projects immediately" in result["message"]
