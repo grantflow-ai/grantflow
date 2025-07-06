@@ -6,7 +6,7 @@ resource "google_storage_bucket" "user_cleanup_functions" {
   location                    = "US"
   force_destroy               = true
   uniform_bucket_level_access = true
-  
+
   lifecycle_rule {
     condition {
       age = 7
@@ -57,7 +57,7 @@ resource "google_project_iam_member" "user_cleanup_permissions" {
 # Pub/Sub topic for scheduling
 resource "google_pubsub_topic" "user_cleanup_schedule" {
   name = "user-cleanup-schedule"
-  
+
   labels = {
     environment = var.environment
     purpose     = "user_cleanup"
@@ -73,7 +73,7 @@ resource "google_cloudfunctions2_function" "user_cleanup" {
   build_config {
     runtime     = "python312"
     entry_point = "main"
-    
+
     source {
       storage_source {
         bucket = google_storage_bucket.user_cleanup_functions.name
@@ -88,7 +88,7 @@ resource "google_cloudfunctions2_function" "user_cleanup" {
     available_memory                 = "512M"
     timeout_seconds                  = 540
     max_instance_request_concurrency = 1
-    
+
     environment_variables = {
       GOOGLE_CLOUD_PROJECT = var.project_id
       CLOUD_SQL_INSTANCE   = "grantflow-db"
@@ -112,7 +112,7 @@ resource "google_cloudfunctions2_function" "user_cleanup" {
     trigger_region = "us-central1"
     event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic   = google_pubsub_topic.user_cleanup_schedule.id
-    
+
     retry_policy = "RETRY_POLICY_RETRY"
   }
 
@@ -134,7 +134,7 @@ resource "google_cloud_scheduler_job" "user_cleanup_daily" {
 
   pubsub_target {
     topic_name = google_pubsub_topic.user_cleanup_schedule.id
-    data       = base64encode(jsonencode({
+    data = base64encode(jsonencode({
       action    = "cleanup_expired_users"
       timestamp = "scheduled"
     }))
@@ -156,7 +156,7 @@ resource "google_monitoring_alert_policy" "user_cleanup_failures" {
 
   conditions {
     display_name = "Cloud Function execution failures"
-    
+
     condition_threshold {
       filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"user-cleanup-function\" AND metric.type=\"logging.googleapis.com/log_entry_count\""
       duration        = "300s"
@@ -190,9 +190,9 @@ resource "google_logging_metric" "user_cleanup_operations" {
   filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"user-cleanup-function\" AND jsonPayload.processed>=0"
 
   metric_descriptor {
-    metric_kind = "GAUGE"
-    value_type  = "INT64"
-    unit        = "1"
+    metric_kind  = "GAUGE"
+    value_type   = "INT64"
+    unit         = "1"
     display_name = "User Cleanup Operations"
   }
 
