@@ -1,5 +1,6 @@
 "use server";
 
+import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
@@ -8,14 +9,26 @@ import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
  * This will mark the account for deletion with a grace period for restoration
  */
 export async function deleteAccount() {
-	// NOTE: Replace with actual API endpoint when backend is implemented
-
 	return withAuthRedirect(
 		getClient()
-			.delete("user/account", {
+			.delete("user", {
 				headers: await createAuthHeaders(),
 			})
-			.json<{ message: string; success: boolean }>(),
+			.json<API.DeleteUser.Http200.ResponseBody>(),
+	);
+}
+
+/**
+ * Get list of projects where the user is the sole owner
+ * These must be handled before account deletion
+ */
+export async function getSoleOwnedProjects() {
+	return withAuthRedirect(
+		getClient()
+			.get("user/sole-owned-projects", {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.GetSoleOwnedProjects.Http200.ResponseBody>(),
 	);
 }
 
@@ -24,10 +37,10 @@ export async function deleteAccount() {
  * @param token - Restoration token sent via email
  */
 export async function restoreAccount(token: string) {
-	// NOTE: Replace with actual API endpoint when backend is implemented
+	// NOTE: Backend endpoint not yet implemented
 	return withAuthRedirect(
 		getClient()
-			.post("user/account/restore", {
+			.post("user/restore", {
 				headers: await createAuthHeaders(),
 				json: { token },
 			})

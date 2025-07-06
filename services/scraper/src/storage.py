@@ -100,7 +100,7 @@ class GCSStorage(Storage):
             if not await run_sync(bucket.exists):
                 await run_sync(bucket.create)
                 logger.info("Created scraper GCS bucket", bucket_name=self._bucket_name)
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.debug("Bucket creation skipped (likely already exists)", bucket_name=self._bucket_name)
 
         return bucket
@@ -181,7 +181,7 @@ class GCSStorage(Storage):
 
             return identifiers
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.error(
                 "Failed to list existing files in GCS",
                 bucket_name=self._bucket_name,

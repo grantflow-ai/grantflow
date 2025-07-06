@@ -28,7 +28,7 @@ class MonitoringTester:
                 response = await client.post(self.webhook_url, json=payload)
 
             return response.status_code == 204
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
     def create_error_alert_embed(self) -> dict[str, Any]:

@@ -80,5 +80,5 @@ def budget_alert_to_discord(request: Any) -> dict[str, Any]:
             return {"status": "success", "message": "Alert sent to Discord"}
         return {"status": "error", "message": f"Discord webhook failed: {response.status_code}"}
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return {"status": "error", "message": str(e)}

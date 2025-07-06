@@ -493,6 +493,17 @@ export namespace API {
 };
 };
 
+	export namespace DeleteUser {
+	export namespace Http200 {
+	export type ResponseBody = {
+	grace_period_days: number;
+	message: string;
+	restoration_info: string;
+	scheduled_deletion_date: string;
+};
+};
+};
+
 	export namespace DismissNotification {
 	export namespace Http200 {
 	export type ResponseBody = {
@@ -567,6 +578,18 @@ export namespace API {
 
 	export interface PathParameters {
 	project_id: string;
+};
+};
+
+	export namespace GetSoleOwnedProjects {
+	export namespace Http200 {
+	export type ResponseBody = {
+	count: number;
+	projects: {
+	id: string;
+	name: string;
+}[];
+};
 };
 };
 
