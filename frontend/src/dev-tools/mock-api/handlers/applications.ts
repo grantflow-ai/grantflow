@@ -57,42 +57,32 @@ export const applicationHandlers = {
 		if (scenario && scenario.data.applications.size > 0) {
 			const templateApp = [...scenario.data.applications.values()][0];
 
-			if (templateApp.grant_template) {
-				application = ApplicationWithTemplateFactory.build({
-					form_inputs: undefined,
-					grant_template: {
-						...templateApp.grant_template,
-						created_at: new Date().toISOString(),
-						rag_sources: templateApp.grant_template.rag_sources || [],
-						submission_date: randomDeadline.toISOString(),
-						updated_at: new Date().toISOString(),
-					},
-					id,
-					project_id: projectId,
-					research_objectives: undefined,
-					status: "DRAFT",
-					title: requestBody.title,
-				});
-				console.log("[DEBUG] Created application with grant template", {
-					id,
-					ragSourcesCount: application.grant_template?.rag_sources?.length || 0,
-					title: requestBody.title,
-				});
-			} else {
-				application = ApplicationFactory.build({
-					form_inputs: undefined,
-					grant_template: undefined,
-					id,
-					project_id: projectId,
-					research_objectives: undefined,
-					status: "DRAFT",
-					title: requestBody.title,
-				});
-				console.log("[DEBUG] Created basic application without template", { id, title: requestBody.title });
-			}
+			application = templateApp.grant_template
+				? ApplicationWithTemplateFactory.build({
+						form_inputs: undefined,
+						grant_template: {
+							...templateApp.grant_template,
+							created_at: new Date().toISOString(),
+							rag_sources: templateApp.grant_template.rag_sources || [],
+							submission_date: randomDeadline.toISOString(),
+							updated_at: new Date().toISOString(),
+						},
+						id,
+						project_id: projectId,
+						research_objectives: undefined,
+						status: "DRAFT",
+						title: requestBody.title,
+					})
+				: ApplicationFactory.build({
+						form_inputs: undefined,
+						grant_template: undefined,
+						id,
+						project_id: projectId,
+						research_objectives: undefined,
+						status: "DRAFT",
+						title: requestBody.title,
+					});
 		} else {
-			// Fallback to basic application when no scenario or empty scenario
-			console.log("[DEBUG] No scenario or empty scenario, creating basic application");
 			application = ApplicationFactory.build({
 				form_inputs: undefined,
 				grant_template: undefined,
@@ -104,7 +94,6 @@ export const applicationHandlers = {
 			});
 		}
 
-		console.log("[DEBUG] Storing application in applicationStore", { id, title: application.title });
 		applicationStore.set(id, application);
 		return application;
 	},
