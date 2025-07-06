@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 from litestar import get, post
 from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, ProjectUser
+from packages.db.src.tables import Project, ProjectUser, User
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -42,6 +42,11 @@ async def handle_login(
         project_user = result.scalars().first()
 
         if project_user is None:
+            
+            user = User(firebase_uid=firebase_uid)
+            session.add(user)
+            await session.flush()
+
             default_project = Project(name="default")
             session.add(default_project)
             await session.flush()

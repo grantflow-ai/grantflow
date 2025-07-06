@@ -63,6 +63,15 @@ def upgrade() -> None:
     op.create_index(op.f("ix_users_created_at"), "users", ["created_at"], unique=False)
     op.create_index(op.f("ix_users_deleted_at"), "users", ["deleted_at"], unique=False)
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=False)
+
+    
+    op.execute("""
+        INSERT INTO users (firebase_uid, created_at, updated_at)
+        SELECT DISTINCT firebase_uid, NOW(), NOW()
+        FROM project_users
+        ON CONFLICT (firebase_uid) DO NOTHING
+    """)
+
     op.create_table(
         "subscriptions",
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),

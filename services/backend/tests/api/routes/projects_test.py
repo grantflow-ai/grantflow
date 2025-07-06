@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import UserProjectInvitation, Project, ProjectUser
+from packages.db.src.tables import UserProjectInvitation, Project, ProjectUser, User
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
@@ -763,6 +763,11 @@ async def test_update_invitation_role_not_found(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session, session.begin():
+        
+        user = User(firebase_uid=firebase_uid)
+        session.add(user)
+        await session.flush()
+
         await session.execute(
             insert(ProjectUser).values(
                 project_id=project.id,
