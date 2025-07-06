@@ -1,10 +1,11 @@
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
-import { deleteAccount, restoreAccount } from "./user";
+import { deleteAccount, getSoleOwnedProjects, restoreAccount } from "./user";
 
 vi.mock("@/utils/api", () => ({
 	getClient: vi.fn(() => ({
 		delete: vi.fn(),
+		get: vi.fn(),
 		post: vi.fn(),
 	})),
 }));
@@ -17,6 +18,7 @@ vi.mock("@/utils/server-side", () => ({
 describe("User Actions", () => {
 	const mockClient = {
 		delete: vi.fn(),
+		get: vi.fn(),
 		post: vi.fn(),
 	};
 
@@ -82,6 +84,79 @@ describe("User Actions", () => {
 			mockClient.delete = mockDelete;
 
 			await deleteAccount();
+
+			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
+			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;
+			expect(wrappedPromise).toBeDefined();
+		});
+	});
+
+	describe("getSoleOwnedProjects", () => {
+		it("should call the correct API endpoint with auth headers", async () => {
+			const mockResponse = {
+				count: 2,
+				projects: [
+					{ id: "project-1", name: "Project One" },
+					{ id: "project-2", name: "Project Two" },
+				],
+			};
+			const mockJson = vi.fn().mockResolvedValue(mockResponse);
+			const mockGet = vi.fn().mockReturnValue({ json: mockJson });
+			mockClient.get = mockGet;
+
+			const result = await getSoleOwnedProjects();
+
+			expect(mockGetClient).toHaveBeenCalledOnce();
+			expect(mockCreateAuthHeaders).toHaveBeenCalledOnce();
+			expect(mockGet).toHaveBeenCalledWith("user/sole-owned-projects", {
+				headers: { Authorization: "Bearer mock-token" },
+			});
+			expect(mockJson).toHaveBeenCalledOnce();
+			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
+			expect(result).toEqual(mockResponse);
+		});
+
+		it("should return empty array when user has no sole-owned projects", async () => {
+			const mockResponse = {
+				count: 0,
+				projects: [],
+			};
+			const mockJson = vi.fn().mockResolvedValue(mockResponse);
+			const mockGet = vi.fn().mockReturnValue({ json: mockJson });
+			mockClient.get = mockGet;
+
+			const result = await getSoleOwnedProjects();
+
+			expect(result).toEqual(mockResponse);
+			expect(result.projects).toHaveLength(0);
+			expect(result.count).toBe(0);
+		});
+
+		it("should handle API errors correctly", async () => {
+			const mockError = new Error("API Error");
+			const mockJson = vi.fn().mockRejectedValue(mockError);
+			const mockGet = vi.fn().mockReturnValue({ json: mockJson });
+			mockClient.get = mockGet;
+
+			await expect(getSoleOwnedProjects()).rejects.toThrow("API Error");
+
+			expect(mockGetClient).toHaveBeenCalledOnce();
+			expect(mockCreateAuthHeaders).toHaveBeenCalledOnce();
+			expect(mockGet).toHaveBeenCalledWith("user/sole-owned-projects", {
+				headers: { Authorization: "Bearer mock-token" },
+			});
+		});
+
+		it("should use withAuthRedirect wrapper", async () => {
+			const mockResponse = {
+				count: 0,
+				projects: [],
+			};
+			const mockJson = vi.fn().mockResolvedValue(mockResponse);
+			const mockGet = vi.fn().mockReturnValue({ json: mockJson });
+			mockClient.get = mockGet;
+
+			await getSoleOwnedProjects();
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
 			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;

@@ -581,6 +581,18 @@ export namespace API {
 };
 };
 
+	export namespace GetSoleOwnedProjects {
+	export namespace Http200 {
+	export type ResponseBody = {
+	count: number;
+	projects: {
+	id: string;
+	name: string;
+}[];
+};
+};
+};
+
 	export namespace HealthCheck {
 	export namespace Http200 {
 	export type ResponseBody = string;
