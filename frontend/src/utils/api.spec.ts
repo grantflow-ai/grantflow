@@ -1,5 +1,6 @@
 import ky from "ky";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { shouldSkipLogging } from "@/dev-tools/utils/dev-helpers";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
@@ -21,6 +22,10 @@ vi.mock("@/utils/state", () => ({
 
 vi.mock("@/dev-tools/mock-api/mock-response", () => ({
 	createMockResponse: vi.fn(() => Promise.resolve(undefined)),
+}));
+
+vi.mock("@/dev-tools/utils/dev-helpers", () => ({
+	shouldSkipLogging: vi.fn(() => false),
 }));
 
 describe("api", () => {
@@ -62,6 +67,7 @@ describe("api", () => {
 		vi.resetModules();
 		vi.mocked(getEnv).mockReturnValue(mockEnv as any);
 		vi.mocked(ky.create).mockReturnValue(mockKyInstance as any);
+		vi.mocked(shouldSkipLogging).mockReturnValue(false);
 
 		vi.mocked(Ref).mockReturnValue({
 			value: undefined,
@@ -295,11 +301,7 @@ describe("api", () => {
 		});
 
 		it("should skip response logging when mock API is enabled", async () => {
-			const mockEnvWithMockAPI = {
-				...mockEnv,
-				NEXT_PUBLIC_MOCK_API: true,
-			};
-			vi.mocked(getEnv).mockReturnValue(mockEnvWithMockAPI as any);
+			vi.mocked(shouldSkipLogging).mockReturnValue(true);
 
 			const { getClient } = await import("./api");
 			getClient();
@@ -318,11 +320,7 @@ describe("api", () => {
 		});
 
 		it("should skip error logging when mock API is enabled", async () => {
-			const mockEnvWithMockAPI = {
-				...mockEnv,
-				NEXT_PUBLIC_MOCK_API: true,
-			};
-			vi.mocked(getEnv).mockReturnValue(mockEnvWithMockAPI as any);
+			vi.mocked(shouldSkipLogging).mockReturnValue(true);
 
 			const { getClient } = await import("./api");
 			getClient();

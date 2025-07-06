@@ -33,6 +33,7 @@ vi.mock("@/utils/env", () => ({
 	getEnv: () => ({
 		NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
 	}),
+	getMockAuthEnabled: vi.fn(() => false),
 }));
 
 vi.mock("@/utils/firebase", () => ({
