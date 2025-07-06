@@ -3,7 +3,7 @@
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
-import { getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
+import { deleteInvitation, getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppAvatar } from "@/components/app";
 import { useNotificationStore } from "@/stores/notification-store";
@@ -18,6 +18,7 @@ interface ProjectMember {
 	email: string;
 	firebaseUid: string;
 	fullName?: null | string;
+	invitationId?: string;
 	joinedAt: string;
 	photoUrl?: null | string;
 	projectAccess?: string[];
@@ -46,6 +47,7 @@ const ROLE_LABELS = {
 export function ProjectSettingsMembers({ currentUserRole, projectId, projectName }: ProjectSettingsMembersProps) {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [editingMember, setEditingMember] = useState<null | ProjectMember>(null);
+	const [pendingInvitations, setPendingInvitations] = useState<ProjectMember[]>([]);
 	const { user } = useUserStore();
 	const { addNotification } = useNotificationStore();
 
@@ -106,6 +108,30 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 		}
 	};
 
+	const handleCancelInvitation = async (invitationId: string, email: string) => {
+		try {
+			await deleteInvitation(projectId, invitationId);
+
+			// Remove from pending invitations
+			setPendingInvitations((prev) => prev.filter((inv) => inv.invitationId !== invitationId));
+
+			addNotification({
+				message: `Invitation to ${email} has been cancelled`,
+				projectName,
+				title: "Invitation cancelled",
+				type: "success",
+			});
+		} catch (error) {
+			log.error("Error cancelling invitation", error, { email, invitationId });
+			addNotification({
+				message: "Failed to cancel invitation",
+				projectName,
+				title: "Error",
+				type: "warning",
+			});
+		}
+	};
+
 	const handleInvite = async (email: string, permission: "admin" | "collaborator") => {
 		if (!user?.displayName) {
 			log.error("User display name not available for invitation", undefined, { email, permission });
@@ -132,6 +158,20 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				return;
 			}
 
+			// Add to pending invitations list
+			const newPendingInvitation: ProjectMember = {
+				email,
+				firebaseUid: "", // Not applicable for pending invitations
+				fullName: null,
+				invitationId: result.invitationId,
+				joinedAt: new Date().toISOString(),
+				photoUrl: null,
+				role: permission === "admin" ? UserRole.ADMIN : UserRole.MEMBER,
+				status: "pending",
+			};
+
+			setPendingInvitations((prev) => [...prev, newPendingInvitation]);
+
 			addNotification({
 				message: `Invitation sent to ${email}`,
 				projectName,
@@ -154,7 +194,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 
 	const canInvite = currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN;
 
-	// Map API response to component format
+	// Map API response to component format and combine with pending invitations
 	const mappedMembers: ProjectMember[] = members.map((member) => ({
 		email: member.email,
 		firebaseUid: member.firebase_uid,
@@ -165,6 +205,9 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 		role: member.role as UserRole,
 		status: "active" as const,
 	}));
+
+	// Combine active members and pending invitations
+	const allMembers = [...mappedMembers, ...pendingInvitations];
 
 	if (isLoading) {
 		return (
@@ -216,11 +259,11 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 
 				{}
 				<div className="divide-y divide-border-primary">
-					{mappedMembers.map((member) => (
+					{allMembers.map((member) => (
 						<div
 							className="px-6 py-4 hover:bg-surface-secondary transition-colors"
-							data-testid={`member-row-${member.firebaseUid}`}
-							key={member.firebaseUid}
+							data-testid={`member-row-${member.firebaseUid || member.email}`}
+							key={member.firebaseUid || member.email}
 						>
 							<div className="grid grid-cols-5 gap-4 items-center">
 								{}
@@ -229,9 +272,16 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 										initials={generateInitials(member.fullName ?? undefined, member.email)}
 										size="sm"
 									/>
-									<span className="text-[16px] text-text-primary truncate font-body">
-										{member.fullName ?? "Name name"}
-									</span>
+									<div className="flex flex-col">
+										<span className="text-[16px] text-text-primary truncate font-body">
+											{member.fullName ?? "Pending Invitation"}
+										</span>
+										{member.status === "pending" && (
+											<span className="text-[12px] text-yellow-600 font-medium">
+												Invitation sent
+											</span>
+										)}
+									</div>
 								</div>
 
 								{}
@@ -252,6 +302,11 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 									<MemberActionMenu
 										currentUserRole={currentUserRole}
 										member={member}
+										onCancelInvitation={
+											member.status === "pending" && member.invitationId
+												? () => handleCancelInvitation(member.invitationId!, member.email)
+												: undefined
+										}
 										onEditPermissions={(member) => {
 											setEditingMember(member);
 										}}
@@ -264,7 +319,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				</div>
 
 				{}
-				{mappedMembers.length === 0 && (
+				{allMembers.length === 0 && (
 					<div className="px-6 py-12 text-center" data-testid="empty-state">
 						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
 						{canInvite && (
@@ -295,7 +350,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 						className="text-[24px] font-semibold text-text-primary font-heading"
 						data-testid="total-members-count"
 					>
-						{mappedMembers.length}
+						{mappedMembers.length + pendingInvitations.length}
 					</div>
 				</div>
 				<div
@@ -307,7 +362,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 						className="text-[24px] font-semibold text-text-primary font-heading"
 						data-testid="admins-count"
 					>
-						{mappedMembers.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
+						{allMembers.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
 					</div>
 				</div>
 				<div
@@ -319,7 +374,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 						className="text-[24px] font-semibold text-text-primary font-heading"
 						data-testid="collaborators-count"
 					>
-						{mappedMembers.filter((m) => m.role === UserRole.MEMBER).length}
+						{allMembers.filter((m) => m.role === UserRole.MEMBER).length}
 					</div>
 				</div>
 			</div>
@@ -354,11 +409,13 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 function MemberActionMenu({
 	currentUserRole,
 	member,
+	onCancelInvitation,
 	onEditPermissions,
 	onRemoveMember,
 }: {
 	currentUserRole: UserRole;
 	member: ProjectMember;
+	onCancelInvitation?: () => void;
 	onEditPermissions: (member: ProjectMember) => void;
 	onRemoveMember: () => void;
 }) {
@@ -384,7 +441,9 @@ function MemberActionMenu({
 	const canModify =
 		member.role !== UserRole.OWNER && (currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN);
 
-	if (!canModify) {
+	const isPending = member.status === "pending";
+
+	if (!(canModify || isPending)) {
 		return null;
 	}
 
@@ -392,7 +451,7 @@ function MemberActionMenu({
 		<div className="relative" ref={menuRef}>
 			<button
 				className="p-2 hover:bg-surface-secondary rounded-md transition-colors"
-				data-testid={`member-action-menu-${member.firebaseUid}`}
+				data-testid={`member-action-menu-${member.firebaseUid || member.email}`}
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
@@ -404,36 +463,52 @@ function MemberActionMenu({
 			{isOpen && (
 				<div
 					className="absolute right-0 top-full mt-1 w-48 bg-surface-primary border border-border-primary rounded-md shadow-lg z-10"
-					data-testid={`member-action-dropdown-${member.firebaseUid}`}
+					data-testid={`member-action-dropdown-${member.firebaseUid || member.email}`}
 				>
 					<div className="py-1">
-						{currentUserRole === UserRole.OWNER && (
+						{isPending && onCancelInvitation ? (
+							<button
+								className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+								data-testid={`cancel-invitation-${member.email}`}
+								onClick={() => {
+									onCancelInvitation();
+									setIsOpen(false);
+								}}
+								type="button"
+							>
+								Cancel invitation
+							</button>
+						) : (
 							<>
+								{currentUserRole === UserRole.OWNER && (
+									<>
+										<button
+											className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-surface-secondary transition-colors"
+											data-testid={`edit-permissions-${member.firebaseUid}`}
+											onClick={() => {
+												onEditPermissions(member);
+												setIsOpen(false);
+											}}
+											type="button"
+										>
+											Edit permissions
+										</button>
+										<hr className="my-1 border-border-primary" />
+									</>
+								)}
 								<button
-									className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-surface-secondary transition-colors"
-									data-testid={`edit-permissions-${member.firebaseUid}`}
+									className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+									data-testid={`remove-member-${member.firebaseUid}`}
 									onClick={() => {
-										onEditPermissions(member);
+										onRemoveMember();
 										setIsOpen(false);
 									}}
 									type="button"
 								>
-									Edit permissions
+									Remove from project
 								</button>
-								<hr className="my-1 border-border-primary" />
 							</>
 						)}
-						<button
-							className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-							data-testid={`remove-member-${member.firebaseUid}`}
-							onClick={() => {
-								onRemoveMember();
-								setIsOpen(false);
-							}}
-							type="button"
-						>
-							Remove from project
-						</button>
 					</div>
 				</div>
 			)}

@@ -4,11 +4,40 @@ import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
+export async function acceptInvitation(invitationId: string) {
+	return withAuthRedirect(
+		getClient()
+			.post(`projects/invitations/${invitationId}/accept`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.AcceptInvitation.Http200.ResponseBody>(),
+	);
+}
+
+export async function createInvitation(projectId: string, data: API.CreateInvitationRedirectUrl.RequestBody) {
+	return withAuthRedirect(
+		getClient()
+			.post(`projects/${projectId}/create-invitation-redirect-url`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.CreateInvitationRedirectUrl.Http201.ResponseBody>(),
+	);
+}
+
 export async function createProject(data: API.CreateProject.RequestBody) {
 	return withAuthRedirect(
 		getClient()
 			.post("projects", { headers: await createAuthHeaders(), json: data })
 			.json<API.CreateProject.Http201.ResponseBody>(),
+	);
+}
+
+export async function deleteInvitation(projectId: string, invitationId: string) {
+	await withAuthRedirect(
+		getClient().delete(`projects/${projectId}/invitations/${invitationId}`, {
+			headers: await createAuthHeaders(),
+		}),
 	);
 }
 
@@ -55,6 +84,21 @@ export async function getProjects() {
 export async function removeProjectMember(projectId: string, firebaseUid: string) {
 	await withAuthRedirect(
 		getClient().delete(`projects/${projectId}/members/${firebaseUid}`, { headers: await createAuthHeaders() }),
+	);
+}
+
+export async function updateInvitationRole(
+	projectId: string,
+	invitationId: string,
+	data: API.UpdateInvitationRole.RequestBody,
+) {
+	return withAuthRedirect(
+		getClient()
+			.patch(`projects/${projectId}/invitations/${invitationId}`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.UpdateInvitationRole.Http200.ResponseBody>(),
 	);
 }
 
