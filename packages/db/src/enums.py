@@ -27,3 +27,10 @@ class RagGenerationStatusEnum(StrEnum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+
+
+class NotificationTypeEnum(StrEnum):
+    DEADLINE = "deadline"
+    INFO = "info"
+    WARNING = "warning"
+    SUCCESS = "success"
