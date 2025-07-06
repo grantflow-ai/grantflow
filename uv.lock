@@ -196,7 +196,7 @@ dev = [
 requires-dist = [
     { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.7" },
-    { name = "google-cloud-firestore", specifier = ">=2.16.0" },
+    { name = "google-cloud-firestore", specifier = ">=2.16" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]

@@ -5,7 +5,11 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
+import functions_framework
 import httpx
+from cloudevents.http import CloudEvent
+
+logger = __import__("logging").getLogger(__name__)
 
 
 def get_mention_for_alert(alert_policy: str, priority: str) -> str:
@@ -38,7 +42,7 @@ def get_mention_for_alert(alert_policy: str, priority: str) -> str:
     return ""
 
 
-async def app_hosting_alert_to_discord(cloud_event: Any) -> dict[str, Any]:
+async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
     """Forward GCP App Hosting alerts to Discord webhook."""
 
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
@@ -49,17 +53,13 @@ async def app_hosting_alert_to_discord(cloud_event: Any) -> dict[str, Any]:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        
-        
-        if hasattr(cloud_event, "data") and isinstance(cloud_event.data, str):
-            
+        if isinstance(cloud_event.data, str):
             message_data = base64.b64decode(cloud_event.data).decode("utf-8")
-        elif hasattr(cloud_event, "data") and "message" in cloud_event.data:
-            
-            message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
+
+        elif isinstance(cloud_event.data, dict):
+            message_data = json.dumps(cloud_event.data)
         else:
-            
-            message_data = base64.b64decode(cloud_event.data).decode("utf-8")
+            message_data = str(cloud_event.data)
 
         alert_data = json.loads(message_data)
 
@@ -176,6 +176,12 @@ async def send_test_alert(webhook_url: str, environment: str, project_id: str) -
         return False
 
 
-def app_hosting_alert_to_discord_sync(cloud_event: Any, context: Any = None) -> dict[str, Any]:  # noqa: ARG001
-    """Synchronous wrapper for the async alert function (Cloud Functions entry point)."""
-    return asyncio.run(app_hosting_alert_to_discord(cloud_event))
+@functions_framework.cloud_event
+def app_hosting_alert_to_discord_sync(cloud_event: CloudEvent) -> None:
+    """Cloud Functions entry point for app hosting alerts."""
+    result = asyncio.run(app_hosting_alert_to_discord(cloud_event))
+
+    if result["status"] == "error":
+        logger.error("Alert function error: %s", result["message"])
+    else:
+        logger.info("Alert sent successfully: %s", result["message"])
