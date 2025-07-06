@@ -8,7 +8,37 @@ from typing import Any
 import httpx
 
 
-async def app_hosting_alert_to_discord(request: Any) -> dict[str, Any]:
+def get_mention_for_alert(alert_policy: str, priority: str) -> str:
+    """Get Discord role mention based on alert type and priority."""
+
+    if priority != "HIGH":
+        return ""
+
+    discord_role_alerts = os.environ.get("DISCORD_ROLE_ALERTS")
+    if not discord_role_alerts:
+        return ""
+
+    critical_keywords = [
+        "build_failure",
+        "deployment_failure",
+        "build failures",
+        "deployment failures",
+        "service_down",
+        "service completely down",
+        "database disconnected",
+        "memory_critical",
+        "high memory",
+        "outage",
+    ]
+
+    policy_lower = alert_policy.lower()
+    if any(keyword in policy_lower for keyword in critical_keywords):
+        return f"<@&{discord_role_alerts}>"
+
+    return ""
+
+
+async def app_hosting_alert_to_discord(cloud_event: Any) -> dict[str, Any]:
     """Forward GCP App Hosting alerts to Discord webhook."""
 
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
@@ -19,11 +49,10 @@ async def app_hosting_alert_to_discord(request: Any) -> dict[str, Any]:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        pubsub_message = request.data
-        if isinstance(pubsub_message, str):
-            pubsub_message = json.loads(pubsub_message)
-
-        message_data = base64.b64decode(pubsub_message["message"]["data"]).decode("utf-8")
+        if hasattr(cloud_event, "data"):
+            message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
+        else:
+            message_data = base64.b64decode(cloud_event["message"]["data"]).decode("utf-8")
         alert_data = json.loads(message_data)
 
         incident = alert_data.get("incident", {})
@@ -75,10 +104,17 @@ async def app_hosting_alert_to_discord(request: Any) -> dict[str, Any]:
                 if "service_name" in labels:
                     fields.append({"name": "🔧 Service", "value": labels["service_name"], "inline": True})
 
+        mention = get_mention_for_alert(alert_policy, priority)
+
+        content = None
+        if priority == "HIGH":
+            if mention:
+                content = f"{mention} **CRITICAL** App Hosting alert in {environment}!"
+            else:
+                content = f"🚨 **CRITICAL** App Hosting alert in {environment}!"
+
         payload = {
-            "content": f"@here **{priority} PRIORITY** App Hosting alert in {environment}!"
-            if priority == "HIGH"
-            else None,
+            "content": content,
             "embeds": [embed],
         }
 
@@ -132,6 +168,6 @@ async def send_test_alert(webhook_url: str, environment: str, project_id: str) -
         return False
 
 
-def app_hosting_alert_to_discord_sync(request: Any) -> dict[str, Any]:
+def app_hosting_alert_to_discord_sync(cloud_event: Any) -> dict[str, Any]:
     """Synchronous wrapper for the async alert function (Cloud Functions entry point)."""
-    return asyncio.run(app_hosting_alert_to_discord(request))
+    return asyncio.run(app_hosting_alert_to_discord(cloud_event))
