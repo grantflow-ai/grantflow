@@ -31,7 +31,29 @@ Processes GCP billing budget alerts and forwards them to Discord.
 
 ## Dependencies
 
-See `requirements.txt` for Python dependencies.
+Dependencies are managed using `pyproject.toml` files and automatically generated `requirements.txt` files for Cloud Functions deployment.
+
+### Managing Dependencies
+
+1. **Add dependencies** to the appropriate `pyproject.toml` file:
+   - Root functions: `cloud_functions/pyproject.toml`
+   - User cleanup function: `cloud_functions/user_cleanup/pyproject.toml`
+
+2. **Generate requirements.txt** files for deployment:
+   ```bash
+   task cloud-functions:generate-requirements
+   ```
+
+3. **Sync development environment**:
+   ```bash
+   task cloud-functions:sync
+   ```
+
+### Workflow
+
+- Edit `pyproject.toml` files to add/update dependencies
+- Run `task cloud-functions:generate-requirements` to create deployment-ready `requirements.txt` files
+- The generated `requirements.txt` files are used by Cloud Functions during deployment
 
 ## Deployment
 

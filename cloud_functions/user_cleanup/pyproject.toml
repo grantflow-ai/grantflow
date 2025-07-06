@@ -1,0 +1,36 @@
+[project]
+name = "grantflow-user-cleanup-function"
+version = "0.1.0"
+description = "User cleanup cloud function for GrantFlow.AI"
+authors = [
+  { name = "GrantFlow.AI Team", email = "team@grantflow.ai" },
+]
+requires-python = ">=3.13"
+classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
+dependencies = [
+  "asyncpg>=0.30",
+  # Firebase and Firestore
+  "firebase-admin>=6.9",
+
+  # Utilities
+  "functions-framework>=3.8",
+  "google-cloud-firestore>=2.21",
+
+  # Database
+  "sqlalchemy[asyncio]>=2.0.41",
+]
+
+[tool.pytest.ini_options]
+testpaths = [ "tests" ]
+python_files = [ "*_test.py" ]
+python_functions = [ "test_*" ]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+
+[tool.uv]
+# Keep dependencies isolated from workspace
+dev-dependencies = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.24.0",
+  "pytest-mock>=3.12.0",
+]
