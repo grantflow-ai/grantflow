@@ -215,7 +215,7 @@ export function DevAutofillButton() {
 			leftIcon={<Wand2 />}
 			onClick={handleAutofill}
 			size="sm"
-			variant="secondary"
+			variant="primary"
 		>
 			{currentStep === WizardStep.GENERATE_AND_COMPLETE ? "Ready" : "Autofill"} {currentStep}
 		</AppButton>

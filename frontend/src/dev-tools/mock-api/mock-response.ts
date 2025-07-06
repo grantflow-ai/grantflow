@@ -89,5 +89,5 @@ async function parseRequestBody(request: Request): Promise<unknown> {
 }
 
 function shouldUseMockAPI(): boolean {
-	return (getEnv().NEXT_PUBLIC_MOCK_API ?? false) && isMockAPIEnabled();
+	return Boolean(getEnv().NEXT_PUBLIC_MOCK_API) && isMockAPIEnabled();
 }

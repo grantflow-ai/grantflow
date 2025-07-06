@@ -73,21 +73,21 @@ pre-commit:
             glob: "*.{yaml,yml}"
             run: |
                 for file in {staged_files}; do
-                  python3 -c "import yaml; yaml.safe_load(open('$file'))"
+                  uv run python -c "import yaml; yaml.safe_load(open('$file'))"
                 done
 
         check-toml:
             glob: "*.toml"
             run: |
                 for file in {staged_files}; do
-                  python3 -c "import tomllib; tomllib.load(open('$file', 'rb'))"
+                  uv run python -c "import tomllib; tomllib.load(open('$file', 'rb'))"
                 done
 
         check-json:
             glob: "*.json"
             run: |
                 for file in {staged_files}; do
-                  python3 -m json.tool "$file" > /dev/null
+                  uv run python -m json.tool "$file" > /dev/null
                 done
 
         check-case-conflict:

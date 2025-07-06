@@ -2,17 +2,15 @@ import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
 	FormInputsFactory,
-	RagSourceFactory,
 	RagSourceFileFactory,
 	RagSourceUrlFactory,
 	ResearchObjectiveFactory,
 } from "::testing/factories";
 import { addDays, addWeeks, subDays } from "date-fns";
-import { getScenario } from "@/dev-tools";
+import { getScenario, triggerWebSocketScenario } from "@/dev-tools";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
-import { triggerWebSocketScenario } from "../websocket";
 
 interface GlobalStore {
 	__MOCK_APPLICATION_STORE__?: Map<string, API.RetrieveApplication.Http200.ResponseBody>;
@@ -39,8 +37,10 @@ export const applicationHandlers = {
 		}
 
 		log.info("[Mock API] Creating application", { title: requestBody.title });
+		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
+		const scenario = getScenario(currentScenarioName);
+
 		const id = crypto.randomUUID();
-		const grantTemplateId = crypto.randomUUID();
 
 		const deadlineScenarios = [
 			addWeeks(new Date(), 6),
@@ -52,35 +52,48 @@ export const applicationHandlers = {
 
 		const randomDeadline = deadlineScenarios[Math.floor(Math.random() * deadlineScenarios.length)];
 
-		const grantTemplate = {
-			created_at: new Date().toISOString(),
-			grant_application_id: id,
-			grant_sections: [],
-			id: grantTemplateId,
-			rag_sources: RagSourceFactory.batch(5).map((source, index) => ({
-				...source,
+		let application: API.CreateApplication.Http201.ResponseBody;
 
-				status: (["FINISHED", "FINISHED", "INDEXING", "CREATED", "FINISHED"] as const)[index],
-			})),
-			submission_date: randomDeadline.toISOString(),
-			updated_at: new Date().toISOString(),
-		};
+		if (scenario && scenario.data.applications.size > 0) {
+			const templateApp = [...scenario.data.applications.values()][0];
 
-		const application = ApplicationFactory.build({
-			form_inputs: undefined,
-			grant_template: grantTemplate,
-			id,
-			project_id: projectId,
-			rag_sources: RagSourceFactory.batch(3).map((source, index) => ({
-				...source,
+			application = templateApp.grant_template
+				? ApplicationWithTemplateFactory.build({
+						form_inputs: undefined,
+						grant_template: {
+							...templateApp.grant_template,
+							created_at: new Date().toISOString(),
+							rag_sources: templateApp.grant_template.rag_sources || [],
+							submission_date: randomDeadline.toISOString(),
+							updated_at: new Date().toISOString(),
+						},
+						id,
+						project_id: projectId,
+						research_objectives: undefined,
+						status: "DRAFT",
+						title: requestBody.title,
+					})
+				: ApplicationFactory.build({
+						form_inputs: undefined,
+						grant_template: undefined,
+						id,
+						project_id: projectId,
+						research_objectives: undefined,
+						status: "DRAFT",
+						title: requestBody.title,
+					});
+		} else {
+			application = ApplicationFactory.build({
+				form_inputs: undefined,
+				grant_template: undefined,
+				id,
+				project_id: projectId,
+				research_objectives: undefined,
+				status: "DRAFT",
+				title: requestBody.title,
+			});
+		}
 
-				status: (["FINISHED", "INDEXING", "FINISHED"] as const)[index],
-			})),
-			research_objectives: undefined,
-			status: "DRAFT",
-			text: undefined,
-			title: requestBody.title,
-		});
 		applicationStore.set(id, application);
 		return application;
 	},
@@ -105,12 +118,6 @@ export const applicationHandlers = {
 			throw new Error("Application ID required");
 		}
 
-		log.info("[Mock API] Starting grant application generation", { applicationId });
-
-		log.info("[Mock API] Triggering grant application WebSocket scenario", {
-			applicationId,
-			scenarioName: "grant-application-generation",
-		});
 		triggerWebSocketScenario(applicationId, "grant-application-generation");
 
 		const application = applicationStore.get(applicationId);
@@ -301,7 +308,7 @@ This innovative research program represents a paradigm shift in cancer diagnosti
 					requestedProjectId: projectId,
 				});
 			}
-			log.info("[Mock API] Returning application from store", { applicationId });
+			log.info("[Mock API] Returning application from store", { existingApplication });
 			return existingApplication;
 		}
 
