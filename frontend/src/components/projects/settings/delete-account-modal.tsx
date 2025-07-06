@@ -22,11 +22,18 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 		try {
 			setIsDeleting(true);
 
-			await deleteAccount();
+			const result = await deleteAccount();
 
 			clearUser();
 
-			router.push("/login?message=account-deleted");
+			// Pass deletion details in the URL for the login page to display
+			const params = new URLSearchParams({
+				gracePeriod: result.grace_period_days.toString(),
+				message: "account-deleted",
+				scheduledDate: result.scheduled_deletion_date,
+			});
+
+			router.push(`/login?${params.toString()}`);
 		} catch (error) {
 			log.error("DeleteAccountModal.handleDelete", error);
 			// NOTE: Show error toast in future enhancement
@@ -43,8 +50,9 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 						Are you sure you want to delete your account?
 					</h2>
 					<p className="font-source-sans-pro text-base leading-5 text-[#2e2d36]">
-						This will permanently delete your account, including all associated research projects,
-						applications, and data. This action cannot be undone.
+						This will schedule your account for deletion. You will be removed from all projects immediately,
+						but your account can be restored within 30 days by contacting support. After 30 days, deletion
+						will be permanent and cannot be undone.
 					</p>
 				</div>
 
