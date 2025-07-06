@@ -187,7 +187,7 @@ resource "google_monitoring_alert_policy" "app_hosting_deployment_failures" {
 
     condition_threshold {
       filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/app_hosting_deployment_failures_${var.environment}\""
-      duration        = "60s" 
+      duration        = "60s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
 
