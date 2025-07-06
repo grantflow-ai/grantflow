@@ -16,6 +16,34 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: z.string(),
 			NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string(),
 			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string(),
+			NEXT_PUBLIC_MOCK_API: z
+				.preprocess((val) => {
+					if (typeof val === "string") {
+						if (val.toLowerCase() === "true") {
+							return true;
+						}
+						if (val.toLowerCase() === "false") {
+							return false;
+						}
+					}
+					return val;
+				}, z.boolean())
+				.optional()
+				.default(false),
+			NEXT_PUBLIC_MOCK_AUTH: z
+				.preprocess((val) => {
+					if (typeof val === "string") {
+						if (val.toLowerCase() === "true") {
+							return true;
+						}
+						if (val.toLowerCase() === "false") {
+							return false;
+						}
+					}
+					return val;
+				}, z.boolean())
+				.optional()
+				.default(false),
 			NEXT_PUBLIC_SEGMENT_WRITE_KEY: z.string(),
 			NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
 		},
@@ -56,34 +84,6 @@ export function getEnv(): Env {
 				.optional()
 				.default(false),
 			NEXT_PUBLIC_GCS_EMULATOR_URL: z.string().url("Please enter a valid URL").optional(),
-			NEXT_PUBLIC_MOCK_API: z
-				.preprocess((val) => {
-					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
-							return true;
-						}
-						if (val.toLowerCase() === "false") {
-							return false;
-						}
-					}
-					return val;
-				}, z.boolean())
-				.optional()
-				.default(false),
-			NEXT_PUBLIC_MOCK_AUTH: z
-				.preprocess((val) => {
-					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
-							return true;
-						}
-						if (val.toLowerCase() === "false") {
-							return false;
-						}
-					}
-					return val;
-				}, z.boolean())
-				.optional()
-				.default(false),
 		},
 	});
 
