@@ -18,10 +18,9 @@ interface EditPermissionModalProps {
 interface ProjectMember {
 	email: string;
 	firebaseUid: string;
-	fullName?: string;
-	id: string;
+	fullName?: null | string;
 	joinedAt: string;
-	photoUrl?: string;
+	photoUrl?: null | string;
 	projectAccess?: string[];
 	role: UserRole;
 	status: "active" | "pending";
@@ -108,7 +107,7 @@ export function EditPermissionModal({
 		setIsSubmitting(true);
 		try {
 			await onUpdateRole(
-				member.id,
+				member.firebaseUid,
 				selectedRole,
 				selectedRole === UserRole.MEMBER ? selectedProjects : undefined,
 			);
@@ -184,7 +183,7 @@ export function EditPermissionModal({
 							disabled
 							id="member-name"
 							type="text"
-							value={member.fullName ?? generateInitials(member.fullName, member.email)}
+							value={member.fullName ?? generateInitials(undefined, member.email)}
 						/>
 					</div>
 
