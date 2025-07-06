@@ -28,6 +28,7 @@ dev = [
   "pytest-timeout>=2.3.1",
   "pytest-xdist>=3.7.0",
   "python-dotenv>=1.0.1",
+  "pyyaml>=6.0.2",
   "ruff>=0.11.1",
   "uncomment>=2.2.3",
   "uv-bump",
