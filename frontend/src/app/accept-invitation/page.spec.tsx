@@ -42,7 +42,7 @@ describe("AcceptInvitationPage", () => {
 		render(<AcceptInvitationPage />);
 
 		expect(screen.getByText("Processing your invitation...")).toBeInTheDocument();
-		expect(screen.getByRole("generic", { hidden: true })).toHaveClass("animate-spin");
+		expect(screen.getByTestId("processing-spinner")).toBeInTheDocument();
 	});
 
 	it("should redirect to projects with error when no token provided", () => {
