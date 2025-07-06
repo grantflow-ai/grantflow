@@ -32,3 +32,7 @@ env:
       secret: RESEND_API_KEY
     - variable: NEXT_PUBLIC_SEGMENT_WRITE_KEY
       secret: NEXT_PUBLIC_SEGMENT_WRITE_KEY
+    - variable: NEXT_PUBLIC_MOCK_API
+      secret: NEXT_PUBLIC_MOCK_API
+    - variable: NEXT_PUBLIC_MOCK_AUTH
+      secret: NEXT_PUBLIC_MOCK_AUTH
