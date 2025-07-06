@@ -16,11 +16,11 @@ members = [
 
 [[package]]
 name = "ai-rulez"
-version = "1.1.1"
+version = "1.1.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4d/7b/a75ca4d2e878ea9cf2c04f53ed54d3c450bc0b9796ad059b47f5ca5276a6/ai_rulez-1.1.1.tar.gz", hash = "sha256:e0d6fc63180e1305bb8caec5cc29edbae4806c55655c43be0b5419bb592a70e9", size = 10400, upload-time = "2025-06-30T18:04:27.478Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/7d/2494e90b3dabc210d3fc676ca6c903a9ee605ea1e76fa8248e205de212a0/ai_rulez-1.1.3.tar.gz", hash = "sha256:569b1c14c69e87022aa6711f73b14e8c7721ba553ab9f3ee76551253e9ea332d", size = 11441, upload-time = "2025-07-06T09:00:33.696Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/81/cf32c4fc0456f88cb86ed55aa102ca44a4da60982da92282b233fb88ed0b/ai_rulez-1.1.1-py3-none-any.whl", hash = "sha256:6b5ed5de13cf3450ef00779f398cee4d23aa9dc282272bbb872a3c93ac515584", size = 8389, upload-time = "2025-06-30T18:04:26.257Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/f6/0fc76df7c063384e435cc2fe30e6b035918f40a977d4790ee18b5980eb3a/ai_rulez-1.1.3-py3-none-any.whl", hash = "sha256:716a81316dd20c87694578e6106328911d333688a6de4ef126ff0d47fc8f581c", size = 8883, upload-time = "2025-07-06T09:00:32.503Z" },
 ]
 
 [[package]]
@@ -182,6 +182,7 @@ source = { virtual = "services/backend" }
 dependencies = [
     { name = "db" },
     { name = "firebase-admin" },
+    { name = "google-cloud-firestore" },
     { name = "pyjwt" },
     { name = "shared-utils", extra = ["gcs", "pubsub", "server"] },
 ]
@@ -195,6 +196,7 @@ dev = [
 requires-dist = [
     { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.7" },
+    { name = "google-cloud-firestore", specifier = ">=2.16.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]

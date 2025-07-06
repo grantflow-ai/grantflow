@@ -87,3 +87,104 @@ async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
     except FirebaseError as e:
         logger.warning("Error getting users by uids.", exec_info=e)
         raise ExternalOperationError("Error getting users by uids.") from e
+
+
+async def delete_user(uid: str) -> None:
+    """Delete a user from Firebase Auth"""
+    from firebase_admin.auth import delete_user
+
+    handler = as_async_callable(delete_user)
+    try:
+        await handler(uid, app=get_firebase_app())
+        logger.info("Deleted Firebase user", firebase_uid=uid)
+    except FirebaseError as e:
+        if "USER_NOT_FOUND" in str(e):
+            logger.warning("User not found for deletion", firebase_uid=uid)
+            return  
+        logger.warning("Error deleting user", firebase_uid=uid, exec_info=e)
+        raise ExternalOperationError("Error deleting user from Firebase") from e
+
+
+
+_firestore_client_ref = Ref[Any]()
+
+
+def get_firestore_client() -> Any:
+    """Get Firestore client instance"""
+    if _firestore_client_ref.value is None:
+        from google.cloud import firestore
+
+        logger.debug("Initializing Firestore client")
+        _firestore_client_ref.value = firestore.AsyncClient()
+    return _firestore_client_ref.value
+
+
+async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[str, Any]:
+    """Schedule a user for deletion in Firestore"""
+    from datetime import datetime, timedelta
+    from google.cloud import firestore
+
+    db = get_firestore_client()
+    from datetime import timezone
+    deletion_date = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=grace_period_days)
+
+    doc_data = {
+        "firebase_uid": uid,
+        "status": "scheduled",
+        "scheduled_at": firestore.SERVER_TIMESTAMP,
+        "deletion_date": deletion_date,
+        "grace_period_days": grace_period_days,
+        "created_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    }
+
+    try:
+        await db.collection("user-deletion-requests").document(uid).set(doc_data)
+        logger.info("Scheduled user for deletion", firebase_uid=uid, deletion_date=deletion_date.isoformat())
+        return doc_data
+    except Exception as e:
+        logger.warning("Error scheduling user deletion", firebase_uid=uid, exec_info=e)
+        raise ExternalOperationError("Error scheduling user deletion") from e
+
+
+async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
+    """Get user deletion status from Firestore"""
+    db = get_firestore_client()
+
+    try:
+        doc = await db.collection("user-deletion-requests").document(uid).get()
+        if doc.exists:
+            data = doc.to_dict()
+            logger.debug("Retrieved user deletion status", firebase_uid=uid, status=data.get("status"))
+            return data
+        return None
+    except Exception as e:
+        logger.warning("Error getting user deletion status", firebase_uid=uid, exec_info=e)
+        raise ExternalOperationError("Error getting user deletion status") from e
+
+
+async def cancel_user_deletion(uid: str) -> bool:
+    """Cancel scheduled user deletion"""
+    from google.cloud import firestore
+
+    db = get_firestore_client()
+
+    try:
+        doc_ref = db.collection("user-deletion-requests").document(uid)
+        doc = await doc_ref.get()
+
+        if not doc.exists:
+            logger.warning("No deletion request found to cancel", firebase_uid=uid)
+            return False
+
+        await doc_ref.update({
+            "status": "cancelled",
+            "cancelled_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+
+        logger.info("Cancelled user deletion", firebase_uid=uid)
+        return True
+    except Exception as e:
+        logger.warning("Error cancelling user deletion", firebase_uid=uid, exec_info=e)
+        raise ExternalOperationError("Error cancelling user deletion") from e
