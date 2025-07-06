@@ -189,7 +189,6 @@ describe("DeleteAccountModal", () => {
 		expect(dialog).toHaveAttribute("aria-labelledby");
 		expect(dialog).toHaveAttribute("aria-describedby");
 
-		// The close button is provided by DialogContent
 		const closeButton = screen.getByRole("button", { name: "Close" });
 		expect(closeButton).toBeInTheDocument();
 	});

@@ -8,7 +8,7 @@ export function ApplicationTools() {
 	const application = useApplicationStore((state) => state.application);
 	const changeApplicationStatus = (status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS") => {
 		if (!application) return;
-		// Mock updating application status directly (dev-only)
+
 		useApplicationStore.setState({
 			application: {
 				...application,
@@ -16,37 +16,34 @@ export function ApplicationTools() {
 				...(status === "COMPLETED" ? { completed_at: new Date().toISOString() } : {}),
 			},
 		});
-		console.log(`[Dev Tools] Changed application status to: ${status}`);
 	};
 
 	const addMockSources = () => {
 		if (!application) return;
 		const mockSources = RagSourceFactory.batch(5);
-		// Mock updating rag sources directly (dev-only)
+
 		useApplicationStore.setState({
 			application: {
 				...application,
 				rag_sources: [...(application.rag_sources ?? []), ...mockSources],
 			},
 		});
-		console.log("[Dev Tools] Added 5 mock RAG sources");
 	};
 
 	const simulateProcessing = () => {
-		// Simulate file processing states
 		const sources = application?.rag_sources ?? [];
 		sources.forEach((source, index) => {
 			const startIndexing = () => {
 				const updatedSources = [...sources];
 				updatedSources[index] = { ...source, status: "INDEXING" };
-				// Mock updating rag sources directly (dev-only)
+
 				useApplicationStore.setState({
 					application: application ? { ...application, rag_sources: updatedSources } : null,
 				});
 
 				const finishIndexing = () => {
 					updatedSources[index] = { ...source, status: "FINISHED" };
-					// Mock updating rag sources directly (dev-only)
+
 					useApplicationStore.setState({
 						application: application ? { ...application, rag_sources: updatedSources } : null,
 					});
@@ -57,14 +54,12 @@ export function ApplicationTools() {
 
 			setTimeout(startIndexing, index * 1000);
 		});
-		console.log("[Dev Tools] Started source processing simulation");
 	};
 
 	const populateFormData = () => {
 		const mockFormInputs = FormInputsFactory.build();
 		const mockObjectives = ResearchObjectiveFactory.batch(3);
 
-		// Mock updating form data directly (dev-only)
 		if (application) {
 			useApplicationStore.setState({
 				application: {
@@ -74,7 +69,6 @@ export function ApplicationTools() {
 				},
 			});
 		}
-		console.log("[Dev Tools] Populated form data and objectives");
 	};
 
 	return (

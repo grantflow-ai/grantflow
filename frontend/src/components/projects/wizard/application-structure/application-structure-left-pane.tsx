@@ -94,6 +94,9 @@ export function ApplicationStructureLeftPane() {
 
 	const [visibleSteps, setVisibleSteps] = useState(0);
 
+	const hasGrantSections = (application?.grant_template?.grant_sections.length ?? 0) > 0;
+	const shouldShowAnalyzing = isGeneratingTemplate || !hasGrantSections;
+
 	const parentId = application?.grant_template?.id;
 
 	const templateFiles: FileWithId[] = useMemo(
@@ -118,7 +121,7 @@ export function ApplicationStructureLeftPane() {
 	usePollingCleanup();
 
 	useEffect(() => {
-		if (isGeneratingTemplate) {
+		if (shouldShowAnalyzing) {
 			const interval = setInterval(() => {
 				setVisibleSteps((prev) => {
 					if (prev < ANALYZING_STEPS.length) {
@@ -133,7 +136,7 @@ export function ApplicationStructureLeftPane() {
 			};
 		}
 		setVisibleSteps(0);
-	}, [isGeneratingTemplate]);
+	}, [shouldShowAnalyzing]);
 
 	const getStepContainerClassName = useCallback(
 		(sectionIndex: number) => {
@@ -211,10 +214,10 @@ export function ApplicationStructureLeftPane() {
 	}, []);
 
 	const descriptionText = useMemo(() => {
-		return isGeneratingTemplate
+		return shouldShowAnalyzing
 			? "Analyzing your knowledge base to generate the optimal structure..."
 			: "Organize Your Application Structure. Drag and drop sections to reorder your application.\nYou can also edit, remove, or add new sections as needed. Once everything looks good, click Approve and Continue.";
-	}, [isGeneratingTemplate]);
+	}, [shouldShowAnalyzing]);
 
 	const hasTemplateFiles = useMemo(() => templateFiles.length > 0, [templateFiles.length]);
 	const hasTemplateUrls = useMemo(() => templateUrls.length > 0, [templateUrls.length]);
@@ -265,7 +268,7 @@ export function ApplicationStructureLeftPane() {
 					</button>
 				</div>
 
-				{isGeneratingTemplate ? (
+				{shouldShowAnalyzing ? (
 					<div className="relative space-y-6">
 						{ANALYZING_STEPS.map((section, sectionIndex) => (
 							<div className={getStepContainerClassName(sectionIndex)} key={sectionIndex}>

@@ -10,7 +10,6 @@ interface RouteSpecificToolsProps {
 }
 
 export function RouteSpecificTools({ pathname }: RouteSpecificToolsProps) {
-	// Determine which tools to show based on current route
 	const getToolsComponent = () => {
 		if (pathname === "/") {
 			return <DashboardTools />;

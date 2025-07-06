@@ -66,7 +66,6 @@ export function useApplicationWebSocket(
  * @returns WebSocket connection state and methods
  */
 export function useMockWebSocket(path: string, options: UseMockWebSocketOptions = {}): UseMockWebSocketReturn {
-	// Get the appropriate WebSocket URL (mock or real)
 	const socketUrl = useMemo(() => {
 		try {
 			return getWebSocketUrl(path);
@@ -75,13 +74,10 @@ export function useMockWebSocket(path: string, options: UseMockWebSocketOptions 
 		}
 	}, [path]);
 
-	// Default reconnection strategy
 	const defaultShouldReconnect = useCallback((closeEvent: CloseEvent) => {
-		// Reconnect on unexpected disconnections (not normal closure)
 		return closeEvent.code !== 1000 && closeEvent.code !== 1001;
 	}, []);
 
-	// Use react-use-websocket with our URL
 	const { lastMessage, readyState, sendJsonMessage, sendMessage } = useWebSocket(socketUrl, {
 		...options,
 		reconnectAttempts: 5,
@@ -115,7 +111,5 @@ export function useProjectWebSocket(projectId: string, options: UseMockWebSocket
 	const path = `/projects/${projectId}/notifications`;
 	return useMockWebSocket(path, options);
 }
-
-// Re-export ReadyState for convenience
 
 export type { ReadyState } from "react-use-websocket";

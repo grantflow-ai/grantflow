@@ -121,13 +121,11 @@ class MockAPIClient {
 		const pathParts = pathWithoutQuery.split("/").filter(Boolean);
 		const params: Record<string, string> = {};
 
-		// Try to find matching pattern
 		const handler = this.findHandler(path, method);
 		if (!handler) {
 			return params;
 		}
 
-		// Find the pattern that matched
 		for (const [pattern] of this.handlers) {
 			const [, ...patternPathParts] = pattern.split(" ");
 			const patternPath = patternPathParts.join(" ");
@@ -154,7 +152,6 @@ class MockAPIClient {
 	private findHandler(path: string, method: string): MockHandler | undefined {
 		const pathWithoutQuery = path.split("?")[0];
 
-		// First try exact match with method
 		const exactKey = `${method} ${pathWithoutQuery}`;
 		for (const [pattern, handler] of this.handlers) {
 			if (this.matchPath(pattern, exactKey)) {
@@ -162,7 +159,6 @@ class MockAPIClient {
 			}
 		}
 
-		// Then try wildcard method
 		const wildcardKey = `* ${pathWithoutQuery}`;
 		for (const [pattern, handler] of this.handlers) {
 			if (this.matchPath(pattern, wildcardKey)) {
@@ -174,11 +170,9 @@ class MockAPIClient {
 	}
 
 	private matchPath(pattern: string, key: string): boolean {
-		// Split the method and path
 		const [patternMethod, ...patternPathParts] = pattern.split(" ");
 		const [keyMethod, ...keyPathParts] = key.split(" ");
 
-		// Check if methods match (or pattern has wildcard)
 		if (patternMethod !== "*" && patternMethod !== keyMethod) {
 			return false;
 		}

@@ -8,32 +8,25 @@ import { useUserStore } from "@/stores/user-store";
 export function DashboardTools() {
 	const addMockProjects = () => {
 		const mockProjects = ProjectListItemFactory.batch(5);
-		// Mock updating the projects state directly (dev-only)
+
 		useProjectStore.setState({ projects: mockProjects });
-		console.log("[Dev Tools] Added 5 mock projects");
 	};
 
 	const simulateEmptyState = () => {
-		// Mock clearing projects state directly (dev-only)
 		useProjectStore.setState({ projects: [] });
-		console.log("[Dev Tools] Cleared all projects");
 	};
 
 	const simulateLoadingState = () => {
-		// Mock loading state directly (dev-only)
 		useProjectStore.setState({ areOperationsInProgress: true });
 		setTimeout(() => {
 			useProjectStore.setState({ areOperationsInProgress: false });
 		}, 3000);
-		console.log("[Dev Tools] Simulating loading state for 3 seconds");
 	};
 
 	const setUserRole = (role: "ADMIN" | "MEMBER" | "OWNER") => {
 		const currentUser = useUserStore.getState().user;
 		if (currentUser) {
-			// Mock updating user role directly (dev-only) - note: user doesn't have role field in real store
 			useUserStore.setState({ user: { ...currentUser, role } as { role: string } & typeof currentUser });
-			console.log(`[Dev Tools] Updated user role to: ${role}`);
 		}
 	};
 
@@ -75,7 +68,7 @@ export function DashboardTools() {
 						const projects = ProjectListItemFactory.batch(3, {
 							applications_count: 0,
 						});
-						// Mock setting projects directly (dev-only)
+
 						useProjectStore.setState({ projects });
 					}}
 					type="button"

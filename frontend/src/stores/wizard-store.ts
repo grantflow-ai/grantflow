@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
+import { triggerMockWebSocketScenario } from "@/dev-tools/utils/dev-helpers";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
@@ -66,7 +67,9 @@ interface WizardActions {
 	addNextObjective: () => void;
 	addObjective: (objective: Objective) => void;
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
+	checkApplicationGeneration: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
+	generateApplication: () => Promise<void>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
@@ -76,6 +79,7 @@ interface WizardActions {
 	removeTask: (objectiveNumber: number, taskNumber: number) => void;
 	reorderObjectives: (objectives: Objective[]) => void;
 	reset: () => void;
+	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
@@ -84,17 +88,21 @@ interface WizardActions {
 
 interface WizardState {
 	currentStep: WizardStep;
+	isGeneratingApplication: boolean;
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
+	shouldRedirectToEditor: boolean;
 }
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
+	isGeneratingApplication: false,
 	isGeneratingTemplate: false,
 	polling: {
 		intervalId: null,
 		isActive: false,
 	},
+	shouldRedirectToEditor: false,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -171,6 +179,38 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					void updateApplication({ research_objectives: updatedObjectives });
 				},
 
+				checkApplicationGeneration: async () => {
+					const { application, retrieveApplication } = useApplicationStore.getState();
+					const { polling } = get();
+
+					if (!application) {
+						return;
+					}
+
+					try {
+						await retrieveApplication(application.project_id, application.id);
+
+						const { application: updatedApplication } = useApplicationStore.getState();
+
+						if (updatedApplication?.text && updatedApplication.text.trim().length > 0) {
+							polling.stop();
+							set((state) => ({
+								...state,
+								isGeneratingApplication: false,
+								shouldRedirectToEditor: true,
+							}));
+							return;
+						}
+					} catch (error) {
+						log.error("checkApplicationGeneration", error);
+						polling.stop();
+						set((state) => ({
+							...state,
+							isGeneratingApplication: false,
+						}));
+					}
+				},
+
 				checkTemplateGeneration: async () => {
 					const { application, retrieveApplication } = useApplicationStore.getState();
 					const { polling } = get();
@@ -198,6 +238,45 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						set((state) => ({
 							...state,
 							isGeneratingTemplate: false,
+						}));
+					}
+				},
+
+				generateApplication: async () => {
+					const { application, generateApplication } = useApplicationStore.getState();
+					const { polling } = get();
+
+					if (!application) {
+						log.error("generateApplication: No application found");
+						return;
+					}
+
+					if (application.text && application.text.trim().length > 0) {
+						log.info("generateApplication: Application already has text, skipping generation");
+						return;
+					}
+
+					try {
+						await generateApplication(application.project_id, application.id);
+
+						set((state) => ({
+							...state,
+							isGeneratingApplication: true,
+						}));
+
+						polling.start(get().checkApplicationGeneration, POLLING_INTERVAL_DURATION, false);
+
+						log.info("Grant application generation initiated", {
+							application_id: application.id,
+							project_id: application.project_id,
+						});
+
+						await triggerMockWebSocketScenario(application.id, "grant-application-generation");
+					} catch (error) {
+						log.error("generateApplication", error);
+						set((state) => ({
+							...state,
+							isGeneratingApplication: false,
 						}));
 					}
 				},
@@ -390,12 +469,21 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 					set({
 						currentStep: initialWizardState.currentStep,
+						isGeneratingApplication: initialWizardState.isGeneratingApplication,
 						isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
 						polling: {
 							...currentState.polling,
 							...initialWizardState.polling,
 						},
+						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
 					});
+				},
+
+				setGeneratingApplication: (isGenerating: boolean) => {
+					set((state) => ({
+						...state,
+						isGeneratingApplication: isGenerating,
+					}));
 				},
 
 				setGeneratingTemplate: (isGenerating: boolean) => {
@@ -466,28 +554,52 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}));
 				},
 
+				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Validation logic needs to be comprehensive
 				validateStepNext: (): boolean => {
 					const { currentStep } = get();
 					const { application } = useApplicationStore.getState();
 
 					if (!application) {
+						log.warn("[Wizard Store] validateStepNext: No application", { currentStep });
 						return false;
 					}
 
 					switch (currentStep) {
 						case WizardStep.APPLICATION_DETAILS: {
-							if (!application.title || application.title.trim().length < MIN_TITLE_LENGTH) {
-								return false;
+							const titleValid = !!(
+								application.title && application.title.trim().length >= MIN_TITLE_LENGTH
+							);
+							const ragSourcesCount = application.grant_template?.rag_sources.length ?? 0;
+							const ragSourcesValid = ragSourcesCount > 0;
+
+							const result: boolean = titleValid && ragSourcesValid;
+
+							const titleLength = application.title ? application.title.length : 0;
+
+							let reason: string;
+							if (!titleValid) {
+								reason = `Title invalid (length: ${titleLength}, min: ${MIN_TITLE_LENGTH})`;
+							} else if (ragSourcesValid) {
+								reason = "Valid";
+							} else {
+								reason = `No RAG sources (count: ${ragSourcesCount})`;
 							}
 
-							return (application.grant_template?.rag_sources.length ?? 0) > 0;
+							log.info("[Wizard Store] validateStepNext APPLICATION_DETAILS", {
+								hasGrantTemplate: !!application.grant_template,
+								ragSourcesCount,
+								reason,
+								result,
+								title: application.title,
+								titleLength,
+							});
+
+							return result;
 						}
 						case WizardStep.APPLICATION_STRUCTURE: {
 							return !!application.grant_template?.grant_sections.length;
 						}
-						case WizardStep.GENERATE_AND_COMPLETE:
-						case WizardStep.RESEARCH_DEEP_DIVE:
-						case WizardStep.RESEARCH_PLAN: {
+						case WizardStep.GENERATE_AND_COMPLETE: {
 							return true;
 						}
 						case WizardStep.KNOWLEDGE_BASE: {
@@ -495,6 +607,56 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 								!!application.rag_sources.length &&
 								application.rag_sources.every((source) => source.status !== "FAILED")
 							);
+						}
+						case WizardStep.RESEARCH_DEEP_DIVE: {
+							const formInputs = application.form_inputs;
+							if (!formInputs) {
+								log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
+									reason: "No form inputs",
+									result: false,
+								});
+								return false;
+							}
+
+							const requiredFields = [
+								"background_context",
+								"hypothesis",
+								"rationale",
+								"novelty_and_innovation",
+								"impact",
+								"team_excellence",
+								"research_feasibility",
+								"preliminary_data",
+							] as const;
+
+							const fieldStatus = requiredFields.map((field) => {
+								const value = formInputs[field];
+								const valid = Boolean(value && typeof value === "string" && value.trim().length > 0);
+								return { field, length: typeof value === "string" ? value.length : 0, valid };
+							});
+
+							const result = fieldStatus.every((status) => status.valid);
+
+							log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
+								fieldStatus,
+								filledFields: fieldStatus.filter((s) => s.valid).length,
+								result,
+								totalFields: requiredFields.length,
+							});
+
+							return result;
+						}
+						case WizardStep.RESEARCH_PLAN: {
+							const objectives = application.research_objectives ?? [];
+							const result = objectives.some((obj) => obj.research_tasks.length > 0);
+
+							log.info("[Wizard Store] validateStepNext RESEARCH_PLAN", {
+								objectivesCount: objectives.length,
+								objectivesWithTasks: objectives.filter((obj) => obj.research_tasks.length > 0).length,
+								result,
+							});
+
+							return result;
 						}
 						default: {
 							return false;
