@@ -81,7 +81,7 @@ resource "google_logging_metric" "app_hosting_build_failures" {
   name   = "app_hosting_build_failures_${var.environment}"
   filter = <<EOF
 resource.type="build"
-logName="projects/${var.project_id}/logs/cloudbuild"
+(logName="projects/grantflow-staging/logs/cloudbuild" OR logName="projects/grantflow/logs/cloudbuild")
 (severity="ERROR" OR severity="CRITICAL")
 AND (
   jsonPayload.message:"failed" 
