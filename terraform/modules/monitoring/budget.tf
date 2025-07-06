@@ -68,7 +68,7 @@ resource "google_cloudfunctions2_function" "budget_to_discord" {
 
   build_config {
     runtime     = "python312"
-    entry_point = "budget_alert_to_discord"
+    entry_point = "budget_alert_to_discord_sync"
 
     source {
       storage_source {
@@ -151,7 +151,7 @@ data "archive_file" "function" {
   output_path = "${path.module}/budget-function.zip"
 
   source {
-    content  = file("../cloud_functions/src/budget_function.py")
+    content  = file("../cloud_functions/src/budget_alerts/main.py")
     filename = "main.py"
   }
 

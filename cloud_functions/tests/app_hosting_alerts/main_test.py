@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from cloud_functions.src.app_hosting_alert_function import (
+from src.app_hosting_alerts.main import (
     app_hosting_alert_to_discord,
     app_hosting_alert_to_discord_sync,
     create_test_alert_embed,
@@ -28,17 +28,16 @@ class TestAppHostingAlertToDiscord:
         """Test successful high priority alert processing."""
 
         app_hosting_alert_data["incident"]["policy_name"] = "Critical Error Alert"
-        pubsub_data = {
-            "message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}
-        }
-        mock_request.data = pubsub_data
+
+        mock_cloud_event = Mock()
+        mock_cloud_event.data = app_hosting_alert_data
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_context = AsyncMock()
             mock_client.return_value.__aenter__.return_value = mock_context
             mock_context.post.return_value = mock_discord_webhook_response
 
-            result = await app_hosting_alert_to_discord(mock_request)
+            result = await app_hosting_alert_to_discord(mock_cloud_event)
 
             assert result["status"] == "success"
             assert result["message"] == "Alert sent to Discord"
@@ -295,7 +294,6 @@ class TestSyncWrapper:
             mock_client.return_value.__aenter__.return_value = mock_context
             mock_context.post.return_value = mock_discord_webhook_response
 
-            result = app_hosting_alert_to_discord_sync(mock_request)
+            app_hosting_alert_to_discord_sync(mock_request)
 
-            assert result["status"] == "success"
-            assert result["message"] == "Alert sent to Discord"
+            mock_context.post.assert_called_once()

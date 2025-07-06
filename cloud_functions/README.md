@@ -1,60 +1,92 @@
-# Cloud Functions
+# GrantFlow Cloud Functions
 
-Python Cloud Functions for monitoring and alerting.
+Serverless Python functions for event processing and monitoring.
+
+## Structure
+
+```
+cloud_functions/
+├── src/
+│   ├── app_hosting_alerts/    # Firebase App Hosting alert notifications
+│   ├── budget_alerts/         # GCP Budget alert notifications  
+│   └── user_cleanup/          # Scheduled user cleanup function
+├── tests/
+│   ├── app_hosting_alerts/
+│   ├── budget_alerts/
+│   └── user_cleanup/
+├── pyproject.toml             # Dependencies and project config
+├── requirements.txt           # Compiled dependencies for deployment
+└── README.md                  # This file
+```
 
 ## Functions
 
-### App Hosting Alerts (`app_hosting_alert_function.py`)
-Processes Firebase App Hosting alerts and sends formatted notifications to Discord via webhook.
+### App Hosting Alerts (`src/app_hosting_alerts/`)
+- **Purpose**: Forwards Firebase App Hosting monitoring alerts to Discord
+- **Trigger**: Pub/Sub topic `app-hosting-alerts-{environment}`
+- **Entry Point**: `app_hosting_alert_to_discord_sync`
+- **Alerts**: Build failures, deployment issues, high error rates, memory usage
 
-**Triggers:**
-- Pub/Sub topic: `app-hosting-alerts-staging`
-- Event type: `google.cloud.pubsub.topic.v1.messagePublished`
+### Budget Alerts (`src/budget_alerts/`)
+- **Purpose**: Forwards GCP billing budget alerts to Discord
+- **Trigger**: Pub/Sub topic `budget-alerts-{environment}`
+- **Entry Point**: `budget_alert_to_discord_sync`
+- **Alerts**: Budget thresholds (50%, 75%, 90%, 100%, 120% forecasted)
 
-**Features:**
-- Rich Discord embeds with alert details
-- Priority-based color coding and notifications
-- Quick links to Firebase and GCP consoles
-- Error handling and fallback messaging
+### User Cleanup (`src/user_cleanup/`)
+- **Purpose**: Scheduled cleanup of expired user accounts
+- **Trigger**: Cloud Scheduler (daily)
+- **Entry Point**: `main`
+- **Actions**: Deletes Firebase users and database records after grace period
 
-### Budget Alerts (`budget_function.py`)
-Processes GCP billing budget alerts and forwards them to Discord.
+## Development
 
-**Triggers:**
-- Pub/Sub topic: `budget-alerts-staging`
-- Event type: `google.cloud.pubsub.topic.v1.messagePublished`
+### Setup
+```bash
+# Install dependencies
+uv sync
 
-**Features:**
-- Budget threshold notifications
-- Spend tracking and forecasting alerts
-- Discord integration for team notifications
+# Run tests
+PYTHONPATH=. uv run pytest tests/
 
-## Dependencies
+# Run linting
+uv run ruff check src/
+uv run ruff format src/
+uv run mypy src/
+```
 
-Dependencies are managed using `pyproject.toml` files and automatically generated `requirements.txt` files for Cloud Functions deployment.
+### Testing
+- **Unit tests**: Fast tests with mocked dependencies
+- **Integration tests**: Real Discord webhook testing (requires env vars)
+- **Coverage**: Aim for 80%+ test coverage
 
-### Managing Dependencies
-
-1. **Add dependencies** to the appropriate `pyproject.toml` file:
-   - Root functions: `cloud_functions/pyproject.toml`
-   - User cleanup function: `cloud_functions/user_cleanup/pyproject.toml`
-
-2. **Generate requirements.txt** files for deployment:
-   ```bash
-   task cloud-functions:generate-requirements
-   ```
-
-3. **Sync development environment**:
-   ```bash
-   task cloud-functions:sync
-   ```
-
-### Workflow
-
-- Edit `pyproject.toml` files to add/update dependencies
-- Run `task cloud-functions:generate-requirements` to create deployment-ready `requirements.txt` files
-- The generated `requirements.txt` files are used by Cloud Functions during deployment
+### Environment Variables
+Functions require these environment variables:
+- `DISCORD_WEBHOOK_URL`: Discord webhook for alerts
+- `ENVIRONMENT`: Environment name (staging/production)
+- `PROJECT_ID`: GCP project ID
+- `DISCORD_ROLE_ALERTS`: Discord role ID for critical alerts
 
 ## Deployment
 
-Cloud Functions are deployed via Terraform in `terraform/modules/monitoring/`.
+Functions are deployed via Terraform in `/terraform/modules/monitoring/`:
+- `app_hosting_alerts.tf` - App Hosting monitoring function
+- `budget.tf` - Budget monitoring function  
+- `user_cleanup.tf` - User cleanup function
+
+Each function is packaged as a zip file and deployed to Cloud Functions Gen2.
+
+## Monitoring
+
+All functions include:
+- Structured logging with error context
+- Discord webhook integration for alerts
+- IAM permissions for Pub/Sub and Cloud Run
+- Retry policies and error handling
+- Performance and usage metrics
+
+## Links
+
+- [Firebase App Hosting Console](https://console.firebase.google.com/project/grantflow/apphosting)
+- [GCP Cloud Functions](https://console.cloud.google.com/functions/list?project=grantflow)
+- [Monitoring Dashboards](https://console.cloud.google.com/monitoring?project=grantflow)

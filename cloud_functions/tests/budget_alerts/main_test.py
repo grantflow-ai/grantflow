@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from cloud_functions.src.budget_function import budget_alert_to_discord, budget_alert_to_discord_sync
+from src.budget_alerts.main import budget_alert_to_discord, budget_alert_to_discord_sync
 
 
 class TestBudgetAlertToDiscord:
@@ -328,7 +328,6 @@ class TestSyncWrapper:
             mock_client.return_value.__aenter__.return_value = mock_context
             mock_context.post.return_value = mock_discord_webhook_response
 
-            result = budget_alert_to_discord_sync(mock_request)
+            budget_alert_to_discord_sync(mock_request)
 
-            assert result["status"] == "success"
-            assert result["message"] == "Alert sent to Discord"
+            mock_context.post.assert_called_once()

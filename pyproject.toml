@@ -60,6 +60,7 @@ lint.ignore = [
   "ISC001",   # Conflicts with formatter
   "PD011",    # Creates false positives
   "PGH003",   # Required specific mypy ignores
+  "PLC0415",
   "PLR2004",  # Magic variables, we allow them
   "S104",     # Disallows using '0.0.0.0' as a host
   "TD",       # We allow todo and fixme comments
@@ -180,7 +181,7 @@ strict = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = [ "." ]
-exclude = [ "cloud_functions/.*" ]
+exclude = [ "^cloud_functions/.*" ]
 
 [tool.uv.workspace]
 members = [
@@ -191,7 +192,6 @@ members = [
   "services/indexer",
   "services/rag",
   "services/scraper",
-  "daily-health-check",
 ]
 
 [tool.uv.sources]
