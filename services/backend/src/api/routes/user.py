@@ -34,7 +34,6 @@ async def delete_user(
     firebase_uid = request.state.firebase_uid
 
     try:
-        
         existing_deletion = await get_user_deletion_status(firebase_uid)
         if existing_deletion and existing_deletion.get("status") == "scheduled":
             raise HTTPException(
@@ -42,16 +41,13 @@ async def delete_user(
                 detail="User account is already scheduled for deletion",
             )
 
-        
         async with session_maker() as session, session.begin():
-            
             result = await session.execute(
                 text("DELETE FROM project_users WHERE firebase_uid = :uid"),
                 {"uid": firebase_uid},
             )
             projects_removed = result.rowcount
 
-            
             await session.execute(
                 text("DELETE FROM notifications WHERE firebase_uid = :uid"),
                 {"uid": firebase_uid},
@@ -63,8 +59,7 @@ async def delete_user(
                 projects_removed=projects_removed,
             )
 
-        
-        grace_period_days = 30  
+        grace_period_days = 30
         deletion_data = await schedule_user_deletion(firebase_uid, grace_period_days)
 
         logger.info(

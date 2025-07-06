@@ -423,7 +423,7 @@ class Notification(BaseWithUUIDPK):
     type: Mapped[NotificationTypeEnum] = mapped_column(Enum(NotificationTypeEnum))
     title: Mapped[str] = mapped_column(String(255))
     message: Mapped[str] = mapped_column(Text)
-    project_name: Mapped[str | None] = mapped_column(String(255), nullable=True)  
+    project_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     read: Mapped[bool] = mapped_column(default=False)
     dismissed: Mapped[bool] = mapped_column(default=False)

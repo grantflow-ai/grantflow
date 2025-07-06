@@ -11,7 +11,6 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-
 revision: str = "9dbbdab85cde"
 down_revision: str | None = "d4dde705a6f3"
 branch_labels: str | Sequence[str] | None = None
@@ -20,7 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     op.create_table(
         "notifications",
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),
@@ -52,12 +51,11 @@ def upgrade() -> None:
     op.create_index(op.f("ix_notifications_created_at"), "notifications", ["created_at"], unique=False)
     op.create_index(op.f("ix_notifications_firebase_uid"), "notifications", ["firebase_uid"], unique=False)
     op.create_index(op.f("ix_notifications_project_id"), "notifications", ["project_id"], unique=False)
-    
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
+
     op.drop_index(op.f("ix_notifications_project_id"), table_name="notifications")
     op.drop_index(op.f("ix_notifications_firebase_uid"), table_name="notifications")
     op.drop_index(op.f("ix_notifications_created_at"), table_name="notifications")
@@ -66,4 +64,3 @@ def downgrade() -> None:
         "idx_notifications_user_active", table_name="notifications", postgresql_where=sa.text("dismissed = FALSE")
     )
     op.drop_table("notifications")
-    
