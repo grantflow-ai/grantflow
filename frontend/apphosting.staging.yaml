@@ -32,8 +32,7 @@ env:
       secret: RESEND_API_KEY_STAGING
     - variable: NEXT_PUBLIC_SEGMENT_WRITE_KEY
       secret: NEXT_PUBLIC_SEGMENT_WRITE_KEY_STAGING
-    # Enable mock API and auth for staging by default
     - variable: NEXT_PUBLIC_MOCK_API
-      value: "true"
+      secret: NEXT_PUBLIC_MOCK_API_STAGING
     - variable: NEXT_PUBLIC_MOCK_AUTH
-      value: "true"
+      secret: NEXT_PUBLIC_MOCK_AUTH_STAGING
