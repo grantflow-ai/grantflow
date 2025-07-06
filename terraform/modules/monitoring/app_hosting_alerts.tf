@@ -324,6 +324,15 @@ resource "google_pubsub_topic_iam_member" "app_hosting_function_subscriber" {
   member = "serviceAccount:${google_service_account.app_hosting_alerts_function.email}"
 }
 
+# Allow the service account to invoke the Cloud Function
+resource "google_cloudfunctions2_function_iam_member" "app_hosting_alerts_invoker" {
+  project        = google_cloudfunctions2_function.app_hosting_alerts_to_discord.project
+  location       = google_cloudfunctions2_function.app_hosting_alerts_to_discord.location
+  cloud_function = google_cloudfunctions2_function.app_hosting_alerts_to_discord.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:${google_service_account.app_hosting_alerts_function.email}"
+}
+
 # Upload the App Hosting alerts function code
 resource "google_storage_bucket_object" "app_hosting_function_zip" {
   name   = "app-hosting-alert-function-${data.archive_file.app_hosting_function.output_md5}.zip"
