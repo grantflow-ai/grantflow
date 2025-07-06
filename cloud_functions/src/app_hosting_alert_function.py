@@ -49,10 +49,8 @@ async def app_hosting_alert_to_discord(cloud_event: Any) -> dict[str, Any]:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        if hasattr(cloud_event, "data"):
-            message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
-        else:
-            message_data = base64.b64decode(cloud_event["message"]["data"]).decode("utf-8")
+        
+        message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
         alert_data = json.loads(message_data)
 
         incident = alert_data.get("incident", {})
@@ -168,6 +166,6 @@ async def send_test_alert(webhook_url: str, environment: str, project_id: str) -
         return False
 
 
-def app_hosting_alert_to_discord_sync(cloud_event: Any) -> dict[str, Any]:
+def app_hosting_alert_to_discord_sync(cloud_event: Any, context: Any = None) -> dict[str, Any]:  # noqa: ARG001
     """Synchronous wrapper for the async alert function (Cloud Functions entry point)."""
     return asyncio.run(app_hosting_alert_to_discord(cloud_event))

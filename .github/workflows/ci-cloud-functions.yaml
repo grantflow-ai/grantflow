@@ -1,0 +1,59 @@
+name: CI - Cloud Functions
+
+on:
+  pull_request:
+    paths:
+      - "cloud_functions/**"
+      - ".github/workflows/ci-cloud-functions.yaml"
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - "cloud_functions/**"
+      - ".github/workflows/ci-cloud-functions.yaml"
+
+jobs:
+  lint-and-test:
+    name: Lint and Test Cloud Functions
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "cloud_functions/uv.lock"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        working-directory: cloud_functions
+        run: |
+          uv sync --frozen
+
+      - name: Run Ruff linter
+        working-directory: cloud_functions
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Run MyPy type checker
+        working-directory: cloud_functions
+        run: |
+          uv run mypy src/
+
+      - name: Run tests
+        working-directory: cloud_functions
+        run: |
+          uv run pytest tests/ -v --cov=src --cov-report=term-missing --cov-fail-under=80
+
+      - name: Check requirements.txt is up to date
+        working-directory: cloud_functions
+        run: |
+          uv pip compile pyproject.toml -o requirements.tmp.txt
+          diff -u requirements.txt requirements.tmp.txt || (echo "requirements.txt is out of date. Run 'uv pip compile pyproject.toml -o requirements.txt' to update it." && exit 1)
