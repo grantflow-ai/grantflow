@@ -396,7 +396,7 @@ describe("EditPermissionModal", () => {
 
 		await user.click(screen.getByTestId("update-button"));
 
-		expect(mockOnUpdateRole).toHaveBeenCalledWith("member123", UserRole.MEMBER, ["1", "2", "3"]);
+		expect(mockOnUpdateRole).toHaveBeenCalledWith("firebase123", UserRole.MEMBER, ["1", "2", "3"]);
 	});
 
 	it("calls onUpdateRole without projects for admin role", async () => {
@@ -419,7 +419,7 @@ describe("EditPermissionModal", () => {
 
 		await user.click(screen.getByTestId("update-button"));
 
-		expect(mockOnUpdateRole).toHaveBeenCalledWith("member123", UserRole.ADMIN, undefined);
+		expect(mockOnUpdateRole).toHaveBeenCalledWith("firebase123", UserRole.ADMIN, undefined);
 	});
 
 	it("shows loading state during submission", async () => {

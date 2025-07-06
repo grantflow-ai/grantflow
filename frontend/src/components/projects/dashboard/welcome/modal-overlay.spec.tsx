@@ -1,13 +1,21 @@
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { render, screen } from "@testing-library/react";
 
 import { WelcomeModalContent, WelcomeModalOverlay } from "./modal-overlay";
 
+// Wrapper component to provide Dialog context
+function DialogWrapper({ children }: { children: React.ReactNode }) {
+	return <DialogPrimitive.Root open>{children}</DialogPrimitive.Root>;
+}
+
 describe("WelcomeModalContent", () => {
 	it("renders children correctly", () => {
 		render(
-			<WelcomeModalContent>
-				<div data-testid="child-content">Hello modal</div>
-			</WelcomeModalContent>,
+			<DialogWrapper>
+				<WelcomeModalContent>
+					<div data-testid="child-content">Hello modal</div>
+				</WelcomeModalContent>
+			</DialogWrapper>,
 		);
 
 		expect(screen.getByTestId("child-content")).toHaveTextContent("Hello modal");
@@ -15,9 +23,11 @@ describe("WelcomeModalContent", () => {
 
 	it("renders the close button when showCloseButton is true", () => {
 		render(
-			<WelcomeModalContent showCloseButton>
-				<div>Modal with close</div>
-			</WelcomeModalContent>,
+			<DialogWrapper>
+				<WelcomeModalContent showCloseButton>
+					<div>Modal with close</div>
+				</WelcomeModalContent>
+			</DialogWrapper>,
 		);
 
 		expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
@@ -25,9 +35,11 @@ describe("WelcomeModalContent", () => {
 
 	it("does not render close button by default", () => {
 		render(
-			<WelcomeModalContent>
-				<div>No close button</div>
-			</WelcomeModalContent>,
+			<DialogWrapper>
+				<WelcomeModalContent>
+					<div>No close button</div>
+				</WelcomeModalContent>
+			</DialogWrapper>,
 		);
 
 		expect(screen.queryByRole("button", { name: /close/i })).not.toBeInTheDocument();
@@ -36,7 +48,11 @@ describe("WelcomeModalContent", () => {
 
 describe("WelcomeModalOverlay", () => {
 	it("renders overlay with correct class", () => {
-		render(<WelcomeModalOverlay data-testid="overlay" />);
+		render(
+			<DialogWrapper>
+				<WelcomeModalOverlay data-testid="overlay" />
+			</DialogWrapper>,
+		);
 
 		const overlay = screen.getByTestId("overlay");
 		expect(overlay).toBeInTheDocument();

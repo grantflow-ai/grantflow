@@ -32,7 +32,7 @@ interface ProjectSidebarProps {
 	applications?: {
 		id: string;
 		name: string;
-		status: "generating" | "in_progress" | "working_draft";
+		status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
 	}[];
 	isCollapsed?: boolean;
 	isCreatingApplication?: boolean;
@@ -60,9 +60,10 @@ export function ProjectSidebar({
 	const [isSettingsOpen, setIsSettingsOpen] = useState(pathname.includes("/settings/"));
 
 	const statusColors = {
-		generating: "bg-[#1e13f8]",
-		in_progress: "bg-[#9747ff]",
-		working_draft: "bg-[#211968]",
+		CANCELLED: "bg-[#636170]",
+		COMPLETED: "bg-[#1e13f8]",
+		DRAFT: "bg-[#211968]",
+		IN_PROGRESS: "bg-[#9747ff]",
 	};
 
 	const handleLogout = () => {
