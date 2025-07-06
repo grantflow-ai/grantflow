@@ -89,7 +89,6 @@ async def get_user_profile(
             "updated_at": user.updated_at.isoformat(),
         }
 
-        
         if user.email:
             response["email"] = user.email
         if user.display_name:
@@ -144,7 +143,6 @@ async def update_user_profile(
             logger.warning("User not found for update", firebase_uid=request.auth)
             raise HTTPException(status_code=404, detail="User not found")
 
-        
         if "display_name" in data:
             user.display_name = data["display_name"]
         if "preferences" in data:
@@ -153,14 +151,12 @@ async def update_user_profile(
         user.updated_at = datetime.now(UTC)
         await session.commit()
 
-        
         response_user: UserProfileResponse = {
             "firebase_uid": user.firebase_uid,
             "created_at": user.created_at.isoformat(),
             "updated_at": user.updated_at.isoformat(),
         }
 
-        
         if user.email:
             response_user["email"] = user.email
         if user.display_name:
@@ -216,7 +212,6 @@ async def delete_account(
             logger.warning("User not found for deletion", firebase_uid=request.auth)
             raise HTTPException(status_code=404, detail="User not found")
 
-        
         deletion_time = datetime.now(UTC) + timedelta(days=7)
         user.deletion_scheduled_at = deletion_time
         user.updated_at = datetime.now(UTC)
@@ -270,12 +265,10 @@ async def get_account_status(
             logger.warning("User not found for status check", firebase_uid=request.auth)
             raise HTTPException(status_code=404, detail="User not found")
 
-        
         if user.deleted_at:
             logger.info("Account is deleted", firebase_uid=request.auth)
             return AccountStatusResponse(deleted=True)
 
-        
         if user.deletion_scheduled_at:
             days_remaining = max(
                 0, (user.deletion_scheduled_at - datetime.now(UTC)).days
@@ -292,6 +285,5 @@ async def get_account_status(
                 days_remaining=days_remaining,
             )
 
-        
         logger.info("Account is active", firebase_uid=request.auth)
         return AccountStatusResponse(deleted=False)

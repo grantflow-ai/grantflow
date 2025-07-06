@@ -82,6 +82,33 @@ resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   }
 }
 
+resource "google_secret_manager_secret" "stripe_secret_key" {
+  secret_id = "STRIPE_SECRET_KEY_STAGING"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "stripe_webhook_secret" {
+  secret_id = "STRIPE_WEBHOOK_SECRET_STAGING"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "stripe_publishable_key" {
+  secret_id = "STRIPE_PUBLISHABLE_KEY_STAGING"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
+
 
 resource "google_kms_key_ring" "secrets_keyring" {
   name     = "secrets-keyring"
@@ -169,5 +196,32 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
   members = [
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
     "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+  ]
+}
+
+resource "google_secret_manager_secret_iam_binding" "stripe_secret_key_access" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.stripe_secret_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members = [
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+  ]
+}
+
+resource "google_secret_manager_secret_iam_binding" "stripe_webhook_secret_access" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.stripe_webhook_secret.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members = [
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+  ]
+}
+
+resource "google_secret_manager_secret_iam_binding" "stripe_publishable_key_access" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.stripe_publishable_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members = [
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }

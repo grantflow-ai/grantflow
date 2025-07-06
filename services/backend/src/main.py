@@ -5,6 +5,13 @@ from packages.shared_utils.src.server import create_litestar_app
 
 from services.backend.src.api.middleware import AuthMiddleware, TraceIdMiddleware
 from services.backend.src.api.routes.auth import handle_create_otp, handle_login
+from services.backend.src.api.routes.billing import (
+    create_checkout_session,
+    create_portal_session,
+    get_subscription,
+    get_subscription_plans,
+)
+from services.backend.src.api.routes.billing_webhook import stripe_webhook
 from services.backend.src.api.routes.funding_organizations import (
     handle_create_organization,
     handle_delete_organization,
@@ -72,6 +79,8 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_otp,
     handle_create_upload_url,
     handle_create_project,
+    create_checkout_session,
+    create_portal_session,
     delete_account,
     handle_delete_application,
     handle_delete_invitation,
@@ -80,6 +89,8 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_delete_project,
     dismiss_notification,
     get_account_status,
+    get_subscription,
+    get_subscription_plans,
     get_user_profile,
     handle_generate_application,
     handle_generate_grant_template,
@@ -102,6 +113,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_update_organization,
     handle_update_project,
     update_user_profile,
+    stripe_webhook,
 ]
 
 

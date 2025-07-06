@@ -42,3 +42,18 @@ output "secrets_key_id" {
   description = "The ID of the KMS key used for secret encryption"
   value       = google_kms_crypto_key.secrets_key.id
 }
+
+output "stripe_secret_key_id" {
+  description = "The ID of the Stripe secret key"
+  value       = google_secret_manager_secret.stripe_secret_key.id
+}
+
+output "stripe_webhook_secret_id" {
+  description = "The ID of the Stripe webhook secret"
+  value       = google_secret_manager_secret.stripe_webhook_secret.id
+}
+
+output "stripe_publishable_key_id" {
+  description = "The ID of the Stripe publishable key"
+  value       = google_secret_manager_secret.stripe_publishable_key.id
+}

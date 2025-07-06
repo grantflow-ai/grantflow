@@ -37,6 +37,30 @@ variable "discord_webhook_url" {
   default     = ""
 }
 
+variable "stripe_portal_config_id" {
+  description = "Stripe customer portal configuration ID"
+  type        = string
+  default     = ""
+}
+
+variable "stripe_success_url" {
+  description = "URL to redirect after successful Stripe checkout"
+  type        = string
+  default     = "https://app.grantflow.ai/billing/success"
+}
+
+variable "stripe_cancel_url" {
+  description = "URL to redirect after canceled Stripe checkout"
+  type        = string
+  default     = "https://app.grantflow.ai/billing"
+}
+
+variable "stripe_portal_return_url" {
+  description = "URL to return from Stripe customer portal"
+  type        = string
+  default     = "https://app.grantflow.ai/billing"
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -148,6 +172,26 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name = "STRIPE_SECRET_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "STRIPE_SECRET_KEY_STAGING"
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "STRIPE_WEBHOOK_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = "STRIPE_WEBHOOK_SECRET_STAGING"
+            version = "latest"
+          }
+        }
+      }
+
+      env {
         name  = "URL_CRAWLING_PUBSUB_TOPIC"
         value = "url-crawling"
       }
@@ -155,6 +199,26 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "RAG_PROCESSING_PUBSUB_TOPIC"
         value = "rag-processing"
+      }
+
+      env {
+        name  = "STRIPE_PORTAL_CONFIG_ID"
+        value = var.stripe_portal_config_id
+      }
+
+      env {
+        name  = "STRIPE_SUCCESS_URL"
+        value = var.stripe_success_url
+      }
+
+      env {
+        name  = "STRIPE_CANCEL_URL"
+        value = var.stripe_cancel_url
+      }
+
+      env {
+        name  = "STRIPE_PORTAL_RETURN_URL"
+        value = var.stripe_portal_return_url
       }
 
 

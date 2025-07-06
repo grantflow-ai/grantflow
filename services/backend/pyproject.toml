@@ -13,6 +13,7 @@ dependencies = [
   "firebase-admin>=6.7",
   "pyjwt>=2.10.1",
   "shared-utils[server,gcs,pubsub]",
+  "stripe>=11.3",
 ]
 
 [dependency-groups]

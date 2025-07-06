@@ -55,3 +55,28 @@ variable "discord_webhook_url" {
   type        = string
   sensitive   = true
 }
+
+
+variable "stripe_portal_config_id" {
+  description = "Stripe customer portal configuration ID"
+  type        = string
+  default     = ""
+}
+
+variable "stripe_success_url" {
+  description = "URL to redirect after successful Stripe checkout"
+  type        = string
+  default     = "https://app.grantflow.ai/billing/success"
+}
+
+variable "stripe_cancel_url" {
+  description = "URL to redirect after canceled Stripe checkout"
+  type        = string
+  default     = "https://app.grantflow.ai/billing"
+}
+
+variable "stripe_portal_return_url" {
+  description = "URL to return from Stripe customer portal"
+  type        = string
+  default     = "https://app.grantflow.ai/billing"
+}

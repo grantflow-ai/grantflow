@@ -43,6 +43,10 @@ module "cloud_run" {
   environment              = var.environment
   database_connection_name = module.database.instance_connection_name
   discord_webhook_url      = var.discord_webhook_url
+  stripe_portal_config_id  = var.stripe_portal_config_id
+  stripe_success_url       = var.stripe_success_url
+  stripe_cancel_url        = var.stripe_cancel_url
+  stripe_portal_return_url = var.stripe_portal_return_url
 }
 
 

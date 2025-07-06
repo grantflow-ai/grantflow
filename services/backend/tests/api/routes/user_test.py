@@ -30,7 +30,6 @@ async def test_get_user_profile_success(
     """Test successfully getting user profile."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -70,8 +69,6 @@ async def test_get_user_profile_minimal_data(
     """Test getting profile with minimal user data."""
     firebase_uid = "a" * 128
 
-    
-
     response = await test_client.get(
         "/user/profile",
         headers={"Authorization": "Bearer some_token"},
@@ -83,7 +80,7 @@ async def test_get_user_profile_minimal_data(
     assert data["firebase_uid"] == firebase_uid
     assert "created_at" in data
     assert "updated_at" in data
-    
+
     assert "email" not in data
     assert "display_name" not in data
     assert "photo_url" not in data
@@ -98,7 +95,6 @@ async def test_get_user_profile_deleted_user(
     """Test that deleted users are not found."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -140,7 +136,6 @@ async def test_update_user_profile_success(
     """Test successfully updating user profile."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -170,7 +165,6 @@ async def test_update_user_profile_success(
     assert data["user"]["preferences"]["theme"] == "dark"
     assert data["user"]["preferences"]["language"] == "en"
 
-    
     async with async_session_maker() as session:
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -189,7 +183,6 @@ async def test_update_user_profile_partial(
     """Test updating only some profile fields."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -201,7 +194,6 @@ async def test_update_user_profile_partial(
 
         await session.commit()
 
-    
     response = await test_client.patch(
         "/user/profile",
         headers={"Authorization": "Bearer some_token"},
@@ -212,11 +204,10 @@ async def test_update_user_profile_partial(
     data = response.json()
 
     assert data["success"] is True
-    assert data["user"]["display_name"] == "Original Name"  
+    assert data["user"]["display_name"] == "Original Name"
     assert data["user"]["preferences"]["theme"] == "dark"
     assert data["user"]["preferences"]["new_setting"] is True
 
-    
     assert "existing" not in data["user"]["preferences"]
 
 
@@ -241,7 +232,6 @@ async def test_delete_account_success(
     """Test successfully scheduling account deletion."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -265,22 +255,20 @@ async def test_delete_account_success(
     assert data["success"] is True
     assert data["days_remaining"] == 7
 
-    
     deletion_time = datetime.fromisoformat(
         data["deletion_scheduled_at"].replace("Z", "+00:00")
     )
     expected_time = before_delete + timedelta(days=7)
     time_diff = abs((deletion_time - expected_time).total_seconds())
-    assert time_diff < 60  
+    assert time_diff < 60
 
-    
     async with async_session_maker() as session:
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
         )
         updated_user = result.scalar_one()
         assert updated_user.deletion_scheduled_at is not None
-        assert updated_user.deleted_at is None  
+        assert updated_user.deleted_at is None
 
 
 async def test_delete_account_already_deleted(
@@ -291,7 +279,6 @@ async def test_delete_account_already_deleted(
     """Test that deleted users cannot schedule deletion again."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -331,8 +318,6 @@ async def test_get_account_status_active(
 ) -> None:
     """Test getting status for active user."""
 
-    
-
     response = await test_client.get(
         "/user/account/status",
         headers={"Authorization": "Bearer some_token"},
@@ -354,7 +339,6 @@ async def test_get_account_status_deleted(
     """Test getting status for deleted user."""
     firebase_uid = "a" * 128
 
-    
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
             select(User).where(User.firebase_uid == firebase_uid)
@@ -386,7 +370,6 @@ async def test_get_account_status_scheduled_for_deletion(
     """Test getting status for user scheduled for deletion."""
     firebase_uid = "a" * 128
 
-    
     deletion_time = datetime.now(UTC) + timedelta(days=5)
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
@@ -408,7 +391,7 @@ async def test_get_account_status_scheduled_for_deletion(
 
     assert data["deleted"] is False
     assert "deletion_scheduled_at" in data
-    assert data["days_remaining"] in [4, 5]  
+    assert data["days_remaining"] in [4, 5]
 
 
 async def test_get_account_status_deletion_overdue(
@@ -419,7 +402,6 @@ async def test_get_account_status_deletion_overdue(
     """Test getting status for user whose deletion is overdue."""
     firebase_uid = "a" * 128
 
-    
     deletion_time = datetime.now(UTC) - timedelta(days=1)
     async with async_session_maker() as session, session.begin():
         result = await session.execute(
@@ -441,7 +423,7 @@ async def test_get_account_status_deletion_overdue(
 
     assert data["deleted"] is False
     assert "deletion_scheduled_at" in data
-    assert data["days_remaining"] == 0  
+    assert data["days_remaining"] == 0
 
 
 async def test_unauthorized_requests(

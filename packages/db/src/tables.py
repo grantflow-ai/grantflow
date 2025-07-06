@@ -81,16 +81,16 @@ class User(Base):
     display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     deletion_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    
     preferences: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
 
-    
     project_users: Relationship[list["ProjectUser"]] = relationship(
         "ProjectUser", back_populates="user", cascade="all, delete-orphan"
+    )
+    subscriptions: Relationship[list["Subscription"]] = relationship(
+        "Subscription", back_populates="user", cascade="all, delete-orphan"
     )
 
     __table_args__ = (
@@ -465,4 +465,68 @@ class Notification(BaseWithUUIDPK):
     __table_args__ = (
         Index("idx_notifications_user_active", "firebase_uid", postgresql_where=text("dismissed = FALSE")),
         Index("idx_notifications_user_created", "firebase_uid", "created_at"),
+    )
+
+
+class SubscriptionPlan(BaseWithUUIDPK):
+    __tablename__ = "subscription_plans"
+
+    stripe_plan_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    price: Mapped[int] = mapped_column(BigInteger)
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    interval: Mapped[str] = mapped_column(String(20))
+    interval_count: Mapped[int] = mapped_column(BigInteger, default=1)
+
+    features: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
+    limits: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+    active: Mapped[bool] = mapped_column(default=True)
+    sort_order: Mapped[int] = mapped_column(BigInteger, default=0)
+
+    subscriptions: Relationship[list["Subscription"]] = relationship(
+        "Subscription", back_populates="plan", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        CheckConstraint("price >= 0", name="check_price_non_negative"),
+        CheckConstraint("interval_count > 0", name="check_interval_count_positive"),
+        Index("idx_subscription_plans_active", "active", "sort_order"),
+    )
+
+
+class Subscription(BaseWithUUIDPK):
+    __tablename__ = "subscriptions"
+
+    firebase_uid: Mapped[str] = mapped_column(
+        String(128), ForeignKey("users.firebase_uid", ondelete="CASCADE"), index=True
+    )
+    plan_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("subscription_plans.id", ondelete="CASCADE"), index=True
+    )
+
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+
+    status: Mapped[str] = mapped_column(String(20), index=True)
+
+    current_period_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    cancel_at_period_end: Mapped[bool] = mapped_column(default=False)
+    canceled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    trial_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    trial_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    extra_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=dict)
+
+    user: Relationship["User"] = relationship("User")
+    plan: Relationship["SubscriptionPlan"] = relationship("SubscriptionPlan", back_populates="subscriptions")
+
+    __table_args__ = (
+        Index("idx_subscriptions_user_status", "firebase_uid", "status"),
+        Index("idx_subscriptions_stripe_customer", "stripe_customer_id"),
+        Index("idx_subscriptions_period_end", "current_period_end"),
     )

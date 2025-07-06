@@ -157,11 +157,9 @@ async def project_member_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
 ) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        
         user = User(firebase_uid=firebase_uid)
         session.add(user)
 
-        
         project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
         session.add(project_user)
         await session.commit()
@@ -173,11 +171,9 @@ async def project_admin_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
 ) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        
         user = User(firebase_uid=firebase_uid)
         session.add(user)
 
-        
         project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
         session.add(project_user)
         await session.commit()
@@ -189,11 +185,9 @@ async def project_owner_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
 ) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        
         user = User(firebase_uid=firebase_uid)
         session.add(user)
 
-        
         project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
         session.add(project_user)
         await session.commit()

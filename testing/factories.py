@@ -28,6 +28,8 @@ from packages.db.src.tables import (
     RagGenerationNotification,
     RagSource,
     RagUrl,
+    Subscription,
+    SubscriptionPlan,
     TextVector,
 )
 from pgvector.utils import Vector
@@ -218,3 +220,36 @@ class ResearchTaskFactory(TypedDictFactory[ResearchTask]):
 
 class ChunkFactory(TypedDictFactory[Chunk]):
     __model__ = Chunk
+
+
+class SubscriptionPlanFactory(SQLAlchemyFactory[SubscriptionPlan]):
+    __model__ = SubscriptionPlan
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+    stripe_plan_id = Use(lambda: f"price_{faker.uuid4()[:24]}")
+    name = Use(lambda: choice(["Starter", "Professional", "Enterprise"]))
+    description = faker.sentence()
+    price = Use(lambda: choice([900, 2900, 9900]))
+    currency = "USD"
+    interval = Use(lambda: choice(["month", "year"]))
+    interval_count = 1
+    features = Use(lambda: [faker.word() for _ in range(3)])
+    limits = Use(lambda: {"api_calls": choice([1000, 10000, 100000]), "projects": choice([1, 10, 100])})
+    active = True
+    sort_order = Use(lambda: choice([0, 1, 2]))
+
+
+class SubscriptionFactory(SQLAlchemyFactory[Subscription]):
+    __model__ = Subscription
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+    stripe_subscription_id = Use(lambda: f"sub_{faker.uuid4()[:24]}")
+    stripe_customer_id = Use(lambda: f"cus_{faker.uuid4()[:24]}")
+    status = Use(lambda: choice(["active", "trialing", "past_due", "canceled"]))
+    current_period_start = faker.date_time_this_month()
+    current_period_end = faker.date_time_this_month()
+    cancel_at_period_end = False
+    canceled_at = None
+    trial_start = None
+    trial_end = None
+    extra_metadata = Use(lambda: {"source": "test"})
