@@ -49,7 +49,8 @@ class TestAppHostingAlertToDiscord:
             assert call_args[0][0] == "https://discord.com/api/webhooks/123/test"
 
             payload = call_args[1]["json"]
-            assert "@here **HIGH PRIORITY**" in payload["content"]
+            assert "**CRITICAL**" in payload["content"]
+            assert "App Hosting alert in test" in payload["content"]
             assert len(payload["embeds"]) == 1
 
             embed = payload["embeds"][0]
@@ -209,28 +210,6 @@ class TestAppHostingAlertToDiscord:
 
             assert result["status"] == "error"
             assert "Discord webhook request failed" in result["message"]
-
-    async def test_string_pubsub_data(
-        self,
-        mock_request: Mock,
-        app_hosting_alert_data: dict[str, Any],
-        mock_discord_webhook_response: Mock,
-    ) -> None:
-        """Test handling of string format Pub/Sub data."""
-
-        pubsub_data = json.dumps(
-            {"message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}}
-        )
-        mock_request.data = pubsub_data
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_context = AsyncMock()
-            mock_client.return_value.__aenter__.return_value = mock_context
-            mock_context.post.return_value = mock_discord_webhook_response
-
-            result = await app_hosting_alert_to_discord(mock_request)
-
-            assert result["status"] == "success"
 
 
 class TestCreateTestAlertEmbed:

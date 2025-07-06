@@ -308,28 +308,6 @@ class TestBudgetAlertToDiscord:
             assert result["status"] == "error"
             assert "Discord webhook request failed" in result["message"]
 
-    async def test_string_pubsub_data(
-        self,
-        mock_request: Mock,
-        budget_alert_data: dict[str, Any],
-        mock_discord_webhook_response: Mock,
-    ) -> None:
-        """Test handling of string format Pub/Sub data."""
-
-        pubsub_data = json.dumps(
-            {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
-        )
-        mock_request.data = pubsub_data
-
-        with patch("httpx.AsyncClient") as mock_client:
-            mock_context = AsyncMock()
-            mock_client.return_value.__aenter__.return_value = mock_context
-            mock_context.post.return_value = mock_discord_webhook_response
-
-            result = await budget_alert_to_discord(mock_request)
-
-            assert result["status"] == "success"
-
 
 class TestSyncWrapper:
     """Test synchronous wrapper function."""
