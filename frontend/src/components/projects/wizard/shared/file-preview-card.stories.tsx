@@ -136,13 +136,9 @@ export const PowerPointFile: Story = {
 	],
 };
 
-export const UnknownFileType: Story = {
-	args: {
-		file: createMockFile("data.xyz", "application/octet-stream"),
-		parentId: "template-123",
-	},
+export const GeneralFileTypes: Story = {
 	decorators: [
-		(Story) => {
+		() => {
 			useEffect(() => {
 				useApplicationStore.setState({
 					removeFile: (...args) => {
@@ -151,9 +147,29 @@ export const UnknownFileType: Story = {
 					},
 				});
 			}, []);
-			return <Story />;
+
+			const generalFiles = [
+				createMockFile("document.latex", "application/x-latex"),
+				createMockFile("text.odt", "application/vnd.oasis.opendocument.text"),
+				createMockFile("readme.rst", "text/x-rst"),
+				createMockFile("notes.rtf", "application/rtf"),
+				createMockFile("data.txt", "text/plain"),
+				createMockFile("spreadsheet.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+			];
+
+			return (
+				<div>
+					{generalFiles.map((file) => (
+						<FilePreviewCard file={file} key={file.id} parentId="template-123" />
+					))}
+				</div>
+			);
 		},
 	],
+	name: "General File Types (use file-general.svg)",
+	parameters: {
+		layout: "fullscreen",
+	},
 };
 
 export const LongFileName: Story = {
@@ -218,12 +234,10 @@ export const MultipleFiles: Story = {
 			];
 
 			return (
-				<div className="bg-gray-50 p-8">
-					<div className="grid max-w-4xl grid-cols-4 gap-4">
-						{files.map((file) => (
-							<FilePreviewCard file={file} key={file.id} parentId="template-123" />
-						))}
-					</div>
+				<div>
+					{files.map((file) => (
+						<FilePreviewCard file={file} key={file.id} parentId="template-123" />
+					))}
 				</div>
 			);
 		},
