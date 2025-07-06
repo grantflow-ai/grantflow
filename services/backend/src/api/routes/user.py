@@ -17,6 +17,9 @@ from services.backend.src.utils.firebase import (
 logger = get_logger(__name__)
 
 
+USER_DELETION_GRACE_PERIOD_DAYS = 10
+
+
 class DeleteUserResponse(TypedDict):
     message: str
     scheduled_deletion_date: str
@@ -116,8 +119,9 @@ async def delete_user(
                 projects_removed=projects_removed,
             )
 
-        grace_period_days = 30
-        deletion_data = await schedule_user_deletion(firebase_uid, grace_period_days)
+        deletion_data = await schedule_user_deletion(
+            firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS
+        )
 
         logger.info(
             "User deletion scheduled successfully",
