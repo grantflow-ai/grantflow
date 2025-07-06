@@ -40,7 +40,6 @@ async def test_list_notifications_with_data(
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
-        
         notification1 = Notification(
             firebase_uid=firebase_uid,
             project_id=project.id,
@@ -61,7 +60,6 @@ async def test_list_notifications_with_data(
             dismissed=False,
         )
 
-        
         notification3 = Notification(
             firebase_uid=firebase_uid,
             type=NotificationTypeEnum.INFO,
@@ -74,7 +72,6 @@ async def test_list_notifications_with_data(
         session.add_all([notification1, notification2, notification3])
         await session.commit()
 
-    
     response = await test_client.get(
         "/notifications",
         headers={"Authorization": "Bearer some_token"},
@@ -92,7 +89,6 @@ async def test_list_notifications_with_data(
     assert "project_id" in data["notifications"][0]
     assert "project_name" in data["notifications"][0]
 
-    
     response = await test_client.get(
         "/notifications",
         params={"include_read": True},
@@ -105,7 +101,6 @@ async def test_list_notifications_with_data(
     assert len(data["notifications"]) == 2
     assert data["total"] == 2
 
-    
     titles = [n["title"] for n in data["notifications"]]
     assert "Welcome to GrantFlow" in titles
     assert "Grant Deadline Approaching" in titles
@@ -120,7 +115,6 @@ async def test_list_notifications_excludes_expired(
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
-        
         expired_notification = Notification(
             firebase_uid=firebase_uid,
             type=NotificationTypeEnum.INFO,
@@ -128,10 +122,9 @@ async def test_list_notifications_excludes_expired(
             message="This notification has expired",
             read=False,
             dismissed=False,
-            expires_at=datetime.now(UTC) - timedelta(hours=1),  
+            expires_at=datetime.now(UTC) - timedelta(hours=1),
         )
 
-        
         active_notification = Notification(
             firebase_uid=firebase_uid,
             type=NotificationTypeEnum.INFO,
@@ -139,7 +132,7 @@ async def test_list_notifications_excludes_expired(
             message="This notification is still active",
             read=False,
             dismissed=False,
-            expires_at=datetime.now(UTC) + timedelta(hours=1),  
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
 
         session.add_all([expired_notification, active_notification])
@@ -198,7 +191,6 @@ async def test_dismiss_notification_success(
     assert data["success"] is True
     assert data["notification_id"] == str(notification_id)
 
-    
     async with async_session_maker() as session:
         result = await session.execute(
             select(Notification).where(Notification.id == notification_id)
@@ -233,7 +225,7 @@ async def test_dismiss_notification_wrong_user(
 
     async with async_session_maker() as session, session.begin():
         notification = Notification(
-            firebase_uid=different_firebase_uid,  
+            firebase_uid=different_firebase_uid,
             type=NotificationTypeEnum.INFO,
             title="Other User's Notification",
             message="This belongs to another user",
@@ -279,7 +271,7 @@ async def test_dismiss_notification_already_dismissed(
             title="Already Dismissed",
             message="This notification is already dismissed",
             read=False,
-            dismissed=True,  
+            dismissed=True,
         )
         session.add(notification)
         await session.commit()
@@ -290,7 +282,6 @@ async def test_dismiss_notification_already_dismissed(
         headers={"Authorization": "Bearer some_token"},
     )
 
-    
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
     assert data["success"] is True

@@ -50,6 +50,7 @@ lint.select = [ "ALL" ]
 lint.ignore = [
   "ANN401",   # Dynamically typed ANY
   "ASYNC110", # Use Event instead of sleep in async loop
+  "BLE001",   # Do not catch blind exception - we allow this pattern
   "COM812",   # Conflicts with formatter
   "D",        # Doc strings
   "E501",     # Line too long, handled by ruff format

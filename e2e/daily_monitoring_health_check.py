@@ -43,7 +43,7 @@ async def send_daily_health_check() -> bool:
 
         return response.status_code == 204
 
-    except Exception:  # noqa: BLE001
+    except Exception:
         return False
 
 

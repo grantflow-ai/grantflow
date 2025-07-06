@@ -431,7 +431,7 @@ async def test_evaluation_optimization_performance(
                             record_performance=True,
                         )
                         perf_ctx.add_llm_call()
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         logger.warning("Evaluation failed in adaptive test", exc_info=True)
 
             final_stats = get_adaptive_timeout_stats()
