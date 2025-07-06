@@ -480,7 +480,7 @@ def _should_keep_section(
             return max_similarity < threshold
 
         return True
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.warning("Embedding calculation failed for section", title=section["title"], error=str(e))
         return True
 

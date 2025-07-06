@@ -64,23 +64,19 @@ async def list_notifications(
     )
 
     async with session_maker() as session:
-        
         filters = [
             Notification.firebase_uid == request.auth,
             Notification.dismissed == False,  # noqa: E712
         ]
 
-        
         if not include_read:
             filters.append(Notification.read == False)  # noqa: E712
 
-        
         filters.append(
             (Notification.expires_at.is_(None))
             | (Notification.expires_at > datetime.now(UTC))
         )
 
-        
         result = await session.execute(
             select(Notification)
             .where(and_(*filters))
@@ -88,7 +84,6 @@ async def list_notifications(
         )
         notifications = result.scalars().all()
 
-        
         notification_responses: list[NotificationResponse] = []
         for notification in notifications:
             response: NotificationResponse = {
@@ -101,7 +96,6 @@ async def list_notifications(
                 "created_at": notification.created_at.isoformat(),
             }
 
-            
             if notification.project_id:
                 response["project_id"] = str(notification.project_id)
             if notification.project_name:
@@ -156,7 +150,6 @@ async def dismiss_notification(
     )
 
     async with session_maker() as session, session.begin():
-        
         result = await session.execute(
             select(Notification).where(
                 and_(
@@ -175,7 +168,6 @@ async def dismiss_notification(
             )
             raise HTTPException(status_code=404, detail="Notification not found")
 
-        
         notification.dismissed = True
         notification.updated_at = datetime.now(UTC)
 

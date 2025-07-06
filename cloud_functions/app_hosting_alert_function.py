@@ -91,7 +91,7 @@ def app_hosting_alert_to_discord(request: Any) -> dict[str, Any]:
         return {"status": "error", "message": f"Data parsing error: {e!s}"}
     except requests.RequestException as e:
         return {"status": "error", "message": f"Discord webhook request failed: {e!s}"}
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return {"status": "error", "message": f"Unexpected error: {e!s}"}
 
 
