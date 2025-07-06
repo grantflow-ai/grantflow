@@ -1,12 +1,17 @@
+import asyncio
 import base64
 import json
 import os
 from typing import Any
 
-import requests
+import functions_framework
+import httpx
+from cloudevents.http import CloudEvent
+
+logger = __import__("logging").getLogger(__name__)
 
 
-def budget_alert_to_discord(request: Any) -> dict[str, Any]:
+async def budget_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
     """Forward GCP budget alerts to Discord webhook."""
 
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
@@ -16,11 +21,14 @@ def budget_alert_to_discord(request: Any) -> dict[str, Any]:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        pubsub_message = request.data
-        if isinstance(pubsub_message, str):
-            pubsub_message = json.loads(pubsub_message)
+        if isinstance(cloud_event.data, str):
+            message_data = base64.b64decode(cloud_event.data).decode("utf-8")
 
-        message_data = base64.b64decode(pubsub_message["message"]["data"]).decode("utf-8")
+        elif isinstance(cloud_event.data, dict):
+            message_data = json.dumps(cloud_event.data)
+        else:
+            message_data = str(cloud_event.data)
+
         budget_notification = json.loads(message_data)
 
         budget_name = budget_notification.get("budgetDisplayName", "Unknown Budget")
@@ -67,18 +75,34 @@ def budget_alert_to_discord(request: Any) -> dict[str, Any]:
                 }
             )
 
-        response = requests.post(
-            webhook_url,
-            json={
-                "content": f"@here Budget threshold exceeded for {environment}!" if percentage >= 90 else None,
-                "embeds": [embed],
-            },
-            timeout=30,
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                webhook_url,
+                json={
+                    "content": f"@here Budget threshold exceeded for {environment}!" if percentage >= 90 else None,
+                    "embeds": [embed],
+                },
+                timeout=30.0,
+            )
 
         if response.status_code == 204:
             return {"status": "success", "message": "Alert sent to Discord"}
         return {"status": "error", "message": f"Discord webhook failed: {response.status_code}"}
 
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        return {"status": "error", "message": f"Data parsing error: {e!s}"}
+    except httpx.RequestError as e:
+        return {"status": "error", "message": f"Discord webhook request failed: {e!s}"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": f"Unexpected error: {e!s}"}
+
+
+@functions_framework.cloud_event
+def budget_alert_to_discord_sync(cloud_event: CloudEvent) -> None:
+    """Cloud Functions entry point for budget alerts."""
+    result = asyncio.run(budget_alert_to_discord(cloud_event))
+
+    if result["status"] == "error":
+        logger.error("Budget alert function error: %s", result["message"])
+    else:
+        logger.info("Budget alert sent successfully: %s", result["message"])
