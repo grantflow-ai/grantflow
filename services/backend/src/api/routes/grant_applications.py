@@ -3,6 +3,7 @@ from uuid import UUID
 
 from litestar import delete, get, patch, post
 from litestar.exceptions import NotFoundException, ValidationException
+from litestar.params import Parameter
 from packages.db.src.enums import (
     ApplicationStatusEnum,
     SourceIndexingStatusEnum,
@@ -31,7 +32,7 @@ from packages.shared_utils.src.exceptions import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_rag_task
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import insert, select, update
+from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.sql.functions import count
@@ -96,6 +97,28 @@ class ApplicationResponse(TypedDict):
     rag_job_id: NotRequired[str]
     created_at: str
     updated_at: str
+
+
+class ApplicationListItemResponse(TypedDict):
+    id: str
+    project_id: str
+    title: str
+    status: ApplicationStatusEnum
+    completed_at: NotRequired[str]
+    created_at: str
+    updated_at: str
+
+
+class PaginationMetadata(TypedDict):
+    total: int
+    limit: int
+    offset: int
+    has_more: bool
+
+
+class ApplicationListResponse(TypedDict):
+    applications: list[ApplicationListItemResponse]
+    pagination: PaginationMetadata
 
 
 def _build_source_response(rag_source: RagSource) -> SourceResponse:
@@ -433,3 +456,108 @@ async def handle_retrieve_application(
     project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
     return await _handle_retrieve_application(project_id, application_id, session_maker)
+
+
+@get(
+    "/projects/{project_id:uuid}/applications",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="ListApplications",
+)
+async def handle_list_applications(
+    project_id: UUID,
+    session_maker: async_sessionmaker[Any],
+    search: str | None = Parameter(
+        default=None,
+        description="Search query for filtering applications by title or description",
+    ),
+    status: ApplicationStatusEnum | None = Parameter(
+        default=None,
+        description="Filter applications by status",
+    ),
+    sort: str = Parameter(
+        default="updated_at",
+        description="Sort field (title, created_at, updated_at, completed_at)",
+        pattern="^(title|created_at|updated_at|completed_at)$",
+    ),
+    order: str = Parameter(
+        default="desc",
+        description="Sort order (asc, desc)",
+        pattern="^(asc|desc)$",
+    ),
+    limit: int = Parameter(
+        default=50,
+        description="Number of items to return",
+        ge=1,
+        le=100,
+    ),
+    offset: int = Parameter(
+        default=0,
+        description="Number of items to skip",
+        ge=0,
+    ),
+) -> ApplicationListResponse:
+    logger.info(
+        "Listing applications",
+        project_id=project_id,
+        search=search,
+        status=status,
+        sort=sort,
+        order=order,
+        limit=limit,
+        offset=offset,
+    )
+
+    async with session_maker() as session:
+        query = select(GrantApplication).where(
+            GrantApplication.project_id == project_id
+        )
+
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    GrantApplication.title.ilike(search_pattern),
+                    GrantApplication.text.ilike(search_pattern),
+                )
+            )
+
+        if status:
+            query = query.where(GrantApplication.status == status)
+
+        count_query = select(func.count()).select_from(query.subquery())
+        total_count = await session.scalar(count_query)
+        total_count = total_count or 0
+
+        sort_column = getattr(GrantApplication, sort)
+        if order == "desc":
+            query = query.order_by(sort_column.desc())
+        else:
+            query = query.order_by(sort_column.asc())
+
+        query = query.limit(limit).offset(offset)
+
+        applications = list(await session.scalars(query))
+
+        application_items: list[ApplicationListItemResponse] = []
+        for app in applications:
+            item: ApplicationListItemResponse = {
+                "id": str(app.id),
+                "project_id": str(app.project_id),
+                "title": app.title,
+                "status": app.status,
+                "created_at": app.created_at.isoformat(),
+                "updated_at": app.updated_at.isoformat(),
+            }
+            if app.completed_at:
+                item["completed_at"] = app.completed_at.isoformat()
+            application_items.append(item)
+
+        return ApplicationListResponse(
+            applications=application_items,
+            pagination=PaginationMetadata(
+                total=total_count,
+                limit=limit,
+                offset=offset,
+                has_more=(offset + limit) < total_count,
+            ),
+        )

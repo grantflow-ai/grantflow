@@ -4,7 +4,8 @@ import { Edit, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { createApplication } from "@/actions/grant-applications";
+import useSWR, { mutate } from "swr";
+import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
 import { AvatarGroup } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { PagePath } from "@/enums";
@@ -19,77 +20,20 @@ interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
 
-const mockApplications = [
-	{
-		deadline: "4 weeks and 3 days to the deadline",
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Dictum pharetra mauris quis id velit. Nulla vulputate elit volutpat magnis non sapien potenti. Faucibus venenatis venenatis elit arcu mauris. Semper ut.",
-		id: "1",
-		lastEdited: "22.08.25",
-		name: "Application Name",
-		status: "generating" as const,
-	},
-	{
-		deadline: "",
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Dictum pharetra mauris quis id velit. Nulla vulputate elit volutpat magnis non sapien potenti. Faucibus venenatis venenatis elit arcu mauris. Semper ut.",
-		id: "2",
-		lastEdited: "22.08.25",
-		name: "Application Name",
-		status: "in_progress" as const,
-	},
-	{
-		deadline: "4 weeks and 3 days to the deadline",
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Dictum pharetra mauris quis id velit. Nulla vulputate elit volutpat magnis non sapien potenti. Faucibus venenatis venenatis elit arcu mauris. Semper ut.",
-		id: "3",
-		lastEdited: "22.08.25",
-		name: "Application Name",
-		status: "working_draft" as const,
-	},
-	{
-		deadline: "4 weeks and 3 days to the deadline",
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Dictum pharetra mauris quis id velit. Nulla vulputate elit volutpat magnis non sapien potenti. Faucibus venenatis venenatis elit arcu mauris. Semper ut.",
-		id: "4",
-		lastEdited: "22.08.25",
-		name: "Application Name",
-		status: "working_draft" as const,
-	},
-	{
-		deadline: "4 weeks and 3 days to the deadline",
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Dictum pharetra mauris quis id velit. Nulla vulputate elit volutpat magnis non sapien potenti. Faucibus venenatis venenatis elit arcu mauris. Semper ut.",
-		id: "5",
-		lastEdited: "22.08.25",
-		name: "Application Name",
-		status: "working_draft" as const,
-	},
-	{
-		deadline: "4 weeks and 3 days to the deadline",
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Dictum pharetra mauris quis id velit. Nulla vulputate elit volutpat magnis non sapien potenti. Faucibus venenatis venenatis elit arcu mauris. Semper ut.",
-		id: "6",
-		lastEdited: "22.08.25",
-		name: "Application Name",
-		status: "working_draft" as const,
-	},
-];
-
 const statusConfig = {
-	generating: {
+	COMPLETED: {
 		color: "bg-[#1e13f8]",
-		label: "Generating",
+		label: "Completed",
 		textColor: "text-white",
 	},
-	in_progress: {
+	DRAFT: {
+		color: "bg-[#211968]",
+		label: "Draft",
+		textColor: "text-white",
+	},
+	IN_PROGRESS: {
 		color: "bg-[#9747ff]",
 		label: "In Progress",
-		textColor: "text-white",
-	},
-	working_draft: {
-		color: "bg-[#211968]",
-		label: "Working Draft",
 		textColor: "text-white",
 	},
 };
@@ -98,12 +42,12 @@ const applicationCardUser = { backgroundColor: "#369e94", initials: "NH" };
 const applicationCardUsers = [applicationCardUser];
 
 interface ApplicationCardProps {
-	application: (typeof mockApplications)[0];
+	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
 }
 
 function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
-	const status = statusConfig[application.status];
+	const status = statusConfig[application.status as keyof typeof statusConfig];
 	const [showMenu, setShowMenu] = useState(false);
 
 	return (
@@ -116,7 +60,7 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 						{status.label}
 					</span>
 					<span className={`font-['Source_Sans_Pro'] text-[10px] ${status.textColor}`}>
-						Last edited {application.lastEdited}
+						Last edited {formatDate(application.updated_at)}
 					</span>
 				</div>
 				<div className="relative">
@@ -156,22 +100,16 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 			<div className="flex items-center gap-3">
 				<AvatarGroup maxVisible={1} size="sm" users={applicationCardUsers} />
 				<h3 className="font-['Source_Sans_Pro'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
-					{application.name}
+					{application.title}
 				</h3>
 			</div>
 
 			{}
 			<p className="font-['Source_Sans_Pro'] text-[14px] leading-[20px] text-[#636170]">
-				{application.description}
+				Grant application for {application.title}
 			</p>
 
 			{}
-			{application.deadline && (
-				<div className="flex items-center gap-2 text-[#636170]">
-					<span className="text-[14px]">⏰</span>
-					<span className="font-['Source_Sans_Pro'] text-[12px]">{application.deadline}</span>
-				</div>
-			)}
 
 			{}
 			<button
@@ -184,6 +122,15 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 	);
 }
 
+function formatDate(dateString: string) {
+	const date = new Date(dateString);
+	return date.toLocaleDateString("en-US", {
+		day: "2-digit",
+		month: "2-digit",
+		year: "2-digit",
+	});
+}
+
 const teamMembers = [{ backgroundColor: "#369e94", initials: "NH" }];
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
@@ -193,26 +140,37 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	const [projectTitle, setProjectTitle] = useState(initialProject.name);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
-	const [applications, setApplications] = useState(mockApplications);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 
-	const filteredApplications = applications.filter(
-		(app) =>
-			app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			app.description.toLowerCase().includes(searchQuery.toLowerCase()),
+	// Fetch applications using SWR
+	const { data: applicationsData, isLoading } = useSWR(
+		`/projects/${initialProject.id}/applications?search=${searchQuery}`,
+		() => listApplications(initialProject.id, { search: searchQuery || undefined }),
+		{
+			revalidateOnFocus: false,
+		},
 	);
+
+	const applications = applicationsData?.applications ?? [];
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);
 		setShowDeleteModal(true);
 	};
 
-	const confirmDeleteApplication = () => {
+	const confirmDeleteApplication = async () => {
 		if (applicationToDelete) {
-			setApplications(applications.filter((app) => app.id !== applicationToDelete));
-			setApplicationToDelete(null);
-			setShowDeleteModal(false);
+			try {
+				await deleteApplication(initialProject.id, applicationToDelete);
+				await mutate(`/projects/${initialProject.id}/applications`);
+				toast.success("Application deleted successfully");
+				setApplicationToDelete(null);
+				setShowDeleteModal(false);
+			} catch (error) {
+				log.error("delete-application", error);
+				toast.error("Failed to delete application");
+			}
 		}
 	};
 
@@ -226,6 +184,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		setIsCreatingApplication(true);
 		try {
 			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
+			await mutate(`/projects/${initialProject.id}/applications`);
 			const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", initialProject.id).replace(
 				":applicationId",
 				application.id,
@@ -250,7 +209,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 			<ProjectSidebar
 				applications={applications.map((app) => ({
 					id: app.id,
-					name: app.name,
+					name: app.title,
 					status: app.status,
 				}))}
 				isCreatingApplication={isCreatingApplication}
@@ -330,9 +289,14 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 
 				{}
 				<div className="flex-1 overflow-auto px-6 pb-6">
-					{filteredApplications.length > 0 ? (
+					{isLoading && (
+						<div className="flex items-center justify-center h-64">
+							<div className="text-[#636170]">Loading applications...</div>
+						</div>
+					)}
+					{!isLoading && applications.length > 0 && (
 						<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-							{filteredApplications.map((application) => (
+							{applications.map((application) => (
 								<ApplicationCard
 									application={application}
 									key={application.id}
@@ -340,7 +304,8 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 								/>
 							))}
 						</div>
-					) : (
+					)}
+					{!isLoading && applications.length === 0 && (
 						<div className="flex items-center justify-center h-full">
 							<button
 								className="flex flex-col items-center justify-center w-[300px] h-[200px] bg-white rounded-lg border-2 border-dashed border-[#e1dfeb] hover:border-[#1e13f8] transition-colors cursor-pointer"
