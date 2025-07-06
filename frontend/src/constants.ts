@@ -1,7 +1,7 @@
 export const FIREBASE_LOCAL_STORAGE_KEY = "firebase-signin-email";
 export const SESSION_COOKIE = "grantflow_session";
 export const WIZARD_STORAGE_KEY = "grantflow-wizard-state";
-export const DEFAULT_APPLICATION_TITLE = "";
+export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
 export enum WizardStep {
 	APPLICATION_DETAILS = "Application Details",

@@ -1,5 +1,6 @@
 import ky, { type KyInstance } from "ky";
 import { createMockResponse } from "@/dev-tools/mock-api/mock-response";
+import { shouldSkipLogging } from "@/dev-tools/utils/dev-helpers";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
@@ -13,8 +14,7 @@ export function getClient(): KyInstance {
 		hooks: {
 			afterResponse: [
 				(request, _options, response) => {
-					// Skip logging for mock responses
-					if (getEnv().NEXT_PUBLIC_MOCK_API) {
+					if (shouldSkipLogging()) {
 						return response;
 					}
 
@@ -31,8 +31,7 @@ export function getClient(): KyInstance {
 			],
 			beforeError: [
 				(error) => {
-					// Skip error logging for mock mode
-					if (getEnv().NEXT_PUBLIC_MOCK_API) {
+					if (shouldSkipLogging()) {
 						return error;
 					}
 
@@ -50,13 +49,11 @@ export function getClient(): KyInstance {
 			],
 			beforeRequest: [
 				async (request, options) => {
-					// Try to intercept with mock handler first
 					const mockResponse = await createMockResponse(request, options);
 					if (mockResponse) {
 						return mockResponse;
 					}
 
-					// Continue with normal request logging
 					log.info(`API ${request.method} ${request.url}`, {
 						method: request.method,
 						operation: request.headers.get("X-Operation"),

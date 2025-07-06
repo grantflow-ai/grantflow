@@ -1,6 +1,7 @@
 export { CreateApplicationButton } from "./applications/create-application-button";
 export { DeleteApplicationModal } from "./applications/delete-application-modal";
 export { GrantApplicationCard } from "./applications/grant-application-card";
+export { GrantApplicationEditor } from "./applications/grant-application-editor";
 export { DashboardClient } from "./dashboard/dashboard-client";
 export { DashboardCreateProjectModal } from "./dashboard/dashboard-create-project-modal";
 export { DashboardHeader } from "./dashboard/dashboard-header";

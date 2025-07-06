@@ -24,7 +24,6 @@ export const UrlResponseFactory = new Factory<{ url: string }>((factory) => ({
 }));
 
 export const JwtResponseFactory = new Factory<API.Login.Http201.ResponseBody>(() => {
-	// Mock JWT with proper structure: header.payload.signature for testing
 	const testJwtValue =
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik1vY2sgVXNlciIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxODkzNDU2MDAwfQ.4Adcj3UFYzPUVaVF43FmMab6RlaQD8A9V8wFzzht-KQ";
 	return {
@@ -248,6 +247,7 @@ export const UpdateApplicationRequestFactory = new Factory<API.UpdateApplication
 	form_inputs: {},
 	research_objectives: ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 })),
 	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+	text: factory.lorem.paragraphs(3),
 	title: factory.lorem.sentence(),
 }));
 
@@ -425,7 +425,9 @@ export const ApplicationListItemFactory = new Factory<ApplicationListItem>((fact
 }));
 
 export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.Http201.ResponseBody>(() => {
-	const baseApplication = ApplicationFactory.build();
+	const baseApplication = ApplicationFactory.build({
+		text: undefined,
+	});
 	const grantTemplate = GrantTemplateFactory.build({
 		grant_application_id: baseApplication.id,
 	});

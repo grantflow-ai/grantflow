@@ -25,7 +25,6 @@ export async function inviteCollaborator({
 	success: boolean;
 }> {
 	try {
-		// For now, just send a simple email notification
 		const { error } = await resend.emails.send({
 			from: "noreply@grantflow.ai",
 			html: `

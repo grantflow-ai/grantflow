@@ -232,7 +232,6 @@ services:
     scraper:
         profiles:
             - all
-            - services
             - scraper
         build:
             args:
@@ -253,8 +252,7 @@ services:
             - ./packages:/app/packages:cached
         command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload"
         depends_on:
-            gcs-emulator:
-                condition: service_healthy
+            - gcs-emulator
 
 volumes:
     data:

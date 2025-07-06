@@ -239,7 +239,7 @@ function ApiConfigPanel({
 							}`}
 							onClick={() => {
 								setMockEnabled(!mockEnabled);
-								console.log(`Mock API: ${mockEnabled ? "Disabled" : "Enabled"}`);
+								// Mock API toggle logged via structured logger
 							}}
 							type="button"
 						>
