@@ -39,7 +39,7 @@ async def test_discord_webhook() -> bool | None:
 
         return response.status_code == 204
 
-    except Exception:  # noqa: BLE001
+    except Exception:
         return False
 
 

@@ -47,7 +47,7 @@ describe("DeleteAccountModal", () => {
 		expect(screen.getByText("Are you sure you want to delete your account?")).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				"This will permanently delete your account, including all associated research projects, applications, and data. This action cannot be undone.",
+				"This will schedule your account for deletion. You will be removed from all projects immediately, but your account can be restored within 30 days by contacting support. After 30 days, deletion will be permanent and cannot be undone.",
 			),
 		).toBeInTheDocument();
 		expect(screen.getByTestId("cancel-button")).toBeInTheDocument();
@@ -83,7 +83,13 @@ describe("DeleteAccountModal", () => {
 
 	it("handles successful account deletion", async () => {
 		const user = userEvent.setup();
-		vi.mocked(deleteAccount).mockResolvedValue({ message: "Account deleted", success: true });
+		const mockResponse = {
+			grace_period_days: 30,
+			message: "Account scheduled for deletion",
+			restoration_info: "Contact support within 30 days to restore your account",
+			scheduled_deletion_date: "2024-02-15T00:00:00Z",
+		};
+		vi.mocked(deleteAccount).mockResolvedValue(mockResponse);
 
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
@@ -95,14 +101,26 @@ describe("DeleteAccountModal", () => {
 		});
 
 		expect(mockClearUser).toHaveBeenCalledTimes(1);
-		expect(mockPush).toHaveBeenCalledWith("/login?message=account-deleted");
+		expect(mockPush).toHaveBeenCalledWith(
+			"/login?gracePeriod=30&message=account-deleted&scheduledDate=2024-02-15T00%3A00%3A00Z",
+		);
 	});
 
 	it("shows loading state during deletion", async () => {
 		const user = userEvent.setup();
-		let resolvePromise: (value: { message: string; success: boolean }) => void;
+		let resolvePromise: (value: {
+			grace_period_days: number;
+			message: string;
+			restoration_info: string;
+			scheduled_deletion_date: string;
+		}) => void;
 
-		const deletePromise = new Promise<{ message: string; success: boolean }>((resolve) => {
+		const deletePromise = new Promise<{
+			grace_period_days: number;
+			message: string;
+			restoration_info: string;
+			scheduled_deletion_date: string;
+		}>((resolve) => {
 			resolvePromise = resolve;
 		});
 
@@ -128,7 +146,12 @@ describe("DeleteAccountModal", () => {
 		expect(updatedDeleteButton).toHaveAttribute("disabled");
 		expect(updatedCancelButton).toHaveAttribute("disabled");
 
-		resolvePromise!({ message: "Account deleted", success: true });
+		resolvePromise!({
+			grace_period_days: 30,
+			message: "Account scheduled for deletion",
+			restoration_info: "Contact support within 30 days to restore your account",
+			scheduled_deletion_date: "2024-02-15T00:00:00Z",
+		});
 
 		await waitFor(() => {
 			expect(mockPush).toHaveBeenCalled();
@@ -163,12 +186,12 @@ describe("DeleteAccountModal", () => {
 		expect(screen.getByTestId("delete-button")).toHaveTextContent("Delete and log out");
 	});
 
-	it("displays warning about data permanence", () => {
+	it("displays warning about scheduled deletion", () => {
 		render(<DeleteAccountModal isOpen={true} onClose={mockOnClose} />);
 
-		expect(screen.getByText(/permanently delete/)).toBeInTheDocument();
-		expect(screen.getByText(/research projects/)).toBeInTheDocument();
-		expect(screen.getByText(/applications/)).toBeInTheDocument();
+		expect(screen.getByText(/schedule your account for deletion/)).toBeInTheDocument();
+		expect(screen.getByText(/removed from all projects immediately/)).toBeInTheDocument();
+		expect(screen.getByText(/30 days/)).toBeInTheDocument();
 		expect(screen.getByText(/cannot be undone/)).toBeInTheDocument();
 	});
 

@@ -34,6 +34,7 @@ from services.backend.src.api.routes.sources import (
     handle_delete_rag_source,
     handle_retrieve_rag_sources,
 )
+from services.backend.src.api.routes.user import delete_user, get_sole_owned_projects
 from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
     handle_create_invitation_redirect_url,
@@ -71,7 +72,9 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_delete_organization,
     handle_delete_rag_source,
     handle_delete_project,
+    delete_user,
     dismiss_notification,
+    get_sole_owned_projects,
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
