@@ -91,9 +91,7 @@ services:
             - services
             - backend
         build:
-            args:
-                service_name: backend
-            dockerfile: services/Dockerfile
+            dockerfile: services/backend/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
@@ -120,9 +118,7 @@ services:
             - services
             - indexer
         build:
-            args:
-                service_name: indexer
-            dockerfile: ./services/Dockerfile
+            dockerfile: ./services/indexer/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
@@ -152,9 +148,7 @@ services:
             - services
             - crawler
         build:
-            args:
-                service_name: crawler
-            dockerfile: ./services/Dockerfile
+            dockerfile: ./services/crawler/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
@@ -183,9 +177,7 @@ services:
             - services
             - rag
         build:
-            args:
-                service_name: rag
-            dockerfile: ./services/Dockerfile
+            dockerfile: ./services/rag/Dockerfile
         environment:
             DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
             GOOGLE_CLOUD_PROJECT: grantflow
@@ -234,9 +226,7 @@ services:
             - all
             - scraper
         build:
-            args:
-                service_name: scraper
-            dockerfile: ./services/Dockerfile
+            dockerfile: ./services/scraper/Dockerfile
         environment:
             GOOGLE_CLOUD_PROJECT: grantflow
             GOOGLE_CLOUD_REGION: us-central1
