@@ -555,6 +555,49 @@ export namespace API {
 };
 };
 
+	export namespace ListApplications {
+	export namespace Http200 {
+	export type ResponseBody = {
+	applications: {
+	completed_at?: string;
+	created_at: string;
+	id: string;
+	project_id: string;
+	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	title: string;
+	updated_at: string;
+}[];
+	pagination: {
+	has_more: boolean;
+	limit: number;
+	offset: number;
+	total: number;
+};
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	project_id: string;
+};
+
+	export interface QueryParameters {
+	limit?: number;
+	offset?: number;
+	order?: string;
+	search?: null | string;
+	sort?: string;
+	status?: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS" | null;
+};
+};
+
 	export namespace ListOrganizations {
 	export namespace Http200 {
 	export type ResponseBody = {

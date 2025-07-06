@@ -3,13 +3,11 @@ import { PROGRESS_BAR_STEPS } from "@/constants";
 import { ProgressBar } from "./progress-bar";
 
 describe("ProgressBar", () => {
-	expect(screen.getAllByTestId("progress-bar-step")).toHaveLength(PROGRESS_BAR_STEPS.length);
-
 	it("renders the correct number of steps", () => {
 		render(<ProgressBar currentStep={1} />);
-		// Each ProgressBarStep renders a dot/circle
-		const circles = screen.getAllByRole("presentation");
-		expect(circles.length).toBe(PROGRESS_BAR_STEPS.length);
+		// Check for step labels
+		const labels = screen.getAllByRole("heading", { level: 5 });
+		expect(labels.length).toBe(PROGRESS_BAR_STEPS.length);
 	});
 
 	it("displays all step labels", () => {
