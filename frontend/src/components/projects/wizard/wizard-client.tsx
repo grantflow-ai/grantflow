@@ -14,6 +14,8 @@ import {
 import { WizardFooter, WizardHeader } from "@/components/wizard/wizard-wrapper-components";
 import { SourceIndexingStatus } from "@/enums";
 import {
+	type AutofillProgressMessage,
+	isAutofillProgressMessage,
 	isRagProcessingStatusMessage,
 	isSourceProcessingNotificationMessage,
 	type SourceProcessingNotificationMessage,
@@ -87,6 +89,49 @@ export function WizardClientComponent({ application: initialApplication, project
 		}
 	}, []);
 
+	const handleAutofillProgress = useCallback(
+		(notification: AutofillProgressMessage) => {
+			const { event } = notification;
+			const { autofill_type, data, message } = notification.data;
+
+			// Handle autofill events
+			switch (event) {
+				case "autofill_completed": {
+					toast.success("Autofill completed successfully!");
+					// Update loading state
+					useWizardStore.getState().setAutofillLoading(autofill_type, false);
+					// Refresh application data to get autofilled content
+					void retrieveApplication(projectId, initialApplication.id);
+
+					break;
+				}
+				case "autofill_error": {
+					toast.error(`Autofill failed: ${message}`);
+					useWizardStore.getState().setAutofillLoading(autofill_type, false);
+
+					break;
+				}
+				case "autofill_progress": {
+					// Progress updates can be shown in the UI if needed
+					if (data?.field_name && typeof data.field_name === "string") {
+						toast.info(`Generating content for ${data.field_name}...`);
+					}
+
+					break;
+				}
+				case "autofill_started": {
+					toast.info(
+						`Starting autofill for ${autofill_type === "research_plan" ? "Research Plan" : "Research Deep Dive"}`,
+					);
+
+					break;
+				}
+				// No default
+			}
+		},
+		[projectId, initialApplication.id, retrieveApplication],
+	);
+
 	useEffect(() => {
 		if (notifications.length === 0) {
 			return;
@@ -96,9 +141,11 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		if (isSourceProcessingNotificationMessage(latestNotification)) {
 			handleSourceProcessingNotification(latestNotification);
-			void retrieveApplication(projectId, initialApplication.id);
+		} else if (isAutofillProgressMessage(latestNotification)) {
+			handleAutofillProgress(latestNotification);
 		}
-	}, [notifications, handleSourceProcessingNotification, initialApplication.id, projectId, retrieveApplication]);
+		void retrieveApplication(projectId, initialApplication.id);
+	}, [notifications, handleSourceProcessingNotification, handleAutofillProgress, retrieveApplication]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 
