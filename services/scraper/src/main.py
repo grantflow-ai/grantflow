@@ -46,10 +46,10 @@ async def run_scraper(
     )
 
     search_results = await download_search_data(storage=storage, from_date=from_date, to_date=to_date)
-    logger.info("Downloaded %d search results", len(search_results))
+    logger.info("Downloaded search results", count=len(search_results))
 
     existing_file_identifiers = await storage.get_existing_file_identifiers()
-    logger.info("Found %d existing file identifiers", len(existing_file_identifiers))
+    logger.info("Found existing file identifiers", count=len(existing_file_identifiers))
 
     new_files_downloaded = await download_grant_pages(
         storage=storage, search_results=search_results, existing_file_identifiers=existing_file_identifiers
