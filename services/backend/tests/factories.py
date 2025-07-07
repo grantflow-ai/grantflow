@@ -11,8 +11,8 @@ from services.backend.src.api.routes.funding_organizations import (
 )
 from services.backend.src.api.routes.projects import (
     CreateProjectRequestBody,
-    UpdateProjectRequestBody,
     ProjectBaseResponse,
+    UpdateProjectRequestBody,
 )
 from services.backend.src.common_types import TableIdResponse
 from services.rag.src.grant_template.determine_application_sections import (

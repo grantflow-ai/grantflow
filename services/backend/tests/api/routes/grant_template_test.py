@@ -9,8 +9,8 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
     GrantTemplateRagSource,
-    RagFile,
     Project,
+    RagFile,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker

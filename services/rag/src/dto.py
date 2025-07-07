@@ -1,4 +1,4 @@
-from typing import Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from packages.db.src.json_objects import TableContext
 
@@ -29,3 +29,19 @@ class ResearchComponentGenerationDTO(TypedDict):
     relationships: list[tuple[str, str]]
     max_words: NotRequired[int]
     type: Literal["task", "objective"]
+
+
+class AutofillRequestDTO(TypedDict):
+    parent_type: Literal["grant_application"]
+    parent_id: str
+    autofill_type: Literal["research_plan", "research_deep_dive"]
+    field_name: NotRequired[str]
+    context: NotRequired[dict[str, Any]]
+    trace_id: NotRequired[str]
+
+
+class AutofillResponseDTO(TypedDict):
+    success: bool
+    data: dict[str, Any]
+    field_name: NotRequired[str]
+    error: NotRequired[str]

@@ -6,6 +6,7 @@ from litestar.exceptions import NotFoundException
 from litestar.handlers import HTTPRouteHandler
 from litestar.types import Method, OperationIDCreator
 from litestar.types.internal_types import PathParameterDefinition
+from packages.db.src.constants import RAG_FILE, RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
@@ -15,10 +16,11 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
+from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import (
-    create_signed_upload_url,
     construct_object_uri,
+    create_signed_upload_url,
     delete_blob,
 )
 from packages.shared_utils.src.logger import get_logger
@@ -28,10 +30,6 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import aliased, with_polymorphic
-
-from packages.db.src.constants import RAG_URL, RAG_FILE
-from packages.shared_utils.src.exceptions import BackendError
-from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
@@ -119,7 +117,7 @@ async def handle_create_rag_source(
             )
             if rag_source:
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                    return cast(UUID, rag_source.id)
+                    return cast("UUID", rag_source.id)
 
                 await session.execute(
                     sa_delete(RagSource).where(RagSource.id == rag_source.id)
@@ -213,7 +211,7 @@ async def handle_create_rag_source(
                 parent_type=parent_type,
                 parent_id=parent_id,
             )
-            return cast(UUID, source_id)
+            return cast("UUID", source_id)
         except SQLAlchemyError as e:
             logger.exception(
                 "Error creating rag source",

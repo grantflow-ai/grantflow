@@ -15,10 +15,10 @@ from packages.db.src.tables import (
     GrantApplicationRagSource,
     GrantTemplate,
     GrantTemplateRagSource,
-    RagFile,
-    RagUrl,
     Project,
     ProjectUser,
+    RagFile,
+    RagUrl,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker

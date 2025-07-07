@@ -65,6 +65,15 @@ class RagRequest(TypedDict):
     trace_id: NotRequired[str]
 
 
+class AutofillRequest(TypedDict):
+    parent_type: Literal["grant_application"]
+    parent_id: UUID
+    autofill_type: Literal["research_plan", "research_deep_dive"]
+    field_name: NotRequired[str]
+    context: NotRequired[dict[str, Any]]
+    trace_id: NotRequired[str]
+
+
 class WebsocketMessage[T](TypedDict):
     type: Literal["info", "error", "data"]
     parent_id: UUID

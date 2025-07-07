@@ -529,10 +529,7 @@ async def handle_list_applications(
         total_count = total_count or 0
 
         sort_column = getattr(GrantApplication, sort)
-        if order == "desc":
-            query = query.order_by(sort_column.desc())
-        else:
-            query = query.order_by(sort_column.asc())
+        query = query.order_by(sort_column.desc()) if order == "desc" else query.order_by(sort_column.asc())
 
         query = query.limit(limit).offset(offset)
 

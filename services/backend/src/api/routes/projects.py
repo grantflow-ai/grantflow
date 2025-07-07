@@ -8,7 +8,7 @@ from jwt import encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import UserProjectInvitation, Project, ProjectUser
+from packages.db.src.tables import Project, ProjectUser, UserProjectInvitation
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger

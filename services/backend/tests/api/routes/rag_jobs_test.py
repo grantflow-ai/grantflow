@@ -3,13 +3,13 @@ from typing import Any
 from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
     Project,
     ProjectUser,
 )
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationGenerationJobFactory,
     GrantTemplateGenerationJobFactory,
