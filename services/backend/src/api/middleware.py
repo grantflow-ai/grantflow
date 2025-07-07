@@ -6,10 +6,10 @@ from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import (
     AbstractAuthenticationMiddleware,
-    AuthenticationResult,
     ASGIMiddleware,
+    AuthenticationResult,
 )
-from litestar.types import Receive, Scope, Send, ASGIApp
+from litestar.types import ASGIApp, Receive, Scope, Send
 from packages.db.src.tables import ProjectUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger

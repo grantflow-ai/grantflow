@@ -12,11 +12,11 @@ from packages.db.src.tables import (
     GrantApplicationRagSource,
     GrantTemplate,
     GrantTemplateRagSource,
+    Project,
+    ProjectUser,
     RagFile,
     RagSource,
     RagUrl,
-    Project,
-    ProjectUser,
 )
 from pytest_mock import MockerFixture
 from sqlalchemy.exc import NoResultFound
