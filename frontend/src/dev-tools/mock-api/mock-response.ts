@@ -1,7 +1,7 @@
 import type { NormalizedOptions } from "ky";
 import { getMockAPIClient, isMockAPIEnabled } from "@/dev-tools";
 import { initializeMockAPI } from "@/dev-tools/mock-api/init";
-import { getEnv } from "@/utils/env";
+import { getEnv, getMockAPIEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
 
 export async function createMockResponse(request: Request, _options: NormalizedOptions): Promise<Response | undefined> {
@@ -89,5 +89,5 @@ async function parseRequestBody(request: Request): Promise<unknown> {
 }
 
 function shouldUseMockAPI(): boolean {
-	return Boolean(getEnv().NEXT_PUBLIC_MOCK_API) && isMockAPIEnabled();
+	return getMockAPIEnabled() && isMockAPIEnabled();
 }
