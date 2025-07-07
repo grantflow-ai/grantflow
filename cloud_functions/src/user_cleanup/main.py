@@ -6,7 +6,7 @@ from typing import Any
 
 import firebase_admin
 from firebase_admin import auth
-from google.cloud import firestore  # type: ignore[attr-defined]
+from google.cloud import firestore
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
