@@ -42,6 +42,7 @@ class TestBudgetAlertToDiscord:
             assert call_args[0][0] == "https://discord.com/api/webhooks/123/test"
 
             payload = call_args[1]["json"]
+            assert payload["content"] is not None, "Payload content should not be None"
             assert "@here Budget threshold exceeded" in payload["content"]
             assert len(payload["embeds"]) == 1
 
