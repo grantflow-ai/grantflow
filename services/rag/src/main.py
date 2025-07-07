@@ -46,7 +46,6 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest | AutofillRequest:
 
         logger.debug("Deserializing message", decoded_length=len(decoded_data))
 
-        
         try:
             rag_request = deserialize(decoded_data, RagRequest)
             decode_duration = time.time() - start_time
@@ -59,7 +58,6 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest | AutofillRequest:
             )
             return rag_request
         except DeserializationError:
-            
             autofill_request = deserialize(decoded_data, AutofillRequest)
             decode_duration = time.time() - start_time
             logger.debug(
@@ -88,15 +86,15 @@ async def handle_autofill_request(request: AutofillRequest) -> dict[str, Any]:
     """Handle autofill requests"""
     trace_id = request.get("trace_id")
 
-    logger.info("Processing autofill request",
-                application_id=str(request["parent_id"]),
-                autofill_type=request["autofill_type"],
-                field_name=request.get("field_name"),
-                trace_id=trace_id)
+    logger.info(
+        "Processing autofill request",
+        application_id=str(request["parent_id"]),
+        autofill_type=request["autofill_type"],
+        field_name=request.get("field_name"),
+        trace_id=trace_id,
+    )
 
     try:
-        
-
         handler_request: AutofillRequestDTO = {
             "parent_type": request["parent_type"],
             "parent_id": str(request["parent_id"]),
@@ -117,25 +115,23 @@ async def handle_autofill_request(request: AutofillRequest) -> dict[str, Any]:
         else:
             raise ValueError(f"Unknown autofill type: {request['autofill_type']}")
 
-        logger.info("Autofill generation completed",
-                    application_id=str(request["parent_id"]),
-                    autofill_type=request["autofill_type"],
-                    trace_id=trace_id)
+        logger.info(
+            "Autofill generation completed",
+            application_id=str(request["parent_id"]),
+            autofill_type=request["autofill_type"],
+            trace_id=trace_id,
+        )
 
-        return {
-            "success": True,
-            "data": result
-        }
+        return {"success": True, "data": result}
 
     except Exception as e:
-        logger.exception("Autofill generation failed",
-                        application_id=str(request["parent_id"]),
-                        autofill_type=request["autofill_type"],
-                        trace_id=trace_id)
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        logger.exception(
+            "Autofill generation failed",
+            application_id=str(request["parent_id"]),
+            autofill_type=request["autofill_type"],
+            trace_id=trace_id,
+        )
+        return {"success": False, "error": str(e)}
 
 
 @post("/")
@@ -152,9 +148,9 @@ async def handle_request(
 
     request = handle_pubsub_message(data)
 
-    
     if isinstance(request, dict) and "autofill_type" in request:
-        autofill_request = request
+        
+        autofill_request: AutofillRequest = request  # type: ignore[assignment]
         trace_id = autofill_request.get("trace_id")
 
         try:
@@ -183,9 +179,9 @@ async def handle_request(
             )
             raise
 
-    
     else:
-        rag_request = request
+        
+        rag_request: RagRequest = request  # type: ignore[assignment]
         trace_id = rag_request.get("trace_id")
 
         logger.debug(

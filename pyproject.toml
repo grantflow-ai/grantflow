@@ -77,6 +77,7 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "PT013",
   "RUF012",
   "S",
+  "SLF001",  # Allow accessing private members in tests
 ]
 lint.per-file-ignores."e2e/**/*.*" = [
   "ARG001",
@@ -91,6 +92,7 @@ lint.per-file-ignores."e2e/**/*.*" = [
   "S",
 ]
 lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
+lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [ "B027" ]  # Allow empty method in base class
 lint.per-file-ignores."scripts/**/*.*" = [
   "ARG001",
   "BLE001",
