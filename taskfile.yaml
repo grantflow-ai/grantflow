@@ -78,6 +78,8 @@ tasks:
     cmds:
       - task: frontend:update
       - task: backend:update
+      - echo "Ensuring cloud_functions requirements.txt is up to date..."
+      - uv pip compile cloud_functions/pyproject.toml -o cloud_functions/requirements.txt
 
   generate:api-types:
     desc: Generate TypeScript from backend API
