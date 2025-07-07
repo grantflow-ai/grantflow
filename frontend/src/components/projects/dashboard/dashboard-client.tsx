@@ -1,6 +1,8 @@
 "use client";
 
+import { assertIsNotNullish } from "@tool-belt/type-predicates";
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import { getProjects } from "@/actions/project";
@@ -30,6 +32,7 @@ const projectTeamMembers = [
 ];
 
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
+	const router = useRouter();
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
@@ -43,6 +46,11 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 	const handleDuplicateProject = async (projectId: string) => {
 		await duplicateProject(projectId);
+	};
+
+	const handleProjectNavigation = (projectId: string) => {
+		assertIsNotNullish(projectId);
+		router.push(`/projects/${projectId}`);
 	};
 
 	const { data: projects = initialProjects } = useSWR("projects", getProjects, {
@@ -168,6 +176,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										<DashboardProjectCard
 											data-testid="dashboard-project-card"
 											key={project.id}
+											onClick={() => {
+												handleProjectNavigation(project.id);
+											}}
 											onDelete={handleDeleteProject}
 											onDuplicate={handleDuplicateProject}
 											project={project}
@@ -175,7 +186,10 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										/>
 									))
 								) : (
-									<div className="flex w-full flex-col items-center justify-center py-12">
+									<div
+										className="flex w-full flex-col items-center justify-center py-12"
+										data-testid="empty-projects-state"
+									>
 										<p className="text-[#636170] mb-4">You don&apos;t have any projects yet.</p>
 										<button
 											className="rounded bg-[#1e13f8] px-4 py-2 text-white"
