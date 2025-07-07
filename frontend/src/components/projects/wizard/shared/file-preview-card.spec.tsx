@@ -2,6 +2,7 @@ import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
+import type { FileWithId } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 
 describe("FilePreviewCard", () => {
@@ -162,7 +163,11 @@ describe("FilePreviewCard", () => {
 		});
 
 		it("enables Open option for browser-openable files", () => {
-			const file = FileWithIdFactory.build({ name: "document.pdf", type: "application/pdf" });
+			// Create a proper File object with content
+			const fileContent = new ArrayBuffer(1024);
+			const file = new File([fileContent], "document.pdf", { type: "application/pdf" }) as FileWithId;
+			file.id = "test-id";
+
 			render(<FilePreviewCard file={file} />);
 
 			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
