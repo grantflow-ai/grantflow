@@ -17,6 +17,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_generate_application,
     handle_list_applications,
     handle_retrieve_application,
+    handle_trigger_autofill,
     handle_update_application,
 )
 from services.backend.src.api.routes.grant_template import (
@@ -89,6 +90,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_rag_sources,
     handle_retrieve_project,
     handle_retrieve_projects,
+    handle_trigger_autofill,
     handle_update_application,
     handle_update_grant_template,
     handle_update_invitation_role,

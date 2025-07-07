@@ -92,7 +92,6 @@ lint.per-file-ignores."e2e/**/*.*" = [
   "S",
 ]
 lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
-lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [ "B027" ]  # Allow empty method in base class
 lint.per-file-ignores."scripts/**/*.*" = [
   "ARG001",
   "BLE001",
@@ -102,6 +101,7 @@ lint.per-file-ignores."scripts/**/*.*" = [
   "N999",
   "S",
 ]
+lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [ "B027" ] # Allow empty method in base class
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
