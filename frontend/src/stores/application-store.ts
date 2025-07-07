@@ -209,9 +209,15 @@ const uploadFileInDevelopment = async (
 
 	const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 
-	setTimeout(() => {
-		void triggerDevIndexing(objectPath);
-	}, 500);
+	try {
+		await new Promise((resolve) => setTimeout(resolve, 500));
+		await triggerDevIndexing(objectPath);
+	} catch (error) {
+		log.error("Failed to trigger dev indexing", error, { objectPath });
+		throw new Error(
+			`File uploaded but indexing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+		);
+	}
 };
 
 const uploadFileInProduction = async (
@@ -234,7 +240,14 @@ const uploadFileInProduction = async (
 	const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 	const objectPath = extractObjectPathFromUrl(url);
 	if (objectPath) {
-		void triggerDevIndexing(objectPath);
+		try {
+			await triggerDevIndexing(objectPath);
+		} catch (error) {
+			log.error("Failed to trigger dev indexing", error, { objectPath });
+			throw new Error(
+				`File uploaded but indexing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+			);
+		}
 	}
 };
 
