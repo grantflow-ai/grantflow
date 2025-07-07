@@ -109,9 +109,7 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
 						data-testid="file-menu-open"
 						disabled={!canOpenInBrowser}
-						onClick={() => {
-							handleOpen();
-						}}
+						onClick={handleOpen}
 					>
 						<ExternalLink className="size-4 text-app-gray-600" />
 						Open
