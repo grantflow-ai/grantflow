@@ -1,11 +1,7 @@
-/**
- * Simple Dashboard Page Test - Basic functionality verification
- */
-
 import { ProjectListItemFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { DashboardClient } from "@/components/projects/dashboard/dashboard-client";
+import DashboardPage from "./page";
 
 vi.mock("@/utils/env", () => ({
 	getEnv: () => ({
@@ -54,10 +50,18 @@ vi.mock("@/stores/project-store", () => ({
 	}),
 }));
 
+const mockGetProjects = vi.fn();
+vi.mock("@/actions/project", () => ({
+	getProjects: () => mockGetProjects(),
+}));
+
 describe("Dashboard Page", () => {
 	it("should render dashboard with projects", async () => {
 		const mockProjects = ProjectListItemFactory.batch(2);
-		render(<DashboardClient initialProjects={mockProjects} />);
+		mockGetProjects.mockResolvedValue(mockProjects);
+
+		const Page = await DashboardPage();
+		render(Page);
 
 		expect(screen.getByTestId("dashboard-stats")).toBeInTheDocument();
 
@@ -69,7 +73,10 @@ describe("Dashboard Page", () => {
 	});
 
 	it("should handle empty state", async () => {
-		render(<DashboardClient initialProjects={[]} />);
+		mockGetProjects.mockResolvedValue([]);
+
+		const Page = await DashboardPage();
+		render(Page);
 
 		await waitFor(() => {
 			expect(screen.getByText("You don't have any projects yet.")).toBeInTheDocument();
