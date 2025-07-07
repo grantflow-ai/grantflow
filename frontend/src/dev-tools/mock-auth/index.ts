@@ -1,5 +1,5 @@
 import { useUserStore } from "@/stores/user-store";
-import { getEnv } from "@/utils/env";
+import { getMockAuthEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { createMockJwtToken, createMockUser } from "./user-factory";
 
@@ -45,5 +45,5 @@ export function initializeMockAuth(): void {
  * Check if mock authentication is enabled
  */
 export function isMockAuthEnabled(): boolean {
-	return getEnv().NEXT_PUBLIC_MOCK_AUTH === true;
+	return getMockAuthEnabled();
 }
