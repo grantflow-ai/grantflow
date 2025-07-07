@@ -104,11 +104,11 @@ export function useApplicationNotifications({
 		const baseUrl = getEnv()
 			.NEXT_PUBLIC_BACKEND_API_BASE_URL.replace(/^https/, "wss")
 			.replace(/^http/, "ws");
-		const url = new URL(
+
+		return new URL(
 			`projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
 			baseUrl,
 		).toString();
-		return url;
 	}, [projectId, applicationId]);
 
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
@@ -123,9 +123,7 @@ export function useApplicationNotifications({
 			},
 			reconnectInterval: (attemptNumber) => {
 				reconnectAttemptRef.current = attemptNumber + 1;
-
-				const interval = Math.min(RECONNECT_INTERVAL_BASE * 2 ** attemptNumber, RECONNECT_INTERVAL_MAX);
-				return interval;
+				return Math.min(RECONNECT_INTERVAL_BASE * 2 ** attemptNumber, RECONNECT_INTERVAL_MAX);
 			},
 			shouldReconnect: (closeEvent) => {
 				return closeEvent.code !== 1000 && reconnectAttemptRef.current < RECONNECT_ATTEMPTS_MAX;
