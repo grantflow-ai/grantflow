@@ -59,56 +59,54 @@ async def test_generate_field_answer(mock_logger: MagicMock) -> None:
 async def test_skip_existing_answers(mock_logger: MagicMock, sample_request: AutofillRequestDTO) -> None:
     """Test that existing answers are skipped"""
     handler = ResearchDeepDiveHandler(mock_logger)
-    handler._validate_indexing_complete = AsyncMock()
+    with patch.object(handler, "_validate_indexing_complete", new_callable=AsyncMock):
+        sample_application = {
+            "title": "Test",
+            "research_objectives": [],
+            "form_inputs": {
+                "background_context": "Existing answer that should be preserved",
+                "hypothesis": "Existing hypothesis",
+                "rationale": "Existing rationale",
+                "novelty_and_innovation": "Existing novelty",
+                "impact": "Existing impact",
+                "team_excellence": "Existing team excellence",
+                "research_feasibility": "Existing feasibility",
+                "preliminary_data": "Existing preliminary data",
+            },
+        }
 
-    sample_application = {
-        "title": "Test",
-        "research_objectives": [],
-        "form_inputs": {
-            "background_context": "Existing answer that should be preserved",
-            "hypothesis": "Existing hypothesis",
-            "rationale": "Existing rationale",
-            "novelty_and_innovation": "Existing novelty",
-            "impact": "Existing impact",
-            "team_excellence": "Existing team excellence",
-            "research_feasibility": "Existing feasibility",
-            "preliminary_data": "Existing preliminary data",
-        },
-    }
+        with patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve:
+            mock_retrieve.return_value = []
 
-    with patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve:
-        mock_retrieve.return_value = []
+            result = await handler._generate_content(sample_request, sample_application)
 
-        result = await handler._generate_content(sample_request, sample_application)
-
-        assert len(result["form_inputs"]) == 0
+            assert len(result["form_inputs"]) == 0
 
 
 async def test_single_field_generation(mock_logger: MagicMock, sample_application: dict[str, Any]) -> None:
     """Test generation of single field only"""
     handler = ResearchDeepDiveHandler(mock_logger)
-    handler._validate_indexing_complete = AsyncMock()
+    with patch.object(handler, "_validate_indexing_complete", new_callable=AsyncMock):
+        sample_request: AutofillRequestDTO = {
+            "parent_type": "grant_application",
+            "parent_id": "app-123",
+            "autofill_type": "research_deep_dive",
+            "field_name": "hypothesis",
+        }
 
-    sample_request: AutofillRequestDTO = {
-        "parent_type": "grant_application",
-        "parent_id": "app-123",
-        "autofill_type": "research_deep_dive",
-        "field_name": "hypothesis",
-    }
+        with patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve:
+            mock_retrieve.return_value = []
 
-    with patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve:
-        mock_retrieve.return_value = []
+            with patch.object(handler, "_generate_field_answer") as mock_generate:
+                mock_generate.return_value = "Generated hypothesis about the research question and expected outcomes based on the available evidence."
 
-        with patch.object(handler, "_generate_field_answer") as mock_generate:
-            mock_generate.return_value = "Generated hypothesis about the research question and expected outcomes based on the available evidence."
+                result = await handler._generate_content(sample_request, sample_application)
 
-            result = await handler._generate_content(sample_request, sample_application)
-
-            assert (
-                result["form_inputs"]["hypothesis"]
-                == "Generated hypothesis about the research question and expected outcomes based on the available evidence."
-            )
-            assert len(result["form_inputs"]) == 1
+                assert (
+                    result["form_inputs"]["hypothesis"]
+                    == "Generated hypothesis about the research question and expected outcomes based on the available evidence."
+                )
+                assert len(result["form_inputs"]) == 1
 
 
 def test_format_documents_for_context(mock_logger: MagicMock) -> None:
@@ -206,9 +204,9 @@ def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
 async def test_validation_failure_handling(mock_logger: MagicMock, sample_request: AutofillRequestDTO) -> None:
     """Test handling of validation failures"""
     handler = ResearchDeepDiveHandler(mock_logger)
-    handler._validate_indexing_complete = AsyncMock(side_effect=Exception("Indexing incomplete"))
+    with patch.object(handler, "_validate_indexing_complete", new_callable=AsyncMock) as mock_validate:
+        mock_validate.side_effect = Exception("Indexing incomplete")
+        response = await handler.handle_request(sample_request)
 
-    response = await handler.handle_request(sample_request)
-
-    assert not response["success"]
-    assert "Indexing incomplete" in response["error"]
+        assert not response["success"]
+        assert "Indexing incomplete" in response["error"]

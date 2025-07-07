@@ -272,15 +272,15 @@ async def publish_autofill_task(
     from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
 
     start_time = time.time()
-    
+
     client = get_publisher_client()
-    
+
     autofill_request = AutofillRequest(
         parent_type="grant_application",
         parent_id=UUID(str(parent_id)),
         autofill_type=autofill_type,
     )
-    
+
     if field_name:
         autofill_request["field_name"] = field_name
     if context:
@@ -290,7 +290,7 @@ async def publish_autofill_task(
 
     try:
         message_data = serialize(autofill_request)
-        
+
         logger.debug(
             "Publishing autofill task",
             parent_id=str(parent_id),
