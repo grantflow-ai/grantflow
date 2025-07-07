@@ -23,17 +23,14 @@ def sample_request() -> AutofillRequestDTO:
 
 @pytest.fixture
 def sample_application() -> dict[str, Any]:
-    return {
-        "title": "AI-Powered Medical Diagnosis",
-        "research_objectives": []
-    }
+    return {"title": "AI-Powered Medical Diagnosis", "research_objectives": []}
 
 
 @pytest.fixture
-def sample_documents() -> list[dict[str, str]]:
+def sample_documents() -> list[str]:
     return [
-        {"content": "Machine learning approaches to medical diagnosis show promising results in early detection of diseases."},
-        {"content": "Deep learning in healthcare applications can improve diagnostic accuracy and reduce physician workload."}
+        "Machine learning approaches to medical diagnosis show promising results in early detection of diseases.",
+        "Deep learning in healthcare applications can improve diagnostic accuracy and reduce physician workload.",
     ]
 
 
@@ -41,7 +38,7 @@ async def test_generate_content_success(
     mock_logger: MagicMock,
     sample_request: AutofillRequestDTO,
     sample_application: dict[str, Any],
-    sample_documents: list[dict[str, str]]
+    sample_documents: list[str],
 ) -> None:
     """Test successful content generation"""
     handler = ResearchPlanHandler(mock_logger)
@@ -61,12 +58,8 @@ async def test_generate_content_success(
                             "title": "Develop ML Models",
                             "description": "Create machine learning models for diagnosis",
                             "research_tasks": [
-                                {
-                                    "number": 1,
-                                    "title": "Data Collection",
-                                    "description": "Collect medical imaging data"
-                                }
-                            ]
+                                {"number": 1, "title": "Data Collection", "description": "Collect medical imaging data"}
+                            ],
                         }
                     ]
                 }
@@ -93,28 +86,16 @@ def test_parse_research_objectives_validation(mock_logger: MagicMock) -> None:
     """Test objective parsing and validation"""
     handler = ResearchPlanHandler(mock_logger)
 
-    
     valid_response = {
         "research_objectives": [
-            {
-                "number": 1,
-                "title": "Test Objective",
-                "research_tasks": [
-                    {"number": 1, "title": "Test Task"}
-                ]
-            }
+            {"number": 1, "title": "Test Objective", "research_tasks": [{"number": 1, "title": "Test Task"}]}
         ]
     }
 
     result = handler._parse_and_validate_objectives(valid_response)
     assert len(result) == 1
 
-    
-    invalid_response = {
-        "research_objectives": [
-            {"number": 1}  
-        ]
-    }
+    invalid_response = {"research_objectives": [{"number": 1}]}
 
     with pytest.raises(ValueError, match="Invalid objective structure"):
         handler._parse_and_validate_objectives(invalid_response)
@@ -124,10 +105,7 @@ def test_format_documents_for_context(mock_logger: MagicMock) -> None:
     """Test document formatting"""
     handler = ResearchPlanHandler(mock_logger)
 
-    documents = [
-        {"content": "Short content"},
-        {"content": "A" * 500}  
-    ]
+    documents = ["Short content", "A" * 500]
 
     result = handler._format_documents_for_context(documents)
 
@@ -135,7 +113,6 @@ def test_format_documents_for_context(mock_logger: MagicMock) -> None:
     assert "Document 2:" in result
     assert len(result.split("\n")) == 2
 
-    
     result = handler._format_documents_for_context([])
     assert result == "No research documents available."
 
@@ -149,9 +126,7 @@ def test_format_existing_objectives(mock_logger: MagicMock) -> None:
             "number": 1,
             "title": "First Objective",
             "description": "Description of first objective",
-            "research_tasks": [
-                {"number": 1, "title": "First Task"}
-            ]
+            "research_tasks": [{"number": 1, "title": "First Task"}],
         }
     ]
 
@@ -161,7 +136,6 @@ def test_format_existing_objectives(mock_logger: MagicMock) -> None:
     assert "Description: Description of first objective" in result
     assert "Task 1: First Task" in result
 
-    
     result = handler._format_existing_objectives([])
     assert result == "None"
 
@@ -170,7 +144,7 @@ def test_no_objectives_generated_error(mock_logger: MagicMock) -> None:
     """Test error when no objectives are generated"""
     handler = ResearchPlanHandler(mock_logger)
 
-    empty_response = {"research_objectives": []}
+    empty_response: dict[str, Any] = {"research_objectives": []}
 
     with pytest.raises(ValueError, match="No research objectives generated"):
         handler._parse_and_validate_objectives(empty_response)
@@ -181,13 +155,7 @@ def test_objective_without_tasks_error(mock_logger: MagicMock) -> None:
     handler = ResearchPlanHandler(mock_logger)
 
     response_without_tasks = {
-        "research_objectives": [
-            {
-                "number": 1,
-                "title": "Objective without tasks",
-                "research_tasks": []
-            }
-        ]
+        "research_objectives": [{"number": 1, "title": "Objective without tasks", "research_tasks": []}]
     }
 
     with pytest.raises(ValueError, match="Objective 1 has no research tasks"):
