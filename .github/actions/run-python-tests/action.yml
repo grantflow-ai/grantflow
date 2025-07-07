@@ -3,7 +3,7 @@ description: "Set up environment and run tests for a specific backend target"
 
 inputs:
     target:
-        description: "Target to test (backend, indexer, crawler, db, shared_utils)"
+        description: "Target to test (backend, indexer, crawler, db, shared_utils, cloud_functions)"
         required: true
 
 runs:
@@ -36,6 +36,16 @@ runs:
           run: |
               if [[ "${{ inputs.target }}" == "db" || "${{ inputs.target }}" == "shared_utils" ]]; then
                 PYTHONPATH=. uv run pytest packages/${{ inputs.target }} -v
+              elif [[ "${{ inputs.target }}" == "cloud_functions" ]]; then
+                PYTHONPATH=. uv run pytest cloud_functions -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi
+
+        - name: Check requirements.txt is up to date (cloud_functions only)
+          if: inputs.target == 'cloud_functions'
+          shell: bash
+          run: |
+              cd cloud_functions
+              uv pip compile pyproject.toml -o requirements.tmp.txt
+              diff -u requirements.txt requirements.tmp.txt || (echo "requirements.txt is out of date. Run 'cd cloud_functions && uv pip compile pyproject.toml -o requirements.txt' to update it." && exit 1)
