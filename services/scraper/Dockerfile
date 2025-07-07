@@ -42,12 +42,11 @@ ENV PYTHONUNBUFFERED=1 \
     APP="services.scraper.src.main:app" \
     PLAYWRIGHT_BROWSERS_PATH="/app/.cache/ms-playwright"
 
-# Install Playwright browsers with correct ownership
+# Install Playwright browsers as root with proper permissions
 RUN mkdir -p /app/.cache/ms-playwright \
-    && chown -R appuser:appuser /app/.cache \
-    && export PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright \
-    && /app/.venv/bin/python -m playwright install chromium \
-    && /app/.venv/bin/python -m playwright install-deps chromium
+    && PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright /app/.venv/bin/python -m playwright install chromium \
+    && /app/.venv/bin/python -m playwright install-deps chromium \
+    && chown -R appuser:appuser /app/.cache
 
 USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]
