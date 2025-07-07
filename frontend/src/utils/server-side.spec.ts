@@ -17,6 +17,8 @@ vi.mock("@/utils/logger", () => ({
 
 vi.mock("@/utils/env", () => ({
 	getEnv: vi.fn(),
+	getMockAPIEnabled: vi.fn(() => false),
+	getMockAuthEnabled: vi.fn(() => false),
 }));
 
 describe("Server-side Utils", () => {
@@ -30,7 +32,6 @@ describe("Server-side Utils", () => {
 		mockCookies.mockResolvedValue(mockCookieStore);
 		vi.mocked(getEnv).mockReturnValue({
 			...mockEnv,
-			NEXT_PUBLIC_MOCK_AUTH: false,
 		});
 	});
 

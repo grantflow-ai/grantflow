@@ -1,4 +1,4 @@
-import { getEnv } from "@/utils/env";
+import { getMockAPIEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
 
 interface MockAPIConfig {
@@ -22,7 +22,7 @@ class MockAPIClient {
 	private handlers = new Map<string, MockHandler>();
 
 	constructor() {
-		if (!getEnv().NEXT_PUBLIC_MOCK_API) {
+		if (!getMockAPIEnabled()) {
 			throw new Error("Mock API client initialized when NEXT_PUBLIC_MOCK_API is false");
 		}
 	}
@@ -216,5 +216,5 @@ export function getMockAPIClient(): MockAPIClient {
 }
 
 export function isMockAPIEnabled(): boolean {
-	return getEnv().NEXT_PUBLIC_MOCK_API ?? false;
+	return getMockAPIEnabled();
 }
