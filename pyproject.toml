@@ -194,6 +194,7 @@ members = [
   "services/indexer",
   "services/rag",
   "services/scraper",
+  "cloud_functions",
 ]
 
 [tool.uv.sources]
