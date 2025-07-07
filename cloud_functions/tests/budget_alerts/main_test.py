@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from src.budget_alerts.main import budget_alert_to_discord, budget_alert_to_discord_sync
+from cloud_functions.src.budget_alerts.main import budget_alert_to_discord, budget_alert_to_discord_sync
 
 
 class TestBudgetAlertToDiscord:

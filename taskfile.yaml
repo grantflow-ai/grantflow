@@ -297,8 +297,12 @@ tasks:
       - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
       - uv run uv-bump --pyproject-toml ./services/crawler/pyproject.toml
       - uv run uv-bump --pyproject-toml ./services/rag/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./services/scraper/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./cloud_functions/pyproject.toml
+      - echo "Regenerating cloud_functions requirements.txt for deployment..."
+      - uv pip compile cloud_functions/pyproject.toml -o cloud_functions/requirements.txt
       - task: backend:install
 
   backend:test:

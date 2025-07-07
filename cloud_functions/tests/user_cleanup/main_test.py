@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.user_cleanup.main import (
+from cloud_functions.src.user_cleanup.main import (
     cleanup_expired_users,
     delete_user_completely,
     delete_user_from_database,
