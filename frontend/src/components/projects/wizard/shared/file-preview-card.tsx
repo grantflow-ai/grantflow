@@ -3,7 +3,6 @@
 import { ExternalLink, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { toast } from "sonner";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
 import { useApplicationStore } from "@/stores/application-store";
 
@@ -34,43 +33,21 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 	const extension = getFileExtension(file.name) ?? "";
 
 	const canOpenInBrowser = ["md", "pdf"].includes(extension);
+	const hasAccessibleContent = file instanceof File && file.size > 0;
+	const canActuallyOpen = canOpenInBrowser && hasAccessibleContent;
 
 	const handleOpen = () => {
-		if (!canOpenInBrowser) return;
+		if (!canActuallyOpen) return;
 
-		// Local file with actual content - open directly
-		if (file instanceof File && file.size > 0) {
-			try {
-				const url = URL.createObjectURL(file);
-				window.open(url, "_blank");
-				setTimeout(() => {
-					URL.revokeObjectURL(url);
-				}, 1000);
-			} catch (error) {
-				log.error("Failed to open file:", error);
-			}
-			return;
+		try {
+			const url = URL.createObjectURL(file);
+			window.open(url, "_blank");
+			setTimeout(() => {
+				URL.revokeObjectURL(url);
+			}, 1000);
+		} catch (error) {
+			log.error("Failed to open file:", error);
 		}
-
-		// Uploaded file - show not implemented message
-		if (file.id) {
-			toast.info("File preview not available", {
-				description: "File preview for uploaded documents is not implemented yet.",
-			});
-			log.warn("File download not implemented", {
-				fileId: file.id,
-				fileName: file.name,
-			});
-			return;
-		}
-
-		// Broken file - no content or ID
-		toast.error("Cannot open file", {
-			description: "File has no accessible content.",
-		});
-		log.error("Cannot open file: No content or ID available", {
-			fileName: file.name,
-		});
 	};
 
 	const handleRemove = async () => {
@@ -108,7 +85,7 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 					<AppDropdownMenuItem
 						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
 						data-testid="file-menu-open"
-						disabled={!canOpenInBrowser}
+						disabled={!canActuallyOpen}
 						onClick={handleOpen}
 					>
 						<ExternalLink className="size-4 text-app-gray-600" />
