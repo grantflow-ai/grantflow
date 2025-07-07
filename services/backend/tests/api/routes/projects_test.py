@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import UserProjectInvitation, Project, ProjectUser
+from packages.db.src.tables import Project, ProjectUser, UserProjectInvitation
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
@@ -17,8 +17,8 @@ from testing.factories import (
 
 from services.backend.src.api.routes.projects import (
     CreateInvitationRedirectUrlRequestBody,
-    UpdateProjectRequestBody,
     UpdateMemberRoleRequestBody,
+    UpdateProjectRequestBody,
 )
 from services.backend.tests.conftest import TestingClientType
 from services.backend.tests.factories import CreateProjectRequestBodyFactory

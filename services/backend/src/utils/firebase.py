@@ -1,3 +1,4 @@
+from datetime import UTC
 from typing import Any, cast
 
 from firebase_admin import App
@@ -122,11 +123,12 @@ async def schedule_user_deletion(
     uid: str, grace_period_days: int = 30
 ) -> dict[str, Any]:
     """Schedule a user for deletion in Firestore"""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+
     from google.cloud import firestore  # type: ignore[attr-defined]
 
     db = get_firestore_client()
-    deletion_date = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
+    deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(
         days=grace_period_days
     )
 
@@ -166,7 +168,7 @@ async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
                 firebase_uid=uid,
                 status=data.get("status") if data else None,
             )
-            return cast(dict[str, Any], data)
+            return cast("dict[str, Any]", data)
         return None
     except Exception as e:
         logger.warning(

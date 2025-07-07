@@ -3,7 +3,8 @@ from typing import Any, NotRequired, TypedDict
 from litestar import delete, get
 from litestar.exceptions import HTTPException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, ProjectUser as ProjectMember
+from packages.db.src.tables import Project
+from packages.db.src.tables import ProjectUser as ProjectMember
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker

@@ -1,13 +1,14 @@
 from typing import Any
 
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, ProjectUser as ProjectMember
+from packages.db.src.tables import Project
+from packages.db.src.tables import ProjectUser as ProjectMember
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.api.routes.user import (
-    DeleteUserResponse,
     USER_DELETION_GRACE_PERIOD_DAYS,
+    DeleteUserResponse,
 )
 from services.backend.tests.conftest import TestingClientType
 
@@ -20,6 +21,7 @@ class TestDeleteUser:
         firebase_uid: str,
     ) -> None:
         from datetime import UTC, datetime, timedelta
+
         from google.cloud import firestore  # type: ignore[attr-defined]
 
         deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(
@@ -101,6 +103,7 @@ class TestDeleteUser:
         firebase_uid: str,
     ) -> None:
         from datetime import UTC, datetime
+
         from google.cloud import firestore  # type: ignore[attr-defined]
 
         deletion_date = datetime.now(UTC).replace(tzinfo=None)
