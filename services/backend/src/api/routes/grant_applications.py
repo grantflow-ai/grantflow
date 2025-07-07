@@ -1,4 +1,4 @@
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 from litestar import delete, get, patch, post
@@ -30,7 +30,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import publish_rag_task
+from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_task
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -53,6 +53,19 @@ class UpdateApplicationRequestBody(TypedDict):
     status: NotRequired[ApplicationStatusEnum]
     text: NotRequired[str]
     title: NotRequired[str]
+
+
+class AutofillRequestBody(TypedDict):
+    autofill_type: Literal["research_plan", "research_deep_dive"]
+    field_name: NotRequired[str]
+    context: NotRequired[dict[str, Any]]
+
+
+class AutofillResponse(TypedDict):
+    message_id: str
+    application_id: str
+    autofill_type: str
+    field_name: NotRequired[str]
 
 
 class FundingOrganizationResponse(TypedDict):
@@ -558,3 +571,67 @@ async def handle_list_applications(
                 has_more=(offset + limit) < total_count,
             ),
         )
+
+
+@post(
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}/autofill",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="TriggerAutofill",
+)
+async def handle_trigger_autofill(
+    request: APIRequest,
+    project_id: UUID,
+    application_id: UUID,
+    data: AutofillRequestBody,
+    session_maker: async_sessionmaker[Any],
+) -> AutofillResponse:
+    """Trigger autofill for a grant application"""
+    trace_id = get_trace_id(request)
+
+    logger.info(
+        "Triggering autofill",
+        project_id=project_id,
+        application_id=application_id,
+        autofill_type=data["autofill_type"],
+        field_name=data.get("field_name"),
+        trace_id=trace_id,
+    )
+
+    
+    async with session_maker() as session:
+        application = await retrieve_application(
+            session=session,
+            application_id=application_id,
+        )
+
+        if application.project_id != project_id:
+            raise NotFoundException("Application not found")
+
+    
+    message_id = await publish_autofill_task(
+        logger=logger,
+        parent_id=application_id,
+        autofill_type=data["autofill_type"],
+        field_name=data.get("field_name"),
+        context=data.get("context"),
+        trace_id=trace_id,
+    )
+
+    logger.info(
+        "Autofill task published",
+        message_id=message_id,
+        application_id=application_id,
+        autofill_type=data["autofill_type"],
+        trace_id=trace_id,
+    )
+
+    response: AutofillResponse = {
+        "message_id": message_id,
+        "application_id": str(application_id),
+        "autofill_type": data["autofill_type"],
+    }
+
+    if field_name := data.get("field_name"):
+        response["field_name"] = field_name
+
+    return response
