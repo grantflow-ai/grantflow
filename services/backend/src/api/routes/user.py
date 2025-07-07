@@ -45,9 +45,7 @@ class GetSoleOwnedProjectsResponse(TypedDict):
 
 
 @delete("/user", operation_id="DeleteUser", status_code=200)
-async def delete_user(
-    request: APIRequest, session_maker: async_sessionmaker[Any]
-) -> DeleteUserResponse:
+async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any]) -> DeleteUserResponse:
     """
     Schedule user account for deletion with grace period.
     User will be removed from all projects immediately.
@@ -95,10 +93,7 @@ async def delete_user(
                     detail="You must transfer ownership of projects before deleting your account",
                     extra={
                         "error": "ownership_transfer_required",
-                        "projects": [
-                            {"id": str(p.id), "name": p.name}
-                            for p in sole_owned_projects
-                        ],
+                        "projects": [{"id": str(p.id), "name": p.name} for p in sole_owned_projects],
                     },
                 )
 
@@ -120,9 +115,7 @@ async def delete_user(
                 projects_removed=projects_removed,
             )
 
-        deletion_data = await schedule_user_deletion(
-            firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS
-        )
+        deletion_data = await schedule_user_deletion(firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS)
 
         logger.info(
             "User deletion scheduled successfully",
@@ -188,8 +181,6 @@ async def get_sole_owned_projects(
         sole_owned_projects = result.scalars().all()
 
         return {
-            "projects": [
-                {"id": str(p.id), "name": p.name} for p in sole_owned_projects
-            ],
+            "projects": [{"id": str(p.id), "name": p.name} for p in sole_owned_projects],
             "count": len(sole_owned_projects),
         }

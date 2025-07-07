@@ -110,9 +110,7 @@ try:
     otel_plugin = OpenTelemetryPlugin()
     plugins = [otel_plugin]
 except ImportError:
-    logger.warning(
-        "Litestar OpenTelemetry plugin not available, using ASGI instrumentation instead"
-    )
+    logger.warning("Litestar OpenTelemetry plugin not available, using ASGI instrumentation instead")
     plugins = []
 
 app = create_litestar_app(

@@ -52,9 +52,7 @@ async def handle_generate_grant_template(
     )
 
     async with session_maker() as session:
-        grant_template = await session.scalar(
-            select(GrantTemplate).where(GrantTemplate.id == grant_template_id)
-        )
+        grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
 
         if not grant_template:
             logger.debug(
@@ -98,9 +96,7 @@ async def handle_generate_grant_template(
                 grant_template_id=str(grant_template_id),
                 rag_sources_count=rag_sources_count,
             )
-            raise ValidationException(
-                "No rag sources found for grant template, cannot generate"
-            )
+            raise ValidationException("No rag sources found for grant template, cannot generate")
 
         logger.debug(
             "Validation passed, publishing RAG task to PubSub",
@@ -125,9 +121,7 @@ async def handle_generate_grant_template(
             raise
         except SQLAlchemyError as e:
             logger.error("Error initiating grant template generation", exc_info=e)
-            raise DatabaseError(
-                "Error initiating grant template generation", context=str(e)
-            ) from e
+            raise DatabaseError("Error initiating grant template generation", context=str(e)) from e
 
 
 @patch(
@@ -152,18 +146,12 @@ async def handle_update_grant_template(
 
     async with session_maker() as session, session.begin():
         try:
-            grant_template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.id == grant_template_id)
-            )
+            grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
 
             if not grant_template:
                 raise ValidationException("Grant template not found")
 
-            await session.execute(
-                update(GrantTemplate)
-                .where(GrantTemplate.id == grant_template.id)
-                .values(**data)
-            )
+            await session.execute(update(GrantTemplate).where(GrantTemplate.id == grant_template.id).values(**data))
             await session.commit()
         except ValidationException:
             await session.rollback()

@@ -466,9 +466,7 @@ async def test_create_upload_url_unauthorized(
 
 @pytest.fixture
 def mock_publish_url_crawling_task() -> Generator[AsyncMock]:
-    with patch(
-        "services.backend.src.api.routes.sources.publish_url_crawling_task"
-    ) as mock_func:
+    with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
         mock_func.return_value = "test-message-id"
         yield mock_func
 
@@ -581,9 +579,7 @@ async def test_handle_crawl_url_pubsub_error(
     grant_application: GrantApplication,
     project_member_user: ProjectUser,
 ) -> None:
-    with patch(
-        "services.backend.src.api.routes.sources.publish_url_crawling_task"
-    ) as mock_func:
+    with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
         mock_func.side_effect = Exception("PubSub error")
 
         request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}

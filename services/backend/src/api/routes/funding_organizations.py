@@ -36,16 +36,12 @@ async def handle_create_organization(
 ) -> FundingOrganizationResponse:
     async with session_maker() as session, session.begin():
         try:
-            organization = await session.scalar(
-                insert(FundingOrganization).values(data).returning(FundingOrganization)
-            )
+            organization = await session.scalar(insert(FundingOrganization).values(data).returning(FundingOrganization))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error creating funding organization", exc_info=e)
-            raise DatabaseError(
-                "Error creating funding organization", context=str(e)
-            ) from e
+            raise DatabaseError("Error creating funding organization", context=str(e)) from e
 
     return FundingOrganizationResponse(
         id=organization.id,
@@ -66,9 +62,7 @@ async def handle_retrieve_organizations(
                 abbreviation=organization.abbreviation,
             )
             for organization in await session.scalars(
-                select(FundingOrganization).order_by(
-                    FundingOrganization.full_name.asc()
-                )
+                select(FundingOrganization).order_by(FundingOrganization.full_name.asc())
             )
         ]
 
@@ -94,9 +88,7 @@ async def handle_update_organization(
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error updating funding organization", exc_info=e)
-            raise DatabaseError(
-                "Error updating funding organization", context=str(e)
-            ) from e
+            raise DatabaseError("Error updating funding organization", context=str(e)) from e
 
     return FundingOrganizationResponse(
         id=organization.id,
@@ -106,9 +98,7 @@ async def handle_update_organization(
 
 
 @delete("/organizations/{organization_id:uuid}", operation_id="DeleteOrganization")
-async def handle_delete_organization(
-    organization_id: UUID, session_maker: async_sessionmaker[Any]
-) -> None:
+async def handle_delete_organization(organization_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
@@ -120,6 +110,4 @@ async def handle_delete_organization(
         except SQLAlchemyError as e:
             await session.rollback()
             logger.error("Error deleting funding organization", exc_info=e)
-            raise DatabaseError(
-                "Error deleting funding organization", context=str(e)
-            ) from e
+            raise DatabaseError("Error deleting funding organization", context=str(e)) from e

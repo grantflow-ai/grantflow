@@ -21,9 +21,7 @@ from services.rag.src.grant_template.determine_application_sections import (
 from services.rag.src.grant_template.determine_longform_metadata import SectionMetadata
 
 
-class CreateOrganizationRequestBodyFactory(
-    TypedDictFactory[CreateOrganizationRequestBody]
-):
+class CreateOrganizationRequestBodyFactory(TypedDictFactory[CreateOrganizationRequestBody]):
     __model__ = CreateOrganizationRequestBody
 
 
