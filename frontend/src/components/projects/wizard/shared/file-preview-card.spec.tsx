@@ -2,6 +2,7 @@ import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
+import type { FileWithId } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 
 describe("FilePreviewCard", () => {
@@ -38,8 +39,8 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "report.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open report.pdf" });
-			expect(button).toBeInTheDocument();
+			const iconContainer = screen.getByRole("img", { name: /File report\.pdf - right click for options/i });
+			expect(iconContainer).toBeInTheDocument();
 			expect(screen.getByText("report.pdf")).toBeInTheDocument();
 		});
 
@@ -105,8 +106,8 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "document.PDF" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open document.PDF" });
-			expect(button).toBeInTheDocument();
+			const iconContainer = screen.getByRole("img", { name: /File document\.PDF - right click for options/i });
+			expect(iconContainer).toBeInTheDocument();
 		});
 	});
 
@@ -132,8 +133,8 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			fireEvent.contextMenu(button);
+			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
+			fireEvent.contextMenu(container);
 
 			expect(screen.getByTestId("file-menu-open")).toBeInTheDocument();
 			expect(screen.getByTestId("file-menu-remove")).toBeInTheDocument();
@@ -162,11 +163,15 @@ describe("FilePreviewCard", () => {
 		});
 
 		it("enables Open option for browser-openable files", () => {
-			const file = FileWithIdFactory.build({ name: "document.pdf", type: "application/pdf" });
+			// Create a proper File object with content
+			const fileContent = new ArrayBuffer(1024);
+			const file = new File([fileContent], "document.pdf", { type: "application/pdf" }) as FileWithId;
+			file.id = "test-id";
+
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			fireEvent.contextMenu(button);
+			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
+			fireEvent.contextMenu(container);
 
 			const openMenuItem = screen.getByTestId("file-menu-open");
 			expect(openMenuItem).not.toHaveAttribute("aria-disabled", "true");
@@ -178,8 +183,8 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			fireEvent.contextMenu(button);
+			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
+			fireEvent.contextMenu(container);
 
 			const removeMenuItem = screen.getByTestId("file-menu-remove");
 			expect(removeMenuItem).toHaveAttribute("aria-disabled", "true");
@@ -189,8 +194,8 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} parentId="test-parent-id" />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			fireEvent.contextMenu(button);
+			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
+			fireEvent.contextMenu(container);
 
 			const removeMenuItem = screen.getByTestId("file-menu-remove");
 			expect(removeMenuItem).not.toHaveAttribute("aria-disabled", "true");
@@ -216,8 +221,8 @@ describe("FilePreviewCard", () => {
 
 			render(<FilePreviewCard file={file} parentId="test-parent-id" />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			fireEvent.contextMenu(button);
+			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
+			fireEvent.contextMenu(container);
 
 			await waitFor(() => {
 				expect(screen.getByTestId("file-context-menu")).toBeInTheDocument();
@@ -241,8 +246,11 @@ describe("FilePreviewCard", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf", type: "application/pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const button = screen.getByRole("button", { name: "Open document.pdf" });
-			expect(button).toHaveAttribute("aria-label", "Open document.pdf");
+			const container = screen.getByRole("img", { name: /File document\.pdf - right click for options/i });
+			expect(container).toHaveAttribute(
+				"aria-label",
+				"File document.pdf - right click for options, double click to open",
+			);
 		});
 
 		it("has proper aria-label for non-clickable files", () => {
@@ -250,7 +258,10 @@ describe("FilePreviewCard", () => {
 			render(<FilePreviewCard file={file} />);
 
 			const container = screen.getByRole("img", { name: /File document\.docx - right click for options/i });
-			expect(container).toHaveAttribute("aria-label", "File document.docx - right click for options");
+			expect(container).toHaveAttribute(
+				"aria-label",
+				"File document.docx - right click for options, double click to open",
+			);
 		});
 
 		it("has hidden dropdown trigger for screen readers", () => {
