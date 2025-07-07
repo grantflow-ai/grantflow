@@ -53,27 +53,85 @@ async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        if isinstance(cloud_event.data, str):
-            message_data = base64.b64decode(cloud_event.data).decode("utf-8")
 
+        logger.info("Received CloudEvent data type: %s", type(cloud_event.data).__name__)
+        logger.info("CloudEvent data content: %s", str(cloud_event.data)[:500])
+
+
+        if isinstance(cloud_event.data, dict) and "message" in cloud_event.data:
+
+            pubsub_message = cloud_event.data["message"]
+            if "data" in pubsub_message:
+
+                message_data = base64.b64decode(pubsub_message["data"]).decode("utf-8")
+            else:
+
+                message_data = json.dumps(pubsub_message)
+        elif isinstance(cloud_event.data, str):
+
+            message_data = base64.b64decode(cloud_event.data).decode("utf-8")
         elif isinstance(cloud_event.data, dict):
+
             message_data = json.dumps(cloud_event.data)
         else:
             message_data = str(cloud_event.data)
 
+        logger.info("Parsed message data: %s", message_data[:500])
         alert_data = json.loads(message_data)
 
-        incident = alert_data.get("incident", {})
-        alert_policy = incident.get("policy_name", "Unknown Policy")
-        condition_name = incident.get("condition_name", "Unknown Condition")
-        state = incident.get("state", "UNKNOWN")
-        summary = incident.get("summary", "No summary available")
 
-        if "error" in alert_policy.lower() or "failure" in alert_policy.lower():
+        logger.info("Complete alert data structure: %s", json.dumps(alert_data, indent=2)[:2000])
+
+
+        incident = None
+        alert_policy = "Unknown Policy"
+        condition_name = "Unknown Condition"
+        state = "UNKNOWN"
+        summary = "No summary available"
+
+        if "incident" in alert_data:
+
+            incident = alert_data.get("incident", {})
+            alert_policy = incident.get("policy_name", "Unknown Policy")
+            condition_name = incident.get("condition_name", "Unknown Condition")
+            state = incident.get("state", "UNKNOWN")
+            summary = incident.get("summary", "No summary available")
+            logger.info("Using incident-based format")
+        elif "policy" in alert_data:
+
+            policy = alert_data.get("policy", {})
+            alert_policy = policy.get("displayName") or policy.get("display_name") or policy.get("name", "Unknown Policy")
+            condition_name = alert_data.get("condition", {}).get("displayName", "Unknown Condition")
+            state = alert_data.get("state", "UNKNOWN")
+            summary = alert_data.get("summary", "No summary available")
+            logger.info("Using policy-based format")
+        elif "policyName" in alert_data:
+
+            alert_policy = alert_data.get("policyName", "Unknown Policy")
+            condition_name = alert_data.get("conditionName", "Unknown Condition")
+            state = alert_data.get("state", "UNKNOWN")
+            summary = alert_data.get("summary", "No summary available")
+            logger.info("Using direct fields format")
+        else:
+
+            logger.warning("Unknown alert format. Top-level keys: %s", list(alert_data.keys()))
+
+            for policy_field in ["alertPolicy", "alert_policy", "policyDisplayName", "policy_display_name"]:
+                if policy_field in alert_data:
+                    policy_obj = alert_data[policy_field]
+                    if isinstance(policy_obj, dict):
+                        alert_policy = policy_obj.get("displayName") or policy_obj.get("display_name") or policy_obj.get("name", "Unknown Policy")
+                    else:
+                        alert_policy = str(policy_obj)
+                    break
+
+
+        alert_policy_lower = (alert_policy or "").lower()
+        if "error" in alert_policy_lower or "failure" in alert_policy_lower:
             color = 0xFF0000
             emoji = "🚨"
             priority = "HIGH"
-        elif "memory" in alert_policy.lower() or "performance" in alert_policy.lower():
+        elif "memory" in alert_policy_lower or "performance" in alert_policy_lower:
             color = 0xFF8C00
             emoji = "⚠️"
             priority = "MEDIUM"
@@ -102,7 +160,7 @@ async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        if "started_at" in incident:
+        if incident and "started_at" in incident:
             fields.append({"name": "🕐 Started At", "value": incident["started_at"], "inline": True})
 
         if "resource" in alert_data:
