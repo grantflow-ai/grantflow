@@ -3,10 +3,12 @@
 import { ExternalLink, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
 import { useApplicationStore } from "@/stores/application-store";
 
 import type { FileWithId } from "@/types/files";
+import { log } from "@/utils/logger";
 
 const FILE_ICON_MAP = {
 	csv: <Image alt="CSV file" className="block" height={56} src="/icons/file-csv.svg" width={48} />,
@@ -34,13 +36,41 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 	const canOpenInBrowser = ["md", "pdf"].includes(extension);
 
 	const handleOpen = () => {
-		if (canOpenInBrowser && file instanceof File) {
-			const url = URL.createObjectURL(file);
-			window.open(url, "_blank");
-			setTimeout(() => {
-				URL.revokeObjectURL(url);
-			}, 1000);
+		if (!canOpenInBrowser) return;
+
+		// Local file with actual content - open directly
+		if (file instanceof File && file.size > 0) {
+			try {
+				const url = URL.createObjectURL(file);
+				window.open(url, "_blank");
+				setTimeout(() => {
+					URL.revokeObjectURL(url);
+				}, 1000);
+			} catch (error) {
+				log.error("Failed to open file:", error);
+			}
+			return;
 		}
+
+		// Uploaded file - show not implemented message
+		if (file.id) {
+			toast.info("File preview not available", {
+				description: "File preview for uploaded documents is not implemented yet.",
+			});
+			log.warn("File download not implemented", {
+				fileId: file.id,
+				fileName: file.name,
+			});
+			return;
+		}
+
+		// Broken file - no content or ID
+		toast.error("Cannot open file", {
+			description: "File has no accessible content.",
+		});
+		log.error("Cannot open file: No content or ID available", {
+			fileName: file.name,
+		});
 	};
 
 	const handleRemove = async () => {
@@ -56,27 +86,15 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 
 	return (
 		<div className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-1 transition-all w-14">
-			{canOpenInBrowser ? (
-				<button
-					aria-label={`Open ${file.name}`}
-					className="flex flex-col items-center justify-center focus:outline-none w-full"
-					onClick={handleOpen}
-					onContextMenu={handleContextMenu}
-					title="Click to open file"
-					type="button"
-				>
-					<FileContent extension={extension} fileName={file.name} />
-				</button>
-			) : (
-				<div
-					aria-label={`File ${file.name} - right click for options`}
-					className="w-full"
-					onContextMenu={handleContextMenu}
-					role="img"
-				>
-					<FileContent extension={extension} fileName={file.name} />
-				</div>
-			)}
+			<div
+				aria-label={`File ${file.name} - right click for options, double click to open`}
+				className="w-full"
+				onContextMenu={handleContextMenu}
+				onDoubleClick={handleOpen}
+				role="img"
+			>
+				<FileContent extension={extension} fileName={file.name} />
+			</div>
 
 			<AppDropdownMenu modal={false} onOpenChange={setDropdownOpen} open={dropdownOpen}>
 				<AppDropdownMenuTrigger className="sr-only" disabled>
@@ -91,7 +109,9 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
 						data-testid="file-menu-open"
 						disabled={!canOpenInBrowser}
-						onClick={handleOpen}
+						onClick={() => {
+							handleOpen();
+						}}
 					>
 						<ExternalLink className="size-4 text-app-gray-600" />
 						Open
