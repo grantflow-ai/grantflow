@@ -43,9 +43,7 @@ async def test_create_application_success(
     assert "id" in data
 
     async with async_session_maker() as session:
-        application = await session.scalar(
-            select(GrantApplication).where(GrantApplication.id == UUID(data["id"]))
-        )
+        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == UUID(data["id"])))
         assert application is not None
         assert application.title == "Test Grant Application"
         assert application.project_id == project.id
@@ -102,9 +100,7 @@ async def test_update_application_success(
     assert response.status_code == HTTPStatus.OK, response.text
 
     async with async_session_maker() as session:
-        updated_app = await session.scalar(
-            select(GrantApplication).where(GrantApplication.id == grant_application.id)
-        )
+        updated_app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
         assert updated_app is not None
         assert updated_app.title == "Updated Title"
         assert updated_app.status == ApplicationStatusEnum.IN_PROGRESS
@@ -145,9 +141,7 @@ async def test_delete_application_success(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        result = await session.scalar(
-            select(GrantApplication).where(GrantApplication.id == grant_application.id)
-        )
+        result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
         assert result is None
 
 
@@ -461,9 +455,7 @@ async def test_retrieve_application_with_complete_data(
                 "number": 1,
                 "title": "Objective 1",
                 "description": "Research objective description",
-                "research_tasks": [
-                    {"number": 1, "title": "Task 1", "description": "Task description"}
-                ],
+                "research_tasks": [{"number": 1, "title": "Task 1", "description": "Task description"}],
             }
         ]
         app.text = "Generated application text content"
@@ -524,15 +516,11 @@ async def test_retrieve_application_with_rag_job_ids(
         app = await session.get(GrantApplication, grant_application.id)
         template = await session.get(GrantTemplate, grant_template.id)
 
-        app_job = GrantApplicationGenerationJobFactory.build(
-            grant_application_id=app.id
-        )
+        app_job = GrantApplicationGenerationJobFactory.build(grant_application_id=app.id)
         session.add(app_job)
         await session.flush()
 
-        template_job = GrantTemplateGenerationJobFactory.build(
-            grant_template_id=template.id
-        )
+        template_job = GrantTemplateGenerationJobFactory.build(grant_template_id=template.id)
         session.add(template_job)
         await session.flush()
 

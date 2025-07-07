@@ -158,9 +158,7 @@ async def test_retrieve_job_unauthorized(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        job = GrantTemplateGenerationJobFactory.build(
-            grant_template_id=grant_template.id
-        )
+        job = GrantTemplateGenerationJobFactory.build(grant_template_id=grant_template.id)
         session.add(job)
         await session.commit()
         job_id = job.id

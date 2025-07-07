@@ -35,8 +35,6 @@ class BaseAutofillHandler(ABC):
 
     async def _validate_indexing_complete(self, application_id: str) -> None:
         """Ensure all RAG sources are indexed before autofill"""
-        
-        
 
     async def _get_application_context(self, application_id: str) -> dict[str, Any]:
         """Get application data for context"""

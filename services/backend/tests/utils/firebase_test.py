@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -39,9 +39,7 @@ def mock_firestore_client(mocker: Any) -> dict[str, Any]:
 
 
 class TestScheduleUserDeletion:
-    async def test_schedule_user_deletion_success(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_schedule_user_deletion_success(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test successful user deletion scheduling."""
         uid = "test-firebase-uid-123"
         grace_period_days = 30
@@ -57,18 +55,14 @@ class TestScheduleUserDeletion:
         assert "updated_at" in result
 
         deletion_date = result["deletion_date"]
-        expected_date = datetime.utcnow() + timedelta(days=grace_period_days)
+        expected_date = datetime.now(UTC) + timedelta(days=grace_period_days)
         time_diff = abs((deletion_date - expected_date).total_seconds())
         assert time_diff < 60
 
-        mock_firestore_client["client"].collection.assert_called_once_with(
-            "user-deletion-requests"
-        )
+        mock_firestore_client["client"].collection.assert_called_once_with("user-deletion-requests")
         mock_firestore_client["document"].set.assert_called_once()
 
-    async def test_schedule_user_deletion_custom_grace_period(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_schedule_user_deletion_custom_grace_period(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test scheduling with custom grace period."""
         uid = "test-firebase-uid-456"
         grace_period_days = 7
@@ -78,26 +72,20 @@ class TestScheduleUserDeletion:
         assert result["grace_period_days"] == 7
 
         deletion_date = result["deletion_date"]
-        expected_date = datetime.utcnow() + timedelta(days=7)
+        expected_date = datetime.now(UTC) + timedelta(days=7)
         time_diff = abs((deletion_date - expected_date).total_seconds())
         assert time_diff < 60
 
-    async def test_schedule_user_deletion_firestore_error(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_schedule_user_deletion_firestore_error(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test handling of Firestore errors during scheduling."""
         uid = "test-firebase-uid-error"
 
         mock_firestore_client["document"].set.side_effect = Exception("Firestore error")
 
-        with pytest.raises(
-            ExternalOperationError, match="Error scheduling user deletion"
-        ):
+        with pytest.raises(ExternalOperationError, match="Error scheduling user deletion"):
             await schedule_user_deletion(uid, 30)
 
-    async def test_schedule_user_deletion_zero_grace_period(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_schedule_user_deletion_zero_grace_period(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test scheduling with zero grace period (immediate deletion)."""
         uid = "test-firebase-uid-immediate"
         grace_period_days = 0
@@ -107,15 +95,13 @@ class TestScheduleUserDeletion:
         assert result["grace_period_days"] == 0
 
         deletion_date = result["deletion_date"]
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         time_diff = abs((deletion_date - now).total_seconds())
         assert time_diff < 60
 
 
 class TestGetUserDeletionStatus:
-    async def test_get_user_deletion_status_found(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_get_user_deletion_status_found(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test retrieving existing deletion status."""
         uid = "test-firebase-uid-existing"
 
@@ -125,8 +111,8 @@ class TestGetUserDeletionStatus:
             "firebase_uid": uid,
             "status": "scheduled",
             "grace_period_days": 30,
-            "deletion_date": datetime.utcnow() + timedelta(days=30),
-            "created_at": datetime.utcnow(),
+            "deletion_date": datetime.now(UTC) + timedelta(days=30),
+            "created_at": datetime.now(UTC),
         }
 
         mock_firestore_client["document"].get.return_value = mock_doc_snapshot
@@ -138,15 +124,11 @@ class TestGetUserDeletionStatus:
         assert result["status"] == "scheduled"
         assert result["grace_period_days"] == 30
 
-        mock_firestore_client["client"].collection.assert_called_once_with(
-            "user-deletion-requests"
-        )
+        mock_firestore_client["client"].collection.assert_called_once_with("user-deletion-requests")
         mock_firestore_client["collection"].document.assert_called_once_with(uid)
         mock_firestore_client["document"].get.assert_called_once()
 
-    async def test_get_user_deletion_status_not_found(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_get_user_deletion_status_not_found(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test retrieving non-existent deletion status."""
         uid = "test-firebase-uid-nonexistent"
 
@@ -159,26 +141,18 @@ class TestGetUserDeletionStatus:
 
         assert result is None
 
-    async def test_get_user_deletion_status_firestore_error(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_get_user_deletion_status_firestore_error(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test handling of Firestore errors during status retrieval."""
         uid = "test-firebase-uid-error"
 
-        mock_firestore_client["document"].get.side_effect = Exception(
-            "Firestore query error"
-        )
+        mock_firestore_client["document"].get.side_effect = Exception("Firestore query error")
 
-        with pytest.raises(
-            ExternalOperationError, match="Error getting user deletion status"
-        ):
+        with pytest.raises(ExternalOperationError, match="Error getting user deletion status"):
             await get_user_deletion_status(uid)
 
 
 class TestCancelUserDeletion:
-    async def test_cancel_user_deletion_success(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_cancel_user_deletion_success(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test successful deletion cancellation."""
         uid = "test-firebase-uid-cancel"
 
@@ -195,16 +169,12 @@ class TestCancelUserDeletion:
 
         assert result is True
 
-        mock_firestore_client["client"].collection.assert_called_once_with(
-            "user-deletion-requests"
-        )
+        mock_firestore_client["client"].collection.assert_called_once_with("user-deletion-requests")
         mock_firestore_client["collection"].document.assert_called_once_with(uid)
         mock_doc_ref.get.assert_called_once()
         mock_doc_ref.update.assert_called_once()
 
-    async def test_cancel_user_deletion_not_found(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_cancel_user_deletion_not_found(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test cancellation when no deletion request exists."""
         uid = "test-firebase-uid-no-deletion"
 
@@ -220,9 +190,7 @@ class TestCancelUserDeletion:
 
         assert result is False
 
-    async def test_cancel_user_deletion_firestore_error(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_cancel_user_deletion_firestore_error(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test handling of Firestore errors during cancellation."""
         uid = "test-firebase-uid-cancel-error"
 
@@ -231,14 +199,10 @@ class TestCancelUserDeletion:
 
         mock_firestore_client["collection"].document.return_value = mock_doc_ref
 
-        with pytest.raises(
-            ExternalOperationError, match="Error cancelling user deletion"
-        ):
+        with pytest.raises(ExternalOperationError, match="Error cancelling user deletion"):
             await cancel_user_deletion(uid)
 
-    async def test_cancel_user_deletion_update_error(
-        self, mock_firestore_client: dict[str, Any]
-    ) -> None:
+    async def test_cancel_user_deletion_update_error(self, mock_firestore_client: dict[str, Any]) -> None:
         """Test handling of Firestore errors during update."""
         uid = "test-firebase-uid-update-error"
 
@@ -251,7 +215,5 @@ class TestCancelUserDeletion:
 
         mock_firestore_client["collection"].document.return_value = mock_doc_ref
 
-        with pytest.raises(
-            ExternalOperationError, match="Error cancelling user deletion"
-        ):
+        with pytest.raises(ExternalOperationError, match="Error cancelling user deletion"):
             await cancel_user_deletion(uid)

@@ -59,9 +59,7 @@ async def list_notifications(
     Returns:
         List of active notifications with metadata
     """
-    logger.info(
-        "Listing notifications", firebase_uid=request.auth, include_read=include_read
-    )
+    logger.info("Listing notifications", firebase_uid=request.auth, include_read=include_read)
 
     async with session_maker() as session:
         filters = [
@@ -72,15 +70,10 @@ async def list_notifications(
         if not include_read:
             filters.append(Notification.read == False)  # noqa: E712
 
-        filters.append(
-            (Notification.expires_at.is_(None))
-            | (Notification.expires_at > datetime.now(UTC))
-        )
+        filters.append((Notification.expires_at.is_(None)) | (Notification.expires_at > datetime.now(UTC)))
 
         result = await session.execute(
-            select(Notification)
-            .where(and_(*filters))
-            .order_by(Notification.created_at.desc())
+            select(Notification).where(and_(*filters)).order_by(Notification.created_at.desc())
         )
         notifications = result.scalars().all()
 
@@ -113,9 +106,7 @@ async def list_notifications(
             count=len(notification_responses),
         )
 
-        return ListNotificationsResponse(
-            notifications=notification_responses, total=len(notification_responses)
-        )
+        return ListNotificationsResponse(notifications=notification_responses, total=len(notification_responses))
 
 
 @post(
@@ -179,6 +170,4 @@ async def dismiss_notification(
             firebase_uid=request.auth,
         )
 
-        return DismissNotificationResponse(
-            success=True, notification_id=str(notification_id)
-        )
+        return DismissNotificationResponse(success=True, notification_id=str(notification_id))

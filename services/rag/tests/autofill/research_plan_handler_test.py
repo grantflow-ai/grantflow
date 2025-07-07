@@ -42,44 +42,43 @@ async def test_generate_content_success(
 ) -> None:
     """Test successful content generation"""
     handler = ResearchPlanHandler(mock_logger)
-    handler._validate_indexing_complete = AsyncMock()
-
-    with patch("services.rag.src.autofill.research_plan_handler.handle_create_search_queries") as mock_search:
+    with (
+        patch.object(handler, "_validate_indexing_complete", new_callable=AsyncMock),
+        patch("services.rag.src.autofill.research_plan_handler.handle_create_search_queries") as mock_search,
+        patch("services.rag.src.autofill.research_plan_handler.retrieve_documents") as mock_retrieve,
+        patch("services.rag.src.autofill.research_plan_handler.handle_completions_request") as mock_completion,
+    ):
         mock_search.return_value = ["machine learning medical diagnosis", "AI healthcare applications"]
-
-        with patch("services.rag.src.autofill.research_plan_handler.retrieve_documents") as mock_retrieve:
-            mock_retrieve.return_value = sample_documents
-
-            with patch("services.rag.src.autofill.research_plan_handler.handle_completions_request") as mock_completion:
-                mock_completion.return_value = {
-                    "research_objectives": [
-                        {
-                            "number": 1,
-                            "title": "Develop ML Models",
-                            "description": "Create machine learning models for diagnosis",
-                            "research_tasks": [
-                                {"number": 1, "title": "Data Collection", "description": "Collect medical imaging data"}
-                            ],
-                        }
-                    ]
+        mock_retrieve.return_value = sample_documents
+        mock_completion.return_value = {
+            "research_objectives": [
+                {
+                    "number": 1,
+                    "title": "Develop ML Models",
+                    "description": "Create machine learning models for diagnosis",
+                    "research_tasks": [
+                        {"number": 1, "title": "Data Collection", "description": "Collect medical imaging data"}
+                    ],
                 }
+            ]
+        }
 
-                result = await handler._generate_content(sample_request, sample_application)
+        result = await handler._generate_content(sample_request, sample_application)
 
-                assert "research_objectives" in result
-                assert len(result["research_objectives"]) == 1
-                assert result["research_objectives"][0]["title"] == "Develop ML Models"
+        assert "research_objectives" in result
+        assert len(result["research_objectives"]) == 1
+        assert result["research_objectives"][0]["title"] == "Develop ML Models"
 
 
 async def test_validation_failure(mock_logger: MagicMock, sample_request: AutofillRequestDTO) -> None:
     """Test handling of validation failures"""
     handler = ResearchPlanHandler(mock_logger)
-    handler._validate_indexing_complete = AsyncMock(side_effect=Exception("Indexing incomplete"))
+    with patch.object(handler, "_validate_indexing_complete", new_callable=AsyncMock) as mock_validate:
+        mock_validate.side_effect = Exception("Indexing incomplete")
+        response = await handler.handle_request(sample_request)
 
-    response = await handler.handle_request(sample_request)
-
-    assert not response["success"]
-    assert "Indexing incomplete" in response["error"]
+        assert not response["success"]
+        assert "Indexing incomplete" in response["error"]
 
 
 def test_parse_research_objectives_validation(mock_logger: MagicMock) -> None:

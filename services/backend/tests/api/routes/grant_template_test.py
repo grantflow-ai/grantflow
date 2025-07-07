@@ -72,9 +72,7 @@ async def test_update_grant_template_success(
 
     async with async_session_maker() as session:
         updated_template = await session.scalar(
-            select(GrantTemplate).where(
-                GrantTemplate.grant_application_id == grant_application.id
-            )
+            select(GrantTemplate).where(GrantTemplate.grant_application_id == grant_application.id)
         )
         assert updated_template is not None
         assert len(updated_template.grant_sections) == 1
