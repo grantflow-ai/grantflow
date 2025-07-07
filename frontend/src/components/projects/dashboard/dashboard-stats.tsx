@@ -22,7 +22,7 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 	);
 
 	return (
-		<article className="flex gap-8 items-center w-full mt-6">
+		<article className="flex gap-8 items-center w-full mt-6" data-testid="dashboard-stats">
 			<div className="w-full h-[130px]  border border-gray-200 rounded-sm px-6 py-6 flex flex-col gap-2.5">
 				<h4 className="font-normal text-4xl text-black" data-testid="project-count">
 					{projectCount}
