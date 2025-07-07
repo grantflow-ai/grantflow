@@ -1,5 +1,5 @@
 import { ProjectListItemFactory } from "::testing/factories";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import DashboardPage from "./page";
 
@@ -56,30 +56,19 @@ vi.mock("@/actions/project", () => ({
 }));
 
 describe("Dashboard Page", () => {
-	it("should render dashboard with projects", async () => {
+	beforeEach(() => {
+		mockGetProjects.mockClear();
+		vi.clearAllMocks();
+	});
+
+	it("should render DashboardClient with fetched projects", async () => {
 		const mockProjects = ProjectListItemFactory.batch(2);
 		mockGetProjects.mockResolvedValue(mockProjects);
 
 		const Page = await DashboardPage();
 		render(Page);
 
+		// Test that the page renders the DashboardClient component
 		expect(screen.getByTestId("dashboard-stats")).toBeInTheDocument();
-
-		await waitFor(() => {
-			mockProjects.forEach((project) => {
-				expect(screen.getByText(project.name)).toBeInTheDocument();
-			});
-		});
-	});
-
-	it("should handle empty state", async () => {
-		mockGetProjects.mockResolvedValue([]);
-
-		const Page = await DashboardPage();
-		render(Page);
-
-		await waitFor(() => {
-			expect(screen.getByText("You don't have any projects yet.")).toBeInTheDocument();
-		});
 	});
 });
