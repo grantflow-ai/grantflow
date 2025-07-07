@@ -149,7 +149,6 @@ async def handle_request(
     request = handle_pubsub_message(data)
 
     if isinstance(request, dict) and "autofill_type" in request:
-        
         autofill_request: AutofillRequest = request  # type: ignore[assignment]
         trace_id = autofill_request.get("trace_id")
 
@@ -180,8 +179,7 @@ async def handle_request(
             raise
 
     else:
-        
-        rag_request: RagRequest = request  # type: ignore[assignment]
+        rag_request: RagRequest = request
         trace_id = rag_request.get("trace_id")
 
         logger.debug(

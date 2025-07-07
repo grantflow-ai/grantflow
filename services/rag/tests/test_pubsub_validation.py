@@ -7,9 +7,9 @@ import pytest
 from packages.shared_utils.src.exceptions import ValidationError
 from packages.shared_utils.src.pubsub import PubSubEvent, PubSubMessage
 
-from services.rag.src.main import handle_pubsub_message, handle_rag_request
+from services.rag.src.main import handle_pubsub_message, handle_request
 
-handle_rag_request_fn = handle_rag_request.fn
+handle_request_fn = handle_request.fn
 
 
 def create_pubsub_event(data: dict[str, str]) -> PubSubEvent:
@@ -89,7 +89,7 @@ def test_handle_pubsub_message_missing_parent_type() -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_rag_request_invalid_message_raises_validation_error() -> None:
+async def test_handle_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker = AsyncMock()
 
     event = PubSubEvent(
@@ -102,13 +102,13 @@ async def test_handle_rag_request_invalid_message_raises_validation_error() -> N
     )
 
     with pytest.raises(ValidationError, match="PubSub message missing data field"):
-        await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=mock_session_maker)
 
     mock_session_maker.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_handle_rag_request_grant_template_success() -> None:
+async def test_handle_request_grant_template_success() -> None:
     mock_session_maker = AsyncMock()
 
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_template"}
@@ -118,7 +118,7 @@ async def test_handle_rag_request_grant_template_success() -> None:
         "services.rag.src.main.grant_template_generation_pipeline_handler",
         new_callable=AsyncMock,
     ) as mock_handler:
-        await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=mock_session_maker)
 
         mock_handler.assert_called_once_with(
             grant_template_id=UUID(data["parent_id"]),
@@ -127,7 +127,7 @@ async def test_handle_rag_request_grant_template_success() -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_rag_request_grant_application_success() -> None:
+async def test_handle_request_grant_application_success() -> None:
     mock_session_maker = AsyncMock()
 
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_application"}
@@ -137,7 +137,7 @@ async def test_handle_rag_request_grant_application_success() -> None:
         "services.rag.src.main.grant_application_text_generation_pipeline_handler",
         new_callable=AsyncMock,
     ) as mock_handler:
-        await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=mock_session_maker)
 
         mock_handler.assert_called_once_with(
             grant_application_id=UUID(data["parent_id"]),
@@ -146,7 +146,7 @@ async def test_handle_rag_request_grant_application_success() -> None:
 
 
 @pytest.mark.asyncio
-async def test_handle_rag_request_pipeline_error_propagates() -> None:
+async def test_handle_request_pipeline_error_propagates() -> None:
     mock_session_maker = AsyncMock()
 
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_template"}
@@ -161,4 +161,4 @@ async def test_handle_rag_request_pipeline_error_propagates() -> None:
         ),
         pytest.raises(Exception, match="Pipeline failed"),
     ):
-        await handle_rag_request_fn(data=event, session_maker=mock_session_maker)
+        await handle_request_fn(data=event, session_maker=mock_session_maker)
