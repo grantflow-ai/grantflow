@@ -110,7 +110,7 @@ _firestore_client_ref = Ref[Any]()
 def get_firestore_client() -> Any:
     """Get Firestore client instance"""
     if _firestore_client_ref.value is None:
-        from google.cloud import firestore  # type: ignore[attr-defined]
+        from google.cloud import firestore
 
         logger.debug("Initializing Firestore client")
         _firestore_client_ref.value = firestore.AsyncClient()
@@ -121,10 +121,10 @@ async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[
     """Schedule a user for deletion in Firestore"""
     from datetime import datetime, timedelta
 
-    from google.cloud import firestore  # type: ignore[attr-defined]
+    from google.cloud import firestore
 
     db = get_firestore_client()
-    deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=grace_period_days)
+    deletion_date = datetime.now(UTC) + timedelta(days=grace_period_days)
 
     doc_data = {
         "firebase_uid": uid,
@@ -171,7 +171,7 @@ async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
 
 async def cancel_user_deletion(uid: str) -> bool:
     """Cancel scheduled user deletion"""
-    from google.cloud import firestore  # type: ignore[attr-defined]
+    from google.cloud import firestore
 
     db = get_firestore_client()
 
