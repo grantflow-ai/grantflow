@@ -1008,6 +1008,38 @@ export namespace API {
 };
 };
 
+	export namespace TriggerAutofill {
+	export namespace Http201 {
+	export type ResponseBody = {
+	application_id: string;
+	autofill_type: string;
+	field_name?: string;
+	message_id: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	application_id: string;
+	project_id: string;
+};
+
+	export type RequestBody = {
+	autofill_type: "research_deep_dive" | "research_plan";
+	context?: {
+	
+};
+	field_name?: string;
+};
+};
+
 	export namespace UpdateApplication {
 	export namespace Http200 {
 	export type ResponseBody = {
