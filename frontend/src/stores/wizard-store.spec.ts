@@ -6,6 +6,20 @@ import { useApplicationStore } from "@/stores/application-store";
 
 import { useWizardStore } from "./wizard-store";
 
+// Mock the triggerAutofill action
+vi.mock("@/actions/grant-applications", () => ({
+	triggerAutofill: vi.fn(),
+}));
+
+// Mock sonner for toast notifications
+vi.mock("sonner", () => ({
+	toast: {
+		error: vi.fn(),
+		info: vi.fn(),
+		success: vi.fn(),
+	},
+}));
+
 describe("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -23,6 +37,10 @@ describe("wizard store", () => {
 		const wizardState = useWizardStore.getState();
 		useWizardStore.setState({
 			currentStep: WizardStep.APPLICATION_DETAILS,
+			isAutofillLoading: {
+				research_deep_dive: false,
+				research_plan: false,
+			},
 			isGeneratingTemplate: false,
 			polling: {
 				...wizardState.polling,
@@ -205,6 +223,141 @@ describe("wizard store", () => {
 			});
 
 			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+		});
+	});
+
+	describe("autofill functionality", () => {
+		it("should set autofill loading state correctly", () => {
+			useWizardStore.getState().setAutofillLoading("research_plan", true);
+			expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(true);
+			expect(useWizardStore.getState().isAutofillLoading.research_deep_dive).toBe(false);
+
+			useWizardStore.getState().setAutofillLoading("research_deep_dive", true);
+			expect(useWizardStore.getState().isAutofillLoading.research_deep_dive).toBe(true);
+
+			useWizardStore.getState().setAutofillLoading("research_plan", false);
+			expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
+		});
+
+		describe("triggerAutofill", () => {
+			beforeEach(() => {
+				vi.resetModules();
+			});
+
+			it("should not trigger autofill when no application exists", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+
+				useApplicationStore.setState({ application: null });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(mockTriggerAutofill).not.toHaveBeenCalled();
+			});
+
+			it("should show error when documents are still indexing", async () => {
+				const { toast } = await import("sonner");
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "INDEXING" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(toast.error).toHaveBeenCalledWith(
+					"Please wait for all documents to finish processing before using autofill",
+				);
+			});
+
+			it("should show error when no documents are uploaded", async () => {
+				const { toast } = await import("sonner");
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: [],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(toast.error).toHaveBeenCalledWith("Please upload at least one document before using autofill");
+			});
+
+			it("should successfully trigger autofill for research plan", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+				const { toast } = await import("sonner");
+
+				(mockTriggerAutofill as any).mockResolvedValue({
+					application_id: "app-123",
+					autofill_type: "research_plan",
+					message_id: "msg-123",
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					id: "app-123",
+					project_id: "proj-123",
+					rag_sources: [{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const }],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("proj-123", "app-123", {
+					autofill_type: "research_plan",
+				});
+
+				expect(toast.success).toHaveBeenCalledWith("Autofill request sent. Processing your documents...");
+			});
+
+			it("should trigger autofill with field name for research deep dive", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+
+				(mockTriggerAutofill as any).mockResolvedValue({
+					application_id: "app-123",
+					autofill_type: "research_deep_dive",
+					field_name: "hypothesis",
+					message_id: "msg-456",
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					id: "app-123",
+					project_id: "proj-123",
+					rag_sources: [{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const }],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_deep_dive", "hypothesis");
+
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("proj-123", "app-123", {
+					autofill_type: "research_deep_dive",
+					field_name: "hypothesis",
+				});
+			});
+
+			it("should handle autofill errors gracefully", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+				const { toast } = await import("sonner");
+
+				const error = new Error("API Error: Rate limit exceeded");
+				(mockTriggerAutofill as any).mockRejectedValue(error);
+
+				const application = ApplicationWithTemplateFactory.build({
+					id: "app-123",
+					project_id: "proj-123",
+					rag_sources: [{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const }],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(toast.error).toHaveBeenCalledWith("Autofill error: API Error: Rate limit exceeded");
+				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
+			});
 		});
 	});
 });
