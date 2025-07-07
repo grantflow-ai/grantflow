@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from src.app_hosting_alerts.main import (
+from cloud_functions.src.app_hosting_alerts.main import (
     app_hosting_alert_to_discord,
     app_hosting_alert_to_discord_sync,
     create_test_alert_embed,
