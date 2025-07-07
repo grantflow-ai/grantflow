@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 
 from services.rag.src.dto import AutofillRequestDTO
@@ -55,7 +54,7 @@ Return your response as valid JSON in the following structure:
     ]
 }
 ```
-"""
+""",
 )
 
 
@@ -65,99 +64,83 @@ class ResearchPlanHandler(BaseAutofillHandler):
     async def _generate_content(self, request: AutofillRequestDTO, application: dict[str, Any]) -> dict[str, Any]:
         """Generate research objectives and tasks"""
 
-        
         app_title = application.get("title", "")
         existing_objectives = application.get("research_objectives", [])
 
-        self.logger.info("Starting research plan generation",
-                        application_id=request["parent_id"],
-                        application_title=app_title,
-                        existing_objectives_count=len(existing_objectives))
+        self.logger.info(
+            "Starting research plan generation",
+            application_id=request["parent_id"],
+            application_title=app_title,
+            existing_objectives_count=len(existing_objectives),
+        )
 
-        
         search_prompt = f"Generate research objectives and tasks for grant application: {app_title}"
 
         search_queries = await handle_create_search_queries(
-            user_prompt=search_prompt,
-            context={"application_title": app_title}
+            user_prompt=search_prompt, context={"application_title": app_title}
         )
 
-        self.logger.debug("Generated search queries",
-                         application_id=request["parent_id"],
-                         queries_count=len(search_queries),
-                         queries=search_queries)
+        self.logger.debug(
+            "Generated search queries",
+            application_id=request["parent_id"],
+            queries_count=len(search_queries),
+            queries=search_queries,
+        )
 
-        
         documents = await retrieve_documents(
             application_id=request["parent_id"],
-            queries=search_queries,
-            max_results=50
+            search_queries=search_queries,
+            task_description=search_prompt,
+            max_tokens=6000,
         )
 
-        self.logger.debug("Retrieved documents",
-                         application_id=request["parent_id"],
-                         documents_count=len(documents))
+        self.logger.debug("Retrieved documents", application_id=request["parent_id"], documents_count=len(documents))
 
-        
-        objectives = await self._generate_objectives_with_llm(
-            app_title, documents, existing_objectives
+        objectives = await self._generate_objectives_with_llm(app_title, documents, existing_objectives)
+
+        self.logger.info(
+            "Research plan generation completed",
+            application_id=request["parent_id"],
+            generated_objectives_count=len(objectives),
         )
-
-        self.logger.info("Research plan generation completed",
-                        application_id=request["parent_id"],
-                        generated_objectives_count=len(objectives))
 
         return {
             "research_objectives": objectives,
-            "generation_context": {
-                "documents_used": len(documents),
-                "search_queries": search_queries
-            }
+            "generation_context": {"documents_used": len(documents), "search_queries": search_queries},
         }
 
     async def _generate_objectives_with_llm(
-        self,
-        title: str,
-        documents: list[dict[str, Any]],
-        existing: list[dict[str, Any]]
+        self, title: str, documents: list[str], existing: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """Generate objectives using LLM"""
 
-        
         context_docs = self._format_documents_for_context(documents)
 
-        
         existing_text = self._format_existing_objectives(existing)
 
-        
         prompt = RESEARCH_PLAN_USER_PROMPT.substitute(
-            application_title=title,
-            context_docs=context_docs,
-            existing_objectives=existing_text
+            application_title=title, context_docs=context_docs, existing_objectives=existing_text
         )
 
-        
         response = await handle_completions_request(
             prompt_identifier="research_plan_generation",
             messages=str(prompt),
             system_prompt=RESEARCH_PLAN_SYSTEM_PROMPT,
             response_type=dict,
-            temperature=0.7
+            temperature=0.7,
         )
 
-        
         return self._parse_and_validate_objectives(response)
 
-
-    def _format_documents_for_context(self, documents: list[dict[str, Any]]) -> str:
+    def _format_documents_for_context(self, documents: list[str]) -> str:
         """Format documents for LLM context"""
         if not documents:
             return "No research documents available."
 
         formatted_docs = []
-        for i, doc in enumerate(documents[:10]):  
-            content = doc.get("content", "")[:300]  
-            formatted_docs.append(f"Document {i+1}: {content}...")
+        for i, doc in enumerate(documents[:10]):
+            content = doc[:300] if len(doc) > 300 else doc
+            formatted_docs.append(f"Document {i + 1}: {content}...")
 
         return "\n".join(formatted_docs)
 
@@ -172,41 +155,41 @@ class ResearchPlanHandler(BaseAutofillHandler):
             if obj.get("description"):
                 formatted.append(f"  Description: {obj['description']}")
 
-            formatted.extend([
-                f"  Task {task.get('number', '?')}: {task.get('title', '')}"
-                for task in obj.get("research_tasks", [])
-            ])
+            formatted.extend(
+                [f"  Task {task.get('number', '?')}: {task.get('title', '')}" for task in obj.get("research_tasks", [])]
+            )
 
         return "\n".join(formatted)
 
     def _parse_and_validate_objectives(self, response: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse and validate LLM response"""
-        objectives = response.get("research_objectives", [])
+        objectives: list[dict[str, Any]] = response.get("research_objectives", [])
 
         if not objectives:
             raise ValueError("No research objectives generated")
 
-        
         for i, obj in enumerate(objectives):
             if not all(key in obj for key in ["number", "title", "research_tasks"]):
                 raise ValueError(f"Invalid objective structure at index {i}: {obj}")
 
             tasks = obj.get("research_tasks", [])
             if not tasks:
-                raise ValueError(f"Objective {i+1} has no research tasks")
+                raise ValueError(f"Objective {i + 1} has no research tasks")
 
             for j, task in enumerate(tasks):
                 if not all(key in task for key in ["number", "title"]):
-                    raise ValueError(f"Invalid task structure at objective {i+1}, task {j+1}: {task}")
+                    raise ValueError(f"Invalid task structure at objective {i + 1}, task {j + 1}: {task}")
 
-        self.logger.debug("Validated research objectives structure",
-                         objectives_count=len(objectives),
-                         total_tasks=sum(len(obj.get("research_tasks", [])) for obj in objectives))
+        self.logger.debug(
+            "Validated research objectives structure",
+            objectives_count=len(objectives),
+            total_tasks=sum(len(obj.get("research_tasks", [])) for obj in objectives),
+        )
 
         return objectives
 
 
-async def generate_research_objectives(request: AutofillRequestDTO, logger: logging.Logger) -> dict[str, Any]:
+async def generate_research_objectives(request: AutofillRequestDTO, logger: Any) -> dict[str, Any]:
     """Generate research objectives for application"""
     handler = ResearchPlanHandler(logger)
     response = await handler.handle_request(request)
