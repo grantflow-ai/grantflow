@@ -6,7 +6,7 @@ const meta: Meta<typeof AppTextArea> = {
 	component: AppTextArea,
 	decorators: [
 		(Story) => (
-			<div className="max-w-md p-8">
+			<div className="max-w-lg w-md p-8">
 				<Story />
 			</div>
 		),

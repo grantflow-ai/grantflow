@@ -31,8 +31,6 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
 			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 			NEXT_PUBLIC_GCS_EMULATOR_URL: process.env.NEXT_PUBLIC_GCS_EMULATOR_URL,
-			NEXT_PUBLIC_MOCK_API: process.env.NEXT_PUBLIC_MOCK_API,
-			NEXT_PUBLIC_MOCK_AUTH: process.env.NEXT_PUBLIC_MOCK_AUTH,
 			NEXT_PUBLIC_SEGMENT_WRITE_KEY: process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY,
 			NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 		},
@@ -56,36 +54,32 @@ export function getEnv(): Env {
 				.optional()
 				.default(false),
 			NEXT_PUBLIC_GCS_EMULATOR_URL: z.string().url("Please enter a valid URL").optional(),
-			NEXT_PUBLIC_MOCK_API: z
-				.preprocess((val) => {
-					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
-							return true;
-						}
-						if (val.toLowerCase() === "false") {
-							return false;
-						}
-					}
-					return val;
-				}, z.boolean())
-				.optional()
-				.default(false),
-			NEXT_PUBLIC_MOCK_AUTH: z
-				.preprocess((val) => {
-					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
-							return true;
-						}
-						if (val.toLowerCase() === "false") {
-							return false;
-						}
-					}
-					return val;
-				}, z.boolean())
-				.optional()
-				.default(false),
 		},
 	});
 
 	return envRef.value;
+}
+
+/**
+ * Get mock API setting - bypasses T3-env validation to avoid build-time issues
+ * Firebase App Hosting injects secrets as strings at runtime
+ */
+export function getMockAPIEnabled(): boolean {
+	const val = process.env.NEXT_PUBLIC_MOCK_API;
+	if (typeof val === "string") {
+		return val.toLowerCase() === "true";
+	}
+	return false;
+}
+
+/**
+ * Get mock auth setting - bypasses T3-env validation to avoid build-time issues
+ * Firebase App Hosting injects secrets as strings at runtime
+ */
+export function getMockAuthEnabled(): boolean {
+	const val = process.env.NEXT_PUBLIC_MOCK_AUTH;
+	if (typeof val === "string") {
+		return val.toLowerCase() === "true";
+	}
+	return false;
 }

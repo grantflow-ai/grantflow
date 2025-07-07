@@ -3,7 +3,7 @@
  * Keep all dev/mock logic consolidated here
  */
 
-import { getEnv } from "@/utils/env";
+import { getMockAPIEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { isMockAPIEnabled } from "../mock-api/client";
 
@@ -18,14 +18,14 @@ export function getMockWebSocketUrl(projectId: string, applicationId: string): s
  * Check if the application is running in development mode with mock API
  */
 export function isDevModeWithMockAPI(): boolean {
-	return Boolean(getEnv().NEXT_PUBLIC_MOCK_API) && isMockAPIEnabled();
+	return getMockAPIEnabled() && isMockAPIEnabled();
 }
 
 /**
  * Check if request should skip logging in dev mode
  */
 export function shouldSkipLogging(): boolean {
-	return Boolean(getEnv().NEXT_PUBLIC_MOCK_API);
+	return getMockAPIEnabled();
 }
 
 /**
