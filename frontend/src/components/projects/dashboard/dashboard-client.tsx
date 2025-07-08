@@ -13,6 +13,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
+import { routes } from "@/utils/navigation";
 import { DeleteProjectModal } from "../modals/delete-project-modal";
 import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
 import { DashboardCreateProjectModal } from "./dashboard-create-project-modal";
@@ -48,9 +49,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		await duplicateProject(projectId);
 	};
 
-	const handleProjectNavigation = (projectId: string) => {
+	const handleProjectNavigation = (projectId: string, projectName: string) => {
 		assertIsNotNullish(projectId);
-		router.push(`/projects/${projectId}`);
+		router.push(routes.project.detail({ projectId, projectName }));
 	};
 
 	const { data: projects = initialProjects } = useSWR("projects", getProjects, {
@@ -177,7 +178,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 											data-testid="dashboard-project-card"
 											key={project.id}
 											onClick={() => {
-												handleProjectNavigation(project.id);
+												handleProjectNavigation(project.id, project.name);
 											}}
 											onDelete={handleDeleteProject}
 											onDuplicate={handleDuplicateProject}
