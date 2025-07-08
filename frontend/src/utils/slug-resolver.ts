@@ -3,29 +3,17 @@ import { getProject } from "@/actions/project";
 import { extractIdFromSlug } from "./navigation";
 
 export async function resolveApplicationSlug(projectId: string, slug: string): Promise<null | string> {
-	// First try to extract ID from slug
-	const extractedId = extractIdFromSlug(slug);
-	if (!extractedId) {
+	// Extract short ID from slug
+	const shortId = extractIdFromSlug(slug);
+	if (!shortId) {
 		return null;
 	}
 
-	// If it's a full UUID, return it
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-	if (uuidRegex.test(extractedId)) {
-		// Verify the application exists
-		try {
-			await retrieveApplication(projectId, extractedId);
-			return extractedId;
-		} catch {
-			return null;
-		}
-	}
-
-	// Similar approach for short IDs
+	// Try common UUID patterns with the short ID
 	const possibleUUIDs = [
-		`${extractedId}-0000-4000-8000-000000000000`,
-		`${extractedId}-0000-4000-8000-00000e0ea30f`,
-		`${extractedId}-1111-1111-1111-111111111111`,
+		`${shortId}-0000-4000-8000-000000000000`,
+		`${shortId}-0000-4000-8000-00000e0ea30f`,
+		`${shortId}-1111-1111-1111-111111111111`,
 	];
 
 	for (const uuid of possibleUUIDs) {
@@ -41,31 +29,18 @@ export async function resolveApplicationSlug(projectId: string, slug: string): P
 }
 
 export async function resolveProjectSlug(slug: string): Promise<null | string> {
-	// First try to extract ID from slug
-	const extractedId = extractIdFromSlug(slug);
-	if (!extractedId) {
+	// Extract short ID from slug
+	const shortId = extractIdFromSlug(slug);
+	if (!shortId) {
 		return null;
 	}
 
-	// If it's a full UUID, return it
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-	if (uuidRegex.test(extractedId)) {
-		// Verify the project exists
-		try {
-			await getProject(extractedId);
-			return extractedId;
-		} catch {
-			return null;
-		}
-	}
-
-	// If it's a short ID, we need to search for projects
-	// For now, we'll construct a UUID pattern and try common UUID versions
-	// In a real implementation, you'd want to store slug->ID mappings in the database
+	// Try common UUID patterns with the short ID
+	// In production, this should query a database mapping
 	const possibleUUIDs = [
-		`${extractedId}-0000-4000-8000-000000000000`, // Common pattern
-		`${extractedId}-0000-4000-8000-00000e0ea30f`, // From your example
-		`${extractedId}-1111-1111-1111-111111111111`, // Test pattern
+		`${shortId}-0000-4000-8000-000000000000`,
+		`${shortId}-0000-4000-8000-00000e0ea30f`,
+		`${shortId}-1111-1111-1111-111111111111`,
 	];
 
 	for (const uuid of possibleUUIDs) {
