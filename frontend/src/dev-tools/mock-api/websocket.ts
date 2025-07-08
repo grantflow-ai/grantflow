@@ -1,4 +1,5 @@
 import {
+	AutofillProgressMessageFactory,
 	RagProcessingStatusMessageFactory,
 	SourceProcessingNotificationMessageFactory,
 	WebSocketMessageFactory,
@@ -576,6 +577,205 @@ export class MockWebSocket implements WebSocket {
 					},
 				],
 				name: "error",
+			},
+			{
+				messages: [
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								current_stage: 1,
+								message: "Starting autofill for Research Plan...",
+								total_stages: 3,
+							},
+							event: "autofill_started",
+							type: "data",
+						}),
+						delay: 0,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								current_stage: 1,
+								field_name: "research_objectives",
+								message: "Analyzing uploaded documents...",
+								total_stages: 3,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 2000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								current_stage: 2,
+								data: { objectives_count: 3 },
+								field_name: "research_objectives",
+								message: "Generating research objectives...",
+								total_stages: 3,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 8000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								current_stage: 3,
+								message: "Finalizing research plan content...",
+								total_stages: 3,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 15_000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								data: { objectives_count: 3, tasks_count: 9 },
+								message: "Research Plan autofill completed successfully!",
+							},
+							event: "autofill_completed",
+							type: "data",
+						}),
+						delay: 20_000,
+					},
+				],
+				name: "autofill-research-plan",
+			},
+			{
+				messages: [
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								current_stage: 1,
+								message: "Starting autofill for Research Deep Dive...",
+								total_stages: 5,
+							},
+							event: "autofill_started",
+							type: "data",
+						}),
+						delay: 0,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								current_stage: 1,
+								field_name: "background_context",
+								message: "Analyzing research context...",
+								total_stages: 5,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 3000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								current_stage: 2,
+								field_name: "hypothesis",
+								message: "Generating hypothesis and rationale...",
+								total_stages: 5,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 10_000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								current_stage: 3,
+								field_name: "novelty_and_innovation",
+								message: "Evaluating novelty and innovation...",
+								total_stages: 5,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 18_000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								current_stage: 4,
+								field_name: "impact",
+								message: "Assessing impact and feasibility...",
+								total_stages: 5,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 25_000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								current_stage: 5,
+								field_name: "team_excellence",
+								message: "Completing team excellence section...",
+								total_stages: 5,
+							},
+							event: "autofill_progress",
+							type: "data",
+						}),
+						delay: 32_000,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_deep_dive",
+								data: { field_count: 9 },
+								message: "Research Deep Dive autofill completed successfully!",
+							},
+							event: "autofill_completed",
+							type: "data",
+						}),
+						delay: 40_000,
+					},
+				],
+				name: "autofill-research-deep-dive",
+			},
+			{
+				messages: [
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								message: "Starting autofill for Research Plan...",
+							},
+							event: "autofill_started",
+							type: "data",
+						}),
+						delay: 0,
+					},
+					{
+						data: AutofillProgressMessageFactory.build({
+							data: {
+								autofill_type: "research_plan",
+								message: "Failed to process documents: No valid research documents found",
+							},
+							event: "autofill_error",
+							type: "error",
+						}),
+						delay: 5000,
+					},
+				],
+				name: "autofill-error",
 			},
 		];
 	}

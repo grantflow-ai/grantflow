@@ -45,7 +45,11 @@ export function UrlInput({ parentId }: { parentId?: string }) {
 
 			if (!urls.includes(trimmedUrl)) {
 				await addUrl(trimmedUrl, parentId);
+				setUrlInput("");
+				return;
 			}
+
+			setUrlError("URL already exists");
 			setUrlInput("");
 		}
 	};

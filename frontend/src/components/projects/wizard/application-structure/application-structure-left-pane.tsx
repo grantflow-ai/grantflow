@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppCard } from "@/components/app";
+import { FilePreviewCard, LinkPreviewItem } from "@/components/projects";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import type { FileWithId } from "@/types/files";
-import { FilePreviewCard } from "../shared/file-preview-card";
-import { LinkPreviewItem } from "../shared/link-preview-item";
+import type { FileWithSource, UrlWithSource } from "@/types/files";
 
 const ANALYZING_STEPS = [
 	{
@@ -50,8 +49,8 @@ export function ApplicationStructureFilePreview({
 	hasTemplateFiles: boolean;
 	hasTemplateUrls: boolean;
 	parentId: string | undefined;
-	templateFiles: FileWithId[];
-	templateUrls: string[];
+	templateFiles: FileWithSource[];
+	templateUrls: UrlWithSource[];
 }) {
 	return (
 		<div className="space-y-4">
@@ -62,7 +61,12 @@ export function ApplicationStructureFilePreview({
 				{hasTemplateFiles ? (
 					<div className="flex gap-3">
 						{templateFiles.map((file, index) => (
-							<FilePreviewCard file={file} key={file.name + index.toString()} parentId={parentId} />
+							<FilePreviewCard
+								file={file}
+								key={file.name + index.toString()}
+								parentId={parentId}
+								sourceStatus={file.sourceStatus}
+							/>
 						))}
 					</div>
 				) : (
@@ -78,8 +82,13 @@ export function ApplicationStructureFilePreview({
 						Links
 					</h3>
 					<div className="space-y-1">
-						{templateUrls.map((url, index) => (
-							<LinkPreviewItem key={url + index.toString()} parentId={parentId} url={url} />
+						{templateUrls.map((urlSource, index) => (
+							<LinkPreviewItem
+								key={urlSource.url + index.toString()}
+								parentId={parentId}
+								sourceStatus={urlSource.sourceStatus}
+								url={urlSource.url}
+							/>
 						))}
 					</div>
 				</AppCard>
@@ -99,22 +108,30 @@ export function ApplicationStructureLeftPane() {
 
 	const parentId = application?.grant_template?.id;
 
-	const templateFiles: FileWithId[] = useMemo(
+	const templateFiles: FileWithSource[] = useMemo(
 		() =>
 			(application?.grant_template?.rag_sources ?? [])
 				.filter((source) => source.filename)
 				.map((source) => {
 					const file = new File([], source.filename!, { type: "application/octet-stream" });
-					return Object.assign(file, { id: source.sourceId });
+					return Object.assign(file, {
+						id: source.sourceId,
+						sourceId: source.sourceId,
+						sourceStatus: source.status,
+					});
 				}),
 		[application?.grant_template?.rag_sources],
 	);
 
-	const templateUrls = useMemo(
+	const templateUrls: UrlWithSource[] = useMemo(
 		() =>
 			(application?.grant_template?.rag_sources ?? [])
 				.filter((source) => source.url)
-				.map((source) => source.url!),
+				.map((source) => ({
+					sourceId: source.sourceId,
+					sourceStatus: source.status,
+					url: source.url!,
+				})),
 		[application?.grant_template?.rag_sources],
 	);
 

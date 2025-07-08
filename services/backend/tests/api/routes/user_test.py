@@ -1,13 +1,14 @@
 from typing import Any
 
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, ProjectUser as ProjectMember
+from packages.db.src.tables import Project
+from packages.db.src.tables import ProjectUser as ProjectMember
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.api.routes.user import (
-    DeleteUserResponse,
     USER_DELETION_GRACE_PERIOD_DAYS,
+    DeleteUserResponse,
 )
 from services.backend.tests.conftest import TestingClientType
 
@@ -20,11 +21,10 @@ class TestDeleteUser:
         firebase_uid: str,
     ) -> None:
         from datetime import UTC, datetime, timedelta
+
         from google.cloud import firestore  # type: ignore[attr-defined]
 
-        deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(
-            days=USER_DELETION_GRACE_PERIOD_DAYS
-        )
+        deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
         mock_firestore_data = {
             "firebase_uid": firebase_uid,
             "status": "scheduled",
@@ -45,9 +45,7 @@ class TestDeleteUser:
             return_value=None,
         )
 
-        response = await test_client.delete(
-            "/user", headers={"Authorization": "Bearer some_token"}
-        )
+        response = await test_client.delete("/user", headers={"Authorization": "Bearer some_token"})
 
         assert response.status_code == 200, response.text
 
@@ -61,9 +59,7 @@ class TestDeleteUser:
 
         assert result == expected_response
 
-        mock_schedule.assert_called_once_with(
-            firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS
-        )
+        mock_schedule.assert_called_once_with(firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS)
 
     async def test_delete_user_firestore_error(
         self,
@@ -81,15 +77,11 @@ class TestDeleteUser:
             side_effect=Exception("Firestore connection failed"),
         )
 
-        response = await test_client.delete(
-            "/user", headers={"Authorization": "Bearer some_token"}
-        )
+        response = await test_client.delete("/user", headers={"Authorization": "Bearer some_token"})
 
         assert response.status_code == 500
 
-    async def test_delete_user_no_firebase_uid(
-        self, test_client: TestingClientType
-    ) -> None:
+    async def test_delete_user_no_firebase_uid(self, test_client: TestingClientType) -> None:
         response = await test_client.delete("/user")
 
         assert response.status_code in [401, 403]
@@ -101,6 +93,7 @@ class TestDeleteUser:
         firebase_uid: str,
     ) -> None:
         from datetime import UTC, datetime
+
         from google.cloud import firestore  # type: ignore[attr-defined]
 
         deletion_date = datetime.now(UTC).replace(tzinfo=None)
@@ -124,9 +117,7 @@ class TestDeleteUser:
             return_value=mock_firestore_data,
         )
 
-        response = await test_client.delete(
-            "/user", headers={"Authorization": "Bearer some_token"}
-        )
+        response = await test_client.delete("/user", headers={"Authorization": "Bearer some_token"})
 
         assert response.status_code == 200, response.text
         result = response.json()
@@ -155,10 +146,7 @@ class TestDeleteUser:
 
         assert response.status_code == 400
         data = response.json()
-        assert (
-            data["detail"]
-            == "You must transfer ownership of projects before deleting your account"
-        )
+        assert data["detail"] == "You must transfer ownership of projects before deleting your account"
         assert data["extra"]["error"] == "ownership_transfer_required"
         assert len(data["extra"]["projects"]) == 1
         assert data["extra"]["projects"][0]["id"] == str(project.id)
@@ -181,9 +169,7 @@ class TestDeleteUser:
             return_value=None,
         )
 
-        deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(
-            days=USER_DELETION_GRACE_PERIOD_DAYS
-        )
+        deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
         mock_schedule = mocker.patch(
             "services.backend.src.api.routes.user.schedule_user_deletion",
             return_value={
@@ -210,10 +196,7 @@ class TestDeleteUser:
 
         assert response.status_code == 200
         data = response.json()
-        assert (
-            data["message"]
-            == "Account scheduled for deletion. You will be removed from all projects immediately."
-        )
+        assert data["message"] == "Account scheduled for deletion. You will be removed from all projects immediately."
         assert mock_schedule.called
 
 
@@ -230,9 +213,7 @@ class TestGetSoleOwnedProjects:
         """Test getting list of sole-owned projects."""
 
         async with async_session_maker() as session, session.begin():
-            shared_project = Project(
-                name="Shared Project", description="Project with multiple owners"
-            )
+            shared_project = Project(name="Shared Project", description="Project with multiple owners")
             session.add(shared_project)
             await session.flush()
 

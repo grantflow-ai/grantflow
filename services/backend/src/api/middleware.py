@@ -6,10 +6,10 @@ from litestar.connection import ASGIConnection
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import (
     AbstractAuthenticationMiddleware,
-    AuthenticationResult,
     ASGIMiddleware,
+    AuthenticationResult,
 )
-from litestar.types import Receive, Scope, Send, ASGIApp
+from litestar.types import ASGIApp, Receive, Scope, Send
 from packages.db.src.tables import ProjectUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
@@ -23,16 +23,27 @@ logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health"}
 ADMIN_PATHS = {"organizations"}
+DEV_BYPASS_PREFIX = "/dev/"
 
 
 class AuthMiddleware(AbstractAuthenticationMiddleware):
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
-        if (
-            isinstance(ASGIConnection, Request) and connection.method == "OPTIONS"
-        ) or any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):
+        
+        if isinstance(ASGIConnection, Request) and connection.method == "OPTIONS":
             return AuthenticationResult(user=None, auth=None)
+
+        
+        if any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):
+            return AuthenticationResult(user=None, auth=None)
+
+        
+        if connection.url.path.startswith(DEV_BYPASS_PREFIX):
+            if get_env("ENABLE_DEV_BYPASS", False):
+                
+                return AuthenticationResult(user=None, auth="dev-bypass-user")
+            raise NotAuthorizedException("Dev bypass not enabled")
 
         auth_header = connection.headers.get("Authorization", "").strip()
 
@@ -43,11 +54,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             raise NotAuthorizedException
 
         firebase_uid: str | None = None
-        if bearer_token := (
-            auth_header.removeprefix("Bearer").strip()
-            if auth_header.startswith("Bearer")
-            else None
-        ):
+        if bearer_token := (auth_header.removeprefix("Bearer").strip() if auth_header.startswith("Bearer") else None):
             firebase_uid = verify_jwt_token(bearer_token)
 
         if otp := connection.query_params.get("otp"):
@@ -85,9 +92,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 class TraceIdMiddleware(ASGIMiddleware):
     """Middleware to extract or generate trace IDs for request tracing and OpenTelemetry integration."""
 
-    async def handle(
-        self, scope: Scope, receive: Receive, send: Send, next_app: ASGIApp
-    ) -> None:
+    async def handle(self, scope: Scope, receive: Receive, send: Send, next_app: ASGIApp) -> None:
         scope_type = scope.get("type")
         if scope_type not in ("http", "websocket"):
             await next_app(scope, receive, send)

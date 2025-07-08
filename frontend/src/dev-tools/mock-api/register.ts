@@ -45,6 +45,11 @@ export function registerMockHandlers(): void {
 		mockHandlers.applications.generateApplication,
 		"POST",
 	);
+	client.register(
+		"/projects/:project_id/applications/:application_id/autofill",
+		mockHandlers.applications.triggerAutofill,
+		"POST",
+	);
 
 	client.register("/organizations", mockHandlers.organizations.createOrganization);
 	client.register("/organizations/:organization_id", mockHandlers.organizations.updateOrganization);
@@ -97,4 +102,28 @@ export function registerMockHandlers(): void {
 		mockHandlers.sources.deleteApplicationSource,
 		"DELETE",
 	);
+
+	// User endpoints
+	client.register("/user", mockHandlers.user.deleteUser, "DELETE");
+	client.register("/user/sole-owned-projects", mockHandlers.user.getSoleOwnedProjects, "GET");
+
+	// Notification endpoints
+	client.register("/notifications", mockHandlers.notifications.listNotifications, "GET");
+	client.register("/notifications/:notification_id/dismiss", mockHandlers.notifications.dismissNotification, "POST");
+
+	// Project member endpoints
+	client.register("/projects/:project_id/members", mockHandlers.projectMembers.listProjectMembers, "GET");
+	client.register(
+		"/projects/:project_id/members/:firebase_uid",
+		mockHandlers.projectMembers.updateMemberRole,
+		"PATCH",
+	);
+	client.register(
+		"/projects/:project_id/members/:firebase_uid",
+		mockHandlers.projectMembers.removeProjectMember,
+		"DELETE",
+	);
+
+	// Health check
+	client.register("/health", mockHandlers.health.health, "GET");
 }
