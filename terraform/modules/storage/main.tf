@@ -30,11 +30,23 @@ variable "file_indexing_topic" {
   default     = "file-indexing"
 }
 
+variable "storage_class" {
+  description = "Default storage class for the bucket"
+  type        = string
+  default     = "STANDARD"
+}
+
+variable "retention_days" {
+  description = "Object lifecycle retention in days"
+  type        = number
+  default     = 30
+}
+
 resource "google_storage_bucket" "uploads" {
   name                        = var.bucket_name
   location                    = "US"
   force_destroy               = false
-  storage_class               = "STANDARD"
+  storage_class               = var.storage_class
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
 
@@ -44,6 +56,15 @@ resource "google_storage_bucket" "uploads" {
 
   encryption {
     default_kms_key_name = google_kms_crypto_key.bucket_key.id
+  }
+
+  lifecycle_rule {
+    condition {
+      age = var.retention_days
+    }
+    action {
+      type = "Delete"
+    }
   }
 
   labels = {
