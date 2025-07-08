@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { AppCard } from "@/components/app";
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
 import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithId } from "@/types/files";
+import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { log } from "@/utils/logger";
 import { FilePreviewCard } from "./file-preview-card";
 import { LinkPreviewItem } from "./link-preview-item";
@@ -24,19 +24,30 @@ export function ApplicationPreview({
 	log.info("ApplicationPreview render", { parentId });
 	const templateSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
 
-	const templateFiles: FileWithId[] = useMemo(
+	const templateFiles: FileWithSource[] = useMemo(
 		() =>
 			(templateSources ?? [])
 				.filter((source) => source.filename)
 				.map((source) => {
 					const file = new File([], source.filename!, { type: "application/octet-stream" });
-					return Object.assign(file, { id: source.sourceId });
+					return Object.assign(file, {
+						id: source.sourceId,
+						sourceId: source.sourceId,
+						sourceStatus: source.status,
+					});
 				}),
 		[templateSources],
 	);
 
-	const templateUrls = useMemo(
-		() => (templateSources ?? []).filter((source) => source.url).map((source) => source.url!),
+	const templateUrls: UrlWithSource[] = useMemo(
+		() =>
+			(templateSources ?? [])
+				.filter((source) => source.url)
+				.map((source) => ({
+					sourceId: source.sourceId,
+					sourceStatus: source.status,
+					url: source.url!,
+				})),
 		[templateSources],
 	);
 
@@ -99,20 +110,25 @@ export function ApplicationPreview({
 	);
 }
 
-function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templateFiles: FileWithId[] }) {
+function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templateFiles: FileWithSource[] }) {
 	return (
 		<PreviewCard data-testid="application-documents">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Application Documents</h4>
 			<div className="flex flex-wrap gap-3" data-testid="file-collection">
 				{templateFiles.map((file, index) => (
-					<FilePreviewCard file={file} key={file.name + index.toString()} parentId={parentId} />
+					<FilePreviewCard
+						file={file}
+						key={file.name + index.toString()}
+						parentId={parentId}
+						sourceStatus={file.sourceStatus}
+					/>
 				))}
 			</div>
 		</PreviewCard>
 	);
 }
 
-function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls: string[] }) {
+function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls: UrlWithSource[] }) {
 	return (
 		<PreviewCard data-testid="application-links">
 			<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">Links</h4>
@@ -120,18 +136,24 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 				<div className="space-y-1">
 					{templateUrls
 						.filter((_, index) => index % 2 === 0)
-						.map((url, originalIndex) => (
-							<LinkPreviewItem key={url + (originalIndex * 2).toString()} parentId={parentId} url={url} />
+						.map((urlSource, originalIndex) => (
+							<LinkPreviewItem
+								key={urlSource.url + (originalIndex * 2).toString()}
+								parentId={parentId}
+								sourceStatus={urlSource.sourceStatus}
+								url={urlSource.url}
+							/>
 						))}
 				</div>
 				<div className="space-y-1">
 					{templateUrls
 						.filter((_, index) => index % 2 === 1)
-						.map((url, originalIndex) => (
+						.map((urlSource, originalIndex) => (
 							<LinkPreviewItem
-								key={url + (originalIndex * 2 + 1).toString()}
+								key={urlSource.url + (originalIndex * 2 + 1).toString()}
 								parentId={parentId}
-								url={url}
+								sourceStatus={urlSource.sourceStatus}
+								url={urlSource.url}
 							/>
 						))}
 				</div>

@@ -124,7 +124,13 @@ describe("ApplicationStructureLeftPane", () => {
 
 describe("ApplicationStructureFilePreview", () => {
 	it("renders file preview correctly", () => {
-		const templateFiles = [Object.assign(new File([], "test.pdf"), { id: "file-1" })];
+		const templateFiles = [
+			Object.assign(new File([], "test.pdf"), {
+				id: "file-1",
+				sourceId: "file-1",
+				sourceStatus: "FINISHED",
+			}),
+		];
 
 		render(
 			<ApplicationStructureFilePreview
