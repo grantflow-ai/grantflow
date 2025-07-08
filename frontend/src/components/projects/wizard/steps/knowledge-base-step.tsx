@@ -4,6 +4,7 @@ import { AppCard } from "@/components/app";
 import { FilePreviewCard, LinkPreviewItem, TemplateFileUploader } from "@/components/projects";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { SourceIndexingStatus } from "@/enums";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
@@ -95,7 +96,7 @@ function KnowledgeBasePreview() {
 	const applicationRagSources = useApplicationStore((state) => state.application?.rag_sources);
 
 	const knowledgeBaseFiles: FileWithSource[] = (applicationRagSources ?? [])
-		.filter((source) => source.filename)
+		.filter((source) => source.filename && source.status !== SourceIndexingStatus.FAILED)
 		.map((source) => {
 			const file = new File([], source.filename!, { type: "application/octet-stream" });
 			return Object.assign(file, {
@@ -106,7 +107,7 @@ function KnowledgeBasePreview() {
 		});
 
 	const knowledgeBaseUrls: UrlWithSource[] = (applicationRagSources ?? [])
-		.filter((source) => source.url)
+		.filter((source) => source.url && source.status !== SourceIndexingStatus.FAILED)
 		.map((source) => ({
 			sourceId: source.sourceId,
 			sourceStatus: source.status,
