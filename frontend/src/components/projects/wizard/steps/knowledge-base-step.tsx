@@ -1,14 +1,12 @@
 "use client";
 
 import { AppCard } from "@/components/app";
+import { FilePreviewCard, LinkPreviewItem, TemplateFileUploader } from "@/components/projects";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithId } from "@/types/files";
-import { FilePreviewCard } from "../shared/file-preview-card";
-import { LinkPreviewItem } from "../shared/link-preview-item";
-import { TemplateFileUploader } from "../shared/template-file-uploader";
+import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { UrlInput } from "../shared/url-input";
 
 export function KnowledgeBaseStep() {
@@ -71,7 +69,7 @@ export function KnowledgeBaseStep() {
 	);
 }
 
-function DocumentsSection({ files, parentId }: { files: FileWithId[]; parentId?: string }) {
+function DocumentsSection({ files, parentId }: { files: FileWithSource[]; parentId?: string }) {
 	if (files.length === 0) return null;
 
 	return (
@@ -79,7 +77,12 @@ function DocumentsSection({ files, parentId }: { files: FileWithId[]; parentId?:
 			<h4 className="font-heading mb-8 font-semibold">Documents</h4>
 			<div className="grid grid-cols-5 gap-3" data-testid="file-collection">
 				{files.map((file, index) => (
-					<FilePreviewCard file={file} key={file.name + index.toString()} parentId={parentId} />
+					<FilePreviewCard
+						file={file}
+						key={file.name + index.toString()}
+						parentId={parentId}
+						sourceStatus={file.sourceStatus}
+					/>
 				))}
 			</div>
 		</div>
@@ -87,22 +90,30 @@ function DocumentsSection({ files, parentId }: { files: FileWithId[]; parentId?:
 }
 
 function KnowledgeBasePreview() {
-	const application = useApplicationStore((state) => state.application);
+	const applicationTitle = useApplicationStore((state) => state.application?.title);
+	const applicationId = useApplicationStore((state) => state.application?.id);
+	const applicationRagSources = useApplicationStore((state) => state.application?.rag_sources);
 
-	const applicationId = application?.id;
-
-	const knowledgeBaseFiles: FileWithId[] = (application?.rag_sources ?? [])
+	const knowledgeBaseFiles: FileWithSource[] = (applicationRagSources ?? [])
 		.filter((source) => source.filename)
 		.map((source) => {
 			const file = new File([], source.filename!, { type: "application/octet-stream" });
-			return Object.assign(file, { id: source.sourceId });
+			return Object.assign(file, {
+				id: source.sourceId,
+				sourceId: source.sourceId,
+				sourceStatus: source.status,
+			});
 		});
 
-	const knowledgeBaseUrls = (application?.rag_sources ?? [])
+	const knowledgeBaseUrls: UrlWithSource[] = (applicationRagSources ?? [])
 		.filter((source) => source.url)
-		.map((source) => source.url!);
+		.map((source) => ({
+			sourceId: source.sourceId,
+			sourceStatus: source.status,
+			url: source.url!,
+		}));
 
-	const hasContent = Boolean(application?.title) || knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
+	const hasContent = Boolean(applicationTitle) || knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 	const hasFilesOrUrls = knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 	const hasBothFilesAndUrls = knowledgeBaseFiles.length > 0 && knowledgeBaseUrls.length > 0;
 
@@ -157,15 +168,20 @@ function KnowledgeBasePreview() {
 	);
 }
 
-function LinksSection({ parentId, urls }: { parentId?: string; urls: string[] }) {
+function LinksSection({ parentId, urls }: { parentId?: string; urls: UrlWithSource[] }) {
 	if (urls.length === 0) return null;
 
 	return (
 		<div data-testid="knowledge-base-urls">
 			<h4 className="font-heading mb-8 font-semibold">Links</h4>
 			<div className="space-y-1">
-				{urls.map((url, index) => (
-					<LinkPreviewItem key={url + index.toString()} parentId={parentId} url={url} />
+				{urls.map((urlSource, index) => (
+					<LinkPreviewItem
+						key={urlSource.url + index.toString()}
+						parentId={parentId}
+						sourceStatus={urlSource.sourceStatus}
+						url={urlSource.url}
+					/>
 				))}
 			</div>
 		</div>

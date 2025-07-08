@@ -4,8 +4,8 @@ import { ExternalLink, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
+import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
-
 import type { FileWithId } from "@/types/files";
 import { log } from "@/utils/logger";
 
@@ -26,7 +26,15 @@ const FILE_ICON_MAP = {
 	xlsx: <Image alt="XLSX file" className="block" height={56} src="/icons/file-general.svg" width={48} />,
 } as const;
 
-export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId?: string }) {
+export function FilePreviewCard({
+	file,
+	parentId,
+	sourceStatus,
+}: {
+	file: FileWithId;
+	parentId?: string;
+	sourceStatus?: string;
+}) {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const removeFile = useApplicationStore((state) => state.removeFile);
 
@@ -35,6 +43,9 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 	const canOpenInBrowser = ["md", "pdf"].includes(extension);
 	const hasAccessibleContent = file instanceof File && file.size > 0;
 	const canActuallyOpen = canOpenInBrowser && hasAccessibleContent;
+
+	const isIndexing = sourceStatus === SourceIndexingStatus.INDEXING;
+	const canRemove = !isIndexing;
 
 	const handleOpen = () => {
 		if (!canActuallyOpen) return;
@@ -51,7 +62,7 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 	};
 
 	const handleRemove = async () => {
-		if (!parentId) return;
+		if (!(parentId && canRemove)) return;
 		await removeFile(file, parentId);
 		setDropdownOpen(false);
 	};
@@ -92,13 +103,18 @@ export function FilePreviewCard({ file, parentId }: { file: FileWithId; parentId
 						Open
 					</AppDropdownMenuItem>
 					<AppDropdownMenuItem
-						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-app-red hover:bg-app-gray-100"
+						className={`flex items-center gap-2 rounded px-2 py-1.5 text-sm ${
+							canRemove
+								? "cursor-pointer text-app-red hover:bg-app-gray-100"
+								: "cursor-not-allowed text-app-gray-400"
+						}`}
 						data-testid="file-menu-remove"
-						disabled={!parentId}
+						disabled={!(parentId && canRemove)}
 						onClick={handleRemove}
+						title={isIndexing ? "Cannot remove file while indexing is in progress" : "Remove file"}
 					>
-						<Trash2 className="size-4" />
-						Remove
+						<Trash2 className={`size-4 ${canRemove ? "" : "text-app-gray-400"}`} />
+						{isIndexing ? "Remove (indexing...)" : "Remove"}
 					</AppDropdownMenuItem>
 				</AppDropdownMenuContent>
 			</AppDropdownMenu>
