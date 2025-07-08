@@ -45,6 +45,11 @@ export function registerMockHandlers(): void {
 		mockHandlers.applications.generateApplication,
 		"POST",
 	);
+	client.register(
+		"/projects/:project_id/applications/:application_id/autofill",
+		mockHandlers.applications.triggerAutofill,
+		"POST",
+	);
 
 	client.register("/organizations", mockHandlers.organizations.createOrganization);
 	client.register("/organizations/:organization_id", mockHandlers.organizations.updateOrganization);

@@ -12,6 +12,7 @@ import {
 	deleteApplication,
 	generateApplication,
 	retrieveApplication,
+	triggerAutofill,
 	updateApplication,
 } from "./grant-applications";
 
@@ -380,6 +381,124 @@ describe("Grant Application Actions", () => {
 
 			expect(result).toEqual(mockRetrieveApplicationResponse);
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+	});
+
+	describe("triggerAutofill", () => {
+		const mockAutofillResponse: API.TriggerAutofill.Http201.ResponseBody = {
+			application_id: mockApplicationId,
+			autofill_type: "research_plan",
+			message_id: "msg-123",
+		};
+
+		it("should call the API with correct parameters for research plan", async () => {
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockAutofillResponse),
+			});
+
+			const autofillData: API.TriggerAutofill.RequestBody = {
+				autofill_type: "research_plan",
+			};
+
+			const result = await triggerAutofill(mockProjectId, mockApplicationId, autofillData);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
+				{
+					headers: mockAuthHeaders,
+					json: autofillData,
+				},
+			);
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+			expect(result).toEqual(mockAutofillResponse);
+		});
+
+		it("should call the API with field name for research deep dive", async () => {
+			const responseWithField: API.TriggerAutofill.Http201.ResponseBody = {
+				...mockAutofillResponse,
+				autofill_type: "research_deep_dive",
+				field_name: "hypothesis",
+			};
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(responseWithField),
+			});
+
+			const autofillData: API.TriggerAutofill.RequestBody = {
+				autofill_type: "research_deep_dive",
+				field_name: "hypothesis",
+			};
+
+			const result = await triggerAutofill(mockProjectId, mockApplicationId, autofillData);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
+				{
+					headers: mockAuthHeaders,
+					json: autofillData,
+				},
+			);
+
+			expect(result).toEqual(responseWithField);
+		});
+
+		it("should handle optional context parameter", async () => {
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockAutofillResponse),
+			});
+
+			const autofillData: API.TriggerAutofill.RequestBody = {
+				autofill_type: "research_plan",
+				context: {
+					existing_objectives: 2,
+					max_objectives: 5,
+				},
+			};
+
+			await triggerAutofill(mockProjectId, mockApplicationId, autofillData);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
+				{
+					headers: mockAuthHeaders,
+					json: autofillData,
+				},
+			);
+		});
+
+		it("should handle API errors", async () => {
+			const mockError = new Error("Rate limit exceeded");
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(mockError),
+			});
+			mockWithAuthRedirect.mockRejectedValueOnce(mockError);
+
+			await expect(
+				triggerAutofill(mockProjectId, mockApplicationId, { autofill_type: "research_plan" }),
+			).rejects.toThrow("Rate limit exceeded");
+		});
+
+		it("should handle 400 validation errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({
+					detail: "Invalid autofill type",
+					extra: { autofill_type: ["Must be one of: research_plan, research_deep_dive"] },
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 400,
+				},
+			);
+			const httpError = new HTTPError(mockResponse, { path: "projects/applications/autofill" } as any, {} as any);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(
+				triggerAutofill(mockProjectId, mockApplicationId, { autofill_type: "invalid_type" as any }),
+			).rejects.toThrow(HTTPError);
 		});
 	});
 });

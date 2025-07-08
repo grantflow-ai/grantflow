@@ -77,6 +77,7 @@ lint.per-file-ignores."**/tests/**/*.*" = [
   "PT013",
   "RUF012",
   "S",
+  "SLF001",  # Allow accessing private members in tests
 ]
 lint.per-file-ignores."e2e/**/*.*" = [
   "ARG001",
@@ -100,6 +101,7 @@ lint.per-file-ignores."scripts/**/*.*" = [
   "N999",
   "S",
 ]
+lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [ "B027" ] # Allow empty method in base class
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
@@ -192,6 +194,7 @@ members = [
   "services/indexer",
   "services/rag",
   "services/scraper",
+  "cloud_functions",
 ]
 
 [tool.uv.sources]

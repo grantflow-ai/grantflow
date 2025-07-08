@@ -17,6 +17,7 @@ from services.backend.src.api.routes.grant_applications import (
     handle_generate_application,
     handle_list_applications,
     handle_retrieve_application,
+    handle_trigger_autofill,
     handle_update_application,
 )
 from services.backend.src.api.routes.grant_template import (
@@ -27,14 +28,6 @@ from services.backend.src.api.routes.notifications import (
     dismiss_notification,
     list_notifications,
 )
-from services.backend.src.api.routes.rag_jobs import handle_retrieve_rag_job
-from services.backend.src.api.routes.sources import (
-    handle_crawl_url,
-    handle_create_upload_url,
-    handle_delete_rag_source,
-    handle_retrieve_rag_sources,
-)
-from services.backend.src.api.routes.user import delete_user, get_sole_owned_projects
 from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
     handle_create_invitation_redirect_url,
@@ -49,6 +42,14 @@ from services.backend.src.api.routes.projects import (
     handle_update_member_role,
     handle_update_project,
 )
+from services.backend.src.api.routes.rag_jobs import handle_retrieve_rag_job
+from services.backend.src.api.routes.sources import (
+    handle_crawl_url,
+    handle_create_upload_url,
+    handle_delete_rag_source,
+    handle_retrieve_rag_sources,
+)
+from services.backend.src.api.routes.user import delete_user, get_sole_owned_projects
 from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
@@ -89,6 +90,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_rag_sources,
     handle_retrieve_project,
     handle_retrieve_projects,
+    handle_trigger_autofill,
     handle_update_application,
     handle_update_grant_template,
     handle_update_invitation_role,
@@ -108,9 +110,7 @@ try:
     otel_plugin = OpenTelemetryPlugin()
     plugins = [otel_plugin]
 except ImportError:
-    logger.warning(
-        "Litestar OpenTelemetry plugin not available, using ASGI instrumentation instead"
-    )
+    logger.warning("Litestar OpenTelemetry plugin not available, using ASGI instrumentation instead")
     plugins = []
 
 app = create_litestar_app(
