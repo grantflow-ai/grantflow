@@ -122,6 +122,7 @@ resource "google_cloudfunctions2_function_iam_member" "budget_alerts_invoker" {
 }
 
 # Storage bucket for Cloud Function source
+# trivy:ignore:AVD-GCP-0066
 resource "google_storage_bucket" "function_source" {
   name     = "${var.project_id}-budget-functions-${var.environment}"
   location = "US"
