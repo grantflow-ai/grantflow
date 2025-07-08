@@ -31,13 +31,15 @@ class SlugStore {
 	}
 
 	getIdFromSlug(slug: string): null | string {
+		// First check our cache
 		const cachedId = this.slugToIdMap.get(slug);
 		if (cachedId) {
 			return cachedId;
 		}
 
-		const extractedId = extractIdFromSlug(slug);
-		return extractedId;
+		// Not in cache, extract the short ID from the slug
+		const shortId = extractIdFromSlug(slug);
+		return shortId;
 	}
 
 	getProjectSlug(id: string): null | string {
