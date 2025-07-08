@@ -96,8 +96,9 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		if (isSourceProcessingNotificationMessage(latestNotification)) {
 			handleSourceProcessingNotification(latestNotification);
+			void retrieveApplication(projectId, initialApplication.id);
 		}
-	}, [notifications, handleSourceProcessingNotification]);
+	}, [notifications, handleSourceProcessingNotification, initialApplication.id, projectId, retrieveApplication]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 
