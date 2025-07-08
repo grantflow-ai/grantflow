@@ -273,19 +273,20 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			await (process.env.NODE_ENV === "development"
 				? uploadFileInDevelopment(file, application!, parentId, isApplicationParent)
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
-
 			toast.success(`File ${file.name} uploaded successfully`);
-			log.info("[rag_sources_check] File upload completed, triggering retrieveApplication", {
-				beforeRagSources: formatRagSources(application),
-				fileName: file.name,
-				isApplicationParent,
-				parentId,
-			});
-			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addFile", error);
 			toast.error("Failed to upload file. Please try again.");
 		}
+
+		log.info("[rag_sources_check] File upload completed, triggering retrieveApplication", {
+			beforeRagSources: formatRagSources(application),
+			fileName: file.name,
+			isApplicationParent,
+			parentId,
+		});
+
+		await get().retrieveApplication(application!.project_id, application!.id);
 	},
 
 	addUrl: async (url: string, parentId: string) => {

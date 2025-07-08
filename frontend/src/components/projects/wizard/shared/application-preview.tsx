@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo } from "react";
 import { AppCard } from "@/components/app";
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
+import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { log } from "@/utils/logger";
@@ -27,7 +28,7 @@ export function ApplicationPreview({
 	const templateFiles: FileWithSource[] = useMemo(
 		() =>
 			(templateSources ?? [])
-				.filter((source) => source.filename)
+				.filter((source) => source.filename && source.status !== SourceIndexingStatus.FAILED)
 				.map((source) => {
 					const file = new File([], source.filename!, { type: "application/octet-stream" });
 					return Object.assign(file, {
@@ -42,7 +43,7 @@ export function ApplicationPreview({
 	const templateUrls: UrlWithSource[] = useMemo(
 		() =>
 			(templateSources ?? [])
-				.filter((source) => source.url)
+				.filter((source) => source.url && source.status !== SourceIndexingStatus.FAILED)
 				.map((source) => ({
 					sourceId: source.sourceId,
 					sourceStatus: source.status,
