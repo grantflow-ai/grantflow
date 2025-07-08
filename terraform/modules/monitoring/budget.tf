@@ -128,6 +128,13 @@ resource "google_storage_bucket" "function_source" {
 
   uniform_bucket_level_access = true
 
+  dynamic "encryption" {
+    for_each = var.enable_kms_encryption ? [1] : []
+    content {
+      default_kms_key_name = google_kms_crypto_key.monitoring_bucket_key[0].id
+    }
+  }
+
   lifecycle_rule {
     condition {
       age = 7
@@ -151,12 +158,12 @@ data "archive_file" "function" {
   output_path = "${path.module}/budget-function.zip"
 
   source {
-    content  = file("../cloud_functions/src/budget_alerts/main.py")
+    content  = file("../../../cloud_functions/src/budget_alerts/main.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("../cloud_functions/requirements.txt")
+    content  = file("../../../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }
