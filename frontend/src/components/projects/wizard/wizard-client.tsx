@@ -145,7 +145,14 @@ export function WizardClientComponent({ application: initialApplication, project
 			handleAutofillProgress(latestNotification);
 		}
 		void retrieveApplication(projectId, initialApplication.id);
-	}, [notifications, handleSourceProcessingNotification, handleAutofillProgress, retrieveApplication]);
+	}, [
+		notifications,
+		handleSourceProcessingNotification,
+		handleAutofillProgress,
+		retrieveApplication,
+		projectId,
+		initialApplication.id,
+	]);
 
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 

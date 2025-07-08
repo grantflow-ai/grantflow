@@ -43,6 +43,11 @@ const config: StorybookConfig = {
 				}),
 			},
 			plugins: [react(), tsconfigPaths()],
+			resolve: {
+				alias: Object.assign({}, config.resolve?.alias, {
+					"next/navigation": require.resolve("../.storybook/mocks/next-navigation.mock.ts"),
+				}),
+			},
 		});
 	},
 };

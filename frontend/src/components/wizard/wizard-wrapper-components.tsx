@@ -1,11 +1,11 @@
-import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { WizardStep } from "@/constants";
 import { PagePath } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
+import { getTimeRemaining } from "@/utils/date-time";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
@@ -17,6 +17,25 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 ];
 
 type IndicatorStatus = "active" | "done" | "inactive";
+
+export function Deadline() {
+	const application = useApplicationStore((state) => state.application);
+	const submissionDate = application?.grant_template?.submission_date;
+
+	const timeRemaining = getTimeRemaining(submissionDate);
+
+	return (
+		<div
+			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
+			data-testid="deadline-component"
+		>
+			<Image alt="Deadline" height={16} src="/icons/deadline.svg" width={16} />
+			<div className="leading-[18px]">
+				{submissionDate ? <span>{timeRemaining}</span> : <span>Deadline not set</span>}
+			</div>
+		</div>
+	);
+}
 
 export function getStepIcon(type: IndicatorStatus) {
 	if (type === "done") {
@@ -53,9 +72,19 @@ export function WizardFooter() {
 	const toNextStep = useWizardStore((state) => state.toNextStep);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const validateStepNext = useWizardStore((state) => state.validateStepNext);
+
+	const title = useApplicationStore((state) => state.application?.title);
+	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
+
 	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
-	const disabled = !validateStepNext();
+
+	const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
+	const localValidation = isApplicationDetailsStep
+		? !!(title && title.trim().length >= MIN_TITLE_LENGTH && ragSources && ragSources.length > 0)
+		: true;
+
+	const disabled = !(validateStepNext() && localValidation);
 	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
 
 	return (
@@ -185,61 +214,6 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 			</div>
 		</div>
 	);
-}
-
-function calculateTimeDifference(submissionDate: string): number {
-	const now = new Date();
-	const deadline = new Date(submissionDate);
-	return deadline.getTime() - now.getTime();
-}
-
-function Deadline() {
-	const application = useApplicationStore((state) => state.application);
-	const submissionDate = application?.grant_template?.submission_date;
-
-	const getTimeRemaining = () => {
-		if (!submissionDate) {
-			return "Deadline not set";
-		}
-
-		const diffTime = calculateTimeDifference(submissionDate);
-
-		if (diffTime <= 0) {
-			const deadline = new Date(submissionDate);
-			const formattedDate = format(deadline, "MM/dd/yyyy");
-			return `Deadline passed (${formattedDate})`;
-		}
-
-		return formatTimeRemaining(diffTime);
-	};
-
-	const timeRemaining = getTimeRemaining();
-
-	return (
-		<div
-			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
-			data-testid="deadline-component"
-		>
-			<Image alt="Deadline" height={16} src="/icons/deadline.svg" width={16} />
-			<div className="leading-[18px]">
-				{submissionDate ? <span>{timeRemaining}</span> : <span>Deadline not set</span>}
-			</div>
-		</div>
-	);
-}
-
-function formatTimeRemaining(diffTime: number): string {
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-	const weeks = Math.floor(diffDays / 7);
-	const days = diffDays % 7;
-
-	if (weeks > 0 && days > 0) {
-		return `${weeks} week${weeks === 1 ? "" : "s"} and ${days} day${days === 1 ? "" : "s"} to the deadline`;
-	}
-	if (weeks > 0) {
-		return `${weeks} week${weeks === 1 ? "" : "s"} to the deadline`;
-	}
-	return `${days} day${days === 1 ? "" : "s"} to the deadline`;
 }
 
 function generateFooterRightButtonProps(currentStep: WizardStep) {
