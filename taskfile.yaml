@@ -667,12 +667,11 @@ tasks:
 
   cloud-functions:test:
     desc: Run tests for cloud functions
-    deps:
-      - task: cloud-functions:sync
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
       - echo "🧪 Running cloud functions tests..."
-      - cd cloud_functions && uv run pytest tests/app_hosting_alert_function_test.py tests/budget_function_test.py -v
-      - cd cloud_functions/user_cleanup && uv run pytest ../tests/user_cleanup/main_test.py -v
+      - uv run pytest cloud_functions/tests -v
       - echo "✅ Cloud functions tests completed!"
 
   # ==============================================================================
