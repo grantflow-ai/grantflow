@@ -1,4 +1,6 @@
+from litestar import Router
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.server import create_litestar_app
@@ -100,6 +102,16 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
 ]
 
 
+route_handlers: (
+    list[HTTPRouteHandler | WebsocketRouteHandler] | list[HTTPRouteHandler | WebsocketRouteHandler | Router]
+) = api_routes
+if get_env("ENABLE_DEV_BYPASS", False):
+    from services.backend.src.api.routes.dev_bypass import dev_bypass_router
+
+    route_handlers = [*api_routes, dev_bypass_router]
+    logger.info("Dev bypass enabled - mock API endpoints available at /dev/*")
+
+
 async def before_server_start() -> None:
     get_firebase_app()
 
@@ -115,7 +127,7 @@ except ImportError:
 
 app = create_litestar_app(
     logger=logger,
-    route_handlers=api_routes,
+    route_handlers=route_handlers,
     on_startup=[before_server_start],
     middleware=[TraceIdMiddleware(), AuthMiddleware],
     plugins=plugins,
