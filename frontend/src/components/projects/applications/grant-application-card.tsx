@@ -8,25 +8,34 @@ import { toast } from "sonner";
 import { deleteApplication } from "@/actions/grant-applications";
 import { AppButton, AppCard, AppCardContent } from "@/components/app";
 import { Badge } from "@/components/ui/badge";
-import { PagePath } from "@/enums";
-
 import type { API } from "@/types/api-types";
+import { routes } from "@/utils/navigation";
 
 export function GrantApplicationCard({
 	application,
 	projectId,
+	projectName,
 }: {
 	application: API.GetProject.Http200.ResponseBody["grant_applications"][0];
 	projectId: string;
+	projectName: string;
 }) {
 	const router = useRouter();
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	const url = application.completed_at
-		? PagePath.APPLICATION_DETAIL.toString()
-				.replace(":projectId", projectId)
-				.replace(":applicationId", application.id)
-		: `/projects/${projectId}/applications/${application.id}/wizard`;
+		? routes.application.detail({
+				applicationId: application.id,
+				applicationTitle: application.title,
+				projectId,
+				projectName,
+			})
+		: routes.application.wizard({
+				applicationId: application.id,
+				applicationTitle: application.title,
+				projectId,
+				projectName,
+			});
 
 	const handleDelete = async (e: React.MouseEvent) => {
 		e.preventDefault();
