@@ -1,20 +1,5 @@
-provider "google" {
-  project               = var.project_id
-  region                = var.region
-  zone                  = var.zone
-  user_project_override = true
-  billing_project       = var.project_id
-}
-
-provider "google-beta" {
-  project               = var.project_id
-  region                = var.region
-  zone                  = var.zone
-  user_project_override = true
-  billing_project       = var.project_id
-}
-
 terraform {
+  required_version = ">= 1.0.0"
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -25,94 +10,128 @@ terraform {
       version = "~> 6.0"
     }
   }
-  required_version = ">= 1.0.0"
+
+  backend "gcs" {
+    bucket = "grantflow-terraform-state"
+    prefix = "staging"
+  }
 }
 
-
-module "network" {
-  source     = "../../modules/network"
-  project_id = var.project_id
-  region     = var.region
+provider "google" {
+  project = var.project_id
+  region  = var.region
+  zone    = var.zone
 }
 
-
-module "cloud_run" {
-  source = "../../modules/cloud_run"
-  project_id               = var.project_id
-  region                   = var.region
-  environment              = var.environment
-  database_connection_name = module.database.instance_connection_name
-  discord_webhook_url      = var.discord_webhook_url
-  min_instances            = var.cloud_run_min_instances
-  max_instances            = var.cloud_run_max_instances
-  cpu_limit                = var.cloud_run_cpu
-  memory_limit             = var.cloud_run_memory
+provider "google-beta" {
+  project = var.project_id
+  region  = var.region
+  zone    = var.zone
 }
 
+# Import existing BigQuery dataset
+resource "google_bigquery_dataset" "frontend" {
+  dataset_id  = "grantflow_frontend"
+  description = "Frontend analytics and user data"
+  location    = "US"
 
-module "pubsub" {
-  source = "../../modules/pubsub"
-  project_id                           = var.project_id
-  region                               = var.region
-  pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
+  # Time-based partitioning for cost optimization
+  default_partition_expiration_ms = 5184000000 # 60 days
+
+  # Labels for organization
+  labels = {
+    environment = var.environment
+    service     = "frontend"
+    managed_by  = "terraform"
+  }
+
+  # Access controls
+  access {
+    role          = "OWNER"
+    special_group = "projectOwners"
+  }
+
+  access {
+    role          = "WRITER"
+    special_group = "projectWriters"
+  }
+
+  access {
+    role          = "READER"
+    special_group = "projectReaders"
+  }
+
+  # Grant BigQuery access to LLM service account for analytics
+  access {
+    role          = "READER"
+    user_by_email = google_service_account.llm_api.email
+  }
+
+  # Grant BigQuery access to dedicated BigQuery service account (same as deleted one)
+  access {
+    role          = "OWNER"
+    user_by_email = google_service_account.bigquery_service.email
+  }
 }
 
-
-module "storage" {
-  source = "../../modules/storage"
-  bucket_name         = var.storage_bucket_name
-  environment         = var.environment
-  file_indexing_topic = module.pubsub.file_indexing_topic_id
-  storage_class       = var.storage_class
-  retention_days      = var.storage_retention_days
+# Import existing LLM service account
+resource "google_service_account" "llm_api" {
+  account_id   = "llm-api-service-account"
+  display_name = "LLM API Service Account"
+  description  = "Service account for accessing LLM APIs and related services"
 }
 
-
-module "iam" {
-  source = "../../modules/iam"
+# BigQuery service account for Segment integration
+resource "google_service_account" "bigquery_service" {
+  account_id   = "bigquery-service"
+  display_name = "BigQuery Service Account"
+  description  = "Service account for BigQuery operations and Segment integration"
 }
 
-
-module "secrets" {
-  source = "../../modules/secrets"
-  project_id = var.project_id
+# Ensure LLM service account has AI Platform access
+resource "google_project_iam_member" "llm_ai_platform" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.llm_api.email}"
 }
 
-
-module "database" {
-  source     = "../../modules/database"
-  project_id = var.project_id
-  region     = var.region
-  zone       = var.database_zone
-  network_id = module.network.network_id
-  
-  # Cost-optimized settings for staging
-  tier              = var.database_tier
-  disk_size         = var.database_disk_size
-  disk_type         = var.database_disk_type
-  edition           = var.database_edition
-  backup_enabled    = var.database_backup_enabled
-  high_availability = var.database_high_availability
-  
-  authorized_networks = var.database_authorized_networks
+# Optional: Grant LLM service account logging permissions
+resource "google_project_iam_member" "llm_logging" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.llm_api.email}"
 }
 
-
-module "scheduler" {
-  source = "../../modules/scheduler"
-  project_id                              = var.project_id
-  region                                  = var.region
-  environment                             = var.environment
-  scraper_url                             = module.cloud_run.scraper_url
-  scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+# BigQuery service account permissions for Segment integration
+resource "google_project_iam_member" "bigquery_data_editor" {
+  project = var.project_id
+  role    = "roles/bigquery.dataEditor"
+  member  = "serviceAccount:${google_service_account.bigquery_service.email}"
 }
 
-module "monitoring" {
-  source = "../../modules/monitoring"
-  project_id            = var.project_id
-  environment           = var.environment
-  discord_webhook_url   = var.discord_webhook_url
-  discord_role_alerts   = var.discord_role_alerts
-  monthly_budget_amount = var.monthly_budget_amount
-  enable_kms_encryption = var.enable_kms_encryption
+resource "google_project_iam_member" "bigquery_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.bigquery_service.email}"
+}
+
+# Output important information
+output "bigquery_dataset_id" {
+  description = "BigQuery dataset ID"
+  value       = google_bigquery_dataset.frontend.dataset_id
+}
+
+output "llm_service_account_email" {
+  description = "LLM service account email"
+  value       = google_service_account.llm_api.email
+}
+
+output "bigquery_service_account_email" {
+  description = "BigQuery service account email for Segment integration"
+  value       = google_service_account.bigquery_service.email
+}
+
+output "project_id" {
+  description = "GCP Project ID"
+  value       = var.project_id
 }
