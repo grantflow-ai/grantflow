@@ -653,8 +653,6 @@ tasks:
     cmds:
       - echo "📦 Generating requirements.txt for root cloud functions..."
       - cd cloud_functions && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
-      - echo "📦 Generating requirements.txt for user_cleanup function..."
-      - cd cloud_functions/user_cleanup && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
       - echo "✅ All requirements.txt files generated successfully!"
 
   cloud-functions:sync:
