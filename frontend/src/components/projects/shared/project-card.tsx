@@ -2,9 +2,8 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { AppCard, AppCardContent } from "@/components/app";
 import { Badge } from "@/components/ui/badge";
-import { PagePath } from "@/enums";
-
 import type { API } from "@/types/api-types";
+import { routes } from "@/utils/navigation";
 
 export function ProjectCard({ project }: { project: API.ListProjects.Http200.ResponseBody[0] }) {
 	type UserRole = "ADMIN" | "MEMBER" | "OWNER";
@@ -14,7 +13,7 @@ export function ProjectCard({ project }: { project: API.ListProjects.Http200.Res
 		OWNER: "bg-primary/10 text-primary hover:bg-primary/20",
 	};
 
-	const url = PagePath.PROJECT_DETAIL.toString().replace(":projectId", project.id);
+	const url = routes.project.detail({ projectId: project.id, projectName: project.name });
 
 	return (
 		<Link className="block" data-testid={`project-link-${project.id}`} href={url}>

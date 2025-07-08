@@ -21,11 +21,13 @@ async def budget_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
     try:
-        if isinstance(cloud_event.data, str):
+        if isinstance(cloud_event.data, dict):
+            if "message" in cloud_event.data and "data" in cloud_event.data["message"]:
+                message_data = base64.b64decode(cloud_event.data["message"]["data"]).decode("utf-8")
+            else:
+                message_data = json.dumps(cloud_event.data)
+        elif isinstance(cloud_event.data, str):
             message_data = base64.b64decode(cloud_event.data).decode("utf-8")
-
-        elif isinstance(cloud_event.data, dict):
-            message_data = json.dumps(cloud_event.data)
         else:
             message_data = str(cloud_event.data)
 

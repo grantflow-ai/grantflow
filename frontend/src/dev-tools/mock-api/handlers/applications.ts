@@ -334,6 +334,108 @@ This innovative research program represents a paradigm shift in cancer diagnosti
 		return application;
 	},
 
+	triggerAutofill: async ({
+		body,
+		params,
+	}: {
+		body?: any;
+		params?: Record<string, string>;
+	}): Promise<API.TriggerAutofill.Http201.ResponseBody> => {
+		const requestBody = body as API.TriggerAutofill.RequestBody;
+		const applicationId = params?.application_id;
+		const projectId = params?.project_id;
+
+		if (!(applicationId && projectId)) {
+			throw new Error("Application ID and Project ID required");
+		}
+
+		log.info("[Mock API] Triggering autofill", {
+			applicationId,
+			autofillType: requestBody.autofill_type,
+			projectId,
+		});
+
+		// Trigger the appropriate WebSocket scenario based on autofill type
+		const scenarioName =
+			requestBody.autofill_type === "research_plan" ? "autofill-research-plan" : "autofill-research-deep-dive";
+
+		// Simulate a delay before starting the WebSocket messages
+		setTimeout(() => {
+			triggerWebSocketScenario(applicationId, scenarioName);
+		}, 500);
+
+		// Simulate updating the application data after autofill completes
+		const existingApplication = applicationStore.get(applicationId);
+		if (existingApplication) {
+			setTimeout(
+				() => {
+					if (requestBody.autofill_type === "research_plan") {
+						// Update with autofilled research objectives
+						const updatedApp = {
+							...existingApplication,
+							research_objectives: ResearchObjectiveFactory.batch(3).map((obj, index) => ({
+								...obj,
+								description:
+									[
+										"Create machine learning models to identify novel cancer biomarkers from multi-omics data",
+										"Conduct clinical trials to validate biomarker efficacy across different cancer types and patient demographics",
+										"Design and implement standardized protocols for early cancer detection using validated biomarkers",
+									][index] || obj.description,
+								number: index + 1,
+								title:
+									[
+										"Develop AI-powered biomarker detection algorithms",
+										"Validate biomarkers in diverse clinical populations",
+										"Establish early detection screening protocols",
+									][index] || obj.title,
+							})),
+							updated_at: new Date().toISOString(),
+						};
+						applicationStore.set(applicationId, updatedApp as Parameters<typeof applicationStore.set>[1]);
+						log.info("[Mock API] Updated application with autofilled research objectives", {
+							applicationId,
+						});
+					} else if (requestBody.autofill_type === "research_deep_dive") {
+						// Update with autofilled form inputs
+						const updatedApp = {
+							...existingApplication,
+							form_inputs: FormInputsFactory.build({
+								background_context:
+									"Recent advances in artificial intelligence and molecular biology have created unprecedented opportunities for early cancer detection. Current diagnostic methods often identify cancer at advanced stages, limiting treatment options and patient outcomes. This research addresses the critical need for earlier, more accurate cancer detection by developing AI-powered systems that analyze novel biomarkers.",
+								hypothesis:
+									"We hypothesize that integrating machine learning algorithms with multi-omics biomarker analysis will enable detection of cancer at preclinical stages with >95% accuracy, significantly earlier than current diagnostic methods.",
+								impact: "This research will revolutionize cancer diagnostics by providing clinicians with tools for ultra-early detection, potentially preventing millions of cancer deaths annually. The AI-powered platform will democratize access to advanced diagnostics and enable population-wide screening programs.",
+								novelty_and_innovation:
+									"Our approach uniquely combines deep learning architectures with novel proteomic and genomic biomarkers discovered through our preliminary research. Unlike existing methods, our system continuously learns from new data, improving accuracy over time and adapting to emerging cancer variants.",
+								preliminary_data:
+									"Our pilot studies have identified 15 novel biomarker candidates with strong correlations to early-stage cancers. Initial AI models achieved 89% sensitivity and 92% specificity in detecting stage 0-1 cancers across 500 patient samples, significantly outperforming current gold-standard tests.",
+								rationale:
+									"Early cancer detection dramatically improves patient survival rates. By leveraging AI to analyze complex patterns in biomarker data that are invisible to traditional methods, we can identify cancer signatures before clinical symptoms appear, enabling preventive interventions and personalized treatment strategies.",
+								research_feasibility:
+									"Our multidisciplinary team has extensive experience in AI, cancer biology, and clinical trials. We have established partnerships with major cancer centers providing access to diverse patient cohorts and state-of-the-art facilities for biomarker analysis and computational modeling.",
+								scientific_infrastructure:
+									"The research will utilize our institution's high-performance computing cluster, advanced proteomics core facility, and established biobanking infrastructure. We have secured agreements with three major hospitals for patient recruitment and sample collection.",
+								team_excellence:
+									"Our team includes world-renowned experts in machine learning (Dr. Smith, Turing Award recipient), cancer biology (Dr. Johnson, NCI Outstanding Investigator), and clinical oncology (Dr. Williams, ASCO President). Combined, we have published over 300 peer-reviewed papers and secured $50M in prior funding.",
+							}),
+							updated_at: new Date().toISOString(),
+						};
+						applicationStore.set(applicationId, updatedApp as Parameters<typeof applicationStore.set>[1]);
+						log.info("[Mock API] Updated application with autofilled form inputs", { applicationId });
+					}
+				},
+				requestBody.autofill_type === "research_plan" ? 21_000 : 41_000,
+			); // After completion message
+		}
+
+		// Return the expected response
+		return {
+			application_id: applicationId,
+			autofill_type: requestBody.autofill_type,
+			message_id: crypto.randomUUID(),
+		};
+	},
+
 	updateApplication: async ({
 		body,
 		params,

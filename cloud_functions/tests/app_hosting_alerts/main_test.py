@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from src.app_hosting_alerts.main import (
+from cloud_functions.src.app_hosting_alerts.main import (
     app_hosting_alert_to_discord,
     app_hosting_alert_to_discord_sync,
     create_test_alert_embed,
@@ -24,9 +24,11 @@ class TestAppHostingAlertToDiscord:
         mock_request: Mock,
         app_hosting_alert_data: dict[str, Any],
         mock_discord_webhook_response: Mock,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test successful high priority alert processing."""
 
+        monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
         app_hosting_alert_data["incident"]["policy_name"] = "Critical Error Alert"
 
         mock_cloud_event = Mock()

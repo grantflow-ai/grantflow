@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from src.budget_alerts.main import budget_alert_to_discord, budget_alert_to_discord_sync
+from cloud_functions.src.budget_alerts.main import budget_alert_to_discord, budget_alert_to_discord_sync
 
 
 class TestBudgetAlertToDiscord:
@@ -19,9 +19,11 @@ class TestBudgetAlertToDiscord:
         mock_request: Mock,
         budget_alert_data: dict[str, Any],
         mock_discord_webhook_response: Mock,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test successful critical budget alert (100%+ usage)."""
 
+        monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
         budget_alert_data["costAmount"] = 105.00
         pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
         mock_request.data = pubsub_data
@@ -42,6 +44,7 @@ class TestBudgetAlertToDiscord:
             assert call_args[0][0] == "https://discord.com/api/webhooks/123/test"
 
             payload = call_args[1]["json"]
+            assert payload["content"] is not None, "Payload content should not be None"
             assert "@here Budget threshold exceeded" in payload["content"]
             assert len(payload["embeds"]) == 1
 

@@ -49,6 +49,18 @@ variable "disk_size" {
   default     = 100
 }
 
+variable "disk_type" {
+  description = "The type of disk (PD_HDD or PD_SSD)"
+  type        = string
+  default     = "PD_SSD"
+}
+
+variable "edition" {
+  description = "Cloud SQL edition (ENTERPRISE or ENTERPRISE_PLUS)"
+  type        = string
+  default     = "ENTERPRISE"
+}
+
 variable "authorized_networks" {
   description = "List of authorized networks"
   type = list(object({
@@ -63,6 +75,18 @@ variable "network_id" {
   type        = string
 }
 
+variable "backup_enabled" {
+  description = "Enable automated backups"
+  type        = bool
+  default     = true
+}
+
+variable "high_availability" {
+  description = "Enable high availability (regional)"
+  type        = bool
+  default     = false
+}
+
 resource "google_sql_database_instance" "main" {
   name             = var.instance_name
   project          = var.project_id
@@ -72,7 +96,7 @@ resource "google_sql_database_instance" "main" {
 
   settings {
     activation_policy = "ALWAYS"
-    availability_type = "ZONAL"
+    availability_type = var.high_availability ? "REGIONAL" : "ZONAL"
 
     backup_configuration {
       backup_retention_settings {
@@ -81,7 +105,7 @@ resource "google_sql_database_instance" "main" {
       }
 
       binary_log_enabled             = "false"
-      enabled                        = "true"
+      enabled                        = var.backup_enabled
       location                       = "us"
       point_in_time_recovery_enabled = "true"
       start_time                     = "22:00"
@@ -98,8 +122,8 @@ resource "google_sql_database_instance" "main" {
     disk_autoresize              = true
     disk_autoresize_limit        = 0
     disk_size                    = var.disk_size
-    disk_type                    = "PD_SSD"
-    edition                      = "ENTERPRISE"
+    disk_type                    = var.disk_type
+    edition                      = var.edition
     enable_dataplex_integration  = false
     enable_google_ml_integration = false
 

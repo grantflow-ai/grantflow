@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import UserProjectInvitation, Project, ProjectUser
+from packages.db.src.tables import Project, ProjectUser, UserProjectInvitation
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
@@ -17,8 +17,8 @@ from testing.factories import (
 
 from services.backend.src.api.routes.projects import (
     CreateInvitationRedirectUrlRequestBody,
-    UpdateProjectRequestBody,
     UpdateMemberRoleRequestBody,
+    UpdateProjectRequestBody,
 )
 from services.backend.tests.conftest import TestingClientType
 from services.backend.tests.factories import CreateProjectRequestBodyFactory
@@ -40,9 +40,7 @@ async def test_create_project_success(
     assert response_body["id"]
 
     async with async_session_maker() as session, session.begin():
-        project = await session.scalar(
-            select(Project).where(Project.id == response_body["id"])
-        )
+        project = await session.scalar(select(Project).where(Project.id == response_body["id"]))
 
         assert project.name == request_body["name"]
         assert project.description == request_body["description"]
@@ -132,9 +130,7 @@ async def test_retrieve_projects(
     assert all(value["id"] != str(project_without_user_access.id) for value in values)
 
 
-@pytest.mark.parametrize(
-    "user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER)
-)
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
 async def test_retrieve_project_success(
     test_client: TestingClientType,
     project: Project,
@@ -242,9 +238,7 @@ async def test_retrieve_project_unauthorized(
             ("name", "logo_url"),
         ),
         (
-            UpdateProjectRequestBody(
-                description="new_description", logo_url="new_logo_url"
-            ),
+            UpdateProjectRequestBody(description="new_description", logo_url="new_logo_url"),
             ("description", "logo_url"),
         ),
     ),
@@ -365,9 +359,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
     async_session_maker: async_sessionmaker[Any],
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch(
-        "services.backend.src.utils.firebase.get_user_by_email", return_value=None
-    )
+    mocker.patch("services.backend.src.utils.firebase.get_user_by_email", return_value=None)
 
     async with async_session_maker() as session, session.begin():
         try:
@@ -383,9 +375,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(
-        email="test@example.com", role=UserRoleEnum.OWNER
-    )
+    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.OWNER)
 
     response = await test_client.post(
         f"/projects/{project.id}/create-invitation-redirect-url",
@@ -393,10 +383,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert (
-        "role must be equal to or lower than the inviter's role"
-        in response.json()["detail"].lower()
-    )
+    assert "role must be equal to or lower than the inviter's role" in response.json()["detail"].lower()
 
 
 async def test_create_invitation_redirect_url_user_already_member(
@@ -439,9 +426,7 @@ async def test_create_invitation_redirect_url_user_already_member(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(
-        email="test@example.com", role=UserRoleEnum.MEMBER
-    )
+    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.MEMBER)
 
     response = await test_client.post(
         f"/projects/{project.id}/create-invitation-redirect-url",
@@ -449,9 +434,7 @@ async def test_create_invitation_redirect_url_user_already_member(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert (
-        "user is already a member of this project" in response.json()["detail"].lower()
-    )
+    assert "user is already a member of this project" in response.json()["detail"].lower()
 
 
 async def test_create_invitation_redirect_url_success(
@@ -480,9 +463,7 @@ async def test_create_invitation_redirect_url_success(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(
-        email="new_user@example.com", role=UserRoleEnum.MEMBER
-    )
+    request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.MEMBER)
 
     response = await test_client.post(
         f"/projects/{project.id}/create-invitation-redirect-url",
@@ -865,10 +846,7 @@ async def test_update_invitation_role_already_accepted(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert (
-        "cannot update role of an accepted invitation"
-        in response.json()["detail"].lower()
-    )
+    assert "cannot update role of an accepted invitation" in response.json()["detail"].lower()
 
 
 async def test_update_invitation_role_higher_than_inviter(
@@ -909,10 +887,7 @@ async def test_update_invitation_role_higher_than_inviter(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert (
-        "role must be equal to or lower than the inviter's role"
-        in response.json()["detail"].lower()
-    )
+    assert "role must be equal to or lower than the inviter's role" in response.json()["detail"].lower()
 
 
 async def test_accept_invitation_success(
@@ -962,9 +937,7 @@ async def test_accept_invitation_success(
         assert project_user.role == UserRoleEnum.MEMBER
 
         updated_invitation = await session.scalar(
-            select(UserProjectInvitation).where(
-                UserProjectInvitation.id == invitation.id
-            )
+            select(UserProjectInvitation).where(UserProjectInvitation.id == invitation.id)
         )
         assert updated_invitation is not None
         assert updated_invitation.accepted_at is not None
@@ -1085,10 +1058,7 @@ async def test_accept_invitation_wrong_user(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert (
-        "authenticated user does not match invitation email"
-        in response.json()["detail"].lower()
-    )
+    assert "authenticated user does not match invitation email" in response.json()["detail"].lower()
 
 
 async def test_list_project_members_success(
@@ -1330,9 +1300,7 @@ async def test_update_member_role_only_owner_can_promote_to_admin(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert (
-        "only owner can promote members to admin" in response.json()["detail"].lower()
-    )
+    assert "only owner can promote members to admin" in response.json()["detail"].lower()
 
 
 async def test_update_member_role_member_not_found(

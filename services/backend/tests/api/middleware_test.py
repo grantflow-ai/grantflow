@@ -87,15 +87,11 @@ async def test_authenticate_public_path(app: MagicMock) -> None:
         assert result.auth is None
 
 
-async def test_authenticate_admin_path_with_valid_code(
-    app: MagicMock, mock_get_env: MagicMock
-) -> None:
+async def test_authenticate_admin_path_with_valid_code(app: MagicMock, mock_get_env: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
 
     for path in ADMIN_PATHS:
-        connection = MockASGIConnection(
-            url_path=f"/{path}", headers={"Authorization": "test-admin-code"}, app=app
-        )
+        connection = MockASGIConnection(url_path=f"/{path}", headers={"Authorization": "test-admin-code"}, app=app)
 
         result: AuthenticationResult = await middleware.authenticate_request(connection)
 
@@ -103,29 +99,21 @@ async def test_authenticate_admin_path_with_valid_code(
         assert result.auth is None
 
 
-async def test_authenticate_admin_path_with_invalid_code(
-    app: MagicMock, mock_get_env: MagicMock
-) -> None:
+async def test_authenticate_admin_path_with_invalid_code(app: MagicMock, mock_get_env: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
 
     for path in ADMIN_PATHS:
-        connection = MockASGIConnection(
-            url_path=f"/{path}", headers={"Authorization": "invalid-code"}, app=app
-        )
+        connection = MockASGIConnection(url_path=f"/{path}", headers={"Authorization": "invalid-code"}, app=app)
 
         with pytest.raises(NotAuthorizedException):
             await middleware.authenticate_request(connection)
 
 
-async def test_authenticate_with_bearer_token(
-    app: MagicMock, mock_verify_jwt_token: MagicMock
-) -> None:
+async def test_authenticate_with_bearer_token(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
-    connection = MockASGIConnection(
-        url_path="/some-path", headers={"Authorization": "Bearer test-token"}, app=app
-    )
+    connection = MockASGIConnection(url_path="/some-path", headers={"Authorization": "Bearer test-token"}, app=app)
 
     result: AuthenticationResult = await middleware.authenticate_request(connection)
 
@@ -133,15 +121,11 @@ async def test_authenticate_with_bearer_token(
     mock_verify_jwt_token.assert_called_once_with("test-token")
 
 
-async def test_authenticate_with_otp(
-    app: MagicMock, mock_verify_jwt_token: MagicMock
-) -> None:
+async def test_authenticate_with_otp(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
-    connection = MockASGIConnection(
-        url_path="/some-path", query_params={"otp": "test-otp"}, app=app
-    )
+    connection = MockASGIConnection(url_path="/some-path", query_params={"otp": "test-otp"}, app=app)
 
     result: AuthenticationResult = await middleware.authenticate_request(connection)
 
@@ -149,9 +133,7 @@ async def test_authenticate_with_otp(
     mock_verify_jwt_token.assert_called_once_with("test-otp")
 
 
-async def test_authenticate_with_allowed_roles(
-    app: MagicMock, mock_verify_jwt_token: MagicMock
-) -> None:
+async def test_authenticate_with_allowed_roles(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
@@ -187,9 +169,7 @@ async def test_authenticate_with_allowed_roles(
     session.execute.assert_called_once()
 
 
-async def test_authenticate_with_allowed_roles_no_project_id(
-    app: MagicMock, mock_verify_jwt_token: MagicMock
-) -> None:
+async def test_authenticate_with_allowed_roles_no_project_id(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
@@ -222,9 +202,7 @@ async def test_authenticate_with_allowed_roles_no_firebase_uid(
         await middleware.authenticate_request(connection)
 
 
-async def test_authenticate_with_allowed_roles_user_not_found(
-    app: MagicMock, mock_verify_jwt_token: MagicMock
-) -> None:
+async def test_authenticate_with_allowed_roles_user_not_found(app: MagicMock, mock_verify_jwt_token: MagicMock) -> None:
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
