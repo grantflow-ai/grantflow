@@ -74,6 +74,8 @@ googleapis-common-protos==1.70.0
     # via
     #   google-api-core
     #   grpcio-status
+greenlet==3.2.3
+    # via sqlalchemy
 grpcio==1.73.1
     # via
     #   google-api-core
