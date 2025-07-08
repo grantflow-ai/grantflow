@@ -21,6 +21,7 @@ import { DashboardHeader } from "./dashboard-header";
 import { DashboardProjectCard } from "./dashboard-project-card";
 import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
+import PaymentLink from "../payment/payment-link";
 
 interface DashboardClientProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;
@@ -128,10 +129,10 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 				}}
 			/>
 			<section className="bg-preview-bg w-full h-full  flex">
-				<main className="w-[98%] h-full">
+				<main className="w-[98%] pb-5">
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
-					<main className=" px-10 flex flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200">
+					<main className=" px-10 relative flex h-[863px] flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200">
 						<main className="flex flex-col gap-8">
 							<article className="text-black flex justify-between items-center">
 								<div className="flex flex-col gap-2">
@@ -187,10 +188,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										/>
 									))
 								) : (
-									<div
-										className="flex w-full flex-col items-center justify-center py-12"
-										data-testid="empty-projects-state"
-									>
+									<div className="flex w-full flex-col items-center justify-center py-12">
 										<p className="text-[#636170] mb-4">You don&apos;t have any projects yet.</p>
 										<button
 											className="rounded bg-[#1e13f8] px-4 py-2 text-white"
@@ -206,8 +204,8 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 								)}
 							</main>
 						</main>
+						<PaymentLink />
 					</main>
-					<div className="pointer-events-none absolute inset-0 rounded-lg border border-solid border-[#e1dfeb]" />
 				</main>
 			</section>
 

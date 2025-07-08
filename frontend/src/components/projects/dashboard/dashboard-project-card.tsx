@@ -12,7 +12,7 @@ import {
 import type { API } from "@/types/api-types";
 
 interface DashboardProjectCardProps {
-	onClick?: () => void;
+	onClick?: (projectId:string) => void;
 	onDelete?: (projectId: string) => void;
 	onDuplicate?: (projectId: string) => void;
 	project: API.ListProjects.Http200.ResponseBody[0];
