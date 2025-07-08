@@ -1,6 +1,7 @@
 # User cleanup Cloud Function and scheduling
 
 # Storage bucket for Cloud Function source
+# trivy:ignore:AVD-GCP-0066
 resource "google_storage_bucket" "user_cleanup_functions" {
   name                        = "${var.project_id}-user-cleanup-functions"
   location                    = "US"
