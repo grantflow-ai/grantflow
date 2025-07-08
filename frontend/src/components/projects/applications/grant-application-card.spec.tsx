@@ -6,6 +6,7 @@ import { GrantApplicationCard } from "./grant-application-card";
 
 describe("GrantApplicationCard", () => {
 	const mockProjectId = "project-123";
+	const mockProjectName = "Test Project";
 
 	const mockApplication = ApplicationListItemFactory.build({
 		completed_at: null,
@@ -20,14 +21,26 @@ describe("GrantApplicationCard", () => {
 	});
 
 	it("renders application details correctly", () => {
-		render(<GrantApplicationCard application={mockApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		expect(screen.getByText("Research Grant Application")).toBeInTheDocument();
 		expect(screen.getByTestId(`application-draft-link-${mockApplication.id}`)).toBeInTheDocument();
 	});
 
 	it("links to the wizard page with applicationId for draft applications", () => {
-		render(<GrantApplicationCard application={mockApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		const link = screen.getByTestId(`application-draft-link-${mockApplication.id}`);
 		const expectedUrl = `/projects/${mockProjectId}/applications/${mockApplication.id}/wizard`;
@@ -36,7 +49,13 @@ describe("GrantApplicationCard", () => {
 	});
 
 	it("links to the application detail page for completed applications", () => {
-		render(<GrantApplicationCard application={mockCompletedApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockCompletedApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		const link = screen.getByTestId(`application-draft-link-${mockCompletedApplication.id}`);
 		const expectedUrl = PagePath.APPLICATION_DETAIL.toString()
@@ -47,14 +66,26 @@ describe("GrantApplicationCard", () => {
 	});
 
 	it("displays the file icon", () => {
-		render(<GrantApplicationCard application={mockApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		const fileIcon = screen.getByText("Research Grant Application").previousSibling;
 		expect(fileIcon).toHaveClass("text-primary");
 	});
 
 	it("shows completion date badge for completed applications", () => {
-		render(<GrantApplicationCard application={mockCompletedApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockCompletedApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		expect(screen.getByText("2025-03-15")).toBeInTheDocument();
 		const badge = screen.getByText("2025-03-15");
@@ -63,13 +94,25 @@ describe("GrantApplicationCard", () => {
 	});
 
 	it("does not show completion date badge for incomplete applications", () => {
-		render(<GrantApplicationCard application={mockApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		expect(screen.queryByRole("badge")).not.toBeInTheDocument();
 	});
 
 	it("has hover styling classes for interactive elements", () => {
-		render(<GrantApplicationCard application={mockApplication} projectId={mockProjectId} />);
+		render(
+			<GrantApplicationCard
+				application={mockApplication}
+				projectId={mockProjectId}
+				projectName={mockProjectName}
+			/>,
+		);
 
 		const card = screen.getByTestId(`application-draft-link-${mockApplication.id}`).firstChild;
 		expect(card).toHaveClass("hover:shadow-md");

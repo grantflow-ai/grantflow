@@ -123,13 +123,17 @@ export function extractIdFromSlug(slug: string): null | string {
 }
 
 export function generateSlug(name: string): string {
-	return name
-		.toLowerCase()
-		.replaceAll(/[^a-z0-9\s-]/g, "")
-		.replaceAll(/\s+/g, "-")
-		.replaceAll(/-+/g, "-")
-		.replaceAll(/(^-+|-+$)/g, "")
-		.slice(0, 50);
+	return (
+		name
+			.toLowerCase()
+			.replaceAll(/[^a-z0-9\s-]/g, "")
+			.replaceAll(/\s+/g, "-")
+			.replaceAll(/-+/g, "-")
+			.replaceAll(/^-+/g, "")
+			// eslint-disable-next-line sonarjs/slow-regex
+			.replaceAll(/-+$/g, "")
+			.slice(0, 50)
+	);
 }
 
 export function navigateTo(
