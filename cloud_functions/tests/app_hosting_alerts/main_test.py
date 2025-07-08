@@ -24,9 +24,11 @@ class TestAppHostingAlertToDiscord:
         mock_request: Mock,
         app_hosting_alert_data: dict[str, Any],
         mock_discord_webhook_response: Mock,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test successful high priority alert processing."""
 
+        monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
         app_hosting_alert_data["incident"]["policy_name"] = "Critical Error Alert"
 
         mock_cloud_event = Mock()

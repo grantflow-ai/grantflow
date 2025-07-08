@@ -19,9 +19,11 @@ class TestBudgetAlertToDiscord:
         mock_request: Mock,
         budget_alert_data: dict[str, Any],
         mock_discord_webhook_response: Mock,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test successful critical budget alert (100%+ usage)."""
 
+        monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
         budget_alert_data["costAmount"] = 105.00
         pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
         mock_request.data = pubsub_data
