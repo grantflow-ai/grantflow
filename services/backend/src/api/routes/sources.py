@@ -6,6 +6,7 @@ from litestar.exceptions import NotFoundException
 from litestar.handlers import HTTPRouteHandler
 from litestar.types import Method, OperationIDCreator
 from litestar.types.internal_types import PathParameterDefinition
+from packages.db.src.constants import RAG_FILE, RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
     FundingOrganizationRagSource,
@@ -15,10 +16,11 @@ from packages.db.src.tables import (
     RagSource,
     RagUrl,
 )
-from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
+from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
+from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import (
-    create_signed_upload_url,
     construct_object_uri,
+    create_signed_upload_url,
     delete_blob,
 )
 from packages.shared_utils.src.logger import get_logger
@@ -28,10 +30,6 @@ from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import aliased, with_polymorphic
-
-from packages.db.src.constants import RAG_URL, RAG_FILE
-from packages.shared_utils.src.exceptions import BackendError
-from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
@@ -74,9 +72,7 @@ class UrlCrawlingResponse(TypedDict):
 
 
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
-    def _create_operation_id(
-        _: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]
-    ) -> str:
+    def _create_operation_id(_: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]) -> str:
         if "applications" in paths:
             return key.format(value="GrantApplication")
         if "grant_templates" in paths:
@@ -114,16 +110,12 @@ async def handle_create_rag_source(
     async with session_maker() as session, session.begin():
         try:
             rag_url_alias = aliased(RagUrl)
-            rag_source = await session.scalar(
-                select(RagSource).join(rag_url_alias).where(rag_url_alias.url == url)
-            )
+            rag_source = await session.scalar(select(RagSource).join(rag_url_alias).where(rag_url_alias.url == url))
             if rag_source:
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                    return cast(UUID, rag_source.id)
+                    return cast("UUID", rag_source.id)
 
-                await session.execute(
-                    sa_delete(RagSource).where(RagSource.id == rag_source.id)
-                )
+                await session.execute(sa_delete(RagSource).where(RagSource.id == rag_source.id))
 
             source_id = await session.scalar(
                 insert(RagSource)
@@ -132,9 +124,7 @@ async def handle_create_rag_source(
                         {
                             "indexing_status": SourceIndexingStatusEnum.CREATED,
                             "text_content": "",
-                            "source_type": RAG_URL
-                            if url
-                            else RAG_FILE,  # Set polymorphic identity ~keep
+                            "source_type": RAG_URL if url else RAG_FILE,  # Set polymorphic identity ~keep
                         }
                     ]
                 )
@@ -213,7 +203,7 @@ async def handle_create_rag_source(
                 parent_type=parent_type,
                 parent_id=parent_id,
             )
-            return cast(UUID, source_id)
+            return cast("UUID", source_id)
         except SQLAlchemyError as e:
             logger.exception(
                 "Error creating rag source",
@@ -268,10 +258,7 @@ async def handle_retrieve_rag_sources(
                     FundingOrganizationRagSource,
                     FundingOrganizationRagSource.rag_source_id == rag_poly.id,
                 )
-                .where(
-                    FundingOrganizationRagSource.funding_organization_id
-                    == organization_id
-                )
+                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
             )
 
         results = await session.scalars(stmt)
@@ -346,8 +333,7 @@ async def handle_delete_rag_source(
                 select(rag_poly)
                 .join(FundingOrganizationRagSource)
                 .where(
-                    FundingOrganizationRagSource.funding_organization_id
-                    == organization_id,
+                    FundingOrganizationRagSource.funding_organization_id == organization_id,
                     rag_poly.id == source_id,
                 )
             )
@@ -434,9 +420,7 @@ async def handle_create_upload_url(
     elif template_id:
         parent_id = template_id
     else:
-        raise ValidationError(
-            "One of application_id, organization_id, or template_id must be provided"
-        )
+        raise ValidationError("One of application_id, organization_id, or template_id must be provided")
 
     trace_id = get_trace_id(request)
 
@@ -500,9 +484,7 @@ async def handle_crawl_url(
     elif template_id:
         parent_id = template_id
     else:
-        raise ValidationError(
-            "One of application_id, organization_id, or template_id must be provided"
-        )
+        raise ValidationError("One of application_id, organization_id, or template_id must be provided")
 
     message_id = await publish_url_crawling_task(
         logger=logger,

@@ -4,13 +4,12 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
-import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 const isDetailedSection = (
 	section: GrantSection,

@@ -3,7 +3,7 @@ description: "Set up environment and run tests for a specific backend target"
 
 inputs:
     target:
-        description: "Target to test (backend, indexer, crawler, db, shared_utils)"
+        description: "Target to test (backend, indexer, crawler, db, shared_utils, cloud_functions)"
         required: true
 
 runs:
@@ -36,6 +36,10 @@ runs:
           run: |
               if [[ "${{ inputs.target }}" == "db" || "${{ inputs.target }}" == "shared_utils" ]]; then
                 PYTHONPATH=. uv run pytest packages/${{ inputs.target }} -v
+              elif [[ "${{ inputs.target }}" == "cloud_functions" ]]; then
+                PYTHONPATH=. uv run pytest cloud_functions -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi
+
+        

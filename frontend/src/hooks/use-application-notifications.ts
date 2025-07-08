@@ -8,6 +8,17 @@ import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 
+export type AutofillProgressMessage = WebsocketMessage<AutofillProgressNotification>;
+
+export interface AutofillProgressNotification {
+	autofill_type: "research_deep_dive" | "research_plan";
+	current_stage?: number;
+	data?: Record<string, unknown>;
+	field_name?: string;
+	message: string;
+	total_stages?: number;
+}
+
 export interface RagProcessingStatus {
 	current_pipeline_stage?: number;
 	data?: Record<string, unknown>;
@@ -15,7 +26,6 @@ export interface RagProcessingStatus {
 	message: string;
 	total_pipeline_stages?: number;
 }
-
 export type RagProcessingStatusMessage = WebsocketMessage<RagProcessingStatus>;
 
 export interface SourceProcessingNotification {
@@ -43,6 +53,10 @@ export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProce
 export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>(
 	(value: unknown) =>
 		isWebsocketMessage(value) && isRecord(value.data) && "event" in value.data && "message" in value.data,
+);
+export const isAutofillProgressMessage = createTypeGuard<AutofillProgressMessage>(
+	(value: unknown) =>
+		isWebsocketMessage(value) && isRecord(value.data) && "autofill_type" in value.data && "message" in value.data,
 );
 
 export const CONNECTION_STATUS_MAP = {

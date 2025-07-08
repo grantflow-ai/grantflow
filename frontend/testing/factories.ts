@@ -416,6 +416,55 @@ export const RagProcessingStatusMessageFactory = new Factory<WebsocketMessage<Ra
 	};
 });
 
+interface AutofillProgressNotification {
+	autofill_type: "research_deep_dive" | "research_plan";
+	current_stage?: number;
+	data?: Record<string, unknown>;
+	field_name?: string;
+	message: string;
+	total_stages?: number;
+}
+
+export const AutofillProgressNotificationFactory = new Factory<AutofillProgressNotification>((factory) => ({
+	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
+	current_stage: factory.datatype.boolean() ? factory.number.int({ max: 5, min: 1 }) : undefined,
+	data: factory.datatype.boolean()
+		? {
+				[factory.helpers.arrayElement(["field_count", "objectives_count", "questions_count"])]:
+					factory.number.int({
+						max: 10,
+						min: 1,
+					}),
+			}
+		: undefined,
+	field_name: factory.datatype.boolean()
+		? factory.helpers.arrayElement([
+				"research_objectives",
+				"background_context",
+				"hypothesis",
+				"rationale",
+				"impact",
+			])
+		: undefined,
+	message: factory.lorem.sentence(),
+	total_stages: factory.datatype.boolean() ? factory.number.int({ max: 5, min: 3 }) : undefined,
+}));
+
+export const AutofillProgressMessageFactory = new Factory<WebsocketMessage<AutofillProgressNotification>>((factory) => {
+	const notification = AutofillProgressNotificationFactory.build();
+	return {
+		data: notification,
+		event: factory.helpers.arrayElement([
+			"autofill_started",
+			"autofill_progress",
+			"autofill_completed",
+			"autofill_error",
+		]),
+		parent_id: factory.string.uuid(),
+		type: factory.datatype.boolean() && factory.helpers.maybe(() => true, { probability: 0.9 }) ? "data" : "error",
+	};
+});
+
 type ApplicationListItem = API.GetProject.Http200.ResponseBody["grant_applications"][0];
 
 export const ApplicationListItemFactory = new Factory<ApplicationListItem>((factory) => ({

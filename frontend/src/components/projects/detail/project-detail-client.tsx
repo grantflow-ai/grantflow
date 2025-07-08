@@ -8,10 +8,10 @@ import useSWR, { mutate } from "swr";
 import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
 import { AvatarGroup } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { PagePath } from "@/enums";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
+import { routes } from "@/utils/navigation";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
 
 import { ProjectSidebar } from "./project-sidebar";
@@ -44,7 +44,7 @@ const applicationCardUsers = [applicationCardUser];
 interface ApplicationCardProps {
 	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
-	onOpen: (applicationId: string) => void;
+	onOpen: (applicationId: string, applicationTitle: string) => void;
 }
 
 function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps) {
@@ -116,7 +116,7 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 			<button
 				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors cursor-pointer"
 				onClick={() => {
-					onOpen(application.id);
+					onOpen(application.id, application.title);
 				}}
 				type="button"
 			>
@@ -189,10 +189,12 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		try {
 			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
 			await mutate(`/projects/${initialProject.id}/applications`);
-			const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", initialProject.id).replace(
-				":applicationId",
-				application.id,
-			);
+			const wizardPath = routes.application.wizard({
+				applicationId: application.id,
+				applicationTitle: application.title || DEFAULT_APPLICATION_TITLE,
+				projectId: initialProject.id,
+				projectName: initialProject.name,
+			});
 			router.push(wizardPath);
 		} catch (error) {
 			log.error("create-application-button", error);
@@ -201,11 +203,13 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		}
 	};
 
-	const handleOpenApplication = (applicationId: string) => {
-		const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", initialProject.id).replace(
-			":applicationId",
+	const handleOpenApplication = (applicationId: string, applicationTitle: string) => {
+		const wizardPath = routes.application.wizard({
 			applicationId,
-		);
+			applicationTitle,
+			projectId: initialProject.id,
+			projectName: initialProject.name,
+		});
 		router.push(wizardPath);
 	};
 

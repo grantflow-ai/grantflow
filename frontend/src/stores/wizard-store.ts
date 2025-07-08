@@ -1,7 +1,7 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
+import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
 import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { triggerMockWebSocketScenario } from "@/dev-tools/utils/dev-helpers";
 import { useApplicationStore } from "@/stores/application-store";
@@ -79,15 +79,21 @@ interface WizardActions {
 	removeTask: (objectiveNumber: number, taskNumber: number) => void;
 	reorderObjectives: (objectives: Objective[]) => void;
 	reset: () => void;
+	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
+	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
 interface WizardState {
 	currentStep: WizardStep;
+	isAutofillLoading: {
+		research_deep_dive: boolean;
+		research_plan: boolean;
+	};
 	isGeneratingApplication: boolean;
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
@@ -96,6 +102,10 @@ interface WizardState {
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
+	isAutofillLoading: {
+		research_deep_dive: false,
+		research_plan: false,
+	},
 	isGeneratingApplication: false,
 	isGeneratingTemplate: false,
 	polling: {
@@ -469,6 +479,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 					set({
 						currentStep: initialWizardState.currentStep,
+						isAutofillLoading: initialWizardState.isAutofillLoading,
 						isGeneratingApplication: initialWizardState.isGeneratingApplication,
 						isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
 						polling: {
@@ -477,6 +488,16 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						},
 						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
 					});
+				},
+
+				setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => {
+					set((state) => ({
+						...state,
+						isAutofillLoading: {
+							...state.isAutofillLoading,
+							[type]: isLoading,
+						},
+					}));
 				},
 
 				setGeneratingApplication: (isGenerating: boolean) => {
@@ -552,6 +573,75 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						...state,
 						currentStep: WIZARD_STEP_ORDER[Math.max(0, currentIndex - 1)],
 					}));
+				},
+
+				triggerAutofill: async (type: "research_deep_dive" | "research_plan", fieldName?: string) => {
+					const { application } = useApplicationStore.getState();
+
+					if (!application) {
+						log.error("triggerAutofill: No application found");
+						return;
+					}
+
+					// Check if indexing is complete before triggering autofill
+					const hasIndexingInProgress = application.rag_sources.some(
+						(source) => source.status === "INDEXING" || source.status === "CREATED",
+					);
+
+					if (hasIndexingInProgress) {
+						// Import toast dynamically to avoid circular dependencies
+						const { toast } = await import("sonner");
+						toast.error("Please wait for all documents to finish processing before using autofill");
+						return;
+					}
+
+					if (application.rag_sources.length === 0) {
+						const { toast } = await import("sonner");
+						toast.error("Please upload at least one document before using autofill");
+						return;
+					}
+
+					try {
+						set((state) => ({
+							...state,
+							isAutofillLoading: {
+								...state.isAutofillLoading,
+								[type]: true,
+							},
+						}));
+
+						const response = await triggerAutofillAction(application.project_id, application.id, {
+							autofill_type: type,
+							...(fieldName && { field_name: fieldName }),
+						});
+
+						log.info("Autofill triggered successfully", {
+							application_id: application.id,
+							autofill_type: type,
+							field_name: fieldName,
+							message_id: response.message_id,
+						});
+
+						// Show initial success message
+						const { toast } = await import("sonner");
+						toast.success("Autofill request sent. Processing your documents...");
+					} catch (error) {
+						log.error("triggerAutofill failed", { error, fieldName, type });
+
+						// Show user-friendly error message
+						const { toast } = await import("sonner");
+						const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
+						toast.error(`Autofill error: ${errorMessage}`);
+
+						// Reset loading state on error
+						set((state) => ({
+							...state,
+							isAutofillLoading: {
+								...state.isAutofillLoading,
+								[type]: false,
+							},
+						}));
+					}
 				},
 
 				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Validation logic needs to be comprehensive

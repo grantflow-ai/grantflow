@@ -273,19 +273,20 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			await (process.env.NODE_ENV === "development"
 				? uploadFileInDevelopment(file, application!, parentId, isApplicationParent)
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
-
 			toast.success(`File ${file.name} uploaded successfully`);
-			log.info("[rag_sources_check] File upload completed, triggering retrieveApplication", {
-				beforeRagSources: formatRagSources(application),
-				fileName: file.name,
-				isApplicationParent,
-				parentId,
-			});
-			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addFile", error);
 			toast.error("Failed to upload file. Please try again.");
 		}
+
+		log.info("[rag_sources_check] File upload completed, triggering retrieveApplication", {
+			beforeRagSources: formatRagSources(application),
+			fileName: file.name,
+			isApplicationParent,
+			parentId,
+		});
+
+		await get().retrieveApplication(application!.project_id, application!.id);
 	},
 
 	addUrl: async (url: string, parentId: string) => {
@@ -513,16 +514,49 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const ragSources = isApplicationParent
 			? application!.rag_sources
 			: (application!.grant_template?.rag_sources ?? []);
+
+		log.info("[removeUrl] Debug info", {
+			isApplicationParent,
+			parentId,
+			ragSources: ragSources.map((source) => ({
+				filename: source.filename,
+				hasUrl: !!source.url,
+				sourceId: source.sourceId,
+				url: source.url,
+				urlMatch: source.url === urlToRemove,
+			})),
+			ragSourcesCount: ragSources.length,
+			urlToRemove,
+		});
+
 		const ragSource = ragSources.find((source) => source.url === urlToRemove);
 
 		if (!ragSource) {
+			log.error("[removeUrl] Source not found", {
+				availableUrls: ragSources.filter((s) => s.url).map((s) => s.url),
+				urlToRemove,
+			});
 			toast.error("Cannot remove URL: Source not found");
 			return;
 		}
 
+		log.info("[removeUrl] Found source to delete", {
+			sourceId: ragSource.sourceId,
+			url: ragSource.url,
+		});
+
 		try {
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
+			log.info("[removeUrl] About to call delete API", {
+				deleteFunction: isApplicationParent ? "deleteApplicationSource" : "deleteTemplateSource",
+				parentId,
+				projectId: application!.project_id,
+				sourceId: ragSource.sourceId,
+			});
+
 			await deleteSource(application!.project_id, parentId, ragSource.sourceId);
+
+			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");
 			log.info("[rag_sources_check] URL removal completed, triggering retrieveApplication", {
 				beforeRagSources: formatRagSources(application),
@@ -531,9 +565,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				sourceId: ragSource.sourceId,
 				url: urlToRemove,
 			});
+
 			await get().retrieveApplication(application!.project_id, application!.id);
+			log.info("[removeUrl] retrieveApplication completed");
 		} catch (error) {
-			log.error("removeUrl", error);
+			log.error("[removeUrl] Error occurred", error);
 			toast.error("Failed to remove URL. Please try again.");
 		}
 	},
