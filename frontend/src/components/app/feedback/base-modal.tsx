@@ -4,15 +4,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 interface BaseModalProps {
 	children: ReactNode;
-	className?: string
+	className?: string;
 	isOpen: boolean;
 	onClose: () => void;
 	title?: string;
 }
 
-export function BaseModal({ children, className, isOpen, onClose, title, }: BaseModalProps) {
+export function BaseModal({ children, className, isOpen, onClose, title }: BaseModalProps) {
 	return (
-		<Dialog onOpenChange={onClose} open={isOpen} >
+		<Dialog onOpenChange={onClose} open={isOpen}>
 			<DialogContent className={`bg-white border border-primary ${className}`}>
 				<DialogHeader>
 					{title ? <DialogTitle>{title}</DialogTitle> : <DialogTitle className="sr-only">Modal</DialogTitle>}

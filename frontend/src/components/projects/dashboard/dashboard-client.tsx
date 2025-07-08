@@ -16,12 +16,12 @@ import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 import { DeleteProjectModal } from "../modals/delete-project-modal";
 import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
+import PaymentLink from "../payment/payment-link";
 import { DashboardCreateProjectModal } from "./dashboard-create-project-modal";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardProjectCard } from "./dashboard-project-card";
 import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
-import PaymentLink from "../payment/payment-link";
 
 interface DashboardClientProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;

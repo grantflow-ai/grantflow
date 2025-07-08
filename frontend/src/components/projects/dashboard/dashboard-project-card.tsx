@@ -12,7 +12,7 @@ import {
 import type { API } from "@/types/api-types";
 
 interface DashboardProjectCardProps {
-	onClick?: (projectId:string) => void;
+	onClick?: (projectId: string) => void;
 	onDelete?: (projectId: string) => void;
 	onDuplicate?: (projectId: string) => void;
 	project: API.ListProjects.Http200.ResponseBody[0];
@@ -33,7 +33,13 @@ export function DashboardProjectCard({
 		<AppCard
 			className="w-[413px] h-[300px] bg-preview-bg cursor-pointer hover:border-gray-300 transition-colors"
 			data-testid="dashboard-project-card"
-			onClick={onClick}
+			onClick={
+				onClick
+					? () => {
+							onClick(project.id);
+						}
+					: undefined
+			}
 		>
 			<AppCardContent className="p-6 flex h-full">
 				<div className="flex flex-col w-full">

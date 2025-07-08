@@ -115,6 +115,7 @@ export const GridLayout: Story = {
 						title: "Climate Research Draft",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 				<GrantApplicationCard
 					application={createApplication({
@@ -123,6 +124,7 @@ export const GridLayout: Story = {
 						title: "Completed NSF Grant",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 				<GrantApplicationCard
 					application={createApplication({
@@ -130,6 +132,7 @@ export const GridLayout: Story = {
 						title: "Medical Research Proposal",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 				<GrantApplicationCard
 					application={createApplication({
@@ -138,6 +141,7 @@ export const GridLayout: Story = {
 						title: "Technology Innovation Grant",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 			</div>
 		),
@@ -184,6 +188,7 @@ export const EmptyTitle: Story = {
 			title: "",
 		}),
 		projectId: "project-1",
+		projectName: "Research Project",
 	},
 	name: "Empty Title (Edge Case)",
 };
@@ -200,6 +205,7 @@ export const AllCompleted: Story = {
 						title: "January Grant Submission",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 				<GrantApplicationCard
 					application={createApplication({
@@ -208,6 +214,7 @@ export const AllCompleted: Story = {
 						title: "February Research Proposal",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 				<GrantApplicationCard
 					application={createApplication({
@@ -216,6 +223,7 @@ export const AllCompleted: Story = {
 						title: "March Innovation Grant",
 					})}
 					projectId="project-1"
+					projectName="Research Project"
 				/>
 			</div>
 		),
