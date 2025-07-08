@@ -21,25 +21,6 @@ from services.backend.src.api.routes.auth import (
     LoginResponse,
     OTPResponse,
 )
-from services.backend.src.api.routes.dev_types import (
-    AcceptInvitationRequestBody,
-    CrawlUrlRequestBody,
-    CreateInvitationRequestBody,
-    CreateInvitationResponse,
-    CreateUploadUrlRequestBody,
-    CreateUploadUrlResponse,
-    DismissNotificationRequestBody,
-    GenerateGrantTemplateRequestBody,
-    GenerateGrantTemplateResponse,
-    InvitationResponse,
-    MemberResponse,
-    MembersListResponse,
-    ProjectDetailResponse,
-    ProjectListResponse,
-    ProjectWithRoleResponse,
-    RagSourceListResponse,
-    RagSourceResponse,
-)
 from services.backend.src.api.routes.funding_organizations import (
     CreateOrganizationRequestBody,
     FundingOrganizationResponse,
@@ -70,7 +51,6 @@ from services.backend.src.api.routes.projects import (
     UpdateProjectRequestBody,
 )
 from services.backend.src.api.routes.rag_jobs import RagJobResponse
-from services.backend.src.api.routes.user import GetSoleOwnedProjectsResponse
 from services.backend.src.common_types import TableIdResponse
 from services.rag.src.grant_template.determine_application_sections import (
     ExtractedSectionDTO,
@@ -152,7 +132,6 @@ class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
         return [faker.sentence() for _ in range(3)]
 
 
-
 class UpdateOrganizationRequestBodyFactory(TypedDictFactory[UpdateOrganizationRequestBody]):
     __model__ = UpdateOrganizationRequestBody
     full_name = faker.company
@@ -182,7 +161,6 @@ class FundingOrganizationResponseFactory(TypedDictFactory[FundingOrganizationRes
     @classmethod
     def updated_at(cls) -> str:
         return datetime.now(UTC).isoformat()
-
 
 
 class SourceResponseFactory(TypedDictFactory[SourceResponse]):
@@ -474,39 +452,6 @@ class AutofillResponseFactory(TypedDictFactory[AutofillResponse]):
         return faker.slug()
 
 
-
-class GenerateGrantTemplateRequestBodyFactory(TypedDictFactory[GenerateGrantTemplateRequestBody]):
-    __model__ = GenerateGrantTemplateRequestBody
-
-    @classmethod
-    def funding_organization_id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def submission_date(cls) -> str:
-        return (datetime.now(UTC) + timedelta(days=30)).isoformat()
-
-    @classmethod
-    def grant_url(cls) -> str:
-        return faker.url()
-
-    @classmethod
-    def grant_name(cls) -> str:
-        return faker.catch_phrase()
-
-
-class GenerateGrantTemplateResponseFactory(TypedDictFactory[GenerateGrantTemplateResponse]):
-    __model__ = GenerateGrantTemplateResponse
-
-    @classmethod
-    def message_id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def grant_template_id(cls) -> str:
-        return str(uuid4())
-
-
 class UpdateGrantTemplateRequestBodyFactory(TypedDictFactory[UpdateGrantTemplateRequestBody]):
     __model__ = UpdateGrantTemplateRequestBody
 
@@ -521,7 +466,6 @@ class UpdateGrantTemplateRequestBodyFactory(TypedDictFactory[UpdateGrantTemplate
     @classmethod
     def grant_sections(cls) -> list[GrantLongFormSection | GrantElement]:
         return [GrantLongFormSectionFactory.build() for _ in range(5)]
-
 
 
 class NotificationResponseFactory(TypedDictFactory[NotificationResponse]):
@@ -570,35 +514,6 @@ class NotificationListResponseFactory(TypedDictFactory[ListNotificationsResponse
         return [NotificationResponseFactory.build() for _ in range(5)]
 
 
-class DismissNotificationRequestBodyFactory(TypedDictFactory[DismissNotificationRequestBody]):
-    __model__ = DismissNotificationRequestBody
-
-
-
-class CreateInvitationRequestBodyFactory(TypedDictFactory[CreateInvitationRequestBody]):
-    __model__ = CreateInvitationRequestBody
-
-    @classmethod
-    def role(cls) -> UserRoleEnum:
-        return faker.random_element(UserRoleEnum)
-
-
-class CreateInvitationResponseFactory(TypedDictFactory[CreateInvitationResponse]):
-    __model__ = CreateInvitationResponse
-
-    @classmethod
-    def invitation_url(cls) -> str:
-        return faker.url()
-
-
-class AcceptInvitationRequestBodyFactory(TypedDictFactory[AcceptInvitationRequestBody]):
-    __model__ = AcceptInvitationRequestBody
-
-    @classmethod
-    def invitation_token(cls) -> str:
-        return faker.lexify("?" * 32)
-
-
 class UpdateInvitationRoleRequestBodyFactory(TypedDictFactory[UpdateInvitationRoleRequestBody]):
     __model__ = UpdateInvitationRoleRequestBody
 
@@ -613,107 +528,6 @@ class UpdateMemberRoleRequestBodyFactory(TypedDictFactory[UpdateMemberRoleReques
     @classmethod
     def role(cls) -> UserRoleEnum:
         return faker.random_element([UserRoleEnum.OWNER, UserRoleEnum.MEMBER])
-
-
-class InvitationResponseFactory(TypedDictFactory[InvitationResponse]):
-    __model__ = InvitationResponse
-
-    @classmethod
-    def id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def project_id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def role(cls) -> UserRoleEnum:
-        return faker.random_element(UserRoleEnum)
-
-    @classmethod
-    def expires_at(cls) -> str:
-        return (datetime.now(UTC) + timedelta(days=7)).isoformat()
-
-    @classmethod
-    def created_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-
-class MemberResponseFactory(TypedDictFactory[MemberResponse]):
-    __model__ = MemberResponse
-
-    @classmethod
-    def id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def project_id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def firebase_uid(cls) -> str:
-        return faker.lexify("?" * 28)
-
-    email = faker.email
-
-    @classmethod
-    def role(cls) -> UserRoleEnum:
-        return faker.random_element(UserRoleEnum)
-
-    @classmethod
-    def created_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-    @classmethod
-    def updated_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-
-class MembersListResponseFactory(TypedDictFactory[MembersListResponse]):
-    __model__ = MembersListResponse
-
-    @classmethod
-    def members(cls) -> list[MemberResponse]:
-        return [MemberResponseFactory.build() for _ in range(3)]
-
-    @classmethod
-    def invitations(cls) -> list[InvitationResponse]:
-        return [InvitationResponseFactory.build() for _ in range(2)]
-
-
-class ProjectDetailResponseFactory(TypedDictFactory[ProjectDetailResponse]):
-    __model__ = ProjectDetailResponse
-
-    @classmethod
-    def id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def name(cls) -> str:
-        return faker.company()
-
-    description = faker.paragraph
-
-    @classmethod
-    def role(cls) -> UserRoleEnum:
-        return faker.random_element(UserRoleEnum)
-
-    @classmethod
-    def created_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-    @classmethod
-    def updated_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-
-class ProjectListResponseFactory(TypedDictFactory[ProjectListResponse]):
-    __model__ = ProjectListResponse
-
-    @classmethod
-    def projects(cls) -> list[ProjectDetailResponse]:
-        return [ProjectDetailResponseFactory.build() for _ in range(3)]
-
 
 
 class RagJobResponseFactory(TypedDictFactory[RagJobResponse]):
@@ -750,105 +564,3 @@ class RagJobResponseFactory(TypedDictFactory[RagJobResponse]):
     @classmethod
     def completed_at(cls) -> str | None:
         return datetime.now(UTC).isoformat() if faker.pybool() else None
-
-
-
-class CreateUploadUrlRequestBodyFactory(TypedDictFactory[CreateUploadUrlRequestBody]):
-    __model__ = CreateUploadUrlRequestBody
-
-    @classmethod
-    def filenames(cls) -> list[str]:
-        return [faker.file_name(extension="pdf") for _ in range(3)]
-
-    @classmethod
-    def grant_application_id(cls) -> str:
-        return str(uuid4())
-
-
-class CreateUploadUrlResponseFactory(TypedDictFactory[CreateUploadUrlResponse]):
-    __model__ = CreateUploadUrlResponse
-
-    @classmethod
-    def upload_urls(cls) -> dict[str, str]:
-        return {faker.file_name(extension="pdf"): faker.url() for _ in range(3)}
-
-
-class CrawlUrlRequestBodyFactory(TypedDictFactory[CrawlUrlRequestBody]):
-    __model__ = CrawlUrlRequestBody
-
-    @classmethod
-    def urls(cls) -> list[str]:
-        return [faker.url() for _ in range(3)]
-
-    @classmethod
-    def grant_application_id(cls) -> str:
-        return str(uuid4())
-
-
-class RagSourceResponseFactory(TypedDictFactory[RagSourceResponse]):
-    __model__ = RagSourceResponse
-
-    @classmethod
-    def id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def project_id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def source_type(cls) -> str:
-        return faker.random_element(["FILE", "URL"])
-
-    @classmethod
-    def indexing_status(cls) -> SourceIndexingStatusEnum:
-        return faker.random_element(SourceIndexingStatusEnum)
-
-    @classmethod
-    def filename(cls) -> str:
-        return faker.file_name(extension="pdf")
-
-    @classmethod
-    def url(cls) -> str:
-        return faker.url()
-
-    @classmethod
-    def created_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-    @classmethod
-    def updated_at(cls) -> str:
-        return datetime.now(UTC).isoformat()
-
-
-class RagSourceListResponseFactory(TypedDictFactory[RagSourceListResponse]):
-    __model__ = RagSourceListResponse
-
-    @classmethod
-    def sources(cls) -> list[RagSourceResponse]:
-        return [RagSourceResponseFactory.build() for _ in range(5)]
-
-
-
-class ProjectWithRoleResponseFactory(TypedDictFactory[ProjectWithRoleResponse]):
-    __model__ = ProjectWithRoleResponse
-
-    @classmethod
-    def id(cls) -> str:
-        return str(uuid4())
-
-    @classmethod
-    def name(cls) -> str:
-        return faker.company()
-
-    @classmethod
-    def role(cls) -> UserRoleEnum:
-        return faker.random_element(UserRoleEnum)
-
-
-class SoleOwnedProjectsResponseFactory(TypedDictFactory[GetSoleOwnedProjectsResponse]):
-    __model__ = GetSoleOwnedProjectsResponse
-
-    @classmethod
-    def sole_owned_projects(cls) -> list[ProjectWithRoleResponse]:
-        return [ProjectWithRoleResponseFactory.build() for _ in range(2)]
