@@ -40,6 +40,9 @@ sentence-transformers/
 *storybook.log
 storybook-static/
 
+# Frontend test results
+frontend/test-results/
+
 # Terraform
 .terraform/
 *.tfstate

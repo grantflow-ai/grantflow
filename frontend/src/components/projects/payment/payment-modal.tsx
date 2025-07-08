@@ -1,9 +1,9 @@
+import { TabsTrigger } from "@radix-ui/react-tabs";
+import { ChevronRight } from "lucide-react";
 import { AppButton, BaseModal } from "@/components/app";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-import { TabsTrigger } from "@radix-ui/react-tabs";
-import { ChevronRight } from "lucide-react";
-import React from "react";
+
 const Monthlyplans = [
 	{
 		btn: "Start Now",
