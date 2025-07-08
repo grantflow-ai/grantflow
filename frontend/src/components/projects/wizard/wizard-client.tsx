@@ -127,7 +127,7 @@ export function WizardClientComponent({ application: initialApplication, project
 	}, [latestRagNotification, setGeneratingTemplate, retrieveApplication, projectId, initialApplication.id]);
 
 	return (
-		<div className="bg-light flex size-full flex-col" data-testid="wizard-page">
+		<div className="bg-light flex size-full flex-col grow" data-testid="wizard-page">
 			<WizardHeader />
 			<section className="flex-1 overflow-auto" data-testid="step-content-container">
 				{stepComponents[currentStep]}

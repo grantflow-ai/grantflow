@@ -296,7 +296,7 @@ describe("ApplicationDetailsStep", () => {
 
 		render(<ApplicationDetailsStep />);
 
-		const fileCard = screen.getByText("test.pdf").closest("button");
+		const fileCard = screen.getByText("test.pdf").closest("div");
 		expect(fileCard).toBeInTheDocument();
 
 		if (fileCard) {

@@ -31,6 +31,25 @@ import { extractGrantTemplateValidationError } from "@/utils/validation";
 
 export type ApplicationType = API.RetrieveApplication.Http200.ResponseBody | null;
 
+const formatRagSources = (application: ApplicationType): string => {
+	if (!application?.grant_template?.rag_sources) {
+		return "files: [], urls: []";
+	}
+
+	const ragSources = application.grant_template.rag_sources;
+	const files = ragSources
+		.filter((source) => source.filename)
+		.map((source) => `${source.filename}:${source.status}`)
+		.join(", ");
+
+	const urls = ragSources
+		.filter((source) => source.url)
+		.map((source) => `${source.url}:${source.status}`)
+		.join(", ");
+
+	return `files: [${files}], urls: [${urls}]`;
+};
+
 interface ApplicationState {
 	application: ApplicationType;
 	areAppOperationsInProgress: boolean;
@@ -256,6 +275,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
 
 			toast.success(`File ${file.name} uploaded successfully`);
+			log.info("[rag_sources_check] File upload completed, triggering retrieveApplication", {
+				beforeRagSources: formatRagSources(application),
+				fileName: file.name,
+				isApplicationParent,
+				parentId,
+			});
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addFile", error);
@@ -276,6 +301,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
 			await crawlUrl(application!.project_id, parentId, url);
 			toast.success("URL added successfully");
+			log.info("[rag_sources_check] URL crawl completed, triggering retrieveApplication", {
+				beforeRagSources: formatRagSources(application),
+				isApplicationParent,
+				parentId,
+				url,
+			});
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addUrl", error);
@@ -347,6 +378,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ areAppOperationsInProgress: true });
 		try {
 			const response = await handleCreateApplication(projectId, { title: DEFAULT_APPLICATION_TITLE });
+			log.info("[rag_sources_check] Application state updated via createApplication", {
+				applicationId: response.id,
+				projectId,
+				ragSources: formatRagSources(response),
+			});
 			set({
 				application: response,
 				areAppOperationsInProgress: false,
@@ -451,6 +487,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
 			await deleteSource(application!.project_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
+			log.info("[rag_sources_check] File removal completed, triggering retrieveApplication", {
+				beforeRagSources: formatRagSources(application),
+				fileId: fileToRemove.id,
+				fileName: fileToRemove.name,
+				isApplicationParent,
+				parentId,
+			});
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("removeFile", error);
@@ -481,6 +524,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
 			await deleteSource(application!.project_id, parentId, ragSource.sourceId);
 			toast.success("URL removed successfully");
+			log.info("[rag_sources_check] URL removal completed, triggering retrieveApplication", {
+				beforeRagSources: formatRagSources(application),
+				isApplicationParent,
+				parentId,
+				sourceId: ragSource.sourceId,
+				url: urlToRemove,
+			});
 			await get().retrieveApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("removeUrl", error);
@@ -489,6 +539,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	reset: () => {
+		const { application } = get();
+		log.info("[rag_sources_check] Application state reset", {
+			previousApplicationId: application?.id,
+			previousProjectId: application?.project_id,
+			previousRagSources: formatRagSources(application),
+		});
 		set(structuredClone(initialState));
 	},
 
@@ -496,6 +552,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ areAppOperationsInProgress: true });
 		try {
 			const response = await handleRetrieveApplication(projectId, applicationId);
+			log.info("[rag_sources_check] Application state updated via retrieveApplication", {
+				applicationId,
+				projectId,
+				ragSources: formatRagSources(response),
+			});
 			set({
 				application: response,
 				areAppOperationsInProgress: false,
@@ -508,6 +569,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	},
 
 	setApplication: (application: NonNullable<ApplicationType>) => {
+		log.info("[rag_sources_check] Application state updated via setApplication", {
+			applicationId: application.id,
+			projectId: application.project_id,
+			ragSources: formatRagSources(application),
+		});
 		set({ application });
 	},
 
@@ -522,6 +588,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		const updatedApplication = deepmerge(existingApplication, data) as NonNullable<ApplicationType>;
 
+		log.info("[rag_sources_check] Application state updated via updateApplication (optimistic)", {
+			applicationId: updatedApplication.id,
+			projectId: updatedApplication.project_id,
+			ragSources: formatRagSources(updatedApplication),
+		});
 		set({ application: updatedApplication });
 
 		try {
@@ -530,8 +601,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				existingApplication.id,
 				data,
 			);
+			log.info("[rag_sources_check] Application state updated via updateApplication (API success)", {
+				applicationId: response.id,
+				projectId: response.project_id,
+				ragSources: formatRagSources(response),
+			});
 			set({ application: response });
 		} catch (e) {
+			log.info("[rag_sources_check] Application state reverted via updateApplication (API failure)", {
+				applicationId: existingApplication.id,
+				projectId: existingApplication.project_id,
+				ragSources: formatRagSources(existingApplication),
+			});
 			set({ application: existingApplication });
 			log.error("updateApplication", new Error(`Failed to update application: ${e}`));
 			toast.error("Failed to update application");
@@ -549,15 +630,28 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const response = await handleUpdateApplication(projectId, applicationId, { title });
+			log.info("[rag_sources_check] Application state updated via updateApplicationTitle", {
+				applicationId: response.id,
+				projectId: response.project_id,
+				ragSources: formatRagSources(response),
+				title: response.title,
+			});
 			set({ application: response });
 		} catch (error) {
 			const currentApplication = get().application;
 			if (currentApplication) {
+				const revertedApplication = {
+					...currentApplication,
+					title: originalTitle,
+				};
+				log.info("[rag_sources_check] Application state reverted via updateApplicationTitle (title restore)", {
+					applicationId: revertedApplication.id,
+					projectId: revertedApplication.project_id,
+					ragSources: formatRagSources(revertedApplication),
+					title: revertedApplication.title,
+				});
 				set({
-					application: {
-						...currentApplication,
-						title: originalTitle,
-					},
+					application: revertedApplication,
 				});
 			}
 			log.error("updateApplicationTitle", error);
@@ -590,6 +684,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		};
 
 		log.info("updateGrantSections: Optimistically updating state");
+		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
+			applicationId: updatedApplication.id,
+			projectId: updatedApplication.project_id,
+			ragSources: formatRagSources(updatedApplication),
+		});
 		set({ application: updatedApplication });
 
 		try {
@@ -613,6 +712,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 					grant_sections: previousGrantSections ?? [],
 				},
 			};
+			log.info("[rag_sources_check] Application state reverted via updateGrantSections (API failure)", {
+				applicationId: restoredApplication.id,
+				projectId: restoredApplication.project_id,
+				ragSources: formatRagSources(restoredApplication),
+			});
 			set({ application: restoredApplication });
 			log.error("updateGrantSections: Failed", error);
 			toast.error("Failed to update grant sections");
