@@ -99,32 +99,23 @@ export function buildUrl(path: string, query?: Record<string, string>): string {
 
 export function createApplicationSlug(title: string, id: string): string {
 	const baseSlug = generateSlug(title || "untitled-application");
-	const idParts = id.split("-");
-	const shortId = idParts[0];
+	const [shortId] = id.split("-");
 	return `${baseSlug}-${shortId}`;
 }
 
 export function createProjectSlug(name: string, id: string): string {
 	const baseSlug = generateSlug(name);
-	const idParts = id.split("-");
-	const shortId = idParts[0];
+	const [shortId] = id.split("-");
 	return `${baseSlug}-${shortId}`;
 }
 
 export function extractIdFromSlug(slug: string): null | string {
-	// First check if it's a raw UUID (backward compatibility)
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-	if (uuidRegex.test(slug)) {
-		return slug;
-	}
-
-	// Extract short ID from slug
+	// Extract short ID from slug (last part after hyphen)
 	const parts = slug.split("-");
 	const possibleId = parts.at(-1);
 
+	// Validate it's an 8-character hex string
 	if (possibleId && possibleId.length === 8 && /^[0-9a-f]{8}$/i.test(possibleId)) {
-		// This is a short ID, we need to look it up
-		// For now, we'll just return the short ID as server can't access localStorage
 		return possibleId;
 	}
 
@@ -134,7 +125,7 @@ export function extractIdFromSlug(slug: string): null | string {
 export function generateSlug(name: string): string {
 	return name
 		.toLowerCase()
-		.replaceAll(/[^a-z0-9\s-]+/g, "")
+		.replaceAll(/[^a-z0-9\s-]/g, "")
 		.replaceAll(/\s+/g, "-")
 		.replaceAll(/-+/g, "-")
 		.replaceAll(/(^-+|-+$)/g, "")
