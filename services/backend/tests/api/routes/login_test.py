@@ -23,23 +23,17 @@ async def test_login_new_user_creates_project(
         return_value={"uid": firebase_uid},
     )
 
-    response = await test_client.post(
-        "/login", json=LoginRequestBody(id_token="123jeronimo")
-    )
+    response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.CREATED
     response_body = response.json()
     assert response_body["jwt_token"] == "jwt_token"
 
     async with async_session_maker() as session:
-        project_user = await session.scalar(
-            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
-        )
+        project_user = await session.scalar(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
         assert project_user is not None
         assert project_user.role == UserRoleEnum.OWNER
 
-        project = await session.scalar(
-            select(Project).where(Project.id == project_user.project_id)
-        )
+        project = await session.scalar(select(Project).where(Project.id == project_user.project_id))
         assert project is not None
         assert project.name == "default"
 
@@ -59,22 +53,16 @@ async def test_login_existing_user_keeps_project(
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
 
     async with async_session_maker() as session:
-        project_user = await session.scalar(
-            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
-        )
+        project_user = await session.scalar(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
         assert project_user is not None
         original_project_id = project_user.project_id
 
-    response = await test_client.post(
-        "/login", json=LoginRequestBody(id_token="123jeronimo")
-    )
+    response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.CREATED
     response_body = response.json()
     assert response_body["jwt_token"] == "jwt_token"
 
     async with async_session_maker() as session:
-        project_user = await session.scalar(
-            select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid)
-        )
+        project_user = await session.scalar(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
         assert project_user is not None
         assert project_user.project_id == original_project_id

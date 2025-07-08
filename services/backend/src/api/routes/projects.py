@@ -8,7 +8,7 @@ from jwt import encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import UserProjectInvitation, Project, ProjectUser
+from packages.db.src.tables import Project, ProjectUser, UserProjectInvitation
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
@@ -91,9 +91,7 @@ async def handle_create_project(
     logger.info("Creating project by user", uid=request.auth)
     async with session_maker() as session, session.begin():
         try:
-            project = await session.scalar(
-                insert(Project).values(data).returning(Project)
-            )
+            project = await session.scalar(insert(Project).values(data).returning(Project))
             await session.execute(
                 insert(ProjectUser).values(
                     {
@@ -160,10 +158,7 @@ async def handle_update_project(
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
-                update(Project)
-                .where(Project.id == project_id)
-                .values(data)
-                .returning(Project)
+                update(Project).where(Project.id == project_id).values(data).returning(Project)
             )
             await session.commit()
         except SQLAlchemyError as e:
@@ -191,9 +186,7 @@ async def handle_retrieve_project(
     logger.info("Retrieving project", project_id=project_id)
     async with session_maker() as session, session.begin():
         project = await session.scalar(
-            select(Project)
-            .options(selectinload(Project.grant_applications))
-            .where(Project.id == project_id)
+            select(Project).options(selectinload(Project.grant_applications)).where(Project.id == project_id)
         )
 
     return ProjectResponse(
@@ -206,9 +199,7 @@ async def handle_retrieve_project(
             BaseApplicationResponse(
                 id=str(grant_application.id),
                 title=grant_application.title,
-                completed_at=grant_application.completed_at.isoformat()
-                if grant_application.completed_at
-                else None,
+                completed_at=grant_application.completed_at.isoformat() if grant_application.completed_at else None,
             )
             for grant_application in project.grant_applications
         ],
@@ -220,9 +211,7 @@ async def handle_retrieve_project(
     allowed_roles=[UserRoleEnum.OWNER],
     operation_id="DeleteProject",
 )
-async def handle_delete_project(
-    project_id: UUID, session_maker: async_sessionmaker[Any]
-) -> None:
+async def handle_delete_project(project_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Deleting project", project_id=project_id)
     async with session_maker() as session, session.begin():
         try:
@@ -261,13 +250,8 @@ async def handle_create_invitation_redirect_url(
             if not inviter:
                 raise ValidationException("User is not a member of this project")
 
-            if (
-                inviter.role != UserRoleEnum.OWNER
-                and data["role"] == UserRoleEnum.OWNER
-            ):
-                raise ValidationException(
-                    "Invitee role must be equal to or lower than the inviter's role"
-                )
+            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
+                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
 
             firebase_user = await get_user_by_email(data["email"])
             if firebase_user:
@@ -277,9 +261,7 @@ async def handle_create_invitation_redirect_url(
                     .where(ProjectUser.firebase_uid == firebase_user["uid"])
                 )
                 if existing_member:
-                    raise ValidationException(
-                        "User is already a member of this project"
-                    )
+                    raise ValidationException("User is already a member of this project")
 
             invitation = await session.scalar(
                 insert(UserProjectInvitation)
@@ -331,9 +313,7 @@ async def handle_delete_invitation(
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info(
-        "Deleting invitation", project_id=project_id, invitation_id=invitation_id
-    )
+    logger.info("Deleting invitation", project_id=project_id, invitation_id=invitation_id)
     async with session_maker() as session, session.begin():
         try:
             await session.scalar(
@@ -396,17 +376,10 @@ async def handle_update_invitation_role(
                 .where(ProjectUser.firebase_uid == request.auth)
             )
             if invitation.accepted_at is not None:
-                raise ValidationException(
-                    "Cannot update role of an accepted invitation"
-                )
+                raise ValidationException("Cannot update role of an accepted invitation")
 
-            if (
-                inviter.role != UserRoleEnum.OWNER
-                and data["role"] == UserRoleEnum.OWNER
-            ):
-                raise ValidationException(
-                    "Invitee role must be equal to or lower than the inviter's role"
-                )
+            if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
+                raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
 
             invitation = await session.scalar(
                 update(UserProjectInvitation)
@@ -438,9 +411,7 @@ async def handle_update_invitation_role(
             await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error updating invitation role", exc_info=e)
-                raise DatabaseError(
-                    "Error updating invitation role", context=str(e)
-                ) from e
+                raise DatabaseError("Error updating invitation role", context=str(e)) from e
             raise e
 
 
@@ -458,9 +429,7 @@ async def handle_accept_invitation(
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
-                select(UserProjectInvitation).where(
-                    UserProjectInvitation.id == invitation_id
-                )
+                select(UserProjectInvitation).where(UserProjectInvitation.id == invitation_id)
             )
 
             if not invitation:
@@ -474,9 +443,7 @@ async def handle_accept_invitation(
                 raise ValidationException("User not found in Firebase")
 
             if firebase_user["uid"] != request.auth:
-                raise ValidationException(
-                    "Authenticated user does not match invitation email"
-                )
+                raise ValidationException("Authenticated user does not match invitation email")
 
             await session.scalar(
                 insert(ProjectUser)
@@ -528,7 +495,6 @@ async def handle_accept_invitation(
     operation_id="ListProjectMembers",
 )
 async def handle_list_project_members(
-    request: APIRequest,
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
 ) -> list[ProjectMemberResponse]:
@@ -536,9 +502,7 @@ async def handle_list_project_members(
     async with session_maker() as session:
         project_users = list(
             await session.scalars(
-                select(ProjectUser)
-                .where(ProjectUser.project_id == project_id)
-                .order_by(ProjectUser.role)
+                select(ProjectUser).where(ProjectUser.project_id == project_id).order_by(ProjectUser.role)
             )
         )
 
@@ -558,9 +522,7 @@ async def handle_list_project_members(
                 "display_name": firebase_user.get("displayName"),
                 "photo_url": firebase_user.get("photoURL"),
                 "role": project_user.role,
-                "joined_at": datetime.now(
-                    UTC
-                ).isoformat(),  # TODO: Add created_at to ProjectUser table
+                "joined_at": datetime.now(UTC).isoformat(),  # TODO: Add created_at to ProjectUser table
             }
             members.append(member)
 
@@ -608,16 +570,10 @@ async def handle_update_member_role(
             if target_member.role == UserRoleEnum.OWNER:
                 raise ValidationException("Cannot modify OWNER role")
 
-            if (
-                requester.role != UserRoleEnum.OWNER
-                and data["role"] == UserRoleEnum.ADMIN
-            ):
+            if requester.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.ADMIN:
                 raise ValidationException("Only OWNER can promote members to ADMIN")
 
-            if (
-                requester.role != UserRoleEnum.OWNER
-                and target_member.role == UserRoleEnum.ADMIN
-            ):
+            if requester.role != UserRoleEnum.OWNER and target_member.role == UserRoleEnum.ADMIN:
                 raise ValidationException("Only OWNER can modify ADMIN roles")
 
             target_member.role = data["role"]
@@ -682,10 +638,7 @@ async def handle_remove_project_member(
             if target_member.role == UserRoleEnum.OWNER:
                 raise ValidationException("Cannot remove OWNER from project")
 
-            if (
-                requester.role != UserRoleEnum.OWNER
-                and target_member.role == UserRoleEnum.ADMIN
-            ):
+            if requester.role != UserRoleEnum.OWNER and target_member.role == UserRoleEnum.ADMIN:
                 raise ValidationException("Only OWNER can remove ADMIN members")
 
             await session.execute(
@@ -699,7 +652,5 @@ async def handle_remove_project_member(
             await session.rollback()
             if isinstance(e, SQLAlchemyError):
                 logger.error("Error removing project member", exc_info=e)
-                raise DatabaseError(
-                    "Error removing project member", context=str(e)
-                ) from e
+                raise DatabaseError("Error removing project member", context=str(e)) from e
             raise e

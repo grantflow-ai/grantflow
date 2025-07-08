@@ -78,6 +78,8 @@ tasks:
     cmds:
       - task: frontend:update
       - task: backend:update
+      - echo "Ensuring cloud_functions requirements.txt is up to date..."
+      - uv pip compile cloud_functions/pyproject.toml -o cloud_functions/requirements.txt
 
   generate:api-types:
     desc: Generate TypeScript from backend API
@@ -297,8 +299,12 @@ tasks:
       - uv run uv-bump --pyproject-toml ./services/indexer/pyproject.toml
       - uv run uv-bump --pyproject-toml ./services/crawler/pyproject.toml
       - uv run uv-bump --pyproject-toml ./services/rag/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./services/scraper/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/db/pyproject.toml
       - uv run uv-bump --pyproject-toml ./packages/shared_utils/pyproject.toml
+      - uv run uv-bump --pyproject-toml ./cloud_functions/pyproject.toml
+      - echo "Regenerating cloud_functions requirements.txt for deployment..."
+      - uv pip compile cloud_functions/pyproject.toml -o cloud_functions/requirements.txt
       - task: backend:install
 
   backend:test:
@@ -647,8 +653,6 @@ tasks:
     cmds:
       - echo "📦 Generating requirements.txt for root cloud functions..."
       - cd cloud_functions && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
-      - echo "📦 Generating requirements.txt for user_cleanup function..."
-      - cd cloud_functions/user_cleanup && uv export --format requirements-txt --output-file requirements.txt --no-hashes --no-editable
       - echo "✅ All requirements.txt files generated successfully!"
 
   cloud-functions:sync:
@@ -661,12 +665,11 @@ tasks:
 
   cloud-functions:test:
     desc: Run tests for cloud functions
-    deps:
-      - task: cloud-functions:sync
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
       - echo "🧪 Running cloud functions tests..."
-      - cd cloud_functions && uv run pytest tests/app_hosting_alert_function_test.py tests/budget_function_test.py -v
-      - cd cloud_functions/user_cleanup && uv run pytest ../tests/user_cleanup/main_test.py -v
+      - uv run pytest cloud_functions/tests -v
       - echo "✅ Cloud functions tests completed!"
 
   # ==============================================================================

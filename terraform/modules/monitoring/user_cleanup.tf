@@ -1,11 +1,19 @@
 # User cleanup Cloud Function and scheduling
 
 # Storage bucket for Cloud Function source
+# trivy:ignore:AVD-GCP-0066
 resource "google_storage_bucket" "user_cleanup_functions" {
   name                        = "${var.project_id}-user-cleanup-functions"
   location                    = "US"
   force_destroy               = true
   uniform_bucket_level_access = true
+
+  dynamic "encryption" {
+    for_each = var.enable_kms_encryption ? [1] : []
+    content {
+      default_kms_key_name = google_kms_crypto_key.monitoring_bucket_key[0].id
+    }
+  }
 
   lifecycle_rule {
     condition {
@@ -23,12 +31,12 @@ data "archive_file" "user_cleanup_source" {
   output_path = "${path.module}/user-cleanup-function.zip"
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/user_cleanup/main.py")
+    content  = file("../../../cloud_functions/src/user_cleanup/main.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/requirements.txt")
+    content  = file("../../../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }

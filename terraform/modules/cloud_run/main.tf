@@ -37,6 +37,30 @@ variable "discord_webhook_url" {
   default     = ""
 }
 
+variable "min_instances" {
+  description = "Minimum number of Cloud Run instances"
+  type        = number
+  default     = 0
+}
+
+variable "max_instances" {
+  description = "Maximum number of Cloud Run instances"
+  type        = number
+  default     = 10
+}
+
+variable "cpu_limit" {
+  description = "CPU allocation for Cloud Run containers"
+  type        = string
+  default     = "1"
+}
+
+variable "memory_limit" {
+  description = "Memory allocation for Cloud Run containers"
+  type        = string
+  default     = "1Gi"
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -50,8 +74,8 @@ resource "google_cloud_run_v2_service" "backend" {
 
       resources {
         limits = {
-          cpu    = "1000m"
-          memory = "2Gi"
+          cpu    = "${var.cpu_limit}000m"
+          memory = var.memory_limit
         }
       }
 
@@ -173,8 +197,8 @@ resource "google_cloud_run_v2_service" "backend" {
     }
 
     scaling {
-      max_instance_count = 10
-      min_instance_count = 0
+      max_instance_count = var.max_instances
+      min_instance_count = var.min_instances
     }
 
     timeout = "300s"
@@ -283,8 +307,8 @@ resource "google_cloud_run_v2_service" "crawler" {
     }
 
     scaling {
-      max_instance_count = 5
-      min_instance_count = 0
+      max_instance_count = var.max_instances
+      min_instance_count = var.min_instances
     }
 
     timeout = "300s"
@@ -393,8 +417,8 @@ resource "google_cloud_run_v2_service" "indexer" {
     }
 
     scaling {
-      max_instance_count = 5
-      min_instance_count = 0
+      max_instance_count = var.max_instances
+      min_instance_count = var.min_instances
     }
 
     timeout = "300s"
@@ -513,8 +537,8 @@ resource "google_cloud_run_v2_service" "rag" {
     }
 
     scaling {
-      max_instance_count = 5
-      min_instance_count = 0
+      max_instance_count = var.max_instances
+      min_instance_count = var.min_instances
     }
 
     timeout = "1800s"

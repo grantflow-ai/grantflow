@@ -80,6 +80,21 @@ export async function retrieveApplication(
 	);
 }
 
+export async function triggerAutofill(
+	projectId: string,
+	applicationId: string,
+	data: API.TriggerAutofill.RequestBody,
+): Promise<API.TriggerAutofill.Http201.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.post(`projects/${projectId}/applications/${applicationId}/autofill`, {
+				headers: await createAuthHeaders(),
+				json: data,
+			})
+			.json<API.TriggerAutofill.Http201.ResponseBody>(),
+	);
+}
+
 export async function updateApplication(
 	projectId: string,
 	applicationId: string,

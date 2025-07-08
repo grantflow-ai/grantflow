@@ -24,7 +24,7 @@ def mock_google_api_response(mocker: MockerFixture) -> Mock:
     aio_client = AsyncMock()
     response = Mock()
     aio_client.models.generate_content.return_value = response
-    client._aio = aio_client  # noqa: SLF001
+    client._aio = aio_client
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
     return response
 
@@ -194,7 +194,7 @@ async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> N
         TooManyRequests("error"),  # type: ignore[no-untyped-call]
         response,
     ]
-    client._aio = aio_client  # noqa: SLF001
+    client._aio = aio_client
     mocker.patch("services.rag.src.utils.completion.get_google_ai_client", return_value=client)
 
     result = await handle_completions_request(
