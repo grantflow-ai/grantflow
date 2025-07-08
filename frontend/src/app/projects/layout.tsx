@@ -12,7 +12,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 				<SidebarProvider>
 					<AppSidebar />
 					<SidebarInset>
-						<div className="flex justify-center bg-[#faf9fb]">
+						<div className="flex grow justify-center bg-[#faf9fb]">
 							<div className="w-full">{children}</div>
 							<NotificationContainer />
 						</div>

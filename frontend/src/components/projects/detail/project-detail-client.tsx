@@ -44,9 +44,10 @@ const applicationCardUsers = [applicationCardUser];
 interface ApplicationCardProps {
 	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
+	onOpen: (applicationId: string) => void;
 }
 
-function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
+function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps) {
 	const status = statusConfig[application.status as keyof typeof statusConfig];
 	const [showMenu, setShowMenu] = useState(false);
 
@@ -113,7 +114,10 @@ function ApplicationCard({ application, onDelete }: ApplicationCardProps) {
 
 			{}
 			<button
-				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors"
+				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors cursor-pointer"
+				onClick={() => {
+					onOpen(application.id);
+				}}
 				type="button"
 			>
 				Open
@@ -195,6 +199,14 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 			toast.error("Failed to create application");
 			setIsCreatingApplication(false);
 		}
+	};
+
+	const handleOpenApplication = (applicationId: string) => {
+		const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", initialProject.id).replace(
+			":applicationId",
+			applicationId,
+		);
+		router.push(wizardPath);
 	};
 
 	useEffect(() => {
@@ -301,6 +313,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 									application={application}
 									key={application.id}
 									onDelete={handleDeleteApplication}
+									onOpen={handleOpenApplication}
 								/>
 							))}
 						</div>

@@ -1,6 +1,8 @@
 "use client";
 
-import {  Plus } from "lucide-react";
+import { assertIsNotNullish } from "@tool-belt/type-predicates";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import { getProjects } from "@/actions/project";
@@ -36,20 +38,26 @@ const projectTeamMembers = [
 ];
 
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
-  const [selectedProjectForInvite, setSelectedProjectForInvite] = useState<
-    API.ListProjects.Http200.ResponseBody[0] | null
-  >(null);
-  const { deleteProject, duplicateProject } = useProjectStore();
-  const { addNotification } = useNotificationStore();
-  const { user } = useUserStore();
+	const router = useRouter();
+	const [showCreateModal, setShowCreateModal] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [showInviteModal, setShowInviteModal] = useState(false);
+	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
+	const [selectedProjectForInvite, setSelectedProjectForInvite] = useState<
+		API.ListProjects.Http200.ResponseBody[0] | null
+	>(null);
+	const { deleteProject, duplicateProject } = useProjectStore();
+	const { addNotification } = useNotificationStore();
+	const { user } = useUserStore();
 
-  const handleDuplicateProject = async (projectId: string) => {
-    await duplicateProject(projectId);
-  };
+	const handleDuplicateProject = async (projectId: string) => {
+		await duplicateProject(projectId);
+	};
+
+	const handleProjectNavigation = (projectId: string) => {
+		assertIsNotNullish(projectId);
+		router.push(`/projects/${projectId}`);
+	};
 
   const { data: projects = initialProjects } = useSWR("projects", getProjects, {
     fallbackData: initialProjects,
@@ -184,6 +192,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
                     <DashboardProjectCard
                       data-testid="dashboard-project-card"
                       key={project.id}
+                      onClick={handleProjectNavigation}
                       onDelete={handleDeleteProject}
                       onDuplicate={handleDuplicateProject}
                       project={project}
