@@ -21,7 +21,6 @@ export default function PaymentLink() {
 						variant="primary"
 					>
 						Upgrade
-						{/* ChevronRight icon from lucide-react for ">" look */}
 						<ChevronRight className="ml-2 size-4" />
 					</AppButton>
 				</div>
