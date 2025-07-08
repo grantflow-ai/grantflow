@@ -37,6 +37,7 @@ export function LinkPreviewItem({
 						filter: isIndexing
 							? "brightness(0) saturate(100%) invert(58%) sepia(88%) saturate(1372%) hue-rotate(5deg) brightness(97%) contrast(102%)"
 							: undefined,
+						zIndex: 20,
 					}}
 					width={16}
 				/>

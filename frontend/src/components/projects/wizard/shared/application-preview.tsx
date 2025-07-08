@@ -7,7 +7,6 @@ import { ThemeBadge } from "@/components/projects/shared/theme-badge";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
-import { log } from "@/utils/logger";
 import { FilePreviewCard } from "./file-preview-card";
 import { LinkPreviewItem } from "./link-preview-item";
 
@@ -22,7 +21,6 @@ export function ApplicationPreview({
 	draftTitle: string;
 	parentId?: string;
 }) {
-	log.info("ApplicationPreview render", { parentId });
 	const templateSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
 
 	const templateFiles: FileWithSource[] = useMemo(
