@@ -31,6 +31,30 @@ variable "discord_role_alerts" {
   default     = ""
 }
 
+variable "enable_kms_encryption" {
+  description = "Enable KMS encryption for storage buckets (recommended for production)"
+  type        = bool
+  default     = false
+}
+
+# KMS resources for storage encryption (production only)
+resource "google_kms_key_ring" "monitoring_keyring" {
+  count    = var.enable_kms_encryption ? 1 : 0
+  name     = "monitoring-keyring-${var.environment}"
+  location = "us"
+}
+
+resource "google_kms_crypto_key" "monitoring_bucket_key" {
+  count    = var.enable_kms_encryption ? 1 : 0
+  name     = "monitoring-bucket-key-${var.environment}"
+  key_ring = google_kms_key_ring.monitoring_keyring[0].id
+  purpose  = "ENCRYPT_DECRYPT"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 # Discord notification channel
 resource "google_monitoring_notification_channel" "discord" {
   display_name = "Discord Alerts - ${title(var.environment)}"
