@@ -192,9 +192,7 @@ async def test_dismiss_notification_success(
     assert data["notification_id"] == str(notification_id)
 
     async with async_session_maker() as session:
-        result = await session.execute(
-            select(Notification).where(Notification.id == notification_id)
-        )
+        result = await session.execute(select(Notification).where(Notification.id == notification_id))
         updated_notification = result.scalar_one()
         assert updated_notification.dismissed is True
 

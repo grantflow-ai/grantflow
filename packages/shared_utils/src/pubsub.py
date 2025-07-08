@@ -65,6 +65,15 @@ class RagRequest(TypedDict):
     trace_id: NotRequired[str]
 
 
+class AutofillRequest(TypedDict):
+    parent_type: Literal["grant_application"]
+    parent_id: UUID
+    autofill_type: Literal["research_plan", "research_deep_dive"]
+    field_name: NotRequired[str]
+    context: NotRequired[dict[str, Any]]
+    trace_id: NotRequired[str]
+
+
 class WebsocketMessage[T](TypedDict):
     type: Literal["info", "error", "data"]
     parent_id: UUID
@@ -246,6 +255,87 @@ async def publish_rag_task(
         logger.error("Error publishing RAG processing message", error=str(e))
         raise BackendError(
             "Error publishing RAG processing message", context={"error": str(e)}
+        ) from e
+
+
+async def publish_autofill_task(
+    *,
+    logger: "FilteringBoundLogger",
+    parent_id: str | UUID,
+    autofill_type: Literal["research_plan", "research_deep_dive"],
+    field_name: str | None = None,
+    context: dict[str, Any] | None = None,
+    trace_id: str | None = None,
+) -> str:
+    """Publish autofill task to rag-processing topic"""
+    import time
+    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
+
+    start_time = time.time()
+
+    client = get_publisher_client()
+
+    autofill_request = AutofillRequest(
+        parent_type="grant_application",
+        parent_id=UUID(str(parent_id)),
+        autofill_type=autofill_type,
+    )
+
+    if field_name:
+        autofill_request["field_name"] = field_name
+    if context:
+        autofill_request["context"] = context
+    if trace_id:
+        autofill_request["trace_id"] = trace_id
+
+    try:
+        message_data = serialize(autofill_request)
+
+        logger.debug(
+            "Publishing autofill task",
+            parent_id=str(parent_id),
+            autofill_type=autofill_type,
+            field_name=field_name,
+            trace_id=trace_id,
+            message_size=len(message_data),
+        )
+
+        topic_path = client.topic_path(
+            project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
+            topic=get_env("RAG_PROCESSING_PUBSUB_TOPIC", fallback="rag-processing"),
+        )
+
+        with create_pubsub_publish_span(topic_path, "AutofillRequest") as span:
+            span.set_attribute("parent_id", str(parent_id))
+            span.set_attribute("autofill_type", autofill_type)
+            if field_name:
+                span.set_attribute("field_name", field_name)
+            if trace_id:
+                span.set_attribute("trace_id", trace_id)
+
+            attributes = {"trace_id": trace_id} if trace_id else {}
+            attributes = inject_trace_context(attributes)
+
+            future = client.publish(topic_path, message_data, **attributes)
+            message_id = await run_sync(future.result)
+
+            span.set_attribute("messaging.message.id", message_id)
+
+        publish_duration = time.time() - start_time
+        logger.info(
+            "Published autofill task",
+            message_id=message_id,
+            parent_id=str(parent_id),
+            autofill_type=autofill_type,
+            field_name=field_name,
+            trace_id=trace_id,
+            publish_duration_ms=round(publish_duration * 1000, 2),
+        )
+        return str(message_id)
+    except MessageTooLargeError as e:
+        logger.error("Error publishing autofill task", error=str(e))
+        raise BackendError(
+            "Error publishing autofill task", context={"error": str(e)}
         ) from e
 
 

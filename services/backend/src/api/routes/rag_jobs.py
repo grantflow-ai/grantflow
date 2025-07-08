@@ -54,9 +54,7 @@ async def handle_retrieve_rag_job(
     logger.info("Retrieving RAG job", project_id=project_id, job_id=job_id)
 
     async with session_maker() as session:
-        job = await session.scalar(
-            select(RagGenerationJob).where(RagGenerationJob.id == job_id)
-        )
+        job = await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == job_id))
 
         if not job:
             raise NotFoundException("RAG job not found")
@@ -64,9 +62,7 @@ async def handle_retrieve_rag_job(
         project_match = False
         if job.job_type == "grant_template_generation":
             template_job = await session.scalar(
-                select(GrantTemplateGenerationJob).where(
-                    GrantTemplateGenerationJob.id == job_id
-                )
+                select(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == job_id)
             )
             if template_job:
                 template = await session.scalar(
@@ -80,9 +76,7 @@ async def handle_retrieve_rag_job(
                 project_match = template is not None
         elif job.job_type == "grant_application_generation":
             app_job = await session.scalar(
-                select(GrantApplicationGenerationJob).where(
-                    GrantApplicationGenerationJob.id == job_id
-                )
+                select(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == job_id)
             )
             if app_job:
                 application = await session.scalar(
@@ -124,9 +118,7 @@ async def handle_retrieve_rag_job(
 
         if job.job_type == "grant_template_generation":
             template_job = await session.scalar(
-                select(GrantTemplateGenerationJob).where(
-                    GrantTemplateGenerationJob.id == job_id
-                )
+                select(GrantTemplateGenerationJob).where(GrantTemplateGenerationJob.id == job_id)
             )
             if template_job:
                 response["grant_template_id"] = str(template_job.grant_template_id)
@@ -137,9 +129,7 @@ async def handle_retrieve_rag_job(
 
         elif job.job_type == "grant_application_generation":
             app_job = await session.scalar(
-                select(GrantApplicationGenerationJob).where(
-                    GrantApplicationGenerationJob.id == job_id
-                )
+                select(GrantApplicationGenerationJob).where(GrantApplicationGenerationJob.id == job_id)
             )
             if app_job:
                 response["grant_application_id"] = str(app_job.grant_application_id)

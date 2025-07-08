@@ -1,3 +1,4 @@
+from datetime import UTC
 from typing import Any, cast
 
 from firebase_admin import App
@@ -22,9 +23,7 @@ def get_firebase_app() -> App:
         from firebase_admin import initialize_app
 
         logger.debug("Initializing Firebase app")
-        service_account_dict = deserialize(
-            get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any]
-        )
+        service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
         firebase_app_ref.value = initialize_app(
             credential=Credentials.from_service_account_info(service_account_dict),  # type: ignore[no-untyped-call]
         )
@@ -111,24 +110,21 @@ _firestore_client_ref = Ref[Any]()
 def get_firestore_client() -> Any:
     """Get Firestore client instance"""
     if _firestore_client_ref.value is None:
-        from google.cloud import firestore  # type: ignore[attr-defined]
+        from google.cloud import firestore
 
         logger.debug("Initializing Firestore client")
         _firestore_client_ref.value = firestore.AsyncClient()
     return _firestore_client_ref.value
 
 
-async def schedule_user_deletion(
-    uid: str, grace_period_days: int = 30
-) -> dict[str, Any]:
+async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[str, Any]:
     """Schedule a user for deletion in Firestore"""
-    from datetime import datetime, timedelta, timezone
-    from google.cloud import firestore  # type: ignore[attr-defined]
+    from datetime import datetime, timedelta
+
+    from google.cloud import firestore
 
     db = get_firestore_client()
-    deletion_date = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
-        days=grace_period_days
-    )
+    deletion_date = datetime.now(UTC) + timedelta(days=grace_period_days)
 
     doc_data = {
         "firebase_uid": uid,
@@ -166,18 +162,16 @@ async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
                 firebase_uid=uid,
                 status=data.get("status") if data else None,
             )
-            return cast(dict[str, Any], data)
+            return cast("dict[str, Any]", data)
         return None
     except Exception as e:
-        logger.warning(
-            "Error getting user deletion status", firebase_uid=uid, exec_info=e
-        )
+        logger.warning("Error getting user deletion status", firebase_uid=uid, exec_info=e)
         raise ExternalOperationError("Error getting user deletion status") from e
 
 
 async def cancel_user_deletion(uid: str) -> bool:
     """Cancel scheduled user deletion"""
-    from google.cloud import firestore  # type: ignore[attr-defined]
+    from google.cloud import firestore
 
     db = get_firestore_client()
 

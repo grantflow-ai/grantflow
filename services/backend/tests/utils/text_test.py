@@ -29,9 +29,7 @@ from services.rag.src.utils.text import (
         ),
     ],
 )
-def test_concatenate_segments_with_spacy_coherence(
-    segments: list[str], expected: str
-) -> None:
+def test_concatenate_segments_with_spacy_coherence(segments: list[str], expected: str) -> None:
     result = concatenate_segments_with_spacy_coherence(segments)
     assert result == expected
 

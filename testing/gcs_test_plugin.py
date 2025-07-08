@@ -60,7 +60,7 @@ async def gcs_emulator_host() -> AsyncGenerator[str]:
 
 @pytest.fixture
 async def storage_client(gcs_emulator_host: str) -> storage.Client:
-    from packages.shared_utils.src.gcs import get_storage_client  # noqa: PLC0415
+    from packages.shared_utils.src.gcs import get_storage_client
 
     storage_client_ref.value = None
     bucket_ref.value = None
@@ -70,7 +70,7 @@ async def storage_client(gcs_emulator_host: str) -> storage.Client:
 
 @pytest.fixture
 async def storage_bucket(storage_client: storage.Client) -> storage.Bucket:
-    from packages.shared_utils.src.gcs import get_bucket  # noqa: PLC0415
+    from packages.shared_utils.src.gcs import get_bucket
 
     bucket_ref.value = None
 

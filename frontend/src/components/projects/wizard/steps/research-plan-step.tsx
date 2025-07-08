@@ -29,6 +29,8 @@ export function ResearchPlanStep() {
 	const addNextObjective = useWizardStore((state) => state.addNextObjective);
 	const handleObjectiveDragEnd = useWizardStore((state) => state.handleObjectiveDragEnd);
 	const removeObjective = useWizardStore((state) => state.removeObjective);
+	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
+	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
 	const objectives = application?.research_objectives ?? [];
 
 	const sensors: SensorDescriptor<SensorOptions>[] = useSensors(
@@ -58,10 +60,12 @@ export function ResearchPlanStep() {
 						<AppButton
 							className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
 							data-testid="ai-try-button"
+							disabled={isAutofillLoading || !application}
 							leftIcon={<span>✨</span>}
+							onClick={() => triggerAutofill("research_plan")}
 							variant="secondary"
 						>
-							Let the AI Try!
+							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
 						</AppButton>
 					</div>
 

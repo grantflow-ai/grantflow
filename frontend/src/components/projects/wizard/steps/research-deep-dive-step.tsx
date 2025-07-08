@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 
 type FormInputsKey = keyof NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
@@ -26,6 +27,8 @@ export function ResearchDeepDiveStep() {
 	const [selectedQuestion, setSelectedQuestion] = useState<null | number>(0);
 	const application = useApplicationStore((state) => state.application);
 	const updateApplication = useApplicationStore((state) => state.updateApplication);
+	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
+	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_deep_dive);
 
 	const formInputs = useMemo(
 		() => application?.form_inputs ?? ({} as Partial<Record<FormInputsKey, string>>),
@@ -146,10 +149,12 @@ export function ResearchDeepDiveStep() {
 					<AppButton
 						className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
 						data-testid="ai-try-button"
+						disabled={isAutofillLoading || !application}
 						leftIcon={<span>✨</span>}
+						onClick={() => triggerAutofill("research_deep_dive")}
 						variant="secondary"
 					>
-						Let the AI Try!
+						{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
 					</AppButton>
 				</div>
 			</div>

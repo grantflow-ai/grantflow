@@ -2,17 +2,52 @@
 
 This directory contains OpenTofu configuration for managing GrantFlow's Google Cloud Platform infrastructure.
 
-## Structure
+## Directory Structure
 
-The configuration is organized into modules:
+```
+terraform/
+├── environments/          # Environment-specific configurations
+│   ├── staging/          # Staging environment
+│   │   ├── main.tf       # Main configuration for staging
+│   │   ├── variables.tf  # Variable definitions
+│   │   ├── outputs.tf    # Output definitions
+│   │   ├── backend.tf    # Backend configuration
+│   │   └── terraform.tfvars # Staging-specific values
+│   └── production/       # Production environment
+│       ├── main.tf       # Main configuration for production
+│       ├── variables.tf  # Variable definitions
+│       ├── outputs.tf    # Output definitions
+│       ├── backend.tf    # Backend configuration
+│       └── terraform.tfvars # Production-specific values
+├── modules/              # Reusable modules
+│   ├── cloud_run/       # Cloud Run service deployments
+│   ├── database/        # Cloud SQL configurations
+│   ├── iam/            # IAM and service accounts
+│   ├── monitoring/      # Monitoring and alerting
+│   ├── network/        # VPC and networking
+│   ├── pubsub/         # Pub/Sub topics and subscriptions
+│   ├── scheduler/      # Cloud Scheduler jobs
+│   ├── secrets/        # Secret Manager
+│   └── storage/        # Cloud Storage buckets
+└── global/             # Global resources (shared across environments)
+    └── backend.tf      # Terraform state bucket configuration
+```
 
-- `modules/cloud_run`: Cloud Run services for the backend, crawler, and indexer
-- `modules/database`: CloudSQL PostgreSQL database
-- `modules/iam`: Service accounts and IAM permissions
-- `modules/network`: VPC network and subnetworks
-- `modules/pubsub`: Pub/Sub topics and subscriptions
-- `modules/secrets`: Secret Manager secrets
-- `modules/storage`: GCS buckets and permissions
+## Cost Optimization by Environment
+
+### Staging Environment
+- **Database**: db-f1-micro (shared CPU, 0.6GB RAM, 10GB HDD)
+- **Cloud Run**: Minimal instances (0-1), 512Mi memory
+- **Storage**: STANDARD class, 7-day retention
+- **Monitoring**: Basic alerts only
+- **Estimated cost**: ~$50-100/month
+
+### Production Environment
+- **Database**: db-custom-2-8192 (2 vCPUs, 8GB RAM, 100GB SSD)
+- **Cloud Run**: Auto-scaling (0-100), 2Gi memory
+- **Storage**: STANDARD class with lifecycle policies
+- **Monitoring**: Comprehensive alerts and logging
+- **Estimated cost**: ~$300-500/month
 
 ## Prerequisites
 
@@ -22,26 +57,32 @@ The configuration is organized into modules:
 
 ## Usage
 
-### Initialization
+### Staging Environment
 
 ```bash
+cd environments/staging
 tofu init
+tofu plan -out=tfplan
+tofu apply tfplan
 ```
 
-### Planning Changes
-
-To see what changes will be applied:
+### Production Environment
 
 ```bash
-tofu plan
+cd environments/production
+tofu init
+tofu plan -out=tfplan
+tofu apply tfplan
 ```
 
-### Applying Changes
+### Working with Modules Directly (Development Only)
 
-To apply the changes:
+For testing individual modules:
 
 ```bash
-tofu apply
+cd modules/database
+tofu init
+tofu plan -var="project_id=grantflow" -var="environment=staging"
 ```
 
 ### Handling Lock Issues
@@ -66,7 +107,10 @@ tofu import module.database.google_sql_database.postgres projects/PROJECT_ID/ins
 
 ## State Management
 
-OpenTofu state is stored in the `grantflow-terraform-state` GCS bucket.
+Each environment maintains its own Terraform state in GCS:
+- **Staging**: `gs://grantflow-terraform-state/staging/default.tfstate`
+- **Production**: `gs://grantflow-terraform-state/production/default.tfstate`
+- **Global**: `gs://grantflow-terraform-state/global/default.tfstate`
 
 ## Cloud Run Services Configuration
 
