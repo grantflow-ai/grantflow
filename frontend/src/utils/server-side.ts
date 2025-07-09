@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
+import { isMockAuthEnabled } from "@/dev-tools/mock-auth";
 import { PagePath } from "@/enums";
-import { getMockAuthEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
 
 // eslint-disable-next-line @typescript-eslint/require-await
@@ -43,7 +43,7 @@ export async function withErrorToast<T>({
 }
 
 export const createAuthHeaders = async () => {
-	if (getMockAuthEnabled()) {
+	if (isMockAuthEnabled()) {
 		const mockToken =
 			// eslint-disable-next-line sonarjs/no-hardcoded-secrets
 			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXVzZXItdWlkLTEyMyIsIm5hbWUiOiJUZXN0IFVzZXIiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3MzU1NTY0MDAsImV4cCI6MTczNjE2MTIwMH0.mock-signature";
@@ -65,7 +65,7 @@ export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 	try {
 		return await promise;
 	} catch (error) {
-		if (getMockAuthEnabled()) {
+		if (isMockAuthEnabled()) {
 			throw error;
 		}
 

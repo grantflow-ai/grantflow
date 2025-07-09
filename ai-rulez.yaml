@@ -568,6 +568,38 @@ rules:
       - Mock external services, not internal components
       - Verify WebSocket integration with proper test clients
 
+      ### E2E Testing
+
+      - **Framework**: Playwright for browser automation
+      - **Mock Environment**: Use mock API/auth for predictable testing
+      - **Selectors**: Use `data-testid` attributes exclusively
+      - **Focus**: API interactions and happy paths
+      - **Configuration**: 
+        - `playwright.config.ts` - main configuration
+        - `playwright.mock.config.ts` - mock environment configuration
+      
+      **Key Practices**:
+      ```typescript
+      // Always use data-testid selectors
+      await page.locator('[data-testid="dashboard-header"]').click();
+      
+      // NOT role or text selectors for key elements
+      await page.getByRole('button', { name: 'Submit' }); // Avoid
+      ```
+      
+      **Running E2E Tests**:
+      ```bash
+      task frontend:test:e2e        # Run e2e tests
+      task frontend:test:e2e:mock   # Run with mock API
+      task frontend:test:e2e:ui     # Run with Playwright UI
+      ```
+      
+      **Test Organization**:
+      - `frontend/tests/e2e/` - E2E test files
+      - Focus on user journeys and critical paths
+      - Mock API responses for predictability
+      - Test happy paths first, edge cases second
+
   - name: "Common Pitfalls and Solutions"
     priority: 37
     content: |

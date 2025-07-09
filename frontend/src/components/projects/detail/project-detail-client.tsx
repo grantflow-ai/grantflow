@@ -294,6 +294,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					</div>
 					<button
 						className="flex items-center gap-2 rounded bg-[#1e13f8] px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-white hover:bg-[#1710d4] transition-colors ml-4"
+						data-testid="new-application-button"
 						disabled={isCreatingApplication}
 						onClick={handleCreateApplication}
 						type="button"
