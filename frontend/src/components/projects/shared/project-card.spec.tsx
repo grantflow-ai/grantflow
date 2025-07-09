@@ -1,6 +1,5 @@
 import { ProjectListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
-import { PagePath } from "@/enums";
 
 import { ProjectCard } from "./project-card";
 
@@ -38,7 +37,7 @@ describe("ProjectCard", () => {
 		render(<ProjectCard project={mockProjectOwner} />);
 
 		const link = screen.getByTestId(`project-link-${mockProjectOwner.id}`);
-		const expectedUrl = PagePath.PROJECT_DETAIL.toString().replace(":projectId", mockProjectOwner.id);
+		const expectedUrl = "/projects/test-project-project";
 
 		expect(link).toHaveAttribute("href", expectedUrl);
 	});

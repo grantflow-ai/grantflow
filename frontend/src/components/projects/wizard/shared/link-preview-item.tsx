@@ -50,7 +50,7 @@ export function LinkPreviewItem({
 			</div>
 			<a
 				className={`h-auto justify-start p-0.5 text-sm leading-[18px] hover:no-underline font-normal block truncate max-w-full ${
-					isIndexing ? "text-orange-500 cursor-not-allowed" : "text-primary hover:text-accent"
+					isIndexing ? "text-orange-500" : "text-primary hover:text-accent"
 				}`}
 				data-testid="link-url"
 				href={url}
