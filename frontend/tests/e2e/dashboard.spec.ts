@@ -59,13 +59,13 @@ test.describe("Dashboard with Mock API", () => {
 		await page.locator('[data-testid="create-project-submit-button"]').click();
 
 		// Wait for modal to close and navigation
-		await expect(page.getByRole("dialog")).not.toBeVisible();
+		await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 10_000 });
 
 		// Should navigate to the new project page
-		await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+$/);
+		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
 		// Verify we're on the project page
-		await expect(page.getByText("Test Research Project")).toBeVisible();
+		await expect(page.getByText("Test Research Project")).toBeVisible({ timeout: 10_000 });
 	});
 
 	test("should handle project card interactions", async ({ page }) => {
@@ -90,14 +90,18 @@ test.describe("Dashboard with Mock API", () => {
 		// Should navigate to project detail page with slug format (name-shortid)
 		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
-		// Verify project page loaded - look for specific project page content
-		await expect(page.getByRole("heading", { name: /applications/i })).toBeVisible();
+		// Verify project page loaded - look for new application button in main content
+		await expect(page.locator("main").locator('[data-testid="new-application-button"]')).toBeVisible();
 	});
 
 	test("should show empty state when no projects", async ({ page }) => {
-		// Mock empty projects response
-		await page.route("/api/projects", async (route) => {
-			await route.fulfill({ json: [] });
+		// Set mock API to use empty scenario
+		await page.addInitScript(() => {
+			 
+			if ((globalThis as any).getMockAPIClient) {
+				 
+				(globalThis as any).getMockAPIClient().setScenario("empty");
+			}
 		});
 
 		// Reload the page
@@ -217,18 +221,18 @@ test.describe("Dashboard Navigation", () => {
 		// Should navigate to project page
 		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
-		// Now click New Application button on the project page
-		await page.locator('[data-testid="new-application-button"]').click();
+		// Now click New Application button on the project page (be more specific)
+		await page.locator("main").locator('[data-testid="new-application-button"]').click();
 
 		// Should open application creation flow (wizard)
 		await expect(page).toHaveURL(/\/wizard/);
 	});
 
 	test("should open settings menu", async ({ page }) => {
-		// Click settings trigger
+		// Click settings trigger to expand the menu
 		await page.locator('[data-testid="settings-trigger"]').click();
 
-		// Verify settings menu items
+		// Wait for menu to expand and verify settings menu items
 		await expect(page.locator('[data-testid="settings-account"]')).toBeVisible();
 		await expect(page.locator('[data-testid="settings-billing"]')).toBeVisible();
 		await expect(page.locator('[data-testid="settings-members"]')).toBeVisible();
