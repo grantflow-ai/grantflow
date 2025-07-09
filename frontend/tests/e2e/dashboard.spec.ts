@@ -90,8 +90,8 @@ test.describe("Dashboard with Mock API", () => {
 		// Should navigate to project detail page with slug format (name-shortid)
 		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
-		// Verify project page loaded
-		await expect(page.getByText("Applications")).toBeVisible();
+		// Verify project page loaded - look for specific project page content
+		await expect(page.getByRole("heading", { name: /applications/i })).toBeVisible();
 	});
 
 	test("should show empty state when no projects", async ({ page }) => {

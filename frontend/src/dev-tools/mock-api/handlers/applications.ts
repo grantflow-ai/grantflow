@@ -285,6 +285,61 @@ This innovative research program represents a paradigm shift in cancer diagnosti
 
 		return [...RagSourceFileFactory.batch(2), ...RagSourceUrlFactory.batch(1)];
 	},
+	listApplications: async ({
+		params,
+	}: {
+		params?: Record<string, string>;
+	}): Promise<API.ListApplications.Http200.ResponseBody> => {
+		const projectId = params?.project_id;
+		if (!projectId) {
+			throw new Error("Project ID required");
+		}
+
+		log.info("[Mock API] Listing applications for project", { projectId });
+
+		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
+		const scenario = getScenario(currentScenarioName);
+
+		if (scenario?.data.applications && scenario.data.applications.size > 0) {
+			const applications = [...scenario.data.applications.values()]
+				.filter((app) => app.project_id === projectId)
+				.map((app) => ({
+					completed_at: app.completed_at,
+					created_at: app.created_at,
+					id: app.id,
+					project_id: app.project_id,
+					status: app.status,
+					title: app.title,
+					updated_at: app.updated_at || app.created_at,
+				}));
+
+			log.info("[Mock API] Returning applications from scenario", {
+				count: applications.length,
+				projectId,
+			});
+			return {
+				applications,
+				pagination: {
+					has_more: false,
+					limit: 50,
+					offset: 0,
+					total: applications.length,
+				},
+			};
+		}
+
+		// Return empty array if no applications found
+		log.info("[Mock API] No applications found for project", { projectId });
+		return {
+			applications: [],
+			pagination: {
+				has_more: false,
+				limit: 50,
+				offset: 0,
+				total: 0,
+			},
+		};
+	},
 
 	retrieveApplication: async ({
 		params,
