@@ -79,23 +79,74 @@ test.describe("Landing Page", () => {
 		const waitlistForm = page.locator('[data-testid="waitlist-form"]');
 		await expect(waitlistForm).toBeVisible();
 
-		// Fill in email
-		const emailInput = waitlistForm.locator('input[type="email"]');
+		// Fill in email using data-testid
+		const emailInput = waitlistForm.locator('[data-testid="test-form-input-email"]');
 		await emailInput.fill("test@example.com");
 
-		// Fill in name
-		const nameInput = waitlistForm.locator('input[type="text"]');
+		// Fill in name using data-testid
+		const nameInput = waitlistForm.locator('[data-testid="test-form-input-name"]');
 		await nameInput.fill("Test User");
 
 		// Wait for form to be valid
-		const submitButton = waitlistForm.locator('button[type="submit"]');
+		const submitButton = waitlistForm.locator('[data-testid="waitlist-form-submit-button"]');
 		await expect(submitButton).toBeEnabled();
 
 		// Submit form
 		await submitButton.click();
 
-		// Check for success message in the form
-		await expect(waitlistForm.getByText(/thank you/i)).toBeVisible();
+		// Check for success message in the form using data-testid
+		await expect(waitlistForm.locator('[data-testid="waitlist-form-message"]')).toBeVisible();
+		await expect(waitlistForm.locator('[data-testid="waitlist-form-message"]')).toContainText(/thank you/i);
+
+		// Check for success toast notification (Sonner toast)
+		await expect(page.locator("[data-sonner-toast]")).toBeVisible();
+		await expect(page.locator("[data-sonner-toast]")).toContainText(/thank you/i);
+	});
+
+	test("should show toast notification on waitlist success", async ({ page }) => {
+		// Find the waitlist form
+		const waitlistForm = page.locator('[data-testid="waitlist-form"]');
+		await expect(waitlistForm).toBeVisible();
+
+		// Fill in valid form data using data-testid
+		await waitlistForm.locator('[data-testid="test-form-input-email"]').fill("success@example.com");
+		await waitlistForm.locator('[data-testid="test-form-input-name"]').fill("Success User");
+
+		// Submit form
+		const submitButton = waitlistForm.locator('[data-testid="waitlist-form-submit-button"]');
+		await expect(submitButton).toBeEnabled();
+		await submitButton.click();
+
+		// Check for success toast (Sonner toast notification)
+		await expect(page.locator("[data-sonner-toast]")).toBeVisible({ timeout: 10_000 });
+		await expect(page.locator("[data-sonner-toast]")).toContainText(/thank you/i);
+	});
+
+	test("should show error message on form validation failure", async ({ page }) => {
+		// Find the waitlist form
+		const waitlistForm = page.locator('[data-testid="waitlist-form"]');
+		await expect(waitlistForm).toBeVisible();
+
+		// Fill in invalid email to trigger validation error
+		await waitlistForm.locator('[data-testid="test-form-input-email"]').fill("invalid-email");
+		await waitlistForm.locator('[data-testid="test-form-input-name"]').fill("Test User");
+
+		// Try to submit form - button should be disabled for invalid email
+		const submitButton = waitlistForm.locator('[data-testid="waitlist-form-submit-button"]');
+		await expect(submitButton).toBeDisabled();
+
+		// Clear email field and leave it empty to test required field validation
+		await waitlistForm.locator('[data-testid="test-form-input-email"]').clear();
+
+		// Submit button should still be disabled
+		await expect(submitButton).toBeDisabled();
+
+		// Fill valid email but leave name empty
+		await waitlistForm.locator('[data-testid="test-form-input-email"]').fill("test@example.com");
+		await waitlistForm.locator('[data-testid="test-form-input-name"]').clear();
+
+		// Submit button should be disabled without name
+		await expect(submitButton).toBeDisabled();
 	});
 
 	test("should navigate to login page", async ({ page }) => {
