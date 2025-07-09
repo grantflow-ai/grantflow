@@ -1,12 +1,11 @@
 import { ApplicationListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
-import { PagePath } from "@/enums";
 
-import { GrantApplicationCard } from "./grant-application-card";
+import { GrantApplicationCard } from "@/components/projects";
 
 describe("GrantApplicationCard", () => {
 	const mockProjectId = "project-123";
-	const mockProjectName = "Test Project";
+	const mockProjectName = "Climate Research Project";
 
 	const mockApplication = ApplicationListItemFactory.build({
 		completed_at: null,
@@ -43,7 +42,8 @@ describe("GrantApplicationCard", () => {
 		);
 
 		const link = screen.getByTestId(`application-draft-link-${mockApplication.id}`);
-		const expectedUrl = `/projects/${mockProjectId}/applications/${mockApplication.id}/wizard`;
+		const expectedUrl =
+			"/projects/climate-research-project-project/applications/research-grant-application-app/wizard";
 
 		expect(link).toHaveAttribute("href", expectedUrl);
 	});
@@ -58,9 +58,7 @@ describe("GrantApplicationCard", () => {
 		);
 
 		const link = screen.getByTestId(`application-draft-link-${mockCompletedApplication.id}`);
-		const expectedUrl = PagePath.APPLICATION_DETAIL.toString()
-			.replace(":projectId", mockProjectId)
-			.replace(":applicationId", mockCompletedApplication.id);
+		const expectedUrl = "/projects/climate-research-project-project/applications/completed-grant-application-app";
 
 		expect(link).toHaveAttribute("href", expectedUrl);
 	});
