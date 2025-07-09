@@ -74,7 +74,11 @@ export function WaitlistForm() {
 
 	return (
 		<Form {...form}>
-			<form className="flex w-full min-w-[22rem] flex-col pe-0 md:mt-0" onSubmit={form.handleSubmit(onSubmit)}>
+			<form
+				className="flex w-full min-w-[22rem] flex-col pe-0 md:mt-0"
+				data-testid="waitlist-form"
+				onSubmit={form.handleSubmit(onSubmit)}
+			>
 				<WaitListFormItem
 					formControl={form.control}
 					id="email"
