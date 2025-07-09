@@ -33,6 +33,7 @@ export function DeleteProjectModal({ isOpen, onClose, onConfirm }: DeleteProject
 						className="rounded-sm px-4 py-2"
 						data-testid="cancel-button"
 						onClick={onClose}
+						type="button"
 						variant="secondary"
 					>
 						Cancel
@@ -41,6 +42,7 @@ export function DeleteProjectModal({ isOpen, onClose, onConfirm }: DeleteProject
 						className="rounded-sm px-4 py-2"
 						data-testid="delete-button"
 						onClick={handleDelete}
+						type="button"
 						variant="primary"
 					>
 						Delete
