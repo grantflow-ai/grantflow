@@ -151,8 +151,11 @@ export function WizardHeader() {
 							<h1
 								className="text-sm sm:text-base text-nowrap font-medium text-text-primary"
 								data-testid="app-name"
+								title={application?.title}
 							>
-								{application?.title}
+								{application?.title && application.title.length > 120
+									? `${application.title.slice(0, 120)}...`
+									: application?.title}
 							</h1>
 							<Deadline />
 						</>

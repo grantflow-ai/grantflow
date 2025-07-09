@@ -50,7 +50,7 @@ export const FirstStep: Story = {
 	name: "Step 1: Application Details - No Title",
 };
 
-export const FirstStepWithTitle: Story = {
+export const WithTitleAndDeadline: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -67,13 +67,13 @@ export const FirstStepWithTitle: Story = {
 					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
-					currentStep: WizardStep.APPLICATION_DETAILS,
+					currentStep: WizardStep.APPLICATION_STRUCTURE,
 				});
 			}, []);
 			return <Story />;
 		},
 	],
-	name: "Step 1: Application Details - With Title and Sources",
+	name: "Step 2: With Title and Deadline Shown",
 };
 
 export const SecondStep: Story = {
@@ -270,7 +270,7 @@ export const DeadlinePassed: Story = {
 	name: "Deadline Passed - 5 Days Ago",
 };
 
-export const LongApplicationTitle: Story = {
+export const MaxLengthTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -279,8 +279,8 @@ export const LongApplicationTitle: Story = {
 				});
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
-					project_id: "project-long",
-					title: "An Interdisciplinary Approach to Understanding Climate Change Impact on Urban Infrastructure and Community Resilience Through Advanced Machine Learning and Social Network Analysis",
+					project_id: "project-max",
+					title: "An Interdisciplinary Approach to Understanding Climate Change Impact on Urban Infrastructure and Community Resilience X",
 				});
 				useApplicationStore.setState({
 					application,
@@ -293,10 +293,10 @@ export const LongApplicationTitle: Story = {
 			return <Story />;
 		},
 	],
-	name: "Long Application Title - Text Wrapping",
+	name: "Max Length Title - 120 Characters Exactly",
 };
 
-export const MobileResponsive: Story = {
+export const TruncatedTitle: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
@@ -305,26 +305,21 @@ export const MobileResponsive: Story = {
 				});
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
-					project_id: "project-mobile",
-					title: "Mobile Responsive Testing Application",
+					project_id: "project-truncated",
+					title: "An Interdisciplinary Approach to Understanding Climate Change Impact on Urban Infrastructure and Community Resilience Through Advanced Machine Learning and Social Network Analysis Methods",
 				});
 				useApplicationStore.setState({
 					application,
 					areAppOperationsInProgress: false,
 				});
 				useWizardStore.setState({
-					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+					currentStep: WizardStep.RESEARCH_PLAN,
 				});
 			}, []);
 			return <Story />;
 		},
 	],
-	name: "Mobile View - Responsive Layout",
-	parameters: {
-		viewport: {
-			defaultViewport: "mobile1",
-		},
-	},
+	name: "Truncated Title - Over 120 Characters with Ellipsis",
 };
 
 export const TabletResponsive: Story = {
@@ -337,7 +332,7 @@ export const TabletResponsive: Story = {
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
 					project_id: "project-tablet",
-					title: "Tablet Responsive Testing Application",
+					title: "Tablet Responsive Testing Application with Long Title",
 				});
 				useApplicationStore.setState({
 					application,
@@ -353,7 +348,7 @@ export const TabletResponsive: Story = {
 	name: "Tablet View - Responsive Layout",
 	parameters: {
 		viewport: {
-			defaultViewport: "ipad",
+			defaultViewport: "tablet",
 		},
 	},
 };
