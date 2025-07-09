@@ -80,6 +80,11 @@ jobs:
           test_markers: smoke
           timeout: 300
         env:
+          GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+          LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           E2E_TESTS: "1"
         continue-on-error: true
 
@@ -91,6 +96,10 @@ jobs:
           test_markers: smoke
           timeout: 300
         env:
+          LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
           E2E_TESTS: "1"
         continue-on-error: true
 
@@ -102,6 +111,11 @@ jobs:
           test_markers: smoke
           timeout: 300
         env:
+          GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+          LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           E2E_TESTS: "1"
         continue-on-error: true
 
