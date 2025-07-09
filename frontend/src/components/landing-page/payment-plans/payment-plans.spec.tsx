@@ -9,7 +9,7 @@ describe("PaymentPlans", () => {
 	it("renders the component with correct structure", () => {
 		render(<PaymentPlans />);
 
-		const mainContainer = screen.getByTestId("payment-plans-container");
+		const mainContainer = screen.getByTestId("payment-plans");
 		expect(mainContainer).toBeInTheDocument();
 	});
 
