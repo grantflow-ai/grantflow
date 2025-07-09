@@ -336,9 +336,17 @@ export const OperationsInProgress: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						filename: "research-paper.pdf",
+						sourceId: "2",
+						status: "FINISHED",
+					}),
+				];
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
+					rag_sources: ragSources,
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -352,65 +360,5 @@ export const OperationsInProgress: Story = {
 			return <Story />;
 		},
 	],
-	name: "Operations In Progress - All Buttons Disabled",
-};
-
-export const MobileResponsive: Story = {
-	decorators: [
-		(Story) => {
-			useEffect(() => {
-				const grantTemplate = GrantTemplateFactory.build();
-				const application = ApplicationWithTemplateFactory.build({
-					grant_template: grantTemplate,
-					title: "Mobile Test Application",
-				});
-				useApplicationStore.setState({
-					application,
-					areAppOperationsInProgress: false,
-				});
-				useWizardStore.setState({
-					currentStep: WizardStep.RESEARCH_PLAN,
-				});
-			}, []);
-			return <Story />;
-		},
-	],
-	name: "Mobile View - Responsive Buttons",
-	parameters: {
-		viewport: {
-			defaultViewport: "mobile1",
-		},
-	},
-};
-
-export const ShortTitleInvalid: Story = {
-	decorators: [
-		(Story) => {
-			useEffect(() => {
-				const ragSources = [
-					RagSourceFactory.build({
-						filename: "grant-guidelines.pdf",
-						sourceId: "1",
-						status: "FINISHED",
-					}),
-				];
-				const grantTemplate = GrantTemplateFactory.build({
-					rag_sources: ragSources,
-				});
-				const application = ApplicationWithTemplateFactory.build({
-					grant_template: grantTemplate,
-					title: "ABC",
-				});
-				useApplicationStore.setState({
-					application,
-					areAppOperationsInProgress: false,
-				});
-				useWizardStore.setState({
-					currentStep: WizardStep.APPLICATION_DETAILS,
-				});
-			}, []);
-			return <Story />;
-		},
-	],
-	name: "Step 1: Title Too Short - Next Button Disabled",
+	name: "Global State: Operations In Progress - All Buttons Disabled",
 };
