@@ -132,11 +132,16 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 				<main className="w-[98%] pb-5">
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
-					<main className=" px-10 relative flex h-[863px] flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200">
+					<main
+						className=" px-10 relative flex h-[863px] flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200"
+						data-testid="dashboard-main-content"
+					>
 						<main className="flex flex-col gap-8">
 							<article className="text-black flex justify-between items-center">
 								<div className="flex flex-col gap-2">
-									<h2 className="font-medium text-4xl ">Dashboard</h2>
+									<h2 className="font-medium text-4xl " data-testid="dashboard-title">
+										Dashboard
+									</h2>
 									<p className="font-normal text-base text-gray-600">
 										Your one‑stop overview for all your Research Projects.
 									</p>
@@ -159,10 +164,21 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 											</Tooltip>
 										</div>
 										<div className="  ">
-											<AvatarGroup size="md" users={projectTeamMembers} />
+											<AvatarGroup
+												data-testid="dashboard-avatar-group"
+												size="md"
+												users={projectTeamMembers}
+											/>
 										</div>
 									</main>
-									<AppButton className="px-4 py-2" variant="primary">
+									<AppButton
+										className="px-4 py-2"
+										data-testid="new-research-project-button"
+										onClick={() => {
+											setShowCreateModal(true);
+										}}
+										variant="primary"
+									>
 										<p className="font-normal text-base">+ New Research Project</p>
 									</AppButton>
 								</div>
@@ -171,8 +187,10 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 							<DashboardStats initialProjects={projects} />
 						</main>
 						<main className="">
-							<h3 className="font-normal text-4xl text-black">Research Projects</h3>
-							<main className="flex items-center gap-4 flex-wrap mt-6">
+							<h3 className="font-normal text-4xl text-black" data-testid="research-projects-heading">
+								Research Projects
+							</h3>
+							<main className="flex items-center gap-4 flex-wrap mt-6" data-testid="projects-container">
 								{projects.length > 0 ? (
 									projects.map((project) => (
 										<DashboardProjectCard
@@ -188,7 +206,10 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										/>
 									))
 								) : (
-									<div className="flex w-full flex-col items-center justify-center py-12">
+									<div
+										className="flex w-full flex-col items-center justify-center py-12"
+										data-testid="empty-projects-state"
+									>
 										<p className="text-[#636170] mb-4">You don&apos;t have any projects yet.</p>
 										<button
 											className="rounded bg-[#1e13f8] px-4 py-2 text-white"

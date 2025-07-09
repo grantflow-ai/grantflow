@@ -42,6 +42,8 @@ storybook-static/
 
 # Frontend test results
 frontend/test-results/
+frontend/playwright-report/
+frontend/playwright/.cache/
 
 # Terraform
 .terraform/

@@ -19,6 +19,20 @@ jobs:
   smoke-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: grantflow
+          POSTGRES_USER: grantflow
+          POSTGRES_PASSWORD: grantflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     env:
       DEBUG: "True"
       DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1389591048962969661/h7QTWNUUPRsL1HwrhfJx15VmiDKIU0mR_SgOvdTMEQbn9eyuZ0XO6mDtG0Q0p6iFYYyY"
@@ -66,6 +80,11 @@ jobs:
           test_markers: smoke
           timeout: 300
         env:
+          GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+          LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           E2E_TESTS: "1"
         continue-on-error: true
 
@@ -77,6 +96,10 @@ jobs:
           test_markers: smoke
           timeout: 300
         env:
+          LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
           E2E_TESTS: "1"
         continue-on-error: true
 
@@ -88,7 +111,19 @@ jobs:
           test_markers: smoke
           timeout: 300
         env:
+          GCS_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GCS_SERVICE_ACCOUNT_CREDENTIALS }}
+          LLM_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.LLM_SERVICE_ACCOUNT_CREDENTIALS }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           E2E_TESTS: "1"
+        continue-on-error: true
+
+      - name: Run Frontend E2E Tests
+        id: frontend_tests
+        uses: ./.github/actions/run-frontend-e2e-tests
+        with:
+          timeout: 300
         continue-on-error: true
 
       - name: Send Discord notification - Results
@@ -99,6 +134,7 @@ jobs:
           indexer_status="${{ steps.indexer_tests.outcome }}"
           rag_status="${{ steps.rag_tests.outcome }}"
           crawler_status="${{ steps.crawler_tests.outcome }}"
+          frontend_status="${{ steps.frontend_tests.outcome }}"
           
           # Count failures
           failures=0
@@ -106,6 +142,7 @@ jobs:
           if [ "$indexer_status" = "failure" ]; then failures=$((failures + 1)); fi
           if [ "$rag_status" = "failure" ]; then failures=$((failures + 1)); fi
           if [ "$crawler_status" = "failure" ]; then failures=$((failures + 1)); fi
+          if [ "$frontend_status" = "failure" ]; then failures=$((failures + 1)); fi
           
           # Set color and title based on results
           if [ $failures -eq 0 ]; then
@@ -115,7 +152,7 @@ jobs:
           else
             color=16711680  # Red
             title="❌ Smoke Test Failures Detected"
-            description="$failures out of 4 smoke test suites failed"
+            description="$failures out of 5 smoke test suites failed"
           fi
           
           # Create status indicators
@@ -123,6 +160,7 @@ jobs:
           indexer_icon="✅"; if [ "$indexer_status" = "failure" ]; then indexer_icon="❌"; fi
           rag_icon="✅"; if [ "$rag_status" = "failure" ]; then rag_icon="❌"; fi
           crawler_icon="✅"; if [ "$crawler_status" = "failure" ]; then crawler_icon="❌"; fi
+          frontend_icon="✅"; if [ "$frontend_status" = "failure" ]; then frontend_icon="❌"; fi
           
           curl -H "Content-Type: application/json" \
                -d '{
@@ -132,8 +170,8 @@ jobs:
                    "color": '"$color"',
                    "fields": [
                      {"name": "Branch", "value": "${{ inputs.branch || 'development' }}", "inline": true},
-                     {"name": "Total Failures", "value": "'"$failures"'/4", "inline": true},
-                     {"name": "Test Results", "value": "'"$scraper_icon"' Scraper\n'"$indexer_icon"' Indexer\n'"$rag_icon"' RAG\n'"$crawler_icon"' Crawler", "inline": false},
+                     {"name": "Total Failures", "value": "'"$failures"'/5", "inline": true},
+                     {"name": "Test Results", "value": "'"$scraper_icon"' Scraper\n'"$indexer_icon"' Indexer\n'"$rag_icon"' RAG\n'"$crawler_icon"' Crawler\n'"$frontend_icon"' Frontend", "inline": false},
                      {"name": "Action", "value": "[View Detailed Results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
                    ],
                    "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"
@@ -143,7 +181,7 @@ jobs:
 
       # Fail the workflow if any tests failed
       - name: Check test results
-        if: steps.scraper_tests.outcome == 'failure' || steps.indexer_tests.outcome == 'failure' || steps.rag_tests.outcome == 'failure' || steps.crawler_tests.outcome == 'failure'
+        if: steps.scraper_tests.outcome == 'failure' || steps.indexer_tests.outcome == 'failure' || steps.rag_tests.outcome == 'failure' || steps.crawler_tests.outcome == 'failure' || steps.frontend_tests.outcome == 'failure'
         run: |
           echo "One or more smoke tests failed"
           exit 1

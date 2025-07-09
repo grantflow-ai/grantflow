@@ -101,15 +101,3 @@ export function getMockAPIEnabled(): boolean {
 	}
 	return false;
 }
-
-/**
- * Get mock auth setting - bypasses T3-env validation to avoid build-time issues
- * Firebase App Hosting injects secrets as strings at runtime
- */
-export function getMockAuthEnabled(): boolean {
-	const val = process.env.NEXT_PUBLIC_MOCK_AUTH;
-	if (typeof val === "string") {
-		return val.toLowerCase() === "true";
-	}
-	return false;
-}
