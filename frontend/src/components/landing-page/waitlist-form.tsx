@@ -112,11 +112,13 @@ export function WaitlistForm() {
 				<div
 					className={`overflow-hidden transition-all duration-300 ease-in-out
 						${formState.status === "idle" ? "max-h-0 opacity-0" : "max-h-12 opacity-100"}`}
+					data-testid="waitlist-form-status"
 				>
 					<p
 						className={`w-full px-1 text-sm transition-all duration-300 ease-in-out
 						${formState.status === "idle" ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}
 						${getStatusTextColor(formState.status)}`}
+						data-testid="waitlist-form-message"
 					>
 						{formState.status === "loading" ? (
 							<span className="flex items-center">
