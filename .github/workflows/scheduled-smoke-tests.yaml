@@ -19,6 +19,20 @@ jobs:
   smoke-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: grantflow
+          POSTGRES_USER: grantflow
+          POSTGRES_PASSWORD: grantflow
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     env:
       DEBUG: "True"
       DISCORD_WEBHOOK_URL: "https://discord.com/api/webhooks/1389591048962969661/h7QTWNUUPRsL1HwrhfJx15VmiDKIU0mR_SgOvdTMEQbn9eyuZ0XO6mDtG0Q0p6iFYYyY"
