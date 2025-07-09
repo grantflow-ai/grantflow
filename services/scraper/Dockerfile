@@ -42,21 +42,20 @@ ENV PYTHONUNBUFFERED=1 \
     APP="services.scraper.src.main:app" \
     PLAYWRIGHT_BROWSERS_PATH="/app/.cache/ms-playwright"
 
+# Install Playwright system dependencies first (as root)
+RUN /app/.venv/bin/python -m playwright install-deps chromium
+
 # Create cache directory with proper permissions
 RUN mkdir -p /app/.cache/ms-playwright && chown -R appuser:appuser /app/.cache
 
-# Switch to appuser for Playwright installation
+# Switch to appuser for browser installation
 USER appuser
 
-# Install Playwright browsers as appuser
-RUN PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright /app/.venv/bin/python -m playwright install chromium
+# Install Playwright browsers as appuser with explicit path
+# Install both chromium and chromium-headless-shell to ensure compatibility
+RUN /app/.venv/bin/python -m playwright install chromium chromium-headless-shell
 
-# Switch back to root for system dependencies
-USER root
+# Verify Playwright installation
+RUN /app/.venv/bin/python -c "from playwright.sync_api import sync_playwright; print('Playwright import successful')"
 
-# Install Playwright system dependencies
-RUN /app/.venv/bin/python -m playwright install-deps chromium
-
-# Switch back to appuser for runtime
-USER appuser
 CMD ["sh", "-c", "uvicorn $APP --host 0.0.0.0 --log-level info"]
