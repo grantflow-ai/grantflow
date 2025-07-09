@@ -1,16 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { dismissWelcomeModal } from "./helpers/dismiss-welcome-modal";
 
 test.describe("Dashboard with Mock API", () => {
 	test.beforeEach(async ({ page }) => {
 		// Navigate to projects page which renders the dashboard
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		// Verify we're on the dashboard
 		await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
@@ -144,12 +141,8 @@ test.describe("Project Creation Flow", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 	});
@@ -201,12 +194,8 @@ test.describe("Dashboard Navigation", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 	});
