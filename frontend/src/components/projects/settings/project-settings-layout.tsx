@@ -52,6 +52,7 @@ export function ProjectSettingsLayout({ children, projectId, userRole = UserRole
 										? "font-semibold border-b-[3px] border-primary font-heading"
 										: "hover:text-text-secondary",
 								)}
+								data-testid={`settings-tab-${tab.href.split("/").pop()}`}
 								href={tab.href}
 								key={tab.href}
 							>

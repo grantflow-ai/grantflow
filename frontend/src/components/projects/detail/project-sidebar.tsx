@@ -85,10 +85,13 @@ export function ProjectSidebar({
 	}
 
 	return (
-		<div className="flex h-full w-[240px] flex-col bg-[#faf9fb] border-r border-[#e1dfeb]">
+		<div
+			className="flex h-full w-[240px] flex-col bg-[#faf9fb] border-r border-[#e1dfeb]"
+			data-testid="project-sidebar"
+		>
 			{}
 			<div className="flex items-center justify-between px-4 py-4">
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-2" data-testid="sidebar-project-name">
 					<div className="size-8 rounded bg-[#1e13f8] flex items-center justify-center">
 						<span className="text-white font-bold text-sm">G</span>
 					</div>
@@ -109,6 +112,7 @@ export function ProjectSidebar({
 			<div className="px-4 pb-4">
 				<button
 					className="flex items-center justify-center gap-2 w-full rounded bg-[#1e13f8] px-4 py-2 text-white font-['Source_Sans_Pro'] text-[14px] hover:bg-[#1710d4] transition-colors"
+					data-testid="sidebar-new-application-button"
 					disabled={isCreatingApplication}
 					onClick={onCreateApplication}
 					type="button"
@@ -133,7 +137,7 @@ export function ProjectSidebar({
 				</Link>
 
 				{}
-				<div className="mt-4">
+				<div className="mt-4" data-testid="sidebar-applications-section">
 					<button
 						className="flex w-full items-center justify-between px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors"
 						onClick={() => {
@@ -183,6 +187,7 @@ export function ProjectSidebar({
 				<div className="mt-4">
 					<button
 						className="flex w-full items-center justify-between px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors"
+						data-testid="project-settings-button"
 						onClick={() => {
 							setIsSettingsOpen(!isSettingsOpen);
 						}}
@@ -253,6 +258,7 @@ export function ProjectSidebar({
 			<div className="border-t border-[#e1dfeb] p-4 space-y-3">
 				<button
 					className="flex w-full items-center gap-3 text-[#636170] hover:text-[#2e2d36] transition-colors"
+					data-testid="support-button"
 					type="button"
 				>
 					<HelpCircle className="size-5" />
@@ -260,6 +266,7 @@ export function ProjectSidebar({
 				</button>
 				<button
 					className="flex w-full items-center gap-3 text-[#636170] hover:text-[#2e2d36] transition-colors"
+					data-testid="logout-button"
 					onClick={handleLogout}
 					type="button"
 				>

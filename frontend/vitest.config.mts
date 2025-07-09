@@ -30,8 +30,6 @@ export default defineConfig({
 			reportsDirectory: "./coverage",
 		},
 		environment: "jsdom",
-		globals: true,
-		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
 		exclude: [
 			"tests/e2e/**",
 			"**/node_modules/**",
@@ -39,6 +37,8 @@ export default defineConfig({
 			"**/.{idea,git,cache,output,temp}/**",
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*"
 		],
+		globals: true,
+		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
