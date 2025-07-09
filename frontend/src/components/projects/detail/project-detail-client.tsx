@@ -52,21 +52,31 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 	const [showMenu, setShowMenu] = useState(false);
 
 	return (
-		<div className="relative flex flex-col gap-4 rounded-lg bg-white border border-[#e1dfeb] p-6">
+		<div
+			className="relative flex flex-col gap-4 rounded-lg bg-white border border-[#e1dfeb] p-6"
+			data-testid="application-card"
+		>
 			{}
 			<div className="flex items-start justify-between">
-				<div className={`flex items-center gap-2 rounded px-2 py-1 ${status.color}`}>
+				<div
+					className={`flex items-center gap-2 rounded px-2 py-1 ${status.color}`}
+					data-testid="application-status"
+				>
 					<div className="size-2 rounded-full bg-white" />
 					<span className={`font-['Source_Sans_Pro'] text-[12px] font-medium ${status.textColor}`}>
 						{status.label}
 					</span>
-					<span className={`font-['Source_Sans_Pro'] text-[10px] ${status.textColor}`}>
+					<span
+						className={`font-['Source_Sans_Pro'] text-[10px] ${status.textColor}`}
+						data-testid="application-last-edited"
+					>
 						Last edited {formatDate(application.updated_at)}
 					</span>
 				</div>
 				<div className="relative">
 					<button
 						className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36]"
+						data-testid="application-menu-trigger"
 						onBlur={() =>
 							setTimeout(() => {
 								setShowMenu(false);
@@ -80,9 +90,13 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 						<MoreVertical className="size-4" />
 					</button>
 					{showMenu && (
-						<div className="absolute right-0 top-8 bg-white border border-[#e1dfeb] rounded-lg shadow-lg z-10 py-1 min-w-[120px]">
+						<div
+							className="absolute right-0 top-8 bg-white border border-[#e1dfeb] rounded-lg shadow-lg z-10 py-1 min-w-[120px]"
+							data-testid="application-menu"
+						>
 							<button
 								className="flex items-center gap-2 w-full px-3 py-2 text-left font-['Source_Sans_Pro'] text-[14px] text-[#d32f2f] hover:bg-[#faf9fb] transition-colors"
+								data-testid="application-delete-button"
 								onClick={() => {
 									onDelete(application.id);
 									setShowMenu(false);
@@ -100,7 +114,10 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 			{}
 			<div className="flex items-center gap-3">
 				<AvatarGroup maxVisible={1} size="sm" users={applicationCardUsers} />
-				<h3 className="font-['Source_Sans_Pro'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
+				<h3
+					className="font-['Source_Sans_Pro'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]"
+					data-testid="application-title"
+				>
 					{application.title}
 				</h3>
 			</div>
@@ -115,6 +132,7 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 			{}
 			<button
 				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors cursor-pointer"
+				data-testid="application-open-button"
 				onClick={() => {
 					onOpen(application.id, application.title);
 				}}
@@ -237,7 +255,10 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 			{}
 			<div className="flex-1 flex flex-col">
 				{}
-				<div className="flex items-center justify-between bg-white px-6 py-4 border-b border-[#e1dfeb]">
+				<div
+					className="flex items-center justify-between bg-white px-6 py-4 border-b border-[#e1dfeb]"
+					data-testid="project-header"
+				>
 					<div className="flex items-center gap-3">
 						<button className="text-[#636170] hover:text-[#2e2d36]" type="button">
 							←
@@ -246,6 +267,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 							{isEditingTitle ? (
 								<input
 									className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36] bg-transparent border-b border-[#1e13f8] outline-none"
+									data-testid="project-title-input"
 									onBlur={() => {
 										setIsEditingTitle(false);
 									}}
@@ -261,12 +283,16 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 									value={projectTitle}
 								/>
 							) : (
-								<h1 className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]">
+								<h1
+									className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]"
+									data-testid="project-title"
+								>
 									{projectTitle}
 								</h1>
 							)}
 							<button
 								className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36]"
+								data-testid="edit-project-title-button"
 								onClick={() => {
 									setIsEditingTitle(true);
 								}}
@@ -276,7 +302,9 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 							</button>
 						</div>
 					</div>
-					<AvatarGroup size="md" users={teamMembers} />
+					<div data-testid="sidebar-team-section">
+						<AvatarGroup size="md" users={teamMembers} />
+					</div>
 				</div>
 
 				{}
@@ -285,6 +313,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 						<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#636170]" />
 						<input
 							className="w-full rounded-lg border border-[#e1dfeb] bg-white py-2 pl-10 pr-4 font-['Source_Sans_Pro'] text-[14px] placeholder-[#636170] outline-none focus:border-[#1e13f8]"
+							data-testid="application-search-input"
 							onChange={(e) => {
 								setSearchQuery(e.target.value);
 							}}
@@ -305,7 +334,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				</div>
 
 				{}
-				<div className="flex-1 overflow-auto px-6 pb-6">
+				<div className="flex-1 overflow-auto px-6 pb-6" data-testid="applications-section">
 					{isLoading && (
 						<div className="flex items-center justify-center h-64">
 							<div className="text-[#636170]">Loading applications...</div>
@@ -324,9 +353,10 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 						</div>
 					)}
 					{!isLoading && applications.length === 0 && (
-						<div className="flex items-center justify-center h-full">
+						<div className="flex items-center justify-center h-full" data-testid="empty-applications-state">
 							<button
 								className="flex flex-col items-center justify-center w-[300px] h-[200px] bg-white rounded-lg border-2 border-dashed border-[#e1dfeb] hover:border-[#1e13f8] transition-colors cursor-pointer"
+								data-testid="empty-state-new-application-button"
 								disabled={isCreatingApplication}
 								onClick={handleCreateApplication}
 								type="button"

@@ -36,6 +36,13 @@ export const test = base.extend({
 			// Set up faster mock API delays for testing
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			(globalThis as any).__MOCK_API_DELAY__ = 100; // 100ms instead of 3000ms
+
+			// Clear mock stores to ensure consistent test state
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			if ((globalThis as any).clearAllMockStores) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(globalThis as any).clearAllMockStores();
+			}
 		});
 
 		// Use the page

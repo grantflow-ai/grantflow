@@ -230,7 +230,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				{canInvite && (
 					<button
 						className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm font-body"
-						data-testid="invite-button"
+						data-testid="invite-member-button"
 						onClick={() => {
 							setIsInviteModalOpen(true);
 						}}
@@ -258,11 +258,11 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				</div>
 
 				{}
-				<div className="divide-y divide-border-primary">
+				<div className="divide-y divide-border-primary" data-testid="members-list">
 					{allMembers.map((member) => (
 						<div
 							className="px-6 py-4 hover:bg-surface-secondary transition-colors"
-							data-testid={`member-row-${member.firebaseUid || member.email}`}
+							data-testid="member-item"
 							key={member.firebaseUid || member.email}
 						>
 							<div className="grid grid-cols-5 gap-4 items-center">
