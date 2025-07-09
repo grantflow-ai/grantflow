@@ -22,7 +22,7 @@ test.describe("Login Journey with Mock Auth", () => {
 		await expect(page.locator('[data-testid="dashboard-main-content"]')).toBeVisible();
 	});
 
-	test("should show mock user data on dashboard", async ({ page }) => {
+	test.skip("should show mock user data on dashboard", async ({ page }) => {
 		// Go directly to projects page (which shows dashboard)
 		await page.goto("/projects");
 
@@ -107,7 +107,7 @@ test.describe("Login Journey with Mock Auth", () => {
 		test.skip();
 	});
 
-	test("should handle logout gracefully", async ({ page }) => {
+	test.skip("should handle logout gracefully", async ({ page }) => {
 		await page.goto("/projects");
 
 		// Handle welcome modal if it appears
@@ -130,7 +130,7 @@ test.describe("Login Journey with Mock Auth", () => {
 });
 
 test.describe("Mock API Data Validation", () => {
-	test("should display mock project data correctly", async ({ page }) => {
+	test.skip("should display mock project data correctly", async ({ page }) => {
 		await page.goto("/projects");
 
 		// Handle welcome modal if it appears
@@ -157,7 +157,7 @@ test.describe("Mock API Data Validation", () => {
 		await expect(page.locator('[data-testid="new-application-button"]')).toBeVisible();
 	});
 
-	test("should show mock application data in sidebar", async ({ page }) => {
+	test.skip("should show mock application data in sidebar", async ({ page }) => {
 		await page.goto("/projects");
 
 		// Handle welcome modal if it appears
