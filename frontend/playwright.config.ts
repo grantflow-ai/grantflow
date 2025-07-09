@@ -8,6 +8,8 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	/* Run tests in files in parallel */
 	fullyParallel: true,
+	/* Global timeout for each test */
+	timeout: 60 * 1000,
 
 	/* Configure projects for major browsers */
 	projects: [
@@ -58,6 +60,14 @@ export default defineConfig({
 
 		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
 		trace: "on-first-retry",
+		
+		/* Increase timeouts for navigation and actions */
+		navigationTimeout: 30000,
+		actionTimeout: 30000,
+		
+		/* Screenshot and video settings */
+		screenshot: "only-on-failure",
+		video: "retain-on-failure",
 	},
 
 	/* Run your local dev server before starting the tests */

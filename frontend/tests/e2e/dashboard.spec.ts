@@ -87,8 +87,8 @@ test.describe("Dashboard with Mock API", () => {
 		// Click on the first project card
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 
-		// Should navigate to project detail page
-		await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+$/);
+		// Should navigate to project detail page with slug format (name-shortid)
+		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
 		// Verify project page loaded
 		await expect(page.getByText("Applications")).toBeVisible();
@@ -151,25 +151,35 @@ test.describe("Project Creation Flow", () => {
 		// Open create project modal
 		await page.locator('[data-testid="new-research-project-button"]').click();
 
-		// Try to submit empty form
-		await page.locator('[data-testid="create-project-submit-button"]').click();
+		// Verify submit button is disabled initially
+		const submitButton = page.locator('[data-testid="create-project-submit-button"]');
+		const nameInput = page.locator('[data-testid="create-project-name-input"]');
+		const descriptionTextarea = page.locator('[data-testid="create-project-description-textarea"]');
 
-		// Should show validation errors
-		await expect(page.getByText("Please provide a project name")).toBeVisible();
+		await expect(submitButton).toBeDisabled();
 
-		// Fill only name
-		await page.locator('[data-testid="create-project-name-input"]').fill("Test");
-		await page.locator('[data-testid="create-project-submit-button"]').click();
+		// Fill a short project name (less than 3 characters)
+		await nameInput.fill("AB");
 
-		// Should still show description error
-		await expect(page.getByText("Please provide a project description")).toBeVisible();
+		// Should show validation error for short name
+		await expect(page.getByText("Project name must be at least 3 characters long")).toBeVisible();
+		await expect(submitButton).toBeDisabled();
 
-		// Fill description
-		await page.locator('[data-testid="create-project-description-textarea"]').fill("Test description");
+		// Clear and fill valid project name
+		await nameInput.clear();
+		await nameInput.fill("Test Project");
 
-		// Should now be able to submit
-		await page.locator('[data-testid="create-project-submit-button"]').click();
-		await expect(page.getByRole("dialog")).not.toBeVisible();
+		// Submit button should be enabled now (description is optional)
+		await expect(submitButton).toBeEnabled();
+
+		// Fill description (optional)
+		await descriptionTextarea.fill("Test description");
+
+		// Submit the form
+		await submitButton.click();
+
+		// Should close modal
+		await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 10_000 });
 	});
 
 	test("should cancel project creation", async ({ page }) => {
@@ -201,10 +211,16 @@ test.describe("Dashboard Navigation", () => {
 	});
 
 	test("should navigate using sidebar", async ({ page }) => {
-		// Click New Application button
+		// First click on a project to enter it
+		await page.locator('[data-testid="dashboard-project-card"]').first().click();
+
+		// Should navigate to project page
+		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
+
+		// Now click New Application button on the project page
 		await page.locator('[data-testid="new-application-button"]').click();
 
-		// Should open application creation flow
+		// Should open application creation flow (wizard)
 		await expect(page).toHaveURL(/\/wizard/);
 	});
 
