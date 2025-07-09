@@ -30,18 +30,14 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
-
         if isinstance(ASGIConnection, Request) and connection.method == "OPTIONS":
             return AuthenticationResult(user=None, auth=None)
-
 
         if any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):
             return AuthenticationResult(user=None, auth=None)
 
-
         if connection.url.path.startswith(DEV_BYPASS_PREFIX):
             if get_env("ENABLE_DEV_BYPASS", False):
-
                 return AuthenticationResult(user=None, auth="dev-bypass-user")
             raise NotAuthorizedException("Dev bypass not enabled")
 
