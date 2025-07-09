@@ -19,7 +19,7 @@ test.describe("Application Wizard with Mock API", () => {
 
 		// Click on first project to enter it
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
-		await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+$/);
+		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
 		// Click New Application button
 		await page.locator('[data-testid="new-application-button"]').click();
@@ -141,7 +141,7 @@ test.describe("Application Wizard with Mock API", () => {
 		await page.locator('[data-testid="exit-button"]').click();
 
 		// Should navigate back to project page
-		await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+$/);
+		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
 
 		// Should see the draft application in the list
 		await expect(page.getByText("Draft Application")).toBeVisible();
