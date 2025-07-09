@@ -32,6 +32,13 @@ export default defineConfig({
 		environment: "jsdom",
 		globals: true,
 		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
+		exclude: [
+			"tests/e2e/**",
+			"**/node_modules/**",
+			"**/dist/**",
+			"**/.{idea,git,cache,output,temp}/**",
+			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*"
+		],
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},

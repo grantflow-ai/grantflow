@@ -20,6 +20,9 @@ describe("WelcomeModal", () => {
 		// Reset mocks
 		vi.clearAllMocks();
 
+		// Mock NODE_ENV to not be 'test' so modal shows
+		vi.stubEnv("NODE_ENV", "development");
+
 		// Mock the store hook
 		vi.mocked(useUserStore).mockReturnValue({
 			dismissWelcomeModal: dismissWelcomeModalMock,
