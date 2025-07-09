@@ -174,6 +174,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 									<AppButton
 										className="px-4 py-2"
 										data-testid="new-research-project-button"
+										onClick={() => {
+											setShowCreateModal(true);
+										}}
 										variant="primary"
 									>
 										<p className="font-normal text-base">+ New Research Project</p>

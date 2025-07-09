@@ -8,7 +8,7 @@ import { z } from "zod";
 import { createProject } from "@/actions/project";
 import { AppCard, AppCardContent, AppInput, AppTextarea } from "@/components/app";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { log } from "@/utils/logger";
 
 const projectSchema = z.object({
@@ -63,6 +63,7 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 											placeholder="Project Name"
 										/>
 									</FormControl>
+									<FormMessage />
 								</FormItem>
 							)}
 						/>
@@ -80,17 +81,30 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 											placeholder="Project Description"
 										/>
 									</FormControl>
+									<FormMessage />
 								</FormItem>
 							)}
 						/>
-						<SubmitButton
-							className="w-full"
-							data-testid="create-project-submit-button"
-							disabled={!form.formState.isValid}
-							isLoading={form.formState.isSubmitting}
-						>
-							Create Project
-						</SubmitButton>
+						<div className="flex gap-4">
+							<button
+								className="flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+								data-testid="cancel-button"
+								onClick={() => {
+									closeModal();
+								}}
+								type="button"
+							>
+								Cancel
+							</button>
+							<SubmitButton
+								className="flex-1"
+								data-testid="create-project-submit-button"
+								disabled={!form.formState.isValid}
+								isLoading={form.formState.isSubmitting}
+							>
+								Create Project
+							</SubmitButton>
+						</div>
 					</form>
 				</Form>
 			</AppCardContent>
