@@ -293,6 +293,12 @@ export default eslintTS.config(
 		},
 	},
 	{
+		files: ["**/tests/e2e/**/*.{ts,tsx}"],
+		rules: {
+			"react-hooks/rules-of-hooks": "off",
+		},
+	},
+	{
 		files: ["**/dev-*.{ts,tsx}"],
 		rules: {
 			"sonarjs/cognitive-complexity": "off",
