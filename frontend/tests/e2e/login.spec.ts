@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { dismissWelcomeModal } from "./helpers/dismiss-welcome-modal";
 
 test.describe("Login Journey with Mock Auth", () => {
 	test("should bypass login and redirect to dashboard", async ({ page }) => {
@@ -10,13 +11,8 @@ test.describe("Login Journey with Mock Auth", () => {
 
 		// Current URL is available via page.url() if needed for debugging
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-			await laterButton.click();
-			// Wait for modal to close
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		// Check if we're on the dashboard or projects page
 		const dashboardHeading = page.getByRole("heading", { name: "Dashboard" });
