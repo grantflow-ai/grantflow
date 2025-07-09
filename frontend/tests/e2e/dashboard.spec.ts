@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
 import { dismissWelcomeModal } from "./helpers/dismiss-welcome-modal";
+import { expect, test } from "./test-setup";
 
 test.describe("Dashboard with Mock API", () => {
 	test.beforeEach(async ({ page }) => {

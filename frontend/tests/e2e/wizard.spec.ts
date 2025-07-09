@@ -1,6 +1,6 @@
 import path from "node:path";
-import { expect, test } from "@playwright/test";
 import { dismissWelcomeModal } from "./helpers/dismiss-welcome-modal";
+import { expect, test } from "./test-setup";
 
 // Helper to get test file paths
 const getTestFilePath = (filename: string) => {
