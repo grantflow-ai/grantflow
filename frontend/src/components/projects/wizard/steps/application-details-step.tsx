@@ -29,6 +29,7 @@ export function ApplicationDetailsStep({
 
 	const [draftTitle, setDraftTitle] = useState("");
 	const [showError, setShowError] = useState(false);
+	const [attemptedContinue, setAttemptedContinue] = useState(false);
 
 	useEffect(() => {
 		if (applicationTitle !== undefined) {
@@ -36,11 +37,29 @@ export function ApplicationDetailsStep({
 		}
 	}, [applicationTitle]);
 
+	useEffect(() => {
+		// Listen for validation attempts
+		const handleValidation = () => {
+			if (draftTitle.trim().length < 10) {
+				setShowError(true);
+				setAttemptedContinue(true);
+			}
+		};
+
+		// Add event listener for continue button clicks
+		const continueButton = document.querySelector('[data-testid="continue-button"]');
+		continueButton?.addEventListener("click", handleValidation);
+
+		return () => {
+			continueButton?.removeEventListener("click", handleValidation);
+		};
+	}, [draftTitle]);
+
 	const handleInputChange = (value: string) => {
 		setDraftTitle(value);
 		handleTitleChange(value);
-		// Show error if title is empty or too short when user has typed something
-		if (value.length > 0 && value.trim().length < 10) {
+		// Show error if title is too short and user has attempted to continue or typed something
+		if ((attemptedContinue || value.length > 0) && value.trim().length < 10) {
 			setShowError(true);
 		} else {
 			setShowError(false);
@@ -109,7 +128,9 @@ function UploadPane({
 						/>
 						{showError && (
 							<p className="text-red-500 text-sm mt-1">
-								Title is required and must be at least 10 characters
+								{draftTitle.trim().length === 0
+									? "Title is required"
+									: "Title is required and must be at least 10 characters"}
 							</p>
 						)}
 					</div>

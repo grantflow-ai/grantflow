@@ -1,5 +1,6 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { dismissWelcomeModal } from "./helpers/dismiss-welcome-modal";
 
 // Helper to get test file paths
 const getTestFilePath = (filename: string) => {
@@ -11,12 +12,8 @@ test.describe("Application Wizard with Mock API", () => {
 		// Navigate to projects and create a new application
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
@@ -34,7 +31,7 @@ test.describe("Application Wizard with Mock API", () => {
 
 	test("should navigate through wizard steps", async ({ page }) => {
 		// Step 1: Application Details
-		await expect(page.locator('[data-testid="step-0"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-0 step-active"]')).toBeVisible();
 		await expect(page.locator('[data-testid="application-details-step"]')).toBeVisible();
 
 		// Fill application title
@@ -46,31 +43,31 @@ test.describe("Application Wizard with Mock API", () => {
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Step 2: Application Structure
-		await expect(page.locator('[data-testid="step-1"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-1 step-active"]')).toBeVisible();
 
 		// Continue to next step
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Step 3: Knowledge Base
-		await expect(page.locator('[data-testid="step-2"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-2 step-active"]')).toBeVisible();
 
 		// Continue to next step
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Step 4: Research Plan
-		await expect(page.locator('[data-testid="step-3"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-3 step-active"]')).toBeVisible();
 
 		// Continue to next step
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Step 5: Research Deep Dive
-		await expect(page.locator('[data-testid="step-4"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-4 step-active"]')).toBeVisible();
 
 		// Continue to final step
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Step 6: Generate and Complete
-		await expect(page.locator('[data-testid="step-5"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-5 step-active"]')).toBeVisible();
 	});
 
 	test("should handle file uploads in Application Details step", async ({ page }) => {
@@ -97,7 +94,7 @@ test.describe("Application Wizard with Mock API", () => {
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Should move to next step
-		await expect(page.locator('[data-testid="step-1"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-1 step-active"]')).toBeVisible();
 	});
 
 	test("should handle URL input in Application Details step", async ({ page }) => {
@@ -115,7 +112,7 @@ test.describe("Application Wizard with Mock API", () => {
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Should move to next step
-		await expect(page.locator('[data-testid="step-1"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-1 step-active"]')).toBeVisible();
 	});
 
 	test("should navigate back through wizard steps", async ({ page }) => {
@@ -124,13 +121,13 @@ test.describe("Application Wizard with Mock API", () => {
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Now on step 2
-		await expect(page.locator('[data-testid="step-1"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-1 step-active"]')).toBeVisible();
 
 		// Click back button
 		await page.locator('[data-testid="back-button"]').click();
 
 		// Should be back on step 1
-		await expect(page.locator('[data-testid="step-0"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-0 step-active"]')).toBeVisible();
 
 		// Title should still be filled
 		await expect(page.locator('[data-testid="application-title-textarea"]')).toHaveValue("Test Navigation");
@@ -156,12 +153,8 @@ test.describe("Knowledge Base Step", () => {
 		// Navigate to Knowledge Base step quickly
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 		await page.locator('[data-testid="new-application-button"]').click();
@@ -171,7 +164,7 @@ test.describe("Knowledge Base Step", () => {
 		await page.locator('[data-testid="continue-button"]').click(); // To step 2
 		await page.locator('[data-testid="continue-button"]').click(); // To step 3 (Knowledge Base)
 
-		await expect(page.locator('[data-testid="step-2"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-2 step-active"]')).toBeVisible();
 	});
 
 	test("should upload multiple files to knowledge base", async ({ page }) => {
@@ -243,12 +236,8 @@ test.describe("Research Plan Step", () => {
 		// Navigate to Research Plan step
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 		await page.locator('[data-testid="new-application-button"]').click();
@@ -259,7 +248,7 @@ test.describe("Research Plan Step", () => {
 		await page.locator('[data-testid="continue-button"]').click(); // To step 3
 		await page.locator('[data-testid="continue-button"]').click(); // To step 4 (Research Plan)
 
-		await expect(page.locator('[data-testid="step-3"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-3 step-active"]')).toBeVisible();
 	});
 
 	test("should display research plan form fields", async ({ page }) => {
@@ -279,7 +268,7 @@ test.describe("Research Plan Step", () => {
 		await page.locator('[data-testid="continue-button"]').click();
 
 		// Should move to Research Deep Dive step
-		await expect(page.locator('[data-testid="step-4"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-4 step-active"]')).toBeVisible();
 	});
 
 	test("should trigger autofill for research plan", async ({ page }) => {
@@ -304,12 +293,8 @@ test.describe("Generate and Complete Step", () => {
 		// Navigate to final step quickly
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 		await page.locator('[data-testid="new-application-button"]').click();
@@ -324,7 +309,7 @@ test.describe("Generate and Complete Step", () => {
 		}
 
 		// Should be on Generate and Complete step
-		await expect(page.locator('[data-testid="step-5"][data-testid="step-active"]')).toBeVisible();
+		await expect(page.locator('[data-testid="step-5 step-active"]')).toBeVisible();
 
 		// Look for generate button
 		const generateButton = page.getByRole("button", { name: /generate/i });
@@ -345,12 +330,8 @@ test.describe("Wizard Error Handling", () => {
 	test("should show validation errors", async ({ page }) => {
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 		await page.locator('[data-testid="new-application-button"]').click();
@@ -372,12 +353,8 @@ test.describe("Wizard Error Handling", () => {
 	test("should handle file upload errors", async ({ page }) => {
 		await page.goto("/projects");
 
-		// Handle welcome modal if it appears
-		const laterButton = page.getByRole("button", { name: "Later" });
-		if (await laterButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-			await laterButton.click();
-			await page.waitForTimeout(500);
-		}
+		// Handle welcome modal
+		await dismissWelcomeModal(page);
 
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 		await page.locator('[data-testid="new-application-button"]').click();
