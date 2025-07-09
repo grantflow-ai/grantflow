@@ -28,6 +28,7 @@ export function ApplicationDetailsStep({
 	const grantTemplateId = useApplicationStore((state) => state.application?.grant_template?.id);
 
 	const [draftTitle, setDraftTitle] = useState("");
+	const [showError, setShowError] = useState(false);
 
 	useEffect(() => {
 		if (applicationTitle !== undefined) {
@@ -38,6 +39,12 @@ export function ApplicationDetailsStep({
 	const handleInputChange = (value: string) => {
 		setDraftTitle(value);
 		handleTitleChange(value);
+		// Show error if title is empty or too short when user has typed something
+		if (value.length > 0 && value.trim().length < 10) {
+			setShowError(true);
+		} else {
+			setShowError(false);
+		}
 	};
 
 	usePollingCleanup();
@@ -48,6 +55,7 @@ export function ApplicationDetailsStep({
 				draftTitle={draftTitle}
 				grantTemplateId={grantTemplateId}
 				handleInputChange={handleInputChange}
+				showError={showError}
 			/>
 
 			<ApplicationPreview
@@ -64,10 +72,12 @@ function UploadPane({
 	draftTitle,
 	grantTemplateId,
 	handleInputChange,
+	showError,
 }: {
 	draftTitle: string;
 	grantTemplateId?: string;
 	handleInputChange: (value: string) => void;
+	showError: boolean;
 }) {
 	return (
 		<div className="w-1/2 md:w-1/3 lg:w-1/4 h-full flex flex-col">
@@ -97,6 +107,11 @@ function UploadPane({
 							testId="application-title-textarea"
 							value={draftTitle}
 						/>
+						{showError && (
+							<p className="text-red-500 text-sm mt-1">
+								Title is required and must be at least 10 characters
+							</p>
+						)}
 					</div>
 
 					<div className="space-y-5">
