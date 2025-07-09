@@ -4,6 +4,7 @@
  */
 
 import { isMockAPIEnabled } from "./client";
+import { clearAllMockStores } from "./handlers";
 import { registerMockHandlers } from "./register";
 import { initializeWebSocketMocking } from "./websocket";
 
@@ -19,6 +20,11 @@ export function initializeMockAPI(): void {
 	initializeWebSocketMocking();
 
 	registerMockHandlers();
+
+	// Make clearAllMockStores available globally for tests
+	if (typeof globalThis.window !== "undefined") {
+		(globalThis as any).clearAllMockStores = clearAllMockStores; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+	}
 }
 
 /**
