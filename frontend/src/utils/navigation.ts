@@ -129,9 +129,8 @@ export function generateSlug(name: string): string {
 			.replaceAll(/[^a-z0-9\s-]/g, "")
 			.replaceAll(/\s+/g, "-")
 			.replaceAll(/-+/g, "-")
-			.replaceAll(/^-+/g, "")
 			// eslint-disable-next-line sonarjs/slow-regex
-			.replaceAll(/-+$/g, "")
+			.replaceAll(/(^-+|-+$)/g, "")
 			.slice(0, 50)
 	);
 }
