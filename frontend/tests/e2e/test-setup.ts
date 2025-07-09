@@ -31,6 +31,13 @@ export const test = base.extend({
 			localStorage.setItem("user-store", JSON.stringify(userStore));
 		});
 
+		// Configure mock API for faster tests
+		await page.addInitScript(() => {
+			// Set up faster mock API delays for testing
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			(globalThis as any).__MOCK_API_DELAY__ = 100; // 100ms instead of 3000ms
+		});
+
 		// Use the page
 		await use(page);
 	},
