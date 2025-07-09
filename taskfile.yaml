@@ -281,6 +281,27 @@ tasks:
     cmds:
       - pnpm run storybook
 
+  frontend:test:e2e:
+    desc: Run frontend end-to-end tests with Playwright
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm test:e2e
+
+  frontend:test:e2e:mock:
+    desc: Run frontend e2e tests with mock API
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm test:e2e:mock
+
+  frontend:test:e2e:ui:
+    desc: Run frontend e2e tests with Playwright UI
+    dir: "{{.FRONTEND_DIR}}"
+    dotenv: [".env"]
+    cmds:
+      - pnpm test:e2e:ui
+
   # ==============================================================================
   # BACKEND COMMANDS
   # ==============================================================================
