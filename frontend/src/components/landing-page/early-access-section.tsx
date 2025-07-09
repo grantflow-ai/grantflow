@@ -170,6 +170,7 @@ export function EarlyAccessSection() {
 		<MotionSection
 			aria-label="early-access-section"
 			className="relative bg-white"
+			data-testid="early-access-section"
 			id="waitlist"
 			initial="hidden"
 			variants={sectionVariants}

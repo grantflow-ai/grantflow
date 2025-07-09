@@ -97,9 +97,7 @@ test.describe("Dashboard with Mock API", () => {
 	test("should show empty state when no projects", async ({ page }) => {
 		// Set mock API to use empty scenario
 		await page.addInitScript(() => {
-			 
 			if ((globalThis as any).getMockAPIClient) {
-				 
 				(globalThis as any).getMockAPIClient().setScenario("empty");
 			}
 		});
@@ -137,7 +135,7 @@ test.describe("Dashboard with Mock API", () => {
 		// The hardcoded statuses in NavMain component
 		await expect(page.getByText("Generating")).toBeVisible();
 		await expect(page.getByText("In Progress")).toBeVisible();
-		await expect(page.getByText("Working Draft")).toBeVisible();
+		await expect(page.getByText("Working Draft").first()).toBeVisible();
 	});
 });
 

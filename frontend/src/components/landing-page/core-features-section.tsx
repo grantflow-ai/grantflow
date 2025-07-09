@@ -28,7 +28,11 @@ const CORE_FEATURES = [
 
 export function CoreFeaturesSection() {
 	return (
-		<section aria-label="core-features-section" className="relative w-full bg-white overflow-hidden">
+		<section
+			aria-label="core-features-section"
+			className="relative w-full bg-white overflow-hidden"
+			data-testid="core-features-section"
+		>
 			<div className="absolute inset-0 z-0">
 				<Image
 					alt="background"

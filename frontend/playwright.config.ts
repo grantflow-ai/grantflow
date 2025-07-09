@@ -8,8 +8,6 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	/* Run tests in files in parallel */
 	fullyParallel: true,
-	/* Global timeout for each test */
-	timeout: 60 * 1000,
 
 	/* Configure projects for major browsers */
 	projects: [
@@ -53,20 +51,22 @@ export default defineConfig({
 	/* Retry on CI only */
 	retries: process.env.CI ? 2 : 0,
 	testDir: "./tests/e2e",
+	/* Global timeout for each test */
+	timeout: 60 * 1000,
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 	use: {
+		actionTimeout: 30_000,
 		/* Base URL to use in actions like `await page.goto('/')`. */
 		baseURL: "http://localhost:3001",
 
-		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-		trace: "on-first-retry",
-		
 		/* Increase timeouts for navigation and actions */
-		navigationTimeout: 30000,
-		actionTimeout: 30000,
-		
+		navigationTimeout: 30_000,
+
 		/* Screenshot and video settings */
 		screenshot: "only-on-failure",
+
+		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+		trace: "on-first-retry",
 		video: "retain-on-failure",
 	},
 
