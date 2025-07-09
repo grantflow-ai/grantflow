@@ -24,7 +24,7 @@ export function PaymentPlans() {
 	return (
 		<div
 			className="bg-preview-bg px-5.5 text-app-black flex flex-col items-center py-20"
-			data-testid="payment-plans-container"
+			data-testid="payment-plans"
 			id="payment-plans"
 		>
 			<h3 className="text-center text-2xl font-medium md:text-4xl">Plans Built for Research Success</h3>
