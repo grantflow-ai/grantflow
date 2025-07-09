@@ -37,7 +37,7 @@ const CONTENT = {
 
 export function BenefitsSection() {
 	return (
-		<section aria-label="benefits-section" className="relative w-full bg-white">
+		<section aria-label="benefits-section" className="relative w-full bg-white" data-testid="benefits-section">
 			<div className="absolute inset-0 z-0">
 				<Image
 					alt="background"

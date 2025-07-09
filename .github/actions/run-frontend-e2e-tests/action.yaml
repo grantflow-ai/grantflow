@@ -1,0 +1,55 @@
+name: "Run Frontend E2E Tests"
+description: "Set up environment and run E2E tests for the frontend"
+
+inputs:
+    timeout:
+        description: "Test timeout in seconds"
+        required: false
+        default: "300"
+
+runs:
+    using: "composite"
+    steps:
+        - name: Install pnpm
+          uses: pnpm/action-setup@v4
+          with:
+              package_json_file: frontend/package.json
+              run_install: false
+
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+              node-version: 22
+              cache: pnpm
+              cache-dependency-path: frontend/pnpm-lock.yaml
+
+        - name: Install Dependencies
+          shell: bash
+          run: cd frontend && pnpm install
+
+        - name: Install Playwright browsers
+          shell: bash
+          run: cd frontend && pnpm exec playwright install --with-deps
+
+        - name: Run E2E Tests
+          shell: bash
+          run: cd frontend && pnpm run test:e2e
+          timeout-minutes: ${{ fromJson(inputs.timeout) / 60 }}
+
+        - name: Upload test results
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+              name: frontend-e2e-test-results
+              path: |
+                  frontend/test-results/
+                  frontend/playwright-report/
+              retention-days: 7
+
+        - name: Upload Playwright report
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+              name: frontend-playwright-report
+              path: frontend/playwright-report/
+              retention-days: 7

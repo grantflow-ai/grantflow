@@ -7,7 +7,7 @@ import { LandingPageScrollButton } from "./scroll-button";
 
 export function HeroBanner() {
 	return (
-		<section className="relative bg-white">
+		<section className="relative bg-white" data-testid="hero-banner">
 			<NavHeader />
 			<AnimatedGradientBackground className="absolute inset-0 z-10" />
 			<BrandPattern

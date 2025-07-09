@@ -204,7 +204,7 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 							<div
 								aria-current={index === currentStepIndex ? "step" : undefined}
 								className={`${isLastStep ? "w-auto flex-initial" : "flex-1"} relative flex flex-col items-center`}
-								data-testid={`step-${index}`}
+								data-testid={`step-${index}${indicatorType === "active" ? " step-active" : ""}`}
 								key={index}
 							>
 								<div className={`flex items-center ${isLastStep ? "" : "w-full"} relative`}>

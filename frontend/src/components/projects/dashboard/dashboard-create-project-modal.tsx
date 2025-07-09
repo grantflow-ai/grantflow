@@ -17,7 +17,7 @@ export function DashboardCreateProjectModal({ isOpen, onClose }: DashboardCreate
 	const router = useRouter();
 
 	return (
-		<BaseModal isOpen={isOpen} onClose={onClose} title="New Research Project">
+		<BaseModal isOpen={isOpen} onClose={onClose} title="Create Project">
 			<CreateProjectForm
 				closeModal={(projectId) => {
 					log.info("[DashboardCreateProjectModal] closeModal called", { projectId });

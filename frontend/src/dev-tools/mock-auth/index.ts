@@ -1,5 +1,4 @@
 import { useUserStore } from "@/stores/user-store";
-import { getMockAuthEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { createMockJwtToken, createMockUser } from "./user-factory";
 
@@ -34,6 +33,9 @@ export function initializeMockAuth(): void {
 	const mockUser = createMockUser();
 	useUserStore.getState().setUser(mockUser);
 
+	// Mark welcome modal as seen to avoid blocking tests
+	useUserStore.getState().dismissWelcomeModal();
+
 	log.info("Mock authentication initialized", {
 		action: "init_mock_auth",
 		provider: mockUser.providerId,
@@ -45,5 +47,9 @@ export function initializeMockAuth(): void {
  * Check if mock authentication is enabled
  */
 export function isMockAuthEnabled(): boolean {
-	return getMockAuthEnabled();
+	const val = process.env.NEXT_PUBLIC_MOCK_AUTH;
+	if (typeof val === "string") {
+		return val.toLowerCase() === "true";
+	}
+	return false;
 }

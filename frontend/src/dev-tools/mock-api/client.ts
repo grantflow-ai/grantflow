@@ -200,8 +200,13 @@ class MockAPIClient {
 	}
 
 	private async simulateDelay(): Promise<void> {
-		if (this.config.delay && this.config.delay > 0) {
-			await new Promise((resolve) => setTimeout(resolve, this.config.delay));
+		// Check for test environment delay override
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const testDelay = typeof globalThis.window !== "undefined" && (globalThis as any).__MOCK_API_DELAY__;
+		const delay = testDelay ?? this.config.delay;
+
+		if (delay && delay > 0) {
+			await new Promise((resolve) => setTimeout(resolve, delay));
 		}
 	}
 }
