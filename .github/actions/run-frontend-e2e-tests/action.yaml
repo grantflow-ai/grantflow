@@ -34,7 +34,6 @@ runs:
         - name: Run E2E Tests
           shell: bash
           run: cd frontend && pnpm run test:e2e
-          timeout-minutes: ${{ fromJson(inputs.timeout) / 60 }}
 
         - name: Upload test results
           if: always()
