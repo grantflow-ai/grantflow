@@ -11,9 +11,9 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 			<SWRProvider>
 				<SidebarProvider>
 					<AppSidebar />
-					<SidebarInset>
-						<div className="flex grow justify-center bg-[#faf9fb]">
-							<div className="w-full">{children}</div>
+					<SidebarInset className="h-screen">
+						<div className="flex h-screen justify-center bg-[#faf9fb]">
+							<div className="flex-1 w-full h-full overflow-hidden">{children}</div>
 							<NotificationContainer />
 						</div>
 					</SidebarInset>
