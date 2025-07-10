@@ -70,7 +70,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.deadlineReminders}
-						data-testid="deadline-reminders-toggle"
+						data-testid="push-notifications-toggle"
 						onChange={() => {
 							handleToggle("deadlineReminders");
 						}}
@@ -94,7 +94,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.collaborationActivity}
-						data-testid="collaboration-activity-toggle"
+						data-testid="weekly-summary-toggle"
 						onChange={() => {
 							handleToggle("collaborationActivity");
 						}}
