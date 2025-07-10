@@ -21,3 +21,10 @@ variable "environment" {
   type        = string
   default     = "staging"
 }
+
+variable "discord_webhook_url" {
+  description = "Discord webhook URL for monitoring alerts"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

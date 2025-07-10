@@ -123,22 +123,44 @@ tasks:
   db:proxy:start:
     desc: Start Cloud SQL Proxy for remote database access
     cmds:
-      - uv run python scripts/cloud_sql_proxy.py start
+      - |
+        if pgrep -f "cloud-sql-proxy.*grantflow-staging" > /dev/null; then
+          echo "Cloud SQL Proxy is already running"
+        else
+          echo "Starting Cloud SQL Proxy..."
+          cloud-sql-proxy grantflow:us-central1:grantflow-staging --port=5432 &
+          sleep 3
+          echo "Cloud SQL Proxy started on 127.0.0.1:5432"
+        fi
 
   db:proxy:stop:
     desc: Stop Cloud SQL Proxy
     cmds:
-      - uv run python scripts/cloud_sql_proxy.py stop
+      - |
+        if pgrep -f "cloud-sql-proxy.*grantflow-staging" > /dev/null; then
+          echo "Stopping Cloud SQL Proxy..."
+          pkill -f "cloud-sql-proxy.*grantflow-staging"
+          echo "Cloud SQL Proxy stopped"
+        else
+          echo "Cloud SQL Proxy is not running"
+        fi
 
   db:proxy:status:
     desc: Check Cloud SQL Proxy status
     cmds:
-      - uv run python scripts/cloud_sql_proxy.py status
+      - |
+        if pgrep -f "cloud-sql-proxy.*grantflow-staging" > /dev/null; then
+          echo "✅ Cloud SQL Proxy is running"
+          echo "Connection: 127.0.0.1:5432 -> grantflow:us-central1:grantflow-staging"
+        else
+          echo "❌ Cloud SQL Proxy is not running"
+        fi
 
   db:proxy:restart:
     desc: Restart Cloud SQL Proxy
     cmds:
-      - uv run python scripts/cloud_sql_proxy.py restart
+      - task: db:proxy:stop
+      - task: db:proxy:start
 
   db:migrate:remote:
     desc: Apply database migrations to Cloud SQL (requires Cloud SQL Proxy running)
