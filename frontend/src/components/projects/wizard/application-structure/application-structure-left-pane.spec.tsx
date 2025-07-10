@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
-import { ApplicationStructureFilePreview, ApplicationStructureLeftPane } from "./application-structure-left-pane";
+import { ApplicationStructureLeftPane, ApplicationStructureSourcesPreview } from "./application-structure-left-pane";
 
 vi.mock("next/image", () => ({
 	default: ({ alt, className }: { alt: string; className?: string; src: string }) => (
@@ -131,7 +131,11 @@ describe("ApplicationStructureFilePreview", () => {
 		];
 
 		render(
-			<ApplicationStructureFilePreview parentId="template-id" templateFiles={templateFiles} templateUrls={[]} />,
+			<ApplicationStructureSourcesPreview
+				parentId="template-id"
+				templateFiles={templateFiles}
+				templateUrls={[]}
+			/>,
 		);
 
 		expect(screen.getByText("Application Documents")).toBeInTheDocument();
@@ -139,7 +143,7 @@ describe("ApplicationStructureFilePreview", () => {
 
 	it("shows empty container when no files", () => {
 		const { container } = render(
-			<ApplicationStructureFilePreview parentId="template-id" templateFiles={[]} templateUrls={[]} />,
+			<ApplicationStructureSourcesPreview parentId="template-id" templateFiles={[]} templateUrls={[]} />,
 		);
 
 		// Should render an empty container div

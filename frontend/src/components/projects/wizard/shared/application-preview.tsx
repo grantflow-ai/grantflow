@@ -3,12 +3,13 @@
 import Image from "next/image";
 import { useMemo } from "react";
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
-import { PreviewCard } from "@/components/wizard/preview-card";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 import { LinkPreviewItem } from "./link-preview-item";
+import { PreviewCard } from "./preview-card";
+import { WizardRightPane } from "./wizard-right-pane";
 
 export function ApplicationPreview({
 	connectionStatus,
@@ -54,8 +55,8 @@ export function ApplicationPreview({
 
 	if (isEmpty) {
 		return (
-			<div className="bg-preview-bg flex flex-1 size-full flex-col border-l border-app-gray-100">
-				<div className="flex flex-1 items-center justify-center p-5 md:p-7">
+			<WizardRightPane>
+				<div className="flex flex-1 items-center justify-center">
 					<Image
 						alt="Preview logo"
 						height={180}
@@ -64,48 +65,55 @@ export function ApplicationPreview({
 						width={180}
 					/>
 				</div>
-			</div>
+			</WizardRightPane>
 		);
 	}
 
 	return (
-		<div className="bg-preview-bg flex flex-1 size-full flex-col border-l border-app-gray-100">
-			<div className="flex-shrink-0 mb-11 flex flex-col items-start gap-2 px-5 md:px-7 pt-5 md:pt-7">
-				<div className="flex items-center gap-2">
-					<ThemeBadge
-						color="light"
-						leftIcon={
-							<Image alt="Draft in progress" height={12} src="/icons/application-title.svg" width={12} />
-						}
-					>
-						Application Title
-					</ThemeBadge>
-					{connectionStatus && (
-						<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
-							{connectionStatus}
+		<WizardRightPane padding="px-5 md:px-7 py-5 md:py-7">
+			<div className="flex h-full flex-col">
+				<div className="flex-shrink-0 mb-11 flex flex-col items-start gap-2">
+					<div className="flex items-center gap-2">
+						<ThemeBadge
+							color="light"
+							leftIcon={
+								<Image
+									alt="Draft in progress"
+									height={12}
+									src="/icons/application-title.svg"
+									width={12}
+								/>
+							}
+						>
+							Application Title
 						</ThemeBadge>
-					)}
-				</div>
-				<h3
-					className={`font-heading text-3xl font-medium leading-[34px] ${draftTitle ? "" : "text-muted-foreground-dark/50"}`}
-					data-testid="application-title"
-				>
-					{draftTitle || "Untitled Application"}
-				</h3>
-			</div>
-
-			<div className="flex-1 min-h-0 relative">
-				<div className="overflow-y-auto h-full px-5 md:px-7 pb-5 md:pb-7">
-					<div className="space-y-5">
-						{templateFiles.length > 0 && (
-							<DocumentsCard parentId={parentId} templateFiles={templateFiles} />
+						{connectionStatus && (
+							<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
+								{connectionStatus}
+							</ThemeBadge>
 						)}
+					</div>
+					<h3
+						className={`font-heading text-3xl font-medium leading-[34px] ${draftTitle ? "" : "text-muted-foreground-dark/50"}`}
+						data-testid="application-title"
+					>
+						{draftTitle || "Untitled Application"}
+					</h3>
+				</div>
 
-						{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
+				<div className="flex-1 min-h-0 relative">
+					<div className="overflow-y-auto h-full">
+						<div className="space-y-5">
+							{templateFiles.length > 0 && (
+								<DocumentsCard parentId={parentId} templateFiles={templateFiles} />
+							)}
+
+							{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</WizardRightPane>
 	);
 }
 

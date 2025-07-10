@@ -2,6 +2,7 @@
 
 import { AppCard } from "@/components/app";
 import { FilePreviewCard, LinkPreviewItem, TemplateFileUploader } from "@/components/projects";
+import { WizardLeftPane, WizardRightPane } from "@/components/projects/wizard/shared";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { SourceIndexingStatus } from "@/enums";
@@ -19,57 +20,43 @@ export function KnowledgeBaseStep() {
 
 	return (
 		<div className="flex size-full" data-testid="knowledge-base-step">
-			<div className="w-1/2 md:w-1/3 lg:w-1/4 min-w-1/4 h-full flex flex-col">
-				<div className="flex-1 overflow-y-auto p-6">
-					<div className="space-y-6">
-						<div>
-							<h2
-								className="font-heading text-2xl font-medium leading-loose"
-								data-testid="knowledge-base-header"
-							>
-								Knowledge Base
-							</h2>
-							<p
-								className="text-muted-foreground-dark leading-tight"
-								data-testid="knowledge-base-description"
-							>
-								Upload your supporting materials, research, notes, slides, publications, bios,
-								references, so we have full context. The more you share, the stronger your application.
-							</p>
-						</div>
+			<WizardLeftPane>
+				<div>
+					<h2 className="font-heading text-2xl font-medium leading-loose" data-testid="knowledge-base-header">
+						Knowledge Base
+					</h2>
+					<p className="text-muted-foreground-dark leading-tight" data-testid="knowledge-base-description">
+						Upload your supporting materials, research, notes, slides, publications, bios, references, so we
+						have full context. The more you share, the stronger your application.
+					</p>
+				</div>
 
-						<div className="space-y-6">
-							<div>
-								<h3
-									className="font-heading mb-5 text-base font-semibold leading-snug"
-									data-testid="documents-title"
-								>
-									Documents
-								</h3>
-								<TemplateFileUploader parentId={applicationId} />
-							</div>
+				<div className="space-y-6">
+					<div>
+						<h3
+							className="font-heading mb-5 text-base font-semibold leading-snug"
+							data-testid="documents-title"
+						>
+							Documents
+						</h3>
+						<TemplateFileUploader parentId={applicationId} />
+					</div>
 
-							<div>
-								<h3
-									className="font-heading text-base font-semibold leading-snug"
-									data-testid="links-title"
-								>
-									Links
-								</h3>
-								<p
-									className="text-muted-foreground-dark mb-5 text-sm leading-none"
-									data-testid="links-subtitle"
-								>
-									Use a static link that doesn&apos;t require login, so we can retrieve the
-									information.
-								</p>
+					<div>
+						<h3 className="font-heading text-base font-semibold leading-snug" data-testid="links-title">
+							Links
+						</h3>
+						<p
+							className="text-muted-foreground-dark mb-5 text-sm leading-none"
+							data-testid="links-subtitle"
+						>
+							Use a static link that doesn&apos;t require login, so we can retrieve the information.
+						</p>
 
-								<UrlInput parentId={applicationId} />
-							</div>
-						</div>
+						<UrlInput parentId={applicationId} />
 					</div>
 				</div>
-			</div>
+			</WizardLeftPane>
 
 			<KnowledgeBasePreview />
 		</div>
@@ -126,52 +113,56 @@ function KnowledgeBasePreview() {
 
 	if (!hasContent) {
 		return (
-			<div className="bg-preview-bg flex h-full w-[70%] flex-col items-center justify-center gap-6 border-l border-gray-100 p-5 md:p-7">
-				<div className="relative">
-					<div className="flex size-96 items-center justify-center">
-						<div className="relative">
-							{}
-							<div className="bg-gray-100 animate-pulse flex size-24 items-center justify-center rounded-full">
-								<div className="bg-gray-200 size-12 rounded-full" />
-							</div>
+			<WizardRightPane>
+				<div className="flex h-full flex-col items-center justify-center gap-6">
+					<div className="relative">
+						<div className="flex size-96 items-center justify-center">
+							<div className="relative">
+								{}
+								<div className="bg-gray-100 animate-pulse flex size-24 items-center justify-center rounded-full">
+									<div className="bg-gray-200 size-12 rounded-full" />
+								</div>
 
-							{}
-							<div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
-								<div className="bg-blue-100 absolute -top-4 left-1/2 size-8 -translate-x-1/2 rounded-full" />
-							</div>
-							<div
-								className="absolute inset-0 animate-spin"
-								style={{ animationDirection: "reverse", animationDuration: "4s" }}
-							>
-								<div className="bg-purple-100 absolute -bottom-4 left-1/2 size-6 -translate-x-1/2 rounded-full" />
-							</div>
-							<div className="absolute inset-0 animate-spin" style={{ animationDuration: "5s" }}>
-								<div className="bg-green-100 absolute -left-4 top-1/2 size-4 -translate-y-1/2 rounded-full" />
+								{}
+								<div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
+									<div className="bg-blue-100 absolute -top-4 left-1/2 size-8 -translate-x-1/2 rounded-full" />
+								</div>
+								<div
+									className="absolute inset-0 animate-spin"
+									style={{ animationDirection: "reverse", animationDuration: "4s" }}
+								>
+									<div className="bg-purple-100 absolute -bottom-4 left-1/2 size-6 -translate-x-1/2 rounded-full" />
+								</div>
+								<div className="absolute inset-0 animate-spin" style={{ animationDuration: "5s" }}>
+									<div className="bg-green-100 absolute -left-4 top-1/2 size-4 -translate-y-1/2 rounded-full" />
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
+			</WizardRightPane>
 		);
 	}
 
 	return (
-		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-5 md:p-7">
-			<ScrollArea className="flex-1">
-				{hasFilesOrUrls && (
-					<AppCard
-						className="border-app-gray-100 border bg-white p-5 shadow-none"
-						data-testid="knowledge-base-container"
-					>
-						<DocumentsSection files={knowledgeBaseFiles} parentId={applicationId} />
-						{hasBothFilesAndUrls && (
-							<Separator className="my-8 bg-gray-200" data-testid="knowledge-base-separator" />
-						)}
-						<LinksSection parentId={applicationId} urls={knowledgeBaseUrls} />
-					</AppCard>
-				)}
-			</ScrollArea>
-		</div>
+		<WizardRightPane>
+			<div className="flex h-full flex-col gap-6">
+				<ScrollArea className="flex-1">
+					{hasFilesOrUrls && (
+						<AppCard
+							className="border-app-gray-100 border bg-white p-5 shadow-none"
+							data-testid="knowledge-base-container"
+						>
+							<DocumentsSection files={knowledgeBaseFiles} parentId={applicationId} />
+							{hasBothFilesAndUrls && (
+								<Separator className="my-8 bg-gray-200" data-testid="knowledge-base-separator" />
+							)}
+							<LinksSection parentId={applicationId} urls={knowledgeBaseUrls} />
+						</AppCard>
+					)}
+				</ScrollArea>
+			</div>
+		</WizardRightPane>
 	);
 }
 
