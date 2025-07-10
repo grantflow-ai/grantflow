@@ -107,7 +107,7 @@ resource "google_sql_database_instance" "main" {
       binary_log_enabled             = "false"
       enabled                        = var.backup_enabled
       location                       = "us"
-      point_in_time_recovery_enabled = "true"
+      point_in_time_recovery_enabled = var.backup_enabled
       start_time                     = "22:00"
       transaction_log_retention_days = "7"
     }
