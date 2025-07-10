@@ -1,11 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { Deadline } from "@/components/projects/wizard/shared";
 import { WizardStep } from "@/constants";
 import { PagePath } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
-import { getTimeRemaining } from "@/utils/date-time";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
@@ -17,25 +19,6 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 ];
 
 type IndicatorStatus = "active" | "done" | "inactive";
-
-export function Deadline() {
-	const application = useApplicationStore((state) => state.application);
-	const submissionDate = application?.grant_template?.submission_date;
-
-	const timeRemaining = getTimeRemaining(submissionDate);
-
-	return (
-		<div
-			className="rounded-xs bg-surface-secondary relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-text-primary"
-			data-testid="deadline-component"
-		>
-			<Image alt="Deadline" height={16} src="/icons/deadline.svg" width={16} />
-			<div className="leading-[18px]">
-				{submissionDate ? <span>{timeRemaining}</span> : <span>Deadline not set</span>}
-			</div>
-		</div>
-	);
-}
 
 export function getStepIcon(type: IndicatorStatus) {
 	if (type === "done") {
