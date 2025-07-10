@@ -42,6 +42,9 @@ jobs:
               uses: dflook/tofu-validate@v1
               with:
                   path: terraform/environments/staging
+                  backend_config: |
+                      bucket=grantflow-terraform-state
+                      prefix=staging
 
     tflint:
         name: TFLint
