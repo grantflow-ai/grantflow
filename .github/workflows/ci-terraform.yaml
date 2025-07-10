@@ -28,7 +28,7 @@ jobs:
             - name: OpenTofu Format
               uses: dflook/tofu-fmt-check@v1
               with:
-                  path: terraform
+                  path: terraform/environments/staging
 
     validate:
         name: Validate
@@ -41,7 +41,7 @@ jobs:
             - name: OpenTofu Validate
               uses: dflook/tofu-validate@v1
               with:
-                  path: terraform
+                  path: terraform/environments/staging
 
     tflint:
         name: TFLint
@@ -61,5 +61,5 @@ jobs:
 
             - name: Run TFLint
               run: |
-                  cd terraform
+                  cd terraform/environments/staging
                   tflint --format compact
