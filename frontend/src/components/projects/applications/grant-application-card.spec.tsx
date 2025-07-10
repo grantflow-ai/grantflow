@@ -9,13 +9,11 @@ describe("GrantApplicationCard", () => {
 
 	const mockApplication = ApplicationListItemFactory.build({
 		completed_at: null,
-		id: "app-456",
 		title: "Research Grant Application",
 	});
 
 	const mockCompletedApplication = ApplicationListItemFactory.build({
 		completed_at: "2025-03-15",
-		id: "app-789",
 		title: "Completed Grant Application",
 	});
 

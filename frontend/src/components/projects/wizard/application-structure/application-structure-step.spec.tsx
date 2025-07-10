@@ -43,7 +43,7 @@ describe("ApplicationStructureStep", () => {
 	it("renders both left pane and preview sections", () => {
 		render(<ApplicationStructureStep />);
 
-		expect(screen.getByTestId("application-structure-left-pane")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-left-pane-content")).toBeInTheDocument();
 		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
 	});
 
