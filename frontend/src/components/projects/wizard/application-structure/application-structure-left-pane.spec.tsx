@@ -49,9 +49,7 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		expect(
-			screen.getByText("Analyzing your knowledge base to generate the optimal structure..."),
-		).toBeInTheDocument();
+		expect(screen.getByText("Reading the call")).toBeInTheDocument();
 	});
 
 	it("renders normal state when not generating", () => {
@@ -104,7 +102,7 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		expect(screen.getByTestId("template-links-title")).toBeInTheDocument();
+		expect(screen.getByTestId("application-links")).toBeInTheDocument();
 	});
 
 	it("starts animation steps when generating", () => {
@@ -133,29 +131,19 @@ describe("ApplicationStructureFilePreview", () => {
 		];
 
 		render(
-			<ApplicationStructureFilePreview
-				hasTemplateFiles={true}
-				hasTemplateUrls={false}
-				parentId="template-id"
-				templateFiles={templateFiles}
-				templateUrls={[]}
-			/>,
+			<ApplicationStructureFilePreview parentId="template-id" templateFiles={templateFiles} templateUrls={[]} />,
 		);
 
-		expect(screen.getByTestId("application-documents-title")).toBeInTheDocument();
+		expect(screen.getByText("Application Documents")).toBeInTheDocument();
 	});
 
-	it("shows no documents message when no files", () => {
-		render(
-			<ApplicationStructureFilePreview
-				hasTemplateFiles={false}
-				hasTemplateUrls={false}
-				parentId="template-id"
-				templateFiles={[]}
-				templateUrls={[]}
-			/>,
+	it("shows empty container when no files", () => {
+		const { container } = render(
+			<ApplicationStructureFilePreview parentId="template-id" templateFiles={[]} templateUrls={[]} />,
 		);
 
-		expect(screen.getByTestId("no-documents-message")).toBeInTheDocument();
+		// Should render an empty container div
+		expect(container.firstChild).toHaveClass("space-y-3");
+		expect(container.firstChild).toBeEmptyDOMElement();
 	});
 });

@@ -30,10 +30,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
 	return (
 		<Sidebar collapsible="icon" {...props} className="flex h-full flex-col border-r">
-			<SidebarHeader className="flex flex-col gap-8  p-3">
+			<SidebarHeader className="flex flex-col gap-8 p-3">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
-						<div className=" size-[31px]">
+						<div className="size-[31px]">
 							<Image
 								alt="logo"
 								className="w-full h-full object-cover"
