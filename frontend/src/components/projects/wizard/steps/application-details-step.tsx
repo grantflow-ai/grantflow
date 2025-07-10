@@ -38,7 +38,6 @@ export function ApplicationDetailsStep({
 	}, [applicationTitle]);
 
 	useEffect(() => {
-		// Listen for validation attempts
 		const handleValidation = () => {
 			if (draftTitle.trim().length < 10) {
 				setShowError(true);
@@ -46,7 +45,6 @@ export function ApplicationDetailsStep({
 			}
 		};
 
-		// Add event listener for continue button clicks
 		const continueButton = document.querySelector('[data-testid="continue-button"]');
 		continueButton?.addEventListener("click", handleValidation);
 
@@ -58,7 +56,7 @@ export function ApplicationDetailsStep({
 	const handleInputChange = (value: string) => {
 		setDraftTitle(value);
 		handleTitleChange(value);
-		// Show error if title is too short and user has attempted to continue or typed something
+
 		if ((attemptedContinue || value.length > 0) && value.trim().length < 10) {
 			setShowError(true);
 		} else {
@@ -99,7 +97,7 @@ function UploadPane({
 	showError: boolean;
 }) {
 	return (
-		<div className="w-1/2 md:w-1/3 lg:w-1/4 h-full flex flex-col">
+		<div className="w-1/2 md:w-1/3 lg:w-1/4 min-w-1/4 h-full flex flex-col">
 			<div className="flex-1 overflow-y-auto p-6">
 				<div className="space-y-6">
 					<div className="space-y-5">
