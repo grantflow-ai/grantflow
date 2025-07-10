@@ -72,6 +72,15 @@ resource "google_secret_manager_secret" "anthropic_api_key" {
   }
 }
 
+resource "google_secret_manager_secret" "google_ai_api_key" {
+  secret_id = "GOOGLE_AI_API_KEY"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
+
 
 resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   secret_id = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
@@ -155,6 +164,15 @@ resource "google_secret_manager_secret_iam_binding" "admin_access_code_access" {
 resource "google_secret_manager_secret_iam_binding" "anthropic_api_key_access" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.anthropic_api_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members = [
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+  ]
+}
+
+resource "google_secret_manager_secret_iam_binding" "google_ai_api_key_access" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.google_ai_api_key.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
