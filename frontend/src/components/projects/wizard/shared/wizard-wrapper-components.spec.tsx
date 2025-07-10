@@ -6,11 +6,10 @@ import {
 } from "::testing/factories";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { StepIndicator, WizardFooter, WizardHeader } from "@/components/projects";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import { StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
