@@ -29,6 +29,82 @@ provider "google-beta" {
   zone    = var.zone
 }
 
+# Secrets module - must be first
+module "secrets" {
+  source     = "../../modules/secrets"
+  project_id = var.project_id
+}
+
+# Network module
+module "network" {
+  source     = "../../modules/network"
+  project_id = var.project_id
+  region     = var.region
+}
+
+# Database module with staging-optimized settings
+module "database" {
+  source           = "../../modules/database"
+  project_id       = var.project_id
+  region           = var.region
+  zone             = var.zone
+  instance_name    = "grantflow-staging"
+  tier             = "db-f1-micro"       # Cost-optimized for staging
+  disk_size        = 10                  # Minimal storage for staging
+  disk_type        = "PD_HDD"           # Cheaper storage type
+  backup_enabled   = true               # Enable backups (required for point-in-time recovery)
+  high_availability = false             # Single zone for staging
+  network_id       = module.network.network_id
+}
+
+# Storage module
+module "storage" {
+  source         = "../../modules/storage"
+  bucket_name    = "grantflow-staging-uploads"
+  environment    = var.environment
+  retention_days = 7  # Shorter retention for staging
+}
+
+# Cloud Run services module with staging-optimized settings
+module "cloud_run" {
+  source                    = "../../modules/cloud_run"
+  project_id               = var.project_id
+  region                   = var.region
+  environment              = var.environment
+  database_connection_name = module.database.instance_connection_name
+  min_instances           = 0           # Scale to zero for cost savings
+  max_instances           = 1           # Limited scaling for staging
+  cpu_limit               = "0.5"      # Reduced CPU for staging
+  memory_limit            = "512Mi"     # Reduced memory for staging
+  discord_webhook_url     = var.discord_webhook_url
+}
+
+# Pub/Sub module - needs to come after cloud_run to get service account
+module "pubsub" {
+  source                               = "../../modules/pubsub"
+  project_id                          = var.project_id
+  region                              = var.region
+  pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
+}
+
+# Scheduler module
+module "scheduler" {
+  source                              = "../../modules/scheduler"
+  project_id                          = var.project_id
+  region                              = var.region
+  environment                         = var.environment
+  scraper_url                         = module.cloud_run.scraper_url
+  scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+}
+
+# Monitoring module
+module "monitoring" {
+  source              = "../../modules/monitoring"
+  project_id          = var.project_id
+  environment         = var.environment
+  discord_webhook_url = var.discord_webhook_url
+}
+
 # Import existing BigQuery dataset
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend"
@@ -115,12 +191,6 @@ resource "google_project_iam_member" "bigquery_job_user" {
   member  = "serviceAccount:${google_service_account.bigquery_service.email}"
 }
 
-# Secrets module
-module "secrets" {
-  source     = "../../modules/secrets"
-  project_id = var.project_id
-}
-
 # Output important information
 output "bigquery_dataset_id" {
   description = "BigQuery dataset ID"
@@ -140,4 +210,19 @@ output "bigquery_service_account_email" {
 output "project_id" {
   description = "GCP Project ID"
   value       = var.project_id
+}
+
+output "database_connection_name" {
+  description = "Database connection name for Cloud Run services"
+  value       = module.database.instance_connection_name
+}
+
+output "backend_url" {
+  description = "Backend service URL"
+  value       = module.cloud_run.backend_url
+}
+
+output "scraper_url" {
+  description = "Scraper service URL"
+  value       = module.cloud_run.scraper_url
 }
