@@ -26,10 +26,9 @@ jobs:
               uses: actions/checkout@v4
 
             - name: OpenTofu Format
-              uses: dflook/terraform-fmt-check@v2
+              uses: dflook/tofu-fmt-check@v1
               with:
-                  path: terraform
-                  command: tofu
+                  path: terraform/environments/staging
 
     validate:
         name: Validate
@@ -40,10 +39,12 @@ jobs:
               uses: actions/checkout@v4
 
             - name: OpenTofu Validate
-              uses: dflook/terraform-validate@v2
+              uses: dflook/tofu-validate@v1
               with:
-                  path: terraform
-                  command: tofu
+                  path: terraform/environments/staging
+                  backend_config: |
+                      bucket=grantflow-terraform-state
+                      prefix=staging
 
     tflint:
         name: TFLint
@@ -63,5 +64,5 @@ jobs:
 
             - name: Run TFLint
               run: |
-                  cd terraform
+                  cd terraform/environments/staging
                   tflint --format compact
