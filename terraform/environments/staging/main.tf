@@ -115,6 +115,12 @@ resource "google_project_iam_member" "bigquery_job_user" {
   member  = "serviceAccount:${google_service_account.bigquery_service.email}"
 }
 
+# Secrets module
+module "secrets" {
+  source     = "../../modules/secrets"
+  project_id = var.project_id
+}
+
 # Output important information
 output "bigquery_dataset_id" {
   description = "BigQuery dataset ID"
