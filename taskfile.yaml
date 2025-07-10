@@ -345,7 +345,7 @@ tasks:
     desc: Start the backend API service in development mode with hot-reloading
     deps:
       - task: db:up
-    dotenv: ["services/backend/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -353,7 +353,7 @@ tasks:
 
   service:backend:test:
     desc: Run backend service tests with detailed output
-    dotenv: ["services/backend/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -361,7 +361,7 @@ tasks:
 
   service:backend:test:e2e:
     desc: Run backend service end-to-end tests
-    dotenv: ["services/backend/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -372,7 +372,7 @@ tasks:
     desc: Start the indexer service in development mode with hot-reloading
     deps:
       - task: db:up
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -380,7 +380,7 @@ tasks:
 
   service:indexer:test:
     desc: Run indexer service tests with detailed output
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -388,7 +388,7 @@ tasks:
 
   service:indexer:test:e2e:
     desc: Run indexer service end-to-end tests
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -397,7 +397,7 @@ tasks:
 
   service:indexer:test:e2e:smoke:
     desc: Run indexer e2e smoke tests (< 1 min)
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -406,7 +406,7 @@ tasks:
 
   service:indexer:test:e2e:quality:
     desc: Run indexer e2e quality assessment tests (2-5 min)
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -415,7 +415,7 @@ tasks:
 
   service:indexer:test:e2e:semantic:
     desc: Run indexer e2e semantic evaluation tests
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -424,7 +424,7 @@ tasks:
 
   service:indexer:test:e2e:ai:
     desc: Run indexer e2e AI-powered evaluation tests
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -433,7 +433,7 @@ tasks:
 
   service:indexer:test:e2e:full:
     desc: Run complete indexer e2e test suite (10+ min)
-    dotenv: ["services/indexer/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -444,7 +444,7 @@ tasks:
     desc: Start the crawler service in development mode with hot-reloading
     deps:
       - task: db:up
-    dotenv: ["services/crawler/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -452,7 +452,7 @@ tasks:
 
   service:crawler:test:
     desc: Run crawler service tests with detailed output
-    dotenv: ["services/crawler/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -460,7 +460,7 @@ tasks:
 
   service:crawler:test:e2e:
     desc: Run crawler service end-to-end tests
-    dotenv: ["services/crawler/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -471,7 +471,7 @@ tasks:
     desc: Start the RAG service in development mode with hot-reloading
     deps:
       - task: db:up
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -479,7 +479,7 @@ tasks:
 
   service:rag:test:
     desc: Run RAG service tests with detailed output (parallel execution)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -487,7 +487,7 @@ tasks:
 
   service:rag:test:serial:
     desc: Run RAG service tests in serial mode (no parallelization)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       PYTHONPATH: "{{.PYTHON_PATH}}"
     cmds:
@@ -495,7 +495,7 @@ tasks:
 
   service:rag:test:e2e:
     desc: Run RAG service end-to-end tests
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -504,7 +504,7 @@ tasks:
 
   service:rag:test:e2e:smoke:
     desc: Run RAG e2e smoke tests (< 1 min)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -513,7 +513,7 @@ tasks:
 
   service:rag:test:e2e:quality:
     desc: Run RAG e2e quality assessment tests (2-5 min)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -522,7 +522,7 @@ tasks:
 
   service:rag:test:e2e:semantic:
     desc: Run RAG e2e semantic evaluation tests (5-10 min)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -531,7 +531,7 @@ tasks:
 
   service:rag:test:e2e:ai:
     desc: Run RAG e2e AI evaluation tests (requires ANTHROPIC_API_KEY)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -540,7 +540,7 @@ tasks:
 
   service:rag:test:e2e:full:
     desc: Run complete RAG e2e test suite (10+ min)
-    dotenv: ["services/rag/.env"]
+    dotenv: [".env"]
     env:
       E2E_TESTS: "1"
       PYTHONPATH: "{{.PYTHON_PATH}}"
@@ -723,26 +723,10 @@ tasks:
   _dev:check-env:
     internal: true
     preconditions:
-      - sh: test -f frontend/.env
+      - sh: test -f .env
         msg: |
-          Missing frontend/.env file.
-          Copy from example: cp frontend/.env.example frontend/.env
-      - sh: test -f services/backend/.env
-        msg: |
-          Missing services/backend/.env file.
-          Copy from example: cp services/backend/.env.example services/backend/.env
-      - sh: test -f services/indexer/.env
-        msg: |
-          Missing services/indexer/.env file.
-          Copy from example: cp services/indexer/.env.example services/indexer/.env
-      - sh: test -f services/crawler/.env
-        msg: |
-          Missing services/crawler/.env file.
-          Copy from example: cp services/crawler/.env.example services/crawler/.env
-      - sh: test -f services/rag/.env
-        msg: |
-          Missing services/rag/.env file.
-          Copy from example: cp services/rag/.env.example services/rag/.env
+          Missing .env file.
+          Copy from example: cp .env.example .env
     silent: true
 
   _dev:init-pubsub:

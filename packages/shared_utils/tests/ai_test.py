@@ -15,7 +15,6 @@ from packages.shared_utils.src.ai import (
     estimate_token_count,
     get_anthropic_client,
     get_google_ai_client,
-    get_vertex_credentials,
     init_llm_connection,
     init_ref,
 )
@@ -31,37 +30,20 @@ async def test_model_constants() -> None:
     assert os.environ.get("REASONING_MODEL", "gemini-2.5-flash") == REASONING_MODEL
 
 
-async def test_get_vertex_credentials() -> None:
-    mock_env = '{"type":"service_account","project_id":"test-project"}'
-
-    with (
-        patch("packages.shared_utils.src.ai.get_env", return_value=mock_env),
-        patch(
-            "packages.shared_utils.src.ai.Credentials.from_service_account_info"
-        ) as mock_from_info,
-    ):
-        get_vertex_credentials()
-        mock_from_info.assert_called_once()
-
-
 async def test_init_llm_connection_first_call() -> None:
     init_ref.value = False
 
     with (
         patch("packages.shared_utils.src.ai.genai") as mock_genai,
-        patch("packages.shared_utils.src.ai.get_vertex_credentials") as mock_get_creds,
-        patch("packages.shared_utils.src.ai.get_env") as mock_get_env,
+        patch("packages.shared_utils.src.ai.get_env", return_value="test-api-key"),
         patch("packages.shared_utils.src.ai.google_client") as mock_client_ref,
     ):
-        mock_get_env.side_effect = ["test-project", "us-central1"]
-        mock_creds = Mock()
-        mock_get_creds.return_value = mock_creds
         mock_client = Mock()
         mock_genai.Client.return_value = mock_client
 
         init_llm_connection()
 
-        mock_genai.Client.assert_called_once()
+        mock_genai.Client.assert_called_once_with(api_key="test-api-key")
         assert mock_client_ref.value == mock_client
         assert init_ref.value is True
 
