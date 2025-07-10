@@ -1,8 +1,8 @@
-"""initial
+"""Initial schema with pgvector support
 
-Revision ID: f8364f7ebdd3
+Revision ID: de55e0b9ba74
 Revises:
-Create Date: 2025-06-27 09:04:32.792158
+Create Date: 2025-07-10 20:48:58.111654
 
 """
 
@@ -12,7 +12,8 @@ import pgvector
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "f8364f7ebdd3"
+
+revision: str = "de55e0b9ba74"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -20,7 +21,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    
+    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
 
+    
     op.create_table(
         "funding_organizations",
         sa.Column("full_name", sa.String(length=255), nullable=False),
@@ -138,6 +143,37 @@ def upgrade() -> None:
     op.create_index(op.f("ix_grant_applications_project_id"), "grant_applications", ["project_id"], unique=False)
     op.create_index(op.f("ix_grant_applications_rag_job_id"), "grant_applications", ["rag_job_id"], unique=False)
     op.create_index(op.f("ix_grant_applications_status"), "grant_applications", ["status"], unique=False)
+    op.create_table(
+        "notifications",
+        sa.Column("firebase_uid", sa.String(length=128), nullable=False),
+        sa.Column("project_id", sa.UUID(), nullable=True),
+        sa.Column(
+            "type", sa.Enum("DEADLINE", "INFO", "WARNING", "SUCCESS", name="notificationtypeenum"), nullable=False
+        ),
+        sa.Column("title", sa.String(length=255), nullable=False),
+        sa.Column("message", sa.Text(), nullable=False),
+        sa.Column("project_name", sa.String(length=255), nullable=True),
+        sa.Column("read", sa.Boolean(), nullable=False),
+        sa.Column("dismissed", sa.Boolean(), nullable=False),
+        sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("extra_data", sa.JSON(), nullable=True),
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(
+        "idx_notifications_user_active",
+        "notifications",
+        ["firebase_uid"],
+        unique=False,
+        postgresql_where=sa.text("dismissed = FALSE"),
+    )
+    op.create_index("idx_notifications_user_created", "notifications", ["firebase_uid", "created_at"], unique=False)
+    op.create_index(op.f("ix_notifications_created_at"), "notifications", ["created_at"], unique=False)
+    op.create_index(op.f("ix_notifications_firebase_uid"), "notifications", ["firebase_uid"], unique=False)
+    op.create_index(op.f("ix_notifications_project_id"), "notifications", ["project_id"], unique=False)
     op.create_table(
         "project_users",
         sa.Column("firebase_uid", sa.String(length=128), nullable=False),
@@ -323,10 +359,46 @@ def upgrade() -> None:
         op.f("ix_grant_template_rag_sources_created_at"), "grant_template_rag_sources", ["created_at"], unique=False
     )
 
+    
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS idx_grant_applications_title_fts
+        ON grant_applications
+        USING gin(to_tsvector('english', title))
+    """)
+
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS idx_grant_applications_title_trgm
+        ON grant_applications
+        USING gin(title gin_trgm_ops)
+    """)
+
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS idx_grant_applications_filtering
+        ON grant_applications (project_id, status, updated_at DESC)
+    """)
+
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS idx_grant_applications_created_at_desc
+        ON grant_applications (project_id, created_at DESC)
+    """)
+
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS idx_grant_applications_title_sort
+        ON grant_applications (project_id, title)
+    """)
+    
+
 
 def downgrade() -> None:
     """Downgrade schema."""
+    
+    op.execute("DROP INDEX IF EXISTS idx_grant_applications_title_sort")
+    op.execute("DROP INDEX IF EXISTS idx_grant_applications_created_at_desc")
+    op.execute("DROP INDEX IF EXISTS idx_grant_applications_filtering")
+    op.execute("DROP INDEX IF EXISTS idx_grant_applications_title_trgm")
+    op.execute("DROP INDEX IF EXISTS idx_grant_applications_title_fts")
 
+    
     op.drop_index(op.f("ix_grant_template_rag_sources_created_at"), table_name="grant_template_rag_sources")
     op.drop_table("grant_template_rag_sources")
     op.drop_index(
@@ -367,6 +439,14 @@ def downgrade() -> None:
     op.drop_table("rag_files")
     op.drop_index(op.f("ix_project_users_created_at"), table_name="project_users")
     op.drop_table("project_users")
+    op.drop_index(op.f("ix_notifications_project_id"), table_name="notifications")
+    op.drop_index(op.f("ix_notifications_firebase_uid"), table_name="notifications")
+    op.drop_index(op.f("ix_notifications_created_at"), table_name="notifications")
+    op.drop_index("idx_notifications_user_created", table_name="notifications")
+    op.drop_index(
+        "idx_notifications_user_active", table_name="notifications", postgresql_where=sa.text("dismissed = FALSE")
+    )
+    op.drop_table("notifications")
     op.drop_index(op.f("ix_grant_applications_status"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_rag_job_id"), table_name="grant_applications")
     op.drop_index(op.f("ix_grant_applications_project_id"), table_name="grant_applications")
@@ -389,3 +469,4 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_funding_organizations_created_at"), table_name="funding_organizations")
     op.drop_index(op.f("ix_funding_organizations_abbreviation"), table_name="funding_organizations")
     op.drop_table("funding_organizations")
+    
