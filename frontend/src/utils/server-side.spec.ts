@@ -21,6 +21,10 @@ vi.mock("@/utils/env", () => ({
 	getMockAuthEnabled: vi.fn(() => false),
 }));
 
+vi.mock("@/dev-tools/mock-auth", () => ({
+	isMockAuthEnabled: vi.fn(() => false),
+}));
+
 describe("Server-side Utils", () => {
 	const mockCookieStore = {
 		get: vi.fn(),
