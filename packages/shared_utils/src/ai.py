@@ -35,10 +35,7 @@ def get_vertex_credentials() -> Credentials:
 def init_llm_connection() -> None:
     if not init_ref.value:
         google_client.value = genai.Client(
-            vertexai=True,
-            project=get_env("GOOGLE_CLOUD_PROJECT"),
-            location=get_env("GOOGLE_CLOUD_REGION"),
-            credentials=get_vertex_credentials(),
+            api_key=get_env("GOOGLE_AI_API_KEY"),
         )
         init_ref.value = True
 

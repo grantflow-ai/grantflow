@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -13,9 +12,8 @@ from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
 from testing.test_utils import create_grant_application_data, process_funding_organization
 
-rag_env_file = Path(__file__).parent.parent / ".env"
-if rag_env_file.exists():
-    load_dotenv(rag_env_file)
+
+load_dotenv()
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
