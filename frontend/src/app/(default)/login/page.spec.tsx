@@ -45,6 +45,11 @@ vi.mock("@/utils/auth-providers", () => ({
 	handleOrcidLogin: (...args: unknown[]) => mockHandleOrcidLogin(...args),
 }));
 
+vi.mock("@/dev-tools/mock-auth", () => ({
+	initializeMockAuth: vi.fn(),
+	isMockAuthEnabled: vi.fn(() => false),
+}));
+
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};
 	return {
