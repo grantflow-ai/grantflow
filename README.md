@@ -48,10 +48,19 @@ task --list-all
 
 ### Environment Setup
 
-You'll need environment files for the services:
+The project uses a single `.env` file in the root directory for all services:
 
-- Copy the `.env.example` file and rename it to `.env` in the appropriate service directories
-- Reach out to the team to get secret values for the obfuscated values
+1. Copy the `.env.example` file in the root directory:
+   ```bash
+   cp .env.example .env
+   ```
+2. Update the `.env` file with your actual values
+3. Reach out to the team to get secret values for sensitive fields
+
+**Note**: If you're migrating from the old multi-env setup, run:
+```bash
+./scripts/migrate_to_single_env.sh
+```
 
 ### Initial Setup
 

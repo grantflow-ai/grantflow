@@ -46,11 +46,7 @@ The frontend follows a modern Next.js App Router architecture:
 
 ### Environment Setup
 
-For local development, create a `.env` file by copying the `.env.example` file:
-
-```bash
-cp .env.example .env
-```
+For local development, the frontend uses environment variables from the root `.env` file. No frontend-specific configuration is needed as Next.js automatically loads the root `.env` file.
 
 For production deployments, environment variables are managed using Google Secret Manager and Firebase App Hosting:
 

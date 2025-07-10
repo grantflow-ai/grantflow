@@ -99,7 +99,7 @@ services:
             PYTHONPATH: .
             DEBUG: "True"
         env_file:
-            - ./services/backend/.env
+            - ./.env
         ports:
             - "8000:8000"
         volumes:
@@ -129,7 +129,7 @@ services:
             DEBUG: "True"
             MODEL_DIR: /app/hf
         env_file:
-            - ./services/indexer/.env
+            - ./.env
         ports:
             - "8001:8000"
         volumes:
@@ -158,7 +158,7 @@ services:
             DEBUG: "True"
             MODEL_DIR: /app/hf
         env_file:
-            - ./services/crawler/.env
+            - ./.env
         ports:
             - "8002:8000"
         volumes:
@@ -187,7 +187,7 @@ services:
             DEBUG: "True"
             MODEL_DIR: /app/hf
         env_file:
-            - ./services/rag/.env
+            - ./.env
         ports:
             - "8003:8000"
         volumes:
@@ -216,7 +216,7 @@ services:
             # backend is the alias for the backend service in the docker network
             NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
         env_file:
-            - ./frontend/.env
+            - ./.env
         command: "pnpm dev"
         depends_on:
             - backend
@@ -234,7 +234,7 @@ services:
             SCRAPER_GCS_BUCKET_NAME: grantflow-scraper
             DEBUG: "True"
         env_file:
-            - ./services/scraper/.env
+            - ./.env
         ports:
             - "8004:8000"
         volumes:
