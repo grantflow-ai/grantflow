@@ -19,47 +19,53 @@ export function KnowledgeBaseStep() {
 
 	return (
 		<div className="flex size-full" data-testid="knowledge-base-step">
-			<div className="w-1/3 space-y-6 overflow-y-auto p-6 sm:w-1/2">
-				<div className="space-y-6">
-					<div>
-						<h2
-							className="font-heading text-2xl font-medium leading-loose"
-							data-testid="knowledge-base-header"
-						>
-							Knowledge Base
-						</h2>
-						<p
-							className="text-muted-foreground-dark leading-tight"
-							data-testid="knowledge-base-description"
-						>
-							Upload your supporting materials, research, notes, slides, publications, bios, references,
-							so we have full context. The more you share, the stronger your application.
-						</p>
-					</div>
-
+			<div className="w-1/2 md:w-1/3 lg:w-1/4 min-w-1/4 h-full flex flex-col">
+				<div className="flex-1 overflow-y-auto p-6">
 					<div className="space-y-6">
 						<div>
-							<h3
-								className="font-heading mb-5 text-base font-semibold leading-snug"
-								data-testid="documents-title"
+							<h2
+								className="font-heading text-2xl font-medium leading-loose"
+								data-testid="knowledge-base-header"
 							>
-								Documents
-							</h3>
-							<TemplateFileUploader parentId={applicationId} />
+								Knowledge Base
+							</h2>
+							<p
+								className="text-muted-foreground-dark leading-tight"
+								data-testid="knowledge-base-description"
+							>
+								Upload your supporting materials, research, notes, slides, publications, bios,
+								references, so we have full context. The more you share, the stronger your application.
+							</p>
 						</div>
 
-						<div>
-							<h3 className="font-heading text-base font-semibold leading-snug" data-testid="links-title">
-								Links
-							</h3>
-							<p
-								className="text-muted-foreground-dark mb-5 text-sm leading-none"
-								data-testid="links-subtitle"
-							>
-								Use a static link that doesn&apos;t require login, so we can retrieve the information.
-							</p>
+						<div className="space-y-6">
+							<div>
+								<h3
+									className="font-heading mb-5 text-base font-semibold leading-snug"
+									data-testid="documents-title"
+								>
+									Documents
+								</h3>
+								<TemplateFileUploader parentId={applicationId} />
+							</div>
 
-							<UrlInput parentId={applicationId} />
+							<div>
+								<h3
+									className="font-heading text-base font-semibold leading-snug"
+									data-testid="links-title"
+								>
+									Links
+								</h3>
+								<p
+									className="text-muted-foreground-dark mb-5 text-sm leading-none"
+									data-testid="links-subtitle"
+								>
+									Use a static link that doesn&apos;t require login, so we can retrieve the
+									information.
+								</p>
+
+								<UrlInput parentId={applicationId} />
+							</div>
 						</div>
 					</div>
 				</div>

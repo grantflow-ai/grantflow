@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
-import { AppCard } from "@/components/app";
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
+import { PreviewCard } from "@/components/wizard/preview-card";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
@@ -54,7 +54,7 @@ export function ApplicationPreview({
 
 	if (isEmpty) {
 		return (
-			<div className="bg-preview-bg flex min-h-0 h-full w-1/2 md:w-2/3 lg:w-3/4 flex-col border-l border-app-gray-100">
+			<div className="bg-preview-bg flex flex-1 size-full flex-col border-l border-app-gray-100">
 				<div className="flex flex-1 items-center justify-center p-5 md:p-7">
 					<Image
 						alt="Preview logo"
@@ -69,7 +69,7 @@ export function ApplicationPreview({
 	}
 
 	return (
-		<div className="bg-preview-bg flex min-h-0 h-full w-1/2 md:w-2/3 lg:w-3/4 flex-col border-l border-app-gray-100">
+		<div className="bg-preview-bg flex flex-1 size-full flex-col border-l border-app-gray-100">
 			<div className="flex-shrink-0 mb-11 flex flex-col items-start gap-2 px-5 md:px-7 pt-5 md:pt-7">
 				<div className="flex items-center gap-2">
 					<ThemeBadge
@@ -158,13 +158,5 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 				</div>
 			</div>
 		</PreviewCard>
-	);
-}
-
-function PreviewCard({ children, ...props }: { children: React.ReactNode } & React.ComponentProps<typeof AppCard>) {
-	return (
-		<AppCard className="border-app-gray-100 border p-5 shadow-none gap-8 rounded-sm" {...props}>
-			{children}
-		</AppCard>
 	);
 }

@@ -126,9 +126,11 @@ export function WizardFooter() {
 
 export function WizardHeader() {
 	const router = useRouter();
+
 	const currentStep = useWizardStore((state) => state.currentStep);
 	const reset = useWizardStore((state) => state.reset);
 	const application = useApplicationStore((state) => state.application);
+
 	const showHeaderInfo = currentStep !== WizardStep.APPLICATION_DETAILS;
 	const isFirstStep = currentStep === WizardStep.APPLICATION_DETAILS;
 
@@ -149,7 +151,7 @@ export function WizardHeader() {
 					{showHeaderInfo ? (
 						<>
 							<h1
-								className="text-sm sm:text-base text-nowrap font-medium text-text-primary"
+								className="text-sm sm:text-base text-nowrap text-app-black"
 								data-testid="app-name"
 								title={application?.title}
 							>

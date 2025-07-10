@@ -55,12 +55,8 @@ export function ApplicationStructureStep() {
 
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
-			<div data-testid="application-structure-left-pane">
-				<ApplicationStructureLeftPane />
-			</div>
-			<div data-testid="application-structure-preview-pane">
-				<ApplicationStructurePreview />
-			</div>
+			<ApplicationStructureLeftPane />
+			<ApplicationStructurePreview />
 		</div>
 	);
 }
@@ -96,43 +92,45 @@ function ApplicationStructurePreview() {
 		[grantSections, updateGrantSections],
 	);
 
+	if (!application) {
+		return (
+			<div
+				className="bg-preview-bg flex flex-1 size-full overflow-y-auto border-l border-app-gray-100"
+				data-testid="application-structure-preview-pane"
+			>
+				<EmptyStateView />
+			</div>
+		);
+	}
+
+	if (isGeneratingTemplate) {
+		return (
+			<div
+				className="bg-preview-bg flex flex-1 size-full overflow-y-auto border-l border-app-gray-100"
+				data-testid="application-structure-preview-pane"
+			>
+				<GeneratingLoader />
+			</div>
+		);
+	}
+
 	return (
-		<div className="bg-preview-bg flex h-full w-[70%] flex-col gap-6 border-l border-gray-100 p-6">
-			{(() => {
-				if (!application) {
-					return <EmptyStateView />;
-				}
-				if (isGeneratingTemplate) {
-					return <GeneratingLoader />;
-				}
-				return (
-					<>
-						<div className="mb-6">
-							<h2 className="font-heading text-2xl font-medium leading-loose mb-2">
-								Application Structure
-							</h2>
-							<p className="text-muted-foreground-dark leading-tight">
-								Organize Your Application Structure. Drag and drop sections to reorder your application.
-								<br />
-								You can also edit, remove, or add new sections as needed. Once everything looks good,
-								click Approve and Continue.
-							</p>
-						</div>
-						<SectionEditor
-							isDetailedSection={isDetailedSection}
-							onAddSection={handleAddNewSection}
-							toUpdateGrantSection={toUpdateGrantSection}
-						/>
-					</>
-				);
-			})()}
+		<div
+			className="bg-preview-bg flex flex-1 size-full overflow-y-auto border-l border-app-gray-100"
+			data-testid="application-structure-preview-pane"
+		>
+			<SectionEditor
+				isDetailedSection={isDetailedSection}
+				onAddSection={handleAddNewSection}
+				toUpdateGrantSection={toUpdateGrantSection}
+			/>
 		</div>
 	);
 }
 
 function EmptyStateView() {
 	return (
-		<div className="flex h-full flex-col items-center justify-center" data-testid="empty-state">
+		<div className="flex h-full w-full flex-col items-center justify-center" data-testid="empty-state">
 			<div className="relative">
 				<div className="flex size-96 items-center justify-center">
 					<div className="relative">
@@ -166,7 +164,7 @@ function EmptyStateView() {
 
 function GeneratingLoader() {
 	return (
-		<div className="flex h-full flex-col items-center justify-center">
+		<div className="flex size-full flex-col items-center justify-center">
 			<Image
 				alt="Analyzing data"
 				className="size-96 object-contain"
@@ -204,7 +202,7 @@ function SectionEditor({
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }) {
 	return (
-		<div data-testid="application-structure-sections">
+		<div className="flex flex-col size-full p-5 md:p-7" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
 				<DragDropSectionManager
