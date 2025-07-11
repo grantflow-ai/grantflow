@@ -6,10 +6,6 @@ interface LogContext {
 type LogLevel = "error" | "info" | "warn";
 
 class Logger {
-	private get isDevelopment(): boolean {
-		return process.env.NODE_ENV === "development";
-	}
-
 	error(message: string, error?: unknown, context?: LogContext): void {
 		const errorContext: LogContext = { ...context };
 
@@ -35,8 +31,6 @@ class Logger {
 	}
 
 	private formatMessage(level: LogLevel, message: string, context?: LogContext): void {
-		if (!this.isDevelopment) return;
-
 		const prefix = `[${level.toUpperCase()}]`;
 		const contextData = context ? { ...context } : {};
 
