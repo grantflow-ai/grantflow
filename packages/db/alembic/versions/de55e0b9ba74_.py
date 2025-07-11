@@ -12,7 +12,6 @@ import pgvector
 import sqlalchemy as sa
 from alembic import op
 
-
 revision: str = "de55e0b9ba74"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
@@ -21,11 +20,10 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
 
-    
     op.create_table(
         "funding_organizations",
         sa.Column("full_name", sa.String(length=255), nullable=False),
@@ -359,7 +357,6 @@ def upgrade() -> None:
         op.f("ix_grant_template_rag_sources_created_at"), "grant_template_rag_sources", ["created_at"], unique=False
     )
 
-    
     op.execute("""
         CREATE INDEX IF NOT EXISTS idx_grant_applications_title_fts
         ON grant_applications
@@ -386,19 +383,17 @@ def upgrade() -> None:
         CREATE INDEX IF NOT EXISTS idx_grant_applications_title_sort
         ON grant_applications (project_id, title)
     """)
-    
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
+
     op.execute("DROP INDEX IF EXISTS idx_grant_applications_title_sort")
     op.execute("DROP INDEX IF EXISTS idx_grant_applications_created_at_desc")
     op.execute("DROP INDEX IF EXISTS idx_grant_applications_filtering")
     op.execute("DROP INDEX IF EXISTS idx_grant_applications_title_trgm")
     op.execute("DROP INDEX IF EXISTS idx_grant_applications_title_fts")
 
-    
     op.drop_index(op.f("ix_grant_template_rag_sources_created_at"), table_name="grant_template_rag_sources")
     op.drop_table("grant_template_rag_sources")
     op.drop_index(
@@ -469,4 +464,3 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_funding_organizations_created_at"), table_name="funding_organizations")
     op.drop_index(op.f("ix_funding_organizations_abbreviation"), table_name="funding_organizations")
     op.drop_table("funding_organizations")
-    

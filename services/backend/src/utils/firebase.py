@@ -110,10 +110,10 @@ _firestore_client_ref = Ref[Any]()
 def get_firestore_client() -> Any:
     """Get Firestore client instance"""
     if _firestore_client_ref.value is None:
-        from google.cloud import firestore
+        from google.cloud.firestore import AsyncClient
 
         logger.debug("Initializing Firestore client")
-        _firestore_client_ref.value = firestore.AsyncClient()
+        _firestore_client_ref.value = AsyncClient()
     return _firestore_client_ref.value
 
 
@@ -121,7 +121,7 @@ async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[
     """Schedule a user for deletion in Firestore"""
     from datetime import datetime, timedelta
 
-    from google.cloud import firestore
+    from google.cloud.firestore import SERVER_TIMESTAMP
 
     db = get_firestore_client()
     deletion_date = datetime.now(UTC) + timedelta(days=grace_period_days)
@@ -129,11 +129,11 @@ async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[
     doc_data = {
         "firebase_uid": uid,
         "status": "scheduled",
-        "scheduled_at": firestore.SERVER_TIMESTAMP,
+        "scheduled_at": SERVER_TIMESTAMP,
         "deletion_date": deletion_date,
         "grace_period_days": grace_period_days,
-        "created_at": firestore.SERVER_TIMESTAMP,
-        "updated_at": firestore.SERVER_TIMESTAMP,
+        "created_at": SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
     }
 
     try:
@@ -171,7 +171,7 @@ async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
 
 async def cancel_user_deletion(uid: str) -> bool:
     """Cancel scheduled user deletion"""
-    from google.cloud import firestore
+    from google.cloud.firestore import SERVER_TIMESTAMP
 
     db = get_firestore_client()
 
@@ -186,8 +186,8 @@ async def cancel_user_deletion(uid: str) -> bool:
         await doc_ref.update(
             {
                 "status": "cancelled",
-                "cancelled_at": firestore.SERVER_TIMESTAMP,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "cancelled_at": SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
             }
         )
 

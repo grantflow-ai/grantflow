@@ -32,10 +32,7 @@ import { getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger";
 
 const loginFormSchema = z.object({
-	email: z
-		.string()
-		.min(1, { message: "Please enter your email address." })
-		.email({ message: "This email address is not valid." }),
+	email: z.email({ message: "This email address is not valid." }),
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
