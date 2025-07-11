@@ -1,159 +1,89 @@
 "use client";
 
-import { Edit, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
+import { PencilIcon, Plus, SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
+
 import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
-import { AvatarGroup } from "@/components/app";
+import { AppButton } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import type { API } from "@/types/api-types";
-import type { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
-
-import { ProjectSidebar } from "./project-sidebar";
+import { DashboardHeader } from "../dashboard/dashboard-header";
+import { ApplicationCard } from "./application-card";
 
 interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
 
-const statusConfig = {
-	COMPLETED: {
-		color: "bg-[#1e13f8]",
-		label: "Completed",
-		textColor: "text-white",
+const projectTeamMembers = [
+	{ backgroundColor: "#369e94", initials: "NH" },
+	{ backgroundColor: "#9e366f", initials: "VH" },
+	{ backgroundColor: "#9747ff", initials: "AR" },
+];
+
+const mockApplications = [
+	{
+		completed_at: null,
+		created_at: "2023-10-20T09:00:00Z",
+		deadline: "6 weeks and 5 days to the deadline",
+		description:
+			"A grant to support local artists and cultural events. This funding aims to foster creativity and community engagement through public art installations, workshops, and performances.",
+		id: "1",
+		project_id: "proj-1",
+		schema_id: "schema-1",
+		status: "Generating",
+		title: "Community Arts Grant",
+		updated_at: "2023-10-26T10:00:00Z",
+		user_id: "user-1",
 	},
-	DRAFT: {
-		color: "bg-[#211968]",
-		label: "Draft",
-		textColor: "text-white",
+	{
+		completed_at: null,
+		created_at: "2023-10-22T11:00:00Z",
+		deadline: "4 weeks and 2 days to the deadline",
+		description:
+			"Funding for educational programs targeting underprivileged youth. The initiative focuses on providing access to quality education, mentorship, and resources to help young people achieve their full potential.",
+		id: "2",
+		project_id: "proj-1",
+		schema_id: "schema-2",
+		status: "In Progress",
+		title: "Youth Education Initiative",
+		updated_at: "2023-10-25T14:30:00Z",
+		user_id: "user-1",
 	},
-	IN_PROGRESS: {
-		color: "bg-[#9747ff]",
-		label: "In Progress",
-		textColor: "text-white",
+	{
+		completed_at: "2023-09-20T12:00:00Z",
+		created_at: "2023-09-01T08:00:00Z",
+		deadline: "2 weeks and 1 day to the deadline",
+		description:
+			"A fund for projects focused on environmental protection. We support initiatives related to conservation, sustainability, and raising awareness about critical environmental issues.",
+		id: "3",
+		project_id: "proj-1",
+		schema_id: "schema-3",
+		status: "Working Draft",
+		title: "Environmental Conservation Fund",
+		updated_at: "2023-09-15T18:45:00Z",
+		user_id: "user-1",
 	},
-};
-
-const applicationCardUser = { backgroundColor: "#369e94", initials: "NH" };
-const applicationCardUsers = [applicationCardUser];
-
-interface ApplicationCardProps {
-	application: API.ListApplications.Http200.ResponseBody["applications"][0];
-	onDelete: (id: string) => void;
-	onOpen: (applicationId: string, applicationTitle: string) => void;
-}
-
-function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps) {
-	const status = statusConfig[application.status as keyof typeof statusConfig];
-	const [showMenu, setShowMenu] = useState(false);
-
-	return (
-		<div
-			className="relative flex flex-col gap-4 rounded-lg bg-white border border-[#e1dfeb] p-6"
-			data-testid="application-card"
-		>
-			{}
-			<div className="flex items-start justify-between">
-				<div
-					className={`flex items-center gap-2 rounded px-2 py-1 ${status.color}`}
-					data-testid="application-status"
-				>
-					<div className="size-2 rounded-full bg-white" />
-					<span className={`font-['Source_Sans_Pro'] text-[12px] font-medium ${status.textColor}`}>
-						{status.label}
-					</span>
-					<span
-						className={`font-['Source_Sans_Pro'] text-[10px] ${status.textColor}`}
-						data-testid="application-last-edited"
-					>
-						Last edited {formatDate(application.updated_at)}
-					</span>
-				</div>
-				<div className="relative">
-					<button
-						className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36]"
-						data-testid="application-menu-trigger"
-						onBlur={() =>
-							setTimeout(() => {
-								setShowMenu(false);
-							}, 200)
-						}
-						onClick={() => {
-							setShowMenu(!showMenu);
-						}}
-						type="button"
-					>
-						<MoreVertical className="size-4" />
-					</button>
-					{showMenu && (
-						<div
-							className="absolute right-0 top-8 bg-white border border-[#e1dfeb] rounded-lg shadow-lg z-10 py-1 min-w-[120px]"
-							data-testid="application-menu"
-						>
-							<button
-								className="flex items-center gap-2 w-full px-3 py-2 text-left font-['Source_Sans_Pro'] text-[14px] text-[#d32f2f] hover:bg-[#faf9fb] transition-colors"
-								data-testid="application-delete-button"
-								onClick={() => {
-									onDelete(application.id);
-									setShowMenu(false);
-								}}
-								type="button"
-							>
-								<Trash2 className="size-4" />
-								Delete
-							</button>
-						</div>
-					)}
-				</div>
-			</div>
-
-			{}
-			<div className="flex items-center gap-3">
-				<AvatarGroup maxVisible={1} size="sm" users={applicationCardUsers} />
-				<h3
-					className="font-['Source_Sans_Pro'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]"
-					data-testid="application-title"
-				>
-					{application.title}
-				</h3>
-			</div>
-
-			{}
-			<p className="font-['Source_Sans_Pro'] text-[14px] leading-[20px] text-[#636170]">
-				Grant application for {application.title}
-			</p>
-
-			{}
-
-			{}
-			<button
-				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors cursor-pointer"
-				data-testid="application-open-button"
-				onClick={() => {
-					onOpen(application.id, application.title);
-				}}
-				type="button"
-			>
-				Open
-			</button>
-		</div>
-	);
-}
-
-function formatDate(dateString: string) {
-	const date = new Date(dateString);
-	return date.toLocaleDateString("en-US", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "2-digit",
-	});
-}
-
-const teamMembers = [{ backgroundColor: "#369e94", initials: "NH" }];
+	{
+		completed_at: null,
+		created_at: "2023-10-21T10:00:00Z",
+		deadline: "8 weeks and 3 days to the deadline",
+		description:
+			"Supporting innovative technology solutions for social problems. This grant is for developers, entrepreneurs, and organizations using technology to create a positive impact on society.",
+		id: "4",
+		project_id: "proj-1",
+		schema_id: "schema-4",
+		status: "In Progress",
+		title: "Tech for Good Grant",
+		updated_at: "2023-10-27T11:00:00Z",
+		user_id: "user-1",
+	},
+];
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
 	const router = useRouter();
@@ -174,7 +104,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		},
 	);
 
-	const applications = applicationsData?.applications ?? [];
+	const applications = mockApplications;
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);
@@ -238,35 +168,18 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	}, [isEditingTitle]);
 
 	return (
-		<div className="flex h-screen bg-[#f6f5f9]">
-			{}
-			<ProjectSidebar
-				applications={applications.map((app) => ({
-					id: app.id,
-					name: app.title,
-					status: app.status,
-				}))}
-				isCreatingApplication={isCreatingApplication}
-				onCreateApplication={handleCreateApplication}
-				projectId={initialProject.id}
-				userRole={initialProject.role as UserRole}
-			/>
-
-			{}
-			<div className="flex-1 flex flex-col">
-				{}
-				<div
-					className="flex items-center justify-between bg-white px-6 py-4 border-b border-[#e1dfeb]"
+		<section className="bg-preview-bg w-full h-full  flex">
+			<main className="w-[98%] pb-5">
+				<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
+				<main
+					className=" px-10 relative flex h-[863px] flex-col gap-10 pt-14 pb-8 rounded-lg bg-white border border-gray-200"
 					data-testid="project-header"
 				>
-					<div className="flex items-center gap-3">
-						<button className="text-[#636170] hover:text-[#2e2d36]" type="button">
-							←
-						</button>
+					<div className="flex items-center justify-between w-full">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
 								<input
-									className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36] bg-transparent border-b border-[#1e13f8] outline-none"
+									className="font-medium text-[36px] leading-[42px] text-black bg-gray-100 outline-none rounded-md px-2 w-full min-w-[100px]"
 									data-testid="project-title-input"
 									onBlur={() => {
 										setIsEditingTitle(false);
@@ -284,64 +197,60 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 								/>
 							) : (
 								<h1
-									className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]"
+									className=" font-medium text-[36px] leading-[42px] text-black"
 									data-testid="project-title"
 								>
 									{projectTitle}
 								</h1>
 							)}
+							{!isEditingTitle && (
+
 							<button
-								className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36]"
+								className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36] cursor-pointer"
 								data-testid="edit-project-title-button"
 								onClick={() => {
 									setIsEditingTitle(true);
 								}}
 								type="button"
 							>
-								<Edit className="size-4" />
+								<PencilIcon className="size-3" />
 							</button>
+							)}
+						</div>
+						<div className="flex items-center gap-3">
+							<div className="relative w-80 ">
+								<SearchIcon className="absolute right-3 top-1/2 size-3 -translate-y-1/2 text-[#636170]" />
+								<input
+									className="w-full h-10 rounded-[4px] px-3 border border-[#e1dfeb] bg-white   text-[14px] text-base text-black placeholder:text-gray-400 placeholder:font-normal placeholder:text-sm outline-none focus:border-[#1e13f8]"
+									data-testid="application-search-input"
+									onChange={(e) => {
+										setSearchQuery(e.target.value);
+									}}
+									placeholder="Search by application name or content"
+									value={searchQuery}
+								/>
+							</div>
+							<AppButton
+								className="px-4 py-2"
+								data-testid="new-application-button"
+								disabled={isCreatingApplication}
+								onClick={handleCreateApplication}
+								type="button"
+								variant="primary"
+							>
+								<Plus className="size-4" />
+								<p className="font-normal text-base">New Application</p>
+							</AppButton>
 						</div>
 					</div>
-					<div data-testid="sidebar-team-section">
-						<AvatarGroup size="md" users={teamMembers} />
-					</div>
-				</div>
-
-				{}
-				<div className="flex items-center justify-between px-6 py-4">
-					<div className="relative flex-1 max-w-2xl">
-						<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#636170]" />
-						<input
-							className="w-full rounded-lg border border-[#e1dfeb] bg-white py-2 pl-10 pr-4 font-['Source_Sans_Pro'] text-[14px] placeholder-[#636170] outline-none focus:border-[#1e13f8]"
-							data-testid="application-search-input"
-							onChange={(e) => {
-								setSearchQuery(e.target.value);
-							}}
-							placeholder="Search by application name or content"
-							value={searchQuery}
-						/>
-					</div>
-					<button
-						className="flex items-center gap-2 rounded bg-[#1e13f8] px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-white hover:bg-[#1710d4] transition-colors ml-4"
-						data-testid="new-application-button"
-						disabled={isCreatingApplication}
-						onClick={handleCreateApplication}
-						type="button"
-					>
-						<Plus className="size-4" />
-						{isCreatingApplication ? "Creating..." : "New Application"}
-					</button>
-				</div>
-
-				{}
-				<div className="flex-1 overflow-auto px-6 pb-6" data-testid="applications-section">
+				<div className="flex-1 overflow-auto  pb-6" data-testid="applications-section">
 					{isLoading && (
 						<div className="flex items-center justify-center h-64">
 							<div className="text-[#636170]">Loading applications...</div>
 						</div>
 					)}
 					{!isLoading && applications.length > 0 && (
-						<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+						<main className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-auto scrollbar-hide auto-rows-min max-h-full">
 							{applications.map((application) => (
 								<ApplicationCard
 									application={application}
@@ -350,28 +259,30 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 									onOpen={handleOpenApplication}
 								/>
 							))}
-						</div>
+						</main>
 					)}
 					{!isLoading && applications.length === 0 && (
-						<div className="flex items-center justify-center h-full" data-testid="empty-applications-state">
+						<div className=" w-[628px] h-[206px]" data-testid="empty-applications-state">
 							<button
-								className="flex flex-col items-center justify-center w-[300px] h-[200px] bg-white rounded-lg border-2 border-dashed border-[#e1dfeb] hover:border-[#1e13f8] transition-colors cursor-pointer"
+								className="flex flex-col items-center gap-2 justify-center w-full h-full bg-preview-bg rounded-[4px] border border-dashed border-gray-200 cursor-pointer"
 								data-testid="empty-state-new-application-button"
 								disabled={isCreatingApplication}
 								onClick={handleCreateApplication}
 								type="button"
 							>
-								<div className="flex items-center justify-center size-12 mb-3">
-									<Plus className="size-8 text-[#1e13f8]" />
-								</div>
-								<span className="font-['Source_Sans_Pro'] text-[16px] text-[#636170]">
+								<div className="flex items-center justify-center size-10">
+											<Plus className="size-6 text-primary" />
+										</div>
+								<span className="text-base font-normal text-black">
 									{getEmptyStateButtonText()}
 								</span>
 							</button>
 						</div>
 					)}
 				</div>
-			</div>
+				</main>
+
+			</main>
 
 			{}
 			<DeleteApplicationModal
@@ -382,6 +293,6 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				}}
 				onConfirm={confirmDeleteApplication}
 			/>
-		</div>
+		</section>
 	);
 }
