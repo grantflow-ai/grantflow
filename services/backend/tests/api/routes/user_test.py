@@ -22,17 +22,17 @@ class TestDeleteUser:
     ) -> None:
         from datetime import UTC, datetime, timedelta
 
-        from google.cloud import firestore  # type: ignore[attr-defined]
+        from google.cloud.firestore import SERVER_TIMESTAMP
 
         deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
         mock_firestore_data = {
             "firebase_uid": firebase_uid,
             "status": "scheduled",
-            "scheduled_at": firestore.SERVER_TIMESTAMP,
+            "scheduled_at": SERVER_TIMESTAMP,
             "deletion_date": deletion_date,
             "grace_period_days": USER_DELETION_GRACE_PERIOD_DAYS,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         }
 
         mock_schedule = mocker.patch(
@@ -94,17 +94,17 @@ class TestDeleteUser:
     ) -> None:
         from datetime import UTC, datetime
 
-        from google.cloud import firestore  # type: ignore[attr-defined]
+        from google.cloud.firestore import SERVER_TIMESTAMP
 
         deletion_date = datetime.now(UTC).replace(tzinfo=None)
         mock_firestore_data = {
             "firebase_uid": firebase_uid,
             "status": "scheduled",
-            "scheduled_at": firestore.SERVER_TIMESTAMP,
+            "scheduled_at": SERVER_TIMESTAMP,
             "deletion_date": deletion_date,
             "grace_period_days": 0,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": SERVER_TIMESTAMP,
+            "updated_at": SERVER_TIMESTAMP,
         }
 
         mocker.patch(

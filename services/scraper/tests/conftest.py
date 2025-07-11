@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from litestar.testing import AsyncTestClient
 from services.scraper.src.main import app
 
-
 load_dotenv()
 
 pytest_plugins = [

@@ -7,10 +7,7 @@ import { IconGoAhead } from "@/components/branding/icons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 const signInFormSchema = z.object({
-	email: z
-		.string()
-		.min(1, { message: "Please enter your email address." })
-		.email({ message: "This email address is not valid." }),
+	email: z.email({ message: "This email address is not valid." }),
 	firstName: z
 		.string()
 		.min(2, { message: "Please enter your first name." })
