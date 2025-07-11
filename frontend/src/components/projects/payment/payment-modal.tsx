@@ -116,7 +116,10 @@ interface PaymentModalProps {
 
 export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 	return (
-		<div>
+		<>
+		{isOpen && (
+
+		<div data-testid="payment-modal">
 			<BaseModal className="w-full !max-w-[1200px] text-black px-14 py-8" isOpen={isOpen} onClose={onClose}>
 				<DialogHeader className=" w-full  flex items-center justify-center">
 					<DialogTitle className="font-medium text-4xl leading-[42px]">
@@ -128,17 +131,19 @@ export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 					</DialogDescription>
 				</DialogHeader>
 				<main>
-					<Tabs defaultValue="account">
+					<Tabs defaultValue="monthly">
 						<div className="flex w-full items-center justify-center">
 							<TabsList className="cursor-pointer">
 								<TabsTrigger
 									className=" cursor-pointer px-6 py-1 rounded-l-[8px] font-normal text-base bg-white text-gray-400 data-[state=active]:bg-primary data-[state=active]:text-white"
+									data-testid="monthly-tab-trigger"
 									value="monthly"
 								>
 									Monthly
 								</TabsTrigger>
 								<TabsTrigger
 									className="cursor-pointer px-6 py-1 rounded-r-[8px] font-normal text-base bg-white text-gray-400 data-[state=active]:bg-primary data-[state=active]:text-white"
+									data-testid="yearly-tab-trigger"
 									value="yearly"
 								>
 									Yearly save 20%
@@ -146,7 +151,7 @@ export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 							</TabsList>
 						</div>
 						<TabsContent className="w-fit" value="monthly">
-							<main className="flex gap-3 w-full">
+							<main className="flex gap-3 w-full" data-testid="monthly-plans-content">
 								{Monthlyplans.map((plan, index) => (
 									<div
 										className="w-[263px] p-6 h-[467px] bg-preview-bg rounded-[12px] flex flex-col gap-[26px] "
@@ -164,7 +169,12 @@ export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 												{plan.title}
 											</h4>
 											<p className="font-normal text-sm leading-[30px] text-gray-500 ">
-												<span className="text-black text-5xl">{plan.price}</span>
+												<span
+													className="text-black text-5xl"
+													data-testid={`plan-price-${plan.price}`}
+												>
+													{plan.price}
+												</span>
 												{plan.note}{" "}
 											</p>
 										</div>
@@ -194,8 +204,8 @@ export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 								))}
 							</main>
 						</TabsContent>
-						<TabsContent value="yearly">
-							<main className="flex gap-3 w-full">
+						<TabsContent data-testid="yearly-plans-content" value="yearly">
+							<main className="flex gap-3 w-full" >
 								{Yearlyplans.map((plan, index) => (
 									<div
 										className="w-[263px] p-6 h-[467px] bg-preview-bg rounded-[12px] flex flex-col gap-[26px] "
@@ -213,7 +223,12 @@ export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 												{plan.title}
 											</h4>
 											<p className="font-normal text-sm leading-[30px] text-gray-500 ">
-												<span className="text-black text-5xl">{plan.price}</span>
+												<span
+													className="text-black text-5xl"
+													data-testid={`plan-price-${plan.price}`}
+												>
+													{plan.price}
+												</span>
 												{plan.note}{" "}
 											</p>
 										</div>
@@ -247,5 +262,7 @@ export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
 				</main>
 			</BaseModal>
 		</div>
+		)}
+		</>
 	);
 }
