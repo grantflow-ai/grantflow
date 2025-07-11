@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useCallback, useEffect } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
+import { WizardRightPane } from "@/components/projects/wizard/shared";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -94,37 +95,28 @@ function ApplicationStructurePreview() {
 
 	if (!application) {
 		return (
-			<div
-				className="bg-preview-bg flex flex-1 size-full overflow-y-auto border-l border-app-gray-100"
-				data-testid="application-structure-preview-pane"
-			>
+			<WizardRightPane padding="p-5 md:p-7" testId="application-structure-preview-pane">
 				<EmptyStateView />
-			</div>
+			</WizardRightPane>
 		);
 	}
 
 	if (isGeneratingTemplate) {
 		return (
-			<div
-				className="bg-preview-bg flex flex-1 size-full overflow-y-auto border-l border-app-gray-100"
-				data-testid="application-structure-preview-pane"
-			>
+			<WizardRightPane padding="p-5 md:p-7" testId="application-structure-preview-pane">
 				<GeneratingLoader />
-			</div>
+			</WizardRightPane>
 		);
 	}
 
 	return (
-		<div
-			className="bg-preview-bg flex flex-1 size-full overflow-y-auto border-l border-app-gray-100"
-			data-testid="application-structure-preview-pane"
-		>
+		<WizardRightPane padding="p-5 md:p-7" testId="application-structure-preview-pane">
 			<SectionEditor
 				isDetailedSection={isDetailedSection}
 				onAddSection={handleAddNewSection}
 				toUpdateGrantSection={toUpdateGrantSection}
 			/>
-		</div>
+		</WizardRightPane>
 	);
 }
 
@@ -202,7 +194,7 @@ function SectionEditor({
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }) {
 	return (
-		<div className="flex flex-col size-full p-5 md:p-7" data-testid="application-structure-sections">
+		<div className="flex flex-col size-full" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
 				<DragDropSectionManager
