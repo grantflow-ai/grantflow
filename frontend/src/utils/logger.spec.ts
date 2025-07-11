@@ -83,19 +83,25 @@ describe("Logger", () => {
 			vi.stubEnv("NODE_ENV", "production");
 		});
 
-		it("should not log any messages in production", () => {
+		it("should log messages in production", () => {
 			const error = new Error("Production error");
 
 			log.error("Error in production", error);
 			log.info("Info in production", { data: "test" });
 			log.warn("Warning in production", { level: "high" });
 
-			expect(consoleSpy.error).not.toHaveBeenCalled();
-			expect(consoleSpy.info).not.toHaveBeenCalled();
-			expect(consoleSpy.warn).not.toHaveBeenCalled();
+			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Error in production", {
+				error: {
+					message: "Production error",
+					name: "Error",
+					stack: expect.any(String),
+				},
+			});
+			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Info in production", { data: "test" });
+			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Warning in production", { level: "high" });
 		});
 
-		it("should not log even with complex contexts in production", () => {
+		it("should log complex contexts in production", () => {
 			const complexContext = {
 				metadata: { timestamp: Date.now() },
 				traceId: "xyz-789",
@@ -106,9 +112,18 @@ describe("Logger", () => {
 			log.info("Complex info", complexContext);
 			log.warn("Complex warning", complexContext);
 
-			expect(consoleSpy.error).not.toHaveBeenCalled();
-			expect(consoleSpy.info).not.toHaveBeenCalled();
-			expect(consoleSpy.warn).not.toHaveBeenCalled();
+			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Complex error", {
+				error: {
+					message: "Test",
+					name: "Error",
+					stack: expect.any(String),
+				},
+				metadata: { timestamp: expect.any(Number) },
+				traceId: "xyz-789",
+				user: { id: "123", name: "Test" },
+			});
+			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Complex info", complexContext);
+			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Complex warning", complexContext);
 		});
 	});
 
@@ -117,14 +132,20 @@ describe("Logger", () => {
 			vi.stubEnv("NODE_ENV", "test");
 		});
 
-		it("should not log messages in test mode", () => {
+		it("should log messages in test mode", () => {
 			log.error("Test mode error", new Error("Test"));
 			log.info("Test mode info");
 			log.warn("Test mode warning");
 
-			expect(consoleSpy.error).not.toHaveBeenCalled();
-			expect(consoleSpy.info).not.toHaveBeenCalled();
-			expect(consoleSpy.warn).not.toHaveBeenCalled();
+			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Test mode error", {
+				error: {
+					message: "Test",
+					name: "Error",
+					stack: expect.any(String),
+				},
+			});
+			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Test mode info", {});
+			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Test mode warning", {});
 		});
 	});
 

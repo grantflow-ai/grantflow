@@ -9,10 +9,6 @@ vi.mock("@/actions/project", () => ({
 	createProject: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
-}));
-
 describe("CreateProjectForm", () => {
 	const mockCloseModal = vi.fn();
 	const mockCreateProject = vi.mocked(createProject);

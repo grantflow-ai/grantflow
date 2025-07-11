@@ -20,10 +20,6 @@ vi.mock("@/actions/grant-applications", () => ({
 	createApplication: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
-}));
-
 describe("CreateApplicationButton", () => {
 	const mockPush = vi.fn();
 	const mockProjectId = ApplicationFactory.build().id;
