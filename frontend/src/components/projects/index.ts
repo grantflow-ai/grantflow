@@ -3,7 +3,6 @@ export { DeleteApplicationModal } from "./applications/delete-application-modal"
 export { GrantApplicationCard } from "./applications/grant-application-card";
 export { GrantApplicationEditor } from "./applications/grant-application-editor";
 export { DashboardClient } from "./dashboard/dashboard-client";
-export { DashboardCreateProjectModal } from "./dashboard/dashboard-create-project-modal";
 export { DashboardHeader } from "./dashboard/dashboard-header";
 export { DashboardProjectCard } from "./dashboard/dashboard-project-card";
 export { DashboardStats } from "./dashboard/dashboard-stats";
@@ -13,7 +12,6 @@ export { ProjectSidebar } from "./detail/project-sidebar";
 
 export { CreateProjectForm } from "./forms/create-project-form";
 
-export { CreateProjectModal } from "./modals/create-project-modal";
 export { DeleteProjectModal } from "./modals/delete-project-modal";
 export { InviteCollaboratorModal } from "./modals/invite-collaborator-modal";
 export { DeleteAccountModal } from "./settings/delete-account-modal";

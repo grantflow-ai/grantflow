@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
-import { getProjects } from "@/actions/project";
+import { createProject, getProjects } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppButton, AvatarGroup } from "@/components/app";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -17,7 +17,6 @@ import { routes } from "@/utils/navigation";
 import { DeleteProjectModal } from "../modals/delete-project-modal";
 import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
 import PaymentLink from "../payment/payment-link";
-import { DashboardCreateProjectModal } from "./dashboard-create-project-modal";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardProjectCard } from "./dashboard-project-card";
 import { DashboardStats } from "./dashboard-stats";
@@ -35,13 +34,13 @@ const projectTeamMembers = [
 
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const router = useRouter();
-	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
 	const [selectedProjectForInvite, setSelectedProjectForInvite] = useState<
 		API.ListProjects.Http200.ResponseBody[0] | null
 	>(null);
+	const [isCreatingProject, setIsCreatingProject] = useState(false);
 	const { deleteProject, duplicateProject } = useProjectStore();
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
@@ -55,7 +54,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		router.push(routes.project.detail({ projectId, projectName }));
 	};
 
-	const { data: projects = initialProjects } = useSWR("projects", getProjects, {
+	const { data: projects = initialProjects, mutate } = useSWR("projects", getProjects, {
 		fallbackData: initialProjects,
 		revalidateOnFocus: false,
 	});
@@ -121,13 +120,71 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 			});
 		}
 	};
+
+	const handleCreateProject = async () => {
+		if (isCreatingProject) return;
+
+		setIsCreatingProject(true);
+		try {
+			// Generate unique name
+			const existingNames = new Set(projects.map((p) => p.name));
+			let newProjectName = "New Research Project";
+			let counter = 2;
+
+			while (existingNames.has(newProjectName)) {
+				newProjectName = `New Research Project ${counter}`;
+				counter++;
+			}
+
+			// Create project
+			const { id: projectId } = await createProject({
+				description: "",
+				name: newProjectName,
+			});
+
+			// Refresh projects list
+			await mutate();
+
+			// Navigate to the new project
+			router.push(routes.project.detail({ projectId, projectName: newProjectName }));
+		} catch {
+			addNotification({
+				message: "Failed to create project. Please try again.",
+				projectName: "",
+				title: "Error creating project",
+				type: "warning",
+			});
+		} finally {
+			setIsCreatingProject(false);
+		}
+	};
+
+	const handleStartApplication = () => {
+		if (projects.length === 0) {
+			addNotification({
+				message: "No projects found. Please create a project first.",
+				projectName: "",
+				title: "No projects",
+				type: "warning",
+			});
+			return;
+		}
+
+		// Find the default project (first project or one named "default")
+		const defaultProject = projects.find((p) => p.name.toLowerCase() === "default") ?? projects[0];
+
+		// Navigate to application wizard for the default project
+		router.push(
+			routes.application.create({
+				projectId: defaultProject.id,
+				projectName: defaultProject.name,
+			}),
+		);
+	};
+
 	return (
 		<div className="relative size-full">
-			<WelcomeModal
-				onStartApplication={() => {
-					setShowCreateModal(true);
-				}}
-			/>
+			<WelcomeModal onStartApplication={handleStartApplication} />
 			<section className="bg-preview-bg w-full h-full  flex">
 				<main className="w-[98%] pb-5">
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
@@ -174,12 +231,13 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 									<AppButton
 										className="px-4 py-2"
 										data-testid="new-research-project-button"
-										onClick={() => {
-											setShowCreateModal(true);
-										}}
+										disabled={isCreatingProject}
+										onClick={handleCreateProject}
 										variant="primary"
 									>
-										<p className="font-normal text-base">+ New Research Project</p>
+										<p className="font-normal text-base">
+											{isCreatingProject ? "Creating..." : "+ New Research Project"}
+										</p>
 									</AppButton>
 								</div>
 							</article>
@@ -214,12 +272,11 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										<button
 											className="rounded bg-[#1e13f8] px-4 py-2 text-white"
 											data-testid="create-first-project-button"
-											onClick={() => {
-												setShowCreateModal(true);
-											}}
+											disabled={isCreatingProject}
+											onClick={handleCreateProject}
 											type="button"
 										>
-											Create Your First Project
+											{isCreatingProject ? "Creating..." : "Create Your First Project"}
 										</button>
 									</div>
 								)}
@@ -229,13 +286,6 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 					</main>
 				</main>
 			</section>
-
-			<DashboardCreateProjectModal
-				isOpen={showCreateModal}
-				onClose={() => {
-					setShowCreateModal(false);
-				}}
-			/>
 
 			<DeleteProjectModal isOpen={showDeleteModal} onClose={closeDeleteModal} onConfirm={confirmDeleteProject} />
 
