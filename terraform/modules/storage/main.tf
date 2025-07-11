@@ -42,13 +42,44 @@ variable "retention_days" {
   default     = 30
 }
 
+variable "location" {
+  description = "Storage bucket location (for GDPR compliance)"
+  type        = string
+  default     = "US"
+}
+
+variable "enable_versioning" {
+  description = "Enable object versioning"
+  type        = bool
+  default     = false
+}
+
+variable "enable_lifecycle" {
+  description = "Enable lifecycle management"
+  type        = bool
+  default     = true
+}
+
+variable "uniform_bucket_access" {
+  description = "Enable uniform bucket-level access"
+  type        = bool
+  default     = true
+}
+
 resource "google_storage_bucket" "uploads" {
   name                        = var.bucket_name
-  location                    = "US"
+  location                    = var.location
   force_destroy               = false
   storage_class               = var.storage_class
-  uniform_bucket_level_access = true
+  uniform_bucket_level_access = var.uniform_bucket_access
   public_access_prevention    = "enforced"
+
+  dynamic "versioning" {
+    for_each = var.enable_versioning ? [1] : []
+    content {
+      enabled = true
+    }
+  }
 
   soft_delete_policy {
     retention_duration_seconds = 604800
@@ -58,12 +89,15 @@ resource "google_storage_bucket" "uploads" {
     default_kms_key_name = google_kms_crypto_key.bucket_key.id
   }
 
-  lifecycle_rule {
-    condition {
-      age = var.retention_days
-    }
-    action {
-      type = "Delete"
+  dynamic "lifecycle_rule" {
+    for_each = var.enable_lifecycle ? [1] : []
+    content {
+      condition {
+        age = var.retention_days
+      }
+      action {
+        type = "Delete"
+      }
     }
   }
 
@@ -74,7 +108,7 @@ resource "google_storage_bucket" "uploads" {
 
 resource "google_kms_key_ring" "storage_keyring" {
   name     = "storage-keyring"
-  location = "us"
+  location = var.location == "US" ? "us" : var.location
 }
 
 resource "google_kms_crypto_key" "bucket_key" {
@@ -154,8 +188,8 @@ resource "google_storage_notification" "file_indexing_notification" {
 
 # Scraper-specific bucket for NIH grant data
 resource "google_storage_bucket" "scraper" {
-  name                        = "grantflow-scraper"
-  location                    = "US"
+  name                        = "grantflow-scraper-${var.environment}"
+  location                    = var.location
   force_destroy               = false
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
