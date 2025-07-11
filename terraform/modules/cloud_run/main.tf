@@ -61,6 +61,30 @@ variable "memory_limit" {
   default     = "1Gi"
 }
 
+variable "enable_cpu_throttling" {
+  description = "Enable CPU throttling"
+  type        = bool
+  default     = true
+}
+
+variable "enable_http2" {
+  description = "Enable HTTP/2"
+  type        = bool
+  default     = false
+}
+
+variable "request_timeout" {
+  description = "Request timeout in seconds"
+  type        = number
+  default     = 300
+}
+
+variable "concurrency_limit" {
+  description = "Maximum number of concurrent requests per instance"
+  type        = number
+  default     = 80
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -201,7 +225,8 @@ resource "google_cloud_run_v2_service" "backend" {
       min_instance_count = var.min_instances
     }
 
-    timeout = "300s"
+    timeout         = "${var.request_timeout}s"
+    max_instance_request_concurrency = var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -311,7 +336,8 @@ resource "google_cloud_run_v2_service" "crawler" {
       min_instance_count = var.min_instances
     }
 
-    timeout = "300s"
+    timeout         = "${var.request_timeout}s"
+    max_instance_request_concurrency = var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -421,7 +447,8 @@ resource "google_cloud_run_v2_service" "indexer" {
       min_instance_count = var.min_instances
     }
 
-    timeout = "300s"
+    timeout         = "${var.request_timeout}s"
+    max_instance_request_concurrency = var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"

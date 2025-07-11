@@ -87,6 +87,36 @@ variable "high_availability" {
   default     = false
 }
 
+variable "backup_retention" {
+  description = "Number of backups to retain"
+  type        = number
+  default     = 7
+}
+
+variable "backup_location" {
+  description = "Backup location (for GDPR compliance)"
+  type        = string
+  default     = "us"
+}
+
+variable "enable_query_insights" {
+  description = "Enable query insights for monitoring"
+  type        = bool
+  default     = true
+}
+
+variable "log_slow_queries" {
+  description = "Enable slow query logging"
+  type        = bool
+  default     = false
+}
+
+variable "deletion_protection" {
+  description = "Enable deletion protection"
+  type        = bool
+  default     = true
+}
+
 resource "google_sql_database_instance" "main" {
   name             = var.instance_name
   project          = var.project_id
@@ -100,13 +130,13 @@ resource "google_sql_database_instance" "main" {
 
     backup_configuration {
       backup_retention_settings {
-        retained_backups = "7"
+        retained_backups = var.backup_retention
         retention_unit   = "COUNT"
       }
 
       binary_log_enabled             = "false"
       enabled                        = var.backup_enabled
-      location                       = "us"
+      location                       = var.backup_location
       point_in_time_recovery_enabled = var.backup_enabled
       start_time                     = "22:00"
       transaction_log_retention_days = "7"
@@ -118,7 +148,7 @@ resource "google_sql_database_instance" "main" {
       data_cache_enabled = "false"
     }
 
-    deletion_protection_enabled  = true
+    deletion_protection_enabled  = var.deletion_protection
     disk_autoresize              = true
     disk_autoresize_limit        = 0
     disk_size                    = var.disk_size
@@ -128,11 +158,11 @@ resource "google_sql_database_instance" "main" {
     enable_google_ml_integration = false
 
     insights_config {
-      query_insights_enabled  = true
-      query_plans_per_minute  = 20
-      query_string_length     = 1024
-      record_application_tags = true
-      record_client_address   = true
+      query_insights_enabled  = var.enable_query_insights
+      query_plans_per_minute  = var.enable_query_insights ? 20 : 0
+      query_string_length     = var.enable_query_insights ? 1024 : 0
+      record_application_tags = var.enable_query_insights
+      record_client_address   = var.enable_query_insights
     }
 
     database_flags {
@@ -157,7 +187,7 @@ resource "google_sql_database_instance" "main" {
 
     database_flags {
       name  = "log_min_duration_statement"
-      value = "1000"
+      value = var.log_slow_queries ? "1000" : "-1"
     }
 
     database_flags {

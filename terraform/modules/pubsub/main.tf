@@ -25,8 +25,28 @@ variable "pubsub_invoker_service_account_email" {
   type        = string
 }
 
+variable "message_retention_duration" {
+  description = "Message retention duration"
+  type        = string
+  default     = "86400s"  # 1 day
+}
+
+variable "ack_deadline_seconds" {
+  description = "Acknowledgment deadline in seconds"
+  type        = number
+  default     = 60
+}
+
+variable "enable_dead_letter" {
+  description = "Enable dead letter queues"
+  type        = bool
+  default     = false
+}
+
 resource "google_pubsub_topic" "file_indexing" {
   name = "file-indexing"
+
+  message_retention_duration = var.message_retention_duration
 
   lifecycle {
     ignore_changes = all
@@ -38,7 +58,7 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
   name  = "file-indexing-subscription"
   topic = google_pubsub_topic.file_indexing.name
 
-  ack_deadline_seconds = 60
+  ack_deadline_seconds = var.ack_deadline_seconds
 
   retry_policy {
     minimum_backoff = "10s"
@@ -85,7 +105,7 @@ resource "google_pubsub_subscription" "file_indexing_dlq_subscription" {
   name  = "file-indexing-dlq-subscription"
   topic = google_pubsub_topic.file_indexing_dlq.name
 
-  ack_deadline_seconds = 60
+  ack_deadline_seconds = var.ack_deadline_seconds
 
   # Keep messages for 7 days
   message_retention_duration = "604800s"
@@ -108,7 +128,7 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
   name  = "url-crawling-subscription"
   topic = google_pubsub_topic.url_crawling.name
 
-  ack_deadline_seconds = 60
+  ack_deadline_seconds = var.ack_deadline_seconds
 
   retry_policy {
     minimum_backoff = "10s"
@@ -155,7 +175,7 @@ resource "google_pubsub_subscription" "url_crawling_dlq_subscription" {
   name  = "url-crawling-dlq-subscription"
   topic = google_pubsub_topic.url_crawling_dlq.name
 
-  ack_deadline_seconds = 60
+  ack_deadline_seconds = var.ack_deadline_seconds
 
   # Keep messages for 7 days
   message_retention_duration = "604800s"
@@ -185,7 +205,7 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
   name  = "rag-processing-subscription"
   topic = google_pubsub_topic.rag_processing.name
 
-  ack_deadline_seconds = 600 # 10 minutes max for Pub/Sub (maximum allowed)
+  ack_deadline_seconds = var.ack_deadline_seconds # 10 minutes max for Pub/Sub (maximum allowed)
 
   retry_policy {
     minimum_backoff = "30s"
@@ -232,7 +252,7 @@ resource "google_pubsub_subscription" "rag_processing_dlq_subscription" {
   name  = "rag-processing-dlq-subscription"
   topic = google_pubsub_topic.rag_processing_dlq.name
 
-  ack_deadline_seconds = 60
+  ack_deadline_seconds = var.ack_deadline_seconds
 
   # Keep messages for 7 days
   message_retention_duration = "604800s"

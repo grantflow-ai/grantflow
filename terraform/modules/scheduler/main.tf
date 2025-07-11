@@ -36,6 +36,12 @@ variable "environment" {
   default     = "staging"
 }
 
+variable "timezone" {
+  description = "Timezone for scheduled jobs"
+  type        = string
+  default     = "Europe/Berlin"
+}
+
 # Enable Cloud Scheduler API
 resource "google_project_service" "scheduler" {
   project = var.project_id
