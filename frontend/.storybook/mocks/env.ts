@@ -12,7 +12,6 @@ export const storybookEnv = {
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
 	NEXT_PUBLIC_GCS_EMULATOR_URL: "http://localhost:9199",
-	NEXT_PUBLIC_SEGMENT_WRITE_KEY: "sk_test_1234567890abcdef",
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
 	RESEND_API_KEY: "re_test_1234567890abcdef",
 } satisfies Env;
