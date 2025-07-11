@@ -16,8 +16,7 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: z.string(),
 			NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string(),
 			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string(),
-			NEXT_PUBLIC_SEGMENT_WRITE_KEY: z.string(),
-			NEXT_PUBLIC_SITE_URL: z.string().url("Please enter a valid URL"),
+			NEXT_PUBLIC_SITE_URL: z.string().url({ message: "Please enter a valid URL" }),
 		},
 		experimental__runtimeEnv: {
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
@@ -33,14 +32,13 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_GCS_EMULATOR_URL: process.env.NEXT_PUBLIC_GCS_EMULATOR_URL,
 			NEXT_PUBLIC_MOCK_API: process.env.NEXT_PUBLIC_MOCK_API === "true",
 			NEXT_PUBLIC_MOCK_AUTH: process.env.NEXT_PUBLIC_MOCK_AUTH === "true",
-			NEXT_PUBLIC_SEGMENT_WRITE_KEY: process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY,
 			NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 		},
 		server: {
 			RESEND_API_KEY: z.string(),
 		},
 		shared: {
-			NEXT_PUBLIC_BACKEND_API_BASE_URL: z.string().url("Please enter a valid URL"),
+			NEXT_PUBLIC_BACKEND_API_BASE_URL: z.string().url({ message: "Please enter a valid URL" }),
 			NEXT_PUBLIC_DEBUG: z
 				.preprocess((val) => {
 					if (typeof val === "string") {
@@ -55,7 +53,7 @@ export function getEnv(): Env {
 				}, z.boolean())
 				.optional()
 				.default(false),
-			NEXT_PUBLIC_GCS_EMULATOR_URL: z.string().url("Please enter a valid URL").optional(),
+			NEXT_PUBLIC_GCS_EMULATOR_URL: z.string().url({ message: "Please enter a valid URL" }).optional(),
 			NEXT_PUBLIC_MOCK_API: z
 				.preprocess((val) => {
 					if (typeof val === "string") {
