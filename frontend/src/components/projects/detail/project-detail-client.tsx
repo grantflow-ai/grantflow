@@ -204,17 +204,16 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 								</h1>
 							)}
 							{!isEditingTitle && (
-
-							<button
-								className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36] cursor-pointer"
-								data-testid="edit-project-title-button"
-								onClick={() => {
-									setIsEditingTitle(true);
-								}}
-								type="button"
-							>
-								<PencilIcon className="size-3" />
-							</button>
+								<button
+									className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36] cursor-pointer"
+									data-testid="edit-project-title-button"
+									onClick={() => {
+										setIsEditingTitle(true);
+									}}
+									type="button"
+								>
+									<PencilIcon className="size-3" />
+								</button>
 							)}
 						</div>
 						<div className="flex items-center gap-3">
@@ -243,45 +242,44 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 							</AppButton>
 						</div>
 					</div>
-				<div className="flex-1 overflow-auto  pb-6" data-testid="applications-section">
-					{isLoading && (
-						<div className="flex items-center justify-center h-64">
-							<div className="text-[#636170]">Loading applications...</div>
-						</div>
-					)}
-					{!isLoading && applications.length > 0 && (
-						<main className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-auto scrollbar-hide auto-rows-min max-h-full">
-							{applications.map((application) => (
-								<ApplicationCard
-									application={application}
-									key={application.id}
-									onDelete={handleDeleteApplication}
-									onOpen={handleOpenApplication}
-								/>
-							))}
-						</main>
-					)}
-					{!isLoading && applications.length === 0 && (
-						<div className=" w-[628px] h-[206px]" data-testid="empty-applications-state">
-							<button
-								className="flex flex-col items-center gap-2 justify-center w-full h-full bg-preview-bg rounded-[4px] border border-dashed border-gray-200 cursor-pointer"
-								data-testid="empty-state-new-application-button"
-								disabled={isCreatingApplication}
-								onClick={handleCreateApplication}
-								type="button"
-							>
-								<div className="flex items-center justify-center size-10">
-											<Plus className="size-6 text-primary" />
-										</div>
-								<span className="text-base font-normal text-black">
-									{getEmptyStateButtonText()}
-								</span>
-							</button>
-						</div>
-					)}
-				</div>
+					<div className="flex-1 overflow-auto  pb-6" data-testid="applications-section">
+						{isLoading && (
+							<div className="flex items-center justify-center h-64">
+								<div className="text-[#636170]">Loading applications...</div>
+							</div>
+						)}
+						{!isLoading && applications.length > 0 && (
+							<main className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-auto scrollbar-hide auto-rows-min max-h-full">
+								{applications.map((application) => (
+									<ApplicationCard
+										application={application}
+										key={application.id}
+										onDelete={handleDeleteApplication}
+										onOpen={handleOpenApplication}
+									/>
+								))}
+							</main>
+						)}
+						{!isLoading && applications.length === 0 && (
+							<div className=" w-[628px] h-[206px]" data-testid="empty-applications-state">
+								<button
+									className="flex flex-col items-center gap-2 justify-center w-full h-full bg-preview-bg rounded-[4px] border border-dashed border-gray-200 cursor-pointer"
+									data-testid="empty-state-new-application-button"
+									disabled={isCreatingApplication}
+									onClick={handleCreateApplication}
+									type="button"
+								>
+									<div className="flex items-center justify-center size-10">
+										<Plus className="size-6 text-primary" />
+									</div>
+									<span className="text-base font-normal text-black">
+										{getEmptyStateButtonText()}
+									</span>
+								</button>
+							</div>
+						)}
+					</div>
 				</main>
-
 			</main>
 
 			{}
