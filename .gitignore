@@ -31,6 +31,7 @@ out/
 # Ignore requirements.txt everywhere except cloud_functions/
 requirements.txt
 !cloud_functions/requirements.txt
+.ropeproject
 
 # Hugging Face model cache
 .cache/
