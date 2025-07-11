@@ -72,7 +72,12 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 							data-testid={`application-card-status-${application.id}`}
 						>
 							<div className="size-3 rounded-full">
-								<Image alt={`${statusStyles.label} icon`} height={12} src={statusStyles.icon} width={12} />
+								<Image
+									alt={`${statusStyles.label} icon`}
+									height={12}
+									src={statusStyles.icon}
+									width={12}
+								/>
 							</div>
 							<span className={`text-xs font-normal ${statusStyles.text}`}>{statusStyles.label}</span>
 						</div>
@@ -83,7 +88,10 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 
 					<div>
 						<DropdownMenu modal={false}>
-							<DropdownMenuTrigger className="-mt-2 cursor-pointer" data-testid="project-card-menu-trigger">
+							<DropdownMenuTrigger
+								className="-mt-2 cursor-pointer"
+								data-testid="project-card-menu-trigger"
+							>
 								<MoreVertical className="size-4 text-gray-700" />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
