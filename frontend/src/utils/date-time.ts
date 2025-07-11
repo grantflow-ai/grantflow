@@ -12,32 +12,17 @@ export function calculateTimeDifference(submittedDate: string): number {
 }
 
 /**
- * Formats time remaining until deadline in weeks and days format
- * @param diffTime Time difference in milliseconds
- * @returns Formatted string like "2 weeks and 3 days to the deadline"
- */
-export function formatTimeRemaining(diffTime: number): string {
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-	const weeks = Math.floor(diffDays / 7);
-	const days = diffDays % 7;
-
-	if (weeks > 0 && days > 0) {
-		return `${weeks} week${weeks === 1 ? "" : "s"} and ${days} day${days === 1 ? "" : "s"} to the deadline`;
-	}
-	if (weeks > 0) {
-		return `${weeks} week${weeks === 1 ? "" : "s"} to the deadline`;
-	}
-	return `${days} day${days === 1 ? "" : "s"} to the deadline`;
-}
-
-/**
- * Gets the time remaining for a deadline or appropriate message
+ * Gets deadline status and time breakdown information
  * @param submissionDate ISO string date of the submission deadline (optional)
- * @returns Formatted time remaining string or appropriate message
+ * @returns Object with deadline status and time information
  */
-export function getTimeRemaining(submissionDate?: string): string {
+export function getDeadlineInfo(submissionDate?: string): {
+	formattedDate?: string;
+	status: "active" | "not_set" | "passed";
+	timeBreakdown?: { days: number; totalDays: number; weeks: number };
+} {
 	if (!submissionDate) {
-		return "Deadline not set";
+		return { status: "not_set" };
 	}
 
 	const diffTime = calculateTimeDifference(submissionDate);
@@ -45,8 +30,22 @@ export function getTimeRemaining(submissionDate?: string): string {
 	if (diffTime <= 0) {
 		const deadline = new Date(submissionDate);
 		const formattedDate = format(deadline, "MM/dd/yyyy");
-		return `Deadline passed (${formattedDate})`;
+		return { formattedDate, status: "passed" };
 	}
 
-	return formatTimeRemaining(diffTime);
+	const timeBreakdown = getTimeBreakdown(diffTime);
+	return { status: "active", timeBreakdown };
+}
+
+/**
+ * Converts time difference to weeks and days breakdown
+ * @param diffTime Time difference in milliseconds
+ * @returns Object containing week and days breakdown
+ */
+export function getTimeBreakdown(diffTime: number): { days: number; totalDays: number; weeks: number } {
+	const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+	const weeks = Math.floor(totalDays / 7);
+	const days = totalDays % 7;
+
+	return { days, totalDays, weeks };
 }

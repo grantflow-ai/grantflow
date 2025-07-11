@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { FilePreviewCard, LinkPreviewItem } from "@/components/projects";
-import { PreviewCard } from "@/components/wizard/preview-card";
+import { PreviewCard, WizardLeftPane } from "@/components/projects/wizard/shared";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -92,23 +92,6 @@ const isStepActive = (sectionIndex: number, visibleSteps: number) => {
 	return visibleSteps === sectionIndex + 1;
 };
 
-export function ApplicationStructureFilePreview({
-	parentId,
-	templateFiles,
-	templateUrls,
-}: {
-	parentId: string | undefined;
-	templateFiles: FileWithSource[];
-	templateUrls: UrlWithSource[];
-}) {
-	return (
-		<div className="space-y-3">
-			{templateFiles.length > 0 && <DocumentsCard parentId={parentId} templateFiles={templateFiles} />}
-			{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
-		</div>
-	);
-}
-
 export function ApplicationStructureLeftPane() {
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
@@ -168,124 +151,100 @@ export function ApplicationStructureLeftPane() {
 		setVisibleSteps(0);
 	}, [shouldShowAnalyzing]);
 
+	if (shouldShowAnalyzing) {
+		return (
+			<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
+				<TitleHeader showDescription={false} />
+				<AnalyzingSteps visibleSteps={visibleSteps} />
+			</WizardLeftPane>
+		);
+	}
+
 	return (
-		<div className="w-1/2 md:w-1/3 lg:w-1/4 h-full flex flex-col" data-testid="application-structure-left-pane">
-			<div className="flex-1 overflow-y-auto p-6">
-				<div className="space-y-2">
-					<div>
-						<h2
-							className="font-heading text-2xl font-medium leading-loose"
-							data-testid="application-structure-header"
-						>
-							Application Structure
-						</h2>
+		<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
+			<TitleHeader showDescription={true} />
 
-						{!shouldShowAnalyzing && (
-							<p
-								className="text-muted-foreground-dark leading-tight whitespace-pre-line"
-								data-testid="application-structure-description"
-							>
-								Organize Your Application Structure. Drag and drop sections to reorder your application.
-								{"\n"}You can also edit, remove, or add new sections as needed. Once everything looks
-								good, click Approve and Continue.
-							</p>
+			{isInfoBannerVisible && (
+				<InfoBanner
+					onClose={() => {
+						setIsInfoBannerVisible(false);
+					}}
+				/>
+			)}
+
+			<div className="mt-6">
+				<ApplicationStructureSourcesPreview
+					parentId={parentId}
+					templateFiles={templateFiles}
+					templateUrls={templateUrls}
+				/>
+			</div>
+		</WizardLeftPane>
+	);
+}
+
+export function ApplicationStructureSourcesPreview({
+	parentId,
+	templateFiles,
+	templateUrls,
+}: {
+	parentId: string | undefined;
+	templateFiles: FileWithSource[];
+	templateUrls: UrlWithSource[];
+}) {
+	return (
+		<div className="space-y-3">
+			{templateFiles.length > 0 && <DocumentsCard parentId={parentId} templateFiles={templateFiles} />}
+			{templateUrls.length > 0 && <LinksCard parentId={parentId} templateUrls={templateUrls} />}
+		</div>
+	);
+}
+
+function AnalyzingSteps({ visibleSteps }: { visibleSteps: number }) {
+	return (
+		<div className="relative space-y-6 mt-6">
+			{ANALYZING_STEPS.map((section, sectionIndex) => (
+				<div className={getStepContainerClassName(sectionIndex, visibleSteps)} key={sectionIndex}>
+					<div className="relative">
+						{shouldShowConnector(sectionIndex) && (
+							<div className={getConnectorLineClassName(sectionIndex, visibleSteps)} />
 						)}
-					</div>
 
-					{!shouldShowAnalyzing && isInfoBannerVisible && (
-						<div className="self-stretch p-2 bg-slate-100 rounded outline-1 outline-offset-[-1px] outline-slate-400 inline-flex justify-start items-start gap-1">
-							<Image
-								alt="Info"
-								className="shrink-0"
-								height={16}
-								src="/icons/icon-toast-info.svg"
-								width={16}
-							/>
-							<div className="flex-1 grow text-sm text-app-black font-normal leading-tight">
-								Keep in mind that AI has limitations and may occasionally make mistakes. Always review
-								and refine the output.
+						<div className="mb-3 flex items-center gap-3">
+							<div className={getStepNumberClassName(sectionIndex, visibleSteps)}>
+								<span className="text-xs font-medium">{sectionIndex + 1}</span>
 							</div>
-							<button
-								className="shrink-0 self-start"
-								onClick={() => {
-									setIsInfoBannerVisible(false);
-								}}
-								type="button"
+							<h4
+								className={getStepTitleClassName(sectionIndex, visibleSteps)}
+								data-testid="analyzing-step-title"
 							>
-								<Image
-									alt="Close"
-									className="hover:opacity-60 transition-opacity cursor-pointer"
-									height={16}
-									src="/icons/close.svg"
-									width={16}
-								/>
-							</button>
-						</div>
-					)}
-
-					{shouldShowAnalyzing && (
-						<div className="relative space-y-6 mt-6">
-							{ANALYZING_STEPS.map((section, sectionIndex) => (
+								{section.title}
+							</h4>
+							{isStepActive(sectionIndex, visibleSteps) && (
 								<div
-									className={getStepContainerClassName(sectionIndex, visibleSteps)}
-									key={sectionIndex}
+									className="ml-2 size-2 animate-pulse rounded-full bg-blue-500"
+									data-testid="step-active-indicator"
+								/>
+							)}
+						</div>
+
+						<div className="ml-9 space-y-2">
+							{section.steps.map((step, stepIndex) => (
+								<div
+									className={getStepContentClassName(sectionIndex, visibleSteps)}
+									key={stepIndex}
+									style={{
+										transitionDelay: getStepDelay(stepIndex),
+									}}
 								>
-									<div className="relative">
-										{shouldShowConnector(sectionIndex) && (
-											<div className={getConnectorLineClassName(sectionIndex, visibleSteps)} />
-										)}
-
-										<div className="mb-3 flex items-center gap-3">
-											<div className={getStepNumberClassName(sectionIndex, visibleSteps)}>
-												<span className="text-xs font-medium">{sectionIndex + 1}</span>
-											</div>
-											<h4
-												className={getStepTitleClassName(sectionIndex, visibleSteps)}
-												data-testid="analyzing-step-title"
-											>
-												{section.title}
-											</h4>
-											{isStepActive(sectionIndex, visibleSteps) && (
-												<div
-													className="ml-2 size-2 animate-pulse rounded-full bg-blue-500"
-													data-testid="step-active-indicator"
-												/>
-											)}
-										</div>
-
-										<div className="ml-9 space-y-2">
-											{section.steps.map((step, stepIndex) => (
-												<div
-													className={getStepContentClassName(sectionIndex, visibleSteps)}
-													key={stepIndex}
-													style={{
-														transitionDelay: getStepDelay(stepIndex),
-													}}
-												>
-													<span className="text-gray-400">{stepIndex + 1}.</span>
-													<span className={getStepTextClassName(sectionIndex, visibleSteps)}>
-														{step}
-													</span>
-												</div>
-											))}
-										</div>
-									</div>
+									<span className="text-gray-400">{stepIndex + 1}.</span>
+									<span className={getStepTextClassName(sectionIndex, visibleSteps)}>{step}</span>
 								</div>
 							))}
 						</div>
-					)}
-
-					{!shouldShowAnalyzing && (
-						<div className="mt-6">
-							<ApplicationStructureFilePreview
-								parentId={parentId}
-								templateFiles={templateFiles}
-								templateUrls={templateUrls}
-							/>
-						</div>
-					)}
+					</div>
 				</div>
-			</div>
+			))}
 		</div>
 	);
 }
@@ -308,6 +267,27 @@ function DocumentsCard({ parentId, templateFiles }: { parentId?: string; templat
 	);
 }
 
+function InfoBanner({ onClose }: { onClose: () => void }) {
+	return (
+		<div className="self-stretch p-2 bg-slate-100 rounded outline-1 outline-offset-[-1px] outline-slate-400 inline-flex justify-start items-start gap-1">
+			<Image alt="Info" className="shrink-0" height={16} src="/icons/icon-toast-info.svg" width={16} />
+			<div className="flex-1 grow text-sm text-app-black font-normal leading-tight">
+				Keep in mind that AI has limitations and may occasionally make mistakes. Always review and refine the
+				output.
+			</div>
+			<button className="shrink-0 self-start" onClick={onClose} type="button">
+				<Image
+					alt="Close"
+					className="hover:opacity-60 transition-opacity cursor-pointer"
+					height={16}
+					src="/icons/close.svg"
+					width={16}
+				/>
+			</button>
+		</div>
+	);
+}
+
 function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls: UrlWithSource[] }) {
 	return (
 		<PreviewCard className="gap-5" data-testid="application-links">
@@ -323,5 +303,26 @@ function LinksCard({ parentId, templateUrls }: { parentId?: string; templateUrls
 				))}
 			</div>
 		</PreviewCard>
+	);
+}
+
+function TitleHeader({ showDescription }: { showDescription: boolean }) {
+	return (
+		<div>
+			<h2 className="font-heading text-2xl font-medium leading-loose" data-testid="application-structure-header">
+				Application Structure
+			</h2>
+
+			{showDescription && (
+				<p
+					className="text-muted-foreground-dark leading-tight whitespace-pre-line"
+					data-testid="application-structure-description"
+				>
+					Organize Your Application Structure. Drag and drop sections to reorder your application.
+					{"\n"}You can also edit, remove, or add new sections as needed. Once everything looks good, click
+					Approve and Continue.
+				</p>
+			)}
+		</div>
 	);
 }
