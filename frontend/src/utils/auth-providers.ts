@@ -68,11 +68,20 @@ const handleAuth = async (
 	isNewUser: boolean;
 	user: User;
 }> => {
+	log.info("Starting authentication", { provider: identifier });
+
 	try {
 		const result = await signInWithPopup(auth, provider);
 
 		const additionalInfo = getAdditionalUserInfo(result);
 		const isNewUser = additionalInfo?.isNewUser ?? false;
+
+		log.info("Authentication successful", {
+			email: result.user.email,
+			isNewUser,
+			provider: identifier,
+			userId: result.user.uid,
+		});
 
 		const idToken = await result.user.getIdToken();
 		return {
@@ -81,7 +90,7 @@ const handleAuth = async (
 			user: result.user,
 		};
 	} catch (error) {
-		log.error(identifier, error);
+		log.error(`Authentication failed for ${identifier}`, error, { provider: identifier });
 		return handleFirebaseAuthError(error, identifier);
 	}
 };

@@ -70,11 +70,11 @@ resource "google_cloud_run_v2_service" "backend" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:staging-latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:latest"
 
       resources {
         limits = {
-          cpu    = "${var.cpu_limit}000m"
+          cpu    = var.cpu_limit
           memory = var.memory_limit
         }
       }
@@ -220,12 +220,12 @@ resource "google_cloud_run_v2_service" "crawler" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:staging-latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:latest"
 
       resources {
         limits = {
-          cpu    = "1000m"
-          memory = "1Gi"
+          cpu    = var.cpu_limit
+          memory = var.memory_limit
         }
       }
 
@@ -330,12 +330,12 @@ resource "google_cloud_run_v2_service" "indexer" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:staging-latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:latest"
 
       resources {
         limits = {
-          cpu    = "1000m"
-          memory = "1Gi"
+          cpu    = var.cpu_limit
+          memory = var.memory_limit
         }
       }
 
@@ -440,12 +440,12 @@ resource "google_cloud_run_v2_service" "rag" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:staging-latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:latest"
 
       resources {
         limits = {
-          cpu    = "2000m"
-          memory = "4Gi"
+          cpu    = var.cpu_limit
+          memory = var.memory_limit
         }
       }
 
@@ -599,12 +599,12 @@ resource "google_cloud_run_v2_service" "scraper" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:staging-latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:latest"
 
       resources {
         limits = {
-          cpu    = "2000m"
-          memory = "4Gi" # Higher memory and CPU for Playwright browser automation and multiple concurrent processes
+          cpu    = var.cpu_limit
+          memory = var.memory_limit
         }
       }
 

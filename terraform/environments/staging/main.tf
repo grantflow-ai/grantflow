@@ -74,8 +74,8 @@ module "cloud_run" {
   database_connection_name = module.database.instance_connection_name
   min_instances           = 0           # Scale to zero for cost savings
   max_instances           = 1           # Limited scaling for staging
-  cpu_limit               = "0.5"      # Reduced CPU for staging
-  memory_limit            = "512Mi"     # Reduced memory for staging
+  cpu_limit               = "1"        # Minimum CPU for Cloud Run
+  memory_limit            = "1Gi"       # Increased memory to handle service requirements
   discord_webhook_url     = var.discord_webhook_url
 }
 

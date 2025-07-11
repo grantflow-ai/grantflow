@@ -59,6 +59,7 @@ export default function Login() {
 		provider: "google" | "orcid",
 		signInMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
 	) => {
+		log.info(`Starting ${provider} sign-in`, { page: "login", provider });
 		setIsLoading(true);
 		setSocialSignInError(null);
 
@@ -93,6 +94,7 @@ export default function Login() {
 			);
 			setSocialSignInError(errorWithLink);
 		} catch (error) {
+			log.error(`${provider} sign-in failed`, error, { page: "login", provider });
 			if (!isRedirectError(error)) {
 				toast.error(
 					error instanceof Error ? error.message : `${provider.toUpperCase()} sign-in failed due to an error`,
@@ -104,6 +106,7 @@ export default function Login() {
 	};
 
 	const handleGoogleSignin = async () => {
+		log.info("Google sign-in button clicked", { page: "login" });
 		await handleSocialSignIn("google", handleGoogleLogin);
 	};
 

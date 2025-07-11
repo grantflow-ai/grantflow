@@ -11,7 +11,7 @@ import {
 	ResearchDeepDiveStep,
 	ResearchPlanStep,
 } from "@/components/projects/wizard";
-import { WizardFooter, WizardHeader } from "@/components/wizard/wizard-wrapper-components";
+import { WizardFooter, WizardHeader } from "@/components/projects/wizard/shared";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	type AutofillProgressMessage,

@@ -19,10 +19,6 @@ vi.mock("@/actions/sources", () => ({
 	deleteApplicationSource: vi.fn(),
 }));
 
-vi.mock("@/utils/logging", () => ({
-	logError: vi.fn(),
-}));
-
 vi.mock("../shared/url-input", () => ({
 	UrlInput: () => (
 		<button data-testid="url-input" type="button">

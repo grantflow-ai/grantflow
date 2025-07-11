@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
 import { AppCard } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { WizardLeftPane, WizardRightPane } from "@/components/projects/wizard/shared";
 import { useApplicationStore } from "@/stores/application-store";
 import { MAX_OBJECTIVES, type Objective, useWizardStore } from "@/stores/wizard-store";
 
@@ -42,65 +43,60 @@ export function ResearchPlanStep() {
 
 	return (
 		<div className="flex size-full" data-testid="research-plan-step">
-			<div className="w-1/3 overflow-y-auto p-6">
-				<div className="space-y-6">
-					<div className="flex items-start justify-between">
-						<div>
-							<h2 className="font-heading text-2xl font-medium" data-testid="research-plan-header">
-								Research plan
-							</h2>
-							<p
-								className="text-muted-foreground-dark mt-1 text-sm"
-								data-testid="research-plan-description"
-							>
-								Define your key objectives and break them into actionable tasks. This structure forms
-								the backbone of your application.
-							</p>
-						</div>
-						<AppButton
-							className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
-							data-testid="ai-try-button"
-							disabled={isAutofillLoading || !application}
-							leftIcon={<span>✨</span>}
-							onClick={() => triggerAutofill("research_plan")}
-							variant="secondary"
-						>
-							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-						</AppButton>
+			<WizardLeftPane testId="research-plan-left-pane">
+				<div className="flex items-start justify-between">
+					<div>
+						<h2 className="font-heading text-2xl font-medium" data-testid="research-plan-header">
+							Research plan
+						</h2>
+						<p className="text-muted-foreground-dark mt-1 text-sm" data-testid="research-plan-description">
+							Define your key objectives and break them into actionable tasks. This structure forms the
+							backbone of your application.
+						</p>
 					</div>
-
-					<div className="space-y-4">
-						<AppButton
-							className="w-full"
-							data-testid="add-objective-button"
-							disabled={objectives.length >= MAX_OBJECTIVES}
-							leftIcon={<Plus size={16} />}
-							onClick={addNextObjective}
-							variant="secondary"
-						>
-							{objectives.length === 0 ? "Add First Objective" : "Add Objective"}
-						</AppButton>
-
-						{objectives.length >= MAX_OBJECTIVES && (
-							<AppCard className="border-app-border-primary bg-app-surface-secondary p-3 flex items-start gap-3">
-								<div className="bg-app-surface-secondary text-app-primary flex size-6 shrink-0 items-center justify-center rounded-full">
-									<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
-										<path
-											clipRule="evenodd"
-											d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-											fillRule="evenodd"
-										/>
-									</svg>
-								</div>
-								<p className="text-app-text-primary text-sm">
-									You&apos;ve reached the maximum of {MAX_OBJECTIVES} objectives. Please edit or
-									remove an existing objective before adding a new one.
-								</p>
-							</AppCard>
-						)}
-					</div>
+					<AppButton
+						className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
+						data-testid="ai-try-button"
+						disabled={isAutofillLoading || !application}
+						leftIcon={<span>✨</span>}
+						onClick={() => triggerAutofill("research_plan")}
+						variant="secondary"
+					>
+						{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
+					</AppButton>
 				</div>
-			</div>
+
+				<div className="space-y-4">
+					<AppButton
+						className="w-full"
+						data-testid="add-objective-button"
+						disabled={objectives.length >= MAX_OBJECTIVES}
+						leftIcon={<Plus size={16} />}
+						onClick={addNextObjective}
+						variant="secondary"
+					>
+						{objectives.length === 0 ? "Add First Objective" : "Add Objective"}
+					</AppButton>
+
+					{objectives.length >= MAX_OBJECTIVES && (
+						<AppCard className="border-app-border-primary bg-app-surface-secondary p-3 flex items-start gap-3">
+							<div className="bg-app-surface-secondary text-app-primary flex size-6 shrink-0 items-center justify-center rounded-full">
+								<svg className="size-4" fill="currentColor" viewBox="0 0 20 20">
+									<path
+										clipRule="evenodd"
+										d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+										fillRule="evenodd"
+									/>
+								</svg>
+							</div>
+							<p className="text-app-text-primary text-sm">
+								You&apos;ve reached the maximum of {MAX_OBJECTIVES} objectives. Please edit or remove an
+								existing objective before adding a new one.
+							</p>
+						</AppCard>
+					)}
+				</div>
+			</WizardLeftPane>
 
 			<ResearchPlanPreview
 				objectives={objectives}
@@ -126,7 +122,7 @@ function ResearchPlanPreview({
 	const hasObjectives = objectives.length > 0;
 
 	return (
-		<div className="bg-preview-bg flex h-full w-2/3 flex-col border-l border-gray-100 px-8 py-6">
+		<WizardRightPane padding="px-8 py-6">
 			{hasObjectives ? (
 				<>
 					<div className="mb-6">
@@ -189,7 +185,7 @@ function ResearchPlanPreview({
 					</div>
 				</div>
 			)}
-		</div>
+		</WizardRightPane>
 	);
 }
 
