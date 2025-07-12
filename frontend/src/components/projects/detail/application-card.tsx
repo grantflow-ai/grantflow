@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { API } from "@/types/api-types";
 
-type StatusStyle = {
+interface StatusStyle {
 	bg: string;
 	icon: string;
 	label: string;
 	text: string;
-};
+}
 
 const statusStyleMap: Record<string, StatusStyle> = {
 	DRAFT: {
@@ -51,10 +51,7 @@ const getStatusStyles = (status: string): StatusStyle => {
 };
 
 interface ApplicationCardProps {
-	application: {
-		deadline?: string;
-		description?: string;
-	} & API.ListApplications.Http200.ResponseBody["applications"][0];
+	application:  API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 }
