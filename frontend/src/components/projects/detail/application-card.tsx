@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 
@@ -51,7 +52,7 @@ const getStatusStyles = (status: string): StatusStyle => {
 };
 
 interface ApplicationCardProps {
-	application:  API.ListApplications.Http200.ResponseBody["applications"][0];
+	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 }
@@ -81,7 +82,7 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 							<span className={`text-xs font-normal ${statusStyles.text}`}>{statusStyles.label}</span>
 						</div>
 						<span className="text-[10px] font-normal text-gray-600">
-							Last edited {formatDate(application.updated_at)}
+							Last edited {format(new Date(application.updated_at), "MM/dd/yy")}
 						</span>
 					</div>
 
@@ -159,13 +160,4 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 			</main>
 		</div>
 	);
-}
-
-function formatDate(dateString: string) {
-	const date = new Date(dateString);
-	return date.toLocaleDateString("en-US", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "2-digit",
-	});
 }
