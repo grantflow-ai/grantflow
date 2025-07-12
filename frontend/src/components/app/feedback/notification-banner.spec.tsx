@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { NotificationData } from "./notification-banner";
-import { NotificationBanner } from "./notification-banner";
+import type { NotificationData } from "@/components/app";
+import { NotificationBanner } from "@/components/app";
 
 describe("NotificationBanner", () => {
 	const mockNotification: NotificationData = {

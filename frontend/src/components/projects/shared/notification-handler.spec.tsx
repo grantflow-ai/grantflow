@@ -1,8 +1,8 @@
 import { render, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { vi } from "vitest";
+import { NotificationHandler } from "@/components/projects";
 import type { RagProcessingStatusMessage } from "@/hooks/use-application-notifications";
-import { NotificationHandler } from "./notification-handler";
 
 vi.mock("sonner", () => {
 	const mockToast = vi.fn(() => "toast-id-123") as any;

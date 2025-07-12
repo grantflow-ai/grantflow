@@ -11,41 +11,43 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { API } from "@/types/api-types";
 
-const getStatusStyles = (status: string) => {
-	switch (status) {
-		case "Generating": {
-			return {
-				bg: "bg-primary",
-				icon: "/icons/piechart.svg",
-				label: "Generating",
-				text: "text-white",
-			};
+type StatusStyle = {
+	bg: string;
+	icon: string;
+	label: string;
+	text: string;
+};
+
+const statusStyleMap: Record<string, StatusStyle> = {
+	DRAFT: {
+		bg: "bg-app-dark-blue",
+		icon: "/icons/working-Draft-white.svg",
+		label: "Working Draft",
+		text: "text-white",
+	},
+	Generating: {
+		bg: "bg-primary",
+		icon: "/icons/piechart.svg",
+		label: "Generating",
+		text: "text-white",
+	},
+	IN_PROGRESS: {
+		bg: "bg-gray-200",
+		icon: "/icons/draft-in-progress.svg",
+		label: "In Progress",
+		text: "text-app-dark-blue",
+	},
+};
+
+const getStatusStyles = (status: string): StatusStyle => {
+	return (
+		statusStyleMap[status] ?? {
+			bg: "bg-gray-200",
+			icon: "/icons/piechart.svg",
+			label: status,
+			text: "text-app-dark-blue",
 		}
-		case "In Progress": {
-			return {
-				bg: "bg-gray-200",
-				icon: "/icons/draft-in-progress.svg",
-				label: "In Progress",
-				text: "text-app-dark-blue",
-			};
-		}
-		case "Working Draft": {
-			return {
-				bg: "bg-app-dark-blue",
-				icon: "/icons/working-Draft-white.svg",
-				label: "Working Draft",
-				text: "text-white",
-			};
-		}
-		default: {
-			return {
-				bg: "bg-gray-200",
-				icon: "/icons/piechart.svg",
-				label: status,
-				text: "text-app-dark-blue",
-			};
-		}
-	}
+	);
 };
 
 interface ApplicationCardProps {

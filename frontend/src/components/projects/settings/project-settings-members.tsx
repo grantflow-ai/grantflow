@@ -6,13 +6,12 @@ import useSWR, { mutate } from "swr";
 import { deleteInvitation, getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppAvatar } from "@/components/app";
+import { EditPermissionModal, InviteCollaboratorModal } from "@/components/projects";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 import { generateInitials } from "@/utils/user";
-import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
-import { EditPermissionModal } from "./edit-permission-modal";
 
 interface ProjectMember {
 	email: string;

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { GenerateCompleteStep } from "./generate-complete-step";
+import { GenerateCompleteStep } from "@/components/projects";
 
 describe("GenerateCompleteStep", () => {
 	it("renders step content", () => {
