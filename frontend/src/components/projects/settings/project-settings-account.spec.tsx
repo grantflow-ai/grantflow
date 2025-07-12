@@ -1,10 +1,9 @@
 import { ProjectFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ProjectSettingsAccount } from "@/components/projects";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
-
-import { ProjectSettingsAccount } from "./project-settings-account";
 
 vi.mock("@/stores/user-store", () => ({
 	useUserStore: vi.fn(),

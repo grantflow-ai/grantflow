@@ -3,15 +3,15 @@
 import { BellIcon, Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-
+import {
+	ProjectSettingsAccount,
+	ProjectSettingsLayout,
+	ProjectSettingsMembers,
+	ProjectSidebar,
+} from "@/components/projects";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
-
-import { ProjectSidebar } from "../detail/project-sidebar";
-import { ProjectSettingsAccount } from "./project-settings-account";
-import { ProjectSettingsLayout } from "./project-settings-layout";
-import { ProjectSettingsMembers } from "./project-settings-members";
 import { ProjectSettingsNotifications } from "./project-settings-notifications";
 
 interface ProjectSettingsClientProps {

@@ -1,10 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
+import { TemplateFileUploader } from "@/components/projects";
 import { WizardStep } from "@/constants";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import { TemplateFileUploader } from "./template-file-uploader";
 
 vi.mock("@/actions/sources", () => ({
 	createTemplateSourceUploadUrl: vi.fn().mockResolvedValue({

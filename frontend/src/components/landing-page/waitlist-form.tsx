@@ -5,9 +5,7 @@ import { useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { addToWaitlist } from "@/actions/join-waitlist";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import type { WAITING_LIST_RESPONSE_CODES } from "@/enums";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
 import { log } from "@/utils/logger";
 import { analyticsIdentify } from "@/utils/segment";
@@ -18,18 +16,6 @@ const getStatusTextColor = (status: string) => {
 	if (status === "success") return "text-success";
 	if (status === "error") return "text-error";
 	return "text-gray-50";
-};
-
-const showToast = (type: "error" | "info" | "success" | "warning", message: string, description?: string) => {
-	toast[type](message, {
-		description: description ?? (type === "error" ? "Please try again or contact support." : undefined),
-	});
-};
-
-const responseMessages: Record<WAITING_LIST_RESPONSE_CODES, string> = {
-	SERVER_ERROR: "Something went wrong on our end. Please try again later.",
-	SUCCESS: "Thank you! You've successfully joined the waitlist.",
-	VALIDATION_ERROR: "Please check your information and try again.",
 };
 
 export function WaitlistForm() {
@@ -55,21 +41,17 @@ export function WaitlistForm() {
 				firstName: values.name.split(" ")[0],
 				lastName: values.name.split(" ").at(-1) ?? "",
 			});
+			const message = "Thank you! You've successfully joined the waitlist.";
+			setFormState({ message, status: "success" });
+			toast.success(message);
 		} catch (error) {
 			log.error("waitlist-form: onSubmit", error);
-		}
-
-		const result = await addToWaitlist(values);
-		const message = responseMessages[result.code];
-
-		if (result.error) {
+			const message = "Please check your information and try again.";
 			setFormState({ message, status: "error" });
-		} else {
-			setFormState({ message, status: "success" });
-			showToast("success", message);
+			toast.error(message);
+		} finally {
+			form.reset();
 		}
-
-		form.reset();
 	}
 
 	return (

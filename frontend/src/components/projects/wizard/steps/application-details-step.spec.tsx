@@ -7,11 +7,10 @@ import {
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApplicationDetailsStep } from "@/components/projects";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import { ApplicationDetailsStep } from "./application-details-step";
 
 const { mockUsePollingCleanup } = vi.hoisted(() => ({
 	mockUsePollingCleanup: vi.fn(),

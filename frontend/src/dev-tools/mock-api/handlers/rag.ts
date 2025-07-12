@@ -1,7 +1,7 @@
 import { GrantSectionDetailedFactory, RagJobResponseFactory } from "::testing/factories";
+import { triggerWebSocketScenario } from "@/dev-tools";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
-import { triggerWebSocketScenario } from "../websocket";
 import { applicationStore } from "./applications";
 
 export const ragHandlers = {

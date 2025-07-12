@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { NotificationProgress } from "@/components/app";
 import type { RagProcessingStatus } from "@/hooks/use-application-notifications";
-import { NotificationProgress } from "./notification-progress";
 
 const meta: Meta<typeof NotificationProgress> = {
 	component: NotificationProgress,

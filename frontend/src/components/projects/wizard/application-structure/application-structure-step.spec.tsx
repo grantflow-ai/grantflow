@@ -1,10 +1,9 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApplicationStructureStep } from "@/components/projects";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-
-import { ApplicationStructureStep } from "./application-structure-step";
 
 vi.mock("./application-structure-left-pane", () => ({
 	ApplicationStructureLeftPane: () => <div data-testid="application-structure-left-pane-content">Left Pane</div>,
