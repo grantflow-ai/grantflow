@@ -7,12 +7,12 @@ import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
 import { AvatarGroup } from "@/components/app";
+import { DeleteApplicationModal } from "@/components/projects";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
-import { DeleteApplicationModal } from "../applications/delete-application-modal";
 
 import { ProjectSidebar } from "./project-sidebar";
 

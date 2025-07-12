@@ -140,7 +140,7 @@ describe("User Utilities", () => {
 			expect(labels).toContain("Admin");
 			expect(labels).toContain("Collaborator");
 
-			expect(labels.every((label) => typeof label === "string" && label.length > 0)).toBe(true);
+			expect(labels.every((label) => label.length > 0)).toBe(true);
 		});
 
 		it("should be consistent with repeated calls", () => {

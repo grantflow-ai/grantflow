@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
+import { TemplateFileUploader } from "@/components/projects";
 import { useApplicationStore } from "@/stores/application-store";
-import { TemplateFileUploader } from "./template-file-uploader";
 
 const meta: Meta<typeof TemplateFileUploader> = {
 	component: TemplateFileUploader,

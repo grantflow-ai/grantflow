@@ -4,11 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { SWRConfig } from "swr";
 import { getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
+import { ProjectSettingsMembers } from "@/components/projects";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
-
-import { ProjectSettingsMembers } from "./project-settings-members";
 
 vi.mock("@/actions/project-invitation", () => ({
 	inviteCollaborator: vi.fn(),

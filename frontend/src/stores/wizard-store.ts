@@ -721,8 +721,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 							const fieldStatus = requiredFields.map((field) => {
 								const value = formInputs[field];
-								const valid = Boolean(value && typeof value === "string" && value.trim().length > 0);
-								return { field, length: typeof value === "string" ? value.length : 0, valid };
+								const valid = Boolean(value && value.trim().length > 0);
+								return { field, length: value.length, valid };
 							});
 
 							const result = fieldStatus.every((status) => status.valid);

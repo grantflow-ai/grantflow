@@ -1,9 +1,9 @@
 import type { HTTPError } from "ky";
 import { z } from "zod";
 
-const urlSchema = z.url().refine(
+const urlSchema = z.string().refine(
 	(val) => {
-		if (val.includes(" ")) return false;
+		if (!val) return false;
 		if (val.includes("..")) return false;
 
 		try {
@@ -12,6 +12,9 @@ const urlSchema = z.url().refine(
 
 			const { hostname } = urlObj;
 			if (!hostname.includes(".") && hostname !== "localhost") return false;
+
+			// Check for spaces in the URL (not in the encoded pathname)
+			if (val.includes(" ")) return false;
 
 			if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) return false;
 

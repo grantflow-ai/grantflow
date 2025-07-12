@@ -1,24 +1,21 @@
 "use client";
 
-import { assertIsNotNullish } from "@tool-belt/type-predicates";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
-import { createProject, getProjects } from "@/actions/project";
+import { createProject } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppButton, AvatarGroup } from "@/components/app";
+import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
-import { DeleteProjectModal } from "../modals/delete-project-modal";
-import { InviteCollaboratorModal } from "../modals/invite-collaborator-modal";
 import PaymentLink from "../payment/payment-link";
 import { DashboardHeader } from "./dashboard-header";
-import { DashboardProjectCard } from "./dashboard-project-card";
 import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
 
@@ -34,6 +31,7 @@ const projectTeamMembers = [
 
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const router = useRouter();
+
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
@@ -41,7 +39,8 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		API.ListProjects.Http200.ResponseBody[0] | null
 	>(null);
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
-	const { deleteProject, duplicateProject } = useProjectStore();
+
+	const { deleteProject, duplicateProject, getProjects } = useProjectStore();
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
 
@@ -50,12 +49,11 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	const handleProjectNavigation = (projectId: string, projectName: string) => {
-		assertIsNotNullish(projectId);
 		router.push(routes.project.detail({ projectId, projectName }));
 	};
 
 	const { data: projects = initialProjects, mutate } = useSWR("projects", getProjects, {
-		fallbackData: initialProjects,
+		fallback: initialProjects,
 		revalidateOnFocus: false,
 	});
 
@@ -67,6 +65,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const confirmDeleteProject = async () => {
 		if (projectToDelete) {
 			await deleteProject(projectToDelete);
+			await mutate();
 			setProjectToDelete(null);
 		}
 	};
@@ -126,17 +125,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 		setIsCreatingProject(true);
 		try {
-			// Generate unique name
-			const existingNames = new Set(projects.map((p) => p.name));
-			let newProjectName = "New Research Project";
-			let counter = 2;
-
-			while (existingNames.has(newProjectName)) {
-				newProjectName = `New Research Project ${counter}`;
-				counter++;
-			}
-
-			// Create project
+			const newProjectName = `New Project ${projects.length + 1}`;
 			const { id: projectId } = await createProject({
 				description: "",
 				name: newProjectName,
@@ -171,7 +160,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		}
 
 		// Find the default project (first project or one named "default")
-		const defaultProject = projects.find((p) => p.name.toLowerCase() === "default") ?? projects[0];
+		const [defaultProject] = projects;
 
 		// Navigate to application wizard for the default project
 		router.push(
@@ -184,7 +173,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 	return (
 		<div className="relative size-full">
-			<WelcomeModal onStartApplication={handleStartApplication} />
+			{projects.length === 1 && projects[0].applications_count === 0 && (
+				<WelcomeModal onStartApplication={handleStartApplication} />
+			)}
 			<section className="bg-preview-bg w-full h-full  flex">
 				<main className="w-[98%] pb-5">
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
