@@ -61,8 +61,7 @@ jobs:
               with:
                   push: true
                   context: ${{ github.workspace }}
-                  file: services/Dockerfile
-                  build-args: service_name=${{ inputs.service-name }}
+                  file: services/${{ inputs.service-name }}/Dockerfile
                   cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:buildcache
                   cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service-name }}:buildcache,mode=max
                   tags: |
