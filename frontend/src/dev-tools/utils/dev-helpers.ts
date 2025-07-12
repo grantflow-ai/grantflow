@@ -3,9 +3,9 @@
  * Keep all dev/mock logic consolidated here
  */
 
+import { isMockAPIEnabled } from "@/dev-tools";
 import { getMockAPIEnabled } from "@/utils/env";
 import { log } from "@/utils/logger";
-import { isMockAPIEnabled } from "../mock-api/client";
 
 /**
  * Get mock WebSocket URL for development

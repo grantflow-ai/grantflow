@@ -6,8 +6,8 @@ import {
 } from "::testing/factories";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DragDropSectionManager } from "@/components/projects";
 import { useApplicationStore } from "@/stores/application-store";
-import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 vi.mock("@dnd-kit/core", () => ({
 	closestCenter: vi.fn(),

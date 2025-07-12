@@ -1,7 +1,7 @@
 import { ProjectListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DashboardProjectCard } from "./dashboard-project-card";
+import { DashboardProjectCard } from "@/components/projects";
 
 test("calls onDelete and onDuplicate handlers", async () => {
 	const user = userEvent.setup(); // create user instance

@@ -78,8 +78,7 @@ export const notificationHandlers = {
 
 		const activeNotifications = notifications.filter((n) => {
 			if (!includeRead && n.read) return false;
-			if (n.expires_at && new Date(n.expires_at) < new Date()) return false;
-			return true;
+			return !(n.expires_at && new Date(n.expires_at) < new Date());
 		});
 
 		return {

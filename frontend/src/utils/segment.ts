@@ -7,6 +7,7 @@ export const analytics: { value: AnalyticsBrowser | null } = {
 export const getAnalytics = () => {
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, sonarjs/different-types-comparison
 	if (!analytics.value && globalThis.window !== undefined) {
+		// ~keep the analytics write key is not a secret value. We might pass it via env later.
 		analytics.value = AnalyticsBrowser.load({ writeKey: "M5CP7BfkccD2I8k11pFE5qAcFjibdUyn" });
 	}
 

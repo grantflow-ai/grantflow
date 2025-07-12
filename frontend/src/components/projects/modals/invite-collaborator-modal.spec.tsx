@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { InviteCollaboratorModal } from "./invite-collaborator-modal";
+import { InviteCollaboratorModal } from "@/components/projects";
 
 describe("InviteCollaboratorModal", () => {
 	const mockOnClose = vi.fn();

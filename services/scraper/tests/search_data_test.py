@@ -9,9 +9,6 @@ def test_create_query_string() -> None:
 
     query_string = create_query_string(from_date, to_date)
 
-    expected_query = (
-        "query=empty&type=all&foa=all&parent_orgs=all&orgs=all&ac=all&ct=all&pfoa=all"
-        "&date=01012020-12312020&fields=all&spons=true"
-    )
+    expected_query = "type=all&spons=true&fields=all"
 
     assert query_string == expected_query
