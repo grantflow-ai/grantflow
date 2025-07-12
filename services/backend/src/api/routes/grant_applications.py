@@ -528,8 +528,8 @@ async def handle_list_applications(
 
         application_items: list[ApplicationListItemResponse] = []
         for row in rows:
-            app = row[0]  
-            submission_date = row[1]  
+            app = row[0]
+            submission_date = row[1]
 
             item: ApplicationListItemResponse = {
                 "id": str(app.id),

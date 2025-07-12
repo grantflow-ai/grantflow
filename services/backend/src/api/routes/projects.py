@@ -1,9 +1,11 @@
+from asyncio import gather
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from secrets import token_hex
 from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
+import msgspec
 from jwt import encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
@@ -45,6 +47,7 @@ class ProjectBaseResponse(TableIdResponse):
 
 class ProjectListItemResponse(ProjectBaseResponse):
     applications_count: int
+    members: list["ProjectMemberInfo"]
 
 
 class ProjectResponse(ProjectBaseResponse):
@@ -76,6 +79,14 @@ class ProjectMemberResponse(TypedDict):
     photo_url: str | None
     role: UserRoleEnum
     joined_at: str
+
+
+class ProjectMemberInfo(TypedDict):
+    firebase_uid: str
+    email: str
+    display_name: str | None
+    photo_url: str | None
+    role: UserRoleEnum
 
 
 class UpdateMemberRoleRequestBody(TypedDict):
@@ -114,21 +125,41 @@ async def handle_create_project(
 
 @get("/projects", operation_id="ListProjects")
 async def handle_retrieve_projects(
-    request: APIRequest, session_maker: async_sessionmaker[Any]
+    request: APIRequest,
+    session_maker: async_sessionmaker[Any],
 ) -> list[ProjectListItemResponse]:
+    store = request.app.stores.get("firebase_user_cache")
     logger.info("Retrieving projects for user", uid=request.auth)
+
     async with session_maker() as session:
         projects = list(
             await session.scalars(
-                select(Project)
-                .options(
+                select(Project).options(
                     selectinload(Project.project_users),
                     selectinload(Project.grant_applications),
                 )
-                .join(ProjectUser)
-                .where(ProjectUser.firebase_uid == request.auth)
             )
         )
+
+    all_member_uids = []
+    for project in projects:
+        all_member_uids.extend([pu.firebase_uid for pu in project.project_users])
+
+    
+    cached_data = await gather(*[store.get(uid) for uid in all_member_uids])
+
+    firebase_users: dict[str, dict[str, Any]] = {}
+    for uid, data in zip(all_member_uids, cached_data, strict=False):
+        if data:
+            firebase_users[uid] = msgspec.json.decode(data)
+
+    if missing_uids := list(set(all_member_uids) - set(firebase_users.keys())):
+        fetched_users = await get_users(missing_uids)
+
+        for uid, user_data in fetched_users.items():
+            await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
+
+        firebase_users.update(fetched_users)
 
     return [
         ProjectListItemResponse(
@@ -136,8 +167,20 @@ async def handle_retrieve_projects(
             name=project.name,
             description=project.description,
             logo_url=project.logo_url,
-            role=project.project_users[0].role,
+            role=next(
+                (pu.role for pu in project.project_users if pu.firebase_uid == request.auth), UserRoleEnum.MEMBER
+            ),
             applications_count=len(project.grant_applications),
+            members=[
+                ProjectMemberInfo(
+                    firebase_uid=pu.firebase_uid,
+                    email=firebase_users[pu.firebase_uid]["email"],
+                    display_name=firebase_users.get(pu.firebase_uid, {}).get("displayName"),
+                    photo_url=firebase_users.get(pu.firebase_uid, {}).get("photoURL"),
+                    role=pu.role,
+                )
+                for pu in project.project_users
+            ],
         )
         for project in projects
     ]
