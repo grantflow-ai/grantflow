@@ -4,6 +4,7 @@ from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
+from faker import Faker
 from packages.db.src.enums import (
     ApplicationStatusEnum,
     SourceIndexingStatusEnum,
@@ -20,10 +21,13 @@ from packages.db.src.tables import (
     RagFile,
     RagUrl,
 )
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from testing.factories import GrantTemplateFactory
 
 from services.backend.tests.conftest import TestingClientType
+
+faker = Faker()
 
 
 async def test_create_application_success(
@@ -683,6 +687,53 @@ async def test_list_applications_basic(
     assert data["pagination"]["limit"] == 50
     assert data["pagination"]["offset"] == 0
     assert data["pagination"]["has_more"] is False
+
+
+async def test_list_applications_with_submission_dates(
+    test_client: TestingClientType,
+    project: Project,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    async with async_session_maker() as session:
+        applications = await session.scalars(
+            insert(GrantApplication)
+            .values(
+                [
+                    {
+                        "project_id": project.id,
+                        "title": f"Test Application {i}",
+                        "status": ApplicationStatusEnum.DRAFT,
+                        "description": f"Description for application {i}",
+                    }
+                    for i in range(5)
+                ]
+            )
+            .returning(GrantApplication)
+        )
+
+        for _i, application in enumerate(applications):
+            grant_template = GrantTemplateFactory.build(
+                grant_application_id=application.id,
+                funding_organization_id=None,
+                submission_date=faker.date_between(start_date="-2y", end_date="+1y"),
+            )
+            session.add(grant_template)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/projects/{project.id}/applications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert "applications" in data
+    assert "pagination" in data
+    assert len(data["applications"]) == 5
+    for app in data["applications"]:
+        assert "submission_date" in app
 
 
 async def test_list_applications_with_search(

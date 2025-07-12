@@ -11,7 +11,6 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-
 revision: str = "389ad9aa95a0"
 down_revision: str | None = "de55e0b9ba74"
 branch_labels: str | Sequence[str] | None = None
@@ -20,19 +19,18 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     op.add_column("grant_applications", sa.Column("description", sa.Text(), nullable=True))
     op.drop_index(op.f("idx_grant_applications_created_at_desc"), table_name="grant_applications")
     op.drop_index(op.f("idx_grant_applications_filtering"), table_name="grant_applications")
     op.drop_index(op.f("idx_grant_applications_title_fts"), table_name="grant_applications", postgresql_using="gin")
     op.drop_index(op.f("idx_grant_applications_title_sort"), table_name="grant_applications")
     op.drop_index(op.f("idx_grant_applications_title_trgm"), table_name="grant_applications", postgresql_using="gin")
-    
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
+
     op.create_index(
         op.f("idx_grant_applications_title_trgm"), "grant_applications", ["title"], unique=False, postgresql_using="gin"
     )
@@ -59,4 +57,3 @@ def downgrade() -> None:
         unique=False,
     )
     op.drop_column("grant_applications", "description")
-    
