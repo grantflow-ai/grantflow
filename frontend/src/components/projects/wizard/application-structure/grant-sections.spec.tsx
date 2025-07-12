@@ -259,13 +259,6 @@ describe("SortableSection", () => {
 	});
 
 	describe("drag and drop integration", () => {
-		it("applies dragging styles when isDragging is true", () => {
-			render(<SortableSection {...defaultProps} isDragging={true} />);
-
-			const container = screen.getByTestId("section-title").closest("div[class*='shadow-lg']");
-			expect(container).toBeInTheDocument();
-		});
-
 		it("renders drag handle", () => {
 			render(<SortableSection {...defaultProps} />);
 

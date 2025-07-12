@@ -1,3 +1,5 @@
+"use client";
+
 import { arrayMove } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
