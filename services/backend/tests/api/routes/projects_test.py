@@ -130,14 +130,27 @@ async def test_retrieve_projects(
     assert response.status_code == HTTPStatus.OK, response.text
 
     values = response.json()
-    assert len(values) == 3
+    
+    for _idx, _proj in enumerate(values):
+        pass
 
+    
+    assert len(values) == 3
+    assert all(value["id"] != str(project_without_user_access.id) for value in values)
+
+    
     for project in projects_with_user_access:
         project_response = next(value for value in values if value["id"] == str(project.id))
         assert project_response["name"] == project.name
         assert project_response["description"] == project.description
         assert project_response["logo_url"] == project.logo_url
         assert "members" in project_response
+        assert len(project_response["members"]) > 0
+
+        
+        user_member = next(m for m in project_response["members"] if m["firebase_uid"] == firebase_uid)
+        assert user_member["email"] == "user@example.com"
+        assert user_member["role"] in [UserRoleEnum.OWNER.value, UserRoleEnum.ADMIN.value, UserRoleEnum.MEMBER.value]
 
         members = project_response["members"]
         assert len(members) == 1

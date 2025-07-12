@@ -27,6 +27,15 @@ function toListProjectItem(project: API.GetProject.Http200.ResponseBody): API.Li
 		description: project.description,
 		id: project.id,
 		logo_url: project.logo_url,
+		members: [
+			{
+				display_name: "Mock User",
+				email: "user@example.com",
+				firebase_uid: "mock-user-1",
+				photo_url: null,
+				role: project.role,
+			},
+		],
 		name: project.name,
 		role: project.role,
 	};
