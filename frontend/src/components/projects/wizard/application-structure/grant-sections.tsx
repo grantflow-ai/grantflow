@@ -1,3 +1,5 @@
+"use client";
+
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
@@ -134,21 +136,21 @@ export function SortableSection({
 				section={section}
 			/>
 
-			<div
-				className={`overflow-hidden transition-all duration-200 ease-in-out ${
-					isExpanded ? "opacity-100" : "max-h-0 opacity-0"
-				}`}
-				data-testid="edit-form-container"
-			>
-				<SectionEditForm
-					formData={formData}
-					isSubsection={isSubsection}
-					onCancel={onToggleExpand}
-					onSave={handleSave}
-					section={section}
-					setFormData={setFormData}
-				/>
-			</div>
+			{isExpanded && (
+				<div
+					className="overflow-hidden transition-all duration-200 ease-in-out opacity-100"
+					data-testid="edit-form-container"
+				>
+					<SectionEditForm
+						formData={formData}
+						isSubsection={isSubsection}
+						onCancel={onToggleExpand}
+						onSave={handleSave}
+						section={section}
+						setFormData={setFormData}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
