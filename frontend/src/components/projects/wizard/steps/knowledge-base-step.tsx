@@ -1,9 +1,7 @@
 "use client";
 
-import { AppCard } from "@/components/app";
 import { FilePreviewCard, LinkPreviewItem, TemplateFileUploader } from "@/components/projects";
-import { WizardLeftPane, WizardRightPane } from "@/components/projects/wizard/shared";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PreviewCard, WizardLeftPane, WizardRightPane } from "@/components/projects/wizard/shared";
 import { Separator } from "@/components/ui/separator";
 import { SourceIndexingStatus } from "@/enums";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
@@ -63,26 +61,6 @@ export function KnowledgeBaseStep() {
 	);
 }
 
-function DocumentsSection({ files, parentId }: { files: FileWithSource[]; parentId?: string }) {
-	if (files.length === 0) return null;
-
-	return (
-		<div data-testid="knowledge-base-files">
-			<h4 className="font-heading mb-8 font-semibold">Documents</h4>
-			<div className="grid grid-cols-5 gap-3" data-testid="file-collection">
-				{files.map((file, index) => (
-					<FilePreviewCard
-						file={file}
-						key={file.name + index.toString()}
-						parentId={parentId}
-						sourceStatus={file.sourceStatus}
-					/>
-				))}
-			</div>
-		</div>
-	);
-}
-
 function KnowledgeBasePreview() {
 	const applicationTitle = useApplicationStore((state) => state.application?.title);
 	const applicationId = useApplicationStore((state) => state.application?.id);
@@ -113,7 +91,7 @@ function KnowledgeBasePreview() {
 
 	if (!hasContent) {
 		return (
-			<WizardRightPane>
+			<WizardRightPane padding="p-4 md:p-6">
 				<div className="flex h-full flex-col items-center justify-center gap-6">
 					<div className="relative">
 						<div className="flex size-96 items-center justify-center">
@@ -145,43 +123,70 @@ function KnowledgeBasePreview() {
 	}
 
 	return (
-		<WizardRightPane>
-			<div className="flex h-full flex-col gap-6">
-				<ScrollArea className="flex-1">
+		<WizardRightPane padding="p-6 md:p-4">
+			<div className="flex-1 min-h-0 overflow-y-auto h-full">
+				<div className="space-y-5">
 					{hasFilesOrUrls && (
-						<AppCard
-							className="border-app-gray-100 border bg-white p-5 shadow-none"
-							data-testid="knowledge-base-container"
-						>
-							<DocumentsSection files={knowledgeBaseFiles} parentId={applicationId} />
-							{hasBothFilesAndUrls && (
-								<Separator className="my-8 bg-gray-200" data-testid="knowledge-base-separator" />
+						<PreviewCard data-testid="knowledge-base-container">
+							{knowledgeBaseFiles.length > 0 && (
+								<>
+									<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
+										Documents
+									</h4>
+									<div className="flex flex-wrap gap-3" data-testid="knowledge-base-files">
+										{knowledgeBaseFiles.map((file, index) => (
+											<FilePreviewCard
+												file={file}
+												key={file.name + index.toString()}
+												parentId={applicationId}
+												sourceStatus={file.sourceStatus}
+											/>
+										))}
+									</div>
+								</>
 							)}
-							<LinksSection parentId={applicationId} urls={knowledgeBaseUrls} />
-						</AppCard>
+
+							{hasBothFilesAndUrls && (
+								<Separator className="bg-gray-200" data-testid="knowledge-base-separator" />
+							)}
+
+							{knowledgeBaseUrls.length > 0 && (
+								<>
+									<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
+										Links
+									</h4>
+									<div className="grid grid-cols-2 gap-x-11" data-testid="knowledge-base-urls">
+										<div className="space-y-1">
+											{knowledgeBaseUrls
+												.filter((_, index) => index % 2 === 0)
+												.map((urlSource, index) => (
+													<LinkPreviewItem
+														key={urlSource.url + index.toString()}
+														parentId={applicationId}
+														sourceStatus={urlSource.sourceStatus}
+														url={urlSource.url}
+													/>
+												))}
+										</div>
+										<div className="space-y-1">
+											{knowledgeBaseUrls
+												.filter((_, index) => index % 2 === 1)
+												.map((urlSource, index) => (
+													<LinkPreviewItem
+														key={urlSource.url + index.toString()}
+														parentId={applicationId}
+														sourceStatus={urlSource.sourceStatus}
+														url={urlSource.url}
+													/>
+												))}
+										</div>
+									</div>
+								</>
+							)}
+						</PreviewCard>
 					)}
-				</ScrollArea>
+				</div>
 			</div>
 		</WizardRightPane>
-	);
-}
-
-function LinksSection({ parentId, urls }: { parentId?: string; urls: UrlWithSource[] }) {
-	if (urls.length === 0) return null;
-
-	return (
-		<div data-testid="knowledge-base-urls">
-			<h4 className="font-heading mb-8 font-semibold">Links</h4>
-			<div className="space-y-1">
-				{urls.map((urlSource, index) => (
-					<LinkPreviewItem
-						key={urlSource.url + index.toString()}
-						parentId={parentId}
-						sourceStatus={urlSource.sourceStatus}
-						url={urlSource.url}
-					/>
-				))}
-			</div>
-		</div>
 	);
 }

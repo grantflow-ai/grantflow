@@ -76,15 +76,31 @@ export const ragHandlers = {
 	},
 
 	updateGrantTemplate: async ({
+		body,
 		params,
 	}: {
-		body?: any;
+		body?: unknown;
 		params?: Record<string, string>;
 	}): Promise<API.UpdateGrantTemplate.Http200.ResponseBody> => {
 		const templateId = params?.template_id;
+		const applicationId = params?.application_id;
+		const projectId = params?.project_id;
+
 		if (!templateId) {
 			throw new Error("Template ID required");
 		}
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+		if (!projectId) {
+			throw new Error("Project ID required");
+		}
+
+		const typedBody = body as API.UpdateGrantTemplate.RequestBody | undefined;
+		console.log(`Mock: Updated grant template ${templateId} for application ${applicationId}`, {
+			grant_sections: typedBody?.grant_sections?.length ?? 0,
+			submission_date: typedBody?.submission_date,
+		});
 
 		return undefined;
 	},
