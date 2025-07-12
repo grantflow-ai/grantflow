@@ -31,6 +31,12 @@ variable "environment" {
   default     = "staging"
 }
 
+variable "image_tag_suffix" {
+  description = "Image tag suffix (latest, staging-latest)"
+  type        = string
+  default     = "latest"
+}
+
 variable "discord_webhook_url" {
   description = "Discord webhook URL for notifications"
   type        = string
@@ -94,7 +100,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -230,11 +236,6 @@ resource "google_cloud_run_v2_service" "backend" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image,
-    ]
-  }
 }
 
 
@@ -245,7 +246,7 @@ resource "google_cloud_run_v2_service" "crawler" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crawler:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -341,11 +342,6 @@ resource "google_cloud_run_v2_service" "crawler" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image,
-    ]
-  }
 }
 
 
@@ -356,7 +352,7 @@ resource "google_cloud_run_v2_service" "indexer" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/indexer:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -452,11 +448,6 @@ resource "google_cloud_run_v2_service" "indexer" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image,
-    ]
-  }
 }
 
 
@@ -467,7 +458,7 @@ resource "google_cloud_run_v2_service" "rag" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -572,11 +563,6 @@ resource "google_cloud_run_v2_service" "rag" {
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image,
-    ]
-  }
 }
 
 
@@ -626,7 +612,7 @@ resource "google_cloud_run_v2_service" "scraper" {
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:latest"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:${var.image_tag_suffix}"
 
       resources {
         limits = {
@@ -717,11 +703,6 @@ resource "google_cloud_run_v2_service" "scraper" {
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image,
-    ]
-  }
 }
 
 # Service account for Cloud Scheduler to invoke scraper

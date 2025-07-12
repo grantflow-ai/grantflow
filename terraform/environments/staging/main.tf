@@ -85,6 +85,7 @@ module "cloud_run" {
   project_id               = var.project_id
   region                   = var.region
   environment              = var.environment
+  image_tag_suffix         = "staging-latest"
   database_connection_name = module.database.instance_connection_name
   min_instances            = 0     # Scale to zero for cost savings
   max_instances            = 1     # Limited scaling for staging
