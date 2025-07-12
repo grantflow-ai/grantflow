@@ -195,6 +195,15 @@ export function StoreInspector() {
 										description: "Development test project",
 										id: "dev-project-1",
 										logo_url: null,
+										members: [
+											{
+												display_name: "Dev User",
+												email: "dev@example.com",
+												firebase_uid: "dev-user-1",
+												photo_url: null,
+												role: "OWNER" as const,
+											},
+										],
 										name: "Dev Project",
 										role: "OWNER" as const,
 									},
