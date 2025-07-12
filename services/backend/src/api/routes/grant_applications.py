@@ -500,7 +500,7 @@ async def handle_list_applications(
         query = (
             select(GrantApplication, GrantTemplate.submission_date)
             .where(GrantApplication.project_id == project_id)
-            .join(GrantTemplate)
+            .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
         )
 
         if search:
@@ -523,10 +523,14 @@ async def handle_list_applications(
         query = query.order_by(sort_column.desc()) if order == "desc" else query.order_by(sort_column.asc())
         query = query.limit(limit).offset(offset)
 
-        applications = list(await session.scalars(query))
+        results = await session.execute(query)
+        rows = results.all()
 
         application_items: list[ApplicationListItemResponse] = []
-        for app in applications:
+        for row in rows:
+            app = row[0]  
+            submission_date = row[1]  
+
             item: ApplicationListItemResponse = {
                 "id": str(app.id),
                 "project_id": str(app.project_id),
@@ -537,8 +541,8 @@ async def handle_list_applications(
             }
             if app.description:
                 item["description"] = app.description
-            if app.submission_date:
-                item["submission_date"] = app.submission_date.isoformat()
+            if submission_date:
+                item["submission_date"] = submission_date.isoformat()
             if app.completed_at:
                 item["completed_at"] = app.completed_at.isoformat()
             application_items.append(item)
