@@ -64,7 +64,11 @@ export function registerMockHandlers(): void {
 
 	client.register("/rag-jobs/:job_id", mockHandlers.rag.getRagJob);
 	client.register("/projects/:project_id/rag-jobs/:job_id", mockHandlers.rag.getRagJob, "GET");
-	client.register("/projects/:project_id/grant-templates/:template_id", mockHandlers.rag.updateGrantTemplate);
+	client.register(
+		"/projects/:project_id/applications/:application_id/grant-template/:template_id",
+		mockHandlers.rag.updateGrantTemplate,
+		"PATCH",
+	);
 
 	client.register(
 		"/projects/:project_id/applications/:application_id/grant-template/:template_id",

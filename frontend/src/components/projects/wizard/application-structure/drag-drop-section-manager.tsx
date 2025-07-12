@@ -11,7 +11,7 @@ import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
 interface SectionListProps {
-	expandedSections: Set<string>;
+	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
@@ -33,7 +33,7 @@ export function DragDropSectionManager({
 }) {
 	const application = useApplicationStore((state) => state.application);
 	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
-	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 
@@ -67,22 +67,11 @@ export function DragDropSectionManager({
 	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
-		setExpandedSections((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(sectionId)) {
-				newSet.delete(sectionId);
-			} else {
-				newSet.add(sectionId);
+		setExpandedSectionId((prev) => {
+			if (prev === sectionId) {
+				return null;
 			}
-			return newSet;
-		});
-	}, []);
-
-	const collapseSections = useCallback((sectionId: string) => {
-		setExpandedSections((prev) => {
-			const newSet = new Set(prev);
-			newSet.delete(sectionId);
-			return newSet;
+			return sectionId;
 		});
 	}, []);
 
@@ -105,9 +94,9 @@ export function DragDropSectionManager({
 				.filter((section) => section.id !== sectionId)
 				.map(toUpdateGrantSection);
 			await updateGrantSections(updatedSections);
-			collapseSections(sectionId);
+			setExpandedSectionId((prev) => (prev === sectionId ? null : prev));
 		},
-		[grantSections, updateGrantSections, collapseSections, toUpdateGrantSection],
+		[grantSections, updateGrantSections, toUpdateGrantSection],
 	);
 
 	const handleAddNewSection = useCallback(
@@ -221,10 +210,10 @@ export function DragDropSectionManager({
 
 	return (
 		<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
-			<div className="mb-3 space-y-2 p-2">
+			<div className="mb-3 space-y-2 p-1">
 				{grantSections.length > 0 && (
 					<SectionList
-						expandedSections={expandedSections}
+						expandedSectionId={expandedSectionId}
 						handleAddNewSection={handleAddNewSection}
 						handleDeleteSection={handleDeleteSection}
 						handleUpdateSection={handleUpdateSection}
@@ -295,7 +284,7 @@ function SectionDragOverlay({
 }
 
 function SectionList({
-	expandedSections,
+	expandedSectionId,
 	handleAddNewSection,
 	handleDeleteSection,
 	handleUpdateSection,
@@ -311,7 +300,7 @@ function SectionList({
 				<div className="space-y-2" key={section.id}>
 					<SortableSection
 						isDetailedSection={isDetailedSection}
-						isExpanded={expandedSections.has(section.id)}
+						isExpanded={expandedSectionId === section.id}
 						onAddSubsection={() => handleAddNewSection(section.id)}
 						onDelete={() => handleDeleteSection(section.id)}
 						onToggleExpand={() => {
@@ -324,7 +313,7 @@ function SectionList({
 					{(subsectionsByParent[section.id] ?? []).map((subsection) => (
 						<SortableSection
 							isDetailedSection={isDetailedSection}
-							isExpanded={expandedSections.has(subsection.id)}
+							isExpanded={expandedSectionId === subsection.id}
 							isSubsection
 							key={subsection.id}
 							onDelete={() => handleDeleteSection(subsection.id)}
