@@ -44,24 +44,24 @@ module "network" {
 
 # Database module with production-optimized settings
 module "database" {
-  source           = "../../modules/database"
-  project_id       = var.project_id
-  region           = var.region
-  zone             = var.zone
-  instance_name    = "grantflow-production"
-  tier             = var.database_tier
-  disk_size        = var.database_disk_size
-  disk_type        = "PD_SSD"                    # SSD for production performance
-  backup_enabled   = true                       # Essential for production
-  high_availability = true                      # Multi-zone for production
-  backup_retention = var.database_backup_retention
-  backup_location  = var.backup_location        # Frankfurt for GDPR
-  network_id       = module.network.network_id
-  
+  source            = "../../modules/database"
+  project_id        = var.project_id
+  region            = var.region
+  zone              = var.zone
+  instance_name     = "grantflow-production"
+  tier              = var.database_tier
+  disk_size         = var.database_disk_size
+  disk_type         = "PD_SSD" # SSD for production performance
+  backup_enabled    = true     # Essential for production
+  high_availability = true     # Multi-zone for production
+  backup_retention  = var.database_backup_retention
+  backup_location   = var.backup_location # Frankfurt for GDPR
+  network_id        = module.network.network_id
+
   # Production database flags for performance and monitoring
   enable_query_insights = true
-  log_slow_queries     = true
-  deletion_protection  = true
+  log_slow_queries      = true
+  deletion_protection   = true
 }
 
 # Storage module with production settings
@@ -69,59 +69,59 @@ module "storage" {
   source         = "../../modules/storage"
   bucket_name    = "grantflow-production-uploads"
   environment    = var.environment
-  location       = var.region                   # Frankfurt for GDPR
-  retention_days = var.storage_retention_days   # Longer retention for production
-  
+  location       = var.region                 # Frankfurt for GDPR
+  retention_days = var.storage_retention_days # Longer retention for production
+
   # Production-specific storage settings
-  enable_versioning     = true                  # File versioning for production
-  enable_lifecycle      = true                  # Automated lifecycle management
-  uniform_bucket_access = true                  # Enhanced security
+  enable_versioning     = true # File versioning for production
+  enable_lifecycle      = true # Automated lifecycle management
+  uniform_bucket_access = true # Enhanced security
 }
 
 # Cloud Run services module with production-optimized settings
 module "cloud_run" {
-  source                    = "../../modules/cloud_run"
+  source                   = "../../modules/cloud_run"
   project_id               = var.project_id
   region                   = var.region
   environment              = var.environment
   database_connection_name = module.database.instance_connection_name
-  min_instances           = var.min_instances    # Always-warm for production
-  max_instances           = var.max_instances    # Higher scaling for production
-  cpu_limit               = var.cpu_limit       # Higher CPU for production
-  memory_limit            = var.memory_limit    # Higher memory for production
-  discord_webhook_url     = var.discord_webhook_url
-  
+  min_instances            = var.min_instances # Always-warm for production
+  max_instances            = var.max_instances # Higher scaling for production
+  cpu_limit                = var.cpu_limit     # Higher CPU for production
+  memory_limit             = var.memory_limit  # Higher memory for production
+  discord_webhook_url      = var.discord_webhook_url
+
   # Production-specific settings
-  enable_cpu_throttling   = false               # No throttling for production
-  enable_http2           = true                 # HTTP/2 for performance
-  request_timeout        = 300                  # 5-minute timeout for long operations
-  concurrency_limit      = 100                  # Higher concurrency for production
+  enable_cpu_throttling = false # No throttling for production
+  enable_http2          = true  # HTTP/2 for performance
+  request_timeout       = 300   # 5-minute timeout for long operations
+  concurrency_limit     = 100   # Higher concurrency for production
 }
 
 # Pub/Sub module - needs to come after cloud_run to get service account
 module "pubsub" {
   source                               = "../../modules/pubsub"
-  project_id                          = var.project_id
-  region                              = var.region
+  project_id                           = var.project_id
+  region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
-  
+
   # Production-specific Pub/Sub settings
-  message_retention_duration = "604800s"        # 7 days retention
-  ack_deadline_seconds      = 300               # 5-minute ack deadline
-  enable_dead_letter        = true              # Dead letter queues for production
+  message_retention_duration = "604800s" # 7 days retention
+  ack_deadline_seconds       = 300       # 5-minute ack deadline
+  enable_dead_letter         = true      # Dead letter queues for production
 }
 
 # Scheduler module with production settings
 module "scheduler" {
-  source                              = "../../modules/scheduler"
-  project_id                          = var.project_id
-  region                              = var.region
-  environment                         = var.environment
-  scraper_url                         = module.cloud_run.scraper_url
+  source                                  = "../../modules/scheduler"
+  project_id                              = var.project_id
+  region                                  = var.region
+  environment                             = var.environment
+  scraper_url                             = module.cloud_run.scraper_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
-  
+
   # Production scheduler settings
-  timezone = "Europe/Berlin"                    # German timezone for GDPR compliance
+  timezone = "Europe/Berlin" # German timezone for GDPR compliance
 }
 
 # Enhanced monitoring module for production
@@ -130,15 +130,15 @@ module "monitoring" {
   project_id          = var.project_id
   environment         = var.environment
   discord_webhook_url = var.discord_webhook_url
-  
+
   # Production-specific monitoring
-  enable_uptime_checks    = true                # External uptime monitoring
-  enable_error_reporting  = true                # Enhanced error tracking
+  enable_uptime_checks   = true # External uptime monitoring
+  enable_error_reporting = true # Enhanced error tracking
   alert_thresholds = {
-    error_rate_threshold    = 0.01              # 1% error rate threshold
-    latency_threshold      = 2000               # 2s latency threshold
-    memory_threshold       = 0.85               # 85% memory threshold
-    cpu_threshold          = 0.80               # 80% CPU threshold
+    error_rate_threshold = 0.01 # 1% error rate threshold
+    latency_threshold    = 2000 # 2s latency threshold
+    memory_threshold     = 0.85 # 85% memory threshold
+    cpu_threshold        = 0.80 # 80% CPU threshold
   }
 }
 
@@ -146,11 +146,11 @@ module "monitoring" {
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend_production"
   description = "Production frontend analytics and user data"
-  location    = var.bigquery_location            # Frankfurt for GDPR
+  location    = var.bigquery_location # Frankfurt for GDPR
 
   # Enhanced data retention for production
-  default_partition_expiration_ms = 15552000000  # 180 days (6 months)
-  default_table_expiration_ms     = 31536000000  # 365 days (1 year)
+  default_partition_expiration_ms = 15552000000 # 180 days (6 months)
+  default_table_expiration_ms     = 31536000000 # 365 days (1 year)
 
   # GDPR compliance labels
   labels = {

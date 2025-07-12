@@ -53,15 +53,15 @@ variable "alert_thresholds" {
   description = "Alert threshold configuration"
   type = object({
     error_rate_threshold = number
-    latency_threshold   = number
-    memory_threshold    = number
-    cpu_threshold       = number
+    latency_threshold    = number
+    memory_threshold     = number
+    cpu_threshold        = number
   })
   default = {
-    error_rate_threshold = 0.05  # 5%
-    latency_threshold   = 5000   # 5s
-    memory_threshold    = 0.90   # 90%
-    cpu_threshold       = 0.85   # 85%
+    error_rate_threshold = 0.05 # 5%
+    latency_threshold    = 5000 # 5s
+    memory_threshold     = 0.90 # 90%
+    cpu_threshold        = 0.85 # 85%
   }
 }
 
