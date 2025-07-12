@@ -134,7 +134,10 @@ async def handle_retrieve_projects(
     async with session_maker() as session:
         projects = list(
             await session.scalars(
-                select(Project).options(
+                select(Project)
+                .join(ProjectUser)
+                .where(ProjectUser.firebase_uid == request.auth)
+                .options(
                     selectinload(Project.project_users),
                     selectinload(Project.grant_applications),
                 )
@@ -145,7 +148,6 @@ async def handle_retrieve_projects(
     for project in projects:
         all_member_uids.extend([pu.firebase_uid for pu in project.project_users])
 
-    
     cached_data = await gather(*[store.get(uid) for uid in all_member_uids])
 
     firebase_users: dict[str, dict[str, Any]] = {}
