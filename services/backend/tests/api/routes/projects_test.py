@@ -64,6 +64,7 @@ async def test_retrieve_projects(
     test_client: TestingClientType,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
 ) -> None:
     projects_data = ProjectFactory.batch(4)
     async with async_session_maker() as session, session.begin():
@@ -109,6 +110,19 @@ async def test_retrieve_projects(
         )
         await session.commit()
 
+    firebase_users = {
+        firebase_uid: {
+            "uid": firebase_uid,
+            "email": "user@example.com",
+            "displayName": "Test User",
+            "photoURL": "https://example.com/photo.jpg",
+        }
+    }
+    mocker.patch(
+        "services.backend.src.api.routes.projects.get_users",
+        return_value=firebase_users,
+    )
+
     response = await test_client.get(
         "/projects",
         headers={"Authorization": "Bearer some_token"},
@@ -119,13 +133,20 @@ async def test_retrieve_projects(
     assert len(values) == 3
 
     for project in projects_with_user_access:
-        assert any(
-            value["id"] == str(project.id)
-            and value["name"] == project.name
-            and value["description"] == project.description
-            and value["logo_url"] == project.logo_url
-            for value in values
-        )
+        project_response = next(value for value in values if value["id"] == str(project.id))
+        assert project_response["name"] == project.name
+        assert project_response["description"] == project.description
+        assert project_response["logo_url"] == project.logo_url
+        assert "members" in project_response
+
+        members = project_response["members"]
+        assert len(members) == 1
+
+        member = members[0]
+        assert member["firebase_uid"] == firebase_uid
+        assert member["email"] == "user@example.com"
+        assert member["display_name"] == "Test User"
+        assert member["photo_url"] == "https://example.com/photo.jpg"
 
     assert all(value["id"] != str(project_without_user_access.id) for value in values)
 
