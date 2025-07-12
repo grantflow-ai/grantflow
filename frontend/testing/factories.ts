@@ -243,8 +243,9 @@ export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody
 
 export const CreateApplicationRequestFactory = TitleRequestFactory;
 
-export const UpdateApplicationRequestFactory = new Factory<API.UpdateApplication.RequestBody>((factory) => ({
-	form_inputs: {},
+export const UpdateApplicationRequestFactory = new Factory<Partial<API.UpdateApplication.RequestBody>>((factory) => ({
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
 	research_objectives: ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 })),
 	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
 	text: factory.lorem.paragraphs(3),

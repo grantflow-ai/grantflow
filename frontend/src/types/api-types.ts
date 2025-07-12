@@ -98,6 +98,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	description?: string;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -189,6 +190,7 @@ export namespace API {
 };
 
 	export type RequestBody = {
+	description?: string;
 	title: string;
 };
 };
@@ -605,9 +607,11 @@ export namespace API {
 	applications: {
 	completed_at?: string;
 	created_at: string;
+	description?: string;
 	id: string;
 	project_id: string;
 	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	submission_date?: string;
 	title: string;
 	updated_at: string;
 }[];
@@ -769,6 +773,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	description?: string;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -1045,6 +1050,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	description?: string;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -1137,6 +1143,7 @@ export namespace API {
 };
 
 	export type RequestBody = {
+	description: string;
 	form_inputs: {
 	
 };

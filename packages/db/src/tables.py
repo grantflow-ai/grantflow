@@ -226,6 +226,7 @@ class GrantApplication(BaseWithUUIDPK):
     )
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), index=True)
     rag_job_id: Mapped[UUID | None] = mapped_column(
