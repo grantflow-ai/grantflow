@@ -23,23 +23,22 @@ describe("PaymentModal", () => {
 		const user = userEvent.setup();
 		render(<PaymentModal isOpen={true} onClose={onClose} />);
 
-		// Check that monthly content is visible by default
 		expect(screen.getByTestId("plan-price-€200")).toBeInTheDocument();
 		expect(screen.queryByTestId("plan-price-€160")).not.toBeInTheDocument();
 
-		// Switch to the yearly tab
+		
 		const yearlyTab = screen.getByTestId("yearly-tab-trigger");
 		await user.click(yearlyTab);
 
-		// Check that yearly content is now visible and monthly content is not
+	
 		expect(await screen.findByTestId("plan-price-€160")).toBeInTheDocument();
 		expect(screen.queryByTestId("plan-price-€200")).not.toBeInTheDocument();
 
-		// Switch back to the monthly tab
+		
 		const monthlyTab = screen.getByTestId("monthly-tab-trigger");
 		await user.click(monthlyTab);
 
-		// Check that monthly content is visible again
+	
 		expect(await screen.findByTestId("plan-price-€200")).toBeInTheDocument();
 		expect(screen.queryByTestId("plan-price-€160")).not.toBeInTheDocument();
 	});

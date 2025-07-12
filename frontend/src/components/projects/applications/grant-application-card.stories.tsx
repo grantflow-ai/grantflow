@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
+import { GrantApplicationCard } from "@/components/projects";
 import type { API } from "@/types/api-types";
-import { GrantApplicationCard } from "./grant-application-card";
 
 const createApplication = (
 	overrides: Partial<API.GetProject.Http200.ResponseBody["grant_applications"][0]>,

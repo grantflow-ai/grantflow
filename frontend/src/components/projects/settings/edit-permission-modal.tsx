@@ -1,5 +1,3 @@
-"use client";
-
 import { ChevronDown, Mail, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 

@@ -6,15 +6,17 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 
-import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
-import { AppButton } from "@/components/app";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import type { API } from "@/types/api-types";
+import { ApplicationList } from "./application-list";
+import { DashboardHeader } from "../dashboard/dashboard-header";
+import { DeleteApplicationModal } from "../applications/delete-application-modal";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
-import { DeleteApplicationModal } from "../applications/delete-application-modal";
-import { DashboardHeader } from "../dashboard/dashboard-header";
-import { ApplicationCard } from "./application-card";
+import type { API } from "@/types/api-types";
+import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { AppButton } from "@/components/app";
+import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
+
+import { ApplicationCardDataFactory } from "::testing/factories";
 
 interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
@@ -26,64 +28,7 @@ const projectTeamMembers = [
 	{ backgroundColor: "#9747ff", initials: "AR" },
 ];
 
-const mockApplications = [
-	{
-		completed_at: null,
-		created_at: "2023-10-20T09:00:00Z",
-		deadline: "6 weeks and 5 days to the deadline",
-		description:
-			"A grant to support local artists and cultural events. This funding aims to foster creativity and community engagement through public art installations, workshops, and performances.",
-		id: "1",
-		project_id: "proj-1",
-		schema_id: "schema-1",
-		status: "Generating",
-		title: "Community Arts Grant",
-		updated_at: "2023-10-26T10:00:00Z",
-		user_id: "user-1",
-	},
-	{
-		completed_at: null,
-		created_at: "2023-10-22T11:00:00Z",
-		deadline: "4 weeks and 2 days to the deadline",
-		description:
-			"Funding for educational programs targeting underprivileged youth. The initiative focuses on providing access to quality education, mentorship, and resources to help young people achieve their full potential.",
-		id: "2",
-		project_id: "proj-1",
-		schema_id: "schema-2",
-		status: "In Progress",
-		title: "Youth Education Initiative",
-		updated_at: "2023-10-25T14:30:00Z",
-		user_id: "user-1",
-	},
-	{
-		completed_at: "2023-09-20T12:00:00Z",
-		created_at: "2023-09-01T08:00:00Z",
-		deadline: "2 weeks and 1 day to the deadline",
-		description:
-			"A fund for projects focused on environmental protection. We support initiatives related to conservation, sustainability, and raising awareness about critical environmental issues.",
-		id: "3",
-		project_id: "proj-1",
-		schema_id: "schema-3",
-		status: "Working Draft",
-		title: "Environmental Conservation Fund",
-		updated_at: "2023-09-15T18:45:00Z",
-		user_id: "user-1",
-	},
-	{
-		completed_at: null,
-		created_at: "2023-10-21T10:00:00Z",
-		deadline: "8 weeks and 3 days to the deadline",
-		description:
-			"Supporting innovative technology solutions for social problems. This grant is for developers, entrepreneurs, and organizations using technology to create a positive impact on society.",
-		id: "4",
-		project_id: "proj-1",
-		schema_id: "schema-4",
-		status: "In Progress",
-		title: "Tech for Good Grant",
-		updated_at: "2023-10-27T11:00:00Z",
-		user_id: "user-1",
-	},
-];
+const mockApplications = ApplicationCardDataFactory.batch(7);
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
 	const router = useRouter();
@@ -104,7 +49,10 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 		},
 	);
 
+	// --- To use real data, comment out the line below ---
 	const applications = mockApplications;
+	// --- To use mock data, comment out the line below ---
+	// const applications = applicationsData?.applications ?? [];
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);
@@ -124,12 +72,6 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				toast.error("Failed to delete application");
 			}
 		}
-	};
-
-	const getEmptyStateButtonText = () => {
-		if (searchQuery) return "No applications found";
-		if (isCreatingApplication) return "Creating...";
-		return "New Application";
 	};
 
 	const handleCreateApplication = async () => {
@@ -168,7 +110,7 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	}, [isEditingTitle]);
 
 	return (
-		<section className="bg-preview-bg w-full h-full  flex">
+		<section className="bg-preview-bg w-full h-full overflow-y-scroll  flex">
 			<main className="w-[98%] pb-5">
 				<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 				<main
@@ -243,41 +185,15 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 						</div>
 					</div>
 					<div className="flex-1 overflow-auto  pb-6" data-testid="applications-section">
-						{isLoading && (
-							<div className="flex items-center justify-center h-64">
-								<div className="text-[#636170]">Loading applications...</div>
-							</div>
-						)}
-						{!isLoading && applications.length > 0 && (
-							<main className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-auto scrollbar-hide auto-rows-min max-h-full">
-								{applications.map((application) => (
-									<ApplicationCard
-										application={application}
-										key={application.id}
-										onDelete={handleDeleteApplication}
-										onOpen={handleOpenApplication}
-									/>
-								))}
-							</main>
-						)}
-						{!isLoading && applications.length === 0 && (
-							<div className=" w-[628px] h-[206px]" data-testid="empty-applications-state">
-								<button
-									className="flex flex-col items-center gap-2 justify-center w-full h-full bg-preview-bg rounded-[4px] border border-dashed border-gray-200 cursor-pointer"
-									data-testid="empty-state-new-application-button"
-									disabled={isCreatingApplication}
-									onClick={handleCreateApplication}
-									type="button"
-								>
-									<div className="flex items-center justify-center size-10">
-										<Plus className="size-6 text-primary" />
-									</div>
-									<span className="text-base font-normal text-black">
-										{getEmptyStateButtonText()}
-									</span>
-								</button>
-							</div>
-						)}
+						<ApplicationList
+							applications={applications}
+							isCreatingApplication={isCreatingApplication}
+							isLoading={isLoading}
+							onCreate={handleCreateApplication}
+							onDelete={handleDeleteApplication}
+							onOpen={handleOpenApplication}
+							searchQuery={searchQuery}
+						/>
 					</div>
 				</main>
 			</main>

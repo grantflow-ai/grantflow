@@ -2,10 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { deleteAccount } from "@/actions/user";
+import { DeleteAccountModal } from "@/components/projects";
 import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger";
-
-import { DeleteAccountModal } from "./delete-account-modal";
 
 vi.mock("next/navigation", () => ({
 	useRouter: vi.fn(),

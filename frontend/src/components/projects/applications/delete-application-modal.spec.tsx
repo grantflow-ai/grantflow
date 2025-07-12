@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { DeleteApplicationModal } from "./delete-application-modal";
+import { DeleteApplicationModal } from "@/components/projects";
 
 describe("DeleteApplicationModal", () => {
 	const mockOnClose = vi.fn();

@@ -2,9 +2,8 @@
 
 import { AlertCircle, RotateCcw, Wand2 } from "lucide-react";
 import { WizardStep } from "@/constants";
+import { DevAutofillButton, DevResetButton } from "@/dev-tools";
 import { useWizardStore } from "@/stores/wizard-store";
-import { DevAutofillButton } from "../dev-autofill-button";
-import { DevResetButton } from "../dev-reset-button";
 
 export function WizardTools() {
 	const currentStep = useWizardStore((state) => state.currentStep);

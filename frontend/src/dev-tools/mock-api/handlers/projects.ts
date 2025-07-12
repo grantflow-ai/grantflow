@@ -1,8 +1,8 @@
 import { ApplicationListItemFactory, ProjectFactory, ProjectListItemFactory } from "::testing/factories";
+import { getScenario } from "@/dev-tools";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger";
 import { getMockAPIClient } from "../client";
-import { getScenario } from "../scenarios";
 
 interface GlobalStore {
 	__MOCK_PROJECT_STORE__?: Map<string, API.GetProject.Http200.ResponseBody>;

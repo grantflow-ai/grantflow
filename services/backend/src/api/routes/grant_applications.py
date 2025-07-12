@@ -45,6 +45,7 @@ logger = get_logger(__name__)
 
 class CreateApplicationRequestBody(TypedDict):
     title: str
+    description: NotRequired[str]
 
 
 class UpdateApplicationRequestBody(TypedDict):
@@ -53,6 +54,7 @@ class UpdateApplicationRequestBody(TypedDict):
     status: NotRequired[ApplicationStatusEnum]
     text: NotRequired[str]
     title: NotRequired[str]
+    description: NotRequired[str]
 
 
 class AutofillRequestBody(TypedDict):
@@ -100,6 +102,7 @@ class ApplicationResponse(TypedDict):
     id: str
     project_id: str
     title: str
+    description: NotRequired[str]
     status: ApplicationStatusEnum
     completed_at: NotRequired[str]
     form_inputs: NotRequired[ResearchDeepDive]
@@ -116,10 +119,12 @@ class ApplicationListItemResponse(TypedDict):
     id: str
     project_id: str
     title: str
+    description: NotRequired[str]
     status: ApplicationStatusEnum
     completed_at: NotRequired[str]
     created_at: str
     updated_at: str
+    submission_date: NotRequired[str]
 
 
 class PaginationMetadata(TypedDict):
@@ -182,6 +187,9 @@ async def _handle_retrieve_application(
             "created_at": grant_application.created_at.isoformat(),
             "updated_at": grant_application.updated_at.isoformat(),
         }
+
+        if grant_application.description:
+            response["description"] = grant_application.description
 
         if grant_application.completed_at:
             response["completed_at"] = grant_application.completed_at.isoformat()
@@ -265,6 +273,7 @@ async def handle_create_application(
                     {
                         "project_id": project_id,
                         "title": data["title"],
+                        "description": data.get("description") or None,
                         "status": ApplicationStatusEnum.DRAFT,
                     }
                 )
@@ -488,7 +497,11 @@ async def handle_list_applications(
     )
 
     async with session_maker() as session:
-        query = select(GrantApplication).where(GrantApplication.project_id == project_id)
+        query = (
+            select(GrantApplication, GrantTemplate.submission_date)
+            .where(GrantApplication.project_id == project_id)
+            .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
+        )
 
         if search:
             search_pattern = f"%{search}%"
@@ -508,13 +521,16 @@ async def handle_list_applications(
 
         sort_column = getattr(GrantApplication, sort)
         query = query.order_by(sort_column.desc()) if order == "desc" else query.order_by(sort_column.asc())
-
         query = query.limit(limit).offset(offset)
 
-        applications = list(await session.scalars(query))
+        results = await session.execute(query)
+        rows = results.all()
 
         application_items: list[ApplicationListItemResponse] = []
-        for app in applications:
+        for row in rows:
+            app = row[0]
+            submission_date = row[1]
+
             item: ApplicationListItemResponse = {
                 "id": str(app.id),
                 "project_id": str(app.project_id),
@@ -523,6 +539,10 @@ async def handle_list_applications(
                 "created_at": app.created_at.isoformat(),
                 "updated_at": app.updated_at.isoformat(),
             }
+            if app.description:
+                item["description"] = app.description
+            if submission_date:
+                item["submission_date"] = submission_date.isoformat()
             if app.completed_at:
                 item["completed_at"] = app.completed_at.isoformat()
             application_items.append(item)

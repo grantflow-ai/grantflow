@@ -1,5 +1,6 @@
 from litestar import Router
 from litestar.handlers import HTTPRouteHandler, WebsocketRouteHandler
+from litestar.stores.memory import MemoryStore
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.server import create_litestar_app
@@ -125,4 +126,5 @@ app = create_litestar_app(
     on_startup=[before_server_start],
     middleware=[TraceIdMiddleware(), AuthMiddleware],
     plugins=plugins,
+    stores={"firebase_user_cache": MemoryStore()},
 )

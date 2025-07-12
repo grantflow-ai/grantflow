@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
-import { CreateApplicationButton } from "./create-application-button";
+import { CreateApplicationButton } from "@/components/projects";
 
 vi.mock("next/navigation", () => ({
 	useRouter: vi.fn(),

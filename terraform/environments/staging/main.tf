@@ -35,6 +35,11 @@ module "secrets" {
   project_id = var.project_id
 }
 
+# IAM module
+module "iam" {
+  source = "../../modules/iam"
+}
+
 # Network module
 module "network" {
   source     = "../../modules/network"
@@ -44,89 +49,89 @@ module "network" {
 
 # Database module with staging-optimized settings
 module "database" {
-  source           = "../../modules/database"
-  project_id       = var.project_id
-  region           = var.region
-  zone             = var.zone
-  instance_name    = "grantflow-staging"
-  tier             = "db-f1-micro"       # Cost-optimized for staging
-  disk_size        = 10                  # Minimal storage for staging
-  disk_type        = "PD_HDD"           # Cheaper storage type
-  backup_enabled   = true               # Enable backups (required for point-in-time recovery)
-  high_availability = false             # Single zone for staging
-  backup_retention = 7                  # Shorter retention for staging
-  backup_location  = "us"               # US location for staging
+  source                = "../../modules/database"
+  project_id            = var.project_id
+  region                = var.region
+  zone                  = var.zone
+  instance_name         = "grantflow-staging"
+  tier                  = "db-f1-micro" # Cost-optimized for staging
+  disk_size             = 10            # Minimal storage for staging
+  disk_type             = "PD_HDD"      # Cheaper storage type
+  backup_enabled        = true          # Enable backups (required for point-in-time recovery)
+  high_availability     = false         # Single zone for staging
+  backup_retention      = 7             # Shorter retention for staging
+  backup_location       = "us"          # US location for staging
   enable_query_insights = true          # Enable for monitoring
-  log_slow_queries = false              # Disable for staging
-  deletion_protection = false           # Allow deletion in staging
-  network_id       = module.network.network_id
+  log_slow_queries      = false         # Disable for staging
+  deletion_protection   = false         # Allow deletion in staging
+  network_id            = module.network.network_id
 }
 
 # Storage module
 module "storage" {
-  source         = "../../modules/storage"
-  bucket_name    = "grantflow-staging-uploads"
-  environment    = var.environment
-  location       = "US"                 # US location for staging
-  retention_days = 7                    # Shorter retention for staging
-  enable_versioning = false             # No versioning for staging
-  enable_lifecycle = true               # Enable lifecycle for staging
-  uniform_bucket_access = true          # Enable uniform access
+  source                = "../../modules/storage"
+  bucket_name           = "grantflow-staging-uploads"
+  environment           = var.environment
+  location              = "US"  # US location for staging
+  retention_days        = 7     # Shorter retention for staging
+  enable_versioning     = false # No versioning for staging
+  enable_lifecycle      = true  # Enable lifecycle for staging
+  uniform_bucket_access = true  # Enable uniform access
 }
 
 # Cloud Run services module with staging-optimized settings
 module "cloud_run" {
-  source                    = "../../modules/cloud_run"
+  source                   = "../../modules/cloud_run"
   project_id               = var.project_id
   region                   = var.region
   environment              = var.environment
   database_connection_name = module.database.instance_connection_name
-  min_instances           = 0           # Scale to zero for cost savings
-  max_instances           = 1           # Limited scaling for staging
-  cpu_limit               = "1"        # Minimum CPU for Cloud Run
-  memory_limit            = "1Gi"       # Increased memory to handle service requirements
-  discord_webhook_url     = var.discord_webhook_url
-  enable_cpu_throttling   = true        # Allow throttling for staging
-  enable_http2           = false        # HTTP/1.1 for staging
-  request_timeout        = 300          # 5-minute timeout
-  concurrency_limit      = 80           # Default concurrency
+  min_instances            = 0     # Scale to zero for cost savings
+  max_instances            = 1     # Limited scaling for staging
+  cpu_limit                = "1"   # Minimum CPU for Cloud Run
+  memory_limit             = "1Gi" # Increased memory to handle service requirements
+  discord_webhook_url      = var.discord_webhook_url
+  enable_cpu_throttling    = true  # Allow throttling for staging
+  enable_http2             = false # HTTP/1.1 for staging
+  request_timeout          = 300   # 5-minute timeout
+  concurrency_limit        = 80    # Default concurrency
 }
 
 # Pub/Sub module - needs to come after cloud_run to get service account
 module "pubsub" {
   source                               = "../../modules/pubsub"
-  project_id                          = var.project_id
-  region                              = var.region
+  project_id                           = var.project_id
+  region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
-  message_retention_duration          = "86400s"  # 1 day for staging
-  ack_deadline_seconds                = 60        # Default deadline
-  enable_dead_letter                  = false     # No DLQ for staging
+  message_retention_duration           = "86400s" # 1 day for staging
+  ack_deadline_seconds                 = 60       # Default deadline
+  enable_dead_letter                   = false    # No DLQ for staging
 }
 
 # Scheduler module
 module "scheduler" {
-  source                              = "../../modules/scheduler"
-  project_id                          = var.project_id
-  region                              = var.region
-  environment                         = var.environment
-  scraper_url                         = module.cloud_run.scraper_url
+  source                                  = "../../modules/scheduler"
+  project_id                              = var.project_id
+  region                                  = var.region
+  environment                             = var.environment
+  scraper_url                             = module.cloud_run.scraper_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
-  timezone                            = "Europe/Berlin"  # Berlin timezone
+  timezone                                = "Europe/Berlin" # Berlin timezone
 }
 
 # Monitoring module
 module "monitoring" {
-  source              = "../../modules/monitoring"
-  project_id          = var.project_id
-  environment         = var.environment
-  discord_webhook_url = var.discord_webhook_url
-  enable_uptime_checks = false         # No uptime checks for staging
-  enable_error_reporting = true        # Enable error reporting
+  source                 = "../../modules/monitoring"
+  project_id             = var.project_id
+  environment            = var.environment
+  discord_webhook_url    = var.discord_webhook_url
+  enable_uptime_checks   = false # No uptime checks for staging
+  enable_error_reporting = true  # Enable error reporting
   alert_thresholds = {
-    error_rate_threshold = 0.10        # 10% for staging (more lenient)
-    latency_threshold   = 10000        # 10s for staging
-    memory_threshold    = 0.95         # 95% for staging
-    cpu_threshold       = 0.90         # 90% for staging
+    error_rate_threshold = 0.10  # 10% for staging (more lenient)
+    latency_threshold    = 10000 # 10s for staging
+    memory_threshold     = 0.95  # 95% for staging
+    cpu_threshold        = 0.90  # 90% for staging
   }
 }
 
@@ -134,7 +139,7 @@ module "monitoring" {
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend"
   description = "Frontend analytics and user data"
-  location    = "US"  # US location for staging
+  location    = "US" # US location for staging
 
   # Time-based partitioning for cost optimization
   default_partition_expiration_ms = 5184000000 # 60 days
