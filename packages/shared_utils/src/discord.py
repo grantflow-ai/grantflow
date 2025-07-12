@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 import httpx
@@ -146,7 +146,7 @@ def create_scraper_report_embed(
                 "inline": False,
             },
         ],
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(tz=UTC).isoformat(),
         "footer": {"text": "GrantFlow AI - NIH Grant Scraper"},
     }
 

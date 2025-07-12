@@ -38,8 +38,7 @@ class SlugStore {
 		}
 
 		// Not in cache, extract the short ID from the slug
-		const shortId = extractIdFromSlug(slug);
-		return shortId;
+		return extractIdFromSlug(slug);
 	}
 
 	getProjectSlug(id: string): null | string {

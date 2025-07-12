@@ -1,6 +1,6 @@
 import { RagProcessingStatusFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
-import { NotificationProgress } from "./notification-progress";
+import { NotificationProgress } from "@/components/app";
 
 describe("NotificationProgress", () => {
 	const mockNotification = RagProcessingStatusFactory.build({

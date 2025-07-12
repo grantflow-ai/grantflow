@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import { SeparatorWithText } from "./separator-with-text";
+import { SeparatorWithText } from "@/components/app";
 
 describe("SeparatorWithText", () => {
 	it("renders with the provided text", () => {

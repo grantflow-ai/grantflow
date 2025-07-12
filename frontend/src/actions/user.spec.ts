@@ -80,8 +80,7 @@ describe("User Actions", () => {
 				scheduled_deletion_date: "2025-08-05T10:00:00Z",
 			};
 			const mockJson = vi.fn().mockResolvedValue(mockResponse);
-			const mockDelete = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.delete = mockDelete;
+			mockClient.delete = vi.fn().mockReturnValue({ json: mockJson });
 
 			await deleteAccount();
 
@@ -122,8 +121,7 @@ describe("User Actions", () => {
 				projects: [],
 			};
 			const mockJson = vi.fn().mockResolvedValue(mockResponse);
-			const mockGet = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.get = mockGet;
+			mockClient.get = vi.fn().mockReturnValue({ json: mockJson });
 
 			const result = await getSoleOwnedProjects();
 
@@ -153,8 +151,7 @@ describe("User Actions", () => {
 				projects: [],
 			};
 			const mockJson = vi.fn().mockResolvedValue(mockResponse);
-			const mockGet = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.get = mockGet;
+			mockClient.get = vi.fn().mockReturnValue({ json: mockJson });
 
 			await getSoleOwnedProjects();
 
@@ -219,8 +216,7 @@ describe("User Actions", () => {
 		it("should use withAuthRedirect wrapper", async () => {
 			const mockResponse = { message: "Restored" };
 			const mockJson = vi.fn().mockResolvedValue(mockResponse);
-			const mockPost = vi.fn().mockReturnValue({ json: mockJson });
-			mockClient.post = mockPost;
+			mockClient.post = vi.fn().mockReturnValue({ json: mockJson });
 
 			await restoreAccount(mockToken);
 

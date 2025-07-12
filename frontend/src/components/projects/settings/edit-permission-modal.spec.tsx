@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { EditPermissionModal } from "@/components/projects";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
-
-import { EditPermissionModal } from "./edit-permission-modal";
 
 vi.mock("@/utils/user", () => ({
 	generateInitials: vi.fn((fullName: string | undefined, email: string) => {

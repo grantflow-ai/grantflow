@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ResearchDeepDiveStep } from "./research-deep-dive-step";
+import { ResearchDeepDiveStep } from "@/components/projects";
 
 describe("ResearchDeepDiveStep", () => {
 	it("renders step content", () => {

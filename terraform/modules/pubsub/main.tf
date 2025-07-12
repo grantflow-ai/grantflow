@@ -28,7 +28,7 @@ variable "pubsub_invoker_service_account_email" {
 variable "message_retention_duration" {
   description = "Message retention duration"
   type        = string
-  default     = "86400s"  # 1 day
+  default     = "86400s" # 1 day
 }
 
 variable "ack_deadline_seconds" {

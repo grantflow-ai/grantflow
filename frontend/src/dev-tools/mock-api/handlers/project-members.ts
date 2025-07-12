@@ -44,8 +44,7 @@ export const projectMemberHandlers = {
 		}
 		log.info("[Mock API] Listing project members", { project_id });
 
-		const members = mockMembers[project_id] || [];
-		return members;
+		return mockMembers[project_id] || [];
 	},
 
 	removeProjectMember: async ({ params }: { params?: Record<string, string> }): Promise<void> => {

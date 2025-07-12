@@ -17,10 +17,9 @@ vi.mock("firebase/auth", () => ({
 		{ credentialFromResult: vi.fn().mockReturnValue({ idToken: "google-id-token" }) },
 	),
 	OAuthProvider: vi.fn(() => {
-		const provider = {
+		return {
 			setCustomParameters: vi.fn(),
 		};
-		return provider;
 	}),
 	signInWithPopup: vi.fn(),
 }));
