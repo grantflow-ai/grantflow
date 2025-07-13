@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { API } from "@/types/api-types";
 
+type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
+
 interface StatusStyle {
 	bg: string;
 	icon: string;
@@ -19,10 +21,16 @@ interface StatusStyle {
 	text: string;
 }
 
-const statusStyleMap: Record<string, StatusStyle> = {
+const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
+	CANCELLED: {
+		bg: "bg-red-500",
+		icon: "/icons/close.svg",
+		label: "Cancelled",
+		text: "text-white",
+	},
 	COMPLETED: {
 		bg: "bg-app-dark-blue",
-		icon: "/icons/working-Draft-white.svg",
+		icon: "/icons/working-draft-white.svg",
 		label: "Working Draft",
 		text: "text-white",
 	},
@@ -40,17 +48,6 @@ const statusStyleMap: Record<string, StatusStyle> = {
 	},
 };
 
-const getStatusStyles = (status: string): StatusStyle => {
-	return (
-		statusStyleMap[status] ?? {
-			bg: "bg-gray-200",
-			icon: "/icons/piechart.svg",
-			label: status,
-			text: "text-app-dark-blue",
-		}
-	);
-};
-
 interface ApplicationCardProps {
 	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
@@ -58,7 +55,7 @@ interface ApplicationCardProps {
 }
 
 export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps) {
-	const statusStyles = getStatusStyles(application.status);
+	const statusStyles = statusStyleMap[application.status];
 	return (
 		<div
 			className="relative flex h-[206px] flex-col rounded-[4px] border border-gray-200 bg-preview-bg px-3 py-6"
@@ -141,15 +138,17 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 			</header>
 
 			<main className="flex h-full w-full items-end justify-between pt-3">
-				{application.deadline && (
-					<div
-						className="flex items-center rounded-xs bg-app-lavender-gray px-2 py-1"
-						data-testid={`application-card-deadline-${application.id}`}
-					>
-						<IconHourglass className="size-4 rotate-180 text-black" />
-						<p className="text-sm font-normal text-black">{application.deadline}</p>
-					</div>
-				)}
+				<div className=" w-full">
+					{application.deadline && (
+						<div
+							className="flex items-center rounded-xs w-fit bg-app-lavender-gray px-2 py-1"
+							data-testid={`application-card-deadline-${application.id}`}
+						>
+							<IconHourglass className="size-4 rotate-180 text-black" />
+							<p className="text-sm font-normal text-black">{application.deadline}</p>
+						</div>
+					)}
+				</div>
 
 				<AppButton
 					className="w-[97px] py-0.5"

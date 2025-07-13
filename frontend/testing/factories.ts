@@ -566,10 +566,10 @@ export const UpdateMemberRoleRequestFactory = new Factory<API.UpdateProjectMembe
 	role: factory.helpers.arrayElement(["ADMIN", "MEMBER"]),
 }));
 
-type ApplicationCardData = API.ListApplications.Http200.ResponseBody["applications"][0] & {
+type ApplicationCardData = {
 	deadline?: string;
 	description?: string;
-};
+} & API.ListApplications.Http200.ResponseBody["applications"][0];
 
 export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory) => ({
 	completed_at: factory.helpers.maybe(() => factory.date.past().toISOString()),
