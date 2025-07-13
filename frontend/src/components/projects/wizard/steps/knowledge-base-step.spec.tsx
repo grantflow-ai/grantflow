@@ -384,7 +384,7 @@ describe("KnowledgeBaseStep", () => {
 
 			expect(screen.getByText("doc1.pdf")).toBeInTheDocument();
 			expect(screen.getByText("doc2.docx")).toBeInTheDocument();
-			expect(screen.getByTestId("file-collection")).toBeInTheDocument();
+			expect(screen.getByTestId("knowledge-base-files")).toBeInTheDocument();
 		});
 	});
 

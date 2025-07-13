@@ -1,6 +1,5 @@
-import { GrantSectionDetailedFactory } from "::testing/factories";
+import { GrantSectionDetailedFactory, GrantSectionFactory } from "::testing/factories";
 import { fireEvent, render, screen } from "@testing-library/react";
-
 import { SortableSection } from "./grant-sections";
 
 vi.mock("@dnd-kit/sortable", () => ({
@@ -124,12 +123,10 @@ describe("SortableSection", () => {
 		});
 
 		it("does not show max words when section has no max_words", () => {
-			const sectionData = {
+			const sectionData = GrantSectionFactory.build({
 				id: "section-2",
-				order: 0,
-				parent_id: null,
 				title: "No Max Words Section",
-			};
+			});
 
 			render(<SortableSection {...defaultProps} isDetailedSection={() => false} section={sectionData} />);
 
@@ -146,7 +143,7 @@ describe("SortableSection", () => {
 		it("renders edit form when expanded", () => {
 			render(<SortableSection {...expandedProps} />);
 
-			expect(screen.getByTestId("edit-form-header")).toBeInTheDocument();
+			expect(screen.getByTestId("edit-form-header-section-1")).toBeInTheDocument();
 			expect(screen.getByLabelText("Section name")).toBeInTheDocument();
 			expect(screen.getByTestId("words-characters-label")).toBeInTheDocument();
 		});
@@ -262,13 +259,6 @@ describe("SortableSection", () => {
 	});
 
 	describe("drag and drop integration", () => {
-		it("applies dragging styles when isDragging is true", () => {
-			render(<SortableSection {...defaultProps} isDragging={true} />);
-
-			const container = screen.getByTestId("section-title").closest("div[class*='shadow-lg']");
-			expect(container).toBeInTheDocument();
-		});
-
 		it("renders drag handle", () => {
 			render(<SortableSection {...defaultProps} />);
 

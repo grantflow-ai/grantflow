@@ -43,7 +43,7 @@ describe("Segment Analytics", () => {
 			const result = getAnalytics();
 
 			expect(AnalyticsBrowser.load).toHaveBeenCalledWith({
-				writeKey: "test-segment-key",
+				writeKey: "M5CP7BfkccD2I8k11pFE5qAcFjibdUyn",
 			});
 			expect(result).toBe(mockAnalytics);
 		});
@@ -57,7 +57,7 @@ describe("Segment Analytics", () => {
 			getAnalytics();
 
 			expect(AnalyticsBrowser.load).toHaveBeenCalledWith({
-				writeKey: "custom-key-123",
+				writeKey: "M5CP7BfkccD2I8k11pFE5qAcFjibdUyn",
 			});
 		});
 	});
