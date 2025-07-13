@@ -8,7 +8,7 @@ describe("ApplicationCard", () => {
 	it("renders application details correctly", () => {
 		const application = ApplicationFactory.build({
 			description: "This is a test description.",
-			status: "In Progress",
+			status: "IN_PROGRESS",
 			title: "Test Application Title",
 		});
 		const handleOpen = vi.fn();
