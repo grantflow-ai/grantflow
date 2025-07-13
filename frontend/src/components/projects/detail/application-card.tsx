@@ -20,13 +20,13 @@ interface StatusStyle {
 }
 
 const statusStyleMap: Record<string, StatusStyle> = {
-	DRAFT: {
+	COMPLETED: {
 		bg: "bg-app-dark-blue",
 		icon: "/icons/working-Draft-white.svg",
 		label: "Working Draft",
 		text: "text-white",
 	},
-	Generating: {
+	DRAFT: {
 		bg: "bg-primary",
 		icon: "/icons/piechart.svg",
 		label: "Generating",
@@ -101,7 +101,9 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 								<DropdownMenuItem
 									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-gray-700 data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
 									data-testid="project-card-delete"
-									onClick={() => onDelete(application.id)}
+									onClick={() => {
+										onDelete(application.id);
+									}}
 								>
 									<Trash2 className="size-4 text-gray-700" />
 									Delete
@@ -152,7 +154,9 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 				<AppButton
 					className="w-[97px] py-0.5"
 					data-testid={`application-card-open-button-${application.id}`}
-					onClick={() => onOpen(application.id, application.title)}
+					onClick={() => {
+						onOpen(application.id, application.title);
+					}}
 					variant="secondary"
 				>
 					Open

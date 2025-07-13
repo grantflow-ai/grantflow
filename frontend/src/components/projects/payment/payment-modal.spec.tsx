@@ -26,19 +26,15 @@ describe("PaymentModal", () => {
 		expect(screen.getByTestId("plan-price-€200")).toBeInTheDocument();
 		expect(screen.queryByTestId("plan-price-€160")).not.toBeInTheDocument();
 
-		
 		const yearlyTab = screen.getByTestId("yearly-tab-trigger");
 		await user.click(yearlyTab);
 
-	
 		expect(await screen.findByTestId("plan-price-€160")).toBeInTheDocument();
 		expect(screen.queryByTestId("plan-price-€200")).not.toBeInTheDocument();
 
-		
 		const monthlyTab = screen.getByTestId("monthly-tab-trigger");
 		await user.click(monthlyTab);
 
-	
 		expect(await screen.findByTestId("plan-price-€200")).toBeInTheDocument();
 		expect(screen.queryByTestId("plan-price-€160")).not.toBeInTheDocument();
 	});
