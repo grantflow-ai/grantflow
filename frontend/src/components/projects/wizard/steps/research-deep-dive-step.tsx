@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -130,32 +131,32 @@ export function ResearchDeepDiveStep() {
 		<div className="flex size-full" data-testid="research-deep-dive-step">
 			{}
 			<div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-100 p-6">
-				<div className="flex items-start justify-between">
-					<div>
+				<div className="space-y-3">
+					<div className="flex items-center justify-between">
 						<h2
-							className="font-heading text-2xl font-medium leading-loose"
+							className="font-heading text-lg sm:text-xl md:text-2xl lg:text-2xl font-medium leading-loose whitespace-nowrap"
 							data-testid="research-deep-dive-header"
 						>
 							Research Deep Dive
 						</h2>
-						<p
-							className="text-muted-foreground-dark leading-tight"
-							data-testid="research-deep-dive-description"
+						<AppButton
+							className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
+							data-testid="ai-try-button"
+							disabled={isAutofillLoading || !application}
+							leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
+							onClick={() => triggerAutofill("research_deep_dive")}
+							variant="secondary"
 						>
-							Before generating your grant application draft, it would be helpful to learn a bit more
-							about your research to ensure more accurate results.
-						</p>
+							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
+						</AppButton>
 					</div>
-					<AppButton
-						className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
-						data-testid="ai-try-button"
-						disabled={isAutofillLoading || !application}
-						leftIcon={<span>✨</span>}
-						onClick={() => triggerAutofill("research_deep_dive")}
-						variant="secondary"
+					<p
+						className="text-muted-foreground-dark leading-tight"
+						data-testid="research-deep-dive-description"
 					>
-						{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-					</AppButton>
+						Before generating your grant application draft, it would be helpful to learn a bit more about
+						your research to ensure more accurate results.
+					</p>
 				</div>
 			</div>
 
