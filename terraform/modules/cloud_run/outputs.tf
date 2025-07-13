@@ -1,6 +1,6 @@
 output "backend_url" {
   description = "The URL of the deployed backend service"
-  value       = google_cloud_run_v2_service.backend.uri
+  value       = var.custom_domain != "" ? "https://${var.custom_domain}" : google_cloud_run_v2_service.backend.uri
 }
 
 output "backend_service_id" {

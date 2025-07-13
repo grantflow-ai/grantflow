@@ -91,6 +91,36 @@ variable "concurrency_limit" {
   default     = 80
 }
 
+variable "custom_domain" {
+  description = "Custom domain for backend service (e.g., api.grantflow.ai)"
+  type        = string
+  default     = ""
+}
+
+variable "crawler_custom_domain" {
+  description = "Custom domain for crawler service"
+  type        = string
+  default     = ""
+}
+
+variable "indexer_custom_domain" {
+  description = "Custom domain for indexer service"
+  type        = string
+  default     = ""
+}
+
+variable "rag_custom_domain" {
+  description = "Custom domain for rag service"
+  type        = string
+  default     = ""
+}
+
+variable "scraper_custom_domain" {
+  description = "Custom domain for scraper service"
+  type        = string
+  default     = ""
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
