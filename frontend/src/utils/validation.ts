@@ -2,27 +2,8 @@ import type { HTTPError } from "ky";
 import { z } from "zod";
 
 export const isValidUrl = (url: string): boolean => {
-	if (url.includes(" ")) return false;
-	if (url.includes("..")) return false;
-
 	const urlResult = z.url().safeParse(url);
-	if (!urlResult.success) return false;
-
-	try {
-		const urlObj = new URL(url);
-
-		if (!["http:", "https:"].includes(urlObj.protocol)) return false;
-
-		const { hostname } = urlObj;
-
-		if (!hostname.includes(".") && hostname !== "localhost") return false;
-
-		if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) return false;
-
-		return !(hostname.startsWith(".") || hostname.endsWith(".") || hostname.includes(".."));
-	} catch {
-		return false;
-	}
+	return urlResult.success;
 };
 
 interface ValidationErrorResponse {
