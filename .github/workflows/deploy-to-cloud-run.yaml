@@ -1,6 +1,23 @@
 name: Deploy to Cloud Run
 
 on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy'
+        required: true
+        type: choice
+        options:
+          - backend
+          - crawler
+          - indexer
+          - rag
+          - scraper
+      use_latest:
+        description: 'Use latest image tag'
+        required: false
+        type: boolean
+        default: true
   workflow_run:
     workflows: 
       - "Build and Push (Backend)"
@@ -21,25 +38,43 @@ env:
 
 jobs:
   get-service-info:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
       service-name: ${{ steps.extract.outputs.service }}
       image-tag: ${{ steps.extract.outputs.tag }}
     steps:
-      - name: Extract service name from workflow
+      - name: Extract service info
         id: extract
         run: |
-          # Extract service name from workflow name
-          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
-          SERVICE=$(echo "$WORKFLOW_NAME" | grep -oP '(?<=\()[^)]+(?=\))' | tr '[:upper:]' '[:lower:]')
-          echo "service=$SERVICE" >> $GITHUB_OUTPUT
-          
-          # Set image tag based on branch
-          if [[ "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
-            echo "tag=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual trigger
+            echo "service=${{ inputs.service }}" >> $GITHUB_OUTPUT
+            if [[ "${{ inputs.use_latest }}" == "true" ]]; then
+              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                echo "tag=latest" >> $GITHUB_OUTPUT
+              else
+                echo "tag=staging-latest" >> $GITHUB_OUTPUT
+              fi
+            else
+              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+              else
+                echo "tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
+              fi
+            fi
           else
-            echo "tag=staging-${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+            # Workflow run trigger
+            WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+            SERVICE=$(echo "$WORKFLOW_NAME" | grep -oP '(?<=\()[^)]+(?=\))' | tr '[:upper:]' '[:lower:]')
+            echo "service=$SERVICE" >> $GITHUB_OUTPUT
+            
+            # Set image tag based on branch
+            if [[ "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
+              echo "tag=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+            else
+              echo "tag=staging-${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+            fi
           fi
 
   deploy-to-cloud-run:
@@ -55,13 +90,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
       
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -132,7 +167,7 @@ jobs:
 
   update-staging-urls:
     needs: [get-service-info, deploy-to-cloud-run]
-    if: github.event.workflow_run.head_branch == 'development'
+    if: (github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'development') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/development')
     runs-on: ubuntu-latest
     
     permissions:
@@ -143,13 +178,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
       
       - name: Update service URLs in secrets
         run: |
