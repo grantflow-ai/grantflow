@@ -16,7 +16,7 @@ import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { AppButton } from "@/components/app";
 import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
 
-import { ApplicationCardDataFactory } from "::testing/factories";
+//import { ApplicationCardDataFactory } from "::testing/factories";
 
 interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
@@ -28,7 +28,7 @@ const projectTeamMembers = [
 	{ backgroundColor: "#9747ff", initials: "AR" },
 ];
 
-const mockApplications = ApplicationCardDataFactory.batch(7);
+//const mockApplications = ApplicationCardDataFactory.batch(7);
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
 	const router = useRouter();
@@ -50,9 +50,9 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	);
 
 	// --- To use real data, comment out the line below ---
-	const applications = mockApplications;
+	//const applications = mockApplications;
 	// --- To use mock data, comment out the line below ---
-	// const applications = applicationsData?.applications ?? [];
+	 const applications = applicationsData?.applications ?? [];
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);
