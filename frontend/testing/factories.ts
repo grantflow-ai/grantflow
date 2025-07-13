@@ -2,6 +2,7 @@ import { Factory } from "interface-forge";
 
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
+import type { GrantSection } from "@/types/grant-sections";
 
 type HttpErrorResponse = API.Login.Http400.ResponseBody;
 
@@ -238,6 +239,13 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 		"application/rtf",
 	]),
 	size: factory.number.int({ max: 10_485_760, min: 1024 }),
+}));
+
+export const GrantSectionFactory = new Factory<GrantSection>((factory) => ({
+	id: factory.string.uuid(),
+	order: factory.number.int({ max: 20, min: 0 }),
+	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
+	title: factory.lorem.sentence(),
 }));
 
 type UserRole = API.CreateInvitationRedirectUrl.RequestBody["role"];
