@@ -107,9 +107,14 @@ jobs:
           IMAGE_TAG="${{ needs.get-service-info.outputs.image-tag }}"
           
           echo "Deploying $SERVICE_NAME with tag $IMAGE_TAG to Cloud Run..."
+          echo "Region: ${{ env.REGION }}, Project: ${{ env.PROJECT_ID }}"
+          
+          # List services first to debug
+          echo "Available services:"
+          gcloud run services list --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} --format="value(metadata.name)" || echo "Failed to list services"
           
           # Check if service exists (handle both old and new naming)
-          if gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null | grep -q "Service $SERVICE_NAME"; then
+          if gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} &>/dev/null; then
             echo "Service exists, updating..."
             
             # Deploy without traffic to test the new revision
