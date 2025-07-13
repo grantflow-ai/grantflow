@@ -1,0 +1,116 @@
+# Cloud Build configuration for automatic deployments
+# This ensures services are updated, not recreated
+
+substitutions:
+  _SERVICE_NAME: ${_SERVICE_NAME}
+  _REGION: us-central1
+  _IMAGE_TAG: ${SHORT_SHA}
+  _DEPLOY_TRAFFIC: '100'  # Can be overridden for gradual rollouts
+
+steps:
+  # Build the Docker image with caching
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    args:
+      - 'build'
+      - '-f'
+      - 'services/${_SERVICE_NAME}/Dockerfile'
+      - '-t'
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/grantflow/${_SERVICE_NAME}:${_IMAGE_TAG}'
+      - '-t'
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/grantflow/${_SERVICE_NAME}:${BRANCH_NAME}-latest'
+      - '--cache-from'
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/grantflow/${_SERVICE_NAME}:${BRANCH_NAME}-latest'
+      - '.'
+
+  # Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/grantflow/${_SERVICE_NAME}'
+
+  # Check if service exists before deploying
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'check-service'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --platform=managed 2>/dev/null; then
+          echo "Service exists, will update"
+          echo "EXISTS" > /workspace/service_exists
+        else
+          echo "Service does not exist, skipping deployment"
+          echo "Create the service first using Terraform"
+          exit 1
+        fi
+
+  # Deploy to Cloud Run without traffic
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image'
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/grantflow/${_SERVICE_NAME}:${_IMAGE_TAG}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--no-traffic'
+      - '--quiet'
+
+  # Update traffic to new revision
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'update-traffic'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'update-traffic'
+      - '${_SERVICE_NAME}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--to-latest'
+      - '--traffic-percent'
+      - '${_DEPLOY_TRAFFIC}'
+      - '--quiet'
+
+  # Verify deployment
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'verify'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} --platform=managed \
+          --format="value(status.url)")
+        echo "Service deployed to: $SERVICE_URL"
+        
+        # Check health endpoint if available
+        if curl -f -s "${SERVICE_URL}/health" > /dev/null 2>&1; then
+          echo "✅ Health check passed"
+        else
+          echo "⚠️  Health check not available or failed"
+        fi
+
+# Build timeout
+timeout: 1200s
+
+# Use Artifact Registry for caching
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+  
+# Only run on specific branches
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/discord-webhook-url/versions/latest
+    env: 'DISCORD_WEBHOOK_URL'

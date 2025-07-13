@@ -1,0 +1,94 @@
+name: Manual Deploy to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy'
+        required: true
+        type: choice
+        options:
+          - backend
+          - crawler
+          - indexer
+          - rag
+          - scraper
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      image_tag:
+        description: 'Image tag (leave empty for latest)'
+        required: false
+        type: string
+
+env:
+  PROJECT_ID: ${{ inputs.environment == 'production' && 'grantflow-prod' || 'grantflow' }}
+  REGION: us-central1
+  GAR_LOCATION: us-east1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Determine image tag
+        id: image-tag
+        run: |
+          if [[ -z "${{ inputs.image_tag }}" ]]; then
+            if [[ "${{ inputs.environment }}" == "production" ]]; then
+              echo "tag=latest" >> $GITHUB_OUTPUT
+            else
+              echo "tag=staging-latest" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Deploy to Cloud Run
+        run: |
+          SERVICE_NAME="${{ inputs.service }}"
+          IMAGE_TAG="${{ steps.image-tag.outputs.tag }}"
+          
+          echo "Deploying $SERVICE_NAME:$IMAGE_TAG to ${{ inputs.environment }}..."
+          
+          # Deploy with immediate traffic
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/grantflow/$SERVICE_NAME:$IMAGE_TAG \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --platform managed \
+            --quiet
+          
+          # Get service URL
+          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --format="value(status.url)")
+          
+          echo "✅ Deployment successful!"
+          echo "Service URL: $SERVICE_URL"
+          
+          # Update GitHub deployment status
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT

@@ -310,6 +310,36 @@ wheels = [
 ]
 
 [[package]]
+name = "chardetng-py"
+version = "0.3.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/f7/46fa567479d9d1ce2e12e1c00e7ab957b2dbeaa70415214730b5121e0e5b/chardetng_py-0.3.4.tar.gz", hash = "sha256:75297a651c96f6e4a6259894309087da79ec6ea438805b434628e53d6316318f", size = 23080, upload-time = "2025-06-01T17:46:31.267Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/4a/ff03c87928954f85a46eed3dd74ffc473bcb10d8a436cfb21b3a3cc05afc/chardetng_py-0.3.4-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:8492e9a6feb0f54699cbc86173878ec98fc4f9bdf4b76302b3a8cdc77bcfae4e", size = 391324, upload-time = "2025-06-01T17:45:40.502Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/38/1961413489947a822ecac5b751f309990e07a2ab20c0176affead3b22cd2/chardetng_py-0.3.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:24f645472ed7930f30021b4d82c38ec5ef818b30bb9b926067aca220a2f09cdd", size = 379069, upload-time = "2025-06-01T17:45:37.028Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/24/23c78560a2836fe3697c7043be47ed45dda19d661100295d626361076a97/chardetng_py-0.3.4-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:88ed83948da09d545df7c99d58c0aeb61ea023e6a559626661a3d7514ad24edf", size = 393313, upload-time = "2025-06-01T17:44:28.977Z" },
+    { url = "https://files.pythonhosted.org/packages/38/df/f52f0a72dcb2f8613255198bb745b23e51a29fb73d4ac7057b2142f0a59b/chardetng_py-0.3.4-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:86feb206219f124dcf6c4ae553d0d4f73e812757ac9eceef86c3f9cfc3abb19d", size = 406703, upload-time = "2025-06-01T17:44:41.37Z" },
+    { url = "https://files.pythonhosted.org/packages/19/45/47237658cd54eedb465f9621c562a16eaf57730cba276f3e07015a2d9344/chardetng_py-0.3.4-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:fa04d9f5cf49e046e115dce7288be4c835d665a19d3f40657b8a8c353dc8b221", size = 432850, upload-time = "2025-06-01T17:44:53.362Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/94/e64bd4eaac002d3bac345843a69ca7d1928c38e815674e803e4c0e9cede0/chardetng_py-0.3.4-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:e7b7fbcdb16b0c4a4a25898871c48c2194d21ac7bc5d2b411d2d2719e9741c9d", size = 447142, upload-time = "2025-06-01T17:45:06.338Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/05/9b5e769f79245543b33eaf9aa273ef250e59fb57b40b6362c6d4dd3ea185/chardetng_py-0.3.4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b5727cd1021a89ce3b6c02a1f0343e1076bfbe923a5736be0496272399d7626e", size = 405146, upload-time = "2025-06-01T17:45:28.214Z" },
+    { url = "https://files.pythonhosted.org/packages/c0/39/430d31f4d53a79e4de1d1a3417e6cda37544fa41fb6671a4400bedb25619/chardetng_py-0.3.4-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:c2d03ba9cc29a6a207f2f8906e3000370d41eadebe7fc959408469b3f981fd84", size = 422230, upload-time = "2025-06-01T17:45:17.264Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/b9/b93eb25a8f62d1c9addd32ab8fe0d0929a0eb99310671e3a4fe5c074c220/chardetng_py-0.3.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:da9af9002aee7aa7c10c89b1d064f5106e358923eccdb221f9c2eeff9f9a69f7", size = 573964, upload-time = "2025-06-01T17:45:45.653Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/91/832e397842af2b76a529e7113e473a4aca3fc8d4b802c5ce4af275c009dc/chardetng_py-0.3.4-cp313-cp313-musllinux_1_2_armv7l.whl", hash = "sha256:317bab7e9960b4d12ddcbeb4cec535ddb450014c45b797a7bc3a193249b29f15", size = 670035, upload-time = "2025-06-01T17:45:57.059Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/13/c83d267220b974facd876815d72ec1d77b9f4eca4730a3492579349431fb/chardetng_py-0.3.4-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:a703ecb3c4fc10e249ec47a2924a7207258228d695c521731bab16d22d01c96c", size = 602444, upload-time = "2025-06-01T17:46:09.976Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/a1/705718609726d7f910193d365df6dc319313b620ae87317062c678e86538/chardetng_py-0.3.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:d48e20e449dd959b3ea8547135f589aac8088f904690c00af1ebc0fb2e8ce089", size = 576835, upload-time = "2025-06-01T17:46:22.895Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/7e/2e57f5cb3300a144dc85067b263eb6a38ed9475ab073929b561809885d25/chardetng_py-0.3.4-cp313-cp313-win32.whl", hash = "sha256:628b3f2bbc4cfced1c9f635f98eb1aeee685ca976e8aa8e503ed59766e3d7472", size = 306608, upload-time = "2025-06-01T17:46:42.238Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/48/2642ea53d2751860a92bff0a1b3a4b68ef523b6619aca2a3c3abb0a15688/chardetng_py-0.3.4-cp313-cp313-win_amd64.whl", hash = "sha256:ccc133ddba8a737380cc49cc2c1a1abfd3f9e6e2873a041911d8cb0628daed87", size = 312261, upload-time = "2025-06-01T17:46:35.223Z" },
+    { url = "https://files.pythonhosted.org/packages/03/69/1bd7dd4e1bf6b590d28c747926bb9b3dd07169d8c3cf3ad0942be91cba94/chardetng_py-0.3.4-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:548476b4568c0e067ac390acb894f9f42c7022f1e415c8ed6de74a100299d4f4", size = 392214, upload-time = "2025-06-01T17:44:30.013Z" },
+    { url = "https://files.pythonhosted.org/packages/df/60/c5b691d4b1ab27f01106f19290df5511854dfd6001ce988f9f3085f9c1d4/chardetng_py-0.3.4-cp313-cp313t-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:e798866c314534390e629422bb457f10ccbd67603d0400f1f5ec0f265c244205", size = 405846, upload-time = "2025-06-01T17:44:42.462Z" },
+    { url = "https://files.pythonhosted.org/packages/14/d8/3b3deda30168fa5c7b70bf5875b018089ad20284f174023ec7e861a345fc/chardetng_py-0.3.4-cp313-cp313t-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:e00f055f83ca93e376454bbfc384021411cd66cd735cc6c7622d8a1bd82a9f7e", size = 431895, upload-time = "2025-06-01T17:44:55.092Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/b9/78baf6cf05c0941f58c30fc370672e69a999f34cef395b1372c41c50ff4d/chardetng_py-0.3.4-cp313-cp313t-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:09514f336e1741006c61405937fa14b48b4050a5ff0805e6e0e04010b1676256", size = 446151, upload-time = "2025-06-01T17:45:07.426Z" },
+    { url = "https://files.pythonhosted.org/packages/05/1f/1bdaa22728318f4bee88613c88417bb02ddef098f15601db15af9fefb916/chardetng_py-0.3.4-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:2c56c11a14a618a50bd5b0e662c72874054ab5fd764018ed83df88a7ca5815a2", size = 572867, upload-time = "2025-06-01T17:45:47.095Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/94/f4e2bd1e504566d522b41285c351cc72e715fbd0fd99d6d4ac094227c00e/chardetng_py-0.3.4-cp313-cp313t-musllinux_1_2_armv7l.whl", hash = "sha256:c68cd58b7daffa1d245b5c2ebd116c59d908a81a86ed51ca084af45d90cc0417", size = 669155, upload-time = "2025-06-01T17:45:59.249Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/11/d26a5f7b34c6901a7a1da8eaf0dedcf206514f601dc4f85dffe5fc5a9bf4/chardetng_py-0.3.4-cp313-cp313t-musllinux_1_2_i686.whl", hash = "sha256:0b72b6ddbbf42aedcd8384bd0cdc22ff7a0f76babe136c25030d1399ddf263de", size = 601732, upload-time = "2025-06-01T17:46:11.455Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/a2/9198269174bbfd0eedc403d2a11ae49a706184c848b6c1602c29639f6107/chardetng_py-0.3.4-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:a9220fdf84db8b8bc73b248cb3ef4d34db195ae8ea068a45c9832b57f43cdd76", size = 576886, upload-time = "2025-06-01T17:46:24.113Z" },
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1505,11 +1535,11 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.7.0"
+version = "3.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
-    { name = "charset-normalizer" },
+    { name = "chardetng-py" },
     { name = "html-to-markdown", extra = ["lxml"] },
     { name = "mcp" },
     { name = "msgspec" },
@@ -1519,9 +1549,9 @@ dependencies = [
     { name = "python-calamine" },
     { name = "python-pptx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/12/e2/8c9c32f62773c891fdb3629ac4e08644bd1ec6d7171a9a080d5a19817b60/kreuzberg-3.7.0.tar.gz", hash = "sha256:21beab228fd8d95066831b682c5c4810056507db816fb3808415a169b71e44d8", size = 9404736, upload-time = "2025-07-11T09:08:31.708Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/63/1fdb054786e744eefa958826541e9f44bf224e3609941653d82564c0ac89/kreuzberg-3.8.1.tar.gz", hash = "sha256:cf776dfd6b75b47685fd0303df3369f528237d3c57a13efac77c29c034388536", size = 9818866, upload-time = "2025-07-13T07:50:37.177Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/3e/c420c7e94cf75db457efc0319fce46cde5650d6cf581c04a90b87c5df3f6/kreuzberg-3.7.0-py3-none-any.whl", hash = "sha256:0775ae5ce4e7406500b3f1b1f009813699836f43f4fe02dc08af5b613a721113", size = 97632, upload-time = "2025-07-11T09:08:27.868Z" },
+    { url = "https://files.pythonhosted.org/packages/37/97/9851202e260b668a86ecadeb53ecd827e0c0f2ef39e3144c5dd645a46f68/kreuzberg-3.8.1-py3-none-any.whl", hash = "sha256:0ed69cfe6f8a1a1cc00f335c7f3254ae35190724569c1ac89a9ae3c0655e63d6", size = 104360, upload-time = "2025-07-13T07:50:35.315Z" },
 ]
 
 [[package]]
