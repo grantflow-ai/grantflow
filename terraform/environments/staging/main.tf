@@ -96,6 +96,9 @@ module "cloud_run" {
   enable_http2             = false # HTTP/1.1 for staging
   request_timeout          = 300   # 5-minute timeout
   concurrency_limit        = 80    # Default concurrency
+  
+  # Custom domain for backend API (commented out to save costs)
+  # custom_domain            = "api-staging.grantflow.ai"
 }
 
 # Pub/Sub module - needs to come after cloud_run to get service account

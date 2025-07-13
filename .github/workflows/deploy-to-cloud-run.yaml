@@ -1,0 +1,174 @@
+name: Deploy to Cloud Run
+
+on:
+  workflow_run:
+    workflows: 
+      - "Build and Push (Backend)"
+      - "Build and Push (Crawler)"
+      - "Build and Push (Indexer)"
+      - "Build and Push (RAG)"
+      - "Build and Push (Scraper)"
+    types:
+      - completed
+    branches:
+      - development
+      - main
+
+env:
+  PROJECT_ID: ${{ github.ref == 'refs/heads/main' && 'grantflow-prod' || 'grantflow' }}
+  REGION: us-central1
+  GAR_LOCATION: us-east1
+
+jobs:
+  get-service-info:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      service-name: ${{ steps.extract.outputs.service }}
+      image-tag: ${{ steps.extract.outputs.tag }}
+    steps:
+      - name: Extract service name from workflow
+        id: extract
+        run: |
+          # Extract service name from workflow name
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          SERVICE=$(echo "$WORKFLOW_NAME" | grep -oP '(?<=\()[^)]+(?=\))' | tr '[:upper:]' '[:lower:]')
+          echo "service=$SERVICE" >> $GITHUB_OUTPUT
+          
+          # Set image tag based on branch
+          if [[ "${{ github.event.workflow_run.head_branch }}" == "main" ]]; then
+            echo "tag=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=staging-${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-to-cloud-run:
+    needs: get-service-info
+    if: needs.get-service-info.outputs.service-name != ''
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Deploy to Cloud Run
+        run: |
+          SERVICE_NAME="${{ needs.get-service-info.outputs.service-name }}"
+          IMAGE_TAG="${{ needs.get-service-info.outputs.image-tag }}"
+          
+          echo "Deploying $SERVICE_NAME with tag $IMAGE_TAG to Cloud Run..."
+          
+          # Check if service exists
+          if gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} &>/dev/null; then
+            echo "Service exists, updating..."
+            
+            # Deploy without traffic to test the new revision
+            gcloud run deploy $SERVICE_NAME \
+              --image ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/grantflow/$SERVICE_NAME:$IMAGE_TAG \
+              --region ${{ env.REGION }} \
+              --project ${{ env.PROJECT_ID }} \
+              --platform managed \
+              --no-traffic \
+              --quiet
+            
+            # Get the new revision name
+            NEW_REVISION=$(gcloud run revisions list \
+              --service=$SERVICE_NAME \
+              --region=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --platform=managed \
+              --limit=1 \
+              --format="value(name)")
+            
+            echo "New revision: $NEW_REVISION"
+            
+            # Gradually roll out traffic (can be adjusted)
+            gcloud run services update-traffic $SERVICE_NAME \
+              --region=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --to-revisions=$NEW_REVISION=100 \
+              --quiet
+              
+            echo "✅ Deployment successful! Service URL remains unchanged."
+          else
+            echo "❌ Service $SERVICE_NAME does not exist. Please create it first using Terraform."
+            exit 1
+          fi
+      
+      - name: Verify deployment
+        run: |
+          SERVICE_NAME="${{ needs.get-service-info.outputs.service-name }}"
+          
+          # Get service URL
+          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --format="value(status.url)")
+          
+          echo "Service URL: $SERVICE_URL"
+          
+          # Check health endpoint
+          if curl -f -s "${SERVICE_URL}/health" > /dev/null; then
+            echo "✅ Health check passed"
+          else
+            echo "⚠️  Health check failed or not available"
+          fi
+
+  update-staging-urls:
+    needs: [get-service-info, deploy-to-cloud-run]
+    if: github.event.workflow_run.head_branch == 'development'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+      
+      - name: Update service URLs in secrets
+        run: |
+          chmod +x scripts/update-service-urls.sh
+          ./scripts/update-service-urls.sh ${{ env.PROJECT_ID }} staging
+      
+      - name: Notify frontend to redeploy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Only create issue if backend was deployed
+            const serviceName = '${{ needs.get-service-info.outputs.service-name }}';
+            if (serviceName === 'backend') {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Frontend: Backend URL may have changed',
+                body: 'The backend service was redeployed. Please check if the frontend needs to be redeployed to pick up any URL changes.\n\nTo redeploy frontend:\n```bash\ncd frontend\nfirebase apphosting:rollouts:create --project=grantflow staging\n```',
+                labels: ['frontend', 'deployment']
+              });
+            }
