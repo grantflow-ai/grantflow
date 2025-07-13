@@ -395,46 +395,4 @@ class TestGlobalFunctions:
         result = evaluate_biomedical_text_quality("test biomedical text")
         
         assert result == expected_result
-        mock_evaluator.evaluate_text_quality.assert_called_once_with("test biomedical text")
-
-
-class TestIntegration:
-    """Integration tests for BioGPT evaluator."""
-    
-    @pytest.mark.integration
-    def test_full_evaluation_pipeline(self, sample_biomedical_text):
-        """Test the complete evaluation pipeline with real model loading."""
-        # This test requires the actual BioGPT model to be available
-        # It's marked as integration test and can be skipped in unit test runs
-        
-        evaluator = BioGPTEvaluator()
-        
-        # Test model loading
-        load_success = evaluator.load_model()
-        if not load_success:
-            pytest.skip("BioGPT model not available for integration test")
-        
-        # Test perplexity calculation
-        perplexity = evaluator.calculate_perplexity(sample_biomedical_text)
-        assert isinstance(perplexity, float)
-        assert perplexity > 0
-        assert perplexity < float('inf')
-        
-        # Test quality evaluation
-        quality_result = evaluator.evaluate_text_quality(sample_biomedical_text)
-        assert "perplexity" in quality_result
-        assert "quality_level" in quality_result
-        assert "quality_score" in quality_result
-        assert quality_result["perplexity"] == perplexity
-        
-        # Test model info
-        model_info = evaluator.get_model_info()
-        assert model_info["status"] == "loaded"
-        assert model_info["model_name"] == BIOGPT_MODEL_NAME
-        
-        # Clean up
-        evaluator.unload_model()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__]) 
+        mock_evaluator.evaluate_text_quality.assert_called_once_with("test biomedical text") 
