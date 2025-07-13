@@ -174,6 +174,7 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	deadline?: string;
 };
 };
 
@@ -614,6 +615,7 @@ export namespace API {
 	submission_date?: string;
 	title: string;
 	updated_at: string;
+	deadline?: string;
 }[];
 	pagination: {
 	has_more: boolean;
@@ -856,6 +858,7 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	deadline?: string;
 };
 };
 
@@ -1133,6 +1136,7 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	deadline?: string;
 };
 };
 
