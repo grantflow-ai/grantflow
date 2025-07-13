@@ -312,8 +312,11 @@ class TestBioGPTEvaluator:
         evaluator._is_loaded = True
         evaluator._load_time = 2.5
         
-        # Mock model parameters
-        mock_model.parameters.return_value = iter([torch.tensor([1.0, 2.0, 3.0])])
+        # Mock model parameters - create a mock that returns a new iterator each time
+        mock_tensor = torch.tensor([1.0, 2.0, 3.0])
+        def parameters():
+            return iter([mock_tensor])
+        mock_model.parameters = parameters
         
         info = evaluator.get_model_info()
         
