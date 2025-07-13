@@ -108,8 +108,8 @@ jobs:
           
           echo "Deploying $SERVICE_NAME with tag $IMAGE_TAG to Cloud Run..."
           
-          # Check if service exists
-          if gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} &>/dev/null; then
+          # Check if service exists (handle both old and new naming)
+          if gcloud run services describe $SERVICE_NAME --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} 2>/dev/null | grep -q "Service $SERVICE_NAME"; then
             echo "Service exists, updating..."
             
             # Deploy without traffic to test the new revision
