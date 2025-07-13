@@ -178,7 +178,7 @@ describe("DragDropSectionManager", () => {
 			const expandButtons = screen.getAllByTestId("expand-section-button");
 			fireEvent.click(expandButtons[0]);
 
-			expect(screen.getByTestId("edit-form-header")).toBeInTheDocument();
+			expect(screen.getByTestId("edit-form-header-section-1")).toBeInTheDocument();
 		});
 
 		it("handles adding new sections", async () => {
