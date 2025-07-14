@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 
 /**
  * NavigationContextProvider handles data loading based on navigation store context
- * This replaces the previous URL parameter-based data fetching with store-based context
+ *
+ * - Loads project/application data using UUIDs from navigation store
+ * - No URL parameters needed - all context is store-based
+ * - UUIDs are used directly for API calls but never exposed to users
  */
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
