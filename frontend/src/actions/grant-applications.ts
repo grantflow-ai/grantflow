@@ -34,6 +34,19 @@ export async function generateApplication(projectId: string, applicationId: stri
 	);
 }
 
+export async function getApplication(
+	projectId: string,
+	applicationId: string,
+): Promise<API.RetrieveApplication.Http200.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.get(`projects/${projectId}/applications/${applicationId}`, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.RetrieveApplication.Http200.ResponseBody>(),
+	);
+}
+
 export async function listApplications(
 	projectId: string,
 	params?: {
@@ -64,19 +77,6 @@ export async function listApplications(
 				headers: await createAuthHeaders(),
 			})
 			.json<API.ListApplications.Http200.ResponseBody>(),
-	);
-}
-
-export async function retrieveApplication(
-	projectId: string,
-	applicationId: string,
-): Promise<API.RetrieveApplication.Http200.ResponseBody> {
-	return withAuthRedirect(
-		getClient()
-			.get(`projects/${projectId}/applications/${applicationId}`, {
-				headers: await createAuthHeaders(),
-			})
-			.json<API.RetrieveApplication.Http200.ResponseBody>(),
 	);
 }
 

@@ -1,4 +1,4 @@
-import { retrieveApplication } from "@/actions/grant-applications";
+import { getApplication } from "@/actions/grant-applications";
 import { getProject } from "@/actions/project";
 import { extractIdFromSlug } from "./navigation";
 
@@ -18,7 +18,7 @@ export async function resolveApplicationSlug(projectId: string, slug: string): P
 
 	for (const uuid of possibleUUIDs) {
 		try {
-			await retrieveApplication(projectId, uuid);
+			await getApplication(projectId, uuid);
 			return uuid;
 		} catch {
 			// Continue trying

@@ -9,6 +9,7 @@ import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppButton, AvatarGroup } from "@/components/app";
 import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
@@ -31,6 +32,7 @@ const projectTeamMembers = [
 
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const router = useRouter();
+	const { navigateToProject } = useNavigationStore();
 
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
@@ -49,7 +51,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	const handleProjectNavigation = (projectId: string, projectName: string) => {
-		router.push(routes.project.detail({ projectId, projectName }));
+		// Set navigation context and navigate
+		navigateToProject(projectId, projectName);
+		router.push(routes.project.detail());
 	};
 
 	const { data: projects = initialProjects, mutate } = useSWR("projects", getProjects, {
@@ -135,7 +139,8 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 			await mutate();
 
 			// Navigate to the new project
-			router.push(routes.project.detail({ projectId, projectName: newProjectName }));
+			navigateToProject(projectId, newProjectName);
+			router.push(routes.project.detail());
 		} catch {
 			addNotification({
 				message: "Failed to create project. Please try again.",
@@ -162,13 +167,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		// Find the default project (first project or one named "default")
 		const [defaultProject] = projects;
 
-		// Navigate to application wizard for the default project
-		router.push(
-			routes.application.create({
-				projectId: defaultProject.id,
-				projectName: defaultProject.name,
-			}),
-		);
+		// Navigate to application creation
+		navigateToProject(defaultProject.id, defaultProject.name);
+		router.push(routes.project.applications.new());
 	};
 
 	return (

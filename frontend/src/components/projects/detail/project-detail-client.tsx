@@ -9,16 +9,14 @@ import { createApplication, deleteApplication, listApplications } from "@/action
 import { AvatarGroup } from "@/components/app";
 import { DeleteApplicationModal } from "@/components/projects";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
 
 import { ProjectSidebar } from "./project-sidebar";
-
-interface ProjectDetailClientProps {
-	initialProject: API.GetProject.Http200.ResponseBody;
-}
 
 const statusConfig = {
 	COMPLETED: {
@@ -56,7 +54,6 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 			className="relative flex flex-col gap-4 rounded-lg bg-white border border-[#e1dfeb] p-6"
 			data-testid="application-card"
 		>
-			{}
 			<div className="flex items-start justify-between">
 				<div
 					className={`flex items-center gap-2 rounded px-2 py-1 ${status.color}`}
@@ -111,7 +108,6 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 				</div>
 			</div>
 
-			{}
 			<div className="flex items-center gap-3">
 				<AvatarGroup maxVisible={1} size="sm" users={applicationCardUsers} />
 				<h3
@@ -122,14 +118,10 @@ function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps
 				</h3>
 			</div>
 
-			{}
 			<p className="font-['Source_Sans_Pro'] text-[14px] leading-[20px] text-[#636170]">
 				Grant application for {application.title}
 			</p>
 
-			{}
-
-			{}
 			<button
 				className="self-end rounded border border-[#1e13f8] bg-white px-4 py-2 font-['Source_Sans_Pro'] font-medium text-[14px] text-[#1e13f8] hover:bg-[#f6f5f9] transition-colors cursor-pointer"
 				data-testid="application-open-button"
@@ -155,26 +147,49 @@ function formatDate(dateString: string) {
 
 const teamMembers = [{ backgroundColor: "#369e94", initials: "NH" }];
 
-export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
+export function ProjectDetailClient() {
 	const router = useRouter();
+	const { project } = useProjectStore();
+	const { navigateToApplication } = useNavigationStore();
+
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
-	const [projectTitle, setProjectTitle] = useState(initialProject.name);
+	const [projectTitle, setProjectTitle] = useState(project?.name ?? "");
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 
+	// Update title when project changes
+	useEffect(() => {
+		if (project) {
+			setProjectTitle(project.name);
+		} else {
+			router.replace(routes.projects());
+		}
+	}, [project, router]);
+
+	// Focus input when editing
+	useEffect(() => {
+		if (isEditingTitle && titleInputRef.current) {
+			titleInputRef.current.focus();
+		}
+	}, [isEditingTitle]);
+
 	// Fetch applications using SWR
 	const { data: applicationsData, isLoading } = useSWR(
-		`/projects/${initialProject.id}/applications?search=${searchQuery}`,
-		() => listApplications(initialProject.id, { search: searchQuery || undefined }),
+		project ? `/projects/${project.id}/applications?search=${searchQuery}` : null,
+		() => (project ? listApplications(project.id, { search: searchQuery || undefined }) : null),
 		{
 			revalidateOnFocus: false,
 		},
 	);
 
 	const applications = applicationsData?.applications ?? [];
+
+	if (!project) {
+		return null; // Will redirect
+	}
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);
@@ -184,8 +199,8 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	const confirmDeleteApplication = async () => {
 		if (applicationToDelete) {
 			try {
-				await deleteApplication(initialProject.id, applicationToDelete);
-				await mutate(`/projects/${initialProject.id}/applications`);
+				await deleteApplication(project.id, applicationToDelete);
+				await mutate(`/projects/${project.id}/applications`);
 				toast.success("Application deleted successfully");
 				setApplicationToDelete(null);
 				setShowDeleteModal(false);
@@ -205,15 +220,17 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	const handleCreateApplication = async () => {
 		setIsCreatingApplication(true);
 		try {
-			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
-			await mutate(`/projects/${initialProject.id}/applications`);
-			const wizardPath = routes.application.wizard({
-				applicationId: application.id,
-				applicationTitle: application.title || DEFAULT_APPLICATION_TITLE,
-				projectId: initialProject.id,
-				projectName: initialProject.name,
-			});
-			router.push(wizardPath);
+			const application = await createApplication(project.id, { title: DEFAULT_APPLICATION_TITLE });
+			await mutate(`/projects/${project.id}/applications`);
+
+			// Set navigation context and navigate
+			navigateToApplication(
+				project.id,
+				project.name,
+				application.id,
+				application.title || DEFAULT_APPLICATION_TITLE,
+			);
+			router.push(routes.application.wizard());
 		} catch (error) {
 			log.error("create-application-button", error);
 			toast.error("Failed to create application");
@@ -222,24 +239,13 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	};
 
 	const handleOpenApplication = (applicationId: string, applicationTitle: string) => {
-		const wizardPath = routes.application.wizard({
-			applicationId,
-			applicationTitle,
-			projectId: initialProject.id,
-			projectName: initialProject.name,
-		});
-		router.push(wizardPath);
+		// Set navigation context and navigate
+		navigateToApplication(project.id, project.name, applicationId, applicationTitle);
+		router.push(routes.application.wizard());
 	};
-
-	useEffect(() => {
-		if (isEditingTitle && titleInputRef.current) {
-			titleInputRef.current.focus();
-		}
-	}, [isEditingTitle]);
 
 	return (
 		<div className="flex h-screen bg-[#f6f5f9]">
-			{}
 			<ProjectSidebar
 				applications={applications.map((app) => ({
 					id: app.id,
@@ -248,19 +254,23 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				}))}
 				isCreatingApplication={isCreatingApplication}
 				onCreateApplication={handleCreateApplication}
-				projectId={initialProject.id}
-				userRole={initialProject.role as UserRole}
+				projectId={project.id}
+				userRole={project.role as UserRole}
 			/>
 
-			{}
 			<div className="flex-1 flex flex-col">
-				{}
 				<div
 					className="flex items-center justify-between bg-white px-6 py-4 border-b border-[#e1dfeb]"
 					data-testid="project-header"
 				>
 					<div className="flex items-center gap-3">
-						<button className="text-[#636170] hover:text-[#2e2d36]" type="button">
+						<button
+							className="text-[#636170] hover:text-[#2e2d36]"
+							onClick={() => {
+								router.push(routes.projects());
+							}}
+							type="button"
+						>
 							←
 						</button>
 						<div className="flex items-center gap-2">
@@ -307,7 +317,6 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					</div>
 				</div>
 
-				{}
 				<div className="flex items-center justify-between px-6 py-4">
 					<div className="relative flex-1 max-w-2xl">
 						<Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#636170]" />
@@ -333,7 +342,6 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 					</button>
 				</div>
 
-				{}
 				<div className="flex-1 overflow-auto px-6 pb-6" data-testid="applications-section">
 					{isLoading && (
 						<div className="flex items-center justify-center h-64">
@@ -373,7 +381,6 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 				</div>
 			</div>
 
-			{}
 			<DeleteApplicationModal
 				isOpen={showDeleteModal}
 				onClose={() => {

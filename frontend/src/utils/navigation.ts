@@ -1,25 +1,13 @@
 import { PagePath } from "@/enums";
 
-import { slugStore } from "./slug-store";
-
-interface ApplicationNavigationParams extends ProjectNavigationParams {
-	applicationId: string;
-	applicationTitle: string;
-}
-
 interface BaseNavigationParams {
 	query?: Record<string, string>;
 }
 
-interface NotificationNavigationParams extends BaseNavigationParams {
-	notificationId: string;
-}
-
-interface ProjectNavigationParams extends BaseNavigationParams {
-	projectId: string;
-	projectName: string;
-}
-
+/**
+ * Navigation routes without URL parameters
+ * All entity selection is handled through the navigation store
+ */
 export const routes = {
 	acceptInvitation: ({ query }: BaseNavigationParams = {}) => {
 		const params = new URLSearchParams(query);
@@ -27,59 +15,37 @@ export const routes = {
 		return queryString ? `/accept-invitation?${queryString}` : "/accept-invitation";
 	},
 
+	// Application routes (context from store)
 	application: {
-		create: ({ projectId, projectName }: ProjectNavigationParams) => {
-			const slug = slugStore.registerProject(projectId, projectName);
-			return `/projects/${slug}/applications/new`;
-		},
-		detail: ({ applicationId, applicationTitle, projectId, projectName }: ApplicationNavigationParams) => {
-			const projectSlug = slugStore.registerProject(projectId, projectName);
-			const applicationSlug = slugStore.registerApplication(applicationId, applicationTitle);
-			return `/projects/${projectSlug}/applications/${applicationSlug}`;
-		},
-		editor: ({ applicationId, applicationTitle, projectId, projectName }: ApplicationNavigationParams) => {
-			const projectSlug = slugStore.registerProject(projectId, projectName);
-			const applicationSlug = slugStore.registerApplication(applicationId, applicationTitle);
-			return `/projects/${projectSlug}/applications/${applicationSlug}/editor`;
-		},
-		wizard: ({ applicationId, applicationTitle, projectId, projectName }: ApplicationNavigationParams) => {
-			const projectSlug = slugStore.registerProject(projectId, projectName);
-			const applicationSlug = slugStore.registerApplication(applicationId, applicationTitle);
-			return `/projects/${projectSlug}/applications/${applicationSlug}/wizard`;
-		},
+		detail: () => "/application",
+		editor: () => "/application/editor",
+		wizard: () => "/application/wizard",
 	},
+	// Public routes
 	home: () => "/",
 	login: () => PagePath.LOGIN,
 
+	// API routes
 	notifications: {
-		dismiss: ({ notificationId }: NotificationNavigationParams) => `/api/notifications/${notificationId}/dismiss`,
+		dismiss: (notificationId: string) => `/api/notifications/${notificationId}/dismiss`,
 	},
 
+	// Project routes (context from store)
 	project: {
-		detail: ({ projectId, projectName }: ProjectNavigationParams) => {
-			const slug = slugStore.registerProject(projectId, projectName);
-			return `/projects/${slug}`;
+		applications: {
+			list: () => "/project/applications",
+			new: () => "/project/applications/new",
 		},
-		list: () => PagePath.PROJECTS,
+		detail: () => "/project",
 		settings: {
-			account: ({ projectId, projectName }: ProjectNavigationParams) => {
-				const slug = slugStore.registerProject(projectId, projectName);
-				return `/projects/${slug}/settings/account`;
-			},
-			billing: ({ projectId, projectName }: ProjectNavigationParams) => {
-				const slug = slugStore.registerProject(projectId, projectName);
-				return `/projects/${slug}/settings/billing`;
-			},
-			members: ({ projectId, projectName }: ProjectNavigationParams) => {
-				const slug = slugStore.registerProject(projectId, projectName);
-				return `/projects/${slug}/settings/members`;
-			},
-			notifications: ({ projectId, projectName }: ProjectNavigationParams) => {
-				const slug = slugStore.registerProject(projectId, projectName);
-				return `/projects/${slug}/settings/notifications`;
-			},
+			account: () => "/project/settings/account",
+			billing: () => "/project/settings/billing",
+			members: () => "/project/settings/members",
+			notifications: () => "/project/settings/notifications",
 		},
 	},
+
+	// Dashboard
 	projects: () => PagePath.PROJECTS,
 };
 
@@ -97,42 +63,38 @@ export function buildUrl(path: string, query?: Record<string, string>): string {
 	return `${path}?${params.toString()}`;
 }
 
-export function createApplicationSlug(title: string, id: string): string {
-	const baseSlug = generateSlug(title || "untitled-application");
-	const [shortId] = id.split("-");
-	return `${baseSlug}-${shortId}`;
+export function createApplicationSlug(applicationId: string, applicationTitle: string): string {
+	const shortId = applicationId.slice(0, 8);
+	const sanitizedTitle = applicationTitle
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]/g, "-")
+		.replaceAll(/-+/g, "-")
+		.replaceAll(/(^-)|(-$)/g, "");
+	return `${sanitizedTitle}-${shortId}`;
 }
 
-export function createProjectSlug(name: string, id: string): string {
-	const baseSlug = generateSlug(name);
-	const [shortId] = id.split("-");
-	return `${baseSlug}-${shortId}`;
+// Slug utilities
+export function createProjectSlug(projectId: string, projectName: string): string {
+	const shortId = projectId.slice(0, 8);
+	const sanitizedName = projectName
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]/g, "-")
+		.replaceAll(/-+/g, "-")
+		.replaceAll(/(^-)|(-$)/g, "");
+	return `${sanitizedName}-${shortId}`;
 }
 
 export function extractIdFromSlug(slug: string): null | string {
-	// Extract short ID from slug (last part after hyphen)
+	// Extract the last segment after the final hyphen
 	const parts = slug.split("-");
-	const possibleId = parts.at(-1);
+	const shortId = parts.at(-1);
 
-	// Validate it's an 8-character hex string
-	if (possibleId && possibleId.length === 8 && /^[0-9a-f]{8}$/i.test(possibleId)) {
-		return possibleId;
+	// Validate it looks like a short UUID (8 hex characters)
+	if (shortId && /^[a-f0-9]{8}$/i.test(shortId)) {
+		return shortId;
 	}
 
 	return null;
-}
-
-export function generateSlug(name: string): string {
-	return (
-		name
-			.toLowerCase()
-			.replaceAll(/[^a-z0-9\s-]/g, "")
-			.replaceAll(/\s+/g, "-")
-			.replaceAll(/-+/g, "-")
-			// eslint-disable-next-line sonarjs/slow-regex
-			.replaceAll(/(^-+|-+$)/g, "")
-			.slice(0, 50)
-	);
 }
 
 export function navigateTo(

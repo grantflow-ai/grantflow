@@ -1,11 +1,17 @@
+"use client";
+
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppCard, AppCardContent } from "@/components/app";
 import { Badge } from "@/components/ui/badge";
+import { useNavigationStore } from "@/stores/navigation-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 
 export function ProjectCard({ project }: { project: API.ListProjects.Http200.ResponseBody[0] }) {
+	const router = useRouter();
+	const { navigateToProject } = useNavigationStore();
+
 	type UserRole = "ADMIN" | "MEMBER" | "OWNER";
 	const roleColors: Record<UserRole, string> = {
 		ADMIN: "bg-secondary/20 text-secondary-foreground hover:bg-secondary/30",
@@ -13,10 +19,19 @@ export function ProjectCard({ project }: { project: API.ListProjects.Http200.Res
 		OWNER: "bg-primary/10 text-primary hover:bg-primary/20",
 	};
 
-	const url = routes.project.detail({ projectId: project.id, projectName: project.name });
+	const handleClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		navigateToProject(project.id, project.name);
+		router.push(routes.project.detail());
+	};
 
 	return (
-		<Link className="block" data-testid={`project-link-${project.id}`} href={url}>
+		<button
+			className="block cursor-pointer w-full text-left"
+			data-testid={`project-link-${project.id}`}
+			onClick={handleClick}
+			type="button"
+		>
 			<AppCard className="hover:bg-muted/50 group overflow-hidden transition-all duration-300 hover:shadow-md">
 				<AppCardContent className="p-4">
 					<div className="flex items-start justify-between gap-4">
@@ -36,6 +51,6 @@ export function ProjectCard({ project }: { project: API.ListProjects.Http200.Res
 					</div>
 				</AppCardContent>
 			</AppCard>
-		</Link>
+		</button>
 	);
 }
