@@ -28,7 +28,6 @@ export function ResearchPlanStep() {
 	};
 
 	const handleSaveObjective = (data: ObjectiveFormData) => {
-		// Convert ObjectiveFormData to the format expected by the store
 		const objective = {
 			description: data.description,
 			number: objectives.length + 1, // This will be overridden by addObjective, but required by type
