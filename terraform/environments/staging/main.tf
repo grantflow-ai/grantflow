@@ -139,14 +139,6 @@ module "monitoring" {
   }
 }
 
-# API Gateway module
-module "api_gateway" {
-  source      = "../../modules/api_gateway"
-  project_id  = var.project_id
-  region      = var.region
-  environment = var.environment
-  backend_url = module.cloud_run.backend_url
-}
 
 # Import existing BigQuery dataset
 resource "google_bigquery_dataset" "frontend" {
@@ -270,7 +262,3 @@ output "scraper_url" {
   value       = module.cloud_run.scraper_url
 }
 
-output "api_gateway_url" {
-  description = "API Gateway URL for the backend"
-  value       = module.api_gateway.api_gateway_url
-}
