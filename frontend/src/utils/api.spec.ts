@@ -45,6 +45,7 @@ describe("api", () => {
 
 	const mockRequest = {
 		headers: {
+			entries: () => mockHeaders.entries(),
 			get: (key: string) => mockHeaders.get(key),
 		},
 		method: "GET",
@@ -52,6 +53,13 @@ describe("api", () => {
 	};
 
 	const mockResponse = {
+		clone: () => ({
+			json: () => Promise.resolve({}),
+		}),
+		headers: {
+			entries: () => [].entries(),
+			get: () => "application/json",
+		},
 		ok: true,
 		status: 200,
 		statusText: "OK",
@@ -110,17 +118,18 @@ describe("api", () => {
 			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
 
 			if (afterResponseHook) {
-				const result = afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
+				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				await afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
 					method: "GET",
 					operation: "test-operation",
+					response_body: {},
+					response_headers: {},
 					status: 200,
 					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
-
-				expect(result).toBe(mockResponse);
 			}
 		});
 
@@ -136,21 +145,34 @@ describe("api", () => {
 				const mockError = {
 					message: "Network error",
 					request: mockRequest,
-					response: { status: 500 },
+					response: {
+						clone: () => ({
+							json: () => Promise.resolve({}),
+						}),
+						headers: {
+							entries: () => [].entries(),
+							get: () => "application/json",
+						},
+						status: 500,
+					},
 				};
 
-				const result = beforeErrorHook(mockError as any);
+				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				await beforeErrorHook(mockError as any);
 
-				expect(log.error).toHaveBeenCalledWith("API ERROR GET https://api.example.com/test", undefined, {
-					error: "Network error",
+				expect(log.error).toHaveBeenCalledWith("API ERROR GET https://api.example.com/test", mockError, {
+					backend_url: "https://api.example.com",
+					error_message: "Network error",
 					method: "GET",
 					operation: "test-operation",
+					request_headers: expect.any(Object),
+					response_body: {},
+					response_headers: {},
 					status: 500,
+					status_text: undefined,
 					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
-
-				expect(result).toBe(mockError);
 			}
 		});
 
@@ -163,11 +185,17 @@ describe("api", () => {
 			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
 
 			if (beforeRequestHook) {
+				vi.clearAllMocks(); // Clear the "Initializing API client" log
 				await beforeRequestHook(mockRequest as any, {} as any);
 
-				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test", {
+				expect(log.info).toHaveBeenCalledWith("API REQUEST GET https://api.example.com/test", {
+					base_url: "https://api.example.com",
+					full_url: "https://api.example.com/test",
 					method: "GET",
 					operation: "test-operation",
+					pathname: "/test",
+					request_body: undefined,
+					request_headers: expect.any(Object),
 					trace_id: "test-trace-id",
 					url: "https://api.example.com/test",
 				});
@@ -184,6 +212,7 @@ describe("api", () => {
 			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
 
 			if (beforeRequestHook) {
+				vi.clearAllMocks(); // Clear the "Initializing API client" log
 				await beforeRequestHook(mockRequest as any, {} as any);
 
 				expect(createMockResponse).toHaveBeenCalledWith(mockRequest, {});
@@ -201,16 +230,20 @@ describe("api", () => {
 			const requestWithNoHeaders = {
 				...mockRequest,
 				headers: {
+					entries: () => [].entries(),
 					get: () => null,
 				},
 			};
 
 			if (afterResponseHook) {
-				afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any);
+				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				await afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
 					method: "GET",
 					operation: null,
+					response_body: {},
+					response_headers: {},
 					status: 200,
 					trace_id: null,
 					url: "https://api.example.com/test",
@@ -228,6 +261,8 @@ describe("api", () => {
 
 			const methods = ["POST", "PUT", "DELETE", "PATCH"];
 
+			vi.clearAllMocks(); // Clear the "Initializing API client" log
+
 			for (const method of methods) {
 				const request = { ...mockRequest, method };
 
@@ -235,7 +270,7 @@ describe("api", () => {
 					await beforeRequestHook(request as any, {} as any);
 
 					expect(log.info).toHaveBeenCalledWith(
-						`API ${method} https://api.example.com/test`,
+						`API REQUEST ${method} https://api.example.com/test`,
 						expect.objectContaining({
 							method,
 						}),
@@ -254,11 +289,13 @@ describe("api", () => {
 
 			const statuses = [201, 204, 301, 400, 401, 403, 404, 500];
 
-			statuses.forEach((status) => {
+			vi.clearAllMocks(); // Clear the "Initializing API client" log
+
+			for (const status of statuses) {
 				const response = { ...mockResponse, status };
 
 				if (afterResponseHook) {
-					afterResponseHook(mockRequest as any, {} as any, response as any);
+					await afterResponseHook(mockRequest as any, {} as any, response as any);
 
 					expect(log.info).toHaveBeenCalledWith(
 						`API GET https://api.example.com/test - ${status}`,
@@ -267,7 +304,7 @@ describe("api", () => {
 						}),
 					);
 				}
-			});
+			}
 		});
 
 		it("should use correct timeout value", async () => {
@@ -304,6 +341,7 @@ describe("api", () => {
 			vi.mocked(shouldSkipLogging).mockReturnValue(true);
 
 			const { getClient } = await import("./api");
+			vi.clearAllMocks(); // Clear all mocks including the init log
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -311,10 +349,10 @@ describe("api", () => {
 			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
 
 			if (afterResponseHook) {
-				const result = afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
+				const result = await afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
 
-				// Should not log when mock API is enabled
-				expect(log.info).not.toHaveBeenCalled();
+				// Should not log API response when mock API is enabled
+				expect(log.info).not.toHaveBeenCalledWith(expect.stringContaining("API GET"), expect.any(Object));
 				expect(result).toBe(mockResponse);
 			}
 		});
@@ -323,6 +361,7 @@ describe("api", () => {
 			vi.mocked(shouldSkipLogging).mockReturnValue(true);
 
 			const { getClient } = await import("./api");
+			vi.clearAllMocks(); // Clear all mocks including the init log
 			getClient();
 
 			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
@@ -333,13 +372,26 @@ describe("api", () => {
 				const mockError = {
 					message: "Network error",
 					request: mockRequest,
-					response: { status: 500 },
+					response: {
+						clone: () => ({
+							json: () => Promise.resolve({}),
+						}),
+						headers: {
+							entries: () => [].entries(),
+							get: () => "application/json",
+						},
+						status: 500,
+					},
 				};
 
-				const result = beforeErrorHook(mockError as any);
+				const result = await beforeErrorHook(mockError as any);
 
-				// Should not log when mock API is enabled
-				expect(log.error).not.toHaveBeenCalled();
+				// Should not log API errors when mock API is enabled
+				expect(log.error).not.toHaveBeenCalledWith(
+					expect.stringContaining("API ERROR"),
+					expect.any(Object),
+					expect.any(Object),
+				);
 				expect(result).toBe(mockError);
 			}
 		});

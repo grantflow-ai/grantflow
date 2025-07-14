@@ -1,5 +1,3 @@
-"use server";
-
 import { ProjectDetailClient } from "@/components/projects/detail/project-detail-client";
 import { NavigationContextProvider } from "@/providers/navigation-context-provider";
 import { routes } from "@/utils/navigation";

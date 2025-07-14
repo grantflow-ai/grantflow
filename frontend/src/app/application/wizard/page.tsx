@@ -1,5 +1,3 @@
-"use server";
-
 import { ApplicationWizardPageClient } from "@/components/applications/wizard/application-wizard-page-client";
 import { NavigationContextProvider } from "@/providers/navigation-context-provider";
 import { routes } from "@/utils/navigation";
