@@ -1,3 +1,4 @@
+import time
 from typing import TYPE_CHECKING, Final, cast
 
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
@@ -13,30 +14,42 @@ MAX_CHARACTERS: Final[int] = 2000
 OVERLAP_CHARACTERS: Final[int] = 200
 
 
-def get_splitter(mime_type: str) -> MarkdownSplitter | TextSplitter:
+def get_splitter(
+    mime_type: str, max_chars: int, overlap_chars: int
+) -> MarkdownSplitter | TextSplitter:
     logger.debug(
         "Selecting text splitter",
         mime_type=mime_type,
-        max_chars=MAX_CHARACTERS,
-        overlap_chars=OVERLAP_CHARACTERS,
+        max_chars=max_chars,
+        overlap_chars=overlap_chars,
     )
 
     if mime_type == "text/markdown":
         logger.debug("Using MarkdownSplitter for markdown content")
-        return MarkdownSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
+        return MarkdownSplitter(max_chars, overlap_chars)
 
     logger.debug("Using TextSplitter for non-markdown content")
-    return TextSplitter(MAX_CHARACTERS, OVERLAP_CHARACTERS)
+    return TextSplitter(max_chars, overlap_chars)
 
 
-def chunk_text(*, text: str, mime_type: str) -> list["Chunk"]:
-    import time
-
+def chunk_text(
+    *,
+    text: str,
+    mime_type: str,
+    max_chars: int = MAX_CHARACTERS,
+    overlap_chars: int = OVERLAP_CHARACTERS,
+) -> list["Chunk"]:
     start_time = time.time()
     text_length = len(text)
-    logger.debug("Starting text chunking", text_length=text_length, mime_type=mime_type)
+    logger.debug(
+        "Starting text chunking",
+        text_length=text_length,
+        mime_type=mime_type,
+        max_chars=max_chars,
+        overlap_chars=overlap_chars,
+    )
 
-    splitter = get_splitter(mime_type)
+    splitter = get_splitter(mime_type, max_chars, overlap_chars)
 
     chunks_raw = list(splitter.chunks(text))
     chunking_duration = time.time() - start_time

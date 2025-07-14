@@ -1,3 +1,4 @@
+import time
 from asyncio import Lock, gather
 from os import getenv
 from pathlib import Path
@@ -20,9 +21,7 @@ EMBEDDING_MODEL_NAME: Final[str] = "sentence-transformers/all-MiniLM-L12-v2"
 CHUNKS_BATCH_SIZE: Final[int] = 30
 
 
-def get_embedding_model() -> SentenceTransformer:
-    import time
-
+def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTransformer:
     if embedding_model_ref.value is None:
         start_time = time.time()
         model_dir = getenv("MODEL_DIR")
@@ -30,7 +29,7 @@ def get_embedding_model() -> SentenceTransformer:
         logger.debug(
             "Initializing embedding model",
             model_dir=model_dir,
-            model_name=EMBEDDING_MODEL_NAME,
+            model_name=model_name,
         )
 
         if model_dir and Path(model_dir).exists():
@@ -40,11 +39,9 @@ def get_embedding_model() -> SentenceTransformer:
             )
             model_source = "local_directory"
         else:
-            logger.debug(
-                "Loading model from default cache", model_name=EMBEDDING_MODEL_NAME
-            )
+            logger.debug("Loading model from default cache", model_name=model_name)
             model = SentenceTransformer(
-                EMBEDDING_MODEL_NAME, device="cpu", trust_remote_code=False
+                model_name, device="cpu", trust_remote_code=False
             )
             model_source = "default_cache"
 
@@ -53,7 +50,7 @@ def get_embedding_model() -> SentenceTransformer:
 
         logger.info(
             "Embedding model loaded successfully",
-            model_name=EMBEDDING_MODEL_NAME,
+            model_name=model_name,
             model_source=model_source,
             load_duration_ms=round(load_duration * 1000, 2),
             device="cpu",
@@ -64,9 +61,9 @@ def get_embedding_model() -> SentenceTransformer:
     return embedding_model_ref.value
 
 
-async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
-    import time
-
+async def generate_embeddings(
+    inputs: str | list[str], model_name: str = EMBEDDING_MODEL_NAME
+) -> list[list[float]]:
     start_time = time.time()
     if not isinstance(inputs, list):
         inputs = [inputs]
@@ -75,11 +72,12 @@ async def generate_embeddings(inputs: str | list[str]) -> list[list[float]]:
         "Starting embedding generation",
         input_count=len(inputs),
         total_text_length=sum(len(text) for text in inputs),
+        model_name=model_name,
     )
 
     model_load_start = time.time()
     async with model_load_lock:
-        model = await run_sync(get_embedding_model)
+        model = await run_sync(get_embedding_model, model_name)
     model_load_duration = time.time() - model_load_start
 
     if model_load_duration > 0.001:
@@ -111,8 +109,9 @@ async def create_vector_dto(
     *,
     chunk: Chunk,
     rag_source_id: str,
+    model_name: str = EMBEDDING_MODEL_NAME,
 ) -> VectorDTO:
-    embedding = await generate_embeddings([chunk["content"]])
+    embedding = await generate_embeddings([chunk["content"]], model_name=model_name)
 
     if len(embedding) != 1:
         logger.error("Expected a single embedding to be generated for the content")
@@ -131,9 +130,8 @@ async def index_chunks(
     *,
     chunks: list[Chunk],
     source_id: str,
+    model_name: str = EMBEDDING_MODEL_NAME,
 ) -> list[VectorDTO]:
-    import time
-
     start_time = time.time()
     total_chunks = len(chunks)
     logger.debug(
@@ -141,6 +139,7 @@ async def index_chunks(
         chunk_count=total_chunks,
         batch_size=CHUNKS_BATCH_SIZE,
         source_id=source_id,
+        model_name=model_name,
     )
 
     if not chunks:
@@ -167,6 +166,7 @@ async def index_chunks(
                 create_vector_dto(
                     chunk=chunk,
                     rag_source_id=source_id,
+                    model_name=model_name,
                 )
                 for chunk in batch_chunks
             ]

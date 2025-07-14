@@ -60,7 +60,6 @@ lint.ignore = [
   "ISC001",   # Conflicts with formatter
   "PD011",    # Creates false positives
   "PGH003",   # Required specific mypy ignores
-  "PLC0415",
   "PLR2004",  # Magic variables, we allow them
   "S104",     # Disallows using '0.0.0.0' as a host
   "TD",       # We allow todo and fixme comments

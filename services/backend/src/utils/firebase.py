@@ -1,9 +1,24 @@
-from datetime import UTC
+from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
-from firebase_admin import App
-from firebase_admin.auth import get_user_by_email as firebase_get_user_by_email
+from firebase_admin import App, initialize_app
+from firebase_admin.auth import (
+    delete_user as firebase_delete_user,
+)
+from firebase_admin.auth import (
+    get_user as firebase_get_user,
+)
+from firebase_admin.auth import (
+    get_user_by_email as firebase_get_user_by_email,
+)
+from firebase_admin.auth import (
+    get_users as firebase_get_users,
+)
+from firebase_admin.auth import (
+    verify_id_token as firebase_verify_id_token,
+)
 from firebase_admin.exceptions import FirebaseError
+from google.cloud.firestore import SERVER_TIMESTAMP, AsyncClient
 from google.oauth2.service_account import Credentials
 from litestar.exceptions import NotAuthorizedException
 from packages.shared_utils.src.env import get_env
@@ -20,8 +35,6 @@ firebase_app_ref = Ref[App]()
 
 def get_firebase_app() -> App:
     if firebase_app_ref.value is None:
-        from firebase_admin import initialize_app
-
         logger.debug("Initializing Firebase app")
         service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
         firebase_app_ref.value = initialize_app(
@@ -31,8 +44,6 @@ def get_firebase_app() -> App:
 
 
 async def verify_id_token(id_token: str) -> dict[str, Any]:
-    from firebase_admin.auth import verify_id_token as firebase_verify_id_token
-
     handler = as_async_callable(firebase_verify_id_token)
     try:
         decoded_token = await handler(id_token, app=get_firebase_app())
@@ -53,46 +64,40 @@ async def get_user_by_email(email: str) -> dict[str, Any] | None:
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             return None
-        logger.warning("Error getting user by email.", exec_info=e)
+        logger.warning("Error getting user by email.", exc_info=e)
         raise ExternalOperationError("Error getting user by email.") from e
 
 
 async def get_user(uid: str) -> dict[str, Any] | None:
-    from firebase_admin.auth import get_user
-
-    handler = as_async_callable(get_user)
+    handler = as_async_callable(firebase_get_user)
     try:
         user = await handler(uid, app=get_firebase_app())
         return cast("dict[str, Any]", user)
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             return None
-        logger.warning("Error getting user by uid.", uid=uid, exec_info=e)
+        logger.warning("Error getting user by uid.", uid=uid, exc_info=e)
         raise ExternalOperationError("Error getting user by uid.") from e
 
 
 async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
-    from firebase_admin.auth import get_users
-
     if not uids:
         return {}
 
-    handler = as_async_callable(get_users)
+    handler = as_async_callable(firebase_get_users)
     try:
         identifiers = [{"uid": uid} for uid in uids]
         result = await handler(identifiers, app=get_firebase_app())
         users = cast("list[dict[str, Any]]", result.users)
         return {user["uid"]: user for user in users}
     except FirebaseError as e:
-        logger.warning("Error getting users by uids.", exec_info=e)
+        logger.warning("Error getting users by uids.", exc_info=e)
         raise ExternalOperationError("Error getting users by uids.") from e
 
 
 async def delete_user(uid: str) -> None:
     """Delete a user from Firebase Auth"""
-    from firebase_admin.auth import delete_user
-
-    handler = as_async_callable(delete_user)
+    handler = as_async_callable(firebase_delete_user)
     try:
         await handler(uid, app=get_firebase_app())
         logger.info("Deleted Firebase user", firebase_uid=uid)
@@ -100,7 +105,7 @@ async def delete_user(uid: str) -> None:
         if "USER_NOT_FOUND" in str(e):
             logger.warning("User not found for deletion", firebase_uid=uid)
             return
-        logger.warning("Error deleting user", firebase_uid=uid, exec_info=e)
+        logger.warning("Error deleting user", firebase_uid=uid, exc_info=e)
         raise ExternalOperationError("Error deleting user from Firebase") from e
 
 
@@ -110,8 +115,6 @@ _firestore_client_ref = Ref[Any]()
 def get_firestore_client() -> Any:
     """Get Firestore client instance"""
     if _firestore_client_ref.value is None:
-        from google.cloud.firestore import AsyncClient
-
         logger.debug("Initializing Firestore client")
         _firestore_client_ref.value = AsyncClient()
     return _firestore_client_ref.value
@@ -119,10 +122,6 @@ def get_firestore_client() -> Any:
 
 async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[str, Any]:
     """Schedule a user for deletion in Firestore"""
-    from datetime import datetime, timedelta
-
-    from google.cloud.firestore import SERVER_TIMESTAMP
-
     db = get_firestore_client()
     deletion_date = datetime.now(UTC) + timedelta(days=grace_period_days)
 
@@ -145,7 +144,7 @@ async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[
         )
         return doc_data
     except Exception as e:
-        logger.warning("Error scheduling user deletion", firebase_uid=uid, exec_info=e)
+        logger.warning("Error scheduling user deletion", firebase_uid=uid, exc_info=e)
         raise ExternalOperationError("Error scheduling user deletion") from e
 
 
@@ -165,14 +164,12 @@ async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
             return cast("dict[str, Any]", data)
         return None
     except Exception as e:
-        logger.warning("Error getting user deletion status", firebase_uid=uid, exec_info=e)
+        logger.warning("Error getting user deletion status", firebase_uid=uid, exc_info=e)
         raise ExternalOperationError("Error getting user deletion status") from e
 
 
 async def cancel_user_deletion(uid: str) -> bool:
     """Cancel scheduled user deletion"""
-    from google.cloud.firestore import SERVER_TIMESTAMP
-
     db = get_firestore_client()
 
     try:
@@ -194,5 +191,5 @@ async def cancel_user_deletion(uid: str) -> bool:
         logger.info("Cancelled user deletion", firebase_uid=uid)
         return True
     except Exception as e:
-        logger.warning("Error cancelling user deletion", firebase_uid=uid, exec_info=e)
+        logger.warning("Error cancelling user deletion", firebase_uid=uid, exc_info=e)
         raise ExternalOperationError("Error cancelling user deletion") from e

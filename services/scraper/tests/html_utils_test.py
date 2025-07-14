@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from bs4 import BeautifulSoup
 from services.scraper.src.html_utils import download_page_html, sanitize_html
 from services.scraper.src.url_utils import get_identifier_from_nih_url
 
@@ -23,8 +24,6 @@ async def test_download_page_html() -> None:
 
 
 def test_sanitize_html() -> None:
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup("<html><body><script>alert('Test');</script><p>Hello World</p></body></html>", "html.parser")
 
     sanitized = sanitize_html(soup)
