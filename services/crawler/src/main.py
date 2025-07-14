@@ -1,5 +1,6 @@
 import base64
 import binascii
+import time
 from asyncio import gather
 from typing import Any
 
@@ -91,8 +92,6 @@ async def handle_gcs_file_upload(
     session_maker: async_sessionmaker[Any],
     parent_type: str,
 ) -> None:
-    import time
-
     start_time = time.time()
     logger.debug(
         "Starting GCS file upload",
@@ -223,8 +222,6 @@ async def handle_url_crawling(
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    import time
-
     start_time = time.time()
     logger.debug("Starting URL crawling request processing")
 

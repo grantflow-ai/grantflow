@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_hex
 from typing import cast
 
-from jwt import InvalidTokenError
+from jwt import InvalidTokenError, decode, encode
 from litestar.exceptions import NotAuthorizedException
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
@@ -11,8 +11,6 @@ logger = get_logger(__name__)
 
 
 def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
-    from jwt import encode
-
     payload = {
         "sub": firebase_uid,
         "iat": int(datetime.now(UTC).timestamp()),
@@ -29,8 +27,6 @@ def create_jwt(firebase_uid: str, ttl: timedelta | None = None) -> str:
 
 
 def verify_jwt_token(token: str) -> str:
-    from jwt import decode
-
     try:
         decoded_token = decode(jwt=token, key=get_env("JWT_SECRET"), algorithms=["HS256"])
         return cast("str", decoded_token["sub"])
