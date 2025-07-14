@@ -59,6 +59,12 @@ jobs:
                   NEXT_PUBLIC_DEBUG: false
                   RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
+            - name: Copy HTML files from docs
+              run: |
+                  if [ -d "docs" ] && ls docs/*.html 1> /dev/null 2>&1; then
+                    cp docs/*.html frontend/storybook-static/
+                  fi
+
             - name: Upload to GitHub Pages
               uses: actions/upload-pages-artifact@v3
               with:
