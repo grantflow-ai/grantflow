@@ -279,7 +279,7 @@ test.describe("Application Wizard", () => {
 		await page.waitForLoadState("networkidle");
 
 		// Test empty title validation
-		const continueButton = page.locator('[data-testid="wizard-continue-button"]');
+		const continueButton = page.locator('[data-testid="continue-button"]');
 		await continueButton.click();
 
 		// Should show validation error
