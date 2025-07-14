@@ -280,11 +280,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2025.7.9"
+version = "2025.7.14"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/de/8a/c729b6b60c66a38f590c4e774decc4b2ec7b0576be8f1aa984a53ffa812a/certifi-2025.7.9.tar.gz", hash = "sha256:c1d2ec05395148ee10cf672ffc28cd37ea0ab0d99f9cc74c43e588cbd111b079", size = 160386, upload-time = "2025-07-09T02:13:58.874Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz", hash = "sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995", size = 163981, upload-time = "2025-07-14T03:29:28.449Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/f3/80a3f974c8b535d394ff960a11ac20368e06b736da395b551a49ce950cce/certifi-2025.7.9-py3-none-any.whl", hash = "sha256:d842783a14f8fdd646895ac26f719a061408834473cfc10203f6a575beb15d39", size = 159230, upload-time = "2025-07-09T02:13:57.007Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl", hash = "sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2", size = 162722, upload-time = "2025-07-14T03:29:26.863Z" },
 ]
 
 [[package]]
@@ -1535,7 +1535,7 @@ wheels = [
 
 [[package]]
 name = "kreuzberg"
-version = "3.8.1"
+version = "3.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1549,9 +1549,9 @@ dependencies = [
     { name = "python-calamine" },
     { name = "python-pptx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/63/1fdb054786e744eefa958826541e9f44bf224e3609941653d82564c0ac89/kreuzberg-3.8.1.tar.gz", hash = "sha256:cf776dfd6b75b47685fd0303df3369f528237d3c57a13efac77c29c034388536", size = 9818866, upload-time = "2025-07-13T07:50:37.177Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/92/2ebbdc01cb74640a495269f71ae577197aecbedf62d27e8f5ea1f064f098/kreuzberg-3.8.2.tar.gz", hash = "sha256:0b925074b0d7b012d833ab9f53e874895b8c184e9a2c9b816f146d1d4b3b8dbd", size = 9828844, upload-time = "2025-07-13T23:04:31.843Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/97/9851202e260b668a86ecadeb53ecd827e0c0f2ef39e3144c5dd645a46f68/kreuzberg-3.8.1-py3-none-any.whl", hash = "sha256:0ed69cfe6f8a1a1cc00f335c7f3254ae35190724569c1ac89a9ae3c0655e63d6", size = 104360, upload-time = "2025-07-13T07:50:35.315Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/fa/b21c5d9b78a0f2f9bdba6ae966904a408e34fc6c56d684c8d93e560e9870/kreuzberg-3.8.2-py3-none-any.whl", hash = "sha256:370b436713c3c03b37da2a8451bd5671ee2aa0790012abe2e204eeaf14bd8492", size = 107565, upload-time = "2025-07-13T23:04:30.278Z" },
 ]
 
 [[package]]
