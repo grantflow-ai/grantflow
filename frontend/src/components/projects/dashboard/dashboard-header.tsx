@@ -7,6 +7,7 @@ import { Notification } from "./notification";
 interface DashboardHeaderProps {
 	projectTeamMembers: {
 		backgroundColor: string;
+		imageUrl?: string;
 		initials: string;
 	}[];
 }
