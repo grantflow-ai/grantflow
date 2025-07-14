@@ -147,8 +147,8 @@ test.describe("Mock API Data Validation", () => {
 		// Click on first project
 		await projectCards.first().click();
 
-		// Should navigate to project detail page with slug format
-		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
+		// Should navigate to project detail page with clean URL
+		await expect(page).toHaveURL("/project");
 
 		// Should see the project page - check for expected elements
 		// Use main locator to avoid matching sidebar button

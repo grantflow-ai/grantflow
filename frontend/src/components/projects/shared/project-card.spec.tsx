@@ -33,12 +33,12 @@ describe("ProjectCard", () => {
 		expect(screen.getByText("OWNER")).toBeInTheDocument();
 	});
 
-	it("has button role and is clickable", () => {
+	it("is a button and is clickable", () => {
 		render(<ProjectCard project={mockProjectOwner} />);
 
 		const button = screen.getByTestId(`project-link-${mockProjectOwner.id}`);
-		expect(button).toHaveAttribute("role", "button");
-		expect(button).toHaveAttribute("tabIndex", "0");
+		expect(button.tagName.toLowerCase()).toBe("button");
+		expect(button).toHaveAttribute("type", "button");
 	});
 
 	it("renders OWNER role badge", () => {
