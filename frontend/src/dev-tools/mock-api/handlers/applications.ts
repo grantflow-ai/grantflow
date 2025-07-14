@@ -271,6 +271,54 @@ This innovative research program represents a paradigm shift in cancer diagnosti
 		return undefined;
 	},
 
+	getApplication: async ({
+		params,
+	}: {
+		params?: Record<string, string>;
+	}): Promise<API.RetrieveApplication.Http200.ResponseBody> => {
+		const applicationId = params?.application_id;
+		if (!applicationId) {
+			throw new Error("Application ID required");
+		}
+
+		const projectId = params?.project_id;
+		log.info("[Mock API] Retrieving application", { applicationId, projectId });
+
+		const existingApplication = applicationStore.get(applicationId);
+		if (existingApplication) {
+			if (projectId && existingApplication.project_id !== projectId) {
+				log.warn("[Mock API] Project ID mismatch", {
+					actualProjectId: existingApplication.project_id,
+					applicationId,
+					requestedProjectId: projectId,
+				});
+			}
+			log.info("[Mock API] Returning application from store", { existingApplication });
+			return existingApplication;
+		}
+
+		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
+		const scenario = getScenario(currentScenarioName);
+		const scenarioApplication = scenario?.data.applications.get(applicationId);
+
+		if (scenarioApplication) {
+			log.info("[Mock API] Application not in store, using scenario data", {
+				applicationId,
+				scenario: currentScenarioName,
+			});
+			applicationStore.set(applicationId, scenarioApplication);
+			return scenarioApplication;
+		}
+
+		log.info("[Mock API] Application not found in store or scenario, creating new one", { applicationId });
+		const application = ApplicationWithTemplateFactory.build({
+			id: applicationId,
+			text: undefined,
+		});
+		applicationStore.set(applicationId, application);
+		return application;
+	},
+
 	getRagSources: async ({
 		params,
 	}: {
@@ -339,54 +387,6 @@ This innovative research program represents a paradigm shift in cancer diagnosti
 				total: 0,
 			},
 		};
-	},
-
-	retrieveApplication: async ({
-		params,
-	}: {
-		params?: Record<string, string>;
-	}): Promise<API.RetrieveApplication.Http200.ResponseBody> => {
-		const applicationId = params?.application_id;
-		if (!applicationId) {
-			throw new Error("Application ID required");
-		}
-
-		const projectId = params?.project_id;
-		log.info("[Mock API] Retrieving application", { applicationId, projectId });
-
-		const existingApplication = applicationStore.get(applicationId);
-		if (existingApplication) {
-			if (projectId && existingApplication.project_id !== projectId) {
-				log.warn("[Mock API] Project ID mismatch", {
-					actualProjectId: existingApplication.project_id,
-					applicationId,
-					requestedProjectId: projectId,
-				});
-			}
-			log.info("[Mock API] Returning application from store", { existingApplication });
-			return existingApplication;
-		}
-
-		const currentScenarioName = getMockAPIClient().getCurrentScenarioName();
-		const scenario = getScenario(currentScenarioName);
-		const scenarioApplication = scenario?.data.applications.get(applicationId);
-
-		if (scenarioApplication) {
-			log.info("[Mock API] Application not in store, using scenario data", {
-				applicationId,
-				scenario: currentScenarioName,
-			});
-			applicationStore.set(applicationId, scenarioApplication);
-			return scenarioApplication;
-		}
-
-		log.info("[Mock API] Application not found in store or scenario, creating new one", { applicationId });
-		const application = ApplicationWithTemplateFactory.build({
-			id: applicationId,
-			text: undefined,
-		});
-		applicationStore.set(applicationId, application);
-		return application;
 	},
 
 	triggerAutofill: async ({

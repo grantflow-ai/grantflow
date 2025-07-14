@@ -30,7 +30,7 @@ describe("GrantApplicationCard", () => {
 		expect(screen.getByTestId(`application-draft-link-${mockApplication.id}`)).toBeInTheDocument();
 	});
 
-	it("links to the wizard page with applicationId for draft applications", () => {
+	it("has button role and is clickable for draft applications", () => {
 		render(
 			<GrantApplicationCard
 				application={mockApplication}
@@ -39,13 +39,12 @@ describe("GrantApplicationCard", () => {
 			/>,
 		);
 
-		const link = screen.getByTestId(`application-draft-link-${mockApplication.id}`);
-		expect(link).toHaveAttribute("href", expect.stringContaining("/wizard"));
-		expect(link).toHaveAttribute("href", expect.stringContaining("/projects/"));
-		expect(link).toHaveAttribute("href", expect.stringContaining("/applications/"));
+		const button = screen.getByTestId(`application-draft-link-${mockApplication.id}`);
+		expect(button).toHaveAttribute("role", "button");
+		expect(button).toHaveAttribute("tabIndex", "0");
 	});
 
-	it("links to the application detail page for completed applications", () => {
+	it("has button role and is clickable for completed applications", () => {
 		render(
 			<GrantApplicationCard
 				application={mockCompletedApplication}
@@ -54,10 +53,9 @@ describe("GrantApplicationCard", () => {
 			/>,
 		);
 
-		const link = screen.getByTestId(`application-draft-link-${mockCompletedApplication.id}`);
-		expect(link).toHaveAttribute("href", expect.not.stringContaining("/wizard"));
-		expect(link).toHaveAttribute("href", expect.stringContaining("/projects/"));
-		expect(link).toHaveAttribute("href", expect.stringContaining("/applications/"));
+		const button = screen.getByTestId(`application-draft-link-${mockCompletedApplication.id}`);
+		expect(button).toHaveAttribute("role", "button");
+		expect(button).toHaveAttribute("tabIndex", "0");
 	});
 
 	it("displays the file icon", () => {

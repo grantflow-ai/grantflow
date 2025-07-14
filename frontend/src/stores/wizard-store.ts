@@ -193,7 +193,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				checkApplicationGeneration: async () => {
-					const { application, retrieveApplication } = useApplicationStore.getState();
+					const { application, getApplication } = useApplicationStore.getState();
 					const { polling } = get();
 
 					if (!application) {
@@ -201,7 +201,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 
 					try {
-						await retrieveApplication(application.project_id, application.id);
+						await getApplication(application.project_id, application.id);
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
@@ -225,7 +225,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				checkTemplateGeneration: async () => {
-					const { application, retrieveApplication } = useApplicationStore.getState();
+					const { application, getApplication } = useApplicationStore.getState();
 					const { polling } = get();
 
 					if (!application) {
@@ -233,7 +233,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 
 					try {
-						await retrieveApplication(application.project_id, application.id);
+						await getApplication(application.project_id, application.id);
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
@@ -295,10 +295,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 				},
 
 				handleApplicationInit: async (projectId: string, applicationId?: string) => {
-					const { createApplication, retrieveApplication } = useApplicationStore.getState();
-					await (applicationId
-						? retrieveApplication(projectId, applicationId)
-						: createApplication(projectId));
+					const { createApplication, getApplication } = useApplicationStore.getState();
+					await (applicationId ? getApplication(projectId, applicationId) : createApplication(projectId));
 				},
 
 				handleObjectiveDragEnd: (event: DragEndEvent) => {

@@ -5,7 +5,7 @@ import {
 	GrantTemplateFactory,
 } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { retrieveApplication, updateApplication } from "@/actions/grant-applications";
+import { getApplication, updateApplication } from "@/actions/grant-applications";
 import { updateGrantTemplate } from "@/actions/grant-template";
 import { retrieveRagJob } from "@/actions/rag-jobs";
 
@@ -84,17 +84,17 @@ describe("Application Store", () => {
 		});
 	});
 
-	describe("retrieveApplication", () => {
+	describe("getApplication", () => {
 		it("should fetch application and update state", async () => {
 			const application = ApplicationFactory.build();
 
-			vi.mocked(retrieveApplication).mockResolvedValue(application);
+			vi.mocked(getApplication).mockResolvedValue(application);
 
-			const { retrieveApplication: retrieveApp } = useApplicationStore.getState();
+			const { getApplication: retrieveApp } = useApplicationStore.getState();
 
 			await retrieveApp("project-id", "app-id");
 
-			expect(retrieveApplication).toHaveBeenCalledWith("project-id", "app-id");
+			expect(getApplication).toHaveBeenCalledWith("project-id", "app-id");
 
 			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(application);
@@ -194,7 +194,7 @@ describe("Application Store", () => {
 			vi.mocked(extractObjectPathFromUrl).mockReturnValue("path");
 			vi.mocked(triggerDevIndexing).mockImplementation(() => Promise.resolve());
 
-			vi.mocked(retrieveApplication).mockResolvedValue(application);
+			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
 			const { addFile } = useApplicationStore.getState();
@@ -212,7 +212,7 @@ describe("Application Store", () => {
 			const { crawlTemplateUrl } = await import("@/actions/sources");
 			vi.mocked(crawlTemplateUrl).mockResolvedValue({ source_id: "source-123" });
 
-			vi.mocked(retrieveApplication).mockResolvedValue(application);
+			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
 			const { addUrl } = useApplicationStore.getState();
@@ -233,7 +233,7 @@ describe("Application Store", () => {
 			const { deleteTemplateSource } = await import("@/actions/sources");
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
-			vi.mocked(retrieveApplication).mockResolvedValue(application);
+			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
 			const { removeFile } = useApplicationStore.getState();
@@ -261,7 +261,7 @@ describe("Application Store", () => {
 			const { deleteTemplateSource } = await import("@/actions/sources");
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
 
-			vi.mocked(retrieveApplication).mockResolvedValue(application);
+			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
 			const { removeUrl } = useApplicationStore.getState();

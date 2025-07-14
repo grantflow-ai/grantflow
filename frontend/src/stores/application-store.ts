@@ -6,7 +6,7 @@ import { create } from "zustand";
 import {
 	createApplication as handleCreateApplication,
 	generateApplication as handleGenerateApplication,
-	retrieveApplication as handleRetrieveApplication,
+	getApplication as handleGetApplication,
 	updateApplication as handleUpdateApplication,
 } from "@/actions/grant-applications";
 import { generateGrantTemplate, updateGrantTemplate } from "@/actions/grant-template";
@@ -186,10 +186,10 @@ interface ApplicationActions {
 	createApplication: (projectId: string) => Promise<void>;
 	generateApplication: (projectId: string, applicationId: string) => Promise<void>;
 	generateTemplate: (templateId: string) => Promise<void>;
+	getApplication: (projectId: string, applicationId: string) => Promise<void>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
-	retrieveApplication: (projectId: string, applicationId: string) => Promise<void>;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
 	updateApplicationTitle: (projectId: string, applicationId: string, title: string) => Promise<void>;
@@ -279,14 +279,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.error("Failed to upload file. Please try again.");
 		}
 
-		log.info("[rag_sources_check] File upload completed, triggering retrieveApplication", {
+		log.info("[rag_sources_check] File upload completed, triggering getApplication", {
 			beforeRagSources: formatRagSources(application),
 			fileName: file.name,
 			isApplicationParent,
 			parentId,
 		});
 
-		await get().retrieveApplication(application!.project_id, application!.id);
+		await get().getApplication(application!.project_id, application!.id);
 	},
 
 	addUrl: async (url: string, parentId: string) => {
@@ -302,13 +302,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
 			await crawlUrl(application!.project_id, parentId, url);
 			toast.success("URL added successfully");
-			log.info("[rag_sources_check] URL crawl completed, triggering retrieveApplication", {
+			log.info("[rag_sources_check] URL crawl completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
 				isApplicationParent,
 				parentId,
 				url,
 			});
-			await get().retrieveApplication(application!.project_id, application!.id);
+			await get().getApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
@@ -470,6 +470,26 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
+	getApplication: async (projectId: string, applicationId: string) => {
+		set({ areAppOperationsInProgress: true });
+		try {
+			const response = await handleGetApplication(projectId, applicationId);
+			log.info("[rag_sources_check] Application state updated via getApplication", {
+				applicationId,
+				projectId,
+				ragSources: formatRagSources(response),
+			});
+			set({
+				application: response,
+				areAppOperationsInProgress: false,
+			});
+		} catch (e: unknown) {
+			log.error("getApplication", e);
+			toast.error("Failed to retrieve application");
+			set({ areAppOperationsInProgress: false });
+		}
+	},
+
 	removeFile: async (fileToRemove: FileWithId, parentId: string) => {
 		const { application } = get();
 
@@ -488,14 +508,14 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
 			await deleteSource(application!.project_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
-			log.info("[rag_sources_check] File removal completed, triggering retrieveApplication", {
+			log.info("[rag_sources_check] File removal completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
 				fileId: fileToRemove.id,
 				fileName: fileToRemove.name,
 				isApplicationParent,
 				parentId,
 			});
-			await get().retrieveApplication(application!.project_id, application!.id);
+			await get().getApplication(application!.project_id, application!.id);
 		} catch (error) {
 			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
@@ -558,7 +578,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");
-			log.info("[rag_sources_check] URL removal completed, triggering retrieveApplication", {
+			log.info("[rag_sources_check] URL removal completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
 				isApplicationParent,
 				parentId,
@@ -566,8 +586,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				url: urlToRemove,
 			});
 
-			await get().retrieveApplication(application!.project_id, application!.id);
-			log.info("[removeUrl] retrieveApplication completed");
+			await get().getApplication(application!.project_id, application!.id);
+			log.info("[removeUrl] getApplication completed");
 		} catch (error) {
 			log.error("[removeUrl] Error occurred", error);
 			toast.error("Failed to remove URL. Please try again.");
@@ -582,26 +602,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			previousRagSources: formatRagSources(application),
 		});
 		set(structuredClone(initialState));
-	},
-
-	retrieveApplication: async (projectId: string, applicationId: string) => {
-		set({ areAppOperationsInProgress: true });
-		try {
-			const response = await handleRetrieveApplication(projectId, applicationId);
-			log.info("[rag_sources_check] Application state updated via retrieveApplication", {
-				applicationId,
-				projectId,
-				ragSources: formatRagSources(response),
-			});
-			set({
-				application: response,
-				areAppOperationsInProgress: false,
-			});
-		} catch (e: unknown) {
-			log.error("retrieveApplication", e);
-			toast.error("Failed to retrieve application");
-			set({ areAppOperationsInProgress: false });
-		}
 	},
 
 	setApplication: (application: NonNullable<ApplicationType>) => {
