@@ -21,7 +21,7 @@ from services.backend.src.utils.jwt import verify_jwt_token
 
 logger = get_logger(__name__)
 
-PUBLIC_PATHS = {"login", "health"}
+PUBLIC_PATHS = {"login", "health", "schema"}
 ADMIN_PATHS = {"organizations"}
 DEV_BYPASS_PREFIX = "/dev/"
 
@@ -34,6 +34,9 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return AuthenticationResult(user=None, auth=None)
 
         if any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):
+            return AuthenticationResult(user=None, auth=None)
+
+        if connection.url.path.startswith("/schema"):
             return AuthenticationResult(user=None, auth=None)
 
         if connection.url.path.startswith(DEV_BYPASS_PREFIX):
