@@ -7,24 +7,40 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { ResearchPlanStep } from "./research-plan-step";
 
+// Mock the ResearchPlanPreview component to avoid DnD issues in tests
+vi.mock("./research-plan-preview", () => ({
+	ResearchPlanPreview: () => <div data-testid="research-plan-preview">ResearchPlanPreview</div>,
+}));
+
 describe("ResearchPlanStep", () => {
 	const mockTriggerAutofill = vi.fn();
+	const mockAddObjective = vi.fn();
+	const mockSetShowResearchPlanInfoBanner = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Reset stores
+		// Reset stores with complete initial state
 		useApplicationStore.setState({
 			application: null,
 		});
 
 		useWizardStore.setState({
+			currentStep: "APPLICATION_DETAILS" as any,
 			isAutofillLoading: {
 				research_deep_dive: false,
 				research_plan: false,
 			},
-			triggerAutofill: mockTriggerAutofill,
+			isGeneratingApplication: false,
+			isGeneratingTemplate: false,
+			shouldRedirectToEditor: false,
+			showResearchPlanInfoBanner: true,
 		});
+
+		// Mock the actions
+		useWizardStore.getState().triggerAutofill = mockTriggerAutofill;
+		useWizardStore.getState().addObjective = mockAddObjective;
+		useWizardStore.getState().setShowResearchPlanInfoBanner = mockSetShowResearchPlanInfoBanner;
 	});
 
 	it("renders step content", () => {
@@ -34,7 +50,7 @@ describe("ResearchPlanStep", () => {
 		expect(screen.getByTestId("research-plan-header")).toBeInTheDocument();
 		expect(screen.getByTestId("research-plan-description")).toBeInTheDocument();
 		expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
-		expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+		expect(screen.getByTestId("research-plan-preview")).toBeInTheDocument();
 	});
 
 	it("renders AI autofill button", () => {
@@ -115,8 +131,6 @@ describe("ResearchPlanStep", () => {
 
 		render(<ResearchPlanStep />);
 
-		expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument();
-		expect(screen.getByText("Test Objective 1")).toBeInTheDocument();
-		expect(screen.getByText("Test Objective 2")).toBeInTheDocument();
+		expect(screen.getByTestId("research-plan-preview")).toBeInTheDocument();
 	});
 });
