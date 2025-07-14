@@ -6,7 +6,7 @@ import { ObjectiveForm, type ObjectiveFormData } from "./objective-form";
 describe("ObjectiveForm", () => {
 	const defaultProps = {
 		objectiveNumber: 1,
-		onSave: vi.fn(),
+		onSaveAction: vi.fn(),
 	};
 
 	it("renders with correct heading based on objective number", () => {
@@ -65,8 +65,8 @@ describe("ObjectiveForm", () => {
 
 	it("shows validation errors when saving with empty fields", async () => {
 		const user = userEvent.setup();
-		const onSave = vi.fn();
-		render(<ObjectiveForm {...defaultProps} onSave={onSave} />);
+		const onSaveAction = vi.fn();
+		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
 		await user.click(screen.getByTestId("save-button"));
 
@@ -75,13 +75,13 @@ describe("ObjectiveForm", () => {
 			"Objective description is required",
 		);
 		expect(screen.getByTestId("task-description-0-error")).toHaveTextContent("Task description is required");
-		expect(onSave).not.toHaveBeenCalled();
+		expect(onSaveAction).not.toHaveBeenCalled();
 	});
 
-	it("calls onSave with correct data when form is valid", async () => {
+	it("calls onSaveAction with correct data when form is valid", async () => {
 		const user = userEvent.setup();
-		const onSave = vi.fn();
-		render(<ObjectiveForm {...defaultProps} onSave={onSave} />);
+		const onSaveAction = vi.fn();
+		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
 		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
 		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
@@ -89,7 +89,7 @@ describe("ObjectiveForm", () => {
 
 		await user.click(screen.getByTestId("save-button"));
 
-		expect(onSave).toHaveBeenCalledWith({
+		expect(onSaveAction).toHaveBeenCalledWith({
 			description: "Test Description",
 			name: "Test Objective",
 			tasks: [
