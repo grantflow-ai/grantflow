@@ -60,20 +60,20 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	// Generate team members from all projects
 	const projectTeamMembers = projects
 		.flatMap((project) => project.members)
-		.reduce<{ backgroundColor: string; imageUrl?: string; initials: string }[]>((acc, member) => {
+		.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>((acc, member) => {
 			// Avoid duplicates by checking if user already exists (by firebase_uid)
-			const existingMember = acc.find(
-				(existing) => existing.initials === generateInitials(member.display_name ?? undefined, member.email),
-			);
+			const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
 			if (!existingMember) {
 				acc.push({
 					backgroundColor: generateBackgroundColor(member.firebase_uid),
 					initials: generateInitials(member.display_name ?? undefined, member.email),
+					uid: member.firebase_uid,
 					...(member.photo_url && { imageUrl: member.photo_url }),
 				});
 			}
 			return acc;
-		}, []);
+		}, [])
+		.map(({ uid: _uid, ...member }) => member); // Remove uid from final result
 
 	const handleDeleteProject = (projectId: string) => {
 		setProjectToDelete(projectId);
