@@ -1,6 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+
+/**
+ * NavigationContextProvider handles data loading based on navigation store context
+ * This replaces the previous URL parameter-based data fetching with store-based context
+ */
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
 import { getProject } from "@/actions/project";
