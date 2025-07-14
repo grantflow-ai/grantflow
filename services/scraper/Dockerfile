@@ -48,12 +48,14 @@ RUN /app/.venv/bin/python -m playwright install-deps chromium
 # Create cache directory with proper permissions
 RUN mkdir -p /app/.cache/ms-playwright && chown -R appuser:appuser /app/.cache
 
-# Switch to appuser for browser installation
-USER appuser
+# Install Playwright browsers as root with explicit cache path
+RUN PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright /app/.venv/bin/python -m playwright install chromium chromium-headless-shell
 
-# Install Playwright browsers as appuser with explicit path
-# Install both chromium and chromium-headless-shell to ensure compatibility
-RUN /app/.venv/bin/python -m playwright install chromium chromium-headless-shell
+# Fix permissions for browser cache after installation
+RUN chown -R appuser:appuser /app/.cache/ms-playwright
+
+# Switch to appuser for runtime
+USER appuser
 
 # Verify Playwright installation
 RUN /app/.venv/bin/python -c "from playwright.sync_api import sync_playwright; print('Playwright import successful')"
