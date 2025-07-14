@@ -3,8 +3,12 @@ import { persist } from "zustand/middleware";
 
 /**
  * Navigation store for managing application context without URL parameters
- * This replaces the previous URL-based navigation system to ensure clean URLs
- * without exposing internal IDs or sensitive information in the browser address bar
+ *
+ * Design principles:
+ * - URLs are clean and contain no IDs (e.g., /project, /application/editor)
+ * - UUIDs are used directly in network traffic for API calls
+ * - Context is maintained in this store for navigation state
+ * - No slug system needed - just direct UUID → API calls
  */
 
 interface NavigationActions {
