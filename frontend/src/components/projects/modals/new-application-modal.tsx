@@ -19,8 +19,8 @@ interface NewApplicationModalProps {
 }
 
 export function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicationModalProps) {
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
+	const [title,] = useState("");
+	const [description, ] = useState("");
 
 	const handleCreate = () => {
 		onCreate(title, description);

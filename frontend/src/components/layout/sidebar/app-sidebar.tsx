@@ -31,7 +31,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 		router.push("/login");
 	};
 
-	const handleCreateApplication = (title: string, description: string) => {
+	const handleCreateApplication = () => {
 		setIsModalOpen(false);
 	};
 	return (
