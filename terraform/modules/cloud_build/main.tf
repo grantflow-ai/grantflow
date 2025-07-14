@@ -38,10 +38,10 @@ locals {
 
 resource "google_cloudbuild_trigger" "service_triggers" {
   for_each = toset(local.services)
-  
+
   name        = "${each.key}-deploy-${var.branch}"
   description = "Deploy ${each.key} service on push to ${var.branch}"
-  
+
   github {
     owner = var.github_owner
     name  = var.github_repo
@@ -49,16 +49,16 @@ resource "google_cloudbuild_trigger" "service_triggers" {
       branch = "^${var.branch}$"
     }
   }
-  
+
   # Only trigger when service files change
   included_files = [
     "services/${each.key}/**",
     "packages/**",
     "cloudbuild.yaml"
   ]
-  
+
   filename = "cloudbuild.yaml"
-  
+
   substitutions = {
     _SERVICE_NAME = each.key
   }
