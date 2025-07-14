@@ -1,0 +1,140 @@
+name: Manual Deploy to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy (backend, crawler, indexer, rag, scraper, all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - backend
+          - crawler
+          - indexer
+          - rag
+          - scraper
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set environment variables
+        run: |
+          if [ "${{ inputs.environment }}" == "production" ]; then
+            echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+            echo "IMAGE_TAG=staging-latest" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy single service
+        if: inputs.service != 'all'
+        run: |
+          echo "Deploying ${{ inputs.service }} to ${{ inputs.environment }}..."
+          
+          # Get the latest image
+          IMAGE="us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/grantflow/${{ inputs.service }}:${{ env.IMAGE_TAG }}"
+          
+          # Deploy to Cloud Run
+          gcloud run deploy ${{ inputs.service }} \
+            --image "${IMAGE}" \
+            --region us-central1 \
+            --project ${{ env.PROJECT_ID }} \
+            --no-traffic
+          
+          # Health check
+          echo "Performing health check..."
+          REVISION=$(gcloud run revisions list --service=${{ inputs.service }} --region=us-central1 --format='value(name)' --limit=1)
+          URL=$(gcloud run services describe ${{ inputs.service }} --region=us-central1 --format='value(status.url)')
+          
+          # Test the new revision
+          if [ "${{ inputs.service }}" == "backend" ]; then
+            HEALTH_URL="${URL}/health"
+            if curl -f "${HEALTH_URL}" --max-time 30; then
+              echo "Health check passed!"
+            else
+              echo "Health check failed!"
+              exit 1
+            fi
+          fi
+          
+          # Route traffic to new revision
+          gcloud run services update-traffic ${{ inputs.service }} \
+            --to-latest \
+            --region us-central1 \
+            --project ${{ env.PROJECT_ID }}
+
+      - name: Deploy all services
+        if: inputs.service == 'all'
+        run: |
+          SERVICES="backend crawler indexer rag scraper"
+          
+          for SERVICE in $SERVICES; do
+            echo "Deploying ${SERVICE} to ${{ inputs.environment }}..."
+            
+            # Get the latest image
+            IMAGE="us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/grantflow/${SERVICE}:${{ env.IMAGE_TAG }}"
+            
+            # Deploy to Cloud Run
+            gcloud run deploy ${SERVICE} \
+              --image "${IMAGE}" \
+              --region us-central1 \
+              --project ${{ env.PROJECT_ID }} \
+              --no-traffic
+            
+            # Get revision info
+            REVISION=$(gcloud run revisions list --service=${SERVICE} --region=us-central1 --format='value(name)' --limit=1)
+            echo "Deployed revision: ${REVISION}"
+          done
+          
+          # Route traffic to all new revisions
+          echo "Routing traffic to new revisions..."
+          for SERVICE in $SERVICES; do
+            gcloud run services update-traffic ${SERVICE} \
+              --to-latest \
+              --region us-central1 \
+              --project ${{ env.PROJECT_ID }}
+          done
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Service(s): ${{ inputs.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Image Tag: ${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ inputs.service }}" == "all" ]; then
+            echo "### Deployed Services:" >> $GITHUB_STEP_SUMMARY
+            for SERVICE in backend crawler indexer rag scraper; do
+              REVISION=$(gcloud run revisions list --service=${SERVICE} --region=us-central1 --format='value(name)' --limit=1 2>/dev/null || echo "N/A")
+              echo "- ${SERVICE}: ${REVISION}" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
