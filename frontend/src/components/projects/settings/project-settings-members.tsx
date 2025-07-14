@@ -539,9 +539,9 @@ function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: str
 
 	return (
 		<div className="flex items-center gap-2 flex-wrap">
-			{displayedApps.map((appId, index) => (
+			{displayedApps.map((appId) => (
 				<span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium" key={appId}>
-					Application {index + 1}
+					{appId}
 				</span>
 			))}
 			{remainingCount > 0 && (
