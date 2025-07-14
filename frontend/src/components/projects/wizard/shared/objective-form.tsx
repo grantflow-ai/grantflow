@@ -94,11 +94,11 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		}
 
 		const taskErrors: Record<string, string> = {};
-		formData.tasks.forEach((task) => {
+		for (const task of formData.tasks) {
 			if (!task.description.trim()) {
 				taskErrors[task.id] = "Task description is required";
 			}
-		});
+		}
 
 		if (Object.keys(taskErrors).length > 0) {
 			newErrors.tasks = taskErrors;
@@ -116,12 +116,10 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 
 	return (
 		<div className={cn("space-y-6", className)} data-testid="objective-form">
-			{/* Header */}
 			<h2 className="text-lg font-medium text-gray-900" data-testid="objective-form-heading">
 				Objective {objectiveNumber}
 			</h2>
 
-			{/* Objective Name */}
 			<div className="space-y-2">
 				<label className="block text-sm font-medium text-gray-700" htmlFor="objective-name-input">
 					Objective name
@@ -139,7 +137,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				/>
 			</div>
 
-			{/* Objective Description */}
 			<div className="space-y-2">
 				<label className="block text-sm font-medium text-gray-700" htmlFor="objective-description-input">
 					Objective description
@@ -158,7 +155,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				/>
 			</div>
 
-			{/* Tasks Section */}
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
 					<h3 className="text-base font-medium text-gray-900">Tasks</h3>
@@ -167,7 +163,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					</AppButton>
 				</div>
 
-				{/* Task List */}
 				<div className="space-y-3">
 					{formData.tasks.map((task, index) => (
 						<div className="space-y-2" key={task.id}>
@@ -208,7 +203,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				</div>
 			</div>
 
-			{/* Action Buttons */}
 			<div className="flex justify-end pt-4">
 				<AppButton data-testid="save-button" onClick={handleSave} type="button" variant="primary">
 					Save
