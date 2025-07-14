@@ -1,8 +1,15 @@
-import { X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 
 import { AppButton } from "@/components/app";
-import { BaseModal } from "@/components/app/feedback/base-modal";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface NewApplicationModalProps {
@@ -20,65 +27,78 @@ export function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicatio
 		onClose();
 	};
 
-	return (
-		<BaseModal isOpen={isOpen} onClose={onClose}>
-			<div className=" w-[464px]" data-testid="new-application-modal">
-				<button
-					aria-label="Close modal"
-					className="absolute right-4 top-4 flex size-4 items-center justify-center text-black"
-					data-testid="close-modal-button"
-					onClick={onClose}
-					type="button"
-				>
-					<X className="size-4" />
-				</button>
+	const handleOpenChange = (open: boolean) => {
+		if (!open) {
+			onClose();
+		}
+	};
 
-				<main className="flex flex-col gap-8 p-8">
-					<div className="flex flex-col gap-2">
-						<h2 className="font-medium text-2xl leading-[30px] text-[#2e2d36]">
-							Select a Research Project
-						</h2>
-						<p className="font-normal text-base leading-5 text-gray-600">
-							Every application is part of a Research Project. Please select a project or create a new
-							one.
-						</p>
-					</div>
-					<div className="flex flex-col">
+	return (
+		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
+			<DialogContent
+				className="p-8 w-[464px] h-[431px] flex flex-col gap-8 bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100"
+				data-testid="new-application-modal"
+			>
+				<DialogHeader className="flex flex-col gap-2">
+					<DialogTitle className="font-medium text-2xl leading-[30px] text-[#2e2d36]">
+						Select a Research Project
+					</DialogTitle>
+					<DialogDescription className="font-normal text-base leading-5 text-gray-600">
+						Every application is part of a Research Project. Please select a project or create a new one.
+					</DialogDescription>
+				</DialogHeader>
+				<main className="flex flex-col gap-6">
+					<div >
 						<label className="font-normal text-xs text-gray-400">Research project</label>
 						<Select>
 							<SelectTrigger className="border border-primary w-full text-black [&>span]:font-normal [&>span]:text-base [&>span]:text-gray-600 [&>svg]:!text-gray-600 [&>svg]:!opacity-100">
 								<SelectValue placeholder="Choose a research project or create new" />
 							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="light">Light</SelectItem>
-								<SelectItem value="dark">Dark</SelectItem>
-								<SelectItem value="system">System</SelectItem>
+							<SelectContent className="[&>*]:p-0 border border-gray-200 w-full shadow-none ">
+								<SelectItem
+									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
+									value="Menu Item - First"
+								>
+									Menu Item - First
+								</SelectItem>
+								<SelectItem
+									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
+									value="	Menu Item - second"
+								>
+									Menu Item - second
+								</SelectItem>
+								<SelectItem
+									className="bg-white cursor-pointer border border-gray-200 text-app-black text-sm font-normal p-0 hover:bg-preview-bg hover:text-app-black focus:bg-preview-bg data-[highlighted]:bg-preview-bg data-[highlighted]:text-app-black rounded-none"
+									value="Menu Item - second"
+								>
+									<div className="w-[400px] flex  p-3">
+										<Plus className="text-primary mr-2" />
+										<div className="w-full ">
+											<p className="text-primary text-sm font-normal text-center">Create New</p>
+										</div>
+									</div>
+								</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
-					<div className="flex flex-col gap-2">
-						<label className="font-medium text-sm text-gray-700" htmlFor="application-description">
-							Description (Optional)
-						</label>
-						<textarea
-							className="w-full h-24 rounded-[4px] px-3 py-2 border border-[#e1dfeb] bg-white text-base text-black placeholder:text-gray-400 outline-none focus:border-[#1e13f8]"
-							id="application-description"
-							onChange={(e) => setDescription(e.target.value)}
-							placeholder="Enter a brief description"
-							value={description}
-						/>
+
+
+					<div>
+						<label className="font-normal text-xs text-gray-400">Research project name</label>
+						<input className="w-full h-10 px-3 rounded border border-gray-900 placeholder:font-normal placeholder:text-base placeholder:text-gray-600 text-base text-gray-600" placeholder="Give your research project a name " type="text" />
 					</div>
 				</main>
-
-				<div className="flex items-center justify-end gap-3">
-					<AppButton onClick={onClose} variant="secondary">
-						Cancel
-					</AppButton>
-					<AppButton onClick={handleCreate} disabled={!title.trim()} variant="primary">
-						Create
-					</AppButton>
-				</div>
-			</div>
-		</BaseModal>
+				<DialogFooter className="size-full flex items-end">
+					<div className="flex items-end justify-between gap-3 w-full">
+						<AppButton className="rounded px-4 py-2" onClick={onClose} variant="secondary">
+							Cancel
+						</AppButton>
+						<AppButton className="rounded px-4 py-2" onClick={handleCreate} variant="primary">
+							Select
+						</AppButton>
+					</div>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
