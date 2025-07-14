@@ -688,6 +688,35 @@ tasks:
       - trivy config ./terraform
 
   # ==============================================================================
+  # GITHUB ACTIONS - GitHub workflow commands
+  # ==============================================================================
+
+  gh:deploy:backend:
+    desc: Deploy backend service to Cloud Run via GitHub Actions
+    cmds:
+      - gh workflow run "Deploy to Cloud Run" --ref development -f service=backend -f use_latest=true
+
+  gh:deploy:crawler:
+    desc: Deploy crawler service to Cloud Run via GitHub Actions
+    cmds:
+      - gh workflow run "Deploy to Cloud Run" --ref development -f service=crawler -f use_latest=true
+
+  gh:deploy:indexer:
+    desc: Deploy indexer service to Cloud Run via GitHub Actions
+    cmds:
+      - gh workflow run "Deploy to Cloud Run" --ref development -f service=indexer -f use_latest=true
+
+  gh:deploy:rag:
+    desc: Deploy RAG service to Cloud Run via GitHub Actions
+    cmds:
+      - gh workflow run "Deploy to Cloud Run" --ref development -f service=rag -f use_latest=true
+
+  gh:deploy:scraper:
+    desc: Deploy scraper service to Cloud Run via GitHub Actions
+    cmds:
+      - gh workflow run "Deploy to Cloud Run" --ref development -f service=scraper -f use_latest=true
+
+  # ==============================================================================
   # CLOUD FUNCTIONS - Cloud Functions development and deployment
   # ==============================================================================
 

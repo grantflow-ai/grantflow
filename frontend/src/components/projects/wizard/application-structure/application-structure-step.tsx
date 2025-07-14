@@ -95,28 +95,34 @@ function ApplicationStructurePreview() {
 
 	if (!application) {
 		return (
-			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-				<EmptyStateView />
-			</WizardRightPane>
+			<div data-testid="application-structure-step">
+				<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+					<EmptyStateView />
+				</WizardRightPane>
+			</div>
 		);
 	}
 
 	if (isGeneratingTemplate) {
 		return (
-			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-				<GeneratingLoader />
-			</WizardRightPane>
+			<div data-testid="application-structure-step">
+				<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+					<GeneratingLoader />
+				</WizardRightPane>
+			</div>
 		);
 	}
 
 	return (
-		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor
-				isDetailedSection={isDetailedSection}
-				onAddSection={handleAddNewSection}
-				toUpdateGrantSection={toUpdateGrantSection}
-			/>
-		</WizardRightPane>
+		<div data-testid="application-structure-step">
+			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+				<SectionEditor
+					isDetailedSection={isDetailedSection}
+					onAddSection={handleAddNewSection}
+					toUpdateGrantSection={toUpdateGrantSection}
+				/>
+			</WizardRightPane>
+		</div>
 	);
 }
 
