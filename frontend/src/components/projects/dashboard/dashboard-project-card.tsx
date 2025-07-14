@@ -18,6 +18,7 @@ interface DashboardProjectCardProps {
 	project: API.ListProjects.Http200.ResponseBody[0];
 	projectTeamMembers: {
 		backgroundColor: string;
+		imageUrl?: string;
 		initials: string;
 	}[];
 }
@@ -50,7 +51,7 @@ export function DashboardProjectCard({
 						>
 							<div className="size-3">
 								<Image
-									alt="No projects"
+									alt="Applications"
 									className="w-full h-full object-cover"
 									data-testid="project-card-icon"
 									height={100}
@@ -58,7 +59,7 @@ export function DashboardProjectCard({
 									width={100}
 								/>
 							</div>
-							You have no applications yet
+							{getApplicationCountText(project.applications_count)}
 						</figure>
 						<div className="flex flex-col gap-2">
 							<h4 className="font-medium text-2xl text-black" data-testid="project-card-title">
@@ -118,4 +119,12 @@ export function DashboardProjectCard({
 			</AppCardContent>
 		</AppCard>
 	);
+}
+
+function getApplicationCountText(count: number): string {
+	if (count === 0) {
+		return "You have no applications yet";
+	}
+	const plural = count > 1 ? "s" : "";
+	return `${count} application${plural}`;
 }
