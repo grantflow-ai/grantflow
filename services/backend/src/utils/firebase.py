@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
 from firebase_admin import App, initialize_app
+from firebase_admin.auth import UidIdentifier
 from firebase_admin.auth import (
     delete_user as firebase_delete_user,
 )
@@ -86,7 +87,7 @@ async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
 
     handler = as_async_callable(firebase_get_users)
     try:
-        identifiers = [{"uid": uid} for uid in uids]
+        identifiers = [UidIdentifier(uid) for uid in uids]
         result = await handler(identifiers, app=get_firebase_app())
         users = cast("list[dict[str, Any]]", result.users)
         return {user["uid"]: user for user in users}
