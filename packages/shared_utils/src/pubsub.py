@@ -442,7 +442,7 @@ async def pull_notifications(
             "subscription": subscription_path,
             "max_messages": 100,
         },
-        timeout=5.0,
+        timeout=3.0,
     )
     ret: list[WebsocketMessage[dict[str, Any]]] = []
     ack_ids: list[str] = []
