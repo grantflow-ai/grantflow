@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
+from google.api_core import exceptions as gcp_exceptions  # type: ignore[import-untyped]
 from litestar import websocket_stream
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.shared_utils.src.logger import get_logger
@@ -23,12 +24,25 @@ async def handle_grant_application_notifications(
 ) -> AsyncGenerator[WebsocketMessage[dict[str, Any]]]:
     while True:
         logger.info("Polling for source updates")
-        messages = await pull_notifications(
-            logger=logger,
-            parent_id=application_id,
-        )
-        logger.debug("Received messages", messages=messages)
-        for message in messages:
-            yield message
+        try:
+            messages = await pull_notifications(
+                logger=logger,
+                parent_id=application_id,
+            )
+            logger.debug("Received messages", messages=messages)
+            for message in messages:
+                yield message
+        except gcp_exceptions.DeadlineExceeded:
+            logger.warning(
+                "Pub/Sub pull timed out, continuing polling",
+                application_id=str(application_id),
+            )
+        except Exception as e:
+            logger.error(
+                "Error pulling notifications, continuing polling",
+                application_id=str(application_id),
+                error=str(e),
+                exc_info=e,
+            )
 
         await asyncio.sleep(NOTIFICATION_POLL_INTERVAL)
