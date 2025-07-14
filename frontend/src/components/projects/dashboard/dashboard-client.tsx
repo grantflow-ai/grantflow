@@ -51,7 +51,8 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	const handleProjectNavigation = (projectId: string, projectName: string) => {
-		// Set navigation context and navigate
+		// Set project context in navigation store for parameter-free routing
+		// The NavigationContextProvider will handle data loading based on this context
 		navigateToProject(projectId, projectName);
 		router.push(routes.project.detail());
 	};

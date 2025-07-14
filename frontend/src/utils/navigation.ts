@@ -85,11 +85,11 @@ export function createProjectSlug(projectId: string, projectName: string): strin
 }
 
 export function extractIdFromSlug(slug: string): null | string {
-	// Extract the last segment after the final hyphen
+	// Extract short ID from slug (last part after hyphen)
 	const parts = slug.split("-");
 	const shortId = parts.at(-1);
 
-	// Validate it looks like a short UUID (8 hex characters)
+	// Validate it's an 8-character hex string
 	if (shortId && /^[a-f0-9]{8}$/i.test(shortId)) {
 		return shortId;
 	}

@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/**
+ * Navigation store for managing application context without URL parameters
+ * This replaces the previous URL-based navigation system to ensure clean URLs
+ * without exposing internal IDs or sensitive information in the browser address bar
+ */
+
 interface NavigationActions {
 	clearActiveApplication: () => void;
 	clearActiveProject: () => void;
