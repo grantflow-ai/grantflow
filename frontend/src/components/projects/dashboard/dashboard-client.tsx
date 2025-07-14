@@ -15,6 +15,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
+import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import PaymentLink from "../payment/payment-link";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardStats } from "./dashboard-stats";
@@ -23,12 +24,6 @@ import { WelcomeModal } from "./welcome/welcome-modal";
 interface DashboardClientProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;
 }
-
-const projectTeamMembers = [
-	{ backgroundColor: "#369e94", initials: "NH" },
-	{ backgroundColor: "#9e366f", initials: "VH" },
-	{ backgroundColor: "#9747ff", initials: "AR" },
-];
 
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const router = useRouter();
@@ -61,6 +56,24 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		fallback: initialProjects,
 		revalidateOnFocus: false,
 	});
+
+	// Generate team members from all projects
+	const projectTeamMembers = projects
+		.flatMap((project) => project.members)
+		.reduce<{ backgroundColor: string; imageUrl?: string; initials: string }[]>((acc, member) => {
+			// Avoid duplicates by checking if user already exists (by firebase_uid)
+			const existingMember = acc.find(
+				(existing) => existing.initials === generateInitials(member.display_name ?? undefined, member.email),
+			);
+			if (!existingMember) {
+				acc.push({
+					backgroundColor: generateBackgroundColor(member.firebase_uid),
+					initials: generateInitials(member.display_name ?? undefined, member.email),
+					...(member.photo_url && { imageUrl: member.photo_url }),
+				});
+			}
+			return acc;
+		}, []);
 
 	const handleDeleteProject = (projectId: string) => {
 		setProjectToDelete(projectId);
