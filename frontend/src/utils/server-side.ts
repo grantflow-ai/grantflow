@@ -60,8 +60,6 @@ export const createAuthHeaders = async () => {
 			redirect_path: PagePath.ONBOARDING,
 		});
 		redirect(PagePath.ONBOARDING);
-
-		return { Authorization: "Bearer test-token" };
 	}
 
 	log.info("Auth headers created", {
