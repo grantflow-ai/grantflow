@@ -167,8 +167,11 @@ describe("Server-side Utils", () => {
 
 		it("should redirect to onboarding when session cookie is missing", async () => {
 			mockCookieStore.get.mockReturnValue(undefined);
+			mockRedirect.mockImplementation(() => {
+				throw new Error("NEXT_REDIRECT"); // Simulate Next.js redirect behavior
+			});
 
-			await createAuthHeaders();
+			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(mockCookieStore.get).toHaveBeenCalledWith(SESSION_COOKIE);
 			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
@@ -176,16 +179,22 @@ describe("Server-side Utils", () => {
 
 		it("should redirect to onboarding when session cookie has no value", async () => {
 			mockCookieStore.get.mockReturnValue({ value: "" });
+			mockRedirect.mockImplementation(() => {
+				throw new Error("NEXT_REDIRECT"); // Simulate Next.js redirect behavior
+			});
 
-			await createAuthHeaders();
+			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
 		});
 
 		it("should redirect to onboarding when session cookie has null value", async () => {
 			mockCookieStore.get.mockReturnValue({ value: null });
+			mockRedirect.mockImplementation(() => {
+				throw new Error("NEXT_REDIRECT"); // Simulate Next.js redirect behavior
+			});
 
-			await createAuthHeaders();
+			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
 		});

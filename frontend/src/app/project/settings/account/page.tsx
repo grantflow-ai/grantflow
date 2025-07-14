@@ -1,5 +1,3 @@
-"use server";
-
 import { ProjectSettingsClient } from "@/components/projects/settings/project-settings-client";
 import { NavigationContextProvider } from "@/providers/navigation-context-provider";
 import { routes } from "@/utils/navigation";
