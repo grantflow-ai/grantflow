@@ -569,6 +569,16 @@ resource "google_cloud_run_v2_service" "rag" {
         }
       }
 
+      env {
+        name = "GOOGLE_AI_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "GOOGLE_AI_API_KEY"
+            version = "latest"
+          }
+        }
+      }
+
 
       volume_mounts {
         name       = "cloudsql"
