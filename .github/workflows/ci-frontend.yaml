@@ -12,6 +12,7 @@ on:
         branches:
             - main
             - development
+            - fix/e2e-test-improvements
         paths:
             - "frontend/**"
             - ".github/workflows/ci-frontend.yaml"
@@ -127,3 +128,60 @@ jobs:
 
             - name: Build Next.js App
               run: cd frontend && pnpm run build
+
+    e2e:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        if: github.ref == 'refs/heads/fix/e2e-test-improvements'
+        env:
+            NEXT_PUBLIC_SITE_URL: http://localhost:3001
+            NEXT_PUBLIC_FIREBASE_API_KEY: mock-api-key
+            NEXT_PUBLIC_FIREBASE_APP_ID: mock-app-id
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: mock-auth-domain
+            NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: mock-measurement-id
+            NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: mock-sender-id
+            NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: mock-tenant-id
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID: mock-project-id
+            NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: mock-storage-bucket
+            NEXT_PUBLIC_BACKEND_API_BASE_URL: http://localhost:8000
+            NEXT_PUBLIC_MAILGUN_API_KEY: mock-mailgun-key
+            NEXT_PUBLIC_SEGMENT_WRITE_KEY: mock-segment-key
+            NEXT_PUBLIC_DEBUG: true
+            NEXT_PUBLIC_MOCK_API: true
+            NEXT_PUBLIC_MOCK_AUTH: true
+            RESEND_API_KEY: mock-resend-api-key
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  package_json_file: frontend/package.json
+                  run_install: false
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+                  cache-dependency-path: frontend/pnpm-lock.yaml
+
+            - name: Install Dependencies
+              run: cd frontend && pnpm install
+
+            - name: Install Playwright Browsers
+              run: cd frontend && pnpm exec playwright install --with-deps chromium
+
+            - name: Run E2E Tests
+              run: cd frontend && pnpm run test:e2e:mock
+
+            - name: Upload E2E Test Results
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: e2e-test-results
+                  path: |
+                      frontend/test-results/
+                      frontend/playwright-report/
+                  retention-days: 30
