@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -127,43 +128,40 @@ export function ResearchDeepDiveStep() {
 		.filter((word: string) => word.length > 0).length;
 
 	return (
-		<div className="flex size-full" data-testid="research-deep-dive-step">
-			{}
-			<div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-100 p-6">
-				<div className="flex items-start justify-between">
-					<div>
-						<h2
-							className="font-heading text-2xl font-medium leading-loose"
-							data-testid="research-deep-dive-header"
+		<div className="flex size-full flex-col" data-testid="research-deep-dive-step">
+			<div className="flex-1 flex flex-col bg-preview-bg">
+				<div className="p-6">
+					<div className="flex items-center justify-between">
+						<div className="flex flex-col">
+							<h2
+								className="font-heading text-lg sm:text-xl md:text-2xl lg:text-2xl font-medium leading-loose whitespace-nowrap"
+								data-testid="research-deep-dive-header"
+							>
+								Research Deep Dive
+							</h2>
+							<p
+								className="text-muted-foreground-dark leading-tight"
+								data-testid="research-deep-dive-description"
+							>
+								Before generating your grant application draft, it would be helpful to learn a bit more
+								about your research to ensure more accurate results.
+							</p>
+						</div>
+						<AppButton
+							className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
+							data-testid="ai-try-button"
+							disabled={isAutofillLoading || !application}
+							leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
+							onClick={() => triggerAutofill("research_deep_dive")}
+							variant="secondary"
 						>
-							Research Deep Dive
-						</h2>
-						<p
-							className="text-muted-foreground-dark leading-tight"
-							data-testid="research-deep-dive-description"
-						>
-							Before generating your grant application draft, it would be helpful to learn a bit more
-							about your research to ensure more accurate results.
-						</p>
+							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
+						</AppButton>
 					</div>
-					<AppButton
-						className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
-						data-testid="ai-try-button"
-						disabled={isAutofillLoading || !application}
-						leftIcon={<span>✨</span>}
-						onClick={() => triggerAutofill("research_deep_dive")}
-						variant="secondary"
-					>
-						{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-					</AppButton>
 				</div>
-			</div>
 
-			{}
-			<div className="flex size-full pt-32">
-				{}
-				<div className="w-1/2 overflow-y-auto p-6">
-					<div className="space-y-3">
+				<div className="flex flex-1 gap-6 p-6 pt-0 min-h-0">
+					<div className="flex-1 overflow-y-auto space-y-3 pr-2">
 						{RESEARCH_QUESTIONS.map((item, index) => (
 							<QuestionCard
 								index={index + 1}
@@ -177,28 +175,30 @@ export function ResearchDeepDiveStep() {
 							/>
 						))}
 					</div>
-				</div>
 
-				{}
-				<div className="w-1/2 border-l border-gray-100 p-6">
-					{selectedQuestion === null ? (
-						<div className="flex h-full items-center justify-center" data-testid="empty-state-container">
-							<p className="text-muted-foreground-dark text-center" data-testid="empty-state-message">
-								Select a question to start answering
-							</p>
-						</div>
-					) : (
-						<AnswerArea
-							answer={currentAnswer}
-							hasChanges={hasUnsavedChanges()}
-							isFirstQuestion={selectedQuestion === 0}
-							onAnswerChange={handleAnswerChange}
-							onBack={handleBack}
-							onSave={handleSave}
-							question={RESEARCH_QUESTIONS[selectedQuestion].question}
-							wordCount={wordCount}
-						/>
-					)}
+					<div className="flex-1">
+						{selectedQuestion === null ? (
+							<div
+								className="flex h-full items-center justify-center"
+								data-testid="empty-state-container"
+							>
+								<p className="text-muted-foreground-dark text-center" data-testid="empty-state-message">
+									Select a question to start answering
+								</p>
+							</div>
+						) : (
+							<AnswerArea
+								answer={currentAnswer}
+								hasChanges={hasUnsavedChanges()}
+								isFirstQuestion={selectedQuestion === 0}
+								onAnswerChange={handleAnswerChange}
+								onBack={handleBack}
+								onSave={handleSave}
+								question={RESEARCH_QUESTIONS[selectedQuestion].question}
+								wordCount={wordCount}
+							/>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -227,7 +227,7 @@ function AnswerArea({
 	return (
 		<div className="h-full flex flex-col">
 			<TextareaField
-				className="flex-1 min-h-0 resize-none border-app-border-primary focus:border-app-primary"
+				className="flex-1 min-h-0 resize-none border-primary focus:border-primary"
 				countType="words"
 				label={question}
 				maxCount={1000}
@@ -274,11 +274,7 @@ function QuestionCard({
 }) {
 	return (
 		<AppCard
-			className={`p-4 cursor-pointer transition-colors border-2 ${
-				isSelected
-					? "border-app-primary bg-app-surface-secondary"
-					: "border-app-border-primary bg-app-surface-primary hover:border-app-action-secondary"
-			}`}
+			className="p-4 cursor-pointer transition-colors border-2 outline-primary text-app-black"
 			onClick={onClick}
 		>
 			<div className="flex items-start gap-3">
