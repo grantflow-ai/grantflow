@@ -2,8 +2,28 @@ import type { HTTPError } from "ky";
 import { z } from "zod";
 
 export const isValidUrl = (url: string): boolean => {
-	const urlResult = z.url().safeParse(url);
-	return urlResult.success;
+	const trimmedUrl = url.trim();
+	if (!trimmedUrl) return false;
+
+	const urlResult = z.url().safeParse(trimmedUrl);
+	if (!urlResult.success) return false;
+
+	try {
+		const parsedUrl = new URL(trimmedUrl);
+		const { hostname, protocol } = parsedUrl;
+
+		if (protocol !== "http:" && protocol !== "https:") {
+			return false;
+		}
+
+		if (hostname.includes("..") || hostname.startsWith(".") || hostname.endsWith(".")) {
+			return false;
+		}
+
+		return !(parsedUrl.port && Number(parsedUrl.port) > 65_535);
+	} catch {
+		return false;
+	}
 };
 
 interface ValidationErrorResponse {

@@ -82,6 +82,7 @@ interface WizardActions {
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
+	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
@@ -98,6 +99,7 @@ interface WizardState {
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
 	shouldRedirectToEditor: boolean;
+	showResearchPlanInfoBanner: boolean;
 }
 
 const initialWizardState: WizardState = {
@@ -113,6 +115,7 @@ const initialWizardState: WizardState = {
 		isActive: false,
 	},
 	shouldRedirectToEditor: false,
+	showResearchPlanInfoBanner: true,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -514,6 +517,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}));
 				},
 
+				setShowResearchPlanInfoBanner: (show: boolean) => {
+					set((state) => ({
+						...state,
+						showResearchPlanInfoBanner: show,
+					}));
+				},
+
 				toNextStep: () => {
 					const { currentStep, polling } = get();
 
@@ -759,6 +769,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 			name: WIZARD_STORAGE_KEY,
 			partialize: (state) => ({
 				currentStep: state.currentStep,
+				showResearchPlanInfoBanner: state.showResearchPlanInfoBanner,
 			}),
 		},
 	),

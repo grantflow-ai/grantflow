@@ -21,10 +21,10 @@ interface ObjectiveFormProps {
 	className?: string;
 	initialData?: ObjectiveFormData;
 	objectiveNumber: number;
-	onSave: (data: ObjectiveFormData) => void;
+	onSaveAction: (data: ObjectiveFormData) => void;
 }
 
-export function ObjectiveForm({ className, initialData, objectiveNumber, onSave }: ObjectiveFormProps) {
+export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveAction }: ObjectiveFormProps) {
 	const [formData, setFormData] = useState<ObjectiveFormData>(
 		initialData ?? {
 			description: "",
@@ -110,7 +110,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSave 
 
 	const handleSave = () => {
 		if (validateForm()) {
-			onSave(formData);
+			onSaveAction(formData);
 		}
 	};
 

@@ -7,7 +7,7 @@ const meta: Meta<typeof ObjectiveForm> = {
 		objectiveNumber: {
 			control: { max: 10, min: 1, type: "number" },
 		},
-		onSave: { action: "onSave" },
+		onSaveAction: { action: "onSaveAction" },
 	},
 	component: ObjectiveForm,
 	parameters: {
@@ -22,14 +22,14 @@ type Story = StoryObj<typeof ObjectiveForm>;
 export const Default: Story = {
 	args: {
 		objectiveNumber: 1,
-		onSave: fn(),
+		onSaveAction: fn(),
 	},
 };
 
 export const SecondObjective: Story = {
 	args: {
 		objectiveNumber: 2,
-		onSave: fn(),
+		onSaveAction: fn(),
 	},
 };
 
@@ -55,7 +55,7 @@ export const WithInitialData: Story = {
 			],
 		} as ObjectiveFormData,
 		objectiveNumber: 1,
-		onSave: fn(),
+		onSaveAction: fn(),
 	},
 };
 
@@ -85,7 +85,7 @@ export const MultipleObjectives: Story = {
 			],
 		} as ObjectiveFormData,
 		objectiveNumber: 3,
-		onSave: fn(),
+		onSaveAction: fn(),
 	},
 };
 
@@ -97,6 +97,6 @@ export const EmptyForm: Story = {
 			tasks: [{ description: "", id: "1" }],
 		} as ObjectiveFormData,
 		objectiveNumber: 1,
-		onSave: fn(),
+		onSaveAction: fn(),
 	},
 };
