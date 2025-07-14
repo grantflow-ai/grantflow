@@ -1,18 +1,24 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { getProject } from "@/actions/project";
 import { ProjectSettingsClient } from "@/components/projects/settings/project-settings-client";
 import { UserRole } from "@/types/user";
+import { resolveProjectSlug } from "@/utils/slug-resolver";
 
 export default async function ProjectSettingsBillingPage({ params }: { params: Promise<{ projectId: string }> }) {
-	const { projectId } = await params;
+	const { projectId: projectSlug } = await params;
+
+	const projectId = await resolveProjectSlug(projectSlug);
+	if (!projectId) {
+		notFound();
+	}
 
 	const project = await getProject(projectId);
 
 	if (project.role === UserRole.MEMBER) {
-		redirect(`/projects/${projectId}/settings/account`);
+		redirect(`/projects/${projectSlug}/settings/account`);
 	}
 
 	return <ProjectSettingsClient activeTab="billing" initialProject={project} />;

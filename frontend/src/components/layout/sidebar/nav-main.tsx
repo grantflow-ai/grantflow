@@ -1,15 +1,28 @@
+"use client";
+
 import { ChevronRight, Search, Settings } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { useProjectStore } from "@/stores/project-store";
+import { routes } from "@/utils/navigation";
 
 export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
+	const params = useParams();
+	const { project } = useProjectStore();
+
+	// Get current project ID from params or store
+	const projectId = (params.projectId as string) || project?.id;
+	const projectName = project?.name ?? "Project";
 	return (
 		<nav {...props}>
-			<main
-				className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center"
+			<Link
+				className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center hover:bg-gray-50 rounded-md transition-colors"
 				data-testid="dashboard-section"
+				href={routes.projects()}
 			>
 				<div className="size-4">
 					<Image
@@ -21,7 +34,7 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 					/>
 				</div>
 				<p className="text-black text-base font-normal ml-2 group-data-[collapsible=icon]:hidden">Dashboard</p>
-			</main>
+			</Link>
 			<SidebarGroup>
 				<SidebarMenu>
 					{/* Recent Applications */}
@@ -128,30 +141,42 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 							</CollapsibleTrigger>
 							<CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
 								<main className="flex flex-col gap-4 px-3">
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-account"
-									>
-										<p className="text-sm text-gray-700 font-normal">Account Setting</p>
-									</div>
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-billing"
-									>
-										<p className="text-sm text-gray-700 font-normal">Billing and payments</p>
-									</div>
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-members"
-									>
-										<p className="text-sm text-gray-700 font-normal">Members</p>
-									</div>
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-notifications"
-									>
-										<p className="text-sm text-gray-700 font-normal">Notifications</p>
-									</div>
+									{projectId ? (
+										<>
+											<Link
+												className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+												data-testid="settings-account"
+												href={routes.project.settings.account({ projectId, projectName })}
+											>
+												<p className="text-sm text-gray-700 font-normal">Account Setting</p>
+											</Link>
+											<Link
+												className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+												data-testid="settings-billing"
+												href={routes.project.settings.billing({ projectId, projectName })}
+											>
+												<p className="text-sm text-gray-700 font-normal">
+													Billing and payments
+												</p>
+											</Link>
+											<Link
+												className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+												data-testid="settings-members"
+												href={routes.project.settings.members({ projectId, projectName })}
+											>
+												<p className="text-sm text-gray-700 font-normal">Members</p>
+											</Link>
+											<Link
+												className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+												data-testid="settings-notifications"
+												href={routes.project.settings.notifications({ projectId, projectName })}
+											>
+												<p className="text-sm text-gray-700 font-normal">Notifications</p>
+											</Link>
+										</>
+									) : (
+										<p className="text-sm text-gray-500 p-2">No project selected</p>
+									)}
 								</main>
 							</CollapsibleContent>
 						</SidebarMenuItem>
