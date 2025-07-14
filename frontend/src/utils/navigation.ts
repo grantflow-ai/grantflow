@@ -5,8 +5,11 @@ interface BaseNavigationParams {
 }
 
 /**
- * Navigation routes without URL parameters
- * All entity selection is handled through the navigation store
+ * Clean navigation routes without URL parameters or exposed IDs
+ *
+ * - All routes are static (e.g., /project, /application/editor)
+ * - Entity context is managed through the navigation store
+ * - UUIDs are used for API calls but never in URLs
  */
 export const routes = {
 	acceptInvitation: ({ query }: BaseNavigationParams = {}) => {
@@ -61,40 +64,6 @@ export function buildUrl(path: string, query?: Record<string, string>): string {
 
 	const params = new URLSearchParams(query);
 	return `${path}?${params.toString()}`;
-}
-
-export function createApplicationSlug(applicationId: string, applicationTitle: string): string {
-	const shortId = applicationId.slice(0, 8);
-	const sanitizedTitle = applicationTitle
-		.toLowerCase()
-		.replaceAll(/[^a-z0-9]/g, "-")
-		.replaceAll(/-+/g, "-")
-		.replaceAll(/(^-)|(-$)/g, "");
-	return `${sanitizedTitle}-${shortId}`;
-}
-
-// Slug utilities
-export function createProjectSlug(projectId: string, projectName: string): string {
-	const shortId = projectId.slice(0, 8);
-	const sanitizedName = projectName
-		.toLowerCase()
-		.replaceAll(/[^a-z0-9]/g, "-")
-		.replaceAll(/-+/g, "-")
-		.replaceAll(/(^-)|(-$)/g, "");
-	return `${sanitizedName}-${shortId}`;
-}
-
-export function extractIdFromSlug(slug: string): null | string {
-	// Extract short ID from slug (last part after hyphen)
-	const parts = slug.split("-");
-	const shortId = parts.at(-1);
-
-	// Validate it's an 8-character hex string
-	if (shortId && /^[a-f0-9]{8}$/i.test(shortId)) {
-		return shortId;
-	}
-
-	return null;
 }
 
 export function navigateTo(
