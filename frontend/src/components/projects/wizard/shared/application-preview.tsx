@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo } from "react";
 import { ThemeBadge } from "@/components/projects/shared/theme-badge";
+import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
@@ -56,15 +57,7 @@ export function ApplicationPreview({
 	if (isEmpty) {
 		return (
 			<WizardRightPane>
-				<div className="flex flex-1 items-center justify-center">
-					<Image
-						alt="Preview logo"
-						height={180}
-						src="/icons/preview-logo.svg"
-						style={{ height: "auto", maxHeight: 180 }}
-						width={180}
-					/>
-				</div>
+				<EmptyStatePreview />
 			</WizardRightPane>
 		);
 	}

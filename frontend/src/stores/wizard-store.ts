@@ -82,6 +82,7 @@ interface WizardActions {
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
+	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
@@ -98,6 +99,7 @@ interface WizardState {
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
 	shouldRedirectToEditor: boolean;
+	showResearchPlanInfoBanner: boolean;
 }
 
 const initialWizardState: WizardState = {
@@ -113,6 +115,7 @@ const initialWizardState: WizardState = {
 		isActive: false,
 	},
 	shouldRedirectToEditor: false,
+	showResearchPlanInfoBanner: true,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -514,6 +517,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}));
 				},
 
+				setShowResearchPlanInfoBanner: (show: boolean) => {
+					set((state) => ({
+						...state,
+						showResearchPlanInfoBanner: show,
+					}));
+				},
+
 				toNextStep: () => {
 					const { currentStep, polling } = get();
 
@@ -583,13 +593,11 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						return;
 					}
 
-					// Check if indexing is complete before triggering autofill
 					const hasIndexingInProgress = application.rag_sources.some(
 						(source) => source.status === "INDEXING" || source.status === "CREATED",
 					);
 
 					if (hasIndexingInProgress) {
-						// Import toast dynamically to avoid circular dependencies
 						const { toast } = await import("sonner");
 						toast.error("Please wait for all documents to finish processing before using autofill");
 						return;
@@ -622,18 +630,15 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							message_id: response.message_id,
 						});
 
-						// Show initial success message
 						const { toast } = await import("sonner");
 						toast.success("Autofill request sent. Processing your documents...");
 					} catch (error) {
 						log.error("triggerAutofill failed", { error, fieldName, type });
 
-						// Show user-friendly error message
 						const { toast } = await import("sonner");
 						const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
 						toast.error(`Autofill error: ${errorMessage}`);
 
-						// Reset loading state on error
 						set((state) => ({
 							...state,
 							isAutofillLoading: {
@@ -759,6 +764,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 			name: WIZARD_STORAGE_KEY,
 			partialize: (state) => ({
 				currentStep: state.currentStep,
+				showResearchPlanInfoBanner: state.showResearchPlanInfoBanner,
 			}),
 		},
 	),

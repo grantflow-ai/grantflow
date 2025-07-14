@@ -2,24 +2,25 @@ import type { HTTPError } from "ky";
 import { z } from "zod";
 
 export const isValidUrl = (url: string): boolean => {
-	if (url.includes(" ")) return false;
-	if (url.includes("..")) return false;
+	const trimmedUrl = url.trim();
+	if (!trimmedUrl) return false;
 
-	const urlResult = z.url().safeParse(url);
+	const urlResult = z.url().safeParse(trimmedUrl);
 	if (!urlResult.success) return false;
 
 	try {
-		const urlObj = new URL(url);
+		const parsedUrl = new URL(trimmedUrl);
+		const { hostname, protocol } = parsedUrl;
 
-		if (!["http:", "https:"].includes(urlObj.protocol)) return false;
+		if (protocol !== "http:" && protocol !== "https:") {
+			return false;
+		}
 
-		const { hostname } = urlObj;
+		if (hostname.includes("..") || hostname.startsWith(".") || hostname.endsWith(".")) {
+			return false;
+		}
 
-		if (!hostname.includes(".") && hostname !== "localhost") return false;
-
-		if (!/^[a-zA-Z0-9.-]+$/.test(hostname)) return false;
-
-		return !(hostname.startsWith(".") || hostname.endsWith(".") || hostname.includes(".."));
+		return !(parsedUrl.port && Number(parsedUrl.port) > 65_535);
 	} catch {
 		return false;
 	}
