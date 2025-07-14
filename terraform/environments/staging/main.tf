@@ -96,7 +96,7 @@ module "cloud_run" {
   enable_http2             = false # HTTP/1.1 for staging
   request_timeout          = 300   # 5-minute timeout
   concurrency_limit        = 80    # Default concurrency
-  
+
   # Custom domain for backend API (commented out to save costs)
   # custom_domain            = "api-staging.grantflow.ai"
 }
@@ -137,6 +137,15 @@ module "monitoring" {
     memory_threshold     = 0.95  # 95% for staging
     cpu_threshold        = 0.90  # 90% for staging
   }
+}
+
+# API Gateway module
+module "api_gateway" {
+  source      = "../../modules/api_gateway"
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+  backend_url = module.cloud_run.backend_url
 }
 
 # Import existing BigQuery dataset
@@ -259,4 +268,9 @@ output "backend_url" {
 output "scraper_url" {
   description = "Scraper service URL"
   value       = module.cloud_run.scraper_url
+}
+
+output "api_gateway_url" {
+  description = "API Gateway URL for the backend"
+  value       = module.api_gateway.api_gateway_url
 }
