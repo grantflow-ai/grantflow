@@ -9,6 +9,7 @@ on:
             - ".github/workflows/deployment-service-scraper.yaml"
             - "packages/**/src/**"
             - "services/scraper/src/**"
+            - "services/scraper/Dockerfile"
     release:
         types: [published]
 
