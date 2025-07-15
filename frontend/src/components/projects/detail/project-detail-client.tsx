@@ -16,8 +16,6 @@ import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { AppButton } from "@/components/app";
 import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
 
-
-
 interface ProjectDetailClientProps {
 	initialProject: API.GetProject.Http200.ResponseBody;
 }
@@ -27,8 +25,6 @@ const projectTeamMembers = [
 	{ backgroundColor: "#9e366f", initials: "VH" },
 	{ backgroundColor: "#9747ff", initials: "AR" },
 ];
-
-
 
 export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
 	const router = useRouter();
