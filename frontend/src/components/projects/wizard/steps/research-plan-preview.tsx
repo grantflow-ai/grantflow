@@ -8,7 +8,7 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, GripHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { AppCard } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -144,13 +144,7 @@ function ObjectiveHeader({ attributes, index, listeners, objective, onEdit, onRe
 					{...attributes}
 					{...listeners}
 				>
-					<Image
-						alt="Drag to reorder"
-						className="flex-shrink-0"
-						height={20}
-						src="/icons/grip-horizontal.svg"
-						width={20}
-					/>
+					<GripHorizontal className="flex-shrink-0" size={20} />
 				</button>
 			</div>
 
@@ -158,7 +152,7 @@ function ObjectiveHeader({ attributes, index, listeners, objective, onEdit, onRe
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<AppButton
-							className="size-8 text-gray-400 hover:text-gray-600"
+							className="size-8 text-gray-400 hover:text-gray-600 hover:bg-app-gray-100"
 							size="sm"
 							type="button"
 							variant="ghost"
@@ -243,13 +237,7 @@ function TaskHeader({ objectiveIndex, taskIndex }: TaskHeaderProps) {
 					className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
 					type="button"
 				>
-					<Image
-						alt="Drag to reorder"
-						className="flex-shrink-0"
-						height={20}
-						src="/icons/grip-horizontal.svg"
-						width={20}
-					/>
+					<GripHorizontal className="flex-shrink-0" size={20} />
 				</button>
 			</div>
 		</div>
