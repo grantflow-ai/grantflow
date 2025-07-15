@@ -2,9 +2,9 @@
 
 import { AvatarGroup } from "@/components/app";
 
-import { Notification } from "./notification";
+import { Notification } from "@/components/projects/dashboard/notification";
 
-interface DashboardHeaderProps {
+interface AppHeaderProps {
 	projectTeamMembers: {
 		backgroundColor: string;
 		imageUrl?: string;
@@ -12,7 +12,7 @@ interface DashboardHeaderProps {
 	}[];
 }
 
-export function DashboardHeader({ projectTeamMembers }: DashboardHeaderProps) {
+export function AppHeader({ projectTeamMembers }: AppHeaderProps) {
 	return (
 		<header className="h-[73px] w-full flex justify-end items-center gap-1 px-6" data-testid="dashboard-header">
 			<button

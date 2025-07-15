@@ -6,21 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
-import { AppButton } from "@/components/app";
+import { getProjectMembers } from "@/actions/project";
+import { AppHeader } from "@/components/layout/app-header";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
+import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
-import { DashboardHeader } from "../dashboard/dashboard-header";
 import { ApplicationList } from "./application-list";
-
-const projectTeamMembers = [
-	{ backgroundColor: "#369e94", initials: "NH" },
-	{ backgroundColor: "#9e366f", initials: "VH" },
-	{ backgroundColor: "#9747ff", initials: "AR" },
-];
 
 export function ProjectDetailClient() {
 	const router = useRouter();
@@ -33,6 +28,13 @@ export function ProjectDetailClient() {
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
+
+	// Focus title input when editing
+	useEffect(() => {
+		if (isEditingTitle && titleInputRef.current) {
+			titleInputRef.current.focus();
+		}
+	}, [isEditingTitle]);
 
 	// Redirect if no project
 	useEffect(() => {
@@ -57,7 +59,35 @@ export function ProjectDetailClient() {
 		},
 	);
 
+	// Fetch project members using SWR
+	const { data: projectMembers } = useSWR(
+		project ? `/projects/${project.id}/members` : null,
+		() => (project ? getProjectMembers(project.id) : null),
+		{
+			revalidateOnFocus: false,
+		},
+	);
+
 	const applications = applicationsData?.applications ?? [];
+
+	// Generate team members from project members (same logic as dashboard)
+	const projectTeamMembers =
+		projectMembers?.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>(
+			(acc, member) => {
+				// Avoid duplicates by checking if user already exists (by firebase_uid)
+				const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
+				if (!existingMember) {
+					acc.push({
+						backgroundColor: generateBackgroundColor(member.firebase_uid),
+						initials: generateInitials(member.display_name ?? undefined, member.email),
+						uid: member.firebase_uid,
+						...(member.photo_url && { imageUrl: member.photo_url }),
+					});
+				}
+				return acc;
+			},
+			[],
+		) ?? [];
 
 	const handleDeleteApplication = (applicationId: string) => {
 		setApplicationToDelete(applicationId);
@@ -109,30 +139,22 @@ export function ProjectDetailClient() {
 		router.push(wizardPath);
 	};
 
-	useEffect(() => {
-		if (isEditingTitle && titleInputRef.current) {
-			titleInputRef.current.focus();
-		}
-	}, [isEditingTitle]);
-
 	if (!project) {
 		return null; // Will redirect via useEffect
 	}
 
 	return (
-		<section className="bg-preview-bg w-full h-full overflow-y-scroll  flex">
-			<main className="w-[98%] pb-5">
-				<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
-				<main
-					className=" px-10 relative flex h-[863px] flex-col gap-10 pt-14 pb-8 rounded-lg bg-white border border-gray-200"
-					data-testid="project-header"
-				>
-					<div className="flex items-center justify-between w-full">
+		<section className="w-full h-full overflow-y-scroll flex flex-col">
+			<AppHeader projectTeamMembers={projectTeamMembers} />
+
+			<main className="flex-1 flex flex-col">
+				<main className="flex flex-col pt-6 pb-8 px-10 flex-1 min-h-0" data-testid="project-header">
+					{/* Inline header content matching Figma design */}
+					<div className="flex items-center justify-between mb-6">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
 								<input
-									className="font-medium text-[36px] leading-[42px] text-black bg-gray-100 outline-none rounded-md px-2 w-full min-w-[100px]"
-									data-testid="project-title-input"
+									className="font-medium text-[36px] leading-[42px] text-app-black bg-app-gray-100 outline-none rounded-md px-2 min-w-[200px]"
 									onBlur={() => {
 										setIsEditingTitle(false);
 									}}
@@ -148,17 +170,13 @@ export function ProjectDetailClient() {
 									value={projectTitle}
 								/>
 							) : (
-								<h1
-									className=" font-medium text-[36px] leading-[42px] text-black"
-									data-testid="project-title"
-								>
+								<h1 className="font-medium text-[36px] leading-[42px] text-app-black">
 									{projectTitle}
 								</h1>
 							)}
 							{!isEditingTitle && (
 								<button
-									className="flex size-6 items-center justify-center text-[#636170] hover:text-[#2e2d36] cursor-pointer"
-									data-testid="edit-project-title-button"
+									className="flex size-6 items-center justify-center text-app-gray-600 hover:text-app-black cursor-pointer"
 									onClick={() => {
 										setIsEditingTitle(true);
 									}}
@@ -168,12 +186,12 @@ export function ProjectDetailClient() {
 								</button>
 							)}
 						</div>
+
 						<div className="flex items-center gap-3">
-							<div className="relative w-80 ">
-								<SearchIcon className="absolute right-3 top-1/2 size-3 -translate-y-1/2 text-[#636170]" />
+							<div className="relative w-80">
+								<SearchIcon className="absolute right-3 top-1/2 size-3 -translate-y-1/2 text-app-gray-600" />
 								<input
-									className="w-full h-10 rounded-[4px] px-3 border border-[#e1dfeb] bg-white   text-[14px] text-base text-black placeholder:text-gray-400 placeholder:font-normal placeholder:text-sm outline-none focus:border-[#1e13f8]"
-									data-testid="application-search-input"
+									className="w-full h-10 rounded-[4px] px-3 border border-app-gray-400 bg-white text-base text-app-black placeholder:text-app-gray-500 placeholder:font-normal outline-none focus:border-primary"
 									onChange={(e) => {
 										setSearchQuery(e.target.value);
 									}}
@@ -181,20 +199,21 @@ export function ProjectDetailClient() {
 									value={searchQuery}
 								/>
 							</div>
-							<AppButton
-								className="px-4 py-2"
+
+							<button
+								className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium text-base inline-flex items-center gap-2 transition-all disabled:pointer-events-none disabled:opacity-50"
 								data-testid="new-application-button"
 								disabled={isCreatingApplication}
 								onClick={handleCreateApplication}
 								type="button"
-								variant="primary"
 							>
 								<Plus className="size-4" />
-								<p className="font-normal text-base">New Application</p>
-							</AppButton>
+								<span>New Application</span>
+							</button>
 						</div>
 					</div>
-					<div className="flex-1 overflow-auto  pb-6" data-testid="applications-section">
+
+					<div className="flex-1 overflow-auto pb-6 min-h-0" data-testid="applications-section">
 						<ApplicationList
 							applications={applications}
 							isCreatingApplication={isCreatingApplication}
@@ -208,7 +227,6 @@ export function ProjectDetailClient() {
 				</main>
 			</main>
 
-			{}
 			<DeleteApplicationModal
 				isOpen={showDeleteModal}
 				onClose={() => {
