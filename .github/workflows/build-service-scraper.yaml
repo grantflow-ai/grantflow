@@ -7,10 +7,12 @@ on:
             - development
         paths:
             - ".github/workflows/build-service-scraper.yaml"
+            - ".github/actions/**"
             - "packages/**/src/**"
             - "services/scraper/src/**"
     release:
         types: [published]
+    workflow_dispatch:
 
 jobs:
     build-and-push:

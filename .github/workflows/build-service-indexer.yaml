@@ -7,10 +7,12 @@ on:
             - development
         paths:
             - ".github/workflows/build-service-indexer.yaml"
+            - ".github/actions/**"
             - "packages/**/src/**"
             - "services/indexer/src/**"
     release:
         types: [published]
+    workflow_dispatch:
 
 jobs:
     build-and-push:
