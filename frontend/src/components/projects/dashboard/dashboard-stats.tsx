@@ -22,18 +22,26 @@ export function DashboardStats({ initialProjects }: DashboardStatsProps) {
 	);
 
 	return (
-		<article className="flex gap-8 items-center w-full mt-6" data-testid="dashboard-stats">
-			<div className="w-full h-[130px]  border border-gray-200 rounded-sm px-6 py-6 flex flex-col gap-2.5">
-				<h4 className="font-normal text-4xl text-black" data-testid="project-count">
+		<article className="flex gap-8 items-center w-full" data-testid="dashboard-stats">
+			<div className="w-full bg-white border border-app-gray-100 rounded px-8 py-6 flex flex-col gap-2.5">
+				<h4
+					className="font-button font-normal text-[36px] leading-[42px] text-app-black"
+					data-testid="project-count"
+				>
 					{projectCount}
 				</h4>
-				<p className="font-normal text-2xl text-gray-600">Research projects</p>
+				<p className="font-button font-normal text-[24px] leading-[30px] text-app-gray-600">
+					Research projects
+				</p>
 			</div>
-			<div className="w-full h-[130px]  border border-gray-200 rounded-sm px-6 py-6 flex flex-col gap-2.5">
-				<h4 className="font-normal text-4xl text-black" data-testid="application-count">
+			<div className="w-full bg-white border border-app-gray-100 rounded px-8 py-6 flex flex-col gap-2.5">
+				<h4
+					className="font-button font-normal text-[36px] leading-[42px] text-app-black"
+					data-testid="application-count"
+				>
 					{applicationCount}
 				</h4>
-				<p className="font-normal text-2xl text-gray-600">Applications</p>
+				<p className="font-button font-normal text-[24px] leading-[30px] text-app-gray-600">Applications</p>
 			</div>
 		</article>
 	);

@@ -6,7 +6,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { createProject } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { AppButton, AvatarGroup } from "@/components/app";
+import { AvatarGroup } from "@/components/app";
 import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -187,46 +187,56 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	return (
-		<div className="relative size-full overflow-y-scroll">
+		<div className="relative size-full overflow-y-scroll bg-preview-bg">
 			{projects.length === 1 && projects[0].applications_count === 0 && (
 				<WelcomeModal onStartApplication={handleStartApplication} />
 			)}
-			<section className="bg-preview-bg w-full ">
-				<main className="w-[98%] pb-5 ">
+			<section className="w-full h-full">
+				<main className="w-full h-full flex flex-col">
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className=" px-10 relative flex h-[863px] flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200"
+						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 rounded-lg bg-white border border-app-gray-100 min-h-0"
 						data-testid="dashboard-main-content"
 					>
 						<main className="flex flex-col gap-8">
-							<article className="text-black flex justify-between items-center">
+							<article className="text-app-black flex justify-between items-start">
 								<div className="flex flex-col gap-2">
-									<h2 className="font-medium text-4xl " data-testid="dashboard-title">
+									<h2
+										className="font-heading font-medium text-[36px] leading-[42px] text-app-black"
+										data-testid="dashboard-title"
+									>
 										Dashboard
 									</h2>
-									<p className="font-normal text-base text-gray-600">
+									<p className="font-body font-normal text-base text-app-gray-600">
 										Your one‑stop overview for all your Research Projects.
 									</p>
 								</div>
-								<div className="flex gap-6">
-									<main className=" flex justify-end items-center gap-2">
-										<div className="size-8 flex items-center justify-center bg-gray-50 rounded-xs cursor-pointer">
+								<div className="flex gap-6 items-center">
+									<main className="flex justify-end items-center gap-1">
+										<button
+											className="size-8 flex items-center justify-center bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
+											data-testid="invite-collaborators-button"
+											onClick={() => {
+												if (projects.length > 0) {
+													setSelectedProjectForInvite(projects[0]);
+													setShowInviteModal(true);
+												}
+											}}
+											type="button"
+										>
 											<Tooltip>
-												<TooltipTrigger
-													className="cursor-pointer"
-													data-testid="invite-collaborators-button"
-												>
-													<Plus className="size-2.5 text-primary " />
+												<TooltipTrigger asChild>
+													<Plus className="size-4 text-app-gray-600" />
 												</TooltipTrigger>
-												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-xs">
-													<p className="text-white font-normal text-base">
+												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
+													<p className="text-white font-body font-normal text-sm">
 														Invite collaborators
 													</p>
 												</TooltipContent>
 											</Tooltip>
-										</div>
-										<div className="  ">
+										</button>
+										<div>
 											<AvatarGroup
 												data-testid="dashboard-avatar-group"
 												size="md"
@@ -234,24 +244,28 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 											/>
 										</div>
 									</main>
-									<AppButton
-										className="px-4 py-2"
+									<button
+										className="bg-primary text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-link-hover-dark transition-colors"
 										data-testid="new-research-project-button"
 										disabled={isCreatingProject}
 										onClick={handleCreateProject}
-										variant="primary"
+										type="button"
 									>
-										<p className="font-normal text-base">
-											{isCreatingProject ? "Creating..." : "+ New Research Project"}
-										</p>
-									</AppButton>
+										<Plus className="size-4" />
+										<span className="font-button font-normal text-base">
+											{isCreatingProject ? "Creating..." : "New Research Project"}
+										</span>
+									</button>
 								</div>
 							</article>
 
 							<DashboardStats initialProjects={projects} />
 						</main>
 						<main className="">
-							<h3 className="font-normal text-4xl text-black" data-testid="research-projects-heading">
+							<h3
+								className="font-heading font-medium text-[28px] leading-[34px] text-app-black"
+								data-testid="research-projects-heading"
+							>
 								Research Projects
 							</h3>
 							<main className="flex items-center gap-4 flex-wrap mt-6" data-testid="projects-container">
@@ -274,9 +288,11 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										className="flex w-full flex-col items-center justify-center py-12"
 										data-testid="empty-projects-state"
 									>
-										<p className="text-[#636170] mb-4">You don&apos;t have any projects yet.</p>
+										<p className="text-app-gray-600 mb-4 font-body">
+											You don&apos;t have any projects yet.
+										</p>
 										<button
-											className="rounded bg-[#1e13f8] px-4 py-2 text-white"
+											className="rounded bg-primary px-4 py-2 text-white hover:bg-link-hover-dark transition-colors font-button"
 											data-testid="create-first-project-button"
 											disabled={isCreatingProject}
 											onClick={handleCreateProject}

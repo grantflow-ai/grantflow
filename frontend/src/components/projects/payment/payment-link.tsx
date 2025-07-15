@@ -7,7 +7,7 @@ export default function PaymentLink() {
 	const [showPaymentModal, setShowPaymentModal] = useState(false);
 
 	return (
-		<section>
+		<section className="hidden">
 			<article className="w-full bottom-0 left-0 absolute h-[54px] rounded-b-[8px] bg-primary flex justify-center items-center">
 				<div className="flex items-center gap-2.5 ">
 					<p className="font-normal text-base font-body leading-5">

@@ -32,7 +32,7 @@ export function DashboardProjectCard({
 }: DashboardProjectCardProps) {
 	return (
 		<AppCard
-			className="w-[413px] h-[300px] bg-preview-bg cursor-pointer hover:border-gray-300 transition-colors"
+			className="w-[413.33px] h-[300px] bg-preview-bg cursor-pointer hover:border-app-gray-300 transition-colors border-app-gray-100"
 			data-testid="dashboard-project-card"
 			onClick={
 				onClick
@@ -42,79 +42,83 @@ export function DashboardProjectCard({
 					: undefined
 			}
 		>
-			<AppCardContent className="p-6 flex h-full">
-				<div className="flex flex-col w-full">
-					<div className="flex flex-col gap-3">
+			<AppCardContent className="px-[24px] flex flex-col h-full justify-between">
+				<div className="flex flex-col gap-3">
+					<div className="flex items-start justify-between">
 						<figure
-							className="px-2 gap-1 bg-gray-100 text-app-dark-blue w-fit items-center flex rounded-[20px]"
+							className="px-2 gap-1 bg-app-gray-100 text-app-dark-blue w-fit items-center flex rounded-[20px] text-[12px] leading-[18px] py-0 font-body"
 							data-testid="project-card-figure"
 						>
-							<div className="size-3">
+							<div className="relative shrink-0 size-3">
 								<Image
 									alt="Applications"
-									className="w-full h-full object-cover"
+									className="size-3 object-cover"
 									data-testid="project-card-icon"
-									height={100}
+									height={12}
 									src="/icons/note_stack.svg"
-									width={100}
+									width={12}
 								/>
 							</div>
-							{getApplicationCountText(project.applications_count)}
+							<span className="leading-[18px] text-[12px]">
+								{getApplicationCountText(project.applications_count)}
+							</span>
 						</figure>
-						<div className="flex flex-col gap-2">
-							<h4 className="font-medium text-2xl text-black" data-testid="project-card-title">
-								{project.name}
-							</h4>
-							<p className="text-gray-600 text-base font-normal" data-testid="project-card-description">
-								{project.description}
-							</p>
-						</div>
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								className="cursor-pointer"
+								data-testid="project-card-menu-trigger"
+								onClick={(e) => {
+									e.stopPropagation();
+								}}
+							>
+								<MoreVertical className="size-4 text-app-gray-700" />
+							</DropdownMenuTrigger>
+							<DropdownMenuContent
+								className="w-[200px] rounded-[5px] bg-white border border-app-gray-100 shadow-[1px_1px_3px_0px_rgba(225,223,235,0.2)] p-0"
+								data-testid="project-card-menu"
+							>
+								<DropdownMenuItem
+									className="p-3 font-body font-normal text-base text-app-gray-300 flex items-center gap-2.5 cursor-pointer hover:bg-app-gray-100/50 data-[highlighted]:bg-app-gray-100/50"
+									data-testid="project-card-delete"
+									onClick={(e) => {
+										e.stopPropagation();
+										onDelete?.(project.id);
+									}}
+								>
+									<Trash2 className="size-4 text-app-gray-300" />
+									Delete
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									className="p-3 font-body font-normal text-base text-app-black flex items-center gap-2.5 cursor-pointer hover:bg-app-gray-100/50 data-[highlighted]:bg-app-gray-100/50 rounded-bl-[4px] rounded-br-[4px]"
+									data-testid="project-card-duplicate"
+									onClick={(e) => {
+										e.stopPropagation();
+										onDuplicate?.(project.id);
+									}}
+								>
+									<Copy className="size-4 text-app-gray-600" />
+									Duplicate
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
-					<div className="flex items-end h-full">
-						<div className="flex items-center " data-testid="project-card-avatar-group">
-							<AvatarGroup size="md" users={projectTeamMembers} />
-						</div>
+					<div className="flex flex-col gap-2 w-[311px]">
+						<h4
+							className="font-heading font-medium text-[24px] leading-[30px] text-app-black"
+							data-testid="project-card-title"
+						>
+							{project.name}
+						</h4>
+						<p
+							className="text-app-gray-600 text-base font-body font-normal"
+							data-testid="project-card-description"
+						>
+							{project.description}
+						</p>
 					</div>
 				</div>
-				<div>
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							className="-mt-2 cursor-pointer"
-							data-testid="project-card-menu-trigger"
-							onClick={(e) => {
-								e.stopPropagation();
-							}}
-						>
-							<MoreVertical className="size-4 text-gray-700 " />
-						</DropdownMenuTrigger>
-						<DropdownMenuContent
-							className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-0"
-							data-testid="project-card-menu"
-						>
-							<DropdownMenuItem
-								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
-								data-testid="project-card-delete"
-								onClick={(e) => {
-									e.stopPropagation();
-									onDelete?.(project.id);
-								}}
-							>
-								<Trash2 className="size-4 text-gray-700" />
-								Delete
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
-								data-testid="project-card-duplicate"
-								onClick={(e) => {
-									e.stopPropagation();
-									onDuplicate?.(project.id);
-								}}
-							>
-								<Copy className="size-4 text-gray-700" />
-								Duplicate
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+				<div className="flex items-center" data-testid="project-card-avatar-group">
+					<AvatarGroup size="md" users={projectTeamMembers} />
 				</div>
 			</AppCardContent>
 		</AppCard>
