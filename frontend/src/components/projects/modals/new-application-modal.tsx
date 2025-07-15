@@ -55,11 +55,14 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 				</DialogHeader>
 				<main className="flex flex-col gap-6">
 					<div>
-						<label className="font-normal text-xs text-gray-400">Research project</label>
+						<label className="font-normal text-xs text-gray-400" htmlFor="research-project-select">
+							Research project
+						</label>
 						<Select>
 							<SelectTrigger
 								className="border border-primary w-full text-black [&>span]:font-normal [&>span]:text-base [&>span]:text-gray-600 [&>svg]:!text-gray-600 [&>svg]:!opacity-100"
 								data-testid="select-trigger"
+								id="research-project-select"
 							>
 								<SelectValue placeholder="Choose a research project or create new" />
 							</SelectTrigger>
@@ -94,10 +97,13 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 					</div>
 
 					<div>
-						<label className="font-normal text-xs text-gray-400">Research project name</label>
+						<label className="font-normal text-xs text-gray-400" htmlFor="project-name-input">
+							Research project name
+						</label>
 						<input
 							className="w-full h-10 px-3 rounded border border-gray-900 placeholder:font-normal placeholder:text-base placeholder:text-gray-600 text-base text-gray-600"
 							data-testid="project-name-input"
+							id="project-name-input"
 							onChange={(e) => {
 								setTitle(e.target.value);
 							}}
