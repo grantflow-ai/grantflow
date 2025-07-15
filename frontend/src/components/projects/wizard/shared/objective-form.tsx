@@ -115,19 +115,20 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 	};
 
 	return (
-		<div className={cn("space-y-6", className)} data-testid="objective-form">
-			<h2 className="text-lg font-medium text-gray-900" data-testid="objective-form-heading">
-				Objective {objectiveNumber}
-			</h2>
+		<div className="flex flex-col space-y-3">
+			<div className={cn("space-y-3", className)} data-testid="objective-form">
+				<h2
+					className="font-semibold font-heading text-app-black leading-snug"
+					data-testid="objective-form-heading"
+				>
+					Objective {objectiveNumber}
+				</h2>
 
-			<div className="space-y-2">
-				<label className="block text-sm font-medium text-gray-700" htmlFor="objective-name-input">
-					Objective name
-				</label>
 				<AppTextArea
-					className="min-h-7 h-7 resize-none [field-sizing:none]"
+					className="min-h-32"
 					errorMessage={errors.name}
 					id="objective-name-input"
+					label="Objective name"
 					onChange={(e) => {
 						updateField("name", e.target.value);
 					}}
@@ -135,75 +136,60 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					testId="objective-name-input"
 					value={formData.name}
 				/>
-			</div>
 
-			<div className="space-y-2">
-				<label className="block text-sm font-medium text-gray-700" htmlFor="objective-description-input">
-					Objective description
-				</label>
 				<AppTextArea
-					className="resize-none [field-sizing:none]"
+					className="min-h-52"
 					errorMessage={errors.description}
 					id="objective-description-input"
+					label="Objective description"
 					onChange={(e) => {
 						updateField("description", e.target.value);
 					}}
 					placeholder="Describe how this objective supports the grant's goals"
-					rows={1}
 					testId="objective-description-input"
 					value={formData.description}
 				/>
-			</div>
 
-			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h3 className="text-base font-medium text-gray-900">Tasks</h3>
+					<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
 					<AppButton data-testid="add-task-button" onClick={addTask} size="sm" type="button" variant="ghost">
 						<Plus className="w-4 h-4" />
 					</AppButton>
 				</div>
 
-				<div className="space-y-3">
-					{formData.tasks.map((task, index) => (
-						<div className="space-y-2" key={task.id}>
-							<div className="flex items-center justify-between">
-								<label
-									className="block text-sm font-medium text-gray-700"
-									htmlFor={`task-description-${index}`}
+				{formData.tasks.map((task, index) => (
+					<div className="space-y-2" key={task.id}>
+						<div className="flex items-center justify-between">
+							{formData.tasks.length > 1 && (
+								<button
+									className="text-sm text-red-600 hover:text-red-800"
+									data-testid={`remove-task-${index}`}
+									onClick={() => {
+										removeTask(task.id);
+									}}
+									type="button"
 								>
-									Task description
-								</label>
-								{formData.tasks.length > 1 && (
-									<button
-										className="text-sm text-red-600 hover:text-red-800"
-										data-testid={`remove-task-${index}`}
-										onClick={() => {
-											removeTask(task.id);
-										}}
-										type="button"
-									>
-										Remove
-									</button>
-								)}
-							</div>
-							<AppTextArea
-								className="resize-none [field-sizing:none]"
-								errorMessage={errors.tasks?.[task.id]}
-								id={`task-description-${index}`}
-								onChange={(e) => {
-									updateTask(task.id, e.target.value);
-								}}
-								placeholder="Describe a step to achieve this objective"
-								rows={1}
-								testId={`task-description-${index}`}
-								value={task.description}
-							/>
+									Remove
+								</button>
+							)}
 						</div>
-					))}
-				</div>
+						<AppTextArea
+							className="min-h-52"
+							errorMessage={errors.tasks?.[task.id]}
+							id={`task-description-${index}`}
+							label="Task description"
+							onChange={(e) => {
+								updateTask(task.id, e.target.value);
+							}}
+							placeholder="Describe a step to achieve this objective"
+							testId={`task-description-${index}`}
+							value={task.description}
+						/>
+					</div>
+				))}
 			</div>
 
-			<div className="flex justify-end pt-4">
+			<div className="flex justify-end">
 				<AppButton data-testid="save-button" onClick={handleSave} type="button" variant="primary">
 					Save
 				</AppButton>

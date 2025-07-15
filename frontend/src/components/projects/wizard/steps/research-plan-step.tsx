@@ -46,7 +46,7 @@ export function ResearchPlanStep() {
 	return (
 		<div className="flex size-full" data-testid="research-plan-step">
 			<WizardLeftPane testId="research-plan-left-pane">
-				<div className="space-y-2">
+				<div className="space-y-1">
 					<div className="flex items-center justify-between gap-4">
 						<h2
 							className="font-heading text-lg md:text-xl lg:text-2xl font-medium"
@@ -93,7 +93,11 @@ export function ResearchPlanStep() {
 					)}
 
 					{showObjectiveForm && (
-						<ObjectiveForm objectiveNumber={objectives.length + 1} onSaveAction={handleSaveObjective} />
+						<ObjectiveForm
+							className="px-3 pb-3"
+							objectiveNumber={objectives.length + 1}
+							onSaveAction={handleSaveObjective}
+						/>
 					)}
 				</div>
 			</WizardLeftPane>
