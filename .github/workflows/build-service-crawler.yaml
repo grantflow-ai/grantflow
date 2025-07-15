@@ -7,10 +7,12 @@ on:
             - development
         paths:
             - ".github/workflows/build-service-crawler.yaml"
+            - ".github/actions/**"
             - "packages/**/src/**"
             - "services/crawler/src/**"
     release:
         types: [published]
+    workflow_dispatch:
 
 jobs:
     build-and-push:

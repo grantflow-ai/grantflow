@@ -13,11 +13,12 @@ on:
     branches:
       - development
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     
     permissions:
       contents: read
@@ -32,18 +33,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
 
       - name: Set environment variables
         run: |
-          if [ "${{ github.event.workflow_run.head_branch }}" == "main" ]; then
-            echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
-            echo "IMAGE_TAG=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_ENV
-            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Manual dispatch - use current branch
+            if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            else
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=staging-${{ github.sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            fi
           else
-            echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
-            echo "IMAGE_TAG=staging-${{ github.event.workflow_run.head_sha }}" >> $GITHUB_ENV
-            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            # Workflow run trigger
+            if [ "${{ github.event.workflow_run.head_branch }}" == "main" ]; then
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            else
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=staging-${{ github.event.workflow_run.head_sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            fi
           fi
 
       - name: Deploy to Cloud Run
@@ -70,7 +85,11 @@ jobs:
           if [ "${{ needs.deploy.result }}" == "success" ]; then
             COLOR="3066993"  # Green
             TITLE="✅ Services Deployed Successfully"
-            DESCRIPTION="All services deployed to ${{ github.event.workflow_run.head_branch }}"
+            if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              DESCRIPTION="All services deployed to ${{ github.ref_name }} (manual)"
+            else
+              DESCRIPTION="All services deployed to ${{ github.event.workflow_run.head_branch }}"
+            fi
           else
             COLOR="15158332"  # Red
             TITLE="❌ Service Deployment Failed"
@@ -88,17 +107,17 @@ jobs:
                 "fields": [
                   {
                     "name": "Branch",
-                    "value": "`'"${{ github.event.workflow_run.head_branch }}"'`",
+                    "value": "`'"$([ "${{ github.event_name }}" == "workflow_dispatch" ] && echo "${{ github.ref_name }}" || echo "${{ github.event.workflow_run.head_branch }}")"'`",
                     "inline": true
                   },
                   {
                     "name": "Commit",
-                    "value": "`'"$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)"'`",
+                    "value": "`'"$([ "${{ github.event_name }}" == "workflow_dispatch" ] && echo "${{ github.sha }}" | cut -c1-7 || echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)"'`",
                     "inline": true
                   },
                   {
                     "name": "Triggered by",
-                    "value": "'"${{ github.event.workflow_run.actor.login }}"'",
+                    "value": "'"$([ "${{ github.event_name }}" == "workflow_dispatch" ] && echo "${{ github.actor }}" || echo "${{ github.event.workflow_run.actor.login }}")"'",
                     "inline": true
                   }
                 ],
