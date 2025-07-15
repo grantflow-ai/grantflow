@@ -162,5 +162,17 @@ resource "google_project_iam_member" "backend_trace_agent" {
   member  = "serviceAccount:${google_service_account.backend.email}"
 }
 
+resource "google_project_iam_member" "backend_identitytoolkit_admin" {
+  project = "grantflow"
+  role    = "roles/identitytoolkit.admin"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_serviceusage_consumer" {
+  project = "grantflow"
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
 
 
