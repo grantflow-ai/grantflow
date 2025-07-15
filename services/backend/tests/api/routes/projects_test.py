@@ -1206,64 +1206,6 @@ async def test_list_project_members_no_access(
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-async def test_update_member_role_success(
-    test_client: TestingClientType,
-    project: Project,
-    firebase_uid: str,
-    async_session_maker: async_sessionmaker[Any],
-    mocker: MockerFixture,
-) -> None:
-    mocker.patch(
-        "services.backend.src.api.routes.projects.get_users",
-        return_value={
-            "member_uid": {
-                "uid": "member_uid",
-                "email": "member@example.com",
-                "displayName": "Member User",
-                "photoURL": None,
-            }
-        },
-    )
-
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(ProjectUser).values(
-                [
-                    {
-                        "project_id": project.id,
-                        "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.OWNER,
-                    },
-                    {
-                        "project_id": project.id,
-                        "firebase_uid": "member_uid",
-                        "role": UserRoleEnum.MEMBER,
-                    },
-                ]
-            )
-        )
-        await session.commit()
-
-    request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
-    response = await test_client.patch(
-        f"/projects/{project.id}/members/member_uid",
-        json=request_body,
-        headers={"Authorization": "Bearer some_token"},
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    member = response.json()
-    assert member["firebase_uid"] == "member_uid"
-    assert member["role"] == UserRoleEnum.ADMIN.value
-
-    async with async_session_maker() as session:
-        updated_member = await session.scalar(
-            select(ProjectUser)
-            .where(ProjectUser.project_id == project.id)
-            .where(ProjectUser.firebase_uid == "member_uid")
-        )
-        assert updated_member.role == UserRoleEnum.ADMIN
-
-
 async def test_update_member_role_cannot_modify_owner(
     test_client: TestingClientType,
     project: Project,

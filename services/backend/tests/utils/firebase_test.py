@@ -7,7 +7,9 @@ from packages.shared_utils.src.exceptions import ExternalOperationError
 
 from services.backend.src.utils.firebase import (
     cancel_user_deletion,
+    get_user,
     get_user_deletion_status,
+    get_users,
     schedule_user_deletion,
 )
 
@@ -217,3 +219,251 @@ class TestCancelUserDeletion:
 
         with pytest.raises(ExternalOperationError, match="Error cancelling user deletion"):
             await cancel_user_deletion(uid)
+
+
+class TestGetUser:
+    """Tests for the get_user function."""
+
+    async def test_get_user_success(self, mocker: Any) -> None:
+        """Test successful user retrieval."""
+        # Mock Firebase app
+        mock_app = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=mock_app,
+        )
+
+        # Create a mock UserRecord
+        mock_user = MagicMock()
+        mock_user.uid = "test-uid-123"
+        mock_user.email = "test@example.com"
+        mock_user.display_name = "Test User"
+        mock_user.photo_url = "https://example.com/photo.jpg"
+        mock_user.phone_number = "+1234567890"
+        mock_user.email_verified = True
+        mock_user.disabled = False
+        mock_user.custom_claims = {"role": "user"}
+        mock_user.provider_data = [
+            MagicMock(
+                provider_id="google.com",
+                uid="google-uid-123",
+                email="test@example.com",
+                display_name="Test User",
+                photo_url="https://example.com/photo.jpg",
+                phone_number=None,
+            )
+        ]
+
+        # Mock the Firebase Admin SDK function
+        mock_firebase_get_user = AsyncMock(return_value=mock_user)
+        mocker.patch(
+            "services.backend.src.utils.firebase.as_async_callable",
+            return_value=mock_firebase_get_user,
+        )
+
+        result = await get_user("test-uid-123")
+
+        assert result is not None
+        assert result["uid"] == "test-uid-123"
+        assert result["email"] == "test@example.com"
+        assert result["displayName"] == "Test User"
+        assert result["photoURL"] == "https://example.com/photo.jpg"
+        assert result["phoneNumber"] == "+1234567890"
+        assert result["emailVerified"] is True
+        assert result["disabled"] is False
+        assert result["customClaims"] == {"role": "user"}
+        assert len(result["providerData"]) == 1
+        assert result["providerData"][0]["providerId"] == "google.com"
+
+    async def test_get_user_not_found(self, mocker: Any) -> None:
+        """Test user not found scenario."""
+        # Mock Firebase app
+        mock_app = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=mock_app,
+        )
+
+        from firebase_admin.exceptions import FirebaseError
+
+        mock_firebase_get_user = AsyncMock(side_effect=FirebaseError("code", "USER_NOT_FOUND"))
+        mocker.patch(
+            "services.backend.src.utils.firebase.as_async_callable",
+            return_value=mock_firebase_get_user,
+        )
+
+        result = await get_user("nonexistent-uid")
+
+        assert result is None
+
+    async def test_get_user_firebase_error(self, mocker: Any) -> None:
+        """Test Firebase error handling."""
+        # Mock Firebase app
+        mock_app = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=mock_app,
+        )
+
+        from firebase_admin.exceptions import FirebaseError
+
+        mock_firebase_get_user = AsyncMock(side_effect=FirebaseError("code", "Firebase error"))
+        mocker.patch(
+            "services.backend.src.utils.firebase.as_async_callable",
+            return_value=mock_firebase_get_user,
+        )
+
+        with pytest.raises(ExternalOperationError, match="Error getting user by uid"):
+            await get_user("error-uid")
+
+
+class TestGetUsers:
+    """Tests for the get_users function."""
+
+    async def test_get_users_success(self, mocker: Any) -> None:
+        """Test successful batch user retrieval."""
+        # Mock Firebase app
+        mock_app = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=mock_app,
+        )
+
+        # Create mock UserRecord objects
+        mock_user1 = MagicMock()
+        mock_user1.uid = "uid1"
+        mock_user1.email = "user1@example.com"
+        mock_user1.display_name = "User One"
+        mock_user1.photo_url = None
+        mock_user1.phone_number = None
+        mock_user1.email_verified = True
+        mock_user1.disabled = False
+        mock_user1.custom_claims = None
+        mock_user1.provider_data = []
+
+        mock_user2 = MagicMock()
+        mock_user2.uid = "uid2"
+        mock_user2.email = "user2@example.com"
+        mock_user2.display_name = "User Two"
+        mock_user2.photo_url = "https://example.com/user2.jpg"
+        mock_user2.phone_number = "+9876543210"
+        mock_user2.email_verified = False
+        mock_user2.disabled = True
+        mock_user2.custom_claims = {"role": "admin"}
+        mock_user2.provider_data = []
+
+        # Create mock GetUsersResult
+        mock_result = MagicMock()
+        mock_result.users = [mock_user1, mock_user2]
+
+        mock_firebase_get_users = AsyncMock(return_value=mock_result)
+        mocker.patch(
+            "services.backend.src.utils.firebase.as_async_callable",
+            return_value=mock_firebase_get_users,
+        )
+
+        # Mock UidIdentifier
+        mock_uid_identifier = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.UidIdentifier",
+            return_value=mock_uid_identifier,
+        )
+
+        result = await get_users(["uid1", "uid2"])
+
+        assert len(result) == 2
+        assert "uid1" in result
+        assert "uid2" in result
+
+        user1 = result["uid1"]
+        assert user1["uid"] == "uid1"
+        assert user1["email"] == "user1@example.com"
+        assert user1["displayName"] == "User One"
+        assert user1["photoURL"] is None
+        assert user1["phoneNumber"] is None
+        assert user1["emailVerified"] is True
+        assert user1["disabled"] is False
+        assert user1["customClaims"] is None
+
+        user2 = result["uid2"]
+        assert user2["uid"] == "uid2"
+        assert user2["email"] == "user2@example.com"
+        assert user2["displayName"] == "User Two"
+        assert user2["photoURL"] == "https://example.com/user2.jpg"
+        assert user2["phoneNumber"] == "+9876543210"
+        assert user2["emailVerified"] is False
+        assert user2["disabled"] is True
+        assert user2["customClaims"] == {"role": "admin"}
+
+    async def test_get_users_empty_list(self, mocker: Any) -> None:
+        """Test get_users with empty uid list."""
+        result = await get_users([])
+        assert result == {}
+
+    async def test_get_users_partial_results(self, mocker: Any) -> None:
+        """Test get_users when some users are not found."""
+        # Mock Firebase app
+        mock_app = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=mock_app,
+        )
+
+        # Only one user found
+        mock_user = MagicMock()
+        mock_user.uid = "found-uid"
+        mock_user.email = "found@example.com"
+        mock_user.display_name = "Found User"
+        mock_user.photo_url = None
+        mock_user.phone_number = None
+        mock_user.email_verified = True
+        mock_user.disabled = False
+        mock_user.custom_claims = None
+        mock_user.provider_data = []
+
+        mock_result = MagicMock()
+        mock_result.users = [mock_user]
+
+        mock_firebase_get_users = AsyncMock(return_value=mock_result)
+        mocker.patch(
+            "services.backend.src.utils.firebase.as_async_callable",
+            return_value=mock_firebase_get_users,
+        )
+
+        mock_uid_identifier = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.UidIdentifier",
+            return_value=mock_uid_identifier,
+        )
+
+        result = await get_users(["found-uid", "not-found-uid"])
+
+        assert len(result) == 1
+        assert "found-uid" in result
+        assert "not-found-uid" not in result
+
+    async def test_get_users_firebase_error(self, mocker: Any) -> None:
+        """Test Firebase error handling in get_users."""
+        # Mock Firebase app
+        mock_app = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.get_firebase_app",
+            return_value=mock_app,
+        )
+
+        from firebase_admin.exceptions import FirebaseError
+
+        mock_firebase_get_users = AsyncMock(side_effect=FirebaseError("code", "Batch get error"))
+        mocker.patch(
+            "services.backend.src.utils.firebase.as_async_callable",
+            return_value=mock_firebase_get_users,
+        )
+
+        mock_uid_identifier = MagicMock()
+        mocker.patch(
+            "services.backend.src.utils.firebase.UidIdentifier",
+            return_value=mock_uid_identifier,
+        )
+
+        with pytest.raises(ExternalOperationError, match="Error getting users"):
+            await get_users(["uid1", "uid2"])

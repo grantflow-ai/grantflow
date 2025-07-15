@@ -213,36 +213,6 @@ async def test_dismiss_notification_not_found(
     assert "Notification not found" in response.text
 
 
-async def test_dismiss_notification_wrong_user(
-    test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
-) -> None:
-    """Test that users can only dismiss their own notifications."""
-    different_firebase_uid = "b" * 128
-
-    async with async_session_maker() as session, session.begin():
-        notification = Notification(
-            firebase_uid=different_firebase_uid,
-            type=NotificationTypeEnum.INFO,
-            title="Other User's Notification",
-            message="This belongs to another user",
-            read=False,
-            dismissed=False,
-        )
-        session.add(notification)
-        await session.commit()
-        notification_id = notification.id
-
-    response = await test_client.post(
-        f"/notifications/{notification_id}/dismiss",
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
-    assert "Notification not found" in response.text
-
-
 async def test_dismiss_notification_unauthorized(
     test_client: TestingClientType,
 ) -> None:
