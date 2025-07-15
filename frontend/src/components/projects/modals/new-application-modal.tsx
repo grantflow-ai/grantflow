@@ -18,9 +18,9 @@ interface NewApplicationModalProps {
 	onCreate: (title: string, description: string) => void;
 }
 
-export function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicationModalProps) {
-	const [title,] = useState("");
-	const [description, ] = useState("");
+export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicationModalProps) {
+	const [title, setTitle] = useState("");
+	const [description] = useState("");
 
 	const handleCreate = () => {
 		onCreate(title, description);
@@ -40,23 +40,33 @@ export function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicatio
 				data-testid="new-application-modal"
 			>
 				<DialogHeader className="flex flex-col gap-2">
-					<DialogTitle className="font-medium text-2xl leading-[30px] text-[#2e2d36]">
+					<DialogTitle
+						className="font-medium text-2xl leading-[30px] text-[#2e2d36]"
+						data-testid="modal-title"
+					>
 						Select a Research Project
 					</DialogTitle>
-					<DialogDescription className="font-normal text-base leading-5 text-gray-600">
+					<DialogDescription
+						className="font-normal text-base leading-5 text-gray-600"
+						data-testid="modal-description"
+					>
 						Every application is part of a Research Project. Please select a project or create a new one.
 					</DialogDescription>
 				</DialogHeader>
 				<main className="flex flex-col gap-6">
-					<div >
+					<div>
 						<label className="font-normal text-xs text-gray-400">Research project</label>
 						<Select>
-							<SelectTrigger className="border border-primary w-full text-black [&>span]:font-normal [&>span]:text-base [&>span]:text-gray-600 [&>svg]:!text-gray-600 [&>svg]:!opacity-100">
+							<SelectTrigger
+								className="border border-primary w-full text-black [&>span]:font-normal [&>span]:text-base [&>span]:text-gray-600 [&>svg]:!text-gray-600 [&>svg]:!opacity-100"
+								data-testid="select-trigger"
+							>
 								<SelectValue placeholder="Choose a research project or create new" />
 							</SelectTrigger>
 							<SelectContent className="[&>*]:p-0 border border-gray-200 w-full shadow-none ">
 								<SelectItem
 									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
+									data-testid="select-item-first"
 									value="Menu Item - First"
 								>
 									Menu Item - First
@@ -69,7 +79,8 @@ export function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicatio
 								</SelectItem>
 								<SelectItem
 									className="bg-white cursor-pointer border border-gray-200 text-app-black text-sm font-normal p-0 hover:bg-preview-bg hover:text-app-black focus:bg-preview-bg data-[highlighted]:bg-preview-bg data-[highlighted]:text-app-black rounded-none"
-									value="Menu Item - second"
+									data-testid="select-item-create-new"
+									value="Menu Item - create-new"
 								>
 									<div className="w-[400px] flex  p-3">
 										<Plus className="text-primary mr-2" />
@@ -82,18 +93,36 @@ export function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicatio
 						</Select>
 					</div>
 
-
 					<div>
 						<label className="font-normal text-xs text-gray-400">Research project name</label>
-						<input className="w-full h-10 px-3 rounded border border-gray-900 placeholder:font-normal placeholder:text-base placeholder:text-gray-600 text-base text-gray-600" placeholder="Give your research project a name " type="text" />
+						<input
+							className="w-full h-10 px-3 rounded border border-gray-900 placeholder:font-normal placeholder:text-base placeholder:text-gray-600 text-base text-gray-600"
+							data-testid="project-name-input"
+							onChange={(e) => {
+								setTitle(e.target.value);
+							}}
+							placeholder="Give your research project a name "
+							type="text"
+							value={title}
+						/>
 					</div>
 				</main>
 				<DialogFooter className="size-full flex items-end">
 					<div className="flex items-end justify-between gap-3 w-full">
-						<AppButton className="rounded px-4 py-2" onClick={onClose} variant="secondary">
+						<AppButton
+							className="rounded px-4 py-2"
+							data-testid="cancel-button"
+							onClick={onClose}
+							variant="secondary"
+						>
 							Cancel
 						</AppButton>
-						<AppButton className="rounded px-4 py-2" onClick={handleCreate} variant="primary">
+						<AppButton
+							className="rounded px-4 py-2"
+							data-testid="select-button"
+							onClick={handleCreate}
+							variant="primary"
+						>
 							Select
 						</AppButton>
 					</div>
