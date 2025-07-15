@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
-from google.api_core import exceptions as gcp_exceptions  # type: ignore[import-untyped]
+from google.api_core import exceptions as gcp_exceptions
 from litestar import websocket_stream
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.shared_utils.src.logger import get_logger

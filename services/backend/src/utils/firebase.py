@@ -38,9 +38,18 @@ def get_firebase_app() -> App:
     if firebase_app_ref.value is None:
         logger.debug("Initializing Firebase app")
         service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
-        firebase_app_ref.value = initialize_app(
-            credential=Credentials.from_service_account_info(service_account_dict),  # type: ignore[no-untyped-call]
+
+        credentials = Credentials.from_service_account_info(  # type: ignore[no-untyped-call]
+            service_account_dict,
+            scopes=[
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/firebase",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/identitytoolkit",
+            ],
         )
+
+        firebase_app_ref.value = initialize_app(credential=credentials)
     return firebase_app_ref.value
 
 
@@ -61,7 +70,28 @@ async def get_user_by_email(email: str) -> dict[str, Any] | None:
     handler = as_async_callable(firebase_get_user_by_email)
     try:
         user = await handler(email, app=get_firebase_app())
-        return cast("dict[str, Any]", user)
+        return {
+            "uid": user.uid,
+            "email": user.email,
+            "displayName": user.display_name,
+            "photoURL": user.photo_url,
+            "phoneNumber": user.phone_number,
+            "emailVerified": user.email_verified,
+            "disabled": user.disabled,
+            "customClaims": user.custom_claims,
+            "tenantId": user.tenant_id,
+            "providerData": [
+                {
+                    "uid": provider.uid,
+                    "providerId": provider.provider_id,
+                    "email": provider.email,
+                    "displayName": provider.display_name,
+                    "photoURL": provider.photo_url,
+                    "phoneNumber": provider.phone_number,
+                }
+                for provider in user.provider_data
+            ],
+        }
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             return None
@@ -73,7 +103,28 @@ async def get_user(uid: str) -> dict[str, Any] | None:
     handler = as_async_callable(firebase_get_user)
     try:
         user = await handler(uid, app=get_firebase_app())
-        return cast("dict[str, Any]", user)
+        return {
+            "uid": user.uid,
+            "email": user.email,
+            "displayName": user.display_name,
+            "photoURL": user.photo_url,
+            "phoneNumber": user.phone_number,
+            "emailVerified": user.email_verified,
+            "disabled": user.disabled,
+            "customClaims": user.custom_claims,
+            "tenantId": user.tenant_id,
+            "providerData": [
+                {
+                    "uid": provider.uid,
+                    "providerId": provider.provider_id,
+                    "email": provider.email,
+                    "displayName": provider.display_name,
+                    "photoURL": provider.photo_url,
+                    "phoneNumber": provider.phone_number,
+                }
+                for provider in user.provider_data
+            ],
+        }
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
             return None
@@ -89,8 +140,32 @@ async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
     try:
         identifiers = [UidIdentifier(uid) for uid in uids]
         result = await handler(identifiers, app=get_firebase_app())
-        users = cast("list[dict[str, Any]]", result.users)
-        return {user["uid"]: user for user in users}
+
+        users_dict = {}
+        for user in result.users:
+            users_dict[user.uid] = {
+                "uid": user.uid,
+                "email": user.email,
+                "displayName": user.display_name,
+                "photoURL": user.photo_url,
+                "phoneNumber": user.phone_number,
+                "emailVerified": user.email_verified,
+                "disabled": user.disabled,
+                "customClaims": user.custom_claims,
+                "tenantId": user.tenant_id,
+                "providerData": [
+                    {
+                        "uid": provider.uid,
+                        "providerId": provider.provider_id,
+                        "email": provider.email,
+                        "displayName": provider.display_name,
+                        "photoURL": provider.photo_url,
+                        "phoneNumber": provider.phone_number,
+                    }
+                    for provider in user.provider_data
+                ],
+            }
+        return users_dict
     except FirebaseError as e:
         logger.warning("Error getting users by uids.", exc_info=e)
         raise ExternalOperationError("Error getting users by uids.") from e

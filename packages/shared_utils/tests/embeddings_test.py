@@ -125,7 +125,9 @@ async def test_create_vector_dto(mocker: MockerFixture) -> None:
     assert vector_dto["chunk"] == chunk
     assert len(vector_dto["embedding"]) == EMBEDDING_DIMENSIONS
     assert all(isinstance(x, float) for x in vector_dto["embedding"])
-    mock_generate_embeddings.assert_called_once_with([chunk["content"]])
+    mock_generate_embeddings.assert_called_once_with(
+        [chunk["content"]], model_name="sentence-transformers/all-MiniLM-L12-v2"
+    )
 
 
 async def test_create_vector_dto_multiple_embeddings_error(
@@ -142,7 +144,9 @@ async def test_create_vector_dto_multiple_embeddings_error(
     with pytest.raises(ExternalOperationError, match="Expected a single embedding"):
         await create_vector_dto(chunk=chunk, rag_source_id=source_id)
 
-    mock_generate_embeddings.assert_called_once_with([chunk["content"]])
+    mock_generate_embeddings.assert_called_once_with(
+        [chunk["content"]], model_name="sentence-transformers/all-MiniLM-L12-v2"
+    )
 
 
 async def test_index_chunks_small_batch(mocker: MockerFixture) -> None:
@@ -168,7 +172,11 @@ async def test_index_chunks_small_batch(mocker: MockerFixture) -> None:
     assert mock_create_vector_dto.call_count == 5
 
     for _i, chunk in enumerate(chunks):
-        mock_create_vector_dto.assert_any_call(chunk=chunk, rag_source_id=source_id)
+        mock_create_vector_dto.assert_any_call(
+            chunk=chunk,
+            rag_source_id=source_id,
+            model_name="sentence-transformers/all-MiniLM-L12-v2",
+        )
 
 
 async def test_index_chunks_large_batch(mocker: MockerFixture) -> None:
@@ -195,7 +203,11 @@ async def test_index_chunks_large_batch(mocker: MockerFixture) -> None:
     assert mock_create_vector_dto.call_count == num_chunks
 
     for chunk in chunks:
-        mock_create_vector_dto.assert_any_call(chunk=chunk, rag_source_id=source_id)
+        mock_create_vector_dto.assert_any_call(
+            chunk=chunk,
+            rag_source_id=source_id,
+            model_name="sentence-transformers/all-MiniLM-L12-v2",
+        )
 
 
 async def test_index_chunks_empty_list() -> None:

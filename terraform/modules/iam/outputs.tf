@@ -27,3 +27,13 @@ output "llm_api_service_account_name" {
   description = "The fully-qualified name of the LLM API service account"
   value       = google_service_account.llm_api_service_account.name
 }
+
+output "backend_service_account_email" {
+  description = "The email of the backend service account"
+  value       = google_service_account.backend.email
+}
+
+output "backend_service_account_name" {
+  description = "The fully-qualified name of the backend service account"
+  value       = google_service_account.backend.name
+}

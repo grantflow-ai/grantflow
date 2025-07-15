@@ -8,6 +8,7 @@ import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { createUserInfo } from "@/utils/firebase";
 
 export function StoreInspector() {
 	const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -173,13 +174,15 @@ export function StoreInspector() {
 					<button
 						className="rounded bg-blue-600 px-3 py-1 text-sm hover:bg-blue-700"
 						onClick={() => {
-							useUserStore.getState().setUser({
-								displayName: "Dev User",
-								email: "dev@example.com",
-								emailVerified: true,
-								photoURL: null,
-								uid: "dev-user-123",
-							});
+							useUserStore.getState().setUser(
+								createUserInfo({
+									displayName: "Dev User",
+									email: "dev@example.com",
+									emailVerified: true,
+									photoURL: null,
+									uid: "dev-user-123",
+								}),
+							);
 						}}
 						type="button"
 					>

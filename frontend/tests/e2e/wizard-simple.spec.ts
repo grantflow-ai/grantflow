@@ -3,7 +3,7 @@ import { expect, test } from "./test-setup";
 test.describe("Application Wizard", () => {
 	test("should load wizard and display first step", async ({ page }) => {
 		// Navigate directly to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Verify we're on the first step
@@ -18,7 +18,7 @@ test.describe("Application Wizard", () => {
 
 	test("should handle application details form", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Test title input
@@ -44,7 +44,7 @@ test.describe("Application Wizard", () => {
 
 	test("should navigate to application structure step", async ({ page }) => {
 		// Navigate to wizard and fill title
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		const titleInput = page.locator('[data-testid="application-title-textarea"]');
@@ -64,7 +64,7 @@ test.describe("Application Wizard", () => {
 
 	test("should handle wizard navigation", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Test back button (should exist but might be disabled)
@@ -111,7 +111,7 @@ test.describe("Application Wizard", () => {
 
 	test("should handle exit functionality", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Test exit button
@@ -126,7 +126,7 @@ test.describe("Application Wizard", () => {
 
 	test("should show step progress indicators", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Test step indicators container
@@ -145,7 +145,7 @@ test.describe("Application Wizard", () => {
 
 	test("should handle file upload interaction", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Test file upload button
@@ -159,7 +159,7 @@ test.describe("Application Wizard", () => {
 
 	test("should persist state during navigation", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Fill in application title
@@ -180,7 +180,7 @@ test.describe("Application Wizard", () => {
 
 	test("should handle URL input functionality", async ({ page }) => {
 		// Navigate to wizard
-		await page.goto("/projects/1/applications/1/wizard");
+		await page.goto("/application/wizard");
 		await page.waitForLoadState("networkidle");
 
 		// Test URL input

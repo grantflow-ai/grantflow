@@ -11,7 +11,7 @@ import { login } from "@/actions/login";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
-import { getFirebaseAuth } from "@/utils/firebase";
+import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger";
 
 export default function FinalizeEmailLogin() {
@@ -33,14 +33,7 @@ export default function FinalizeEmailLogin() {
 			try {
 				const cred = await signInWithEmailLink(auth, email, globalThis.location.href);
 
-				setUser({
-					displayName: cred.user.displayName,
-					email: cred.user.email,
-					emailVerified: cred.user.emailVerified,
-					photoURL: cred.user.photoURL,
-					providerId: cred.user.providerData[0]?.providerId,
-					uid: cred.user.uid,
-				});
+				setUser(convertFirebaseUser(cred.user));
 
 				const idToken = await cred.user.getIdToken();
 				await login(idToken);

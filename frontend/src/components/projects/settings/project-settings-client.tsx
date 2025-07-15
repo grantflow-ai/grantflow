@@ -100,7 +100,7 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 	};
 
 	return (
-		<div className="flex h-screen bg-[#f6f5f9]">
+		<div className="flex h-screen bg-[#f6f5f9]" data-testid="settings-container">
 			<ProjectSidebar
 				applications={mockApplications}
 				isCreatingApplication={false}

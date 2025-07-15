@@ -20,6 +20,9 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [`/frontend`](./frontend/README.md) - NextJS frontend application
 - [`/terraform`](./terraform/README.md) - Terraform configuration for GCP infrastructure
 - [`/cloud_functions`](./cloud_functions/README.md) - Python Cloud Functions for monitoring and alerting
+  - `app_hosting_alerts` - Firebase App Hosting deployment alerts
+  - `budget_alerts` - GCP budget monitoring and alerts
+  - `user_cleanup` - Automated user data cleanup
 
 ## Prerequisites
 
@@ -57,10 +60,7 @@ The project uses a single `.env` file in the root directory for all services:
 2. Update the `.env` file with your actual values
 3. Reach out to the team to get secret values for sensitive fields
 
-**Note**: If you're migrating from the old multi-env setup, run:
-```bash
-./scripts/migrate_to_single_env.sh
-```
+**Note**: The project uses a unified environment configuration in the root `.env` file.
 
 ### Initial Setup
 
@@ -124,6 +124,31 @@ task db:create-migration -- <migration_name>
 
 # Seed the database
 task db:seed
+
+# Drop and recreate database (WARNING: destroys all data)
+task db:drop
+
+# Drop database and re-run migrations (WARNING: destroys all data)
+task db:reset
+```
+
+### Remote Database (Cloud SQL)
+
+```bash
+# Start Cloud SQL Proxy for remote database access
+task db:proxy:start
+
+# Stop Cloud SQL Proxy
+task db:proxy:stop
+
+# Check Cloud SQL Proxy status
+task db:proxy:status
+
+# Restart Cloud SQL Proxy
+task db:proxy:restart
+
+# Apply migrations to Cloud SQL (auto-starts proxy)
+task db:migrate:remote
 ```
 
 ### Docker Compose Commands
@@ -187,6 +212,68 @@ For a complete list of available commands:
 
 ```bash
 task --list
+```
+
+### Cloud Functions Development
+
+```bash
+# Generate requirements.txt files from pyproject.toml for cloud functions
+task cloud-functions:generate-requirements
+
+# Sync dependencies for cloud functions
+task cloud-functions:sync
+
+# Run tests for cloud functions
+task cloud-functions:test
+```
+
+### Testing Variations
+
+```bash
+# Run all tests (default, parallel execution)
+task test
+
+# Run all tests in serial mode (no parallelization)
+task test:serial
+
+# Run tests in CI mode (serial execution)
+task test:ci
+
+# Run all end-to-end tests
+task test:e2e
+
+# Service-specific granular E2E testing
+task service:indexer:test:e2e:smoke     # < 1 min
+task service:indexer:test:e2e:quality   # 2-5 min
+task service:indexer:test:e2e:full      # 10+ min
+task service:indexer:test:e2e:semantic  # Semantic evaluation
+task service:indexer:test:e2e:ai        # AI-powered evaluation
+
+task service:rag:test:e2e:smoke         # < 1 min
+task service:rag:test:e2e:quality       # 2-5 min
+task service:rag:test:e2e:full          # 10+ min
+task service:rag:test:e2e:semantic      # Semantic evaluation
+task service:rag:test:e2e:ai            # AI evaluation
+task service:rag:test:serial            # Serial mode for debugging
+```
+
+### GitHub Actions Deployment
+
+```bash
+# Deploy individual services via GitHub Actions
+task gh:deploy:backend
+task gh:deploy:crawler
+task gh:deploy:indexer
+task gh:deploy:rag
+task gh:deploy:scraper
+```
+
+### Local Development Emulators
+
+```bash
+# Start individual emulators
+task emulator:pubsub:up    # Pub/Sub emulator
+task emulator:gcs:up       # Google Cloud Storage emulator
 ```
 
 ## Windows Setup (WSL)

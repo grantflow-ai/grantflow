@@ -81,21 +81,22 @@ module "storage" {
 
 # Cloud Run services module with staging-optimized settings
 module "cloud_run" {
-  source                   = "../../modules/cloud_run"
-  project_id               = var.project_id
-  region                   = var.region
-  environment              = var.environment
-  image_tag_suffix         = "staging-latest"
-  database_connection_name = module.database.instance_connection_name
-  min_instances            = 0     # Scale to zero for cost savings
-  max_instances            = 1     # Limited scaling for staging
-  cpu_limit                = "1"   # Minimum CPU for Cloud Run
-  memory_limit             = "1Gi" # Increased memory to handle service requirements
-  discord_webhook_url      = var.discord_webhook_url
-  enable_cpu_throttling    = true  # Allow throttling for staging
-  enable_http2             = false # HTTP/1.1 for staging
-  request_timeout          = 300   # 5-minute timeout
-  concurrency_limit        = 80    # Default concurrency
+  source                        = "../../modules/cloud_run"
+  project_id                    = var.project_id
+  region                        = var.region
+  environment                   = var.environment
+  image_tag_suffix              = "staging-latest"
+  database_connection_name      = module.database.instance_connection_name
+  backend_service_account_email = module.iam.backend_service_account_email
+  min_instances                 = 0     # Scale to zero for cost savings
+  max_instances                 = 1     # Limited scaling for staging
+  cpu_limit                     = "1"   # Minimum CPU for Cloud Run
+  memory_limit                  = "1Gi" # Increased memory to handle service requirements
+  discord_webhook_url           = var.discord_webhook_url
+  enable_cpu_throttling         = true  # Allow throttling for staging
+  enable_http2                  = false # HTTP/1.1 for staging
+  request_timeout               = 300   # 5-minute timeout
+  concurrency_limit             = 80    # Default concurrency
 
   # Custom domain for backend API (commented out to save costs)
   # custom_domain            = "api-staging.grantflow.ai"
