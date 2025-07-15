@@ -24,6 +24,11 @@ export function initializeMockAPI(): void {
 	// Make clearAllMockStores available globally for tests
 	if (typeof globalThis.window !== "undefined") {
 		(globalThis as any).clearAllMockStores = clearAllMockStores; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+		// Make mock API client available globally for tests
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const { getMockAPIClient } = require("./client.js");
+		(globalThis as any).getMockAPIClient = getMockAPIClient; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 	}
 }
 

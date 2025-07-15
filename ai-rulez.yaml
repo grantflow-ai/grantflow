@@ -56,6 +56,7 @@ rules:
       - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
       - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
       - **Services**: backend (API), indexer (docs), crawler (web), rag (processing), scraper (grants)
+      - **Cloud Functions**: app_hosting_alerts, budget_alerts, user_cleanup (monitoring/alerting)
       - **Database**: PostgreSQL with asyncpg, pgvector for embeddings
       - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
       - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
@@ -110,15 +111,56 @@ rules:
       task db:migrate         # Run migrations (local)
       task db:drop            # Drop and recreate DB (WARNING: destroys data)
       task db:reset           # Drop DB and re-run migrations
+      task db:up              # Start PostgreSQL database container if not running
+      task db:down            # Stop and remove database container
+      task db:create-migration # Generate new database migration from schema changes
+      task db:seed            # Populate database with initial seed data
 
       # Remote Database (Cloud SQL)
       task db:proxy:start     # Start Cloud SQL Proxy
       task db:proxy:stop      # Stop Cloud SQL Proxy
       task db:proxy:status    # Check proxy status
+      task db:proxy:restart   # Restart Cloud SQL Proxy
       task db:migrate:remote  # Run migrations on Cloud SQL (auto-starts proxy)
+
+      # Testing variations
+      task test:serial        # Run all tests in serial mode (no parallelization)
+      task test:ci            # Run tests in CI mode (serial execution)
+      task test:e2e           # Run all end-to-end tests
+
+      # Cloud Functions
+      task cloud-functions:generate-requirements # Generate requirements.txt from pyproject.toml
+      task cloud-functions:sync                  # Sync dependencies for cloud functions
+      task cloud-functions:test                  # Run tests for cloud functions
+
+      # GitHub Actions deployment
+      task gh:deploy:backend  # Deploy backend service via GitHub Actions
+      task gh:deploy:crawler  # Deploy crawler service via GitHub Actions
+      task gh:deploy:indexer  # Deploy indexer service via GitHub Actions
+      task gh:deploy:rag      # Deploy RAG service via GitHub Actions
+      task gh:deploy:scraper  # Deploy scraper service via GitHub Actions
+
+      # Emulators
+      task emulator:pubsub:up # Start Pub/Sub emulator for local development
+      task emulator:gcs:up    # Start GCS emulator for local development
+
+      # Service-specific E2E testing (granular)
+      task service:indexer:test:e2e:smoke    # Indexer smoke tests (< 1 min)
+      task service:indexer:test:e2e:quality  # Indexer quality assessment (2-5 min)
+      task service:indexer:test:e2e:full     # Complete indexer E2E suite (10+ min)
+      task service:indexer:test:e2e:semantic # Indexer semantic evaluation tests
+      task service:indexer:test:e2e:ai       # Indexer AI-powered evaluation tests
+
+      task service:rag:test:e2e:smoke        # RAG smoke tests (< 1 min)
+      task service:rag:test:e2e:quality      # RAG quality assessment (2-5 min)
+      task service:rag:test:e2e:full         # Complete RAG E2E suite (10+ min)
+      task service:rag:test:e2e:semantic     # RAG semantic evaluation tests
+      task service:rag:test:e2e:ai           # RAG AI evaluation tests
+      task service:rag:test:serial           # RAG tests in serial mode
 
       # Other
       task generate:api-types # Generate TypeScript types from backend
+      task generate:ai-rules  # Generate AI assistant configuration files
       task --list             # Show all available tasks
       ```
 
@@ -381,6 +423,107 @@ rules:
       - Use `.isoformat()` for datetime serialization
       - Polymorphic SQLAlchemy models for flexible schemas
       - **Database**: Handle unique constraint violations gracefully with existence checks
+
+  - name: "GitHub Workflows and Actions"
+    priority: 53
+    content: |
+      ### Workflow Architecture
+
+      The project uses an **Actions-first architecture** with reusable composite actions to reduce duplication and ensure consistency across all workflows.
+
+      ### Workflow Types and Naming Conventions
+
+      **Build Workflows** (`build-service-*.yaml`):
+      - `build-service-backend.yaml` - Builds and pushes backend Docker image
+      - `build-service-crawler.yaml` - Builds and pushes crawler Docker image
+      - `build-service-indexer.yaml` - Builds and pushes indexer Docker image
+      - `build-service-rag.yaml` - Builds and pushes RAG Docker image
+      - `build-service-scraper.yaml` - Builds and pushes scraper Docker image
+      - **Triggers**: Push to main/development branches, release events, manual dispatch
+      - **Auto-trigger**: When workflow files or actions change
+
+      **CI Workflows** (`ci-*.yaml`):
+      - `ci-service-*.yaml` - Run tests and linting for each service
+      - `ci-package-*.yaml` - Run tests for shared packages
+      - `ci-frontend.yaml` - Frontend testing and linting
+      - `ci-terraform.yaml` - Terraform validation and security scanning
+      - `ci-cloud-functions.yaml` - Cloud Functions testing
+
+      **Deployment Workflows**:
+      - `deploy-services.yaml` - **Unified deployment** for all services to Cloud Run
+      - **Triggers**: After successful build workflows, manual dispatch
+      - **Strategy**: Matrix deployment for parallel service deployments
+
+      **E2E Workflows** (`e2e-service-*.yaml`):
+      - Long-running integration tests for each service
+      - **Triggers**: Manual dispatch, scheduled runs
+
+      **Other Workflows**:
+      - `pr-title.yaml` - Validates PR titles follow conventional commits
+      - `validate.yaml` - General validation workflows
+      - `scheduled-smoke-tests.yaml` - Automated health checks
+
+      ### Reusable Actions
+
+      **Setup Actions**:
+      - `.github/actions/setup-gcp/` - Standardized GCP authentication and Cloud SDK setup
+      - `.github/actions/setup-task/` - Task runner installation and configuration
+
+      **Build and Deploy Actions**:
+      - `.github/actions/build-service/` - Docker build and push for services
+      - `.github/actions/deploy-cloud-run/` - Cloud Run deployment with health checks
+
+      ### CI/CD Pipeline Flow
+
+      1. **Code Push** → Triggers build workflows for affected services
+      2. **Build Success** → Triggers `deploy-services.yaml` workflow
+      3. **Deployment** → Matrix deployment to Cloud Run services
+      4. **Notifications** → Discord notifications on success/failure
+
+      ### Key Features
+
+      **Image Tagging Strategy**:
+      - **Development branch**: `staging-{commit-sha}`, `staging-latest`
+      - **Main branch**: `{commit-sha}`, `latest`
+      - **Releases**: `{release-tag}`
+
+      **Zero-Downtime Deployments**:
+      - Deploy with `--no-traffic` flag first
+      - Health checks on new revision
+      - Gradual traffic migration
+      - Automatic rollback on failures
+
+      **Manual Triggers**:
+      - All workflows support `workflow_dispatch` for manual testing
+      - Deployment workflow allows environment and service selection
+
+      **Self-Triggering**:
+      - Workflows run when their own files change
+      - Actions trigger workflows when modified
+      - Ensures CI/CD pipeline stays current
+
+      ### Workflow Variables and Secrets
+
+      **GitHub Variables**:
+      - `WIF_PROVIDER` - Workload Identity Federation provider
+      - `WIF_SERVICE_ACCOUNT` - Service account for GCP authentication
+
+      **GitHub Secrets**:
+      - `DISCORD_WEBHOOK_URL` - Discord notifications webhook
+
+      **Environment Variables**:
+      - `PROJECT_ID` - GCP project (grantflow for staging, grantflow-prod for production)
+      - `REGION` - us-central1 (Cloud Run region)
+      - `GAR_LOCATION` - us-east1 (Artifact Registry location)
+
+      ### Best Practices
+
+      1. **Use Actions**: Prefer composite actions over inline scripts
+      2. **Naming Convention**: Follow `{category}-{entity}.yaml` pattern
+      3. **Matrix Builds**: Use matrix strategy for parallel deployments
+      4. **Health Checks**: Always verify deployments before traffic migration
+      5. **Fail-Fast**: Set `fail-fast: false` for independent deployments
+      6. **Manual Testing**: Include `workflow_dispatch` triggers for all workflows
 
   - name: "GitOps and Deployment"
     priority: 52
