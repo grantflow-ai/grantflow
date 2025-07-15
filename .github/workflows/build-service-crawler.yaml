@@ -1,0 +1,41 @@
+name: "Build: Crawler"
+
+on:
+    push:
+        branches:
+            - main
+            - development
+        paths:
+            - ".github/workflows/build-service-crawler.yaml"
+            - "packages/**/src/**"
+            - "services/crawler/src/**"
+    release:
+        types: [published]
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set image tag
+              id: tag
+              run: |
+                  if [[ "${{ github.event_name }}" == "release" ]]; then
+                      echo "image_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+                  elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                      echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+                  else
+                      echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Build and push service
+              uses: ./.github/actions/build-service
+              with:
+                  service: crawler
+                  image_tag: ${{ steps.tag.outputs.image_tag }}
