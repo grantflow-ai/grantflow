@@ -106,6 +106,14 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		}
 	};
 
+	const isFormValid = (): boolean => {
+		return Boolean(
+			formData.name.trim() &&
+				formData.description.trim() &&
+				formData.tasks.every((task) => task.description.trim()),
+		);
+	};
+
 	return (
 		<div className="flex flex-col space-y-3">
 			<div className={cn("space-y-3", className)} data-testid="objective-form">
@@ -174,7 +182,13 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			</div>
 
 			<div className="flex justify-end">
-				<AppButton data-testid="save-button" onClick={handleSave} type="button" variant="primary">
+				<AppButton
+					data-testid="save-button"
+					disabled={!isFormValid()}
+					onClick={handleSave}
+					type="button"
+					variant="primary"
+				>
 					Save
 				</AppButton>
 			</div>
