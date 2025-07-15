@@ -726,6 +726,27 @@ wheels = [
 ]
 
 [[package]]
+name = "firebase-functions"
+version = "0.4.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cloudevents" },
+    { name = "firebase-admin" },
+    { name = "flask" },
+    { name = "flask-cors" },
+    { name = "functions-framework" },
+    { name = "google-cloud-firestore" },
+    { name = "google-events" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "pyyaml" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/db/99/cf6693770e713cb567f2ccf7f7b6235451441a7851205563ec443a527b15/firebase_functions-0.4.3.tar.gz", hash = "sha256:b69dce34a913fe31fa9443b75e59162bbef2c7783388515416a79d68088084d8", size = 70834, upload-time = "2025-05-23T18:40:04.848Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e6/4c/321507328632a21a2f58f269ee318823d319b3929be4776da3e13b8ae3b3/firebase_functions-0.4.3-py3-none-any.whl", hash = "sha256:073237df9ab61763ec91c7f06b07941b83c09703565117b2afab298e5b695f1a", size = 81928, upload-time = "2025-05-23T18:40:03.17Z" },
+]
+
+[[package]]
 name = "flask"
 version = "3.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -740,6 +761,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c0/de/e47735752347f4128bcf354e0da07ef311a78244eba9e3dc1d4a5ab21a98/flask-3.1.1.tar.gz", hash = "sha256:284c7b8f2f58cb737f0cf1c30fd7eaf0ccfcde196099d24ecede3fc2005aa59e", size = 753440, upload-time = "2025-05-13T15:01:17.447Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/68/9d4508e893976286d2ead7f8f571314af6c2037af34853a30fd769c02e9d/flask-3.1.1-py3-none-any.whl", hash = "sha256:07aae2bb5eaf77993ef57e357491839f5fd9f4dc281593a81a9e4d79a24f295c", size = 103305, upload-time = "2025-05-13T15:01:15.591Z" },
+]
+
+[[package]]
+name = "flask-cors"
+version = "6.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flask" },
+    { name = "werkzeug" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/37/bcfa6c7d5eec777c4c7cf45ce6b27631cebe5230caf88d85eadd63edd37a/flask_cors-6.0.1.tar.gz", hash = "sha256:d81bcb31f07b0985be7f48406247e9243aced229b7747219160a0559edd678db", size = 13463, upload-time = "2025-06-11T01:32:08.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/f8/01bf35a3afd734345528f98d0353f2a978a476528ad4d7e78b70c4d149dd/flask_cors-6.0.1-py3-none-any.whl", hash = "sha256:c7b2cbfb1a31aa0d2e5341eea03a6805349f7a61647daee1a15c46bbe981494c", size = 13244, upload-time = "2025-06-11T01:32:07.352Z" },
 ]
 
 [[package]]
@@ -1002,6 +1036,19 @@ wheels = [
 ]
 
 [[package]]
+name = "google-events"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3e/cd/cdea628192f5960688342386a5fbc2d6053234bd8c3232412c435cbb7101/google-events-0.5.0.tar.gz", hash = "sha256:c86511402ee758685ad6b7f3d93c3febb3f60122da71498d6ed4b44f097af49c", size = 127152, upload-time = "2023-03-24T18:45:58.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a4/0f/c5f48d7864a8126dfc45008a7c3203c5665214a40a958a8678666966f3b7/google_events-0.5.0-py3-none-any.whl", hash = "sha256:cb81884a23dea4cec1716cfe2a1c88251653681436c48b2c9dfcae92dc3e4bc3", size = 246513, upload-time = "2023-03-24T18:45:56.502Z" },
+]
+
+[[package]]
 name = "google-genai"
 version = "1.20.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1109,6 +1156,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "cloudevents" },
     { name = "firebase-admin" },
+    { name = "firebase-functions" },
     { name = "functions-framework" },
     { name = "httpx" },
     { name = "sqlalchemy" },
@@ -1124,6 +1172,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.29" },
     { name = "cloudevents", specifier = ">=1.10" },
     { name = "firebase-admin", specifier = ">=6.5" },
+    { name = "firebase-functions", specifier = ">=0.1.1" },
     { name = "functions-framework", specifier = ">=3.5" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "sqlalchemy", specifier = ">=2" },
