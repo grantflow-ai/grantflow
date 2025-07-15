@@ -2,10 +2,10 @@
 * @Goldziher
 
 # Frontend codebase
-/frontend/ @Goldziher @v-tan
-/package.json @Goldziher @v-tan
+/frontend/ @Goldziher @Developers
+/package.json @Goldziher @Developers
 
 # Backend services and packages
-/services/* @Goldziher @taihim
-/packages/* @Goldziher @taihim
-/pyproject.toml @Goldziher @taihim
+/services/* @Goldziher
+/packages/* @Goldziher
+/pyproject.toml @Goldziher

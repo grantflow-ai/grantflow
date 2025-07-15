@@ -573,3 +573,25 @@ export const ProjectMemberFactory = new Factory<API.ListProjectMembers.Http200.R
 export const UpdateMemberRoleRequestFactory = new Factory<API.UpdateProjectMemberRole.RequestBody>((factory) => ({
 	role: factory.helpers.arrayElement(["ADMIN", "MEMBER"]),
 }));
+
+type ApplicationCardData = {
+	deadline?: string;
+	description?: string;
+} & API.ListApplications.Http200.ResponseBody["applications"][0];
+
+export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory) => ({
+	completed_at: factory.helpers.maybe(() => factory.date.past().toISOString()),
+	created_at: factory.date.past().toISOString(),
+	deadline: factory.datatype.boolean()
+		? `${factory.number.int({ max: 12, min: 1 })} weeks and ${factory.number.int({
+				max: 6,
+				min: 1,
+			})} days to the deadline`
+		: undefined,
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	id: factory.string.uuid(),
+	project_id: factory.string.uuid(),
+	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+	title: factory.lorem.sentence({ min: 3, max: 8 }),
+	updated_at: factory.date.recent().toISOString(),
+}));

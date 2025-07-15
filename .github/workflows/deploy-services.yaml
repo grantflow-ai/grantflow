@@ -1,0 +1,126 @@
+name: "Deploy: Services"
+
+on:
+  workflow_run:
+    workflows: 
+      - "Build: Backend"
+      - "Build: Crawler" 
+      - "Build: Indexer"
+      - "Build: RAG"
+      - "Build: Scraper"
+    types:
+      - completed
+    branches:
+      - development
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    
+    permissions:
+      contents: read
+      id-token: write
+    
+    strategy:
+      matrix:
+        service: [backend, crawler, indexer, rag, scraper]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+
+      - name: Set environment variables
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Manual dispatch - use current branch
+            if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            else
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=staging-${{ github.sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            fi
+          else
+            # Workflow run trigger
+            if [ "${{ github.event.workflow_run.head_branch }}" == "main" ]; then
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            else
+              echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+              echo "IMAGE_TAG=staging-${{ github.event.workflow_run.head_sha }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Deploy to Cloud Run
+        uses: ./.github/actions/deploy-cloud-run
+        with:
+          service: ${{ matrix.service }}
+          image_tag: ${{ env.IMAGE_TAG }}
+          environment: ${{ env.ENVIRONMENT }}
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          # Determine overall status
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            COLOR="3066993"  # Green
+            TITLE="✅ Services Deployed Successfully"
+            if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              DESCRIPTION="All services deployed to ${{ github.ref_name }} (manual)"
+            else
+              DESCRIPTION="All services deployed to ${{ github.event.workflow_run.head_branch }}"
+            fi
+          else
+            COLOR="15158332"  # Red
+            TITLE="❌ Service Deployment Failed"
+            DESCRIPTION="One or more services failed to deploy"
+          fi
+          
+          # Send Discord webhook
+          curl -X POST $DISCORD_WEBHOOK \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "'"${TITLE}"'",
+                "description": "'"${DESCRIPTION}"'",
+                "color": '"${COLOR}"',
+                "fields": [
+                  {
+                    "name": "Branch",
+                    "value": "`'"$([ "${{ github.event_name }}" == "workflow_dispatch" ] && echo "${{ github.ref_name }}" || echo "${{ github.event.workflow_run.head_branch }}")"'`",
+                    "inline": true
+                  },
+                  {
+                    "name": "Commit",
+                    "value": "`'"$([ "${{ github.event_name }}" == "workflow_dispatch" ] && echo "${{ github.sha }}" | cut -c1-7 || echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)"'`",
+                    "inline": true
+                  },
+                  {
+                    "name": "Triggered by",
+                    "value": "'"$([ "${{ github.event_name }}" == "workflow_dispatch" ] && echo "${{ github.actor }}" || echo "${{ github.event.workflow_run.actor.login }}")"'",
+                    "inline": true
+                  }
+                ],
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"'"
+              }]
+            }'
