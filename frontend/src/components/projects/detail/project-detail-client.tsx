@@ -148,9 +148,12 @@ export function ProjectDetailClient() {
 			<AppHeader projectTeamMembers={projectTeamMembers} />
 
 			<main className="flex-1 flex flex-col">
-				<main className="flex flex-col pt-6 pb-8 px-10 flex-1 min-h-0" data-testid="project-header">
+				<main
+					className="mx-6 mb-6 px-10 relative flex flex-col gap-6 py-6 rounded-lg bg-white border border-app-gray-100 flex-1 min-h-0"
+					data-testid="project-header"
+				>
 					{/* Inline header content matching Figma design */}
-					<div className="flex items-center justify-between mb-6">
+					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
 								<input
@@ -213,7 +216,7 @@ export function ProjectDetailClient() {
 						</div>
 					</div>
 
-					<div className="flex-1 overflow-auto pb-6 min-h-0" data-testid="applications-section">
+					<div className="flex-1 overflow-auto min-h-0" data-testid="applications-section">
 						<ApplicationList
 							applications={applications}
 							isCreatingApplication={isCreatingApplication}

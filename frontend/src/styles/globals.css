@@ -125,7 +125,7 @@
 	--text-light: oklch(1 0 0);
 	--text-dark: var(--app-black);
 
-	--background: var(--background-dark);
+	--background: var(--app-gray-20);
 	--foreground: var(--text-light);
 
 	--primary: var(--app-primary-blue);
@@ -202,7 +202,7 @@
 	--text-light: oklch(1 0 0);
 	--text-dark: var(--app-black);
 
-	--background: var(--background-dark);
+	--background: var(--app-gray-20);
 	--foreground: var(--text-light);
 
 	--primary: var(--app-primary-blue);
