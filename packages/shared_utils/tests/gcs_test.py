@@ -81,7 +81,7 @@ def test_get_credentials_with_service_account(mock_env_vars: None) -> None:
 
         credentials = get_credentials()
 
-        mock_get_env.assert_any_call("STORAGE_EMULATOR_HOST", fallback="")
+        mock_get_env.assert_any_call("STORAGE_EMULATOR_HOST", raise_on_missing=False)
         mock_deserialize.assert_called_once_with("credentials_json", dict[str, Any])
         mock_creds_class.from_service_account_info.assert_called_once_with(
             mock_credentials
