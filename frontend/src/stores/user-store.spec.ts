@@ -1,4 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
+import type { UserInfo } from "@/types/user";
+import { createUserInfo } from "@/utils/firebase";
 
 import { useUserStore } from "./user-store";
 
@@ -7,14 +9,14 @@ vi.mock("zustand/middleware", () => ({
 	persist: (fn: any, _options: any) => fn,
 }));
 
-const mockUser = {
+const mockUser: UserInfo = createUserInfo({
 	displayName: "John Doe",
 	email: "john.doe@example.com",
 	emailVerified: true,
 	photoURL: "https://example.com/photo.jpg",
 	providerId: "google.com",
 	uid: "test-uid-123",
-};
+});
 
 describe("useUserStore", () => {
 	beforeEach(() => {
@@ -116,13 +118,13 @@ describe("useUserStore", () => {
 	it("handles user with minimal properties", () => {
 		const { result } = renderHook(() => useUserStore());
 
-		const minimalUser = {
+		const minimalUser = createUserInfo({
 			displayName: null,
 			email: "minimal@example.com",
 			emailVerified: false,
 			photoURL: null,
 			uid: "minimal-uid",
-		};
+		});
 
 		act(() => {
 			result.current.setUser(minimalUser);
@@ -143,13 +145,15 @@ describe("useUserStore", () => {
 		expect(result.current.isAuthenticated).toBe(true);
 
 		act(() => {
-			result.current.setUser({
-				displayName: null,
-				email: null,
-				emailVerified: false,
-				photoURL: null,
-				uid: "test",
-			});
+			result.current.setUser(
+				createUserInfo({
+					displayName: null,
+					email: null,
+					emailVerified: false,
+					photoURL: null,
+					uid: "test",
+				}),
+			);
 		});
 		expect(result.current.isAuthenticated).toBe(true);
 

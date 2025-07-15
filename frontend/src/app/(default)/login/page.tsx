@@ -28,7 +28,7 @@ import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
-import { getFirebaseAuth } from "@/utils/firebase";
+import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger";
 
 const loginFormSchema = z.object({
@@ -64,15 +64,7 @@ export default function Login() {
 			const { idToken, isNewUser, user } = await signInMethod();
 
 			if (!isNewUser) {
-				setUser({
-					displayName: user.displayName,
-					email: user.email,
-					emailVerified: user.emailVerified,
-					photoURL: user.photoURL,
-					providerId: user.providerData[0]?.providerId,
-					uid: user.uid,
-				});
-
+				setUser(convertFirebaseUser(user));
 				await login(idToken);
 				return;
 			}
