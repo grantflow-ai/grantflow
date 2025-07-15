@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/forms/textarea-field";
 import { cn } from "@/lib/utils";
 
@@ -73,15 +74,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 		}));
 	};
 
-	const removeTask = (taskId: string) => {
-		if (formData.tasks.length > 1) {
-			setFormData((prev) => ({
-				...prev,
-				tasks: prev.tasks.filter((task) => task.id !== taskId),
-			}));
-		}
-	};
-
 	const validateForm = (): boolean => {
 		const newErrors: typeof errors = {};
 
@@ -115,19 +107,20 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 	};
 
 	return (
-		<div className={cn("space-y-6", className)} data-testid="objective-form">
-			<h2 className="text-lg font-medium text-gray-900" data-testid="objective-form-heading">
-				Objective {objectiveNumber}
-			</h2>
+		<div className="flex flex-col space-y-3">
+			<div className={cn("space-y-3", className)} data-testid="objective-form">
+				<h2
+					className="font-semibold font-heading text-app-black leading-snug"
+					data-testid="objective-form-heading"
+				>
+					Objective {objectiveNumber}
+				</h2>
 
-			<div className="space-y-2">
-				<label className="block text-sm font-medium text-gray-700" htmlFor="objective-name-input">
-					Objective name
-				</label>
 				<AppTextArea
-					className="min-h-7 h-7 resize-none [field-sizing:none]"
+					className="min-h-32"
 					errorMessage={errors.name}
 					id="objective-name-input"
+					label="Objective name"
 					onChange={(e) => {
 						updateField("name", e.target.value);
 					}}
@@ -135,75 +128,52 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 					testId="objective-name-input"
 					value={formData.name}
 				/>
-			</div>
 
-			<div className="space-y-2">
-				<label className="block text-sm font-medium text-gray-700" htmlFor="objective-description-input">
-					Objective description
-				</label>
 				<AppTextArea
-					className="resize-none [field-sizing:none]"
+					className="min-h-52"
 					errorMessage={errors.description}
 					id="objective-description-input"
+					label="Objective description"
 					onChange={(e) => {
 						updateField("description", e.target.value);
 					}}
 					placeholder="Describe how this objective supports the grant's goals"
-					rows={1}
 					testId="objective-description-input"
 					value={formData.description}
 				/>
-			</div>
 
-			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h3 className="text-base font-medium text-gray-900">Tasks</h3>
-					<AppButton data-testid="add-task-button" onClick={addTask} size="sm" type="button" variant="ghost">
+					<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
+					<IconButton
+						data-testid="add-task-button"
+						disabled={formData.tasks.length === 1 && !formData.tasks[0].description.trim()}
+						onClick={addTask}
+						size="sm"
+						type="button"
+						variant="solid"
+					>
 						<Plus className="w-4 h-4" />
-					</AppButton>
+					</IconButton>
 				</div>
 
-				<div className="space-y-3">
-					{formData.tasks.map((task, index) => (
-						<div className="space-y-2" key={task.id}>
-							<div className="flex items-center justify-between">
-								<label
-									className="block text-sm font-medium text-gray-700"
-									htmlFor={`task-description-${index}`}
-								>
-									Task description
-								</label>
-								{formData.tasks.length > 1 && (
-									<button
-										className="text-sm text-red-600 hover:text-red-800"
-										data-testid={`remove-task-${index}`}
-										onClick={() => {
-											removeTask(task.id);
-										}}
-										type="button"
-									>
-										Remove
-									</button>
-								)}
-							</div>
-							<AppTextArea
-								className="resize-none [field-sizing:none]"
-								errorMessage={errors.tasks?.[task.id]}
-								id={`task-description-${index}`}
-								onChange={(e) => {
-									updateTask(task.id, e.target.value);
-								}}
-								placeholder="Describe a step to achieve this objective"
-								rows={1}
-								testId={`task-description-${index}`}
-								value={task.description}
-							/>
-						</div>
-					))}
-				</div>
+				{formData.tasks.map((task, index) => (
+					<AppTextArea
+						className="min-h-52"
+						errorMessage={errors.tasks?.[task.id]}
+						id={`task-description-${index}`}
+						key={task.id}
+						label="Task description"
+						onChange={(e) => {
+							updateTask(task.id, e.target.value);
+						}}
+						placeholder="Describe a step to achieve this objective"
+						testId={`task-description-${index}`}
+						value={task.description}
+					/>
+				))}
 			</div>
 
-			<div className="flex justify-end pt-4">
+			<div className="flex justify-end">
 				<AppButton data-testid="save-button" onClick={handleSave} type="button" variant="primary">
 					Save
 				</AppButton>
