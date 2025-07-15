@@ -24,7 +24,6 @@ export { ProjectSettingsMembers } from "./settings/project-settings-members";
 
 export { NotificationHandler } from "./shared/notification-handler";
 
-export { ProjectCard } from "./shared/project-card";
 export { ThemeBadge } from "./shared/theme-badge";
 
 export * from "./wizard";

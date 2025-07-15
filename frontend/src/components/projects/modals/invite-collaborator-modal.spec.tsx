@@ -15,8 +15,8 @@ describe("InviteCollaboratorModal", () => {
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
 		expect(screen.getByTestId("invite-collaborator-modal")).toBeInTheDocument();
-		expect(screen.getByText("Invite New Collaborator")).toBeInTheDocument();
-		expect(screen.getByText("Invite new collaborator and set up collaborator role.")).toBeInTheDocument();
+		expect(screen.getByText("Invite New Member")).toBeInTheDocument();
+		expect(screen.getByText("Invite new member and set up member role.")).toBeInTheDocument();
 		expect(screen.getByTestId("email-input")).toBeInTheDocument();
 		expect(screen.getByTestId("permission-dropdown")).toBeInTheDocument();
 		expect(screen.getByTestId("cancel-button")).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe("InviteCollaboratorModal", () => {
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
 		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent(
-			"Collaborator (can access applications within this project)",
+			"Member (can access applications within this project)",
 		);
 	});
 
@@ -87,7 +87,7 @@ describe("InviteCollaboratorModal", () => {
 		await user.click(screen.getByTestId("collaborator-option"));
 
 		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent(
-			"Collaborator (can access applications within this project)",
+			"Member (can access applications within this project)",
 		);
 		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 	});
