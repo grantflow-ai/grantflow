@@ -95,4 +95,72 @@ resource "google_project_iam_member" "owners_group" {
 }
 
 
+resource "google_service_account" "backend" {
+  account_id   = "backend-service"
+  display_name = "Backend Service Account"
+  description  = "Service account for the backend Cloud Run service"
+}
+
+
+resource "google_project_iam_member" "backend_firebase_admin" {
+  project = "grantflow"
+  role    = "roles/firebase.admin"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_firebase_viewer" {
+  project = "grantflow"
+  role    = "roles/firebase.viewer"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_cloudsql_client" {
+  project = "grantflow"
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_pubsub_publisher" {
+  project = "grantflow"
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_storage_object_viewer" {
+  project = "grantflow"
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_storage_object_creator" {
+  project = "grantflow"
+  role    = "roles/storage.objectCreator"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_secret_accessor" {
+  project = "grantflow"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_logging_writer" {
+  project = "grantflow"
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_monitoring_metric_writer" {
+  project = "grantflow"
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_project_iam_member" "backend_trace_agent" {
+  project = "grantflow"
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+
 
