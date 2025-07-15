@@ -32,7 +32,7 @@ const meta: Meta<typeof GrantApplicationCard> = {
 			},
 		},
 	},
-	title: "Components/Projects/Detail/GrantApplicationCard",
+	title: "Components/Projects/GrantApplicationCard",
 };
 
 export default meta;
