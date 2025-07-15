@@ -7,10 +7,12 @@ on:
             - development
         paths:
             - ".github/workflows/build-service-rag.yaml"
+            - ".github/actions/**"
             - "packages/**/src/**"
             - "services/rag/src/**"
     release:
         types: [published]
+    workflow_dispatch:
 
 jobs:
     build-and-push:
