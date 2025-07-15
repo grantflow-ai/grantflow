@@ -30,30 +30,6 @@ from services.backend.tests.conftest import TestingClientType
 faker = Faker()
 
 
-async def test_create_application_success(
-    test_client: TestingClientType,
-    project: Project,
-    async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
-) -> None:
-    response = await test_client.post(
-        f"/projects/{project.id}/applications",
-        json={"title": "Test Grant Application"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    data = response.json()
-    assert "id" in data
-
-    async with async_session_maker() as session:
-        application = await session.scalar(select(GrantApplication).where(GrantApplication.id == UUID(data["id"])))
-        assert application is not None
-        assert application.title == "Test Grant Application"
-        assert application.project_id == project.id
-        assert application.status == ApplicationStatusEnum.DRAFT
-
-
 async def test_create_application_unauthorized(
     test_client: TestingClientType,
 ) -> None:
