@@ -90,7 +90,13 @@ def get_pubsub_credentials() -> Credentials | None:
             return None
 
         credentials_data = deserialize(credentials_json, dict[str, Any])
-        return Credentials.from_service_account_info(credentials_data)  # type: ignore[no-any-return, no-untyped-call]
+        return Credentials.from_service_account_info(  # type: ignore[no-untyped-call, no-any-return]
+            credentials_data,
+            scopes=[
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/pubsub",
+            ],
+        )
     except Exception:
         return None
 
