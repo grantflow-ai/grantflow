@@ -5,20 +5,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-
-import { ApplicationList } from "./application-list";
-import { DashboardHeader } from "../dashboard/dashboard-header";
-import { DeleteApplicationModal } from "../applications/delete-application-modal";
+import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
+import { AppButton } from "@/components/app";
+import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
-import type { API } from "@/types/api-types";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { AppButton } from "@/components/app";
-import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
-
-interface ProjectDetailClientProps {
-	initialProject: API.GetProject.Http200.ResponseBody;
-}
+import { DeleteApplicationModal } from "../applications/delete-application-modal";
+import { DashboardHeader } from "../dashboard/dashboard-header";
+import { ApplicationList } from "./application-list";
 
 const projectTeamMembers = [
 	{ backgroundColor: "#369e94", initials: "NH" },
@@ -26,20 +22,36 @@ const projectTeamMembers = [
 	{ backgroundColor: "#9747ff", initials: "AR" },
 ];
 
-export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps) {
+export function ProjectDetailClient() {
 	const router = useRouter();
+	const { project } = useProjectStore();
+	const { navigateToApplication } = useNavigationStore();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
-	const [projectTitle, setProjectTitle] = useState(initialProject.name);
+	const [projectTitle, setProjectTitle] = useState(project?.name ?? "");
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 
+	// Redirect if no project
+	useEffect(() => {
+		if (!project) {
+			router.replace(routes.projects());
+		}
+	}, [project, router]);
+
+	// Update title when project changes
+	useEffect(() => {
+		if (project?.name) {
+			setProjectTitle(project.name);
+		}
+	}, [project?.name]);
+
 	// Fetch applications using SWR
 	const { data: applicationsData, isLoading } = useSWR(
-		`/projects/${initialProject.id}/applications?search=${searchQuery}`,
-		() => listApplications(initialProject.id, { search: searchQuery || undefined }),
+		project ? `/projects/${project.id}/applications?search=${searchQuery}` : null,
+		() => (project ? listApplications(project.id, { search: searchQuery || undefined }) : null),
 		{
 			revalidateOnFocus: false,
 		},
@@ -53,10 +65,10 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	};
 
 	const confirmDeleteApplication = async () => {
-		if (applicationToDelete) {
+		if (applicationToDelete && project) {
 			try {
-				await deleteApplication(initialProject.id, applicationToDelete);
-				await mutate(`/projects/${initialProject.id}/applications`);
+				await deleteApplication(project.id, applicationToDelete);
+				await mutate(`/projects/${project.id}/applications`);
 				toast.success("Application deleted successfully");
 				setApplicationToDelete(null);
 				setShowDeleteModal(false);
@@ -68,16 +80,19 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	};
 
 	const handleCreateApplication = async () => {
+		if (!project) return;
 		setIsCreatingApplication(true);
 		try {
-			const application = await createApplication(initialProject.id, { title: DEFAULT_APPLICATION_TITLE });
-			await mutate(`/projects/${initialProject.id}/applications`);
-			const wizardPath = routes.application.wizard({
-				applicationId: application.id,
-				applicationTitle: application.title || DEFAULT_APPLICATION_TITLE,
-				projectId: initialProject.id,
-				projectName: initialProject.name,
-			});
+			const application = await createApplication(project.id, { title: DEFAULT_APPLICATION_TITLE });
+			await mutate(`/projects/${project.id}/applications`);
+			// Set navigation context
+			navigateToApplication(
+				project.id,
+				project.name,
+				application.id,
+				application.title || DEFAULT_APPLICATION_TITLE,
+			);
+			const wizardPath = routes.application.wizard();
 			router.push(wizardPath);
 		} catch (error) {
 			log.error("create-application-button", error);
@@ -87,12 +102,10 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 	};
 
 	const handleOpenApplication = (applicationId: string, applicationTitle: string) => {
-		const wizardPath = routes.application.wizard({
-			applicationId,
-			applicationTitle,
-			projectId: initialProject.id,
-			projectName: initialProject.name,
-		});
+		if (!project) return;
+		// Set navigation context
+		navigateToApplication(project.id, project.name, applicationId, applicationTitle);
+		const wizardPath = routes.application.wizard();
 		router.push(wizardPath);
 	};
 
@@ -101,6 +114,10 @@ export function ProjectDetailClient({ initialProject }: ProjectDetailClientProps
 			titleInputRef.current.focus();
 		}
 	}, [isEditingTitle]);
+
+	if (!project) {
+		return null; // Will redirect via useEffect
+	}
 
 	return (
 		<section className="bg-preview-bg w-full h-full overflow-y-scroll  flex">

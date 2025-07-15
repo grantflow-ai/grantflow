@@ -4,7 +4,9 @@ import { HelpCircle, LogOut, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
+import { useState } from "react";
 import { AppButton } from "@/components/app";
+import NewApplicationModal from "@/components/projects/modals/new-application-modal";
 import {
 	Sidebar,
 	SidebarContent,
@@ -16,8 +18,6 @@ import {
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
-import  NewApplicationModal  from "@/components/projects/modals/new-application-modal";
-import { useState } from "react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();

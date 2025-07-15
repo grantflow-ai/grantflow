@@ -592,6 +592,6 @@ export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((fact
 	id: factory.string.uuid(),
 	project_id: factory.string.uuid(),
 	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
-	title: factory.lorem.sentence({ min: 3, max: 8 }),
+	title: factory.lorem.sentence({ max: 8, min: 3 }),
 	updated_at: factory.date.recent().toISOString(),
 }));
