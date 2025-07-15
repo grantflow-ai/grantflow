@@ -20,11 +20,11 @@ on:
         default: true
   workflow_run:
     workflows: 
-      - "Build and Push (Backend)"
-      - "Build and Push (Crawler)"
-      - "Build and Push (Indexer)"
-      - "Build and Push (RAG)"
-      - "Build and Push (Scraper)"
+      - "Build: Backend"
+      - "Build: Crawler"
+      - "Build: Indexer"
+      - "Build: RAG"
+      - "Build: Scraper"
     types:
       - completed
     branches:

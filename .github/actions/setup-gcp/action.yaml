@@ -1,0 +1,21 @@
+name: "Setup GCP"
+description: "Authenticate to Google Cloud and set up standard GCP tools"
+
+outputs:
+    access_token:
+        description: "GCP access token for authentication"
+        value: ${{ steps.auth.outputs.access_token }}
+
+runs:
+    using: "composite"
+    steps:
+        - name: Authenticate to Google Cloud
+          id: auth
+          uses: google-github-actions/auth@v2
+          with:
+              token_format: access_token
+              workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+              service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+
+        - name: Set up Cloud SDK
+          uses: google-github-actions/setup-gcloud@v2

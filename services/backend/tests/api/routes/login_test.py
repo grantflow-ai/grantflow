@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from typing import Any
+from unittest.mock import AsyncMock
 
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Project, ProjectUser
@@ -17,10 +18,11 @@ async def test_login_new_user_creates_project(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
 ) -> None:
-    mocker.patch("jwt.encode", return_value="jwt_token")
+    mocker.patch("services.backend.src.utils.jwt.encode", return_value="jwt_token")
+    verify_mock = AsyncMock(return_value={"uid": firebase_uid})
     mocker.patch(
-        "services.backend.src.utils.firebase.verify_id_token",
-        return_value={"uid": firebase_uid},
+        "services.backend.src.api.routes.auth.verify_id_token",
+        verify_mock,
     )
 
     response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
@@ -44,10 +46,11 @@ async def test_login_existing_user_keeps_project(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
 ) -> None:
-    mocker.patch("jwt.encode", return_value="jwt_token")
+    mocker.patch("services.backend.src.utils.jwt.encode", return_value="jwt_token")
+    verify_mock = AsyncMock(return_value={"uid": firebase_uid})
     mocker.patch(
-        "services.backend.src.utils.firebase.verify_id_token",
-        return_value={"uid": firebase_uid},
+        "services.backend.src.api.routes.auth.verify_id_token",
+        verify_mock,
     )
 
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
