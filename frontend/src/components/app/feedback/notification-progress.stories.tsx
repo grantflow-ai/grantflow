@@ -7,7 +7,7 @@ const meta: Meta<typeof NotificationProgress> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/NotificationProgress",
+	title: "Components/Feedback/NotificationProgress",
 };
 
 export default meta;
