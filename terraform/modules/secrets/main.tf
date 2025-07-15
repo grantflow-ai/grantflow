@@ -116,7 +116,8 @@ resource "google_secret_manager_secret_iam_binding" "database_connection_string_
   secret_id = google_secret_manager_secret.database_connection_string.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
+    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
   ]
 }
 
@@ -126,7 +127,8 @@ resource "google_secret_manager_secret_iam_binding" "firebase_credentials_access
   secret_id = google_secret_manager_secret.firebase_service_account_credentials.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
+    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
   ]
 }
 
@@ -146,7 +148,8 @@ resource "google_secret_manager_secret_iam_binding" "jwt_secret_access" {
   secret_id = google_secret_manager_secret.jwt_secret.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
+    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
   ]
 }
 
@@ -156,7 +159,8 @@ resource "google_secret_manager_secret_iam_binding" "admin_access_code_access" {
   secret_id = google_secret_manager_secret.admin_access_code.secret_id
   role      = "roles/secretmanager.secretAccessor"
   members = [
-    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
+    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
   ]
 }
 
@@ -186,6 +190,7 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
+    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
   ]
 }

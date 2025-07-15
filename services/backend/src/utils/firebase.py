@@ -38,9 +38,18 @@ def get_firebase_app() -> App:
     if firebase_app_ref.value is None:
         logger.debug("Initializing Firebase app")
         service_account_dict = deserialize(get_env("FIREBASE_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any])
-        firebase_app_ref.value = initialize_app(
-            credential=Credentials.from_service_account_info(service_account_dict),  # type: ignore[no-untyped-call]
+
+        credentials = Credentials.from_service_account_info(  # type: ignore[no-untyped-call]
+            service_account_dict,
+            scopes=[
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/firebase",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/identitytoolkit",
+            ],
         )
+
+        firebase_app_ref.value = initialize_app(credential=credentials)
     return firebase_app_ref.value
 
 

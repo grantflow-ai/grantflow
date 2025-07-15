@@ -38,9 +38,18 @@ def get_credentials() -> Credentials:
     )
     if credentials_json:
         credentials = deserialize(credentials_json, dict[str, Any])
-        return cast("Credentials", Credentials.from_service_account_info(credentials))  # type: ignore[no-untyped-call]
+        return cast(
+            "Credentials",
+            Credentials.from_service_account_info(  # type: ignore[no-untyped-call]
+                credentials,
+                scopes=[
+                    "https://www.googleapis.com/auth/cloud-platform",
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                ],
+            ),
+        )
 
-    return cast("Credentials", None)  # type: ignore[arg-type]
+    return cast("Credentials", None)
 
 
 def get_storage_client() -> storage.Client:
