@@ -8,6 +8,14 @@ inputs:
     image_tag:
         description: "Docker image tag"
         required: true
+    workload_identity_provider:
+        description: "Workload identity provider"
+        required: false
+        default: "projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool"
+    service_account:
+        description: "Service account email"
+        required: false
+        default: "githubactions@grantflow.iam.gserviceaccount.com"
 
 runs:
     using: "composite"
@@ -15,6 +23,9 @@ runs:
         - name: Setup GCP
           id: gcp
           uses: ./.github/actions/setup-gcp
+          with:
+              workload_identity_provider: ${{ inputs.workload_identity_provider }}
+              service_account: ${{ inputs.service_account }}
 
         - name: Set up Docker Buildx
           uses: docker/setup-buildx-action@v3
