@@ -24,7 +24,7 @@ interface SortableObjectiveCardProps {
 }
 
 export function ResearchPlanPreview() {
-	const objectives = useApplicationStore((state) => state.application?.research_objectives ?? []);
+	const objectives = useApplicationStore((state) => state.application?.research_objectives) ?? [];
 	const handleObjectiveDragEnd = useWizardStore((state) => state.handleObjectiveDragEnd);
 	const removeObjective = useWizardStore((state) => state.removeObjective);
 
