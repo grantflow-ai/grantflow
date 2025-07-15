@@ -1,14 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { DashboardHeader } from "./dashboard-header";
+import { AppHeader } from "@/components/layout/app-header";
 
-describe("DashboardHeader", () => {
+describe("AppHeader", () => {
 	it("renders notification and avatar group", () => {
 		const teamMembers = [
 			{ backgroundColor: "#369e94", initials: "NH" },
 			{ backgroundColor: "#9e366f", initials: "VH" },
 		];
 
-		render(<DashboardHeader projectTeamMembers={teamMembers} />);
+		render(<AppHeader projectTeamMembers={teamMembers} />);
 
 		// Assert the container
 		expect(screen.getByTestId("dashboard-header")).toBeInTheDocument();
