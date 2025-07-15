@@ -203,7 +203,11 @@ async def test_index_chunks_large_batch(mocker: MockerFixture) -> None:
     assert mock_create_vector_dto.call_count == num_chunks
 
     for chunk in chunks:
-        mock_create_vector_dto.assert_any_call(chunk=chunk, rag_source_id=source_id)
+        mock_create_vector_dto.assert_any_call(
+            chunk=chunk,
+            rag_source_id=source_id,
+            model_name="sentence-transformers/all-MiniLM-L12-v2",
+        )
 
 
 async def test_index_chunks_empty_list() -> None:

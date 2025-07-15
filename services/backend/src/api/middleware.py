@@ -30,7 +30,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
-        if isinstance(ASGIConnection, Request) and connection.method == "OPTIONS":
+        if isinstance(connection, Request) and connection.method == "OPTIONS":
             return AuthenticationResult(user=None, auth=None)
 
         if any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):

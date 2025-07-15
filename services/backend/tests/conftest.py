@@ -44,6 +44,7 @@ async def test_client(
         patch("services.backend.src.main.before_server_start"),
         patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
         patch("services.backend.src.utils.jwt.verify_jwt_token", return_value=firebase_uid),
+        patch("services.backend.src.api.middleware.verify_jwt_token", return_value=firebase_uid),
         patch(
             "services.backend.src.utils.firebase.get_firebase_app",
             return_value=firebase_app_ref.value,
