@@ -62,8 +62,8 @@ test.describe("Dashboard with Mock API", () => {
 		// Wait for modal to close and navigation
 		await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 10_000 });
 
-		// Should navigate to the new project page
-		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
+		// Should navigate to the new project page with clean URL
+		await expect(page).toHaveURL("/project");
 
 		// Verify we're on the project page
 		await expect(page.getByText("Test Research Project")).toBeVisible({ timeout: 10_000 });
@@ -88,8 +88,8 @@ test.describe("Dashboard with Mock API", () => {
 		// Click on the first project card
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 
-		// Should navigate to project detail page with slug format (name-shortid)
-		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
+		// Should navigate to clean project URL
+		await expect(page).toHaveURL("/project");
 
 		// Verify project page loaded - look for new application button in main content
 		await expect(page.locator("main").locator('[data-testid="new-application-button"]')).toBeVisible();
@@ -222,8 +222,8 @@ test.describe("Dashboard Navigation", () => {
 		// First click on a project to enter it
 		await page.locator('[data-testid="dashboard-project-card"]').first().click();
 
-		// Should navigate to project page
-		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
+		// Should navigate to project page with clean URL
+		await expect(page).toHaveURL("/project");
 
 		// Now click New Application button on the project page (be more specific)
 		await page.locator("main").locator('[data-testid="new-application-button"]').click();

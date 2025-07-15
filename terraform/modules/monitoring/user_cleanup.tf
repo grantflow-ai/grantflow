@@ -114,11 +114,11 @@ resource "google_cloudfunctions2_function" "user_cleanup" {
       DATABASE_USER        = "grantflow"
     }
 
-    # Reference to database password from Secret Manager
+    # Reference to database connection string from Secret Manager
     secret_environment_variables {
-      key        = "DATABASE_PASSWORD"
+      key        = "DATABASE_CONNECTION_STRING"
       project_id = var.project_id
-      secret     = "database-password"
+      secret     = "DATABASE_CONNECTION_STRING"
       version    = "latest"
     }
 
@@ -205,19 +205,6 @@ resource "google_monitoring_alert_policy" "user_cleanup_failures" {
 resource "google_logging_metric" "user_cleanup_operations" {
   name   = "user_cleanup_operations"
   filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"user-cleanup-function\" AND jsonPayload.processed>=0"
-
-  metric_descriptor {
-    metric_kind  = "GAUGE"
-    value_type   = "INT64"
-    unit         = "1"
-    display_name = "User Cleanup Operations"
-  }
-
-  value_extractor = "EXTRACT(jsonPayload.processed)"
-
-  label_extractors = {
-    status = "EXTRACT(jsonPayload.statusCode)"
-  }
 }
 
 # Output the function details

@@ -34,17 +34,20 @@ class Logger {
 		const prefix = `[${level.toUpperCase()}]`;
 		const contextData = context ? { ...context } : {};
 
+		// Use JSON.stringify for better debugging visibility
+		const contextString = Object.keys(contextData).length > 0 ? JSON.stringify(contextData, null, 2) : "";
+
 		switch (level) {
 			case "error": {
-				console.error(prefix, message, contextData);
+				console.error(prefix, message, contextString);
 				break;
 			}
 			case "info": {
-				console.info(prefix, message, contextData);
+				console.info(prefix, message, contextString);
 				break;
 			}
 			case "warn": {
-				console.warn(prefix, message, contextData);
+				console.warn(prefix, message, contextString);
 				break;
 			}
 		}

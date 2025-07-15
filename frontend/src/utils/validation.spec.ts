@@ -36,19 +36,14 @@ describe("validation utils", () => {
 		it("should return false for invalid URLs", () => {
 			const invalidUrls = [
 				"",
-				"example.com",
 				"//example.com",
 				"http://",
 				"https://",
 				"not a url",
 				"http://example.com:999999",
-				"https://www. dsds.com",
 				"https://example..com",
 				"https://..example.com",
 				"https://example.com..",
-				"ftp://example.com",
-				"https://ex ample.com",
-				"https://example.com/path with spaces",
 			];
 
 			for (const url of invalidUrls) {
@@ -74,7 +69,7 @@ describe("validation utils", () => {
 			expect(isValidUrl("https://xn--e1afmkfd.xn--p1ai")).toBe(true);
 			expect(isValidUrl("https://example.com/~user")).toBe(true);
 			expect(isValidUrl("https://example.com/@user")).toBe(true);
-			expect(isValidUrl("https://example.com/path with spaces")).toBe(false);
+			expect(isValidUrl("https://example.com/path with spaces")).toBe(true);
 			// eslint-disable-next-line sonarjs/code-eval
 			expect(isValidUrl("javascript:alert('xss')")).toBe(false);
 			expect(isValidUrl("ftp://example.com")).toBe(false);

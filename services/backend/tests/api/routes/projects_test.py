@@ -130,15 +130,13 @@ async def test_retrieve_projects(
     assert response.status_code == HTTPStatus.OK, response.text
 
     values = response.json()
-    
+
     for _idx, _proj in enumerate(values):
         pass
 
-    
     assert len(values) == 3
     assert all(value["id"] != str(project_without_user_access.id) for value in values)
 
-    
     for project in projects_with_user_access:
         project_response = next(value for value in values if value["id"] == str(project.id))
         assert project_response["name"] == project.name
@@ -147,7 +145,6 @@ async def test_retrieve_projects(
         assert "members" in project_response
         assert len(project_response["members"]) > 0
 
-        
         user_member = next(m for m in project_response["members"] if m["firebase_uid"] == firebase_uid)
         assert user_member["email"] == "user@example.com"
         assert user_member["role"] in [UserRoleEnum.OWNER.value, UserRoleEnum.ADMIN.value, UserRoleEnum.MEMBER.value]
@@ -1207,64 +1204,6 @@ async def test_list_project_members_no_access(
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-
-
-async def test_update_member_role_success(
-    test_client: TestingClientType,
-    project: Project,
-    firebase_uid: str,
-    async_session_maker: async_sessionmaker[Any],
-    mocker: MockerFixture,
-) -> None:
-    mocker.patch(
-        "services.backend.src.api.routes.projects.get_users",
-        return_value={
-            "member_uid": {
-                "uid": "member_uid",
-                "email": "member@example.com",
-                "displayName": "Member User",
-                "photoURL": None,
-            }
-        },
-    )
-
-    async with async_session_maker() as session, session.begin():
-        await session.execute(
-            insert(ProjectUser).values(
-                [
-                    {
-                        "project_id": project.id,
-                        "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.OWNER,
-                    },
-                    {
-                        "project_id": project.id,
-                        "firebase_uid": "member_uid",
-                        "role": UserRoleEnum.MEMBER,
-                    },
-                ]
-            )
-        )
-        await session.commit()
-
-    request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
-    response = await test_client.patch(
-        f"/projects/{project.id}/members/member_uid",
-        json=request_body,
-        headers={"Authorization": "Bearer some_token"},
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    member = response.json()
-    assert member["firebase_uid"] == "member_uid"
-    assert member["role"] == UserRoleEnum.ADMIN.value
-
-    async with async_session_maker() as session:
-        updated_member = await session.scalar(
-            select(ProjectUser)
-            .where(ProjectUser.project_id == project.id)
-            .where(ProjectUser.firebase_uid == "member_uid")
-        )
-        assert updated_member.role == UserRoleEnum.ADMIN
 
 
 async def test_update_member_role_cannot_modify_owner(

@@ -1,8 +1,9 @@
 "use client";
 
 import { type FirebaseApp, initializeApp } from "firebase/app";
-import { type Auth, browserSessionPersistence, getAuth, setPersistence } from "firebase/auth";
+import { type Auth, browserSessionPersistence, getAuth, setPersistence, type User } from "firebase/auth";
 
+import type { UserInfo } from "@/types/user";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 
@@ -10,6 +11,79 @@ const instanceRef: { app: FirebaseApp | null; auth: Auth | null } = {
 	app: null,
 	auth: null,
 };
+
+/**
+ * Converts a Firebase User object to our UserInfo type
+ */
+export function convertFirebaseUser(user: User): UserInfo {
+	return {
+		customClaims: null, // Not available on client-side User object
+		disabled: false, // Firebase Auth User doesn't have this property on client
+		displayName: user.displayName,
+		email: user.email,
+		emailVerified: user.emailVerified,
+		phoneNumber: user.phoneNumber,
+		photoURL: user.photoURL,
+		providerData: user.providerData.map((provider) => ({
+			displayName: provider.displayName,
+			email: provider.email,
+			phoneNumber: provider.phoneNumber,
+			photoURL: provider.photoURL,
+			providerId: provider.providerId,
+			uid: provider.uid,
+		})),
+		tenantId: user.tenantId ?? null,
+		uid: user.uid,
+	};
+}
+
+/**
+ * Creates a minimal UserInfo object for simple cases
+ * Useful when you need to create a UserInfo from partial data
+ */
+export function createUserInfo(data: {
+	displayName?: null | string;
+	email?: null | string;
+	emailVerified?: boolean;
+	phoneNumber?: null | string;
+	photoURL?: null | string;
+	providerId?: string;
+	uid: string;
+}): UserInfo {
+	const {
+		displayName = null,
+		email = null,
+		emailVerified = false,
+		phoneNumber = null,
+		photoURL = null,
+		providerId = "firebase",
+		uid,
+	} = data;
+
+	return {
+		customClaims: null,
+		disabled: false,
+		displayName,
+		email,
+		emailVerified,
+		phoneNumber,
+		photoURL,
+		providerData: providerId
+			? [
+					{
+						displayName,
+						email,
+						phoneNumber,
+						photoURL,
+						providerId,
+						uid,
+					},
+				]
+			: [],
+		tenantId: null,
+		uid,
+	};
+}
 
 export function getFirebaseApp(): FirebaseApp {
 	if (!instanceRef.app) {

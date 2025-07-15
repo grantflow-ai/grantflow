@@ -9,7 +9,7 @@ env:
     - variable: NEXT_PUBLIC_SITE_URL
       secret: NEXT_PUBLIC_SITE_URL_STAGING
     - variable: NEXT_PUBLIC_BACKEND_API_BASE_URL
-      secret: NEXT_PUBLIC_BACKEND_API_BASE_URL_STAGING
+      value: "https://staging-api.grantflow.ai"
     - variable: NEXT_PUBLIC_FIREBASE_API_KEY
       secret: NEXT_PUBLIC_FIREBASE_API_KEY_STAGING
     - variable: NEXT_PUBLIC_FIREBASE_APP_ID

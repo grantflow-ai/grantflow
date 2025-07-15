@@ -34,7 +34,7 @@ export function WizardClientComponent({ application: initialApplication, project
 	const currentStep = useWizardStore((state) => state.currentStep);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
-	const retrieveApplication = useApplicationStore((state) => state.retrieveApplication);
+	const getApplication = useApplicationStore((state) => state.getApplication);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
@@ -101,7 +101,7 @@ export function WizardClientComponent({ application: initialApplication, project
 					// Update loading state
 					useWizardStore.getState().setAutofillLoading(autofill_type, false);
 					// Refresh application data to get autofilled content
-					void retrieveApplication(projectId, initialApplication.id);
+					void getApplication(projectId, initialApplication.id);
 
 					break;
 				}
@@ -129,7 +129,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				// No default
 			}
 		},
-		[projectId, initialApplication.id, retrieveApplication],
+		[projectId, initialApplication.id, getApplication],
 	);
 
 	useEffect(() => {
@@ -144,12 +144,12 @@ export function WizardClientComponent({ application: initialApplication, project
 		} else if (isAutofillProgressMessage(latestNotification)) {
 			handleAutofillProgress(latestNotification);
 		}
-		void retrieveApplication(projectId, initialApplication.id);
+		void getApplication(projectId, initialApplication.id);
 	}, [
 		notifications,
 		handleSourceProcessingNotification,
 		handleAutofillProgress,
-		retrieveApplication,
+		getApplication,
 		projectId,
 		initialApplication.id,
 	]);
@@ -173,13 +173,13 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
-			void retrieveApplication(projectId, initialApplication.id);
+			void getApplication(projectId, initialApplication.id);
 		}
 
 		if (event === "generation_error" || event === "pipeline_error") {
 			setGeneratingTemplate(false);
 		}
-	}, [latestRagNotification, setGeneratingTemplate, retrieveApplication, projectId, initialApplication.id]);
+	}, [latestRagNotification, setGeneratingTemplate, getApplication, projectId, initialApplication.id]);
 
 	return (
 		<div className="bg-light flex h-full w-full flex-col overflow-hidden" data-testid="wizard-page">

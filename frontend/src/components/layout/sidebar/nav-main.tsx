@@ -1,15 +1,29 @@
+"use client";
+
 import { ChevronRight, Search, Settings } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useProjectStore } from "@/stores/project-store";
+import { routes } from "@/utils/navigation";
 
 export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
+	const { activeProjectId, activeProjectName } = useNavigationStore();
+	const { project } = useProjectStore();
+
+	// Use project from store if available, otherwise fall back to navigation store
+	const currentProjectName = project?.name ?? activeProjectName ?? "Project";
+	const hasActiveProject = !!activeProjectId || !!project;
+
 	return (
 		<nav {...props}>
-			<main
-				className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center"
+			<Link
+				className="flex px-3 items-center pl-12 pb-6 group-data-[collapsible=icon]:pl-3 group-data-[collapsible=icon]:justify-center hover:bg-gray-50 rounded-md transition-colors"
 				data-testid="dashboard-section"
+				href={routes.projects()}
 			>
 				<div className="size-4">
 					<Image
@@ -21,7 +35,7 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 					/>
 				</div>
 				<p className="text-black text-base font-normal ml-2 group-data-[collapsible=icon]:hidden">Dashboard</p>
-			</main>
+			</Link>
 			<SidebarGroup>
 				<SidebarMenu>
 					{/* Recent Applications */}
@@ -56,57 +70,7 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 										/>
 									</div>
 									<main className="flex flex-col gap-4 h-[286px] overflow-y-scroll">
-										<div className="p-2 rounded-md bg-gray-50 flex flex-col gap-1">
-											<div className="rounded-md flex items-center bg-primary w-fit gap-0.5 px-[4.39px]">
-												<div className="size-[6px] bg-white rounded-full" />
-												<p className="text-[6.59px] text-white font-normal">Generating</p>
-											</div>
-											<p className="text-sm text-gray-700 font-normal">
-												Application name 123456...
-											</p>
-										</div>
-										<div className="p-2 rounded-md flex flex-col gap-1">
-											<div className="rounded-md flex items-center bg-gray-100 w-fit gap-0.5 px-[4.39px]">
-												<div className="size-[6px] bg-blue-600 rounded-full" />
-												<p className="text-[6.59px] text-blue-600 font-normal">In Progress</p>
-											</div>
-											<p className="text-sm text-gray-700 font-normal">
-												Application name 123456...
-											</p>
-										</div>
-										<div className="p-2 rounded-md flex flex-col gap-1">
-											<div className="rounded-md flex items-center bg-slate-100 w-fit gap-0.5 px-[4.39px]">
-												<div className="size-[6px] bg-slate-600 rounded-full" />
-												<p className="text-[6.59px] text-slate-600 font-normal">
-													Working Draft
-												</p>
-											</div>
-											<p className="text-sm text-gray-700 font-normal">
-												Application name 123456...
-											</p>
-										</div>
-										<div className="p-2 rounded-md flex flex-col gap-1">
-											<div className="rounded-md flex items-center bg-slate-100 w-fit gap-0.5 px-[4.39px]">
-												<div className="size-[6px] bg-slate-600 rounded-full" />
-												<p className="text-[6.59px] text-slate-600 font-normal">
-													Working Draft
-												</p>
-											</div>
-											<p className="text-sm text-gray-700 font-normal">
-												Application name 123456...
-											</p>
-										</div>
-										<div className="p-2 rounded-md bg-gray-50 flex flex-col gap-1">
-											<div className="rounded-md flex items-center bg-slate-100 w-fit gap-0.5 px-[4.39px]">
-												<div className="size-[6px] bg-slate-600 rounded-full" />
-												<p className="text-[6.59px] text-slate-600 font-normal">
-													Working Draft
-												</p>
-											</div>
-											<p className="text-sm text-gray-700 font-normal">
-												Application name 123456...
-											</p>
-										</div>
+										<p className="text-sm text-gray-500 p-2">No recent applications</p>
 									</main>
 								</div>
 							</CollapsibleContent>
@@ -114,48 +78,62 @@ export function NavMain(props: React.HTMLAttributes<HTMLButtonElement>) {
 					</Collapsible>
 
 					{/* Settings */}
-					<Collapsible className="group/collapsible" defaultOpen>
-						<SidebarMenuItem>
-							<CollapsibleTrigger asChild>
-								<SidebarMenuButton
-									className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 "
-									data-testid="settings-trigger"
-								>
-									<Settings className="text-primary size-4 flex-shrink-0" />
-									<span className="group-data-[collapsible=icon]:hidden">Settings</span>
-									<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
-								</SidebarMenuButton>
-							</CollapsibleTrigger>
-							<CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
-								<main className="flex flex-col gap-4 px-3">
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-account"
+					{hasActiveProject && (
+						<Collapsible className="group/collapsible" defaultOpen>
+							<SidebarMenuItem>
+								<CollapsibleTrigger asChild>
+									<SidebarMenuButton
+										className="bg-white text-primary hover:bg-gray-100 hover:text-blue-700 font-normal text-base border border-gray-200 "
+										data-testid="settings-trigger"
 									>
-										<p className="text-sm text-gray-700 font-normal">Account Setting</p>
-									</div>
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-billing"
-									>
-										<p className="text-sm text-gray-700 font-normal">Billing and payments</p>
-									</div>
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-members"
-									>
-										<p className="text-sm text-gray-700 font-normal">Members</p>
-									</div>
-									<div
-										className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors"
-										data-testid="settings-notifications"
-									>
-										<p className="text-sm text-gray-700 font-normal">Notifications</p>
-									</div>
-								</main>
-							</CollapsibleContent>
-						</SidebarMenuItem>
-					</Collapsible>
+										<Settings className="text-primary size-4 flex-shrink-0" />
+										<span className="group-data-[collapsible=icon]:hidden">Settings</span>
+										<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
+									</SidebarMenuButton>
+								</CollapsibleTrigger>
+								<CollapsibleContent className="mt-4 group-data-[collapsible=icon]:hidden">
+									<main className="flex flex-col gap-4 px-3">
+										<Link
+											className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+											data-testid="settings-account"
+											href={routes.project.settings.account()}
+										>
+											<p className="text-sm text-gray-700 font-normal">Account Setting</p>
+										</Link>
+										<Link
+											className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+											data-testid="settings-billing"
+											href={routes.project.settings.billing()}
+										>
+											<p className="text-sm text-gray-700 font-normal">Billing and payments</p>
+										</Link>
+										<Link
+											className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+											data-testid="settings-members"
+											href={routes.project.settings.members()}
+										>
+											<p className="text-sm text-gray-700 font-normal">Members</p>
+										</Link>
+										<Link
+											className="hover:bg-gray-50 p-2 rounded-md cursor-pointer transition-colors block"
+											data-testid="settings-notifications"
+											href={routes.project.settings.notifications()}
+										>
+											<p className="text-sm text-gray-700 font-normal">Notifications</p>
+										</Link>
+									</main>
+								</CollapsibleContent>
+							</SidebarMenuItem>
+						</Collapsible>
+					)}
+
+					{/* Current Project Info */}
+					{hasActiveProject && (
+						<div className="mt-4 px-3 py-2 bg-gray-50 rounded-md group-data-[collapsible=icon]:hidden">
+							<p className="text-xs text-gray-500 mb-1">Current Project</p>
+							<p className="text-sm text-gray-700 font-medium truncate">{currentProjectName}</p>
+						</div>
+					)}
 				</SidebarMenu>
 			</SidebarGroup>
 		</nav>

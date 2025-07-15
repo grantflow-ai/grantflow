@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete RAG Pipeline - Grant Application Generation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 1.5s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 300;
+            background: linear-gradient(45deg, #00d4ff, #ff00ff, #ffaa00, #00ff88);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 4s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            font-size: 1.4em;
+            opacity: 0.9;
+            animation: pulse 3s ease-in-out infinite;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .pipeline-phases {
+            display: flex;
+            flex-direction: column;
+            gap: 80px;
+            margin-bottom: 50px;
+        }
+
+        .phase {
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideInUp 1s ease-out forwards;
+        }
+
+        .phase:nth-child(1) { animation-delay: 0.2s; }
+        .phase:nth-child(2) { animation-delay: 0.4s; }
+        .phase:nth-child(3) { animation-delay: 0.6s; }
+        .phase:nth-child(4) { animation-delay: 0.8s; }
+        .phase:nth-child(5) { animation-delay: 1.0s; }
+        .phase:nth-child(6) { animation-delay: 1.2s; }
+
+        .phase-header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .phase-title {
+            font-size: 2.5em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .phase-subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .phase-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .step-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            min-height: 280px;
+        }
+
+        .step-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 212, 255, 0.3);
+            border-color: rgba(0, 212, 255, 0.6);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            margin-right: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .icon-ingest { background: linear-gradient(45deg, #ff6b6b, #ee5a52); }
+        .icon-process { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
+        .icon-ai { background: linear-gradient(45deg, #45b7d1, #96c93d); }
+        .icon-rag { background: linear-gradient(45deg, #f093fb, #f5576c); }
+        .icon-generate { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+        .icon-validate { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+
+        .step-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #00d4ff;
+            flex: 1;
+        }
+
+        .step-type {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .type-service { background: linear-gradient(45deg, #667eea, #764ba2); color: white; }
+        .type-ai { background: linear-gradient(45deg, #f093fb, #f5576c); color: white; }
+        .type-database { background: linear-gradient(45deg, #4facfe, #00f2fe); color: white; }
+        .type-validation { background: linear-gradient(45deg, #43e97b, #38f9d7); color: white; }
+
+        .step-description {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .step-details {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+
+        .detail-label {
+            color: #00d4ff;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .model-info {
+            background: rgba(255, 107, 107, 0.15);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .model-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .model-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .model-detail {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 3px solid #ff6b6b;
+        }
+
+        .flow-arrow {
+            width: 4px;
+            height: 60px;
+            background: linear-gradient(to bottom, #00d4ff, #ff00ff, #ffaa00);
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.8), transparent);
+            animation: flowDown 2s ease-in-out infinite;
+        }
+
+        .flow-arrow::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 18px solid #ffaa00;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .data-flow {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .data-input, .data-output {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .data-input {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .data-output {
+            background: rgba(255, 0, 255, 0.1);
+            border-color: rgba(255, 0, 255, 0.3);
+        }
+
+        .data-label {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        .data-output .data-label {
+            color: #ff00ff;
+        }
+
+        .data-items {
+            list-style: none;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .data-items li {
+            margin: 5px 0;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .data-items li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #00d4ff;
+        }
+
+        .progress-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        .batch-info {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffaa00, #ff6600);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .metrics-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 300px;
+            z-index: 1000;
+        }
+
+        .metrics-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-align: center;
+        }
+
+        .metric-group {
+            margin-bottom: 20px;
+        }
+
+        .metric-group-title {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #ff00ff;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.9em;
+            padding: 5px 0;
+        }
+
+        .metric-value {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .pipeline-overview {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 20px 30px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            z-index: 1000;
+        }
+
+        .overview-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .overview-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .dot-active { background: #00d4ff; }
+        .dot-complete { background: #00ff88; }
+        .dot-pending { background: #ffaa00; }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes flowDown {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(300%); }
+        }
+
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 4s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        @media (max-width: 1200px) {
+            .phase-steps {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+            .metrics-panel, .pipeline-overview {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.5em; }
+            .phase-title { font-size: 2em; }
+            .step-card { padding: 20px; }
+            .data-flow { flex-direction: column; }
+            .model-details { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Complete RAG Pipeline</h1>
+            <p>From Document Ingestion to Grant Application Generation - A Complete AI-Powered Workflow</p>
+        </div>
+
+        <div class="pipeline-phases">
+            <!-- Phase 1: Document Ingestion -->
+            <div class="phase">
+                <div class="phase-header">
+                    <div class="phase-title">📥 Phase 1: Document Ingestion</div>
+                    <div class="phase-subtitle">Upload and process research documents, guidelines, and funding announcements</div>
+                </div>
+                <div class="phase-steps" style="display: flex; flex-direction: row; justify-content: center; align-items: flex-start; position: relative;">
+                    <div class="step-card" id="step-upload" style="min-width: 350px;">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-ingest">📄</div>
+                            <div class="step-title">Document Upload</div>
+                            <div class="step-type type-service">Service</div>
+                        </div>
+                        <div class="step-description">
+                            Users upload research papers, grant guidelines, and funding announcements through the web interface
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-input">
+                                <div class="data-label">📥 Inputs</div>
+                                <ul class="data-items">
+                                    <li>1. PDF documents</li>
+                                    <li>2. Word documents</li>
+                                    <li>3. Text files</li>
+                                    <li>4. URLs to web content</li>
+                                </ul>
+                            </div>
+                            <div class="data-output">
+                                <div class="data-label">📤 Outputs</div>
+                                <ul class="data-items">
+                                    <li>1. Extracted text content</li>
+                                    <li>2. Document metadata</li>
+                                    <li>3. File storage references</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="width: 60px;"></div>
+                    <div class="step-card" id="step-processing" style="min-width: 350px;">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-process">🔧</div>
+                            <div class="step-title">Text Processing</div>
+                            <div class="step-type type-service">Service</div>
+                        </div>
+                        <div class="step-description">
+                            Extract and clean text content, handle formatting, and prepare for AI processing
+                        </div>
+                        <div class="data-input">
+                            <div class="data-label">📥 Inputs</div>
+                            <ul class="data-items">
+                                <li>1. Extracted text content</li>
+                                <li>2. Document metadata</li>
+                                <li>3. File storage references</li>
+                            </ul>
+                        </div>
+                        <div class="step-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Processing:</span>
+                                <span class="detail-value">OCR + Text Extraction</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Format Support:</span>
+                                <span class="detail-value">PDF, DOCX, TXT, HTML</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Language:</span>
+                                <span class="detail-value">Multi-language</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Centered SVG Arrow below both cards -->
+                <div style="display: flex; justify-content: center; margin-top: 24px;">
+                    <svg width="120" height="60">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff" />
+                            </marker>
+                        </defs>
+                        <line x1="10" y1="10" x2="110" y2="10" stroke="#00d4ff" stroke-width="4" marker-end="url(#arrowhead)" />
+                    </svg>
+                </div>
+            </div>
+            <!-- Arrow between phases -->
+            <div class="phase-arrow">
+                <svg width="100%" height="60" viewBox="0 0 100 60">
+                    <line x1="50" y1="0" x2="50" y2="50" stroke="#ffaa00" stroke-width="6" />
+                    <polygon points="40,50 60,50 50,60" fill="#ffaa00" />
+                </svg>
+            </div>
+
+            <!-- Phase 2: AI Processing -->
+            <div class="phase">
+                <div class="phase-header">
+                    <div class="phase-title">🧠 Phase 2: AI Processing</div>
+                    <div class="phase-subtitle">Extract information, generate embeddings, and prepare for RAG</div>
+                </div>
+                
+                <div class="phase-steps">
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-ai">🔍</div>
+                            <div class="step-title">CFP Data Extraction</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Extract structured information from funding announcements using AI
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Task:</strong> Information Extraction
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Output:</strong> Structured CFP Data
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Fields:</strong> Deadlines, Requirements, Guidelines
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-ai">📋</div>
+                            <div class="step-title">Section Structure Analysis</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Analyze grant requirements and determine the optimal section structure
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Task:</strong> Structure Analysis
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Output:</strong> Section Hierarchy
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Identifies:</strong> Research Plan Sections
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="phase-arrow">
+                <svg width="100%" height="60" viewBox="0 0 100 60">
+                    <line x1="50" y1="0" x2="50" y2="50" stroke="#ffaa00" stroke-width="6" />
+                    <polygon points="40,50 60,50 50,60" fill="#ffaa00" />
+                </svg>
+            </div>
+
+            <!-- Phase 3: RAG Setup -->
+            <div class="phase">
+                <div class="phase-header">
+                    <div class="phase-title">🔗 Phase 3: RAG Setup</div>
+                    <div class="phase-subtitle">Prepare retrieval system and generate search queries</div>
+                </div>
+                
+                <div class="phase-steps">
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-rag">🔍</div>
+                            <div class="step-title">Search Query Generation</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Generate diverse search queries for each section to retrieve relevant information
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Gemini 2.5 Flash</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Queries:</strong> 3-10 per section
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Diversity:</strong> Multiple angles
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Optimization:</strong> Vector similarity
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-rag">📊</div>
+                            <div class="step-title">Vector Search</div>
+                            <div class="step-type type-database">Database</div>
+                        </div>
+                        <div class="step-description">
+                            Perform semantic search using vector embeddings to find relevant document chunks
+                        </div>
+                        <div class="step-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Embedding Model:</span>
+                                <span class="detail-value">all-MiniLM-L12-v2</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Search Method:</span>
+                                <span class="detail-value">Cosine Similarity</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Results:</span>
+                                <span class="detail-value">Top 100 chunks</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Similarity Threshold:</span>
+                                <span class="detail-value">0.25-1.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-rag">✅</div>
+                            <div class="step-title">Source Validation</div>
+                            <div class="step-type type-validation">Validation</div>
+                        </div>
+                        <div class="step-description">
+                            Validate that retrieved sources contain sufficient information for generation
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Validation:</strong> Information completeness
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Threshold:</strong> 50% minimum
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Output:</strong> Missing info report
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="phase-arrow">
+                <svg width="100%" height="60" viewBox="0 0 100 60">
+                    <line x1="50" y1="0" x2="50" y2="50" stroke="#ffaa00" stroke-width="6" />
+                    <polygon points="40,50 60,50 50,60" fill="#ffaa00" />
+                </svg>
+            </div>
+
+            <!-- Phase 4: Research Planning -->
+            <div class="phase">
+                <div class="phase-header">
+                    <div class="phase-title">📋 Phase 4: Research Planning</div>
+                    <div class="phase-subtitle">Generate research objectives, tasks, and relationships</div>
+                </div>
+                
+                <div class="phase-steps">
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-generate">🎯</div>
+                            <div class="step-title">Research Objectives</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Generate 3-5 research objectives with 2-4 specific tasks each
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Objectives:</strong> 3-5 per application
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Tasks:</strong> 2-4 per objective
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Format:</strong> JSON structure
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-generate">🔗</div>
+                            <div class="step-title">Relationship Extraction</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Identify dependencies and relationships between objectives and tasks
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Types:</strong> Sequential, Causal, Complementary
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Analysis:</strong> Bidirectional relationships
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Output:</strong> Relationship matrix
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-generate">📝</div>
+                            <div class="step-title">Research Deep Dive</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Generate detailed answers to research questions using RAG context
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Questions:</strong> 8 predefined fields
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Length:</strong> 200-500 words
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Style:</strong> Academic tone
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="phase-arrow">
+                <svg width="100%" height="60" viewBox="0 0 100 60">
+                    <line x1="50" y1="0" x2="50" y2="50" stroke="#ffaa00" stroke-width="6" />
+                    <polygon points="40,50 60,50 50,60" fill="#ffaa00" />
+                </svg>
+            </div>
+
+            <!-- Phase 5: Content Generation -->
+            <div class="phase">
+                <div class="phase-header">
+                    <div class="phase-title">✍️ Phase 5: Content Generation</div>
+                    <div class="phase-subtitle">Generate comprehensive grant application sections</div>
+                </div>
+                
+                <div class="phase-steps">
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <button class="see-prompt-btn" onclick="showPrompt('section')">See Prompt</button>
+                        <div class="step-header">
+                            <div class="step-icon icon-generate">📄</div>
+                            <div class="step-title">Section Generation</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Generate complete sections using shared RAG context and section metadata
+                        </div>
+                        <div class="batch-info">📦 Batch Size: 3 sections concurrently</div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Gemini 2.5 Flash</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Model:</strong> Gemini 2.5 Flash
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Max Calls:</strong> 5 per section
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Output:</strong> Long-form text
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <button class="see-prompt-btn" onclick="showPrompt('workplan')">See Prompt</button>
+                        <div class="step-header">
+                            <div class="step-icon icon-generate">📋</div>
+                            <div class="step-title">Work Plan Generation</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Generate detailed work plan with objectives, tasks, and methodological details
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Gemini 2.5 Flash</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Components:</strong> Objectives + Tasks
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Style:</strong> Scientific methodology
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Length:</strong> 2000+ words
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <button class="see-prompt-btn" onclick="showPrompt('refine')">See Prompt</button>
+                        <div class="step-header">
+                            <div class="step-icon icon-generate">🔧</div>
+                            <div class="step-title">Text Refinement</div>
+                            <div class="step-type type-ai">AI Model</div>
+                        </div>
+                        <div class="step-description">
+                            Refine and shorten text while maintaining scientific accuracy and completeness
+                        </div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Task:</strong> Text shortening
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Preserve:</strong> Scientific accuracy
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Target:</strong> Word limits
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="phase-arrow">
+                <svg width="100%" height="60" viewBox="0 0 100 60">
+                    <line x1="50" y1="0" x2="50" y2="50" stroke="#ffaa00" stroke-width="6" />
+                    <polygon points="40,50 60,50 50,60" fill="#ffaa00" />
+                </svg>
+            </div>
+
+            <!-- Phase 6: Validation & Quality Control -->
+            <div class="phase">
+                <div class="phase-header">
+                    <div class="phase-title">✅ Phase 6: Validation & Quality Control</div>
+                    <div class="phase-subtitle">Comprehensive evaluation and quality assurance</div>
+                </div>
+                
+                <div class="phase-steps">
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <button class="see-prompt-btn" onclick="showPrompt('evaluation')">See Prompt</button>
+                        <div class="step-header">
+                            <div class="step-icon icon-validate">🔍</div>
+                            <div class="step-title">Content Evaluation</div>
+                            <div class="step-type type-validation">Validation</div>
+                        </div>
+                        <div class="step-description">
+                            Evaluate generated content against multiple criteria with automatic retry logic
+                        </div>
+                        <div class="batch-info">📦 Retries: Up to 4 attempts</div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Criteria:</strong> 6 evaluation dimensions
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Scoring:</strong> 0-100 scale
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Threshold:</strong> 70+ passing score
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <button class="see-prompt-btn" onclick="showPrompt('batch')">See Prompt</button>
+                        <div class="step-header">
+                            <div class="step-icon icon-validate">⚡</div>
+                            <div class="step-title">Batch Validation</div>
+                            <div class="step-type type-validation">Validation</div>
+                        </div>
+                        <div class="step-description">
+                            Run multiple evaluations in parallel with concurrency control for efficiency
+                        </div>
+                        <div class="batch-info">🧩 Concurrency: max 3 parallel</div>
+                        <div class="model-info">
+                            <div class="model-title">
+                                <span>🤖</span>
+                                <span>Claude 3 Sonnet</span>
+                            </div>
+                            <div class="model-details">
+                                <div class="model-detail">
+                                    <strong>Parallel:</strong> Multiple evaluations
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Timeout:</strong> 60s per evaluation
+                                </div>
+                                <div class="model-detail">
+                                    <strong>Output:</strong> Quality scores
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-arrow">
+                        <svg width="100%" height="40" viewBox="0 0 100 40">
+                            <line x1="50" y1="0" x2="50" y2="30" stroke="#00d4ff" stroke-width="4" />
+                            <polygon points="45,30 55,30 50,40" fill="#00d4ff" />
+                        </svg>
+                    </div>
+                    <div class="step-card">
+                        <div class="progress-indicator"></div>
+                        <div class="step-header">
+                            <div class="step-icon icon-validate">🎯</div>
+                            <div class="step-title">Final Assembly</div>
+                            <div class="step-type type-service">Service</div>
+                        </div>
+                        <div class="step-description">
+                            Assemble all validated sections into a complete grant application document
+                        </div>
+                        <div class="step-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Format:</span>
+                                <span class="detail-value">Markdown + PDF</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Sections:</span>
+                                <span class="detail-value">All validated content</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Delivery:</span>
+                                <span class="detail-value">Download + Preview</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Overview -->
+    <div class="pipeline-overview">
+        <div class="overview-item">
+            <div class="overview-dot dot-active"></div>
+            <span>Document Ingestion</span>
+        </div>
+        <div class="overview-item">
+            <div class="overview-dot dot-active"></div>
+            <span>AI Processing</span>
+        </div>
+        <div class="overview-item">
+            <div class="overview-dot dot-active"></div>
+            <span>RAG Setup</span>
+        </div>
+        <div class="overview-item">
+            <div class="overview-dot dot-active"></div>
+            <span>Research Planning</span>
+        </div>
+        <div class="overview-item">
+            <div class="overview-dot dot-active"></div>
+            <span>Content Generation</span>
+        </div>
+        <div class="overview-item">
+            <div class="overview-dot dot-active"></div>
+            <span>Validation</span>
+        </div>
+    </div>
+
+    <!-- Prompt Modal -->
+    <div id="promptModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:#181828; border-radius:16px; max-width:700px; width:90vw; margin:40px auto; padding:32px 24px; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+            <button onclick="closePrompt()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#fff; font-size:1.5em; cursor:pointer;">&times;</button>
+            <h3 style="margin-bottom:16px; color:#00d4ff;">Prompt</h3>
+            <pre id="promptText" style="white-space:pre-wrap; color:#fff; background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; font-size:1em; max-height:60vh; overflow:auto;"></pre>
+        </div>
+    </div>
+    <script>
+        // Add interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress indicators
+            const indicators = document.querySelectorAll('.progress-indicator');
+            indicators.forEach((indicator, index) => {
+                setTimeout(() => {
+                    indicator.style.background = '#00ff00';
+                }, index * 500);
+            });
+
+            // Add hover effects to step cards
+            const stepCards = document.querySelectorAll('.step-card');
+            stepCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Simulate pipeline progress
+            const overviewDots = document.querySelectorAll('.overview-dot');
+            overviewDots.forEach((dot, index) => {
+                setTimeout(() => {
+                    dot.classList.remove('dot-active');
+                    dot.classList.add('dot-complete');
+                }, (index + 1) * 2000);
+            });
+        });
+
+        const PROMPTS = {
+            section: `## Task Overview\nGenerate a high-quality segment of text for a STEM grant application. This text will be part of a multi-step generation process for a complete grant application section.\n\n## Task Requirements\n<task_description>\nDescribe the project’s main objective and expected outcomes.\n</task_description>\n\n## Previously Generated Text\n<already_generated_text>\nNone.\n</already_generated_text>\n\n**Length Requirements**: The complete text must be between 500 words (minimum) and 1000 words (maximum).\n\n## Source Materials\nUse ONLY the following sources for your generation. Do not incorporate external knowledge or make up information.\n<sources>\n- Project proposal document\n- Funding guidelines\n- Research background summary\n</sources>\n\n## Generation Guidelines\n1. Content Analysis:\n   - Carefully assess the task description and source materials\n   - Identify all available and missing information critical to the task\n\n2. Continuation Strategy:\n   - Seamlessly continue from the previously generated text\n   - Maintain consistent scientific terminology, writing style, and narrative flow\n   - Never repeat content already covered in previous segments\n\n3. Scientific Writing Principles:\n   - Maximize information density with precise, field-specific terminology\n   - Write for expert reviewers who understand technical concepts without explanation\n   - Present methodologies, results, and implications with formal, data-driven language\n   - Use passive voice and academic tone appropriate for grant applications\n   - Arrange content in a logical sequence with clear transitions between ideas\n   - Do not define acronyms; assume a separate acronyms table exists\n\n4. Information Integrity:\n   - NEVER invent or fabricate facts, data, or methodologies not present in the sources\n   - When critical information is missing, use this exact format: **[MISSING INFORMATION: specific description]**\n   - Cite sources accurately if citation formats are provided in source materials\n\n## Task Completion\nGenerate the text segment following the guidelines above. Indicate completion status:\n- Mark as complete when the section is finished, even if it contains missing information markers\n- Mark as incomplete when more generation is needed to complete the full text\n\nNote: Missing information markers do not make a text incomplete - they simply highlight gaps in the source materials.`,
+            workplan: `## Task Overview\nGenerate a high-quality segment of text for a STEM grant application. This text will be part of a multi-step generation process for a complete grant application section.\n\n## Task Requirements\n<task_description>\nOutline the work plan, including objectives, tasks, and timeline.\n</task_description>\n\n## Previously Generated Text\n<already_generated_text>\nNone.\n</already_generated_text>\n\n**Length Requirements**: The complete text must be between 800 words (minimum) and 2000 words (maximum).\n\n## Source Materials\nUse ONLY the following sources for your generation. Do not incorporate external knowledge or make up information.\n<sources>\n- Work plan draft\n- Project milestones\n- Team member bios\n</sources>\n\n## Generation Guidelines\n1. Content Analysis:\n   - Carefully assess the task description and source materials\n   - Identify all available and missing information critical to the task\n\n2. Continuation Strategy:\n   - Seamlessly continue from the previously generated text\n   - Maintain consistent scientific terminology, writing style, and narrative flow\n   - Never repeat content already covered in previous segments\n\n3. Scientific Writing Principles:\n   - Maximize information density with precise, field-specific terminology\n   - Write for expert reviewers who understand technical concepts without explanation\n   - Present methodologies, results, and implications with formal, data-driven language\n   - Use passive voice and academic tone appropriate for grant applications\n   - Arrange content in a logical sequence with clear transitions between ideas\n   - Do not define acronyms; assume a separate acronyms table exists\n\n4. Information Integrity:\n   - NEVER invent or fabricate facts, data, or methodologies not present in the sources\n   - When critical information is missing, use this exact format: **[MISSING INFORMATION: specific description]**\n   - Cite sources accurately if citation formats are provided in source materials\n\n## Task Completion\nGenerate the text segment following the guidelines above. Indicate completion status:\n- Mark as complete when the section is finished, even if it contains missing information markers\n- Mark as incomplete when more generation is needed to complete the full text\n\nNote: Missing information markers do not make a text incomplete - they simply highlight gaps in the source materials.`,
+            refine: `## Scientific Text Revision Task\nYou must reduce the length of this STEM grant application text while preserving scientific accuracy and core meaning.\n\n## Text To Revise\n<text>\nThis project aims to develop a new method for early cancer detection using AI-based image analysis. The approach combines deep learning with clinical data to improve diagnostic accuracy.\n</text>\n\n## Requirements\n- Reduce the text by at least 100 words\n- The final version must maintain all essential scientific information\n- Preserve the academic tone and formal structure\n\n## Revision Strategy\n1. Prioritize content analysis:\n   - Identify the central scientific claims, methodologies, and results\n   - Distinguish between essential content and supporting/contextual information\n\n2. Apply targeted reduction techniques:\n   - Remove redundancies and unnecessarily verbose descriptions\n   - Condense lengthy explanations while maintaining technical precision\n   - Eliminate tangential examples that aren't crucial to understanding\n   - Consolidate similar points or methodological descriptions\n   - Tighten transitions between concepts\n\n3. Preserve scientific integrity:\n   - Do not remove critical data points, measurements, or core methodologies\n   - Maintain all essential citations and references to prior work\n   - Ensure any **[MISSING INFORMATION]** markers remain intact\n   - Keep the logical flow of arguments and experimental descriptions\n\n## Output Format\nProvide only the revised text with the reduced word count. Maintain appropriate formatting including paragraph structure and any special markup.`,
+            evaluation: `Your task is to evaluate the output generated by a language model in response to a specific prompt.\n\n### Inputs:\nThe prompt:\n  <prompt>\n  Write a summary of the project’s main goal and expected impact.\n  </prompt>\n\nThe model output:\n  <model_output>\n  The project aims to improve early cancer detection by integrating AI with clinical workflows.\n  </model_output>\n\nGuidelines:\n    1. Begin by analyzing the prompt to understand the requirements, guidelines and any provided validation rules.\n    2. Evaluate the output generated by the language model relative to the instructions and sources available in the prompt.\n    3. Evaluate the output against the evaluation criteria provided factoring the quality and availability of sources in the prompt.\n    4. Assign scores based on the quality of the output: 0 is the worst and 100 is the best, offsetting for missing source data in the prompt.\n    5. Provide concrete instructions for improvement, if the sources provided in the prompt are insufficient or the output is inaccurate.\n\n**IMPORTANT**:\n    - If information is missing the model should signify this with **[MISSING INFORMATION: specific description]** rather than invent facts.\n    - If **[MISSING INFORMATION: specific description]** is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.`,
+            batch: `Your task is to evaluate the output generated by a language model in response to a specific prompt.\n\n### Inputs:\nThe prompt:\n  <prompt>\n  Write a summary of the project’s main goal and expected impact.\n  </prompt>\n\nThe model output:\n  <model_output>\n  The project aims to improve early cancer detection by integrating AI with clinical workflows.\n  </model_output>\n\nGuidelines:\n    1. Begin by analyzing the prompt to understand the requirements, guidelines and any provided validation rules.\n    2. Evaluate the output generated by the language model relative to the instructions and sources available in the prompt.\n    3. Evaluate the output against the evaluation criteria provided factoring the quality and availability of sources in the prompt.\n    4. Assign scores based on the quality of the output: 0 is the worst and 100 is the best, offsetting for missing source data in the prompt.\n    5. Provide concrete instructions for improvement, if the sources provided in the prompt are insufficient or the output is inaccurate.\n\n**IMPORTANT**:\n    - If information is missing the model should signify this with **[MISSING INFORMATION: specific description]** rather than invent facts.\n    - If **[MISSING INFORMATION: specific description]** is provided, this should not reduce the score - unless the information is actually available, in which case this should be considered negatively.`,
+            source: `Your task is to analyze whether the provided sources contain sufficient information to complete the requested task. You will evaluate if critical information is missing that would prevent successful task completion.\n\n## Task Description\n\n<task_description>\nSummarize the methodology for the clinical trial.\n</task_description>\n\n## Max Length\n\n<max_length>\n2000\n</max_length>\n\n## Available Sources\n\n<sources>\n- Clinical trial protocol\n- Investigator brochure\n- Regulatory guidelines\n</sources>\n\n## Instructions\n\n1. First, analyze the max length to understand the scope and detail level expected:\n   - If max length is short (under 1000 characters), you should only require essential core information and be more lenient in your validation\n   - If max length is medium (1000-5000 characters), you should require moderate detail on key points\n   - If max length is long (over 5000 characters), you should expect comprehensive information and be more stringent in your validation\n\n2. Carefully analyze the task description to identify the key information requirements based on expected output length:\n   - What specific data or context is needed to complete the task at the appropriate level of detail?\n   - What methodological details must be available, considering the depth possible in the output?\n   - What domain knowledge is required for an output of this length?\n   - What constraints or parameters need to be defined?\n\n3. Evaluate the available sources to determine if they contain all required information:\n   - Check if all key concepts, terms, and references in the task description are addressed in the sources\n   - Assess if the sources provide adequate context, background, and specifics for the expected output length\n   - Verify if the sources include sufficient methodological details\n   - Determine if any critical domain knowledge is missing\n\n4. Identify any specific gaps or missing information:\n   - Note any key requirements mentioned in the task that aren't addressed in the sources\n   - Identify ambiguities that cannot be resolved with the available information\n   - Flag any incomplete or insufficient methodological details\n   - Highlight if domain-specific knowledge is required but not provided\n\n5. Calculate the percentage of required information that is available in the sources:\n   - Enumerate all discrete pieces of information needed for the task, scaled appropriately to the max length\n   - Count how many of these pieces are adequately covered in the sources\n   - Calculate the percentage of required information that is available\n   - For shorter outputs, fewer pieces of information are required, so adjust your evaluation accordingly\n\nImportant: The calculation MUST be relative to the max length of the expected text. A shorter max length means fewer details are required, while a longer max length requires more comprehensive information.\n\n## Task Completion\n\nProvide your assessment with:\n- A percentage (0-100) indicating how much of the required information is available in the sources\n- A list of specific missing information pieces, each clearly describing what's missing and why it's required\n- If all necessary information is present (100%), provide an empty list for missing information\n\nEach missing information entry should be specific, actionable, and clear about what information is needed. Avoid generic statements - precisely identify what's missing and why it matters for task completion.`
+        };
+        function showPrompt(type) {
+            var modal = document.getElementById('promptModal');
+            modal.style.display = 'flex';
+            modal.classList.add('active');
+            document.getElementById('promptText').textContent = PROMPTS[type] || 'Prompt not found.';
+        }
+        function closePrompt() {
+            var modal = document.getElementById('promptModal');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+        }
+    </script>
+</body>
+</html> 
