@@ -14,7 +14,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { useApplicationStore } from "@/stores/application-store";
-import { MAX_OBJECTIVES, type Objective, useWizardStore } from "@/stores/wizard-store";
+import { type Objective, useWizardStore } from "@/stores/wizard-store";
 
 interface SortableObjectiveCardProps {
 	id: number;
@@ -47,12 +47,6 @@ export function ResearchPlanPreview() {
 
 	return (
 		<WizardRightPane padding="p-6">
-			<div className="mb-6">
-				<p className="text-muted-foreground-dark text-sm">
-					{objectives.length} of {MAX_OBJECTIVES} objectives defined
-				</p>
-			</div>
-
 			<div className="flex-1">
 				<DndContext collisionDetection={closestCenter} onDragEnd={handleObjectiveDragEnd} sensors={sensors}>
 					<SortableContext
@@ -90,7 +84,7 @@ function SortableObjectiveCard({ id, index, objective, onRemove }: SortableObjec
 
 	return (
 		<AppCard
-			className="cursor-grab border border-gray-200 bg-white p-4 transition-colors hover:border-gray-300 active:cursor-grabbing"
+			className="bg-white outline-1 outline-primary rounded p-4 transition-colors hover:outline-2"
 			ref={setNodeRef}
 			style={style}
 		>
