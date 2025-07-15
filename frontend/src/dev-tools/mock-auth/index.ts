@@ -38,7 +38,7 @@ export function initializeMockAuth(): void {
 
 	log.info("Mock authentication initialized", {
 		action: "init_mock_auth",
-		provider: mockUser.providerId,
+		provider: mockUser.providerData[0]?.providerId || "unknown",
 		user: mockUser.email,
 	});
 }
