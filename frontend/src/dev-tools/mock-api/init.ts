@@ -1,9 +1,4 @@
-/**
- * Mock API initialization
- * This module handles the setup of mock API infrastructure in development mode
- */
-
-import { isMockAPIEnabled } from "./client";
+import { getMockAPIClient, isMockAPIEnabled } from "./client";
 import { clearAllMockStores } from "./handlers";
 import { registerMockHandlers } from "./register";
 import { initializeWebSocketMocking } from "./websocket";
@@ -26,8 +21,6 @@ export function initializeMockAPI(): void {
 		(globalThis as any).clearAllMockStores = clearAllMockStores; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
 		// Make mock API client available globally for tests
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const { getMockAPIClient } = require("./client.js");
 		(globalThis as any).getMockAPIClient = getMockAPIClient; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 	}
 }

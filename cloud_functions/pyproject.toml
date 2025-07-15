@@ -11,6 +11,7 @@ dependencies = [
   "asyncpg>=0.29",
   "cloudevents>=1.10",
   "firebase-admin>=6.5",
+  "firebase-functions>=0.1.1",
   "functions-framework>=3.5",
   "httpx>=0.27",
   "sqlalchemy>=2",

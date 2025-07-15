@@ -1,1 +1,10 @@
-{}
+{
+	"functions": {
+		"ignore": ["node_modules", ".git", "tests", "**/__pycache__"],
+		"predeploy": [
+			"rm -rf functions && cp -r ../cloud_functions functions && cd functions && python3.12 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+		],
+		"runtime": "python312",
+		"source": "functions"
+	}
+}

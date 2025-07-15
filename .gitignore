@@ -58,3 +58,4 @@ sentence-transformers/
 storybook-static/
 terraform.rc
 testing/test_data/results/*
+frontend/functions/
