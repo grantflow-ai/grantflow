@@ -6,7 +6,7 @@ from packages.shared_utils.src.env import get_env
 
 logger = logging.getLogger(__name__)
 
-ANTHROPIC_API_KEY = get_env("ANTHROPIC_API_KEY", raise_on_missing=False, fallback="")
+ANTHROPIC_API_KEY = get_env("ANTHROPIC_API_KEY", raise_on_missing=False)
 AI_EVALUATION_ENABLED = ANTHROPIC_API_KEY and ANTHROPIC_API_KEY != "..." and len(ANTHROPIC_API_KEY) > 10
 
 client: Any = None

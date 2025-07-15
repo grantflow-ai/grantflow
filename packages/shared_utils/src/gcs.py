@@ -30,20 +30,26 @@ class URIParseResult(TypedDict):
 
 
 def get_credentials() -> Credentials:
-    if get_env("STORAGE_EMULATOR_HOST", fallback=""):
+    if get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False):
         return cast("Credentials", AnonymousCredentials())  # type: ignore[no-untyped-call]
-    credentials = deserialize(
-        get_env("GCS_SERVICE_ACCOUNT_CREDENTIALS"), dict[str, Any]
+
+    credentials_json = get_env(
+        "GCS_SERVICE_ACCOUNT_CREDENTIALS", raise_on_missing=False
     )
-    return cast("Credentials", Credentials.from_service_account_info(credentials))  # type: ignore[no-untyped-call]
+    if credentials_json:
+        credentials = deserialize(credentials_json, dict[str, Any])
+        return cast("Credentials", Credentials.from_service_account_info(credentials))  # type: ignore[no-untyped-call]
+
+    return cast("Credentials", None)  # type: ignore[arg-type]
 
 
 def get_storage_client() -> storage.Client:
     if storage_client_ref.value:
         return storage_client_ref.value
 
+    credentials = get_credentials()
     storage_client_ref.value = storage.Client(
-        credentials=get_credentials(),
+        credentials=credentials,
         project=get_env("GOOGLE_CLOUD_PROJECT"),
     )
 
@@ -150,7 +156,7 @@ async def create_signed_upload_url(
 
     # Dev bypass: return special URL for direct indexer upload ~keep
     if get_env("DEBUG", fallback="False").lower() == "true" and not get_env(
-        "STORAGE_EMULATOR_HOST", fallback=""
+        "STORAGE_EMULATOR_HOST", raise_on_missing=False
     ):
         dev_url = f"dev://indexer/{blob_path}"
         logger.info(
@@ -161,9 +167,7 @@ async def create_signed_upload_url(
         return dev_url
 
     # E2E tests: use GCS emulator if configured ~keep
-    if emulator_host := get_env(
-        "STORAGE_EMULATOR_HOST", raise_on_missing=False, fallback=""
-    ):
+    if emulator_host := get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False):
         bucket_name = get_env(
             "GCS_BUCKET_NAME", raise_on_missing=False, fallback="grantflow-uploads"
         )
