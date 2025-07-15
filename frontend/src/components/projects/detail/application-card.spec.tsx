@@ -1,6 +1,6 @@
+import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ApplicationFactory } from "::testing/factories";
 
 import { ApplicationCard } from "./application-card";
 
