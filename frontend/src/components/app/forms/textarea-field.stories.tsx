@@ -14,7 +14,7 @@ const meta: Meta<typeof AppTextArea> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/TextareaField",
+	title: "Components/Forms/TextareaField",
 };
 
 export default meta;

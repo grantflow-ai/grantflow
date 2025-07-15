@@ -18,7 +18,7 @@ const meta: Meta<typeof Toaster> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Toaster",
+	title: "Components/Feedback/Toaster",
 };
 
 export default meta;

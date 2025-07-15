@@ -15,7 +15,7 @@ const meta: Meta<typeof AppInput> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/InputField",
+	title: "Components/Forms/InputField",
 };
 
 export default meta;
