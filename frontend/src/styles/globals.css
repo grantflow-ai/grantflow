@@ -262,6 +262,14 @@
 		@apply bg-background text-foreground;
 		font-family: "Sora", sans-serif;
 	}
+	.scrollbar-hide {
+		-ms-overflow-style: none; /* IE and Edge */
+		scrollbar-width: none; /* Firefox */
+	}
+
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none; /* Chrome, Safari, Opera */
+	}
 }
 
 @layer utilities {
