@@ -112,7 +112,6 @@ runs:
                 
                 for i in {1..10}; do
                   STATUS=$(gcloud run revisions describe ${{ steps.deploy.outputs.revision }} \
-                    --service=${{ inputs.service }} \
                     --region=${{ inputs.region }} \
                     --project=${{ inputs.project_id }} \
                     --format='value(status.conditions[0].status)')
