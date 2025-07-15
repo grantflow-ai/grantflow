@@ -15,6 +15,7 @@ export default function PaymentLink() {
 					</p>
 					<AppButton
 						className="bg-white text-primary flex items-center gap-1 px-3 py-1 font-normal text-sm leading-[22px] hover:bg-white "
+						data-testid="upgrade-button"
 						onClick={() => {
 							setShowPaymentModal(true);
 						}}

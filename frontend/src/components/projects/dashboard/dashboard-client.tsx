@@ -187,12 +187,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	return (
-		<div className="relative size-full">
+		<div className="relative size-full overflow-y-scroll">
 			{projects.length === 1 && projects[0].applications_count === 0 && (
 				<WelcomeModal onStartApplication={handleStartApplication} />
 			)}
-			<section className="bg-preview-bg w-full h-full  flex">
-				<main className="w-[98%] pb-5">
+			<section className="bg-preview-bg w-full ">
+				<main className="w-[98%] pb-5 ">
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
