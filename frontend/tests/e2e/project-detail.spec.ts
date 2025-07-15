@@ -2,8 +2,6 @@ import { dismissWelcomeModal } from "./helpers/dismiss-welcome-modal";
 import { expect, test } from "./test-setup";
 
 test.describe("Project Detail Page", () => {
-	let projectId: string;
-
 	test.beforeEach(async ({ page }) => {
 		// Navigate to projects page
 		await page.goto("/projects");
@@ -18,13 +16,8 @@ test.describe("Project Detail Page", () => {
 		const firstProjectCard = page.locator('[data-testid="dashboard-project-card"]').first();
 		await firstProjectCard.click();
 
-		// Wait for navigation to project detail page
-		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
-
-		// Extract project ID from URL for later use
-		const url = page.url();
-		const match = /\/projects\/([\w-]+-[a-f0-9]{8})$/.exec(url);
-		projectId = match?.[1] ?? "";
+		// Wait for navigation to project detail page with clean URL
+		await expect(page).toHaveURL("/project");
 	});
 
 	test("should display project title and allow editing", async ({ page }) => {
@@ -197,8 +190,8 @@ test.describe("Project Detail Page", () => {
 		// Click on Account Setting using data-testid
 		await page.locator('[data-testid="settings-account"]').click();
 
-		// Should navigate to project settings
-		await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/settings`));
+		// Should navigate to project settings with clean URL
+		await expect(page).toHaveURL("/project/settings/account");
 	});
 });
 
@@ -210,7 +203,7 @@ test.describe("Project Detail Page - Application Status", () => {
 
 		const firstProjectCard = page.locator('[data-testid="dashboard-project-card"]').first();
 		await firstProjectCard.click();
-		await expect(page).toHaveURL(/\/projects\/[\w-]+-[a-f0-9]{8}$/);
+		await expect(page).toHaveURL("/project");
 	});
 
 	test("should display correct application status badges", async ({ page }) => {

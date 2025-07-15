@@ -16,7 +16,7 @@ import {
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
-import { NewApplicationModal } from "@/components/projects/modals/new-application-modal";
+import  NewApplicationModal  from "@/components/projects/modals/new-application-modal";
 import { useState } from "react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

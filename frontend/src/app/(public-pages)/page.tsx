@@ -1,5 +1,3 @@
-"use server";
-
 import Link from "next/link";
 import { IconGoAhead } from "@/components/branding/icons";
 import { GradientBackground } from "@/components/landing-page/backgrounds";

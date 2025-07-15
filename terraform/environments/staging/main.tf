@@ -81,22 +81,23 @@ module "storage" {
 
 # Cloud Run services module with staging-optimized settings
 module "cloud_run" {
-  source                   = "../../modules/cloud_run"
-  project_id               = var.project_id
-  region                   = var.region
-  environment              = var.environment
-  image_tag_suffix         = "staging-latest"
-  database_connection_name = module.database.instance_connection_name
-  min_instances            = 0     # Scale to zero for cost savings
-  max_instances            = 1     # Limited scaling for staging
-  cpu_limit                = "1"   # Minimum CPU for Cloud Run
-  memory_limit             = "1Gi" # Increased memory to handle service requirements
-  discord_webhook_url      = var.discord_webhook_url
-  enable_cpu_throttling    = true  # Allow throttling for staging
-  enable_http2             = false # HTTP/1.1 for staging
-  request_timeout          = 300   # 5-minute timeout
-  concurrency_limit        = 80    # Default concurrency
-  
+  source                        = "../../modules/cloud_run"
+  project_id                    = var.project_id
+  region                        = var.region
+  environment                   = var.environment
+  image_tag_suffix              = "staging-latest"
+  database_connection_name      = module.database.instance_connection_name
+  backend_service_account_email = module.iam.backend_service_account_email
+  min_instances                 = 0     # Scale to zero for cost savings
+  max_instances                 = 1     # Limited scaling for staging
+  cpu_limit                     = "1"   # Minimum CPU for Cloud Run
+  memory_limit                  = "1Gi" # Increased memory to handle service requirements
+  discord_webhook_url           = var.discord_webhook_url
+  enable_cpu_throttling         = true  # Allow throttling for staging
+  enable_http2                  = false # HTTP/1.1 for staging
+  request_timeout               = 300   # 5-minute timeout
+  concurrency_limit             = 80    # Default concurrency
+
   # Custom domain for backend API (commented out to save costs)
   # custom_domain            = "api-staging.grantflow.ai"
 }
@@ -138,6 +139,7 @@ module "monitoring" {
     cpu_threshold        = 0.90  # 90% for staging
   }
 }
+
 
 # Import existing BigQuery dataset
 resource "google_bigquery_dataset" "frontend" {
@@ -260,3 +262,26 @@ output "scraper_url" {
   description = "Scraper service URL"
   value       = module.cloud_run.scraper_url
 }
+
+# Load Balancer module with staging-optimized settings
+module "load_balancer" {
+  source      = "../../modules/load_balancer"
+  project_id  = var.project_id
+  region      = var.region
+  environment = var.environment
+  backend_url = module.cloud_run.backend_url
+  domain      = "staging-api.grantflow.ai"
+  enable_ssl  = true  # SSL certificate for custom domain
+  enable_cdn  = false # No CDN for staging to save costs
+}
+
+output "load_balancer_ip" {
+  description = "Load balancer IP address for DNS configuration"
+  value       = module.load_balancer.load_balancer_ip
+}
+
+output "load_balancer_url" {
+  description = "Load balancer URL for frontend configuration"
+  value       = module.load_balancer.load_balancer_url
+}
+

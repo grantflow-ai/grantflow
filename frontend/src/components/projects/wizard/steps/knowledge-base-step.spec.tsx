@@ -62,9 +62,9 @@ describe("KnowledgeBaseStep", () => {
 			addFile: vi.fn(),
 			addUrl: vi.fn(),
 			application: ApplicationFactory.build({ id: "test-app-id", project_id: "test-project" }),
+			getApplication: vi.fn(),
 			removeFile: vi.fn(),
 			removeUrl: vi.fn(),
-			retrieveApplication: vi.fn(),
 		});
 	});
 

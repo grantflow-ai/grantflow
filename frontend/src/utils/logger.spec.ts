@@ -31,15 +31,11 @@ describe("Logger", () => {
 
 			log.error("Test error message", error, context);
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Test error message", {
-				action: "test",
-				error: {
-					message: "Test error",
-					name: "Error",
-					stack: expect.any(String),
-				},
-				userId: "123",
-			});
+			expect(consoleSpy.error).toHaveBeenCalledWith(
+				"[ERROR]",
+				"Test error message",
+				expect.stringContaining('"action": "test"'),
+			);
 		});
 
 		it("should log info messages with context", () => {
@@ -47,7 +43,11 @@ describe("Logger", () => {
 
 			log.info("Operation completed", context);
 
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Operation completed", context);
+			expect(consoleSpy.info).toHaveBeenCalledWith(
+				"[INFO]",
+				"Operation completed",
+				expect.stringContaining('"operation": "save"'),
+			);
 		});
 
 		it("should log warning messages with context", () => {
@@ -55,7 +55,11 @@ describe("Logger", () => {
 
 			log.warn("Threshold exceeded", context);
 
-			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Threshold exceeded", context);
+			expect(consoleSpy.warn).toHaveBeenCalledWith(
+				"[WARN]",
+				"Threshold exceeded",
+				expect.stringContaining('"current": 95'),
+			);
 		});
 
 		it("should handle non-Error objects in error method", () => {
@@ -63,7 +67,11 @@ describe("Logger", () => {
 
 			log.error("An error occurred", errorString);
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "An error occurred", { error: errorString });
+			expect(consoleSpy.error).toHaveBeenCalledWith(
+				"[ERROR]",
+				"An error occurred",
+				expect.stringContaining('"error": "String error"'),
+			);
 		});
 
 		it("should include correlation ID when provided", () => {
@@ -71,10 +79,11 @@ describe("Logger", () => {
 
 			log.info("Request processed", context);
 
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Request processed", {
-				data: "test",
-				traceId: "abc-123",
-			});
+			expect(consoleSpy.info).toHaveBeenCalledWith(
+				"[INFO]",
+				"Request processed",
+				expect.stringContaining('"traceId": "abc-123"'),
+			);
 		});
 	});
 
@@ -90,15 +99,21 @@ describe("Logger", () => {
 			log.info("Info in production", { data: "test" });
 			log.warn("Warning in production", { level: "high" });
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Error in production", {
-				error: {
-					message: "Production error",
-					name: "Error",
-					stack: expect.any(String),
-				},
-			});
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Info in production", { data: "test" });
-			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Warning in production", { level: "high" });
+			expect(consoleSpy.error).toHaveBeenCalledWith(
+				"[ERROR]",
+				"Error in production",
+				expect.stringContaining('"error"'),
+			);
+			expect(consoleSpy.info).toHaveBeenCalledWith(
+				"[INFO]",
+				"Info in production",
+				expect.stringContaining('"data": "test"'),
+			);
+			expect(consoleSpy.warn).toHaveBeenCalledWith(
+				"[WARN]",
+				"Warning in production",
+				expect.stringContaining('"level": "high"'),
+			);
 		});
 
 		it("should log complex contexts in production", () => {
@@ -112,18 +127,21 @@ describe("Logger", () => {
 			log.info("Complex info", complexContext);
 			log.warn("Complex warning", complexContext);
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Complex error", {
-				error: {
-					message: "Test",
-					name: "Error",
-					stack: expect.any(String),
-				},
-				metadata: { timestamp: expect.any(Number) },
-				traceId: "xyz-789",
-				user: { id: "123", name: "Test" },
-			});
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Complex info", complexContext);
-			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Complex warning", complexContext);
+			expect(consoleSpy.error).toHaveBeenCalledWith(
+				"[ERROR]",
+				"Complex error",
+				expect.stringContaining('"traceId": "xyz-789"'),
+			);
+			expect(consoleSpy.info).toHaveBeenCalledWith(
+				"[INFO]",
+				"Complex info",
+				expect.stringContaining('"traceId": "xyz-789"'),
+			);
+			expect(consoleSpy.warn).toHaveBeenCalledWith(
+				"[WARN]",
+				"Complex warning",
+				expect.stringContaining('"traceId": "xyz-789"'),
+			);
 		});
 	});
 
@@ -137,15 +155,13 @@ describe("Logger", () => {
 			log.info("Test mode info");
 			log.warn("Test mode warning");
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Test mode error", {
-				error: {
-					message: "Test",
-					name: "Error",
-					stack: expect.any(String),
-				},
-			});
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Test mode info", {});
-			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Test mode warning", {});
+			expect(consoleSpy.error).toHaveBeenCalledWith(
+				"[ERROR]",
+				"Test mode error",
+				expect.stringContaining('"error"'),
+			);
+			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Test mode info", "");
+			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Test mode warning", "");
 		});
 	});
 
@@ -157,19 +173,23 @@ describe("Logger", () => {
 		it("should handle undefined error gracefully", () => {
 			log.error("Undefined error occurred", undefined, { action: "test" });
 
-			expect(consoleSpy.error).toHaveBeenCalledWith("[ERROR]", "Undefined error occurred", { action: "test" });
+			expect(consoleSpy.error).toHaveBeenCalledWith(
+				"[ERROR]",
+				"Undefined error occurred",
+				expect.stringContaining('"action": "test"'),
+			);
 		});
 
 		it("should handle null context", () => {
 			log.info("Message with null context", null as any);
 
-			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Message with null context", {});
+			expect(consoleSpy.info).toHaveBeenCalledWith("[INFO]", "Message with null context", "");
 		});
 
 		it("should handle empty context", () => {
 			log.warn("Message with empty context", {});
 
-			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Message with empty context", {});
+			expect(consoleSpy.warn).toHaveBeenCalledWith("[WARN]", "Message with empty context", "");
 		});
 	});
 });

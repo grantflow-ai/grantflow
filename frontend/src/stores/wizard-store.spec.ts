@@ -70,7 +70,7 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({
 				application,
-				retrieveApplication: vi.fn().mockResolvedValue(undefined),
+				getApplication: vi.fn().mockResolvedValue(undefined),
 			});
 
 			useWizardStore.setState({
@@ -93,7 +93,7 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({
 				application,
-				retrieveApplication: vi.fn().mockResolvedValue(undefined),
+				getApplication: vi.fn().mockResolvedValue(undefined),
 			});
 
 			useWizardStore.setState({

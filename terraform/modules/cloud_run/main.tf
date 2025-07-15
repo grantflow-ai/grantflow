@@ -121,6 +121,12 @@ variable "scraper_custom_domain" {
   default     = ""
 }
 
+variable "backend_service_account_email" {
+  description = "Service account email for the backend service"
+  type        = string
+  default     = ""
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -129,6 +135,8 @@ resource "google_cloud_run_v2_service" "backend" {
   deletion_protection = false
 
   template {
+    service_account = var.backend_service_account_email != "" ? var.backend_service_account_email : null
+    
     containers {
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/backend:${var.image_tag_suffix}"
 
@@ -564,6 +572,16 @@ resource "google_cloud_run_v2_service" "rag" {
         value_source {
           secret_key_ref {
             secret  = "ANTHROPIC_API_KEY"
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "GOOGLE_AI_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "GOOGLE_AI_API_KEY"
             version = "latest"
           }
         }

@@ -6,3 +6,6 @@ class Ref[T: Any]:
 
     def __init__(self, value: T | None = None) -> None:
         self.value = value
+
+    def reset(self) -> None:
+        self.value = None

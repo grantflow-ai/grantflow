@@ -9,11 +9,13 @@ import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppButton, AvatarGroup } from "@/components/app";
 import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
+import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import PaymentLink from "../payment/payment-link";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardStats } from "./dashboard-stats";
@@ -23,14 +25,9 @@ interface DashboardClientProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;
 }
 
-const projectTeamMembers = [
-	{ backgroundColor: "#369e94", initials: "NH" },
-	{ backgroundColor: "#9e366f", initials: "VH" },
-	{ backgroundColor: "#9747ff", initials: "AR" },
-];
-
 export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const router = useRouter();
+	const { navigateToProject } = useNavigationStore();
 
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
@@ -49,13 +46,34 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	const handleProjectNavigation = (projectId: string, projectName: string) => {
-		router.push(routes.project.detail({ projectId, projectName }));
+		// Set project context in navigation store for parameter-free routing
+		// The NavigationContextProvider will handle data loading based on this context
+		navigateToProject(projectId, projectName);
+		router.push(routes.project.detail());
 	};
 
 	const { data: projects = initialProjects, mutate } = useSWR("projects", getProjects, {
 		fallback: initialProjects,
 		revalidateOnFocus: false,
 	});
+
+	// Generate team members from all projects
+	const projectTeamMembers = projects
+		.flatMap((project) => project.members)
+		.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>((acc, member) => {
+			// Avoid duplicates by checking if user already exists (by firebase_uid)
+			const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
+			if (!existingMember) {
+				acc.push({
+					backgroundColor: generateBackgroundColor(member.firebase_uid),
+					initials: generateInitials(member.display_name ?? undefined, member.email),
+					uid: member.firebase_uid,
+					...(member.photo_url && { imageUrl: member.photo_url }),
+				});
+			}
+			return acc;
+		}, [])
+		.map(({ uid: _uid, ...member }) => member); // Remove uid from final result
 
 	const handleDeleteProject = (projectId: string) => {
 		setProjectToDelete(projectId);
@@ -135,7 +153,8 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 			await mutate();
 
 			// Navigate to the new project
-			router.push(routes.project.detail({ projectId, projectName: newProjectName }));
+			navigateToProject(projectId, newProjectName);
+			router.push(routes.project.detail());
 		} catch {
 			addNotification({
 				message: "Failed to create project. Please try again.",
@@ -162,13 +181,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		// Find the default project (first project or one named "default")
 		const [defaultProject] = projects;
 
-		// Navigate to application wizard for the default project
-		router.push(
-			routes.application.create({
-				projectId: defaultProject.id,
-				projectName: defaultProject.name,
-			}),
-		);
+		// Navigate to application creation
+		navigateToProject(defaultProject.id, defaultProject.name);
+		router.push(routes.project.applications.new());
 	};
 
 	return (

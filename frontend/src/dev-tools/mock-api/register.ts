@@ -18,7 +18,7 @@ export function registerMockHandlers(): void {
 	client.register("/projects/:project_id/applications", mockHandlers.applications.createApplication, "POST");
 	client.register(
 		"/projects/:project_id/applications/:application_id",
-		mockHandlers.applications.retrieveApplication,
+		mockHandlers.applications.getApplication,
 		"GET",
 	);
 	client.register(
