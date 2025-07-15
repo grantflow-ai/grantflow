@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/forms/textarea-field";
 import { cn } from "@/lib/utils";
 
@@ -71,15 +72,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			...prev,
 			tasks: [...prev.tasks, { description: "", id: crypto.randomUUID() }],
 		}));
-	};
-
-	const removeTask = (taskId: string) => {
-		if (formData.tasks.length > 1) {
-			setFormData((prev) => ({
-				...prev,
-				tasks: prev.tasks.filter((task) => task.id !== taskId),
-			}));
-		}
 	};
 
 	const validateForm = (): boolean => {
@@ -152,40 +144,32 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 
 				<div className="flex items-center justify-between">
 					<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
-					<AppButton data-testid="add-task-button" onClick={addTask} size="sm" type="button" variant="ghost">
+					<IconButton
+						data-testid="add-task-button"
+						disabled={formData.tasks.length === 1 && !formData.tasks[0].description.trim()}
+						onClick={addTask}
+						size="sm"
+						type="button"
+						variant="solid"
+					>
 						<Plus className="w-4 h-4" />
-					</AppButton>
+					</IconButton>
 				</div>
 
 				{formData.tasks.map((task, index) => (
-					<div className="space-y-2" key={task.id}>
-						<div className="flex items-center justify-between">
-							{formData.tasks.length > 1 && (
-								<button
-									className="text-sm text-red-600 hover:text-red-800"
-									data-testid={`remove-task-${index}`}
-									onClick={() => {
-										removeTask(task.id);
-									}}
-									type="button"
-								>
-									Remove
-								</button>
-							)}
-						</div>
-						<AppTextArea
-							className="min-h-52"
-							errorMessage={errors.tasks?.[task.id]}
-							id={`task-description-${index}`}
-							label="Task description"
-							onChange={(e) => {
-								updateTask(task.id, e.target.value);
-							}}
-							placeholder="Describe a step to achieve this objective"
-							testId={`task-description-${index}`}
-							value={task.description}
-						/>
-					</div>
+					<AppTextArea
+						className="min-h-52"
+						errorMessage={errors.tasks?.[task.id]}
+						id={`task-description-${index}`}
+						key={task.id}
+						label="Task description"
+						onChange={(e) => {
+							updateTask(task.id, e.target.value);
+						}}
+						placeholder="Describe a step to achieve this objective"
+						testId={`task-description-${index}`}
+						value={task.description}
+					/>
 				))}
 			</div>
 
