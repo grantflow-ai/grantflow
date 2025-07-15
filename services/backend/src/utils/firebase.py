@@ -140,7 +140,7 @@ async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
     try:
         identifiers = [UidIdentifier(uid) for uid in uids]
         result = await handler(identifiers, app=get_firebase_app())
-        
+
         users_dict = {}
         for user in result.users:
             users_dict[user.uid] = {

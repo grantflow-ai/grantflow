@@ -29,7 +29,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	};
 
 	return (
-		<Sidebar collapsible="icon" {...props} className="flex h-full flex-col border-r">
+		<Sidebar collapsible="icon" {...props} className="flex h-full flex-col border-r" data-testid="app-sidebar">
 			<SidebarHeader className="flex flex-col gap-8 p-3">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
