@@ -137,20 +137,26 @@ pre-commit:
 
         tofu-fmt:
             glob: "**/*.tf"
-            run: tofu fmt -check=true {staged_files}
+            run: |
+                # Format each file individually
+                for file in {staged_files}; do
+                    tofu fmt -write=true "$file"
+                done
             stage_fixed: true
 
         tofu-validate:
             glob: "terraform/**/*.tf"
             run: |
-                if echo "{staged_files}" | grep -q "\.tf"; then
+                # Only run if terraform files are actually staged
+                if [ -n "{staged_files}" ] && echo "{staged_files}" | grep -q "terraform/.*\.tf"; then
                     cd terraform && tofu init -backend=false && tofu validate
                 fi
 
         tflint:
             glob: "terraform/**/*.tf"
             run: |
-                if echo "{staged_files}" | grep -q "\.tf"; then
+                # Only run if terraform files are actually staged
+                if [ -n "{staged_files}" ] && echo "{staged_files}" | grep -q "terraform/.*\.tf"; then
                     tflint --chdir=terraform
                 fi
 
