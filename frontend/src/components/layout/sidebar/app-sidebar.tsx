@@ -5,14 +5,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { useState } from "react";
-import { AppButton } from "@/components/app";
 import NewApplicationModal from "@/components/projects/modals/new-application-modal";
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
 	SidebarHeader,
+	SidebarMenu,
 	SidebarMenuButton,
+	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar";
 import { useUserStore } from "@/stores/user-store";
@@ -36,71 +37,84 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	};
 	return (
 		<>
-			<Sidebar collapsible="icon" {...props} className="flex h-full flex-col border-r">
-				<SidebarHeader className="flex flex-col gap-8 p-3">
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<div className="size-[31px]">
-								<Image
-									alt="logo"
-									className="w-full h-full object-cover"
-									data-testid="sidebar-logo"
-									height={100}
-									src="/assets/logo-horizontal.svg"
-									width={100}
-								/>
+			<Sidebar
+				collapsible="icon"
+				{...props}
+				className="flex h-full flex-col bg-preview-bg [&>div]:!border-0 [&>div]:!border-r-0 [&>div>div]:!border-0 [&>div>div]:!border-r-0 [&>div]:!border-l-0 [&>div]:!shadow-none"
+			>
+				<SidebarHeader className="flex flex-col gap-2 p-3 group-data-[collapsible=icon]:p-2">
+					<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+						<div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
+							<div className="flex items-center gap-2">
+								<div className="size-[31px] shrink-0">
+									<Image
+										alt="logo"
+										className="w-full h-full object-cover"
+										data-testid="sidebar-logo"
+										height={100}
+										src="/assets/logo-horizontal.svg"
+										width={100}
+									/>
+								</div>
+								<h2
+									className="text-xl font-semibold group-data-[collapsible=icon]:hidden"
+									data-testid="sidebar-title"
+								>
+									GrantFlow
+								</h2>
 							</div>
-							<h2
-								className="text-xl font-semibold group-data-[collapsible=icon]:hidden"
-								data-testid="sidebar-title"
-							>
-								GrantFlow
-							</h2>
-						</div>
-						<div className="group-data-[collapsible=icon]:hidden">
-							<CustomSidebarTrigger data-testid="sidebar-trigger" />
+							<div className="group-data-[collapsible=icon]:hidden">
+								<CustomSidebarTrigger data-testid="sidebar-trigger" />
+							</div>
 						</div>
 					</div>
-					<div className="hidden group-data-[collapsible=icon]:flex justify-center mt-2">
-						<CustomSidebarTrigger />
+					<div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+						<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
 					</div>
-					<AppButton
-						className="w-full justify-center gap-x-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-2 "
+					<button
+						className="bg-primary text-white rounded px-4 py-2 flex items-center justify-center gap-1 hover:bg-link-hover-dark transition-colors mt-10 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:mx-auto"
 						data-testid="new-application-button"
 						onClick={() => {
 							setIsModalOpen(true);
 						}}
+						type="button"
 					>
-						<Plus className="h-4 w-4" />
-						<span className="group-data-[collapsible=icon]:hidden">New Application</span>
-					</AppButton>
+						<Plus className="size-4 shrink-0" />
+						<span className="group-data-[collapsible=icon]:hidden font-button">New Application</span>
+					</button>
 				</SidebarHeader>
 
-				<SidebarContent className="flex-grow gap-0  py-4">
+				<SidebarContent className="flex-grow gap-0 py-4 group-data-[collapsible=icon]:px-2">
 					<NavMain data-testid="nav-main" />
 				</SidebarContent>
 
-				<SidebarFooter>
-					<div className="flex flex-col gap-1">
-						<SidebarMenuButton
-							className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center"
-							data-testid="support-button"
-						>
-							<HelpCircle className="h-5 w-5 flex-shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden">Support</span>
-						</SidebarMenuButton>
-						<SidebarMenuButton
-							className="w-full justify-start gap-3 text-black hover:bg-gray-100 group-data-[collapsible=icon]:justify-center"
-							data-testid="logout-button"
-							onClick={handleLogout}
-						>
-							<LogOut className="h-5 w-5 flex-shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden">Logout</span>
-						</SidebarMenuButton>
-					</div>
+				<SidebarFooter className="pb-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-4">
+					<SidebarMenu>
+						<SidebarMenuItem>
+							<SidebarMenuButton
+								className="flex items-center gap-2"
+								data-testid="support-button"
+								tooltip="Support"
+							>
+								<HelpCircle className="size-4 shrink-0" />
+								<span className="group-data-[collapsible=icon]:hidden font-body">Support</span>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+						<SidebarMenuItem>
+							<SidebarMenuButton
+								className="flex items-center gap-2"
+								data-testid="logout-button"
+								onClick={handleLogout}
+								tooltip="Logout"
+							>
+								<LogOut className="size-4 shrink-0" />
+								<span className="group-data-[collapsible=icon]:hidden font-body">Logout</span>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+					</SidebarMenu>
 				</SidebarFooter>
 
-				<SidebarRail />
+				<SidebarRail className="hidden" />
 			</Sidebar>
 
 			<NewApplicationModal

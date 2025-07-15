@@ -24,25 +24,23 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 	return (
 		<div
 			className={cn(
-				"relative flex w-[320px] flex-col gap-2 rounded-lg bg-surface-primary p-4 shadow-lg border border-border-primary",
+				"relative flex w-[320px] flex-col gap-2 rounded-lg bg-white p-4 shadow-lg border border-app-gray-200",
 				className,
 			)}
 		>
-			{}
 			<div className="flex items-start justify-between">
 				<div className="flex items-center gap-2">
-					{}
 					<div
 						className={cn(
 							"size-2 rounded-full shrink-0",
 							type === "deadline" && "bg-primary",
-							type === "info" && "bg-action-secondary",
+							type === "info" && "bg-app-slate-blue",
 							type === "warning" && "bg-[#ff9747]",
-							type === "success" && "bg-[#47ff97]",
+							type === "success" && "bg-app-green",
 						)}
 					/>
 					<h3
-						className="font-body font-semibold text-[14px] leading-[18px] text-text-primary"
+						className="font-body font-semibold text-[14px] leading-[18px] text-app-black"
 						data-testid="notification-title"
 					>
 						{title}
@@ -51,7 +49,7 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 				{onClose && (
 					<button
 						aria-label="Close notification"
-						className="flex size-4 items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
+						className="flex size-4 items-center justify-center text-app-gray-600 hover:text-app-black transition-colors"
 						data-testid="notification-close-button"
 						onClick={() => {
 							onClose(id);
@@ -63,14 +61,13 @@ export function NotificationBanner({ className, notification, onClose }: Notific
 				)}
 			</div>
 
-			{}
 			<div className="flex flex-col gap-1">
 				<p
-					className="font-body text-[12px] leading-[16px] text-text-secondary"
+					className="font-body text-[12px] leading-[16px] text-app-gray-600"
 					data-testid="notification-message"
 				>
 					Your project{" "}
-					<span className="font-semibold text-text-primary" data-testid="notification-project-name">
+					<span className="font-semibold text-app-black" data-testid="notification-project-name">
 						&ldquo;{projectName}&rdquo;
 					</span>{" "}
 					{message}

@@ -11,7 +11,7 @@ describe("Notification component", () => {
 		await user.click(screen.getByTestId("notification-trigger"));
 
 		// Check dropdown appears
-		expect(await screen.findByTestId("notification-dropdown")).toBeInTheDocument();
+		expect(await screen.findByTestId("notification-panel")).toBeInTheDocument();
 
 		// Check that the red dot exists
 		expect(screen.getByTestId("notification-dot-1")).toBeInTheDocument();
