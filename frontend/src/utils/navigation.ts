@@ -22,7 +22,7 @@ export const routes = {
 	application: {
 		detail: () => "/application",
 		editor: () => "/application/editor",
-		wizard: () => "/application/wizard",
+		wizard: (p0: { applicationId: string; applicationTitle: string; projectId: string; projectName: string; }) => "/application/wizard",
 	},
 	// Public routes
 	home: () => "/",

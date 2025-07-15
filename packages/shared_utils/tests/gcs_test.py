@@ -70,21 +70,30 @@ def test_get_credentials_with_service_account(mock_env_vars: None) -> None:
         patch("packages.shared_utils.src.gcs.deserialize") as mock_deserialize,
         patch("packages.shared_utils.src.gcs.Credentials") as mock_creds_class,
     ):
-        mock_get_env.side_effect = (
-            lambda key, fallback=None: ""
-            if key == "STORAGE_EMULATOR_HOST"
-            else "credentials_json"
-        )
+
+        def mock_get_env_impl(
+            key: str, fallback: Any = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "STORAGE_EMULATOR_HOST":
+                return ""
+            else:
+                return "credentials_json"
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_deserialize.return_value = mock_credentials
         mock_creds_instance = MagicMock()
         mock_creds_class.from_service_account_info.return_value = mock_creds_instance
 
         credentials = get_credentials()
 
-        mock_get_env.assert_any_call("STORAGE_EMULATOR_HOST", fallback="")
+        mock_get_env.assert_any_call("STORAGE_EMULATOR_HOST", raise_on_missing=False)
         mock_deserialize.assert_called_once_with("credentials_json", dict[str, Any])
         mock_creds_class.from_service_account_info.assert_called_once_with(
-            mock_credentials
+            mock_credentials,
+            scopes=[
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/devstorage.read_write",
+            ],
         )
         assert credentials == mock_creds_instance
 

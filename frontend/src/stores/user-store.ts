@@ -1,14 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-
-export interface UserInfo {
-	displayName: null | string;
-	email: null | string;
-	emailVerified: boolean;
-	photoURL: null | string;
-	providerId?: string;
-	uid: string;
-}
+import type { UserInfo } from "@/types/user";
 
 interface UserStore {
 	clearUser: () => void;

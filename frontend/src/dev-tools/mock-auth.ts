@@ -1,4 +1,5 @@
 import { useUserStore } from "@/stores/user-store";
+import { createUserInfo } from "@/utils/firebase";
 
 export function initializeMockAuth(): void {
 	if (!isMockAuthEnabled()) {
@@ -6,14 +7,16 @@ export function initializeMockAuth(): void {
 	}
 
 	// Set mock user data
-	useUserStore.getState().setUser({
-		displayName: "Test User",
-		email: "test@example.com",
-		emailVerified: true,
-		photoURL: null,
-		providerId: "mock",
-		uid: "mock-user-123",
-	});
+	useUserStore.getState().setUser(
+		createUserInfo({
+			displayName: "Test User",
+			email: "test@example.com",
+			emailVerified: true,
+			photoURL: null,
+			providerId: "mock",
+			uid: "mock-user-123",
+		}),
+	);
 
 	// Mark welcome modal as seen to avoid blocking tests
 	useUserStore.getState().dismissWelcomeModal();

@@ -9,13 +9,13 @@ from packages.shared_utils.src.ref import Ref
     "input_value", [1, "a", True, None, 1.1, 2 + 3j, {"a ": "b"}, [1, 2]]
 )
 def test_ref_with_different_types(input_value: Any) -> None:
-    ref = Ref(input_value)  # type: ignore[var-annotated]
+    ref = Ref(input_value)
     assert ref.value == input_value
 
 
 @pytest.mark.parametrize("input_value", [1, "a", True, None])
 def test_ref_with_different_types_async(input_value: Any) -> None:
-    ref = Ref(input_value)  # type: ignore[var-annotated]
+    ref = Ref(input_value)
     assert ref.value == input_value
 
 

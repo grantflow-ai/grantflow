@@ -72,23 +72,47 @@ pre-commit:
         check-yaml:
             glob: "*.{yaml,yml}"
             run: |
+                failed_files=""
                 for file in {staged_files}; do
-                  uv run python -c "import yaml; yaml.safe_load(open('$file'))"
+                  if ! uv run python -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                    echo "❌ YAML syntax error in: $file"
+                    failed_files="$failed_files $file"
+                  fi
                 done
+                if [ -n "$failed_files" ]; then
+                  echo "YAML validation failed for:$failed_files"
+                  exit 1
+                fi
 
         check-toml:
             glob: "*.toml"
             run: |
+                failed_files=""
                 for file in {staged_files}; do
-                  uv run python -c "import tomllib; tomllib.load(open('$file', 'rb'))"
+                  if ! uv run python -c "import tomllib; tomllib.load(open('$file', 'rb'))" 2>/dev/null; then
+                    echo "❌ TOML syntax error in: $file"
+                    failed_files="$failed_files $file"
+                  fi
                 done
+                if [ -n "$failed_files" ]; then
+                  echo "TOML validation failed for:$failed_files"
+                  exit 1
+                fi
 
         check-json:
             glob: "*.json"
             run: |
+                failed_files=""
                 for file in {staged_files}; do
-                  uv run python -m json.tool "$file" > /dev/null
+                  if ! uv run python -m json.tool "$file" > /dev/null 2>&1; then
+                    echo "❌ JSON syntax error in: $file"
+                    failed_files="$failed_files $file"
+                  fi
                 done
+                if [ -n "$failed_files" ]; then
+                  echo "JSON validation failed for:$failed_files"
+                  exit 1
+                fi
 
         check-case-conflict:
             run: |
@@ -136,23 +160,24 @@ pre-commit:
             stage_fixed: true
 
         tofu-fmt:
-            glob: "**/*.tf"
-            run: tofu fmt -check=true {staged_files}
+            only:
+                - glob: "terraform/**/*.tf"
+            run: |
+                # Format each file individually
+                for file in {staged_files}; do
+                    tofu fmt -write=true "$file"
+                done
             stage_fixed: true
 
         tofu-validate:
-            glob: "terraform/**/*.tf"
-            run: |
-                if echo "{staged_files}" | grep -q "\.tf"; then
-                    cd terraform && tofu init -backend=false && tofu validate
-                fi
+            only:
+                - glob: "terraform/**/*.tf"
+            run: cd terraform && tofu init -backend=false && tofu validate
 
         tflint:
-            glob: "terraform/**/*.tf"
-            run: |
-                if echo "{staged_files}" | grep -q "\.tf"; then
-                    tflint --chdir=terraform
-                fi
+            only:
+                - glob: "terraform/**/*.tf"
+            run: tflint --chdir=terraform
 
 commit-msg:
     commands:
