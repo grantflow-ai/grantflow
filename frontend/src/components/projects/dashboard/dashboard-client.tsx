@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { createProject } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AvatarGroup } from "@/components/app";
+import { AppHeader } from "@/components/layout/app-header";
 import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -17,7 +18,6 @@ import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import PaymentLink from "../payment/payment-link";
-import { DashboardHeader } from "./dashboard-header";
 import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
 
@@ -193,7 +193,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 			)}
 			<section className="w-full h-full">
 				<main className="w-full h-full flex flex-col">
-					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
+					<AppHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
 						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 rounded-lg bg-white border border-app-gray-100 min-h-0"

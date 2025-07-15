@@ -38,20 +38,21 @@ export function ApplicationList({
 		};
 
 		return (
-			<div className=" w-[628px] h-[206px]" data-testid="empty-applications-state">
+			<main className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-auto scrollbar-hide auto-rows-min max-h-full">
 				<button
-					className="flex flex-col items-center gap-2 justify-center w-full h-full bg-preview-bg rounded-[4px] border border-dashed border-gray-200 cursor-pointer"
+					className="flex flex-col items-center gap-3 justify-center w-full h-[260px] rounded-lg border cursor-pointer transition-colors"
 					data-testid="empty-state-new-application-button"
 					disabled={isCreatingApplication}
 					onClick={onCreate}
+					style={{ backgroundColor: "#FAF9FB", borderColor: "#E1DFEB" }}
 					type="button"
 				>
-					<div className="flex items-center justify-center size-10">
+					<div className="flex items-center justify-center">
 						<Plus className="size-6 text-primary" />
 					</div>
-					<span className="text-base font-normal text-black">{getEmptyStateButtonText()}</span>
+					<span className="text-base font-normal text-app-black">{getEmptyStateButtonText()}</span>
 				</button>
-			</div>
+			</main>
 		);
 	}
 
