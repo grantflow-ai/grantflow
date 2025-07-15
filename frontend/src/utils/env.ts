@@ -8,15 +8,39 @@ const envRef: { value: null | Readonly<Env> } = { value: null };
 export function getEnv(): Env {
 	envRef.value ??= createEnv({
 		client: {
-			NEXT_PUBLIC_FIREBASE_API_KEY: z.string(),
-			NEXT_PUBLIC_FIREBASE_APP_ID: z.string(),
-			NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string(),
-			NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string(),
-			NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: z.string(),
-			NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: z.string(),
-			NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string(),
-			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string(),
-			NEXT_PUBLIC_SITE_URL: z.url(),
+			NEXT_PUBLIC_FIREBASE_API_KEY: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_APP_ID: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.string(),
+			),
+			NEXT_PUBLIC_SITE_URL: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.url()),
 		},
 		experimental__runtimeEnv: {
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
@@ -35,17 +59,21 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 		},
 		server: {
-			RESEND_API_KEY: z.string(),
+			RESEND_API_KEY: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.string()),
 		},
 		shared: {
-			NEXT_PUBLIC_BACKEND_API_BASE_URL: z.url(),
+			NEXT_PUBLIC_BACKEND_API_BASE_URL: z.preprocess(
+				(val) => (typeof val === "string" ? val.trim() : val),
+				z.url(),
+			),
 			NEXT_PUBLIC_DEBUG: z
 				.preprocess((val) => {
 					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
+						const trimmed = val.trim().toLowerCase();
+						if (trimmed === "true") {
 							return true;
 						}
-						if (val.toLowerCase() === "false") {
+						if (trimmed === "false") {
 							return false;
 						}
 					}
@@ -53,14 +81,17 @@ export function getEnv(): Env {
 				}, z.boolean())
 				.optional()
 				.default(false),
-			NEXT_PUBLIC_GCS_EMULATOR_URL: z.url().optional(),
+			NEXT_PUBLIC_GCS_EMULATOR_URL: z
+				.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.url())
+				.optional(),
 			NEXT_PUBLIC_MOCK_API: z
 				.preprocess((val) => {
 					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
+						const trimmed = val.trim().toLowerCase();
+						if (trimmed === "true") {
 							return true;
 						}
-						if (val.toLowerCase() === "false") {
+						if (trimmed === "false") {
 							return false;
 						}
 					}
@@ -71,10 +102,11 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_MOCK_AUTH: z
 				.preprocess((val) => {
 					if (typeof val === "string") {
-						if (val.toLowerCase() === "true") {
+						const trimmed = val.trim().toLowerCase();
+						if (trimmed === "true") {
 							return true;
 						}
-						if (val.toLowerCase() === "false") {
+						if (trimmed === "false") {
 							return false;
 						}
 					}
@@ -95,7 +127,7 @@ export function getEnv(): Env {
 export function getMockAPIEnabled(): boolean {
 	const val = process.env.NEXT_PUBLIC_MOCK_API;
 	if (typeof val === "string") {
-		return val.toLowerCase() === "true";
+		return val.trim().toLowerCase() === "true";
 	}
 	return false;
 }

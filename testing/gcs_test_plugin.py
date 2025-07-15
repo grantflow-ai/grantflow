@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from anyio import run_process, sleep
 from google.cloud import storage
-from packages.shared_utils.src.gcs import bucket_ref, storage_client_ref
+from packages.shared_utils.src.gcs import bucket_ref, get_bucket, get_storage_client, storage_client_ref
 from packages.shared_utils.src.logger import get_logger
 
 logger = get_logger(__name__)
@@ -60,8 +60,6 @@ async def gcs_emulator_host() -> AsyncGenerator[str]:
 
 @pytest.fixture
 async def storage_client(gcs_emulator_host: str) -> storage.Client:
-    from packages.shared_utils.src.gcs import get_storage_client
-
     storage_client_ref.value = None
     bucket_ref.value = None
 
@@ -70,8 +68,6 @@ async def storage_client(gcs_emulator_host: str) -> storage.Client:
 
 @pytest.fixture
 async def storage_bucket(storage_client: storage.Client) -> storage.Bucket:
-    from packages.shared_utils.src.gcs import get_bucket
-
     bucket_ref.value = None
 
     return get_bucket()

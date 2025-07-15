@@ -16,6 +16,9 @@ async def process_source(
     source_id: str,
     filename: str,
     mime_type: str,
+    max_chars: int | None = None,
+    overlap_chars: int | None = None,
+    model_name: str | None = None,
 ) -> tuple[list[VectorDTO], str]:
     logger.debug("Starting text extraction", filename=filename, mime_type=mime_type, content_size=len(content))
 
@@ -37,7 +40,13 @@ async def process_source(
     )
 
     chunking_start = time.time()
-    chunks = chunk_text(text=extracted_text, mime_type=processed_mime_type)
+    chunk_kwargs = {}
+    if max_chars is not None:
+        chunk_kwargs["max_chars"] = max_chars
+    if overlap_chars is not None:
+        chunk_kwargs["overlap_chars"] = overlap_chars
+
+    chunks = chunk_text(text=extracted_text, mime_type=processed_mime_type, **chunk_kwargs)
     chunking_duration = time.time() - chunking_start
 
     logger.debug(
@@ -49,10 +58,10 @@ async def process_source(
     )
 
     embedding_start = time.time()
-    vectors = await index_chunks(
-        chunks=chunks,
-        source_id=source_id,
-    )
+    if model_name is not None:
+        vectors = await index_chunks(chunks=chunks, source_id=source_id, model_name=model_name)
+    else:
+        vectors = await index_chunks(chunks=chunks, source_id=source_id)
     embedding_duration = time.time() - embedding_start
 
     logger.debug(

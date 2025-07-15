@@ -28,7 +28,7 @@ import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
-import { getFirebaseAuth } from "@/utils/firebase";
+import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger";
 
 export default function SignIn() {
@@ -59,14 +59,7 @@ export default function SignIn() {
 			if (isNewUser) {
 				toast.success("Account created successfully!");
 
-				setUser({
-					displayName: user.displayName,
-					email: user.email,
-					emailVerified: user.emailVerified,
-					photoURL: user.photoURL,
-					providerId: user.providerData[0]?.providerId,
-					uid: user.uid,
-				});
+				setUser(convertFirebaseUser(user));
 
 				await login(idToken);
 				return;

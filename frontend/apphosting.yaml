@@ -11,7 +11,7 @@ env:
     - variable: NEXT_PUBLIC_SITE_URL
       secret: NEXT_PUBLIC_SITE_URL
     - variable: NEXT_PUBLIC_BACKEND_API_BASE_URL
-      secret: NEXT_PUBLIC_BACKEND_API_BASE_URL
+      value: "http://localhost:8000"
     - variable: NEXT_PUBLIC_FIREBASE_API_KEY
       secret: NEXT_PUBLIC_FIREBASE_API_KEY
     - variable: NEXT_PUBLIC_FIREBASE_APP_ID

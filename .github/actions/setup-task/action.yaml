@@ -1,0 +1,19 @@
+name: "Setup Task"
+description: "Install and cache the Task binary for workflow use"
+
+runs:
+    using: "composite"
+    steps:
+        - name: Cache Task Binary
+          uses: actions/cache@v4
+          with:
+              path: ~/.local/bin/task
+              key: task-${{ runner.os }}-3.x
+              restore-keys: |
+                  task-${{ runner.os }}-
+
+        - name: Install Task
+          uses: arduino/setup-task@v2
+          with:
+              version: 3.x
+              repo-token: ${{ github.token }}

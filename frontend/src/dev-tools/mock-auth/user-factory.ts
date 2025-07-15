@@ -1,15 +1,28 @@
-import type { UserInfo } from "@/stores/user-store";
+import type { UserInfo } from "@/types/user";
 
 /**
  * Mock user data for development authentication bypass
  */
 export const createMockUser = (overrides?: Partial<UserInfo>): UserInfo => {
 	const defaultUser: UserInfo = {
+		customClaims: null,
+		disabled: false,
 		displayName: "Test User",
 		email: "test@example.com",
 		emailVerified: true,
+		phoneNumber: null,
 		photoURL: "https://lh3.googleusercontent.com/a/default-user=s96-c",
-		providerId: "google.com",
+		providerData: [
+			{
+				displayName: "Test User",
+				email: "test@example.com",
+				phoneNumber: null,
+				photoURL: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+				providerId: "google.com",
+				uid: "mock-user-uid-123",
+			},
+		],
+		tenantId: null,
 		uid: "mock-user-uid-123",
 	};
 
@@ -27,13 +40,31 @@ export const mockUsers = {
 		displayName: "Email Test User",
 		email: "email.user@example.com",
 		photoURL: null,
-		providerId: "password",
+		providerData: [
+			{
+				displayName: "Email Test User",
+				email: "email.user@example.com",
+				phoneNumber: null,
+				photoURL: null,
+				providerId: "password",
+				uid: "email-mock-uid",
+			},
+		],
 		uid: "email-mock-uid",
 	}),
 	googleUser: createMockUser({
 		displayName: "Google Test User",
 		email: "google.user@gmail.com",
-		providerId: "google.com",
+		providerData: [
+			{
+				displayName: "Google Test User",
+				email: "google.user@gmail.com",
+				phoneNumber: null,
+				photoURL: "https://lh3.googleusercontent.com/a/default-user=s96-c",
+				providerId: "google.com",
+				uid: "google-mock-uid",
+			},
+		],
 		uid: "google-mock-uid",
 	}),
 
@@ -41,7 +72,16 @@ export const mockUsers = {
 		displayName: "Dr. Research Scientist",
 		email: "researcher@university.edu",
 		photoURL: null,
-		providerId: "oidc.orcid",
+		providerData: [
+			{
+				displayName: "Dr. Research Scientist",
+				email: "researcher@university.edu",
+				phoneNumber: null,
+				photoURL: null,
+				providerId: "oidc.orcid",
+				uid: "orcid-mock-uid",
+			},
+		],
 		uid: "orcid-mock-uid",
 	}),
 };

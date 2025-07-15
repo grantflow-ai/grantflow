@@ -1,16 +1,25 @@
 from pytest_mock import MockFixture
 from semantic_text_splitter import MarkdownSplitter, TextSplitter
 
-from packages.shared_utils.src.chunking import MAX_CHARACTERS, chunk_text, get_splitter
+from packages.shared_utils.src.chunking import (
+    MAX_CHARACTERS,
+    OVERLAP_CHARACTERS,
+    chunk_text,
+    get_splitter,
+)
 
 
 def test_get_splitter_markdown() -> None:
-    splitter = get_splitter("text/markdown")
+    splitter = get_splitter(
+        "text/markdown", max_chars=MAX_CHARACTERS, overlap_chars=OVERLAP_CHARACTERS
+    )
     assert isinstance(splitter, MarkdownSplitter)
 
 
 def test_get_splitter_text() -> None:
-    splitter = get_splitter("text/plain")
+    splitter = get_splitter(
+        "text/plain", max_chars=MAX_CHARACTERS, overlap_chars=OVERLAP_CHARACTERS
+    )
     assert isinstance(splitter, TextSplitter)
 
 

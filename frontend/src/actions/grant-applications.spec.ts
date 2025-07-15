@@ -11,7 +11,7 @@ import {
 	createApplication,
 	deleteApplication,
 	generateApplication,
-	retrieveApplication,
+	getApplication,
 	triggerAutofill,
 	updateApplication,
 } from "./grant-applications";
@@ -120,9 +120,9 @@ describe("Grant Application Actions", () => {
 		});
 	});
 
-	describe("retrieveApplication", () => {
+	describe("getApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			const result = await retrieveApplication(mockProjectId, mockApplicationId);
+			const result = await getApplication(mockProjectId, mockApplicationId);
 
 			expect(mockGet).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
 				headers: mockAuthHeaders,
@@ -147,7 +147,7 @@ describe("Grant Application Actions", () => {
 			});
 			mockWithAuthRedirect.mockRejectedValue(mockError);
 
-			await expect(retrieveApplication(mockProjectId, mockApplicationId)).rejects.toThrow();
+			await expect(getApplication(mockProjectId, mockApplicationId)).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 
@@ -167,7 +167,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(retrieveApplication(mockProjectId, mockApplicationId)).rejects.toThrow(HTTPError);
+			await expect(getApplication(mockProjectId, mockApplicationId)).rejects.toThrow(HTTPError);
 		});
 	});
 
