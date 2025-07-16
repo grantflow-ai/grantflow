@@ -10,7 +10,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
-from testing.test_utils import create_grant_application_data, process_funding_organization
+from testing.utils import create_grant_application_data, process_funding_organization
 
 load_dotenv()
 

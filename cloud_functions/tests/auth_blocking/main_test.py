@@ -35,8 +35,17 @@ class TestBeforeCreateFunction:
     """Test the beforeCreate auth blocking function."""
 
     @patch("cloud_functions.src.auth_blocking.main.logger")
-    def test_allows_grantflow_email(self, mock_logger: Any) -> None:
+    @patch("cloud_functions.src.auth_blocking.main.identity_fn.BeforeCreateResponse")
+    def test_allows_grantflow_email(self, mock_response_class: Any, mock_logger: Any) -> None:
         """Test that grantflow.ai emails are allowed."""
+        
+        mock_response = Mock()
+        mock_response.custom_claims = {
+            "domain": "grantflow.ai",
+            "access_level": "team_member",
+            "registration_time": 1234567890000,
+        }
+        mock_response_class.return_value = mock_response
 
         user_record = Mock(spec=identity_fn.AuthUserRecord)
         user_record.email = "user@grantflow.ai"
@@ -46,13 +55,16 @@ class TestBeforeCreateFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
-        response = before_create(event)
+        
+        inner_func = before_create.__wrapped__
+        response = inner_func(event)
 
         assert response is not None
-        assert response.custom_claims is not None
-        assert response.custom_claims["domain"] == "grantflow.ai"
-        assert response.custom_claims["access_level"] == "team_member"
-        assert "registration_time" in response.custom_claims
+        mock_response_class.assert_called_once()
+        call_args = mock_response_class.call_args
+        assert call_args[1]["custom_claims"]["domain"] == "grantflow.ai"
+        assert call_args[1]["custom_claims"]["access_level"] == "team_member"
+        assert "registration_time" in call_args[1]["custom_claims"]
 
         mock_logger.info.assert_called()
         mock_logger.warning.assert_not_called()
@@ -69,8 +81,11 @@ class TestBeforeCreateFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
+        
+        inner_func = before_create.__wrapped__
+
         with pytest.raises(https_fn.HttpsError) as exc_info:
-            before_create(event)
+            inner_func(event)
 
         assert exc_info.value.code == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
         assert "Access restricted to grantflow.ai team members only" in str(exc_info.value.message)
@@ -89,8 +104,11 @@ class TestBeforeCreateFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
+        
+        inner_func = before_create.__wrapped__
+
         with pytest.raises(https_fn.HttpsError) as exc_info:
-            before_create(event)
+            inner_func(event)
 
         assert exc_info.value.code == https_fn.FunctionsErrorCode.INVALID_ARGUMENT
 
@@ -99,8 +117,12 @@ class TestBeforeSignInFunction:
     """Test the beforeSignIn auth blocking function."""
 
     @patch("cloud_functions.src.auth_blocking.main.logger")
-    def test_allows_grantflow_email(self, mock_logger: Any) -> None:
+    @patch("cloud_functions.src.auth_blocking.main.identity_fn.BeforeSignInResponse")
+    def test_allows_grantflow_email(self, mock_response_class: Any, mock_logger: Any) -> None:
         """Test that grantflow.ai emails are allowed."""
+        
+        mock_response = Mock()
+        mock_response_class.return_value = mock_response
 
         user_record = Mock(spec=identity_fn.AuthUserRecord)
         user_record.email = "user@grantflow.ai"
@@ -110,9 +132,12 @@ class TestBeforeSignInFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
-        response = before_sign_in(event)
+        
+        inner_func = before_sign_in.__wrapped__
+        response = inner_func(event)
 
         assert response is not None
+        mock_response_class.assert_called_once()
 
         mock_logger.info.assert_called()
         mock_logger.warning.assert_not_called()
@@ -129,8 +154,11 @@ class TestBeforeSignInFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
+        
+        inner_func = before_sign_in.__wrapped__
+
         with pytest.raises(https_fn.HttpsError) as exc_info:
-            before_sign_in(event)
+            inner_func(event)
 
         assert exc_info.value.code == https_fn.FunctionsErrorCode.PERMISSION_DENIED
         assert "Access restricted to grantflow.ai team members only" in str(exc_info.value.message)
