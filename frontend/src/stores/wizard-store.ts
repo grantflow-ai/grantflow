@@ -86,6 +86,7 @@ interface WizardActions {
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
+	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
@@ -645,6 +646,22 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							},
 						}));
 					}
+				},
+
+				updateFormInputs: async (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => {
+					const { application, updateApplication } = useApplicationStore.getState();
+
+					if (!application) {
+						log.error("updateFormInputs: No application found");
+						return;
+					}
+
+					const currentFormInputs = application.form_inputs ?? {};
+					const mergedFormInputs = { ...currentFormInputs, ...formInputs };
+
+					await updateApplication({
+						form_inputs: mergedFormInputs as API.UpdateApplication.RequestBody["form_inputs"],
+					});
 				},
 
 				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Validation logic needs to be comprehensive
