@@ -232,6 +232,9 @@ class GrantApplication(BaseWithUUIDPK):
     rag_job_id: Mapped[UUID | None] = mapped_column(
         SA_UUID(), ForeignKey("rag_generation_jobs.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    parent_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     rag_sources: Relationship[list["GrantApplicationRagSource"]] = relationship(
         "GrantApplicationRagSource", back_populates="grant_application", cascade="all, delete-orphan"
@@ -245,6 +248,12 @@ class GrantApplication(BaseWithUUIDPK):
         back_populates="grant_application",
         uselist=False,
         foreign_keys="[GrantApplication.rag_job_id]",
+    )
+    parent: Relationship["GrantApplication | None"] = relationship(
+        "GrantApplication", remote_side="[GrantApplication.id]", back_populates="children"
+    )
+    children: Relationship[list["GrantApplication"]] = relationship(
+        "GrantApplication", back_populates="parent", cascade="all, delete-orphan"
     )
 
 
