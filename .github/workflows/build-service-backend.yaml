@@ -16,7 +16,7 @@ on:
 
 jobs:
     build-and-push:
-        runs-on: ubuntu-latest
+        runs-on: docker-build-runner
         timeout-minutes: 15
         permissions:
             contents: read
