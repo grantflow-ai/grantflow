@@ -196,7 +196,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 					<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className=" px-10 relative flex h-[863px] flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200"
+						className=" px-10 relative flex flex-col gap-10 py-14 rounded-lg bg-white border border-gray-200"
 						data-testid="dashboard-main-content"
 					>
 						<main className="flex flex-col gap-8">
@@ -254,7 +254,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 							<h3 className="font-normal text-4xl text-black" data-testid="research-projects-heading">
 								Research Projects
 							</h3>
-							<main className="flex items-center gap-4 flex-wrap mt-6" data-testid="projects-container">
+							<main className="">
+
+							<main className="flex gap-6 scroll-box w-full h-[550px] flex-wrap mt-6 overflow-y-scroll " data-testid="projects-container">
 								{projects.length > 0 ? (
 									projects.map((project) => (
 										<DashboardProjectCard
@@ -286,6 +288,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 										</button>
 									</div>
 								)}
+							</main>
 							</main>
 						</main>
 						<PaymentLink />

@@ -32,7 +32,7 @@ export function DashboardProjectCard({
 }: DashboardProjectCardProps) {
 	return (
 		<AppCard
-			className="w-[413px] h-[300px] bg-preview-bg cursor-pointer hover:border-gray-300 transition-colors"
+			className="w-[408px] h-[300px] bg-preview-bg cursor-pointer border-2 border-gray-200 shadow-none rounded-[8px]  hover:border-2 hover:border-primary hover:shadow-none "
 			data-testid="dashboard-project-card"
 			onClick={
 				onClick
@@ -42,7 +42,7 @@ export function DashboardProjectCard({
 					: undefined
 			}
 		>
-			<AppCardContent className="p-6 flex h-full">
+			<AppCardContent className=" flex h-full">
 				<div className="flex flex-col w-full">
 					<div className="flex flex-col gap-3">
 						<figure

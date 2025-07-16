@@ -4,7 +4,7 @@ import { DashboardClient } from "@/components/projects/dashboard/dashboard-clien
 
 export default async function DashboardPage() {
 	const initialProjects = await getProjects();
-	const mockProjects = ProjectListItemFactory.batch(3)
+	const mockProjects = ProjectListItemFactory.batch(10)
 
 	return <DashboardClient initialProjects={mockProjects} />;
 }
