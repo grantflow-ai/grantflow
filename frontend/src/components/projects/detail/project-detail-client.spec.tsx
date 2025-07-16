@@ -124,7 +124,7 @@ describe("ProjectDetailClient", () => {
 
 		// Mock SWR for project data
 		vi.mocked(useSWR).mockImplementation((key: any) => {
-			if (key && key.includes("/projects/") && key.includes("/applications")) {
+			if (key?.includes("/projects/") && key.includes("/applications")) {
 				return {
 					data: {
 						applications: mockApplications,
@@ -135,7 +135,7 @@ describe("ProjectDetailClient", () => {
 					mutate: vi.fn(),
 				} as any;
 			}
-			if (key && key.includes("/projects/") && key.includes("/members")) {
+			if (key?.includes("/projects/") && key.includes("/members")) {
 				return {
 					data: mockMembers,
 					error: null,
@@ -181,7 +181,7 @@ describe("ProjectDetailClient", () => {
 
 		it("shows empty state when no applications exist", async () => {
 			vi.mocked(useSWR).mockImplementation((key: any) => {
-				if (key && key.includes("/applications")) {
+				if (key?.includes("/applications")) {
 					return {
 						data: {
 							applications: [],
@@ -192,7 +192,7 @@ describe("ProjectDetailClient", () => {
 						mutate: vi.fn(),
 					} as any;
 				}
-				if (key && key.includes("/members")) {
+				if (key?.includes("/members")) {
 					return {
 						data: mockMembers,
 						error: null,
@@ -365,7 +365,7 @@ describe("ProjectDetailClient", () => {
 
 		it("handles applications loading errors", async () => {
 			vi.mocked(useSWR).mockImplementation((key: any) => {
-				if (key && key.includes("/applications")) {
+				if (key?.includes("/applications")) {
 					return {
 						data: null,
 						error: new Error("Failed to load applications"),
@@ -373,7 +373,7 @@ describe("ProjectDetailClient", () => {
 						mutate: vi.fn(),
 					} as any;
 				}
-				if (key && key.includes("/members")) {
+				if (key?.includes("/members")) {
 					return {
 						data: mockMembers,
 						error: null,

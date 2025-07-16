@@ -195,7 +195,7 @@ export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
 	updated_at: factory.date.recent().toISOString(),
 }));
 
-type ApplicationStatus = "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+type ApplicationStatus = "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 
 export const ApplicationFactory = new Factory<API.CreateApplication.Http201.ResponseBody>((factory) => ({
 	completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
@@ -209,7 +209,7 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 	research_objectives: factory.datatype.boolean()
 		? ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 }))
 		: undefined,
-	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"]),
 	text: factory.datatype.boolean() ? factory.lorem.paragraphs(5) : undefined,
 	title: factory.lorem.sentence(),
 	updated_at: factory.date.recent().toISOString(),
@@ -266,7 +266,7 @@ export const UpdateApplicationRequestFactory = new Factory<Partial<API.UpdateApp
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
 	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
 	research_objectives: ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 })),
-	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"]),
 	text: factory.lorem.paragraphs(3),
 	title: factory.lorem.sentence(),
 }));
@@ -592,7 +592,7 @@ export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((fact
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
 	id: factory.string.uuid(),
 	project_id: factory.string.uuid(),
-	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"]),
+	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"]),
 	title: factory.lorem.sentence({ max: 8, min: 3 }),
 	updated_at: factory.date.recent().toISOString(),
 }));

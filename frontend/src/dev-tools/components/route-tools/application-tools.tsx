@@ -6,14 +6,14 @@ import { useApplicationStore } from "@/stores/application-store";
 
 export function ApplicationTools() {
 	const application = useApplicationStore((state) => state.application);
-	const changeApplicationStatus = (status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS") => {
+	const changeApplicationStatus = (status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS") => {
 		if (!application) return;
 
 		useApplicationStore.setState({
 			application: {
 				...application,
 				status,
-				...(status === "COMPLETED" ? { completed_at: new Date().toISOString() } : {}),
+				...(status === "GENERATING" ? { completed_at: new Date().toISOString() } : {}),
 			},
 		});
 	};
@@ -120,19 +120,19 @@ export function ApplicationTools() {
 				<button
 					className="flex items-center gap-2 rounded bg-emerald-600 px-4 py-2 text-sm hover:bg-emerald-700"
 					onClick={() => {
-						changeApplicationStatus("COMPLETED");
+						changeApplicationStatus("GENERATING");
 					}}
 					type="button"
 				>
 					<CheckCircle className="h-4 w-4" />
-					Mark Complete
+					Mark Generating
 				</button>
 			</div>
 
 			<div className="space-y-2">
 				<p className="text-sm font-medium">Change Status:</p>
 				<div className="flex gap-2">
-					{(["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const).map((status) => (
+					{(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"] as const).map((status) => (
 						<button
 							className={`rounded px-3 py-1 text-xs ${
 								application?.status === status
