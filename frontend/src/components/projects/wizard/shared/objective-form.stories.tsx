@@ -10,10 +10,17 @@ const meta: Meta<typeof ObjectiveForm> = {
 		onSaveAction: { action: "onSaveAction" },
 	},
 	component: ObjectiveForm,
+	decorators: [
+		(Story) => (
+			<div className="w-1/3 mx-auto p-8">
+				<Story />
+			</div>
+		),
+	],
 	parameters: {
-		layout: "padded",
+		layout: "fullscreen",
 	},
-	title: "Projects/Wizard/ObjectiveForm",
+	title: "Wizard/Components/ObjectiveForm",
 };
 
 export default meta;
@@ -59,7 +66,25 @@ export const WithInitialData: Story = {
 	},
 };
 
-export const MultipleObjectives: Story = {
+export const OneTask: Story = {
+	args: {
+		initialData: {
+			description:
+				"Develop comprehensive methodologies for evaluating the effectiveness of new treatment approaches in clinical settings.",
+			name: "Evaluate treatment effectiveness",
+			tasks: [
+				{
+					description: "Design and implement randomized controlled trial for treatment evaluation",
+					id: "1",
+				},
+			],
+		} as ObjectiveFormData,
+		objectiveNumber: 1,
+		onSaveAction: fn(),
+	},
+};
+
+export const MultipleTasks: Story = {
 	args: {
 		initialData: {
 			description:
@@ -84,19 +109,7 @@ export const MultipleObjectives: Story = {
 				},
 			],
 		} as ObjectiveFormData,
-		objectiveNumber: 3,
-		onSaveAction: fn(),
-	},
-};
-
-export const EmptyForm: Story = {
-	args: {
-		initialData: {
-			description: "",
-			name: "",
-			tasks: [{ description: "", id: "1" }],
-		} as ObjectiveFormData,
-		objectiveNumber: 1,
+		objectiveNumber: 2,
 		onSaveAction: fn(),
 	},
 };

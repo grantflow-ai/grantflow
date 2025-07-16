@@ -39,7 +39,7 @@ export function NavMain(props: NavMainProps) {
 				<SidebarMenuButton
 					asChild
 					className={isProjectsActive ? "bg-white text-primary [&_svg]:text-primary" : ""}
-					data-testid="dashboard-section"
+					data-testid="dashboard-button"
 					isActive={isProjectsActive}
 					tooltip="Dashboard"
 				>
@@ -50,7 +50,6 @@ export function NavMain(props: NavMainProps) {
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 
-			{/* Recent Applications */}
 			<Collapsible className="group/collapsible" defaultOpen>
 				<SidebarMenuItem>
 					<CollapsibleTrigger asChild>
@@ -88,7 +87,7 @@ export function NavMain(props: NavMainProps) {
 			</Collapsible>
 
 			{/* Settings */}
-			<Collapsible className="group/collapsible" defaultOpen>
+			<Collapsible className="group/collapsible">
 				<SidebarMenuItem>
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
