@@ -55,6 +55,14 @@ runs:
           shell: bash
           run: uv sync --all-packages --all-extras --dev --upgrade
 
+        - name: Install Playwright Browsers
+          if: ${{ inputs.service == 'scraper' }}
+          shell: bash
+          run: |
+              echo "Installing Playwright browsers for scraper service..."
+              uv run playwright install chromium chromium-headless-shell
+              uv run playwright install-deps chromium
+
         - name: Cache Hugging Face models
           uses: actions/cache@v4
           with:
