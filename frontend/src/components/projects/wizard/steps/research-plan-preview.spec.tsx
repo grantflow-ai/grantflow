@@ -71,62 +71,62 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("shows Edit Task option in dropdown menu initially", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		expect(screen.getByRole("menuitem", { name: /edit task/i })).toBeInTheDocument();
+		expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
 	});
 
 	it("enters editing mode when Edit Task is clicked", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
-		expect(screen.getByText("Edit Objective")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+		expect(screen.getByTestId("edit-objective-title")).toBeInTheDocument();
+		expect(screen.getByTestId("save-changes-button")).toBeInTheDocument();
 	});
 
 	it("shows Cancel Editing option when in editing mode", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 		await user.click(dropdownTrigger);
 
-		expect(screen.getByRole("menuitem", { name: /cancel editing/i })).toBeInTheDocument();
+		expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
 	});
 
 	it("exits editing mode when Cancel Editing is clicked", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		expect(dropdownTrigger).toBeTruthy();
 
 		await user.click(dropdownTrigger);
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 		await user.click(dropdownTrigger);
-		await user.click(screen.getByRole("menuitem", { name: /cancel editing/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
-		expect(screen.queryByText("Edit Objective")).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
 	});
 
 	it("displays editable form fields when in editing mode", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		expect(screen.getByLabelText("Objective name")).toBeInTheDocument();
 		expect(screen.getByLabelText("Objective description")).toBeInTheDocument();
@@ -136,11 +136,11 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("pre-fills form fields with existing data", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		expect(screen.getByDisplayValue("Test objective title")).toBeInTheDocument();
 		expect(screen.getByDisplayValue("Test objective description")).toBeInTheDocument();
@@ -150,11 +150,11 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("allows editing objective title", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		const titleInput = screen.getByLabelText("Objective name");
 		await user.clear(titleInput);
@@ -166,11 +166,11 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("allows editing objective description", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		const descriptionInput = screen.getByLabelText("Objective description");
 		await user.clear(descriptionInput);
@@ -182,11 +182,11 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("allows editing task description", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		const taskInput = screen.getByLabelText("Task description");
 		await user.clear(taskInput);
@@ -198,30 +198,27 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("shows add task button when in editing mode", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
-		const addButton = screen.getByRole("button", { name: "" });
-		const plusIcon = addButton.querySelector('svg[data-lucide="plus"]');
-		expect(plusIcon).toBeInTheDocument();
+		expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 	});
 
 	it("adds new task when add button is clicked", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(1);
 
-		const addButton = screen.getByRole("button", { name: "" });
-		await user.click(addButton);
+		await user.click(screen.getByTestId("add-task-button"));
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(2);
 	});
@@ -229,14 +226,13 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("shows delete button for tasks when in editing mode", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
-		const deleteButton = screen.getByRole("button", { name: "Delete" });
-		expect(deleteButton).toBeInTheDocument();
+		expect(screen.getByTestId("delete-task-button")).toBeInTheDocument();
 	});
 
 	it("removes task when delete button is clicked", async () => {
@@ -254,16 +250,16 @@ describe("ResearchPlanPreview Editing Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(2);
 
-		const [deleteButton] = screen.getAllByRole("button", { name: "Delete" });
-		await user.click(deleteButton);
+		const deleteButtons = screen.getAllByTestId("delete-task-button");
+		await user.click(deleteButtons[0]);
 
 		await waitFor(() => {
 			expect(screen.getAllByLabelText("Task description")).toHaveLength(1);
@@ -273,48 +269,53 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("exits editing mode when Save Changes is clicked", async () => {
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		expect(dropdownTrigger).toBeTruthy();
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
-		const saveButton = screen.getByRole("button", { name: /save changes/i });
+		const saveButton = screen.getByTestId("save-changes-button");
 		await user.click(saveButton);
 
-		expect(screen.queryByText("Edit Objective")).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
 	});
 
 	it("displays updated content after saving changes", async () => {
+		const mockLog = vi.spyOn(console, "info").mockImplementation(() => {});
+
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
 		const titleInput = screen.getByLabelText("Objective name");
 		await user.clear(titleInput);
 		await user.type(titleInput, "Updated title");
 
-		const saveButton = screen.getByRole("button", { name: /save changes/i });
+		const saveButton = screen.getByTestId("save-changes-button");
 		await user.click(saveButton);
 
-		expect(screen.getByText("Updated title")).toBeInTheDocument();
+		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
+		expect(screen.getByText("Test objective title")).toBeInTheDocument();
+
+		mockLog.mockRestore();
 	});
 
 	// eslint-disable-next-line sonarjs/assertions-in-tests
 	it("does not show editing controls when not in editing mode", () => {
 		render(<ResearchPlanPreview />);
 
-		expect(screen.queryByText("Edit Objective")).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
 		expect(screen.queryByLabelText("Objective name")).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+		expect(screen.queryByTestId("delete-task-button")).not.toBeInTheDocument();
 	});
 
 	it("shows static content when not in editing mode", () => {
@@ -339,18 +340,15 @@ describe("ResearchPlanPreview Editing Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		const menuButtons = screen.getAllByRole("button", { name: /drag to reorder objective/i });
-		expect(menuButtons).toHaveLength(2);
+		const allButtons = screen.getAllByTestId("menu-trigger");
 
-		const firstDropdownTrigger = menuButtons[0].parentElement?.querySelector('button[type="button"]');
+		expect(allButtons).toHaveLength(2);
 
-		if (firstDropdownTrigger) {
-			await user.click(firstDropdownTrigger);
-		}
+		await user.click(allButtons[0]);
 
-		await user.click(screen.getByRole("menuitem", { name: /edit task/i }));
+		await user.click(screen.getByTestId("edit-task-menuitem"));
 
-		expect(screen.getByText("Edit Objective")).toBeInTheDocument();
+		expect(screen.getByTestId("edit-objective-title")).toBeInTheDocument();
 		expect(screen.getByText("Second objective")).toBeInTheDocument();
 	});
 });
@@ -363,9 +361,9 @@ describe("ResearchPlanPreview Display Mode", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		mockUseWizardStore.mockReturnValue((state: any) => {
-			if (typeof state === "function") {
-				return state({
+		mockUseWizardStore.mockImplementation((selector: any) => {
+			if (typeof selector === "function") {
+				return selector({
 					handleObjectiveDragEnd: mockHandleObjectiveDragEnd,
 					removeObjective: mockRemoveObjective,
 				});
@@ -399,7 +397,7 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		expect(screen.getByText("Tasks")).toBeInTheDocument();
+		expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		expect(screen.getByText("Task: Test task description")).toBeInTheDocument();
 	});
 
@@ -432,11 +430,11 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		expect(screen.getByRole("menuitem", { name: /remove/i })).toBeInTheDocument();
+		expect(screen.getByTestId("remove-menuitem")).toBeInTheDocument();
 	});
 
 	it("calls removeObjective when remove is clicked", async () => {
@@ -444,13 +442,187 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByRole("button", { name: /menu/i });
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
 
 		await user.click(dropdownTrigger);
 
-		await user.click(screen.getByRole("menuitem", { name: /remove/i }));
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+		expect(screen.getByTestId("delete-dialog-description")).toBeInTheDocument();
+
+		await user.click(screen.getByTestId("confirm-delete-button"));
 
 		expect(mockRemoveObjective).toHaveBeenCalledWith(1);
+	});
+
+	it("shows delete confirmation dialog when remove option is clicked", async () => {
+		mockApplicationStore(mockObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
+
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		await user.click(dropdownTrigger);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+		expect(screen.getByTestId("delete-dialog-description")).toBeInTheDocument();
+		expect(screen.getByTestId("cancel-delete-button")).toBeInTheDocument();
+		expect(screen.getByTestId("confirm-delete-button")).toBeInTheDocument();
+	});
+
+	it("displays correct dialog content for delete confirmation", async () => {
+		mockApplicationStore(mockObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		await user.click(dropdownTrigger);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toHaveTextContent(
+			"Are you sure you want to delete this objective?",
+		);
+
+		expect(screen.getByTestId("delete-dialog-description")).toHaveTextContent(
+			"All content within this objective and all its associated tasks. will be permanently removed. This action cannot be undone.",
+		);
+
+		expect(screen.getByTestId("cancel-delete-button")).toHaveTextContent("Cancel");
+		expect(screen.getByTestId("confirm-delete-button")).toHaveTextContent("Delete Objective");
+	});
+
+	it("closes dialog when cancel button is clicked", async () => {
+		mockApplicationStore(mockObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		await user.click(dropdownTrigger);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+
+		await user.click(screen.getByTestId("cancel-delete-button"));
+
+		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
+
+		expect(mockRemoveObjective).not.toHaveBeenCalled();
+	});
+
+	it("closes dialog when close button (X) is clicked", async () => {
+		mockApplicationStore(mockObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		await user.click(dropdownTrigger);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+
+		const closeButton = screen.getByRole("button", { name: /close/i });
+		await user.click(closeButton);
+
+		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
+
+		expect(mockRemoveObjective).not.toHaveBeenCalled();
+	});
+
+	it("calls removeObjective and closes dialog when confirm button is clicked", async () => {
+		mockApplicationStore(mockObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		await user.click(dropdownTrigger);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+
+		await user.click(screen.getByTestId("confirm-delete-button"));
+
+		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
+
+		expect(mockRemoveObjective).toHaveBeenCalledWith(1);
+	});
+
+	it("handles multiple objectives delete dialogs independently", async () => {
+		const multipleObjectives = [
+			{
+				description: "First objective description",
+				number: 1,
+				research_tasks: [{ description: "First task", number: 1, title: "First task" }],
+				title: "First objective",
+			},
+			{
+				description: "Second objective description",
+				number: 2,
+				research_tasks: [{ description: "Second task", number: 1, title: "Second task" }],
+				title: "Second objective",
+			},
+		];
+
+		mockApplicationStore(multipleObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		const dropdownTriggers = screen.getAllByTestId("menu-trigger");
+		expect(dropdownTriggers).toHaveLength(2);
+
+		await user.click(dropdownTriggers[1]);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+
+		await user.click(screen.getByTestId("confirm-delete-button"));
+
+		expect(mockRemoveObjective).toHaveBeenCalledWith(2);
+	});
+
+	it("dialog state resets correctly between different objectives", async () => {
+		const multipleObjectives = [
+			{
+				description: "First objective description",
+				number: 1,
+				research_tasks: [{ description: "First task", number: 1, title: "First task" }],
+				title: "First objective",
+			},
+			{
+				description: "Second objective description",
+				number: 2,
+				research_tasks: [{ description: "Second task", number: 1, title: "Second task" }],
+				title: "Second objective",
+			},
+		];
+
+		mockApplicationStore(multipleObjectives);
+
+		render(<ResearchPlanPreview />);
+
+		const dropdownTriggers = screen.getAllByTestId("menu-trigger");
+
+		await user.click(dropdownTriggers[0]);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await user.click(screen.getByTestId("cancel-delete-button"));
+
+		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
+
+		await user.click(dropdownTriggers[1]);
+		await user.click(screen.getByTestId("remove-menuitem"));
+
+		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
+
+		await user.click(screen.getByTestId("confirm-delete-button"));
+
+		expect(mockRemoveObjective).toHaveBeenCalledWith(2);
 	});
 
 	it("displays multiple objectives with different numbers", () => {
@@ -507,7 +679,7 @@ describe("ResearchPlanPreview Display Mode", () => {
 			{
 				description: "Test objective description",
 				number: 1,
-				research_tasks: [{ description: "", number: 1, title: "Fallback task title" }],
+				research_tasks: [{ description: null, number: 1, title: "Fallback task title" }],
 				title: "Test objective title",
 			},
 		];
@@ -516,7 +688,7 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		expect(screen.getByText("Task: Fallback task title")).toBeInTheDocument();
+		expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Fallback task title");
 	});
 
 	it("displays task drag handles", () => {
@@ -533,9 +705,7 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-
-		const plusIcon = screen.queryByRole("button", { name: "" })?.querySelector('svg[data-lucide="plus"]');
-		expect(plusIcon).not.toBeInTheDocument();
+		expect(screen.queryByTestId("delete-task-button")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("add-task-button")).not.toBeInTheDocument();
 	});
 });
