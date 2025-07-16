@@ -40,6 +40,46 @@ async def test_client(
 
     # JWT_SECRET is already set to "abc123" in base_test_plugin.py ~keep
 
+    
+    async def mock_get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
+        return {
+            uid: {
+                "uid": uid,
+                "email": f"test-{uid}@example.com",
+                "displayName": f"Test User {uid}",
+                "photoURL": f"https://example.com/photo-{uid}.jpg",
+                "phoneNumber": None,
+                "emailVerified": True,
+                "disabled": False,
+                "customClaims": {},
+                "tenantId": None,
+                "providerData": [],
+            }
+            for uid in uids
+        }
+
+    
+    class MockResult:
+        def __init__(self, users: list[Any]) -> None:
+            self.users = users
+
+    class MockUser:
+        def __init__(self, uid: str) -> None:
+            self.uid = uid
+            self.email = f"test-{uid}@example.com"
+            self.display_name = f"Test User {uid}"
+            self.photo_url = f"https://example.com/photo-{uid}.jpg"
+            self.phone_number = None
+            self.email_verified = True
+            self.disabled = False
+            self.custom_claims = {}
+            self.tenant_id = None
+            self.provider_data = []
+
+    async def mock_firebase_get_users(identifiers: list[Any], app: Any = None) -> MockResult:
+        users = [MockUser(identifier.uid) for identifier in identifiers]
+        return MockResult(users)
+
     with (
         patch("services.backend.src.main.before_server_start"),
         patch("firebase_admin.auth.verify_id_token", return_value={"uid": firebase_uid}),
@@ -49,6 +89,8 @@ async def test_client(
             "services.backend.src.utils.firebase.get_firebase_app",
             return_value=firebase_app_ref.value,
         ),
+        patch("services.backend.src.utils.firebase.as_async_callable", return_value=mock_firebase_get_users),
+        patch("services.backend.src.utils.firebase.UidIdentifier", side_effect=lambda uid: Mock(uid=uid)),
         patch("firebase_admin.initialize_app", return_value=Mock()),
     ):
         from services.backend.src.main import app

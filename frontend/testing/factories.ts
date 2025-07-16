@@ -77,6 +77,16 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 	),
 	id: factory.string.uuid(),
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	members: factory.helpers.multiple(
+		() => ({
+			display_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+			email: factory.internet.email(),
+			firebase_uid: factory.string.uuid(),
+			photo_url: factory.datatype.boolean() ? factory.image.avatar() : null,
+			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+		}),
+		{ count: { max: 5, min: 1 } },
+	),
 	name: factory.company.name(),
 	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
 }));

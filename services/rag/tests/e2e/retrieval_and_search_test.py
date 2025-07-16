@@ -26,7 +26,7 @@ from testing.rag_evaluation import (
 
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
-from services.rag.tests.e2e.test_utils import create_rag_sources_from_cfp_file
+from services.rag.tests.e2e.utils_test import create_rag_sources_from_cfp_file
 
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=180)
