@@ -18,7 +18,7 @@ const meta: Meta<typeof ApplicationDetailsStep> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/ApplicationDetailsStep",
+	title: "Wizard/Steps/ApplicationDetailsStep",
 };
 
 export default meta;
@@ -250,7 +250,7 @@ export const LargeDatasetsWithTruncation: Story = {
 			useEffect(() => {
 				const ragSources = [
 					...Array.from({ length: 20 }, (_, i) => {
-						const extensions = ["pdf", "docx", "xlsx", "pptx", "txt", "csv", "json", "xml"];
+						const extensions = ["pdf", "docx", "xlsx", "pptx", "txt", "csv"];
 						const statuses = ["FINISHED", "INDEXING", "FAILED", "CREATED"] as const;
 						const extension = extensions[i % extensions.length];
 						const status = statuses[i % statuses.length];

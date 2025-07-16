@@ -18,7 +18,7 @@ const meta: Meta<typeof ApplicationStructureStep> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/ApplicationStructureStep",
+	title: "Wizard/Steps/ApplicationStructureStep",
 };
 
 export default meta;

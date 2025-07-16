@@ -18,7 +18,7 @@ const meta: Meta<typeof Deadline> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/Wizard/Deadline",
+	title: "Wizard/Components/Deadline",
 };
 
 export default meta;
