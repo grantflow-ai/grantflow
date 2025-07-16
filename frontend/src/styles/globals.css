@@ -272,6 +272,21 @@
 	.scrollbar-hide::-webkit-scrollbar {
 		display: none; /* Chrome, Safari, Opera */
 	}
+	.scroll-box::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	.scroll-box::-webkit-scrollbar-thumb {
+		@apply bg-gray-300 rounded;
+	}
+
+	.scroll-box::-webkit-scrollbar-track {
+		@apply bg-gray-100 rounded;
+	}
+
+	.scroll-box::-webkit-scrollbar-button {
+		display: none;
+	}
 }
 
 @layer utilities {

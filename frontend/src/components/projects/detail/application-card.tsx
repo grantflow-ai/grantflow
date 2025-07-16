@@ -28,13 +28,13 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 	},
 	DRAFT: {
 		bg: "bg-app-dark-blue",
-		icon: "/icons/piechart.svg",
+		icon: "/icons/working-draft-white.svg",
 		label: "Working Draft",
 		text: "text-white",
 	},
 	GENERATING: {
 		bg: "bg-primary",
-		icon: "/icons/working-draft-white.svg",
+		icon: "/icons/piechart.svg",
 		label: "Generating",
 		text: "text-white",
 	},
