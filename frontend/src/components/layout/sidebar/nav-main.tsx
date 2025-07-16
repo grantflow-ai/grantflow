@@ -39,7 +39,7 @@ export function NavMain(props: NavMainProps) {
 				<SidebarMenuButton
 					asChild
 					className={isProjectsActive ? "bg-white text-primary [&_svg]:text-primary" : ""}
-					data-testid="dashboard-section"
+					data-testid="dashboard-button"
 					isActive={isProjectsActive}
 					tooltip="Dashboard"
 				>
