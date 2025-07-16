@@ -152,35 +152,33 @@ export function EditPermissionModal({
 	return (
 		<BaseModal isOpen={isOpen} onClose={handleClose}>
 			<div className="flex flex-col gap-6 p-8 w-[464px]" data-testid="edit-permission-modal">
-				{}
 				<div className="flex items-center justify-between">
-					<h2 className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]">
+					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
 						Edit Permission
 					</h2>
 					<button
 						aria-label="Close modal"
-						className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors"
+						className="p-1 rounded-sm hover:bg-app-gray-100 transition-colors"
 						data-testid="close-button"
 						onClick={handleClose}
 						type="button"
 					>
-						<X className="size-4 text-[#636170]" />
+						<X className="size-4 text-app-gray-600" />
 					</button>
 				</div>
 
-				<p className="font-['Source_Sans_Pro'] text-[14px] text-[#636170] -mt-2">
+				<p className="font-body text-[14px] text-app-gray-600 -mt-2">
 					Control access and permission levels across research projects.
 				</p>
 
 				{}
 				<div className="flex flex-col gap-4">
-					{}
 					<div className="flex flex-col gap-2">
-						<label className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]" htmlFor="member-name">
+						<label className="font-body text-[14px] text-app-gray-600" htmlFor="member-name">
 							Name
 						</label>
 						<input
-							className="w-full px-3 py-2 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#2e2d36] bg-[#f5f5f5] cursor-not-allowed"
+							className="w-full px-3 py-2 border border-app-gray-200 rounded-md font-body text-[16px] text-app-black bg-app-gray-50 cursor-not-allowed"
 							data-testid="name-input"
 							disabled
 							id="member-name"
@@ -189,40 +187,35 @@ export function EditPermissionModal({
 						/>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-2">
-						<label className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]" htmlFor="member-email">
+						<label className="font-body text-[14px] text-app-gray-600" htmlFor="member-email">
 							Email address
 						</label>
 						<div className="relative">
 							<input
-								className="w-full px-3 py-2 pr-10 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#636170] bg-[#f5f5f5] cursor-not-allowed"
+								className="w-full px-3 py-2 pr-10 border border-app-gray-200 rounded-md font-body text-[16px] text-app-gray-600 bg-app-gray-50 cursor-not-allowed"
 								data-testid="email-input"
 								disabled
 								id="member-email"
 								type="email"
 								value={member.email}
 							/>
-							<Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-[#636170]" />
+							<Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-app-gray-600" />
 						</div>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-2">
-						<label
-							className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]"
-							htmlFor="member-permission"
-						>
+						<label className="font-body text-[14px] text-app-gray-600" htmlFor="member-permission">
 							Permission
 						</label>
 						<div className="relative" ref={dropdownRef}>
 							<button
 								aria-expanded={isDropdownOpen}
 								aria-haspopup="listbox"
-								className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between font-['Source_Sans_Pro'] text-[16px] transition-colors ${
+								className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between font-body text-[16px] transition-colors ${
 									canEdit
-										? "border-[#e1dfeb] text-[#2e2d36] hover:border-[#1e13f8] cursor-pointer"
-										: "border-[#e1dfeb] text-[#636170] bg-[#f5f5f5] cursor-not-allowed"
+										? "border-app-gray-200 text-app-black hover:border-primary cursor-pointer"
+										: "border-app-gray-200 text-app-gray-600 bg-app-gray-50 cursor-not-allowed"
 								}`}
 								data-testid="permission-dropdown"
 								disabled={!canEdit}
@@ -235,18 +228,18 @@ export function EditPermissionModal({
 								type="button"
 							>
 								<span className="truncate">{selectedOption?.label ?? "Select permission level"}</span>
-								{canEdit && <ChevronDown className="size-4 text-[#636170] flex-shrink-0" />}
+								{canEdit && <ChevronDown className="size-4 text-app-gray-600 flex-shrink-0" />}
 							</button>
 
 							{isDropdownOpen && canEdit && (
 								<div
-									className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10"
+									className="absolute top-full left-0 right-0 mt-1 bg-white border border-app-gray-200 rounded-md shadow-lg z-10"
 									data-testid="permission-dropdown-menu"
 								>
 									{PERMISSION_OPTIONS.map((option) => (
 										<button
-											className={`w-full px-3 py-3 text-left hover:bg-[#f5f5f5] transition-colors border-b border-[#e1dfeb] last:border-b-0 ${
-												selectedRole === option.value ? "bg-[#f0f0ff]" : ""
+											className={`w-full px-3 py-3 text-left hover:bg-app-gray-50 transition-colors border-b border-app-gray-200 last:border-b-0 ${
+												selectedRole === option.value ? "bg-app-gray-100" : ""
 											}`}
 											data-testid={`permission-option-${option.value}`}
 											key={option.value}
@@ -260,10 +253,10 @@ export function EditPermissionModal({
 											}}
 											type="button"
 										>
-											<div className="font-['Source_Sans_Pro'] text-[14px] text-[#2e2d36] font-medium">
+											<div className="font-body text-[14px] text-app-black font-medium">
 												{option.label}
 											</div>
-											<div className="font-['Source_Sans_Pro'] text-[12px] text-[#636170] mt-1">
+											<div className="font-body text-[12px] text-app-gray-600 mt-1">
 												{option.description}
 											</div>
 										</button>
@@ -273,19 +266,15 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{}
 					{selectedRole === UserRole.MEMBER && (
 						<div className="flex flex-col gap-3">
-							<span className="font-['Source_Sans_Pro'] text-[14px] text-[#636170]">
-								Research Project Access
-							</span>
+							<span className="font-body text-[14px] text-app-gray-600">Research Project Access</span>
 
-							{}
 							{selectedProjects.length > 0 && (
 								<div className="flex flex-wrap gap-2">
 									{selectedProjects.map((projectId) => (
 										<div
-											className="flex items-center gap-2 px-3 py-1 bg-[#1e13f8] text-white rounded-full font-['Source_Sans_Pro'] text-[14px]"
+											className="flex items-center gap-2 px-3 py-1 bg-primary text-white rounded-full font-body text-[14px]"
 											data-testid={`selected-project-${projectId}`}
 											key={projectId}
 										>
@@ -308,12 +297,11 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{}
 							{canEdit && (
 								<div className="relative" ref={searchRef}>
 									<div className="relative">
 										<input
-											className="w-full px-3 py-2 pr-10 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#2e2d36] placeholder:text-[#aaa8b9]"
+											className="w-full px-3 py-2 pr-10 border border-app-gray-200 rounded-md font-body text-[16px] text-app-black placeholder:text-app-gray-400"
 											data-testid="project-search-input"
 											onChange={(e) => {
 												setSearchQuery(e.target.value);
@@ -326,18 +314,17 @@ export function EditPermissionModal({
 											type="text"
 											value={searchQuery}
 										/>
-										<Search className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-[#636170]" />
+										<Search className="absolute right-3 top-1/2 transform -translate-y-1/2 size-4 text-app-gray-600" />
 									</div>
 
-									{}
 									{isProjectSearchOpen && filteredProjects.length > 0 && (
 										<div
-											className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#e1dfeb] rounded-md shadow-lg z-10 max-h-48 overflow-y-auto"
+											className="absolute top-full left-0 right-0 mt-1 bg-white border border-app-gray-200 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto"
 											data-testid="project-search-results"
 										>
 											{filteredProjects.map((project) => (
 												<button
-													className="w-full px-3 py-2 text-left hover:bg-[#f5f5f5] transition-colors font-['Source_Sans_Pro'] text-[14px] text-[#2e2d36]"
+													className="w-full px-3 py-2 text-left hover:bg-app-gray-50 transition-colors font-body text-[14px] text-app-black"
 													data-testid={`project-option-${project.id}`}
 													key={project.id}
 													onClick={() => {
@@ -353,11 +340,14 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{}
 							{selectedProjects.length > 0 && (
-								<div className="flex items-start gap-2 p-3 bg-[#fff8e1] border border-[#f9cc33] rounded-md">
+								<div className="flex items-start gap-2 p-3 bg-warning-50 border border-warning-200 rounded-md">
 									<div className="size-4 mt-0.5">
-										<svg className="size-4 text-[#f9cc33]" fill="currentColor" viewBox="0 0 20 20">
+										<svg
+											className="size-4 text-warning-500"
+											fill="currentColor"
+											viewBox="0 0 20 20"
+										>
 											<path
 												clipRule="evenodd"
 												d="M8.485 3.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 3.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z"
@@ -366,7 +356,7 @@ export function EditPermissionModal({
 										</svg>
 									</div>
 									<div className="flex-1">
-										<p className="font-['Source_Sans_Pro'] text-[12px] text-[#b8860b] font-medium">
+										<p className="font-body text-[12px] text-warning-700 font-medium">
 											Removing research project permission will revoke access. The user will no
 											longer be able to view or edit content.
 										</p>
@@ -377,10 +367,9 @@ export function EditPermissionModal({
 					)}
 				</div>
 
-				{}
 				<div className="flex items-center gap-3 pt-2">
 					<button
-						className="px-4 py-2 border border-[#e1dfeb] rounded-md font-['Source_Sans_Pro'] text-[16px] text-[#636170] hover:bg-[#f5f5f5] transition-colors"
+						className="px-4 py-2 border border-app-gray-200 rounded-md font-body text-[16px] text-app-gray-600 hover:bg-app-gray-50 transition-colors"
 						data-testid="cancel-button"
 						onClick={handleClose}
 						type="button"
@@ -388,17 +377,17 @@ export function EditPermissionModal({
 						Cancel
 					</button>
 					<button
-						className={`px-4 py-2 rounded-md font-['Source_Sans_Pro'] text-[16px] text-white transition-colors ${
+						className={`px-4 py-2 rounded-md font-body text-[16px] text-white transition-colors ${
 							canEdit && !isSubmitting
-								? "bg-[#1e13f8] hover:bg-[#1710d4]"
-								: "bg-[#aaa8b9] cursor-not-allowed"
+								? "bg-primary hover:bg-primary/90"
+								: "bg-app-gray-400 cursor-not-allowed"
 						}`}
 						data-testid="update-button"
 						disabled={!canEdit || isSubmitting}
 						onClick={handleSubmit}
 						type="button"
 					>
-						{isSubmitting ? "Updating..." : "Update"}
+						{isSubmitting ? "Updating..." : "Send Update"}
 					</button>
 				</div>
 			</div>
