@@ -87,7 +87,7 @@ export function NavMain(props: NavMainProps) {
 			</Collapsible>
 
 			{/* Settings */}
-			<Collapsible className="group/collapsible" defaultOpen>
+			<Collapsible className="group/collapsible">
 				<SidebarMenuItem>
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
