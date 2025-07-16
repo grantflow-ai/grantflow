@@ -26,6 +26,21 @@ export async function deleteApplication(projectId: string, applicationId: string
 	);
 }
 
+export async function duplicateApplication(
+	projectId: string,
+	applicationId: string,
+	title: string,
+): Promise<API.RetrieveApplication.Http200.ResponseBody> {
+	return withAuthRedirect(
+		getClient()
+			.post(`projects/${projectId}/applications/${applicationId}/duplicate`, {
+				headers: await createAuthHeaders(),
+				json: { title },
+			})
+			.json<API.RetrieveApplication.Http200.ResponseBody>(),
+	);
+}
+
 export async function generateApplication(projectId: string, applicationId: string): Promise<void> {
 	await withAuthRedirect(
 		getClient().post(`projects/${projectId}/applications/${applicationId}`, {

@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-import { createApplication, deleteApplication, listApplications } from "@/actions/grant-applications";
+import {
+	createApplication,
+	deleteApplication,
+	duplicateApplication,
+	listApplications,
+} from "@/actions/grant-applications";
 import { getProjectMembers } from "@/actions/project";
 import { AppHeader } from "@/components/layout/app-header";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
@@ -106,6 +111,23 @@ export function ProjectDetailClient() {
 				log.error("delete-application", error);
 				toast.error("Failed to delete application");
 			}
+		}
+	};
+
+	const handleDuplicateApplication = async (applicationId: string, currentTitle: string) => {
+		if (!project) return;
+		try {
+			const newTitle = `Copy of ${currentTitle}`;
+			const duplicatedApp = await duplicateApplication(project.id, applicationId, newTitle);
+			await mutate(`/projects/${project.id}/applications`);
+			toast.success("Application duplicated successfully");
+			// Navigate to the duplicated application
+			navigateToApplication(project.id, project.name, duplicatedApp.id, duplicatedApp.title || newTitle);
+			const wizardPath = routes.application.wizard();
+			router.push(wizardPath);
+		} catch (error) {
+			log.error("duplicate-application", error);
+			toast.error("Failed to duplicate application");
 		}
 	};
 
@@ -223,6 +245,7 @@ export function ProjectDetailClient() {
 							isLoading={isLoading}
 							onCreate={handleCreateApplication}
 							onDelete={handleDeleteApplication}
+							onDuplicate={handleDuplicateApplication}
 							onOpen={handleOpenApplication}
 							searchQuery={searchQuery}
 						/>

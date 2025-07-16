@@ -10,6 +10,7 @@ import type { API } from "@/types/api-types";
 import {
 	createApplication,
 	deleteApplication,
+	duplicateApplication,
 	generateApplication,
 	getApplication,
 	triggerAutofill,
@@ -239,6 +240,209 @@ describe("Grant Application Actions", () => {
 			});
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+	});
+
+	describe("duplicateApplication", () => {
+		it("should call the API with correct parameters", async () => {
+			const newTitle = "Copy of Test Application";
+			const duplicatedApplication = {
+				...mockRetrieveApplicationResponse,
+				id: "new-application-id",
+				parent_id: mockApplicationId,
+				title: newTitle,
+			};
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(duplicatedApplication),
+			});
+
+			const result = await duplicateApplication(mockProjectId, mockApplicationId, newTitle);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
+				{
+					headers: mockAuthHeaders,
+					json: { title: newTitle },
+				},
+			);
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+			expect(result).toEqual(duplicatedApplication);
+		});
+
+		it("should handle empty title", async () => {
+			const emptyTitle = "";
+			const duplicatedApplication = {
+				...mockRetrieveApplicationResponse,
+				id: "new-application-id",
+				parent_id: mockApplicationId,
+				title: emptyTitle,
+			};
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(duplicatedApplication),
+			});
+
+			const result = await duplicateApplication(mockProjectId, mockApplicationId, emptyTitle);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
+				{
+					headers: mockAuthHeaders,
+					json: { title: emptyTitle },
+				},
+			);
+
+			expect(result).toEqual(duplicatedApplication);
+		});
+
+		it("should handle long title", async () => {
+			const longTitle = "A".repeat(256); // Very long title
+			const duplicatedApplication = {
+				...mockRetrieveApplicationResponse,
+				id: "new-application-id",
+				parent_id: mockApplicationId,
+				title: longTitle,
+			};
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(duplicatedApplication),
+			});
+
+			const result = await duplicateApplication(mockProjectId, mockApplicationId, longTitle);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
+				{
+					headers: mockAuthHeaders,
+					json: { title: longTitle },
+				},
+			);
+
+			expect(result).toEqual(duplicatedApplication);
+		});
+
+		it("should preserve all application data in response", async () => {
+			const newTitle = "Duplicated Application";
+			const duplicatedApplication: API.RetrieveApplication.Http200.ResponseBody = {
+				...mockRetrieveApplicationResponse,
+				// Ensure all fields are preserved
+				form_inputs: mockRetrieveApplicationResponse.form_inputs,
+				grant_template: mockRetrieveApplicationResponse.grant_template,
+				id: "new-application-id",
+				parent_id: mockApplicationId,
+				rag_sources: mockRetrieveApplicationResponse.rag_sources,
+				research_objectives: mockRetrieveApplicationResponse.research_objectives,
+				text: mockRetrieveApplicationResponse.text,
+				title: newTitle,
+			};
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(duplicatedApplication),
+			});
+
+			const result = await duplicateApplication(mockProjectId, mockApplicationId, newTitle);
+
+			expect(result).toEqual(duplicatedApplication);
+			expect(result.parent_id).toBe(mockApplicationId);
+			expect(result.form_inputs).toEqual(mockRetrieveApplicationResponse.form_inputs);
+			expect(result.grant_template).toEqual(mockRetrieveApplicationResponse.grant_template);
+		});
+
+		it("should handle API errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({
+					detail: "Application not found",
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 404,
+				},
+			);
+			const httpError = new HTTPError(
+				mockResponse,
+				{ path: `projects/${mockProjectId}/applications/${mockApplicationId}/duplicate` } as any,
+				{} as any,
+			);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(duplicateApplication(mockProjectId, mockApplicationId, "New Title")).rejects.toThrow(
+				HTTPError,
+			);
+		});
+
+		it("should handle 400 validation errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({
+					detail: "Title too long",
+					extra: { title: ["Title must be less than 255 characters"] },
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 400,
+				},
+			);
+			const httpError = new HTTPError(
+				mockResponse,
+				{ path: `projects/${mockProjectId}/applications/${mockApplicationId}/duplicate` } as any,
+				{} as any,
+			);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(duplicateApplication(mockProjectId, mockApplicationId, "A".repeat(300))).rejects.toThrow(
+				HTTPError,
+			);
+		});
+
+		it("should handle 403 forbidden errors", async () => {
+			const mockResponse = new Response(
+				JSON.stringify({ detail: "Insufficient permissions to duplicate application" }),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 403,
+				},
+			);
+			const httpError = new HTTPError(
+				mockResponse,
+				{ path: `projects/${mockProjectId}/applications/${mockApplicationId}/duplicate` } as any,
+				{} as any,
+			);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+
+			await expect(duplicateApplication(mockProjectId, mockApplicationId, "New Title")).rejects.toThrow(
+				HTTPError,
+			);
+		});
+
+		it("should handle server errors", async () => {
+			const mockResponse = new Response(JSON.stringify({ detail: "Internal server error" }), {
+				headers: { "Content-Type": "application/json" },
+				status: 500,
+			});
+			const httpError = new HTTPError(
+				mockResponse,
+				{ path: `projects/${mockProjectId}/applications/${mockApplicationId}/duplicate` } as any,
+				{} as any,
+			);
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockRejectedValue(httpError),
+			});
+			mockWithAuthRedirect.mockRejectedValueOnce(httpError);
+
+			await expect(duplicateApplication(mockProjectId, mockApplicationId, "New Title")).rejects.toThrow(
+				HTTPError,
+			);
 		});
 	});
 
