@@ -14,6 +14,14 @@ const mockMembers: Record<string, ProjectMember[]> = {
 			role: "OWNER",
 		},
 		{
+			display_name: "Test User",
+			email: "test@example.com",
+			firebase_uid: "mock-user-123",
+			joined_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(), // 20 days ago
+			photo_url: null,
+			role: "ADMIN",
+		},
+		{
 			display_name: "Admin User",
 			email: "admin@example.com",
 			firebase_uid: "user-2",
@@ -44,7 +52,36 @@ export const projectMemberHandlers = {
 		}
 		log.info("[Mock API] Listing project members", { project_id });
 
-		return mockMembers[project_id] || [];
+		// For any project, return default members including the current mock user
+		// This ensures all projects have at least the current user as a member
+		const defaultMembers: ProjectMember[] = [
+			{
+				display_name: "Mock User",
+				email: "test@example.com",
+				firebase_uid: "mock-user-123",
+				joined_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(), // 20 days ago
+				photo_url: null,
+				role: "OWNER",
+			},
+			{
+				display_name: "Admin User",
+				email: "admin@example.com",
+				firebase_uid: "user-2",
+				joined_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(), // 15 days ago
+				photo_url: "https://example.com/photos/admin.jpg",
+				role: "ADMIN",
+			},
+			{
+				display_name: null,
+				email: "member@example.com",
+				firebase_uid: "user-3",
+				joined_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days ago
+				photo_url: null,
+				role: "MEMBER",
+			},
+		];
+
+		return defaultMembers;
 	},
 
 	removeProjectMember: async ({ params }: { params?: Record<string, string> }): Promise<void> => {

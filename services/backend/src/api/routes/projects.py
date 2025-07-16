@@ -242,10 +242,8 @@ async def handle_retrieve_project(
             .where(Project.id == project_id)
         )
 
-    
     member_uids = [pu.firebase_uid for pu in project.project_users]
 
-    
     cached_data = await gather(*[store.get(uid) for uid in member_uids])
 
     firebase_users: dict[str, dict[str, Any]] = {}
@@ -253,11 +251,9 @@ async def handle_retrieve_project(
         if data:
             firebase_users[uid] = msgspec.json.decode(data)
 
-    
     if missing_uids := list(set(member_uids) - set(firebase_users.keys())):
         fetched_users = await get_users(missing_uids)
 
-        
         for uid, user_data in fetched_users.items():
             await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
 

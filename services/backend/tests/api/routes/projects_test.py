@@ -240,7 +240,6 @@ async def test_retrieve_project_success(
             assert app["title"] == "Application 2"
             assert app["completed_at"] is None
 
-    
     members = response_data["members"]
     assert len(members) == 1
     assert members[0]["firebase_uid"] == firebase_uid

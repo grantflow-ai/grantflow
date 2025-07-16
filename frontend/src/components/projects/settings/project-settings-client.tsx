@@ -27,9 +27,9 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 		}
 	}, [project, router]);
 
-	// Check role for billing pages - only OWNER and ADMIN can access billing
+	// Check role for restricted pages - only OWNER and ADMIN can access billing and members
 	useEffect(() => {
-		if (project && project.role === "MEMBER" && activeTab === "billing") {
+		if (project && project.role === "MEMBER" && (activeTab === "billing" || activeTab === "members")) {
 			router.replace(routes.project.settings.account());
 		}
 	}, [project, activeTab, router]);
