@@ -98,6 +98,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	form_inputs?: {
 	background_context: string;
@@ -152,6 +153,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -174,7 +176,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 };
 };
 
@@ -608,14 +609,15 @@ export namespace API {
 	applications: {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
 	submission_date?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 }[];
 	pagination: {
 	has_more: boolean;
@@ -782,6 +784,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	form_inputs?: {
 	background_context: string;
@@ -836,6 +839,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -858,7 +862,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 };
 };
 
@@ -1060,6 +1063,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	form_inputs?: {
 	background_context: string;
@@ -1114,6 +1118,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -1136,7 +1141,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 };
 };
 

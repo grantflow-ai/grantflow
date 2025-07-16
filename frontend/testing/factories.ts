@@ -200,6 +200,7 @@ type ApplicationStatus = "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
 export const ApplicationFactory = new Factory<API.CreateApplication.Http201.ResponseBody>((factory) => ({
 	completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
 	created_at: factory.date.past().toISOString(),
+	deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
 	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
 	grant_template: factory.datatype.boolean() ? (GrantTemplateFactory.build() as any) : undefined,
 	id: factory.string.uuid(),
