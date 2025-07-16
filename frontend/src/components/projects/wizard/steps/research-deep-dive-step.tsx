@@ -1,16 +1,30 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 
-type FormInputsKey = keyof NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
+type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
+type FormInputsKey = keyof FormInputs;
 
-type QuestionState = "default" | "disabled" | "done";
+const getDisabledTextColorClass = (): string => "text-app-gray-400";
+const getEnabledTextColorClass = (): string => "text-app-black";
+
+const placeholders: Record<FormInputsKey, string> = {
+	background_context: "Provide context and background of your research project...",
+	hypothesis: "Describe your central hypothesis or key research question...",
+	impact: "Describe how your research will contribute to the field and society...",
+	novelty_and_innovation: "Highlight what makes your approach unique or innovative...",
+	preliminary_data: "Share any preliminary findings that support your research...",
+	rationale: "Explain why this research is important and what motivates it...",
+	research_feasibility: "Describe what makes your research plan realistic and achievable...",
+	scientific_infrastructure: "Describe the scientific infrastructure and resources available for your research...",
+	team_excellence: "Explain what makes your team uniquely qualified for this project...",
+};
 
 const RESEARCH_QUESTIONS: { key: FormInputsKey; question: string }[] = [
 	{ key: "background_context", question: "What is the context and background of your research?" },
@@ -38,43 +52,6 @@ const RESEARCH_QUESTIONS: { key: FormInputsKey; question: string }[] = [
 	},
 ];
 
-const isQuestionAccessible = (questionIndex: number, formInputs: Record<string, unknown>): boolean => {
-	for (let i = 0; i < questionIndex; i++) {
-		const prevQuestionKey = RESEARCH_QUESTIONS[i].key;
-		const prevAnswerValue = formInputs[prevQuestionKey] as string | undefined;
-		const prevHasAnswer = prevAnswerValue && prevAnswerValue.trim().length > 0;
-
-		if (!prevHasAnswer) {
-			return false;
-		}
-	}
-	return true;
-};
-
-const getQuestionState = (
-	questionIndex: number,
-	questionKey: FormInputsKey,
-	selectedQuestion: number,
-	formInputs: Record<string, unknown>,
-): QuestionState => {
-	const answerValue = formInputs[questionKey] as string | undefined;
-	const hasAnswer = answerValue && answerValue.trim().length > 0;
-
-	if (hasAnswer) {
-		return "done";
-	}
-
-	if (selectedQuestion === questionIndex) {
-		return "default";
-	}
-
-	if (!isQuestionAccessible(questionIndex, formInputs)) {
-		return "disabled";
-	}
-
-	return "disabled";
-};
-
 export function ResearchDeepDiveStep() {
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_deep_dive);
@@ -92,9 +69,10 @@ export function ResearchDeepDiveStep() {
 			/>
 
 			<div className="flex w-full gap-6 px-16">
-				<QuestionsList onSelectQuestion={setSelectedQuestion} selectedQuestion={selectedQuestion} />
+				<QuestionsList onSelectQuestion={setSelectedQuestion} />
 
 				<AnswerCard
+					key={selectedQuestion}
 					onBack={() => {
 						setSelectedQuestion(selectedQuestion - 1);
 					}}
@@ -107,18 +85,12 @@ export function ResearchDeepDiveStep() {
 
 function AnswerCard({ onBack, selectedQuestion }: { onBack: () => void; selectedQuestion: number }) {
 	const updateFormInputs = useWizardStore((state) => state.updateFormInputs);
-	const formInputs = useApplicationStore((state) => state.application?.form_inputs ?? {}) as Record<string, unknown>;
+	const formInputs = (useApplicationStore((state) => state.application?.form_inputs) ?? {}) as FormInputs;
 
-	const currentQuestion = RESEARCH_QUESTIONS[selectedQuestion];
-	const { question } = currentQuestion;
-	const questionKey = currentQuestion.key;
-	const answer = (formInputs[questionKey] as string) || "";
+	const { key: questionKey, question } = RESEARCH_QUESTIONS[selectedQuestion];
+	const formInputsAnswer = formInputs[questionKey] || "";
 
-	const [answerValue, setAnswerValue] = useState<string>(answer);
-
-	useEffect(() => {
-		setAnswerValue(answer);
-	}, [answer]);
+	const [answerValue, setAnswerValue] = useState(formInputsAnswer);
 
 	const isBackVisible = selectedQuestion >= 1;
 	const isSaveEnabled = answerValue.trim().length > 0;
@@ -131,14 +103,14 @@ function AnswerCard({ onBack, selectedQuestion }: { onBack: () => void; selected
 
 	return (
 		<div className="w-1/2">
-			<AppCard className="flex flex-col space-y-5 gap-0 p-5 outline-1 outline-primary">
+			<AppCard className="flex flex-col space-y-5 gap-0 p-5 outline-1 outline-primary rounded mb-1">
 				<span className="text-app-black text-base font-semibold leading-tight">{question}</span>
 				<TextareaField
 					className="min-h-96 w-full focus:outline-app-gray-600 focus-visible:outline-app-gray-600 focus-visible:border-app-gray-600"
 					onChange={(e) => {
 						setAnswerValue(e.target.value);
 					}}
-					placeholder="Context and background of your research"
+					placeholder={placeholders[questionKey]}
 					testId="research-deep-dive-answer"
 					value={answerValue}
 				/>
@@ -165,8 +137,8 @@ function AnswerCard({ onBack, selectedQuestion }: { onBack: () => void; selected
 	);
 }
 
-function IndexBadge({ index, isDisabled, state }: { index: number; isDisabled: boolean; state: QuestionState }) {
-	if (state === "done") {
+function IndexBadge({ hasAnswer, index, isDisabled }: { hasAnswer: boolean; index: number; isDisabled: boolean }) {
+	if (hasAnswer) {
 		return <Image alt="Done" className="size-7" height={26} src="/icons/research-question-done.svg" width={26} />;
 	}
 
@@ -184,70 +156,99 @@ function IndexBadge({ index, isDisabled, state }: { index: number; isDisabled: b
 }
 
 function QuestionCard({
+	hasAnswer,
 	index,
+	isDisabled,
 	onClick,
 	question,
-	state,
 }: {
+	hasAnswer: boolean;
 	index: number;
+	isDisabled: boolean;
 	onClick: () => void;
 	question: string;
-	state: QuestionState;
 }) {
-	const isDisabledState = state === "disabled";
+	const textRef = useRef<HTMLParagraphElement>(null);
+	const [isEllipsized, setIsEllipsized] = useState(false);
+
+	useEffect(() => {
+		const checkEllipsis = () => {
+			if (textRef.current) {
+				const isOverflowing = textRef.current.scrollWidth > textRef.current.clientWidth;
+				setIsEllipsized(isOverflowing);
+			}
+		};
+
+		checkEllipsis();
+		window.addEventListener("resize", checkEllipsis);
+		return () => {
+			window.removeEventListener("resize", checkEllipsis);
+		};
+	}, []);
+
+	const textColorClass = isDisabled ? getDisabledTextColorClass() : getEnabledTextColorClass();
+	const textClasses = isEllipsized
+		? `flex-1 max-h-5 group-hover:max-h-20 transition-all duration-300 truncate group-hover:whitespace-normal ${textColorClass}`
+		: `flex-1 truncate ${textColorClass}`;
 
 	return (
-		<AppCard
-			className={`rounded cursor-pointer p-3 gap-0 transition-all duration-300 outline-1 ${isDisabledState ? "outline-app-gray-100" : "outline-primary group hover:outline-2 hover:outline-primary"}`}
-			data-testid={`question-card-${index}`}
-			onClick={onClick}
-			onKeyDown={(e: React.KeyboardEvent) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					onClick();
-				}
-			}}
-			role="button"
-			tabIndex={0}
-		>
-			<div className="flex items-center gap-3">
-				<IndexBadge index={index} isDisabled={isDisabledState} state={state} />
-				<p className="flex-1 max-h-5 group-hover:max-h-20 transition-all duration-300 truncate group-hover:whitespace-normal text-app-black">
-					{question}
-				</p>
-			</div>
-		</AppCard>
+		<li>
+			<AppCard
+				className={`rounded p-3 gap-0 transition-all duration-300 outline-1 ${isDisabled ? "outline-app-gray-100" : "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer"}`}
+				data-testid={`question-card-${index}`}
+				onClick={onClick}
+				onKeyDown={(e: React.KeyboardEvent) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault();
+						onClick();
+					}
+				}}
+				tabIndex={0}
+			>
+				<div className="flex items-center gap-3">
+					<IndexBadge hasAnswer={hasAnswer} index={index} isDisabled={isDisabled} />
+					<p className={textClasses} ref={textRef}>
+						{question}
+					</p>
+				</div>
+			</AppCard>
+		</li>
 	);
 }
 
-function QuestionsList({
-	onSelectQuestion,
-	selectedQuestion,
-}: {
-	onSelectQuestion: (index: number) => void;
-	selectedQuestion: number;
-}) {
-	const formInputs = useApplicationStore((state) => state.application?.form_inputs ?? {}) as Record<string, unknown>;
+function QuestionsList({ onSelectQuestion }: { onSelectQuestion: (index: number) => void }) {
+	const formInputs = (useApplicationStore((state) => state.application?.form_inputs) ?? {}) as FormInputs;
+
+	let lastAnswered = -1;
 
 	return (
-		<div className="w-1/2 flex flex-col space-y-3 pb-2">
+		<ul className="w-1/2 flex flex-col space-y-3 pb-2">
 			{RESEARCH_QUESTIONS.map((item, index) => {
-				const state = getQuestionState(index, item.key, selectedQuestion, formInputs);
+				const answerValue = formInputs[item.key];
+				const hasAnswer = answerValue && answerValue.trim().length > 0;
+
+				if (hasAnswer) {
+					lastAnswered = index;
+				}
+
+				const isDisabled = index > 0 && !hasAnswer && index > lastAnswered + 1;
+
 				return (
 					<QuestionCard
+						hasAnswer={Boolean(hasAnswer)}
 						index={index}
+						isDisabled={isDisabled}
 						key={item.key}
 						onClick={() => {
-							if (isQuestionAccessible(index, formInputs)) {
+							if (!isDisabled) {
 								onSelectQuestion(index);
 							}
 						}}
 						question={item.question}
-						state={state}
 					/>
 				);
 			})}
-		</div>
+		</ul>
 	);
 }
 
