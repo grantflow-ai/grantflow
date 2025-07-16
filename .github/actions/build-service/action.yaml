@@ -37,9 +37,10 @@ runs:
               sudo apt-get clean
               
               # Remove some large packages we don't need
-              sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli hhvm google-chrome-stable firefox powershell mono-devel
-              sudo apt-get autoremove -y
-              sudo apt-get clean
+              # Use || true to continue even if some packages don't exist
+              sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel || true
+              sudo apt-get autoremove -y || true
+              sudo apt-get clean || true
               
               # Clean docker images
               docker system prune -af --volumes
