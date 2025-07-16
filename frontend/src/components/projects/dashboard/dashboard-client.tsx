@@ -6,7 +6,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { createProject } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { AvatarGroup } from "@/components/app";
+import { AppButton, AvatarGroup } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
 import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -187,12 +187,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	return (
-		<div className="relative size-full overflow-y-scroll bg-preview-bg">
+		<div className="relative size-full overflow-y-scroll ">
 			{projects.length === 1 && projects[0].applications_count === 0 && (
 				<WelcomeModal onStartApplication={handleStartApplication} />
 			)}
-			<section className="w-full h-full">
-				<main className="w-full h-full flex flex-col">
+			<section className="bg-preview-bg w-full">
+				<main className="w-[98%] pb-5">
 					<AppHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
@@ -202,20 +202,17 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 						<main className="flex flex-col gap-8">
 							<article className="text-app-black flex justify-between items-start">
 								<div className="flex flex-col gap-2">
-									<h2
-										className="font-heading font-medium text-[36px] leading-[42px] text-app-black"
-										data-testid="dashboard-title"
-									>
+									<h2 className="font-medium text-4xl " data-testid="dashboard-title">
 										Dashboard
 									</h2>
-									<p className="font-body font-normal text-base text-app-gray-600">
+									<p className="font-normal text-base text-gray-600">
 										Your one‑stop overview for all your Research Projects.
 									</p>
 								</div>
 								<div className="flex gap-6 items-center">
 									<main className="flex justify-end items-center gap-1">
 										<button
-											className="size-8 flex items-center justify-center bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
+											className="size-8 flex items-center justify-center bg-gray-50 rounded-xs cursor-pointer"
 											data-testid="invite-collaborators-button"
 											onClick={() => {
 												if (projects.length > 0) {
@@ -226,11 +223,15 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 											type="button"
 										>
 											<Tooltip>
-												<TooltipTrigger asChild>
-													<Plus className="size-4 text-app-gray-600" />
+												<TooltipTrigger
+												asChild
+													className="cursor-pointer"
+													data-testid="invite-collaborators-button"
+												>
+													<Plus className="size-2.5 text-primary " />
 												</TooltipTrigger>
-												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
-													<p className="text-white font-body font-normal text-sm">
+												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-xs">
+													<p className="text-white font-normal text-base">
 														Invite collaborators
 													</p>
 												</TooltipContent>
@@ -244,28 +245,24 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 											/>
 										</div>
 									</main>
-									<button
-										className="bg-primary text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-link-hover-dark transition-colors"
+								<AppButton
+										className="px-4 py-2"
 										data-testid="new-research-project-button"
 										disabled={isCreatingProject}
 										onClick={handleCreateProject}
-										type="button"
+										variant="primary"
 									>
-										<Plus className="size-4" />
-										<span className="font-button font-normal text-base">
-											{isCreatingProject ? "Creating..." : "New Research Project"}
-										</span>
-									</button>
+										<p className="font-normal text-base">
+											{isCreatingProject ? "Creating..." : "+ New Research Project"}
+										</p>
+									</AppButton>
 								</div>
 							</article>
 
 							<DashboardStats initialProjects={projects} />
 						</main>
 						<main className="">
-							<h3
-								className="font-heading font-medium text-[28px] leading-[34px] text-app-black"
-								data-testid="research-projects-heading"
-							>
+							<h3 className="font-normal text-4xl text-black" data-testid="research-projects-heading">
 								Research Projects
 							</h3>
 							<main className="">

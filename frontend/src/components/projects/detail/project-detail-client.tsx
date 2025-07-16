@@ -21,6 +21,10 @@ import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
 import { ApplicationList } from "./application-list";
+import { AppButton } from "@/components/app";
+
+
+
 
 export function ProjectDetailClient() {
 	const router = useRouter();
@@ -165,17 +169,18 @@ export function ProjectDetailClient() {
 		return null; // Will redirect via useEffect
 	}
 
-	return (
-		<section className="w-full h-full overflow-y-scroll flex flex-col">
-			<AppHeader projectTeamMembers={projectTeamMembers} />
+	
 
-			<main className="flex-1 flex flex-col">
+	return (
+		<section className="bg-preview-bg w-full h-full overflow-y-scroll  flex">
+			<main className="w-[98%] pb-5">
+
+			<AppHeader projectTeamMembers={projectTeamMembers} />
 				<main
-					className="mx-6 mb-6 px-10 relative flex flex-col gap-6 py-6 rounded-lg bg-white border border-app-gray-100 flex-1 min-h-0"
+					className=" px-10 relative flex h-[863px] flex-col gap-10 pt-14 pb-8 rounded-lg bg-white border border-gray-200"
 					data-testid="project-header"
 				>
-					{/* Inline header content matching Figma design */}
-					<div className="flex items-center justify-between">
+					<div className="flex items-center justify-between w-full">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
 								<input
@@ -213,10 +218,11 @@ export function ProjectDetailClient() {
 						</div>
 
 						<div className="flex items-center gap-3">
-							<div className="relative w-80">
-								<SearchIcon className="absolute right-3 top-1/2 size-3 -translate-y-1/2 text-app-gray-600" />
+								<div className="relative w-80 ">
+								<SearchIcon className="absolute right-3 top-1/2 size-3 -translate-y-1/2 text-[#636170]" />
 								<input
-									className="w-full h-10 rounded-[4px] px-3 border border-app-gray-400 bg-white text-base text-app-black placeholder:text-app-gray-500 placeholder:font-normal outline-none focus:border-primary"
+									className="w-full h-10 rounded-[4px] px-3 border border-[#e1dfeb] bg-white   text-[14px] text-base text-black placeholder:text-gray-400 placeholder:font-normal placeholder:text-sm outline-none focus:border-[#1e13f8]"
+									data-testid="application-search-input"
 									onChange={(e) => {
 										setSearchQuery(e.target.value);
 									}}
@@ -225,20 +231,21 @@ export function ProjectDetailClient() {
 								/>
 							</div>
 
-							<button
-								className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium text-base inline-flex items-center gap-2 transition-all disabled:pointer-events-none disabled:opacity-50"
+						<AppButton
+								className="px-4 py-2"
 								data-testid="new-application-button"
 								disabled={isCreatingApplication}
 								onClick={handleCreateApplication}
 								type="button"
+								variant="primary"
 							>
 								<Plus className="size-4" />
-								<span>New Application</span>
-							</button>
+								<p className="font-normal text-base">New Application</p>
+							</AppButton>
 						</div>
 					</div>
 
-					<div className="flex-1 overflow-auto min-h-0" data-testid="applications-section">
+					<div className="flex-1 overflow-auto  pb-6" data-testid="applications-section">
 						<ApplicationList
 							applications={applications}
 							isCreatingApplication={isCreatingApplication}
@@ -251,6 +258,7 @@ export function ProjectDetailClient() {
 						/>
 					</div>
 				</main>
+			
 			</main>
 
 			<DeleteApplicationModal

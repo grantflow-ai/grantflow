@@ -9,6 +9,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { API } from "@/types/api-types";
+import { IconHourglass } from "@/components/about/icons";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
@@ -27,19 +28,19 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 		text: "text-white",
 	},
 	DRAFT: {
-		bg: "bg-app-dark-blue",
-		icon: "/icons/piechart.svg",
+			bg: "bg-app-dark-blue",
+		icon: "/icons/working-draft-white.svg",
 		label: "Working Draft",
 		text: "text-white",
 	},
 	GENERATING: {
 		bg: "bg-primary",
-		icon: "/icons/working-draft-white.svg",
+		icon: "/icons/piechart.svg",
 		label: "Generating",
 		text: "text-white",
 	},
 	IN_PROGRESS: {
-		bg: "bg-app-gray-200",
+	bg: "bg-gray-200",
 		icon: "/icons/draft-in-progress.svg",
 		label: "In Progress",
 		text: "text-app-dark-blue",
@@ -56,10 +57,11 @@ interface ApplicationCardProps {
 export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
 	const statusStyles = statusStyleMap[application.status];
 	return (
-		<div
-			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4"
+		
+
+<div
+			className="relative flex h-[206px] flex-col rounded-[4px] border border-gray-200 bg-preview-bg px-3 py-6"
 			data-testid={`application-card-${application.id}`}
-			style={{ backgroundColor: "#FAF9FB", borderColor: "#E1DFEB" }}
 		>
 			<header className="flex flex-col gap-3">
 				<div className="flex items-start justify-between">
@@ -78,16 +80,9 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 							</div>
 							<span className={`text-xs font-normal ${statusStyles.text}`}>{statusStyles.label}</span>
 						</div>
-						<div className="flex flex-col gap-1">
-							<span className="text-[10px] font-normal text-app-gray-600">
-								Last edited {format(new Date(application.updated_at), "dd.MM.yy")}
-							</span>
-							{application.deadline && (
-								<span className="text-[10px] font-normal text-app-gray-600">
-									Deadline {format(new Date(application.deadline), "dd.MM.yy")}
-								</span>
-							)}
-						</div>
+						<span className="text-[10px] font-normal text-gray-600">
+							Last edited {format(new Date(application.updated_at), "MM/dd/yy")}
+						</span>
 					</div>
 
 					<div>
@@ -96,30 +91,30 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 								className="-mt-2 cursor-pointer"
 								data-testid="project-card-menu-trigger"
 							>
-								<MoreVertical className="size-4 text-app-gray-600" />
+								<MoreVertical className="size-4 text-gray-700" />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
-								className="w-[200px] rounded-sm border border-app-gray-200 bg-white p-0 shadow-none"
+								className="w-[200px] rounded-sm border border-gray-200 bg-white p-0 shadow-none"
 								data-testid="project-card-menu"
 							>
 								<DropdownMenuItem
-									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-app-gray-600 data-[highlighted]:bg-transparent data-[highlighted]:text-app-gray-600"
+									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-gray-700 data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
 									data-testid="project-card-delete"
 									onClick={() => {
 										onDelete(application.id);
 									}}
 								>
-									<Trash2 className="size-4 text-app-gray-600" />
+									<Trash2 className="size-4 text-gray-700" />
 									Delete
 								</DropdownMenuItem>
 								<DropdownMenuItem
-									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-app-gray-600 data-[highlighted]:bg-transparent data-[highlighted]:text-app-gray-600"
+									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-gray-700 data-[highlighted]:bg-transparent data-[highlighted]:text-gray-700"
 									data-testid="project-card-duplicate"
 									onClick={() => {
-										onDuplicate(application.id, application.title);
-									}}
+		 								onDuplicate(application.id, application.title);
+								}}
 								>
-									<Copy className="size-4 text-app-gray-600" />
+									<Copy className="size-4 text-gray-700" />
 									Duplicate
 								</DropdownMenuItem>
 							</DropdownMenuContent>
@@ -128,9 +123,9 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 				</div>
 
 				<div className="flex items-center gap-2">
-					<div className="size-[19px] rounded-full bg-app-gray-300" />
+					<div className="size-[19px] rounded-full bg-gray-200" />
 					<h3
-						className="text-base font-semibold leading-[22px] text-app-black"
+						className="text-base font-semibold  text-black capitalize"
 						data-testid={`application-card-title-${application.id}`}
 					>
 						{application.title}
@@ -139,7 +134,7 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 
 				{application.description && (
 					<p
-						className="text-sm font-normal leading-[20px] text-app-gray-600"
+						className="text-sm font-normal leading-[20px] text-gray-600"
 						data-testid={`application-card-description-${application.id}`}
 					>
 						{application.description}
@@ -148,10 +143,20 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 			</header>
 
 			<main className="flex h-full w-full items-end justify-between pt-3">
-				<div className="w-full" />
+				<div className=" w-full">
+					{application.deadline && (
+						<div
+							className="flex items-center rounded-xs w-fit bg-app-lavender-gray px-2 py-1"
+							data-testid={`application-card-deadline-${application.id}`}
+						>
+							<IconHourglass className="size-4 rotate-180 text-black" />
+							<p className="text-sm font-normal text-black">{application.deadline}</p>
+						</div>
+					)}
+				</div>
 
 				<AppButton
-					className="w-[97px] py-0.5 bg-white"
+					className="w-[97px] py-0.5"
 					data-testid={`application-card-open-button-${application.id}`}
 					onClick={() => {
 						onOpen(application.id, application.title);
@@ -162,5 +167,6 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 				</AppButton>
 			</main>
 		</div>
+
 	);
 }
