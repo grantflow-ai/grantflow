@@ -104,32 +104,24 @@ export function NavMain(props: NavMainProps) {
 					</CollapsibleTrigger>
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
 						<SidebarMenuSub>
-							<SidebarMenuSubItem>
+							<SidebarMenuSubItem data-testid="settings-account">
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/account"}>
-									<Link data-testid="settings-account" href="/settings/account">
-										Account Settings
-									</Link>
+									<Link href="/settings/account">Account Settings</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem>
+							<SidebarMenuSubItem data-testid="settings-billing">
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/billing"}>
-									<Link data-testid="settings-billing" href="/settings/billing">
-										Billing & Payments
-									</Link>
+									<Link href="/settings/billing">Billing & Payments</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem>
+							<SidebarMenuSubItem data-testid="settings-members">
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/members"}>
-									<Link data-testid="settings-members" href="/settings/members">
-										Members
-									</Link>
+									<Link href="/settings/members">Members</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem>
+							<SidebarMenuSubItem data-testid="settings-notifications">
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/notifications"}>
-									<Link data-testid="settings-notifications" href="/settings/notifications">
-										Notifications
-									</Link>
+									<Link href="/settings/notifications">Notifications</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
 						</SidebarMenuSub>
