@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { IconHourglass } from "@/components/about/icons";
 import { AppButton } from "@/components/app";
 import {
 	DropdownMenu,
@@ -50,10 +49,11 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 interface ApplicationCardProps {
 	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
+	onDuplicate: (id: string, currentTitle: string) => void;
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 }
 
-export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCardProps) {
+export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
 	const statusStyles = statusStyleMap[application.status];
 	return (
 		<div
@@ -78,9 +78,16 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 							</div>
 							<span className={`text-xs font-normal ${statusStyles.text}`}>{statusStyles.label}</span>
 						</div>
-						<span className="text-[10px] font-normal text-app-gray-600">
-							Last edited {format(new Date(application.updated_at), "dd.MM.yy")}
-						</span>
+						<div className="flex flex-col gap-1">
+							<span className="text-[10px] font-normal text-app-gray-600">
+								Last edited {format(new Date(application.updated_at), "dd.MM.yy")}
+							</span>
+							{application.deadline && (
+								<span className="text-[10px] font-normal text-app-gray-600">
+									Deadline {format(new Date(application.deadline), "dd.MM.yy")}
+								</span>
+							)}
+						</div>
 					</div>
 
 					<div>
@@ -108,6 +115,9 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 								<DropdownMenuItem
 									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-app-gray-600 data-[highlighted]:bg-transparent data-[highlighted]:text-app-gray-600"
 									data-testid="project-card-duplicate"
+									onClick={() => {
+										onDuplicate(application.id, application.title);
+									}}
 								>
 									<Copy className="size-4 text-app-gray-600" />
 									Duplicate
@@ -138,17 +148,7 @@ export function ApplicationCard({ application, onDelete, onOpen }: ApplicationCa
 			</header>
 
 			<main className="flex h-full w-full items-end justify-between pt-3">
-				<div className=" w-full">
-					{application.deadline && (
-						<div
-							className="flex items-center rounded-xs w-fit bg-app-lavender-gray px-2 py-1"
-							data-testid={`application-card-deadline-${application.id}`}
-						>
-							<IconHourglass className="size-4 rotate-180 text-app-black" />
-							<p className="text-sm font-normal text-app-black">{application.deadline}</p>
-						</div>
-					)}
-				</div>
+				<div className="w-full" />
 
 				<AppButton
 					className="w-[97px] py-0.5 bg-white"

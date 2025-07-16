@@ -9,6 +9,7 @@ interface ApplicationListProps {
 	isLoading: boolean;
 	onCreate: () => void;
 	onDelete: (id: string) => void;
+	onDuplicate: (id: string, currentTitle: string) => void;
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 	searchQuery: string;
 }
@@ -19,6 +20,7 @@ export function ApplicationList({
 	isLoading,
 	onCreate,
 	onDelete,
+	onDuplicate,
 	onOpen,
 	searchQuery,
 }: ApplicationListProps) {
@@ -59,7 +61,13 @@ export function ApplicationList({
 	return (
 		<main className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-auto scrollbar-hide auto-rows-min max-h-full">
 			{applications.map((application) => (
-				<ApplicationCard application={application} key={application.id} onDelete={onDelete} onOpen={onOpen} />
+				<ApplicationCard
+					application={application}
+					key={application.id}
+					onDelete={onDelete}
+					onDuplicate={onDuplicate}
+					onOpen={onOpen}
+				/>
 			))}
 		</main>
 	);
