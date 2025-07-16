@@ -20,6 +20,33 @@ inputs:
 runs:
     using: "composite"
     steps:
+        - name: Free disk space
+          shell: bash
+          run: |
+              echo "Disk space before cleanup:"
+              df -h
+              
+              # Remove unnecessary tools and files
+              sudo rm -rf /usr/share/dotnet
+              sudo rm -rf /opt/ghc
+              sudo rm -rf "/usr/local/share/boost"
+              sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+              sudo rm -rf /usr/local/lib/android
+              
+              # Clean apt cache
+              sudo apt-get clean
+              
+              # Remove some large packages we don't need
+              sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli hhvm google-chrome-stable firefox powershell mono-devel
+              sudo apt-get autoremove -y
+              sudo apt-get clean
+              
+              # Clean docker images
+              docker system prune -af --volumes
+              
+              echo "Disk space after cleanup:"
+              df -h
+        
         - name: Setup GCP
           id: gcp
           uses: ./.github/actions/setup-gcp
@@ -46,6 +73,13 @@ runs:
               else
                 echo "env_latest=latest" >> $GITHUB_OUTPUT
               fi
+
+        - name: Clear Docker cache before build
+          shell: bash
+          run: |
+              echo "Clearing Docker build cache..."
+              docker builder prune -af
+              docker system df
 
         - name: Build and push service
           uses: docker/build-push-action@v6
