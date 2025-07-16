@@ -233,7 +233,7 @@ async def _handle_retrieve_application(
 
             if template.submission_date:
                 template_response["submission_date"] = template.submission_date.isoformat()
-                
+
                 response["deadline"] = template.submission_date.isoformat()
 
             if template.rag_job_id:
@@ -437,7 +437,6 @@ async def handle_generate_application(
         if rag_sources_count == 0:
             raise ValidationException("No rag sources found for application, cannot generate")
 
-        
         async with session.begin():
             await session.execute(
                 update(GrantApplication)
@@ -565,7 +564,7 @@ async def handle_list_applications(
                 item["description"] = app.description
             if submission_date:
                 item["submission_date"] = submission_date.isoformat()
-                
+
                 item["deadline"] = submission_date.isoformat()
             if app.completed_at:
                 item["completed_at"] = app.completed_at.isoformat()
@@ -667,7 +666,6 @@ async def handle_duplicate_application(
 
     async with session_maker() as session, session.begin():
         try:
-            
             original_app = await session.scalar(
                 select(GrantApplication)
                 .where(GrantApplication.id == application_id)
@@ -677,12 +675,10 @@ async def handle_duplicate_application(
             if not original_app:
                 raise NotFoundException("Application not found")
 
-            
             template = await session.scalar(
                 select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
             )
 
-            
             new_app = await session.scalar(
                 insert(GrantApplication)
                 .values(
@@ -694,16 +690,14 @@ async def handle_duplicate_application(
                         "form_inputs": original_app.form_inputs,
                         "research_objectives": original_app.research_objectives,
                         "text": original_app.text,
-                        "parent_id": application_id,  
+                        "parent_id": application_id,
                     }
                 )
                 .returning(GrantApplication)
             )
 
-            
             new_app_id = new_app.id
 
-            
             if template:
                 await session.scalar(
                     insert(GrantTemplate)
@@ -718,7 +712,6 @@ async def handle_duplicate_application(
                     .returning(GrantTemplate)
                 )
 
-            
             rag_sources = await session.execute(
                 select(GrantApplicationRagSource).where(
                     GrantApplicationRagSource.grant_application_id == application_id
