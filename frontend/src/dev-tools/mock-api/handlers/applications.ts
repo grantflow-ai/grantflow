@@ -249,7 +249,7 @@ This innovative research program represents a paradigm shift in cancer diagnosti
 				completed_at: new Date().toISOString(),
 				form_inputs: FormInputsFactory.build() as unknown,
 				research_objectives: ResearchObjectiveFactory.batch(3),
-				status: "COMPLETED" as const,
+				status: "GENERATING" as const,
 				text: generatedText,
 			};
 

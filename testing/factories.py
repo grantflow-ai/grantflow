@@ -193,6 +193,7 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     rag_job_id = None
+    parent_id = None
 
 
 class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationRagSource]):

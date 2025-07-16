@@ -77,7 +77,7 @@ export const scenarios: Scenario[] = [
 							submission_date: subDays(new Date(), 10).toISOString(),
 						},
 						id: "app-1",
-						status: "COMPLETED",
+						status: "GENERATING",
 						title: "NIH R01 Grant Application",
 					}),
 				],
