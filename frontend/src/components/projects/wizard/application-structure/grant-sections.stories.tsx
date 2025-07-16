@@ -1,7 +1,7 @@
 import { GrantSectionDetailedFactory } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "@storybook/test";
 import { useState } from "react";
-import { vi } from "vitest";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { SortableSection } from "./grant-sections";
 
@@ -17,7 +17,7 @@ const meta: Meta<typeof SortableSection> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/GrantSections",
+	title: "Wizard/Components/GrantSections",
 };
 
 export default meta;
@@ -27,10 +27,10 @@ const defaultProps = {
 	isDetailedSection: () => true,
 	isDragging: false,
 	isExpanded: false,
-	onAddSubsection: vi.fn(),
-	onDelete: vi.fn(),
-	onToggleExpand: vi.fn(),
-	onUpdate: vi.fn(),
+	onAddSubsection: fn(),
+	onDelete: fn(),
+	onToggleExpand: fn(),
+	onUpdate: fn(),
 	toUpdateGrantSection: (section: GrantSection): UpdateGrantSection => ({
 		depends_on: [],
 		generation_instructions: "",
@@ -53,7 +53,6 @@ export const BasicSection: Story = {
 			title: "Project Overview",
 		}),
 	},
-	name: "Basic Section - Collapsed State",
 };
 
 export const ExpandedSection: Story = {
@@ -66,7 +65,6 @@ export const ExpandedSection: Story = {
 			title: "Research Methodology",
 		}),
 	},
-	name: "Expanded Section - Edit Form Visible",
 };
 
 export const ResearchPlanSection: Story = {
@@ -79,7 +77,6 @@ export const ResearchPlanSection: Story = {
 			title: "Detailed Research Plan",
 		}),
 	},
-	name: "Research Plan Section - Main Research Plan Toggle",
 };
 
 export const SubsectionBasic: Story = {
@@ -92,7 +89,6 @@ export const SubsectionBasic: Story = {
 			title: "Literature Review",
 		}),
 	},
-	name: "Subsection - Collapsed State",
 };
 
 export const SubsectionExpanded: Story = {
@@ -106,19 +102,6 @@ export const SubsectionExpanded: Story = {
 			title: "Data Collection Methods",
 		}),
 	},
-	name: "Subsection - Expanded Edit Form",
-};
-
-export const DraggingState: Story = {
-	args: {
-		...defaultProps,
-		isDragging: true,
-		section: GrantSectionDetailedFactory.build({
-			max_words: 2000,
-			title: "Budget Justification",
-		}),
-	},
-	name: "Dragging State - Visual Feedback",
 };
 
 export const NoMaxWords: Story = {
@@ -130,7 +113,6 @@ export const NoMaxWords: Story = {
 			title: "Project Timeline",
 		}),
 	},
-	name: "No Word Limit - Section Without Max Words",
 };
 
 export const LongTitle: Story = {
@@ -141,7 +123,6 @@ export const LongTitle: Story = {
 			title: "Comprehensive Analysis of Environmental Impact and Sustainability Measures for Large-Scale Renewable Energy Implementation",
 		}),
 	},
-	name: "Long Title - Text Overflow Handling",
 };
 
 export const MinimalWords: Story = {
@@ -153,7 +134,6 @@ export const MinimalWords: Story = {
 			title: "Executive Summary",
 		}),
 	},
-	name: "Minimal Word Count - 100 Words",
 };
 
 export const MaximumWords: Story = {
@@ -165,12 +145,10 @@ export const MaximumWords: Story = {
 			title: "Comprehensive Technical Documentation",
 		}),
 	},
-	name: "Maximum Word Count - 10,000 Words",
 };
 
 function InteractiveDemoComponent() {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [isDragging, setIsDragging] = useState(false);
 	const [section, setSection] = useState(() =>
 		GrantSectionDetailedFactory.build({
 			is_detailed_research_plan: false,
@@ -194,15 +172,6 @@ function InteractiveDemoComponent() {
 						{isExpanded ? "Collapse" : "Expand"}
 					</button>
 					<button
-						className="px-3 py-1 bg-purple-500 text-white rounded"
-						onClick={() => {
-							setIsDragging(!isDragging);
-						}}
-						type="button"
-					>
-						{isDragging ? "Stop Dragging" : "Start Dragging"}
-					</button>
-					<button
 						className="px-3 py-1 bg-green-500 text-white rounded"
 						onClick={() => {
 							setSection({
@@ -218,7 +187,6 @@ function InteractiveDemoComponent() {
 			</div>
 			<SortableSection
 				{...defaultProps}
-				isDragging={isDragging}
 				isExpanded={isExpanded}
 				onToggleExpand={() => {
 					setIsExpanded(!isExpanded);
@@ -233,7 +201,6 @@ function InteractiveDemoComponent() {
 }
 
 export const InteractiveDemo: Story = {
-	name: "Interactive Demo - All States Controllable",
 	render: () => <InteractiveDemoComponent />,
 };
 
@@ -305,7 +272,6 @@ function SectionHierarchyComponent() {
 }
 
 export const SectionHierarchy: Story = {
-	name: "Section Hierarchy - Parent with Subsections",
 	render: () => <SectionHierarchyComponent />,
 };
 
@@ -351,7 +317,6 @@ function FormValidationStatesComponent() {
 }
 
 export const FormValidationStates: Story = {
-	name: "Form Validation States - Edge Cases",
 	render: () => <FormValidationStatesComponent />,
 };
 
@@ -364,7 +329,6 @@ export const AccessibilityFocus: Story = {
 			title: "Accessibility Testing Section",
 		}),
 	},
-	name: "Accessibility Focus - Keyboard Navigation",
 	parameters: {
 		docs: {
 			description: {

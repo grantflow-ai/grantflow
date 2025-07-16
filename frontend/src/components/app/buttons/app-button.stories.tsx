@@ -8,7 +8,7 @@ const meta: Meta<typeof AppButton> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/AppButton",
+	title: "Components/Buttons/AppButton",
 };
 
 export default meta;

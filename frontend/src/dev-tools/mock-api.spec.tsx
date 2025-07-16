@@ -261,7 +261,7 @@ describe("Mock API Core Integration", () => {
 			expect(mockApplication).toMatchObject({
 				created_at: expect.any(String),
 				id: expect.any(String),
-				status: expect.stringMatching(/^(DRAFT|IN_PROGRESS|COMPLETED|CANCELLED)$/),
+				status: expect.stringMatching(/^(DRAFT|IN_PROGRESS|GENERATING|CANCELLED)$/),
 				title: expect.any(String),
 			});
 		});

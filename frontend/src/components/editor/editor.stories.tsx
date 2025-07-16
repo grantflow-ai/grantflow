@@ -7,7 +7,7 @@ const meta = {
 		layout: "centered",
 	},
 	tags: ["autodocs"],
-	title: "Components/Editor",
+	title: "Editor",
 } satisfies Meta<typeof Editor>;
 
 export default meta;

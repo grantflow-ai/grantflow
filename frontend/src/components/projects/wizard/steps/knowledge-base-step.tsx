@@ -2,7 +2,7 @@
 
 import { FilePreviewCard, LinkPreviewItem, TemplateFileUploader } from "@/components/projects";
 import { PreviewCard, WizardLeftPane, WizardRightPane } from "@/components/projects/wizard/shared";
-import { PreviewLoadingComponent } from "@/components/projects/wizard/shared/preview-loading";
+import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { Separator } from "@/components/ui/separator";
 import { SourceIndexingStatus } from "@/enums";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
@@ -91,7 +91,11 @@ function KnowledgeBasePreview() {
 	const hasBothFilesAndUrls = knowledgeBaseFiles.length > 0 && knowledgeBaseUrls.length > 0;
 
 	if (!hasContent) {
-		return <PreviewLoadingComponent />;
+		return (
+			<WizardRightPane padding="p-6">
+				<EmptyStatePreview />
+			</WizardRightPane>
+		);
 	}
 
 	return (

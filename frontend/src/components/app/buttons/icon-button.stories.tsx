@@ -20,7 +20,7 @@ const meta = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/App/IconButton",
+	title: "Components/Buttons/IconButton",
 };
 
 export default meta;

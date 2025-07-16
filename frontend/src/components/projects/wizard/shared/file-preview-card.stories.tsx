@@ -19,7 +19,7 @@ const meta: Meta<typeof FilePreviewCard> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/Wizard/FilePreviewCard",
+	title: "Wizard/Components/FilePreviewCard",
 };
 
 export default meta;

@@ -1,16 +1,15 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useProjectStore } from "@/stores/project-store";
 import { NavMain } from "./nav-main";
 
-// Mock the stores
 vi.mock("@/stores/navigation-store");
 vi.mock("@/stores/project-store");
 
 describe("NavMain", () => {
 	beforeEach(() => {
-		// Mock navigation store with active project
 		vi.mocked(useNavigationStore).mockReturnValue({
 			activeApplicationId: null,
 			activeApplicationTitle: null,
@@ -26,7 +25,6 @@ describe("NavMain", () => {
 			setActiveProject: vi.fn(),
 		});
 
-		// Mock project store
 		vi.mocked(useProjectStore).mockReturnValue({
 			clearProject: vi.fn(),
 			project: {
@@ -43,25 +41,26 @@ describe("NavMain", () => {
 		});
 	});
 
-	it("renders all main parts correctly", () => {
+	it("renders all main parts correctly", async () => {
+		const user = userEvent.setup();
+
 		render(
 			<SidebarProvider>
 				<NavMain data-testid="nav-main" />
 			</SidebarProvider>,
 		);
 
-		// Top dashboard section
-		expect(screen.getByTestId("dashboard-section")).toBeInTheDocument();
+		expect(screen.getByTestId("dashboard-button")).toBeInTheDocument();
 
-		// Triggers
 		expect(screen.getByTestId("recent-applications-trigger")).toBeInTheDocument();
 		expect(screen.getByTestId("settings-trigger")).toBeInTheDocument();
 
-		// Recent Applications content
 		expect(screen.getByTestId("search-input")).toBeInTheDocument();
 		expect(screen.getByTestId("recent-app-item")).toBeInTheDocument();
 
-		// Settings items
+		const settingsTrigger = screen.getByTestId("settings-trigger");
+		await user.click(settingsTrigger);
+
 		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
 		expect(screen.getByTestId("settings-billing")).toBeInTheDocument();
 		expect(screen.getByTestId("settings-members")).toBeInTheDocument();
