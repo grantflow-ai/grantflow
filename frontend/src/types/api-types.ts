@@ -1271,7 +1271,15 @@ export namespace API {
 	export type RequestBody = {
 	description: string;
 	form_inputs: {
-	
+		background_context: string;
+		hypothesis: string;
+		impact: string;
+		novelty_and_innovation: string;
+		preliminary_data: string;
+		rationale: string;
+		research_feasibility: string;
+		scientific_infrastructure: string;
+		team_excellence: string;
 };
 	research_objectives: {
 	description?: string;
