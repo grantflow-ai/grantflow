@@ -15,6 +15,7 @@ import { routes } from "@/utils/navigation";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
 import { DashboardHeader } from "../dashboard/dashboard-header";
 import { ApplicationList } from "./application-list";
+import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 
 const projectTeamMembers = [
 	{ backgroundColor: "#369e94", initials: "NH" },
@@ -120,6 +121,9 @@ export function ProjectDetailClient() {
 	}
 
 	return (
+		<>
+		
+		
 		<section className="bg-preview-bg w-full h-full overflow-y-scroll  flex">
 			<main className="w-[98%] pb-5">
 				<DashboardHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
@@ -218,5 +222,6 @@ export function ProjectDetailClient() {
 				onConfirm={confirmDeleteApplication}
 			/>
 		</section>
+		</>
 	);
 }

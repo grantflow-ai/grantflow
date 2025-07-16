@@ -9,7 +9,10 @@ export default function ProjectDetailPage() {
 
 	return (
 		<NavigationContextProvider redirectTo={routes.projects()} requireProject>
-			<ProjectDetailClient />
+			<ProjectDetailClient/>
 		</NavigationContextProvider>
+
+
+
 	);
 }
