@@ -437,7 +437,6 @@ async def handle_generate_application(
         if rag_sources_count == 0:
             raise ValidationException("No rag sources found for application, cannot generate")
 
-        
         await session.execute(
             update(GrantApplication)
             .where(GrantApplication.id == application.id)

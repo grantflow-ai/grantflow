@@ -12,7 +12,12 @@ interface BaseModalProps {
 
 export function BaseModal({ children, className, isOpen, onClose, title }: BaseModalProps) {
 	return (
-		<Dialog onOpenChange={onClose} open={isOpen}>
+		<Dialog
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+			open={isOpen}
+		>
 			<DialogContent className={`bg-white border border-primary ${className}`}>
 				<DialogHeader>
 					{title ? <DialogTitle>{title}</DialogTitle> : <DialogTitle className="sr-only">Modal</DialogTitle>}

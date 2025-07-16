@@ -2,7 +2,7 @@
 
 import { ChevronRight, Clock, LayoutDashboard, Search, Settings as SettingsIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,22 +14,40 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
 
 interface NavMainProps {
 	"data-testid"?: string;
+	userRole?: "ADMIN" | "MEMBER" | "OWNER";
 }
 
-export function NavMain(props: NavMainProps) {
+export function NavMain({ userRole, ...props }: NavMainProps) {
 	const pathname = usePathname();
+	const router = useRouter();
 	const isProjectsActive = pathname === "/projects";
 	const isSettingsActive = pathname.startsWith("/project/settings");
 	const { setOpen, state } = useSidebar();
+	const { activeProjectId } = useNavigationStore();
+	const project = useProjectStore((state) => state.project);
 
 	const handleExpandSidebar = () => {
 		if (state === "collapsed") {
 			setOpen(true);
 		}
+	};
+
+	const handleSettingsClick = (e: React.MouseEvent, href: string) => {
+		e.preventDefault();
+		// Ensure we have project context before navigating
+		if (!(activeProjectId && project)) {
+			// If no project context, redirect to projects page
+			router.push(routes.projects());
+			return;
+		}
+		// Navigate with project context maintained
+		router.push(href);
 	};
 
 	return (
@@ -106,28 +124,56 @@ export function NavMain(props: NavMainProps) {
 						<SidebarMenuSub>
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/account"}>
-									<Link data-testid="settings-account" href="/project/settings/account">
+									<Link
+										data-testid="settings-account"
+										href="/project/settings/account"
+										onClick={(e) => {
+											handleSettingsClick(e, "/project/settings/account");
+										}}
+									>
 										Account Settings
 									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem>
-								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/billing"}>
-									<Link data-testid="settings-billing" href="/project/settings/billing">
-										Billing & Payments
-									</Link>
-								</SidebarMenuSubButton>
-							</SidebarMenuSubItem>
-							<SidebarMenuSubItem>
-								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/members"}>
-									<Link data-testid="settings-members" href="/project/settings/members">
-										Members
-									</Link>
-								</SidebarMenuSubButton>
-							</SidebarMenuSubItem>
+							{userRole && userRole !== "MEMBER" && (
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/billing"}>
+										<Link
+											data-testid="settings-billing"
+											href="/project/settings/billing"
+											onClick={(e) => {
+												handleSettingsClick(e, "/project/settings/billing");
+											}}
+										>
+											Billing & Payments
+										</Link>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+							)}
+							{userRole && userRole !== "MEMBER" && (
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/members"}>
+										<Link
+											data-testid="settings-members"
+											href="/project/settings/members"
+											onClick={(e) => {
+												handleSettingsClick(e, "/project/settings/members");
+											}}
+										>
+											Members
+										</Link>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+							)}
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/notifications"}>
-									<Link data-testid="settings-notifications" href="/project/settings/notifications">
+									<Link
+										data-testid="settings-notifications"
+										href="/project/settings/notifications"
+										onClick={(e) => {
+											handleSettingsClick(e, "/project/settings/notifications");
+										}}
+									>
 										Notifications
 									</Link>
 								</SidebarMenuSubButton>

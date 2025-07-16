@@ -206,7 +206,7 @@ export const scenarios: Scenario[] = [
 							email: "test@example.com",
 							firebase_uid: "mock-user-123",
 							photo_url: null,
-							role: "MEMBER" as const,
+							role: "ADMIN" as const,
 						},
 						{
 							display_name: "Dr. Jennifer Liu",
@@ -218,7 +218,29 @@ export const scenarios: Scenario[] = [
 						},
 					],
 					name: "Climate Change Analysis",
-					role: "MEMBER",
+					role: "ADMIN",
+				}),
+				ProjectListItemFactory.build({
+					applications_count: 1,
+					members: [
+						{
+							display_name: "Current User",
+							email: "test@example.com",
+							firebase_uid: "mock-user-123",
+							photo_url: null,
+							role: "OWNER" as const,
+						},
+						{
+							display_name: "Sarah Martinez",
+							email: "s.martinez@university.edu",
+							firebase_uid: "mock-user-10",
+							photo_url:
+								"https://images.unsplash.com/photo-1587614382346-4ec70e388b28?w=150&h=150&fit=crop&crop=face",
+							role: "MEMBER" as const,
+						},
+					],
+					name: "My Personal Research",
+					role: "OWNER",
 				}),
 			],
 		},

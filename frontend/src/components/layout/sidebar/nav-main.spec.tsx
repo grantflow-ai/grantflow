@@ -41,12 +41,12 @@ describe("NavMain", () => {
 		});
 	});
 
-	it("renders all main parts correctly", async () => {
+	it("renders all main parts correctly for OWNER role", async () => {
 		const user = userEvent.setup();
 
 		render(
 			<SidebarProvider>
-				<NavMain data-testid="nav-main" />
+				<NavMain data-testid="nav-main" userRole="OWNER" />
 			</SidebarProvider>,
 		);
 
@@ -57,6 +57,42 @@ describe("NavMain", () => {
 
 		expect(screen.getByTestId("search-input")).toBeInTheDocument();
 		expect(screen.getByTestId("recent-app-item")).toBeInTheDocument();
+
+		const settingsTrigger = screen.getByTestId("settings-trigger");
+		await user.click(settingsTrigger);
+
+		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
+		expect(screen.getByTestId("settings-billing")).toBeInTheDocument();
+		expect(screen.getByTestId("settings-members")).toBeInTheDocument();
+		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+	});
+
+	it("hides billing and members links for MEMBER role", async () => {
+		const user = userEvent.setup();
+
+		render(
+			<SidebarProvider>
+				<NavMain data-testid="nav-main" userRole="MEMBER" />
+			</SidebarProvider>,
+		);
+
+		const settingsTrigger = screen.getByTestId("settings-trigger");
+		await user.click(settingsTrigger);
+
+		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
+		expect(screen.queryByTestId("settings-billing")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("settings-members")).not.toBeInTheDocument();
+		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+	});
+
+	it("shows billing and members links for ADMIN role", async () => {
+		const user = userEvent.setup();
+
+		render(
+			<SidebarProvider>
+				<NavMain data-testid="nav-main" userRole="ADMIN" />
+			</SidebarProvider>,
+		);
 
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
