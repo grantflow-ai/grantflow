@@ -8,7 +8,7 @@ const meta: Meta<typeof SubmitButton> = {
 	parameters: {
 		layout: "centered",
 	},
-	title: "Components/SubmitButton",
+	title: "Components/Buttons/SubmitButton",
 };
 
 export default meta;

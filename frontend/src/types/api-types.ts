@@ -98,6 +98,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	form_inputs?: {
 	background_context: string;
@@ -152,6 +153,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -170,11 +172,10 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 	text?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 };
 };
 
@@ -528,6 +529,110 @@ export namespace API {
 };
 };
 
+	export namespace DuplicateApplication {
+	export namespace Http201 {
+	export type ResponseBody = {
+	completed_at?: string;
+	created_at: string;
+	deadline?: string;
+	description?: string;
+	form_inputs?: {
+	background_context: string;
+	hypothesis: string;
+	impact: string;
+	novelty_and_innovation: string;
+	preliminary_data: string;
+	rationale: string;
+	research_feasibility: string;
+	scientific_infrastructure: string;
+	team_excellence: string;
+};
+	grant_template?: {
+	created_at: string;
+	funding_organization?: {
+	abbreviation?: string;
+	created_at: string;
+	full_name: string;
+	id: string;
+	updated_at: string;
+};
+	funding_organization_id?: string;
+	grant_application_id: string;
+	grant_sections: ({
+	depends_on: string[];
+	generation_instructions: string;
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	max_words: number;
+	order: number;
+	parent_id: null | string;
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	id: string;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	id: string;
+	rag_job_id?: string;
+	rag_sources: {
+	filename?: string;
+	sourceId: string;
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	url?: string;
+}[];
+	submission_date?: string;
+	updated_at: string;
+};
+	id: string;
+	parent_id?: string;
+	project_id: string;
+	rag_job_id?: string;
+	rag_sources: {
+	filename?: string;
+	sourceId: string;
+	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	url?: string;
+}[];
+	research_objectives?: {
+	description?: string;
+	number: number;
+	research_tasks: {
+	description?: string;
+	number: number;
+	title: string;
+}[];
+	title: string;
+}[];
+	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	text?: string;
+	title: string;
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	application_id: string;
+	project_id: string;
+};
+
+	export type RequestBody = {
+	title: string;
+};
+};
+
 	export namespace GenerateApplication {
 	export namespace Http201 {
 	export type ResponseBody = undefined;
@@ -566,6 +671,13 @@ export namespace API {
 }[];
 	id: string;
 	logo_url: null | string;
+	members: {
+	display_name: null | string;
+	email: string;
+	firebase_uid: string;
+	photo_url: null | string;
+	role: "ADMIN" | "MEMBER" | "OWNER";
+}[];
 	name: string;
 	role: "ADMIN" | "MEMBER" | "OWNER";
 };
@@ -608,14 +720,15 @@ export namespace API {
 	applications: {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	id: string;
+	parent_id?: string;
 	project_id: string;
-	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 	submission_date?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 }[];
 	pagination: {
 	has_more: boolean;
@@ -644,7 +757,7 @@ export namespace API {
 	order?: string;
 	search?: null | string;
 	sort?: string;
-	status?: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS" | null;
+	status?: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS" | null;
 };
 };
 
@@ -782,6 +895,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	form_inputs?: {
 	background_context: string;
@@ -836,6 +950,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -854,11 +969,10 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 	text?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 };
 };
 
@@ -1060,6 +1174,7 @@ export namespace API {
 	export type ResponseBody = {
 	completed_at?: string;
 	created_at: string;
+	deadline?: string;
 	description?: string;
 	form_inputs?: {
 	background_context: string;
@@ -1114,6 +1229,7 @@ export namespace API {
 	updated_at: string;
 };
 	id: string;
+	parent_id?: string;
 	project_id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -1132,11 +1248,10 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 	text?: string;
 	title: string;
 	updated_at: string;
-	deadline?: string;
 };
 };
 
@@ -1168,7 +1283,7 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 	text: string;
 	title: string;
 };

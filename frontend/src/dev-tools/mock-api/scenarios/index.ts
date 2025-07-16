@@ -59,6 +59,23 @@ export const scenarios: Scenario[] = [
 			organizations: OrganizationFactory.batch(1),
 			projects: ProjectListItemFactory.batch(1, {
 				applications_count: 1,
+				members: [
+					{
+						display_name: "Dr. Jane Smith",
+						email: "jane.smith@university.edu",
+						firebase_uid: "mock-user-owner",
+						photo_url:
+							"https://images.unsplash.com/photo-1494790108755-2616b9d5c333?w=150&h=150&fit=crop&crop=face",
+						role: "OWNER" as const,
+					},
+					{
+						display_name: "John Doe",
+						email: "john.doe@university.edu",
+						firebase_uid: "mock-user-admin",
+						photo_url: null,
+						role: "ADMIN" as const,
+					},
+				],
 				name: "My Research Project",
 			}),
 		},
@@ -77,7 +94,7 @@ export const scenarios: Scenario[] = [
 							submission_date: subDays(new Date(), 10).toISOString(),
 						},
 						id: "app-1",
-						status: "COMPLETED",
+						status: "GENERATING",
 						title: "NIH R01 Grant Application",
 					}),
 				],
@@ -107,16 +124,99 @@ export const scenarios: Scenario[] = [
 			projects: [
 				ProjectListItemFactory.build({
 					applications_count: 3,
+					members: [
+						{
+							display_name: "Dr. Sarah Johnson",
+							email: "s.johnson@medcenter.edu",
+							firebase_uid: "mock-user-1",
+							photo_url:
+								"https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
+							role: "OWNER" as const,
+						},
+						{
+							display_name: "Dr. Michael Chen",
+							email: "m.chen@medcenter.edu",
+							firebase_uid: "mock-user-2",
+							photo_url:
+								"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+							role: "ADMIN" as const,
+						},
+						{
+							display_name: "Emily Rodriguez",
+							email: "e.rodriguez@medcenter.edu",
+							firebase_uid: "mock-user-3",
+							photo_url: null,
+							role: "MEMBER" as const,
+						},
+						{
+							display_name: "Dr. David Kim",
+							email: "d.kim@medcenter.edu",
+							firebase_uid: "mock-user-4",
+							photo_url:
+								"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+							role: "ADMIN" as const,
+						},
+					],
 					name: "Cancer Research Initiative",
 					role: "OWNER",
 				}),
 				ProjectListItemFactory.build({
 					applications_count: 2,
+					members: [
+						{
+							display_name: "Prof. Lisa Anderson",
+							email: "l.anderson@techuni.edu",
+							firebase_uid: "mock-user-5",
+							photo_url:
+								"https://images.unsplash.com/photo-1494790108755-2616b9d5c333?w=150&h=150&fit=crop&crop=face",
+							role: "OWNER" as const,
+						},
+						{
+							display_name: "Alex Thompson",
+							email: "a.thompson@techuni.edu",
+							firebase_uid: "mock-user-6",
+							photo_url: null,
+							role: "ADMIN" as const,
+						},
+						{
+							display_name: "Maria Garcia",
+							email: "m.garcia@techuni.edu",
+							firebase_uid: "mock-user-7",
+							photo_url:
+								"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+							role: "MEMBER" as const,
+						},
+					],
 					name: "AI Ethics Study",
 					role: "ADMIN",
 				}),
 				ProjectListItemFactory.build({
 					applications_count: 5,
+					members: [
+						{
+							display_name: "Dr. Robert Wilson",
+							email: "r.wilson@climatelab.org",
+							firebase_uid: "mock-user-8",
+							photo_url:
+								"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+							role: "OWNER" as const,
+						},
+						{
+							display_name: "Current User",
+							email: "test@example.com",
+							firebase_uid: "mock-user-123",
+							photo_url: null,
+							role: "MEMBER" as const,
+						},
+						{
+							display_name: "Dr. Jennifer Liu",
+							email: "j.liu@climatelab.org",
+							firebase_uid: "mock-user-9",
+							photo_url:
+								"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
+							role: "ADMIN" as const,
+						},
+					],
 					name: "Climate Change Analysis",
 					role: "MEMBER",
 				}),
@@ -147,6 +247,23 @@ export const scenarios: Scenario[] = [
 				ProjectListItemFactory.build({
 					applications_count: 0,
 					id: "wizard-project",
+					members: [
+						{
+							display_name: "Test User",
+							email: "test@example.com",
+							firebase_uid: "mock-user-123",
+							photo_url: null,
+							role: "OWNER" as const,
+						},
+						{
+							display_name: "Research Assistant",
+							email: "assistant@university.edu",
+							firebase_uid: "mock-user-assistant",
+							photo_url:
+								"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
+							role: "MEMBER" as const,
+						},
+					],
 					name: "Wizard Test Project",
 				}),
 			],
@@ -243,6 +360,37 @@ export const scenarios: Scenario[] = [
 							photo_url: null,
 							role: "OWNER" as const,
 						},
+						{
+							display_name: "Dr. Amanda Foster",
+							email: "a.foster@research.edu",
+							firebase_uid: "mock-user-sources-1",
+							photo_url:
+								"https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face",
+							role: "ADMIN" as const,
+						},
+						{
+							display_name: "Kevin Zhang",
+							email: "k.zhang@research.edu",
+							firebase_uid: "mock-user-sources-2",
+							photo_url: null,
+							role: "MEMBER" as const,
+						},
+						{
+							display_name: "Dr. Rachel Green",
+							email: "r.green@research.edu",
+							firebase_uid: "mock-user-sources-3",
+							photo_url:
+								"https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
+							role: "MEMBER" as const,
+						},
+						{
+							display_name: "Prof. James Mitchell",
+							email: "j.mitchell@research.edu",
+							firebase_uid: "mock-user-sources-4",
+							photo_url:
+								"https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face",
+							role: "ADMIN" as const,
+						},
 					],
 					name: "Research Project with Sources",
 					role: "OWNER" as const,
@@ -276,6 +424,23 @@ export const scenarios: Scenario[] = [
 			projects: [
 				ProjectListItemFactory.build({
 					applications_count: 2,
+					members: [
+						{
+							display_name: "Error Test User",
+							email: "test@example.com",
+							firebase_uid: "mock-user-123",
+							photo_url: null,
+							role: "OWNER" as const,
+						},
+						{
+							display_name: "Failed User",
+							email: "failed@example.com",
+							firebase_uid: "mock-user-failed",
+							photo_url:
+								"https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop&crop=face",
+							role: "MEMBER" as const,
+						},
+					],
 					name: "Project with Failed Applications",
 				}),
 			],

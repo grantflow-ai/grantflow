@@ -26,12 +26,12 @@ def test_create_scraper_report_embed_success() -> None:
         success=True,
     )
 
-    assert embed["title"] == " NIH Grant Scraper Report - STAGING"
+    assert embed["title"] == "🤖 NIH Grant Scraper Report - STAGING"
     assert embed["color"] == 0x00FF00
     assert len(embed["fields"]) == 3
 
     run_summary = embed["fields"][0]
-    assert run_summary["name"] == " Run Summary"
+    assert run_summary["name"] == "📊 Run Summary"
     assert "Date Range**: 2025-07-01 to 2025-07-02" in run_summary["value"]
     assert "Search Results Found**: 100 grants" in run_summary["value"]
     assert "New Files Downloaded**: 25 grants" in run_summary["value"]
@@ -39,12 +39,12 @@ def test_create_scraper_report_embed_success() -> None:
     assert "Total Processing Time**: 2m 0s" in run_summary["value"]
 
     storage_info = embed["fields"][1]
-    assert storage_info["name"] == " Storage Info"
+    assert storage_info["name"] == "📁 Storage Info"
     assert "Bucket**: `grantflow-scraper`" in storage_info["value"]
     assert "Total Files in Bucket**: 500 grants" in storage_info["value"]
 
     status_field = embed["fields"][2]
-    assert status_field["name"] == " Status"
+    assert status_field["name"] == "✅ Status"
     assert status_field["value"] == "Completed Successfully"
 
 
@@ -62,11 +62,11 @@ def test_create_scraper_report_embed_failure() -> None:
         error_message="Network timeout",
     )
 
-    assert embed["title"] == " NIH Grant Scraper Report - PROD"
+    assert embed["title"] == "🤖 NIH Grant Scraper Report - PROD"
     assert embed["color"] == 0xFF0000
 
     status_field = embed["fields"][2]
-    assert status_field["name"] == " Status"
+    assert status_field["name"] == "❌ Status"
     assert "Failed" in status_field["value"]
     assert "Error**: Network timeout" in status_field["value"]
 

@@ -18,7 +18,7 @@ const meta: Meta<typeof ResearchDeepDiveStep> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/ResearchDeepDiveStep",
+	title: "Wizard/Steps/ResearchDeepDiveStep",
 };
 
 export default meta;

@@ -2,10 +2,12 @@
 
 import { Info, Mail, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { DeleteAccountModal } from "@/components/projects/settings/delete-account-modal";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
+import { log } from "@/utils/logger";
 
 interface ProjectSettingsAccountProps {
 	projectId: string;
@@ -16,10 +18,14 @@ export function ProjectSettingsAccount({
 	projectId: _projectId,
 	userRole = UserRole.MEMBER,
 }: ProjectSettingsAccountProps) {
-	const { user } = useUserStore();
+	const { deleteProfilePhoto, updateDisplayName, updateEmail, updateProfilePhoto, user } = useUserStore();
 	const [name, setName] = useState(user?.displayName ?? "");
+	const [email, setEmail] = useState(user?.email ?? "");
 	const [showEmailTooltip, setShowEmailTooltip] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [isUploading, setIsUploading] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const getInitials = () => {
 		if (user?.displayName) {
@@ -53,12 +59,88 @@ export function ProjectSettingsAccount({
 		}
 	};
 
+	const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!(file && user)) return;
+
+		// Validate file type
+		if (!file.type.startsWith("image/")) {
+			toast.error("Please select an image file (PNG, JPG, or GIF)");
+			return;
+		}
+
+		// Validate file size (10MB limit)
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error("Please select an image under 10MB");
+			return;
+		}
+
+		setIsUploading(true);
+		try {
+			await updateProfilePhoto(file);
+			toast.success("Profile photo updated successfully");
+		} catch (error) {
+			log.error("Error uploading profile photo", error);
+			toast.error("Failed to upload profile photo");
+		} finally {
+			setIsUploading(false);
+			// Reset file input
+			if (fileInputRef.current) {
+				fileInputRef.current.value = "";
+			}
+		}
+	};
+
+	const handlePhotoDelete = async () => {
+		if (!user) return;
+
+		setIsUploading(true);
+		try {
+			await deleteProfilePhoto();
+			toast.success("Profile photo removed successfully");
+		} catch (error) {
+			log.error("Error deleting profile photo", error);
+			toast.error("Failed to delete profile photo");
+		} finally {
+			setIsUploading(false);
+		}
+	};
+
+	const handleSave = async () => {
+		setIsSaving(true);
+		try {
+			// Update display name if changed
+			if (name !== user?.displayName) {
+				await updateDisplayName(name);
+			}
+
+			// Update email if changed
+			if (email !== user?.email && email) {
+				await updateEmail(email);
+			}
+
+			toast.success("Profile updated successfully");
+		} catch (error) {
+			log.error("Error updating profile", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
+
+			// Check for specific Firebase errors
+			if (errorMessage.includes("auth/requires-recent-login")) {
+				toast.error("Please sign in again to update your email address");
+			} else {
+				toast.error(errorMessage);
+			}
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
 	return (
 		<>
 			<div className="flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
 				{}
 				<div className="flex flex-col gap-3">
-					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
+					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 						Profile Image
 					</h3>
 					<div className="flex items-end gap-3">
@@ -69,39 +151,49 @@ export function ProjectSettingsAccount({
 							{user?.photoURL ? (
 								<Image alt="Profile" className="rounded object-cover" fill src={user.photoURL} />
 							) : (
-								<span className="font-['Cabin'] font-medium text-[22px] text-white">
-									{getInitials()}
-								</span>
+								<span className="font-heading font-medium text-[22px] text-white">{getInitials()}</span>
 							)}
 						</div>
 						<div className="flex gap-1">
+							<input
+								accept="image/*"
+								className="hidden"
+								disabled={isUploading}
+								onChange={handlePhotoUpload}
+								ref={fileInputRef}
+								type="file"
+							/>
 							<button
-								className="flex items-center gap-1 px-1 py-0.5 border border-[#1e13f8] rounded bg-white text-[#1e13f8] font-['Sora'] text-[14px] hover:bg-[#1e13f8] hover:text-white transition-colors"
+								className="flex items-center gap-1 px-1 py-0.5 border border-primary rounded bg-white text-primary font-button text-[14px] hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 								data-testid="upload-photo-button"
+								disabled={isUploading}
+								onClick={() => fileInputRef.current?.click()}
 								type="button"
 							>
 								<Plus className="size-4" />
-								Upload
+								{isUploading ? "Uploading..." : "Upload"}
 							</button>
 							<button
-								className="p-1 rounded-sm hover:bg-[#e1dfeb] transition-colors"
+								className="p-1 rounded-sm hover:bg-app-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 								data-testid="delete-photo-button"
+								disabled={isUploading || !user?.photoURL}
+								onClick={handlePhotoDelete}
 								type="button"
 							>
-								<Trash2 className="size-4 text-[#ff456d]" />
+								<Trash2 className="size-4 text-error" />
 							</button>
 						</div>
 					</div>
-					<p className="text-[14px] text-[#4a4855] font-['Source_Sans_Pro']">
+					<p className="text-[14px] text-app-gray-700 font-body">
 						We support PNG&apos;s, JPG&apos;s, GIF&apos;s under 10MB
 					</p>
 				</div>
 
 				{}
 				<div className="flex flex-col gap-3">
-					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Name</h3>
+					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Name</h3>
 					<input
-						className="w-full h-10 px-3 border border-[#636170] rounded bg-white text-[14px] font-['Source_Sans_Pro'] text-[#636170] focus:outline-none focus:border-[#1e13f8]"
+						className="w-full h-10 px-3 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 focus:outline-none focus:border-primary"
 						data-testid="name-input"
 						onChange={(e) => {
 							setName(e.target.value);
@@ -115,7 +207,7 @@ export function ProjectSettingsAccount({
 				{}
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center gap-1 relative">
-						<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
+						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Email address
 						</h3>
 						<button
@@ -129,39 +221,42 @@ export function ProjectSettingsAccount({
 							}}
 							type="button"
 						>
-							<Info className="size-3 text-[#636170]" />
+							<Info className="size-3 text-app-gray-600" />
 						</button>
 						{showEmailTooltip && (
 							<div className="absolute left-0 top-6 z-10 w-[300px]" data-testid="email-tooltip">
-								<div className="bg-[#211968] text-white text-[14px] font-['Source_Sans_Pro'] px-3 py-1 rounded-sm">
-									The main email address cannot be edited.
+								<div className="bg-app-dark-blue text-white text-[14px] font-body px-3 py-1 rounded-sm">
+									Changing your email address requires recent authentication.
 									<br />
-									To change it, please contact our support team.
+									You may need to sign in again.
 								</div>
 								<div className="flex justify-start ml-4">
-									<div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-[#211968]" />
+									<div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-app-dark-blue" />
 								</div>
 							</div>
 						)}
 					</div>
 					<div className="relative">
 						<input
-							className="w-full h-10 px-3 pr-10 border border-[#636170] rounded bg-white text-[14px] font-['Source_Sans_Pro'] text-[#636170] cursor-not-allowed"
+							className="w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 focus:outline-none focus:border-primary"
 							data-testid="email-input"
-							disabled
+							onChange={(e) => {
+								setEmail(e.target.value);
+							}}
+							placeholder="email@example.com"
 							type="email"
-							value={user?.email ?? "Email@address.com"}
+							value={email}
 						/>
-						<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-[#636170]" />
+						<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-app-gray-600" />
 					</div>
 				</div>
 
 				{}
 				<div className="flex flex-col gap-3">
-					<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">Role</h3>
+					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Role</h3>
 					<div className="inline-flex">
 						<span
-							className="px-2 py-0 bg-[#e1dfeb] rounded-[20px] text-[12px] font-['Source_Sans_Pro'] text-[#211968]"
+							className="px-2 py-0 bg-app-gray-100 rounded-[20px] text-[12px] font-body text-app-dark-blue"
 							data-testid="role-badge"
 						>
 							{getRoleLabel(userRole)}
@@ -170,13 +265,30 @@ export function ProjectSettingsAccount({
 				</div>
 
 				{}
+				<div className="flex justify-end pt-4">
+					<button
+						className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-button text-[14px]"
+						data-testid="save-profile-button"
+						disabled={
+							isSaving ||
+							!(name || email) ||
+							!!(user && name === user.displayName && email === user.email)
+						}
+						onClick={handleSave}
+						type="button"
+					>
+						{isSaving ? "Saving..." : "Save Changes"}
+					</button>
+				</div>
+
+				{}
 				{userRole === UserRole.OWNER && (
 					<div className="flex flex-col gap-3">
-						<h3 className="font-['Cabin'] font-semibold text-[16px] leading-[22px] text-[#2e2d36]">
+						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Delete account
 						</h3>
 						<button
-							className="flex items-center gap-1 px-1 py-0.5 border border-[#ff456d] rounded bg-white text-[#ff456d] font-['Sora'] text-[14px] hover:bg-[#ff456d] hover:text-white transition-colors self-start"
+							className="flex items-center gap-1 px-1 py-0.5 border border-error rounded bg-white text-error font-button text-[14px] hover:bg-error hover:text-white transition-colors self-start"
 							data-testid="delete-account-button"
 							onClick={() => {
 								setShowDeleteModal(true);

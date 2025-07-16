@@ -18,7 +18,7 @@ const meta: Meta<typeof WizardHeader> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/WizardHeader",
+	title: "Wizard/Components/WizardHeader",
 };
 
 export default meta;

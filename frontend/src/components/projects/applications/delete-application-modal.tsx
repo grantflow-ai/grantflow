@@ -15,7 +15,7 @@ export function DeleteApplicationModal({ isOpen, onClose, onConfirm }: DeleteApp
 				{}
 				<button
 					aria-label="Close modal"
-					className="absolute right-4 top-4 flex size-4 items-center justify-center text-black hover:text-[#2e2d36]"
+					className="absolute right-4 top-4 flex size-4 items-center justify-center text-app-gray-600 hover:text-app-black"
 					data-testid="close-modal-button"
 					onClick={onClose}
 					type="button"
@@ -24,16 +24,16 @@ export function DeleteApplicationModal({ isOpen, onClose, onConfirm }: DeleteApp
 				</button>
 
 				<div className="flex flex-col gap-4">
-					<h2 className=" font-medium text-2xl leading-[30px] text-black">
+					<h2 className="font-medium text-2xl leading-[30px] text-app-black">
 						Are you sure you want to delete this application?
 					</h2>
-					<p className="text-base font-normal leading-[20px] text-black">
+					<p className="text-base font-normal leading-[20px] text-app-gray-600">
 						This action is permanent and cannot be undone.
 					</p>
 				</div>
-				<div className="flex items-center justify-between">
+				<div className="flex items-center justify-end gap-3">
 					<AppButton
-						className="px-4 py-2 rounded "
+						className="px-4 py-2 rounded"
 						data-testid="cancel-button"
 						onClick={onClose}
 						type="button"
@@ -42,7 +42,7 @@ export function DeleteApplicationModal({ isOpen, onClose, onConfirm }: DeleteApp
 						Cancel
 					</AppButton>
 					<AppButton
-						className="px-4 py-2 rounded "
+						className="px-4 py-2 rounded"
 						data-testid="delete-button"
 						onClick={() => {
 							onConfirm();

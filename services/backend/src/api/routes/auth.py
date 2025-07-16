@@ -38,7 +38,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
         project_user = result.scalars().first()
 
         if project_user is None:
-            default_project = Project(name="default")
+            default_project = Project(name="New Research Project")
             session.add(default_project)
             await session.flush()
 

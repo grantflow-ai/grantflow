@@ -19,7 +19,7 @@ const meta: Meta<typeof WizardFooter> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/WizardFooter",
+	title: "Wizard/Components/WizardFooter",
 };
 
 export default meta;

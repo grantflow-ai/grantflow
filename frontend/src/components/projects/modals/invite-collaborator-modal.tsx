@@ -45,12 +45,12 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				{}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<h2 className="font-heading font-medium text-[24px] leading-[30px] text-text-primary">
-							Invite New Collaborator
+						<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
+							Invite New Member
 						</h2>
 						<button
 							aria-label="Close modal"
-							className="absolute right-4 top-4 flex size-4 items-center justify-center text-text-secondary hover:text-text-primary"
+							className="absolute right-4 top-4 flex size-4 items-center justify-center text-app-gray-600 hover:text-app-black"
 							data-testid="close-button"
 							onClick={handleClose}
 							type="button"
@@ -58,8 +58,8 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							<X className="size-4" />
 						</button>
 					</div>
-					<p className="font-body text-[16px] leading-[20px] text-text-secondary w-[360px]">
-						Invite new collaborator and set up collaborator role.
+					<p className="font-body text-[16px] leading-[20px] text-app-gray-600 w-[360px]">
+						Invite new member and set up member role.
 					</p>
 				</div>
 
@@ -75,7 +75,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</label>
 						<div className="relative flex items-center">
 							<input
-								className="w-full h-10 pl-3 pr-10 border border-border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary placeholder-app-gray-400 outline-none focus:border-primary"
+								className="w-full h-10 pl-3 pr-10 border border-app-gray-100 rounded bg-white font-body text-[14px] text-app-gray-600 placeholder-app-gray-400 outline-none focus:border-primary"
 								data-testid="email-input"
 								id="collaborator-email"
 								onChange={(e) => {
@@ -99,7 +99,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</label>
 						<div className="relative">
 							<button
-								className="w-full h-10 px-3 border border-primary rounded bg-surface-primary font-body text-[14px] text-text-secondary text-left flex items-center justify-between outline-none"
+								className="w-full h-10 px-3 border border-primary rounded bg-white font-body text-[14px] text-app-gray-600 text-left flex items-center justify-between outline-none"
 								data-testid="permission-dropdown"
 								id="collaborator-permission"
 								onClick={() => {
@@ -109,7 +109,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							>
 								<span>
 									{permission === "collaborator"
-										? "Collaborator (can access applications within this project)"
+										? "Member (can access applications within this project)"
 										: "Admin (can access all research projects)"}
 								</span>
 								{isDropdownOpen ? (
@@ -122,11 +122,11 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							{}
 							{isDropdownOpen && (
 								<div
-									className="absolute top-full left-0 right-0 mt-[-1px] bg-surface-primary border border-border-primary rounded shadow-lg z-10"
+									className="absolute top-full left-0 right-0 mt-[-1px] bg-white border border-app-gray-100 rounded shadow-lg z-10"
 									data-testid="permission-dropdown-menu"
 								>
 									<button
-										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-text-primary hover:bg-surface-secondary transition-colors"
+										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-app-black hover:bg-preview-bg transition-colors"
 										data-testid="admin-option"
 										onClick={() => {
 											setPermission("admin");
@@ -137,7 +137,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 										Admin (can access all research projects)
 									</button>
 									<button
-										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-text-primary hover:bg-surface-secondary transition-colors"
+										className="w-full px-3 py-3 text-left font-body text-[16px] leading-[20px] text-app-black hover:bg-preview-bg transition-colors"
 										data-testid="collaborator-option"
 										onClick={() => {
 											setPermission("collaborator");
@@ -145,7 +145,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 										}}
 										type="button"
 									>
-										Collaborator (can access applications within this project)
+										Member (can access applications within this project)
 									</button>
 								</div>
 							)}
@@ -156,7 +156,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				{}
 				<div className="flex items-center justify-between">
 					<button
-						className="px-4 py-2 border border-primary rounded bg-surface-primary font-button text-[16px] leading-[22px] text-primary hover:bg-surface-secondary transition-colors"
+						className="px-4 py-2 border border-primary rounded bg-white font-button text-[16px] leading-[22px] text-primary hover:bg-preview-bg transition-colors"
 						data-testid="cancel-button"
 						onClick={handleClose}
 						type="button"

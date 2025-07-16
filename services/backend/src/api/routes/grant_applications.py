@@ -63,6 +63,10 @@ class AutofillRequestBody(TypedDict):
     context: NotRequired[dict[str, Any]]
 
 
+class DuplicateApplicationRequestBody(TypedDict):
+    title: str
+
+
 class AutofillResponse(TypedDict):
     message_id: str
     application_id: str
@@ -111,6 +115,8 @@ class ApplicationResponse(TypedDict):
     grant_template: NotRequired[GrantTemplateResponse]
     rag_sources: list[SourceResponse]
     rag_job_id: NotRequired[str]
+    parent_id: NotRequired[str]
+    deadline: NotRequired[str]
     created_at: str
     updated_at: str
 
@@ -122,6 +128,8 @@ class ApplicationListItemResponse(TypedDict):
     description: NotRequired[str]
     status: ApplicationStatusEnum
     completed_at: NotRequired[str]
+    parent_id: NotRequired[str]
+    deadline: NotRequired[str]
     created_at: str
     updated_at: str
     submission_date: NotRequired[str]
@@ -206,6 +214,9 @@ async def _handle_retrieve_application(
         if grant_application.rag_job_id:
             response["rag_job_id"] = str(grant_application.rag_job_id)
 
+        if grant_application.parent_id:
+            response["parent_id"] = str(grant_application.parent_id)
+
         if grant_application.grant_template:
             template = grant_application.grant_template
             template_response: GrantTemplateResponse = {
@@ -222,6 +233,8 @@ async def _handle_retrieve_application(
 
             if template.submission_date:
                 template_response["submission_date"] = template.submission_date.isoformat()
+
+                response["deadline"] = template.submission_date.isoformat()
 
             if template.rag_job_id:
                 template_response["rag_job_id"] = str(template.rag_job_id)
@@ -424,6 +437,14 @@ async def handle_generate_application(
         if rag_sources_count == 0:
             raise ValidationException("No rag sources found for application, cannot generate")
 
+        
+        await session.execute(
+            update(GrantApplication)
+            .where(GrantApplication.id == application.id)
+            .values(status=ApplicationStatusEnum.GENERATING)
+        )
+        await session.commit()
+
         try:
             await publish_rag_task(
                 logger=logger,
@@ -543,8 +564,12 @@ async def handle_list_applications(
                 item["description"] = app.description
             if submission_date:
                 item["submission_date"] = submission_date.isoformat()
+
+                item["deadline"] = submission_date.isoformat()
             if app.completed_at:
                 item["completed_at"] = app.completed_at.isoformat()
+            if app.parent_id:
+                item["parent_id"] = str(app.parent_id)
             application_items.append(item)
 
         return ApplicationListResponse(
@@ -618,3 +643,106 @@ async def handle_trigger_autofill(
         response["field_name"] = field_name
 
     return response
+
+
+@post(
+    "/projects/{project_id:uuid}/applications/{application_id:uuid}/duplicate",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    operation_id="DuplicateApplication",
+)
+async def handle_duplicate_application(
+    project_id: UUID,
+    application_id: UUID,
+    data: DuplicateApplicationRequestBody,
+    session_maker: async_sessionmaker[Any],
+) -> ApplicationResponse:
+    """Duplicate an existing grant application with forking model"""
+    logger.info(
+        "Duplicating application",
+        project_id=project_id,
+        application_id=application_id,
+        new_title=data["title"],
+    )
+
+    async with session_maker() as session, session.begin():
+        try:
+            original_app = await session.scalar(
+                select(GrantApplication)
+                .where(GrantApplication.id == application_id)
+                .where(GrantApplication.project_id == project_id)
+            )
+
+            if not original_app:
+                raise NotFoundException("Application not found")
+
+            template = await session.scalar(
+                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
+            )
+
+            new_app = await session.scalar(
+                insert(GrantApplication)
+                .values(
+                    {
+                        "project_id": project_id,
+                        "title": data["title"],
+                        "description": original_app.description,
+                        "status": ApplicationStatusEnum.DRAFT,
+                        "form_inputs": original_app.form_inputs,
+                        "research_objectives": original_app.research_objectives,
+                        "text": original_app.text,
+                        "parent_id": application_id,
+                    }
+                )
+                .returning(GrantApplication)
+            )
+
+            new_app_id = new_app.id
+
+            if template:
+                await session.scalar(
+                    insert(GrantTemplate)
+                    .values(
+                        {
+                            "grant_application_id": new_app.id,
+                            "grant_sections": template.grant_sections,
+                            "funding_organization_id": template.funding_organization_id,
+                            "submission_date": template.submission_date,
+                        }
+                    )
+                    .returning(GrantTemplate)
+                )
+
+            rag_sources = await session.execute(
+                select(GrantApplicationRagSource).where(
+                    GrantApplicationRagSource.grant_application_id == application_id
+                )
+            )
+            for rag_source in rag_sources.scalars():
+                await session.execute(
+                    insert(GrantApplicationRagSource).values(
+                        {
+                            "grant_application_id": new_app.id,
+                            "rag_source_id": rag_source.rag_source_id,
+                        }
+                    )
+                )
+
+            await session.commit()
+
+            logger.info(
+                "Application duplicated successfully",
+                original_id=str(application_id),
+                new_id=str(new_app.id),
+                parent_id=str(application_id),
+            )
+
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error duplicating application", exc_info=e)
+            raise DatabaseError("Error duplicating application", context=str(e)) from e
+
+    return await _handle_retrieve_application(
+        project_id=project_id,
+        application_id=new_app_id,
+        session_maker=session_maker,
+    )

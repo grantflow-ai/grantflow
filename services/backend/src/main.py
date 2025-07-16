@@ -16,6 +16,7 @@ from services.backend.src.api.routes.funding_organizations import (
 from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
+    handle_duplicate_application,
     handle_generate_application,
     handle_list_applications,
     handle_retrieve_application,
@@ -71,6 +72,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_create_upload_url,
     handle_create_project,
     handle_delete_application,
+    handle_duplicate_application,
     handle_delete_invitation,
     handle_delete_organization,
     handle_delete_rag_source,

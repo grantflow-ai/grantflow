@@ -128,40 +128,41 @@ export function ResearchDeepDiveStep() {
 		.filter((word: string) => word.length > 0).length;
 
 	return (
-		<div className="flex size-full flex-col" data-testid="research-deep-dive-step">
-			<div className="flex-1 flex flex-col bg-preview-bg">
-				<div className="p-6">
-					<div className="flex items-center justify-between">
-						<div className="flex flex-col">
-							<h2
-								className="font-heading text-lg sm:text-xl md:text-2xl lg:text-2xl font-medium leading-loose whitespace-nowrap"
-								data-testid="research-deep-dive-header"
-							>
-								Research Deep Dive
-							</h2>
-							<p
-								className="text-muted-foreground-dark leading-tight"
-								data-testid="research-deep-dive-description"
-							>
-								Before generating your grant application draft, it would be helpful to learn a bit more
-								about your research to ensure more accurate results.
-							</p>
-						</div>
-						<AppButton
-							className="bg-app-surface-secondary text-app-primary border-app-border-primary shrink-0"
-							data-testid="ai-try-button"
-							disabled={isAutofillLoading || !application}
-							leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
-							onClick={() => triggerAutofill("research_deep_dive")}
-							variant="secondary"
-						>
-							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-						</AppButton>
-					</div>
+		<div
+			className="flex h-screen size-full flex-col overflow-hidden p-6 bg-preview-bg space-y-6"
+			data-testid="research-deep-dive-step"
+		>
+			<div className="flex items-center justify-between mt-5 px-17">
+				<div className="flex flex-col">
+					<h2
+						className="text-app-black text-3xl font-medium font-heading leading-loose"
+						data-testid="research-deep-dive-header"
+					>
+						Research Deep Dive
+					</h2>
+					<p
+						className="text-app-black font-normal text-base leading-tight -mt-2"
+						data-testid="research-deep-dive-description"
+					>
+						Before generating your grant application draft, it would be helpful to learn a bit more about
+						your research to ensure more accurate results.
+					</p>
 				</div>
+				<AppButton
+					className="shrink-0"
+					data-testid="ai-try-button"
+					disabled={isAutofillLoading || !application}
+					leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
+					onClick={() => triggerAutofill("research_deep_dive")}
+					variant="secondary"
+				>
+					{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
+				</AppButton>
+			</div>
 
-				<div className="flex flex-1 gap-6 p-6 pt-0 min-h-0">
-					<div className="flex-1 overflow-y-auto space-y-3 pr-2">
+			<div className="flex flex-1 gap-6 px-16 min-h-0">
+				<div className="flex-1 flex flex-col">
+					<div className="flex-1 overflow-y-auto space-y-3 px-1 pt-1">
 						{RESEARCH_QUESTIONS.map((item, index) => (
 							<QuestionCard
 								index={index + 1}
@@ -175,30 +176,27 @@ export function ResearchDeepDiveStep() {
 							/>
 						))}
 					</div>
+				</div>
 
-					<div className="flex-1">
-						{selectedQuestion === null ? (
-							<div
-								className="flex h-full items-center justify-center"
-								data-testid="empty-state-container"
-							>
-								<p className="text-muted-foreground-dark text-center" data-testid="empty-state-message">
-									Select a question to start answering
-								</p>
-							</div>
-						) : (
-							<AnswerArea
-								answer={currentAnswer}
-								hasChanges={hasUnsavedChanges()}
-								isFirstQuestion={selectedQuestion === 0}
-								onAnswerChange={handleAnswerChange}
-								onBack={handleBack}
-								onSave={handleSave}
-								question={RESEARCH_QUESTIONS[selectedQuestion].question}
-								wordCount={wordCount}
-							/>
-						)}
-					</div>
+				<div className="flex-1">
+					{selectedQuestion === null ? (
+						<div className="flex h-full items-center justify-center" data-testid="empty-state-container">
+							<p className="text-muted-foreground-dark text-center" data-testid="empty-state-message">
+								Select a question to start answering
+							</p>
+						</div>
+					) : (
+						<AnswerArea
+							answer={currentAnswer}
+							hasChanges={hasUnsavedChanges()}
+							isFirstQuestion={selectedQuestion === 0}
+							onAnswerChange={handleAnswerChange}
+							onBack={handleBack}
+							onSave={handleSave}
+							question={RESEARCH_QUESTIONS[selectedQuestion].question}
+							wordCount={wordCount}
+						/>
+					)}
 				</div>
 			</div>
 		</div>
@@ -272,26 +270,51 @@ function QuestionCard({
 	onClick: () => void;
 	question: string;
 }) {
+	const getIndexBackgroundClass = () => {
+		if (isSelected) {
+			return "bg-primary text-white";
+		}
+		if (isAnswered) {
+			return "bg-transparent border border-primary text-primary";
+		}
+		return "bg-app-gray-100 text-muted-foreground";
+	};
+
+	const getCardClasses = () => {
+		if (isSelected) {
+			return "h-14 p-2 cursor-pointer outline outline-2 outline-primary";
+		}
+		if (isAnswered) {
+			return "h-14 p-2 cursor-pointer outline outline-1 outline-primary hover:outline hover:outline-2 hover:outline-primary transition-all";
+		}
+		return "h-14 p-2 cursor-pointer outline outline-1 outline-app-gray-100 hover:outline hover:outline-2 hover:outline-primary transition-all";
+	};
+
+	const getIndexHoverClass = () => {
+		if (isSelected) {
+			return "bg-primary text-white";
+		}
+		return "group-hover:bg-primary group-hover:text-white";
+	};
+
 	return (
-		<AppCard
-			className="p-4 cursor-pointer transition-colors border-2 outline-primary text-app-black"
-			onClick={onClick}
-		>
-			<div className="flex items-start gap-3">
+		<AppCard className={`${getCardClasses()} group`} onClick={onClick}>
+			<div className="flex items-center gap-3 h-full">
 				<div
-					className={`flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-						isAnswered || isSelected ? "bg-app-primary text-white" : "bg-gray-200 text-gray-600"
-					}`}
+					className={`size-7 rounded-full flex items-center justify-center text-sm font-medium ${getIndexBackgroundClass()} ${getIndexHoverClass()}`}
 				>
-					{isAnswered ? "✓" : index}
+					{isAnswered ? (
+						<Image
+							alt="Question completed"
+							height={26}
+							src="/icons/research-question-done.svg"
+							width={26}
+						/>
+					) : (
+						index
+					)}
 				</div>
-				<p
-					className={`text-sm leading-tight ${
-						isSelected ? "text-app-text-primary font-medium" : "text-app-text-secondary"
-					}`}
-				>
-					{question}
-				</p>
+				<p className="text-sm text-gray-700 flex-1 line-clamp-1">{question}</p>
 			</div>
 		</AppCard>
 	);

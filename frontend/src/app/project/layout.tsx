@@ -12,8 +12,8 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 				<SidebarProvider>
 					<AppSidebar />
 					<SidebarInset className="h-screen">
-						<div className="flex h-screen justify-center bg-preview-bg">
-							<div className="flex-1 w-full h-full overflow-hidden bg-preview-bg">{children}</div>
+						<div className="flex h-screen justify-center">
+							<div className="flex-1 w-full h-full overflow-hidden">{children}</div>
 							<NotificationContainer />
 						</div>
 					</SidebarInset>

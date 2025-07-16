@@ -18,7 +18,7 @@ const meta: Meta<typeof GenerateCompleteStep> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/GenerateCompleteStep",
+	title: "Wizard/Steps/GenerateCompleteStep",
 };
 
 export default meta;

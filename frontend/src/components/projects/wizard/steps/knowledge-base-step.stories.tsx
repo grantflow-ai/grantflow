@@ -18,7 +18,7 @@ const meta: Meta<typeof KnowledgeBaseStep> = {
 	parameters: {
 		layout: "fullscreen",
 	},
-	title: "Components/Wizard/KnowledgeBaseStep",
+	title: "Wizard/Steps/KnowledgeBaseStep",
 };
 
 export default meta;

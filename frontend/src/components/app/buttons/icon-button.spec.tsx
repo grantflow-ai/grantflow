@@ -234,7 +234,7 @@ describe("IconButton", () => {
 			await user.keyboard("{Enter}");
 			expect(onClick).toHaveBeenCalledOnce();
 
-			await user.keyboard("{Space}");
+			await user.keyboard(" ");
 			expect(onClick).toHaveBeenCalledTimes(2);
 		});
 
