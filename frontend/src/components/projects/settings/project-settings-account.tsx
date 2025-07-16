@@ -3,12 +3,10 @@
 import { Info, Mail, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { deleteUserProfilePhoto, updateUserProfilePhoto } from "@/actions/profile-photo";
+import { toast } from "sonner";
 import { DeleteAccountModal } from "@/components/projects/settings/delete-account-modal";
-import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
-import { deleteProfilePhoto, getFirebaseAuth, uploadProfilePhoto } from "@/utils/firebase";
 import { log } from "@/utils/logger";
 
 interface ProjectSettingsAccountProps {
@@ -20,12 +18,13 @@ export function ProjectSettingsAccount({
 	projectId: _projectId,
 	userRole = UserRole.MEMBER,
 }: ProjectSettingsAccountProps) {
-	const { setUser, user } = useUserStore();
-	const { addNotification } = useNotificationStore();
+	const { deleteProfilePhoto, updateDisplayName, updateEmail, updateProfilePhoto, user } = useUserStore();
 	const [name, setName] = useState(user?.displayName ?? "");
+	const [email, setEmail] = useState(user?.email ?? "");
 	const [showEmailTooltip, setShowEmailTooltip] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const getInitials = () => {
@@ -66,61 +65,23 @@ export function ProjectSettingsAccount({
 
 		// Validate file type
 		if (!file.type.startsWith("image/")) {
-			addNotification({
-				message: "Please select an image file (PNG, JPG, or GIF)",
-				projectName: "Account Settings",
-				title: "Invalid file type",
-				type: "warning",
-			});
+			toast.error("Please select an image file (PNG, JPG, or GIF)");
 			return;
 		}
 
 		// Validate file size (10MB limit)
 		if (file.size > 10 * 1024 * 1024) {
-			addNotification({
-				message: "Please select an image under 10MB",
-				projectName: "Account Settings",
-				title: "File too large",
-				type: "warning",
-			});
+			toast.error("Please select an image under 10MB");
 			return;
 		}
 
 		setIsUploading(true);
 		try {
-			const auth = getFirebaseAuth();
-			const { currentUser } = auth;
-
-			if (!currentUser) {
-				throw new Error("No authenticated user");
-			}
-
-			// Upload photo to Firebase Storage and update profile
-			const photoURL = await uploadProfilePhoto(currentUser, file);
-
-			// Update server-side profile
-			await updateUserProfilePhoto(photoURL);
-
-			// Update local user store
-			setUser({
-				...user,
-				photoURL,
-			});
-
-			addNotification({
-				message: "Your profile photo has been successfully updated",
-				projectName: "Account Settings",
-				title: "Profile photo updated",
-				type: "success",
-			});
+			await updateProfilePhoto(file);
+			toast.success("Profile photo updated successfully");
 		} catch (error) {
 			log.error("Error uploading profile photo", error);
-			addNotification({
-				message: "Failed to upload profile photo. Please try again.",
-				projectName: "Account Settings",
-				title: "Upload failed",
-				type: "warning",
-			});
+			toast.error("Failed to upload profile photo");
 		} finally {
 			setIsUploading(false);
 			// Reset file input
@@ -135,41 +96,42 @@ export function ProjectSettingsAccount({
 
 		setIsUploading(true);
 		try {
-			const auth = getFirebaseAuth();
-			const { currentUser } = auth;
-
-			if (!currentUser) {
-				throw new Error("No authenticated user");
-			}
-
-			// Delete photo from Firebase Storage and update profile
-			await deleteProfilePhoto(currentUser);
-
-			// Update server-side profile
-			await deleteUserProfilePhoto();
-
-			// Update local user store
-			setUser({
-				...user,
-				photoURL: null,
-			});
-
-			addNotification({
-				message: "Your profile photo has been successfully removed",
-				projectName: "Account Settings",
-				title: "Profile photo removed",
-				type: "success",
-			});
+			await deleteProfilePhoto();
+			toast.success("Profile photo removed successfully");
 		} catch (error) {
 			log.error("Error deleting profile photo", error);
-			addNotification({
-				message: "Failed to delete profile photo. Please try again.",
-				projectName: "Account Settings",
-				title: "Delete failed",
-				type: "warning",
-			});
+			toast.error("Failed to delete profile photo");
 		} finally {
 			setIsUploading(false);
+		}
+	};
+
+	const handleSave = async () => {
+		setIsSaving(true);
+		try {
+			// Update display name if changed
+			if (name !== user?.displayName) {
+				await updateDisplayName(name);
+			}
+
+			// Update email if changed
+			if (email !== user?.email && email) {
+				await updateEmail(email);
+			}
+
+			toast.success("Profile updated successfully");
+		} catch (error) {
+			log.error("Error updating profile", error);
+			const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
+
+			// Check for specific Firebase errors
+			if (errorMessage.includes("auth/requires-recent-login")) {
+				toast.error("Please sign in again to update your email address");
+			} else {
+				toast.error(errorMessage);
+			}
+		} finally {
+			setIsSaving(false);
 		}
 	};
 
@@ -264,9 +226,9 @@ export function ProjectSettingsAccount({
 						{showEmailTooltip && (
 							<div className="absolute left-0 top-6 z-10 w-[300px]" data-testid="email-tooltip">
 								<div className="bg-app-dark-blue text-white text-[14px] font-body px-3 py-1 rounded-sm">
-									The main email address cannot be edited.
+									Changing your email address requires recent authentication.
 									<br />
-									To change it, please contact our support team.
+									You may need to sign in again.
 								</div>
 								<div className="flex justify-start ml-4">
 									<div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-app-dark-blue" />
@@ -276,11 +238,14 @@ export function ProjectSettingsAccount({
 					</div>
 					<div className="relative">
 						<input
-							className="w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 cursor-not-allowed"
+							className="w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 focus:outline-none focus:border-primary"
 							data-testid="email-input"
-							disabled
+							onChange={(e) => {
+								setEmail(e.target.value);
+							}}
+							placeholder="email@example.com"
 							type="email"
-							value={user?.email ?? "Email@address.com"}
+							value={email}
 						/>
 						<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-app-gray-600" />
 					</div>
@@ -297,6 +262,23 @@ export function ProjectSettingsAccount({
 							{getRoleLabel(userRole)}
 						</span>
 					</div>
+				</div>
+
+				{}
+				<div className="flex justify-end pt-4">
+					<button
+						className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-button text-[14px]"
+						data-testid="save-profile-button"
+						disabled={
+							isSaving ||
+							!(name || email) ||
+							!!(user && name === user.displayName && email === user.email)
+						}
+						onClick={handleSave}
+						type="button"
+					>
+						{isSaving ? "Saving..." : "Save Changes"}
+					</button>
 				</div>
 
 				{}
