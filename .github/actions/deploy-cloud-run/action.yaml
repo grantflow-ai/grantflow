@@ -32,39 +32,41 @@ inputs:
 outputs:
     service_url:
         description: "Cloud Run service URL"
-        value: ${{ steps.deploy.outputs.service_url }}
+        value: ${{ steps.deploy.outputs.url }}
     revision:
         description: "Deployed revision name"
-        value: ${{ steps.deploy.outputs.revision }}
+        value: ${{ steps.get-revision.outputs.revision }}
 
 runs:
     using: "composite"
     steps:
         - name: Setup GCP
-          uses: ./.github/actions/setup-gcp
+          uses: google-github-actions/auth@v2
           with:
               workload_identity_provider: ${{ inputs.workload_identity_provider }}
               service_account: ${{ inputs.service_account }}
 
         - name: Deploy to Cloud Run
           id: deploy
+          uses: google-github-actions/deploy-cloudrun@v2
+          with:
+              service: ${{ inputs.service }}
+              image: us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
+              region: ${{ inputs.region }}
+              project_id: ${{ inputs.project_id }}
+              no_traffic: true
+              labels: |
+                  commit-sha=${{ github.sha }}
+                  deployed-by=github-actions
+                  environment=${{ inputs.environment }}
+              env_vars: |
+                  DEPLOYMENT_TIMESTAMP=${{ github.run_id }}
+
+        - name: Get revision name
+          id: get-revision
           shell: bash
           run: |
-              echo "Deploying ${{ inputs.service }} to ${{ inputs.environment }}..."
-              
-              # Construct image URL
-              IMAGE="us-east1-docker.pkg.dev/${{ inputs.project_id }}/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}"
-              
-              # Deploy with zero downtime using --no-traffic flag
-              gcloud run deploy ${{ inputs.service }} \
-                --image "${IMAGE}" \
-                --region ${{ inputs.region }} \
-                --project ${{ inputs.project_id }} \
-                --no-traffic \
-                --update-labels "commit-sha=$(echo ${{ github.sha }} | cut -c1-7),deployed-by=github-actions,environment=${{ inputs.environment }}" \
-                --update-env-vars "DEPLOYMENT_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              
-              # Get the new revision name
+              # Get the latest revision name
               REVISION=$(gcloud run revisions list \
                 --service=${{ inputs.service }} \
                 --region=${{ inputs.region }} \
@@ -73,14 +75,6 @@ runs:
                 --limit=1)
               
               echo "revision=${REVISION}" >> $GITHUB_OUTPUT
-              
-              # Get service URL
-              SERVICE_URL=$(gcloud run services describe ${{ inputs.service }} \
-                --region=${{ inputs.region }} \
-                --project=${{ inputs.project_id }} \
-                --format='value(status.url)')
-              
-              echo "service_url=${SERVICE_URL}" >> $GITHUB_OUTPUT
 
         - name: Health check
           id: health
@@ -90,7 +84,7 @@ runs:
               
               if [ "${{ inputs.service }}" == "backend" ]; then
                 # Backend has a public health endpoint
-                HEALTH_URL="${{ steps.deploy.outputs.service_url }}/health"
+                HEALTH_URL="${{ steps.deploy.outputs.url }}/health"
                 echo "Checking ${HEALTH_URL}..."
                 
                 for i in {1..5}; do
@@ -111,7 +105,7 @@ runs:
                 echo "Checking revision status..."
                 
                 for i in {1..10}; do
-                  STATUS=$(gcloud run revisions describe ${{ steps.deploy.outputs.revision }} \
+                  STATUS=$(gcloud run revisions describe ${{ steps.get-revision.outputs.revision }} \
                     --region=${{ inputs.region }} \
                     --project=${{ inputs.project_id }} \
                     --format='value(status.conditions[0].status)')
@@ -145,7 +139,7 @@ runs:
               echo "✅ Successfully deployed ${{ inputs.service }} to ${{ inputs.environment }}"
 
         - name: Rollback on failure
-          if: failure() && steps.deploy.outputs.revision != ''
+          if: failure() && steps.get-revision.outputs.revision != ''
           shell: bash
           run: |
               echo "⚠️ Rolling back ${{ inputs.service }}..."
