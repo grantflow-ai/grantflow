@@ -17,7 +17,7 @@ class SourceIndexingStatusEnum(StrEnum):
 class ApplicationStatusEnum(StrEnum):
     DRAFT = "DRAFT"
     IN_PROGRESS = "IN_PROGRESS"
-    COMPLETED = "COMPLETED"
+    GENERATING = "GENERATING"
     CANCELLED = "CANCELLED"
 
 
