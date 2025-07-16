@@ -16,7 +16,11 @@ import {
 } from "@/components/ui/sidebar";
 import { routes } from "@/utils/navigation";
 
-export function NavMain() {
+interface NavMainProps {
+	"data-testid"?: string;
+}
+
+export function NavMain(props: NavMainProps) {
 	const pathname = usePathname();
 	const isProjectsActive = pathname === "/projects";
 	const isSettingsActive = pathname.startsWith("/settings");
@@ -29,12 +33,13 @@ export function NavMain() {
 	};
 
 	return (
-		<SidebarMenu>
+		<SidebarMenu {...props}>
 			{/* Dashboard */}
 			<SidebarMenuItem>
 				<SidebarMenuButton
 					asChild
 					className={isProjectsActive ? "bg-white text-primary [&_svg]:text-primary" : ""}
+					data-testid="dashboard-section"
 					isActive={isProjectsActive}
 					tooltip="Dashboard"
 				>
@@ -51,6 +56,7 @@ export function NavMain() {
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
 							className="flex items-center gap-2"
+							data-testid="recent-applications-trigger"
 							onClick={handleExpandSidebar}
 							tooltip="Recent Applications"
 						>
@@ -65,13 +71,16 @@ export function NavMain() {
 								<Search className="absolute left-3 top-2.5 h-4 w-4 text-app-gray-400" />
 								<Input
 									className="pl-9 pr-3 py-2 h-9 bg-white border-app-gray-100 placeholder:text-app-gray-400 placeholder:text-sm"
+									data-testid="search-input"
 									placeholder="Search application"
 								/>
 							</div>
 						</div>
 						<SidebarMenuSub>
 							<SidebarMenuSubItem>
-								<div className="px-3 py-2 text-sm text-app-gray-600">No recent applications</div>
+								<div className="px-3 py-2 text-sm text-app-gray-600" data-testid="recent-app-item">
+									No recent applications
+								</div>
 							</SidebarMenuSubItem>
 						</SidebarMenuSub>
 					</CollapsibleContent>
@@ -79,11 +88,12 @@ export function NavMain() {
 			</Collapsible>
 
 			{/* Settings */}
-			<Collapsible className="group/collapsible">
+			<Collapsible className="group/collapsible" defaultOpen>
 				<SidebarMenuItem>
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
 							className={`flex items-center gap-2 ${isSettingsActive ? "bg-white text-primary [&_svg]:text-primary" : ""}`}
+							data-testid="settings-trigger"
 							isActive={isSettingsActive}
 							onClick={handleExpandSidebar}
 							tooltip="Settings"
@@ -97,22 +107,30 @@ export function NavMain() {
 						<SidebarMenuSub>
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/account"}>
-									<Link href="/settings/account">Account Settings</Link>
+									<Link data-testid="settings-account" href="/settings/account">
+										Account Settings
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/billing"}>
-									<Link href="/settings/billing">Billing & Payments</Link>
+									<Link data-testid="settings-billing" href="/settings/billing">
+										Billing & Payments
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/members"}>
-									<Link href="/settings/members">Members</Link>
+									<Link data-testid="settings-members" href="/settings/members">
+										Members
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton asChild isActive={pathname === "/settings/notifications"}>
-									<Link href="/settings/notifications">Notifications</Link>
+									<Link data-testid="settings-notifications" href="/settings/notifications">
+										Notifications
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
 						</SidebarMenuSub>

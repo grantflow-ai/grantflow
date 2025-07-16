@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
@@ -72,6 +72,26 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			...prev,
 			tasks: [...prev.tasks, { description: "", id: crypto.randomUUID() }],
 		}));
+	};
+
+	const removeTask = (taskId: string) => {
+		setFormData((prev) => ({
+			...prev,
+			tasks: prev.tasks.filter((task) => task.id !== taskId),
+		}));
+
+		// Clear task errors for removed task
+		if (errors.tasks?.[taskId]) {
+			setErrors((prev) => {
+				const newTasks = { ...prev.tasks };
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete newTasks[taskId];
+				return {
+					...prev,
+					tasks: Object.keys(newTasks).length > 0 ? newTasks : undefined,
+				};
+			});
+		}
 	};
 
 	const validateForm = (): boolean => {
@@ -152,32 +172,40 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 
 				<div className="flex items-center justify-between">
 					<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
-					<IconButton
-						data-testid="add-task-button"
-						disabled={formData.tasks.length === 1 && !formData.tasks[0].description.trim()}
-						onClick={addTask}
-						size="sm"
-						type="button"
-						variant="solid"
-					>
+					<IconButton data-testid="add-task-button" onClick={addTask} size="sm" type="button" variant="solid">
 						<Plus className="w-4 h-4" />
 					</IconButton>
 				</div>
 
 				{formData.tasks.map((task, index) => (
-					<AppTextArea
-						className="min-h-52"
-						errorMessage={errors.tasks?.[task.id]}
-						id={`task-description-${index}`}
-						key={task.id}
-						label="Task description"
-						onChange={(e) => {
-							updateTask(task.id, e.target.value);
-						}}
-						placeholder="Describe a step to achieve this objective"
-						testId={`task-description-${index}`}
-						value={task.description}
-					/>
+					<div className="flex gap-3 items-start" key={task.id}>
+						<AppTextArea
+							className="min-h-52 flex-1"
+							errorMessage={errors.tasks?.[task.id]}
+							id={`task-description-${index}`}
+							label="Task description"
+							onChange={(e) => {
+								updateTask(task.id, e.target.value);
+							}}
+							placeholder="Describe a step to achieve this objective"
+							testId={`task-description-${index}`}
+							value={task.description}
+						/>
+						{formData.tasks.length > 1 && (
+							<IconButton
+								className="mt-6"
+								data-testid={`remove-task-${index}`}
+								onClick={() => {
+									removeTask(task.id);
+								}}
+								size="sm"
+								type="button"
+								variant="float"
+							>
+								<Minus className="w-4 h-4" />
+							</IconButton>
+						)}
+					</div>
 				))}
 			</div>
 
