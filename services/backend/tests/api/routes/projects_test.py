@@ -240,6 +240,15 @@ async def test_retrieve_project_success(
             assert app["title"] == "Application 2"
             assert app["completed_at"] is None
 
+    
+    members = response_data["members"]
+    assert len(members) == 1
+    assert members[0]["firebase_uid"] == firebase_uid
+    assert members[0]["role"] == user_role.value
+    assert members[0]["email"] == f"test-{firebase_uid}@example.com"
+    assert members[0]["display_name"] == f"Test User {firebase_uid}"
+    assert members[0]["photo_url"] == f"https://example.com/photo-{firebase_uid}.jpg"
+
 
 async def test_retrieve_project_unauthorized(
     test_client: TestingClientType,

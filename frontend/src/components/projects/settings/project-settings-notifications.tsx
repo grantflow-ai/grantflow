@@ -35,19 +35,18 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 	return (
 		<div className="w-full" data-testid="project-settings-notifications">
 			<div className="mb-8">
-				<h2 className="text-[24px] font-medium text-text-primary font-heading mb-2">
+				<h2 className="text-[16px] font-heading font-semibold text-app-black mb-2">
 					General Email Notifications
 				</h2>
 			</div>
 
 			<div className="space-y-6">
-				{}
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
-						<h3 className="text-[16px] font-normal text-text-primary font-body mb-1">
+						<h3 className="text-[16px] font-body font-normal text-app-black mb-1">
 							Receive important email notifications
 						</h3>
-						<p className="text-[14px] font-normal text-text-secondary font-body">
+						<p className="text-[14px] font-body font-normal text-app-gray-600">
 							Get notified about deadlines, collaborator activity, and grant updates.
 						</p>
 					</div>
@@ -60,11 +59,10 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					/>
 				</div>
 
-				{}
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
-						<h3 className="text-[16px] font-normal text-text-primary font-body mb-1">Deadline Reminders</h3>
-						<p className="text-[14px] font-normal text-text-secondary font-body">
+						<h3 className="text-[16px] font-body font-normal text-app-black mb-1">Deadline Reminders</h3>
+						<p className="text-[14px] font-body font-normal text-app-gray-600">
 							Get notified 6 days and 1 day before a grant deadline.
 						</p>
 					</div>
@@ -77,17 +75,16 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					/>
 				</div>
 
-				{}
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
-						<h3 className="text-[16px] font-normal text-text-primary font-body mb-1">
+						<h3 className="text-[16px] font-body font-normal text-app-black mb-1">
 							Collaboration Activity
 						</h3>
 						<div className="space-y-1">
-							<p className="text-[14px] font-normal text-text-secondary font-body">
+							<p className="text-[14px] font-body font-normal text-app-gray-600">
 								Notify me when someone comments or edits
 							</p>
-							<p className="text-[14px] font-normal text-text-secondary font-body">
+							<p className="text-[14px] font-body font-normal text-app-gray-600">
 								Stay updated on changes and suggestions from your team.
 							</p>
 						</div>

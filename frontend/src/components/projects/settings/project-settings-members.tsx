@@ -1,11 +1,10 @@
 "use client";
 
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Edit, MoreVertical, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { deleteInvitation, getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { AppAvatar } from "@/components/app";
 import { EditPermissionModal, InviteCollaboratorModal } from "@/components/projects";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
@@ -20,22 +19,26 @@ interface ProjectMember {
 	invitationId?: string;
 	joinedAt: string;
 	photoUrl?: null | string;
-	projectAccess?: string[];
 	role: UserRole;
 	status: "active" | "pending";
 }
 
 interface ProjectSettingsMembersProps {
 	currentUserRole: UserRole;
+	onInviteHandlerChange?: (handler: (() => void) | undefined) => void;
 	projectId: string;
 	projectName: string;
 }
 
-const ROLE_COLORS = {
-	[UserRole.ADMIN]: "bg-[#9747ff] text-white",
-	[UserRole.MEMBER]: "bg-text-secondary text-white",
-	[UserRole.OWNER]: "bg-primary text-white",
-};
+// Avatar colors based on email hash
+const AVATAR_COLORS = [
+	"bg-[#369e94]", // Teal (like in Figma)
+	"bg-[#9747ff]", // Purple (like in Figma)
+	"bg-[#4dc283]", // Green (like in Figma)
+	"bg-[#ff6b6b]", // Red
+	"bg-[#4ecdc4]", // Cyan
+	"bg-[#45b7d1]", // Blue
+];
 
 const ROLE_LABELS = {
 	[UserRole.ADMIN]: "Admin",
@@ -43,7 +46,12 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
-export function ProjectSettingsMembers({ currentUserRole, projectId, projectName }: ProjectSettingsMembersProps) {
+export function ProjectSettingsMembers({
+	currentUserRole,
+	onInviteHandlerChange,
+	projectId,
+	projectName,
+}: ProjectSettingsMembersProps) {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [editingMember, setEditingMember] = useState<null | ProjectMember>(null);
 	const [pendingInvitations, setPendingInvitations] = useState<ProjectMember[]>([]);
@@ -62,10 +70,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 	const handleRemoveMember = async (firebaseUid: string) => {
 		try {
 			await removeProjectMember(projectId, firebaseUid);
-
-			// Refresh the members list
 			await mutate(`/projects/${projectId}/members`);
-
 			addNotification({
 				message: "The member has been removed from the project",
 				projectName,
@@ -83,13 +88,10 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 		}
 	};
 
-	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole, _projectAccess?: string[]) => {
+	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole) => {
 		try {
 			await updateProjectMemberRole(projectId, firebaseUid, { role: newRole });
-
-			// Refresh the members list
 			await mutate(`/projects/${projectId}/members`);
-
 			addNotification({
 				message: `Member role has been updated to ${ROLE_LABELS[newRole]}`,
 				projectName,
@@ -110,10 +112,7 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 	const handleCancelInvitation = async (invitationId: string, email: string) => {
 		try {
 			await deleteInvitation(projectId, invitationId);
-
-			// Remove from pending invitations
 			setPendingInvitations((prev) => prev.filter((inv) => inv.invitationId !== invitationId));
-
 			addNotification({
 				message: `Invitation to ${email} has been cancelled`,
 				projectName,
@@ -157,10 +156,9 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				return;
 			}
 
-			// Add to pending invitations list
 			const newPendingInvitation: ProjectMember = {
 				email,
-				firebaseUid: "", // Not applicable for pending invitations
+				firebaseUid: "",
 				fullName: null,
 				invitationId: result.invitationId,
 				joinedAt: new Date().toISOString(),
@@ -170,7 +168,6 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 			};
 
 			setPendingInvitations((prev) => [...prev, newPendingInvitation]);
-
 			addNotification({
 				message: `Invitation sent to ${email}`,
 				projectName,
@@ -193,6 +190,19 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 
 	const canInvite = currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN;
 
+	// Pass invite handler to parent
+	useEffect(() => {
+		if (onInviteHandlerChange) {
+			onInviteHandlerChange(
+				canInvite
+					? () => {
+							setIsInviteModalOpen(true);
+						}
+					: undefined,
+			);
+		}
+	}, [canInvite, onInviteHandlerChange]);
+
 	// Map API response to component format and combine with pending invitations
 	const mappedMembers: ProjectMember[] = members.map((member) => ({
 		email: member.email,
@@ -200,7 +210,6 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 		fullName: member.display_name,
 		joinedAt: member.joined_at,
 		photoUrl: member.photo_url,
-		projectAccess: [],
 		role: member.role as UserRole,
 		status: "active" as const,
 	}));
@@ -211,174 +220,138 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 	if (isLoading) {
 		return (
 			<div className="w-full flex items-center justify-center py-12">
-				<p className="text-text-secondary">Loading members...</p>
+				<p className="text-app-gray-600">Loading members...</p>
 			</div>
 		);
 	}
 
 	return (
 		<div className="w-full" data-testid="project-settings-members">
-			{}
-			<div className="flex items-center justify-between mb-6">
-				<div>
-					<h2 className="text-[24px] font-medium text-text-primary mb-2 font-heading">Team Members</h2>
-					<p className="text-text-secondary text-[16px] font-body">
-						Manage who has access to this project and their permissions.
-					</p>
-				</div>
-				{canInvite && (
-					<button
-						className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm font-body"
-						data-testid="invite-button"
-						onClick={() => {
-							setIsInviteModalOpen(true);
-						}}
-						type="button"
-					>
-						<Plus className="size-4" />
-						Invite
-					</button>
-				)}
-			</div>
-
-			{}
-			<div className="bg-surface-primary border border-border-primary rounded-lg overflow-hidden">
-				{}
-				<div className="bg-surface-secondary border-b border-border-primary px-6 py-4">
-					<div className="grid grid-cols-5 gap-4">
-						<div className="font-semibold text-[14px] text-text-secondary font-body">Name</div>
-						<div className="font-semibold text-[14px] text-text-secondary font-body">Email</div>
-						<div className="font-semibold text-[14px] text-text-secondary font-body">Role</div>
-						<div className="font-semibold text-[14px] text-text-secondary font-body">
-							Research Projects Access
+			{/* Table Structure */}
+			<div className="w-full">
+				<div className="flex w-full">
+					{/* Avatar Column */}
+					<div className="flex flex-col min-w-[60px]">
+						{/* Header */}
+						<div className="h-[41px] border-b border-app-gray-400 flex items-center justify-center px-2">
+							<div className="font-heading font-semibold text-[16px] text-app-black">&nbsp;</div>
 						</div>
-						<div className="font-semibold text-[14px] text-text-secondary font-body">{}</div>
+						{/* Rows */}
+						{allMembers.map((member) => (
+							<div
+								className={`h-[41px] border-b border-app-gray-100 flex items-center justify-center px-2 ${
+									member.status === "pending" ? "bg-app-gray-20" : ""
+								}`}
+								key={member.firebaseUid || member.email}
+							>
+								<ColoredAvatar
+									email={member.email}
+									initials={generateInitials(member.fullName ?? undefined, member.email)}
+								/>
+							</div>
+						))}
 					</div>
-				</div>
 
-				{}
-				<div className="divide-y divide-border-primary" data-testid="members-list">
-					{allMembers.map((member) => (
-						<div
-							className="px-6 py-4 hover:bg-surface-secondary transition-colors"
-							data-testid={`member-row-${member.firebaseUid || member.email}`}
-							key={member.firebaseUid || member.email}
-						>
-							<div className="grid grid-cols-5 gap-4 items-center">
-								{}
-								<div className="flex items-center gap-3">
-									<AppAvatar
-										initials={generateInitials(member.fullName ?? undefined, member.email)}
-										size="sm"
-									/>
-									<div className="flex flex-col">
-										<span className="text-[16px] text-text-primary truncate font-body">
-											{member.fullName ?? "Pending Invitation"}
-										</span>
-										{member.status === "pending" && (
-											<span className="text-[12px] text-yellow-600 font-medium">
-												Invitation sent
-											</span>
-										)}
-									</div>
-								</div>
-
-								{}
-								<div className="text-[14px] text-text-secondary truncate font-body">{member.email}</div>
-
-								{}
-								<div>
-									<RoleBadge role={member.role} />
-								</div>
-
-								{}
-								<div>
-									<ProjectAccessBadges projectAccess={member.projectAccess} role={member.role} />
-								</div>
-
-								{}
-								<div className="flex justify-end">
-									<MemberActionMenu
-										currentUserRole={currentUserRole}
-										member={member}
-										onCancelInvitation={
-											member.status === "pending" && member.invitationId
-												? () => handleCancelInvitation(member.invitationId!, member.email)
-												: undefined
-										}
-										onEditPermissions={(member) => {
-											setEditingMember(member);
-										}}
-										onRemoveMember={() => handleRemoveMember(member.firebaseUid)}
-									/>
+					{/* Name Column */}
+					<div className="flex-1 flex flex-col min-w-[150px]">
+						{/* Header */}
+						<div className="h-[41px] border-b border-app-gray-400 flex items-center px-2">
+							<div className="font-heading font-semibold text-[16px] text-app-black">Name</div>
+						</div>
+						{/* Rows */}
+						{allMembers.map((member) => (
+							<div
+								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
+									member.status === "pending" ? "bg-app-gray-20" : ""
+								}`}
+								key={member.firebaseUid || member.email}
+							>
+								<div className="font-body text-[14px] text-app-gray-600">
+									{member.fullName ?? "Name name"}
 								</div>
 							</div>
+						))}
+					</div>
+
+					{/* Email Column */}
+					<div className="flex-1 flex flex-col min-w-[180px]">
+						{/* Header */}
+						<div className="h-[41px] border-b border-app-gray-400 flex items-center px-2">
+							<div className="font-heading font-semibold text-[16px] text-app-black">Email</div>
 						</div>
-					))}
+						{/* Rows */}
+						{allMembers.map((member) => (
+							<div
+								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
+									member.status === "pending" ? "bg-app-gray-20" : ""
+								}`}
+								key={member.firebaseUid || member.email}
+							>
+								<div className="font-body text-[14px] text-app-gray-600">{member.email}</div>
+							</div>
+						))}
+					</div>
+
+					{/* Role Column */}
+					<div className="flex-1 flex flex-col min-w-[120px]">
+						{/* Header */}
+						<div className="h-[41px] border-b border-app-gray-400 flex items-center px-2">
+							<div className="font-heading font-semibold text-[16px] text-app-black">Role</div>
+						</div>
+						{/* Rows */}
+						{allMembers.map((member) => (
+							<div
+								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
+									member.status === "pending" ? "bg-app-gray-20" : ""
+								}`}
+								key={member.firebaseUid || member.email}
+							>
+								<FigmaRoleBadge role={member.role} />
+							</div>
+						))}
+					</div>
+
+					{/* Actions Column */}
+					<div className="flex flex-col min-w-[60px]">
+						{/* Header */}
+						<div className="h-[41px] border-b border-app-gray-400 flex items-center justify-center px-2">
+							<div className="font-heading font-semibold text-[16px] text-app-black">&nbsp;</div>
+						</div>
+						{/* Rows */}
+						{allMembers.map((member) => (
+							<div
+								className={`h-[41px] border-b border-app-gray-100 flex items-center justify-center px-2 ${
+									member.status === "pending" ? "bg-app-gray-20" : ""
+								}`}
+								key={member.firebaseUid || member.email}
+							>
+								<MemberActionMenu
+									currentUserRole={currentUserRole}
+									member={member}
+									onCancelInvitation={
+										member.status === "pending" && member.invitationId
+											? () => handleCancelInvitation(member.invitationId!, member.email)
+											: undefined
+									}
+									onEditPermissions={(member) => {
+										setEditingMember(member);
+									}}
+									onRemoveMember={() => handleRemoveMember(member.firebaseUid)}
+								/>
+							</div>
+						))}
+					</div>
 				</div>
 
-				{}
+				{/* Empty State */}
 				{allMembers.length === 0 && (
 					<div className="px-6 py-12 text-center" data-testid="empty-state">
-						<p className="text-[16px] text-text-secondary mb-4 font-body">No team members yet.</p>
-						{canInvite && (
-							<button
-								className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-[14px] mx-auto font-body"
-								data-testid="invite-first-member-button"
-								onClick={() => {
-									setIsInviteModalOpen(true);
-								}}
-								type="button"
-							>
-								<Plus className="size-4" />
-								Invite your first team member
-							</button>
-						)}
+						<p className="text-[16px] text-app-gray-600 mb-4 font-body">No team members yet.</p>
 					</div>
 				)}
 			</div>
 
-			{}
-			<div className="mt-6 grid grid-cols-3 gap-4">
-				<div
-					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
-					data-testid="total-members-stat"
-				>
-					<div className="text-[14px] text-text-secondary mb-1 font-body">Total Members</div>
-					<div
-						className="text-[24px] font-semibold text-text-primary font-heading"
-						data-testid="total-members-count"
-					>
-						{mappedMembers.length + pendingInvitations.length}
-					</div>
-				</div>
-				<div
-					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
-					data-testid="admins-stat"
-				>
-					<div className="text-[14px] text-text-secondary mb-1 font-body">Admins</div>
-					<div
-						className="text-[24px] font-semibold text-text-primary font-heading"
-						data-testid="admins-count"
-					>
-						{allMembers.filter((m) => m.role === UserRole.ADMIN || m.role === UserRole.OWNER).length}
-					</div>
-				</div>
-				<div
-					className="bg-surface-secondary border border-border-primary rounded-lg p-4"
-					data-testid="collaborators-stat"
-				>
-					<div className="text-[14px] text-text-secondary mb-1 font-body">Collaborators</div>
-					<div
-						className="text-[24px] font-semibold text-text-primary font-heading"
-						data-testid="collaborators-count"
-					>
-						{allMembers.filter((m) => m.role === UserRole.MEMBER).length}
-					</div>
-				</div>
-			</div>
-
-			{}
+			{/* Modals */}
 			{isInviteModalOpen && (
 				<InviteCollaboratorModal
 					isOpen={isInviteModalOpen}
@@ -389,7 +362,6 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				/>
 			)}
 
-			{}
 			<EditPermissionModal
 				currentUserRole={currentUserRole}
 				isOpen={editingMember !== null}
@@ -397,11 +369,39 @@ export function ProjectSettingsMembers({ currentUserRole, projectId, projectName
 				onClose={() => {
 					setEditingMember(null);
 				}}
-				onUpdateRole={(firebaseUid, newRole, projectAccess) =>
-					handleUpdateRole(firebaseUid, newRole, projectAccess)
-				}
+				onUpdateRole={(firebaseUid, newRole) => handleUpdateRole(firebaseUid, newRole)}
 			/>
 		</div>
+	);
+}
+
+// Simple hash function to get consistent color based on email
+const hashCode = (str: string) => {
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		const char = str.codePointAt(i) ?? 0;
+		hash = (hash << 5) - hash + char;
+		hash &= hash; // Convert to 32-bit integer
+	}
+	return Math.abs(hash);
+};
+
+function ColoredAvatar({ email, initials }: { email: string; initials: string }) {
+	const colorIndex = hashCode(email) % AVATAR_COLORS.length;
+	const colorClass = AVATAR_COLORS[colorIndex];
+
+	return (
+		<div className={`size-[25px] rounded flex items-center justify-center ${colorClass}`}>
+			<span className="font-body font-semibold text-[16px] text-white">{initials}</span>
+		</div>
+	);
+}
+
+function FigmaRoleBadge({ role }: { role: UserRole }) {
+	return (
+		<span className="px-2 py-0 bg-app-gray-100 rounded-[20px] text-[12px] font-body text-app-dark-blue">
+			{ROLE_LABELS[role]}
+		</span>
 	);
 }
 
@@ -449,62 +449,55 @@ function MemberActionMenu({
 	return (
 		<div className="relative" ref={menuRef}>
 			<button
-				className="p-2 hover:bg-surface-secondary rounded-md transition-colors"
-				data-testid={`member-action-menu-${member.firebaseUid || member.email}`}
+				className="p-1 hover:bg-app-gray-100 rounded transition-colors"
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
 				type="button"
 			>
-				<MoreHorizontal className="size-4 text-text-secondary" />
+				<MoreVertical className="size-4 text-app-gray-600" />
 			</button>
 
 			{isOpen && (
-				<div
-					className="absolute right-0 top-full mt-1 w-48 bg-surface-primary border border-border-primary rounded-md shadow-lg z-10"
-					data-testid={`member-action-dropdown-${member.firebaseUid || member.email}`}
-				>
+				<div className="absolute right-0 top-full mt-1 w-[200px] bg-white border border-app-gray-100 rounded shadow-lg z-10">
 					<div className="py-1">
 						{isPending && onCancelInvitation ? (
 							<button
-								className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-								data-testid={`cancel-invitation-${member.email}`}
+								className="w-full px-3 py-3 text-left text-[16px] text-app-black hover:bg-app-gray-20 transition-colors flex items-center gap-2"
 								onClick={() => {
 									onCancelInvitation();
 									setIsOpen(false);
 								}}
 								type="button"
 							>
-								Cancel invitation
+								<X className="size-4" />
+								Remove
 							</button>
 						) : (
 							<>
 								{currentUserRole === UserRole.OWNER && (
-									<>
-										<button
-											className="w-full px-4 py-2 text-left text-sm text-text-primary hover:bg-surface-secondary transition-colors"
-											data-testid={`edit-permissions-${member.firebaseUid}`}
-											onClick={() => {
-												onEditPermissions(member);
-												setIsOpen(false);
-											}}
-											type="button"
-										>
-											Edit permissions
-										</button>
-										<hr className="my-1 border-border-primary" />
-									</>
+									<button
+										className="w-full px-3 py-3 text-left text-[16px] text-app-black hover:bg-app-gray-20 transition-colors flex items-center gap-2"
+										onClick={() => {
+											onEditPermissions(member);
+											setIsOpen(false);
+										}}
+										type="button"
+									>
+										<Edit className="size-4" />
+										Edit Permission
+									</button>
 								)}
 								<button
-									className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
-									data-testid={`remove-member-${member.firebaseUid}`}
+									className="w-full px-3 py-3 text-left text-[16px] text-app-black hover:bg-app-gray-20 transition-colors flex items-center gap-2"
 									onClick={() => {
 										onRemoveMember();
 										setIsOpen(false);
 									}}
 									type="button"
 								>
-									Remove from project
+									<X className="size-4" />
+									Remove
 								</button>
 							</>
 						)}
@@ -513,46 +506,4 @@ function MemberActionMenu({
 			)}
 		</div>
 	);
-}
-
-function ProjectAccessBadges({ projectAccess = [], role }: { projectAccess?: string[]; role: UserRole }) {
-	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
-		return (
-			<div className="flex items-center gap-2">
-				<span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium">All</span>
-			</div>
-		);
-	}
-
-	if (projectAccess.length === 0) {
-		return (
-			<div className="flex items-center gap-2">
-				<span className="px-3 py-1 bg-surface-secondary text-text-secondary rounded-full text-sm">
-					No access
-				</span>
-			</div>
-		);
-	}
-
-	const displayedApps = projectAccess.slice(0, 4);
-	const remainingCount = projectAccess.length - 4;
-
-	return (
-		<div className="flex items-center gap-2 flex-wrap">
-			{displayedApps.map((appId) => (
-				<span className="px-3 py-1 bg-primary text-white rounded-full text-sm font-medium" key={appId}>
-					{appId}
-				</span>
-			))}
-			{remainingCount > 0 && (
-				<span className="px-3 py-1 bg-text-secondary text-white rounded-full text-sm font-medium">
-					+ {remainingCount}
-				</span>
-			)}
-		</div>
-	);
-}
-
-function RoleBadge({ role }: { role: UserRole }) {
-	return <span className={`px-2 py-1 rounded-md text-sm font-medium ${ROLE_COLORS[role]}`}>{ROLE_LABELS[role]}</span>;
 }

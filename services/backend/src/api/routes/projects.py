@@ -52,6 +52,7 @@ class ProjectListItemResponse(ProjectBaseResponse):
 
 class ProjectResponse(ProjectBaseResponse):
     grant_applications: list["BaseApplicationResponse"]
+    members: list["ProjectMemberInfo"]
 
 
 class BaseApplicationResponse(TableIdResponse):
@@ -228,11 +229,39 @@ async def handle_update_project(
 async def handle_retrieve_project(
     request: APIRequest, project_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ProjectResponse:
+    store = request.app.stores.get("firebase_user_cache")
     logger.info("Retrieving project", project_id=project_id)
+
     async with session_maker() as session, session.begin():
         project = await session.scalar(
-            select(Project).options(selectinload(Project.grant_applications)).where(Project.id == project_id)
+            select(Project)
+            .options(
+                selectinload(Project.grant_applications),
+                selectinload(Project.project_users),
+            )
+            .where(Project.id == project_id)
         )
+
+    
+    member_uids = [pu.firebase_uid for pu in project.project_users]
+
+    
+    cached_data = await gather(*[store.get(uid) for uid in member_uids])
+
+    firebase_users: dict[str, dict[str, Any]] = {}
+    for uid, data in zip(member_uids, cached_data, strict=False):
+        if data:
+            firebase_users[uid] = msgspec.json.decode(data)
+
+    
+    if missing_uids := list(set(member_uids) - set(firebase_users.keys())):
+        fetched_users = await get_users(missing_uids)
+
+        
+        for uid, user_data in fetched_users.items():
+            await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
+
+        firebase_users.update(fetched_users)
 
     return ProjectResponse(
         id=str(project.id),
@@ -247,6 +276,16 @@ async def handle_retrieve_project(
                 completed_at=grant_application.completed_at.isoformat() if grant_application.completed_at else None,
             )
             for grant_application in project.grant_applications
+        ],
+        members=[
+            ProjectMemberInfo(
+                firebase_uid=pu.firebase_uid,
+                email=firebase_users[pu.firebase_uid]["email"],
+                display_name=firebase_users.get(pu.firebase_uid, {}).get("displayName"),
+                photo_url=firebase_users.get(pu.firebase_uid, {}).get("photoURL"),
+                role=pu.role,
+            )
+            for pu in project.project_users
         ],
     )
 
