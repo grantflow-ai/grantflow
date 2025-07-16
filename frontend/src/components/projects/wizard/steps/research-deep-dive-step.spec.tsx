@@ -135,13 +135,14 @@ describe("ResearchDeepDiveStep", () => {
 
 		render(<ResearchDeepDiveStep />);
 
-		const textarea = screen.getByTestId("research-deep-dive-answer");
+		let textarea = screen.getByTestId("research-deep-dive-answer");
 		expect(textarea).toHaveValue("Background context");
 
 		const secondQuestion = screen.getByTestId("question-card-1");
 		await user.click(secondQuestion);
 
 		await waitFor(() => {
+			textarea = screen.getByTestId("research-deep-dive-answer");
 			expect(textarea).toHaveValue("Research hypothesis");
 		});
 	});
