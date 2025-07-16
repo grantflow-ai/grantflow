@@ -37,7 +37,7 @@ async def test_login_new_user_creates_project(
 
         project = await session.scalar(select(Project).where(Project.id == project_user.project_id))
         assert project is not None
-        assert project.name == "default"
+        assert project.name == "New Research Project"
 
 
 async def test_login_existing_user_keeps_project(

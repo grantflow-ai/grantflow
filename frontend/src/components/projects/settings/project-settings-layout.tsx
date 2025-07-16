@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { API } from "@/types/api-types";
@@ -9,10 +10,11 @@ import { routes } from "@/utils/navigation";
 interface ProjectSettingsLayoutProps {
 	activeTab: string;
 	children: React.ReactNode;
+	onInviteClick?: () => void;
 	project: API.GetProject.Http200.ResponseBody;
 }
 
-export function ProjectSettingsLayout({ activeTab, children, project }: ProjectSettingsLayoutProps) {
+export function ProjectSettingsLayout({ activeTab, children, onInviteClick, project }: ProjectSettingsLayoutProps) {
 	const userRole = project.role as UserRole;
 
 	const allTabs = [
@@ -46,19 +48,19 @@ export function ProjectSettingsLayout({ activeTab, children, project }: ProjectS
 	});
 
 	return (
-		<div className="flex size-full flex-col items-start">
-			<div className="flex size-full flex-col items-start justify-start px-10 py-14 gap-14">
-				<div className="flex w-full flex-col gap-8">
-					<h1 className="font-medium text-[36px] leading-[42px] text-text-primary font-heading">Settings</h1>
+		<div className="flex flex-col gap-8">
+			<div className="flex w-full flex-col gap-8">
+				<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">Settings</h1>
 
+				<div className="flex items-center justify-between w-full">
 					<div className="flex items-center gap-6">
 						{tabs.map((tab) => (
 							<Link
 								className={cn(
-									"relative px-2 py-3 text-[16px] text-text-primary transition-all font-body",
+									"relative px-2 py-3 text-[16px] transition-all",
 									activeTab === tab.key
-										? "font-semibold border-b-[3px] border-primary font-heading"
-										: "hover:text-text-secondary",
+										? "font-heading font-semibold text-app-black border-b-[3px] border-primary"
+										: "font-body text-app-black hover:text-app-gray-600",
 								)}
 								data-testid={`settings-tab-${tab.key}`}
 								href={tab.href}
@@ -68,10 +70,23 @@ export function ProjectSettingsLayout({ activeTab, children, project }: ProjectS
 							</Link>
 						))}
 					</div>
-				</div>
 
-				<div className="w-full">{children}</div>
+					{activeTab === "members" &&
+						onInviteClick &&
+						(userRole === UserRole.OWNER || userRole === UserRole.ADMIN) && (
+							<button
+								className="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded font-button text-[16px] hover:bg-primary/90 transition-colors"
+								onClick={onInviteClick}
+								type="button"
+							>
+								<Plus className="size-4" />
+								Invite
+							</button>
+						)}
+				</div>
 			</div>
+
+			<div className="w-full">{children}</div>
 		</div>
 	);
 }

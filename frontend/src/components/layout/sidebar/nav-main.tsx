@@ -23,7 +23,7 @@ interface NavMainProps {
 export function NavMain(props: NavMainProps) {
 	const pathname = usePathname();
 	const isProjectsActive = pathname === "/projects";
-	const isSettingsActive = pathname.startsWith("/settings");
+	const isSettingsActive = pathname.startsWith("/project/settings");
 	const { setOpen, state } = useSidebar();
 
 	const handleExpandSidebar = () => {
@@ -104,24 +104,32 @@ export function NavMain(props: NavMainProps) {
 					</CollapsibleTrigger>
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
 						<SidebarMenuSub>
-							<SidebarMenuSubItem data-testid="settings-account">
-								<SidebarMenuSubButton asChild isActive={pathname === "/settings/account"}>
-									<Link href="/settings/account">Account Settings</Link>
+							<SidebarMenuSubItem>
+								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/account"}>
+									<Link data-testid="settings-account" href="/project/settings/account">
+										Account Settings
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem data-testid="settings-billing">
-								<SidebarMenuSubButton asChild isActive={pathname === "/settings/billing"}>
-									<Link href="/settings/billing">Billing & Payments</Link>
+							<SidebarMenuSubItem>
+								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/billing"}>
+									<Link data-testid="settings-billing" href="/project/settings/billing">
+										Billing & Payments
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem data-testid="settings-members">
-								<SidebarMenuSubButton asChild isActive={pathname === "/settings/members"}>
-									<Link href="/settings/members">Members</Link>
+							<SidebarMenuSubItem>
+								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/members"}>
+									<Link data-testid="settings-members" href="/project/settings/members">
+										Members
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							<SidebarMenuSubItem data-testid="settings-notifications">
-								<SidebarMenuSubButton asChild isActive={pathname === "/settings/notifications"}>
-									<Link href="/settings/notifications">Notifications</Link>
+							<SidebarMenuSubItem>
+								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/notifications"}>
+									<Link data-testid="settings-notifications" href="/project/settings/notifications">
+										Notifications
+									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
 						</SidebarMenuSub>

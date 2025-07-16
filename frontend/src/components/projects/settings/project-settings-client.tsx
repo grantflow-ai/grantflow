@@ -1,17 +1,13 @@
 "use client";
 
-import { BellIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { toast } from "sonner";
-import { createApplication } from "@/actions/grant-applications";
-import { ProjectSettingsAccount, ProjectSettingsMembers, ProjectSidebar } from "@/components/projects";
-import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { useNavigationStore } from "@/stores/navigation-store";
+import { useEffect, useState } from "react";
+import { AppHeader } from "@/components/layout/app-header";
+import { ProjectSettingsAccount, ProjectSettingsMembers } from "@/components/projects";
 import { useProjectStore } from "@/stores/project-store";
-import { useUserStore } from "@/stores/user-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
+import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import { ProjectSettingsLayout } from "./project-settings-layout";
 import { ProjectSettingsNotifications } from "./project-settings-notifications";
 
@@ -19,28 +15,10 @@ interface ProjectSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications";
 }
 
-const mockApplications = [
-	{
-		id: "1",
-		name: "Application Name",
-		status: "COMPLETED" as const,
-	},
-	{
-		id: "2",
-		name: "Application Name",
-		status: "IN_PROGRESS" as const,
-	},
-	{
-		id: "3",
-		name: "Application Name",
-		status: "DRAFT" as const,
-	},
-];
-
 export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps) {
 	const router = useRouter();
-	const { user } = useUserStore();
 	const { project } = useProjectStore();
+	const [inviteHandler, setInviteHandler] = useState<(() => void) | undefined>();
 
 	// Redirect if no project context
 	useEffect(() => {
@@ -49,9 +27,9 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 		}
 	}, [project, router]);
 
-	// Check role for billing/members pages
+	// Check role for billing pages - only OWNER and ADMIN can access billing
 	useEffect(() => {
-		if (project && project.role === "MEMBER" && (activeTab === "billing" || activeTab === "members")) {
+		if (project && project.role === "MEMBER" && activeTab === "billing") {
 			router.replace(routes.project.settings.account());
 		}
 	}, [project, activeTab, router]);
@@ -60,17 +38,12 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 		return null; // Will redirect
 	}
 
-	const getInitials = () => {
-		if (user?.displayName) {
-			return user.displayName
-				.split(" ")
-				.map((n) => n[0])
-				.join("")
-				.toUpperCase()
-				.slice(0, 2);
-		}
-		return user?.email?.[0]?.toUpperCase() ?? "U";
-	};
+	// Generate team members for AppHeader (similar to dashboard)
+	const projectTeamMembers = project.members.map((member) => ({
+		backgroundColor: generateBackgroundColor(member.firebase_uid),
+		initials: generateInitials(member.display_name ?? undefined, member.email),
+		...(member.photo_url && { imageUrl: member.photo_url }),
+	}));
 
 	const renderSettingsContent = () => {
 		switch (activeTab) {
@@ -80,7 +53,7 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 			case "billing": {
 				return (
 					<div className="flex items-center justify-center h-full" data-testid="billing-settings">
-						<p className="text-[#636170]">Billing settings coming soon...</p>
+						<p className="text-app-gray-600">Billing settings coming soon...</p>
 					</div>
 				);
 			}
@@ -88,6 +61,7 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 				return (
 					<ProjectSettingsMembers
 						currentUserRole={project.role as UserRole}
+						onInviteHandlerChange={setInviteHandler}
 						projectId={project.id}
 						projectName={project.name}
 					/>
@@ -100,72 +74,21 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 	};
 
 	return (
-		<div className="flex h-screen bg-[#f6f5f9]" data-testid="settings-container">
-			<ProjectSidebar
-				applications={mockApplications}
-				isCreatingApplication={false}
-				onCreateApplication={async () => {
-					const { navigateToApplication } = useNavigationStore.getState();
-					try {
-						const application = await createApplication(project.id, {
-							title: DEFAULT_APPLICATION_TITLE,
-						});
-						navigateToApplication(
-							project.id,
-							project.name,
-							application.id,
-							application.title || DEFAULT_APPLICATION_TITLE,
-						);
-						router.push(routes.application.wizard());
-					} catch {
-						toast.error("Failed to create application");
-					}
-				}}
-				projectId={project.id}
-				userRole={project.role as UserRole}
-			/>
+		<div className="relative size-full overflow-y-scroll bg-preview-bg" data-testid="settings-container">
+			<section className="w-full h-full">
+				<main className="w-full h-full flex flex-col">
+					<AppHeader data-testid="settings-header" projectTeamMembers={projectTeamMembers} />
 
-			<div className="flex-1 flex flex-col">
-				<div
-					className="flex items-center justify-between bg-white px-6 py-4 border-b border-[#e1dfeb]"
-					data-testid="settings-header"
-				>
-					<div className="flex items-center gap-3">
-						<button
-							className="text-[#636170] hover:text-[#2e2d36]"
-							onClick={() => {
-								router.push(routes.project.detail());
-							}}
-							type="button"
-						>
-							←
-						</button>
-						<h1
-							className="font-['Cabin'] font-medium text-[24px] leading-[30px] text-[#2e2d36]"
-							data-testid="settings-title"
-						>
-							Settings
-						</h1>
-					</div>
-					<div className="flex items-center gap-3">
-						<button
-							className="relative p-2 rounded-full hover:bg-[#f6f5f9] transition-colors"
-							data-testid="notifications-button"
-							type="button"
-						>
-							<BellIcon className="size-5 text-[#636170]" />
-							<span className="absolute top-0 right-0 size-2 bg-[#ff4949] rounded-full" />
-						</button>
-						<div className="size-10 rounded-full bg-[#369e94] flex items-center justify-center text-white font-medium text-[14px]">
-							{getInitials()}
-						</div>
-					</div>
-				</div>
-
-				<ProjectSettingsLayout activeTab={activeTab} project={project}>
-					{renderSettingsContent()}
-				</ProjectSettingsLayout>
-			</div>
+					<main
+						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 rounded-lg bg-white border border-app-gray-100 min-h-0"
+						data-testid="settings-main-content"
+					>
+						<ProjectSettingsLayout activeTab={activeTab} onInviteClick={inviteHandler} project={project}>
+							{renderSettingsContent()}
+						</ProjectSettingsLayout>
+					</main>
+				</main>
+			</section>
 		</div>
 	);
 }

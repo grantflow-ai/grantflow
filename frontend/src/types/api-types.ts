@@ -671,6 +671,13 @@ export namespace API {
 }[];
 	id: string;
 	logo_url: null | string;
+	members: {
+	display_name: null | string;
+	email: string;
+	firebase_uid: string;
+	photo_url: null | string;
+	role: "ADMIN" | "MEMBER" | "OWNER";
+}[];
 	name: string;
 	role: "ADMIN" | "MEMBER" | "OWNER";
 };
