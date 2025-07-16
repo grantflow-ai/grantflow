@@ -26,16 +26,16 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 		label: "Cancelled",
 		text: "text-white",
 	},
-	COMPLETED: {
-		bg: "bg-primary",
-		icon: "/icons/working-draft-white.svg",
-		label: "Generating",
-		text: "text-white",
-	},
 	DRAFT: {
 		bg: "bg-app-dark-blue",
 		icon: "/icons/piechart.svg",
 		label: "Working Draft",
+		text: "text-white",
+	},
+	GENERATING: {
+		bg: "bg-primary",
+		icon: "/icons/working-draft-white.svg",
+		label: "Generating",
 		text: "text-white",
 	},
 	IN_PROGRESS: {

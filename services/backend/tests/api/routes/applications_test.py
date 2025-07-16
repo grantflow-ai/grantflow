@@ -772,8 +772,8 @@ async def test_list_applications_with_status_filter(
         )
         app_completed = GrantApplication(
             project_id=project.id,
-            title="Completed Application",
-            status=ApplicationStatusEnum.COMPLETED,
+            title="Generating Application",
+            status=ApplicationStatusEnum.GENERATING,
             completed_at=datetime.now(UTC),
         )
         session.add_all([app_draft, app_in_progress, app_completed])
