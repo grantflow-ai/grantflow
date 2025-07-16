@@ -40,7 +40,6 @@ async def test_client(
 
     # JWT_SECRET is already set to "abc123" in base_test_plugin.py ~keep
 
-    
     async def mock_get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
         return {
             uid: {
@@ -58,7 +57,6 @@ async def test_client(
             for uid in uids
         }
 
-    
     class MockResult:
         def __init__(self, users: list[Any]) -> None:
             self.users = users
@@ -72,9 +70,9 @@ async def test_client(
             self.phone_number = None
             self.email_verified = True
             self.disabled = False
-            self.custom_claims = {}
+            self.custom_claims: dict[str, Any] = {}
             self.tenant_id = None
-            self.provider_data = []
+            self.provider_data: list[Any] = []
 
     async def mock_firebase_get_users(identifiers: list[Any], app: Any = None) -> MockResult:
         users = [MockUser(identifier.uid) for identifier in identifiers]

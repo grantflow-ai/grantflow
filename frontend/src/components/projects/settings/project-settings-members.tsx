@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit, MoreVertical, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { deleteInvitation, getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
@@ -190,18 +190,17 @@ export function ProjectSettingsMembers({
 
 	const canInvite = currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN;
 
+	// Create a stable handler for opening the invite modal
+	const openInviteModal = useCallback(() => {
+		setIsInviteModalOpen(true);
+	}, []);
+
 	// Pass invite handler to parent
 	useEffect(() => {
 		if (onInviteHandlerChange) {
-			onInviteHandlerChange(
-				canInvite
-					? () => {
-							setIsInviteModalOpen(true);
-						}
-					: undefined,
-			);
+			onInviteHandlerChange(canInvite ? openInviteModal : undefined);
 		}
-	}, [canInvite, onInviteHandlerChange]);
+	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
 	// Map API response to component format and combine with pending invitations
 	const mappedMembers: ProjectMember[] = members.map((member) => ({
@@ -352,15 +351,13 @@ export function ProjectSettingsMembers({
 			</div>
 
 			{/* Modals */}
-			{isInviteModalOpen && (
-				<InviteCollaboratorModal
-					isOpen={isInviteModalOpen}
-					onClose={() => {
-						setIsInviteModalOpen(false);
-					}}
-					onInvite={handleInvite}
-				/>
-			)}
+			<InviteCollaboratorModal
+				isOpen={isInviteModalOpen}
+				onClose={() => {
+					setIsInviteModalOpen(false);
+				}}
+				onInvite={handleInvite}
+			/>
 
 			<EditPermissionModal
 				currentUserRole={currentUserRole}

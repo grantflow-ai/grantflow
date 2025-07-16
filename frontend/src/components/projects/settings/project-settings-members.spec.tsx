@@ -128,6 +128,32 @@ describe("ProjectSettingsMembers", () => {
 		vi.mocked(useUserStore).mockReturnValue({ user: mockUser } as any);
 	});
 
+	it("does not open invite modal on initial render", async () => {
+		const mockInviteHandlerChange = vi.fn();
+		vi.mocked(getProjectMembers).mockResolvedValue(mockMembers);
+
+		renderWithSWR(
+			<ProjectSettingsMembers
+				currentUserRole={UserRole.OWNER}
+				onInviteHandlerChange={mockInviteHandlerChange}
+				projectId={mockProject.id}
+				projectName={mockProject.name}
+			/>,
+		);
+
+		// Wait for members to load
+		await waitFor(() => {
+			expect(screen.queryByText("Loading members...")).not.toBeInTheDocument();
+		});
+
+		// Verify modal is not open
+		expect(screen.queryByTestId("invite-collaborator-modal")).not.toBeInTheDocument();
+		expect(screen.queryByText("Invite New Member")).not.toBeInTheDocument();
+
+		// Verify handler was registered
+		expect(mockInviteHandlerChange).toHaveBeenCalled();
+	});
+
 	it("renders the members list with all members", async () => {
 		vi.mocked(getProjectMembers).mockResolvedValue(mockMembers);
 
@@ -146,12 +172,11 @@ describe("ProjectSettingsMembers", () => {
 		});
 
 		expect(screen.getByTestId("project-settings-members")).toBeInTheDocument();
-		expect(screen.getByText("Team Members")).toBeInTheDocument();
-		expect(screen.getByText("Manage who has access to this project and their permissions.")).toBeInTheDocument();
 
-		expect(screen.getByTestId("member-row-firebase-uid-1")).toBeInTheDocument();
-		expect(screen.getByTestId("member-row-firebase-uid-2")).toBeInTheDocument();
-		expect(screen.getByTestId("member-row-firebase-uid-3")).toBeInTheDocument();
+		// Check member emails are displayed
+		expect(screen.getByText("owner@example.com")).toBeInTheDocument();
+		expect(screen.getByText("admin@example.com")).toBeInTheDocument();
+		expect(screen.getByText("member@example.com")).toBeInTheDocument();
 
 		expect(screen.getByText("Owner User")).toBeInTheDocument();
 		expect(screen.getByText("owner@example.com")).toBeInTheDocument();

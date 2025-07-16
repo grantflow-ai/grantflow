@@ -19,7 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     result = (
         op.get_bind()
         .execute(
@@ -32,21 +32,14 @@ def upgrade() -> None:
     )
 
     if not result:
-        
         op.execute("COMMIT")
         op.execute("ALTER TYPE applicationstatusenum ADD VALUE 'GENERATING'")
         op.execute("BEGIN")
 
-    
     op.execute("UPDATE grant_applications SET status = 'GENERATING' WHERE status = 'COMPLETED'")
-
-    
-    
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
-    op.execute("UPDATE grant_applications SET status = 'COMPLETED' WHERE status = 'GENERATING'")
 
-    
+    op.execute("UPDATE grant_applications SET status = 'COMPLETED' WHERE status = 'GENERATING'")
