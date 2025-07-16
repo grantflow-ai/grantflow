@@ -16,6 +16,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/forms/textarea-field";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -87,6 +88,8 @@ export function ResearchPlanPreview() {
 	const handleObjectiveDragEnd = useWizardStore((state) => state.handleObjectiveDragEnd);
 	const removeObjective = useWizardStore((state) => state.removeObjective);
 	const [editingObjectiveId, setEditingObjectiveId] = useState<null | number>(null);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [objectiveToDelete, setObjectiveToDelete] = useState<null | Objective>(null);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -94,6 +97,24 @@ export function ResearchPlanPreview() {
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
 	);
+
+	const handleRemoveClick = (objective: Objective) => {
+		setObjectiveToDelete(objective);
+		setDeleteDialogOpen(true);
+	};
+
+	const handleConfirmDelete = () => {
+		if (objectiveToDelete) {
+			removeObjective(objectiveToDelete.number);
+			setDeleteDialogOpen(false);
+			setObjectiveToDelete(null);
+		}
+	};
+
+	const handleCancelDelete = () => {
+		setDeleteDialogOpen(false);
+		setObjectiveToDelete(null);
+	};
 
 	if (objectives.length === 0) {
 		return (
@@ -131,7 +152,7 @@ export function ResearchPlanPreview() {
 											setEditingObjectiveId(objective.number);
 										}}
 										onRemove={() => {
-											removeObjective(objective.number);
+											handleRemoveClick(objective);
 										}}
 										onSave={(updatedObjective) => {
 											log.info("Save objective", { objective: updatedObjective });
@@ -144,6 +165,50 @@ export function ResearchPlanPreview() {
 					</SortableContext>
 				</DndContext>
 			</div>
+			<Dialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
+				<DialogContent className="p-8 outline-1 outline-primary rounded" showCloseButton={false}>
+					<button
+						className="absolute top-4 right-4 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+						onClick={handleCancelDelete}
+						type="button"
+					>
+						<Image alt="Close" height={16} src="/icons/close.svg" width={16} />
+					</button>
+					<div className="space-y-3">
+						<div
+							className="text-app-black text-2xl font-medium font-heading leading-tight"
+							data-testid="delete-dialog-title"
+						>
+							Are you sure you want to delete this objective?
+						</div>
+						<div
+							className="text-app-black font-normal leading-tight"
+							data-testid="delete-dialog-description"
+						>
+							All content within this objective and all its associated tasks. will be permanently removed.
+							This action cannot be undone.
+						</div>
+					</div>
+					<div className="flex justify-between mt-6">
+						<AppButton
+							data-testid="cancel-delete-button"
+							onClick={handleCancelDelete}
+							type="button"
+							variant="secondary"
+						>
+							Cancel
+						</AppButton>
+						<AppButton
+							data-testid="confirm-delete-button"
+							onClick={handleConfirmDelete}
+							type="button"
+							variant="primary"
+						>
+							Delete Objective
+						</AppButton>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</WizardRightPane>
 	);
 }
@@ -186,8 +251,10 @@ function EditableObjective({ index, objective, onCancel: _onCancel, onSave }: Ed
 	return (
 		<div className="space-y-3 px-3 pb-3 pt-15">
 			<div className="flex justify-between items-center">
-				<div className="font-semibold font-['Cabin'] leading-snug">Edit Objective</div>
-				<AppButton onClick={handleSave} type="button" variant="primary">
+				<div className="font-semibold font-['Cabin'] leading-snug" data-testid="edit-objective-title">
+					Edit Objective
+				</div>
+				<AppButton data-testid="save-changes-button" onClick={handleSave} type="button" variant="primary">
 					Save Changes
 				</AppButton>
 			</div>
@@ -270,6 +337,7 @@ function ObjectiveHeader({
 					<DropdownMenuTrigger asChild>
 						<AppButton
 							className="size-8 text-gray-400 hover:text-gray-600 hover:bg-app-gray-100 focus:outline-none"
+							data-testid="menu-trigger"
 							size="sm"
 							type="button"
 							variant="ghost"
@@ -278,11 +346,11 @@ function ObjectiveHeader({
 						</AppButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
-						<DropdownMenuItem onClick={isEditing ? onCancel : onEdit}>
+						<DropdownMenuItem data-testid="edit-task-menuitem" onClick={isEditing ? onCancel : onEdit}>
 							<Edit className="mr-2 size-4" />
 							{isEditing ? "Cancel Editing" : "Edit Task"}
 						</DropdownMenuItem>
-						<DropdownMenuItem onClick={onRemove}>
+						<DropdownMenuItem data-testid="remove-menuitem" onClick={onRemove}>
 							<Trash2 className="mr-2 size-4" />
 							Remove
 						</DropdownMenuItem>
@@ -340,9 +408,17 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 	return (
 		<div className="space-y-3">
 			<div className={isEditing ? "flex items-center justify-between" : ""}>
-				<div className="text-app-black font-semibold font-heading leading-snug">Tasks</div>
+				<div className="text-app-black font-semibold font-heading leading-snug" data-testid="tasks-section">
+					Tasks
+				</div>
 				{isEditing && (
-					<IconButton onClick={onTaskAdd} size="sm" type="button" variant="solid">
+					<IconButton
+						data-testid="add-task-button"
+						onClick={onTaskAdd}
+						size="sm"
+						type="button"
+						variant="solid"
+					>
 						<Plus className="w-4 h-4" />
 					</IconButton>
 				)}
@@ -370,7 +446,10 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 									/>
 								</div>
 							) : (
-								<div className="text-app-gray-600 text-sm font-normal leading-none">
+								<div
+									className="text-app-gray-600 text-sm font-normal leading-none"
+									data-testid="task-display"
+								>
 									Task: {task.description ?? task.title}
 								</div>
 							)}
@@ -403,7 +482,7 @@ function TaskHeader({ isEditing, objectiveIndex, onTaskDelete, taskIndex }: Task
 
 			{isEditing && (
 				<div className="flex items-center">
-					<IconButton onClick={onTaskDelete} type="button" variant="float">
+					<IconButton data-testid="delete-task-button" onClick={onTaskDelete} type="button" variant="float">
 						<Image alt="Delete" height={16} src="/icons/delete.svg" width={16} />
 					</IconButton>
 				</div>

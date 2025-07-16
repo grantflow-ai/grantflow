@@ -50,7 +50,6 @@ export function NavMain(props: NavMainProps) {
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 
-			{/* Recent Applications */}
 			<Collapsible className="group/collapsible" defaultOpen>
 				<SidebarMenuItem>
 					<CollapsibleTrigger asChild>

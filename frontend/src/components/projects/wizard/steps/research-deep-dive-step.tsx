@@ -161,19 +161,21 @@ export function ResearchDeepDiveStep() {
 			</div>
 
 			<div className="flex flex-1 gap-6 px-16 min-h-0">
-				<div className="flex-1 overflow-y-auto space-y-3 px-1 pt-1">
-					{RESEARCH_QUESTIONS.map((item, index) => (
-						<QuestionCard
-							index={index + 1}
-							isAnswered={isQuestionAnswered(item.key)}
-							isSelected={selectedQuestion === index}
-							key={item.key}
-							onClick={() => {
-								handleQuestionSelect(index);
-							}}
-							question={item.question}
-						/>
-					))}
+				<div className="flex-1 flex flex-col">
+					<div className="flex-1 overflow-y-auto space-y-3 px-1 pt-1">
+						{RESEARCH_QUESTIONS.map((item, index) => (
+							<QuestionCard
+								index={index + 1}
+								isAnswered={isQuestionAnswered(item.key)}
+								isSelected={selectedQuestion === index}
+								key={item.key}
+								onClick={() => {
+									handleQuestionSelect(index);
+								}}
+								question={item.question}
+							/>
+						))}
+					</div>
 				</div>
 
 				<div className="flex-1">
