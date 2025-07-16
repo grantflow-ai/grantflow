@@ -50,7 +50,7 @@ describe("NavMain", () => {
 			</SidebarProvider>,
 		);
 
-		expect(screen.getByTestId("dashboard-section")).toBeInTheDocument();
+		expect(screen.getByTestId("dashboard-button")).toBeInTheDocument();
 
 		expect(screen.getByTestId("recent-applications-trigger")).toBeInTheDocument();
 		expect(screen.getByTestId("settings-trigger")).toBeInTheDocument();
