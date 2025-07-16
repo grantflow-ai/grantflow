@@ -55,7 +55,6 @@ class TestBeforeCreateFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
-        
         response = before_create(event)
 
         assert response is not None
@@ -125,7 +124,6 @@ class TestBeforeSignInFunction:
         event.data = user_record
         event.timestamp = datetime.now(UTC)
 
-        
         response = before_sign_in(event)
 
         assert response is not None
