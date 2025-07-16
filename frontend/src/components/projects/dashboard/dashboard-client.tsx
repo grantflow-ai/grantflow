@@ -256,7 +256,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 							</h3>
 							<main className="">
 
-							<main className="flex gap-6 scroll-box w-full h-[550px] flex-wrap mt-6 overflow-y-scroll " data-testid="projects-container">
+							<main className="grid grid-cols-1 lg:grid-cols-3 gap-6 scroll-box auto-rows-min  h-[550px] flex-wrap mt-6 overflow-y-scroll pr-2 " data-testid="projects-container">
 								{projects.length > 0 ? (
 									projects.map((project) => (
 										<DashboardProjectCard
