@@ -905,3 +905,134 @@ async def test_list_applications_empty_project(
     assert data["applications"] == []
     assert data["pagination"]["total"] == 0
     assert data["pagination"]["has_more"] is False
+
+
+@patch(
+    "services.backend.src.api.routes.grant_applications.publish_rag_task",
+    new_callable=AsyncMock,
+)
+async def test_generate_application_status_transition_to_generating(
+    mock_publish_rag_task: AsyncMock,
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    project: Project,
+    grant_application: GrantApplication,
+    project_owner_user: ProjectUser,
+) -> None:
+    """Test that application status transitions to GENERATING when RAG generation starts"""
+    
+    async with async_session_maker() as session, session.begin():
+        
+        grant_application.status = ApplicationStatusEnum.DRAFT
+        grant_application.title = "Test Application"
+        grant_application.research_objectives = [
+            {
+                "number": 1,
+                "title": "Test Research Objective",
+                "description": "Description of objective",
+                "research_tasks": [
+                    {
+                        "number": 1,
+                        "title": "Research Task",
+                        "description": "Task description",
+                    }
+                ],
+            }
+        ]
+        session.add(grant_application)
+
+        
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[
+                {
+                    "id": "section1",
+                    "order": 1,
+                    "title": "Introduction",
+                    "parent_id": None,
+                }
+            ],
+        )
+        session.add(grant_template)
+
+        
+        rag_source = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path",
+            filename="test.pdf",
+            mime_type="application/pdf",
+            size=1000,
+            indexing_status=SourceIndexingStatusEnum.FINISHED,
+        )
+        session.add(rag_source)
+        await session.flush()
+
+        
+        app_source = GrantApplicationRagSource(
+            grant_application_id=grant_application.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(app_source)
+        await session.commit()
+
+    
+    response = await test_client.post(
+        f"/projects/{project.id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    
+    assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
+
+    
+    mock_publish_rag_task.assert_called_once_with(
+        logger=ANY,
+        parent_type="grant_application",
+        parent_id=grant_application.id,
+        trace_id=ANY,
+    )
+
+    
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, grant_application.id)
+        assert app.status == ApplicationStatusEnum.GENERATING
+
+
+async def test_application_status_transitions_preserve_generating(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    grant_application: GrantApplication,
+    project_owner_user: ProjectUser,
+) -> None:
+    """Test that GENERATING status is preserved and displayed correctly"""
+    
+    async with async_session_maker() as session:
+        app = await session.get(GrantApplication, grant_application.id)
+        app.status = ApplicationStatusEnum.GENERATING
+        await session.commit()
+
+    
+    response = await test_client.get(
+        f"/projects/{grant_application.project_id}/applications/{grant_application.id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == ApplicationStatusEnum.GENERATING.value
+
+    
+    response = await test_client.get(
+        f"/projects/{grant_application.project_id}/applications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["applications"]) > 0
+
+    
+    our_app = next((app for app in data["applications"] if app["id"] == str(grant_application.id)), None)
+    assert our_app is not None
+    assert our_app["status"] == ApplicationStatusEnum.GENERATING.value

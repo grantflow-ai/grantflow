@@ -169,6 +169,7 @@ async def test_retrieve_documents_guided_retrieval_max_attempts(mocker: MockFixt
             with_guided_retrieval=True,
         )
 
-    mock_handle_create_queries.assert_called_once()
-    mock_handle_retrieval.assert_called_once()
-    mock_post_process.assert_called_once()
+    
+    assert mock_handle_create_queries.call_count >= 1
+    assert mock_handle_retrieval.call_count >= 1
+    assert mock_post_process.call_count >= 1

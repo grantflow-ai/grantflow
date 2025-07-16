@@ -437,13 +437,13 @@ async def handle_generate_application(
         if rag_sources_count == 0:
             raise ValidationException("No rag sources found for application, cannot generate")
 
-        async with session.begin():
-            await session.execute(
-                update(GrantApplication)
-                .where(GrantApplication.id == application.id)
-                .values(status=ApplicationStatusEnum.GENERATING)
-            )
-            await session.commit()
+        
+        await session.execute(
+            update(GrantApplication)
+            .where(GrantApplication.id == application.id)
+            .values(status=ApplicationStatusEnum.GENERATING)
+        )
+        await session.commit()
 
         try:
             await publish_rag_task(
