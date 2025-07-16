@@ -16,7 +16,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/forms/textarea-field";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -167,6 +167,19 @@ export function ResearchPlanPreview() {
 			</div>
 			<Dialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
 				<DialogContent className="p-8 outline-1 outline-primary rounded" showCloseButton={false}>
+					<DialogTitle
+						className="text-app-black text-2xl font-medium font-heading leading-tight"
+						data-testid="delete-dialog-title"
+					>
+						Are you sure you want to delete this objective?
+					</DialogTitle>
+					<DialogDescription
+						className="text-app-black font-normal leading-tight"
+						data-testid="delete-dialog-description"
+					>
+						All content within this objective and all its associated tasks. will be permanently removed.
+						This action cannot be undone.
+					</DialogDescription>
 					<button
 						className="absolute top-4 right-4 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
 						onClick={handleCancelDelete}
@@ -174,21 +187,6 @@ export function ResearchPlanPreview() {
 					>
 						<Image alt="Close" height={16} src="/icons/close.svg" width={16} />
 					</button>
-					<div className="space-y-3">
-						<div
-							className="text-app-black text-2xl font-medium font-heading leading-tight"
-							data-testid="delete-dialog-title"
-						>
-							Are you sure you want to delete this objective?
-						</div>
-						<div
-							className="text-app-black font-normal leading-tight"
-							data-testid="delete-dialog-description"
-						>
-							All content within this objective and all its associated tasks. will be permanently removed.
-							This action cannot be undone.
-						</div>
-					</div>
 					<div className="flex justify-between mt-6">
 						<AppButton
 							data-testid="cancel-delete-button"
