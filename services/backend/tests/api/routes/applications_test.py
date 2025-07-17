@@ -54,7 +54,17 @@ async def test_update_application_success(
     update_data = {
         "title": "Updated Title",
         "status": ApplicationStatusEnum.IN_PROGRESS.value,
-        "form_inputs": {"field1": "value1", "field2": "value2"},
+        "form_inputs": {
+            "background_context": "Updated background context",
+            "hypothesis": "Updated hypothesis",
+            "rationale": "Updated rationale",
+            "novelty_and_innovation": "Updated novelty and innovation",
+            "team_excellence": "Updated team excellence",
+            "preliminary_data": "Updated preliminary data",
+            "research_feasibility": "Updated research feasibility",
+            "impact": "Updated impact",
+            "scientific_infrastructure": "Updated scientific infrastructure",
+        },
         "research_objectives": [
             {
                 "number": 1,
@@ -84,7 +94,17 @@ async def test_update_application_success(
         assert updated_app is not None
         assert updated_app.title == "Updated Title"
         assert updated_app.status == ApplicationStatusEnum.IN_PROGRESS
-        assert updated_app.form_inputs == {"field1": "value1", "field2": "value2"}
+        assert updated_app.form_inputs == {
+            "background_context": "Updated background context",
+            "hypothesis": "Updated hypothesis",
+            "rationale": "Updated rationale",
+            "novelty_and_innovation": "Updated novelty and innovation",
+            "team_excellence": "Updated team excellence",
+            "preliminary_data": "Updated preliminary data",
+            "research_feasibility": "Updated research feasibility",
+            "impact": "Updated impact",
+            "scientific_infrastructure": "Updated scientific infrastructure",
+        }
         assert len(updated_app.research_objectives) == 1
         assert updated_app.research_objectives[0]["title"] == "Objective 1"
 
