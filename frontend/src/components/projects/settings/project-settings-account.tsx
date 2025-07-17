@@ -106,35 +106,6 @@ export function ProjectSettingsAccount({
 		}
 	};
 
-	const handleSave = async () => {
-		setIsSaving(true);
-		try {
-			// Update display name if changed
-			if (name !== user?.displayName) {
-				await updateDisplayName(name);
-			}
-
-			// Update email if changed
-			if (email !== user?.email && email) {
-				await updateEmail(email);
-			}
-
-			toast.success("Profile updated successfully");
-		} catch (error) {
-			log.error("Error updating profile", error);
-			const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
-
-			// Check for specific Firebase errors
-			if (errorMessage.includes("auth/requires-recent-login")) {
-				toast.error("Please sign in again to update your email address");
-			} else {
-				toast.error(errorMessage);
-			}
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
 	return (
 		<>
 			<div className="  flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
