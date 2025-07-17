@@ -1,0 +1,37 @@
+{
+  "test_id": "chunking_test_20250714_171838_minilm",
+  "timestamp": "2025-07-14T17:18:54.620971+00:00",
+  "embedding_model": "MiniLM-L12-v2",
+  "embedding_model_name": "sentence-transformers/all-MiniLM-L12-v2",
+  "embedding_dimensions": 384,
+  "chunking_strategy": "medium",
+  "metrics": {
+    "vector_count": 35,
+    "indexing_time_seconds": 0.83,
+    "embedding_efficiency": 2.04
+  },
+  "retrieval": {
+    "query": "CAR-T cell therapy melanoma brain metastases CD8+ T cells immunosuppression",
+    "retrieved_count": 30,
+    "retrieval_time_seconds": 2.59,
+    "ai_evaluation": {
+      "relevance_scores": [
+        4,
+        3,
+        4,
+        3,
+        3
+      ],
+      "avg_relevance": 3.4,
+      "explanations": [
+        "The document discusses key topics related to the query, including melanoma brain metastases, the tumor microenvironment, and new treatment approaches. It is highly relevant.",
+        "The document mentions melanoma brain metastases and immunotherapy, but the focus is more on acral melanoma and funding opportunities. It is moderately relevant.",
+        "The document covers several relevant topics, including melanoma brain metastases, biomarkers, and new treatment options. It is highly relevant.",
+        "The document discusses melanoma detection and diagnosis using AI/machine learning, which is only tangentially related to the query. It is moderately relevant.",
+        "The document mentions melanoma immunotherapy but is primarily focused on radiation oncology research opportunities. It is moderately relevant."
+      ],
+      "overall_assessment": "The retrieved documents cover several key aspects of the query, including the biology and treatment of melanoma brain metastases, the role of the immune system, and new therapeutic approaches. While some documents are more directly relevant than others, the overall set provides a good overview of the current state of research in this area.",
+      "evaluation_enabled": true
+    }
+  }
+}

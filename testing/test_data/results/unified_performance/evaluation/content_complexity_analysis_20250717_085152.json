@@ -1,0 +1,77 @@
+{
+  "test_name": "content_complexity_analysis",
+  "test_category": "evaluation",
+  "timestamp": "2025-07-17T08:51:52.021370+00:00",
+  "test_id": "019920c7-97e9-4b9e-8f0c-b134839fdcfe",
+  "configuration": {},
+  "total_duration_seconds": 0.000838,
+  "total_duration_minutes": 1.3966666666666666e-05,
+  "stage_metrics": [
+    {
+      "stage_name": "objective_extraction",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 30,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "objective_enrichment",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 120,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "work_plan_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 180,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    },
+    {
+      "stage_name": "final_generation",
+      "duration_seconds": 0.0,
+      "meets_target": true,
+      "target_seconds": 90,
+      "bottleneck": false,
+      "percentage_of_total": 0.0
+    }
+  ],
+  "performance_grade": "A",
+  "performance_score": 71.2,
+  "meets_targets": true,
+  "bottleneck_stages": [],
+  "quality_metrics": {
+    "total_characters": 0,
+    "total_words": 0,
+    "total_lines": 1,
+    "section_count": 1,
+    "avg_chars_per_section": 0.0,
+    "has_objectives": false,
+    "has_work_plan": false,
+    "has_methodology": false,
+    "has_timeline": false,
+    "objective_count": 0,
+    "task_count": 0,
+    "key_terms_found": [],
+    "content_richness_score": 0.0,
+    "structure_quality_score": 0.0,
+    "completeness_score": 20.0,
+    "overall_quality_score": 4.0,
+    "meets_min_length": false,
+    "meets_min_sections": false,
+    "meets_content_requirements": false
+  },
+  "optimization_metrics": null,
+  "environment_info": {
+    "test_framework": "unified_performance",
+    "category": "evaluation"
+  },
+  "errors_encountered": [
+    "AssertionError: assert 0 >= 2\n +  where 0 = ComplexityAnalysis(complexity_level=<ContentComplexity.COMPLEX: 'complex'>, word_count=51, sentence_count=4, section_count=0, technical_terms_count=23, readability_score=0, structural_complexity=0.51275, recommended_timeout=120.0, recommended_evaluation_mode='thorough_evaluation', confidence_score=0.6333333333333333, analysis_details={'avg_sentence_length': 12.75, 'avg_syllables_per_word': 2.588235294117647, 'technical_density': 0.45098039215686275, 'section_density': 0.0, 'structural_factors': {'section_organization': 0.0, 'technical_density': 1.0, 'length_complexity': 0.051, 'readability_inverse': 1.0}}).section_count"
+  ],
+  "warnings_encountered": []
+}

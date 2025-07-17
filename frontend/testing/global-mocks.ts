@@ -85,8 +85,10 @@ vi.mock("sonner", async (importOriginal) => {
 	};
 });
 
+// Mock the environment utility completely
 vi.mock("@/utils/env", () => ({
 	getEnv: vi.fn().mockReturnValue(mockEnv),
+	getMockAPIEnabled: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("next-themes", () => ({
@@ -154,4 +156,7 @@ beforeEach(() => {
 		process.env,
 		Object.fromEntries(Object.entries(mockEnv).map(([key, value]) => [key, value.toString()])),
 	);
+
+	// Clear the environment cache so mocked values are used
+	vi.clearAllMocks();
 });

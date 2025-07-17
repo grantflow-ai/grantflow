@@ -704,12 +704,67 @@ rules:
       - Use `vi.fn()` for mocking functions you need to spy on
       - Test behavior and user interactions, not implementation details
 
+      ### Frontend Vitest Performance Configuration
+
+      Optimized for maximum performance and concurrency:
+
+      **Configuration**:
+      ```typescript
+      // vitest.config.mts
+      cacheDir: "node_modules/.vite",
+      test: {
+        isolate: false,           // Disable isolation for speed (no database needed)
+        pool: "threads",          // Use thread pool for parallelization
+        poolOptions: {
+          threads: {
+            maxThreads: 8,        // Maximum concurrent threads
+            minThreads: 2,        // Minimum threads maintained
+            singleThread: false,  // Enable multi-threading
+          },
+        },
+        sequence: {
+          concurrent: true,       // Enable concurrent test execution
+          shuffle: false,         // Deterministic test order
+        },
+      }
+      ```
+
+      **Benefits**:
+      - Thread-based parallelization (up to 8 concurrent threads)
+      - Disabled test isolation for faster execution
+      - Efficient caching with Vite cache directory
+      - Concurrent test execution within suites
+      - Optimized for frontend tests that don't need database isolation
+
       ### Backend Testing
 
       - pytest async, focus on API behavior
-      - Use real PostgreSQL for all tests
+      - Use real PostgreSQL for all tests (local PostgreSQL, not Docker)
+      - Database isolation: Tests create unique databases per worker (`grantflow_test_{worker_id}_{process_id}`)
+      - Fast cleanup: Uses TRUNCATE instead of DROP/CREATE for better performance
       - Mock external services, not internal components
       - Verify WebSocket integration with proper test clients
+
+      ### Database Test Setup
+
+      The project uses local PostgreSQL instead of Docker containers for better performance and isolation:
+
+      **Setup Requirements**:
+      - PostgreSQL 17 with pgvector extension installed locally
+      - Each test worker gets its own isolated database
+      - Automatic cleanup with connection termination before database drop
+
+      **Configuration**:
+      ```python
+      # Database plugin creates unique databases per worker
+      DATABASE_URL = f"postgresql://username:password@localhost:5432/grantflow_test_{worker_id}_{process_id}"
+      ```
+
+      **Benefits**:
+      - No Docker container overhead
+      - Better parallelization (each worker has dedicated database)
+      - Faster test execution with TRUNCATE-based cleanup
+      - Consistent with CI environment (PostgreSQL 17 + pgvector)
 
       ### E2E Testing
 
