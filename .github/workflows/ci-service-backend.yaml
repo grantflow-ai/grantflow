@@ -7,7 +7,8 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-backend.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/backend/**"
     push:
         branches:
@@ -15,7 +16,8 @@ on:
             - development
         paths:
             - ".github/workflows/ci-service-backend.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/backend/**"
 
 jobs:

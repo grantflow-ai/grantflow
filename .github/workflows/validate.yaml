@@ -77,5 +77,36 @@ jobs:
                   version: 3.x
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Run Linters
-              run: task lint
+            - name: Detect changes
+              uses: dorny/paths-filter@v3
+              id: changes
+              with:
+                  filters: |
+                      python:
+                          - '**/*.py'
+                          - 'pyproject.toml'
+                          - 'uv.lock'
+                      typescript:
+                          - '**/*.ts'
+                          - '**/*.tsx'
+                          - '**/*.js'
+                          - '**/*.jsx'
+                          - 'frontend/**'
+                      terraform:
+                          - 'terraform/**/*.tf'
+                          - 'terraform/**/*.tfvars'
+
+            - name: Run Python linters
+              if: steps.changes.outputs.python == 'true'
+              run: task lint:python
+
+            - name: Run Frontend linters
+              if: steps.changes.outputs.typescript == 'true'
+              run: task lint:frontend
+
+            - name: Run Terraform linters
+              if: steps.changes.outputs.terraform == 'true'
+              run: task lint:terraform
+
+            - name: Run Codespell
+              run: task lint:codespell
