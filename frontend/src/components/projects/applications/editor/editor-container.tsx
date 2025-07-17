@@ -18,7 +18,7 @@ export function EditorContainer() {
 					// @ts-expect-error Update the props
 					application={{ text: "hello grantflow editor" }}
 				/>
-				<div className="min-w-[207px] w-[207px] flex flex-col gap-3">
+				<div className="min-w-[207px] w-[207px] flex flex-col gap-3 mt-6">
 					<EditorExportButton />
 					<EditorSections />
 				</div>
