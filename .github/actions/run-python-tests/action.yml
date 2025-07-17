@@ -41,24 +41,21 @@ runs:
                   # Install pgvector extension
                   sudo apt-get install -y postgresql-17-pgvector
                   
-                  # Stop any existing PostgreSQL instances
-                  sudo systemctl stop postgresql || true
-                  sudo systemctl disable postgresql || true
+                  # Configure PostgreSQL to use version 17 by default
+                  sudo pg_createcluster 17 main --start
+                  sudo systemctl start postgresql
+                  sudo systemctl enable postgresql
                   
-                  # Start PostgreSQL 17 specifically
-                  sudo systemctl start postgresql@17-main
-                  sudo systemctl enable postgresql@17-main
-                  
-                  # Create test user and set up database using PostgreSQL 17
-                  sudo -u postgres /usr/lib/postgresql/17/bin/createuser --superuser runner
-                  sudo -u postgres /usr/lib/postgresql/17/bin/psql -c "ALTER USER runner WITH PASSWORD 'testpass';"
+                  # Create test user and set up database
+                  sudo -u postgres createuser --superuser runner
+                  sudo -u postgres psql -c "ALTER USER runner WITH PASSWORD 'testpass';"
                   
                   # Set DATABASE_URL for tests
                   echo "DATABASE_URL=postgresql://runner:testpass@localhost:5432/postgres" >> $GITHUB_ENV
                   
                   # Test connection and create vector extension
-                  /usr/lib/postgresql/17/bin/psql "postgresql://runner:testpass@localhost:5432/postgres" -c "SELECT version();"
-                  /usr/lib/postgresql/17/bin/psql "postgresql://runner:testpass@localhost:5432/postgres" -c "CREATE EXTENSION IF NOT EXISTS vector;"
+                  psql "postgresql://runner:testpass@localhost:5432/postgres" -c "SELECT version();"
+                  psql "postgresql://runner:testpass@localhost:5432/postgres" -c "CREATE EXTENSION IF NOT EXISTS vector;"
               fi
 
         - name: Install Dependencies for Target
