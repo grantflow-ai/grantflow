@@ -16,7 +16,7 @@ export function WizardRightPane({
 			className={`bg-preview-bg flex flex-col border-l border-app-gray-100 flex-1 size-full overflow-y-auto ${className}`}
 			data-testid={testId}
 		>
-			<div className={`flex-1 ${padding ?? ""}`}>{children}</div>
+			<div className={`flex-1 h-full ${padding ?? ""}`}>{children}</div>
 		</div>
 	);
 }
