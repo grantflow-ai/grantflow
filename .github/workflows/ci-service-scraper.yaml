@@ -7,7 +7,7 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-scraper.yaml"
-            - "packages/**"
+            - "packages/shared_utils/**"
             - "services/scraper/**"
     push:
         branches:
@@ -15,7 +15,7 @@ on:
             - development
         paths:
             - ".github/workflows/ci-service-scraper.yaml"
-            - "packages/**"
+            - "packages/shared_utils/**"
             - "services/scraper/**"
 
 jobs:
