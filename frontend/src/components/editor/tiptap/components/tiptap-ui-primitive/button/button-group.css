@@ -1,0 +1,17 @@
+.tiptap-button-group {
+	align-items: center;
+	display: flex;
+	gap: 0.125rem;
+	flex-direction: column;
+}
+
+.tiptap-button-group[data-orientation="vertical"],
+.tiptap-button-group [data-orientation="vertical"] {
+	flex-direction: column;
+}
+.tiptap-button-group[data-orientation="horizontal"],
+.tiptap-button-group [data-orientation="horizontal"] {
+	flex-direction: row;
+}
+
+/*# sourceMappingURL=button-group.css.map */
