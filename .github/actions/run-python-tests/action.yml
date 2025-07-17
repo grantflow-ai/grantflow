@@ -46,16 +46,16 @@ runs:
                   sudo systemctl start postgresql
                   sudo systemctl enable postgresql
                   
-                  # Create test user and set up database
-                  sudo -u postgres createuser --superuser runner
-                  sudo -u postgres psql -c "ALTER USER runner WITH PASSWORD 'testpass';"
+                  # Create test user and set up database (using PostgreSQL 17 cluster)
+                  sudo -u postgres createuser --superuser runner --port=5433
+                  sudo -u postgres psql --port=5433 -c "ALTER USER runner WITH PASSWORD 'testpass';"
                   
-                  # Set DATABASE_URL for tests
-                  echo "DATABASE_URL=postgresql://runner:testpass@localhost:5432/postgres" >> $GITHUB_ENV
+                  # Set DATABASE_URL for tests (PostgreSQL 17 runs on port 5433)
+                  echo "DATABASE_URL=postgresql://runner:testpass@localhost:5433/postgres" >> $GITHUB_ENV
                   
                   # Test connection and create vector extension
-                  psql "postgresql://runner:testpass@localhost:5432/postgres" -c "SELECT version();"
-                  psql "postgresql://runner:testpass@localhost:5432/postgres" -c "CREATE EXTENSION IF NOT EXISTS vector;"
+                  psql "postgresql://runner:testpass@localhost:5433/postgres" -c "SELECT version();"
+                  psql "postgresql://runner:testpass@localhost:5433/postgres" -c "CREATE EXTENSION IF NOT EXISTS vector;"
               fi
 
         - name: Install Dependencies for Target
