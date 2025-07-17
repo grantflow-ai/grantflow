@@ -12,6 +12,7 @@ import {
 	ResearchPlanStep,
 } from "@/components/projects/wizard";
 import { WizardFooter, WizardHeader } from "@/components/projects/wizard/shared";
+import { WizardDialog } from "@/components/projects/wizard/shared/wizard-dialog";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	type AutofillProgressMessage,
@@ -94,13 +95,10 @@ export function WizardClientComponent({ application: initialApplication, project
 			const { event } = notification;
 			const { autofill_type, data, message } = notification.data;
 
-			// Handle autofill events
 			switch (event) {
 				case "autofill_completed": {
 					toast.success("Autofill completed successfully!");
-					// Update loading state
 					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-					// Refresh application data to get autofilled content
 					void getApplication(projectId, initialApplication.id);
 
 					break;
@@ -112,7 +110,6 @@ export function WizardClientComponent({ application: initialApplication, project
 					break;
 				}
 				case "autofill_progress": {
-					// Progress updates can be shown in the UI if needed
 					if (data?.field_name && typeof data.field_name === "string") {
 						toast.info(`Generating content for ${data.field_name}...`);
 					}
@@ -126,7 +123,6 @@ export function WizardClientComponent({ application: initialApplication, project
 
 					break;
 				}
-				// No default
 			}
 		},
 		[projectId, initialApplication.id, getApplication],
@@ -190,6 +186,7 @@ export function WizardClientComponent({ application: initialApplication, project
 			<WizardFooter />
 
 			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
+			<WizardDialog />
 		</div>
 	);
 }

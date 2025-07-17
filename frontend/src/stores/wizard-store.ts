@@ -69,11 +69,19 @@ interface WizardActions {
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
 	checkApplicationGeneration: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
+	closeDialog: () => void;
 	generateApplication: () => Promise<void>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
+	hasIndexingTemplateSources: () => boolean;
+	hasInProcessTemplateSources: () => boolean;
+	openDialog: (
+		title: string,
+		content: React.ReactNode,
+		options?: { description?: string; footer?: React.ReactNode },
+	) => void;
 	polling: PollingActions;
 	removeObjective: (objectiveNumber: number) => void;
 	removeTask: (objectiveNumber: number, taskNumber: number) => void;
@@ -92,6 +100,13 @@ interface WizardActions {
 
 interface WizardState {
 	currentStep: WizardStep;
+	dialog: {
+		content: React.ReactNode;
+		description?: string;
+		footer?: React.ReactNode;
+		isOpen: boolean;
+		title: string;
+	};
 	isAutofillLoading: {
 		research_deep_dive: boolean;
 		research_plan: boolean;
@@ -105,6 +120,13 @@ interface WizardState {
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
+	dialog: {
+		content: null,
+		description: undefined,
+		footer: undefined,
+		isOpen: false,
+		title: "",
+	},
 	isAutofillLoading: {
 		research_deep_dive: false,
 		research_plan: false,
@@ -256,6 +278,16 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
+				closeDialog: () => {
+					set((state) => ({
+						...state,
+						dialog: {
+							...state.dialog,
+							isOpen: false,
+						},
+					}));
+				},
+
 				generateApplication: async () => {
 					const { application, generateApplication } = useApplicationStore.getState();
 					const { polling } = get();
@@ -365,6 +397,46 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					if (application) {
 						debouncedUpdateTitle.call(title);
 					}
+				},
+
+				hasIndexingTemplateSources: () => {
+					const { application } = useApplicationStore.getState();
+
+					if (!application?.grant_template?.rag_sources) {
+						return false;
+					}
+
+					return application.grant_template.rag_sources.some((source) => source.status === "INDEXING");
+				},
+
+				hasInProcessTemplateSources: () => {
+					const { application } = useApplicationStore.getState();
+
+					if (!application?.grant_template?.rag_sources) {
+						return false;
+					}
+
+					return application.grant_template.rag_sources.some(
+						(source) =>
+							source.status === "INDEXING" || source.status === "FAILED" || source.status === "CREATED",
+					);
+				},
+
+				openDialog: (
+					title: string,
+					content: React.ReactNode,
+					options?: { description?: string; footer?: React.ReactNode },
+				) => {
+					set((state) => ({
+						...state,
+						dialog: {
+							content,
+							description: options?.description,
+							footer: options?.footer,
+							isOpen: true,
+							title,
+						},
+					}));
 				},
 
 				polling: {

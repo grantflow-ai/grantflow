@@ -2,22 +2,29 @@ import { ApplicationFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
+import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { WizardClientComponent } from "./wizard-client";
 
+const mockNotifications = vi.fn();
+const mockIsRagProcessingStatusMessage = vi.fn();
+const mockIsSourceProcessingNotificationMessage = vi.fn();
+const mockIsAutofillProgressMessage = vi.fn();
+
 vi.mock("@/hooks/use-application-notifications", () => ({
-	isRagProcessingStatusMessage: vi.fn(),
-	isSourceProcessingNotificationMessage: vi.fn(),
+	isAutofillProgressMessage: mockIsAutofillProgressMessage,
+	isRagProcessingStatusMessage: mockIsRagProcessingStatusMessage,
+	isSourceProcessingNotificationMessage: mockIsSourceProcessingNotificationMessage,
 	useApplicationNotifications: () => ({
 		connectionStatus: "Connected",
 		connectionStatusColor: "green",
-		notifications: [],
+		notifications: mockNotifications(),
 	}),
 }));
 
-vi.mock("@/components/projects/notification-handler", () => ({
+vi.mock("@/components/projects/shared/notification-handler", () => ({
 	NotificationHandler: () => <div data-testid="notification-handler" />,
 }));
 
@@ -30,9 +37,21 @@ vi.mock("@/components/projects/wizard", () => ({
 	ResearchPlanStep: () => <div data-testid="research-plan-step" />,
 }));
 
-vi.mock("@/components/wizard/wizard-wrapper-components", () => ({
+vi.mock("@/components/projects/wizard/shared", () => ({
 	WizardFooter: () => <div data-testid="wizard-footer" />,
 	WizardHeader: () => <div data-testid="wizard-header" />,
+}));
+
+vi.mock("@/components/projects/wizard/shared/wizard-dialog", () => ({
+	WizardDialog: () => <div data-testid="wizard-dialog" />,
+}));
+
+vi.mock("sonner", () => ({
+	toast: {
+		error: vi.fn(),
+		info: vi.fn(),
+		success: vi.fn(),
+	},
 }));
 
 describe("WizardClientComponent", () => {
@@ -44,6 +63,11 @@ describe("WizardClientComponent", () => {
 
 		useApplicationStore.getState().reset();
 		useWizardStore.getState().reset();
+
+		mockNotifications.mockReturnValue([]);
+		mockIsRagProcessingStatusMessage.mockReturnValue(false);
+		mockIsSourceProcessingNotificationMessage.mockReturnValue(false);
+		mockIsAutofillProgressMessage.mockReturnValue(false);
 	});
 
 	it("should render wizard layout with header and footer", () => {
@@ -53,6 +77,12 @@ describe("WizardClientComponent", () => {
 		expect(screen.getByTestId("wizard-header")).toBeInTheDocument();
 		expect(screen.getByTestId("wizard-footer")).toBeInTheDocument();
 		expect(screen.getByTestId("step-content-container")).toBeInTheDocument();
+	});
+
+	it("should render wizard dialog", () => {
+		render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+
+		expect(screen.getByTestId("wizard-dialog")).toBeInTheDocument();
 	});
 
 	it("should render application details step by default", () => {
@@ -112,6 +142,86 @@ describe("WizardClientComponent", () => {
 
 			expect(screen.getByTestId(testId)).toBeInTheDocument();
 			unmount();
+		});
+	});
+
+	describe("Notification Handling", () => {
+		it("should handle source processing notifications", () => {
+			const mockNotification = {
+				data: {
+					identifier: "test-file.pdf",
+					indexing_status: SourceIndexingStatus.FINISHED,
+				},
+			};
+
+			mockNotifications.mockReturnValue([mockNotification]);
+			mockIsSourceProcessingNotificationMessage.mockReturnValue(true);
+
+			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+
+			expect(mockIsSourceProcessingNotificationMessage).toHaveBeenCalledWith(mockNotification);
+		});
+
+		it("should handle autofill progress notifications", () => {
+			const mockNotification = {
+				data: {
+					autofill_type: "research_plan",
+					message: "Autofill completed successfully",
+				},
+				event: "autofill_completed",
+			};
+
+			mockNotifications.mockReturnValue([mockNotification]);
+			mockIsAutofillProgressMessage.mockReturnValue(true);
+
+			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+
+			expect(mockIsAutofillProgressMessage).toHaveBeenCalledWith(mockNotification);
+		});
+
+		it("should handle RAG processing notifications", () => {
+			const mockNotification = {
+				data: {
+					event: "grant_template_generation_started",
+				},
+			};
+
+			mockNotifications.mockReturnValue([mockNotification]);
+			mockIsRagProcessingStatusMessage.mockReturnValue(true);
+
+			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+
+			expect(mockIsRagProcessingStatusMessage).toHaveBeenCalledWith(mockNotification);
+		});
+
+		it("should render notification handler when RAG notification exists", () => {
+			const mockNotification = {
+				data: {
+					event: "grant_template_generation_started",
+				},
+			};
+
+			mockNotifications.mockReturnValue([mockNotification]);
+			mockIsRagProcessingStatusMessage.mockReturnValue(true);
+
+			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+
+			expect(screen.getByTestId("notification-handler")).toBeInTheDocument();
+		});
+	});
+
+	describe("Store Initialization", () => {
+		it("should initialize stores with correct cleanup", () => {
+			const { unmount } = render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+
+			expect(useApplicationStore.getState().application).toEqual(mockApplication);
+			expect(useApplicationStore.getState().areAppOperationsInProgress).toBe(false);
+
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
+
+			unmount();
+
+			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 		});
 	});
 });
