@@ -22,6 +22,7 @@ class E2ETestCategory(str, Enum):
     E2E_FULL = "e2e_full"
     SEMANTIC_EVALUATION = "semantic_evaluation"
     AI_EVAL = "ai_eval"
+    VECTOR_BENCHMARK = "vector_benchmark"
 
 
 @dataclass
@@ -68,6 +69,13 @@ TEST_SCENARIOS = {
         category=E2ETestCategory.AI_EVAL,
         timeout=1800,
         expected_duration="5-30 minutes",
+    ),
+    E2ETestCategory.VECTOR_BENCHMARK: TestScenario(
+        name="vector_benchmark",
+        description="Vector database performance benchmarks",
+        category=E2ETestCategory.VECTOR_BENCHMARK,
+        timeout=1200,
+        expected_duration="5-20 minutes",
     ),
 }
 
