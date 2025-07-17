@@ -1,0 +1,25 @@
+{
+  "test_name": "test_configuration_baseline",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 2.4579219818115234,
+    "min_time": 2.4579219818115234,
+    "max_time": 2.4579219818115234,
+    "std_deviation": 0.0,
+    "individual_times": [
+      2.4579219818115234
+    ],
+    "timeout_utilization": 0.020482683181762697
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 120,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-17T16:55:09.889557+00:00"
+}

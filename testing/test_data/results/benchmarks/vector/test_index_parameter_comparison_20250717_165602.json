@@ -1,0 +1,25 @@
+{
+  "test_name": "test_index_parameter_comparison",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 23.317220211029053,
+    "min_time": 23.317220211029053,
+    "max_time": 23.317220211029053,
+    "std_deviation": 0.0,
+    "individual_times": [
+      23.317220211029053
+    ],
+    "timeout_utilization": 0.05829305052757263
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 400,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-17T16:56:02.585918+00:00"
+}

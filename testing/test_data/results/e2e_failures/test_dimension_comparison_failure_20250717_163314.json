@@ -1,0 +1,26 @@
+{
+  "test_name": "test_dimension_comparison",
+  "test_category": "vector_benchmark",
+  "status": "failed",
+  "error": {
+    "type": "TypeError",
+    "message": "'project_id' is an invalid keyword argument for RagFile",
+    "execution_time_before_failure": 0.02757096290588379
+  },
+  "performance": {
+    "execution_time": 0.02757096290588379,
+    "timeout_reached": false,
+    "timeout_utilization": 4.595160484313965e-05
+  },
+  "diagnostic_info": {
+    "timeout_configured": 600,
+    "category": "vector_benchmark",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "async_session_maker",
+      "project",
+      "logger"
+    ]
+  },
+  "timestamp": "2025-07-17T16:33:14.358449+00:00"
+}
