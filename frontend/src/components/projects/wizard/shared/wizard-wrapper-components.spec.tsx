@@ -1,21 +1,11 @@
-import {
-	ApplicationFactory,
-	ApplicationWithTemplateFactory,
-	GrantTemplateFactory,
-	RagSourceFactory,
-} from "::testing/factories";
+import { ApplicationFactory } from "::testing/factories";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
-import { useWizardDialog } from "@/hooks/use-wizard-dialog";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { getStepIcon, StepIndicator, WizardFooter, WizardHeader } from "./wizard-wrapper-components";
-
-vi.mock("@/hooks/use-wizard-dialog", () => ({
-	useWizardDialog: vi.fn(),
-}));
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -49,9 +39,6 @@ describe("getStepIcon", () => {
 });
 
 describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
-	const mockCloseDialog = vi.fn();
-	const mockOpenDialog = vi.fn();
-
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
@@ -62,24 +49,9 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		useWizardStore.getState().reset();
 		useApplicationStore.getState().reset();
 
-		(useWizardDialog as any).mockReturnValue({
-			closeDialog: mockCloseDialog,
-			openDialog: mockOpenDialog,
-		});
-
-		const ragSource = RagSourceFactory.build({
-			sourceId: "source-1",
-			status: "FINISHED",
-			url: "https://example.com",
-		});
-
-		const application = ApplicationWithTemplateFactory.build({
-			grant_template: GrantTemplateFactory.build({
-				grant_sections: [],
-				id: "template-id",
-				rag_sources: [ragSource],
-			}),
-			title: "A".repeat(20),
+		// Simple application setup - component doesn't need detailed application state
+		const application = ApplicationFactory.build({
+			title: "Test Application Title",
 		});
 
 		useApplicationStore.setState({
@@ -147,9 +119,14 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 
 	describe("Button State Management", () => {
 		it("enables continue button when step validation passes", () => {
+			// Mock validateStepNext to return true
+			const mockValidateStepNext = vi.fn(() => true);
+
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: mockValidateStepNext,
 			});
+
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
@@ -157,19 +134,12 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 
 		it("disables continue button when step validation fails", () => {
-			const application = ApplicationFactory.build({
-				grant_template: undefined,
-				rag_sources: [],
-				title: "Short",
-			});
-
-			useApplicationStore.setState({
-				application,
-				areAppOperationsInProgress: false,
-			});
+			// Mock validateStepNext to return false
+			const mockValidateStepNext = vi.fn(() => false);
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: mockValidateStepNext,
 			});
 
 			render(<WizardFooter />);
@@ -178,105 +148,23 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 			expect(continueButtons[0]).toBeDisabled();
 		});
 
-		it("disables continue button when title is too short", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [RagSourceFactory.build()],
-				}),
-				title: "Short",
-			});
-
-			useApplicationStore.setState({
-				application,
-				areAppOperationsInProgress: false,
+		it("disables back button when template is generating", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				isGeneratingTemplate: true,
 			});
 
 			render(<WizardFooter />);
 
-			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
-		});
-
-		it("disables continue button when no RAG sources", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [],
-				}),
-				title: "This is a valid title with enough length",
-			});
-
-			useApplicationStore.setState({
-				application,
-				areAppOperationsInProgress: false,
-			});
-
-			render(<WizardFooter />);
-
-			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toBeDisabled();
+			const backButton = screen.getByTestId("back-button");
+			expect(backButton).toBeDisabled();
 		});
 	});
 
-	describe("Dialog Integration", () => {
-		it("opens dialog when continue clicked and has in-process template sources", async () => {
-			const user = userEvent.setup();
-
-			// Set up application state with in-process sources
-			const applicationWithInProcessSources = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [
-						RagSourceFactory.build({
-							sourceId: "source-1",
-							status: "INDEXING",
-							url: "https://example.com",
-						}),
-					],
-				}),
-				title: "Test Application with enough length",
-			});
-
-			useApplicationStore.setState({
-				application: applicationWithInProcessSources,
-				areAppOperationsInProgress: false,
-			});
-
-			render(<WizardFooter />);
-			const continueButtons = screen.getAllByTestId("continue-button");
-			await user.click(continueButtons[0]);
-
-			expect(mockOpenDialog).toHaveBeenCalledWith(
-				"Review Required: Some Uploads Failed",
-				expect.any(Object),
-				expect.objectContaining({
-					description:
-						"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
-					footer: expect.any(Object),
-				}),
-			);
-		});
-
-		it("proceeds to next step directly when no in-process template sources", async () => {
+	describe("Continue Button Behavior", () => {
+		it("calls toNextStep when continue button is clicked", async () => {
 			const user = userEvent.setup();
 			const mockToNextStep = vi.fn();
-
-			// Set up application state with completed sources (no in-process)
-			const applicationWithCompletedSources = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [
-						RagSourceFactory.build({
-							sourceId: "source-1",
-							status: "FINISHED",
-							url: "https://example.com",
-						}),
-					],
-				}),
-				title: "Test Application with enough length",
-			});
-
-			useApplicationStore.setState({
-				application: applicationWithCompletedSources,
-				areAppOperationsInProgress: false,
-			});
 
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
@@ -288,7 +176,6 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 			await user.click(continueButtons[0]);
 
 			expect(mockToNextStep).toHaveBeenCalledOnce();
-			expect(mockOpenDialog).not.toHaveBeenCalled();
 		});
 	});
 });

@@ -10,13 +10,12 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 export function WizardDialog() {
 	const dialog = useWizardStore((state) => state.dialog);
-	const closeDialog = useWizardStore((state) => state.closeDialog);
 
 	return (
 		<AppDialog
 			onOpenChange={(open) => {
 				if (!open) {
-					closeDialog();
+					return;
 				}
 			}}
 			open={dialog.isOpen}
