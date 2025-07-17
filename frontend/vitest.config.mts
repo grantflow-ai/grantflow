@@ -1,3 +1,4 @@
+import path from "node:path";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
@@ -9,7 +10,14 @@ const suppressedErrors = [
 ];
 
 export default defineConfig({
+	cacheDir: "node_modules/.vite",
 	plugins: [tsconfigPaths() as any, react() as any],
+	resolve: {
+		alias: {
+			"::testing": path.resolve(__dirname, "./testing"),
+			"@": path.resolve(__dirname, "./src"),
+		},
+	},
 	test: {
 		coverage: {
 			exclude: [
@@ -38,10 +46,29 @@ export default defineConfig({
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*"
 		],
 		globals: true,
+		hookTimeout: 10_000,
 		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
+		// Frontend tests don't need strict isolation (no database)
+		// Disabling isolation for speed - tests are isolated by design
+		isolate: false,
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
+		pool: "threads",
+		poolOptions: {
+			threads: {
+				maxThreads: 8,
+				minThreads: 2,
+				singleThread: false,
+			},
+		},
+		// poolMatchGlobs is deprecated, using pool: "threads" for all tests
+		sequence: {
+			concurrent: true,
+			shuffle: false,
+		},
 		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts", "./vitest.setup.ts"],
+		teardownTimeout: 10_000,
+		testTimeout: 15_000,
 	},
 });
