@@ -1,0 +1,26 @@
+{
+  "test_name": "test_dimension_comparison",
+  "test_category": "vector_benchmark",
+  "status": "failed",
+  "error": {
+    "type": "StatementError",
+    "message": "(builtins.ValueError) expected 384 dimensions, not 128\n[SQL: SELECT text_vectors.chunk, text_vectors.embedding, text_vectors.rag_source_id, text_vectors.id, text_vectors.created_at, text_vectors.updated_at \nFROM text_vectors ORDER BY text_vectors.embedding <=> $1 \n LIMIT $2::INTEGER]\n[parameters: [{}]]",
+    "execution_time_before_failure": 6.498274803161621
+  },
+  "performance": {
+    "execution_time": 6.498274803161621,
+    "timeout_reached": false,
+    "timeout_utilization": 0.010830458005269368
+  },
+  "diagnostic_info": {
+    "timeout_configured": 600,
+    "category": "vector_benchmark",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "async_session_maker",
+      "project",
+      "logger"
+    ]
+  },
+  "timestamp": "2025-07-17T16:45:54.692695+00:00"
+}

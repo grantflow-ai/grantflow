@@ -1,0 +1,25 @@
+{
+  "test_name": "test_baseline_similarity_search",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 13.929330825805664,
+    "min_time": 13.929330825805664,
+    "max_time": 13.929330825805664,
+    "std_deviation": 0.0,
+    "individual_times": [
+      13.929330825805664
+    ],
+    "timeout_utilization": 0.07738517125447592
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 180,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-17T19:20:37.701276+00:00"
+}

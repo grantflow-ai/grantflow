@@ -140,6 +140,11 @@ markers = [
   "semantic_evaluation: Semantic similarity evaluation tests",
   "ai_eval: AI-powered evaluation tests",
   "xdist_group(name): Mark tests to run in the same xdist worker",
+  "vector_benchmark: Vector database performance benchmarks",
+  "benchmark: All benchmark tests",
+  "benchmark_vector: Vector-specific benchmarks",
+  "benchmark_database: Database performance benchmarks",
+  "benchmark_api: API performance benchmarks",
 ]
 filterwarnings = [
   "ignore::DeprecationWarning:pkg_resources.*",

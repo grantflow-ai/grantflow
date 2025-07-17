@@ -63,35 +63,28 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
     """Create a unique test database for each worker process."""
-    
+
     base_connection_string = (
         os.getenv("DATABASE_URL") or f"postgresql://{os.getenv('USER', 'postgres')}@localhost:5432/postgres"
     )
 
-    
     process_id = os.getpid()
     test_db_name = f"grantflow_test_{worker_id}_{process_id}"
 
-    
     parsed = urlparse(base_connection_string)
     admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
 
     try:
-        
         admin_conn = await connect(admin_connection_string)
 
-        
         with contextlib.suppress(Exception):
             await admin_conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
 
-        
         await admin_conn.execute(f'CREATE DATABASE "{test_db_name}"')
         await admin_conn.close()
 
-        
         test_connection_string = urlunparse(parsed._replace(path=f"/{test_db_name}"))
 
-        
         test_conn = await connect(test_connection_string)
 
         await test_conn.execute(
@@ -106,18 +99,15 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         yield test_connection_string.replace("postgresql://", "postgresql+asyncpg://")
 
     finally:
-        
         try:
             admin_conn = await connect(admin_connection_string)
 
-            
             await admin_conn.execute(f"""
                 SELECT pg_terminate_backend(pid)
                 FROM pg_stat_activity
                 WHERE datname = '{test_db_name}' AND pid <> pg_backend_pid()
             """)
 
-            
             await admin_conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
             await admin_conn.close()
         except Exception:
@@ -146,7 +136,6 @@ async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
 async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
     """Clean up database state between tests by truncating all tables."""
     async with async_session_maker() as session:
-        
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
         await session.commit()

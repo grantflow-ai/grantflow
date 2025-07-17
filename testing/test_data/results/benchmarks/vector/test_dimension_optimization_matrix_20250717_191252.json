@@ -1,0 +1,25 @@
+{
+  "test_name": "test_dimension_optimization_matrix",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 41.52899479866028,
+    "min_time": 41.52899479866028,
+    "max_time": 41.52899479866028,
+    "std_deviation": 0.0,
+    "individual_times": [
+      41.52899479866028
+    ],
+    "timeout_utilization": 0.02307166377703349
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 1800,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-17T19:12:52.161759+00:00"
+}
