@@ -32,7 +32,7 @@ export function DashboardProjectCard({
 }: DashboardProjectCardProps) {
 	return (
 		<AppCard
-			className="w-[408px] h-[300px] bg-preview-bg cursor-pointer hover:border-primary rounded shadow-none border-2 border-gray-200"
+			className=" h-[300px] bg-preview-bg cursor-pointer hover:border-primary rounded shadow-none border-2 border-gray-200"
 			data-testid="dashboard-project-card"
 			onClick={
 				onClick

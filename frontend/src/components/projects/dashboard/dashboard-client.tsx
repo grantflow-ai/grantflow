@@ -261,14 +261,17 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
 							<DashboardStats initialProjects={projects} />
 						</main>
-						<main className="">
+						<main className="flex flex-col flex-1 min-h-0">
 							<h3
 								className="font-heading font-medium text-[28px] leading-[34px] text-app-black"
 								data-testid="research-projects-heading"
 							>
 								Research Projects
 							</h3>
-							<main className="flex items-center gap-4 flex-wrap mt-6" data-testid="projects-container">
+							<main
+								className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min mt-6 overflow-y-auto pr-2 scroll-box"
+								data-testid="projects-container"
+							>
 								{projects.length > 0 ? (
 									projects.map((project) => (
 										<DashboardProjectCard
