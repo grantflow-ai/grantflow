@@ -19,12 +19,11 @@ export function ProjectSettingsAccount({
 	projectId: _projectId,
 	userRole = UserRole.MEMBER,
 }: ProjectSettingsAccountProps) {
-	const { deleteProfilePhoto, updateDisplayName, updateEmail, updateProfilePhoto, user } = useUserStore();
+	const { deleteProfilePhoto, updateProfilePhoto, user } = useUserStore();
 	const [name, setName] = useState(user?.displayName ?? "");
 	const [email, setEmail] = useState(user?.email ?? "");
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const getInitials = () => {
