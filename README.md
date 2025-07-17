@@ -29,6 +29,7 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - Node.js 22 or higher
 - Python 3.13
 - Docker and Docker Compose
+- **PostgreSQL 17 with pgvector extension**: For local database testing (required for backend tests)
 - [UV](https://github.com/astral-sh/uv): Package manager for Python dependencies
 - [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies
 - [Task](https://taskfile.dev): Taskfile runner
@@ -39,6 +40,24 @@ Next.js 15, and the backend is a microservice-based Python architecture.
   backend development)
 
 Make sure to install all of these on your system.
+
+### PostgreSQL Setup for Testing
+
+The project uses local PostgreSQL for testing instead of Docker containers for better performance and isolation:
+
+```bash
+# macOS (using Homebrew)
+brew install postgresql@17 pgvector
+
+# Ubuntu/Debian
+sudo apt-get install postgresql-17 postgresql-17-pgvector
+
+# Start PostgreSQL service
+# macOS: brew services start postgresql@17
+# Ubuntu: sudo systemctl start postgresql
+```
+
+**Important**: Each test worker creates its own isolated database (`grantflow_test_{worker_id}_{process_id}`) to prevent conflicts during parallel test execution.
 
 ## Getting Started
 
@@ -346,16 +365,54 @@ We use [Lefthook](https://github.com/evilmartians/lefthook) to run pre-commit ch
 - Linters run on staged files with auto-fix
 - Commit messages are validated against conventional commits format
 
-## End-to-End Tests
+## Testing
 
-E2E tests validate real functionality with actual services and APIs. They are categorized by duration and purpose:
+The project uses different testing strategies optimized for performance and reliability:
 
-### Running E2E Tests
+### Backend Testing
 
+**Database Testing**:
+- Uses local PostgreSQL 17 with pgvector extension (not Docker)
+- Each test worker gets isolated database: `grantflow_test_{worker_id}_{process_id}`
+- Fast cleanup with TRUNCATE instead of DROP/CREATE
+- Parallel test execution with pytest-xdist (max 4 workers locally, 2 in CI)
+
+**Running Backend Tests**:
 ```bash
 # Run all unit tests (default, fast)
 task test
 
+# Run tests for specific services
+PYTHONPATH=. uv run pytest services/backend/tests/
+PYTHONPATH=. uv run pytest services/indexer/tests/
+PYTHONPATH=. uv run pytest services/rag/tests/
+PYTHONPATH=. uv run pytest services/crawler/tests/
+PYTHONPATH=. uv run pytest services/scraper/tests/
+```
+
+### Frontend Testing
+
+**Performance Configuration**:
+- Vitest with thread-based parallelization (up to 8 concurrent threads)
+- Disabled test isolation for faster execution
+- Efficient caching with Vite cache directory
+- Concurrent test execution within suites
+
+**Running Frontend Tests**:
+```bash
+# Run frontend tests
+cd frontend && pnpm test
+
+# Run specific test files
+cd frontend && pnpm test src/utils/format.spec.ts
+```
+
+### End-to-End Tests
+
+E2E tests validate real functionality with actual services and APIs. They are categorized by duration and purpose:
+
+**Running E2E Tests**:
+```bash
 # Run E2E tests by category
 E2E_TESTS=1 pytest -m "smoke"              # Quick validation (<1 min)
 E2E_TESTS=1 pytest -m "quality_assessment" # Moderate quality checks (2-5 min)
@@ -373,8 +430,7 @@ E2E_TESTS=1 pytest services/scraper/tests/
 E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)"
 ```
 
-### Writing E2E Tests
-
+**Writing E2E Tests**:
 Use the `@e2e_test` decorator from `testing.e2e_utils`:
 
 ```python

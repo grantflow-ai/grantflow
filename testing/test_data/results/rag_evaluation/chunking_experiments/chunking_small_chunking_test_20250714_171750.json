@@ -1,0 +1,44 @@
+{
+  "test_id": "chunking_test_20250714_171750_small",
+  "timestamp": "2025-07-14T17:18:07.157342+00:00",
+  "chunking_strategy": "small",
+  "chunking_params": {
+    "max_chars": 500,
+    "overlap_chars": 50
+  },
+  "embedding_model": "MiniLM-L12-v2",
+  "metrics": {
+    "strategy": "small",
+    "chunk_count": 71,
+    "avg_chunk_size": 384,
+    "min_chunk_size": 120,
+    "max_chunk_size": 499,
+    "total_content_length": 27313,
+    "coverage_ratio": 1.00707938497843,
+    "indexing_time_seconds": 1.42
+  },
+  "retrieval": {
+    "query": "melanoma brain metastases immunotherapy research",
+    "retrieved_count": 55,
+    "retrieval_time_seconds": 2.69,
+    "ai_evaluation": {
+      "relevance_scores": [
+        5,
+        4,
+        4,
+        4,
+        4
+      ],
+      "avg_relevance": 4.2,
+      "explanations": [
+        "This document extensively covers the key aspects of the query, including the examination of melanoma brain metastases, new approaches for clinical trials, and understanding tumor cell dormancy in the brain.",
+        "This document discusses the partnership between TMMF and MRA to advance research on melanoma brain metastases, including identifying and developing novel immune, targeted, and combination approaches for preclinical testing.",
+        "This document focuses on important aspects of the query, such as improving drug delivery across the blood-brain barrier, identifying cell types in the brain tumor microenvironment, and developing new models for the study of metastasis.",
+        "This document covers several relevant topics, including understanding melanoma brain metastasis and leptomeningeal disease, identifying new treatment options, and advancing neoadjuvant/adjuvant therapies for melanoma.",
+        "This document discusses molecular analysis of brain metastases, the Melanoma Research Alliance's research priority areas, and prior investments in AI and machine learning approaches, as well as addressing equity and diversity."
+      ],
+      "overall_assessment": "The given set of documents is highly relevant to the query on melanoma brain metastases and immunotherapy research. The documents cover a wide range of relevant topics, including the examination of brain metastases, new clinical trial approaches, identifying novel therapies, and understanding the underlying biology. The documents provide a comprehensive overview of the current state of research in this area.",
+      "evaluation_enabled": true
+    }
+  }
+}

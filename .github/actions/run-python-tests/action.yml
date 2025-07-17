@@ -25,6 +25,37 @@ runs:
               packages: tesseract-ocr pandoc
               version: 1.0
 
+        - name: Set up PostgreSQL
+          shell: bash
+          run: |
+              # Only set up PostgreSQL for services that need database access
+              if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "indexer" || "${{ inputs.target }}" == "crawler" || "${{ inputs.target }}" == "rag" || "${{ inputs.target }}" == "db" ]]; then
+                  # Install PostgreSQL 17 and pgvector
+                  sudo apt-get update
+                  sudo apt-get install -y wget ca-certificates
+                  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+                  echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+                  sudo apt-get update
+                  sudo apt-get install -y postgresql-17 postgresql-client-17 postgresql-contrib-17
+                  
+                  # Install pgvector extension
+                  sudo apt-get install -y postgresql-17-pgvector
+                  
+                  # Start PostgreSQL service
+                  sudo systemctl start postgresql
+                  sudo systemctl enable postgresql
+                  
+                  # Create test user and set up database
+                  sudo -u postgres createuser --superuser runner
+                  sudo -u postgres psql -c "ALTER USER runner WITH PASSWORD 'testpass';"
+                  
+                  # Set DATABASE_URL for tests
+                  echo "DATABASE_URL=postgresql://runner:testpass@localhost:5432/postgres" >> $GITHUB_ENV
+                  
+                  # Test connection
+                  psql "postgresql://runner:testpass@localhost:5432/postgres" -c "SELECT version();"
+              fi
+
         - name: Install Dependencies for Target
           shell: bash
           # TODO: temporary fix, we need to handle dependencies for each target better ~keep

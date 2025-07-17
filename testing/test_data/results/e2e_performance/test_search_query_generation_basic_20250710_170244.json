@@ -1,0 +1,11 @@
+{
+  "test_name": "test_search_query_generation_basic",
+  "test_category": "quality_assessment",
+  "status": "success",
+  "performance": {
+    "execution_time": 30.343669652938843,
+    "within_threshold": true,
+    "timeout_utilization": 0.10114556550979614
+  },
+  "timestamp": "2025-07-10T17:02:44.270560+00:00"
+}
