@@ -8,7 +8,8 @@ on:
         paths:
             - ".github/workflows/build-service-rag.yaml"
             - ".github/actions/**"
-            - "packages/**/src/**"
+            - "packages/db/src/**"
+            - "packages/shared_utils/src/**"
             - "services/rag/src/**"
     release:
         types: [published]
@@ -41,5 +42,38 @@ jobs:
               with:
                   service: rag
                   image_tag: ${{ steps.tag.outputs.image_tag }}
+                  workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+                  service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+        outputs:
+            image_tag: ${{ steps.tag.outputs.image_tag }}
+
+    deploy:
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set environment variables
+              run: |
+                  if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+                      echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+                      echo "ENVIRONMENT=production" >> $GITHUB_ENV
+                  else
+                      echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
+                      echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+                  fi
+
+            - name: Deploy to Cloud Run
+              uses: ./.github/actions/deploy-cloud-run
+              with:
+                  service: rag
+                  image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+                  environment: ${{ env.ENVIRONMENT }}
+                  project_id: ${{ env.PROJECT_ID }}
                   workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
                   service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
