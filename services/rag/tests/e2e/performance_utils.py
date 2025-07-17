@@ -128,6 +128,7 @@ class PerformanceTestContext:
             self.logger.info("Performance result saved to: %s", saved_path)
         except (ValueError, TypeError, KeyError, AttributeError, OSError) as e:
             self.logger.error("Failed to save performance result: %s", e)
+            self.errors.append(f"Failed to save performance result: {e}")
 
         self.logger.info(
             "Result created successfully, performance_grade: %s",
@@ -161,6 +162,42 @@ class PerformanceTestContext:
         """Add an error to the test result."""
         self.errors.append(message)
         self.logger.error(message)
+
+    def save_result(self) -> "PerformanceResult":
+        """Manually save the performance result and return it."""
+        if not self.start_time:
+            raise ValueError("Test not started - cannot save result")
+
+        total_time = (datetime.now(tz=UTC) - self.start_time).total_seconds()
+
+        baseline_time = None
+        if self.baseline_test_name:
+            baseline_time = result_manager.get_baseline_time(self.baseline_test_name)
+
+        self.result = self.analyzer.create_performance_result(
+            test_name=self.test_name,
+            test_id=self.test_id,
+            total_time=total_time,
+            stage_times=self.stage_times,
+            content=self.generated_content or "",
+            section_texts=self.section_texts,
+            configuration=self.configuration,
+            baseline_time=baseline_time,
+            current_llm_calls=self.llm_calls_made,
+            expected_patterns=self.expected_patterns,
+            errors=self.errors,
+            warnings=self.warnings,
+        )
+
+        try:
+            subfolder = self.test_category.value
+            saved_path = result_manager.save_result(self.result, subfolder)
+            self.logger.info("Performance result manually saved to: %s", saved_path)
+            return self.result
+        except (ValueError, TypeError, KeyError, AttributeError, OSError) as e:
+            self.logger.error("Failed to save performance result: %s", e)
+            self.errors.append(f"Failed to save performance result: {e}")
+            raise
 
     def _log_performance_summary(self) -> None:
         """Log comprehensive performance summary."""
@@ -369,6 +406,20 @@ def assert_performance_targets(result: PerformanceResult | None, min_grade: str 
     assert actual_grade_index <= min_grade_index, (
         f"Performance grade {result.performance_grade.value} does not meet minimum requirement of {min_grade}"
     )
+
+
+def safe_performance_test(perf_ctx: PerformanceTestContext, assertion_func: Callable[[], None]) -> None:
+    """Safely run performance test with guaranteed result saving."""
+    try:
+        assertion_func()
+    except Exception as e:
+        perf_ctx.add_error(f"Assertion failed: {e}")
+        raise
+    finally:
+        try:
+            perf_ctx.save_result()
+        except Exception as save_error:
+            perf_ctx.logger.error("Failed to save result even in finally block: %s", save_error)
 
 
 def assert_quality_targets(result: PerformanceResult | None, min_score: float = 70.0) -> None:
