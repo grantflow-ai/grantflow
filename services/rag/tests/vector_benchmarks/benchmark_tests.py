@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testing.benchmark_utils import benchmark_vector
 
 from .framework import BenchmarkResult, VectorBenchmarkFramework
-from .test_data import TestDataGenerator
+from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
