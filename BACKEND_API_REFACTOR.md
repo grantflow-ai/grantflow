@@ -275,21 +275,24 @@ Transform the backend API from project-centric to organization-centric architect
 - ✅ **Added**: IP address extraction from request headers with proxy support
 - ✅ **Added**: Structured audit data formatting with organization context
 
-#### 1.1. Update Cloud Function for Soft Delete Cleanup
+#### 1.1. Update Cloud Function for Soft Delete Cleanup ✅ COMPLETED
 
 **File**: `cloud_functions/src/user_cleanup/main.py`
-- ❌ **Update**: `delete_organization_completely()` function to handle soft-deleted child entities
-- ❌ **Add**: Hard delete logic for projects, applications, and sources when organization is hard deleted
-- ❌ **Add**: Cascade cleanup for all organization-related soft-deleted records
+- ✅ **Update**: `hard_delete_organization()` function to handle soft-deleted child entities
+- ✅ **Add**: Hard delete logic for projects, applications, and sources when organization is hard deleted
+- ✅ **Add**: Cascade cleanup for all organization-related soft-deleted records
+- ✅ **Add**: Grace period calculation for both users (10 days) and organizations (30 days)
+- ✅ **Add**: Comprehensive error handling and logging for cleanup operations
 
-#### 1.2. Update Terraform Infrastructure for Enhanced Cleanup
+#### 1.2. Update Terraform Infrastructure for Enhanced Cleanup ✅ COMPLETED
 
 **File**: `terraform/modules/monitoring/user_cleanup.tf`
-- ❌ **Update**: Cloud Function deployment to use updated cleanup function
-- ❌ **Update**: Cloud Scheduler configuration to run daily (like user cleanup)
-- ❌ **Update**: IAM permissions for organization and project cleanup operations
-- ❌ **Add**: Environment variables for organization cleanup grace period
-- ❌ **Add**: Monitoring alerts for organization cleanup failures
+- ✅ **Update**: Cloud Function deployment renamed to `entity_cleanup` to reflect dual cleanup
+- ✅ **Update**: Cloud Scheduler configuration runs daily at 2 AM UTC
+- ✅ **Update**: IAM permissions include Cloud SQL client access for database operations
+- ✅ **Add**: Environment variables for both grace periods (USER_DELETION_GRACE_PERIOD_DAYS=10, ORGANIZATION_DELETION_GRACE_PERIOD_DAYS=30)
+- ✅ **Add**: Monitoring alerts for both user and organization cleanup failures
+- ✅ **Add**: Enhanced monitoring with Discord webhook notifications
 
 #### 2. Add Soft Delete Filters to SELECT Queries ✅ COMPLETED
 
@@ -408,7 +411,7 @@ Transform the backend API from project-centric to organization-centric architect
 
 ## Next Steps Priority:
 
-1. **🔥 CRITICAL**: Update cloud function and Terraform infrastructure (todos 3-4)
+1. **🔥 CRITICAL**: ✅ COMPLETED - Cloud function and Terraform infrastructure updated
 2. **🚨 HIGH**: Add missing organization member/access endpoints (todos 5-7)
 3. **🔧 MEDIUM**: Update URL structure to organization-first (todos 8-9)
 4. **🧪 LOW**: Update test infrastructure (todos 10-11)
@@ -420,8 +423,8 @@ Transform the backend API from project-centric to organization-centric architect
 - ✅ **Member removal**: Hard delete is acceptable for removing members from organizations
 - ✅ **Audit logging**: Comprehensive audit trail for all organization actions
 - ✅ **Soft delete filtering**: All SELECT queries respect soft delete status
-- ❌ **Cloud function**: Update to handle soft-deleted child entities during organization cleanup
-- ❌ **Infrastructure**: Update Terraform for enhanced cleanup with daily scheduling
+- ✅ **Cloud function**: Updated to handle soft-deleted child entities during organization cleanup
+- ✅ **Infrastructure**: Updated Terraform for enhanced cleanup with daily scheduling
 
 ## Risk Assessment
 - **Low Risk**: Current implementation is stable with backward compatibility
@@ -467,8 +470,8 @@ Transform the backend API from project-centric to organization-centric architect
 - Comprehensive audit trail implementation
 
 ### ❌ **REMAINING TASKS**
-1. Update cloud function for soft-deleted child entity cleanup
-2. Update Terraform infrastructure for enhanced cleanup scheduling
+1. ✅ COMPLETED - Update cloud function for soft-deleted child entity cleanup
+2. ✅ COMPLETED - Update Terraform infrastructure for enhanced cleanup scheduling
 3. Add organization member management endpoints
 4. Add project access management endpoints
 5. Add organization-scoped invitation endpoints
