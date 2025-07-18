@@ -11,6 +11,7 @@ from litestar.middleware import (
 )
 from litestar.types import ASGIApp, Receive, Scope, Send
 from packages.db.src.tables import OrganizationUser
+from packages.db.src.enums import UserRoleEnum
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.tracing import start_span_with_trace_id
@@ -60,9 +61,22 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             firebase_uid = verify_jwt_token(otp)
 
         if allowed_roles := connection.route_handler.opt.get("allowed_roles"):
+            # Try to get organization_id from path params (new structure)
+            organization_id = connection.path_params.get("organization_id")
             project_id = connection.path_params.get("project_id")
-            if not project_id:
-                raise NotAuthorizedException
+            
+            # For backward compatibility, if no organization_id but we have project_id,
+            # we need to look up the organization through the project
+            if not organization_id and project_id:
+                # TODO: This is temporary backward compatibility - eventually all routes should have organization_id
+                async with connection.app.state.session_maker() as session:
+                    from packages.db.src.tables import Project
+                    project = await session.get(Project, project_id)
+                    if project:
+                        organization_id = project.organization_id
+            
+            if not organization_id:
+                raise NotAuthorizedException("Organization context required")
 
             if not firebase_uid:
                 raise NotAuthorizedException
@@ -71,15 +85,32 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 stmt = (
                     select(OrganizationUser)
                     .where(OrganizationUser.firebase_uid == firebase_uid)
-                    .where(OrganizationUser.project_id == project_id)
+                    .where(OrganizationUser.organization_id == organization_id)
                 )
                 if allowed_roles is not None:
                     stmt = stmt.where(OrganizationUser.role.in_(allowed_roles))
 
                 result = await session.execute(stmt)
+                organization_user = result.scalar_one_or_none()
 
-            if organization_user := result.scalar_one_or_none():
-                return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
+                if organization_user:
+                    # For COLLABORATOR role, check project-specific access if needed
+                    if (organization_user.role == UserRoleEnum.COLLABORATOR and 
+                        not organization_user.has_all_projects_access and 
+                        project_id):
+                        from packages.db.src.tables import ProjectAccess
+                        project_access = await session.scalar(
+                            select(ProjectAccess).where(
+                                ProjectAccess.firebase_uid == firebase_uid,
+                                ProjectAccess.organization_id == organization_id,
+                                ProjectAccess.project_id == project_id
+                            )
+                        )
+                        if not project_access:
+                            raise NotAuthorizedException("Project access required")
+                    
+                    return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
+                
             raise NotAuthorizedException
 
         if firebase_uid:
