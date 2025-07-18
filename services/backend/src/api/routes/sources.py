@@ -9,9 +9,12 @@ from litestar.types.internal_types import PathParameterDefinition
 from packages.db.src.constants import RAG_FILE, RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
+    GrantApplication,
     GrantApplicationSource,
     GrantingInstitutionSource,
+    GrantTemplate,
     GrantTemplateSource,
+    Project,
     RagFile,
     RagSource,
     RagUrl,
@@ -25,7 +28,6 @@ from packages.shared_utils.src.gcs import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_url_crawling_task
-from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -33,6 +35,7 @@ from sqlalchemy.orm import aliased, with_polymorphic
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
+from services.backend.src.utils.audit import DELETE_SOURCE, log_organization_audit_from_request
 
 if TYPE_CHECKING:
     from packages.shared_utils.src.shared_types import ParentType
@@ -110,12 +113,19 @@ async def handle_create_rag_source(
     async with session_maker() as session, session.begin():
         try:
             rag_url_alias = aliased(RagUrl)
-            rag_source = await session.scalar(select(RagSource).join(rag_url_alias).where(rag_url_alias.url == url))
+            rag_source = await session.scalar(
+                select(RagSource)
+                .join(rag_url_alias)
+                .where(
+                    rag_url_alias.url == url,
+                    RagSource.deleted_at.is_(None),
+                )
+            )
             if rag_source:
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
                     return cast("UUID", rag_source.id)
 
-                await session.execute(sa_delete(RagSource).where(RagSource.id == rag_source.id))
+                rag_source.soft_delete()
 
             source_id = await session.scalar(
                 insert(RagSource)
@@ -301,6 +311,7 @@ async def handle_retrieve_rag_sources(
     operation_id=_create_operation_id_creator("Delete{value}RagSource"),
 )
 async def handle_delete_rag_source(
+    request: APIRequest,
     session_maker: async_sessionmaker[Any],
     source_id: UUID,
     application_id: UUID | None = None,
@@ -342,6 +353,53 @@ async def handle_delete_rag_source(
             result = await session.execute(statement)
             source = result.scalar_one()
 
+            # Determine organization_id for audit logging
+            if application_id:
+                # Get project from application to get organization_id
+                app_with_project = await session.scalar(
+                    select(GrantApplication)
+                    .join(Project)
+                    .where(
+                        GrantApplication.id == application_id,
+                        GrantApplication.deleted_at.is_(None),
+                        Project.deleted_at.is_(None),
+                    )
+                )
+                audit_org_id = app_with_project.project.organization_id
+            elif template_id:
+                # Get application from template to get organization_id
+                template_with_app = await session.scalar(
+                    select(GrantTemplate)
+                    .join(GrantApplication)
+                    .join(Project)
+                    .where(
+                        GrantTemplate.id == template_id,
+                        GrantTemplate.deleted_at.is_(None),
+                        GrantApplication.deleted_at.is_(None),
+                        Project.deleted_at.is_(None),
+                    )
+                )
+                audit_org_id = template_with_app.grant_application.project.organization_id
+            else:
+                # For organization-level sources, use organization_id directly
+                audit_org_id = organization_id
+
+            # Log audit event
+            if audit_org_id:
+                await log_organization_audit_from_request(
+                    session=session,
+                    request=request,
+                    organization_id=audit_org_id,
+                    action=DELETE_SOURCE,
+                    details={
+                        "source_id": str(source_id),
+                        "source_type": source.source_type,
+                        "application_id": str(application_id) if application_id else None,
+                        "template_id": str(template_id) if template_id else None,
+                        "organization_id": str(organization_id) if organization_id else None,
+                    },
+                )
+
             if isinstance(source, RagFile):
                 try:
                     await delete_blob(source.object_path)
@@ -358,10 +416,10 @@ async def handle_delete_rag_source(
                         error=str(e),
                     )
 
-            await session.execute(sa_delete(RagSource).where(RagSource.id == source_id))
+            source.soft_delete()
             await session.commit()
 
-            logger.info("Successfully deleted RAG source", source_id=source_id)
+            logger.info("Successfully soft deleted RAG source", source_id=source_id)
 
         except NoResultFound as e:
             raise NotFoundException from e

@@ -52,7 +52,12 @@ async def handle_generate_grant_template(
     )
 
     async with session_maker() as session:
-        grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
+        grant_template = await session.scalar(
+            select(GrantTemplate).where(
+                GrantTemplate.id == grant_template_id,
+                GrantTemplate.deleted_at.is_(None),
+            )
+        )
 
         if not grant_template:
             logger.debug(
@@ -146,7 +151,12 @@ async def handle_update_grant_template(
 
     async with session_maker() as session, session.begin():
         try:
-            grant_template = await session.scalar(select(GrantTemplate).where(GrantTemplate.id == grant_template_id))
+            grant_template = await session.scalar(
+                select(GrantTemplate).where(
+                    GrantTemplate.id == grant_template_id,
+                    GrantTemplate.deleted_at.is_(None),
+                )
+            )
 
             if not grant_template:
                 raise ValidationException("Grant template not found")
