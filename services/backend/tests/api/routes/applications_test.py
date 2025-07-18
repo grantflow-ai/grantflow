@@ -49,7 +49,7 @@ async def test_update_application_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     update_data = {
         "title": "Updated Title",
@@ -131,7 +131,7 @@ async def test_delete_application_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.delete(
         f"/projects/{project.id}/applications/{grant_application.id}",
@@ -142,7 +142,8 @@ async def test_delete_application_success(
 
     async with async_session_maker() as session:
         result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
-        assert result is None
+        assert result is not None
+        assert result.deleted_at is not None
 
 
 async def test_delete_application_unauthorized(
@@ -238,7 +239,7 @@ async def test_generate_application_insufficient_data(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.post(
         f"/projects/{project.id}/applications/{grant_application.id}",

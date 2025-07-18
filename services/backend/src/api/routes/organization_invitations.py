@@ -269,7 +269,7 @@ async def handle_delete_organization_invitation(
     organization_id: UUID,
     invitation_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> dict[str, str]:
+) -> None:
     logger.info(
         "Deleting organization invitation",
         organization_id=organization_id,
@@ -309,8 +309,6 @@ async def handle_delete_organization_invitation(
             )
 
             await session.commit()
-
-            return {"message": "Invitation deleted successfully"}
 
         except SQLAlchemyError as e:
             await session.rollback()

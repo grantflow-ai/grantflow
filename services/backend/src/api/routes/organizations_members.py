@@ -181,7 +181,7 @@ async def handle_add_organization_member(
 
 
 @patch(
-    "/organizations/{organization_id:uuid}/members/{firebase_uid}",
+    "/organizations/{organization_id:uuid}/members/{firebase_uid:str}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
     operation_id="UpdateMemberRole",
 )
@@ -313,7 +313,7 @@ async def handle_update_member_role(
 
 
 @delete(
-    "/organizations/{organization_id:uuid}/members/{firebase_uid}",
+    "/organizations/{organization_id:uuid}/members/{firebase_uid:str}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN],
     operation_id="RemoveMember",
 )
@@ -322,7 +322,7 @@ async def handle_remove_member(
     organization_id: UUID,
     firebase_uid: str,
     session_maker: async_sessionmaker[Any],
-) -> MemberActionResponse:
+) -> None:
     logger.info(
         "Removing organization member", organization_id=organization_id, target_uid=firebase_uid, uid=request.auth
     )
@@ -352,8 +352,6 @@ async def handle_remove_member(
             if member.role == UserRoleEnum.OWNER:
                 raise ValidationException("Cannot remove organization owner")
 
-            member_role = member.role
-
             await session.execute(
                 sa_delete(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
@@ -377,9 +375,3 @@ async def handle_remove_member(
             await session.rollback()
             logger.error("Error removing organization member", exc_info=e)
             raise DatabaseError("Error removing organization member", context=str(e)) from e
-
-    return MemberActionResponse(
-        message="Member removed successfully",
-        firebase_uid=firebase_uid,
-        role=member_role,
-    )
