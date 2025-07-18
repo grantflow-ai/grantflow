@@ -24,6 +24,28 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
 
+export type TemplateGenerationEvent =
+	| "cfp_data_extracted"
+	| "extracting_cfp_data"
+	| "generation_error"
+	| "grant_template_created"
+	| "grant_template_extraction"
+	| "grant_template_generation_started"
+	| "grant_template_metadata"
+	| "indexing_in_progress"
+	| "insufficient_context_error"
+	| "internal_error"
+	| "low_retrieval_quality"
+	| "metadata_generated"
+	| "pipeline_error"
+	| "saving_grant_template"
+	| "sections_extracted";
+
+export interface TemplateGenerationStatus {
+	event: TemplateGenerationEvent;
+	message: string;
+}
+
 type RagSourceStatus = NonNullable<
 	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
 >["rag_sources"][0]["status"];
@@ -88,6 +110,7 @@ interface WizardActions {
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
+	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
 	startTemplateGeneration: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
@@ -107,6 +130,7 @@ interface WizardState {
 	polling: PollingState;
 	shouldRedirectToEditor: boolean;
 	showResearchPlanInfoBanner: boolean;
+	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
 const initialWizardState: WizardState = {
@@ -123,6 +147,7 @@ const initialWizardState: WizardState = {
 	},
 	shouldRedirectToEditor: false,
 	showResearchPlanInfoBanner: true,
+	templateGenerationStatus: null,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -506,6 +531,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							...initialWizardState.polling,
 						},
 						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
+						templateGenerationStatus: initialWizardState.templateGenerationStatus,
 					});
 				},
 
@@ -537,6 +563,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					set((state) => ({
 						...state,
 						showResearchPlanInfoBanner: show,
+					}));
+				},
+
+				setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
+					set((state) => ({
+						...state,
+						templateGenerationStatus: status,
 					}));
 				},
 
