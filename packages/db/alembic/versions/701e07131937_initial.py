@@ -12,7 +12,6 @@ import pgvector.sqlalchemy
 import sqlalchemy as sa
 from alembic import op
 
-
 revision: str = "701e07131937"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
@@ -21,7 +20,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    
+
     op.create_table(
         "granting_institutions",
         sa.Column("full_name", sa.String(length=255), nullable=False),
@@ -496,12 +495,11 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_grant_template_sources_deleted_at"), "grant_template_sources", ["deleted_at"], unique=False
     )
-    
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    
+
     op.drop_index(op.f("ix_grant_template_sources_deleted_at"), table_name="grant_template_sources")
     op.drop_index(op.f("ix_grant_template_sources_created_at"), table_name="grant_template_sources")
     op.drop_table("grant_template_sources")
@@ -611,4 +609,3 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_granting_institutions_created_at"), table_name="granting_institutions")
     op.drop_index(op.f("ix_granting_institutions_abbreviation"), table_name="granting_institutions")
     op.drop_table("granting_institutions")
-    

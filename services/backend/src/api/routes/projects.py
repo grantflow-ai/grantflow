@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest, TableIdResponse
+from services.backend.src.utils.audit import DELETE_PROJECT, log_organization_audit_from_request
 from services.backend.src.utils.firebase import get_user_by_email, get_users
 
 logger = get_logger(__name__)
@@ -64,7 +65,7 @@ class BaseApplicationResponse(TableIdResponse):
 class CreateInvitationRedirectUrlRequestBody(TypedDict):
     email: str
     role: UserRoleEnum
-    project_ids: NotRequired[list[str]]  
+    project_ids: NotRequired[list[str]]
 
 
 class InvitationRedirectUrlResponse(TypedDict):
@@ -106,7 +107,10 @@ async def handle_create_project(
     async with session_maker() as session, session.begin():
         try:
             user_org = await session.scalar(
-                select(OrganizationUser).where(OrganizationUser.firebase_uid == request.auth)
+                select(OrganizationUser).where(
+                    OrganizationUser.firebase_uid == request.auth,
+                    OrganizationUser.deleted_at.is_(None),
+                )
             )
             if not user_org:
                 raise ValidationException("User is not a member of any organization")
@@ -137,7 +141,11 @@ async def handle_retrieve_projects(
             await session.scalars(
                 select(Project)
                 .join(OrganizationUser)
-                .where(OrganizationUser.firebase_uid == request.auth)
+                .where(
+                    OrganizationUser.firebase_uid == request.auth,
+                    OrganizationUser.deleted_at.is_(None),
+                    Project.deleted_at.is_(None),
+                )
                 .options(
                     selectinload(Project.project_access),
                     selectinload(Project.grant_applications),
@@ -205,7 +213,13 @@ async def handle_update_project(
     async with session_maker() as session, session.begin():
         try:
             project = await session.scalar(
-                update(Project).where(Project.id == project_id).values(data).returning(Project)
+                update(Project)
+                .where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+                .values(data)
+                .returning(Project)
             )
             await session.commit()
         except SQLAlchemyError as e:
@@ -240,7 +254,10 @@ async def handle_retrieve_project(
                 selectinload(Project.grant_applications),
                 selectinload(Project.project_access),
             )
-            .where(Project.id == project_id)
+            .where(
+                Project.id == project_id,
+                Project.deleted_at.is_(None),
+            )
         )
 
     organization_users = await session.scalars(
@@ -304,11 +321,29 @@ async def handle_retrieve_project(
     allowed_roles=[UserRoleEnum.OWNER],
     operation_id="DeleteProject",
 )
-async def handle_delete_project(project_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
+async def handle_delete_project(request: APIRequest, project_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     logger.info("Deleting project", project_id=project_id)
     async with session_maker() as session, session.begin():
         try:
-            await session.execute(sa_delete(Project).where(Project.id == project_id))
+            project = await session.scalar(
+                select(Project).where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+            )
+            if not project:
+                raise ValidationException("Project not found")
+
+            # Log audit event
+            await log_organization_audit_from_request(
+                session=session,
+                request=request,
+                organization_id=project.organization_id,
+                action=DELETE_PROJECT,
+                details={"project_id": str(project_id), "project_name": project.name},
+            )
+
+            project.soft_delete()
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
@@ -334,14 +369,21 @@ async def handle_create_invitation_redirect_url(
     )
     async with session_maker() as session, session.begin():
         try:
-            project = await session.scalar(select(Project).where(Project.id == project_id))
+            project = await session.scalar(
+                select(Project).where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+            )
             if not project:
                 raise ValidationException("Project not found")
 
             inviter = await session.scalar(
-                select(OrganizationUser)
-                .where(OrganizationUser.organization_id == project.organization_id)
-                .where(OrganizationUser.firebase_uid == request.auth)
+                select(OrganizationUser).where(
+                    OrganizationUser.organization_id == project.organization_id,
+                    OrganizationUser.firebase_uid == request.auth,
+                    OrganizationUser.deleted_at.is_(None),
+                )
             )
 
             if not inviter:
@@ -377,7 +419,7 @@ async def handle_create_invitation_redirect_url(
                 "invitation_id": str(invitation.id),
                 "project_id": str(project_id),
                 "role": data["role"].value,
-                "project_ids": data.get("project_ids", []),  
+                "project_ids": data.get("project_ids", []),
                 "iat": int(datetime.now(UTC).timestamp()),
                 "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),
@@ -414,30 +456,35 @@ async def handle_delete_invitation(
     logger.info("Deleting invitation", project_id=project_id, invitation_id=invitation_id)
     async with session_maker() as session, session.begin():
         try:
-            project = await session.scalar(select(Project).where(Project.id == project_id))
+            project = await session.scalar(
+                select(Project).where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+            )
             if not project:
                 raise ValidationException("Project not found")
 
             await session.scalar(
-                select(OrganizationUser)
-                .where(OrganizationUser.organization_id == project.organization_id)
-                .where(OrganizationUser.firebase_uid == request.auth)
+                select(OrganizationUser).where(
+                    OrganizationUser.organization_id == project.organization_id,
+                    OrganizationUser.firebase_uid == request.auth,
+                    OrganizationUser.deleted_at.is_(None),
+                )
             )
 
             invitation = await session.scalar(
-                select(OrganizationInvitation)
-                .where(OrganizationInvitation.id == invitation_id)
-                .where(OrganizationInvitation.organization_id == project.organization_id)
+                select(OrganizationInvitation).where(
+                    OrganizationInvitation.id == invitation_id,
+                    OrganizationInvitation.organization_id == project.organization_id,
+                    OrganizationInvitation.deleted_at.is_(None),
+                )
             )
 
             if not invitation:
                 raise ValidationException("Invitation not found")
 
-            await session.execute(
-                sa_delete(OrganizationInvitation)
-                .where(OrganizationInvitation.id == invitation_id)
-                .where(OrganizationInvitation.organization_id == project.organization_id)
-            )
+            invitation.soft_delete()
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
@@ -464,14 +511,21 @@ async def handle_update_invitation_role(
     )
     async with session_maker() as session, session.begin():
         try:
-            project = await session.scalar(select(Project).where(Project.id == project_id))
+            project = await session.scalar(
+                select(Project).where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+            )
             if not project:
                 raise ValidationException("Project not found")
 
             invitation = await session.scalar(
-                select(OrganizationInvitation)
-                .where(OrganizationInvitation.id == invitation_id)
-                .where(OrganizationInvitation.organization_id == project.organization_id)
+                select(OrganizationInvitation).where(
+                    OrganizationInvitation.id == invitation_id,
+                    OrganizationInvitation.organization_id == project.organization_id,
+                    OrganizationInvitation.deleted_at.is_(None),
+                )
             )
             if not invitation:
                 raise ValidationException("Invitation not found")
@@ -522,7 +576,7 @@ async def handle_update_invitation_role(
 
 
 class AcceptInvitationRequestBody(TypedDict):
-    token: NotRequired[str]  
+    token: NotRequired[str]
 
 
 @post(
@@ -540,7 +594,10 @@ async def handle_accept_invitation(
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
-                select(OrganizationInvitation).where(OrganizationInvitation.id == invitation_id)
+                select(OrganizationInvitation).where(
+                    OrganizationInvitation.id == invitation_id,
+                    OrganizationInvitation.deleted_at.is_(None),
+                )
             )
 
             if not invitation:
@@ -556,7 +613,6 @@ async def handle_accept_invitation(
             if firebase_user["uid"] != request.auth:
                 raise ValidationException("Authenticated user does not match invitation email")
 
-            
             await session.scalar(
                 insert(OrganizationUser)
                 .values(
@@ -564,26 +620,23 @@ async def handle_accept_invitation(
                         "organization_id": invitation.organization_id,
                         "firebase_uid": request.auth,
                         "role": invitation.role,
-                        "has_all_projects_access": False,  
+                        "has_all_projects_access": False,
                     }
                 )
                 .returning(OrganizationUser)
             )
 
-            
             project_ids = []
             if "token" in data:
                 with suppress(Exception):
-                    
                     token_payload = decode(data["token"], get_env("JWT_SECRET"), algorithms=["HS256"])
                     project_ids = token_payload.get("project_ids", [])
 
             if project_ids:
-                
                 for project_id_str in project_ids:
                     with suppress(ValueError):
                         project_id_uuid = UUID(project_id_str)
-                        
+
                         existing_access = await session.scalar(
                             select(ProjectAccess)
                             .where(ProjectAccess.firebase_uid == request.auth)
@@ -602,7 +655,6 @@ async def handle_accept_invitation(
                                 )
                             )
             else:
-                
                 await session.execute(
                     update(OrganizationUser)
                     .where(OrganizationUser.firebase_uid == request.auth)
@@ -653,7 +705,12 @@ async def handle_list_project_members(
 ) -> list[ProjectMemberResponse]:
     logger.info("Listing project members", project_id=project_id)
     async with session_maker() as session:
-        project = await session.scalar(select(Project).where(Project.id == project_id))
+        project = await session.scalar(
+            select(Project).where(
+                Project.id == project_id,
+                Project.deleted_at.is_(None),
+            )
+        )
         if not project:
             return []
 
@@ -716,14 +773,21 @@ async def handle_update_member_role(
     )
     async with session_maker() as session, session.begin():
         try:
-            project = await session.scalar(select(Project).where(Project.id == project_id))
+            project = await session.scalar(
+                select(Project).where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+            )
             if not project:
                 raise ValidationException("Project not found")
 
             requester = await session.scalar(
-                select(OrganizationUser)
-                .where(OrganizationUser.organization_id == project.organization_id)
-                .where(OrganizationUser.firebase_uid == request.auth)
+                select(OrganizationUser).where(
+                    OrganizationUser.organization_id == project.organization_id,
+                    OrganizationUser.firebase_uid == request.auth,
+                    OrganizationUser.deleted_at.is_(None),
+                )
             )
 
             if not requester:
@@ -788,23 +852,32 @@ async def handle_remove_project_member(
     )
     async with session_maker() as session, session.begin():
         try:
-            project = await session.scalar(select(Project).where(Project.id == project_id))
+            project = await session.scalar(
+                select(Project).where(
+                    Project.id == project_id,
+                    Project.deleted_at.is_(None),
+                )
+            )
             if not project:
                 raise ValidationException("Project not found")
 
             requester = await session.scalar(
-                select(OrganizationUser)
-                .where(OrganizationUser.organization_id == project.organization_id)
-                .where(OrganizationUser.firebase_uid == request.auth)
+                select(OrganizationUser).where(
+                    OrganizationUser.organization_id == project.organization_id,
+                    OrganizationUser.firebase_uid == request.auth,
+                    OrganizationUser.deleted_at.is_(None),
+                )
             )
 
             if not requester:
                 raise ValidationException("Requester is not a member of this organization")
 
             target_member = await session.scalar(
-                select(OrganizationUser)
-                .where(OrganizationUser.organization_id == project.organization_id)
-                .where(OrganizationUser.firebase_uid == firebase_uid)
+                select(OrganizationUser).where(
+                    OrganizationUser.organization_id == project.organization_id,
+                    OrganizationUser.firebase_uid == firebase_uid,
+                    OrganizationUser.deleted_at.is_(None),
+                )
             )
 
             if not target_member:

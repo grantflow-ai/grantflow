@@ -34,7 +34,12 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
     firebase_uid = decoded_token["uid"]
 
     async with session_maker() as session, session.begin():
-        result = await session.execute(select(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid))
+        result = await session.execute(
+            select(OrganizationUser).where(
+                OrganizationUser.firebase_uid == firebase_uid,
+                OrganizationUser.deleted_at.is_(None),
+            )
+        )
         organization_user = result.scalars().first()
 
         if organization_user is None:
