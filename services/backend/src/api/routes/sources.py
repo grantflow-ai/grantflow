@@ -365,7 +365,7 @@ async def handle_delete_rag_source(
                         Project.deleted_at.is_(None),
                     )
                 )
-                audit_org_id = app_with_project.project.organization_id
+                audit_org_id = app_with_project.project.organization_id if app_with_project else None
             elif template_id:
                 # Get application from template to get organization_id
                 template_with_app = await session.scalar(
@@ -379,7 +379,7 @@ async def handle_delete_rag_source(
                         Project.deleted_at.is_(None),
                     )
                 )
-                audit_org_id = template_with_app.grant_application.project.organization_id
+                audit_org_id = template_with_app.grant_application.project.organization_id if template_with_app else None
             else:
                 # For organization-level sources, use organization_id directly
                 audit_org_id = organization_id

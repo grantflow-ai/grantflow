@@ -188,7 +188,11 @@ async def test_retrieve_grant_template_sources_unauthorized(
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
+@patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
+@patch("services.backend.src.api.routes.sources.log_organization_audit_from_request", new_callable=AsyncMock)
 async def test_delete_application_source(
+    mock_audit: AsyncMock,
+    mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
@@ -217,7 +221,7 @@ async def test_delete_application_source(
             )
 
 
-@patch("services.backend.src.api.routes.sources.delete_blob")
+@patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
 async def test_delete_application_source_deletes_from_gcs(
     mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
@@ -242,7 +246,9 @@ async def test_delete_application_source_deletes_from_gcs(
     mock_delete_blob.assert_called_once_with(object_path)
 
 
+@patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
 async def test_delete_organization_source(
+    mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
     granting_institution: GrantingInstitution,
     granting_institution_file: GrantingInstitutionSource,
@@ -270,7 +276,9 @@ async def test_delete_organization_source(
             )
 
 
+@patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
 async def test_delete_template_source(
+    mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
     project: Project,
     grant_template: GrantTemplate,
