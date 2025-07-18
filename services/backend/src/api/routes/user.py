@@ -74,8 +74,6 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
             )
 
         async with session_maker() as session:
-            
-            
             owned_organizations = (
                 select(ProjectMember.organization_id)
                 .where(ProjectMember.firebase_uid == firebase_uid)

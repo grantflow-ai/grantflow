@@ -61,12 +61,9 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             firebase_uid = verify_jwt_token(otp)
 
         if allowed_roles := connection.route_handler.opt.get("allowed_roles"):
-            
             organization_id = connection.path_params.get("organization_id")
             project_id = connection.path_params.get("project_id")
 
-            
-            
             if not organization_id and project_id:
                 # TODO: This is temporary backward compatibility - eventually all routes should have organization_id
                 async with connection.app.state.session_maker() as session:
@@ -93,7 +90,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 organization_user = result.scalar_one_or_none()
 
                 if organization_user:
-                    
                     if (
                         organization_user.role == UserRoleEnum.COLLABORATOR
                         and not organization_user.has_all_projects_access
