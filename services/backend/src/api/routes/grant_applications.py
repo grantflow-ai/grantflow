@@ -34,6 +34,7 @@ from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
@@ -336,6 +337,7 @@ async def handle_update_application(
                 select(GrantApplication)
                 .where(GrantApplication.id == application_id)
                 .where(GrantApplication.project_id == project_id)
+                .where(GrantApplication.deleted_at.is_(None))
             )
 
             if not application:
@@ -364,22 +366,25 @@ async def handle_update_application(
     operation_id="DeleteApplication",
 )
 async def handle_delete_application(
-    request: APIRequest, application_id: UUID, session_maker: async_sessionmaker[Any]
+    request: APIRequest, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> None:
     logger.info("Deleting application", application_id=application_id)
 
     async with session_maker() as session, session.begin():
         try:
             application = await session.scalar(
-                select(GrantApplication).where(
+                select(GrantApplication)
+                .where(
                     GrantApplication.id == application_id,
+                    GrantApplication.project_id == project_id,
                     GrantApplication.deleted_at.is_(None),
                 )
+                .options(selectinload(GrantApplication.project))
             )
             if not application:
                 raise ValidationException("Application not found")
 
-            # Log audit event
+            
             await log_organization_audit_from_request(
                 session=session,
                 request=request,
