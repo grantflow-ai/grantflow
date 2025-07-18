@@ -10,7 +10,7 @@ from packages.db.src.constants import (
     RAG_FILE,
     RAG_URL,
 )
-from packages.db.src.enums import RagGenerationStatusEnum
+from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
@@ -140,10 +140,19 @@ class ProjectFactory(SQLAlchemyFactory[Project]):
     __set_association_proxy__ = False
 
 
-class ProjectUserFactory(SQLAlchemyFactory[OrganizationUser]):
+class OrganizationUserFactory(SQLAlchemyFactory[OrganizationUser]):
     __model__ = OrganizationUser
     __set_relationships__ = False
     __set_association_proxy__ = False
+    
+    firebase_uid = Use(lambda: faker.uuid4()[:128])
+    organization_id = Use(lambda: faker.uuid4())
+    role = Use(lambda: choice(list(UserRoleEnum)))
+    has_all_projects_access = False
+
+
+# Keep ProjectUserFactory as an alias for backward compatibility
+ProjectUserFactory = OrganizationUserFactory
 
 
 class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):
