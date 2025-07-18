@@ -24,6 +24,28 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
 
+export type TemplateGenerationEvent =
+	| "cfp_data_extracted"
+	| "extracting_cfp_data"
+	| "generation_error"
+	| "grant_template_created"
+	| "grant_template_extraction"
+	| "grant_template_generation_started"
+	| "grant_template_metadata"
+	| "indexing_in_progress"
+	| "insufficient_context_error"
+	| "internal_error"
+	| "low_retrieval_quality"
+	| "metadata_generated"
+	| "pipeline_error"
+	| "saving_grant_template"
+	| "sections_extracted";
+
+export interface TemplateGenerationStatus {
+	event: TemplateGenerationEvent;
+	message: string;
+}
+
 type RagSourceStatus = NonNullable<
 	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
 >["rag_sources"][0]["status"];
@@ -73,18 +95,12 @@ interface WizardActions {
 	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
 	checkApplicationGeneration: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
-	closeDialog: () => void;
 	generateApplication: () => Promise<void>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
 	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
-	openDialog: (
-		title: string,
-		content: React.ReactNode,
-		options?: { description?: string; footer?: React.ReactNode },
-	) => void;
 	polling: PollingActions;
 	removeObjective: (objectiveNumber: number) => void;
 	removeTask: (objectiveNumber: number, taskNumber: number) => void;
@@ -94,6 +110,7 @@ interface WizardActions {
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
+	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
 	startTemplateGeneration: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
@@ -104,13 +121,6 @@ interface WizardActions {
 
 interface WizardState {
 	currentStep: WizardStep;
-	dialog: {
-		content: React.ReactNode;
-		description?: string;
-		footer?: React.ReactNode;
-		isOpen: boolean;
-		title: string;
-	};
 	isAutofillLoading: {
 		research_deep_dive: boolean;
 		research_plan: boolean;
@@ -120,17 +130,11 @@ interface WizardState {
 	polling: PollingState;
 	shouldRedirectToEditor: boolean;
 	showResearchPlanInfoBanner: boolean;
+	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
 const initialWizardState: WizardState = {
 	currentStep: WizardStep.APPLICATION_DETAILS,
-	dialog: {
-		content: null,
-		description: undefined,
-		footer: undefined,
-		isOpen: false,
-		title: "",
-	},
 	isAutofillLoading: {
 		research_deep_dive: false,
 		research_plan: false,
@@ -143,6 +147,7 @@ const initialWizardState: WizardState = {
 	},
 	shouldRedirectToEditor: false,
 	showResearchPlanInfoBanner: true,
+	templateGenerationStatus: null,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -282,16 +287,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
-				closeDialog: () => {
-					set((state) => ({
-						...state,
-						dialog: {
-							...state.dialog,
-							isOpen: false,
-						},
-					}));
-				},
-
 				generateApplication: async () => {
 					const { application, generateApplication } = useApplicationStore.getState();
 					const { polling } = get();
@@ -412,23 +407,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 					const statusArray = Array.isArray(statuses) ? statuses : [statuses];
 					return application.grant_template.rag_sources.some((source) => statusArray.includes(source.status));
-				},
-
-				openDialog: (
-					title: string,
-					content: React.ReactNode,
-					options?: { description?: string; footer?: React.ReactNode },
-				) => {
-					set((state) => ({
-						...state,
-						dialog: {
-							content,
-							description: options?.description,
-							footer: options?.footer,
-							isOpen: true,
-							title,
-						},
-					}));
 				},
 
 				polling: {
@@ -553,6 +531,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							...initialWizardState.polling,
 						},
 						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
+						templateGenerationStatus: initialWizardState.templateGenerationStatus,
 					});
 				},
 
@@ -584,6 +563,13 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					set((state) => ({
 						...state,
 						showResearchPlanInfoBanner: show,
+					}));
+				},
+
+				setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
+					set((state) => ({
+						...state,
+						templateGenerationStatus: status,
 					}));
 				},
 
