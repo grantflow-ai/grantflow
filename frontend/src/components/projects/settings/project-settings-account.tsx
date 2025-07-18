@@ -4,6 +4,7 @@ import { Info, Mail, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DeleteAccountModal } from "@/components/projects/settings/delete-account-modal";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
@@ -18,13 +19,11 @@ export function ProjectSettingsAccount({
 	projectId: _projectId,
 	userRole = UserRole.MEMBER,
 }: ProjectSettingsAccountProps) {
-	const { deleteProfilePhoto, updateDisplayName, updateEmail, updateProfilePhoto, user } = useUserStore();
+	const { deleteProfilePhoto, updateProfilePhoto, user } = useUserStore();
 	const [name, setName] = useState(user?.displayName ?? "");
 	const [email, setEmail] = useState(user?.email ?? "");
-	const [showEmailTooltip, setShowEmailTooltip] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const getInitials = () => {
@@ -106,38 +105,9 @@ export function ProjectSettingsAccount({
 		}
 	};
 
-	const handleSave = async () => {
-		setIsSaving(true);
-		try {
-			// Update display name if changed
-			if (name !== user?.displayName) {
-				await updateDisplayName(name);
-			}
-
-			// Update email if changed
-			if (email !== user?.email && email) {
-				await updateEmail(email);
-			}
-
-			toast.success("Profile updated successfully");
-		} catch (error) {
-			log.error("Error updating profile", error);
-			const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
-
-			// Check for specific Firebase errors
-			if (errorMessage.includes("auth/requires-recent-login")) {
-				toast.error("Please sign in again to update your email address");
-			} else {
-				toast.error(errorMessage);
-			}
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
 	return (
 		<>
-			<div className="flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
+			<div className="  flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
 				{}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
@@ -206,35 +176,23 @@ export function ProjectSettingsAccount({
 
 				{}
 				<div className="flex flex-col gap-3">
-					<div className="flex items-center gap-1 relative">
+					<div className="flex items-center gap-1">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Email address
 						</h3>
-						<button
-							className="relative"
-							data-testid="email-info-button"
-							onMouseEnter={() => {
-								setShowEmailTooltip(true);
-							}}
-							onMouseLeave={() => {
-								setShowEmailTooltip(false);
-							}}
-							type="button"
-						>
-							<Info className="size-3 text-app-gray-600" />
-						</button>
-						{showEmailTooltip && (
-							<div className="absolute left-0 top-6 z-10 w-[300px]" data-testid="email-tooltip">
-								<div className="bg-app-dark-blue text-white text-[14px] font-body px-3 py-1 rounded-sm">
-									Changing your email address requires recent authentication.
-									<br />
-									You may need to sign in again.
-								</div>
-								<div className="flex justify-start ml-4">
-									<div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-app-dark-blue" />
-								</div>
-							</div>
-						)}
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<button className="relative" data-testid="email-info-button" type="button">
+										<Info className="size-3 text-app-gray-600" />
+									</button>
+								</TooltipTrigger>
+								<TooltipContent className="bg-app-dark-blue text-white font-normal text-sm rounded-sm">
+									<p>The main email address cannot be edited.</p>
+									<p>To change it, please contact our support team.</p>
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
 					</div>
 					<div className="relative">
 						<input
@@ -264,24 +222,6 @@ export function ProjectSettingsAccount({
 					</div>
 				</div>
 
-				{}
-				<div className="flex justify-end pt-4">
-					<button
-						className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-button text-[14px]"
-						data-testid="save-profile-button"
-						disabled={
-							isSaving ||
-							!(name || email) ||
-							!!(user && name === user.displayName && email === user.email)
-						}
-						onClick={handleSave}
-						type="button"
-					>
-						{isSaving ? "Saving..." : "Save Changes"}
-					</button>
-				</div>
-
-				{}
 				{userRole === UserRole.OWNER && (
 					<div className="flex flex-col gap-3">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">

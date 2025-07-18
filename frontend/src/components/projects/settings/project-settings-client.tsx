@@ -80,7 +80,7 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 					<AppHeader data-testid="settings-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 rounded-lg bg-white border border-app-gray-100 min-h-0"
+						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 flex-grow rounded-lg border border-app-gray-100 min-h-0"
 						data-testid="settings-main-content"
 					>
 						<ProjectSettingsLayout activeTab={activeTab} onInviteClick={inviteHandler} project={project}>
