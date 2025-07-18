@@ -8,11 +8,6 @@ terraform {
   }
 }
 
-variable "project_id" {
-  description = "The Google Cloud project ID"
-  type        = string
-}
-
 data "google_project" "project" {
   project_id = var.project_id
 }
