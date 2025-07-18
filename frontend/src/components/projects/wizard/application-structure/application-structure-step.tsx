@@ -6,6 +6,7 @@ import { useCallback, useEffect } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
+import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -45,14 +46,27 @@ export function ApplicationStructureStep() {
 	const checkTemplateGeneration = useWizardStore((state) => state.checkTemplateGeneration);
 	const polling = useWizardStore((state) => state.polling);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
+	const hasIndexingTemplateSources = useWizardStore((state) => state.hasIndexingTemplateSources);
 
 	useEffect(() => {
-		if (application?.grant_template && !application.grant_template.grant_sections.length && !polling.isActive) {
+		if (
+			application?.grant_template &&
+			!application.grant_template.grant_sections.length &&
+			!polling.isActive &&
+			!hasIndexingTemplateSources()
+		) {
 			void generateTemplate(application.grant_template.id);
 			setGeneratingTemplate(true);
 			polling.start(checkTemplateGeneration, 2000, false);
 		}
-	}, [application, generateTemplate, checkTemplateGeneration, polling, setGeneratingTemplate]);
+	}, [
+		application,
+		generateTemplate,
+		checkTemplateGeneration,
+		polling,
+		setGeneratingTemplate,
+		hasIndexingTemplateSources,
+	]);
 
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
@@ -96,7 +110,7 @@ function ApplicationStructurePreview() {
 	if (!application) {
 		return (
 			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-				<EmptyStateView />
+				<EmptyStatePreview />
 			</WizardRightPane>
 		);
 	}
@@ -111,46 +125,8 @@ function ApplicationStructurePreview() {
 
 	return (
 		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor
-				isDetailedSection={isDetailedSection}
-				onAddSection={handleAddNewSection}
-				toUpdateGrantSection={toUpdateGrantSection}
-			/>
+			<SectionEditor isDetailedSection={isDetailedSection} onAddSection={handleAddNewSection} />
 		</WizardRightPane>
-	);
-}
-
-function EmptyStateView() {
-	return (
-		<div className="flex h-full w-full flex-col items-center justify-center" data-testid="empty-state">
-			<div className="relative">
-				<div className="flex size-96 items-center justify-center">
-					<div className="relative">
-						{}
-						<div className="bg-gray-100 animate-pulse flex size-24 items-center justify-center rounded-full">
-							<div className="bg-gray-200 size-12 rounded-full" />
-						</div>
-
-						{}
-						<div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
-							<div className="bg-blue-100 absolute -top-4 left-1/2 size-8 -translate-x-1/2 rounded-full" />
-						</div>
-						<div
-							className="absolute inset-0 animate-spin"
-							style={{ animationDirection: "reverse", animationDuration: "4s" }}
-						>
-							<div className="bg-purple-100 absolute -bottom-4 left-1/2 size-6 -translate-x-1/2 rounded-full" />
-						</div>
-						<div className="absolute inset-0 animate-spin" style={{ animationDuration: "5s" }}>
-							<div className="bg-green-100 absolute -left-4 top-1/2 size-4 -translate-y-1/2 rounded-full" />
-						</div>
-					</div>
-				</div>
-			</div>
-			<p className="text-muted-foreground-dark mt-6 text-center text-sm" data-testid="empty-state-message">
-				Loading, analyzing...
-			</p>
-		</div>
 	);
 }
 
@@ -187,21 +163,15 @@ function PreviewHeader({ onAddSection }: { onAddSection: (parentId?: null | stri
 function SectionEditor({
 	isDetailedSection,
 	onAddSection,
-	toUpdateGrantSection,
 }: {
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }) {
 	return (
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
-				<DragDropSectionManager
-					isDetailedSection={isDetailedSection}
-					onAddSection={onAddSection}
-					toUpdateGrantSection={toUpdateGrantSection}
-				/>
+				<DragDropSectionManager isDetailedSection={isDetailedSection} onAddSection={onAddSection} />
 			</ScrollArea>
 		</div>
 	);

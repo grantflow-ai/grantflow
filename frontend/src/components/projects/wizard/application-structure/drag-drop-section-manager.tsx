@@ -21,23 +21,44 @@ interface SectionListProps {
 	mainSections: GrantSection[];
 	subsectionsByParent: Record<string, GrantSection[]>;
 	toggleSectionExpanded: (sectionId: string) => void;
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }
 
 export function DragDropSectionManager({
 	isDetailedSection,
 	onAddSection,
-	toUpdateGrantSection,
 }: {
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }) {
 	const application = useApplicationStore((state) => state.application);
 	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
+
+	const toUpdateGrantSection = useCallback(
+		(section: GrantSection): UpdateGrantSection => {
+			if (isDetailedSection(section)) {
+				return section as UpdateGrantSection;
+			}
+
+			return {
+				depends_on: [],
+				generation_instructions: "",
+				id: section.id,
+				is_clinical_trial: null,
+				is_detailed_research_plan: null,
+				keywords: [],
+				max_words: 3000,
+				order: section.order,
+				parent_id: section.parent_id,
+				search_queries: [],
+				title: section.title,
+				topics: [],
+			};
+		},
+		[isDetailedSection],
+	);
 
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
@@ -295,7 +316,7 @@ function SectionList({
 	subsectionsByParent,
 	toggleSectionExpanded,
 	toUpdateGrantSection,
-}: SectionListProps) {
+}: { toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection } & SectionListProps) {
 	return (
 		<>
 			{mainSections.map((section) => (
