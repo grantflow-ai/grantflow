@@ -140,9 +140,9 @@ export const test = base.extend({
 							created_at: new Date().toISOString(),
 							grant_sections: [],
 							granting_institution: {
-								abbreviation: "TFO",
+								abbreviation: "TGI",
 								created_at: new Date().toISOString(),
-								full_name: "Test Funding Organization",
+								full_name: "Test Granting Institution",
 								id: "org-1",
 								logo_url: null,
 								updated_at: new Date().toISOString(),
