@@ -31,8 +31,9 @@ provider "google-beta" {
 
 # Secrets module - must be first
 module "secrets" {
-  source     = "../../modules/secrets"
-  project_id = var.project_id
+  source      = "../../modules/secrets"
+  project_id  = var.project_id
+  environment = var.environment
 }
 
 # Network module
