@@ -79,7 +79,6 @@ async def user_cleanup(now: datetime) -> dict[str, Any]:
 
     try:
         async with session_maker() as session:
-            
             result = await session.execute(
                 text("""
                     SELECT firebase_uid, deleted_at
@@ -140,7 +139,6 @@ async def organization_cleanup(now: datetime) -> dict[str, Any]:
 
     try:
         async with session_maker() as session:
-            
             result = await session.execute(
                 text("""
                     SELECT id, deleted_at, name
@@ -220,13 +218,11 @@ async def hard_delete_organization(organization_id: str) -> None:
 
     try:
         async with session_maker() as session, session.begin():
-            
             await session.execute(
                 text("DELETE FROM project_access WHERE organization_id = :org_id"),
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("""
                     DELETE FROM grant_application_sources
@@ -239,7 +235,6 @@ async def hard_delete_organization(organization_id: str) -> None:
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("""
                     DELETE FROM grant_template_sources
@@ -253,7 +248,6 @@ async def hard_delete_organization(organization_id: str) -> None:
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("""
                     DELETE FROM rag_sources
@@ -274,7 +268,6 @@ async def hard_delete_organization(organization_id: str) -> None:
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("""
                     DELETE FROM grant_templates
@@ -287,7 +280,6 @@ async def hard_delete_organization(organization_id: str) -> None:
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("""
                     DELETE FROM grant_applications
@@ -298,37 +290,31 @@ async def hard_delete_organization(organization_id: str) -> None:
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("DELETE FROM projects WHERE organization_id = :org_id"),
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("DELETE FROM organization_invitations WHERE organization_id = :org_id"),
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("DELETE FROM organization_users WHERE organization_id = :org_id"),
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("DELETE FROM organization_audit_logs WHERE organization_id = :org_id"),
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("DELETE FROM notifications WHERE organization_id = :org_id"),
                 {"org_id": organization_id},
             )
 
-            
             await session.execute(
                 text("DELETE FROM organizations WHERE id = :org_id"),
                 {"org_id": organization_id},

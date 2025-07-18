@@ -37,6 +37,12 @@ from services.backend.src.api.routes.notifications import (
     dismiss_notification,
     list_notifications,
 )
+from services.backend.src.api.routes.organization_invitations import (
+    handle_create_organization_invitation,
+    handle_delete_organization_invitation,
+    handle_list_organization_invitations,
+    handle_update_organization_invitation,
+)
 from services.backend.src.api.routes.organizations import (
     handle_create_organization as handle_create_org,
 )
@@ -50,6 +56,14 @@ from services.backend.src.api.routes.organizations import (
 )
 from services.backend.src.api.routes.organizations import (
     handle_update_organization as handle_update_org,
+)
+from services.backend.src.api.routes.organizations_members import (
+    handle_add_organization_member,
+    handle_list_organization_members,
+    handle_remove_member,
+)
+from services.backend.src.api.routes.organizations_members import (
+    handle_update_member_role as handle_update_organization_member_role,
 )
 from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
@@ -94,6 +108,14 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_update_org,
     handle_delete_org,
     handle_restore_organization,
+    handle_list_organization_members,
+    handle_add_organization_member,
+    handle_update_organization_member_role,
+    handle_remove_member,
+    handle_list_organization_invitations,
+    handle_create_organization_invitation,
+    handle_update_organization_invitation,
+    handle_delete_organization_invitation,
     handle_create_project,
     handle_retrieve_projects,
     handle_retrieve_project,
