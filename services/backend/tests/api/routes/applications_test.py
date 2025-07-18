@@ -8,7 +8,6 @@ from faker import Faker
 from packages.db.src.enums import (
     ApplicationStatusEnum,
     SourceIndexingStatusEnum,
-    UserRoleEnum,
 )
 from packages.db.src.tables import (
     GrantApplication,
@@ -51,6 +50,12 @@ async def test_update_application_success(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
+    async with async_session_maker() as session:
+        app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        assert app is not None
+        assert app.project_id == project.id
+        assert app.deleted_at is None
+
     update_data = {
         "title": "Updated Title",
         "status": ApplicationStatusEnum.IN_PROGRESS.value,
@@ -112,7 +117,7 @@ async def test_update_application_success(
 async def test_update_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
@@ -133,6 +138,12 @@ async def test_delete_application_success(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: OrganizationUser,
 ) -> None:
+    async with async_session_maker() as session:
+        app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        assert app is not None
+        assert app.project_id == project.id
+        assert app.deleted_at is None
+
     response = await test_client.delete(
         f"/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
@@ -171,7 +182,7 @@ async def test_generate_application_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         grant_application.research_objectives = [
@@ -255,7 +266,7 @@ async def test_generate_application_no_rag_sources(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         grant_application.research_objectives = [
@@ -301,7 +312,7 @@ async def test_generate_application_no_rag_sources(
 async def test_generate_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
@@ -317,7 +328,7 @@ async def test_retrieve_application_success(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
         f"/projects/{project.id}/applications/{grant_application.id}",
@@ -342,7 +353,7 @@ async def test_retrieve_application_with_grant_template(
     project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
         f"/projects/{project.id}/applications/{grant_application.id}",
@@ -375,7 +386,7 @@ async def test_retrieve_application_with_grant_template(
 async def test_retrieve_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
@@ -392,20 +403,11 @@ async def test_retrieve_application_wrong_project(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        different_project = Project(name="Different Project")
+        different_project = Project(name="Different Project", organization_id=project.organization_id)
         session.add(different_project)
-        await session.flush()
-
-        firebase_uid = "a" * 128
-        project_user = OrganizationUser(
-            project_id=different_project.id,
-            firebase_uid=firebase_uid,
-            role=UserRoleEnum.COLLABORATOR,
-        )
-        session.add(project_user)
         await session.commit()
 
     response = await test_client.get(
@@ -434,7 +436,7 @@ async def test_retrieve_application_with_complete_data(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = await session.get(GrantApplication, grant_application.id)
@@ -506,7 +508,7 @@ async def test_retrieve_application_with_rag_job_ids(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     from testing.factories import (
         GrantApplicationGenerationJobFactory,
@@ -554,7 +556,7 @@ async def test_retrieve_application_with_rag_sources(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = await session.get(GrantApplication, grant_application.id)
@@ -654,7 +656,7 @@ async def test_list_applications_basic(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         applications = []
@@ -690,7 +692,7 @@ async def test_list_applications_with_submission_dates(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session:
         applications = await session.scalars(
@@ -737,7 +739,7 @@ async def test_list_applications_with_search(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app1 = GrantApplication(
@@ -778,7 +780,7 @@ async def test_list_applications_with_status_filter(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app_draft = GrantApplication(
@@ -818,7 +820,7 @@ async def test_list_applications_with_pagination(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         for i in range(15):
@@ -863,7 +865,7 @@ async def test_list_applications_with_sorting(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app1 = GrantApplication(
@@ -913,7 +915,7 @@ async def test_list_applications_unauthorized(
 async def test_list_applications_empty_project(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
         f"/projects/{project.id}/applications",

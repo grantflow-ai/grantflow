@@ -384,7 +384,6 @@ async def handle_delete_application(
             if not application:
                 raise ValidationException("Application not found")
 
-            
             await log_organization_audit_from_request(
                 session=session,
                 request=request,
