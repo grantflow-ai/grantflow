@@ -4,9 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { Deadline } from "@/components/projects/wizard/shared";
-import { createRagSourcesDialog } from "@/components/projects/wizard/shared/rag-sources-dialog-utils";
 import { WizardStep } from "@/constants";
-import { useWizardDialog } from "@/hooks/use-wizard-dialog";
 import { useApplicationStore } from "@/stores/application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
 import { routes } from "@/utils/navigation";
@@ -57,10 +55,6 @@ export function WizardFooter() {
 	const toNextStep = useWizardStore((state) => state.toNextStep);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const validateStepNext = useWizardStore((state) => state.validateStepNext);
-	const hasInProcessTemplateSources = useWizardStore((state) => state.hasInProcessTemplateSources);
-
-	const { closeDialog, openDialog } = useWizardDialog();
-
 	const title = useApplicationStore((state) => state.application?.title);
 	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
 
@@ -99,28 +93,7 @@ export function WizardFooter() {
 				data-testid="continue-button"
 				disabled={disabled}
 				leftIcon={leftIcon}
-				onClick={() => {
-					if (!hasInProcessTemplateSources()) {
-						toNextStep();
-						return;
-					}
-
-					const ragDialog = createRagSourcesDialog({
-						onBackToUploads: () => {
-							closeDialog();
-						},
-						onContinue: () => {
-							closeDialog();
-							toNextStep();
-						},
-					});
-
-					openDialog("Review Required: Some Uploads Failed", ragDialog.content, {
-						description:
-							"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
-						footer: ragDialog.footer,
-					});
-				}}
+				onClick={toNextStep}
 				rightIcon={rightIcon}
 				size="lg"
 				variant="primary"
