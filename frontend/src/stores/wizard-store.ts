@@ -24,6 +24,10 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
 
+type RagSourceStatus = NonNullable<
+	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
+>["rag_sources"][0]["status"];
+
 export const MAX_OBJECTIVES = 5;
 
 export const EXAMPLE_OBJECTIVES = [
@@ -75,8 +79,7 @@ interface WizardActions {
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
-	hasIndexingTemplateSources: () => boolean;
-	hasInProcessTemplateSources: () => boolean;
+	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
 	openDialog: (
 		title: string,
 		content: React.ReactNode,
@@ -91,6 +94,7 @@ interface WizardActions {
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
+	startTemplateGeneration: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
@@ -399,27 +403,15 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
-				hasIndexingTemplateSources: () => {
+				hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => {
 					const { application } = useApplicationStore.getState();
 
 					if (!application?.grant_template?.rag_sources) {
 						return false;
 					}
 
-					return application.grant_template.rag_sources.some((source) => source.status === "INDEXING");
-				},
-
-				hasInProcessTemplateSources: () => {
-					const { application } = useApplicationStore.getState();
-
-					if (!application?.grant_template?.rag_sources) {
-						return false;
-					}
-
-					return application.grant_template.rag_sources.some(
-						(source) =>
-							source.status === "INDEXING" || source.status === "FAILED" || source.status === "CREATED",
-					);
+					const statusArray = Array.isArray(statuses) ? statuses : [statuses];
+					return application.grant_template.rag_sources.some((source) => statusArray.includes(source.status));
 				},
 
 				openDialog: (
@@ -595,8 +587,24 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}));
 				},
 
+				startTemplateGeneration: () => {
+					const { application, generateTemplate } = useApplicationStore.getState();
+					const { polling } = get();
+
+					if (application?.grant_template?.id) {
+						void generateTemplate(application.grant_template.id);
+
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: true,
+						}));
+
+						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
+					}
+				},
+
 				toNextStep: () => {
-					const { currentStep, polling } = get();
+					const { currentStep, hasTemplateSourcesWithStatuses, polling, startTemplateGeneration } = get();
 
 					if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 						return;
@@ -617,20 +625,21 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						currentStep: nextStep,
 					}));
 
-					const { application, generateTemplate } = useApplicationStore.getState();
+					const { application } = useApplicationStore.getState();
 					if (
 						nextStep === WizardStep.APPLICATION_STRUCTURE &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
-						void generateTemplate(application.grant_template.id);
+						const ragSources = application.grant_template.rag_sources;
 
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: true,
-						}));
-
-						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
+						// Only trigger template generation if all RAG sources are FINISHED
+						if (
+							ragSources.length === 0 ||
+							!hasTemplateSourcesWithStatuses(["CREATED", "INDEXING", "FAILED"])
+						) {
+							startTemplateGeneration();
+						}
 					}
 				},
 
