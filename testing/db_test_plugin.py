@@ -18,8 +18,8 @@ from packages.db.src.tables import (
     GrantApplicationSource,
     GrantTemplate,
     GrantTemplateSource,
-    Project,
     OrganizationUser,
+    Project,
     RagFile,
     RagUrl,
 )
@@ -35,8 +35,8 @@ from testing.factories import (
     GrantApplicationSourceFactory,
     GrantTemplateFactory,
     GrantTemplateSourceFactory,
+    OrganizationUserFactory,
     ProjectFactory,
-    ProjectUserFactory,
     RagFileFactory,
     RagUrlFactory,
 )
@@ -151,8 +151,8 @@ async def project(async_session_maker: async_sessionmaker[Any]) -> Project:
 
 
 @pytest.fixture
-async def project_user(async_session_maker: async_sessionmaker[Any], project: Project) -> ProjectUser:
-    user_data = ProjectUserFactory.build(project_id=project.id)
+async def project_user(async_session_maker: async_sessionmaker[Any], project: Project) -> OrganizationUser:
+    user_data = OrganizationUserFactory.build(project_id=project.id)
     async with async_session_maker() as session, session.begin():
         session.add(user_data)
         await session.commit()
@@ -162,9 +162,11 @@ async def project_user(async_session_maker: async_sessionmaker[Any], project: Pr
 @pytest.fixture
 async def project_member_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
-) -> ProjectUser:
+) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
-        project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.COLLABORATOR)
+        project_user = OrganizationUser(
+            project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.COLLABORATOR
+        )
         session.add(project_user)
         await session.commit()
     return project_user
@@ -173,7 +175,7 @@ async def project_member_user(
 @pytest.fixture
 async def project_admin_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
-) -> ProjectUser:
+) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
         project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
         session.add(project_user)
@@ -184,7 +186,7 @@ async def project_admin_user(
 @pytest.fixture
 async def project_owner_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
-) -> ProjectUser:
+) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
         project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
         session.add(project_user)
@@ -222,7 +224,7 @@ async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> 
 @pytest.fixture
 async def funding_organization_file(
     async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_file: RagFile
-) -> FundingOrganizationRagSource:
+) -> FundingOrganizationSource:
     data = FundingOrganizationSourceFactory.build(
         funding_organization_id=funding_organization.id, rag_source_id=rag_file.id
     )
@@ -235,7 +237,7 @@ async def funding_organization_file(
 @pytest.fixture
 async def funding_organization_url(
     async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_url: RagUrl
-) -> FundingOrganizationRagSource:
+) -> FundingOrganizationSource:
     data = FundingOrganizationSourceFactory.build(
         funding_organization_id=funding_organization.id, rag_source_id=rag_url.id
     )
@@ -259,7 +261,7 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], projec
 @pytest.fixture
 async def grant_application_file(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_file: RagFile
-) -> GrantApplicationRagSource:
+) -> GrantApplicationSource:
     file_data = GrantApplicationSourceFactory.build(
         grant_application_id=grant_application.id, rag_source_id=rag_file.id
     )
@@ -272,7 +274,7 @@ async def grant_application_file(
 @pytest.fixture
 async def grant_application_url(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_url: RagUrl
-) -> GrantApplicationRagSource:
+) -> GrantApplicationSource:
     file_data = GrantApplicationSourceFactory.build(grant_application_id=grant_application.id, rag_source_id=rag_url.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
@@ -401,7 +403,7 @@ async def grant_template(
 @pytest.fixture
 async def grant_template_file(
     async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_file: RagFile
-) -> GrantTemplateRagSource:
+) -> GrantTemplateSource:
     data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_file.id)
     async with async_session_maker() as session, session.begin():
         session.add(data)
@@ -412,7 +414,7 @@ async def grant_template_file(
 @pytest.fixture
 async def grant_template_url(
     async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_url: RagUrl
-) -> GrantTemplateRagSource:
+) -> GrantTemplateSource:
     data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_url.id)
     async with async_session_maker() as session, session.begin():
         session.add(data)

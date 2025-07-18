@@ -203,9 +203,7 @@ async def parse_source_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationSource).values(
-                [{"grant_application_id": application_id, "rag_source_id": file_id}]
-            )
+            insert(GrantApplicationSource).values([{"grant_application_id": application_id, "rag_source_id": file_id}])
             if application_id
             else insert(FundingOrganizationSource).values(
                 [{"funding_organization_id": organization_id, "rag_source_id": file_id}]
@@ -217,16 +215,16 @@ async def parse_source_file(
         if application_id:
             stmt = (
                 select(GrantApplicationSource)
-                .options(selectinload(GrantApplicationRagSource.rag_source).selectinload(RagFile.text_vectors))
-                .where(GrantApplicationRagSource.rag_source_id == file_id)
-                .where(GrantApplicationRagSource.grant_application_id == application_id)
+                .options(selectinload(GrantApplicationSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(GrantApplicationSource.rag_source_id == file_id)
+                .where(GrantApplicationSource.grant_application_id == application_id)
             )
         else:
             stmt = (
                 select(FundingOrganizationSource)  # type: ignore[assignment]
-                .options(selectinload(FundingOrganizationRagSource.rag_source).selectinload(RagFile.text_vectors))
-                .where(FundingOrganizationRagSource.rag_source_id == file_id)
-                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
+                .options(selectinload(FundingOrganizationSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(FundingOrganizationSource.rag_source_id == file_id)
+                .where(FundingOrganizationSource.funding_organization_id == organization_id)
             )
 
         file_datum = await session.scalar(stmt)

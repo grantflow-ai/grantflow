@@ -396,8 +396,8 @@ async def test_get_rag_sources_data(
     grant_template_with_sources: GrantTemplate,
 ) -> None:
     async with async_session_maker() as session:
-        stmt = select(GrantTemplateRagSource.rag_source_id).where(
-            GrantTemplateRagSource.grant_template_id == grant_template_with_sources.id
+        stmt = select(GrantTemplateSource.rag_source_id).where(
+            GrantTemplateSource.grant_template_id == grant_template_with_sources.id
         )
         result = await session.execute(stmt)
         source_ids = [str(row[0]) for row in result.fetchall()]
