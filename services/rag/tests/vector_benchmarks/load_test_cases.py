@@ -47,7 +47,7 @@ async def test_vector_search_load(
         await modifier.modify_vector_dimension(config.vector_dimension)
         await modifier.modify_index_parameters(m=48, ef_construction=256)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -67,7 +67,7 @@ async def test_vector_search_load(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
         await session.refresh(app_rag)
@@ -170,13 +170,13 @@ async def test_dimension_load_comparison(
             modifier = VectorTableModifier(session)
             await modifier.modify_vector_dimension(dimension)
 
-            from packages.db.src.tables import GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, RagFileFactory
 
             grant_app = await GrantApplicationFactory.create_async()
             rag_source = await RagFileFactory.create_async(content_type="application/pdf")
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
@@ -275,13 +275,13 @@ async def test_index_parameter_load_comparison(
             modifier = VectorTableModifier(session)
             await modifier.modify_index_parameters(m=m, ef_construction=ef_search)
 
-            from packages.db.src.tables import GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, RagFileFactory
 
             grant_app = await GrantApplicationFactory.create_async()
             rag_source = await RagFileFactory.create_async(content_type="application/pdf")
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
@@ -347,13 +347,13 @@ async def test_result_quality_by_dimension(
             await modifier.modify_vector_dimension(dimension)
             await modifier.modify_index_parameters(m=32, ef_construction=256)
 
-            from packages.db.src.tables import GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, RagFileFactory
 
             grant_app = await GrantApplicationFactory.create_async()
             rag_source = await RagFileFactory.create_async(content_type="application/pdf")
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 

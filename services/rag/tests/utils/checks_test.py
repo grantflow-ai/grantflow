@@ -5,9 +5,9 @@ import pytest
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagSource,
 )
 from packages.shared_utils.src.exceptions import ValidationError
@@ -82,13 +82,13 @@ async def create_rag_source_with_status(
 
 
 async def link_source_to_application(session: Any, application_id: Any, source_id: Any) -> None:
-    link = GrantApplicationRagSource(grant_application_id=application_id, rag_source_id=source_id)
+    link = GrantApplicationSource(grant_application_id=application_id, rag_source_id=source_id)
     session.add(link)
     await session.flush()
 
 
 async def link_source_to_template(session: Any, template_id: Any, source_id: Any) -> None:
-    link = GrantTemplateRagSource(grant_template_id=template_id, rag_source_id=source_id)
+    link = GrantTemplateSource(grant_template_id=template_id, rag_source_id=source_id)
     session.add(link)
     await session.flush()
 

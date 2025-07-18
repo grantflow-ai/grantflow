@@ -9,9 +9,9 @@ from litestar.types.internal_types import PathParameterDefinition
 from packages.db.src.constants import RAG_FILE, RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
-    FundingOrganizationRagSource,
-    GrantApplicationRagSource,
-    GrantTemplateRagSource,
+    FundingOrganizationSource,
+    GrantApplicationSource,
+    GrantTemplateSource,
     RagFile,
     RagSource,
     RagUrl,
@@ -172,7 +172,7 @@ async def handle_create_rag_source(
 
             if parent_type == "grant_application":
                 await session.execute(
-                    insert(GrantApplicationRagSource).values(
+                    insert(GrantApplicationSource).values(
                         {
                             "rag_source_id": source_id,
                             "grant_application_id": parent_id,
@@ -181,7 +181,7 @@ async def handle_create_rag_source(
                 )
             elif parent_type == "funding_organization":
                 await session.execute(
-                    insert(FundingOrganizationRagSource).values(
+                    insert(FundingOrganizationSource).values(
                         {
                             "rag_source_id": source_id,
                             "funding_organization_id": parent_id,
@@ -190,7 +190,7 @@ async def handle_create_rag_source(
                 )
             else:
                 await session.execute(
-                    insert(GrantTemplateRagSource).values(
+                    insert(GrantTemplateSource).values(
                         {
                             "rag_source_id": source_id,
                             "grant_template_id": parent_id,
@@ -221,7 +221,7 @@ async def handle_create_rag_source(
         "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/sources",
     ],
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Retrieve{value}RagSources"),
 )
 async def handle_retrieve_rag_sources(
@@ -237,7 +237,7 @@ async def handle_retrieve_rag_sources(
             stmt = (
                 select(rag_poly)
                 .join(
-                    GrantApplicationRagSource,
+                    GrantApplicationSource,
                     GrantApplicationRagSource.rag_source_id == rag_poly.id,
                 )
                 .where(GrantApplicationRagSource.grant_application_id == application_id)
@@ -246,7 +246,7 @@ async def handle_retrieve_rag_sources(
             stmt = (
                 select(rag_poly)
                 .join(
-                    GrantTemplateRagSource,
+                    GrantTemplateSource,
                     GrantTemplateRagSource.rag_source_id == rag_poly.id,
                 )
                 .where(GrantTemplateRagSource.grant_template_id == template_id)
@@ -255,7 +255,7 @@ async def handle_retrieve_rag_sources(
             stmt = (
                 select(rag_poly)
                 .join(
-                    FundingOrganizationRagSource,
+                    FundingOrganizationSource,
                     FundingOrganizationRagSource.rag_source_id == rag_poly.id,
                 )
                 .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
@@ -297,7 +297,7 @@ async def handle_retrieve_rag_sources(
         "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
     ],
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Delete{value}RagSource"),
 )
 async def handle_delete_rag_source(
@@ -313,7 +313,7 @@ async def handle_delete_rag_source(
         if application_id:
             statement = (
                 select(rag_poly)
-                .join(GrantApplicationRagSource)
+                .join(GrantApplicationSource)
                 .where(
                     GrantApplicationRagSource.grant_application_id == application_id,
                     rag_poly.id == source_id,
@@ -322,7 +322,7 @@ async def handle_delete_rag_source(
         elif template_id:
             statement = (
                 select(rag_poly)
-                .join(GrantTemplateRagSource)
+                .join(GrantTemplateSource)
                 .where(
                     GrantTemplateRagSource.grant_template_id == template_id,
                     rag_poly.id == source_id,
@@ -331,7 +331,7 @@ async def handle_delete_rag_source(
         else:
             statement = (
                 select(rag_poly)
-                .join(FundingOrganizationRagSource)
+                .join(FundingOrganizationSource)
                 .where(
                     FundingOrganizationRagSource.funding_organization_id == organization_id,
                     rag_poly.id == source_id,
@@ -377,7 +377,7 @@ async def handle_delete_rag_source(
         "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/sources/upload-url",
     ],
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Create{value}RagSourceUploadUrl"),
 )
 async def handle_create_upload_url(
@@ -441,7 +441,7 @@ async def handle_create_upload_url(
         "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
         "/organizations/{organization_id:uuid}/sources/crawl-url",
     ],
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Crawl{value}Url"),
 )
 async def handle_crawl_url(

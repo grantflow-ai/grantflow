@@ -69,7 +69,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
             async with connection.app.state.session_maker() as session:
                 stmt = (
-                    select(ProjectUser)
+                    select(OrganizationUser)
                     .where(ProjectUser.firebase_uid == firebase_uid)
                     .where(ProjectUser.project_id == project_id)
                 )

@@ -8,9 +8,9 @@ from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import (
     FundingOrganization,
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
     Project,
     RagFile,
@@ -117,7 +117,7 @@ async def process_organization_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(FundingOrganizationRagSource)
+                insert(FundingOrganizationSource)
                 .values(
                     {
                         "funding_organization_id": funding_organization.id,
@@ -203,11 +203,11 @@ async def parse_source_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 [{"grant_application_id": application_id, "rag_source_id": file_id}]
             )
             if application_id
-            else insert(FundingOrganizationRagSource).values(
+            else insert(FundingOrganizationSource).values(
                 [{"funding_organization_id": organization_id, "rag_source_id": file_id}]
             )
         )
@@ -216,14 +216,14 @@ async def parse_source_file(
     async with async_session_maker() as session:
         if application_id:
             stmt = (
-                select(GrantApplicationRagSource)
+                select(GrantApplicationSource)
                 .options(selectinload(GrantApplicationRagSource.rag_source).selectinload(RagFile.text_vectors))
                 .where(GrantApplicationRagSource.rag_source_id == file_id)
                 .where(GrantApplicationRagSource.grant_application_id == application_id)
             )
         else:
             stmt = (
-                select(FundingOrganizationRagSource)  # type: ignore[assignment]
+                select(FundingOrganizationSource)  # type: ignore[assignment]
                 .options(selectinload(FundingOrganizationRagSource.rag_source).selectinload(RagFile.text_vectors))
                 .where(FundingOrganizationRagSource.rag_source_id == file_id)
                 .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
@@ -331,7 +331,7 @@ async def process_application_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(GrantApplicationRagSource)
+                insert(GrantApplicationSource)
                 .values({"grant_application_id": application_id, "rag_source_id": rag_source_id})
                 .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_source_id"])
             )

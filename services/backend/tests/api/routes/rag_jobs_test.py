@@ -7,7 +7,7 @@ from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
     Project,
-    ProjectUser,
+    OrganizationUser,
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
@@ -23,7 +23,7 @@ async def test_retrieve_grant_template_job_success(
     project: Project,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
@@ -64,7 +64,7 @@ async def test_retrieve_grant_application_job_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
@@ -102,7 +102,7 @@ async def test_retrieve_job_with_error_details(
     project: Project,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
@@ -139,7 +139,7 @@ async def test_retrieve_job_with_error_details(
 async def test_retrieve_job_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 

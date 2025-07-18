@@ -13,11 +13,11 @@ from packages.db.src.constants import RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagSource,
     RagUrl,
 )
@@ -168,7 +168,7 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -241,7 +241,7 @@ async def test_handle_url_crawling_funding_organization(
             )
         )
         await session.execute(
-            insert(FundingOrganizationRagSource).values(
+            insert(FundingOrganizationSource).values(
                 {
                     "rag_source_id": source_id,
                     "funding_organization_id": funding_organization.id,
@@ -302,7 +302,7 @@ async def test_handle_url_crawling_grant_template(
             )
         )
         await session.execute(
-            insert(GrantTemplateRagSource).values(
+            insert(GrantTemplateSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_template_id": grant_template.id,
@@ -360,7 +360,7 @@ async def test_handle_url_crawling_no_files_returned(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -429,7 +429,7 @@ async def test_handle_url_crawling_database_error(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -486,7 +486,7 @@ async def test_handle_url_crawling_extraction_error(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -560,7 +560,7 @@ async def test_handle_url_crawling_network_error(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -633,7 +633,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
