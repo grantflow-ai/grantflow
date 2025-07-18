@@ -108,11 +108,11 @@ export const RagSourceFactory = new Factory<RagSource>((factory) => {
 	};
 });
 
-type FundingOrganization = NonNullable<
+type GrantingInstitution = NonNullable<
 	API.CreateApplication.Http201.ResponseBody["grant_template"]
->["funding_organization"];
+>["granting_institution"];
 
-export const FundingOrganizationFactory = new Factory<NonNullable<FundingOrganization>>((factory) => ({
+export const GrantingInstitutionFactory = new Factory<NonNullable<GrantingInstitution>>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : undefined,
 	created_at: factory.date.past().toISOString(),
 	full_name: factory.company.name(),
@@ -191,13 +191,13 @@ type GrantTemplate = NonNullable<API.CreateApplication.Http201.ResponseBody["gra
 
 export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
 	created_at: factory.date.past().toISOString(),
-	funding_organization: factory.datatype.boolean() ? FundingOrganizationFactory.build() : undefined,
-	funding_organization_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	grant_application_id: factory.string.uuid(),
 	grant_sections: factory.helpers.multiple(
 		() => (factory.datatype.boolean() ? GrantSectionDetailedFactory.build() : GrantSectionBaseFactory.build()),
 		{ count: { max: 10, min: 1 } },
 	),
+	granting_institution: factory.datatype.boolean() ? GrantingInstitutionFactory.build() : undefined,
+	granting_institution_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	id: factory.string.uuid(),
 	rag_job_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
 	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),

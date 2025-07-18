@@ -1,7 +1,7 @@
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
-	FundingOrganizationFactory,
+	GrantingInstitutionFactory,
 	OrganizationFactory,
 	ProjectListItemFactory,
 } from "::testing/factories";
@@ -11,9 +11,9 @@ import type { API } from "@/types/api-types";
 export interface Scenario {
 	data: {
 		applications: Map<string, API.RetrieveApplication.Http200.ResponseBody>;
-		fundingOrganizations: NonNullable<
+		grantingInstitutions: NonNullable<
 			API.CreateApplication.Http201.ResponseBody["grant_template"]
-		>["funding_organization"][];
+		>["granting_institution"][];
 		organizations: API.CreateOrganization.Http201.ResponseBody[];
 		projects: API.ListProjects.Http200.ResponseBody;
 	};
@@ -25,7 +25,7 @@ export const scenarios: Scenario[] = [
 	{
 		data: {
 			applications: new Map(),
-			fundingOrganizations: [],
+			grantingInstitutions: [],
 			organizations: [],
 			projects: [],
 		},
@@ -55,7 +55,7 @@ export const scenarios: Scenario[] = [
 					}),
 				],
 			]),
-			fundingOrganizations: FundingOrganizationFactory.batch(3),
+			grantingInstitutions: GrantingInstitutionFactory.batch(3),
 			organizations: OrganizationFactory.batch(1),
 			projects: ProjectListItemFactory.batch(1, {
 				applications_count: 1,
@@ -119,7 +119,7 @@ export const scenarios: Scenario[] = [
 					}),
 				],
 			]),
-			fundingOrganizations: FundingOrganizationFactory.batch(10),
+			grantingInstitutions: GrantingInstitutionFactory.batch(10),
 			organizations: OrganizationFactory.batch(3),
 			projects: [
 				ProjectListItemFactory.build({
@@ -250,16 +250,16 @@ export const scenarios: Scenario[] = [
 	{
 		data: {
 			applications: new Map(),
-			fundingOrganizations: [
-				FundingOrganizationFactory.build({
+			grantingInstitutions: [
+				GrantingInstitutionFactory.build({
 					abbreviation: "NIH",
 					full_name: "National Institutes of Health",
 				}),
-				FundingOrganizationFactory.build({
+				GrantingInstitutionFactory.build({
 					abbreviation: "NSF",
 					full_name: "National Science Foundation",
 				}),
-				FundingOrganizationFactory.build({
+				GrantingInstitutionFactory.build({
 					abbreviation: "ERC",
 					full_name: "European Research Council",
 				}),
@@ -304,8 +304,8 @@ export const scenarios: Scenario[] = [
 						form_inputs: null,
 						grant_template: {
 							created_at: new Date().toISOString(),
-							funding_organization: FundingOrganizationFactory.build(),
 							grant_sections: [],
+							granting_institution: GrantingInstitutionFactory.build(),
 							id: "550e8400-e29b-41d4-a716-446655440002",
 							rag_sources: [
 								{
@@ -366,7 +366,7 @@ export const scenarios: Scenario[] = [
 					},
 				],
 			]),
-			fundingOrganizations: FundingOrganizationFactory.batch(3),
+			grantingInstitutions: GrantingInstitutionFactory.batch(3),
 			organizations: OrganizationFactory.batch(1),
 			projects: [
 				{
@@ -441,7 +441,7 @@ export const scenarios: Scenario[] = [
 					}),
 				],
 			]),
-			fundingOrganizations: [],
+			grantingInstitutions: [],
 			organizations: [],
 			projects: [
 				ProjectListItemFactory.build({
