@@ -1,4 +1,5 @@
 from asyncio import gather
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from secrets import token_hex
@@ -6,7 +7,7 @@ from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
 import msgspec
-from jwt import encode
+from jwt import decode, encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
@@ -63,6 +64,7 @@ class BaseApplicationResponse(TableIdResponse):
 class CreateInvitationRedirectUrlRequestBody(TypedDict):
     email: str
     role: UserRoleEnum
+    project_ids: NotRequired[list[str]]  
 
 
 class InvitationRedirectUrlResponse(TypedDict):
@@ -375,6 +377,7 @@ async def handle_create_invitation_redirect_url(
                 "invitation_id": str(invitation.id),
                 "project_id": str(project_id),
                 "role": data["role"].value,
+                "project_ids": data.get("project_ids", []),  
                 "iat": int(datetime.now(UTC).timestamp()),
                 "exp": int((datetime.now(UTC) + timedelta(days=7)).timestamp()),
                 "jti": token_hex(16),
@@ -487,7 +490,7 @@ async def handle_update_invitation_role(
             invitation = await session.scalar(
                 update(OrganizationInvitation)
                 .where(OrganizationInvitation.id == invitation_id)
-                .where(OrganizationInvitation.organization_id == project_id)
+                .where(OrganizationInvitation.organization_id == project.organization_id)
                 .values(role=data["role"])
                 .returning(OrganizationInvitation)
             )
@@ -518,6 +521,10 @@ async def handle_update_invitation_role(
             raise e
 
 
+class AcceptInvitationRequestBody(TypedDict):
+    token: NotRequired[str]  
+
+
 @post(
     "/projects/invitations/{invitation_id:uuid}/accept",
     operation_id="AcceptInvitation",
@@ -526,6 +533,7 @@ async def handle_update_invitation_role(
 async def handle_accept_invitation(
     request: APIRequest,
     invitation_id: UUID,
+    data: AcceptInvitationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> InvitationRedirectUrlResponse:
     logger.info("Accepting invitation", invitation_id=invitation_id)
@@ -548,6 +556,7 @@ async def handle_accept_invitation(
             if firebase_user["uid"] != request.auth:
                 raise ValidationException("Authenticated user does not match invitation email")
 
+            
             await session.scalar(
                 insert(OrganizationUser)
                 .values(
@@ -555,10 +564,51 @@ async def handle_accept_invitation(
                         "organization_id": invitation.organization_id,
                         "firebase_uid": request.auth,
                         "role": invitation.role,
+                        "has_all_projects_access": False,  
                     }
                 )
                 .returning(OrganizationUser)
             )
+
+            
+            project_ids = []
+            if "token" in data:
+                with suppress(Exception):
+                    
+                    token_payload = decode(data["token"], get_env("JWT_SECRET"), algorithms=["HS256"])
+                    project_ids = token_payload.get("project_ids", [])
+
+            if project_ids:
+                
+                for project_id_str in project_ids:
+                    with suppress(ValueError):
+                        project_id_uuid = UUID(project_id_str)
+                        
+                        existing_access = await session.scalar(
+                            select(ProjectAccess)
+                            .where(ProjectAccess.firebase_uid == request.auth)
+                            .where(ProjectAccess.organization_id == invitation.organization_id)
+                            .where(ProjectAccess.project_id == project_id_uuid)
+                        )
+
+                        if not existing_access:
+                            await session.execute(
+                                insert(ProjectAccess).values(
+                                    {
+                                        "firebase_uid": request.auth,
+                                        "organization_id": invitation.organization_id,
+                                        "project_id": project_id_uuid,
+                                    }
+                                )
+                            )
+            else:
+                
+                await session.execute(
+                    update(OrganizationUser)
+                    .where(OrganizationUser.firebase_uid == request.auth)
+                    .where(OrganizationUser.organization_id == invitation.organization_id)
+                    .values(has_all_projects_access=True)
+                )
 
             await session.execute(
                 update(OrganizationInvitation)
