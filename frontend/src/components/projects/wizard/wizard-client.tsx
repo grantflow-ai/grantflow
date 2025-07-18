@@ -179,7 +179,13 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		const { event } = latestRagNotification.data;
 
-		if (event === "grant_template_generation_started" || event === "indexing_in_progress") {
+		if (
+			event === "grant_template_generation_started" ||
+			event === "indexing_in_progress" ||
+			event === "extracting_cfp_data" ||
+			event === "grant_template_extraction" ||
+			event === "grant_template_metadata"
+		) {
 			setGeneratingTemplate(true);
 		}
 
