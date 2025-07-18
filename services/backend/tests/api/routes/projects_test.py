@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, ProjectUser, UserProjectInvitation
+from packages.db.src.tables import Project, OrganizationUser, UserProjectInvitation
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
@@ -88,7 +88,7 @@ async def test_retrieve_projects(
 
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": projects_with_user_access[0].id,
@@ -103,7 +103,7 @@ async def test_retrieve_projects(
                     {
                         "project_id": projects_with_user_access[2].id,
                         "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.MEMBER.value,
+                        "role": UserRoleEnum.COLLABORATOR.value,
                     },
                 ]
             )
@@ -113,9 +113,9 @@ async def test_retrieve_projects(
     firebase_users = {
         firebase_uid: {
             "uid": firebase_uid,
-            "email": f"test-{firebase_uid}@example.com",
-            "displayName": f"Test User {firebase_uid}",
-            "photoURL": f"https://example.com/photo-{firebase_uid}.jpg",
+            "email": "user@example.com",
+            "displayName": "Test User",
+            "photoURL": "https://example.com/photo.jpg",
         }
     }
     mocker.patch(
@@ -146,22 +146,26 @@ async def test_retrieve_projects(
         assert len(project_response["members"]) > 0
 
         user_member = next(m for m in project_response["members"] if m["firebase_uid"] == firebase_uid)
-        assert user_member["email"] == f"test-{firebase_uid}@example.com"
-        assert user_member["role"] in [UserRoleEnum.OWNER.value, UserRoleEnum.ADMIN.value, UserRoleEnum.MEMBER.value]
+        assert user_member["email"] == "user@example.com"
+        assert user_member["role"] in [
+            UserRoleEnum.OWNER.value,
+            UserRoleEnum.ADMIN.value,
+            UserRoleEnum.COLLABORATOR.value,
+        ]
 
         members = project_response["members"]
         assert len(members) == 1
 
         member = members[0]
         assert member["firebase_uid"] == firebase_uid
-        assert member["email"] == f"test-{firebase_uid}@example.com"
-        assert member["display_name"] == f"Test User {firebase_uid}"
-        assert member["photo_url"] == f"https://example.com/photo-{firebase_uid}.jpg"
+        assert member["email"] == "user@example.com"
+        assert member["display_name"] == "Test User"
+        assert member["photo_url"] == "https://example.com/photo.jpg"
 
     assert all(value["id"] != str(project_without_user_access.id) for value in values)
 
 
-@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
+@pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR))
 async def test_retrieve_project_success(
     test_client: TestingClientType,
     project: Project,
@@ -172,7 +176,7 @@ async def test_retrieve_project_success(
     async with async_session_maker() as session, session.begin():
         if user_role == UserRoleEnum.OWNER:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.OWNER.value,
@@ -180,7 +184,7 @@ async def test_retrieve_project_success(
             )
         elif user_role == UserRoleEnum.ADMIN:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN.value,
@@ -188,10 +192,10 @@ async def test_retrieve_project_success(
             )
         else:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
-                    role=UserRoleEnum.MEMBER.value,
+                    role=UserRoleEnum.COLLABORATOR.value,
                 )
             )
         await session.commit()
@@ -294,7 +298,7 @@ async def test_update_project_success(
     async with async_session_maker() as session, session.begin():
         if user_role == UserRoleEnum.OWNER:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.OWNER.value,
@@ -302,7 +306,7 @@ async def test_update_project_success(
             )
         else:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN.value,
@@ -355,7 +359,7 @@ async def test_delete_project_success(
             await session.get_one(Project, project.id)
 
 
-@pytest.mark.parametrize("user_role", (UserRoleEnum.ADMIN, UserRoleEnum.MEMBER))
+@pytest.mark.parametrize("user_role", (UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR))
 async def test_delete_project_failure_unauthorized(
     test_client: TestingClientType,
     project: Project,
@@ -366,7 +370,7 @@ async def test_delete_project_failure_unauthorized(
     async with async_session_maker() as session, session.begin():
         if user_role == UserRoleEnum.ADMIN:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN.value,
@@ -374,10 +378,10 @@ async def test_delete_project_failure_unauthorized(
             )
         else:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
-                    role=UserRoleEnum.MEMBER.value,
+                    role=UserRoleEnum.COLLABORATOR.value,
                 )
             )
         await session.commit()
@@ -403,7 +407,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
     async with async_session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=user_role.value,
@@ -440,7 +444,7 @@ async def test_create_invitation_redirect_url_user_already_member(
     async with async_session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN,
@@ -454,10 +458,10 @@ async def test_create_invitation_redirect_url_user_already_member(
     async with async_session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid="existing_user_uid",
-                    role=UserRoleEnum.MEMBER,
+                    role=UserRoleEnum.COLLABORATOR,
                 )
             )
             await session.commit()
@@ -465,7 +469,7 @@ async def test_create_invitation_redirect_url_user_already_member(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.MEMBER)
+    request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.COLLABORATOR)
 
     response = await test_client.post(
         f"/projects/{project.id}/create-invitation-redirect-url",
@@ -491,7 +495,7 @@ async def test_create_invitation_redirect_url_success(
     async with async_session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN,
@@ -502,7 +506,7 @@ async def test_create_invitation_redirect_url_success(
             await session.rollback()
             raise e
 
-    request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.MEMBER)
+    request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.COLLABORATOR)
 
     response = await test_client.post(
         f"/projects/{project.id}/create-invitation-redirect-url",
@@ -517,12 +521,12 @@ async def test_create_invitation_redirect_url_success(
 
     async with async_session_maker() as session:
         invitation = await session.scalar(
-            select(UserProjectInvitation)
+            select(OrganizationInvitation)
             .where(UserProjectInvitation.project_id == project.id)
             .where(UserProjectInvitation.email == "new_user@example.com")
         )
         assert invitation is not None
-        assert invitation.role == UserRoleEnum.MEMBER
+        assert invitation.role == UserRoleEnum.COLLABORATOR
         assert invitation.invitation_sent_at is not None
 
 
@@ -549,7 +553,7 @@ async def test_delete_invitation_success(
             )
 
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     {
                         "project_id": project.id,
                         "firebase_uid": firebase_uid,
@@ -559,16 +563,16 @@ async def test_delete_invitation_success(
             )
 
             invitation = await session.scalar(
-                insert(UserProjectInvitation)
+                insert(OrganizationInvitation)
                 .values(
                     {
                         "project_id": project.id,
                         "email": "test@example.com",
-                        "role": UserRoleEnum.MEMBER,
+                        "role": UserRoleEnum.COLLABORATOR,
                         "invitation_sent_at": datetime.now(UTC),
                     }
                 )
-                .returning(UserProjectInvitation)
+                .returning(OrganizationInvitation)
             )
 
             await session.commit()
@@ -583,7 +587,7 @@ async def test_delete_invitation_success(
 
     async with async_session_maker() as session:
         deleted_invitation = await session.scalar(
-            select(UserProjectInvitation)
+            select(OrganizationInvitation)
             .where(UserProjectInvitation.id == invitation.id)
             .where(UserProjectInvitation.project_id == project.id)
         )
@@ -597,16 +601,16 @@ async def test_delete_invitation_not_project_member(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER.value,
+                    "role": UserRoleEnum.COLLABORATOR.value,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -628,7 +632,7 @@ async def test_delete_invitation_not_found(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
                 role=user_role,
@@ -653,26 +657,26 @@ async def test_delete_invitation_unauthorized_role(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
-                role=UserRoleEnum.MEMBER,
+                role=UserRoleEnum.COLLABORATOR,
             )
         )
         await session.commit()
 
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -695,7 +699,7 @@ async def test_update_invitation_role_success(
     async with async_session_maker() as session, session.begin():
         try:
             await session.execute(
-                insert(ProjectUser).values(
+                insert(OrganizationUser).values(
                     project_id=project.id,
                     firebase_uid=firebase_uid,
                     role=user_role.value,
@@ -703,16 +707,16 @@ async def test_update_invitation_role_success(
             )
 
             invitation = await session.scalar(
-                insert(UserProjectInvitation)
+                insert(OrganizationInvitation)
                 .values(
                     {
                         "project_id": project.id,
                         "email": "test@example.com",
-                        "role": UserRoleEnum.MEMBER,
+                        "role": UserRoleEnum.COLLABORATOR,
                         "invitation_sent_at": datetime.now(UTC),
                     }
                 )
-                .returning(UserProjectInvitation)
+                .returning(OrganizationInvitation)
             )
 
             await session.commit()
@@ -735,7 +739,7 @@ async def test_update_invitation_role_success(
 
     async with async_session_maker() as session:
         updated_invitation = await session.scalar(
-            select(UserProjectInvitation)
+            select(OrganizationInvitation)
             .where(UserProjectInvitation.id == invitation.id)
             .where(UserProjectInvitation.project_id == project.id)
         )
@@ -750,16 +754,16 @@ async def test_update_invitation_role_not_project_member(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -784,7 +788,7 @@ async def test_update_invitation_role_not_found(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
                 role=user_role,
@@ -812,26 +816,26 @@ async def test_update_invitation_role_unauthorized_role(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
-                role=UserRoleEnum.MEMBER,
+                role=UserRoleEnum.COLLABORATOR,
             )
         )
         await session.commit()
 
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -854,7 +858,7 @@ async def test_update_invitation_role_already_accepted(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.ADMIN,
@@ -862,17 +866,17 @@ async def test_update_invitation_role_already_accepted(
         )
 
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                     "accepted_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
 
         await session.commit()
@@ -896,7 +900,7 @@ async def test_update_invitation_role_higher_than_inviter(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.ADMIN,
@@ -904,16 +908,16 @@ async def test_update_invitation_role_higher_than_inviter(
         )
 
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
 
         await session.commit()
@@ -943,16 +947,16 @@ async def test_accept_invitation_success(
 
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -968,15 +972,15 @@ async def test_accept_invitation_success(
 
     async with async_session_maker() as session:
         project_user = await session.scalar(
-            select(ProjectUser)
+            select(OrganizationUser)
             .where(ProjectUser.project_id == project.id)
             .where(ProjectUser.firebase_uid == firebase_uid)
         )
         assert project_user is not None
-        assert project_user.role == UserRoleEnum.MEMBER
+        assert project_user.role == UserRoleEnum.COLLABORATOR
 
         updated_invitation = await session.scalar(
-            select(UserProjectInvitation).where(UserProjectInvitation.id == invitation.id)
+            select(OrganizationInvitation).where(UserProjectInvitation.id == invitation.id)
         )
         assert updated_invitation is not None
         assert updated_invitation.accepted_at is not None
@@ -1009,17 +1013,17 @@ async def test_accept_invitation_already_accepted(
 
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                     "accepted_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -1044,16 +1048,16 @@ async def test_accept_invitation_user_not_found(
 
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -1079,16 +1083,16 @@ async def test_accept_invitation_wrong_user(
 
     async with async_session_maker() as session, session.begin():
         invitation = await session.scalar(
-            insert(UserProjectInvitation)
+            insert(OrganizationInvitation)
             .values(
                 {
                     "project_id": project.id,
                     "email": "test@example.com",
-                    "role": UserRoleEnum.MEMBER,
+                    "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
                 }
             )
-            .returning(UserProjectInvitation)
+            .returning(OrganizationInvitation)
         )
         await session.commit()
 
@@ -1134,7 +1138,7 @@ async def test_list_project_members_success(
 
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": project.id,
@@ -1149,7 +1153,7 @@ async def test_list_project_members_success(
                     {
                         "project_id": project.id,
                         "firebase_uid": "member_uid",
-                        "role": UserRoleEnum.MEMBER,
+                        "role": UserRoleEnum.COLLABORATOR,
                     },
                 ]
             )
@@ -1179,7 +1183,7 @@ async def test_list_project_members_success(
     assert member["email"] == "member@example.com"
     assert member["display_name"] is None
     assert member["photo_url"] is None
-    assert member["role"] == UserRoleEnum.MEMBER.value
+    assert member["role"] == UserRoleEnum.COLLABORATOR.value
 
 
 async def test_list_project_members_no_access(
@@ -1199,7 +1203,7 @@ async def test_list_project_members_no_access(
         )
 
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=other_project.id,
                 firebase_uid="other_user_uid",
                 role=UserRoleEnum.OWNER,
@@ -1222,7 +1226,7 @@ async def test_update_member_role_cannot_modify_owner(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": project.id,
@@ -1257,7 +1261,7 @@ async def test_update_member_role_only_owner_can_promote_to_admin(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": project.id,
@@ -1267,7 +1271,7 @@ async def test_update_member_role_only_owner_can_promote_to_admin(
                     {
                         "project_id": project.id,
                         "firebase_uid": "member_uid",
-                        "role": UserRoleEnum.MEMBER,
+                        "role": UserRoleEnum.COLLABORATOR,
                     },
                 ]
             )
@@ -1292,7 +1296,7 @@ async def test_update_member_role_member_not_found(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,
@@ -1318,7 +1322,7 @@ async def test_remove_project_member_success(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": project.id,
@@ -1328,7 +1332,7 @@ async def test_remove_project_member_success(
                     {
                         "project_id": project.id,
                         "firebase_uid": "member_uid",
-                        "role": UserRoleEnum.MEMBER,
+                        "role": UserRoleEnum.COLLABORATOR,
                     },
                 ]
             )
@@ -1343,7 +1347,7 @@ async def test_remove_project_member_success(
 
     async with async_session_maker() as session:
         removed_member = await session.scalar(
-            select(ProjectUser)
+            select(OrganizationUser)
             .where(ProjectUser.project_id == project.id)
             .where(ProjectUser.firebase_uid == "member_uid")
         )
@@ -1358,7 +1362,7 @@ async def test_remove_project_member_cannot_remove_owner(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": project.id,
@@ -1391,7 +1395,7 @@ async def test_remove_project_member_only_owner_can_remove_admin(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 [
                     {
                         "project_id": project.id,
@@ -1424,7 +1428,7 @@ async def test_remove_project_member_not_found(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            insert(ProjectUser).values(
+            insert(OrganizationUser).values(
                 project_id=project.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,

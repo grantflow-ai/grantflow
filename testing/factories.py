@@ -14,18 +14,18 @@ from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
     FundingOrganization,
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
     GrantApplicationGenerationJob,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
     GrantTemplateGenerationJob,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     Project,
-    ProjectUser,
+    OrganizationUser,
     RagFile,
     RagGenerationJob,
-    RagGenerationNotification,
+    GenerationNotification,
     RagSource,
     RagUrl,
     TextVector,
@@ -101,8 +101,8 @@ class RagUrlFactory(SQLAlchemyFactory[RagUrl]):
     source_type = RAG_URL
 
 
-class GrantTemplateSourceFactory(SQLAlchemyFactory[GrantTemplateRagSource]):
-    __model__ = GrantTemplateRagSource
+class GrantTemplateSourceFactory(SQLAlchemyFactory[GrantTemplateSource]):
+    __model__ = GrantTemplateSource
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
@@ -127,8 +127,8 @@ class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
     __set_association_proxy__ = False
 
 
-class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationRagSource]):
-    __model__ = FundingOrganizationRagSource
+class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationSource]):
+    __model__ = FundingOrganizationSource
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
@@ -140,8 +140,8 @@ class ProjectFactory(SQLAlchemyFactory[Project]):
     __set_association_proxy__ = False
 
 
-class ProjectUserFactory(SQLAlchemyFactory[ProjectUser]):
-    __model__ = ProjectUser
+class ProjectUserFactory(SQLAlchemyFactory[OrganizationUser]):
+    __model__ = OrganizationUser
     __set_relationships__ = False
     __set_association_proxy__ = False
 
@@ -179,8 +179,8 @@ class GrantApplicationGenerationJobFactory(SQLAlchemyFactory[GrantApplicationGen
     job_type = GRANT_APPLICATION_GENERATION
 
 
-class RagGenerationNotificationFactory(SQLAlchemyFactory[RagGenerationNotification]):
-    __model__ = RagGenerationNotification
+class GenerationNotificationFactory(SQLAlchemyFactory[GenerationNotification]):
+    __model__ = GenerationNotification
     __set_relationships__ = False
     __set_association_proxy__ = False
     event = faker.word()
@@ -196,8 +196,8 @@ class GrantApplicationFactory(SQLAlchemyFactory[GrantApplication]):
     parent_id = None
 
 
-class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationRagSource]):
-    __model__ = GrantApplicationRagSource
+class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationSource]):
+    __model__ = GrantApplicationSource
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])

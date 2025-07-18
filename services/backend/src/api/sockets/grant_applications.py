@@ -16,7 +16,7 @@ NOTIFICATION_POLL_INTERVAL = 3.0
 
 @websocket_stream(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}/notifications",
-    opt={"allowed_roles": [UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER]},
+    opt={"allowed_roles": [UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR]},
     type_encoders={UUID: str, SourceIndexingStatusEnum: lambda x: x.value},
 )
 async def handle_grant_application_notifications(

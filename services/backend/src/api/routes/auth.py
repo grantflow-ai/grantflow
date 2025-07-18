@@ -34,7 +34,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
     firebase_uid = decoded_token["uid"]
 
     async with session_maker() as session, session.begin():
-        result = await session.execute(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
+        result = await session.execute(select(OrganizationUser).where(ProjectUser.firebase_uid == firebase_uid))
         project_user = result.scalars().first()
 
         if project_user is None:
@@ -42,7 +42,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
             session.add(default_project)
             await session.flush()
 
-            project_user = ProjectUser(
+            project_user = OrganizationUser(
                 project_id=default_project.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,

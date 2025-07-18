@@ -78,7 +78,7 @@ async def benchmark_rag_source(
     This creates a RagFile and associates it with a grant application
     for vector benchmarking.
     """
-    from packages.db.src.tables import GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplicationSource
 
     async with async_session_maker() as session:
         rag_file = RagFileFactory.build()
@@ -86,7 +86,7 @@ async def benchmark_rag_source(
         await session.commit()
         await session.refresh(rag_file)
 
-        app_rag_source = GrantApplicationRagSource(grant_application_id=grant_application.id, rag_source_id=rag_file.id)
+        app_rag_source = GrantApplicationSource(grant_application_id=grant_application.id, rag_source_id=rag_file.id)
         session.add(app_rag_source)
         await session.commit()
 

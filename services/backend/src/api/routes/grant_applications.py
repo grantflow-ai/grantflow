@@ -17,7 +17,7 @@ from packages.db.src.json_objects import (
 )
 from packages.db.src.tables import (
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
     RagFile,
     RagSource,
@@ -268,7 +268,7 @@ async def _handle_retrieve_application(
 
 @post(
     "/projects/{project_id:uuid}/applications",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="CreateApplication",
 )
 async def handle_create_application(
@@ -287,7 +287,7 @@ async def handle_create_application(
                         "project_id": project_id,
                         "title": data["title"],
                         "description": data.get("description") or None,
-                        "status": ApplicationStatusEnum.DRAFT,
+                        "status": ApplicationStatusEnum.WORKING_DRAFT,
                     }
                 )
                 .returning(GrantApplication)
@@ -319,7 +319,7 @@ async def handle_create_application(
 
 @patch(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="UpdateApplication",
 )
 async def handle_update_application(
@@ -360,7 +360,7 @@ async def handle_update_application(
 
 @delete(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DeleteApplication",
 )
 async def handle_delete_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
@@ -397,7 +397,7 @@ async def handle_delete_application(application_id: UUID, session_maker: async_s
 
 @post(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="GenerateApplication",
 )
 async def handle_generate_application(
@@ -421,7 +421,7 @@ async def handle_generate_application(
 
         rag_sources_count = await session.scalar(
             select(count())
-            .select_from(GrantApplicationRagSource)
+            .select_from(GrantApplicationSource)
             .join(RagSource)
             .where(
                 GrantApplicationRagSource.grant_application_id == application.id,
@@ -461,7 +461,7 @@ async def handle_generate_application(
 
 @get(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="RetrieveApplication",
 )
 async def handle_retrieve_application(
@@ -472,7 +472,7 @@ async def handle_retrieve_application(
 
 @get(
     "/projects/{project_id:uuid}/applications",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="ListApplications",
 )
 async def handle_list_applications(
@@ -584,7 +584,7 @@ async def handle_list_applications(
 
 @post(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}/autofill",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="TriggerAutofill",
 )
 async def handle_trigger_autofill(
@@ -646,7 +646,7 @@ async def handle_trigger_autofill(
 
 @post(
     "/projects/{project_id:uuid}/applications/{application_id:uuid}/duplicate",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DuplicateApplication",
 )
 async def handle_duplicate_application(
@@ -685,7 +685,7 @@ async def handle_duplicate_application(
                         "project_id": project_id,
                         "title": data["title"],
                         "description": original_app.description,
-                        "status": ApplicationStatusEnum.DRAFT,
+                        "status": ApplicationStatusEnum.WORKING_DRAFT,
                         "form_inputs": original_app.form_inputs,
                         "research_objectives": original_app.research_objectives,
                         "text": original_app.text,
@@ -712,13 +712,13 @@ async def handle_duplicate_application(
                 )
 
             rag_sources = await session.execute(
-                select(GrantApplicationRagSource).where(
+                select(GrantApplicationSource).where(
                     GrantApplicationRagSource.grant_application_id == application_id
                 )
             )
             for rag_source in rag_sources.scalars():
                 await session.execute(
-                    insert(GrantApplicationRagSource).values(
+                    insert(GrantApplicationSource).values(
                         {
                             "grant_application_id": new_app.id,
                             "rag_source_id": rag_source.rag_source_id,
