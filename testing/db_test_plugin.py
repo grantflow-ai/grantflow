@@ -104,13 +104,17 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         try:
             admin_conn = await connect(admin_connection_string)
 
-            await admin_conn.execute(f"""
-                SELECT pg_terminate_backend(pid)
-                FROM pg_stat_activity
-                WHERE datname = '{test_db_name}' AND pid <> pg_backend_pid()
-            """)
+            # Clean up both test database and template
+            template_db_name = f"{test_db_name}_template"
+            
+            for db_name in [test_db_name, template_db_name]:
+                await admin_conn.execute(f"""
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+                """)
+                await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
 
-            await admin_conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
             await admin_conn.close()
         except Exception:
             pass
@@ -134,35 +138,88 @@ async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmake
     return get_session_maker()
 
 
-@pytest.fixture(autouse=True)
-async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
+@pytest.fixture(scope="session")
+async def database_snapshot(db_connection_string: str, async_session_maker: async_sessionmaker[Any]) -> str:
+    """Create a database snapshot after seeding for fast test isolation."""
+    # Seed the database first
     await seed_db()
+    
+    # Create a snapshot name
+    snapshot_name = f"test_snapshot_{os.getpid()}"
+    
+    # Connect directly to create snapshot
+    parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
+    admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
+    
+    admin_conn = await connect(admin_connection_string)
+    
+    try:
+        # Create a template database from our seeded database
+        db_name = parsed.path.lstrip("/")
+        template_db_name = f"{db_name}_template"
+        
+        # Terminate connections to source db
+        await admin_conn.execute(f"""
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+        """)
+        
+        # Create template database
+        with contextlib.suppress(Exception):
+            await admin_conn.execute(f'DROP DATABASE IF EXISTS "{template_db_name}"')
+        
+        await admin_conn.execute(f'CREATE DATABASE "{template_db_name}" WITH TEMPLATE "{db_name}"')
+        
+        return template_db_name
+        
+    finally:
+        await admin_conn.close()
 
 
 @pytest.fixture(autouse=True)
-async def cleanup_database(
-    async_session_maker: async_sessionmaker[Any], request: pytest.FixtureRequest
+async def restore_database_snapshot(
+    database_snapshot: str,
+    db_connection_string: str,
+    request: pytest.FixtureRequest
 ) -> AsyncGenerator[None]:
-    """Clean up database state between tests by truncating all tables except seeded data."""
-
-    yield
-
+    """Restore database to clean snapshot state before each test."""
+    
     if "no_cleanup" in request.keywords:
+        yield
         return
+    
+    # Restore from snapshot before test
+    await _restore_from_snapshot(database_snapshot, db_connection_string)
+    
+    yield
+    
+    # Optionally restore after test too for extra isolation
+    # await _restore_from_snapshot(database_snapshot, db_connection_string)
 
-    async with async_session_maker() as session:
-        preserved_tables = {"granting_institutions"}
 
-        try:
-            await session.execute(text("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"))
-
-            for table in reversed(Base.metadata.sorted_tables):
-                if table.name not in preserved_tables:
-                    await session.execute(text(f"DELETE FROM {table.name}"))
-
-            await session.commit()
-        except Exception:
-            await session.rollback()
+async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
+    """Restore database from template snapshot."""
+    parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
+    admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
+    db_name = parsed.path.lstrip("/")
+    
+    admin_conn = await connect(admin_connection_string)
+    
+    try:
+        # Terminate all connections to target database
+        await admin_conn.execute(f"""
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+        """)
+        
+        # Drop and recreate from template
+        await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
+        await admin_conn.execute(f'CREATE DATABASE "{db_name}" WITH TEMPLATE "{template_db_name}"')
+        
+    finally:
+        await admin_conn.close()
 
 
 @pytest.fixture

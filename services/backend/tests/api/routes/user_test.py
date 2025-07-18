@@ -1,8 +1,8 @@
 from typing import Any
 
 from packages.db.src.enums import UserRoleEnum
+from packages.db.src.tables import Organization, OrganizationUser, Project
 from packages.db.src.tables import OrganizationUser as ProjectMember
-from packages.db.src.tables import Project
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -129,7 +129,8 @@ async def test_delete_user_with_sole_owned_projects(
     mocker: MockerFixture,
     async_session_maker: async_sessionmaker[Any],
     project: Project,
-    project_owner_user: ProjectMember,
+    organization: Organization,
+    project_owner_user: OrganizationUser,
     firebase_uid: str,
 ) -> None:
     """Test that user deletion is blocked when user is sole owner of projects."""
@@ -145,11 +146,11 @@ async def test_delete_user_with_sole_owned_projects(
 
     assert response.status_code == 400
     data = response.json()
-    assert data["detail"] == "You must transfer ownership of projects before deleting your account"
+    assert data["detail"] == "You must transfer ownership of organizations before deleting your account"
     assert data["extra"]["error"] == "ownership_transfer_required"
-    assert len(data["extra"]["projects"]) == 1
-    assert data["extra"]["projects"][0]["id"] == str(project.id)
-    assert data["extra"]["projects"][0]["name"] == project.name
+    assert len(data["extra"]["organizations"]) == 1
+    assert data["extra"]["organizations"][0]["id"] == str(project.organization_id)
+    assert data["extra"]["organizations"][0]["name"] == organization.name
 
 
 async def test_delete_user_with_multiple_owners(
@@ -181,9 +182,10 @@ async def test_delete_user_with_multiple_owners(
 
     async with async_session_maker() as session, session.begin():
         another_owner = ProjectMember(
-            project_id=project.id,
+            organization_id=project.organization_id,
             firebase_uid="another_owner_uid",
             role=UserRoleEnum.OWNER,
+            has_all_projects_access=True,
         )
         session.add(another_owner)
         await session.commit()
