@@ -18,6 +18,8 @@ vi.mock("next/image", () => ({
 }));
 
 describe("ApplicationStructureStep", () => {
+	const mockDialogRef = { current: null };
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 
@@ -40,14 +42,14 @@ describe("ApplicationStructureStep", () => {
 	});
 
 	it("renders both left pane and preview sections", () => {
-		render(<ApplicationStructureStep />);
+		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
 		expect(screen.getByTestId("application-structure-left-pane-content")).toBeInTheDocument();
 		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
 	});
 
 	it("shows empty state when no application", () => {
-		render(<ApplicationStructureStep />);
+		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
 		expect(screen.getByTestId("empty-state")).toBeInTheDocument();
 		expect(screen.getByTestId("empty-state-message")).toHaveTextContent("Loading, analyzing...");
@@ -58,7 +60,7 @@ describe("ApplicationStructureStep", () => {
 		useApplicationStore.setState({ application });
 		useWizardStore.setState({ isGeneratingTemplate: true });
 
-		render(<ApplicationStructureStep />);
+		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
 		expect(screen.getByTestId("image-Analyzing data")).toBeInTheDocument();
 	});
@@ -80,7 +82,7 @@ describe("ApplicationStructureStep", () => {
 		useApplicationStore.setState({ application });
 		useWizardStore.setState({ isGeneratingTemplate: false });
 
-		render(<ApplicationStructureStep />);
+		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
 		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();

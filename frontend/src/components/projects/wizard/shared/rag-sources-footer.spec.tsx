@@ -5,6 +5,7 @@ import { RagSourcesFooter } from "./rag-sources-footer";
 describe("RagSourcesFooter", () => {
 	afterEach(() => {
 		cleanup();
+		vi.clearAllMocks();
 	});
 
 	it("renders both buttons", () => {
