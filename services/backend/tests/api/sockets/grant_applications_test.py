@@ -10,7 +10,7 @@ from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnu
 from packages.db.src.tables import (
     GrantApplication,
     Project,
-    ProjectUser,
+    OrganizationUser,
 )
 from packages.shared_utils.src.pubsub import SourceProcessingResult, WebsocketMessage
 from sqlalchemy import insert, select
@@ -40,7 +40,7 @@ async def application(project: Project, async_session_maker: async_sessionmaker[
                 id=application_id,
                 project_id=project.id,
                 title="Test Application",
-                status=ApplicationStatusEnum.DRAFT,
+                status=ApplicationStatusEnum.WORKING_DRAFT,
             )
         )
 
@@ -58,7 +58,7 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_otp(
     project: Project,
     application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     sync_test_client: TestClient[Any],
 ) -> None:
     with (
@@ -89,7 +89,7 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_proj
 async def test_handle_grant_application_notifications_success(
     project: Project,
     application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -154,7 +154,7 @@ async def test_handle_grant_application_notifications_success(
 async def test_handle_grant_application_notifications_failed_status(
     project: Project,
     application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -200,7 +200,7 @@ async def test_handle_grant_application_notifications_failed_status(
 async def test_handle_grant_application_notifications_empty_notifications(
     project: Project,
     application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -219,7 +219,7 @@ async def test_handle_grant_application_notifications_empty_notifications(
 async def test_handle_grant_application_notifications_different_roles(
     project: Project,
     application: GrantApplication,
-    project_admin_user: ProjectUser,
+    project_admin_user: OrganizationUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,
@@ -263,7 +263,7 @@ async def test_handle_grant_application_notifications_different_roles(
 async def test_handle_grant_application_notifications_continuous_updates(
     project: Project,
     application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     otp_code: str,
     sync_test_client: TestClient[Any],
     mock_pull_notifications: AsyncMock,

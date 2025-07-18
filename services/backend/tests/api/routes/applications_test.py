@@ -13,11 +13,11 @@ from packages.db.src.enums import (
 from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     Project,
-    ProjectUser,
+    OrganizationUser,
     RagFile,
     RagUrl,
 )
@@ -213,7 +213,7 @@ async def test_generate_application_success(
         session.add(rag_source)
         await session.flush()
 
-        app_source = GrantApplicationRagSource(
+        app_source = GrantApplicationSource(
             grant_application_id=grant_application.id,
             rag_source_id=rag_source.id,
         )
@@ -399,10 +399,10 @@ async def test_retrieve_application_wrong_project(
         await session.flush()
 
         firebase_uid = "a" * 128
-        project_user = ProjectUser(
+        project_user = OrganizationUser(
             project_id=different_project.id,
             firebase_uid=firebase_uid,
-            role=UserRoleEnum.MEMBER,
+            role=UserRoleEnum.COLLABORATOR,
         )
         session.add(project_user)
         await session.commit()
@@ -591,18 +591,18 @@ async def test_retrieve_application_with_rag_sources(
         session.add(template_rag_file)
         await session.flush()
 
-        app_rag_file = GrantApplicationRagSource(
+        app_rag_file = GrantApplicationSource(
             grant_application_id=app.id,
             rag_source_id=rag_file.id,
         )
-        app_rag_url = GrantApplicationRagSource(
+        app_rag_url = GrantApplicationSource(
             grant_application_id=app.id,
             rag_source_id=rag_url.id,
         )
         session.add(app_rag_file)
         session.add(app_rag_url)
 
-        template_rag_source = GrantTemplateRagSource(
+        template_rag_source = GrantTemplateSource(
             grant_template_id=template.id,
             rag_source_id=template_rag_file.id,
         )
@@ -661,7 +661,7 @@ async def test_list_applications_basic(
             app = GrantApplication(
                 project_id=project.id,
                 title=f"Test Application {i}",
-                status=ApplicationStatusEnum.DRAFT,
+                status=ApplicationStatusEnum.WORKING_DRAFT,
                 text=f"Description for application {i}",
             )
             session.add(app)
@@ -699,7 +699,7 @@ async def test_list_applications_with_submission_dates(
                     {
                         "project_id": project.id,
                         "title": f"Test Application {i}",
-                        "status": ApplicationStatusEnum.DRAFT,
+                        "status": ApplicationStatusEnum.WORKING_DRAFT,
                         "description": f"Description for application {i}",
                     }
                     for i in range(5)
@@ -742,19 +742,19 @@ async def test_list_applications_with_search(
         app1 = GrantApplication(
             project_id=project.id,
             title="Research Grant Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
             text="This is about machine learning research",
         )
         app2 = GrantApplication(
             project_id=project.id,
             title="Equipment Purchase Request",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
             text="We need new research equipment",
         )
         app3 = GrantApplication(
             project_id=project.id,
             title="Conference Travel Grant",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
             text="Travel funding for research conference",
         )
         session.add_all([app1, app2, app3])
@@ -783,7 +783,7 @@ async def test_list_applications_with_status_filter(
         app_draft = GrantApplication(
             project_id=project.id,
             title="Draft Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         app_in_progress = GrantApplication(
             project_id=project.id,
@@ -824,7 +824,7 @@ async def test_list_applications_with_pagination(
             app = GrantApplication(
                 project_id=project.id,
                 title=f"Application {i:02d}",
-                status=ApplicationStatusEnum.DRAFT,
+                status=ApplicationStatusEnum.WORKING_DRAFT,
             )
             session.add(app)
         await session.commit()
@@ -868,17 +868,17 @@ async def test_list_applications_with_sorting(
         app1 = GrantApplication(
             project_id=project.id,
             title="Zebra Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         app2 = GrantApplication(
             project_id=project.id,
             title="Alpha Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         app3 = GrantApplication(
             project_id=project.id,
             title="Beta Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         session.add_all([app1, app2, app3])
         await session.commit()
@@ -937,12 +937,12 @@ async def test_generate_application_status_transition_to_generating(
     async_session_maker: async_sessionmaker[Any],
     project: Project,
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that application status transitions to GENERATING when RAG generation starts"""
 
     async with async_session_maker() as session, session.begin():
-        grant_application.status = ApplicationStatusEnum.DRAFT
+        grant_application.status = ApplicationStatusEnum.WORKING_DRAFT
         grant_application.title = "Test Application"
         grant_application.research_objectives = [
             {
@@ -984,7 +984,7 @@ async def test_generate_application_status_transition_to_generating(
         session.add(rag_source)
         await session.flush()
 
-        app_source = GrantApplicationRagSource(
+        app_source = GrantApplicationSource(
             grant_application_id=grant_application.id,
             rag_source_id=rag_source.id,
         )
@@ -1014,7 +1014,7 @@ async def test_application_status_transitions_preserve_generating(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that GENERATING status is preserved and displayed correctly"""
 

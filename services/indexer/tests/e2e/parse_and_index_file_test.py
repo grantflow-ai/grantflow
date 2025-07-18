@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+from packages.db.src.tables import GrantApplication, GrantApplicationSource
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import SOURCES_FOLDER
@@ -19,7 +19,7 @@ async def test_parse_application_file(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     logger.info("Running end-to-end test for parse_and_index_file")
 

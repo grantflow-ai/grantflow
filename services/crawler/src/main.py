@@ -33,9 +33,9 @@ from packages.db.src.constants import RAG_FILE
 from packages.db.src.tables import (
     RagSource,
     RagFile,
-    GrantApplicationRagSource,
-    GrantTemplateRagSource,
-    FundingOrganizationRagSource,
+    GrantApplicationSource,
+    GrantTemplateSource,
+    FundingOrganizationSource,
 )
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
@@ -159,7 +159,7 @@ async def handle_gcs_file_upload(
 
             if parent_type == "grant_application":
                 await session.execute(
-                    insert(GrantApplicationRagSource).values(
+                    insert(GrantApplicationSource).values(
                         {
                             "rag_source_id": source_id,
                             "grant_application_id": crawling_request["parent_id"],
@@ -168,7 +168,7 @@ async def handle_gcs_file_upload(
                 )
             elif parent_type == "funding_organization":
                 await session.execute(
-                    insert(FundingOrganizationRagSource).values(
+                    insert(FundingOrganizationSource).values(
                         {
                             "rag_source_id": source_id,
                             "funding_organization_id": crawling_request["parent_id"],
@@ -177,7 +177,7 @@ async def handle_gcs_file_upload(
                 )
             else:
                 await session.execute(
-                    insert(GrantTemplateRagSource).values(
+                    insert(GrantTemplateSource).values(
                         {
                             "rag_source_id": source_id,
                             "grant_template_id": crawling_request["parent_id"],
@@ -310,7 +310,7 @@ async def handle_url_crawling(
             lookup_start = time.time()
             async with session_maker() as session:
                 if await session.scalar(
-                    select(GrantApplicationRagSource).where(
+                    select(GrantApplicationSource).where(
                         GrantApplicationRagSource.rag_source_id
                         == crawling_request["source_id"]
                     )
@@ -318,7 +318,7 @@ async def handle_url_crawling(
                     parent_type = "grant_application"
 
                 elif await session.scalar(
-                    select(GrantTemplateRagSource).where(
+                    select(GrantTemplateSource).where(
                         GrantTemplateRagSource.rag_source_id
                         == crawling_request["source_id"]
                     )
@@ -326,7 +326,7 @@ async def handle_url_crawling(
                     parent_type = "grant_template"
 
                 elif await session.scalar(
-                    select(FundingOrganizationRagSource).where(
+                    select(FundingOrganizationSource).where(
                         FundingOrganizationRagSource.rag_source_id
                         == crawling_request["source_id"]
                     )

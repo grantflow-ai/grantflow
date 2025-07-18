@@ -7,13 +7,13 @@ from uuid import UUID
 import pytest
 from packages.db.src.tables import (
     FundingOrganization,
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     Project,
-    ProjectUser,
+    OrganizationUser,
     RagFile,
     RagSource,
     RagUrl,
@@ -33,9 +33,9 @@ async def test_retrieve_application_sources(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
-    grant_application_url: GrantApplicationRagSource,
-    project_member_user: ProjectUser,
+    grant_application_file: GrantApplicationSource,
+    grant_application_url: GrantApplicationSource,
+    project_member_user: OrganizationUser,
     rag_file: RagFile,
     rag_url: RagUrl,
 ) -> None:
@@ -68,7 +68,7 @@ async def test_retrieve_application_sources(
 async def test_retrieve_application_sources_empty(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session, session.begin():
@@ -95,8 +95,8 @@ async def test_retrieve_application_sources_empty(
 async def test_retrieve_organization_sources(
     test_client: TestingClientType,
     funding_organization: FundingOrganization,
-    funding_organization_file: FundingOrganizationRagSource,
-    funding_organization_url: FundingOrganizationRagSource,
+    funding_organization_file: FundingOrganizationSource,
+    funding_organization_url: FundingOrganizationSource,
     rag_file: RagFile,
     rag_url: RagUrl,
     mock_admin_code: Mock,
@@ -130,11 +130,11 @@ async def test_retrieve_template_sources(
     test_client: TestingClientType,
     project: Project,
     grant_template: GrantTemplate,
-    grant_template_file: GrantTemplateRagSource,
-    grant_template_url: GrantTemplateRagSource,
+    grant_template_file: GrantTemplateSource,
+    grant_template_url: GrantTemplateSource,
     rag_file: RagFile,
     rag_url: RagUrl,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
         f"/projects/{project.id}/grant_templates/{grant_template.id}/sources",
@@ -192,8 +192,8 @@ async def test_delete_application_source(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
-    project_member_user: ProjectUser,
+    grant_application_file: GrantApplicationSource,
+    project_member_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
@@ -209,7 +209,7 @@ async def test_delete_application_source(
 
         with pytest.raises(NoResultFound):
             await session.get_one(
-                GrantApplicationRagSource,
+                GrantApplicationSource,
                 {
                     "grant_application_id": grant_application.id,
                     "rag_source_id": grant_application_file.rag_source_id,
@@ -223,8 +223,8 @@ async def test_delete_application_source_deletes_from_gcs(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
-    project_member_user: ProjectUser,
+    grant_application_file: GrantApplicationSource,
+    project_member_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
@@ -245,7 +245,7 @@ async def test_delete_application_source_deletes_from_gcs(
 async def test_delete_organization_source(
     test_client: TestingClientType,
     funding_organization: FundingOrganization,
-    funding_organization_file: FundingOrganizationRagSource,
+    funding_organization_file: FundingOrganizationSource,
     async_session_maker: async_sessionmaker[Any],
     mock_admin_code: Mock,
 ) -> None:
@@ -262,7 +262,7 @@ async def test_delete_organization_source(
 
         with pytest.raises(NoResultFound):
             await session.get_one(
-                FundingOrganizationRagSource,
+                FundingOrganizationSource,
                 {
                     "funding_organization_id": funding_organization.id,
                     "rag_source_id": funding_organization_file.rag_source_id,
@@ -274,8 +274,8 @@ async def test_delete_template_source(
     test_client: TestingClientType,
     project: Project,
     grant_template: GrantTemplate,
-    grant_template_file: GrantTemplateRagSource,
-    project_member_user: ProjectUser,
+    grant_template_file: GrantTemplateSource,
+    project_member_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
@@ -291,7 +291,7 @@ async def test_delete_template_source(
 
         with pytest.raises(NoResultFound):
             await session.get_one(
-                GrantTemplateRagSource,
+                GrantTemplateSource,
                 {
                     "grant_template_id": grant_template.id,
                     "rag_source_id": grant_template_file.rag_source_id,
@@ -303,7 +303,7 @@ async def test_delete_grant_application_source_unauthorized(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     response = await test_client.delete(
         f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
@@ -317,7 +317,7 @@ async def test_delete_grant_application_source_not_found(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.delete(
         f"/projects/{project.id}/applications/{grant_application.id}/sources/{UUID('00000000-0000-0000-0000-000000000000')}",
@@ -332,8 +332,8 @@ async def test_delete_source_from_wrong_entity(
     project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
-    grant_application_file: GrantApplicationRagSource,
-    project_member_user: ProjectUser,
+    grant_application_file: GrantApplicationSource,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.delete(
         f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_application_file.rag_source_id}",
@@ -347,7 +347,7 @@ async def test_create_upload_url(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     mocker: MockerFixture,
 ) -> None:
     mock_signed_url = "https://storage.googleapis.com/test-bucket/test-signed-url"
@@ -412,7 +412,7 @@ async def test_create_template_upload_url(
     test_client: TestingClientType,
     project: Project,
     grant_template: GrantTemplate,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
     mocker: MockerFixture,
 ) -> None:
     mock_signed_url = "https://storage.googleapis.com/test-bucket/test-signed-url"
@@ -476,7 +476,7 @@ async def test_handle_crawl_url_grant_application(
     mock_publish_url_crawling_task: AsyncMock,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
@@ -533,7 +533,7 @@ async def test_handle_crawl_url_grant_template(
     mock_publish_url_crawling_task: AsyncMock,
     project: Project,
     grant_template: GrantTemplate,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
@@ -577,7 +577,7 @@ async def test_handle_crawl_url_pubsub_error(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: ProjectUser,
+    project_member_user: OrganizationUser,
 ) -> None:
     with patch("services.backend.src.api.routes.sources.publish_url_crawling_task") as mock_func:
         mock_func.side_effect = Exception("PubSub error")

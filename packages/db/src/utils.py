@@ -8,11 +8,11 @@ from sqlalchemy.orm import selectinload, with_polymorphic
 
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagFile,
     RagSource,
     RagUrl,

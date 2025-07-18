@@ -4,7 +4,7 @@ from enum import StrEnum
 class UserRoleEnum(StrEnum):
     OWNER = "OWNER"
     ADMIN = "ADMIN"
-    MEMBER = "MEMBER"
+    COLLABORATOR = "COLLABORATOR"
 
 
 class SourceIndexingStatusEnum(StrEnum):
@@ -15,7 +15,7 @@ class SourceIndexingStatusEnum(StrEnum):
 
 
 class ApplicationStatusEnum(StrEnum):
-    DRAFT = "DRAFT"
+    WORKING_DRAFT = "WORKING_DRAFT"
     IN_PROGRESS = "IN_PROGRESS"
     GENERATING = "GENERATING"
     CANCELLED = "CANCELLED"
@@ -30,7 +30,7 @@ class RagGenerationStatusEnum(StrEnum):
 
 
 class NotificationTypeEnum(StrEnum):
-    DEADLINE = "deadline"
-    INFO = "info"
-    WARNING = "warning"
-    SUCCESS = "success"
+    DEADLINE = "DEADLINE"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    SUCCESS = "SUCCESS"
