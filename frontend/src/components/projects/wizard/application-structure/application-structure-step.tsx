@@ -85,7 +85,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		}
 
 		// Only show dialog for failed sources if it hasn't been dismissed
-		if (hasFailedSources && !dialogDismissedRef.current) {
+		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
 			const ragDialog = createRagSourcesDialog({
 				onBackToUploads: () => {
 					dialogDismissedRef.current = true;
@@ -109,7 +109,14 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 				title: "Review Required: Some Uploads Failed",
 			});
 		}
-	}, [canStartTemplateGeneration, templateRagSources, dialogRef, startTemplateGeneration, toPreviousStep]);
+	}, [
+		canStartTemplateGeneration,
+		templateRagSources,
+		dialogRef,
+		startTemplateGeneration,
+		toPreviousStep,
+		grantTemplate?.grant_sections.length,
+	]);
 
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
