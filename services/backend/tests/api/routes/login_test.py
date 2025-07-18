@@ -31,7 +31,7 @@ async def test_login_new_user_creates_project(
     assert response_body["jwt_token"] == "jwt_token"
 
     async with async_session_maker() as session:
-        project_user = await session.scalar(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
+        project_user = await session.scalar(select(OrganizationUser).where(ProjectUser.firebase_uid == firebase_uid))
         assert project_user is not None
         assert project_user.role == UserRoleEnum.OWNER
 
@@ -56,7 +56,7 @@ async def test_login_existing_user_keeps_project(
     await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
 
     async with async_session_maker() as session:
-        project_user = await session.scalar(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
+        project_user = await session.scalar(select(OrganizationUser).where(ProjectUser.firebase_uid == firebase_uid))
         assert project_user is not None
         original_project_id = project_user.project_id
 
@@ -66,6 +66,6 @@ async def test_login_existing_user_keeps_project(
     assert response_body["jwt_token"] == "jwt_token"
 
     async with async_session_maker() as session:
-        project_user = await session.scalar(select(ProjectUser).where(ProjectUser.firebase_uid == firebase_uid))
+        project_user = await session.scalar(select(OrganizationUser).where(ProjectUser.firebase_uid == firebase_uid))
         assert project_user is not None
         assert project_user.project_id == original_project_id

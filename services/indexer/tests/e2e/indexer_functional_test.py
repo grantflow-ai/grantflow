@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from packages.db.src.tables import GrantApplicationRagSource, TextVector
+from packages.db.src.tables import GrantApplicationSource, TextVector
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
@@ -86,7 +86,7 @@ async def test_chunking_smoke(logger: logging.Logger, data_file: Path) -> None:
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=120)
 async def test_embedding_generation_smoke(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running smoke test for embedding generation")
 
@@ -114,7 +114,7 @@ async def test_embedding_generation_smoke(
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
 @pytest.mark.parametrize("data_file", QUALITY_TEST_FILES)
 async def test_semantic_coherence_assessment(
-    logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running semantic coherence assessment for %s", data_file.name)
 
@@ -160,7 +160,7 @@ async def test_semantic_coherence_assessment(
 
 @e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=240)
 async def test_embedding_similarity_evaluation(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running embedding similarity evaluation")
 
@@ -198,7 +198,7 @@ async def test_embedding_similarity_evaluation(
 async def test_database_integration_quality(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     logger.info("Running database integration quality test")
 
@@ -237,7 +237,7 @@ async def test_comprehensive_pipeline_evaluation(
     logger: logging.Logger,
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     logger.info("Running comprehensive pipeline evaluation for %s", data_file.name)
 

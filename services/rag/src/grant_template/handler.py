@@ -4,7 +4,7 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
-from packages.db.src.tables import FundingOrganization, GrantTemplate, GrantTemplateRagSource, RagSource
+from packages.db.src.tables import FundingOrganization, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
@@ -164,8 +164,8 @@ async def grant_template_generation_pipeline_handler(
                 str(source_id)
                 for source_id in await session.scalars(
                     select(RagSource.id)
-                    .join(GrantTemplateRagSource, RagSource.id == GrantTemplateRagSource.rag_source_id)
-                    .where(GrantTemplateRagSource.grant_template_id == grant_template_id)
+                    .join(GrantTemplateSource, RagSource.id == GrantTemplateSource.rag_source_id)
+                    .where(GrantTemplateSource.grant_template_id == grant_template_id)
                     .where(RagSource.indexing_status == SourceIndexingStatusEnum.FINISHED)
                 )
             ]

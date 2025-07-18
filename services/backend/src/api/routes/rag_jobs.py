@@ -43,7 +43,7 @@ class RagJobResponse(TypedDict):
 
 @get(
     "/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
-    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.MEMBER],
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="RetrieveRagJob",
 )
 async def handle_retrieve_rag_job(

@@ -2,7 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 from packages.db.src.enums import ApplicationStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource, GrantTemplate, Project, ProjectUser
+from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, Project, ProjectUser
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
@@ -12,7 +12,7 @@ async def test_duplicate_application_success(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test successful application duplication with forking model"""
 
@@ -39,7 +39,7 @@ async def test_duplicate_application_success(
 
     assert data["title"] == "Copy of Test Application"
     assert data["description"] == "Original description"
-    assert data["status"] == ApplicationStatusEnum.DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
     assert data["parent_id"] == str(grant_application.id)
     assert data["id"] != str(grant_application.id)
 
@@ -55,7 +55,7 @@ async def test_duplicate_application_success(
 async def test_duplicate_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test duplicating non-existent application"""
 
@@ -77,7 +77,7 @@ async def test_duplicate_application_wrong_project(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test duplicating application from different project"""
 
@@ -86,7 +86,7 @@ async def test_duplicate_application_wrong_project(
         session.add(other_project)
         await session.flush()
 
-        other_project_user = ProjectUser(
+        other_project_user = OrganizationUser(
             project_id=other_project.id, firebase_uid=project_owner_user.firebase_uid, role=project_owner_user.role
         )
         session.add(other_project_user)
@@ -108,7 +108,7 @@ async def test_duplicate_with_grant_template(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     grant_template: GrantTemplate,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that grant template is properly duplicated"""
 
@@ -135,8 +135,8 @@ async def test_duplicate_with_grant_template(
 async def test_duplicate_preserves_rag_sources(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
-    grant_application_file: GrantApplicationRagSource,
-    project_owner_user: ProjectUser,
+    grant_application_file: GrantApplicationSource,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that RAG sources are properly duplicated"""
 
@@ -169,7 +169,7 @@ async def test_duplicate_preserves_rag_sources(
 async def test_duplicate_application_validation_error(
     test_client: TestingClientType,
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test validation error with invalid title"""
 
@@ -188,7 +188,7 @@ async def test_duplicate_application_preserves_status_as_draft(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that duplicated application always starts as DRAFT regardless of original status"""
 
@@ -207,13 +207,13 @@ async def test_duplicate_application_preserves_status_as_draft(
 
     assert response.status_code == 201
     data = response.json()
-    assert data["status"] == ApplicationStatusEnum.DRAFT.value
+    assert data["status"] == ApplicationStatusEnum.WORKING_DRAFT.value
 
 
 async def test_duplicate_application_long_title(
     test_client: TestingClientType,
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test duplication with very long title"""
 

@@ -7,7 +7,7 @@ from packages.db.src.tables import (
     FundingOrganization,
     GrantApplication,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
 )
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from sqlalchemy import select

@@ -11,11 +11,11 @@ from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     FundingOrganization,
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagFile,
     RagSource,
 )
@@ -158,7 +158,7 @@ async def test_handle_file_indexing_grant_application(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -191,7 +191,7 @@ async def test_handle_file_indexing_grant_application(
         assert rag_file.mime_type == "application/pdf"
 
         app_file = await session.scalar(
-            select(GrantApplicationRagSource).where(GrantApplicationRagSource.rag_source_id == source_id)
+            select(GrantApplicationSource).where(GrantApplicationRagSource.rag_source_id == source_id)
         )
         assert app_file is not None
         assert app_file.grant_application_id == grant_application.id
@@ -245,7 +245,7 @@ async def test_handle_file_indexing_funding_organization(
             )
         )
         await session.execute(
-            insert(FundingOrganizationRagSource).values(
+            insert(FundingOrganizationSource).values(
                 {
                     "rag_source_id": source_id,
                     "funding_organization_id": funding_organization.id,
@@ -273,7 +273,7 @@ async def test_handle_file_indexing_funding_organization(
         assert source.indexing_status == SourceIndexingStatusEnum.FINISHED
 
         org_file = await session.scalars(
-            select(FundingOrganizationRagSource).where(FundingOrganizationRagSource.rag_source_id == source.id)
+            select(FundingOrganizationSource).where(FundingOrganizationRagSource.rag_source_id == source.id)
         )
         org_file_record = org_file.first()
         assert org_file_record is not None
@@ -326,7 +326,7 @@ async def test_handle_file_indexing_grant_template(
             )
         )
         await session.execute(
-            insert(GrantTemplateRagSource).values(
+            insert(GrantTemplateSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_template_id": grant_template.id,
@@ -360,7 +360,7 @@ async def test_handle_file_indexing_grant_template(
         assert file.mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
         template_file = await session.scalars(
-            select(GrantTemplateRagSource).where(GrantTemplateRagSource.rag_source_id == source.id)
+            select(GrantTemplateSource).where(GrantTemplateRagSource.rag_source_id == source.id)
         )
         template_file_record = template_file.first()
         assert template_file_record is not None
@@ -476,7 +476,7 @@ async def test_handle_file_indexing_processing_error(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -622,7 +622,7 @@ async def test_handle_file_indexing_existing_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,
@@ -754,7 +754,7 @@ async def test_handle_file_indexing_retry_failed_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "rag_source_id": source_id,
                     "grant_application_id": grant_application.id,

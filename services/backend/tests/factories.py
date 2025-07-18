@@ -527,7 +527,7 @@ class UpdateMemberRoleRequestBodyFactory(TypedDictFactory[UpdateMemberRoleReques
 
     @classmethod
     def role(cls) -> UserRoleEnum:
-        return faker.random_element([UserRoleEnum.OWNER, UserRoleEnum.MEMBER])
+        return faker.random_element([UserRoleEnum.OWNER, UserRoleEnum.COLLABORATOR])
 
 
 class RagJobResponseFactory(TypedDictFactory[RagJobResponse]):

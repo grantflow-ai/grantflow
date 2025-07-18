@@ -13,13 +13,13 @@ from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import (
     Base,
     FundingOrganization,
-    FundingOrganizationRagSource,
+    FundingOrganizationSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     Project,
-    ProjectUser,
+    OrganizationUser,
     RagFile,
     RagUrl,
 )
@@ -164,7 +164,7 @@ async def project_member_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
 ) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
+        project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.COLLABORATOR)
         session.add(project_user)
         await session.commit()
     return project_user
@@ -175,7 +175,7 @@ async def project_admin_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
 ) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
+        project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
         session.add(project_user)
         await session.commit()
     return project_user
@@ -186,7 +186,7 @@ async def project_owner_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
 ) -> ProjectUser:
     async with async_session_maker() as session, session.begin():
-        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
+        project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
         session.add(project_user)
         await session.commit()
     return project_user

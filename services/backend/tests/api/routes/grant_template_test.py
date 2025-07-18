@@ -8,7 +8,7 @@ from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     Project,
     RagFile,
 )
@@ -140,7 +140,7 @@ async def test_generate_grant_template_success(
         session.add(grant_template)
         await session.flush()
 
-        template_source = GrantTemplateRagSource(
+        template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
         )
@@ -215,7 +215,7 @@ async def test_generate_grant_template_failed_sources_only(
         session.add(grant_template)
         await session.flush()
 
-        template_source = GrantTemplateRagSource(
+        template_source = GrantTemplateSource(
             grant_template_id=grant_template.id,
             rag_source_id=rag_source.id,
         )
