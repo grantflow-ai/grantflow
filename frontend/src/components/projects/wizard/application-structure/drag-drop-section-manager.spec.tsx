@@ -58,12 +58,10 @@ describe("DragDropSectionManager", () => {
 	const mockUpdateGrantSections = vi.fn();
 	const mockOnAddSection = vi.fn();
 	const mockIsDetailedSection = vi.fn(() => true);
-	const mockToUpdateGrantSection = vi.fn((section) => section);
 
 	const defaultProps = {
 		isDetailedSection: mockIsDetailedSection,
 		onAddSection: mockOnAddSection,
-		toUpdateGrantSection: mockToUpdateGrantSection,
 	};
 
 	const mockApplication = ApplicationWithTemplateFactory.build({
@@ -308,14 +306,6 @@ describe("DragDropSectionManager", () => {
 			const customIsDetailedSection = vi.fn(() => false);
 
 			render(<DragDropSectionManager {...defaultProps} isDetailedSection={customIsDetailedSection} />);
-
-			expect(screen.getByText("Main Section 1")).toBeInTheDocument();
-		});
-
-		it("passes toUpdateGrantSection function to child components", () => {
-			const customToUpdateGrantSection = vi.fn((section) => ({ ...section, custom: true }));
-
-			render(<DragDropSectionManager {...defaultProps} toUpdateGrantSection={customToUpdateGrantSection} />);
 
 			expect(screen.getByText("Main Section 1")).toBeInTheDocument();
 		});

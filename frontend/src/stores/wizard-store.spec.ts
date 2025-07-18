@@ -1,4 +1,5 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WizardStep } from "@/constants";
@@ -223,6 +224,181 @@ describe("wizard store", () => {
 			});
 
 			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+		});
+	});
+
+	describe("dialog functionality", () => {
+		it("should open dialog with correct parameters", () => {
+			const mockContent = createElement("div", null, "Test content");
+			const mockFooter = createElement("div", null, "Test footer");
+
+			useWizardStore.getState().openDialog("Test Title", mockContent, {
+				description: "Test description",
+				footer: mockFooter,
+			});
+
+			const state = useWizardStore.getState();
+			expect(state.dialog.isOpen).toBe(true);
+			expect(state.dialog.title).toBe("Test Title");
+			expect(state.dialog.content).toBe(mockContent);
+			expect(state.dialog.description).toBe("Test description");
+			expect(state.dialog.footer).toBe(mockFooter);
+		});
+
+		it("should close dialog", () => {
+			useWizardStore.getState().openDialog("Test Title", createElement("div", null, "Test content"));
+			expect(useWizardStore.getState().dialog.isOpen).toBe(true);
+
+			useWizardStore.getState().closeDialog();
+			expect(useWizardStore.getState().dialog.isOpen).toBe(false);
+		});
+
+		it("should open dialog without optional parameters", () => {
+			const mockContent = createElement("div", null, "Test content");
+
+			useWizardStore.getState().openDialog("Test Title", mockContent);
+
+			const state = useWizardStore.getState();
+			expect(state.dialog.isOpen).toBe(true);
+			expect(state.dialog.title).toBe("Test Title");
+			expect(state.dialog.content).toBe(mockContent);
+			expect(state.dialog.description).toBeUndefined();
+			expect(state.dialog.footer).toBeUndefined();
+		});
+	});
+
+	describe("hasInProcessTemplateSources", () => {
+		it("should return true when template sources are in process", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "INDEXING" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(true);
+		});
+
+		it("should return true when template sources have failed", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "FAILED" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(true);
+		});
+
+		it("should return true when template sources are created", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [{ filename: "doc1.pdf", sourceId: "1", status: "CREATED" as const }],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(true);
+		});
+
+		it("should return false when all template sources are finished", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(false);
+		});
+
+		it("should return false when no template sources exist", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(false);
+		});
+
+		it("should return false when no grant template exists", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: undefined,
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(false);
+		});
+	});
+
+	describe("hasIndexingTemplateSources", () => {
+		it("should return true when template sources are indexing", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "INDEXING" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(true);
+		});
+
+		it("should return false when template sources are not indexing", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FAILED" as const },
+					],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(false);
+		});
+
+		it("should return false when no template sources exist", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [],
+				}),
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(false);
+		});
+
+		it("should return false when no grant template exists", () => {
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: undefined,
+			});
+
+			useApplicationStore.setState({ application });
+
+			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(false);
 		});
 	});
 
