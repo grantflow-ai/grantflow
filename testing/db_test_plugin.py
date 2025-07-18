@@ -1,11 +1,12 @@
+import contextlib
 import logging
+import os
 from collections.abc import AsyncGenerator
-from socket import AF_INET, SOCK_STREAM, socket
 from textwrap import dedent
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 import pytest
-from anyio import run_process, sleep
 from asyncpg import connect
 from packages.db.src.connection import engine_ref, get_session_maker
 from packages.db.src.enums import UserRoleEnum
@@ -24,7 +25,7 @@ from packages.db.src.tables import (
 )
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
-from sqlalchemy import NullPool, select
+from sqlalchemy import NullPool, select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from testing.factories import (
@@ -61,50 +62,56 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
-    container_name = f"test_postgres_container_{worker_id}" if worker_id != "master" else "test_postgres_container"
+    """Create a unique test database for each worker process."""
 
-    with socket(AF_INET, SOCK_STREAM) as s:
-        s.bind(("", 0))
-        local_port = s.getsockname()[1]
-
-    await run_process(["docker", "rm", "-f", container_name], check=False)
-
-    await run_process(
-        [
-            "docker",
-            "run",
-            "--name",
-            container_name,
-            "-e",
-            "POSTGRES_USER=test_user",
-            "-e",
-            "POSTGRES_PASSWORD=test_password",
-            "-e",
-            "POSTGRES_DB=test_db",
-            "-p",
-            f"{local_port}:5432",
-            "-d",
-            "pgvector/pgvector:pg17",
-        ]
+    base_connection_string = (
+        os.getenv("DATABASE_URL") or f"postgresql://{os.getenv('USER', 'postgres')}@localhost:5432/postgres"
     )
 
-    await sleep(3)
+    process_id = os.getpid()
+    test_db_name = f"grantflow_test_{worker_id}_{process_id}"
 
-    connection_string = f"postgresql://test_user:test_password@0.0.0.0:{local_port}/test_db"
-    test_conn = await connect(connection_string)
+    parsed = urlparse(base_connection_string)
+    admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
 
-    await test_conn.execute(
-        dedent("""
-        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-        CREATE EXTENSION IF NOT EXISTS vector;
-        """)
-    )
+    try:
+        admin_conn = await connect(admin_connection_string)
 
-    await test_conn.close()
+        with contextlib.suppress(Exception):
+            await admin_conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
 
-    yield connection_string.replace("postgresql://", "postgresql+asyncpg://")
+        await admin_conn.execute(f'CREATE DATABASE "{test_db_name}"')
+        await admin_conn.close()
 
-    await run_process(["docker", "rm", "-f", container_name], check=False)
+        test_connection_string = urlunparse(parsed._replace(path=f"/{test_db_name}"))
+
+        test_conn = await connect(test_connection_string)
+
+        await test_conn.execute(
+            dedent("""
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+            CREATE EXTENSION IF NOT EXISTS vector;
+            """)
+        )
+
+        await test_conn.close()
+
+        yield test_connection_string.replace("postgresql://", "postgresql+asyncpg://")
+
+    finally:
+        try:
+            admin_conn = await connect(admin_connection_string)
+
+            await admin_conn.execute(f"""
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE datname = '{test_db_name}' AND pid <> pg_backend_pid()
+            """)
+
+            await admin_conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
+            await admin_conn.close()
+        except Exception:
+            pass
 
 
 @pytest.fixture(scope="session")
@@ -127,9 +134,10 @@ async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
 
 @pytest.fixture(autouse=True)
 async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
+    """Clean up database state between tests by truncating all tables."""
     async with async_session_maker() as session:
         for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(table.delete())
+            await session.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
         await session.commit()
 
 

@@ -7,16 +7,20 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-rag.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/rag/**"
+            - "testing/**"
     push:
         branches:
             - main
             - development
         paths:
             - ".github/workflows/ci-service-rag.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/rag/**"
+            - "testing/**"
 
 jobs:
     test:

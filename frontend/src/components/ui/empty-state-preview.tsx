@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export function EmptyStatePreview() {
 	return (
-		<div className="flex flex-1 items-center justify-center">
+		<div className="size-full flex flex-1 items-center justify-center">
 			<Image
 				alt="Preview logo"
 				height={180}

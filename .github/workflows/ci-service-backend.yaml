@@ -7,16 +7,22 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-backend.yaml"
-            - "packages/**"
+            - ".github/actions/run-python-tests/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/backend/**"
+            - "testing/**"
     push:
         branches:
             - main
             - development
         paths:
             - ".github/workflows/ci-service-backend.yaml"
-            - "packages/**"
+            - ".github/actions/run-python-tests/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/backend/**"
+            - "testing/**"
 
 jobs:
     test:

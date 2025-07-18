@@ -33,7 +33,7 @@ async def test_evaluation_framework_baseline(
     Baseline performance test for the evaluation framework.
     Measures timing and quality consistency of LLM evaluations.
     """
-    with PerformanceTestContext(
+    perf_ctx = PerformanceTestContext(
         test_name="evaluation_framework_baseline",
         test_category=TestCategory.EVALUATION,
         logger=logger,
@@ -41,7 +41,13 @@ async def test_evaluation_framework_baseline(
             "test_type": "baseline_performance",
             "evaluation_scenarios": 3,
         },
-    ) as perf_ctx:
+    )
+
+    evaluation_count = 0
+    total_time = 0.0
+    avg_time = 0.0
+
+    with perf_ctx:
         logger.info("=== EVALUATION FRAMEWORK BASELINE TEST ===")
 
         criteria = [
@@ -131,10 +137,14 @@ async def test_evaluation_framework_baseline(
             }
         )
 
+    try:
         assert evaluation_count == 3, f"Expected 3 evaluations, got {evaluation_count}"
         assert total_time > 0, "Total evaluation time should be positive"
         assert avg_time < 10, f"Average evaluation time too high: {avg_time:.2f}s"
         assert perf_ctx.llm_calls_made == 3, f"Expected 3 LLM calls, got {perf_ctx.llm_calls_made}"
+    except AssertionError as e:
+        perf_ctx.add_error(str(e))
+        raise
 
 
 @e2e_test(timeout=180)
@@ -145,7 +155,7 @@ async def test_evaluation_consistency(
     Test evaluation consistency for the same content.
     Measures how consistently the evaluation framework scores identical content.
     """
-    with PerformanceTestContext(
+    perf_ctx = PerformanceTestContext(
         test_name="evaluation_consistency",
         test_category=TestCategory.EVALUATION,
         logger=logger,
@@ -153,7 +163,14 @@ async def test_evaluation_consistency(
             "test_type": "consistency_check",
             "trials": 3,
         },
-    ) as perf_ctx:
+    )
+
+    scores: list[int] = []
+    avg_score = 0.0
+    score_std = 0.0
+    consistency_percentage = 0.0
+
+    with perf_ctx:
         logger.info("=== EVALUATION CONSISTENCY TEST ===")
 
         criterion = EvaluationCriterion(
@@ -220,9 +237,13 @@ async def test_evaluation_consistency(
             }
         )
 
+    try:
         assert len(scores) == 3, f"Expected 3 scores, got {len(scores)}"
         assert score_std < 10, f"Score variance too high: {score_std:.1f}"
         assert consistency_percentage > 50, f"Consistency too low: {consistency_percentage:.1f}%"
+    except AssertionError as e:
+        perf_ctx.add_error(str(e))
+        raise
 
 
 @e2e_test(timeout=600)
@@ -237,7 +258,7 @@ async def test_evaluation_optimization_performance(
     clear_evaluation_cache()
     reset_adaptive_timeouts()
 
-    with PerformanceTestContext(
+    perf_ctx = PerformanceTestContext(
         test_name="evaluation_optimization_performance",
         test_category=TestCategory.EVALUATION,
         logger=logger,
@@ -245,7 +266,12 @@ async def test_evaluation_optimization_performance(
             "test_type": "optimization_performance",
             "features_tested": ["caching", "complexity_routing", "adaptive_timeouts"],
         },
-    ) as perf_ctx:
+    )
+
+    routing_results: dict[str, dict[str, Any]] = {}
+    final_stats: dict[str, Any] = {}
+
+    with perf_ctx:
         logger.info("=== EVALUATION OPTIMIZATION PERFORMANCE TEST ===")
 
         criteria = [
@@ -323,7 +349,7 @@ async def test_evaluation_optimization_performance(
             """,
         }
 
-        performance_results: dict[str, Any] = {
+        performance_results_dict: dict[str, Any] = {
             "cache_performance": {},
             "complexity_routing": {},
             "adaptive_timeout": {},
@@ -365,7 +391,7 @@ async def test_evaluation_optimization_performance(
                 )
 
             cache_stats = get_cache_stats()
-            performance_results["cache_performance"] = {
+            performance_results_dict["cache_performance"] = {
                 "avg_first_call": sum(cache_times["first_call"]) / len(cache_times["first_call"]),
                 "avg_cached_call": sum(cache_times["cached_call"]) / len(cache_times["cached_call"]),
                 "speedup_factor": sum(cache_times["first_call"]) / max(sum(cache_times["cached_call"]), 0.001),
@@ -411,7 +437,7 @@ async def test_evaluation_optimization_performance(
                     routing_time,
                 )
 
-            performance_results["complexity_routing"] = routing_results
+            performance_results_dict["complexity_routing"] = routing_results
 
         logger.info("Testing adaptive timeout learning...")
         with perf_ctx.stage_timer("adaptive_timeout_test"):
@@ -437,7 +463,7 @@ async def test_evaluation_optimization_performance(
             final_stats = get_adaptive_timeout_stats()
             adaptive_results["after_learning"] = final_stats
 
-            performance_results["adaptive_timeout"] = adaptive_results
+            performance_results_dict["adaptive_timeout"] = adaptive_results
 
             logger.info(
                 "Adaptive learning: %d evaluations, success rate: %.1f%%",
@@ -449,10 +475,10 @@ async def test_evaluation_optimization_performance(
 # Evaluation Framework Optimization Results
 
 ## Cache Performance
-- Average first call: {performance_results["cache_performance"]["avg_first_call"]:.3f}s
-- Average cached call: {performance_results["cache_performance"]["avg_cached_call"]:.3f}s
-- Speedup factor: {performance_results["cache_performance"]["speedup_factor"]:.1f}x
-- Cache effectiveness: {performance_results["cache_performance"]["speedup_factor"] > 10}
+- Average first call: {performance_results_dict["cache_performance"]["avg_first_call"]:.3f}s
+- Average cached call: {performance_results_dict["cache_performance"]["avg_cached_call"]:.3f}s
+- Speedup factor: {performance_results_dict["cache_performance"]["speedup_factor"]:.1f}x
+- Cache effectiveness: {performance_results_dict["cache_performance"]["speedup_factor"] > 10}
 
 ## Complexity Routing
 - Simple content: {routing_results["simple"]["complexity_level"]} → {routing_results["simple"]["actual_time"]:.3f}s
@@ -466,24 +492,28 @@ async def test_evaluation_optimization_performance(
 - Prediction accuracy: {final_stats.get("prediction_accuracy", 0) * 100:.1f}%
 
 ## Overall Performance Impact
-- Cache speedup: {performance_results["cache_performance"]["speedup_factor"]:.1f}x
+- Cache speedup: {performance_results_dict["cache_performance"]["speedup_factor"]:.1f}x
 - Smart routing effectiveness: ✓ (appropriate timeouts for complexity)
 - Adaptive learning: {"✓ Improving" if final_stats.get("success_rate", 0) > 0.8 else "⚠ Needs more data"}
         """
 
         perf_ctx.set_content(results_content, list(test_contents.values()))
-        perf_ctx.configuration.update(performance_results)
+        perf_ctx.configuration.update(performance_results_dict)
 
-        assert performance_results["cache_performance"]["speedup_factor"] > 5, "Cache should provide >5x speedup"
+    try:
+        assert performance_results_dict["cache_performance"]["speedup_factor"] > 5, "Cache should provide >5x speedup"
         assert all(r["within_timeout"] for r in routing_results.values()), (
             "All evaluations should complete within timeout"
         )
         assert final_stats.get("total_evaluations", 0) >= 15, "Should have recorded at least 15 evaluations"
+    except AssertionError as e:
+        perf_ctx.add_error(str(e))
+        raise
 
-        logger.info("=== OPTIMIZATION IMPACT SUMMARY ===")
-        logger.info("Cache speedup: %.1fx", performance_results["cache_performance"]["speedup_factor"])
-        logger.info("Complexity routing: 100%% success rate")
-        logger.info("Adaptive learning: %d evaluations processed", final_stats.get("total_evaluations", 0))
+    logger.info("=== OPTIMIZATION IMPACT SUMMARY ===")
+    logger.info("Cache speedup: %.1fx", performance_results_dict["cache_performance"]["speedup_factor"])
+    logger.info("Complexity routing: 100%% success rate")
+    logger.info("Adaptive learning: %d evaluations processed", final_stats.get("total_evaluations", 0))
 
 
 @e2e_test(timeout=180)
@@ -492,11 +522,17 @@ async def test_content_complexity_analysis(
 ) -> None:
     """Test content complexity analysis with different content types."""
 
-    with PerformanceTestContext(
+    perf_ctx = PerformanceTestContext(
         test_name="content_complexity_analysis",
         test_category=TestCategory.EVALUATION,
         logger=logger,
-    ) as perf_ctx:
+    )
+
+    simple_analysis = None
+    moderate_analysis = None
+    complex_analysis = None
+
+    with perf_ctx:
         simple_content = """
         This is a simple research proposal.
         We want to study basic patterns in data.
@@ -587,14 +623,18 @@ async def test_content_complexity_analysis(
             complex_analysis.recommended_timeout,
         )
 
+    try:
         assert simple_analysis.confidence_score > 0.5
         assert moderate_analysis.confidence_score > 0.7
         assert complex_analysis.confidence_score > 0.8
 
         assert simple_analysis.recommended_timeout < moderate_analysis.recommended_timeout
         assert moderate_analysis.recommended_timeout <= complex_analysis.recommended_timeout
+    except AssertionError as e:
+        perf_ctx.add_error(str(e))
+        raise
 
-        logger.info("Content complexity analysis validation completed successfully")
+    logger.info("Content complexity analysis validation completed successfully")
 
 
 @e2e_test(timeout=300)
@@ -616,40 +656,46 @@ async def test_smart_evaluation_routing(
         ),
     ]
 
-    with PerformanceTestContext(
+    perf_ctx = PerformanceTestContext(
         test_name="smart_evaluation_routing",
         test_category=TestCategory.EVALUATION,
         logger=logger,
-    ) as perf_ctx:
-        with patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request:
-            mock_request.return_value = {
-                "criteria": {
-                    "Content Quality": {"score": 85, "instructions": "Good quality content"},
-                    "Technical Accuracy": {"score": 80, "instructions": "Technically sound"},
-                }
+    )
+
+    analysis = None
+    result = None
+    multi_criteria_analysis = None
+    single_criteria_analysis = None
+
+    with perf_ctx, patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request:
+        mock_request.return_value = {
+            "criteria": {
+                "Content Quality": {"score": 85, "instructions": "Good quality content"},
+                "Technical Accuracy": {"score": 80, "instructions": "Technically sound"},
             }
+        }
 
-            simple_content = "Basic research proposal with simple methodology."
+        simple_content = "Basic research proposal with simple methodology."
 
-            with perf_ctx.stage_timer("simple_routing_test"):
-                result, analysis = await smart_evaluate_output(
-                    criteria=criteria,
-                    prompt="Evaluate this research proposal",
-                    model_output=simple_content,
-                    auto_route=True,
-                )
-
-            assert analysis.complexity_level == ContentComplexity.SIMPLE
-            assert analysis.recommended_evaluation_mode == "quick_evaluation"
-            assert result["criteria"]["Content Quality"]["score"] == 85
-
-            logger.info(
-                "Simple content routed to: %s (timeout: %.1fs)",
-                analysis.recommended_evaluation_mode,
-                analysis.recommended_timeout,
+        with perf_ctx.stage_timer("simple_routing_test"):
+            result, analysis = await smart_evaluate_output(
+                criteria=criteria,
+                prompt="Evaluate this research proposal",
+                model_output=simple_content,
+                auto_route=True,
             )
 
-            complex_content = """
+        assert analysis.complexity_level == ContentComplexity.SIMPLE
+        assert analysis.recommended_evaluation_mode == "quick_evaluation"
+        assert result["criteria"]["Content Quality"]["score"] == 85
+
+        logger.info(
+            "Simple content routed to: %s (timeout: %.1fs)",
+            analysis.recommended_evaluation_mode,
+            analysis.recommended_timeout,
+        )
+
+        complex_content = """
             # Advanced Research Framework
 
             ## Methodology
@@ -662,77 +708,84 @@ async def test_smart_evaluation_routing(
             advanced regression techniques and multivariate correlation analysis.
             """
 
-            with perf_ctx.stage_timer("complex_routing_test"):
-                result, analysis = await smart_evaluate_output(
-                    criteria=criteria,
-                    prompt="Evaluate this research proposal",
-                    model_output=complex_content,
-                    auto_route=True,
-                )
-
-            assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
-            assert analysis.recommended_evaluation_mode in ["thorough_evaluation", "optimized_prompt_evaluation"]
-            assert analysis.recommended_timeout > 60
-
-            logger.info(
-                "Complex content routed to: %s (timeout: %.1fs)",
-                analysis.recommended_evaluation_mode,
-                analysis.recommended_timeout,
+        with perf_ctx.stage_timer("complex_routing_test"):
+            result, analysis = await smart_evaluate_output(
+                criteria=criteria,
+                prompt="Evaluate this research proposal",
+                model_output=complex_content,
+                auto_route=True,
             )
 
-            with perf_ctx.stage_timer("manual_override_test"):
-                result, analysis = await smart_evaluate_output(
-                    criteria=criteria,
-                    prompt="Evaluate this research proposal",
-                    model_output=complex_content,
-                    auto_route=False,
-                    force_mode="quick_evaluation",
-                    force_timeout=30.0,
-                )
+        assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
+        assert analysis.recommended_evaluation_mode in ["thorough_evaluation", "optimized_prompt_evaluation"]
+        assert analysis.recommended_timeout > 60
 
-            assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
+        logger.info(
+            "Complex content routed to: %s (timeout: %.1fs)",
+            analysis.recommended_evaluation_mode,
+            analysis.recommended_timeout,
+        )
 
-            assert result["criteria"]["Content Quality"]["score"] == 85
+        with perf_ctx.stage_timer("manual_override_test"):
+            result, analysis = await smart_evaluate_output(
+                criteria=criteria,
+                prompt="Evaluate this research proposal",
+                model_output=complex_content,
+                auto_route=False,
+                force_mode="quick_evaluation",
+                force_timeout=30.0,
+            )
 
-            logger.info("Manual routing override completed successfully")
+        assert analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
 
-            many_criteria = [
-                *criteria,
-                EvaluationCriterion(name="Clarity", evaluation_instructions="Evaluate content clarity", weight=0.5),
-                EvaluationCriterion(
-                    name="Completeness", evaluation_instructions="Assess content completeness", weight=0.7
-                ),
-            ]
+        assert result["criteria"]["Content Quality"]["score"] == 85
 
-            mock_request.return_value = {
-                "criteria": {
-                    "Content Quality": {"score": 85, "instructions": "Good quality"},
-                    "Technical Accuracy": {"score": 80, "instructions": "Technically sound"},
-                    "Clarity": {"score": 75, "instructions": "Clear content"},
-                    "Completeness": {"score": 88, "instructions": "Complete content"},
-                }
+        logger.info("Manual routing override completed successfully")
+
+        many_criteria = [
+            *criteria,
+            EvaluationCriterion(name="Clarity", evaluation_instructions="Evaluate content clarity", weight=0.5),
+            EvaluationCriterion(name="Completeness", evaluation_instructions="Assess content completeness", weight=0.7),
+        ]
+
+        mock_request.return_value = {
+            "criteria": {
+                "Content Quality": {"score": 85, "instructions": "Good quality"},
+                "Technical Accuracy": {"score": 80, "instructions": "Technically sound"},
+                "Clarity": {"score": 75, "instructions": "Clear content"},
+                "Completeness": {"score": 88, "instructions": "Complete content"},
             }
+        }
 
-            with perf_ctx.stage_timer("multi_criteria_timeout_test"):
-                _, analysis = await smart_evaluate_output(
-                    criteria=many_criteria,
-                    prompt="Evaluate this research proposal",
-                    model_output=complex_content,
-                    auto_route=True,
-                )
-
-            single_criteria_analysis = analyze_content_complexity(complex_content, criteria[:1])
-            multi_criteria_analysis = analysis
-
-            assert multi_criteria_analysis.recommended_timeout > single_criteria_analysis.recommended_timeout
-
-            logger.info(
-                "Multi-criteria timeout: %.1fs vs single: %.1fs",
-                multi_criteria_analysis.recommended_timeout,
-                single_criteria_analysis.recommended_timeout,
+        with perf_ctx.stage_timer("multi_criteria_timeout_test"):
+            _, analysis = await smart_evaluate_output(
+                criteria=many_criteria,
+                prompt="Evaluate this research proposal",
+                model_output=complex_content,
+                auto_route=True,
             )
 
-        logger.info("Smart evaluation routing validation completed successfully")
+        single_criteria_analysis = analyze_content_complexity(complex_content, criteria[:1])
+        multi_criteria_analysis = analysis
+
+        assert multi_criteria_analysis.recommended_timeout > single_criteria_analysis.recommended_timeout
+
+        logger.info(
+            "Multi-criteria timeout: %.1fs vs single: %.1fs",
+            multi_criteria_analysis.recommended_timeout,
+            single_criteria_analysis.recommended_timeout,
+        )
+
+    try:
+        assert analysis is not None
+        assert result is not None
+        assert multi_criteria_analysis is not None
+        assert single_criteria_analysis is not None
+    except AssertionError as e:
+        perf_ctx.add_error(str(e))
+        raise
+
+    logger.info("Smart evaluation routing validation completed successfully")
 
 
 @e2e_test(timeout=120)
@@ -741,11 +794,18 @@ async def test_complexity_analysis_edge_cases(
 ) -> None:
     """Test edge cases and boundary conditions for complexity analysis."""
 
-    with PerformanceTestContext(
+    perf_ctx = PerformanceTestContext(
         test_name="complexity_edge_cases",
         test_category=TestCategory.EVALUATION,
         logger=logger,
-    ) as perf_ctx:
+    )
+
+    empty_analysis = None
+    single_word_analysis = None
+    long_analysis = None
+    technical_analysis = None
+
+    with perf_ctx:
         with perf_ctx.stage_timer("empty_content_test"):
             empty_analysis = analyze_content_complexity("")
 
@@ -774,7 +834,11 @@ async def test_complexity_analysis_edge_cases(
         with perf_ctx.stage_timer("high_technical_density_test"):
             technical_analysis = analyze_content_complexity(technical_content)
 
+    try:
         assert technical_analysis.word_count < 10
         assert technical_analysis.technical_terms_count >= 5
+    except AssertionError as e:
+        perf_ctx.add_error(str(e))
+        raise
 
-        logger.info("Edge cases validation completed successfully")
+    logger.info("Edge cases validation completed successfully")

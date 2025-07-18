@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { Deadline } from "@/components/projects/wizard/shared";
 import { WizardStep } from "@/constants";
-import { PagePath } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
+import { routes } from "@/utils/navigation";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
@@ -55,7 +55,6 @@ export function WizardFooter() {
 	const toNextStep = useWizardStore((state) => state.toNextStep);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const validateStepNext = useWizardStore((state) => state.validateStepNext);
-
 	const title = useApplicationStore((state) => state.application?.title);
 	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
 
@@ -94,9 +93,7 @@ export function WizardFooter() {
 				data-testid="continue-button"
 				disabled={disabled}
 				leftIcon={leftIcon}
-				onClick={() => {
-					toNextStep();
-				}}
+				onClick={toNextStep}
 				rightIcon={rightIcon}
 				size="lg"
 				variant="primary"
@@ -119,12 +116,7 @@ export function WizardHeader() {
 
 	const handleExit = () => {
 		reset();
-		if (application?.project_id) {
-			const projectPath = PagePath.PROJECT_DETAIL.replace(":projectId", application.project_id);
-			router.push(projectPath);
-		} else {
-			router.push(PagePath.PROJECTS);
-		}
+		router.push(routes.project.detail());
 	};
 
 	return (

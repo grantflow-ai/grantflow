@@ -1,0 +1,11 @@
+{
+  "test_name": "test_retrieval_smoke",
+  "test_category": "smoke",
+  "status": "success",
+  "performance": {
+    "execution_time": 7.89729905128479,
+    "within_threshold": true,
+    "timeout_utilization": 0.043873883618248836
+  },
+  "timestamp": "2025-07-10T16:54:18.387815+00:00"
+}

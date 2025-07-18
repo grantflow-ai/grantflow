@@ -284,6 +284,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			fileName: file.name,
 			isApplicationParent,
 			parentId,
+			templateId: application?.grant_template?.id,
 		});
 
 		await get().getApplication(application!.project_id, application!.id);
@@ -306,6 +307,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				beforeRagSources: formatRagSources(application),
 				isApplicationParent,
 				parentId,
+				templateId: application?.grant_template?.id,
 				url,
 			});
 			await get().getApplication(application!.project_id, application!.id);
@@ -382,7 +384,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via createApplication", {
 				applicationId: response.id,
 				projectId,
-				ragSources: formatRagSources(response),
+				template_rag_sources: formatRagSources(response),
+				templateId: response.grant_template?.id,
 			});
 			set({
 				application: response,
@@ -477,7 +480,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via getApplication", {
 				applicationId,
 				projectId,
-				ragSources: formatRagSources(response),
+				template_rag_sources: formatRagSources(response),
+				templateId: response.grant_template?.id,
 			});
 			set({
 				application: response,
@@ -514,6 +518,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				fileName: fileToRemove.name,
 				isApplicationParent,
 				parentId,
+				templateId: application?.grant_template?.id,
 			});
 			await get().getApplication(application!.project_id, application!.id);
 		} catch (error) {
@@ -583,6 +588,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				isApplicationParent,
 				parentId,
 				sourceId: ragSource.sourceId,
+				templateId: application?.grant_template?.id,
 				url: urlToRemove,
 			});
 
@@ -597,9 +603,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	reset: () => {
 		const { application } = get();
 		log.info("[rag_sources_check] Application state reset", {
+			previous_template_rag_sources: formatRagSources(application),
 			previousApplicationId: application?.id,
 			previousProjectId: application?.project_id,
-			previousRagSources: formatRagSources(application),
+			templateId: application?.grant_template?.id,
 		});
 		set(structuredClone(initialState));
 	},
@@ -608,7 +615,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("[rag_sources_check] Application state updated via setApplication", {
 			applicationId: application.id,
 			projectId: application.project_id,
-			ragSources: formatRagSources(application),
+			template_rag_sources: formatRagSources(application),
+			templateId: application.grant_template?.id,
 		});
 		set({ application });
 	},
@@ -627,7 +635,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("[rag_sources_check] Application state updated via updateApplication (optimistic)", {
 			applicationId: updatedApplication.id,
 			projectId: updatedApplication.project_id,
-			ragSources: formatRagSources(updatedApplication),
+			template_rag_sources: formatRagSources(updatedApplication),
+			templateId: updatedApplication.grant_template?.id,
 		});
 		set({ application: updatedApplication });
 
@@ -640,14 +649,16 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via updateApplication (API success)", {
 				applicationId: response.id,
 				projectId: response.project_id,
-				ragSources: formatRagSources(response),
+				template_rag_sources: formatRagSources(response),
+				templateId: response.grant_template?.id,
 			});
 			set({ application: response });
 		} catch (e) {
 			log.info("[rag_sources_check] Application state reverted via updateApplication (API failure)", {
 				applicationId: existingApplication.id,
 				projectId: existingApplication.project_id,
-				ragSources: formatRagSources(existingApplication),
+				template_rag_sources: formatRagSources(existingApplication),
+				templateId: existingApplication.grant_template?.id,
 			});
 			set({ application: existingApplication });
 			log.error("updateApplication", new Error(`Failed to update application: ${e}`));
@@ -669,7 +680,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via updateApplicationTitle", {
 				applicationId: response.id,
 				projectId: response.project_id,
-				ragSources: formatRagSources(response),
+				template_rag_sources: formatRagSources(response),
+				templateId: response.grant_template?.id,
 				title: response.title,
 			});
 			set({ application: response });
@@ -683,7 +695,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				log.info("[rag_sources_check] Application state reverted via updateApplicationTitle (title restore)", {
 					applicationId: revertedApplication.id,
 					projectId: revertedApplication.project_id,
-					ragSources: formatRagSources(revertedApplication),
+					template_rag_sources: formatRagSources(revertedApplication),
+					templateId: revertedApplication.grant_template?.id,
 					title: revertedApplication.title,
 				});
 				set({
@@ -723,7 +736,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			applicationId: updatedApplication.id,
 			projectId: updatedApplication.project_id,
-			ragSources: formatRagSources(updatedApplication),
+			template_rag_sources: formatRagSources(updatedApplication),
+			templateId: updatedApplication.grant_template?.id,
 		});
 		set({ application: updatedApplication });
 
@@ -751,7 +765,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state reverted via updateGrantSections (API failure)", {
 				applicationId: restoredApplication.id,
 				projectId: restoredApplication.project_id,
-				ragSources: formatRagSources(restoredApplication),
+				template_rag_sources: formatRagSources(restoredApplication),
+				templateId: restoredApplication.grant_template?.id,
 			});
 			set({ application: restoredApplication });
 			log.error("updateGrantSections: Failed", error);

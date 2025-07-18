@@ -1,0 +1,24 @@
+{
+  "test_name": "test_run_scraper",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "TimeoutError",
+    "message": "Page.wait_for_selector: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"text=Export Results\") to be visible\n",
+    "execution_time_before_failure": 35.895270109176636
+  },
+  "performance": {
+    "execution_time": 35.895270109176636,
+    "timeout_reached": false,
+    "timeout_utilization": 0.11965090036392212
+  },
+  "diagnostic_info": {
+    "timeout_configured": 300,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-07-09T15:23:07.006998+00:00"
+}

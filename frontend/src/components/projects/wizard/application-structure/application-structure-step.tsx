@@ -2,10 +2,13 @@
 
 import { Plus } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect } from "react";
+import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
+import { createRagSourcesDialog } from "@/components/projects/wizard/shared/rag-sources-dialog-utils";
+import type { WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
+import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -39,20 +42,81 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	};
 };
 
-export function ApplicationStructureStep() {
-	const application = useApplicationStore((state) => state.application);
-	const generateTemplate = useApplicationStore((state) => state.generateTemplate);
-	const checkTemplateGeneration = useWizardStore((state) => state.checkTemplateGeneration);
-	const polling = useWizardStore((state) => state.polling);
-	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
+interface ApplicationStructureStepProps {
+	dialogRef: RefObject<null | WizardDialogRef>;
+}
+
+export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStepProps) {
+	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
+	const pollingIsActive = useWizardStore((state) => state.polling.isActive);
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+	const startTemplateGeneration = useWizardStore((state) => state.startTemplateGeneration);
+
+	const templateRagSources = grantTemplate?.rag_sources ?? [];
+	const dialogDismissedRef = useRef(false);
+
+	const canStartTemplateGeneration = useCallback(() => {
+		if (!grantTemplate) return false;
+		if (grantTemplate.grant_sections.length > 0) return false;
+		if (isGeneratingTemplate) return false;
+		return !pollingIsActive;
+	}, [grantTemplate, isGeneratingTemplate, pollingIsActive]);
 
 	useEffect(() => {
-		if (application?.grant_template && !application.grant_template.grant_sections.length && !polling.isActive) {
-			void generateTemplate(application.grant_template.id);
-			setGeneratingTemplate(true);
-			polling.start(checkTemplateGeneration, 2000, false);
+		if (templateRagSources.length === 0) return;
+
+		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
+		if (allFinished && canStartTemplateGeneration()) {
+			startTemplateGeneration();
+			return;
 		}
-	}, [application, generateTemplate, checkTemplateGeneration, polling, setGeneratingTemplate]);
+
+		const hasIndexingSources = templateRagSources.some((source) => source.status === "INDEXING");
+		if (hasIndexingSources) {
+			return;
+		}
+
+		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
+
+		if (!hasFailedSources && canStartTemplateGeneration()) {
+			startTemplateGeneration();
+			return;
+		}
+
+		// Only show dialog for failed sources if it hasn't been dismissed
+		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
+			const ragDialog = createRagSourcesDialog({
+				onBackToUploads: () => {
+					dialogDismissedRef.current = true;
+					dialogRef.current?.close();
+					toPreviousStep();
+				},
+				onContinue: () => {
+					dialogDismissedRef.current = true;
+					dialogRef.current?.close();
+					if (canStartTemplateGeneration()) {
+						startTemplateGeneration();
+					}
+				},
+			});
+
+			dialogRef.current?.open({
+				content: ragDialog.content,
+				description:
+					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
+				footer: ragDialog.footer,
+				title: "Review Required: Some Uploads Failed",
+			});
+		}
+	}, [
+		canStartTemplateGeneration,
+		templateRagSources,
+		dialogRef,
+		startTemplateGeneration,
+		toPreviousStep,
+		grantTemplate?.grant_sections.length,
+	]);
 
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
@@ -96,7 +160,7 @@ function ApplicationStructurePreview() {
 	if (!application) {
 		return (
 			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-				<EmptyStateView />
+				<EmptyStatePreview />
 			</WizardRightPane>
 		);
 	}
@@ -109,48 +173,18 @@ function ApplicationStructurePreview() {
 		);
 	}
 
+	if (!grantSections.length) {
+		return (
+			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+				<EmptyStatePreview />
+			</WizardRightPane>
+		);
+	}
+
 	return (
 		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor
-				isDetailedSection={isDetailedSection}
-				onAddSection={handleAddNewSection}
-				toUpdateGrantSection={toUpdateGrantSection}
-			/>
+			<SectionEditor isDetailedSection={isDetailedSection} onAddSection={handleAddNewSection} />
 		</WizardRightPane>
-	);
-}
-
-function EmptyStateView() {
-	return (
-		<div className="flex h-full w-full flex-col items-center justify-center" data-testid="empty-state">
-			<div className="relative">
-				<div className="flex size-96 items-center justify-center">
-					<div className="relative">
-						{}
-						<div className="bg-gray-100 animate-pulse flex size-24 items-center justify-center rounded-full">
-							<div className="bg-gray-200 size-12 rounded-full" />
-						</div>
-
-						{}
-						<div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
-							<div className="bg-blue-100 absolute -top-4 left-1/2 size-8 -translate-x-1/2 rounded-full" />
-						</div>
-						<div
-							className="absolute inset-0 animate-spin"
-							style={{ animationDirection: "reverse", animationDuration: "4s" }}
-						>
-							<div className="bg-purple-100 absolute -bottom-4 left-1/2 size-6 -translate-x-1/2 rounded-full" />
-						</div>
-						<div className="absolute inset-0 animate-spin" style={{ animationDuration: "5s" }}>
-							<div className="bg-green-100 absolute -left-4 top-1/2 size-4 -translate-y-1/2 rounded-full" />
-						</div>
-					</div>
-				</div>
-			</div>
-			<p className="text-muted-foreground-dark mt-6 text-center text-sm" data-testid="empty-state-message">
-				Loading, analyzing...
-			</p>
-		</div>
 	);
 }
 
@@ -187,21 +221,15 @@ function PreviewHeader({ onAddSection }: { onAddSection: (parentId?: null | stri
 function SectionEditor({
 	isDetailedSection,
 	onAddSection,
-	toUpdateGrantSection,
 }: {
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 }) {
 	return (
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
-				<DragDropSectionManager
-					isDetailedSection={isDetailedSection}
-					onAddSection={onAddSection}
-					toUpdateGrantSection={toUpdateGrantSection}
-				/>
+				<DragDropSectionManager isDetailedSection={isDetailedSection} onAddSection={onAddSection} />
 			</ScrollArea>
 		</div>
 	);

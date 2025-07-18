@@ -1,0 +1,24 @@
+{
+  "test_name": "test_run_scraper",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "ScraperError",
+    "message": "Failed to handle automatic CSV download: Timeout 10000ms exceeded while waiting for event \"download\"\n=========================== logs ===========================\nwaiting for event \"download\"\n============================================================",
+    "execution_time_before_failure": 14.199046850204468
+  },
+  "performance": {
+    "execution_time": 14.199046850204468,
+    "timeout_reached": false,
+    "timeout_utilization": 0.047330156167348224
+  },
+  "diagnostic_info": {
+    "timeout_configured": 300,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-07-09T15:25:34.082223+00:00"
+}

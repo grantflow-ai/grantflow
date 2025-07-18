@@ -62,7 +62,7 @@ def test_create_scraper_report_embed_failure() -> None:
         error_message="Network timeout",
     )
 
-    assert embed["title"] == "🤖 NIH Grant Scraper Report - PROD"
+    assert embed["title"] == "🚨 NIH Grant Scraper Report - PROD"
     assert embed["color"] == 0xFF0000
 
     status_field = embed["fields"][2]

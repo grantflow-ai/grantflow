@@ -1,0 +1,24 @@
+{
+  "test_name": "test_run_scraper",
+  "test_category": "smoke",
+  "status": "failed",
+  "error": {
+    "type": "TimeoutError",
+    "message": "Timeout 30000ms exceeded while waiting for event \"download\"\n=========================== logs ===========================\nwaiting for event \"download\"\n============================================================",
+    "execution_time_before_failure": 30.321058988571167
+  },
+  "performance": {
+    "execution_time": 30.321058988571167,
+    "timeout_reached": false,
+    "timeout_utilization": 0.10107019662857056
+  },
+  "diagnostic_info": {
+    "timeout_configured": 300,
+    "category": "smoke",
+    "args_provided": 0,
+    "kwargs_provided": [
+      "logger"
+    ]
+  },
+  "timestamp": "2025-07-09T15:26:43.101297+00:00"
+}

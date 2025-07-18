@@ -7,16 +7,20 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-indexer.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/indexer/**"
+            - "testing/**"
     push:
         branches:
             - main
             - development
         paths:
             - ".github/workflows/ci-service-indexer.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/indexer/**"
+            - "testing/**"
 
 jobs:
     test:

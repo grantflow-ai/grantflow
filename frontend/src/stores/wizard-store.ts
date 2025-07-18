@@ -24,6 +24,32 @@ const WIZARD_STEP_ORDER: WizardStep[] = [
 
 export type Objective = NonNullable<API.RetrieveApplication.Http200.ResponseBody["research_objectives"]>[0];
 
+export type TemplateGenerationEvent =
+	| "cfp_data_extracted"
+	| "extracting_cfp_data"
+	| "generation_error"
+	| "grant_template_created"
+	| "grant_template_extraction"
+	| "grant_template_generation_started"
+	| "grant_template_metadata"
+	| "indexing_in_progress"
+	| "insufficient_context_error"
+	| "internal_error"
+	| "low_retrieval_quality"
+	| "metadata_generated"
+	| "pipeline_error"
+	| "saving_grant_template"
+	| "sections_extracted";
+
+export interface TemplateGenerationStatus {
+	event: TemplateGenerationEvent;
+	message: string;
+}
+
+type RagSourceStatus = NonNullable<
+	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
+>["rag_sources"][0]["status"];
+
 export const MAX_OBJECTIVES = 5;
 
 export const EXAMPLE_OBJECTIVES = [
@@ -74,6 +100,7 @@ interface WizardActions {
 	handleObjectiveDragEnd: (event: DragEndEvent) => void;
 	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
+	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
 	polling: PollingActions;
 	removeObjective: (objectiveNumber: number) => void;
 	removeTask: (objectiveNumber: number, taskNumber: number) => void;
@@ -83,9 +110,12 @@ interface WizardActions {
 	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
+	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
+	startTemplateGeneration: () => void;
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
+	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
@@ -100,6 +130,7 @@ interface WizardState {
 	polling: PollingState;
 	shouldRedirectToEditor: boolean;
 	showResearchPlanInfoBanner: boolean;
+	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
 const initialWizardState: WizardState = {
@@ -116,6 +147,7 @@ const initialWizardState: WizardState = {
 	},
 	shouldRedirectToEditor: false,
 	showResearchPlanInfoBanner: true,
+	templateGenerationStatus: null,
 };
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
@@ -366,6 +398,17 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
+				hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => {
+					const { application } = useApplicationStore.getState();
+
+					if (!application?.grant_template?.rag_sources) {
+						return false;
+					}
+
+					const statusArray = Array.isArray(statuses) ? statuses : [statuses];
+					return application.grant_template.rag_sources.some((source) => statusArray.includes(source.status));
+				},
+
 				polling: {
 					...initialWizardState.polling,
 
@@ -488,6 +531,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							...initialWizardState.polling,
 						},
 						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
+						templateGenerationStatus: initialWizardState.templateGenerationStatus,
 					});
 				},
 
@@ -522,8 +566,31 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}));
 				},
 
+				setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
+					set((state) => ({
+						...state,
+						templateGenerationStatus: status,
+					}));
+				},
+
+				startTemplateGeneration: () => {
+					const { application, generateTemplate } = useApplicationStore.getState();
+					const { polling } = get();
+
+					if (application?.grant_template?.id) {
+						void generateTemplate(application.grant_template.id);
+
+						set((state) => ({
+							...state,
+							isGeneratingTemplate: true,
+						}));
+
+						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
+					}
+				},
+
 				toNextStep: () => {
-					const { currentStep, polling } = get();
+					const { currentStep, hasTemplateSourcesWithStatuses, polling, startTemplateGeneration } = get();
 
 					if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
 						return;
@@ -544,20 +611,21 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						currentStep: nextStep,
 					}));
 
-					const { application, generateTemplate } = useApplicationStore.getState();
+					const { application } = useApplicationStore.getState();
 					if (
 						nextStep === WizardStep.APPLICATION_STRUCTURE &&
 						application?.grant_template &&
 						!application.grant_template.grant_sections.length
 					) {
-						void generateTemplate(application.grant_template.id);
+						const ragSources = application.grant_template.rag_sources;
 
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: true,
-						}));
-
-						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
+						// Only trigger template generation if all RAG sources are FINISHED
+						if (
+							ragSources.length === 0 ||
+							!hasTemplateSourcesWithStatuses(["CREATED", "INDEXING", "FAILED"])
+						) {
+							startTemplateGeneration();
+						}
 					}
 				},
 
@@ -645,6 +713,22 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							},
 						}));
 					}
+				},
+
+				updateFormInputs: async (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => {
+					const { application, updateApplication } = useApplicationStore.getState();
+
+					if (!application) {
+						log.error("updateFormInputs: No application found");
+						return;
+					}
+
+					const currentFormInputs = application.form_inputs ?? {};
+					const mergedFormInputs = { ...currentFormInputs, ...formInputs };
+
+					await updateApplication({
+						form_inputs: mergedFormInputs as API.UpdateApplication.RequestBody["form_inputs"],
+					});
 				},
 
 				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Validation logic needs to be comprehensive

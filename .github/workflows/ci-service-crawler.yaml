@@ -7,16 +7,20 @@ on:
             - development*
         paths:
             - ".github/workflows/ci-service-crawler.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/crawler/**"
+            - "testing/**"
     push:
         branches:
             - main
             - development
         paths:
             - ".github/workflows/ci-service-crawler.yaml"
-            - "packages/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
             - "services/crawler/**"
+            - "testing/**"
 
 jobs:
     test:

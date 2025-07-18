@@ -1,321 +1,293 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppCard, TextareaField } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 
-type FormInputsKey = keyof NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
+type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;
+type FormInputsKey = keyof FormInputs;
+
+const getDisabledTextColorClass = (): string => "text-app-gray-400";
+const getEnabledTextColorClass = (): string => "text-app-black";
+
+const placeholders: Record<FormInputsKey, string> = {
+	background_context: "Provide context and background of your research project...",
+	hypothesis: "Describe your central hypothesis or key research question...",
+	impact: "Describe how your research will contribute to the field and society...",
+	novelty_and_innovation: "Highlight what makes your approach unique or innovative...",
+	preliminary_data: "Share any preliminary findings that support your research...",
+	rationale: "Explain why this research is important and what motivates it...",
+	research_feasibility: "Describe what makes your research plan realistic and achievable...",
+	scientific_infrastructure: "Describe the scientific infrastructure and resources available for your research...",
+	team_excellence: "Explain what makes your team uniquely qualified for this project...",
+};
 
 const RESEARCH_QUESTIONS: { key: FormInputsKey; question: string }[] = [
 	{ key: "background_context", question: "What is the context and background of your research?" },
-	{ key: "hypothesis", question: "What is the central hypothesis or key question your research aims to address?" },
+	{
+		key: "hypothesis",
+		question: "What is the central hypothesis or key question your research aims to address?",
+	},
 	{ key: "rationale", question: "Why is this research important and what motivates its pursuit?" },
 	{
 		key: "novelty_and_innovation",
 		question: "What makes your approach unique or innovative compared to existing research?",
 	},
 	{ key: "impact", question: "How will your research contribute to the field and society?" },
-	{ key: "team_excellence", question: "What makes your team uniquely qualified to carry out this project?" },
-	{ key: "research_feasibility", question: "What makes your research plan realistic and achievable?" },
-	{ key: "preliminary_data", question: "Have you obtained any preliminary findings that support your research?" },
+	{
+		key: "team_excellence",
+		question: "What makes your team uniquely qualified to carry out this project?",
+	},
+	{
+		key: "research_feasibility",
+		question: "What makes your research plan realistic and achievable?",
+	},
+	{
+		key: "preliminary_data",
+		question: "Have you obtained any preliminary findings that support your research?",
+	},
 ];
 
 export function ResearchDeepDiveStep() {
-	const [selectedQuestion, setSelectedQuestion] = useState<null | number>(0);
-	const application = useApplicationStore((state) => state.application);
-	const updateApplication = useApplicationStore((state) => state.updateApplication);
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_deep_dive);
 
-	const formInputs = useMemo(
-		() => application?.form_inputs ?? ({} as Partial<Record<FormInputsKey, string>>),
-		[application?.form_inputs],
-	);
-
-	const [localAnswers, setLocalAnswers] = useState<Partial<Record<FormInputsKey, string>>>(() => {
-		const initialAnswers: Partial<Record<FormInputsKey, string>> = {};
-		RESEARCH_QUESTIONS.forEach((question) => {
-			if (formInputs[question.key]) {
-				initialAnswers[question.key] = formInputs[question.key];
-			}
-		});
-		return initialAnswers;
-	});
-
-	const [savedQuestions, setSavedQuestions] = useState<Set<FormInputsKey>>(new Set());
-
-	useEffect(() => {
-		setLocalAnswers((prev) => {
-			const updatedAnswers: Partial<Record<FormInputsKey, string>> = { ...prev };
-
-			RESEARCH_QUESTIONS.forEach((question) => {
-				if (formInputs[question.key] && !prev[question.key]) {
-					updatedAnswers[question.key] = formInputs[question.key];
-				}
-			});
-
-			return updatedAnswers;
-		});
-	}, [formInputs]);
-
-	const handleQuestionSelect = (index: number) => {
-		setSelectedQuestion(index);
-	};
-
-	const handleAnswerChange = (answer: string) => {
-		if (selectedQuestion !== null) {
-			const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
-			setLocalAnswers((prev) => ({
-				...prev,
-				[questionKey]: answer,
-			}));
-		}
-	};
-
-	const handleSave = async () => {
-		if (selectedQuestion !== null) {
-			const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
-			const answer = localAnswers[questionKey] ?? "";
-
-			await updateApplication({
-				form_inputs: {
-					...formInputs,
-					[questionKey]: answer,
-				},
-			});
-
-			setSavedQuestions((prev) => new Set([questionKey, ...prev]));
-
-			if (selectedQuestion < RESEARCH_QUESTIONS.length - 1) {
-				setSelectedQuestion(selectedQuestion + 1);
-			}
-		}
-	};
-
-	const handleBack = () => {
-		if (selectedQuestion !== null && selectedQuestion > 0) {
-			setSelectedQuestion(selectedQuestion - 1);
-		}
-	};
-
-	const getCurrentAnswer = () => {
-		if (selectedQuestion === null) return "";
-		const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
-		return localAnswers[questionKey] ?? "";
-	};
-
-	const isQuestionAnswered = (key: FormInputsKey): boolean => {
-		const value = formInputs[key];
-		return savedQuestions.has(key) || Boolean(value && value.trim().length > 0);
-	};
-
-	const hasUnsavedChanges = (): boolean => {
-		if (selectedQuestion === null) return false;
-		const questionKey = RESEARCH_QUESTIONS[selectedQuestion].key;
-		const currentValue = localAnswers[questionKey] ?? "";
-		const savedValue = formInputs[questionKey] ?? "";
-		return currentValue.trim() !== savedValue.trim();
-	};
-
-	const currentAnswer = getCurrentAnswer();
-	const wordCount = currentAnswer
-		.trim()
-		.split(/\s+/)
-		.filter((word: string) => word.length > 0).length;
+	const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
 
 	return (
 		<div
-			className="flex h-screen size-full flex-col overflow-hidden p-6 bg-preview-bg space-y-6"
+			className="flex flex-col h-full lg:px-6 lg:pt-6 md:px-4 md:pt-4 px-3 pt-3 bg-preview-bg space-y-6 overflow-y-auto"
 			data-testid="research-deep-dive-step"
 		>
-			<div className="flex items-center justify-between mt-5 px-17">
-				<div className="flex flex-col">
-					<h2
-						className="text-app-black text-3xl font-medium font-heading leading-loose"
-						data-testid="research-deep-dive-header"
-					>
-						Research Deep Dive
-					</h2>
-					<p
-						className="text-app-black font-normal text-base leading-tight -mt-2"
-						data-testid="research-deep-dive-description"
-					>
-						Before generating your grant application draft, it would be helpful to learn a bit more about
-						your research to ensure more accurate results.
-					</p>
-				</div>
-				<AppButton
-					className="shrink-0"
-					data-testid="ai-try-button"
-					disabled={isAutofillLoading || !application}
-					leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
-					onClick={() => triggerAutofill("research_deep_dive")}
-					variant="secondary"
-				>
-					{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-				</AppButton>
-			</div>
+			<ResearchDeepDiveHeader
+				isAutofillLoading={isAutofillLoading}
+				onTriggerAutofill={() => triggerAutofill("research_deep_dive")}
+			/>
 
-			<div className="flex flex-1 gap-6 px-16 min-h-0">
-				<div className="flex-1 flex flex-col">
-					<div className="flex-1 overflow-y-auto space-y-3 px-1 pt-1">
-						{RESEARCH_QUESTIONS.map((item, index) => (
-							<QuestionCard
-								index={index + 1}
-								isAnswered={isQuestionAnswered(item.key)}
-								isSelected={selectedQuestion === index}
-								key={item.key}
-								onClick={() => {
-									handleQuestionSelect(index);
-								}}
-								question={item.question}
-							/>
-						))}
-					</div>
-				</div>
+			<div className="flex w-full gap-6 px-16">
+				<QuestionsList onSelectQuestion={setSelectedQuestion} />
 
-				<div className="flex-1">
-					{selectedQuestion === null ? (
-						<div className="flex h-full items-center justify-center" data-testid="empty-state-container">
-							<p className="text-muted-foreground-dark text-center" data-testid="empty-state-message">
-								Select a question to start answering
-							</p>
-						</div>
-					) : (
-						<AnswerArea
-							answer={currentAnswer}
-							hasChanges={hasUnsavedChanges()}
-							isFirstQuestion={selectedQuestion === 0}
-							onAnswerChange={handleAnswerChange}
-							onBack={handleBack}
-							onSave={handleSave}
-							question={RESEARCH_QUESTIONS[selectedQuestion].question}
-							wordCount={wordCount}
-						/>
-					)}
-				</div>
+				<AnswerCard
+					key={selectedQuestion}
+					onBack={() => {
+						setSelectedQuestion(selectedQuestion - 1);
+					}}
+					selectedQuestion={selectedQuestion}
+				/>
 			</div>
 		</div>
 	);
 }
 
-function AnswerArea({
-	answer,
-	hasChanges,
-	isFirstQuestion,
-	onAnswerChange,
-	onBack,
-	onSave,
-	question,
-	wordCount: _wordCount,
-}: {
-	answer: string;
-	hasChanges: boolean;
-	isFirstQuestion: boolean;
-	onAnswerChange: (answer: string) => void;
-	onBack: () => void;
-	onSave: () => void;
-	question: string;
-	wordCount: number;
-}) {
-	return (
-		<div className="h-full flex flex-col">
-			<TextareaField
-				className="flex-1 min-h-0 resize-none border-primary focus:border-primary"
-				countType="words"
-				label={question}
-				maxCount={1000}
-				onChange={(e) => {
-					onAnswerChange(e.target.value);
-				}}
-				placeholder="Context and background of your research"
-				showCount={true}
-				testId="research-deep-dive-answer"
-				value={answer}
-			/>
+function AnswerCard({ onBack, selectedQuestion }: { onBack: () => void; selectedQuestion: number }) {
+	const updateFormInputs = useWizardStore((state) => state.updateFormInputs);
+	const formInputs = (useApplicationStore((state) => state.application?.form_inputs) ?? {}) as FormInputs;
 
-			<div className="mt-4 flex gap-3">
-				{!isFirstQuestion && (
-					<AppButton className="flex-1" onClick={onBack} variant="secondary">
-						Back
-					</AppButton>
-				)}
-				<AppButton
-					className={isFirstQuestion ? "w-full" : "flex-1"}
-					disabled={!answer || answer.trim().length === 0 || !hasChanges}
-					onClick={onSave}
-					variant="primary"
-				>
-					Save
-				</AppButton>
-			</div>
+	const { key: questionKey, question } = RESEARCH_QUESTIONS[selectedQuestion];
+	const formInputsAnswer = formInputs[questionKey] || "";
+
+	const [answerValue, setAnswerValue] = useState(formInputsAnswer);
+
+	const isBackVisible = selectedQuestion >= 1;
+	const isSaveEnabled = answerValue.trim().length > 0;
+
+	const handleSave = async () => {
+		if (isSaveEnabled) {
+			await updateFormInputs({ [questionKey]: answerValue.trim() });
+		}
+	};
+
+	return (
+		<div className="w-1/2">
+			<AppCard className="flex flex-col space-y-5 gap-0 p-5 outline-1 outline-primary rounded mb-1">
+				<span className="text-app-black text-base font-semibold leading-tight">{question}</span>
+				<TextareaField
+					className="min-h-96 w-full focus:outline-app-gray-600 focus-visible:outline-app-gray-600 focus-visible:border-app-gray-600"
+					onChange={(e) => {
+						setAnswerValue(e.target.value);
+					}}
+					placeholder={placeholders[questionKey]}
+					testId="research-deep-dive-answer"
+					value={answerValue}
+				/>
+
+				<div className="flex justify-between w-full gap-3">
+					{isBackVisible && (
+						<AppButton data-testid="back-button" onClick={onBack} variant="secondary">
+							Back
+						</AppButton>
+					)}
+					<div className={isBackVisible ? "" : "ml-auto"}>
+						<AppButton
+							data-testid="save-button"
+							disabled={!isSaveEnabled}
+							onClick={handleSave}
+							variant="primary"
+						>
+							Save
+						</AppButton>
+					</div>
+				</div>
+			</AppCard>
+		</div>
+	);
+}
+
+function IndexBadge({ hasAnswer, index, isDisabled }: { hasAnswer: boolean; index: number; isDisabled: boolean }) {
+	if (hasAnswer) {
+		return <Image alt="Done" className="size-7" height={26} src="/icons/research-question-done.svg" width={26} />;
+	}
+
+	const badgeClasses = isDisabled
+		? "bg-app-gray-100 text-white"
+		: "bg-transparent outline outline-1 outline-primary text-primary group-hover:bg-primary group-hover:text-white";
+
+	return (
+		<div
+			className={`size-7 rounded-full flex items-center justify-center text-base font-semibold font-heading ${badgeClasses}`}
+		>
+			{index + 1}
 		</div>
 	);
 }
 
 function QuestionCard({
+	hasAnswer,
 	index,
-	isAnswered,
-	isSelected,
+	isDisabled,
 	onClick,
 	question,
 }: {
+	hasAnswer: boolean;
 	index: number;
-	isAnswered: boolean;
-	isSelected: boolean;
+	isDisabled: boolean;
 	onClick: () => void;
 	question: string;
 }) {
-	const getIndexBackgroundClass = () => {
-		if (isSelected) {
-			return "bg-primary text-white";
-		}
-		if (isAnswered) {
-			return "bg-transparent border border-primary text-primary";
-		}
-		return "bg-app-gray-100 text-muted-foreground";
-	};
+	const textRef = useRef<HTMLParagraphElement>(null);
+	const [isEllipsized, setIsEllipsized] = useState(false);
 
-	const getCardClasses = () => {
-		if (isSelected) {
-			return "h-14 p-2 cursor-pointer outline outline-2 outline-primary";
-		}
-		if (isAnswered) {
-			return "h-14 p-2 cursor-pointer outline outline-1 outline-primary hover:outline hover:outline-2 hover:outline-primary transition-all";
-		}
-		return "h-14 p-2 cursor-pointer outline outline-1 outline-app-gray-100 hover:outline hover:outline-2 hover:outline-primary transition-all";
-	};
+	useEffect(() => {
+		const checkEllipsis = () => {
+			if (textRef.current) {
+				const isOverflowing = textRef.current.scrollWidth > textRef.current.clientWidth;
+				setIsEllipsized(isOverflowing);
+			}
+		};
 
-	const getIndexHoverClass = () => {
-		if (isSelected) {
-			return "bg-primary text-white";
-		}
-		return "group-hover:bg-primary group-hover:text-white";
-	};
+		checkEllipsis();
+		window.addEventListener("resize", checkEllipsis);
+		return () => {
+			window.removeEventListener("resize", checkEllipsis);
+		};
+	}, []);
+
+	const textColorClass = isDisabled ? getDisabledTextColorClass() : getEnabledTextColorClass();
+	const textClasses = isEllipsized
+		? `flex-1 max-h-5 group-hover:max-h-20 transition-all duration-300 truncate group-hover:whitespace-normal ${textColorClass}`
+		: `flex-1 truncate ${textColorClass}`;
 
 	return (
-		<AppCard className={`${getCardClasses()} group`} onClick={onClick}>
-			<div className="flex items-center gap-3 h-full">
-				<div
-					className={`size-7 rounded-full flex items-center justify-center text-sm font-medium ${getIndexBackgroundClass()} ${getIndexHoverClass()}`}
-				>
-					{isAnswered ? (
-						<Image
-							alt="Question completed"
-							height={26}
-							src="/icons/research-question-done.svg"
-							width={26}
-						/>
-					) : (
-						index
-					)}
+		<li>
+			<AppCard
+				className={`rounded p-3 gap-0 transition-all duration-300 outline-1 ${isDisabled ? "outline-app-gray-100" : "outline-primary group hover:outline-2 hover:outline-primary cursor-pointer"}`}
+				data-testid={`question-card-${index}`}
+				onClick={onClick}
+				onKeyDown={(e: React.KeyboardEvent) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault();
+						onClick();
+					}
+				}}
+				tabIndex={0}
+			>
+				<div className="flex items-center gap-3">
+					<IndexBadge hasAnswer={hasAnswer} index={index} isDisabled={isDisabled} />
+					<p className={textClasses} ref={textRef}>
+						{question}
+					</p>
 				</div>
-				<p className="text-sm text-gray-700 flex-1 line-clamp-1">{question}</p>
+			</AppCard>
+		</li>
+	);
+}
+
+function QuestionsList({ onSelectQuestion }: { onSelectQuestion: (index: number) => void }) {
+	const formInputs = (useApplicationStore((state) => state.application?.form_inputs) ?? {}) as FormInputs;
+
+	let lastAnswered = -1;
+
+	return (
+		<ul className="w-1/2 flex flex-col space-y-3 pb-2">
+			{RESEARCH_QUESTIONS.map((item, index) => {
+				const answerValue = formInputs[item.key];
+				const hasAnswer = answerValue && answerValue.trim().length > 0;
+
+				if (hasAnswer) {
+					lastAnswered = index;
+				}
+
+				const isDisabled = index > 0 && !hasAnswer && index > lastAnswered + 1;
+
+				return (
+					<QuestionCard
+						hasAnswer={Boolean(hasAnswer)}
+						index={index}
+						isDisabled={isDisabled}
+						key={item.key}
+						onClick={() => {
+							if (!isDisabled) {
+								onSelectQuestion(index);
+							}
+						}}
+						question={item.question}
+					/>
+				);
+			})}
+		</ul>
+	);
+}
+
+function ResearchDeepDiveHeader({
+	isAutofillLoading,
+	onTriggerAutofill,
+}: {
+	isAutofillLoading: boolean;
+	onTriggerAutofill: () => void;
+}) {
+	const application = useApplicationStore((state) => state.application);
+
+	return (
+		<div className="flex items-center justify-between mt-5 px-17 gap-4">
+			<div className="flex flex-col">
+				<h2
+					className="text-app-black text-3xl font-medium font-heading leading-loose"
+					data-testid="research-deep-dive-header"
+				>
+					Research Deep Dive
+				</h2>
+				<p
+					className="text-app-black font-normal text-base leading-tight -mt-2"
+					data-testid="research-deep-dive-description"
+				>
+					Before generating your grant application draft, it would be helpful to learn a bit more about your
+					research to ensure more accurate results.
+				</p>
 			</div>
-		</AppCard>
+			<AppButton
+				className="shrink-0"
+				data-testid="ai-try-button"
+				disabled={isAutofillLoading || !application}
+				leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
+				onClick={onTriggerAutofill}
+				variant="secondary"
+			>
+				{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
+			</AppButton>
+		</div>
 	);
 }
