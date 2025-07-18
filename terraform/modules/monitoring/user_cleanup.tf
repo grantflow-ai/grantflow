@@ -31,12 +31,12 @@ data "archive_file" "entity_cleanup_source" {
   output_path = "${path.module}/entity-cleanup-function.zip"
 
   source {
-    content  = file("${path.module}/../../../cloud_functions/src/user_cleanup/main.py")
+    content  = file("../../../cloud_functions/src/user_cleanup/main.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("${path.module}/../../../cloud_functions/requirements.txt")
+    content  = file("../../../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }
