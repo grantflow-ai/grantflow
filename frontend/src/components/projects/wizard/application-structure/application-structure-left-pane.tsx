@@ -93,27 +93,22 @@ const isStepActive = (sectionIndex: number, visibleSteps: number) => {
 	return visibleSteps === sectionIndex + 1;
 };
 
-const eventToStepMap: Record<TemplateGenerationEvent, number> = {
-	// Reading the call - validating and extracting CFP data
+const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
 	cfp_data_extracted: 0,
 	extracting_cfp_data: 0,
 	generation_error: -1,
 
-	// Building the outline - extracting sections and relationships
 	grant_template_created: 3,
 	grant_template_extraction: 1,
 
-	// Adding writing cues - generating metadata
 	grant_template_generation_started: 0,
 	grant_template_metadata: 2,
 
 	indexing_in_progress: 0,
 
-	// Final check - saving template
 	insufficient_context_error: -1,
 	internal_error: -1,
 
-	// Error events (don't progress steps)
 	low_retrieval_quality: -1,
 	metadata_generated: 2,
 	pipeline_error: -1,
@@ -123,11 +118,10 @@ const eventToStepMap: Record<TemplateGenerationEvent, number> = {
 
 export function ApplicationStructureLeftPane() {
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
+
 	const [isInfoBannerVisible, setIsInfoBannerVisible] = useState(true);
 
 	const hasGrantSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
-	const shouldShowAnalyzing = !hasGrantSections;
-
 	const parentId = grantTemplate?.id;
 
 	const templateFiles: FileWithSource[] = useMemo(
@@ -159,7 +153,7 @@ export function ApplicationStructureLeftPane() {
 
 	usePollingCleanup();
 
-	if (shouldShowAnalyzing) {
+	if (!hasGrantSections) {
 		return (
 			<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
 				<TitleHeader showDescription={false} />
@@ -211,17 +205,57 @@ export function ApplicationStructureSourcesPreview({
 function AnalyzingSteps() {
 	const templateGenerationStatus = useWizardStore((state) => state.templateGenerationStatus);
 	const [maxVisibleSteps, setMaxVisibleSteps] = useState(0);
+	const [showStepsDetails, setShowStepsDetails] = useState(false);
+	const [hasError, setHasError] = useState(false);
 
 	useEffect(() => {
 		if (templateGenerationStatus?.event) {
-			const stepGroup = eventToStepMap[templateGenerationStatus.event];
-			log.info("[useApplicationNotifications] Received mapping in AnalysingSteps", { stepGroup });
+			const stepGroup = eventToVisualStepMap[templateGenerationStatus.event];
+			log.info("[useApplicationNotifications] Received mapping in AnalysingSteps", {
+				event: templateGenerationStatus.event,
+				stepGroup,
+			});
+
+			if (stepGroup === -1) {
+				setHasError(true);
+				return;
+			}
+			setHasError(false);
+
+			// Show only title for indexing events, show steps for extraction events
+			const isIndexingEvent =
+				templateGenerationStatus.event === "grant_template_generation_started" ||
+				templateGenerationStatus.event === "indexing_in_progress";
+			setShowStepsDetails(!isIndexingEvent);
+
 			if (stepGroup >= 0) {
 				const newVisibleSteps = stepGroup + 1;
 				setMaxVisibleSteps((prev) => Math.max(prev, newVisibleSteps));
 			}
 		}
 	}, [templateGenerationStatus]);
+
+	if (hasError && templateGenerationStatus) {
+		return (
+			<div className="relative space-y-6 mt-6">
+				<div className="rounded-lg border border-red-200 bg-red-50 p-4">
+					<div className="flex items-start gap-3">
+						<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500">
+							<span className="text-xs font-medium text-white">!</span>
+						</div>
+						<div className="flex-1">
+							<h4 className="font-medium text-red-900" data-testid="error-title">
+								Template Generation Failed
+							</h4>
+							<p className="mt-1 text-sm text-red-700" data-testid="error-message">
+								{templateGenerationStatus.message}
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="relative space-y-6 mt-6">
@@ -250,20 +284,24 @@ function AnalyzingSteps() {
 							)}
 						</div>
 
-						<div className="ml-9 space-y-2">
-							{section.steps.map((step, stepIndex) => (
-								<div
-									className={getStepContentClassName(sectionIndex, maxVisibleSteps)}
-									key={stepIndex}
-									style={{
-										transitionDelay: getStepDelay(stepIndex),
-									}}
-								>
-									<span className="text-gray-400">{stepIndex + 1}.</span>
-									<span className={getStepTextClassName(sectionIndex, maxVisibleSteps)}>{step}</span>
-								</div>
-							))}
-						</div>
+						{showStepsDetails && (
+							<div className="ml-9 space-y-2">
+								{section.steps.map((step, stepIndex) => (
+									<div
+										className={getStepContentClassName(sectionIndex, maxVisibleSteps)}
+										key={stepIndex}
+										style={{
+											transitionDelay: getStepDelay(stepIndex),
+										}}
+									>
+										<span className="text-gray-400">{stepIndex + 1}.</span>
+										<span className={getStepTextClassName(sectionIndex, maxVisibleSteps)}>
+											{step}
+										</span>
+									</div>
+								))}
+							</div>
+						)}
 					</div>
 				</div>
 			))}
