@@ -4,12 +4,12 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
+    GenerationNotification,
     GrantApplication,
     GrantApplicationGenerationJob,
     GrantTemplate,
     GrantTemplateGenerationJob,
     RagGenerationJob,
-    GenerationNotification,
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
@@ -280,8 +280,8 @@ class JobManager:
         async with self.session_maker() as session:
             query = (
                 select(GenerationNotification)
-                .where(RagGenerationNotification.rag_job_id == self.job_id)
-                .order_by(RagGenerationNotification.created_at.desc())
+                .where(GenerationNotification.rag_job_id == self.job_id)
+                .order_by(GenerationNotification.created_at.desc())
             )
 
             if limit:

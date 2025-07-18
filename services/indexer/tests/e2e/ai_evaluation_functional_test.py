@@ -99,9 +99,7 @@ async def test_content_relevance_evaluation(
 
 
 @e2e_test(category=E2ETestCategory.AI_EVAL, timeout=240)
-async def test_hallucination_detection(
-    logger: logging.Logger, grant_application_file: GrantApplicationSource
-) -> None:
+async def test_hallucination_detection(logger: logging.Logger, grant_application_file: GrantApplicationSource) -> None:
     logger.info("Running AI hallucination detection test")
 
     test_cases = [

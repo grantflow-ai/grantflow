@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, OrganizationUser, UserProjectInvitation
+from packages.db.src.tables import OrganizationInvitation, OrganizationUser, Project
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
@@ -522,8 +522,8 @@ async def test_create_invitation_redirect_url_success(
     async with async_session_maker() as session:
         invitation = await session.scalar(
             select(OrganizationInvitation)
-            .where(UserProjectInvitation.project_id == project.id)
-            .where(UserProjectInvitation.email == "new_user@example.com")
+            .where(OrganizationInvitation.project_id == project.id)
+            .where(OrganizationInvitation.email == "new_user@example.com")
         )
         assert invitation is not None
         assert invitation.role == UserRoleEnum.COLLABORATOR
@@ -588,8 +588,8 @@ async def test_delete_invitation_success(
     async with async_session_maker() as session:
         deleted_invitation = await session.scalar(
             select(OrganizationInvitation)
-            .where(UserProjectInvitation.id == invitation.id)
-            .where(UserProjectInvitation.project_id == project.id)
+            .where(OrganizationInvitation.id == invitation.id)
+            .where(OrganizationInvitation.project_id == project.id)
         )
         assert deleted_invitation is None
 
@@ -740,8 +740,8 @@ async def test_update_invitation_role_success(
     async with async_session_maker() as session:
         updated_invitation = await session.scalar(
             select(OrganizationInvitation)
-            .where(UserProjectInvitation.id == invitation.id)
-            .where(UserProjectInvitation.project_id == project.id)
+            .where(OrganizationInvitation.id == invitation.id)
+            .where(OrganizationInvitation.project_id == project.id)
         )
         assert updated_invitation is not None
         assert updated_invitation.role == UserRoleEnum.ADMIN
@@ -973,14 +973,14 @@ async def test_accept_invitation_success(
     async with async_session_maker() as session:
         project_user = await session.scalar(
             select(OrganizationUser)
-            .where(ProjectUser.project_id == project.id)
-            .where(ProjectUser.firebase_uid == firebase_uid)
+            .where(OrganizationUser.project_id == project.id)
+            .where(OrganizationUser.firebase_uid == firebase_uid)
         )
         assert project_user is not None
         assert project_user.role == UserRoleEnum.COLLABORATOR
 
         updated_invitation = await session.scalar(
-            select(OrganizationInvitation).where(UserProjectInvitation.id == invitation.id)
+            select(OrganizationInvitation).where(OrganizationInvitation.id == invitation.id)
         )
         assert updated_invitation is not None
         assert updated_invitation.accepted_at is not None
@@ -1348,8 +1348,8 @@ async def test_remove_project_member_success(
     async with async_session_maker() as session:
         removed_member = await session.scalar(
             select(OrganizationUser)
-            .where(ProjectUser.project_id == project.id)
-            .where(ProjectUser.firebase_uid == "member_uid")
+            .where(OrganizationUser.project_id == project.id)
+            .where(OrganizationUser.firebase_uid == "member_uid")
         )
         assert removed_member is None
 

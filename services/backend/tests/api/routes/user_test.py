@@ -1,8 +1,8 @@
 from typing import Any
 
 from packages.db.src.enums import UserRoleEnum
+from packages.db.src.tables import OrganizationUser as ProjectMember
 from packages.db.src.tables import Project
-from packages.db.src.tables import ProjectUser as ProjectMember
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
