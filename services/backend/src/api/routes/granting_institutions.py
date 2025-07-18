@@ -3,7 +3,7 @@ from uuid import UUID
 
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
-from packages.db.src.tables import FundingOrganization
+from packages.db.src.tables import GrantingInstitution
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import delete as sa_delete
@@ -24,90 +24,90 @@ class UpdateOrganizationRequestBody(TypedDict):
     abbreviation: NotRequired[str | None]
 
 
-class FundingOrganizationResponse(TypedDict):
+class GrantingInstitutionResponse(TypedDict):
     id: str
     full_name: str
     abbreviation: str | None
 
 
-@post("/funding-organizations", operation_id="CreateFundingOrganization")
+@post("/granting-institutions", operation_id="CreateGrantingInstitution")
 async def handle_create_organization(
     data: CreateOrganizationRequestBody, session_maker: async_sessionmaker[Any]
-) -> FundingOrganizationResponse:
+) -> GrantingInstitutionResponse:
     async with session_maker() as session, session.begin():
         try:
-            organization = await session.scalar(insert(FundingOrganization).values(data).returning(FundingOrganization))
+            organization = await session.scalar(insert(GrantingInstitution).values(data).returning(GrantingInstitution))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
-            logger.error("Error creating funding organization", exc_info=e)
-            raise DatabaseError("Error creating funding organization", context=str(e)) from e
+            logger.error("Error creating granting institution", exc_info=e)
+            raise DatabaseError("Error creating granting institution", context=str(e)) from e
 
-    return FundingOrganizationResponse(
+    return GrantingInstitutionResponse(
         id=organization.id,
         full_name=organization.full_name,
         abbreviation=organization.abbreviation,
     )
 
 
-@get("/funding-organizations", operation_id="ListFundingOrganizations")
+@get("/granting-institutions", operation_id="ListGrantingInstitutions")
 async def handle_retrieve_organizations(
     session_maker: async_sessionmaker[Any],
-) -> list[FundingOrganizationResponse]:
+) -> list[GrantingInstitutionResponse]:
     async with session_maker() as session:
         return [
-            FundingOrganizationResponse(
+            GrantingInstitutionResponse(
                 id=organization.id,
                 full_name=organization.full_name,
                 abbreviation=organization.abbreviation,
             )
             for organization in await session.scalars(
-                select(FundingOrganization).order_by(FundingOrganization.full_name.asc())
+                select(GrantingInstitution).order_by(GrantingInstitution.full_name.asc())
             )
         ]
 
 
-@patch("/funding-organizations/{organization_id:uuid}", operation_id="UpdateFundingOrganization")
+@patch("/granting-institutions/{organization_id:uuid}", operation_id="UpdateGrantingInstitution")
 async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
-) -> FundingOrganizationResponse:
+) -> GrantingInstitutionResponse:
     if not data:
         raise ValidationException("Request body is empty")
 
     async with session_maker() as session, session.begin():
         try:
             organization = await session.scalar(
-                update(FundingOrganization)
+                update(GrantingInstitution)
                 .values(data)
-                .returning(FundingOrganization)
-                .where(FundingOrganization.id == organization_id)
+                .returning(GrantingInstitution)
+                .where(GrantingInstitution.id == organization_id)
             )
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
-            logger.error("Error updating funding organization", exc_info=e)
-            raise DatabaseError("Error updating funding organization", context=str(e)) from e
+            logger.error("Error updating granting institution", exc_info=e)
+            raise DatabaseError("Error updating granting institution", context=str(e)) from e
 
-    return FundingOrganizationResponse(
+    return GrantingInstitutionResponse(
         id=organization.id,
         full_name=organization.full_name,
         abbreviation=organization.abbreviation,
     )
 
 
-@delete("/funding-organizations/{organization_id:uuid}", operation_id="DeleteFundingOrganization")
+@delete("/granting-institutions/{organization_id:uuid}", operation_id="DeleteGrantingInstitution")
 async def handle_delete_organization(organization_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:
             await session.execute(
-                sa_delete(FundingOrganization)
-                .returning(FundingOrganization)
-                .where(FundingOrganization.id == organization_id)
+                sa_delete(GrantingInstitution)
+                .returning(GrantingInstitution)
+                .where(GrantingInstitution.id == organization_id)
             )
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()
-            logger.error("Error deleting funding organization", exc_info=e)
-            raise DatabaseError("Error deleting funding organization", context=str(e)) from e
+            logger.error("Error deleting granting institution", exc_info=e)
+            raise DatabaseError("Error deleting granting institution", context=str(e)) from e

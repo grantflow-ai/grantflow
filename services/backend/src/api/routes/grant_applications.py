@@ -74,7 +74,7 @@ class AutofillResponse(TypedDict):
     field_name: NotRequired[str]
 
 
-class FundingOrganizationResponse(TypedDict):
+class GrantingInstitutionResponse(TypedDict):
     id: str
     full_name: str
     abbreviation: NotRequired[str]
@@ -92,8 +92,8 @@ class SourceResponse(TypedDict):
 class GrantTemplateResponse(TypedDict):
     id: str
     grant_application_id: str
-    funding_organization_id: NotRequired[str]
-    funding_organization: NotRequired[FundingOrganizationResponse]
+    granting_institution_id: NotRequired[str]
+    granting_institution: NotRequired[GrantingInstitutionResponse]
     grant_sections: list[GrantLongFormSection | GrantElement]
     submission_date: NotRequired[str]
     rag_sources: list[SourceResponse]
@@ -228,8 +228,8 @@ async def _handle_retrieve_application(
                 "updated_at": template.updated_at.isoformat(),
             }
 
-            if template.funding_organization_id:
-                template_response["funding_organization_id"] = str(template.funding_organization_id)
+            if template.granting_institution_id:
+                template_response["granting_institution_id"] = str(template.granting_institution_id)
 
             if template.submission_date:
                 template_response["submission_date"] = template.submission_date.isoformat()
@@ -239,17 +239,17 @@ async def _handle_retrieve_application(
             if template.rag_job_id:
                 template_response["rag_job_id"] = str(template.rag_job_id)
 
-            if template.funding_organization:
-                org = template.funding_organization
-                funding_org_response: FundingOrganizationResponse = {
+            if template.granting_institution:
+                org = template.granting_institution
+                granting_institution_response: GrantingInstitutionResponse = {
                     "id": str(org.id),
                     "full_name": org.full_name,
                     "created_at": org.created_at.isoformat(),
                     "updated_at": org.updated_at.isoformat(),
                 }
                 if org.abbreviation:
-                    funding_org_response["abbreviation"] = org.abbreviation
-                template_response["funding_organization"] = funding_org_response
+                    granting_institution_response["abbreviation"] = org.abbreviation
+                template_response["granting_institution"] = granting_institution_response
 
             if hasattr(template, "rag_sources") and template.rag_sources:
                 for template_rag_source in template.rag_sources:
@@ -704,7 +704,7 @@ async def handle_duplicate_application(
                         {
                             "grant_application_id": new_app.id,
                             "grant_sections": template.grant_sections,
-                            "funding_organization_id": template.funding_organization_id,
+                            "granting_institution_id": template.granting_institution_id,
                             "submission_date": template.submission_date,
                         }
                     )

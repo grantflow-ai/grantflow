@@ -5,12 +5,12 @@ from uuid import UUID
 import pytest
 from dotenv import load_dotenv
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
-from packages.db.src.tables import FundingOrganization, Project
+from packages.db.src.tables import GrantingInstitution, Project
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
-from testing.utils import create_grant_application_data, process_funding_organization
+from testing.utils import create_grant_application_data, process_granting_institution
 
 load_dotenv()
 
@@ -219,7 +219,7 @@ def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str,
     return {
         "grant_sections": grant_sections,
         "grant_application_id": str(GRANT_APPLICATION_ID),
-        "funding_organization_id": None,
+        "granting_institution_id": None,
         "submission_date": "2025-04-26",
     }
 
@@ -227,15 +227,15 @@ def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str,
 @pytest.fixture
 async def nih_organization(
     async_session_maker: async_sessionmaker[Any],
-) -> FundingOrganization:
-    return await process_funding_organization(async_session_maker, "NIH")
+) -> GrantingInstitution:
+    return await process_granting_institution(async_session_maker, "NIH")
 
 
 @pytest.fixture
 async def erc_organization(
     async_session_maker: async_sessionmaker[Any],
-) -> FundingOrganization:
-    return await process_funding_organization(async_session_maker, "ERC")
+) -> GrantingInstitution:
+    return await process_granting_institution(async_session_maker, "ERC")
 
 
 @pytest.fixture
