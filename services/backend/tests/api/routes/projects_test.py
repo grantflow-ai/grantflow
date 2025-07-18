@@ -7,6 +7,7 @@ from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization, OrganizationInvitation, OrganizationUser, Project
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
+from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -94,7 +95,18 @@ async def test_retrieve_projects(
     async_session_maker: async_sessionmaker[Any],
     mocker: MockerFixture,
 ) -> None:
-    projects_data = ProjectFactory.batch(4)
+    organization = OrganizationFactory.build()
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(Organization).values(
+                id=organization.id,
+                name=organization.name,
+                description=organization.description,
+            )
+        )
+        await session.commit()
+
+    projects_data = ProjectFactory.batch(4, organization_id=organization.id)
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(Project).values(
@@ -104,6 +116,7 @@ async def test_retrieve_projects(
                         "name": value.name,
                         "description": value.description,
                         "logo_url": value.logo_url,
+                        "organization_id": organization.id,
                     }
                     for value in projects_data
                 ]
@@ -111,29 +124,18 @@ async def test_retrieve_projects(
         )
         await session.commit()
 
-    projects_with_user_access = projects_data[:3]
-    project_without_user_access = projects_data[3]
+    projects_data[:3]
+    projects_data[3]
 
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                [
-                    {
-                        "project_id": projects_with_user_access[0].id,
-                        "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.OWNER.value,
-                    },
-                    {
-                        "project_id": projects_with_user_access[1].id,
-                        "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.ADMIN.value,
-                    },
-                    {
-                        "project_id": projects_with_user_access[2].id,
-                        "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.COLLABORATOR.value,
-                    },
-                ]
+                {
+                    "organization_id": organization.id,
+                    "firebase_uid": firebase_uid,
+                    "role": UserRoleEnum.OWNER,
+                    "has_all_projects_access": True,
+                }
             )
         )
         await session.commit()
@@ -162,10 +164,9 @@ async def test_retrieve_projects(
     for _idx, _proj in enumerate(values):
         pass
 
-    assert len(values) == 3
-    assert all(value["id"] != str(project_without_user_access.id) for value in values)
+    assert len(values) == 4
 
-    for project in projects_with_user_access:
+    for project in projects_data:
         project_response = next(value for value in values if value["id"] == str(project.id))
         assert project_response["name"] == project.name
         assert project_response["description"] == project.description
@@ -175,11 +176,7 @@ async def test_retrieve_projects(
 
         user_member = next(m for m in project_response["members"] if m["firebase_uid"] == firebase_uid)
         assert user_member["email"] == "user@example.com"
-        assert user_member["role"] in [
-            UserRoleEnum.OWNER.value,
-            UserRoleEnum.ADMIN.value,
-            UserRoleEnum.COLLABORATOR.value,
-        ]
+        assert user_member["role"] == UserRoleEnum.OWNER.value
 
         members = project_response["members"]
         assert len(members) == 1
@@ -190,8 +187,6 @@ async def test_retrieve_projects(
         assert member["display_name"] == "Test User"
         assert member["photo_url"] == "https://example.com/photo.jpg"
 
-    assert all(value["id"] != str(project_without_user_access.id) for value in values)
-
 
 @pytest.mark.parametrize("user_role", (UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR))
 async def test_retrieve_project_success(
@@ -200,33 +195,37 @@ async def test_retrieve_project_success(
     user_role: UserRoleEnum,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        if user_role == UserRoleEnum.OWNER:
-            await session.execute(
-                insert(OrganizationUser).values(
-                    project_id=project.id,
-                    firebase_uid=firebase_uid,
-                    role=UserRoleEnum.OWNER.value,
-                )
+        await session.execute(
+            sa_delete(OrganizationUser).where(
+                OrganizationUser.organization_id == project.organization_id,
+                OrganizationUser.firebase_uid == firebase_uid,
             )
-        elif user_role == UserRoleEnum.ADMIN:
-            await session.execute(
-                insert(OrganizationUser).values(
-                    project_id=project.id,
-                    firebase_uid=firebase_uid,
-                    role=UserRoleEnum.ADMIN.value,
-                )
+        )
+
+        await session.execute(
+            insert(OrganizationUser).values(
+                organization_id=project.organization_id,
+                firebase_uid=firebase_uid,
+                role=user_role,
+                has_all_projects_access=True,
             )
-        else:
-            await session.execute(
-                insert(OrganizationUser).values(
-                    project_id=project.id,
-                    firebase_uid=firebase_uid,
-                    role=UserRoleEnum.COLLABORATOR.value,
-                )
-            )
+        )
         await session.commit()
+
+    mocker.patch(
+        "services.backend.src.api.routes.projects.get_users",
+        return_value={
+            firebase_uid: {
+                "uid": firebase_uid,
+                "email": f"test-{firebase_uid}@example.com",
+                "displayName": f"Test User {firebase_uid}",
+                "photoURL": f"https://example.com/photo-{firebase_uid}.jpg",
+            }
+        },
+    )
 
     grant_app1 = GrantApplicationFactory.build(
         project_id=project.id,
@@ -327,17 +326,19 @@ async def test_update_project_success(
         if user_role == UserRoleEnum.OWNER:
             await session.execute(
                 insert(OrganizationUser).values(
-                    project_id=project.id,
+                    organization_id=project.organization_id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.OWNER.value,
+                    has_all_projects_access=True,
                 )
             )
         else:
             await session.execute(
                 insert(OrganizationUser).values(
-                    project_id=project.id,
+                    organization_id=project.organization_id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN.value,
+                    has_all_projects_access=True,
                 )
             )
         await session.commit()
@@ -399,17 +400,19 @@ async def test_delete_project_failure_unauthorized(
         if user_role == UserRoleEnum.ADMIN:
             await session.execute(
                 insert(OrganizationUser).values(
-                    project_id=project.id,
+                    organization_id=project.organization_id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.ADMIN.value,
+                    has_all_projects_access=True,
                 )
             )
         else:
             await session.execute(
                 insert(OrganizationUser).values(
-                    project_id=project.id,
+                    organization_id=project.organization_id,
                     firebase_uid=firebase_uid,
                     role=UserRoleEnum.COLLABORATOR.value,
+                    has_all_projects_access=True,
                 )
             )
         await session.commit()
@@ -436,9 +439,10 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
         try:
             await session.execute(
                 insert(OrganizationUser).values(
-                    project_id=project.id,
+                    organization_id=project.organization_id,
                     firebase_uid=firebase_uid,
                     role=user_role.value,
+                    has_all_projects_access=True,
                 )
             )
             await session.commit()
@@ -661,9 +665,10 @@ async def test_delete_invitation_not_found(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=user_role,
+                has_all_projects_access=True,
             )
         )
         await session.commit()
@@ -686,9 +691,10 @@ async def test_delete_invitation_unauthorized_role(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.COLLABORATOR,
+                has_all_projects_access=True,
             )
         )
         await session.commit()
@@ -728,9 +734,10 @@ async def test_update_invitation_role_success(
         try:
             await session.execute(
                 insert(OrganizationUser).values(
-                    project_id=project.id,
+                    organization_id=project.organization_id,
                     firebase_uid=firebase_uid,
                     role=user_role.value,
+                    has_all_projects_access=True,
                 )
             )
 
@@ -817,9 +824,10 @@ async def test_update_invitation_role_not_found(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=user_role,
+                has_all_projects_access=True,
             )
         )
         await session.commit()
@@ -845,9 +853,10 @@ async def test_update_invitation_role_unauthorized_role(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.COLLABORATOR,
+                has_all_projects_access=True,
             )
         )
         await session.commit()
@@ -887,9 +896,10 @@ async def test_update_invitation_role_already_accepted(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.ADMIN,
+                has_all_projects_access=True,
             )
         )
 
@@ -929,9 +939,10 @@ async def test_update_invitation_role_higher_than_inviter(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.ADMIN,
+                has_all_projects_access=True,
             )
         )
 
@@ -1171,6 +1182,10 @@ async def test_list_project_members_success(
 
     async with async_session_maker() as session, session.begin():
         await session.execute(
+            sa_delete(OrganizationUser).where(OrganizationUser.organization_id == project.organization_id)
+        )
+
+        await session.execute(
             insert(OrganizationUser).values(
                 [
                     {
@@ -1228,12 +1243,10 @@ async def test_list_project_members_no_access(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     other_org = OrganizationFactory.build()
     other_project = ProjectFactory.build(organization_id=other_org.id)
 
     async with async_session_maker() as session, session.begin():
-        
         await session.execute(
             insert(Organization).values(
                 id=other_org.id,
@@ -1242,7 +1255,6 @@ async def test_list_project_members_no_access(
             )
         )
 
-        
         await session.execute(
             insert(Project).values(
                 id=other_project.id,
@@ -1252,7 +1264,6 @@ async def test_list_project_members_no_access(
             )
         )
 
-        
         await session.execute(
             insert(OrganizationUser).values(
                 organization_id=other_org.id,
@@ -1274,22 +1285,17 @@ async def test_update_member_role_cannot_modify_owner(
     project: Project,
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
+    project_owner_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                [
-                    {
-                        "organization_id": project.organization_id,
-                        "firebase_uid": firebase_uid,
-                        "role": UserRoleEnum.OWNER,
-                    },
-                    {
-                        "organization_id": project.organization_id,
-                        "firebase_uid": "owner2_uid",
-                        "role": UserRoleEnum.OWNER,
-                    },
-                ]
+                {
+                    "organization_id": project.organization_id,
+                    "firebase_uid": "owner2_uid",
+                    "role": UserRoleEnum.OWNER,
+                    "has_all_projects_access": True,
+                }
             )
         )
         await session.commit()
@@ -1348,9 +1354,10 @@ async def test_update_member_role_member_not_found(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,
+                has_all_projects_access=True,
             )
         )
         await session.commit()
@@ -1480,9 +1487,10 @@ async def test_remove_project_member_not_found(
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=project.id,
+                organization_id=project.organization_id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,
+                has_all_projects_access=True,
             )
         )
         await session.commit()

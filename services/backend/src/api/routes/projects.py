@@ -11,7 +11,7 @@ from jwt import decode, encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import OrganizationInvitation, OrganizationUser, Project, ProjectAccess
+from packages.db.src.tables import Organization, OrganizationInvitation, OrganizationUser, Project, ProjectAccess
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
@@ -140,7 +140,8 @@ async def handle_retrieve_projects(
         projects = list(
             await session.scalars(
                 select(Project)
-                .join(OrganizationUser)
+                .join(Organization, Project.organization_id == Organization.id)
+                .join(OrganizationUser, Organization.id == OrganizationUser.organization_id)
                 .where(
                     OrganizationUser.firebase_uid == request.auth,
                     OrganizationUser.deleted_at.is_(None),
@@ -153,9 +154,24 @@ async def handle_retrieve_projects(
             )
         )
 
-    all_member_uids = []
-    for project in projects:
-        all_member_uids.extend([pa.firebase_uid for pa in project.project_access])
+    org_ids = list({project.organization_id for project in projects})
+
+    async with session_maker() as session:
+        org_users = list(
+            await session.scalars(
+                select(OrganizationUser)
+                .where(OrganizationUser.organization_id.in_(org_ids))
+                .where(OrganizationUser.deleted_at.is_(None))
+            )
+        )
+
+    org_users_map: dict[UUID, list[OrganizationUser]] = {}
+    for org_user in org_users:
+        if org_user.organization_id not in org_users_map:
+            org_users_map[org_user.organization_id] = []
+        org_users_map[org_user.organization_id].append(org_user)
+
+    all_member_uids = list({ou.firebase_uid for ou in org_users})
 
     cached_data = await gather(*[store.get(uid) for uid in all_member_uids])
 
@@ -179,19 +195,23 @@ async def handle_retrieve_projects(
             description=project.description,
             logo_url=project.logo_url,
             role=next(
-                (pa.organization_user.role for pa in project.project_access if pa.firebase_uid == request.auth),
+                (ou.role for ou in org_users_map.get(project.organization_id, []) if ou.firebase_uid == request.auth),
                 UserRoleEnum.COLLABORATOR,
             ),
             applications_count=len(project.grant_applications),
             members=[
                 ProjectMemberInfo(
-                    firebase_uid=pa.firebase_uid,
-                    email=firebase_users[pa.firebase_uid]["email"],
-                    display_name=firebase_users.get(pa.firebase_uid, {}).get("displayName"),
-                    photo_url=firebase_users.get(pa.firebase_uid, {}).get("photoURL"),
-                    role=pa.organization_user.role,
+                    firebase_uid=ou.firebase_uid,
+                    email=firebase_users[ou.firebase_uid]["email"],
+                    display_name=firebase_users.get(ou.firebase_uid, {}).get("displayName"),
+                    photo_url=firebase_users.get(ou.firebase_uid, {}).get("photoURL"),
+                    role=ou.role,
                 )
-                for pa in project.project_access
+                for ou in org_users_map.get(project.organization_id, [])
+                if (
+                    ou.has_all_projects_access
+                    or any(pa.firebase_uid == ou.firebase_uid for pa in project.project_access)
+                )
             ],
         )
         for project in projects
@@ -247,7 +267,7 @@ async def handle_retrieve_project(
     store = request.app.stores.get("firebase_user_cache")
     logger.info("Retrieving project", project_id=project_id)
 
-    async with session_maker() as session, session.begin():
+    async with session_maker() as session:
         project = await session.scalar(
             select(Project)
             .options(
@@ -260,18 +280,24 @@ async def handle_retrieve_project(
             )
         )
 
-    organization_users = await session.scalars(
-        select(OrganizationUser)
-        .where(OrganizationUser.organization_id == project.organization_id)
-        .where(
-            OrganizationUser.has_all_projects_access
-            | (
-                OrganizationUser.firebase_uid.in_(
-                    select(ProjectAccess.firebase_uid).where(ProjectAccess.project_id == project.id)
+        if not project:
+            raise ValidationException("Project not found")
+
+        organization_users = list(
+            await session.scalars(
+                select(OrganizationUser)
+                .where(OrganizationUser.organization_id == project.organization_id)
+                .where(OrganizationUser.deleted_at.is_(None))
+                .where(
+                    OrganizationUser.has_all_projects_access
+                    | (
+                        OrganizationUser.firebase_uid.in_(
+                            select(ProjectAccess.firebase_uid).where(ProjectAccess.project_id == project.id)
+                        )
+                    )
                 )
             )
         )
-    )
     member_uids = [ou.firebase_uid for ou in organization_users]
 
     cached_data = await gather(*[store.get(uid) for uid in member_uids])
@@ -334,7 +360,6 @@ async def handle_delete_project(request: APIRequest, project_id: UUID, session_m
             if not project:
                 raise ValidationException("Project not found")
 
-            # Log audit event
             await log_organization_audit_from_request(
                 session=session,
                 request=request,
@@ -718,6 +743,7 @@ async def handle_list_project_members(
             await session.scalars(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == project.organization_id)
+                .where(OrganizationUser.deleted_at.is_(None))
                 .where(
                     OrganizationUser.has_all_projects_access
                     | (
