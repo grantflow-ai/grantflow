@@ -38,14 +38,23 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
         organization_user = result.scalars().first()
 
         if organization_user is None:
-            default_project = Project(name="New Research Project")
+            # Create a default organization for new users
+            from packages.db.src.tables import Organization
+            default_organization = Organization(name="My Organization")
+            session.add(default_organization)
+            await session.flush()
+
+            # Create a default project within the organization
+            default_project = Project(name="New Research Project", organization_id=default_organization.id)
             session.add(default_project)
             await session.flush()
 
+            # Create organization user with full access
             organization_user = OrganizationUser(
-                project_id=default_project.id,
+                organization_id=default_organization.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,
+                has_all_projects_access=True,
             )
             session.add(organization_user)
 
