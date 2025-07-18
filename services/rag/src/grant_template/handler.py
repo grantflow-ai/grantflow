@@ -4,7 +4,7 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
-from packages.db.src.tables import FundingOrganization, GrantTemplate, GrantTemplateSource, RagSource
+from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 async def extract_and_enrich_sections(
     cfp_content: list[Content],
     cfp_subject: str,
-    organization: FundingOrganization | None,
+    organization: GrantingInstitution | None,
     parent_id: UUID,
     job_manager: JobManager,
 ) -> list[GrantElement | GrantLongFormSection]:
@@ -170,7 +170,7 @@ async def grant_template_generation_pipeline_handler(
                 )
             ]
             funding_organizations = list(
-                await session.scalars(select(FundingOrganization).order_by(FundingOrganization.full_name.asc()))
+                await session.scalars(select(GrantingInstitution).order_by(GrantingInstitution.full_name.asc()))
             )
 
         organization_mapping = {
@@ -279,7 +279,7 @@ async def grant_template_generation_pipeline_handler(
                 .where(GrantTemplate.id == grant_template_id)
                 .values(
                     {
-                        "funding_organization_id": UUID(extraction_result["organization_id"])
+                        "granting_institution_id": UUID(extraction_result["organization_id"])
                         if extraction_result["organization_id"]
                         else None,
                         "submission_date": submission_date,

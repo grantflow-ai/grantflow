@@ -6,10 +6,10 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationSource,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
     OrganizationUser,
@@ -94,15 +94,15 @@ async def test_retrieve_application_sources_empty(
 
 async def test_retrieve_organization_sources(
     test_client: TestingClientType,
-    funding_organization: FundingOrganization,
-    funding_organization_file: FundingOrganizationSource,
-    funding_organization_url: FundingOrganizationSource,
+    granting_institution: GrantingInstitution,
+    granting_institution_file: GrantingInstitutionSource,
+    granting_institution_url: GrantingInstitutionSource,
     rag_file: RagFile,
     rag_url: RagUrl,
     mock_admin_code: Mock,
 ) -> None:
     response = await test_client.get(
-        f"/organizations/{funding_organization.id}/sources",
+        f"/organizations/{granting_institution.id}/sources",
         headers={"Authorization": "test-admin-code"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -244,13 +244,13 @@ async def test_delete_application_source_deletes_from_gcs(
 
 async def test_delete_organization_source(
     test_client: TestingClientType,
-    funding_organization: FundingOrganization,
-    funding_organization_file: FundingOrganizationSource,
+    granting_institution: GrantingInstitution,
+    granting_institution_file: GrantingInstitutionSource,
     async_session_maker: async_sessionmaker[Any],
     mock_admin_code: Mock,
 ) -> None:
     response = await test_client.delete(
-        f"/organizations/{funding_organization.id}/sources/{funding_organization_file.rag_source_id}",
+        f"/organizations/{granting_institution.id}/sources/{granting_institution_file.rag_source_id}",
         headers={"Authorization": "test-admin-code"},
     )
 
@@ -258,14 +258,14 @@ async def test_delete_organization_source(
 
     async with async_session_maker() as session:
         with pytest.raises(NoResultFound):
-            await session.get_one(RagSource, funding_organization_file.rag_source_id)
+            await session.get_one(RagSource, granting_institution_file.rag_source_id)
 
         with pytest.raises(NoResultFound):
             await session.get_one(
-                FundingOrganizationSource,
+                GrantingInstitutionSource,
                 {
-                    "funding_organization_id": funding_organization.id,
-                    "rag_source_id": funding_organization_file.rag_source_id,
+                    "granting_institution_id": granting_institution.id,
+                    "rag_source_id": granting_institution_file.rag_source_id,
                 },
             )
 
@@ -378,7 +378,7 @@ async def test_create_upload_url(
 
 async def test_create_organization_upload_url(
     test_client: TestingClientType,
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
     mock_admin_code: Mock,
     mocker: MockerFixture,
 ) -> None:
@@ -390,7 +390,7 @@ async def test_create_organization_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/organizations/{funding_organization.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/organizations/{granting_institution.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "test-admin-code"},
     )
 
@@ -401,7 +401,7 @@ async def test_create_organization_upload_url(
 
     mock_create_url.assert_called_once_with(
         project_id=None,
-        parent_id=funding_organization.id,
+        parent_id=granting_institution.id,
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
@@ -503,13 +503,13 @@ async def test_handle_crawl_url_grant_application(
 async def test_handle_crawl_url_funding_organization(
     test_client: TestingClientType,
     mock_publish_url_crawling_task: AsyncMock,
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
     mock_admin_code: Mock,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/organizations/{funding_organization.id}/sources/crawl-url",
+        f"/organizations/{granting_institution.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "test-admin-code"},
     )
@@ -523,7 +523,7 @@ async def test_handle_crawl_url_funding_organization(
         url="https://example.org/docs",
         source_id=ANY,
         project_id=None,
-        parent_id=funding_organization.id,
+        parent_id=granting_institution.id,
         trace_id=ANY,
     )
 

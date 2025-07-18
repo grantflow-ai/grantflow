@@ -60,7 +60,7 @@ async def test_grant_template(
         session.add(application)
         await session.flush()
 
-        template = GrantTemplateFactory.build(grant_application_id=application.id, funding_organization_id=None)
+        template = GrantTemplateFactory.build(grant_application_id=application.id, granting_institution_id=None)
         session.add(template)
         await session.commit()
         return template

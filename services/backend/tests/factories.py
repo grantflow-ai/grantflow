@@ -21,11 +21,6 @@ from services.backend.src.api.routes.auth import (
     LoginResponse,
     OTPResponse,
 )
-from services.backend.src.api.routes.funding_organizations import (
-    CreateOrganizationRequestBody,
-    FundingOrganizationResponse,
-    UpdateOrganizationRequestBody,
-)
 from services.backend.src.api.routes.grant_applications import (
     ApplicationListItemResponse,
     ApplicationListResponse,
@@ -36,9 +31,14 @@ from services.backend.src.api.routes.grant_applications import (
     SourceResponse,
 )
 from services.backend.src.api.routes.grant_applications import (
-    FundingOrganizationResponse as AppFundingOrgResponse,
+    GrantingInstitutionResponse as AppGrantingInstitutionResponse,
 )
 from services.backend.src.api.routes.grant_template import UpdateGrantTemplateRequestBody
+from services.backend.src.api.routes.granting_institutions import (
+    CreateOrganizationRequestBody,
+    GrantingInstitutionResponse,
+    UpdateOrganizationRequestBody,
+)
 from services.backend.src.api.routes.notifications import (
     ListNotificationsResponse,
     NotificationResponse,
@@ -141,8 +141,8 @@ class UpdateOrganizationRequestBodyFactory(TypedDictFactory[UpdateOrganizationRe
         return faker.lexify("???")
 
 
-class FundingOrganizationResponseFactory(TypedDictFactory[FundingOrganizationResponse]):
-    __model__ = FundingOrganizationResponse
+class GrantingInstitutionResponseFactory(TypedDictFactory[GrantingInstitutionResponse]):
+    __model__ = GrantingInstitutionResponse
 
     @classmethod
     def id(cls) -> str:
@@ -183,8 +183,8 @@ class SourceResponseFactory(TypedDictFactory[SourceResponse]):
         return faker.url()
 
 
-class AppFundingOrgResponseFactory(TypedDictFactory[AppFundingOrgResponse]):
-    __model__ = AppFundingOrgResponse
+class AppGrantingInstitutionResponseFactory(TypedDictFactory[AppGrantingInstitutionResponse]):
+    __model__ = AppGrantingInstitutionResponse
 
     @classmethod
     def id(cls) -> str:
@@ -282,12 +282,12 @@ class GrantTemplateResponseFactory(TypedDictFactory[GrantTemplateResponse]):
         return str(uuid4())
 
     @classmethod
-    def funding_organization_id(cls) -> str:
+    def granting_institution_id(cls) -> str:
         return str(uuid4())
 
     @classmethod
-    def funding_organization(cls) -> AppFundingOrgResponse:
-        return AppFundingOrgResponseFactory.build()
+    def granting_institution(cls) -> AppGrantingInstitutionResponse:
+        return AppGrantingInstitutionResponseFactory.build()
 
     @classmethod
     def grant_sections(cls) -> list[GrantLongFormSection | GrantElement]:
@@ -456,7 +456,7 @@ class UpdateGrantTemplateRequestBodyFactory(TypedDictFactory[UpdateGrantTemplate
     __model__ = UpdateGrantTemplateRequestBody
 
     @classmethod
-    def funding_organization_id(cls) -> str:
+    def granting_institution_id(cls) -> str:
         return str(uuid4())
 
     @classmethod

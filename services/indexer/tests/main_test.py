@@ -10,10 +10,10 @@ from litestar.testing import AsyncTestClient
 from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationSource,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
     RagFile,
@@ -217,7 +217,7 @@ async def test_handle_file_indexing_funding_organization(
     mock_process_source: AsyncMock,
     mock_parse_object_uri: MagicMock,
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
     mock_publish_notification: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
@@ -240,27 +240,27 @@ async def test_handle_file_indexing_funding_organization(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"{funding_organization.id}/{funding_organization.id}/{source_id}/guidelines.pdf",
+                    "object_path": f"{granting_institution.id}/{granting_institution.id}/{source_id}/guidelines.pdf",
                 }
             )
         )
         await session.execute(
-            insert(FundingOrganizationSource).values(
+            insert(GrantingInstitutionSource).values(
                 {
                     "rag_source_id": source_id,
-                    "funding_organization_id": funding_organization.id,
+                    "granting_institution_id": granting_institution.id,
                 }
             )
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": funding_organization.id,
-        "parent_id": funding_organization.id,
+        "project_id": granting_institution.id,
+        "parent_id": granting_institution.id,
         "source_id": source_id,
         "blob_name": "guidelines.pdf",
     }
 
-    file_path = f"{funding_organization.id}/{funding_organization.id}/{source_id}/guidelines.pdf"
+    file_path = f"{granting_institution.id}/{granting_institution.id}/{source_id}/guidelines.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -273,18 +273,18 @@ async def test_handle_file_indexing_funding_organization(
         assert source.indexing_status == SourceIndexingStatusEnum.FINISHED
 
         org_file = await session.scalars(
-            select(FundingOrganizationSource).where(FundingOrganizationSource.rag_source_id == source.id)
+            select(GrantingInstitutionSource).where(GrantingInstitutionSource.rag_source_id == source.id)
         )
         org_file_record = org_file.first()
         assert org_file_record is not None
-        assert org_file_record.funding_organization_id == funding_organization.id
+        assert org_file_record.granting_institution_id == granting_institution.id
 
     mock_download_blob.assert_awaited_once_with(file_path)
     mock_process_source.assert_awaited_once()
 
     mock_publish_notification.assert_called_once()
     call_kwargs = mock_publish_notification.call_args.kwargs
-    assert str(call_kwargs["parent_id"]) == str(funding_organization.id)
+    assert str(call_kwargs["parent_id"]) == str(granting_institution.id)
     assert call_kwargs["event"] == "source_processing"
     assert call_kwargs["data"]["indexing_status"] == SourceIndexingStatusEnum.FINISHED
     assert call_kwargs["data"]["identifier"] == "guidelines.pdf"
