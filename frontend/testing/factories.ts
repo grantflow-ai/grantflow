@@ -108,11 +108,11 @@ export const RagSourceFactory = new Factory<RagSource>((factory) => {
 	};
 });
 
-type FundingOrganization = NonNullable<
+type GrantingInstitution = NonNullable<
 	API.CreateApplication.Http201.ResponseBody["grant_template"]
->["funding_organization"];
+>["granting_institution"];
 
-export const FundingOrganizationFactory = new Factory<NonNullable<FundingOrganization>>((factory) => ({
+export const GrantingInstitutionFactory = new Factory<NonNullable<GrantingInstitution>>((factory) => ({
 	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : undefined,
 	created_at: factory.date.past().toISOString(),
 	full_name: factory.company.name(),
@@ -159,8 +159,8 @@ type GrantSections = NonNullable<API.CreateApplication.Http201.ResponseBody["gra
 
 export const GrantSectionBaseFactory = new Factory<GrantSectionBase>((factory) => ({
 	id: factory.string.uuid(),
-	order: 0, // Default to 0, should be set explicitly when creating ordered sequences
-	parent_id: null, // Default to main section, override explicitly for sub-sections
+	order: factory.number.int({ max: 20, min: 0 }),
+	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
 	title: factory.lorem.sentence(),
 }));
 
@@ -176,8 +176,8 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 		count: { max: 5, min: 1 },
 	}),
 	max_words: factory.number.int({ max: 5000, min: 100 }),
-	order: 0, // Default to 0, should be set explicitly when creating ordered sequences
-	parent_id: null, // Default to main section, override explicitly for sub-sections
+	order: factory.number.int({ max: 20, min: 0 }),
+	parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
 	search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), {
 		count: { max: 3, min: 0 },
 	}),
@@ -189,31 +189,21 @@ export const GrantSectionDetailedFactory = new Factory<GrantSectionDetailed>((fa
 
 type GrantTemplate = NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>;
 
-export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => {
-	const sectionsCount = factory.number.int({ max: 5, min: 3 });
-	const grant_sections = Array.from({ length: sectionsCount }, (_, index) => {
-		const isDetailed = factory.datatype.boolean();
-		const baseSection = isDetailed ? GrantSectionDetailedFactory.build() : GrantSectionBaseFactory.build();
-		return {
-			...baseSection,
-			order: index,
-			parent_id: null,
-		};
-	});
-
-	return {
-		created_at: factory.date.past().toISOString(),
-		funding_organization: factory.datatype.boolean() ? FundingOrganizationFactory.build() : undefined,
-		funding_organization_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
-		grant_application_id: factory.string.uuid(),
-		grant_sections,
-		id: factory.string.uuid(),
-		rag_job_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
-		rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
-		submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
-		updated_at: factory.date.recent().toISOString(),
-	};
-});
+export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
+	created_at: factory.date.past().toISOString(),
+	grant_application_id: factory.string.uuid(),
+	grant_sections: factory.helpers.multiple(
+		() => (factory.datatype.boolean() ? GrantSectionDetailedFactory.build() : GrantSectionBaseFactory.build()),
+		{ count: { max: 10, min: 1 } },
+	),
+	granting_institution: factory.datatype.boolean() ? GrantingInstitutionFactory.build() : undefined,
+	granting_institution_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
+	id: factory.string.uuid(),
+	rag_job_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
+	rag_sources: RagSourceFactory.batch(factory.number.int({ max: 5, min: 0 })),
+	submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+	updated_at: factory.date.recent().toISOString(),
+}));
 
 type ApplicationStatus = "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
 

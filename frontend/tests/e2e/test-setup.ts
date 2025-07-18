@@ -138,7 +138,8 @@ export const test = base.extend({
 						form_inputs: null,
 						grant_template: {
 							created_at: new Date().toISOString(),
-							funding_organization: {
+							grant_sections: [],
+							granting_institution: {
 								abbreviation: "TFO",
 								created_at: new Date().toISOString(),
 								full_name: "Test Funding Organization",
@@ -146,7 +147,6 @@ export const test = base.extend({
 								logo_url: null,
 								updated_at: new Date().toISOString(),
 							},
-							grant_sections: [],
 							id: TEST_TEMPLATE_ID,
 							rag_sources: [
 								{
