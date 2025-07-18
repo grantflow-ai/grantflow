@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 from litestar import get, post
 from litestar.exceptions import NotAuthorizedException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import OrganizationUser, Project
+from packages.db.src.tables import Organization, OrganizationUser, Project
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -38,18 +38,17 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
         organization_user = result.scalars().first()
 
         if organization_user is None:
-            # Create a default organization for new users
-            from packages.db.src.tables import Organization
+            
             default_organization = Organization(name="My Organization")
             session.add(default_organization)
             await session.flush()
 
-            # Create a default project within the organization
+            
             default_project = Project(name="New Research Project", organization_id=default_organization.id)
             session.add(default_project)
             await session.flush()
 
-            # Create organization user with full access
+            
             organization_user = OrganizationUser(
                 organization_id=default_organization.id,
                 firebase_uid=firebase_uid,

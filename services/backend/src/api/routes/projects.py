@@ -103,9 +103,6 @@ async def handle_create_project(
     logger.info("Creating project by user", uid=request.auth)
     async with session_maker() as session, session.begin():
         try:
-            
-            
-            
             user_org = await session.scalar(
                 select(OrganizationUser).where(OrganizationUser.firebase_uid == request.auth)
             )
@@ -244,13 +241,10 @@ async def handle_retrieve_project(
             .where(Project.id == project_id)
         )
 
-    
-    
     organization_users = await session.scalars(
         select(OrganizationUser)
         .where(OrganizationUser.organization_id == project.organization_id)
         .where(
-            
             OrganizationUser.has_all_projects_access
             | (
                 OrganizationUser.firebase_uid.in_(
@@ -338,12 +332,10 @@ async def handle_create_invitation_redirect_url(
     )
     async with session_maker() as session, session.begin():
         try:
-            
             project = await session.scalar(select(Project).where(Project.id == project_id))
             if not project:
                 raise ValidationException("Project not found")
 
-            
             inviter = await session.scalar(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == project.organization_id)
@@ -419,12 +411,10 @@ async def handle_delete_invitation(
     logger.info("Deleting invitation", project_id=project_id, invitation_id=invitation_id)
     async with session_maker() as session, session.begin():
         try:
-            
             project = await session.scalar(select(Project).where(Project.id == project_id))
             if not project:
                 raise ValidationException("Project not found")
 
-            
             await session.scalar(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == project.organization_id)
@@ -471,7 +461,6 @@ async def handle_update_invitation_role(
     )
     async with session_maker() as session, session.begin():
         try:
-            
             project = await session.scalar(select(Project).where(Project.id == project_id))
             if not project:
                 raise ValidationException("Project not found")
@@ -614,18 +603,15 @@ async def handle_list_project_members(
 ) -> list[ProjectMemberResponse]:
     logger.info("Listing project members", project_id=project_id)
     async with session_maker() as session:
-        
         project = await session.scalar(select(Project).where(Project.id == project_id))
         if not project:
             return []
 
-        
         project_users = list(
             await session.scalars(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == project.organization_id)
                 .where(
-                    
                     OrganizationUser.has_all_projects_access
                     | (
                         OrganizationUser.firebase_uid.in_(
@@ -680,7 +666,6 @@ async def handle_update_member_role(
     )
     async with session_maker() as session, session.begin():
         try:
-            
             project = await session.scalar(select(Project).where(Project.id == project_id))
             if not project:
                 raise ValidationException("Project not found")
@@ -753,7 +738,6 @@ async def handle_remove_project_member(
     )
     async with session_maker() as session, session.begin():
         try:
-            
             project = await session.scalar(select(Project).where(Project.id == project_id))
             if not project:
                 raise ValidationException("Project not found")
@@ -782,7 +766,6 @@ async def handle_remove_project_member(
             if requester.role != UserRoleEnum.OWNER and target_member.role == UserRoleEnum.ADMIN:
                 raise ValidationException("Only OWNER can remove ADMIN members")
 
-            
             await session.execute(
                 sa_delete(OrganizationUser)
                 .where(OrganizationUser.organization_id == project.organization_id)
