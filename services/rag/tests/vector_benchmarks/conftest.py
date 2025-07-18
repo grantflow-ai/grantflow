@@ -30,7 +30,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testing.factories import RagFileFactory
 
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator
+from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
@@ -129,9 +129,7 @@ async def benchmark_entities(project: Any, grant_application: Any, benchmark_rag
 
 
 @pytest.fixture(params=["small_fast", "medium_balanced", "current_production"])
-async def configured_vector_db(
-    async_session_maker: async_sessionmaker[AsyncSession], request: Any
-) -> AsyncGenerator[dict[str, Any]]:
+async def configured_vector_db(async_session_maker: async_sessionmaker[AsyncSession], request: Any) -> dict[str, Any]:
     """
     Parametrized fixture that tests multiple vector configurations.
 

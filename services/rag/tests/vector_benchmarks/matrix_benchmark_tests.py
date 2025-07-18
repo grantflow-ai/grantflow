@@ -25,7 +25,7 @@ from .parameter_matrix import (
     VectorTestParameters,
 )
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator
+from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
