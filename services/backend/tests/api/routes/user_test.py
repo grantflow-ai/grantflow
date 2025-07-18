@@ -206,29 +206,38 @@ async def test_get_sole_owned_projects(
     mocker: MockerFixture,
     async_session_maker: async_sessionmaker[Any],
     project: Project,
+    organization: Organization,
     project_owner_user: ProjectMember,
     firebase_uid: str,
 ) -> None:
-    """Test getting list of sole-owned projects."""
+    """Test getting list of sole-owned organizations (API returns organizations despite endpoint name)."""
 
     async with async_session_maker() as session, session.begin():
-        shared_project = Project(name="Shared Project", description="Project with multiple owners")
-        session.add(shared_project)
+        
+        shared_org = Organization(
+            name="Shared Organization",
+            description="Organization with multiple owners"
+        )
+        session.add(shared_org)
         await session.flush()
 
+        
         session.add(
             ProjectMember(
-                project_id=shared_project.id,
+                organization_id=shared_org.id,
                 firebase_uid=firebase_uid,
                 role=UserRoleEnum.OWNER,
+                has_all_projects_access=True,
             )
         )
 
+        
         session.add(
             ProjectMember(
-                project_id=shared_project.id,
+                organization_id=shared_org.id,
                 firebase_uid="another_owner",
                 role=UserRoleEnum.OWNER,
+                has_all_projects_access=True,
             )
         )
         await session.commit()
@@ -240,10 +249,11 @@ async def test_get_sole_owned_projects(
 
     assert response.status_code == 200
     data = response.json()
+    
     assert data["count"] == 1
     assert len(data["projects"]) == 1
-    assert data["projects"][0]["id"] == str(project.id)
-    assert data["projects"][0]["name"] == project.name
+    assert data["projects"][0]["id"] == str(organization.id)
+    assert data["projects"][0]["name"] == organization.name
 
 
 async def test_get_sole_owned_projects_empty(

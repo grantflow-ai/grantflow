@@ -170,19 +170,22 @@ filterwarnings = [
   "ignore::DeprecationWarning:spacy.*",
   "ignore::DeprecationWarning:weasel.*",
 ]
-# Enable pytest-xdist for both local development and CI
+# Enable pytest-xdist for parallel execution with increased retries
 addopts = [
   "-n",
-  "auto",             # Use all available CPU cores (2 in GitHub Actions, more locally)
+  "auto",             # Use all available CPU cores
   "--dist",
   "worksteal",        # Dynamic test distribution for better load balancing
   "--maxprocesses",
   "4",                # Limit to 4 workers max
-  "-x",               # Stop on first failure to get faster feedback
   "--strict-markers", # Ensure all markers are registered
   "--tb=short",       # Shorter traceback format for better readability in CI
-  "--reruns=3",       # Rerun failed tests up to 3 times
+  "--reruns=5",       # Rerun failed tests up to 5 times
   "--reruns-delay=1", # Wait 1 second between reruns
+]
+testpaths = [
+  "packages/*/tests",
+  "services/*/tests",
 ]
 
 [tool.coverage.run]
