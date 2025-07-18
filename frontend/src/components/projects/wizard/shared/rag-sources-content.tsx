@@ -24,11 +24,11 @@ const statusColors = {
 };
 
 export function RagSourcesContent() {
-	const application = useApplicationStore((state) => state.application);
+	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
 
-	const ragSources = application?.grant_template?.rag_sources ?? [];
+	const ragSources = grantTemplate?.rag_sources ?? [];
 
-	if (!application?.grant_template) {
+	if (!grantTemplate) {
 		return (
 			<div className="space-y-4" data-testid="rag-sources-no-template">
 				<p className="text-sm text-gray-600">No template found. Please create or reload the application.</p>
