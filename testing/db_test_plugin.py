@@ -135,11 +135,17 @@ async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
 
 
 @pytest.fixture(autouse=True)
-async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
-    """Clean up database state between tests by truncating all tables."""
+async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[None]:
+    """Clean up database state between tests by truncating all tables except seeded data."""
+    
+    yield
+    
     async with async_session_maker() as session:
+        
+        preserved_tables = {"granting_institutions"}
         for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
+            if table.name not in preserved_tables:
+                await session.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
         await session.commit()
 
 
@@ -176,7 +182,10 @@ async def project_member_user(
 ) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
         organization_user = OrganizationUser(
-            organization_id=organization.id, firebase_uid=firebase_uid, role=UserRoleEnum.COLLABORATOR
+            organization_id=organization.id,
+            firebase_uid=firebase_uid,
+            role=UserRoleEnum.COLLABORATOR,
+            has_all_projects_access=True,
         )
         session.add(organization_user)
         await session.commit()

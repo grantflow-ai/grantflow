@@ -583,7 +583,7 @@ async def test_delete_invitation_success(
             await session.execute(
                 insert(OrganizationUser).values(
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": user_role.value,
                     }
@@ -594,7 +594,7 @@ async def test_delete_invitation_success(
                 insert(OrganizationInvitation)
                 .values(
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "email": "test@example.com",
                         "role": UserRoleEnum.COLLABORATOR,
                         "invitation_sent_at": datetime.now(UTC),
@@ -632,7 +632,7 @@ async def test_delete_invitation_not_project_member(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR.value,
                     "invitation_sent_at": datetime.now(UTC),
@@ -698,7 +698,7 @@ async def test_delete_invitation_unauthorized_role(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -738,7 +738,7 @@ async def test_update_invitation_role_success(
                 insert(OrganizationInvitation)
                 .values(
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "email": "test@example.com",
                         "role": UserRoleEnum.COLLABORATOR,
                         "invitation_sent_at": datetime.now(UTC),
@@ -785,7 +785,7 @@ async def test_update_invitation_role_not_project_member(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -857,7 +857,7 @@ async def test_update_invitation_role_unauthorized_role(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -897,7 +897,7 @@ async def test_update_invitation_role_already_accepted(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -939,7 +939,7 @@ async def test_update_invitation_role_higher_than_inviter(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -978,7 +978,7 @@ async def test_accept_invitation_success(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -990,6 +990,7 @@ async def test_accept_invitation_success(
 
     response = await test_client.post(
         f"/projects/invitations/{invitation.id}/accept",
+        json={},
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -1021,6 +1022,7 @@ async def test_accept_invitation_not_found(
     non_existent_invitation_id = "00000000-0000-0000-0000-000000000000"
     response = await test_client.post(
         f"/projects/invitations/{non_existent_invitation_id}/accept",
+        json={},
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -1044,7 +1046,7 @@ async def test_accept_invitation_already_accepted(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -1057,6 +1059,7 @@ async def test_accept_invitation_already_accepted(
 
     response = await test_client.post(
         f"/projects/invitations/{invitation.id}/accept",
+        json={},
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -1079,7 +1082,7 @@ async def test_accept_invitation_user_not_found(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -1091,6 +1094,7 @@ async def test_accept_invitation_user_not_found(
 
     response = await test_client.post(
         f"/projects/invitations/{invitation.id}/accept",
+        json={},
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -1114,7 +1118,7 @@ async def test_accept_invitation_wrong_user(
             insert(OrganizationInvitation)
             .values(
                 {
-                    "project_id": project.id,
+                    "organization_id": project.organization_id,
                     "email": "test@example.com",
                     "role": UserRoleEnum.COLLABORATOR,
                     "invitation_sent_at": datetime.now(UTC),
@@ -1126,6 +1130,7 @@ async def test_accept_invitation_wrong_user(
 
     response = await test_client.post(
         f"/projects/invitations/{invitation.id}/accept",
+        json={},
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -1169,19 +1174,22 @@ async def test_list_project_members_success(
             insert(OrganizationUser).values(
                 [
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.OWNER,
+                        "has_all_projects_access": True,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "admin_uid",
                         "role": UserRoleEnum.ADMIN,
+                        "has_all_projects_access": True,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "member_uid",
                         "role": UserRoleEnum.COLLABORATOR,
+                        "has_all_projects_access": True,
                     },
                 ]
             )
@@ -1220,19 +1228,34 @@ async def test_list_project_members_no_access(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    other_project = ProjectFactory.build()
+    
+    other_org = OrganizationFactory.build()
+    other_project = ProjectFactory.build(organization_id=other_org.id)
+
     async with async_session_maker() as session, session.begin():
+        
+        await session.execute(
+            insert(Organization).values(
+                id=other_org.id,
+                name=other_org.name,
+                description=other_org.description,
+            )
+        )
+
+        
         await session.execute(
             insert(Project).values(
                 id=other_project.id,
                 name=other_project.name,
                 description=other_project.description,
+                organization_id=other_org.id,
             )
         )
 
+        
         await session.execute(
             insert(OrganizationUser).values(
-                project_id=other_project.id,
+                organization_id=other_org.id,
                 firebase_uid="other_user_uid",
                 role=UserRoleEnum.OWNER,
             )
@@ -1257,12 +1280,12 @@ async def test_update_member_role_cannot_modify_owner(
             insert(OrganizationUser).values(
                 [
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.OWNER,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "owner2_uid",
                         "role": UserRoleEnum.OWNER,
                     },
@@ -1292,12 +1315,12 @@ async def test_update_member_role_only_owner_can_promote_to_admin(
             insert(OrganizationUser).values(
                 [
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.ADMIN,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "member_uid",
                         "role": UserRoleEnum.COLLABORATOR,
                     },
@@ -1353,12 +1376,12 @@ async def test_remove_project_member_success(
             insert(OrganizationUser).values(
                 [
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.OWNER,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "member_uid",
                         "role": UserRoleEnum.COLLABORATOR,
                     },
@@ -1393,12 +1416,12 @@ async def test_remove_project_member_cannot_remove_owner(
             insert(OrganizationUser).values(
                 [
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.OWNER,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "owner2_uid",
                         "role": UserRoleEnum.OWNER,
                     },
@@ -1426,12 +1449,12 @@ async def test_remove_project_member_only_owner_can_remove_admin(
             insert(OrganizationUser).values(
                 [
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.ADMIN,
                     },
                     {
-                        "project_id": project.id,
+                        "organization_id": project.organization_id,
                         "firebase_uid": "admin2_uid",
                         "role": UserRoleEnum.ADMIN,
                     },
