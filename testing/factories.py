@@ -171,7 +171,6 @@ class OrganizationUserFactory(SQLAlchemyFactory[OrganizationUser]):
     has_all_projects_access = False
 
 
-
 ProjectUserFactory = OrganizationUserFactory
 
 
