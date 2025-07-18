@@ -9,8 +9,8 @@ from litestar.types.internal_types import PathParameterDefinition
 from packages.db.src.constants import RAG_FILE, RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum, UserRoleEnum
 from packages.db.src.tables import (
-    FundingOrganizationSource,
     GrantApplicationSource,
+    GrantingInstitutionSource,
     GrantTemplateSource,
     RagFile,
     RagSource,
@@ -77,7 +77,7 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
             return key.format(value="GrantApplication")
         if "grant_templates" in paths:
             return key.format(value="GrantTemplate")
-        return key.format(value="FundingOrganization")
+        return key.format(value="GrantingInstitution")
 
     return _create_operation_id
 
@@ -99,7 +99,7 @@ async def handle_create_rag_source(
         parent_type = "grant_application"
         parent_id = application_id
     elif organization_id:
-        parent_type = "funding_organization"
+        parent_type = "granting_institution"
         parent_id = organization_id
     elif template_id:
         parent_type = "grant_template"
@@ -147,7 +147,7 @@ async def handle_create_rag_source(
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
-                if not project_id and parent_type != "funding_organization":
+                if not project_id and parent_type != "granting_institution":
                     raise BackendError("Missing project_id for file source")
 
                 await session.execute(
@@ -179,12 +179,12 @@ async def handle_create_rag_source(
                         }
                     )
                 )
-            elif parent_type == "funding_organization":
+            elif parent_type == "granting_institution":
                 await session.execute(
-                    insert(FundingOrganizationSource).values(
+                    insert(GrantingInstitutionSource).values(
                         {
                             "rag_source_id": source_id,
-                            "funding_organization_id": parent_id,
+                            "granting_institution_id": parent_id,
                         }
                     )
                 )
@@ -255,10 +255,10 @@ async def handle_retrieve_rag_sources(
             stmt = (
                 select(rag_poly)
                 .join(
-                    FundingOrganizationSource,
-                    FundingOrganizationSource.rag_source_id == rag_poly.id,
+                    GrantingInstitutionSource,
+                    GrantingInstitutionSource.rag_source_id == rag_poly.id,
                 )
-                .where(FundingOrganizationSource.funding_organization_id == organization_id)
+                .where(GrantingInstitutionSource.granting_institution_id == organization_id)
             )
 
         results = await session.scalars(stmt)
@@ -331,9 +331,9 @@ async def handle_delete_rag_source(
         else:
             statement = (
                 select(rag_poly)
-                .join(FundingOrganizationSource)
+                .join(GrantingInstitutionSource)
                 .where(
-                    FundingOrganizationSource.funding_organization_id == organization_id,
+                    GrantingInstitutionSource.granting_institution_id == organization_id,
                     rag_poly.id == source_id,
                 )
             )

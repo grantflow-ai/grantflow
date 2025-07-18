@@ -4,8 +4,8 @@ from uuid import UUID
 
 import pytest
 from packages.db.src.tables import (
-    FundingOrganization,
     GrantApplication,
+    GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
 )
@@ -110,7 +110,7 @@ def mock_section_metadata() -> list[SectionMetadata]:
 
 @pytest.fixture
 def mock_extracted_cfp_data(
-    nih_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
 ) -> dict[str, Any]:
     return {
         "organization_id": str(nih_organization.id),
@@ -173,11 +173,11 @@ def mock_rag_sources() -> list[RagSourceData]:
 @pytest.fixture
 async def test_grant_template(
     async_session_maker: async_sessionmaker[Any],
-    nih_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     grant_application: GrantApplication,
 ) -> GrantTemplate:
     template = GrantTemplateFactory.build(
-        funding_organization_id=nih_organization.id,
+        granting_institution_id=nih_organization.id,
         grant_application_id=grant_application.id,
         grant_sections=None,
         submission_date=None,
@@ -261,7 +261,7 @@ async def grant_template_with_sources(
 async def test_extract_and_enrich_sections_with_mocked_llm(
     sample_cfp_content: list[Content],
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
@@ -283,7 +283,7 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
         result = await extract_and_enrich_sections(
             cfp_content=sample_cfp_content,
             cfp_subject=cfp_subject,
-            organization=funding_organization,
+            organization=nih_organization,
             parent_id=parent_id,
             job_manager=mock_job_manager,
         )
@@ -328,8 +328,7 @@ async def test_extract_and_enrich_sections_with_mocked_llm(
 async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
     grant_template_with_sources: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
-    nih_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
     mock_extracted_cfp_data: dict[str, Any],
@@ -542,7 +541,7 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
 
 async def test_extract_and_enrich_sections_empty_cfp_content(
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
@@ -565,7 +564,7 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
         result = await extract_and_enrich_sections(
             cfp_content=[],
             cfp_subject=cfp_subject,
-            organization=funding_organization,
+            organization=nih_organization,
             parent_id=parent_id,
             job_manager=mock_job_manager,
         )
@@ -576,7 +575,7 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
 async def test_extract_and_enrich_sections_validation_error(
     sample_cfp_content: list[Content],
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
 ) -> None:
     """Test that extract_and_enrich_sections handles validation errors properly."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
@@ -592,7 +591,7 @@ async def test_extract_and_enrich_sections_validation_error(
             await extract_and_enrich_sections(
                 cfp_content=sample_cfp_content,
                 cfp_subject=cfp_subject,
-                organization=funding_organization,
+                organization=nih_organization,
                 parent_id=parent_id,
                 job_manager=mock_job_manager,
             )
@@ -603,7 +602,7 @@ async def test_extract_and_enrich_sections_validation_error(
 async def test_extract_and_enrich_sections_backend_error(
     sample_cfp_content: list[Content],
     cfp_subject: str,
-    funding_organization: FundingOrganization,
+    nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
 ) -> None:
     """Test that extract_and_enrich_sections handles backend errors properly."""
@@ -626,7 +625,7 @@ async def test_extract_and_enrich_sections_backend_error(
             await extract_and_enrich_sections(
                 cfp_content=sample_cfp_content,
                 cfp_subject=cfp_subject,
-                organization=funding_organization,
+                organization=nih_organization,
                 parent_id=parent_id,
                 job_manager=mock_job_manager,
             )

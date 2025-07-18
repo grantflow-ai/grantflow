@@ -12,10 +12,10 @@ from packages.db.src.connection import engine_ref, get_session_maker
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import (
     Base,
-    FundingOrganization,
-    FundingOrganizationSource,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
     Organization,
@@ -30,10 +30,10 @@ from sqlalchemy import NullPool, select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from testing.factories import (
-    FundingOrganizationFactory,
-    FundingOrganizationSourceFactory,
     GrantApplicationFactory,
     GrantApplicationSourceFactory,
+    GrantingInstitutionFactory,
+    GrantingInstitutionSourceFactory,
     GrantTemplateFactory,
     GrantTemplateSourceFactory,
     OrganizationFactory,
@@ -228,8 +228,8 @@ async def rag_url(async_session_maker: async_sessionmaker[Any]) -> RagUrl:
 
 
 @pytest.fixture
-async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> FundingOrganization:
-    org_data = FundingOrganizationFactory.build()
+async def granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
+    org_data = GrantingInstitutionFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(org_data)
         await session.commit()
@@ -237,11 +237,11 @@ async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> 
 
 
 @pytest.fixture
-async def funding_organization_file(
-    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_file: RagFile
-) -> FundingOrganizationSource:
-    data = FundingOrganizationSourceFactory.build(
-        funding_organization_id=funding_organization.id, rag_source_id=rag_file.id
+async def granting_institution_file(
+    async_session_maker: async_sessionmaker[Any], granting_institution: GrantingInstitution, rag_file: RagFile
+) -> GrantingInstitutionSource:
+    data = GrantingInstitutionSourceFactory.build(
+        granting_institution_id=granting_institution.id, rag_source_id=rag_file.id
     )
     async with async_session_maker() as session, session.begin():
         session.add(data)
@@ -250,11 +250,11 @@ async def funding_organization_file(
 
 
 @pytest.fixture
-async def funding_organization_url(
-    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_url: RagUrl
-) -> FundingOrganizationSource:
-    data = FundingOrganizationSourceFactory.build(
-        funding_organization_id=funding_organization.id, rag_source_id=rag_url.id
+async def granting_institution_url(
+    async_session_maker: async_sessionmaker[Any], granting_institution: GrantingInstitution, rag_url: RagUrl
+) -> GrantingInstitutionSource:
+    data = GrantingInstitutionSourceFactory.build(
+        granting_institution_id=granting_institution.id, rag_source_id=rag_url.id
     )
     async with async_session_maker() as session, session.begin():
         session.add(data)
@@ -302,12 +302,12 @@ async def grant_template(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> GrantTemplate:
     async with async_session_maker() as session:
-        result = await session.execute(select(FundingOrganization.id).where(FundingOrganization.abbreviation == "NIH"))
-        funding_organization_id = result.scalar_one()
+        result = await session.execute(select(GrantingInstitution.id).where(GrantingInstitution.abbreviation == "NIH"))
+        granting_institution_id = result.scalar_one()
 
     grant_template_data = GrantTemplateFactory.build(
         grant_application_id=grant_application.id,
-        funding_organization_id=funding_organization_id,
+        granting_institution_id=granting_institution_id,
         grant_sections=[
             {
                 "title": "Executive Summary",

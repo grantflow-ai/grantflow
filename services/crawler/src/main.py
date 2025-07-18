@@ -35,7 +35,7 @@ from packages.db.src.tables import (
     RagFile,
     GrantApplicationSource,
     GrantTemplateSource,
-    FundingOrganizationSource,
+    GrantingInstitutionSource,
 )
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
@@ -168,10 +168,10 @@ async def handle_gcs_file_upload(
                 )
             elif parent_type == "funding_organization":
                 await session.execute(
-                    insert(FundingOrganizationSource).values(
+                    insert(GrantingInstitutionSource).values(
                         {
                             "rag_source_id": source_id,
-                            "funding_organization_id": crawling_request["parent_id"],
+                            "granting_institution_id": crawling_request["parent_id"],
                         }
                     )
                 )
@@ -326,8 +326,8 @@ async def handle_url_crawling(
                     parent_type = "grant_template"
 
                 elif await session.scalar(
-                    select(FundingOrganizationSource).where(
-                        FundingOrganizationSource.rag_source_id
+                    select(GrantingInstitutionSource).where(
+                        GrantingInstitutionSource.rag_source_id
                         == crawling_request["source_id"]
                     )
                 ):
