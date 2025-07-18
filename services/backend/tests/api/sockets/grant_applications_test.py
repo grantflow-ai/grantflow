@@ -9,8 +9,8 @@ from litestar.testing import TestClient
 from packages.db.src.enums import ApplicationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
-    Project,
     OrganizationUser,
+    Project,
 )
 from packages.shared_utils.src.pubsub import SourceProcessingResult, WebsocketMessage
 from sqlalchemy import insert, select

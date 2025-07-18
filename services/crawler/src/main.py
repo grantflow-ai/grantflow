@@ -311,7 +311,7 @@ async def handle_url_crawling(
             async with session_maker() as session:
                 if await session.scalar(
                     select(GrantApplicationSource).where(
-                        GrantApplicationRagSource.rag_source_id
+                        GrantApplicationSource.rag_source_id
                         == crawling_request["source_id"]
                     )
                 ):
@@ -319,7 +319,7 @@ async def handle_url_crawling(
 
                 elif await session.scalar(
                     select(GrantTemplateSource).where(
-                        GrantTemplateRagSource.rag_source_id
+                        GrantTemplateSource.rag_source_id
                         == crawling_request["source_id"]
                     )
                 ):
@@ -327,7 +327,7 @@ async def handle_url_crawling(
 
                 elif await session.scalar(
                     select(FundingOrganizationSource).where(
-                        FundingOrganizationRagSource.rag_source_id
+                        FundingOrganizationSource.rag_source_id
                         == crawling_request["source_id"]
                     )
                 ):

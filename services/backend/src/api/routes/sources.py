@@ -238,27 +238,27 @@ async def handle_retrieve_rag_sources(
                 select(rag_poly)
                 .join(
                     GrantApplicationSource,
-                    GrantApplicationRagSource.rag_source_id == rag_poly.id,
+                    GrantApplicationSource.rag_source_id == rag_poly.id,
                 )
-                .where(GrantApplicationRagSource.grant_application_id == application_id)
+                .where(GrantApplicationSource.grant_application_id == application_id)
             )
         elif template_id:
             stmt = (
                 select(rag_poly)
                 .join(
                     GrantTemplateSource,
-                    GrantTemplateRagSource.rag_source_id == rag_poly.id,
+                    GrantTemplateSource.rag_source_id == rag_poly.id,
                 )
-                .where(GrantTemplateRagSource.grant_template_id == template_id)
+                .where(GrantTemplateSource.grant_template_id == template_id)
             )
         else:
             stmt = (
                 select(rag_poly)
                 .join(
                     FundingOrganizationSource,
-                    FundingOrganizationRagSource.rag_source_id == rag_poly.id,
+                    FundingOrganizationSource.rag_source_id == rag_poly.id,
                 )
-                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
+                .where(FundingOrganizationSource.funding_organization_id == organization_id)
             )
 
         results = await session.scalars(stmt)
@@ -315,7 +315,7 @@ async def handle_delete_rag_source(
                 select(rag_poly)
                 .join(GrantApplicationSource)
                 .where(
-                    GrantApplicationRagSource.grant_application_id == application_id,
+                    GrantApplicationSource.grant_application_id == application_id,
                     rag_poly.id == source_id,
                 )
             )
@@ -324,7 +324,7 @@ async def handle_delete_rag_source(
                 select(rag_poly)
                 .join(GrantTemplateSource)
                 .where(
-                    GrantTemplateRagSource.grant_template_id == template_id,
+                    GrantTemplateSource.grant_template_id == template_id,
                     rag_poly.id == source_id,
                 )
             )
@@ -333,7 +333,7 @@ async def handle_delete_rag_source(
                 select(rag_poly)
                 .join(FundingOrganizationSource)
                 .where(
-                    FundingOrganizationRagSource.funding_organization_id == organization_id,
+                    FundingOrganizationSource.funding_organization_id == organization_id,
                     rag_poly.id == source_id,
                 )
             )

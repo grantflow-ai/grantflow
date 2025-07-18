@@ -191,7 +191,7 @@ async def test_handle_file_indexing_grant_application(
         assert rag_file.mime_type == "application/pdf"
 
         app_file = await session.scalar(
-            select(GrantApplicationSource).where(GrantApplicationRagSource.rag_source_id == source_id)
+            select(GrantApplicationSource).where(GrantApplicationSource.rag_source_id == source_id)
         )
         assert app_file is not None
         assert app_file.grant_application_id == grant_application.id
@@ -273,7 +273,7 @@ async def test_handle_file_indexing_funding_organization(
         assert source.indexing_status == SourceIndexingStatusEnum.FINISHED
 
         org_file = await session.scalars(
-            select(FundingOrganizationSource).where(FundingOrganizationRagSource.rag_source_id == source.id)
+            select(FundingOrganizationSource).where(FundingOrganizationSource.rag_source_id == source.id)
         )
         org_file_record = org_file.first()
         assert org_file_record is not None
@@ -360,7 +360,7 @@ async def test_handle_file_indexing_grant_template(
         assert file.mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
         template_file = await session.scalars(
-            select(GrantTemplateSource).where(GrantTemplateRagSource.rag_source_id == source.id)
+            select(GrantTemplateSource).where(GrantTemplateSource.rag_source_id == source.id)
         )
         template_file_record = template_file.first()
         assert template_file_record is not None

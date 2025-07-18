@@ -36,7 +36,7 @@ async def verify_rag_sources_indexed(
                         select(RagSource)
                         .join(GrantApplicationSource)
                         .join(GrantApplication)
-                        .where(GrantApplicationRagSource.grant_application_id == parent_id)
+                        .where(GrantApplicationSource.grant_application_id == parent_id)
                     )
                 )
             else:
@@ -45,7 +45,7 @@ async def verify_rag_sources_indexed(
                         select(RagSource)
                         .join(GrantTemplateSource)
                         .join(GrantTemplate)
-                        .where(GrantTemplateRagSource.grant_template_id == parent_id)
+                        .where(GrantTemplateSource.grant_template_id == parent_id)
                     )
                 )
 

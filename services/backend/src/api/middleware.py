@@ -10,7 +10,7 @@ from litestar.middleware import (
     AuthenticationResult,
 )
 from litestar.types import ASGIApp, Receive, Scope, Send
-from packages.db.src.tables import ProjectUser
+from packages.db.src.tables import OrganizationUser
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.tracing import start_span_with_trace_id
@@ -70,16 +70,16 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             async with connection.app.state.session_maker() as session:
                 stmt = (
                     select(OrganizationUser)
-                    .where(ProjectUser.firebase_uid == firebase_uid)
-                    .where(ProjectUser.project_id == project_id)
+                    .where(OrganizationUser.firebase_uid == firebase_uid)
+                    .where(OrganizationUser.project_id == project_id)
                 )
                 if allowed_roles is not None:
-                    stmt = stmt.where(ProjectUser.role.in_(allowed_roles))
+                    stmt = stmt.where(OrganizationUser.role.in_(allowed_roles))
 
                 result = await session.execute(stmt)
 
-            if project_user := result.scalar_one_or_none():
-                return AuthenticationResult(user=project_user.role, auth=firebase_uid)
+            if organization_user := result.scalar_one_or_none():
+                return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
             raise NotAuthorizedException
 
         if firebase_uid:

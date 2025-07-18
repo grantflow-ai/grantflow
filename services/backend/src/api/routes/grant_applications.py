@@ -424,7 +424,7 @@ async def handle_generate_application(
             .select_from(GrantApplicationSource)
             .join(RagSource)
             .where(
-                GrantApplicationRagSource.grant_application_id == application.id,
+                GrantApplicationSource.grant_application_id == application.id,
                 RagSource.indexing_status.in_(
                     (
                         SourceIndexingStatusEnum.INDEXING,
@@ -712,9 +712,7 @@ async def handle_duplicate_application(
                 )
 
             rag_sources = await session.execute(
-                select(GrantApplicationSource).where(
-                    GrantApplicationRagSource.grant_application_id == application_id
-                )
+                select(GrantApplicationSource).where(GrantApplicationSource.grant_application_id == application_id)
             )
             for rag_source in rag_sources.scalars():
                 await session.execute(

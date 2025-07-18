@@ -35,7 +35,7 @@ async def check_exists_files_being_indexed(
     if not application_id and not organization_id:
         raise ValidationError("Either application_id or organization_id must be provided.")
 
-    file_table_cls = GrantApplicationRagSource if application_id else FundingOrganizationRagSource
+    file_table_cls = GrantApplicationSource if application_id else FundingOrganizationSource
 
     async with session_maker() as session:
         return cast(
@@ -67,11 +67,11 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
             .options(
                 selectinload(GrantApplication.grant_template)
                 .selectinload(GrantTemplate.rag_sources)
-                .selectinload(GrantTemplateRagSource.rag_source.of_type(poly_rag_source))
+                .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source))
             )
             .options(
                 selectinload(GrantApplication.rag_sources).selectinload(
-                    GrantApplicationRagSource.rag_source.of_type(poly_rag_source)
+                    GrantApplicationSource.rag_source.of_type(poly_rag_source)
                 )
             )
             .where(GrantApplication.id == application_id)

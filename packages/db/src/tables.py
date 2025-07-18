@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
@@ -56,8 +56,7 @@ class Base(DeclarativeBase):
 
     def soft_delete(self) -> None:
         """Mark the record as soft deleted."""
-        from datetime import datetime as dt
-        self.deleted_at = dt.now()
+        self.deleted_at = datetime.now(UTC)
 
     def restore(self) -> None:
         """Restore a soft deleted record."""
@@ -107,9 +106,7 @@ class Organization(BaseWithUUIDPK):
         "Project", back_populates="organization", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        UniqueConstraint("name", name="uq_organization_name"),
-    )
+    __table_args__ = (UniqueConstraint("name", name="uq_organization_name"),)
 
 
 class OrganizationUser(Base):
@@ -128,9 +125,7 @@ class OrganizationUser(Base):
         "ProjectAccess", back_populates="organization_user", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        Index("idx_org_user_org_role", "organization_id", "role"),
-    )
+    __table_args__ = (Index("idx_org_user_org_role", "organization_id", "role"),)
 
 
 class OrganizationAuditLog(BaseWithUUIDPK):
@@ -182,17 +177,15 @@ class ProjectAccess(Base):
 
     firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
     organization_id: Mapped[UUID] = mapped_column(SA_UUID(), primary_key=True)
-    project_id: Mapped[UUID] = mapped_column(
-        SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True
-    )
+    project_id: Mapped[UUID] = mapped_column(SA_UUID(), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
     granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now())
 
     organization_user: Relationship["OrganizationUser"] = relationship(
         "OrganizationUser",
         primaryjoin="and_(ProjectAccess.firebase_uid == OrganizationUser.firebase_uid, "
-                    "ProjectAccess.organization_id == OrganizationUser.organization_id)",
+        "ProjectAccess.organization_id == OrganizationUser.organization_id)",
         back_populates="project_access",
-        viewonly=True
+        viewonly=True,
     )
     project: Relationship["Project"] = relationship("Project", back_populates="project_access")
 
@@ -200,7 +193,7 @@ class ProjectAccess(Base):
         ForeignKeyConstraint(
             ["firebase_uid", "organization_id"],
             ["organization_users.firebase_uid", "organization_users.organization_id"],
-            ondelete="CASCADE"
+            ondelete="CASCADE",
         ),
         Index("idx_project_access_user", "firebase_uid", "organization_id"),
     )
