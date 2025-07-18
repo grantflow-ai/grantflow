@@ -74,7 +74,10 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
                     GrantApplicationSource.rag_source.of_type(poly_rag_source)
                 )
             )
-            .where(GrantApplication.id == application_id)
+            .where(
+                GrantApplication.id == application_id,
+                GrantApplication.deleted_at.is_(None),
+            )
         )
         return result.scalar_one()
     except NoResultFound as e:
@@ -96,7 +99,10 @@ async def update_source_indexing_status(
         try:
             await session.execute(
                 update(RagSource)
-                .where(RagSource.id == source_id)
+                .where(
+                    RagSource.id == source_id,
+                    RagSource.deleted_at.is_(None),
+                )
                 .values({"indexing_status": indexing_status, "text_content": text_content})
             )
             if vectors:

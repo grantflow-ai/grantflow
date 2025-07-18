@@ -31,7 +31,6 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_autofill_task, publish_rag_task
-from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -39,6 +38,7 @@ from sqlalchemy.sql.functions import count
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
+from services.backend.src.utils.audit import DELETE_APPLICATION, log_organization_audit_from_request
 
 logger = get_logger(__name__)
 
@@ -363,29 +363,56 @@ async def handle_update_application(
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DeleteApplication",
 )
-async def handle_delete_application(application_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
+async def handle_delete_application(
+    request: APIRequest, application_id: UUID, session_maker: async_sessionmaker[Any]
+) -> None:
     logger.info("Deleting application", application_id=application_id)
 
     async with session_maker() as session, session.begin():
         try:
+            application = await session.scalar(
+                select(GrantApplication).where(
+                    GrantApplication.id == application_id,
+                    GrantApplication.deleted_at.is_(None),
+                )
+            )
+            if not application:
+                raise ValidationException("Application not found")
+
+            # Log audit event
+            await log_organization_audit_from_request(
+                session=session,
+                request=request,
+                organization_id=application.project.organization_id,
+                action=DELETE_APPLICATION,
+                details={
+                    "application_id": str(application_id),
+                    "application_title": application.title,
+                    "project_id": str(application.project_id),
+                },
+            )
+
             template_result = await session.execute(
-                select(GrantTemplate.id).where(GrantTemplate.grant_application_id == application_id)
+                select(GrantTemplate.id).where(
+                    GrantTemplate.grant_application_id == application_id,
+                    GrantTemplate.deleted_at.is_(None),
+                )
             )
             template_ids = template_result.scalars().all()
 
             if template_ids:
                 logger.debug(
-                    "Grant templates will be deleted due to CASCADE",
+                    "Grant templates will be soft deleted due to CASCADE",
                     application_id=str(application_id),
                     template_ids=[str(t_id) for t_id in template_ids],
                 )
 
-            await session.execute(sa_delete(GrantApplication).where(GrantApplication.id == application_id))
+            application.soft_delete()
             await session.commit()
 
             if template_ids:
                 logger.debug(
-                    "Application and associated templates deleted successfully",
+                    "Application and associated templates soft deleted successfully",
                     application_id=str(application_id),
                     deleted_template_ids=[str(t_id) for t_id in template_ids],
                 )
@@ -519,7 +546,10 @@ async def handle_list_applications(
     async with session_maker() as session:
         query = (
             select(GrantApplication, GrantTemplate.submission_date)
-            .where(GrantApplication.project_id == project_id)
+            .where(
+                GrantApplication.project_id == project_id,
+                GrantApplication.deleted_at.is_(None),
+            )
             .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
         )
 
@@ -666,16 +696,21 @@ async def handle_duplicate_application(
     async with session_maker() as session, session.begin():
         try:
             original_app = await session.scalar(
-                select(GrantApplication)
-                .where(GrantApplication.id == application_id)
-                .where(GrantApplication.project_id == project_id)
+                select(GrantApplication).where(
+                    GrantApplication.id == application_id,
+                    GrantApplication.project_id == project_id,
+                    GrantApplication.deleted_at.is_(None),
+                )
             )
 
             if not original_app:
                 raise NotFoundException("Application not found")
 
             template = await session.scalar(
-                select(GrantTemplate).where(GrantTemplate.grant_application_id == application_id)
+                select(GrantTemplate).where(
+                    GrantTemplate.grant_application_id == application_id,
+                    GrantTemplate.deleted_at.is_(None),
+                )
             )
 
             new_app = await session.scalar(
@@ -712,7 +747,10 @@ async def handle_duplicate_application(
                 )
 
             rag_sources = await session.execute(
-                select(GrantApplicationSource).where(GrantApplicationSource.grant_application_id == application_id)
+                select(GrantApplicationSource).where(
+                    GrantApplicationSource.grant_application_id == application_id,
+                    GrantApplicationSource.deleted_at.is_(None),
+                )
             )
             for rag_source in rag_sources.scalars():
                 await session.execute(

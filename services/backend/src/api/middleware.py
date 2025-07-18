@@ -78,10 +78,10 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
                 raise NotAuthorizedException
 
             async with connection.app.state.session_maker() as session:
-                stmt = (
-                    select(OrganizationUser)
-                    .where(OrganizationUser.firebase_uid == firebase_uid)
-                    .where(OrganizationUser.organization_id == organization_id)
+                stmt = select(OrganizationUser).where(
+                    OrganizationUser.firebase_uid == firebase_uid,
+                    OrganizationUser.organization_id == organization_id,
+                    OrganizationUser.deleted_at.is_(None),
                 )
                 if allowed_roles is not None:
                     stmt = stmt.where(OrganizationUser.role.in_(allowed_roles))
