@@ -37,7 +37,7 @@ async def test_login_new_user_creates_project(
         assert project_user is not None
         assert project_user.role == UserRoleEnum.OWNER
 
-        project = await session.scalar(select(Project).where(Project.id == project_user.project_id))
+        project = await session.scalar(select(Project).where(Project.organization_id == project_user.organization_id))
         assert project is not None
         assert project.name == "New Research Project"
 
@@ -62,7 +62,7 @@ async def test_login_existing_user_keeps_project(
             select(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid)
         )
         assert project_user is not None
-        original_project_id = project_user.project_id
+        original_organization_id = project_user.organization_id
 
     response = await test_client.post("/login", json=LoginRequestBody(id_token="123jeronimo"))
     assert response.status_code == HTTPStatus.CREATED
@@ -74,4 +74,4 @@ async def test_login_existing_user_keeps_project(
             select(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid)
         )
         assert project_user is not None
-        assert project_user.project_id == original_project_id
+        assert project_user.organization_id == original_organization_id
