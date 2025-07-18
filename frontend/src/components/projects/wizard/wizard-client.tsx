@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { NotificationHandler } from "@/components/projects/shared/notification-handler";
 import {
@@ -12,7 +12,7 @@ import {
 	ResearchPlanStep,
 } from "@/components/projects/wizard";
 import { WizardFooter, WizardHeader } from "@/components/projects/wizard/shared";
-import { WizardDialog } from "@/components/projects/wizard/shared/wizard-dialog";
+import { WizardDialog, type WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	type AutofillProgressMessage,
@@ -36,6 +36,7 @@ export function WizardClientComponent({ application: initialApplication, project
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
 	const getApplication = useApplicationStore((state) => state.getApplication);
+	const dialogRef = useRef<null | WizardDialogRef>(null);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
@@ -50,7 +51,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				key="Application Details"
 			/>
 		),
-		"Application Structure": <ApplicationStructureStep key="Application Structure" />,
+		"Application Structure": <ApplicationStructureStep dialogRef={dialogRef} key="Application Structure" />,
 		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
@@ -186,7 +187,7 @@ export function WizardClientComponent({ application: initialApplication, project
 			<WizardFooter />
 
 			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
-			<WizardDialog />
+			<WizardDialog ref={dialogRef} />
 		</div>
 	);
 }

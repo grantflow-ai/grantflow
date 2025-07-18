@@ -1,4 +1,5 @@
 import { AppButton } from "@/components/app/buttons/app-button";
+import { useApplicationStore } from "@/stores/application-store";
 
 interface RagSourcesFooterProps {
 	onBackToUploads?: () => void;
@@ -6,6 +7,12 @@ interface RagSourcesFooterProps {
 }
 
 export function RagSourcesFooter({ onBackToUploads, onContinue }: RagSourcesFooterProps) {
+	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources) ?? [];
+	const hasNoSources = ragSources.length === 0;
+	const allSourcesFailed = ragSources.length > 0 && ragSources.every((source) => source.status === "FAILED");
+
+	const isContinueDisabled = hasNoSources || allSourcesFailed;
+
 	return (
 		<div className="flex w-full justify-between items-center" data-testid="rag-sources-footer">
 			<AppButton
@@ -17,7 +24,14 @@ export function RagSourcesFooter({ onBackToUploads, onContinue }: RagSourcesFoot
 			>
 				Back to Uploads
 			</AppButton>
-			<AppButton data-testid="continue-button" onClick={onContinue} size="lg" type="button" variant="primary">
+			<AppButton
+				data-testid="continue-button"
+				disabled={isContinueDisabled}
+				onClick={onContinue}
+				size="lg"
+				type="button"
+				variant="primary"
+			>
 				Continue
 			</AppButton>
 		</div>

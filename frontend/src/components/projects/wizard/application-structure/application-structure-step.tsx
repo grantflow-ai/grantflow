@@ -2,14 +2,14 @@
 
 import { Plus } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect } from "react";
+import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
 import { createRagSourcesDialog } from "@/components/projects/wizard/shared/rag-sources-dialog-utils";
+import type { WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useWizardDialog } from "@/hooks/use-wizard-dialog";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
@@ -42,7 +42,11 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 	};
 };
 
-export function ApplicationStructureStep() {
+interface ApplicationStructureStepProps {
+	dialogRef: RefObject<null | WizardDialogRef>;
+}
+
+export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStepProps) {
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
 	const pollingIsActive = useWizardStore((state) => state.polling.isActive);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
@@ -50,8 +54,7 @@ export function ApplicationStructureStep() {
 	const startTemplateGeneration = useWizardStore((state) => state.startTemplateGeneration);
 
 	const templateRagSources = grantTemplate?.rag_sources ?? [];
-
-	const { closeDialog, openDialog } = useWizardDialog();
+	const dialogDismissedRef = useRef(false);
 
 	const canStartTemplateGeneration = useCallback(() => {
 		if (!grantTemplate) return false;
@@ -81,31 +84,32 @@ export function ApplicationStructureStep() {
 			return;
 		}
 
-		// Show dialog for failed sources
-		const ragDialog = createRagSourcesDialog({
-			onBackToUploads: () => {
-				closeDialog();
-				toPreviousStep();
-			},
-			onContinue: () => {
-				closeDialog();
-				if (canStartTemplateGeneration()) startTemplateGeneration();
-			},
-		});
+		// Only show dialog for failed sources if it hasn't been dismissed
+		if (hasFailedSources && !dialogDismissedRef.current) {
+			const ragDialog = createRagSourcesDialog({
+				onBackToUploads: () => {
+					dialogDismissedRef.current = true;
+					dialogRef.current?.close();
+					toPreviousStep();
+				},
+				onContinue: () => {
+					dialogDismissedRef.current = true;
+					dialogRef.current?.close();
+					if (canStartTemplateGeneration()) {
+						startTemplateGeneration();
+					}
+				},
+			});
 
-		openDialog("Review Required: Some Uploads Failed", ragDialog.content, {
-			description:
-				"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
-			footer: ragDialog.footer,
-		});
-	}, [
-		canStartTemplateGeneration,
-		templateRagSources,
-		closeDialog,
-		openDialog,
-		startTemplateGeneration,
-		toPreviousStep,
-	]);
+			dialogRef.current?.open({
+				content: ragDialog.content,
+				description:
+					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
+				footer: ragDialog.footer,
+				title: "Review Required: Some Uploads Failed",
+			});
+		}
+	}, [canStartTemplateGeneration, templateRagSources, dialogRef, startTemplateGeneration, toPreviousStep]);
 
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">

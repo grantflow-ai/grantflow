@@ -1,3 +1,4 @@
+import { forwardRef, type ReactNode, useImperativeHandle, useState } from "react";
 import {
 	AppDialog,
 	AppDialogContent,
@@ -6,20 +7,42 @@ import {
 	AppDialogHeader,
 	AppDialogTitle,
 } from "@/components/app/app-dialog";
-import { useWizardStore } from "@/stores/wizard-store";
 
-export function WizardDialog() {
-	const dialog = useWizardStore((state) => state.dialog);
+export interface WizardDialogRef {
+	close: () => void;
+	open: (content: DialogContent) => void;
+}
+
+interface DialogContent {
+	content: ReactNode;
+	description?: string;
+	footer?: ReactNode;
+	title: string;
+}
+
+export const WizardDialog = forwardRef<WizardDialogRef>((_, ref) => {
+	const [dialog, setDialog] = useState<{ isOpen: boolean } & DialogContent>({
+		content: null,
+		description: undefined,
+		footer: undefined,
+		isOpen: false,
+		title: "",
+	});
+
+	useImperativeHandle(ref, () => ({
+		close: () => {
+			setDialog((prev) => ({ ...prev, isOpen: false }));
+		},
+		open: (content: DialogContent) => {
+			setDialog({
+				...content,
+				isOpen: true,
+			});
+		},
+	}));
 
 	return (
-		<AppDialog
-			onOpenChange={(open) => {
-				if (!open) {
-					return;
-				}
-			}}
-			open={dialog.isOpen}
-		>
+		<AppDialog open={dialog.isOpen}>
 			<AppDialogContent className="w-fit min-w-3xl rounded outline-1 outline-primary p-8 border-0 max-h-[90vh] overflow-hidden flex flex-col">
 				<AppDialogHeader>
 					<AppDialogTitle className="text-app-black text-2xl font-medium font-heading leading-loose">
@@ -36,4 +59,6 @@ export function WizardDialog() {
 			</AppDialogContent>
 		</AppDialog>
 	);
-}
+});
+
+WizardDialog.displayName = "WizardDialog";
