@@ -409,7 +409,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).not.toHaveBeenCalled();
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
