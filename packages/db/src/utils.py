@@ -8,9 +8,9 @@ from sqlalchemy.orm import selectinload, with_polymorphic
 
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganizationSource,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
     RagFile,
@@ -35,7 +35,7 @@ async def check_exists_files_being_indexed(
     if not application_id and not organization_id:
         raise ValidationError("Either application_id or organization_id must be provided.")
 
-    file_table_cls = GrantApplicationSource if application_id else FundingOrganizationSource
+    file_table_cls = GrantApplicationSource if application_id else GrantingInstitutionSource
 
     async with session_maker() as session:
         return cast(
@@ -48,7 +48,7 @@ async def check_exists_files_being_indexed(
                         .where(
                             file_table_cls.grant_application_id == application_id
                             if hasattr(file_table_cls, "grant_application_id")
-                            else file_table_cls.funding_organization_id == organization_id
+                            else file_table_cls.granting_institution_id == organization_id
                         )
                         .where(RagFile.indexing_status == SourceIndexingStatusEnum.INDEXING)
                     )
@@ -63,7 +63,7 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
     try:
         result = await session.execute(
             select(GrantApplication)
-            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
+            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution))
             .options(
                 selectinload(GrantApplication.grant_template)
                 .selectinload(GrantTemplate.rag_sources)

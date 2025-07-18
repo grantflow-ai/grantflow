@@ -33,7 +33,7 @@ async def melanoma_application_data(async_session_maker: async_sessionmaker[Any]
             "grant_template": application.grant_template,
             "research_objectives": application.research_objectives or {},
             "grant_sections": application.grant_template.grant_sections if application.grant_template else [],
-            "organization_id": application.grant_template.funding_organization_id
+            "organization_id": application.grant_template.granting_institution_id
             if application.grant_template
             else None,
         }

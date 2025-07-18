@@ -12,10 +12,10 @@ from litestar.testing import AsyncTestClient
 from packages.db.src.constants import RAG_URL
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationSource,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
     RagSource,
@@ -214,7 +214,7 @@ async def test_handle_url_crawling_funding_organization(
     mock_upload_blob: AsyncMock,
     mock_construct_object_uri: Mock,
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
@@ -241,16 +241,16 @@ async def test_handle_url_crawling_funding_organization(
             )
         )
         await session.execute(
-            insert(FundingOrganizationSource).values(
+            insert(GrantingInstitutionSource).values(
                 {
                     "rag_source_id": source_id,
-                    "funding_organization_id": funding_organization.id,
+                    "granting_institution_id": granting_institution.id,
                 }
             )
         )
 
     pubsub_event = create_pubsub_event(
-        parent_id=funding_organization.id,
+        parent_id=granting_institution.id,
         source_id=source_id,
     )
 

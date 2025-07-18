@@ -11,9 +11,9 @@ from packages.db.src.enums import (
     UserRoleEnum,
 )
 from packages.db.src.tables import (
-    FundingOrganization,
     GrantApplication,
     GrantApplicationSource,
+    GrantingInstitution,
     GrantTemplate,
     GrantTemplateSource,
     OrganizationUser,
@@ -358,13 +358,13 @@ async def test_retrieve_application_with_grant_template(
     template_data = data["grant_template"]
     assert template_data["id"] == str(grant_template.id)
     assert "grant_sections" in template_data
-    assert "funding_organization_id" in template_data
+    assert "granting_institution_id" in template_data
     assert "rag_sources" in template_data
     assert template_data["rag_sources"] == []
     assert "rag_job_id" not in template_data
 
-    if "funding_organization" in template_data:
-        org_data = template_data["funding_organization"]
+    if "granting_institution" in template_data:
+        org_data = template_data["granting_institution"]
         assert "id" in org_data
         assert "full_name" in org_data
 
@@ -439,14 +439,14 @@ async def test_retrieve_application_with_complete_data(
         app = await session.get(GrantApplication, grant_application.id)
         template = await session.get(GrantTemplate, grant_template.id)
 
-        funding_org = FundingOrganization(
+        granting_institution = GrantingInstitution(
             full_name="Test Funding Organization Complete",
             abbreviation="TFOC",
         )
-        session.add(funding_org)
+        session.add(granting_institution)
         await session.flush()
 
-        template.funding_organization_id = funding_org.id
+        template.granting_institution_id = granting_institution.id
         template.submission_date = date(2024, 12, 31)
 
         app.form_inputs = {"principal_investigator": "Dr. Smith", "budget": "500000"}
@@ -488,8 +488,8 @@ async def test_retrieve_application_with_complete_data(
     template_data = data["grant_template"]
     assert template_data["id"] == str(grant_template.id)
     assert template_data["submission_date"] == "2024-12-31"
-    assert "funding_organization" in template_data
-    org_data = template_data["funding_organization"]
+    assert "granting_institution" in template_data
+    org_data = template_data["granting_institution"]
     assert org_data["full_name"] == "Test Funding Organization Complete"
     assert org_data["abbreviation"] == "TFOC"
 
@@ -711,7 +711,7 @@ async def test_list_applications_with_submission_dates(
         for _i, application in enumerate(applications):
             grant_template = GrantTemplateFactory.build(
                 grant_application_id=application.id,
-                funding_organization_id=None,
+                granting_institution_id=None,
                 submission_date=faker.date_between(start_date="-2y", end_date="+1y"),
             )
             session.add(grant_template)

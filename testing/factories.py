@@ -13,12 +13,12 @@ from packages.db.src.constants import (
 from packages.db.src.enums import RagGenerationStatusEnum, UserRoleEnum
 from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchObjective, ResearchTask
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationSource,
     GenerationNotification,
     GrantApplication,
     GrantApplicationGenerationJob,
     GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateGenerationJob,
     GrantTemplateSource,
@@ -123,14 +123,14 @@ class TextVectorFactory(SQLAlchemyFactory[TextVector]):
         return super().get_type_from_column(column)
 
 
-class FundingOrganizationFactory(SQLAlchemyFactory[FundingOrganization]):
-    __model__ = FundingOrganization
+class GrantingInstitutionFactory(SQLAlchemyFactory[GrantingInstitution]):
+    __model__ = GrantingInstitution
     __set_relationships__ = False
     __set_association_proxy__ = False
 
 
-class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationSource]):
-    __model__ = FundingOrganizationSource
+class GrantingInstitutionSourceFactory(SQLAlchemyFactory[GrantingInstitutionSource]):
+    __model__ = GrantingInstitutionSource
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])

@@ -7,18 +7,6 @@ from packages.shared_utils.src.server import create_litestar_app
 
 from services.backend.src.api.middleware import AuthMiddleware, TraceIdMiddleware
 from services.backend.src.api.routes.auth import handle_create_otp, handle_login
-from services.backend.src.api.routes.funding_organizations import (
-    handle_create_organization as handle_create_funding_org,
-)
-from services.backend.src.api.routes.funding_organizations import (
-    handle_delete_organization as handle_delete_funding_org,
-)
-from services.backend.src.api.routes.funding_organizations import (
-    handle_retrieve_organizations as handle_retrieve_funding_orgs,
-)
-from services.backend.src.api.routes.funding_organizations import (
-    handle_update_organization as handle_update_funding_org,
-)
 from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
@@ -32,6 +20,18 @@ from services.backend.src.api.routes.grant_applications import (
 from services.backend.src.api.routes.grant_template import (
     handle_generate_grant_template,
     handle_update_grant_template,
+)
+from services.backend.src.api.routes.granting_institutions import (
+    handle_create_organization as handle_create_granting_institution,
+)
+from services.backend.src.api.routes.granting_institutions import (
+    handle_delete_organization as handle_delete_granting_institution,
+)
+from services.backend.src.api.routes.granting_institutions import (
+    handle_retrieve_organizations as handle_retrieve_granting_institutions,
+)
+from services.backend.src.api.routes.granting_institutions import (
+    handle_update_organization as handle_update_granting_institution,
 )
 from services.backend.src.api.routes.notifications import (
     dismiss_notification,
@@ -83,21 +83,17 @@ configure_otel("backend")
 logger = get_logger(__name__)
 
 api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
-    
     handle_create_otp,
     handle_login,
-    
     delete_user,
     get_sole_owned_projects,
     get_sole_owned_organizations,
-    
     handle_create_org,
     handle_list_organizations,
     handle_get_organization,
     handle_update_org,
     handle_delete_org,
     handle_restore_organization,
-    
     handle_create_project,
     handle_retrieve_projects,
     handle_retrieve_project,
@@ -106,12 +102,10 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_list_project_members,
     handle_update_member_role,
     handle_remove_project_member,
-    
     handle_create_invitation_redirect_url,
     handle_delete_invitation,
     handle_update_invitation_role,
     handle_accept_invitation,
-    
     handle_create_application,
     handle_list_applications,
     handle_retrieve_application,
@@ -121,21 +115,17 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_generate_application,
     handle_trigger_autofill,
     handle_grant_application_notifications,
-    
     handle_generate_grant_template,
     handle_update_grant_template,
-    
-    handle_create_funding_org,
-    handle_retrieve_funding_orgs,
-    handle_update_funding_org,
-    handle_delete_funding_org,
-    
+    handle_create_granting_institution,
+    handle_retrieve_granting_institutions,
+    handle_update_granting_institution,
+    handle_delete_granting_institution,
     handle_create_upload_url,
     handle_crawl_url,
     handle_retrieve_rag_sources,
     handle_delete_rag_source,
     handle_retrieve_rag_job,
-    
     list_notifications,
     dismiss_notification,
 ]
