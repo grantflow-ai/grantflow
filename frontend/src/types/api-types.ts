@@ -19,7 +19,7 @@ export namespace API {
 };
 };
 
-	export namespace CrawlFundingOrganizationUrl {
+	export namespace CrawlGrantingInstitutionUrl {
 	export namespace Http201 {
 	export type ResponseBody = {
 	source_id: string;
@@ -113,14 +113,14 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
+	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
 	full_name: string;
 	id: string;
 	updated_at: string;
 };
-	funding_organization_id?: string;
+	granting_institution_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -197,7 +197,7 @@ export namespace API {
 };
 };
 
-	export namespace CreateFundingOrganizationRagSourceUploadUrl {
+	export namespace CreateGrantingInstitutionRagSourceUploadUrl {
 	export namespace Http201 {
 	export type ResponseBody = {
 	source_id: string;
@@ -383,7 +383,7 @@ export namespace API {
 };
 };
 
-	export namespace DeleteFundingOrganizationRagSource {
+	export namespace DeleteGrantingInstitutionRagSource {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
 };
@@ -549,14 +549,14 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
+	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
 	full_name: string;
 	id: string;
 	updated_at: string;
 };
-	funding_organization_id?: string;
+	granting_institution_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -910,14 +910,14 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
+	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
 	full_name: string;
 	id: string;
 	updated_at: string;
 };
-	funding_organization_id?: string;
+	granting_institution_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -990,7 +990,7 @@ export namespace API {
 };
 };
 
-	export namespace RetrieveFundingOrganizationRagSources {
+	export namespace RetrieveGrantingInstitutionRagSources {
 	export namespace Http200 {
 	export type ResponseBody = ({
 	created_at: string;
@@ -1189,14 +1189,14 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
+	granting_institution?: {
 	abbreviation?: string;
 	created_at: string;
 	full_name: string;
 	id: string;
 	updated_at: string;
 };
-	funding_organization_id?: string;
+	granting_institution_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];

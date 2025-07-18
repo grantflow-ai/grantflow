@@ -1,4 +1,4 @@
-import { FundingOrganizationFactory, OrganizationFactory } from "::testing/factories";
+import { GrantingInstitutionFactory, OrganizationFactory } from "::testing/factories";
 import type { API } from "@/types/api-types";
 
 const organizationStore = new Map<string, API.CreateOrganization.Http201.ResponseBody>();
@@ -15,10 +15,10 @@ export const organizationHandlers = {
 		return organization;
 	},
 
-	listFundingOrganizations: async (): Promise<
-		NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["funding_organization"][]
+	listGrantingInstitutions: async (): Promise<
+		NonNullable<API.CreateApplication.Http201.ResponseBody["grant_template"]>["granting_institution"][]
 	> => {
-		return FundingOrganizationFactory.batch(5);
+		return GrantingInstitutionFactory.batch(5);
 	},
 
 	updateOrganization: async ({
