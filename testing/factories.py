@@ -22,8 +22,10 @@ from packages.db.src.tables import (
     GrantTemplate,
     GrantTemplateGenerationJob,
     GrantTemplateSource,
+    Organization,
     OrganizationUser,
     Project,
+    ProjectAccess,
     RagFile,
     RagGenerationJob,
     RagSource,
@@ -134,24 +136,42 @@ class FundingOrganizationSourceFactory(SQLAlchemyFactory[FundingOrganizationSour
     source_type = choice([RAG_FILE, RAG_URL])
 
 
+class OrganizationFactory(SQLAlchemyFactory[Organization]):
+    __model__ = Organization
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+
+
 class ProjectFactory(SQLAlchemyFactory[Project]):
     __model__ = Project
     __set_relationships__ = False
     __set_association_proxy__ = False
+
+    organization_id = Use(lambda: faker.uuid4())
+
+
+class ProjectAccessFactory(SQLAlchemyFactory[ProjectAccess]):
+    __model__ = ProjectAccess
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+
+    firebase_uid = Use(lambda: faker.uuid4()[:128])
+    project_id = Use(lambda: faker.uuid4())
+    organization_id = Use(lambda: faker.uuid4())
 
 
 class OrganizationUserFactory(SQLAlchemyFactory[OrganizationUser]):
     __model__ = OrganizationUser
     __set_relationships__ = False
     __set_association_proxy__ = False
-    
+
     firebase_uid = Use(lambda: faker.uuid4()[:128])
     organization_id = Use(lambda: faker.uuid4())
     role = Use(lambda: choice(list(UserRoleEnum)))
     has_all_projects_access = False
 
 
-# Keep ProjectUserFactory as an alias for backward compatibility
+
 ProjectUserFactory = OrganizationUserFactory
 
 

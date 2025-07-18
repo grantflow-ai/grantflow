@@ -18,6 +18,7 @@ from packages.db.src.tables import (
     GrantApplicationSource,
     GrantTemplate,
     GrantTemplateSource,
+    Organization,
     OrganizationUser,
     Project,
     RagFile,
@@ -35,6 +36,7 @@ from testing.factories import (
     GrantApplicationSourceFactory,
     GrantTemplateFactory,
     GrantTemplateSourceFactory,
+    OrganizationFactory,
     OrganizationUserFactory,
     ProjectFactory,
     RagFileFactory,
@@ -142,8 +144,17 @@ async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None
 
 
 @pytest.fixture
-async def project(async_session_maker: async_sessionmaker[Any]) -> Project:
-    project_data = ProjectFactory.build()
+async def organization(async_session_maker: async_sessionmaker[Any]) -> Organization:
+    organization_data = OrganizationFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(organization_data)
+        await session.commit()
+    return organization_data
+
+
+@pytest.fixture
+async def project(async_session_maker: async_sessionmaker[Any], organization: Organization) -> Project:
+    project_data = ProjectFactory.build(organization_id=organization.id)
     async with async_session_maker() as session, session.begin():
         session.add(project_data)
         await session.commit()
@@ -151,8 +162,8 @@ async def project(async_session_maker: async_sessionmaker[Any]) -> Project:
 
 
 @pytest.fixture
-async def project_user(async_session_maker: async_sessionmaker[Any], project: Project) -> OrganizationUser:
-    user_data = OrganizationUserFactory.build(project_id=project.id)
+async def project_user(async_session_maker: async_sessionmaker[Any], organization: Organization) -> OrganizationUser:
+    user_data = OrganizationUserFactory.build(organization_id=organization.id)
     async with async_session_maker() as session, session.begin():
         session.add(user_data)
         await session.commit()
@@ -161,37 +172,41 @@ async def project_user(async_session_maker: async_sessionmaker[Any], project: Pr
 
 @pytest.fixture
 async def project_member_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
 ) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
-        project_user = OrganizationUser(
-            project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.COLLABORATOR
+        organization_user = OrganizationUser(
+            organization_id=organization.id, firebase_uid=firebase_uid, role=UserRoleEnum.COLLABORATOR
         )
-        session.add(project_user)
+        session.add(organization_user)
         await session.commit()
-    return project_user
+    return organization_user
 
 
 @pytest.fixture
 async def project_admin_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
 ) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
-        project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
-        session.add(project_user)
+        organization_user = OrganizationUser(
+            organization_id=organization.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN
+        )
+        session.add(organization_user)
         await session.commit()
-    return project_user
+    return organization_user
 
 
 @pytest.fixture
 async def project_owner_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
 ) -> OrganizationUser:
     async with async_session_maker() as session, session.begin():
-        project_user = OrganizationUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
-        session.add(project_user)
+        organization_user = OrganizationUser(
+            organization_id=organization.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
+        )
+        session.add(organization_user)
         await session.commit()
-    return project_user
+    return organization_user
 
 
 @pytest.fixture
