@@ -2,7 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 from packages.db.src.enums import ApplicationStatusEnum
-from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, Project, ProjectUser
+from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, OrganizationUser, Project
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType

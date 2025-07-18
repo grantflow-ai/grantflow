@@ -16,8 +16,8 @@ from packages.db.src.tables import (
     GrantApplicationSource,
     GrantTemplate,
     GrantTemplateSource,
-    Project,
     OrganizationUser,
+    Project,
     RagFile,
     RagUrl,
 )

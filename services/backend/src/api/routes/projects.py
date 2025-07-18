@@ -10,7 +10,7 @@ from jwt import encode
 from litestar import delete, get, patch, post
 from litestar.exceptions import ValidationException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Project, OrganizationUser, OrganizationInvitation
+from packages.db.src.tables import OrganizationInvitation, OrganizationUser, Project
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
@@ -137,7 +137,7 @@ async def handle_retrieve_projects(
             await session.scalars(
                 select(Project)
                 .join(OrganizationUser)
-                .where(ProjectUser.firebase_uid == request.auth)
+                .where(OrganizationUser.firebase_uid == request.auth)
                 .options(
                     selectinload(Project.project_users),
                     selectinload(Project.grant_applications),
@@ -323,8 +323,8 @@ async def handle_create_invitation_redirect_url(
         try:
             inviter = await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == request.auth)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == request.auth)
             )
 
             if not inviter:
@@ -337,8 +337,8 @@ async def handle_create_invitation_redirect_url(
             if firebase_user:
                 existing_member = await session.scalar(
                     select(OrganizationUser)
-                    .where(ProjectUser.project_id == project_id)
-                    .where(ProjectUser.firebase_uid == firebase_user["uid"])
+                    .where(OrganizationUser.project_id == project_id)
+                    .where(OrganizationUser.firebase_uid == firebase_user["uid"])
                 )
                 if existing_member:
                     raise ValidationException("User is already a member of this project")
@@ -398,14 +398,14 @@ async def handle_delete_invitation(
         try:
             await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == request.auth)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == request.auth)
             )
 
             invitation = await session.scalar(
                 select(OrganizationInvitation)
-                .where(UserProjectInvitation.id == invitation_id)
-                .where(UserProjectInvitation.project_id == project_id)
+                .where(OrganizationInvitation.id == invitation_id)
+                .where(OrganizationInvitation.project_id == project_id)
             )
 
             if not invitation:
@@ -413,8 +413,8 @@ async def handle_delete_invitation(
 
             await session.execute(
                 sa_delete(OrganizationInvitation)
-                .where(UserProjectInvitation.id == invitation_id)
-                .where(UserProjectInvitation.project_id == project_id)
+                .where(OrganizationInvitation.id == invitation_id)
+                .where(OrganizationInvitation.project_id == project_id)
             )
             await session.commit()
         except SQLAlchemyError as e:
@@ -444,16 +444,16 @@ async def handle_update_invitation_role(
         try:
             invitation = await session.scalar(
                 select(OrganizationInvitation)
-                .where(UserProjectInvitation.id == invitation_id)
-                .where(UserProjectInvitation.project_id == project_id)
+                .where(OrganizationInvitation.id == invitation_id)
+                .where(OrganizationInvitation.project_id == project_id)
             )
             if not invitation:
                 raise ValidationException("Invitation not found")
 
             inviter = await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == request.auth)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == request.auth)
             )
             if invitation.accepted_at is not None:
                 raise ValidationException("Cannot update role of an accepted invitation")
@@ -463,8 +463,8 @@ async def handle_update_invitation_role(
 
             invitation = await session.scalar(
                 update(OrganizationInvitation)
-                .where(UserProjectInvitation.id == invitation_id)
-                .where(UserProjectInvitation.project_id == project_id)
+                .where(OrganizationInvitation.id == invitation_id)
+                .where(OrganizationInvitation.project_id == project_id)
                 .values(role=data["role"])
                 .returning(OrganizationInvitation)
             )
@@ -509,7 +509,7 @@ async def handle_accept_invitation(
     async with session_maker() as session, session.begin():
         try:
             invitation = await session.scalar(
-                select(OrganizationInvitation).where(UserProjectInvitation.id == invitation_id)
+                select(OrganizationInvitation).where(OrganizationInvitation.id == invitation_id)
             )
 
             if not invitation:
@@ -539,7 +539,7 @@ async def handle_accept_invitation(
 
             await session.execute(
                 update(OrganizationInvitation)
-                .where(UserProjectInvitation.id == invitation_id)
+                .where(OrganizationInvitation.id == invitation_id)
                 .values(accepted_at=datetime.now(UTC))
             )
 
@@ -582,7 +582,9 @@ async def handle_list_project_members(
     async with session_maker() as session:
         project_users = list(
             await session.scalars(
-                select(OrganizationUser).where(ProjectUser.project_id == project_id).order_by(ProjectUser.role)
+                select(OrganizationUser)
+                .where(OrganizationUser.project_id == project_id)
+                .order_by(OrganizationUser.role)
             )
         )
 
@@ -602,7 +604,7 @@ async def handle_list_project_members(
                 "display_name": firebase_user.get("displayName"),
                 "photo_url": firebase_user.get("photoURL"),
                 "role": project_user.role,
-                "joined_at": datetime.now(UTC).isoformat(),  # TODO: Add created_at to ProjectUser table
+                "joined_at": datetime.now(UTC).isoformat(),  # TODO: Add created_at to OrganizationUser table
             }
             members.append(member)
 
@@ -631,8 +633,8 @@ async def handle_update_member_role(
         try:
             requester = await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == request.auth)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == request.auth)
             )
 
             if not requester:
@@ -640,8 +642,8 @@ async def handle_update_member_role(
 
             target_member = await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == firebase_uid)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == firebase_uid)
             )
 
             if not target_member:
@@ -699,8 +701,8 @@ async def handle_remove_project_member(
         try:
             requester = await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == request.auth)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == request.auth)
             )
 
             if not requester:
@@ -708,8 +710,8 @@ async def handle_remove_project_member(
 
             target_member = await session.scalar(
                 select(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == firebase_uid)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == firebase_uid)
             )
 
             if not target_member:
@@ -723,8 +725,8 @@ async def handle_remove_project_member(
 
             await session.execute(
                 sa_delete(OrganizationUser)
-                .where(ProjectUser.project_id == project_id)
-                .where(ProjectUser.firebase_uid == firebase_uid)
+                .where(OrganizationUser.project_id == project_id)
+                .where(OrganizationUser.firebase_uid == firebase_uid)
             )
             await session.commit()
 

@@ -6,8 +6,8 @@ from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantTemplate,
-    Project,
     OrganizationUser,
+    Project,
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
