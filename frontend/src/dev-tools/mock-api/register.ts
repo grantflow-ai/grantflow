@@ -54,7 +54,7 @@ export function registerMockHandlers(): void {
 
 	client.register("/organizations", mockHandlers.organizations.createOrganization);
 	client.register("/organizations/:organization_id", mockHandlers.organizations.updateOrganization);
-	client.register("/funding-organizations", mockHandlers.organizations.listFundingOrganizations);
+	client.register("/granting-institutions", mockHandlers.organizations.listGrantingInstitutions);
 
 	client.register("/projects/:project_id/invitations", mockHandlers.invitations.createInvitation);
 	client.register("/invitations/:invitation_id/accept", mockHandlers.invitations.acceptInvitation);

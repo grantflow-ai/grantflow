@@ -55,7 +55,7 @@ const mockCreateApplicationResponse = ApplicationFactory.build({
 	id: mockApplicationId,
 });
 
-const fundingOrg: NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>["funding_organization"] =
+const grantingInstitution: NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]>["granting_institution"] =
 	{
 		abbreviation: "NIH",
 		created_at: "2024-01-01T00:00:00Z",
@@ -67,9 +67,9 @@ const fundingOrg: NonNullable<API.RetrieveApplication.Http200.ResponseBody["gran
 const grantTemplate: NonNullable<API.RetrieveApplication.Http200.ResponseBody["grant_template"]> = {
 	...GrantTemplateFactory.build(),
 	created_at: "2024-01-01T00:00:00Z",
-	funding_organization: fundingOrg,
-	funding_organization_id: "org-1",
 	grant_application_id: mockApplicationId,
+	granting_institution: grantingInstitution,
+	granting_institution_id: "org-1",
 	id: mockTemplateId,
 	updated_at: "2024-01-01T00:00:00Z",
 };
