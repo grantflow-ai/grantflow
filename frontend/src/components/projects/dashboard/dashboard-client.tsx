@@ -3,7 +3,6 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import useSWR from "swr";
 import { createProject } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AvatarGroup } from "@/components/app";
@@ -37,7 +36,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	>(null);
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
 
-	const { deleteProject, duplicateProject, getProjects } = useProjectStore();
+	const { deleteProject, duplicateProject } = useProjectStore();
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
 
@@ -52,10 +51,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		router.push(routes.project.detail());
 	};
 
-	const { data: projects = initialProjects, mutate } = useSWR("projects", getProjects, {
-		fallback: initialProjects,
-		revalidateOnFocus: false,
-	});
+	const projects = initialProjects;
 
 	// Generate team members from all projects
 	const projectTeamMembers = projects
@@ -83,7 +79,6 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const confirmDeleteProject = async () => {
 		if (projectToDelete) {
 			await deleteProject(projectToDelete);
-			await mutate();
 			setProjectToDelete(null);
 		}
 	};
@@ -144,17 +139,10 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		setIsCreatingProject(true);
 		try {
 			const newProjectName = `New Project ${projects.length + 1}`;
-			const { id: projectId } = await createProject({
+			await createProject({
 				description: "",
 				name: newProjectName,
 			});
-
-			// Refresh projects list
-			await mutate();
-
-			// Navigate to the new project
-			navigateToProject(projectId, newProjectName);
-			router.push(routes.project.detail());
 		} catch {
 			addNotification({
 				message: "Failed to create project. Please try again.",
@@ -196,7 +184,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 					<AppHeader data-testid="dashboard-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 rounded-lg bg-white border border-app-gray-100 min-h-0"
+						className=" mb-6 px-10 relative flex flex-1 flex-col gap-10 py-14 rounded-lg mr-5  bg-white border border-app-gray-100 min-h-0"
 						data-testid="dashboard-main-content"
 					>
 						<main className="flex flex-col gap-8">
@@ -215,7 +203,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 								<div className="flex gap-6 items-center">
 									<main className="flex justify-end items-center gap-1">
 										<button
-											className="size-8 flex items-center justify-center bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
+											className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
 											data-testid="invite-collaborators-button"
 											onClick={() => {
 												if (projects.length > 0) {
