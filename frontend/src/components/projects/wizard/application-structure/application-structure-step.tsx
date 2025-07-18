@@ -6,8 +6,10 @@ import { useCallback, useEffect } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
+import { createRagSourcesDialog } from "@/components/projects/wizard/shared/rag-sources-dialog-utils";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useWizardDialog } from "@/hooks/use-wizard-dialog";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
@@ -41,31 +43,68 @@ const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
 };
 
 export function ApplicationStructureStep() {
-	const application = useApplicationStore((state) => state.application);
-	const generateTemplate = useApplicationStore((state) => state.generateTemplate);
-	const checkTemplateGeneration = useWizardStore((state) => state.checkTemplateGeneration);
-	const polling = useWizardStore((state) => state.polling);
-	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
-	const hasIndexingTemplateSources = useWizardStore((state) => state.hasIndexingTemplateSources);
+	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
+	const pollingIsActive = useWizardStore((state) => state.polling.isActive);
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+	const startTemplateGeneration = useWizardStore((state) => state.startTemplateGeneration);
+
+	const templateRagSources = grantTemplate?.rag_sources ?? [];
+
+	const { closeDialog, openDialog } = useWizardDialog();
+
+	const canStartTemplateGeneration = useCallback(() => {
+		if (!grantTemplate) return false;
+		if (grantTemplate.grant_sections.length > 0) return false;
+		if (isGeneratingTemplate) return false;
+		return !pollingIsActive;
+	}, [grantTemplate, isGeneratingTemplate, pollingIsActive]);
 
 	useEffect(() => {
-		if (
-			application?.grant_template &&
-			!application.grant_template.grant_sections.length &&
-			!polling.isActive &&
-			!hasIndexingTemplateSources()
-		) {
-			void generateTemplate(application.grant_template.id);
-			setGeneratingTemplate(true);
-			polling.start(checkTemplateGeneration, 2000, false);
+		if (templateRagSources.length === 0) return;
+
+		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
+		if (allFinished && canStartTemplateGeneration()) {
+			startTemplateGeneration();
+			return;
 		}
+
+		const hasIndexingSources = templateRagSources.some((source) => source.status === "INDEXING");
+		if (hasIndexingSources) {
+			return;
+		}
+
+		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
+
+		if (!hasFailedSources && canStartTemplateGeneration()) {
+			startTemplateGeneration();
+			return;
+		}
+
+		// Show dialog for failed sources
+		const ragDialog = createRagSourcesDialog({
+			onBackToUploads: () => {
+				closeDialog();
+				toPreviousStep();
+			},
+			onContinue: () => {
+				closeDialog();
+				if (canStartTemplateGeneration()) startTemplateGeneration();
+			},
+		});
+
+		openDialog("Review Required: Some Uploads Failed", ragDialog.content, {
+			description:
+				"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
+			footer: ragDialog.footer,
+		});
 	}, [
-		application,
-		generateTemplate,
-		checkTemplateGeneration,
-		polling,
-		setGeneratingTemplate,
-		hasIndexingTemplateSources,
+		canStartTemplateGeneration,
+		templateRagSources,
+		closeDialog,
+		openDialog,
+		startTemplateGeneration,
+		toPreviousStep,
 	]);
 
 	return (
@@ -119,6 +158,14 @@ function ApplicationStructurePreview() {
 		return (
 			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
 				<GeneratingLoader />
+			</WizardRightPane>
+		);
+	}
+
+	if (!grantSections.length) {
+		return (
+			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+				<EmptyStatePreview />
 			</WizardRightPane>
 		);
 	}

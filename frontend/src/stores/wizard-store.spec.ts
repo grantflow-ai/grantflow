@@ -267,8 +267,8 @@ describe("wizard store", () => {
 		});
 	});
 
-	describe("hasInProcessTemplateSources", () => {
-		it("should return true when template sources are in process", () => {
+	describe("hasTemplateSourcesWithStatuses", () => {
+		it("should return true when template sources match single status", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -280,10 +280,12 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({ application });
 
-			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(true);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses("INDEXING")).toBe(true);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses("FINISHED")).toBe(true);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses("FAILED")).toBe(false);
 		});
 
-		it("should return true when template sources have failed", () => {
+		it("should return true when template sources match multiple statuses", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -295,7 +297,10 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({ application });
 
-			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(true);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses(["INDEXING", "FAILED", "CREATED"])).toBe(
+				true,
+			);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses(["INDEXING", "CREATED"])).toBe(false);
 		});
 
 		it("should return true when template sources are created", () => {
@@ -307,10 +312,12 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({ application });
 
-			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(true);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses(["INDEXING", "FAILED", "CREATED"])).toBe(
+				true,
+			);
 		});
 
-		it("should return false when all template sources are finished", () => {
+		it("should return false when no template sources match", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					rag_sources: [
@@ -322,7 +329,9 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({ application });
 
-			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(false);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses(["INDEXING", "FAILED", "CREATED"])).toBe(
+				false,
+			);
 		});
 
 		it("should return false when no template sources exist", () => {
@@ -334,7 +343,7 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({ application });
 
-			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(false);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses("INDEXING")).toBe(false);
 		});
 
 		it("should return false when no grant template exists", () => {
@@ -344,61 +353,7 @@ describe("wizard store", () => {
 
 			useApplicationStore.setState({ application });
 
-			expect(useWizardStore.getState().hasInProcessTemplateSources()).toBe(false);
-		});
-	});
-
-	describe("hasIndexingTemplateSources", () => {
-		it("should return true when template sources are indexing", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [
-						{ filename: "doc1.pdf", sourceId: "1", status: "INDEXING" as const },
-						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
-					],
-				}),
-			});
-
-			useApplicationStore.setState({ application });
-
-			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(true);
-		});
-
-		it("should return false when template sources are not indexing", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [
-						{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const },
-						{ filename: "doc2.pdf", sourceId: "2", status: "FAILED" as const },
-					],
-				}),
-			});
-
-			useApplicationStore.setState({ application });
-
-			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(false);
-		});
-
-		it("should return false when no template sources exist", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: GrantTemplateFactory.build({
-					rag_sources: [],
-				}),
-			});
-
-			useApplicationStore.setState({ application });
-
-			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(false);
-		});
-
-		it("should return false when no grant template exists", () => {
-			const application = ApplicationWithTemplateFactory.build({
-				grant_template: undefined,
-			});
-
-			useApplicationStore.setState({ application });
-
-			expect(useWizardStore.getState().hasIndexingTemplateSources()).toBe(false);
+			expect(useWizardStore.getState().hasTemplateSourcesWithStatuses("INDEXING")).toBe(false);
 		});
 	});
 
