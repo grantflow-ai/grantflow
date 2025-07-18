@@ -3,8 +3,8 @@ from typing import Any, NotRequired, TypedDict
 from litestar import delete, get
 from litestar.exceptions import HTTPException
 from packages.db.src.enums import UserRoleEnum
+from packages.db.src.tables import Organization
 from packages.db.src.tables import OrganizationUser as ProjectMember
-from packages.db.src.tables import Organization, Project
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -44,6 +44,16 @@ class GetSoleOwnedProjectsResponse(TypedDict):
     count: int
 
 
+class SoleOwnedOrganization(TypedDict):
+    id: str
+    name: str
+
+
+class GetSoleOwnedOrganizationsResponse(TypedDict):
+    organizations: list[SoleOwnedOrganization]
+    count: int
+
+
 @delete("/user", operation_id="DeleteUser", status_code=200)
 async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any]) -> DeleteUserResponse:
     """
@@ -64,8 +74,8 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
             )
 
         async with session_maker() as session:
-            # In the new organization-based model, we need to check for sole-owned organizations
-            # A user can only delete their account if they are not the sole owner of any organization
+            
+            
             owned_organizations = (
                 select(ProjectMember.organization_id)
                 .where(ProjectMember.firebase_uid == firebase_uid)
@@ -184,5 +194,47 @@ async def get_sole_owned_projects(
 
         return {
             "projects": [{"id": str(o.id), "name": o.name} for o in sole_owned_organizations],
+            "count": len(sole_owned_organizations),
+        }
+
+
+@get("/user/sole-owned-organizations", operation_id="GetSoleOwnedOrganizations")
+async def get_sole_owned_organizations(
+    request: APIRequest, session_maker: async_sessionmaker[Any]
+) -> GetSoleOwnedOrganizationsResponse:
+    """
+    Get list of organizations where the user is the sole owner.
+    These organizations must be handled before account deletion.
+    """
+    firebase_uid = request.auth
+    if not firebase_uid:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    async with session_maker() as session:
+        owned_organizations = (
+            select(ProjectMember.organization_id)
+            .where(ProjectMember.firebase_uid == firebase_uid)
+            .where(ProjectMember.role == UserRoleEnum.OWNER)
+            .subquery()
+        )
+
+        sole_owned_query = (
+            select(Organization)
+            .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+            .outerjoin(
+                ProjectMember,
+                (Organization.id == ProjectMember.organization_id)
+                & (ProjectMember.role == UserRoleEnum.OWNER)
+                & (ProjectMember.firebase_uid != firebase_uid),
+            )
+            .group_by(Organization.id)
+            .having(func.count(ProjectMember.firebase_uid) == 0)
+        )
+
+        result = await session.execute(sole_owned_query)
+        sole_owned_organizations = result.scalars().all()
+
+        return {
+            "organizations": [{"id": str(o.id), "name": o.name} for o in sole_owned_organizations],
             "count": len(sole_owned_organizations),
         }

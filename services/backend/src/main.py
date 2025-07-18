@@ -31,6 +31,20 @@ from services.backend.src.api.routes.notifications import (
     dismiss_notification,
     list_notifications,
 )
+from services.backend.src.api.routes.organizations import (
+    handle_create_organization as handle_create_org,
+)
+from services.backend.src.api.routes.organizations import (
+    handle_delete_organization as handle_delete_org,
+)
+from services.backend.src.api.routes.organizations import (
+    handle_get_organization,
+    handle_list_organizations,
+    handle_restore_organization,
+)
+from services.backend.src.api.routes.organizations import (
+    handle_update_organization as handle_update_org,
+)
 from services.backend.src.api.routes.projects import (
     handle_accept_invitation,
     handle_create_invitation_redirect_url,
@@ -52,7 +66,7 @@ from services.backend.src.api.routes.sources import (
     handle_delete_rag_source,
     handle_retrieve_rag_sources,
 )
-from services.backend.src.api.routes.user import delete_user, get_sole_owned_projects
+from services.backend.src.api.routes.user import delete_user, get_sole_owned_organizations, get_sole_owned_projects
 from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
@@ -80,6 +94,13 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     delete_user,
     dismiss_notification,
     get_sole_owned_projects,
+    get_sole_owned_organizations,
+    handle_create_org,
+    handle_list_organizations,
+    handle_get_organization,
+    handle_update_org,
+    handle_delete_org,
+    handle_restore_organization,
     handle_generate_application,
     handle_generate_grant_template,
     handle_grant_application_notifications,
