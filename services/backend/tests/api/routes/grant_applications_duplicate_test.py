@@ -82,16 +82,11 @@ async def test_duplicate_application_wrong_project(
     """Test duplicating application from different project"""
 
     async with async_session_maker() as session:
-        other_project = Project(name="Other Project")
+        other_project = Project(name="Other Project", organization_id=project_owner_user.organization_id)
         session.add(other_project)
         await session.flush()
-
-        other_project_user = OrganizationUser(
-            project_id=other_project.id, firebase_uid=project_owner_user.firebase_uid, role=project_owner_user.role
-        )
-        session.add(other_project_user)
-        await session.commit()
         other_project_id = other_project.id
+        await session.commit()
 
     response = await test_client.post(
         f"/projects/{other_project_id}/applications/{grant_application.id}/duplicate",

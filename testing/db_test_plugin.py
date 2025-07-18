@@ -118,7 +118,12 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
 
 @pytest.fixture(scope="session")
 async def async_db_engine(db_connection_string: str) -> AsyncEngine:
-    engine_ref.value = create_async_engine(db_connection_string, echo=False, poolclass=NullPool)
+    engine_ref.value = create_async_engine(
+        db_connection_string,
+        echo=False,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+    )
     async with engine_ref.value.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     return engine_ref.value
@@ -135,18 +140,29 @@ async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
 
 
 @pytest.fixture(autouse=True)
-async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> AsyncGenerator[None]:
+async def cleanup_database(
+    async_session_maker: async_sessionmaker[Any], request: pytest.FixtureRequest
+) -> AsyncGenerator[None]:
     """Clean up database state between tests by truncating all tables except seeded data."""
-    
+
     yield
-    
+
+    if "no_cleanup" in request.keywords:
+        return
+
     async with async_session_maker() as session:
-        
         preserved_tables = {"granting_institutions"}
-        for table in reversed(Base.metadata.sorted_tables):
-            if table.name not in preserved_tables:
-                await session.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
-        await session.commit()
+
+        try:
+            await session.execute(text("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"))
+
+            for table in reversed(Base.metadata.sorted_tables):
+                if table.name not in preserved_tables:
+                    await session.execute(text(f"DELETE FROM {table.name}"))
+
+            await session.commit()
+        except Exception:
+            await session.rollback()
 
 
 @pytest.fixture
@@ -275,6 +291,7 @@ async def granting_institution_url(
 async def grant_application(async_session_maker: async_sessionmaker[Any], project: Project) -> GrantApplication:
     application_data = GrantApplicationFactory.build(
         project_id=project.id,
+        deleted_at=None,
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)

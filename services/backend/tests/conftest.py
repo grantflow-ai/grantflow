@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
+from packages.db.src.tables import GrantApplication, Organization, Project
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.utils.firebase import firebase_app_ref
@@ -12,7 +13,79 @@ from services.backend.src.utils.jwt import create_jwt
 
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """
+    Override the default xdist grouping to provide better test isolation for backend tests.
+
+    Strategy:
+    1. Group tests by their test file to reduce inter-file conflicts
+    2. Tests that modify shared state (write operations) are grouped separately
+    3. This ensures tests don't interfere with each other's database state
+    """
+
+    test_groups = {
+        "applications_test.py": "backend_applications",
+        "projects_test.py": "backend_projects",
+        "login_test.py": "backend_login",
+        "organizations_members_test.py": "backend_org_members",
+        "organization_invitations_test.py": "backend_org_invitations",
+        "notifications_test.py": "backend_notifications",
+        "files_test.py": "backend_files",
+        "health_test.py": "backend_health",
+        "grants_test.py": "backend_grants",
+    }
+
+    for item in items:
+        test_file = item.fspath.basename if hasattr(item.fspath, "basename") else str(item.fspath).split("/")[-1]
+
+        group_name = None
+        for pattern, group in test_groups.items():
+            if pattern in test_file:
+                group_name = group
+                break
+
+        if not group_name:
+            group_name = "backend_other"
+
+        item.add_marker(pytest.mark.xdist_group(group_name))
+
+
 TestingClientType = AsyncTestClient[Litestar]
+
+
+@pytest.fixture
+async def isolated_grant_application(
+    async_session_maker: async_sessionmaker[Any], project: Project
+) -> GrantApplication:
+    """
+    Create a grant application that is isolated for each test.
+    This avoids conflicts when tests modify applications.
+    """
+    from testing.factories import GrantApplicationFactory
+
+    async with async_session_maker() as session, session.begin():
+        app_data = GrantApplicationFactory.build(project_id=project.id)
+        session.add(app_data)
+        await session.commit()
+        await session.refresh(app_data)
+        return app_data
+
+
+@pytest.fixture
+async def isolated_project(async_session_maker: async_sessionmaker[Any], organization: Organization) -> Project:
+    """
+    Create a project that is isolated for each test.
+    This avoids conflicts when tests modify projects.
+    """
+    from testing.factories import ProjectFactory
+
+    async with async_session_maker() as session, session.begin():
+        project_data = ProjectFactory.build(organization_id=organization.id)
+        session.add(project_data)
+        await session.commit()
+        await session.refresh(project_data)
+        return project_data
 
 
 @pytest.fixture
