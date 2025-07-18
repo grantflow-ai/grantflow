@@ -6,8 +6,9 @@ import { FilePreviewCard, LinkPreviewItem } from "@/components/projects";
 import { PreviewCard, WizardLeftPane } from "@/components/projects/wizard/shared";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
+import { log } from "@/utils/logger";
 
 const ANALYZING_STEPS = [
 	{
@@ -92,15 +93,40 @@ const isStepActive = (sectionIndex: number, visibleSteps: number) => {
 	return visibleSteps === sectionIndex + 1;
 };
 
+const eventToStepMap: Record<TemplateGenerationEvent, number> = {
+	// Reading the call - validating and extracting CFP data
+	cfp_data_extracted: 0,
+	extracting_cfp_data: 0,
+	generation_error: -1,
+
+	// Building the outline - extracting sections and relationships
+	grant_template_created: 3,
+	grant_template_extraction: 1,
+
+	// Adding writing cues - generating metadata
+	grant_template_generation_started: 0,
+	grant_template_metadata: 2,
+
+	indexing_in_progress: 0,
+
+	// Final check - saving template
+	insufficient_context_error: -1,
+	internal_error: -1,
+
+	// Error events (don't progress steps)
+	low_retrieval_quality: -1,
+	metadata_generated: 2,
+	pipeline_error: -1,
+	saving_grant_template: 3,
+	sections_extracted: 1,
+};
+
 export function ApplicationStructureLeftPane() {
 	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
-	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
-
-	const [visibleSteps, setVisibleSteps] = useState(0);
 	const [isInfoBannerVisible, setIsInfoBannerVisible] = useState(true);
 
 	const hasGrantSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
-	const shouldShowAnalyzing = isGeneratingTemplate || !hasGrantSections;
+	const shouldShowAnalyzing = !hasGrantSections;
 
 	const parentId = grantTemplate?.id;
 
@@ -133,29 +159,11 @@ export function ApplicationStructureLeftPane() {
 
 	usePollingCleanup();
 
-	useEffect(() => {
-		if (shouldShowAnalyzing) {
-			const interval = setInterval(() => {
-				setVisibleSteps((prev) => {
-					if (prev < ANALYZING_STEPS.length) {
-						return prev + 1;
-					}
-					return prev;
-				});
-			}, 1000);
-
-			return () => {
-				clearInterval(interval);
-			};
-		}
-		setVisibleSteps(0);
-	}, [shouldShowAnalyzing]);
-
 	if (shouldShowAnalyzing) {
 		return (
 			<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
 				<TitleHeader showDescription={false} />
-				<AnalyzingSteps visibleSteps={visibleSteps} />
+				<AnalyzingSteps />
 			</WizardLeftPane>
 		);
 	}
@@ -200,27 +208,41 @@ export function ApplicationStructureSourcesPreview({
 	);
 }
 
-function AnalyzingSteps({ visibleSteps }: { visibleSteps: number }) {
+function AnalyzingSteps() {
+	const templateGenerationStatus = useWizardStore((state) => state.templateGenerationStatus);
+	const [maxVisibleSteps, setMaxVisibleSteps] = useState(0);
+
+	useEffect(() => {
+		if (templateGenerationStatus?.event) {
+			const stepGroup = eventToStepMap[templateGenerationStatus.event];
+			log.info("[useApplicationNotifications] Received mapping in AnalysingSteps", { stepGroup });
+			if (stepGroup >= 0) {
+				const newVisibleSteps = stepGroup + 1;
+				setMaxVisibleSteps((prev) => Math.max(prev, newVisibleSteps));
+			}
+		}
+	}, [templateGenerationStatus]);
+
 	return (
 		<div className="relative space-y-6 mt-6">
 			{ANALYZING_STEPS.map((section, sectionIndex) => (
-				<div className={getStepContainerClassName(sectionIndex, visibleSteps)} key={sectionIndex}>
+				<div className={getStepContainerClassName(sectionIndex, maxVisibleSteps)} key={sectionIndex}>
 					<div className="relative">
 						{shouldShowConnector(sectionIndex) && (
-							<div className={getConnectorLineClassName(sectionIndex, visibleSteps)} />
+							<div className={getConnectorLineClassName(sectionIndex, maxVisibleSteps)} />
 						)}
 
 						<div className="mb-3 flex items-center gap-3">
-							<div className={getStepNumberClassName(sectionIndex, visibleSteps)}>
+							<div className={getStepNumberClassName(sectionIndex, maxVisibleSteps)}>
 								<span className="text-xs font-medium">{sectionIndex + 1}</span>
 							</div>
 							<h4
-								className={getStepTitleClassName(sectionIndex, visibleSteps)}
+								className={getStepTitleClassName(sectionIndex, maxVisibleSteps)}
 								data-testid="analyzing-step-title"
 							>
 								{section.title}
 							</h4>
-							{isStepActive(sectionIndex, visibleSteps) && (
+							{isStepActive(sectionIndex, maxVisibleSteps) && (
 								<div
 									className="ml-2 size-2 animate-pulse rounded-full bg-blue-500"
 									data-testid="step-active-indicator"
@@ -231,14 +253,14 @@ function AnalyzingSteps({ visibleSteps }: { visibleSteps: number }) {
 						<div className="ml-9 space-y-2">
 							{section.steps.map((step, stepIndex) => (
 								<div
-									className={getStepContentClassName(sectionIndex, visibleSteps)}
+									className={getStepContentClassName(sectionIndex, maxVisibleSteps)}
 									key={stepIndex}
 									style={{
 										transitionDelay: getStepDelay(stepIndex),
 									}}
 								>
 									<span className="text-gray-400">{stepIndex + 1}.</span>
-									<span className={getStepTextClassName(sectionIndex, visibleSteps)}>{step}</span>
+									<span className={getStepTextClassName(sectionIndex, maxVisibleSteps)}>{step}</span>
 								</div>
 							))}
 						</div>
