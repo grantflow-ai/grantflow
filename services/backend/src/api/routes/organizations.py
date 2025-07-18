@@ -67,7 +67,6 @@ class DeleteOrganizationResponse(TypedDict):
     restoration_info: str
 
 
-
 ORGANIZATION_DELETION_GRACE_PERIOD_DAYS = 30
 
 
@@ -82,7 +81,6 @@ async def handle_create_organization(
         try:
             organization = await session.scalar(insert(Organization).values(data).returning(Organization))
 
-            
             await session.execute(
                 insert(OrganizationUser).values(
                     {
@@ -111,13 +109,12 @@ async def handle_list_organizations(
     logger.info("Listing organizations for user", uid=request.auth)
 
     async with session_maker() as session:
-        
         organizations = list(
             await session.scalars(
                 select(Organization)
                 .join(OrganizationUser)
                 .where(OrganizationUser.firebase_uid == request.auth)
-                .where(Organization.deleted_at.is_(None))  
+                .where(Organization.deleted_at.is_(None))
             )
         )
 
@@ -154,7 +151,6 @@ async def handle_get_organization(
         if not organization:
             raise ValidationException("Organization not found")
 
-        
         user_org = await session.scalar(
             select(OrganizationUser)
             .where(OrganizationUser.organization_id == organization_id)
@@ -204,7 +200,6 @@ async def handle_update_organization(
             if not organization:
                 raise ValidationException("Organization not found")
 
-            
             user_org = await session.scalar(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
@@ -235,6 +230,7 @@ async def handle_update_organization(
     "/organizations/{organization_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER],
     operation_id="DeleteOrganization",
+    status_code=200,
 )
 async def handle_delete_organization(
     request: APIRequest,
@@ -252,10 +248,8 @@ async def handle_delete_organization(
             if not organization:
                 raise ValidationException("Organization not found")
 
-            
             organization.soft_delete()
 
-            
             await session.execute(
                 sa_delete(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
@@ -268,7 +262,6 @@ async def handle_delete_organization(
             logger.error("Error deleting organization", exc_info=e)
             raise DatabaseError("Error deleting organization", context=str(e)) from e
 
-    
     try:
         deletion_data = await schedule_organization_deletion(
             str(organization_id), ORGANIZATION_DELETION_GRACE_PERIOD_DAYS
@@ -313,10 +306,8 @@ async def handle_restore_organization(
             if not organization.deleted_at:
                 raise ValidationException("Organization is not deleted")
 
-            
             organization.restore()
 
-            
             user_org = await session.scalar(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
@@ -329,7 +320,6 @@ async def handle_restore_organization(
             logger.error("Error restoring organization", exc_info=e)
             raise DatabaseError("Error restoring organization", context=str(e)) from e
 
-    
     try:
         db = firestore.AsyncClient()
         await (

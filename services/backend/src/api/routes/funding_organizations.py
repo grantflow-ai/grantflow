@@ -30,7 +30,7 @@ class FundingOrganizationResponse(TypedDict):
     abbreviation: str | None
 
 
-@post("/organizations", operation_id="CreateOrganization")
+@post("/funding-organizations", operation_id="CreateFundingOrganization")
 async def handle_create_organization(
     data: CreateOrganizationRequestBody, session_maker: async_sessionmaker[Any]
 ) -> FundingOrganizationResponse:
@@ -50,7 +50,7 @@ async def handle_create_organization(
     )
 
 
-@get("/organizations", operation_id="ListOrganizations")
+@get("/funding-organizations", operation_id="ListFundingOrganizations")
 async def handle_retrieve_organizations(
     session_maker: async_sessionmaker[Any],
 ) -> list[FundingOrganizationResponse]:
@@ -67,7 +67,7 @@ async def handle_retrieve_organizations(
         ]
 
 
-@patch("/organizations/{organization_id:uuid}", operation_id="UpdateOrganization")
+@patch("/funding-organizations/{organization_id:uuid}", operation_id="UpdateFundingOrganization")
 async def handle_update_organization(
     data: UpdateOrganizationRequestBody,
     organization_id: UUID,
@@ -97,7 +97,7 @@ async def handle_update_organization(
     )
 
 
-@delete("/organizations/{organization_id:uuid}", operation_id="DeleteOrganization")
+@delete("/funding-organizations/{organization_id:uuid}", operation_id="DeleteFundingOrganization")
 async def handle_delete_organization(organization_id: UUID, session_maker: async_sessionmaker[Any]) -> None:
     async with session_maker() as session, session.begin():
         try:

@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import OrganizationInvitation, OrganizationUser, Project
+from packages.db.src.tables import Organization, OrganizationInvitation, OrganizationUser, Project
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import insert, select
@@ -12,6 +12,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationFactory,
+    OrganizationFactory,
     ProjectFactory,
 )
 
@@ -29,6 +30,34 @@ async def test_create_project_success(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    
+    organization = OrganizationFactory.build()
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(Organization).values(
+                id=organization.id,
+                name=organization.name,
+                description=organization.description,
+                logo_url=organization.logo_url,
+                contact_email=organization.contact_email,
+                contact_person_name=organization.contact_person_name,
+                institutional_affiliation=organization.institutional_affiliation,
+            )
+        )
+        await session.commit()
+
+    
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(OrganizationUser).values(
+                organization_id=organization.id,
+                firebase_uid=firebase_uid,
+                role=UserRoleEnum.OWNER,
+                has_all_projects_access=True,
+            )
+        )
+        await session.commit()
+
     request_body = CreateProjectRequestBodyFactory.build()
     response = await test_client.post(
         "/projects",
@@ -45,6 +74,7 @@ async def test_create_project_success(
         assert project.name == request_body["name"]
         assert project.description == request_body["description"]
         assert project.logo_url == request_body["logo_url"]
+        assert project.organization_id == organization.id
 
 
 async def test_create_project_failure(
@@ -522,7 +552,7 @@ async def test_create_invitation_redirect_url_success(
     async with async_session_maker() as session:
         invitation = await session.scalar(
             select(OrganizationInvitation)
-            .where(OrganizationInvitation.project_id == project.id)
+            .where(OrganizationInvitation.organization_id == project.organization_id)
             .where(OrganizationInvitation.email == "new_user@example.com")
         )
         assert invitation is not None
@@ -589,7 +619,7 @@ async def test_delete_invitation_success(
         deleted_invitation = await session.scalar(
             select(OrganizationInvitation)
             .where(OrganizationInvitation.id == invitation.id)
-            .where(OrganizationInvitation.project_id == project.id)
+            .where(OrganizationInvitation.organization_id == project.organization_id)
         )
         assert deleted_invitation is None
 
@@ -741,7 +771,7 @@ async def test_update_invitation_role_success(
         updated_invitation = await session.scalar(
             select(OrganizationInvitation)
             .where(OrganizationInvitation.id == invitation.id)
-            .where(OrganizationInvitation.project_id == project.id)
+            .where(OrganizationInvitation.organization_id == project.organization_id)
         )
         assert updated_invitation is not None
         assert updated_invitation.role == UserRoleEnum.ADMIN
@@ -973,7 +1003,7 @@ async def test_accept_invitation_success(
     async with async_session_maker() as session:
         project_user = await session.scalar(
             select(OrganizationUser)
-            .where(OrganizationUser.project_id == project.id)
+            .where(OrganizationUser.organization_id == project.organization_id)
             .where(OrganizationUser.firebase_uid == firebase_uid)
         )
         assert project_user is not None
@@ -1348,7 +1378,7 @@ async def test_remove_project_member_success(
     async with async_session_maker() as session:
         removed_member = await session.scalar(
             select(OrganizationUser)
-            .where(OrganizationUser.project_id == project.id)
+            .where(OrganizationUser.organization_id == project.organization_id)
             .where(OrganizationUser.firebase_uid == "member_uid")
         )
         assert removed_member is None

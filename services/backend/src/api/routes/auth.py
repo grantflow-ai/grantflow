@@ -38,17 +38,14 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
         organization_user = result.scalars().first()
 
         if organization_user is None:
-            
             default_organization = Organization(name="My Organization")
             session.add(default_organization)
             await session.flush()
 
-            
             default_project = Project(name="New Research Project", organization_id=default_organization.id)
             session.add(default_project)
             await session.flush()
 
-            
             organization_user = OrganizationUser(
                 organization_id=default_organization.id,
                 firebase_uid=firebase_uid,
