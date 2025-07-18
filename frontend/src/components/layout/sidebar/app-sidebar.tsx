@@ -14,7 +14,7 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarRail,
+	//SidebarRail,
 } from "@/components/ui/sidebar";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
@@ -42,7 +42,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<Sidebar
 				collapsible="icon"
 				{...props}
-				className="flex h-full flex-col bg-preview-bg [&>div]:!border-0 [&>div]:!border-r-0 [&>div>div]:!border-0 [&>div>div]:!border-r-0 [&>div]:!border-l-0 [&>div]:!shadow-none"
+				className="!border-r-0 flex h-full flex-col bg-preview-bg [&>div]:!border-0 [&>div]:!border-r-0 [&>div>div]:!border-0 [&>div>div]:!border-r-0 [&>div]:!border-l-0 [&>div]:!shadow-none"
 			>
 				<SidebarHeader className="flex flex-col gap-2 p-3 group-data-[collapsible=icon]:p-2">
 					<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
@@ -116,7 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					</SidebarMenu>
 				</SidebarFooter>
 
-				<SidebarRail className="hidden" />
+				{/* <SidebarRail className="hidden" /> */}
 			</Sidebar>
 
 			<NewApplicationModal
