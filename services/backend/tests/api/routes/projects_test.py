@@ -30,7 +30,6 @@ async def test_create_project_success(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     organization = OrganizationFactory.build()
     async with async_session_maker() as session, session.begin():
         await session.execute(
@@ -46,7 +45,6 @@ async def test_create_project_success(
         )
         await session.commit()
 
-    
     async with async_session_maker() as session, session.begin():
         await session.execute(
             insert(OrganizationUser).values(
