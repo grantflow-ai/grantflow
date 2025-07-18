@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { NotificationHandler } from "@/components/projects/shared/notification-handler";
 import {
@@ -12,7 +12,8 @@ import {
 	ResearchPlanStep,
 } from "@/components/projects/wizard";
 import { WizardFooter, WizardHeader } from "@/components/projects/wizard/shared";
-import { WizardDialog } from "@/components/projects/wizard/shared/wizard-dialog";
+import { WizardDialog, type WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
+import { WizardStep } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {
 	type AutofillProgressMessage,
@@ -23,8 +24,9 @@ import {
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
 import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
+import { log } from "@/utils/logger";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;
@@ -33,9 +35,11 @@ interface WizardClientComponentProps {
 
 export function WizardClientComponent({ application: initialApplication, projectId }: WizardClientComponentProps) {
 	const currentStep = useWizardStore((state) => state.currentStep);
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
 	const ragJobState = useApplicationStore((state) => state.ragJobState);
 	const getApplication = useApplicationStore((state) => state.getApplication);
+	const dialogRef = useRef<null | WizardDialogRef>(null);
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
@@ -50,7 +54,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				key="Application Details"
 			/>
 		),
-		"Application Structure": <ApplicationStructureStep key="Application Structure" />,
+		"Application Structure": <ApplicationStructureStep dialogRef={dialogRef} key="Application Structure" />,
 		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
@@ -153,6 +157,18 @@ export function WizardClientComponent({ application: initialApplication, project
 	const latestRagNotification = notifications.findLast((n) => isRagProcessingStatusMessage(n));
 
 	useEffect(() => {
+		if (latestRagNotification) {
+			const { event, message } = latestRagNotification.data;
+
+			log.info("[useApplicationNotifications] Received event from latestRagNotification:", { event });
+			useWizardStore.getState().setTemplateGenerationStatus({
+				event: event as TemplateGenerationEvent,
+				message,
+			});
+		}
+	}, [latestRagNotification]);
+
+	useEffect(() => {
 		if (latestRagNotification && ragJobState.restoredJob) {
 			useApplicationStore.getState().clearRestoredJobState();
 		}
@@ -163,7 +179,13 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		const { event } = latestRagNotification.data;
 
-		if (event === "grant_template_generation_started") {
+		if (
+			event === "grant_template_generation_started" ||
+			event === "indexing_in_progress" ||
+			event === "extracting_cfp_data" ||
+			event === "grant_template_extraction" ||
+			event === "grant_template_metadata"
+		) {
 			setGeneratingTemplate(true);
 		}
 
@@ -177,6 +199,12 @@ export function WizardClientComponent({ application: initialApplication, project
 		}
 	}, [latestRagNotification, setGeneratingTemplate, getApplication, projectId, initialApplication.id]);
 
+	useEffect(() => {
+		if (isGeneratingTemplate && currentStep === WizardStep.APPLICATION_DETAILS) {
+			useWizardStore.getState().toNextStep();
+		}
+	}, [isGeneratingTemplate, currentStep]);
+
 	return (
 		<div className="bg-light flex h-screen w-full flex-col overflow-hidden" data-testid="wizard-page">
 			<WizardHeader />
@@ -186,7 +214,7 @@ export function WizardClientComponent({ application: initialApplication, project
 			<WizardFooter />
 
 			{latestRagNotification && <NotificationHandler notification={latestRagNotification} />}
-			<WizardDialog />
+			<WizardDialog ref={dialogRef} />
 		</div>
 	);
 }
