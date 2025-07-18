@@ -19,7 +19,6 @@ from packages.db.src.tables import (
     RagUrl,
 )
 from pytest_mock import MockerFixture
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import GrantApplicationFactory
 
@@ -208,17 +207,20 @@ async def test_delete_application_source(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        with pytest.raises(NoResultFound):
-            await session.get_one(RagSource, grant_application_file.rag_source_id)
+        
+        deleted_source = await session.get(RagSource, grant_application_file.rag_source_id)
+        assert deleted_source is not None
+        assert deleted_source.deleted_at is not None
 
-        with pytest.raises(NoResultFound):
-            await session.get_one(
-                GrantApplicationSource,
-                {
-                    "grant_application_id": grant_application.id,
-                    "rag_source_id": grant_application_file.rag_source_id,
-                },
-            )
+        
+        junction = await session.get(
+            GrantApplicationSource,
+            {
+                "grant_application_id": grant_application.id,
+                "rag_source_id": grant_application_file.rag_source_id,
+            },
+        )
+        assert junction is not None
 
 
 @patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
@@ -263,17 +265,20 @@ async def test_delete_organization_source(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        with pytest.raises(NoResultFound):
-            await session.get_one(RagSource, granting_institution_file.rag_source_id)
+        
+        deleted_source = await session.get(RagSource, granting_institution_file.rag_source_id)
+        assert deleted_source is not None
+        assert deleted_source.deleted_at is not None
 
-        with pytest.raises(NoResultFound):
-            await session.get_one(
-                GrantingInstitutionSource,
-                {
-                    "granting_institution_id": granting_institution.id,
-                    "rag_source_id": granting_institution_file.rag_source_id,
-                },
-            )
+        
+        junction = await session.get(
+            GrantingInstitutionSource,
+            {
+                "granting_institution_id": granting_institution.id,
+                "rag_source_id": granting_institution_file.rag_source_id,
+            },
+        )
+        assert junction is not None
 
 
 @patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
@@ -294,17 +299,20 @@ async def test_delete_template_source(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        with pytest.raises(NoResultFound):
-            await session.get_one(RagSource, grant_template_file.rag_source_id)
+        
+        deleted_source = await session.get(RagSource, grant_template_file.rag_source_id)
+        assert deleted_source is not None
+        assert deleted_source.deleted_at is not None
 
-        with pytest.raises(NoResultFound):
-            await session.get_one(
-                GrantTemplateSource,
-                {
-                    "grant_template_id": grant_template.id,
-                    "rag_source_id": grant_template_file.rag_source_id,
-                },
-            )
+        
+        junction = await session.get(
+            GrantTemplateSource,
+            {
+                "grant_template_id": grant_template.id,
+                "rag_source_id": grant_template_file.rag_source_id,
+            },
+        )
+        assert junction is not None
 
 
 async def test_delete_grant_application_source_unauthorized(

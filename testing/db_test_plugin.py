@@ -26,7 +26,7 @@ from packages.db.src.tables import (
 )
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
-from sqlalchemy import NullPool, select, text
+from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from testing.factories import (
@@ -104,9 +104,9 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         try:
             admin_conn = await connect(admin_connection_string)
 
-            # Clean up both test database and template
-            template_db_name = f"{test_db_name}_template"
             
+            template_db_name = f"{test_db_name}_template"
+
             for db_name in [test_db_name, template_db_name]:
                 await admin_conn.execute(f"""
                     SELECT pg_terminate_backend(pid)
@@ -141,38 +141,38 @@ async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmake
 @pytest.fixture(scope="session")
 async def database_snapshot(db_connection_string: str, async_session_maker: async_sessionmaker[Any]) -> str:
     """Create a database snapshot after seeding for fast test isolation."""
-    # Seed the database first
+    
     await seed_db()
+
     
-    # Create a snapshot name
-    snapshot_name = f"test_snapshot_{os.getpid()}"
+    f"test_snapshot_{os.getpid()}"
+
     
-    # Connect directly to create snapshot
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
     admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
-    
+
     admin_conn = await connect(admin_connection_string)
-    
+
     try:
-        # Create a template database from our seeded database
+        
         db_name = parsed.path.lstrip("/")
         template_db_name = f"{db_name}_template"
+
         
-        # Terminate connections to source db
         await admin_conn.execute(f"""
             SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
             WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
         """)
+
         
-        # Create template database
         with contextlib.suppress(Exception):
             await admin_conn.execute(f'DROP DATABASE IF EXISTS "{template_db_name}"')
-        
+
         await admin_conn.execute(f'CREATE DATABASE "{template_db_name}" WITH TEMPLATE "{db_name}"')
-        
+
         return template_db_name
-        
+
     finally:
         await admin_conn.close()
 
@@ -184,18 +184,18 @@ async def restore_database_snapshot(
     request: pytest.FixtureRequest
 ) -> AsyncGenerator[None]:
     """Restore database to clean snapshot state before each test."""
-    
+
     if "no_cleanup" in request.keywords:
         yield
         return
+
     
-    # Restore from snapshot before test
     await _restore_from_snapshot(database_snapshot, db_connection_string)
-    
+
     yield
+
     
-    # Optionally restore after test too for extra isolation
-    # await _restore_from_snapshot(database_snapshot, db_connection_string)
+    
 
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
@@ -203,23 +203,25 @@ async def _restore_from_snapshot(template_db_name: str, db_connection_string: st
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
     admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
     db_name = parsed.path.lstrip("/")
-    
+
     admin_conn = await connect(admin_connection_string)
-    
+
     try:
-        # Terminate all connections to target database
+        
         await admin_conn.execute(f"""
             SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
             WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
         """)
+
         
-        # Drop and recreate from template
         await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
         await admin_conn.execute(f'CREATE DATABASE "{db_name}" WITH TEMPLATE "{template_db_name}"')
-        
+
     finally:
         await admin_conn.close()
+
+
 
 
 @pytest.fixture
@@ -253,13 +255,13 @@ async def project_user(async_session_maker: async_sessionmaker[Any], organizatio
 async def project_member_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
 ) -> OrganizationUser:
+    organization_user = OrganizationUser(
+        organization_id=organization.id,
+        firebase_uid=firebase_uid,
+        role=UserRoleEnum.COLLABORATOR,
+        has_all_projects_access=True,
+    )
     async with async_session_maker() as session, session.begin():
-        organization_user = OrganizationUser(
-            organization_id=organization.id,
-            firebase_uid=firebase_uid,
-            role=UserRoleEnum.COLLABORATOR,
-            has_all_projects_access=True,
-        )
         session.add(organization_user)
         await session.commit()
     return organization_user
@@ -269,10 +271,13 @@ async def project_member_user(
 async def project_admin_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
 ) -> OrganizationUser:
+    organization_user = OrganizationUser(
+        organization_id=organization.id,
+        firebase_uid=firebase_uid,
+        role=UserRoleEnum.ADMIN,
+        has_all_projects_access=True,
+    )
     async with async_session_maker() as session, session.begin():
-        organization_user = OrganizationUser(
-            organization_id=organization.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN
-        )
         session.add(organization_user)
         await session.commit()
     return organization_user
@@ -282,10 +287,13 @@ async def project_admin_user(
 async def project_owner_user(
     async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
 ) -> OrganizationUser:
+    organization_user = OrganizationUser(
+        organization_id=organization.id,
+        firebase_uid=firebase_uid,
+        role=UserRoleEnum.OWNER,
+        has_all_projects_access=True,
+    )
     async with async_session_maker() as session, session.begin():
-        organization_user = OrganizationUser(
-            organization_id=organization.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER
-        )
         session.add(organization_user)
         await session.commit()
     return organization_user
@@ -388,7 +396,7 @@ async def grant_template(
         result = await session.execute(select(GrantingInstitution.id).where(GrantingInstitution.abbreviation == "NIH"))
         granting_institution_id = result.scalar_one()
 
-    grant_template_data = GrantTemplateFactory.build(
+        grant_template_data = GrantTemplateFactory.build(
         grant_application_id=grant_application.id,
         granting_institution_id=granting_institution_id,
         grant_sections=[

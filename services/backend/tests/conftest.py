@@ -34,6 +34,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         "files_test.py": "backend_files",
         "health_test.py": "backend_health",
         "grants_test.py": "backend_grants",
+        "sources_test.py": "backend_sources",
+        "user_test.py": "backend_user",
     }
 
     for item in items:
