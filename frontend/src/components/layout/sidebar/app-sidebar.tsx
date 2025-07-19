@@ -73,6 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
 						<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
 					</div>
+
 					<button
 						className="bg-primary text-white rounded px-4 py-2 flex items-center justify-center gap-1 hover:bg-link-hover-dark transition-colors mt-10 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:mx-auto"
 						data-testid="new-application-button"

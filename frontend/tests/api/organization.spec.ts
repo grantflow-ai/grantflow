@@ -10,8 +10,6 @@ vi.mock("@/actions/organization");
 describe("Organization API Actions", () => {
 	const mockOrgId = "123e4567-e89b-12d3-a456-426614174000";
 	const mockFirebaseUid = "firebase-uid-123";
-	const mockInvitationId = "inv-123";
-	const mockSourceId = "source-123";
 
 	describe("Organization Management", () => {
 		it("should create organization", async () => {

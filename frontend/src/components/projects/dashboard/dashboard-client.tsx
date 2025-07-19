@@ -2,15 +2,18 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { createProject } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AvatarGroup } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
 import { DashboardProjectCard, DeleteProjectModal, InviteCollaboratorModal } from "@/components/projects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useOrganization } from "@/hooks/use-organization";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNotificationStore } from "@/stores/notification-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
@@ -21,12 +24,20 @@ import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
 
 interface DashboardClientProps {
+	initialOrganizations: API.ListOrganizations.ResponseBody;
 	initialProjects: API.ListProjects.Http200.ResponseBody;
+	initialSelectedOrganizationId: null | string;
 }
 
-export function DashboardClient({ initialProjects }: DashboardClientProps) {
+export function DashboardClient({
+	initialOrganizations,
+	initialProjects,
+	initialSelectedOrganizationId,
+}: DashboardClientProps) {
 	const router = useRouter();
 	const { navigateToProject } = useNavigationStore();
+	const { selectedOrganizationId, switchOrganization } = useOrganization();
+	const { setOrganizations } = useOrganizationStore();
 
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
@@ -40,8 +51,35 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
 
+	// Initialize organization store with server data
+	useEffect(() => {
+		setOrganizations(initialOrganizations);
+
+		// If no organization is selected in cookies but we have an initial one, set it
+		if (!selectedOrganizationId && initialSelectedOrganizationId) {
+			switchOrganization(initialSelectedOrganizationId);
+		}
+	}, [
+		initialOrganizations,
+		initialSelectedOrganizationId,
+		selectedOrganizationId,
+		setOrganizations,
+		switchOrganization,
+	]);
+
+	// Use the organization ID from cookies (client-side) or initial (server-side)
+	const currentOrganizationId = selectedOrganizationId || initialSelectedOrganizationId;
+
 	const handleDuplicateProject = async (projectId: string) => {
-		await duplicateProject(projectId);
+		if (!currentOrganizationId) {
+			addNotification({
+				message: "Please select an organization first",
+				projectName: "",
+				type: "error",
+			});
+			return;
+		}
+		await duplicateProject(currentOrganizationId, projectId);
 	};
 
 	const handleProjectNavigation = (projectId: string, projectName: string) => {
@@ -51,7 +89,14 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 		router.push(routes.project.detail());
 	};
 
-	const projects = initialProjects;
+	const { data: projects = initialProjects, mutate } = useSWR(
+		currentOrganizationId ? ["projects", currentOrganizationId] : null,
+		() => (currentOrganizationId ? getProjects(currentOrganizationId) : Promise.resolve([])),
+		{
+			fallbackData: initialProjects,
+			revalidateOnFocus: false,
+		},
+	);
 
 	// Generate team members from all projects
 	const projectTeamMembers = projects
@@ -77,8 +122,9 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	const confirmDeleteProject = async () => {
-		if (projectToDelete) {
-			await deleteProject(projectToDelete);
+		if (projectToDelete && currentOrganizationId) {
+			await deleteProject(currentOrganizationId, projectToDelete);
+			await mutate();
 			setProjectToDelete(null);
 		}
 	};
@@ -134,12 +180,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 	};
 
 	const handleCreateProject = async () => {
-		if (isCreatingProject) return;
+		if (isCreatingProject || !currentOrganizationId) return;
 
 		setIsCreatingProject(true);
 		try {
 			const newProjectName = `New Project ${projects.length + 1}`;
-			await createProject({
+			const { id: projectId } = await createProject(currentOrganizationId, {
 				description: "",
 				name: newProjectName,
 			});
