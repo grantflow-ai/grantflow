@@ -38,6 +38,7 @@ vi.mock("@/utils/server-side", async () => {
 	};
 });
 
+const mockOrganizationId = "mock-organization-id";
 const mockProjectId = "mock-project-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
@@ -118,9 +119,9 @@ describe("Project Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const projectData = CreateProjectRequestFactory.build();
 
-			const result = await createProject(projectData);
+			const result = await createProject(mockOrganizationId, projectData);
 
-			expect(mockPost).toHaveBeenCalledWith("projects", {
+			expect(mockPost).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects`, {
 				headers: mockAuthHeaders,
 				json: projectData,
 			});
@@ -132,9 +133,9 @@ describe("Project Actions", () => {
 
 	describe("getProject", () => {
 		it("should call the API with correct parameters", async () => {
-			const result = await getProject(mockProjectId);
+			const result = await getProject(mockOrganizationId, mockProjectId);
 
-			expect(mockGet).toHaveBeenCalledWith(`projects/${mockProjectId}`, {
+			expect(mockGet).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects/${mockProjectId}`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -149,9 +150,9 @@ describe("Project Actions", () => {
 				json: vi.fn().mockResolvedValue(mockGetProjectsResponse),
 			});
 
-			const result = await getProjects();
+			const result = await getProjects(mockOrganizationId);
 
-			expect(mockGet).toHaveBeenCalledWith("projects", {
+			expect(mockGet).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -164,9 +165,9 @@ describe("Project Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const updateData = UpdateProjectRequestFactory.build();
 
-			const result = await updateProject(mockProjectId, updateData);
+			const result = await updateProject(mockOrganizationId, mockProjectId, updateData);
 
-			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}`, {
+			expect(mockPatch).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects/${mockProjectId}`, {
 				headers: mockAuthHeaders,
 				json: updateData,
 			});
@@ -178,9 +179,9 @@ describe("Project Actions", () => {
 
 	describe("deleteProject", () => {
 		it("should call the API with correct parameters", async () => {
-			await deleteProject(mockProjectId);
+			await deleteProject(mockOrganizationId, mockProjectId);
 
-			expect(mockDelete).toHaveBeenCalledWith(`projects/${mockProjectId}`, {
+			expect(mockDelete).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects/${mockProjectId}`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -197,12 +198,16 @@ describe("Project Actions", () => {
 
 			mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-			await expect(getProject(mockProjectId)).rejects.toThrow("API Error");
+			await expect(getProject(mockOrganizationId, mockProjectId)).rejects.toThrow("API Error");
 		});
 
 		it("should redirect to sign-in page on 401 errors", async () => {
 			const mockResponse = new Response(null, { status: 401 });
-			const httpError = new HTTPError(mockResponse, { path: "projects" } as any, {} as any);
+			const httpError = new HTTPError(
+				mockResponse,
+				{ path: `organizations/${mockOrganizationId}/projects` } as any,
+				{} as any,
+			);
 
 			mockGet.mockReturnValueOnce({
 				json: vi.fn().mockRejectedValue(httpError),
@@ -218,7 +223,7 @@ describe("Project Actions", () => {
 				});
 			});
 
-			await getProject(mockProjectId);
+			await getProject(mockOrganizationId, mockProjectId);
 
 			expect(mockRedirect).toHaveBeenCalledWith("/signin");
 		});

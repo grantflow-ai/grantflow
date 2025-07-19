@@ -16,6 +16,7 @@ import { AppButton } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
@@ -26,6 +27,7 @@ import { ApplicationList } from "./application-list";
 export function ProjectDetailClient() {
 	const router = useRouter();
 	const { project } = useProjectStore();
+	const { selectedOrganizationId } = useOrganizationStore();
 	const { navigateToApplication } = useNavigationStore();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -58,8 +60,13 @@ export function ProjectDetailClient() {
 
 	// Fetch applications using SWR
 	const { data: applicationsData, isLoading } = useSWR(
-		project ? `/projects/${project.id}/applications?search=${searchQuery}` : null,
-		() => (project ? listApplications(project.id, { search: searchQuery || undefined }) : null),
+		project && selectedOrganizationId
+			? `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`
+			: null,
+		() =>
+			project && selectedOrganizationId
+				? listApplications(selectedOrganizationId, project.id, { search: searchQuery || undefined })
+				: null,
 		{
 			revalidateOnFocus: false,
 		},
@@ -67,8 +74,10 @@ export function ProjectDetailClient() {
 
 	// Fetch project members using SWR
 	const { data: projectMembers } = useSWR(
-		project ? `/projects/${project.id}/members` : null,
-		() => (project ? getProjectMembers(project.id) : null),
+		project && selectedOrganizationId
+			? `/organizations/${selectedOrganizationId}/projects/${project.id}/members`
+			: null,
+		() => (project && selectedOrganizationId ? getProjectMembers(selectedOrganizationId, project.id) : null),
 		{
 			revalidateOnFocus: false,
 		},
@@ -101,10 +110,10 @@ export function ProjectDetailClient() {
 	};
 
 	const confirmDeleteApplication = async () => {
-		if (applicationToDelete && project) {
+		if (applicationToDelete && project && selectedOrganizationId) {
 			try {
-				await deleteApplication(project.id, applicationToDelete);
-				await mutate(`/projects/${project.id}/applications`);
+				await deleteApplication(selectedOrganizationId, project.id, applicationToDelete);
+				await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
 				toast.success("Application deleted successfully");
 				setApplicationToDelete(null);
 				setShowDeleteModal(false);
@@ -116,11 +125,16 @@ export function ProjectDetailClient() {
 	};
 
 	const handleDuplicateApplication = async (applicationId: string, currentTitle: string) => {
-		if (!project) return;
+		if (!(project && selectedOrganizationId)) return;
 		try {
 			const newTitle = `Copy of ${currentTitle}`;
-			const duplicatedApp = await duplicateApplication(project.id, applicationId, newTitle);
-			await mutate(`/projects/${project.id}/applications`);
+			const duplicatedApp = await duplicateApplication(
+				selectedOrganizationId,
+				project.id,
+				applicationId,
+				newTitle,
+			);
+			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
 			toast.success("Application duplicated successfully");
 			// Navigate to the duplicated application
 			navigateToApplication(project.id, project.name, duplicatedApp.id, duplicatedApp.title || newTitle);
@@ -133,11 +147,13 @@ export function ProjectDetailClient() {
 	};
 
 	const handleCreateApplication = async () => {
-		if (!project) return;
+		if (!(project && selectedOrganizationId)) return;
 		setIsCreatingApplication(true);
 		try {
-			const application = await createApplication(project.id, { title: DEFAULT_APPLICATION_TITLE });
-			await mutate(`/projects/${project.id}/applications`);
+			const application = await createApplication(selectedOrganizationId, project.id, {
+				title: DEFAULT_APPLICATION_TITLE,
+			});
+			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
 			// Set navigation context
 			navigateToApplication(
 				project.id,

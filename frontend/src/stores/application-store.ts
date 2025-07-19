@@ -20,6 +20,7 @@ import {
 	deleteTemplateSource,
 } from "@/actions/sources";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
@@ -182,16 +183,21 @@ interface ApplicationActions {
 	addUrl: (url: string, parentId: string) => Promise<void>;
 	checkAndRestoreJobState: () => Promise<void>;
 	clearRestoredJobState: () => void;
-	createApplication: (projectId: string) => Promise<void>;
-	generateApplication: (projectId: string, applicationId: string) => Promise<void>;
+	createApplication: (organizationId: string, projectId: string) => Promise<void>;
+	generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
 	generateTemplate: (templateId: string) => Promise<void>;
-	getApplication: (projectId: string, applicationId: string) => Promise<void>;
+	getApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
 	removeUrl: (url: string, parentId: string) => Promise<void>;
 	reset: () => void;
 	setApplication: (application: NonNullable<ApplicationType>) => void;
 	updateApplication: (data: Partial<API.UpdateApplication.RequestBody>) => Promise<void>;
-	updateApplicationTitle: (projectId: string, applicationId: string, title: string) => Promise<void>;
+	updateApplicationTitle: (
+		organizationId: string,
+		projectId: string,
+		applicationId: string,
+		title: string,
+	) => Promise<void>;
 	updateGrantSections: (sections: API.UpdateGrantTemplate.RequestBody["grant_sections"]) => Promise<void>;
 }
 
@@ -201,24 +207,12 @@ const uploadFileInDevelopment = async (
 	parentId: string,
 	isApplicationParent: boolean,
 ) => {
-	log.info("[file-upload] uploadFileInDevelopment started", {
-		fileId: file.id,
-		fileName: file.name,
-		isApplicationParent,
-		parentId,
-		projectId: application.project_id,
-	});
-
+	const { selectedOrganizationId } = useOrganizationStore.getState();
+	if (!selectedOrganizationId) {
+		throw new Error("No organization selected");
+	}
 	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
-
-	log.info("[file-upload] Creating upload URL", {
-		fileName: file.name,
-		parentId,
-		projectId: application.project_id,
-		urlType: isApplicationParent ? "application" : "template",
-	});
-
-	const { url } = await createUploadUrl(application.project_id, parentId, file.name);
+	const { url } = await createUploadUrl(selectedOrganizationId, application.project_id, parentId, file.name);
 
 	log.info("[file-upload] Upload URL created", {
 		fileName: file.name,
@@ -289,24 +283,12 @@ const uploadFileInProduction = async (
 	parentId: string,
 	isApplicationParent: boolean,
 ) => {
-	log.info("[file-upload] uploadFileInProduction started", {
-		fileId: file.id,
-		fileName: file.name,
-		isApplicationParent,
-		parentId,
-		projectId: application.project_id,
-	});
-
+	const { selectedOrganizationId } = useOrganizationStore.getState();
+	if (!selectedOrganizationId) {
+		throw new Error("No organization selected");
+	}
 	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
-
-	log.info("[file-upload] Creating upload URL", {
-		fileName: file.name,
-		parentId,
-		projectId: application.project_id,
-		urlType: isApplicationParent ? "application" : "template",
-	});
-
-	const { url } = await createUploadUrl(application.project_id, parentId, file.name);
+	const { url } = await createUploadUrl(selectedOrganizationId, application.project_id, parentId, file.name);
 
 	log.info("[file-upload] Upload URL created", {
 		fileName: file.name,
@@ -423,7 +405,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			templateId: application?.grant_template?.id,
 		});
 
-		await get().getApplication(application!.project_id, application!.id);
+		await get().getApplication(application!.organization_id, application!.project_id, application!.id);
 	},
 
 	addUrl: async (url: string, parentId: string) => {
@@ -437,7 +419,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
-			await crawlUrl(application!.project_id, parentId, url);
+			await crawlUrl(application!.organization_id, application!.project_id, parentId, url);
 			toast.success("URL added successfully");
 			log.info("[rag_sources_check] URL crawl completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
@@ -446,7 +428,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				templateId: application?.grant_template?.id,
 				url,
 			});
-			await get().getApplication(application!.project_id, application!.id);
+			await get().getApplication(application!.organization_id, application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
@@ -486,7 +468,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 
 		try {
-			const jobData = await retrieveRagJob(projectId, ragJobId);
+			const jobData = await retrieveRagJob(application!.organization_id, projectId, ragJobId);
 			handleRagJobDataResponse(jobData, ragJobId, set);
 		} catch (error) {
 			set((state) => ({
@@ -513,10 +495,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 	},
 
-	createApplication: async (projectId: string) => {
+	createApplication: async (organizationId: string, projectId: string) => {
 		set({ areAppOperationsInProgress: true });
 		try {
-			const response = await handleCreateApplication(projectId, { title: DEFAULT_APPLICATION_TITLE });
+			const response = await handleCreateApplication(organizationId, projectId, {
+				title: DEFAULT_APPLICATION_TITLE,
+			});
 			log.info("[rag_sources_check] Application state updated via createApplication", {
 				applicationId: response.id,
 				projectId,
@@ -534,9 +518,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	generateApplication: async (projectId: string, applicationId: string) => {
+	generateApplication: async (organizationId: string, projectId: string, applicationId: string) => {
 		try {
-			await withRetry(() => handleGenerateApplication(projectId, applicationId), {
+			await withRetry(() => handleGenerateApplication(organizationId, projectId, applicationId), {
 				initialDelay: 1000,
 				maxRetries: 3,
 				retryCondition: (error: unknown) => {
@@ -575,7 +559,13 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 
 			const traceId = await withRetry(
-				() => generateGrantTemplate(application.project_id, application.id, templateId),
+				() =>
+					generateGrantTemplate(
+						application.organization_id,
+						application.project_id,
+						application.id,
+						templateId,
+					),
 				{
 					initialDelay: 1000,
 					maxRetries: 3,
@@ -607,10 +597,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	getApplication: async (projectId: string, applicationId: string) => {
+	getApplication: async (organizationId: string, projectId: string, applicationId: string) => {
 		set({ areAppOperationsInProgress: true });
 		try {
-			const response = await handleGetApplication(projectId, applicationId);
+			const response = await handleGetApplication(organizationId, projectId, applicationId);
 			log.info("[rag_sources_check] Application state updated via getApplication", {
 				applicationId,
 				projectId,
@@ -644,7 +634,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(application!.project_id, parentId, fileToRemove.id);
+			await deleteSource(application!.organization_id, application!.project_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
 			log.info("[rag_sources_check] File removal completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
@@ -654,7 +644,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				parentId,
 				templateId: application?.grant_template?.id,
 			});
-			await get().getApplication(application!.project_id, application!.id);
+			await get().getApplication(application!.organization_id, application!.project_id, application!.id);
 		} catch (error) {
 			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
@@ -713,7 +703,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				sourceId: ragSource.sourceId,
 			});
 
-			await deleteSource(application!.project_id, parentId, ragSource.sourceId);
+			await deleteSource(application!.organization_id, application!.project_id, parentId, ragSource.sourceId);
 
 			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");
@@ -726,7 +716,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				url: urlToRemove,
 			});
 
-			await get().getApplication(application!.project_id, application!.id);
+			await get().getApplication(application!.organization_id, application!.project_id, application!.id);
 			log.info("[removeUrl] getApplication completed");
 		} catch (error) {
 			log.error("[removeUrl] Error occurred", error);
@@ -776,6 +766,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		try {
 			const response = await handleUpdateApplication(
+				existingApplication.organization_id,
 				existingApplication.project_id,
 				existingApplication.id,
 				data,
@@ -802,7 +793,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}
 	},
 
-	updateApplicationTitle: async (projectId: string, applicationId: string, title: string) => {
+	updateApplicationTitle: async (organizationId: string, projectId: string, applicationId: string, title: string) => {
 		const { application } = get();
 
 		assertIsNotNullish(application, { message: "Application must exist to update title" });
@@ -810,7 +801,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const originalTitle = application.title;
 
 		try {
-			const response = await handleUpdateApplication(projectId, applicationId, { title });
+			const response = await handleUpdateApplication(organizationId, projectId, applicationId, { title });
 			log.info("[rag_sources_check] Application state updated via updateApplicationTitle", {
 				applicationId: response.id,
 				projectId: response.project_id,
@@ -883,9 +874,19 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				templateId: application.grant_template.id,
 			});
 
-			await updateGrantTemplate(application.project_id, application.id, application.grant_template.id, {
-				grant_sections: sections,
-			});
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				throw new Error("No organization selected");
+			}
+			await updateGrantTemplate(
+				selectedOrganizationId,
+				application.project_id,
+				application.id,
+				application.grant_template.id,
+				{
+					grant_sections: sections,
+				},
+			);
 
 			log.info("updateGrantSections: Success");
 		} catch (error) {

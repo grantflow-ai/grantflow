@@ -2,126 +2,85 @@
 
 ## Executive Summary
 
-Backend organization-scoped URLs are **already implemented**. Frontend migration is **30% complete** with core infrastructure in place. Focus on completing frontend API calls, components, and cleanup.
+Backend organization-scoped URLs are **implemented**. Frontend action layer migration is **COMPLETE**. Focus on application layer (stores, components, tests) and cleanup.
 
 ## Remaining Implementation Plan
 
-### Commit Block 1: Complete Frontend Action File Migration
-**Update Remaining Action Files to Organization-Scoped URLs**
+### Commit Block 1: Update Application Store
+**Add Organization Parameters to Application Store Methods**
 
 #### Files to Update:
-- [ ] `frontend/src/actions/grant-template.ts` - All grant template endpoints
-- [ ] `frontend/src/actions/sources.ts` - All source management endpoints  
-- [ ] `frontend/src/actions/rag-jobs.ts` - RAG job endpoints
+- [ ] `frontend/src/stores/application-store.ts` - Update all methods to accept organizationId parameter
 
 #### Key Changes:
 ```typescript
-// OLD: getClient().post(`projects/${projectId}/applications/${appId}/grant-template`)
-// NEW: getClient().post(`organizations/${orgId}/projects/${projectId}/applications/${appId}/grant-template`)
-
-// Add organizationId parameter to all functions:
-export async function createGrantTemplate(
-  organizationId: string,  // Add this parameter
-  projectId: string,
-  applicationId: string,
-  data: API.CreateGrantTemplate.RequestBody
-) { ... }
+// Update interface methods to include organizationId:
+createApplication: (organizationId: string, projectId: string) => Promise<void>;
+getApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
+generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
+// ... etc for all methods that call action functions
 ```
 
-### Commit Block 2: Update WebSocket and Notification URLs
-**Fix WebSocket Implementation for Organization Context**
-
-#### Files to Update:
-- [x] `frontend/src/hooks/use-application-notifications.ts` - WebSocket URL pattern and props
-- [ ] Backend WebSocket route to support organization-scoped URLs
-- [ ] Frontend WebSocket message types to align with backend schemas
-
-#### Key Changes:
-```typescript
-// URL Pattern Update:
-// OLD: `/projects/${projectId}/applications/${applicationId}/notifications`
-// NEW: `/organizations/${orgId}/projects/${projectId}/applications/${appId}/notifications`
-
-// Type Alignment Issues Found:
-// Frontend SourceProcessingNotification has fields that don't match backend SourceProcessingResult
-// - Frontend: rag_source_id, parent_id, parent_type
-// - Backend: source_id (UUID), parent_id in wrapper message only
-```
-
-#### Critical Backend Issue:
-**WebSocket endpoint still uses old URL pattern** - needs backend update to:
-```python
-@websocket_stream(
-    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/notifications"
-)
-```
-
-### Commit Block 3: Fix API Type Generation and TypeScript Errors
-**Resolve Type Generation and Compilation Issues**
-
-#### Actions:
-- [ ] Run `task generate:api-types` to regenerate types
-- [ ] Fix missing ResponseBody type definitions
-- [ ] Resolve 32+ TypeScript compilation errors
-
-#### Files Likely Affected:
-- [ ] `frontend/src/types/api-types.ts` - Generated types
-- [ ] `frontend/src/actions/*.ts` - Action files with type errors
-
-### Commit Block 4: Update Components and Stores
+### Commit Block 2: Update Components  
 **Pass Organization Context Through Components**
 
 #### Files to Update:
 - [ ] `frontend/src/components/projects/detail/project-detail-client.tsx`
 - [ ] `frontend/src/components/projects/settings/project-settings-members.tsx` 
 - [ ] `frontend/src/providers/navigation-context-provider.tsx`
-- [ ] `frontend/src/stores/application-store.ts` - Add organization parameters
-- [ ] `frontend/src/stores/project-store.ts` - Verify organization handling
+- [ ] Components using WebSocket notifications (add organizationId prop)
 
 #### Key Changes:
 - Add `organizationId` props to components
-- Update store methods to accept organization parameters
-- Ensure API calls pass organization context
+- Update component calls to stores/actions with organization context
+- Update WebSocket hook usage to include organizationId
 
-### Commit Block 5: Fix Test Files
+### Commit Block 3: Fix Test Files
 **Update Tests for Organization-Scoped Patterns**
 
 #### Files to Update:
 - [ ] `frontend/src/actions/grant-applications.spec.ts` - 32 failing tests
+- [ ] `frontend/src/actions/grant-template.spec.ts` - Tests with missing organizationId
+- [ ] `frontend/src/actions/sources.spec.ts` - Tests with missing organizationId  
 - [ ] `frontend/src/components/projects/forms/create-project-form.spec.tsx` - 5 failing tests
-- [ ] `frontend/tests/api/` - API test files
+- [ ] Other test files with organization parameter mismatches
 
 #### Key Changes:
 - Add `organizationId` parameters to test function calls
-- Update test expectations for new URL patterns
+- Update test expectations for new function signatures
 - Fix component props in tests
 
-### Commit Block 6: Final Cleanup and Validation
+### Commit Block 4: Final Cleanup and Validation
 **Run Linters and Verify System**
 
 #### Actions:
-- [ ] Run `task lint:frontend` and fix issues
+- [ ] Run `task lint:frontend` and fix remaining issues
 - [ ] Run `task test` and ensure all tests pass
-- [ ] Verify all API endpoints work with organization context
-- [ ] Test user flows with organization selection
+- [ ] Verify TypeScript compilation is clean
+- [ ] Test key user flows with organization selection
+
+### Backend Task (Separate)
+**Update Backend WebSocket Endpoint** 
+- [ ] Update WebSocket route to support organization-scoped URLs in backend
 
 ## Current Status
 
-**✅ Complete:**
-- Backend organization-scoped URLs implemented
-- Organization store and context utilities
-- Main dashboard and project/application actions partially migrated
+**✅ Complete (High Priority Tasks):**
+- ✅ All frontend action files use organization-scoped URLs
+- ✅ WebSocket frontend URLs and types updated  
+- ✅ API types regenerated successfully
+- ✅ Granting institution frontend functionality removed
+- ✅ Project store has organization parameters
 
-**❌ Remaining:**
-- 3 action files still using old URLs
-- WebSocket URLs need organization context
-- TypeScript compilation errors (32+)
-- Component props missing organization context
-- Test files need updating
+**📋 Remaining (Application Layer):**
+- Application store methods need organization parameters
+- Components need organization context passed through  
+- Test files need parameter updates
+- TypeScript compilation cleanup
 
 ## Notes
 
-- Backend migration is **already complete** - no backend work needed
-- Focus entirely on frontend completion
-- Organization switcher functionality removed (out of scope)
-- All changes are forward-only improvements with no legacy compatibility concerns
+- **Action layer migration is COMPLETE** - all API calls use organization-scoped URLs
+- Focus on application layer: stores → components → tests → cleanup
+- Backend WebSocket endpoint update is separate backend task
+- All changes are forward-only improvements
