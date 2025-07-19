@@ -42,6 +42,17 @@ export async function createOrganizationInvitation(
 	);
 }
 
+export async function createOrganizationSourceUploadUrl(organizationId: string, fileName: string) {
+	return withAuthRedirect(
+		getClient()
+			.post(`organizations/${organizationId}/sources/upload-url`, {
+				headers: await createAuthHeaders(),
+				json: { file_name: fileName },
+			})
+			.json<API.CreateGrantingInstitutionRagSourceUploadUrl.Http201.ResponseBody>(),
+	);
+}
+
 export async function deleteOrganization(organizationId: string) {
 	return withAuthRedirect(
 		getClient()

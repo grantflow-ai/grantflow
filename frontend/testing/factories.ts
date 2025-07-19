@@ -1,5 +1,6 @@
 import { Factory } from "interface-forge";
-
+import { SourceIndexingStatus } from "@/enums";
+import type { SourceProcessingNotification, WebsocketMessage } from "@/hooks/use-application-notifications";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import type { GrantSection } from "@/types/grant-sections";
@@ -379,27 +380,14 @@ export const GrantSectionUpdateRequestFactory = new Factory<GrantSectionUpdateRe
 	topics: [],
 }));
 
-interface SourceProcessingNotification {
-	identifier: string;
-	indexing_status: IndexingStatus;
-	parent_id: string;
-	parent_type: string;
-	rag_source_id: string;
-}
-
-interface WebsocketMessage<T> {
-	data: T;
-	event: string;
-	parent_id: string;
-	type: "data" | "error" | "info";
-}
-
 export const SourceProcessingNotificationFactory = new Factory<SourceProcessingNotification>((factory) => ({
 	identifier: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`,
-	indexing_status: factory.helpers.arrayElement<IndexingStatus>(["CREATED", "INDEXING", "FINISHED", "FAILED"]),
-	parent_id: factory.string.uuid(),
-	parent_type: factory.helpers.arrayElement(["grant_application", "grant_template"]),
-	rag_source_id: factory.string.uuid(),
+	indexing_status: factory.helpers.arrayElement([
+		SourceIndexingStatus.INDEXING,
+		SourceIndexingStatus.FINISHED,
+		SourceIndexingStatus.FAILED,
+	]),
+	source_id: factory.string.uuid(),
 }));
 
 export const WebSocketMessageFactory = new Factory<WebsocketMessage<unknown>>((factory) => ({
@@ -410,12 +398,12 @@ export const WebSocketMessageFactory = new Factory<WebsocketMessage<unknown>>((f
 }));
 
 export const SourceProcessingNotificationMessageFactory = new Factory<WebsocketMessage<SourceProcessingNotification>>(
-	() => {
+	(factory) => {
 		const notification = SourceProcessingNotificationFactory.build();
 		return {
 			data: notification,
 			event: "source_processing",
-			parent_id: notification.parent_id,
+			parent_id: factory.string.uuid(),
 			type: "data",
 		};
 	},

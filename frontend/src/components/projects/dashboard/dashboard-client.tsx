@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { createProject } from "@/actions/project";
+import { createProject, getProjects } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AvatarGroup } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
@@ -92,7 +92,7 @@ export function DashboardClient({
 
 	const { data: projects = initialProjects, mutate } = useSWR(
 		currentOrganizationId ? ["projects", currentOrganizationId] : null,
-		() => (currentOrganizationId ? getProjects(currentOrganizationId) : Promise.resolve([])),
+		([, orgId]: [string, string]) => getProjects(orgId),
 		{
 			fallbackData: initialProjects,
 			revalidateOnFocus: false,
@@ -142,6 +142,16 @@ export function DashboardClient({
 				projectName: "",
 				title: "No project selected",
 				type: "warning",
+			});
+			return;
+		}
+
+		if (!currentOrganizationId) {
+			addNotification({
+				message: "Please select an organization first",
+				projectName: selectedProjectForInvite.name,
+				title: "Organization Required",
+				type: "error",
 			});
 			return;
 		}

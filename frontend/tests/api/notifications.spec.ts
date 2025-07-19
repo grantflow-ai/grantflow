@@ -9,16 +9,20 @@ describe("Notifications API Actions", () => {
 
 	describe("Notification Management", () => {
 		it("should get all notifications", async () => {
-			const expectedResponse = [
-				{
-					created_at: "2023-01-01T00:00:00Z",
-					id: mockNotificationId,
-					message: "Your grant application has been updated",
-					read: false,
-					title: "Application Updated",
-					type: "application_update",
-				},
-			];
+			const expectedResponse = {
+				notifications: [
+					{
+						created_at: "2023-01-01T00:00:00Z",
+						dismissed: false,
+						id: mockNotificationId,
+						message: "Your grant application has been updated",
+						read: false,
+						title: "Application Updated",
+						type: "application_update",
+					},
+				],
+				total: 1,
+			};
 			vi.mocked(notificationActions.getNotifications).mockResolvedValue(expectedResponse);
 
 			const result = await notificationActions.getNotifications();
@@ -27,13 +31,13 @@ describe("Notifications API Actions", () => {
 			expect(result).toEqual(expectedResponse);
 		});
 
-		it("should delete notification", async () => {
-			const expectedResponse = { success: true };
-			vi.mocked(notificationActions.deleteNotification).mockResolvedValue(expectedResponse);
+		it("should dismiss notification", async () => {
+			const expectedResponse = { notification_id: mockNotificationId, success: true };
+			vi.mocked(notificationActions.dismissNotification).mockResolvedValue(expectedResponse);
 
-			const result = await notificationActions.deleteNotification(mockNotificationId);
+			const result = await notificationActions.dismissNotification(mockNotificationId);
 
-			expect(notificationActions.deleteNotification).toHaveBeenCalledWith(mockNotificationId);
+			expect(notificationActions.dismissNotification).toHaveBeenCalledWith(mockNotificationId);
 			expect(result).toEqual(expectedResponse);
 		});
 	});
