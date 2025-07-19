@@ -32,13 +32,28 @@ export async function createGrantTemplate(
 **Fix WebSocket Implementation for Organization Context**
 
 #### Files to Update:
-- [ ] `frontend/src/hooks/use-application-notifications.ts` - WebSocket URL pattern
-- [ ] Any other WebSocket hooks or notification systems
+- [x] `frontend/src/hooks/use-application-notifications.ts` - WebSocket URL pattern and props
+- [ ] Backend WebSocket route to support organization-scoped URLs
+- [ ] Frontend WebSocket message types to align with backend schemas
 
 #### Key Changes:
 ```typescript
+// URL Pattern Update:
 // OLD: `/projects/${projectId}/applications/${applicationId}/notifications`
 // NEW: `/organizations/${orgId}/projects/${projectId}/applications/${appId}/notifications`
+
+// Type Alignment Issues Found:
+// Frontend SourceProcessingNotification has fields that don't match backend SourceProcessingResult
+// - Frontend: rag_source_id, parent_id, parent_type
+// - Backend: source_id (UUID), parent_id in wrapper message only
+```
+
+#### Critical Backend Issue:
+**WebSocket endpoint still uses old URL pattern** - needs backend update to:
+```python
+@websocket_stream(
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/notifications"
+)
 ```
 
 ### Commit Block 3: Fix API Type Generation and TypeScript Errors
