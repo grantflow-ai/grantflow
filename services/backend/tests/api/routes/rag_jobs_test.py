@@ -39,7 +39,7 @@ async def test_retrieve_grant_template_job_success(
         job_id = job.id
 
     response = await test_client.get(
-        f"/projects/{project.id}/rag-jobs/{job_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -80,7 +80,7 @@ async def test_retrieve_grant_application_job_success(
         job_id = job.id
 
     response = await test_client.get(
-        f"/projects/{project.id}/rag-jobs/{job_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -120,7 +120,7 @@ async def test_retrieve_job_with_error_details(
         job_id = job.id
 
     response = await test_client.get(
-        f"/projects/{project.id}/rag-jobs/{job_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -163,6 +163,8 @@ async def test_retrieve_job_unauthorized(
         await session.commit()
         job_id = job.id
 
-    response = await test_client.get(f"/projects/{project.id}/rag-jobs/{job_id}")
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}"
+    )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text

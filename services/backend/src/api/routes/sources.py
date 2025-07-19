@@ -227,17 +227,18 @@ async def handle_create_rag_source(
 
 @get(
     [
-        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
-        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Retrieve{value}RagSources"),
 )
 async def handle_retrieve_rag_sources(
+    *,
     session_maker: async_sessionmaker[Any],
+    organization_id: UUID,
     application_id: UUID | None = None,
-    organization_id: UUID | None = None,
     template_id: UUID | None = None,
 ) -> list[RagFileResponse | RagUrlResponse]:
     async with session_maker() as session:
@@ -303,19 +304,20 @@ async def handle_retrieve_rag_sources(
 
 @delete(
     [
-        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
-        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Delete{value}RagSource"),
 )
 async def handle_delete_rag_source(
+    *,
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
+    organization_id: UUID,
     source_id: UUID,
     application_id: UUID | None = None,
-    organization_id: UUID | None = None,
     template_id: UUID | None = None,
 ) -> None:
     async with session_maker() as session, session.begin():
@@ -428,8 +430,8 @@ async def handle_delete_rag_source(
 
 @post(
     [
-        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
-        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -439,8 +441,8 @@ async def handle_create_upload_url(
     session_maker: async_sessionmaker[Any],
     blob_name: str,
     request: APIRequest,
+    organization_id: UUID,
     application_id: UUID | None = None,
-    organization_id: UUID | None = None,
     template_id: UUID | None = None,
     project_id: UUID | None = None,
 ) -> UploadUrlResponse:
@@ -492,8 +494,8 @@ async def handle_create_upload_url(
 
 @post(
     [
-        "/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
-        "/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
         "/organizations/{organization_id:uuid}/sources/crawl-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -503,8 +505,8 @@ async def handle_crawl_url(
     session_maker: async_sessionmaker[Any],
     data: UrlCrawlingRequest,
     request: APIRequest,
+    organization_id: UUID,
     application_id: UUID | None = None,
-    organization_id: UUID | None = None,
     template_id: UUID | None = None,
     project_id: UUID | None = None,
 ) -> UrlCrawlingResponse:
