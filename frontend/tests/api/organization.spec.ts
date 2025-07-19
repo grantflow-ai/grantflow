@@ -28,7 +28,26 @@ describe("Organization API Actions", () => {
 		});
 
 		it("should get all organizations", async () => {
-			const expectedResponse = [OrganizationFactory.build(), OrganizationFactory.build()];
+			const expectedResponse: API.ListOrganizations.Http200.ResponseBody = [
+				{
+					description: "Test org 1",
+					id: "org-1",
+					logo_url: null,
+					members_count: 5,
+					name: "Organization 1",
+					projects_count: 3,
+					role: "OWNER",
+				},
+				{
+					description: "Test org 2",
+					id: "org-2",
+					logo_url: null,
+					members_count: 3,
+					name: "Organization 2",
+					projects_count: 1,
+					role: "ADMIN",
+				},
+			];
 			vi.mocked(organizationActions.getOrganizations).mockResolvedValue(expectedResponse);
 
 			const result = await organizationActions.getOrganizations();
@@ -38,7 +57,18 @@ describe("Organization API Actions", () => {
 		});
 
 		it("should get single organization", async () => {
-			const expectedResponse = OrganizationFactory.build();
+			const expectedResponse: API.GetOrganization.Http200.ResponseBody = {
+				contact_email: "test@example.com",
+				contact_person_name: "John Doe",
+				created_at: "2023-01-01T00:00:00Z",
+				description: "Test organization description",
+				id: mockOrgId,
+				institutional_affiliation: "Test University",
+				logo_url: null,
+				name: "Test Org",
+				role: "OWNER",
+				updated_at: "2023-01-01T00:00:00Z",
+			};
 			vi.mocked(organizationActions.getOrganization).mockResolvedValue(expectedResponse);
 
 			const result = await organizationActions.getOrganization(mockOrgId);
@@ -49,9 +79,25 @@ describe("Organization API Actions", () => {
 
 		it("should update organization", async () => {
 			const updateData: API.UpdateOrganization.RequestBody = {
+				contact_email: "updated@example.com",
+				contact_person_name: "Jane Doe",
+				description: "Updated description",
+				institutional_affiliation: "Updated University",
+				logo_url: null,
 				name: "Updated Organization",
 			};
-			const expectedResponse = OrganizationFactory.build();
+			const expectedResponse: API.UpdateOrganization.Http200.ResponseBody = {
+				contact_email: "updated@example.com",
+				contact_person_name: "Jane Doe",
+				created_at: "2023-01-01T00:00:00Z",
+				description: "Updated description",
+				id: mockOrgId,
+				institutional_affiliation: "Updated University",
+				logo_url: null,
+				name: "Updated Organization",
+				role: "OWNER",
+				updated_at: "2023-01-02T00:00:00Z",
+			};
 			vi.mocked(organizationActions.updateOrganization).mockResolvedValue(expectedResponse);
 
 			const result = await organizationActions.updateOrganization(mockOrgId, updateData);
@@ -61,7 +107,12 @@ describe("Organization API Actions", () => {
 		});
 
 		it("should delete organization", async () => {
-			const expectedResponse = { success: true };
+			const expectedResponse: API.DeleteOrganization.Http200.ResponseBody = {
+				grace_period_days: 30,
+				message: "Organization scheduled for deletion",
+				restoration_info: "Organization can be restored within 30 days",
+				scheduled_deletion_date: "2023-01-31T00:00:00Z",
+			};
 			vi.mocked(organizationActions.deleteOrganization).mockResolvedValue(expectedResponse);
 
 			const result = await organizationActions.deleteOrganization(mockOrgId);
@@ -73,14 +124,14 @@ describe("Organization API Actions", () => {
 
 	describe("Organization Members", () => {
 		it("should get organization members", async () => {
-			const expectedResponse = [
+			const expectedResponse: API.ListOrganizationMembers.Http200.ResponseBody = [
 				{
-					display_name: "Test User",
-					email: "test@example.com",
+					created_at: "2023-01-01T00:00:00Z",
 					firebase_uid: mockFirebaseUid,
-					joined_at: "2023-01-01T00:00:00Z",
-					photo_url: null,
-					role: UserRole.COLLABORATOR,
+					has_all_projects_access: true,
+					project_access: [],
+					role: "COLLABORATOR",
+					updated_at: "2023-01-01T00:00:00Z",
 				},
 			];
 			vi.mocked(organizationActions.getOrganizationMembers).mockResolvedValue(expectedResponse);
@@ -96,7 +147,11 @@ describe("Organization API Actions", () => {
 				firebase_uid: mockFirebaseUid,
 				role: UserRole.COLLABORATOR,
 			};
-			const expectedResponse = { success: true };
+			const expectedResponse: API.AddOrganizationMember.Http201.ResponseBody = {
+				firebase_uid: mockFirebaseUid,
+				message: "Member added successfully",
+				role: "COLLABORATOR",
+			};
 			vi.mocked(organizationActions.addOrganizationMember).mockResolvedValue(expectedResponse);
 
 			const result = await organizationActions.addOrganizationMember(mockOrgId, memberData);
@@ -128,9 +183,9 @@ describe("Organization API Actions", () => {
 	describe("Organization Sources", () => {
 		it("should create organization source upload URL", async () => {
 			const fileName = "document.pdf";
-			const expectedResponse = {
-				rag_source_id: "source-123",
-				upload_url: "https://storage.googleapis.com/bucket/file",
+			const expectedResponse: API.CreateGrantingInstitutionRagSourceUploadUrl.Http201.ResponseBody = {
+				source_id: "source-123",
+				url: "https://storage.googleapis.com/bucket/file",
 			};
 			vi.mocked(organizationActions.createOrganizationSourceUploadUrl).mockResolvedValue(expectedResponse);
 
