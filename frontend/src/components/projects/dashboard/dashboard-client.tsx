@@ -24,7 +24,7 @@ import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
 
 interface DashboardClientProps {
-	initialOrganizations: API.ListOrganizations.ResponseBody;
+	initialOrganizations: API.ListOrganizations.Http200.ResponseBody;
 	initialProjects: API.ListProjects.Http200.ResponseBody;
 	initialSelectedOrganizationId: null | string;
 }
@@ -68,13 +68,14 @@ export function DashboardClient({
 	]);
 
 	// Use the organization ID from cookies (client-side) or initial (server-side)
-	const currentOrganizationId = selectedOrganizationId || initialSelectedOrganizationId;
+	const currentOrganizationId = selectedOrganizationId ?? initialSelectedOrganizationId;
 
 	const handleDuplicateProject = async (projectId: string) => {
 		if (!currentOrganizationId) {
 			addNotification({
 				message: "Please select an organization first",
 				projectName: "",
+				title: "Organization Required",
 				type: "error",
 			});
 			return;
@@ -149,6 +150,7 @@ export function DashboardClient({
 			const result = await inviteCollaborator({
 				email,
 				inviterName: user?.displayName ?? user?.email ?? "Team Member",
+				organizationId: currentOrganizationId,
 				projectId: selectedProjectForInvite.id,
 				projectName: selectedProjectForInvite.name,
 				role: permission === "admin" ? "admin" : "member",
