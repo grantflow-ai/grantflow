@@ -39,7 +39,7 @@ async def test_retrieve_application_sources(
     rag_url: RagUrl,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -81,7 +81,7 @@ async def test_retrieve_application_sources_empty(
         application_id = new_application.id
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{application_id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application_id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -136,7 +136,7 @@ async def test_retrieve_template_sources(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -167,7 +167,7 @@ async def test_retrieve_grant_application_sources_unauthorized(
     grant_application: GrantApplication,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -180,7 +180,7 @@ async def test_retrieve_grant_template_sources_unauthorized(
     grant_template: GrantTemplate,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -200,7 +200,7 @@ async def test_delete_application_source(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -237,7 +237,7 @@ async def test_delete_application_source_deletes_from_gcs(
         object_path = file_source.object_path
 
     response = await test_client.delete(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -288,7 +288,7 @@ async def test_delete_template_source(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
-        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_template_file.rag_source_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_template_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -316,7 +316,7 @@ async def test_delete_grant_application_source_unauthorized(
     grant_application_file: GrantApplicationSource,
 ) -> None:
     response = await test_client.delete(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -330,7 +330,7 @@ async def test_delete_grant_application_source_not_found(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.delete(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/{UUID('00000000-0000-0000-0000-000000000000')}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/{UUID('00000000-0000-0000-0000-000000000000')}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -346,7 +346,7 @@ async def test_delete_source_from_wrong_entity(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.delete(
-        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_application_file.rag_source_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_application_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -368,7 +368,7 @@ async def test_create_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -433,7 +433,7 @@ async def test_create_template_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -465,7 +465,7 @@ async def test_create_upload_url_unauthorized(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -491,7 +491,7 @@ async def test_handle_crawl_url_grant_application(
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -548,7 +548,7 @@ async def test_handle_crawl_url_grant_template(
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/projects/{project.id}/grant_templates/{grant_template.id}/sources/crawl-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -575,7 +575,7 @@ async def test_handle_crawl_url_unauthorized(
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer invalid_token"},
     )
@@ -595,7 +595,7 @@ async def test_handle_crawl_url_pubsub_error(
         request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
         response = await test_client.post(
-            f"/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
             json=request_data,
             headers={"Authorization": "Bearer some_token"},
         )

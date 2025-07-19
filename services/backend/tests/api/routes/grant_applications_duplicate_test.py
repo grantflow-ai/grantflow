@@ -26,8 +26,13 @@ async def test_duplicate_application_success(
         app.text = "Original text content"
         await session.commit()
 
+    
+    async with async_session_maker() as session:
+        project = await session.get(Project, project_id)
+        organization_id = project.organization_id
+
     response = await test_client.post(
-        f"/projects/{project_id}/applications/{grant_application.id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{grant_application.id}/duplicate",
         json={"title": "Copy of Test Application"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -113,8 +118,13 @@ async def test_duplicate_with_grant_template(
         project = await session.get(GrantApplication, app_id)
         project_id = project.project_id
 
+    
+    async with async_session_maker() as session:
+        project_obj = await session.get(Project, project_id)
+        organization_id = project_obj.organization_id
+
     response = await test_client.post(
-        f"/projects/{project_id}/applications/{app_id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{app_id}/duplicate",
         json={"title": "Copy with Template"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -144,8 +154,13 @@ async def test_duplicate_preserves_rag_sources(
         original_rag_count = len(app.rag_sources)
         assert original_rag_count > 0
 
+    
+    async with async_session_maker() as session:
+        project_obj = await session.get(Project, project_id)
+        organization_id = project_obj.organization_id
+
     response = await test_client.post(
-        f"/projects/{project_id}/applications/{application_id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{application_id}/duplicate",
         json={"title": "Copy with RAG Sources"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -165,13 +180,19 @@ async def test_duplicate_application_validation_error(
     test_client: TestingClientType,
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     """Test validation error with invalid title"""
 
     project_id = grant_application.project_id
 
+    
+    async with async_session_maker() as session:
+        project = await session.get(Project, project_id)
+        organization_id = project.organization_id
+
     response = await test_client.post(
-        f"/projects/{project_id}/applications/{grant_application.id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{grant_application.id}/duplicate",
         json={"title": ""},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -194,8 +215,13 @@ async def test_duplicate_application_preserves_status_as_draft(
         app.status = ApplicationStatusEnum.GENERATING
         await session.commit()
 
+    
+    async with async_session_maker() as session:
+        project = await session.get(Project, project_id)
+        organization_id = project.organization_id
+
     response = await test_client.post(
-        f"/projects/{project_id}/applications/{grant_application.id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{grant_application.id}/duplicate",
         json={"title": "Draft Copy"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -209,14 +235,20 @@ async def test_duplicate_application_long_title(
     test_client: TestingClientType,
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
+    async_session_maker: async_sessionmaker[Any],
 ) -> None:
     """Test duplication with very long title"""
 
     project_id = grant_application.project_id
     long_title = "A" * 300
 
+    
+    async with async_session_maker() as session:
+        project = await session.get(Project, project_id)
+        organization_id = project.organization_id
+
     response = await test_client.post(
-        f"/projects/{project_id}/applications/{grant_application.id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{grant_application.id}/duplicate",
         json={"title": long_title},
         headers={"Authorization": "Bearer some_token"},
     )
