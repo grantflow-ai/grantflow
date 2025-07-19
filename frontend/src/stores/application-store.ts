@@ -413,6 +413,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				parentId,
 			});
 			toast.error("Failed to upload file. Please try again.");
+			throw error;
 		}
 
 		log.info("[rag_sources_check] File upload completed, triggering getApplication", {
