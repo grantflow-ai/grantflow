@@ -3,6 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { ReadyState } from "react-use-websocket";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getOtp } from "@/actions/otp";
+import { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 
 vi.mock("@/actions/otp");
@@ -84,7 +85,7 @@ describe("useApplicationNotifications", () => {
 		const firstNotification = SourceProcessingNotificationMessageFactory.build({
 			data: {
 				identifier: "doc1.pdf",
-				indexing_status: "FINISHED",
+				indexing_status: SourceIndexingStatus.FINISHED,
 				source_id: "source-1",
 			},
 			parent_id: "app-123",
@@ -110,7 +111,7 @@ describe("useApplicationNotifications", () => {
 		const secondNotification = SourceProcessingNotificationMessageFactory.build({
 			data: {
 				identifier: "doc2.pdf",
-				indexing_status: "INDEXING",
+				indexing_status: SourceIndexingStatus.INDEXING,
 				source_id: "source-2",
 			},
 			parent_id: "app-123",
@@ -236,9 +237,7 @@ describe("Type Guards", () => {
 			data: {
 				identifier: "test.pdf",
 				indexing_status: SourceIndexingStatus.INDEXING,
-				parent_id: "test-id",
-				parent_type: "grant_template",
-				rag_source_id: "source-1",
+				source_id: "source-1",
 			},
 			event: "source_processing",
 			parent_id: "test-id",

@@ -56,6 +56,7 @@ vi.mock("sonner", () => ({
 
 describe("WizardClientComponent", () => {
 	const mockApplication = ApplicationFactory.build();
+	const organizationId = "mock-org-id";
 	const projectId = "test-project-id";
 
 	beforeEach(() => {
@@ -71,7 +72,13 @@ describe("WizardClientComponent", () => {
 	});
 
 	it("should render wizard layout with header and footer", () => {
-		render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		render(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		expect(screen.getByTestId("wizard-page")).toBeInTheDocument();
 		expect(screen.getByTestId("wizard-header")).toBeInTheDocument();
@@ -80,23 +87,47 @@ describe("WizardClientComponent", () => {
 	});
 
 	it("should render wizard dialog", () => {
-		render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		render(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		expect(screen.getByTestId("wizard-dialog")).toBeInTheDocument();
 	});
 
 	it("should render application details step by default", () => {
-		render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		render(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
 	});
 
 	it("should render different steps based on wizard store state", () => {
-		const { rerender } = render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		const { rerender } = render(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
 
-		rerender(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		rerender(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		expect(screen.getByTestId("knowledge-base-step")).toBeInTheDocument();
 	});
@@ -105,7 +136,13 @@ describe("WizardClientComponent", () => {
 		const resetSpy = vi.spyOn(useApplicationStore.getState(), "reset");
 		const setStateSpy = vi.spyOn(useApplicationStore, "setState");
 
-		render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		render(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		expect(resetSpy).toHaveBeenCalled();
 		expect(setStateSpy).toHaveBeenCalledWith({
@@ -117,7 +154,13 @@ describe("WizardClientComponent", () => {
 	it("should initialize wizard store", () => {
 		const resetSpy = vi.spyOn(useWizardStore.getState(), "reset");
 
-		render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+		render(
+			<WizardClientComponent
+				application={mockApplication}
+				organizationId={organizationId}
+				projectId={projectId}
+			/>,
+		);
 
 		expect(resetSpy).toHaveBeenCalled();
 	});
@@ -134,11 +177,21 @@ describe("WizardClientComponent", () => {
 
 		stepTests.forEach(({ step, testId }) => {
 			const { rerender, unmount } = render(
-				<WizardClientComponent application={mockApplication} projectId={projectId} />,
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
 			);
 
 			useWizardStore.setState({ currentStep: step });
-			rerender(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+			rerender(
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
+			);
 
 			expect(screen.getByTestId(testId)).toBeInTheDocument();
 			unmount();
@@ -157,7 +210,13 @@ describe("WizardClientComponent", () => {
 			mockNotifications.mockReturnValue([mockNotification]);
 			mockIsSourceProcessingNotificationMessage.mockReturnValue(true);
 
-			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+			render(
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
+			);
 
 			expect(mockIsSourceProcessingNotificationMessage).toHaveBeenCalledWith(mockNotification);
 		});
@@ -174,7 +233,13 @@ describe("WizardClientComponent", () => {
 			mockNotifications.mockReturnValue([mockNotification]);
 			mockIsAutofillProgressMessage.mockReturnValue(true);
 
-			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+			render(
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
+			);
 
 			expect(mockIsAutofillProgressMessage).toHaveBeenCalledWith(mockNotification);
 		});
@@ -189,7 +254,13 @@ describe("WizardClientComponent", () => {
 			mockNotifications.mockReturnValue([mockNotification]);
 			mockIsRagProcessingStatusMessage.mockReturnValue(true);
 
-			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+			render(
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
+			);
 
 			expect(mockIsRagProcessingStatusMessage).toHaveBeenCalledWith(mockNotification);
 		});
@@ -204,7 +275,13 @@ describe("WizardClientComponent", () => {
 			mockNotifications.mockReturnValue([mockNotification]);
 			mockIsRagProcessingStatusMessage.mockReturnValue(true);
 
-			render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+			render(
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
+			);
 
 			expect(screen.getByTestId("notification-handler")).toBeInTheDocument();
 		});
@@ -212,7 +289,13 @@ describe("WizardClientComponent", () => {
 
 	describe("Store Initialization", () => {
 		it("should initialize stores with correct cleanup", () => {
-			const { unmount } = render(<WizardClientComponent application={mockApplication} projectId={projectId} />);
+			const { unmount } = render(
+				<WizardClientComponent
+					application={mockApplication}
+					organizationId={organizationId}
+					projectId={projectId}
+				/>,
+			);
 
 			expect(useApplicationStore.getState().application).toEqual(mockApplication);
 			expect(useApplicationStore.getState().areAppOperationsInProgress).toBe(false);

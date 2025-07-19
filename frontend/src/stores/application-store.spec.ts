@@ -74,7 +74,7 @@ describe("Application Store", () => {
 
 			const { updateApplicationTitle } = useApplicationStore.getState();
 
-			await updateApplicationTitle("project-id", "app-id", "New Title");
+			await updateApplicationTitle("mock-org-id", "project-id", "app-id", "New Title");
 
 			expect(updateApplication).toHaveBeenCalledWith("mock-org-id", "project-id", "app-id", {
 				title: "New Title",
@@ -93,7 +93,7 @@ describe("Application Store", () => {
 
 			const { updateApplicationTitle } = useApplicationStore.getState();
 
-			await updateApplicationTitle("project-id", "app-id", "New Title");
+			await updateApplicationTitle("mock-org-id", "project-id", "app-id", "New Title");
 
 			const state = useApplicationStore.getState();
 			expect(state.application?.title).toBe("Old Title");
@@ -108,7 +108,7 @@ describe("Application Store", () => {
 
 			const { getApplication: retrieveApp } = useApplicationStore.getState();
 
-			await retrieveApp("project-id", "app-id");
+			await retrieveApp("mock-org-id", "project-id", "app-id");
 
 			expect(getApplication).toHaveBeenCalledWith("mock-org-id", "project-id", "app-id");
 

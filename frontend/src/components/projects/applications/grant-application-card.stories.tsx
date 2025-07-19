@@ -45,7 +45,6 @@ export const Draft: Story = {
 			title: "Climate Change Research Grant",
 		}),
 		organizationId: "org-1",
-		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -127,7 +126,6 @@ export const GridLayout: Story = {
 						id: "1",
 						title: "Climate Research Draft",
 					})}
-					organizationId="org-1"
 					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"

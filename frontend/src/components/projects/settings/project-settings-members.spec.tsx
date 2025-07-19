@@ -78,6 +78,7 @@ vi.mock("./edit-permission-modal", () => ({
 }));
 
 const mockProject = ProjectFactory.build();
+const mockOrganizationId = "mock-org-id";
 const mockUser = {
 	displayName: "Test User",
 	email: "test@example.com",
@@ -128,6 +129,7 @@ describe("ProjectSettingsMembers", () => {
 			<ProjectSettingsMembers
 				currentUserRole={UserRole.OWNER}
 				onInviteHandlerChange={mockInviteHandlerChange}
+				organizationId={mockOrganizationId}
 				projectId={mockProject.id}
 				projectName={mockProject.name}
 			/>,
@@ -152,6 +154,7 @@ describe("ProjectSettingsMembers", () => {
 		renderWithSWR(
 			<ProjectSettingsMembers
 				currentUserRole={UserRole.OWNER}
+				organizationId={mockOrganizationId}
 				projectId={mockProject.id}
 				projectName={mockProject.name}
 			/>,
@@ -184,6 +187,7 @@ describe("ProjectSettingsMembers", () => {
 		renderWithSWR(
 			<ProjectSettingsMembers
 				currentUserRole={UserRole.OWNER}
+				organizationId={mockOrganizationId}
 				projectId={mockProject.id}
 				projectName={mockProject.name}
 			/>,
@@ -204,6 +208,7 @@ describe("ProjectSettingsMembers", () => {
 		renderWithSWR(
 			<ProjectSettingsMembers
 				currentUserRole={UserRole.OWNER}
+				organizationId={mockOrganizationId}
 				projectId={mockProject.id}
 				projectName={mockProject.name}
 			/>,
@@ -226,6 +231,7 @@ describe("ProjectSettingsMembers", () => {
 		renderWithSWR(
 			<ProjectSettingsMembers
 				currentUserRole={UserRole.COLLABORATOR}
+				organizationId={mockOrganizationId}
 				projectId={mockProject.id}
 				projectName={mockProject.name}
 			/>,

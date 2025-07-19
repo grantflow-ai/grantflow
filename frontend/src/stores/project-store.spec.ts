@@ -73,7 +73,7 @@ describe("Project Store", () => {
 			vi.mocked(createProject).mockResolvedValue(createdProject);
 			vi.mocked(getProjects).mockResolvedValue(projectsList);
 
-			await useProjectStore.getState().createProject(projectData);
+			await useProjectStore.getState().createProject("mock-org-id", projectData);
 
 			expect(createProject).toHaveBeenCalledWith("mock-org-id", projectData);
 			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
@@ -87,7 +87,7 @@ describe("Project Store", () => {
 
 			vi.mocked(createProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().createProject(projectData);
+			await useProjectStore.getState().createProject("mock-org-id", projectData);
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().project).toBeNull();
@@ -99,7 +99,7 @@ describe("Project Store", () => {
 			const project = ProjectFactory.build();
 			vi.mocked(getProject).mockResolvedValue(project);
 
-			await useProjectStore.getState().getProject(project.id);
+			await useProjectStore.getState().getProject("mock-org-id", project.id);
 
 			expect(getProject).toHaveBeenCalledWith("mock-org-id", project.id);
 			expect(useProjectStore.getState().project).toEqual(project);
@@ -112,7 +112,7 @@ describe("Project Store", () => {
 
 			vi.mocked(getProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().getProject(projectId);
+			await useProjectStore.getState().getProject("mock-org-id", projectId);
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
@@ -123,7 +123,7 @@ describe("Project Store", () => {
 			const projects = [ProjectListItemFactory.build(), ProjectListItemFactory.build()];
 			vi.mocked(getProjects).mockResolvedValue(projects);
 
-			await useProjectStore.getState().getProjects();
+			await useProjectStore.getState().getProjects("mock-org-id");
 
 			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 			expect(useProjectStore.getState().projects).toEqual(projects);
@@ -134,7 +134,7 @@ describe("Project Store", () => {
 			const error = new Error("Fetch failed");
 			vi.mocked(getProjects).mockRejectedValue(error);
 
-			await useProjectStore.getState().getProjects();
+			await useProjectStore.getState().getProjects("mock-org-id");
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().projects).toEqual([]);
@@ -161,7 +161,7 @@ describe("Project Store", () => {
 			vi.mocked(getProject).mockResolvedValue(updatedProject);
 			vi.mocked(getProjects).mockResolvedValue([updatedProjectListItem]);
 
-			await useProjectStore.getState().updateProject(project.id, updateData);
+			await useProjectStore.getState().updateProject("mock-org-id", project.id, updateData);
 
 			expect(updateProject).toHaveBeenCalledWith("mock-org-id", project.id, updateData);
 			expect(getProject).toHaveBeenCalledWith("mock-org-id", project.id);
@@ -178,7 +178,7 @@ describe("Project Store", () => {
 
 			vi.mocked(updateProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().updateProject(project.id, updateData);
+			await useProjectStore.getState().updateProject("mock-org-id", project.id, updateData);
 
 			expect(useProjectStore.getState().project).toEqual(project);
 			expect(useProjectStore.getState().projects).toEqual([projectListItem]);
@@ -198,7 +198,7 @@ describe("Project Store", () => {
 
 			vi.mocked(deleteProject).mockResolvedValue(undefined);
 
-			await useProjectStore.getState().deleteProject(project1.id);
+			await useProjectStore.getState().deleteProject("mock-org-id", project1.id);
 
 			expect(deleteProject).toHaveBeenCalledWith("mock-org-id", project1.id);
 			expect(useProjectStore.getState().project).toBeNull();
@@ -215,7 +215,7 @@ describe("Project Store", () => {
 
 			vi.mocked(deleteProject).mockRejectedValue(error);
 
-			await useProjectStore.getState().deleteProject(project.id);
+			await useProjectStore.getState().deleteProject("mock-org-id", project.id);
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().project).toEqual(project);
