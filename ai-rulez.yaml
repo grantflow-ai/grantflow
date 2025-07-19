@@ -352,10 +352,22 @@ rules:
       ### Backend Endpoint
 
       ```python
-      @post("/items", allowed_roles=[UserRoleEnum.MEMBER])
-      async def create_item(data: TypedDict, session_maker: async_sessionmaker[Any]) -> dict:
+      @post("/organizations/{organization_id:uuid}/items", 
+            allowed_roles=[UserRoleEnum.COLLABORATOR])
+      async def create_item(
+          organization_id: UUID,
+          data: TypedDict, 
+          session_maker: async_sessionmaker[Any]
+      ) -> dict:
           async with session_maker() as session, session.begin():
-              # operations
+              # Middleware has already validated organization access
+              # Just implement business logic
+              item = await session.scalar(
+                  insert(Item).values({
+                      **data,
+                      "organization_id": organization_id,
+                  }).returning(Item)
+              )
               await session.commit()
               return {"id": str(item.id)}
       ```
@@ -377,10 +389,13 @@ rules:
       ### Frontend API
 
       ```typescript
-      export async function createItem(data: API.CreateItem.RequestBody) {
+      export async function createItem(
+          organizationId: string,
+          data: API.CreateItem.RequestBody
+      ) {
       	return withAuthRedirect(
       		getClient()
-      			.post(`items`, {
+      			.post(`organizations/${organizationId}/items`, {
       				headers: await createAuthHeaders(),
       				json: data,
       			})
@@ -679,10 +694,76 @@ rules:
       - `packages/shared_utils/src/metrics.py` - Custom business metrics
       - `terraform/modules/monitoring/` - Alert policies and notification channels
 
+  - name: "Authentication and Authorization"
+    priority: 46
+    content: |
+      ### Authentication Architecture
+      
+      The application uses **Firebase Authentication** with custom JWT tokens for organization context:
+      
+      - **Firebase Auth**: Primary authentication provider
+      - **JWT Tokens**: Enhanced with organization_id and role claims
+      - **Middleware**: Handles all authorization logic
+      
+      ### URL Patterns and Organization Scoping
+      
+      All protected resources follow organization-scoped URL patterns:
+      
+      ```
+      /organizations/{organization_id}/projects
+      /organizations/{organization_id}/projects/{project_id}
+      /organizations/{organization_id}/projects/{project_id}/applications
+      /organizations/{organization_id}/projects/{project_id}/applications/{application_id}
+      ```
+      
+      ### Middleware Authorization Flow
+      
+      1. **Public Endpoints** (no auth required):
+         - `/login` - Firebase authentication
+         - `/health` - Health checks
+         - `/schema` - OpenAPI documentation
+      
+      2. **Admin Endpoints** (requires ADMIN_ACCESS_CODE):
+         - `/organizations` - Organization CRUD (admin only)
+         - `/organizations/{id}` - Single organization operations
+      
+      3. **Organization-Scoped Endpoints** (requires organization membership):
+         - All endpoints with `organization_id` in path
+         - Middleware validates user is member of organization
+         - Role-based access control via `allowed_roles` decorator
+      
+      ### Role Hierarchy
+      
+      - **OWNER**: Full control over organization and projects
+      - **ADMIN**: Can manage projects and members (except other admins)
+      - **COLLABORATOR**: Can work on projects they have access to
+      
+      ### Project Access for COLLABORATOR Role
+      
+      Collaborators have two access modes:
+      - **has_all_projects_access=true**: Access to all organization projects
+      - **has_all_projects_access=false**: Access only via ProjectAccess table
+      
+      ### Key Implementation Details
+      
+      ```python
+      # Backend endpoint with role-based access
+      @post("/organizations/{organization_id:uuid}/projects", 
+            allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN])
+      async def create_project(...):
+          # Middleware has already validated:
+          # 1. User is authenticated
+          # 2. User belongs to organization
+          # 3. User has required role
+          # Just implement business logic
+      ```
+      
+      **IMPORTANT**: Never add manual authorization checks in endpoints - trust the middleware
+      
   - name: "Security"
     priority: 45
     content: |
-      Firebase auth + JWT, environment variables for secrets, never commit credentials.
+      Environment variables for secrets, never commit credentials, use GCP Secret Manager for production.
 
   - name: "Testing Conventions"
     priority: 40

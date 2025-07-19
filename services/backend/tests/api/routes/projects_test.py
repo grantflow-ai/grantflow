@@ -59,7 +59,7 @@ async def test_create_project_success(
 
     request_body = CreateProjectRequestBodyFactory.build()
     response = await test_client.post(
-        "/projects",
+        f"/organizations/{organization.id}/projects",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -81,8 +81,20 @@ async def test_create_project_failure(
     firebase_uid: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    
+    organization = OrganizationFactory.build()
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(Organization).values(
+                id=organization.id,
+                name=organization.name,
+                description=organization.description,
+            )
+        )
+        await session.commit()
+
     response = await test_client.post(
-        "/projects",
+        f"/organizations/{organization.id}/projects",
         json={},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -154,7 +166,7 @@ async def test_retrieve_projects(
     )
 
     response = await test_client.get(
-        "/projects",
+        f"/organizations/{organization.id}/projects",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -245,7 +257,7 @@ async def test_retrieve_project_success(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -287,7 +299,7 @@ async def test_retrieve_project_unauthorized(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}",
         headers={"Authorization": "Bearer invalid_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -346,7 +358,7 @@ async def test_update_project_success(
         await session.commit()
 
     response = await test_client.patch(
-        f"/projects/{project.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -366,7 +378,7 @@ async def test_update_project_failure_unauthorized(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.patch(
-        f"/projects/{project.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}",
         json=UpdateProjectRequestBody(name="new_name"),
         headers={"Authorization": "Bearer some_token"},
     )
@@ -380,7 +392,7 @@ async def test_delete_project_success(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
-        f"/projects/{project.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
@@ -421,7 +433,7 @@ async def test_delete_project_failure_unauthorized(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -456,7 +468,7 @@ async def test_create_invitation_redirect_url_selected_role_lower_than_or_equals
     request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.OWNER)
 
     response = await test_client.post(
-        f"/projects/{project.id}/create-invitation-redirect-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/create-invitation-redirect-url",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -509,7 +521,7 @@ async def test_create_invitation_redirect_url_user_already_member(
     request_body = CreateInvitationRedirectUrlRequestBody(email="test@example.com", role=UserRoleEnum.COLLABORATOR)
 
     response = await test_client.post(
-        f"/projects/{project.id}/create-invitation-redirect-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/create-invitation-redirect-url",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -548,7 +560,7 @@ async def test_create_invitation_redirect_url_success(
     request_body = CreateInvitationRedirectUrlRequestBody(email="new_user@example.com", role=UserRoleEnum.COLLABORATOR)
 
     response = await test_client.post(
-        f"/projects/{project.id}/create-invitation-redirect-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/create-invitation-redirect-url",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -608,7 +620,7 @@ async def test_delete_invitation_success(
             await session.rollback()
             raise DatabaseError("Error deleting invitation", context=str(e)) from e
     response = await test_client.delete(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
@@ -645,7 +657,7 @@ async def test_delete_invitation_not_project_member(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -673,7 +685,7 @@ async def test_delete_invitation_not_found(
 
     non_existent_invitation_id = "00000000-0000-0000-0000-000000000000"
     response = await test_client.delete(
-        f"/projects/{project.id}/invitations/{non_existent_invitation_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{non_existent_invitation_id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -713,7 +725,7 @@ async def test_delete_invitation_unauthorized_role(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -760,7 +772,7 @@ async def test_update_invitation_role_success(
     request_body = {"role": UserRoleEnum.ADMIN}
 
     response = await test_client.patch(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -803,7 +815,7 @@ async def test_update_invitation_role_not_project_member(
     request_body = {"role": UserRoleEnum.ADMIN.value}
 
     response = await test_client.patch(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -834,7 +846,7 @@ async def test_update_invitation_role_not_found(
     request_body = {"role": UserRoleEnum.ADMIN.value}
 
     response = await test_client.patch(
-        f"/projects/{project.id}/invitations/{non_existent_invitation_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{non_existent_invitation_id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -877,7 +889,7 @@ async def test_update_invitation_role_unauthorized_role(
     request_body = {"role": UserRoleEnum.ADMIN.value}
 
     response = await test_client.patch(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -920,7 +932,7 @@ async def test_update_invitation_role_already_accepted(
     request_body = {"role": UserRoleEnum.ADMIN.value}
 
     response = await test_client.patch(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -962,7 +974,7 @@ async def test_update_invitation_role_higher_than_inviter(
     request_body = {"role": UserRoleEnum.OWNER}
 
     response = await test_client.patch(
-        f"/projects/{project.id}/invitations/{invitation.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/invitations/{invitation.id}",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -1210,7 +1222,7 @@ async def test_list_project_members_success(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/members",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -1272,7 +1284,7 @@ async def test_list_project_members_no_access(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{other_project.id}/members",
+        f"/organizations/{other_project.organization_id}/projects/{other_project.id}/members",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -1300,7 +1312,7 @@ async def test_update_member_role_cannot_modify_owner(
 
     request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
     response = await test_client.patch(
-        f"/projects/{project.id}/members/owner2_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/owner2_uid",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -1335,7 +1347,7 @@ async def test_update_member_role_only_owner_can_promote_to_admin(
 
     request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
     response = await test_client.patch(
-        f"/projects/{project.id}/members/member_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/member_uid",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -1362,7 +1374,7 @@ async def test_update_member_role_member_not_found(
 
     request_body = UpdateMemberRoleRequestBody(role=UserRoleEnum.ADMIN)
     response = await test_client.patch(
-        f"/projects/{project.id}/members/nonexistent_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/nonexistent_uid",
         json=request_body,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -1396,7 +1408,7 @@ async def test_remove_project_member_success(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}/members/member_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/member_uid",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -1437,7 +1449,7 @@ async def test_remove_project_member_cannot_remove_owner(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}/members/owner2_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/owner2_uid",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -1470,7 +1482,7 @@ async def test_remove_project_member_only_owner_can_remove_admin(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}/members/admin2_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/admin2_uid",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -1496,7 +1508,7 @@ async def test_remove_project_member_not_found(
         await session.commit()
 
     response = await test_client.delete(
-        f"/projects/{project.id}/members/nonexistent_uid",
+        f"/organizations/{project.organization_id}/projects/{project.id}/members/nonexistent_uid",
         headers={"Authorization": "Bearer some_token"},
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text

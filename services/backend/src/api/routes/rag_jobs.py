@@ -42,11 +42,12 @@ class RagJobResponse(TypedDict):
 
 
 @get(
-    "/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/rag-jobs/{job_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="RetrieveRagJob",
 )
 async def handle_retrieve_rag_job(
+    *,
     project_id: UUID,
     job_id: UUID,
     session_maker: async_sessionmaker[Any],

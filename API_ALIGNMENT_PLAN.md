@@ -2,23 +2,25 @@
 
 ## Executive Summary
 
-After comprehensive audit of both backend and frontend APIs, the current architecture is **correctly designed** for a multi-tenant SaaS application. The project-scoped URLs are appropriate because projects belong to organizations, and organization context is maintained through authentication and authorization layers.
+After comprehensive audit of both backend and frontend APIs, **CRITICAL ISSUE FOUND**: The current project endpoints have **ambiguous organization scoping** that breaks multi-tenant functionality. Users in multiple organizations cannot reliably control which organization context they're operating in.
 
 **Pre-MVP Status**: No legacy compatibility or rollback concerns. All changes are forward-only improvements.
 
-## Current API Structure (Correct)
+## Current API Structure Issues
 
-### Organization Management
+### Organization Management (Correctly Implemented)
 - ✅ `/organizations` - CRUD operations
 - ✅ `/organizations/{org_id}/members` - Member management  
 - ✅ `/organizations/{org_id}/invitations` - Invitation management
 - ✅ `/organizations/{org_id}/sources` - Organization-scoped sources
 
-### Project Management (Correctly Inherits Organization Context)
-- ✅ `/projects` - Scoped to user's organizations via auth
-- ✅ `/projects/{project_id}` - Project operations
-- ✅ `/projects/{project_id}/applications` - Grant applications
-- ✅ `/projects/{project_id}/members` - Project member management
+### Project Management (BROKEN - Needs Organization Scoping)
+- ❌ `/projects` - **BROKEN**: Uses arbitrary organization selection via `session.scalar()`
+- ❌ `/projects/{project_id}` - **BROKEN**: No organization context validation
+- ❌ `/projects/{project_id}/applications` - **BROKEN**: Inherits broken project scoping
+- ❌ `/projects/{project_id}/members` - **BROKEN**: Inherits broken project scoping
+
+**Root Cause**: `projects.py:109-113` uses `session.scalar()` which returns random organization when user belongs to multiple organizations.
 
 ### Authentication & User Management
 - ✅ `/login` - Firebase authentication
@@ -28,25 +30,99 @@ After comprehensive audit of both backend and frontend APIs, the current archite
 ### WebSocket
 - ✅ `/projects/{project_id}/applications/{application_id}/notifications` - Real-time updates
 
-## Issues Found & Fixes Required
+## Required Fixes
 
-### Commit Block 0: Prerequisites (Fix Existing Issues)
+### CRITICAL: Organization-Scoped Project URLs
+
+**Problem**: Current project endpoints break multi-tenant functionality
+
+**Solution**: Convert to organization-scoped URLs:
+- `/projects` → `/organizations/{org_id}/projects`
+- `/projects/{project_id}` → `/organizations/{org_id}/projects/{project_id}`
+- `/projects/{project_id}/applications` → `/organizations/{org_id}/projects/{project_id}/applications`
+- `/projects/{project_id}/members` → `/organizations/{org_id}/projects/{project_id}/members`
+
+### Implementation Plan
+
+#### Commit Block 0: Backend Organization-Scoped Project URLs
+**Update Backend Project Endpoints**
+
+##### Files to Update:
+- [ ] `services/backend/src/api/routes/projects.py` - All project endpoints
+- [ ] `services/backend/src/api/routes/applications.py` - Grant application endpoints (if exists)
+- [ ] `services/backend/tests/` - Update all project-related tests
+- [ ] Update OpenAPI spec generation
+
+##### Key Changes:
+1. **URL Path Changes**:
+   ```python
+   # OLD: @post("/projects")
+   @post("/organizations/{org_id:uuid}/projects")
+   
+   # OLD: @get("/projects/{project_id:uuid}")  
+   @get("/organizations/{org_id:uuid}/projects/{project_id:uuid}")
+   ```
+
+2. **Organization Validation**:
+   ```python
+   # Add to all endpoints
+   async def validate_org_access(request: APIRequest, org_id: UUID, session: AsyncSession):
+       org_user = await session.scalar(
+           select(OrganizationUser).where(
+               OrganizationUser.organization_id == org_id,
+               OrganizationUser.firebase_uid == request.auth,
+               OrganizationUser.deleted_at.is_(None)
+           )
+       )
+       if not org_user:
+           raise ValidationException("User not authorized for this organization")
+       return org_user
+   ```
+
+3. **Remove Ambiguous Organization Selection**:
+   ```python
+   # REMOVE this problematic code from all endpoints:
+   user_org = await session.scalar(
+       select(OrganizationUser).where(
+           OrganizationUser.firebase_uid == request.auth,
+           OrganizationUser.deleted_at.is_(None),
+       )
+   )
+   ```
+
+#### Commit Block 1: Frontend Organization-Scoped Project URLs
+**Update Frontend Project API Calls**
+
+##### Files to Update:
+- [ ] `frontend/src/actions/projects.ts` - All project API calls
+- [ ] `frontend/src/actions/applications.ts` - Grant application API calls (if exists)
+- [ ] `frontend/src/types/api-types.ts` - Type definitions (regenerate)
+- [ ] All components using project APIs
+- [ ] All test files
+
+##### Key Changes:
+1. **API Call Updates**:
+   ```typescript
+   // OLD: getClient().post("projects", {...})
+   getClient().post(`organizations/${orgId}/projects`, {...})
+   
+   // OLD: getClient().get(`projects/${projectId}`)
+   getClient().get(`organizations/${orgId}/projects/${projectId}`)
+   ```
+
+2. **Organization Context Requirements**:
+   - All project operations require `organizationId` parameter
+   - Update component props to include organization context
+   - Update route handlers to extract organization from URL/context
+
+#### Commit Block 2: Prerequisites (Fix Existing Issues)
 **Resolve Current TypeScript and Test Failures**
 
-#### Current Frontend Issues:
+##### Current Frontend Issues:
 - [ ] Fix 346+ TypeScript errors throughout frontend
 - [ ] Resolve failing component tests (missing data-testid attributes)
 - [ ] Fix broken imports and missing dependencies
 - [ ] Update all test files to use correct type imports (UserRole vs UserRoleEnum)
-
-#### Current Backend Issues:
-- [ ] Verify all backend tests pass
-- [ ] Fix any linting errors in backend code
-- [ ] Ensure database migrations are up to date
-
-#### Risk Assessment:
-- **High Risk**: Proceeding with API changes while existing errors exist
-- **Mitigation**: Must resolve all existing issues before making new changes
 
 ### Commit Block 1: Automatic User Restoration on Login
 **Implement Automatic Soft-Delete Recovery**

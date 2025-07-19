@@ -171,10 +171,11 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
 
 
 async def _handle_retrieve_application(
-    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
     logger.info(
         "Retrieving application",
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
     )
@@ -268,16 +269,17 @@ async def _handle_retrieve_application(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="CreateApplication",
 )
 async def handle_create_application(
+    organization_id: UUID,
     project_id: UUID,
     data: CreateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Creating application", project_id=project_id, title=data["title"])
+    logger.info("Creating application", organization_id=organization_id, project_id=project_id, title=data["title"])
 
     async with session_maker() as session, session.begin():
         try:
@@ -312,6 +314,7 @@ async def handle_create_application(
             raise DatabaseError("Error creating application and template", context=str(e)) from e
 
     return await _handle_retrieve_application(
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application.id,
         session_maker=session_maker,
@@ -319,17 +322,20 @@ async def handle_create_application(
 
 
 @patch(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="UpdateApplication",
 )
 async def handle_update_application(
+    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: UpdateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    logger.info("Updating application", project_id=project_id, application_id=application_id)
+    logger.info(
+        "Updating application", organization_id=organization_id, project_id=project_id, application_id=application_id
+    )
 
     async with session_maker() as session, session.begin():
         try:
@@ -354,6 +360,7 @@ async def handle_update_application(
             raise DatabaseError("Error updating application", context=str(e)) from e
 
     return await _handle_retrieve_application(
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
         session_maker=session_maker,
@@ -361,14 +368,18 @@ async def handle_update_application(
 
 
 @delete(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DeleteApplication",
 )
 async def handle_delete_application(
-    request: APIRequest, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    request: APIRequest,
+    organization_id: UUID,
+    project_id: UUID,
+    application_id: UUID,
+    session_maker: async_sessionmaker[Any],
 ) -> None:
-    logger.info("Deleting application", application_id=application_id)
+    logger.info("Deleting application", organization_id=organization_id, application_id=application_id)
 
     async with session_maker() as session, session.begin():
         try:
@@ -427,15 +438,17 @@ async def handle_delete_application(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="GenerateApplication",
 )
 async def handle_generate_application(
-    application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
+    organization_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any], request: APIRequest
 ) -> None:
     trace_id = get_trace_id(request)
-    logger.info("Generating application", application_id=application_id, trace_id=trace_id)
+    logger.info(
+        "Generating application", organization_id=organization_id, application_id=application_id, trace_id=trace_id
+    )
     async with session_maker() as session:
         try:
             application = await retrieve_application(application_id=application_id, session=session)
@@ -491,22 +504,23 @@ async def handle_generate_application(
 
 
 @get(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="RetrieveApplication",
 )
 async def handle_retrieve_application(
-    project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
+    organization_id: UUID, project_id: UUID, application_id: UUID, session_maker: async_sessionmaker[Any]
 ) -> ApplicationResponse:
-    return await _handle_retrieve_application(project_id, application_id, session_maker)
+    return await _handle_retrieve_application(organization_id, project_id, application_id, session_maker)
 
 
 @get(
-    "/projects/{project_id:uuid}/applications",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="ListApplications",
 )
 async def handle_list_applications(
+    organization_id: UUID,
     project_id: UUID,
     session_maker: async_sessionmaker[Any],
     search: str | None = Parameter(
@@ -538,6 +552,7 @@ async def handle_list_applications(
 ) -> ApplicationListResponse:
     logger.info(
         "Listing applications",
+        organization_id=organization_id,
         project_id=project_id,
         search=search,
         status=status,
@@ -617,12 +632,13 @@ async def handle_list_applications(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}/autofill",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/autofill",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="TriggerAutofill",
 )
 async def handle_trigger_autofill(
     request: APIRequest,
+    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: AutofillRequestBody,
@@ -633,6 +649,7 @@ async def handle_trigger_autofill(
 
     logger.info(
         "Triggering autofill",
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
         autofill_type=data["autofill_type"],
@@ -679,11 +696,12 @@ async def handle_trigger_autofill(
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}/duplicate",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/duplicate",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="DuplicateApplication",
 )
 async def handle_duplicate_application(
+    organization_id: UUID,
     project_id: UUID,
     application_id: UUID,
     data: DuplicateApplicationRequestBody,
@@ -692,6 +710,7 @@ async def handle_duplicate_application(
     """Duplicate an existing grant application with forking model"""
     logger.info(
         "Duplicating application",
+        organization_id=organization_id,
         project_id=project_id,
         application_id=application_id,
         new_title=data["title"],
@@ -781,6 +800,7 @@ async def handle_duplicate_application(
             raise DatabaseError("Error duplicating application", context=str(e)) from e
 
     return await _handle_retrieve_application(
+        organization_id=organization_id,
         project_id=project_id,
         application_id=new_app_id,
         session_maker=session_maker,

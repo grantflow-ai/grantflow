@@ -27,11 +27,12 @@ class UpdateGrantTemplateRequestBody(TypedDict):
 
 
 @post(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="CreateGrantTemplate",
 )
 async def handle_generate_grant_template(
+    *,
     grant_template_id: UUID,
     session_maker: async_sessionmaker[Any],
     request: APIRequest,
@@ -130,11 +131,12 @@ async def handle_generate_grant_template(
 
 
 @patch(
-    "/projects/{project_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant-template/{grant_template_id:uuid}",
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id="UpdateGrantTemplate",
 )
 async def handle_update_grant_template(
+    *,
     grant_template_id: UUID,
     data: UpdateGrantTemplateRequestBody,
     session_maker: async_sessionmaker[Any],

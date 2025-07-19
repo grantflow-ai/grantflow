@@ -34,8 +34,9 @@ async def test_create_application_unauthorized(
 ) -> None:
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
+    
     response = await test_client.post(
-        f"/projects/{different_project_id}/applications",
+        f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications",
         json={"title": "Test Grant Application"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -87,7 +88,7 @@ async def test_update_application_success(
     }
 
     response = await test_client.patch(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -122,7 +123,7 @@ async def test_update_application_not_found(
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.patch(
-        f"/projects/{project.id}/applications/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
         json={"title": "Updated Title"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -145,7 +146,7 @@ async def test_delete_application_success(
         assert app.deleted_at is None
 
     response = await test_client.delete(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -164,8 +165,9 @@ async def test_delete_application_unauthorized(
 ) -> None:
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
+    
     response = await test_client.delete(
-        f"/projects/{different_project_id}/applications/{grant_application.id}",
+        f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -233,7 +235,7 @@ async def test_generate_application_success(
         await session.commit()
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -253,7 +255,7 @@ async def test_generate_application_insufficient_data(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -301,7 +303,7 @@ async def test_generate_application_no_rag_sources(
         await session.commit()
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -317,7 +319,7 @@ async def test_generate_application_not_found(
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -331,7 +333,7 @@ async def test_retrieve_application_success(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -356,7 +358,7 @@ async def test_retrieve_application_with_grant_template(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -391,7 +393,7 @@ async def test_retrieve_application_not_found(
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -411,7 +413,7 @@ async def test_retrieve_application_wrong_project(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{different_project.id}/applications/{grant_application.id}",
+        f"/organizations/{different_project.organization_id}/projects/{different_project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -424,7 +426,7 @@ async def test_retrieve_application_unauthorized(
     grant_application: GrantApplication,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -467,7 +469,7 @@ async def test_retrieve_application_with_complete_data(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -533,7 +535,7 @@ async def test_retrieve_application_with_rag_job_ids(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -614,7 +616,7 @@ async def test_retrieve_application_with_rag_sources(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -672,7 +674,7 @@ async def test_list_applications_basic(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -721,7 +723,7 @@ async def test_list_applications_with_submission_dates(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -764,7 +766,7 @@ async def test_list_applications_with_search(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"search": "research"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -803,7 +805,7 @@ async def test_list_applications_with_status_filter(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"status": "IN_PROGRESS"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -833,7 +835,7 @@ async def test_list_applications_with_pagination(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"limit": 10, "offset": 0},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -848,7 +850,7 @@ async def test_list_applications_with_pagination(
     assert data["pagination"]["has_more"] is True
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"limit": 10, "offset": 10},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -887,7 +889,7 @@ async def test_list_applications_with_sorting(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"sort": "title", "order": "asc"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -906,7 +908,7 @@ async def test_list_applications_unauthorized(
     project: Project,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -918,7 +920,7 @@ async def test_list_applications_empty_project(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -995,7 +997,7 @@ async def test_generate_application_status_transition_to_generating(
         await session.commit()
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -1026,8 +1028,13 @@ async def test_application_status_transitions_preserve_generating(
         app.status = ApplicationStatusEnum.GENERATING
         await session.commit()
 
+    
+    async with async_session_maker() as session:
+        project = await session.get(Project, grant_application.project_id)
+        organization_id = project.organization_id
+
     response = await test_client.get(
-        f"/projects/{grant_application.project_id}/applications/{grant_application.id}",
+        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -1036,7 +1043,7 @@ async def test_application_status_transitions_preserve_generating(
     assert data["status"] == ApplicationStatusEnum.GENERATING.value
 
     response = await test_client.get(
-        f"/projects/{grant_application.project_id}/applications",
+        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 

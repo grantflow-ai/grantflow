@@ -11,7 +11,7 @@ from litestar.middleware import (
 )
 from litestar.types import ASGIApp, Receive, Scope, Send
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import OrganizationUser, Project, ProjectAccess
+from packages.db.src.tables import OrganizationUser, ProjectAccess
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.tracing import start_span_with_trace_id
@@ -23,7 +23,7 @@ from services.backend.src.utils.jwt import verify_jwt_token
 logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema"}
-ADMIN_PATHS = {"organizations"}
+ADMIN_PATHS = {"organizations"}  
 DEV_BYPASS_PREFIX = "/dev/"
 
 
@@ -47,7 +47,17 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
         auth_header = connection.headers.get("Authorization", "").strip()
 
-        if any(connection.url.path.startswith(f"/{path}") for path in ADMIN_PATHS):
+        
+        is_admin_path = False
+        for admin_path in ADMIN_PATHS:
+            if connection.url.path == f"/{admin_path}" or (
+                connection.url.path.startswith(f"/{admin_path}/")
+                and len(connection.url.path.split("/")) <= 3  
+            ):
+                is_admin_path = True
+                break
+
+        if is_admin_path:
             access_code = get_env("ADMIN_ACCESS_CODE")
             if auth_header and auth_header == access_code:
                 return AuthenticationResult(user=None, auth=None)
@@ -63,13 +73,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         if allowed_roles := connection.route_handler.opt.get("allowed_roles"):
             organization_id = connection.path_params.get("organization_id")
             project_id = connection.path_params.get("project_id")
-
-            if not organization_id and project_id:
-                # TODO: This is temporary backward compatibility - eventually all routes should have organization_id
-                async with connection.app.state.session_maker() as session:
-                    project = await session.get(Project, project_id)
-                    if project:
-                        organization_id = project.organization_id
 
             if not organization_id:
                 raise NotAuthorizedException("Organization context required")
