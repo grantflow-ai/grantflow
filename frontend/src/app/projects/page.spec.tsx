@@ -15,7 +15,6 @@ vi.mock("@/utils/env", () => ({
 		NEXT_PUBLIC_FIREBASE_PROJECT_ID: "mock-project-id",
 		NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "mock.appspot.com",
 		NEXT_PUBLIC_MAILGUN_API_KEY: "mock-mailgun-key",
-		NEXT_PUBLIC_MOCK_API: true,
 		NEXT_PUBLIC_SEGMENT_WRITE_KEY: "mock-segment-key",
 		NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
 	}),

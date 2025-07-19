@@ -22,7 +22,8 @@ vi.mock("@/actions/grant-applications", () => ({
 
 describe("CreateApplicationButton", () => {
 	const mockPush = vi.fn();
-	const mockProjectId = ApplicationFactory.build().id;
+	const mockApplication = ApplicationFactory.build();
+	const mockProjectId = mockApplication.project_id;
 
 	beforeEach(() => {
 		vi.clearAllMocks();

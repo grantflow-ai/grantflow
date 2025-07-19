@@ -3,7 +3,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
 import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
-import { triggerMockWebSocketScenario } from "@/dev-tools/utils/dev-helpers";
 import { useApplicationStore } from "@/stores/application-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
@@ -315,8 +314,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							application_id: application.id,
 							project_id: application.project_id,
 						});
-
-						await triggerMockWebSocketScenario(application.id, "grant-application-generation");
 					} catch (error) {
 						log.error("generateApplication", error);
 						set((state) => ({

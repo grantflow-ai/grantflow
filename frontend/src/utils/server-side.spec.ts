@@ -17,12 +17,6 @@ vi.mock("@/utils/logger", () => ({
 
 vi.mock("@/utils/env", () => ({
 	getEnv: vi.fn(),
-	getMockAPIEnabled: vi.fn(() => false),
-	getMockAuthEnabled: vi.fn(() => false),
-}));
-
-vi.mock("@/dev-tools/mock-auth", () => ({
-	isMockAuthEnabled: vi.fn(() => false),
 }));
 
 describe("Server-side Utils", () => {

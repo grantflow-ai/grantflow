@@ -54,7 +54,7 @@ describe("inviteCollaborator", () => {
 
 		expect(mockCreateInvitation).toHaveBeenCalledWith("proj-123", {
 			email: "test@example.com",
-			role: "MEMBER",
+			role: "COLLABORATOR",
 		});
 
 		expect(mockEmailSend).toHaveBeenCalledWith({

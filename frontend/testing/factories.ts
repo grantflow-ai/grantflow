@@ -57,12 +57,12 @@ export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.Respo
 			email: factory.internet.email(),
 			firebase_uid: factory.string.uuid(),
 			photo_url: factory.datatype.boolean() ? factory.image.avatar() : null,
-			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 		}),
 		{ count: { max: 5, min: 1 } },
 	),
 	name: factory.company.name(),
-	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((factory) => ({
@@ -83,12 +83,12 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 			email: factory.internet.email(),
 			firebase_uid: factory.string.uuid(),
 			photo_url: factory.datatype.boolean() ? factory.image.avatar() : null,
-			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 		}),
 		{ count: { max: 5, min: 1 } },
 	),
 	name: factory.company.name(),
-	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 type IndexingStatus = RagSource["status"];
@@ -205,7 +205,7 @@ export const GrantTemplateFactory = new Factory<GrantTemplate>((factory) => ({
 	updated_at: factory.date.recent().toISOString(),
 }));
 
-type ApplicationStatus = "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+type ApplicationStatus = "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 
 export const ApplicationFactory = new Factory<API.CreateApplication.Http201.ResponseBody>((factory) => ({
 	completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
@@ -219,7 +219,12 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 	research_objectives: factory.datatype.boolean()
 		? ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 }))
 		: undefined,
-	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"]),
+	status: factory.helpers.arrayElement<ApplicationStatus>([
+		"WORKING_DRAFT",
+		"IN_PROGRESS",
+		"GENERATING",
+		"CANCELLED",
+	]),
 	text: factory.datatype.boolean() ? factory.lorem.paragraphs(5) : undefined,
 	title: factory.lorem.sentence(),
 	updated_at: factory.date.recent().toISOString(),
@@ -263,7 +268,7 @@ type UserRole = API.CreateInvitationRedirectUrl.RequestBody["role"];
 
 export const InvitationFactory = new Factory<API.CreateInvitationRedirectUrl.RequestBody>((factory) => ({
 	email: factory.internet.email(),
-	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
+	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 export const TitleRequestFactory = new Factory<API.CreateApplication.RequestBody>((factory) => ({
@@ -276,7 +281,12 @@ export const UpdateApplicationRequestFactory = new Factory<Partial<API.UpdateApp
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
 	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
 	research_objectives: ResearchObjectiveFactory.batch(factory.number.int({ max: 3, min: 1 })),
-	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"]),
+	status: factory.helpers.arrayElement<ApplicationStatus>([
+		"WORKING_DRAFT",
+		"IN_PROGRESS",
+		"GENERATING",
+		"CANCELLED",
+	]),
 	text: factory.lorem.paragraphs(3),
 	title: factory.lorem.sentence(),
 }));
@@ -295,14 +305,22 @@ export const UpdateProjectRequestFactory = new Factory<API.UpdateProject.Request
 }));
 
 export const OrganizationRequestFactory = new Factory<API.CreateOrganization.RequestBody>((factory) => ({
-	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
-	full_name: factory.company.name(),
+	contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
+	contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+	institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
+	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	name: factory.company.name(),
 }));
 
 export const CreateOrganizationRequestFactory = OrganizationRequestFactory;
 export const UpdateOrganizationRequestFactory = new Factory<API.UpdateOrganization.RequestBody>((factory) => ({
-	abbreviation: factory.datatype.boolean() ? factory.string.alpha({ length: 3 }).toUpperCase() : null,
-	full_name: factory.company.name(),
+	contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
+	contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+	institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
+	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	name: factory.company.name(),
 }));
 
 export const LoginRequestFactory = new Factory<API.Login.RequestBody>((factory) => ({
@@ -318,7 +336,7 @@ export const CrawlUrlRequestFactory = UrlRequestFactory;
 export const CreateInvitationRequestFactory = InvitationFactory;
 
 export const RoleRequestFactory = new Factory<API.UpdateInvitationRole.RequestBody>((factory) => ({
-	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "MEMBER"]),
+	role: factory.helpers.arrayElement<UserRole>(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 export const UpdateInvitationRoleRequestFactory = RoleRequestFactory;
@@ -578,11 +596,11 @@ export const ProjectMemberFactory = new Factory<API.ListProjectMembers.Http200.R
 	firebase_uid: factory.string.alphanumeric(28),
 	joined_at: factory.date.past().toISOString(),
 	photo_url: factory.datatype.boolean() ? factory.image.avatarGitHub() : null,
-	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "MEMBER"]),
+	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 export const UpdateMemberRoleRequestFactory = new Factory<API.UpdateProjectMemberRole.RequestBody>((factory) => ({
-	role: factory.helpers.arrayElement(["ADMIN", "MEMBER"]),
+	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR"]),
 }));
 
 type ApplicationCardData = {
@@ -602,7 +620,12 @@ export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((fact
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
 	id: factory.string.uuid(),
 	project_id: factory.string.uuid(),
-	status: factory.helpers.arrayElement<ApplicationStatus>(["DRAFT", "IN_PROGRESS", "GENERATING", "CANCELLED"]),
+	status: factory.helpers.arrayElement<ApplicationStatus>([
+		"WORKING_DRAFT",
+		"IN_PROGRESS",
+		"GENERATING",
+		"CANCELLED",
+	]),
 	title: factory.lorem.sentence({ max: 8, min: 3 }),
 	updated_at: factory.date.recent().toISOString(),
 }));

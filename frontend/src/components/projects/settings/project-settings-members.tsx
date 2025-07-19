@@ -42,7 +42,7 @@ const AVATAR_COLORS = [
 
 const ROLE_LABELS = {
 	[UserRole.ADMIN]: "Admin",
-	[UserRole.MEMBER]: "Collaborator",
+	[UserRole.COLLABORATOR]: "Collaborator",
 	[UserRole.OWNER]: "Owner",
 };
 
@@ -163,7 +163,7 @@ export function ProjectSettingsMembers({
 				invitationId: result.invitationId,
 				joinedAt: new Date().toISOString(),
 				photoUrl: null,
-				role: permission === "admin" ? UserRole.ADMIN : UserRole.MEMBER,
+				role: permission === "admin" ? UserRole.ADMIN : UserRole.COLLABORATOR,
 				status: "pending",
 			};
 

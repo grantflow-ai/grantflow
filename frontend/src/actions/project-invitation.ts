@@ -29,7 +29,7 @@ export async function inviteCollaborator({
 		const resend = new Resend(getEnv().RESEND_API_KEY);
 
 		// First create the invitation in our backend
-		const backendRole = role === "admin" ? "ADMIN" : "MEMBER";
+		const backendRole = role === "admin" ? "ADMIN" : "COLLABORATOR";
 		const invitationResult = await createInvitation(projectId, {
 			email,
 			role: backendRole,

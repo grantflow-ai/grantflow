@@ -20,7 +20,6 @@ import {
 	deleteTemplateSource,
 } from "@/actions/sources";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { triggerMockWebSocketScenario } from "@/dev-tools/utils/dev-helpers";
 import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
@@ -597,8 +596,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				template_id: templateId,
 				trace_id: traceId,
 			});
-
-			await triggerMockWebSocketScenario(application.id, "grant-template-generation");
 		} catch (error: unknown) {
 			if (error instanceof HTTPError && error.response.status === 422) {
 				await handleGrantTemplateValidationError(error);

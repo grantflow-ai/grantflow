@@ -33,7 +33,6 @@ vi.mock("@/utils/env", () => ({
 	getEnv: () => ({
 		NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
 	}),
-	getMockAuthEnabled: vi.fn(() => false),
 }));
 
 vi.mock("@/utils/firebase", () => ({
@@ -43,11 +42,6 @@ vi.mock("@/utils/firebase", () => ({
 vi.mock("@/utils/auth-providers", () => ({
 	handleGoogleLogin: (...args: unknown[]) => mockHandleGoogleLogin(...args),
 	handleOrcidLogin: (...args: unknown[]) => mockHandleOrcidLogin(...args),
-}));
-
-vi.mock("@/dev-tools/mock-auth", () => ({
-	initializeMockAuth: vi.fn(),
-	isMockAuthEnabled: vi.fn(() => false),
 }));
 
 const localStorageMock = (() => {

@@ -17,7 +17,7 @@ interface ProjectSettingsAccountProps {
 
 export function ProjectSettingsAccount({
 	projectId: _projectId,
-	userRole = UserRole.MEMBER,
+	userRole = UserRole.COLLABORATOR,
 }: ProjectSettingsAccountProps) {
 	const { deleteProfilePhoto, updateProfilePhoto, user } = useUserStore();
 	const [name, setName] = useState(user?.displayName ?? "");
@@ -46,7 +46,7 @@ export function ProjectSettingsAccount({
 			case UserRole.ADMIN: {
 				return "Admin";
 			}
-			case UserRole.MEMBER: {
+			case UserRole.COLLABORATOR: {
 				return "Collaborator";
 			}
 			case UserRole.OWNER: {

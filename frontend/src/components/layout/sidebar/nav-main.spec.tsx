@@ -72,7 +72,7 @@ describe("NavMain", () => {
 
 		render(
 			<SidebarProvider>
-				<NavMain data-testid="nav-main" userRole="MEMBER" />
+				<NavMain data-testid="nav-main" userRole="COLLABORATOR" />
 			</SidebarProvider>,
 		);
 
