@@ -14,7 +14,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppButton } from "@/components/app";
 
-type CollaboratorPermission = "admin" | "collaborator" | "owner";
+type CollaboratorPermission = "admin" | "collaborator" ;
 
 interface InviteCollaboratorModalProps {
 	isOpen: boolean;
@@ -98,7 +98,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 								<p>00/00</p>
 							</label>
 							<Select
-								onValueChange={(value: "admin" | "collaborator" | "owner") => {
+								onValueChange={(value: "admin" | "collaborator" ) => {
 									setPermission(value);
 								}}
 								value={permission}
