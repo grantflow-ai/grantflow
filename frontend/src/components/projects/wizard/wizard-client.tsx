@@ -30,10 +30,15 @@ import { log } from "@/utils/logger";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;
+	organizationId: string;
 	projectId: string;
 }
 
-export function WizardClientComponent({ application: initialApplication, projectId }: WizardClientComponentProps) {
+export function WizardClientComponent({
+	application: initialApplication,
+	organizationId,
+	projectId,
+}: WizardClientComponentProps) {
 	const currentStep = useWizardStore((state) => state.currentStep);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 	const setGeneratingTemplate = useWizardStore((state) => state.setGeneratingTemplate);
@@ -43,6 +48,7 @@ export function WizardClientComponent({ application: initialApplication, project
 
 	const { connectionStatus, connectionStatusColor, notifications } = useApplicationNotifications({
 		applicationId: initialApplication.id,
+		organizationId,
 		projectId,
 	});
 
@@ -103,7 +109,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				case "autofill_completed": {
 					toast.success("Autofill completed successfully!");
 					useWizardStore.getState().setAutofillLoading(autofill_type, false);
-					void getApplication(projectId, initialApplication.id);
+					void getApplication(organizationId, projectId, initialApplication.id);
 
 					break;
 				}
@@ -129,7 +135,7 @@ export function WizardClientComponent({ application: initialApplication, project
 				}
 			}
 		},
-		[projectId, initialApplication.id, getApplication],
+		[organizationId, projectId, initialApplication.id, getApplication],
 	);
 
 	useEffect(() => {
@@ -144,12 +150,13 @@ export function WizardClientComponent({ application: initialApplication, project
 		} else if (isAutofillProgressMessage(latestNotification)) {
 			handleAutofillProgress(latestNotification);
 		}
-		void getApplication(projectId, initialApplication.id);
+		void getApplication(organizationId, projectId, initialApplication.id);
 	}, [
 		notifications,
 		handleSourceProcessingNotification,
 		handleAutofillProgress,
 		getApplication,
+		organizationId,
 		projectId,
 		initialApplication.id,
 	]);
@@ -191,13 +198,20 @@ export function WizardClientComponent({ application: initialApplication, project
 
 		if (event === "grant_template_generation_completed") {
 			setGeneratingTemplate(false);
-			void getApplication(projectId, initialApplication.id);
+			void getApplication(organizationId, projectId, initialApplication.id);
 		}
 
 		if (event === "generation_error" || event === "pipeline_error") {
 			setGeneratingTemplate(false);
 		}
-	}, [latestRagNotification, setGeneratingTemplate, getApplication, projectId, initialApplication.id]);
+	}, [
+		latestRagNotification,
+		setGeneratingTemplate,
+		getApplication,
+		organizationId,
+		projectId,
+		initialApplication.id,
+	]);
 
 	useEffect(() => {
 		if (isGeneratingTemplate && currentStep === WizardStep.APPLICATION_DETAILS) {

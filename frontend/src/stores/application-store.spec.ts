@@ -33,6 +33,13 @@ vi.mock("sonner", () => ({
 		success: vi.fn(),
 	},
 }));
+vi.mock("@/stores/organization-store", () => ({
+	useOrganizationStore: {
+		getState: vi.fn(() => ({
+			selectedOrganizationId: "mock-org-id",
+		})),
+	},
+}));
 
 describe("Application Store", () => {
 	beforeEach(() => {
@@ -69,7 +76,9 @@ describe("Application Store", () => {
 
 			await updateApplicationTitle("project-id", "app-id", "New Title");
 
-			expect(updateApplication).toHaveBeenCalledWith("project-id", "app-id", { title: "New Title" });
+			expect(updateApplication).toHaveBeenCalledWith("mock-org-id", "project-id", "app-id", {
+				title: "New Title",
+			});
 
 			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(updatedApplication);
@@ -101,7 +110,7 @@ describe("Application Store", () => {
 
 			await retrieveApp("project-id", "app-id");
 
-			expect(getApplication).toHaveBeenCalledWith("project-id", "app-id");
+			expect(getApplication).toHaveBeenCalledWith("mock-org-id", "project-id", "app-id");
 
 			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(application);
@@ -150,6 +159,7 @@ describe("Application Store", () => {
 
 			if (application.grant_template?.id) {
 				expect(updateGrantTemplate).toHaveBeenCalledWith(
+					"mock-org-id",
 					application.project_id,
 					application.id,
 					application.grant_template.id,
@@ -243,6 +253,7 @@ describe("Application Store", () => {
 			await addUrl("https://example.com", application.grant_template?.id ?? "");
 
 			expect(crawlTemplateUrl).toHaveBeenCalledWith(
+				"mock-org-id",
 				application.project_id,
 				application.grant_template?.id,
 				"https://example.com",
@@ -265,6 +276,7 @@ describe("Application Store", () => {
 				await removeFile(file1 as any, application.grant_template.id);
 
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
+					"mock-org-id",
 					application.project_id,
 					application.grant_template.id,
 					"1",
@@ -293,6 +305,7 @@ describe("Application Store", () => {
 				await removeUrl("https://example.com", application.grant_template.id);
 
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
+					"mock-org-id",
 					application.project_id,
 					application.grant_template.id,
 					"source-1",
@@ -352,7 +365,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 				expect(state.ragJobState.isRestoring).toBe(false);
@@ -381,7 +394,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 			});
@@ -438,7 +451,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
@@ -467,7 +480,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "template-job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "template-job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 			});
@@ -485,7 +498,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 				expect(state.ragJobState.isRestoring).toBe(false);

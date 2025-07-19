@@ -6,23 +6,25 @@ import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
 
 export function NewApplicationClient() {
 	const router = useRouter();
 	const { project } = useProjectStore();
+	const { selectedOrganizationId } = useOrganizationStore();
 	const { navigateToApplication } = useNavigationStore();
 	const creatingRef = useRef(false);
 
 	useEffect(() => {
 		async function createNewApplication() {
 			// Prevent duplicate creation
-			if (creatingRef.current || !project) return;
+			if (creatingRef.current || !project || !selectedOrganizationId) return;
 			creatingRef.current = true;
 
 			try {
-				const application = await createApplication(project.id, {
+				const application = await createApplication(selectedOrganizationId, project.id, {
 					title: DEFAULT_APPLICATION_TITLE,
 				});
 
@@ -43,7 +45,7 @@ export function NewApplicationClient() {
 		}
 
 		void createNewApplication();
-	}, [project, router, navigateToApplication]);
+	}, [project, router, navigateToApplication, selectedOrganizationId]);
 
 	if (!project) {
 		return null; // Will redirect via NavigationContextProvider

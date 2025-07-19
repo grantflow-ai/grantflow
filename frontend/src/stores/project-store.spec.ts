@@ -12,6 +12,13 @@ vi.mock("sonner", () => ({
 		success: vi.fn(),
 	},
 }));
+vi.mock("@/stores/organization-store", () => ({
+	useOrganizationStore: {
+		getState: vi.fn(() => ({
+			selectedOrganizationId: "mock-org-id",
+		})),
+	},
+}));
 
 describe("Project Store", () => {
 	beforeEach(() => {
@@ -68,8 +75,8 @@ describe("Project Store", () => {
 
 			await useProjectStore.getState().createProject(projectData);
 
-			expect(createProject).toHaveBeenCalledWith(projectData);
-			expect(getProjects).toHaveBeenCalled();
+			expect(createProject).toHaveBeenCalledWith("mock-org-id", projectData);
+			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 			expect(useProjectStore.getState().projects).toEqual(projectsList);
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
@@ -94,7 +101,7 @@ describe("Project Store", () => {
 
 			await useProjectStore.getState().getProject(project.id);
 
-			expect(getProject).toHaveBeenCalledWith(project.id);
+			expect(getProject).toHaveBeenCalledWith("mock-org-id", project.id);
 			expect(useProjectStore.getState().project).toEqual(project);
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
@@ -118,7 +125,7 @@ describe("Project Store", () => {
 
 			await useProjectStore.getState().getProjects();
 
-			expect(getProjects).toHaveBeenCalled();
+			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 			expect(useProjectStore.getState().projects).toEqual(projects);
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 		});
@@ -156,9 +163,9 @@ describe("Project Store", () => {
 
 			await useProjectStore.getState().updateProject(project.id, updateData);
 
-			expect(updateProject).toHaveBeenCalledWith(project.id, updateData);
-			expect(getProject).toHaveBeenCalledWith(project.id);
-			expect(getProjects).toHaveBeenCalled();
+			expect(updateProject).toHaveBeenCalledWith("mock-org-id", project.id, updateData);
+			expect(getProject).toHaveBeenCalledWith("mock-org-id", project.id);
+			expect(getProjects).toHaveBeenCalledWith("mock-org-id");
 		});
 
 		it("should handle update error and restore previous state", async () => {
@@ -193,7 +200,7 @@ describe("Project Store", () => {
 
 			await useProjectStore.getState().deleteProject(project1.id);
 
-			expect(deleteProject).toHaveBeenCalledWith(project1.id);
+			expect(deleteProject).toHaveBeenCalledWith("mock-org-id", project1.id);
 			expect(useProjectStore.getState().project).toBeNull();
 			expect(useProjectStore.getState().projects).toEqual([projectListItem2]);
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
