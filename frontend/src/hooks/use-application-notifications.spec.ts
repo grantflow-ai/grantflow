@@ -41,12 +41,13 @@ describe("useApplicationNotifications", () => {
 		vi.resetModules();
 	});
 
-	it("should not connect when projectId or applicationId is missing", async () => {
+	it("should not connect when organizationId, projectId or applicationId is missing", async () => {
 		const { useApplicationNotifications } = await import("./use-application-notifications");
 
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: undefined,
 				projectId: undefined,
 			}),
 		);
@@ -54,12 +55,13 @@ describe("useApplicationNotifications", () => {
 		expect(mockUseWebSocket).toHaveBeenCalledWith(null, expect.any(Object));
 	});
 
-	it("should connect with proper URL when both IDs are provided", async () => {
+	it("should connect with proper URL when all IDs are provided", async () => {
 		const { useApplicationNotifications } = await import("./use-application-notifications");
 
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: "org-123",
 				projectId: "project-123",
 			}),
 		);
@@ -72,7 +74,7 @@ describe("useApplicationNotifications", () => {
 		const url = await getSocketUrl();
 
 		expect(url).toBe(
-			"ws://localhost:8000/projects/project-123/applications/app-123/notifications?otp=test-otp-token",
+			"ws://localhost:8000/organizations/org-123/projects/project-123/applications/app-123/notifications?otp=test-otp-token",
 		);
 	});
 
@@ -83,9 +85,7 @@ describe("useApplicationNotifications", () => {
 			data: {
 				identifier: "doc1.pdf",
 				indexing_status: "FINISHED",
-				parent_id: "app-123",
-				parent_type: "grant_application",
-				rag_source_id: "source-1",
+				source_id: "source-1",
 			},
 			parent_id: "app-123",
 		});
@@ -99,6 +99,7 @@ describe("useApplicationNotifications", () => {
 		const { rerender, result } = renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: "org-123",
 				projectId: "project-123",
 			}),
 		);
@@ -110,9 +111,7 @@ describe("useApplicationNotifications", () => {
 			data: {
 				identifier: "doc2.pdf",
 				indexing_status: "INDEXING",
-				parent_id: "app-123",
-				parent_type: "grant_application",
-				rag_source_id: "source-2",
+				source_id: "source-2",
 			},
 			parent_id: "app-123",
 		});
@@ -144,6 +143,7 @@ describe("useApplicationNotifications", () => {
 		const { result } = renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: "org-123",
 				projectId: "project-123",
 			}),
 		);
@@ -158,6 +158,7 @@ describe("useApplicationNotifications", () => {
 		const { result } = renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: "org-123",
 				projectId: "project-123",
 			}),
 		);
@@ -172,6 +173,7 @@ describe("useApplicationNotifications", () => {
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: "org-123",
 				projectId: "project-123",
 			}),
 		);
@@ -200,6 +202,7 @@ describe("useApplicationNotifications", () => {
 		renderHook(() =>
 			useApplicationNotifications({
 				applicationId: "app-123",
+				organizationId: "org-123",
 				projectId: "project-123",
 			}),
 		);
