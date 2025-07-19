@@ -202,20 +202,57 @@ const uploadFileInDevelopment = async (
 	parentId: string,
 	isApplicationParent: boolean,
 ) => {
+	log.info("[file-upload] uploadFileInDevelopment started", {
+		fileId: file.id,
+		fileName: file.name,
+		isApplicationParent,
+		parentId,
+		projectId: application.project_id,
+	});
+
 	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
+
+	log.info("[file-upload] Creating upload URL", {
+		fileName: file.name,
+		parentId,
+		projectId: application.project_id,
+		urlType: isApplicationParent ? "application" : "template",
+	});
+
 	const { url } = await createUploadUrl(application.project_id, parentId, file.name);
+
+	log.info("[file-upload] Upload URL created", {
+		fileName: file.name,
+		url: `${url.slice(0, 100)}...`, // Log first 100 chars for debugging
+	});
 
 	const { extractObjectPathFromUrl } = await import("@/utils/dev-indexing-patch");
 	const objectPath = extractObjectPathFromUrl(url);
 
 	if (!objectPath) {
+		log.error("[file-upload] Failed to extract object path from upload URL", {
+			fileName: file.name,
+			url,
+		});
 		throw new Error("Failed to extract object path from upload URL");
 	}
+
+	log.info("[file-upload] Extracted object path", {
+		fileName: file.name,
+		objectPath,
+	});
 
 	const env = getEnv();
 
 	if (env.NEXT_PUBLIC_GCS_EMULATOR_URL) {
 		const emulatorUrl = `${env.NEXT_PUBLIC_GCS_EMULATOR_URL}/upload/storage/v1/b/grantflow-uploads/o?uploadType=media&name=${objectPath}`;
+
+		log.info("[file-upload] Uploading to GCS emulator", {
+			contentType: file.type,
+			emulatorUrl,
+			fileName: file.name,
+			fileSize: file.size,
+		});
 
 		await ky(emulatorUrl, {
 			body: file,
@@ -224,13 +261,27 @@ const uploadFileInDevelopment = async (
 			},
 			method: "POST",
 		});
+
+		log.info("[file-upload] Upload to GCS emulator completed", {
+			fileName: file.name,
+		});
 	}
 
 	const { triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 
+	log.info("[file-upload] Triggering dev indexing", {
+		fileName: file.name,
+		objectPath,
+	});
+
 	setTimeout(() => {
 		void triggerDevIndexing(objectPath);
 	}, 500);
+
+	log.info("[file-upload] uploadFileInDevelopment completed", {
+		fileId: file.id,
+		fileName: file.name,
+	});
 };
 
 const uploadFileInProduction = async (
@@ -239,8 +290,35 @@ const uploadFileInProduction = async (
 	parentId: string,
 	isApplicationParent: boolean,
 ) => {
+	log.info("[file-upload] uploadFileInProduction started", {
+		fileId: file.id,
+		fileName: file.name,
+		isApplicationParent,
+		parentId,
+		projectId: application.project_id,
+	});
+
 	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
+
+	log.info("[file-upload] Creating upload URL", {
+		fileName: file.name,
+		parentId,
+		projectId: application.project_id,
+		urlType: isApplicationParent ? "application" : "template",
+	});
+
 	const { url } = await createUploadUrl(application.project_id, parentId, file.name);
+
+	log.info("[file-upload] Upload URL created", {
+		fileName: file.name,
+		url: `${url.slice(0, 100)}...`, // Log first 100 chars for debugging
+	});
+
+	log.info("[file-upload] Uploading to production GCS", {
+		contentType: file.type,
+		fileName: file.name,
+		fileSize: file.size,
+	});
 
 	await ky(url, {
 		body: file,
@@ -250,11 +328,30 @@ const uploadFileInProduction = async (
 		method: "PUT",
 	});
 
+	log.info("[file-upload] Upload to production GCS completed", {
+		fileName: file.name,
+	});
+
 	const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 	const objectPath = extractObjectPathFromUrl(url);
+
 	if (objectPath) {
+		log.info("[file-upload] Triggering dev indexing", {
+			fileName: file.name,
+			objectPath,
+		});
 		void triggerDevIndexing(objectPath);
+	} else {
+		log.warn("[file-upload] No object path extracted for dev indexing", {
+			fileName: file.name,
+			url: `${url.slice(0, 100)}...`,
+		});
 	}
+
+	log.info("[file-upload] uploadFileInProduction completed", {
+		fileId: file.id,
+		fileName: file.name,
+	});
 };
 
 export const useApplicationStore = create<ApplicationActions & ApplicationState>((set, get) => ({
@@ -263,19 +360,58 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 	addFile: async (file: FileWithId, parentId: string) => {
 		const { application } = get();
 
+		log.info("[file-upload] addFile called", {
+			applicationId: application?.id,
+			environment: process.env.NODE_ENV,
+			fileId: file.id,
+			fileName: file.name,
+			fileSize: file.size,
+			fileType: file.type,
+			parentId,
+			templateId: application?.grant_template?.id,
+		});
+
 		if (!validateStateForRagSource(application, parentId, "addFile")) {
+			log.error("[file-upload] validateStateForRagSource failed", {
+				applicationId: application?.id,
+				fileName: file.name,
+				hasApplication: !!application,
+				parentId,
+			});
 			return;
 		}
 
 		const isApplicationParent = parentId === application!.id;
 
+		log.info("[file-upload] Starting file upload process", {
+			environment: process.env.NODE_ENV,
+			fileId: file.id,
+			fileName: file.name,
+			isApplicationParent,
+			parentId,
+		});
+
 		try {
 			await (process.env.NODE_ENV === "development"
 				? uploadFileInDevelopment(file, application!, parentId, isApplicationParent)
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
+
+			log.info("[file-upload] File upload completed successfully", {
+				fileId: file.id,
+				fileName: file.name,
+				isApplicationParent,
+				parentId,
+			});
+
 			toast.success(`File ${file.name} uploaded successfully`);
 		} catch (error) {
-			log.error("addFile", error);
+			log.error("[file-upload] addFile upload failed", {
+				error,
+				fileId: file.id,
+				fileName: file.name,
+				isApplicationParent,
+				parentId,
+			});
 			toast.error("Failed to upload file. Please try again.");
 		}
 
