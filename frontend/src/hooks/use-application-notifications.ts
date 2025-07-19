@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
-import { getMockWebSocketUrl, isDevModeWithMockAPI } from "@/dev-tools/utils/dev-helpers";
 import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
@@ -102,16 +101,6 @@ export function useApplicationNotifications({
 	const getSocketUrl = useCallback(async () => {
 		if (!(projectId && applicationId)) {
 			throw new Error("Project ID and Application ID are required");
-		}
-
-		if (isDevModeWithMockAPI()) {
-			const url = getMockWebSocketUrl(projectId, applicationId);
-			log.info("[useApplicationNotifications] Using mock WebSocket URL", {
-				applicationId,
-				projectId,
-				url,
-			});
-			return url;
 		}
 
 		const response = await getOtp();

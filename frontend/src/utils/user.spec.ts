@@ -123,7 +123,7 @@ describe("User Utilities", () => {
 		it("should return correct labels for each role", () => {
 			expect(getRoleLabel(UserRole.OWNER)).toBe("Owner");
 			expect(getRoleLabel(UserRole.ADMIN)).toBe("Admin");
-			expect(getRoleLabel(UserRole.MEMBER)).toBe("Collaborator");
+			expect(getRoleLabel(UserRole.COLLABORATOR)).toBe("Collaborator");
 		});
 
 		it("should return Collaborator as default for unknown roles", () => {
@@ -146,7 +146,7 @@ describe("User Utilities", () => {
 		it("should be consistent with repeated calls", () => {
 			expect(getRoleLabel(UserRole.OWNER)).toBe(getRoleLabel(UserRole.OWNER));
 			expect(getRoleLabel(UserRole.ADMIN)).toBe(getRoleLabel(UserRole.ADMIN));
-			expect(getRoleLabel(UserRole.MEMBER)).toBe(getRoleLabel(UserRole.MEMBER));
+			expect(getRoleLabel(UserRole.COLLABORATOR)).toBe(getRoleLabel(UserRole.COLLABORATOR));
 		});
 	});
 });

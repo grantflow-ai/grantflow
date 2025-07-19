@@ -20,7 +20,7 @@ import { routes } from "@/utils/navigation";
 
 interface NavMainProps {
 	"data-testid"?: string;
-	userRole?: "ADMIN" | "MEMBER" | "OWNER";
+	userRole?: "ADMIN" | "COLLABORATOR" | "OWNER";
 }
 
 export function NavMain({ userRole, ...props }: NavMainProps) {
@@ -135,7 +135,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							{userRole && userRole !== "MEMBER" && (
+							{userRole && userRole !== "COLLABORATOR" && (
 								<SidebarMenuSubItem>
 									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/billing"}>
 										<Link
@@ -150,7 +150,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							)}
-							{userRole && userRole !== "MEMBER" && (
+							{userRole && userRole !== "COLLABORATOR" && (
 								<SidebarMenuSubItem>
 									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/members"}>
 										<Link

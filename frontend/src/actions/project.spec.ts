@@ -73,7 +73,7 @@ const mockGetProjectsResponse = [
 		id: "project-2",
 		logo_url: null,
 		name: "Another Project",
-		role: "MEMBER",
+		role: "COLLABORATOR",
 	}),
 ];
 

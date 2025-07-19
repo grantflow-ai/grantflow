@@ -28,7 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleLogout = () => {
-		// Clear mock user data
+		// Clear user data
 		setUser(null);
 		// Redirect to login
 		router.push("/login");
