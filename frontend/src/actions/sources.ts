@@ -2,6 +2,7 @@
 
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
+import { log } from "@/utils/logger";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 export async function crawlApplicationUrl(
@@ -39,13 +40,39 @@ export async function createApplicationSourceUploadUrl(
 	applicationId: string,
 	fileName: string,
 ): Promise<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody> {
-	return withAuthRedirect(
-		getClient()
-			.post(`projects/${projectId}/applications/${applicationId}/sources/upload-url?blob_name=${fileName}`, {
-				headers: await createAuthHeaders(),
-			})
-			.json<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>(),
-	);
+	log.info("[file-upload] createApplicationSourceUploadUrl called", {
+		applicationId,
+		fileName,
+		projectId,
+	});
+
+	try {
+		const result = await withAuthRedirect(
+			getClient()
+				.post(`projects/${projectId}/applications/${applicationId}/sources/upload-url?blob_name=${fileName}`, {
+					headers: await createAuthHeaders(),
+				})
+				.json<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>(),
+		);
+
+		log.info("[file-upload] createApplicationSourceUploadUrl succeeded", {
+			applicationId,
+			fileName,
+			hasUrl: !!result.url,
+			projectId,
+			urlPrefix: `${result.url.slice(0, 50)}...`,
+		});
+
+		return result;
+	} catch (error) {
+		log.error("[file-upload] createApplicationSourceUploadUrl failed", {
+			applicationId,
+			error,
+			fileName,
+			projectId,
+		});
+		throw error;
+	}
 }
 
 export async function createTemplateSourceUploadUrl(
@@ -53,13 +80,39 @@ export async function createTemplateSourceUploadUrl(
 	templateId: string,
 	fileName: string,
 ): Promise<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody> {
-	return withAuthRedirect(
-		getClient()
-			.post(`projects/${projectId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`, {
-				headers: await createAuthHeaders(),
-			})
-			.json<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody>(),
-	);
+	log.info("[file-upload] createTemplateSourceUploadUrl called", {
+		fileName,
+		projectId,
+		templateId,
+	});
+
+	try {
+		const result = await withAuthRedirect(
+			getClient()
+				.post(`projects/${projectId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`, {
+					headers: await createAuthHeaders(),
+				})
+				.json<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody>(),
+		);
+
+		log.info("[file-upload] createTemplateSourceUploadUrl succeeded", {
+			fileName,
+			hasUrl: !!result.url,
+			projectId,
+			templateId,
+			urlPrefix: `${result.url.slice(0, 50)}...`,
+		});
+
+		return result;
+	} catch (error) {
+		log.error("[file-upload] createTemplateSourceUploadUrl failed", {
+			error,
+			fileName,
+			projectId,
+			templateId,
+		});
+		throw error;
+	}
 }
 
 export async function deleteApplicationSource(projectId: string, applicationId: string, sourceId: string) {

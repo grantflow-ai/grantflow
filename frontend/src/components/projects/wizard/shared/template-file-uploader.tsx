@@ -7,6 +7,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
+import { log } from "@/utils/logger";
 
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],
@@ -48,22 +49,84 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 
 	const handleUploadFile = useCallback(
 		async (file: File) => {
-			if (!parentId) return;
+			log.info("[file-upload] Starting handleUploadFile", {
+				fileName: file.name,
+				fileSize: file.size,
+				fileType: file.type,
+				parentId,
+			});
+
+			if (!parentId) {
+				log.error("[file-upload] handleUploadFile failed - no parentId", {
+					fileName: file.name,
+				});
+				return;
+			}
+
 			const fileWithId: FileWithId = Object.assign(file, { id: crypto.randomUUID() });
-			await addFile(fileWithId, parentId);
+
+			log.info("[file-upload] Created file with ID, calling addFile", {
+				fileId: fileWithId.id,
+				fileName: file.name,
+				parentId,
+			});
+
+			try {
+				await addFile(fileWithId, parentId);
+				log.info("[file-upload] addFile completed successfully", {
+					fileId: fileWithId.id,
+					fileName: file.name,
+					parentId,
+				});
+			} catch (error) {
+				log.error("[file-upload] addFile failed in handleUploadFile", {
+					error,
+					fileId: fileWithId.id,
+					fileName: file.name,
+					parentId,
+				});
+				throw error;
+			}
 		},
 		[addFile, parentId],
 	);
 
 	const handleFilesAdded = useCallback(
 		async (newFiles: File[]) => {
+			log.info("[file-upload] Starting handleFilesAdded", {
+				fileCount: newFiles.length,
+				fileNames: newFiles.map((f) => f.name),
+				parentId,
+			});
+
 			if (!validateFileUploads(newFiles)) {
+				log.error("[file-upload] File validation failed", {
+					fileCount: newFiles.length,
+					fileNames: newFiles.map((f) => f.name),
+				});
 				return;
 			}
 
-			await Promise.all(newFiles.map(handleUploadFile));
+			log.info("[file-upload] File validation passed, starting uploads", {
+				fileCount: newFiles.length,
+			});
+
+			try {
+				await Promise.all(newFiles.map(handleUploadFile));
+				log.info("[file-upload] All files uploaded successfully", {
+					fileCount: newFiles.length,
+					fileNames: newFiles.map((f) => f.name),
+				});
+			} catch (error) {
+				log.error("[file-upload] One or more file uploads failed", {
+					error,
+					fileCount: newFiles.length,
+					fileNames: newFiles.map((f) => f.name),
+				});
+				throw error;
+			}
 		},
-		[handleUploadFile, validateFileUploads],
+		[handleUploadFile, validateFileUploads, parentId],
 	);
 
 	return (
