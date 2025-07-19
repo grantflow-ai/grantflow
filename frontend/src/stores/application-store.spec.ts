@@ -23,7 +23,12 @@ vi.mock("@/actions/sources", () => ({
 	crawlApplicationUrl: vi.fn(),
 	crawlTemplateUrl: vi.fn(),
 	createApplicationSourceUploadUrl: vi.fn(),
-	createTemplateSourceUploadUrl: vi.fn(),
+	createTemplateSourceUploadUrl: vi.fn(() =>
+		Promise.resolve({
+			source_id: "source-123",
+			url: "https://upload.url",
+		}),
+	),
 	deleteApplicationSource: vi.fn(),
 	deleteTemplateSource: vi.fn(),
 }));
@@ -31,6 +36,9 @@ vi.mock("@/utils/dev-indexing-patch", () => ({
 	extractObjectPathFromUrl: vi.fn(),
 	triggerDevIndexing: vi.fn(),
 }));
+
+import ky from "ky";
+
 vi.mock("ky", () => ({
 	default: vi.fn(),
 	HTTPError: class HTTPError extends Error {
@@ -86,15 +94,22 @@ describe("Application Store", () => {
 
 	describe("updateApplicationTitle", () => {
 		it("should call updateApplication API and update state on success", async () => {
-			const application = ApplicationFactory.build();
+			const application = ApplicationFactory.build({
+				id: "app-id",
+				project_id: "project-id",
+			});
+			// Set title explicitly to avoid random values
 			application.title = "Old Title";
 
-			// Create updated application with new title
-			const updatedApplication = { ...application };
-			updatedApplication.title = "New Title";
+			// Create updated application with new title - should match the API response type
+			const updatedApplication = {
+				...application,
+				rag_job_id: undefined, // Add this since it's part of the response type
+				title: "New Title",
+			};
 
-			// Mock the imported function
-			vi.mocked(updateApplication).mockImplementation(() => Promise.resolve(updatedApplication));
+			// Mock the imported function - need to handle the organization parameter
+			vi.mocked(updateApplication).mockResolvedValue(updatedApplication);
 
 			useApplicationStore.setState({ application });
 
@@ -112,7 +127,11 @@ describe("Application Store", () => {
 
 		it("should rollback on API error", async () => {
 			// Create a specific application with a known title
-			const application = ApplicationFactory.build();
+			const application = ApplicationFactory.build({
+				id: "app-id",
+				project_id: "project-id",
+			});
+			// Set title explicitly to avoid random values
 			application.title = "Old Title";
 
 			vi.mocked(updateApplication).mockRejectedValue(new Error("API Error"));
@@ -150,6 +169,9 @@ describe("Application Store", () => {
 		it("should update application", () => {
 			const application = ApplicationFactory.build({ title: "Test App" });
 
+			// Clear any existing application first
+			useApplicationStore.setState({ application: null });
+
 			const { setApplication } = useApplicationStore.getState();
 
 			setApplication(application);
@@ -185,23 +207,23 @@ describe("Application Store", () => {
 
 			await updateGrantSections(sections);
 
-			if (application.grant_template?.id) {
-				expect(updateGrantTemplate).toHaveBeenCalledWith(
-					"mock-org-id",
-					application.project_id,
-					application.id,
-					application.grant_template.id,
-					{ grant_sections: sections },
-				);
-			}
+			expect(updateGrantTemplate).toHaveBeenCalledWith(
+				"mock-org-id",
+				application.project_id,
+				application.id,
+				application.grant_template!.id,
+				{ grant_sections: sections },
+			);
 		});
 
 		it("should handle missing grant template gracefully", async () => {
 			// Create an application without grant_template
-			const application = {
-				...ApplicationFactory.build(),
-				grant_template: undefined,
-			};
+			const application = ApplicationFactory.build();
+			// Explicitly set grant_template to undefined
+			application.grant_template = undefined;
+
+			// Reset the mock before the test to ensure clean state
+			vi.mocked(updateGrantTemplate).mockClear();
 
 			useApplicationStore.setState({ application });
 
@@ -263,22 +285,16 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
+			// Import the already mocked modules to get their mock functions
 			const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
 			const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-			const { default: ky } = await import("ky");
 
-			vi.mocked(createTemplateSourceUploadUrl).mockImplementation(() =>
-				Promise.resolve({
-					source_id: "source-123",
-					url: "https://upload.url",
-				}),
-			);
-			vi.mocked(extractObjectPathFromUrl).mockImplementation(() => "path");
-			vi.mocked(triggerDevIndexing).mockImplementation(() => Promise.resolve());
-			// Mock ky to return a proper response-like object
-			vi.mocked(ky).mockImplementation(() => ({ ok: true }) as any);
-
+			// Set up the mock implementations
+			vi.mocked(extractObjectPathFromUrl).mockReturnValue("path");
+			vi.mocked(triggerDevIndexing).mockResolvedValue(undefined);
+			vi.mocked(ky).mockReturnValue({ ok: true } as any);
 			vi.mocked(getApplication).mockResolvedValue(application);
+
 			useApplicationStore.setState({ application });
 
 			const { addFile } = useApplicationStore.getState();
@@ -287,6 +303,7 @@ describe("Application Store", () => {
 				await addFile(file as any, application.grant_template.id);
 			}
 
+			// Check that createTemplateSourceUploadUrl was called
 			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
 		});
 
@@ -315,10 +332,6 @@ describe("Application Store", () => {
 			const file1 = { id: "1", name: "test1.pdf", size: 1000 };
 			const application = ApplicationWithTemplateFactory.build();
 
-			const { deleteTemplateSource } = await import("@/actions/sources");
-			// The mock is already set up in the vi.mock call, just need to set implementation
-			vi.mocked(deleteTemplateSource).mockImplementation(() => Promise.resolve(undefined));
-
 			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
@@ -327,6 +340,7 @@ describe("Application Store", () => {
 			if (application.grant_template?.id) {
 				await removeFile(file1 as any, application.grant_template.id);
 
+				const { deleteTemplateSource } = await import("@/actions/sources");
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
 					"mock-org-id",
 					application.project_id,
@@ -382,10 +396,11 @@ describe("Application Store", () => {
 			});
 
 			it("should not restore when no rag_job_id exists", async () => {
-				const application = ApplicationFactory.build({
-					grant_template: undefined,
-					rag_job_id: undefined,
-				});
+				const application = ApplicationFactory.build();
+				// Explicitly set both rag_job_id fields to undefined
+				application.rag_job_id = undefined;
+				application.grant_template = undefined;
+
 				useApplicationStore.setState({ application });
 
 				const { checkAndRestoreJobState } = useApplicationStore.getState();
