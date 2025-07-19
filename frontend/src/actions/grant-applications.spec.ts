@@ -46,6 +46,7 @@ vi.mock("@/utils/server-side", async () => {
 	};
 });
 
+const mockOrganizationId = "mock-organization-id";
 const mockProjectId = "mock-project-id";
 const mockApplicationId = "mock-application-id";
 const mockTemplateId = "mock-template-id";
@@ -110,12 +111,15 @@ describe("Grant Application Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const applicationData = CreateApplicationRequestFactory.build();
 
-			const result = await createApplication(mockProjectId, applicationData);
+			const result = await createApplication(mockOrganizationId, mockProjectId, applicationData);
 
-			expect(mockPost).toHaveBeenCalledWith(`projects/${mockProjectId}/applications`, {
-				headers: mockAuthHeaders,
-				json: applicationData,
-			});
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications`,
+				{
+					headers: mockAuthHeaders,
+					json: applicationData,
+				},
+			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 			expect(result).toEqual(mockCreateApplicationResponse);
@@ -124,11 +128,14 @@ describe("Grant Application Actions", () => {
 
 	describe("getApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			const result = await getApplication(mockProjectId, mockApplicationId);
+			const result = await getApplication(mockOrganizationId, mockProjectId, mockApplicationId);
 
-			expect(mockGet).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
-				headers: mockAuthHeaders,
-			});
+			expect(mockGet).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: mockAuthHeaders,
+				},
+			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 			expect(result).toEqual(mockRetrieveApplicationResponse);
@@ -139,7 +146,7 @@ describe("Grant Application Actions", () => {
 			const mockError = new HTTPError(
 				mockResponse,
 				{
-					path: `projects/${mockProjectId}/applications/${mockApplicationId}`,
+					path: `organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
 				} as never,
 				{} as never,
 			);
@@ -149,7 +156,7 @@ describe("Grant Application Actions", () => {
 			});
 			mockWithAuthRedirect.mockRejectedValue(mockError);
 
-			await expect(getApplication(mockProjectId, mockApplicationId)).rejects.toThrow();
+			await expect(getApplication(mockOrganizationId, mockProjectId, mockApplicationId)).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 
@@ -169,7 +176,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(getApplication(mockProjectId, mockApplicationId)).rejects.toThrow(HTTPError);
+			await expect(getApplication(mockOrganizationId, mockProjectId, mockApplicationId)).rejects.toThrow(
+				HTTPError,
+			);
 		});
 	});
 
@@ -177,12 +186,15 @@ describe("Grant Application Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const updateData = UpdateApplicationRequestFactory.build();
 
-			await updateApplication(mockProjectId, mockApplicationId, updateData);
+			await updateApplication(mockOrganizationId, mockProjectId, mockApplicationId, updateData);
 
-			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
-				headers: mockAuthHeaders,
-				json: updateData,
-			});
+			expect(mockPatch).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: mockAuthHeaders,
+					json: updateData,
+				},
+			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
@@ -192,12 +204,15 @@ describe("Grant Application Actions", () => {
 				title: "Updated Title Only",
 			} as API.UpdateApplication.RequestBody;
 
-			await updateApplication(mockProjectId, mockApplicationId, partialUpdateData);
+			await updateApplication(mockOrganizationId, mockProjectId, mockApplicationId, partialUpdateData);
 
-			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
-				headers: mockAuthHeaders,
-				json: partialUpdateData,
-			});
+			expect(mockPatch).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: mockAuthHeaders,
+					json: partialUpdateData,
+				},
+			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
@@ -205,11 +220,14 @@ describe("Grant Application Actions", () => {
 
 	describe("generateApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			await generateApplication(mockProjectId, mockApplicationId);
+			await generateApplication(mockOrganizationId, mockProjectId, mockApplicationId);
 
-			expect(mockPost).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
-				headers: mockAuthHeaders,
-			});
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: mockAuthHeaders,
+				},
+			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
@@ -219,7 +237,7 @@ describe("Grant Application Actions", () => {
 			const mockError = new HTTPError(
 				mockResponse,
 				{
-					path: `projects/${mockProjectId}/applications/${mockApplicationId}`,
+					path: `organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
 				} as never,
 				{} as never,
 			);
@@ -227,18 +245,21 @@ describe("Grant Application Actions", () => {
 			mockPost.mockRejectedValue(mockError);
 			mockWithAuthRedirect.mockRejectedValue(mockError);
 
-			await expect(generateApplication(mockProjectId, mockApplicationId)).rejects.toThrow();
+			await expect(generateApplication(mockOrganizationId, mockProjectId, mockApplicationId)).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 	});
 
 	describe("deleteApplication", () => {
 		it("should call the API with correct parameters", async () => {
-			await deleteApplication(mockProjectId, mockApplicationId);
+			await deleteApplication(mockOrganizationId, mockProjectId, mockApplicationId);
 
-			expect(mockDelete).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
-				headers: mockAuthHeaders,
-			});
+			expect(mockDelete).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: mockAuthHeaders,
+				},
+			);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
@@ -258,7 +279,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(duplicatedApplication),
 			});
 
-			const result = await duplicateApplication(mockProjectId, mockApplicationId, newTitle);
+			const result = await duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, newTitle);
 
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
@@ -285,7 +306,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(duplicatedApplication),
 			});
 
-			const result = await duplicateApplication(mockProjectId, mockApplicationId, emptyTitle);
+			const result = await duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, emptyTitle);
 
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
@@ -311,7 +332,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(duplicatedApplication),
 			});
 
-			const result = await duplicateApplication(mockProjectId, mockApplicationId, longTitle);
+			const result = await duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, longTitle);
 
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
@@ -343,7 +364,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(duplicatedApplication),
 			});
 
-			const result = await duplicateApplication(mockProjectId, mockApplicationId, newTitle);
+			const result = await duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, newTitle);
 
 			expect(result).toEqual(duplicatedApplication);
 			expect(result.parent_id).toBe(mockApplicationId);
@@ -371,9 +392,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(duplicateApplication(mockProjectId, mockApplicationId, "New Title")).rejects.toThrow(
-				HTTPError,
-			);
+			await expect(
+				duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, "New Title"),
+			).rejects.toThrow(HTTPError);
 		});
 
 		it("should handle 400 validation errors", async () => {
@@ -397,9 +418,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(duplicateApplication(mockProjectId, mockApplicationId, "A".repeat(300))).rejects.toThrow(
-				HTTPError,
-			);
+			await expect(
+				duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, "A".repeat(300)),
+			).rejects.toThrow(HTTPError);
 		});
 
 		it("should handle 403 forbidden errors", async () => {
@@ -420,9 +441,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(duplicateApplication(mockProjectId, mockApplicationId, "New Title")).rejects.toThrow(
-				HTTPError,
-			);
+			await expect(
+				duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, "New Title"),
+			).rejects.toThrow(HTTPError);
 		});
 
 		it("should handle server errors", async () => {
@@ -441,9 +462,9 @@ describe("Grant Application Actions", () => {
 			});
 			mockWithAuthRedirect.mockRejectedValueOnce(httpError);
 
-			await expect(duplicateApplication(mockProjectId, mockApplicationId, "New Title")).rejects.toThrow(
-				HTTPError,
-			);
+			await expect(
+				duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, "New Title"),
+			).rejects.toThrow(HTTPError);
 		});
 	});
 
@@ -456,7 +477,9 @@ describe("Grant Application Actions", () => {
 
 			mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-			await expect(createApplication(mockProjectId, { title: "Test" })).rejects.toThrow("API Error");
+			await expect(createApplication(mockOrganizationId, mockProjectId, { title: "Test" })).rejects.toThrow(
+				"API Error",
+			);
 		});
 
 		it("should redirect to sign-in page on 401 errors", async () => {
@@ -477,7 +500,7 @@ describe("Grant Application Actions", () => {
 				});
 			});
 
-			await createApplication(mockProjectId, { title: "Test" });
+			await createApplication(mockOrganizationId, mockProjectId, { title: "Test" });
 
 			expect(mockRedirect).toHaveBeenCalledWith("/signin");
 		});
@@ -499,7 +522,9 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockRejectedValue(httpError),
 			});
 
-			await expect(createApplication(mockProjectId, { title: "" })).rejects.toThrow(HTTPError);
+			await expect(createApplication(mockOrganizationId, mockProjectId, { title: "" })).rejects.toThrow(
+				HTTPError,
+			);
 		});
 
 		it("should handle 403 forbidden errors", async () => {
@@ -511,7 +536,9 @@ describe("Grant Application Actions", () => {
 
 			mockDelete.mockRejectedValueOnce(httpError);
 
-			await expect(deleteApplication(mockProjectId, mockApplicationId)).rejects.toThrow(HTTPError);
+			await expect(deleteApplication(mockOrganizationId, mockProjectId, mockApplicationId)).rejects.toThrow(
+				HTTPError,
+			);
 		});
 	});
 
@@ -520,7 +547,7 @@ describe("Grant Application Actions", () => {
 			mockCreateAuthHeaders.mockRejectedValueOnce(new Error("Failed to get auth token"));
 			mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
-			await expect(createApplication(mockProjectId, { title: "Test" })).rejects.toThrow(
+			await expect(createApplication(mockOrganizationId, mockProjectId, { title: "Test" })).rejects.toThrow(
 				"Failed to get auth token",
 			);
 		});
@@ -533,12 +560,15 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue({ id: mockApplicationId }),
 			});
 
-			await createApplication(mockProjectId, { title: "Test" });
+			await createApplication(mockOrganizationId, mockProjectId, { title: "Test" });
 
-			expect(mockPost).toHaveBeenCalledWith(`projects/${mockProjectId}/applications`, {
-				headers: null,
-				json: { title: "Test" },
-			});
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications`,
+				{
+					headers: null,
+					json: { title: "Test" },
+				},
+			);
 		});
 
 		it("should handle empty auth headers", async () => {
@@ -549,12 +579,15 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
 			});
 
-			await updateApplication(mockProjectId, mockApplicationId, { title: "Updated" });
+			await updateApplication(mockOrganizationId, mockProjectId, mockApplicationId, { title: "Updated" });
 
-			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}/applications/${mockApplicationId}`, {
-				headers: {},
-				json: { title: "Updated" },
-			});
+			expect(mockPatch).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: {},
+					json: { title: "Updated" },
+				},
+			);
 		});
 	});
 
@@ -565,7 +598,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(expectedResponse),
 			});
 
-			const result = await createApplication(mockProjectId, { title: "Test App" });
+			const result = await createApplication(mockOrganizationId, mockProjectId, { title: "Test App" });
 
 			expect(result).toEqual(expectedResponse);
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
@@ -580,7 +613,7 @@ describe("Grant Application Actions", () => {
 				json: vi.fn().mockResolvedValue(mockRetrieveApplicationResponse),
 			});
 
-			const result = await updateApplication(mockProjectId, mockApplicationId, {
+			const result = await updateApplication(mockOrganizationId, mockProjectId, mockApplicationId, {
 				title: "Updated Title",
 			});
 
@@ -605,7 +638,7 @@ describe("Grant Application Actions", () => {
 				autofill_type: "research_plan",
 			};
 
-			const result = await triggerAutofill(mockProjectId, mockApplicationId, autofillData);
+			const result = await triggerAutofill(mockOrganizationId, mockProjectId, mockApplicationId, autofillData);
 
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
@@ -635,7 +668,7 @@ describe("Grant Application Actions", () => {
 				field_name: "hypothesis",
 			};
 
-			const result = await triggerAutofill(mockProjectId, mockApplicationId, autofillData);
+			const result = await triggerAutofill(mockOrganizationId, mockProjectId, mockApplicationId, autofillData);
 
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
@@ -661,7 +694,7 @@ describe("Grant Application Actions", () => {
 				},
 			};
 
-			await triggerAutofill(mockProjectId, mockApplicationId, autofillData);
+			await triggerAutofill(mockOrganizationId, mockProjectId, mockApplicationId, autofillData);
 
 			expect(mockPost).toHaveBeenCalledWith(
 				`projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
@@ -680,7 +713,9 @@ describe("Grant Application Actions", () => {
 			mockWithAuthRedirect.mockRejectedValueOnce(mockError);
 
 			await expect(
-				triggerAutofill(mockProjectId, mockApplicationId, { autofill_type: "research_plan" }),
+				triggerAutofill(mockOrganizationId, mockProjectId, mockApplicationId, {
+					autofill_type: "research_plan",
+				}),
 			).rejects.toThrow("Rate limit exceeded");
 		});
 
@@ -702,7 +737,9 @@ describe("Grant Application Actions", () => {
 			});
 
 			await expect(
-				triggerAutofill(mockProjectId, mockApplicationId, { autofill_type: "invalid_type" as any }),
+				triggerAutofill(mockOrganizationId, mockProjectId, mockApplicationId, {
+					autofill_type: "invalid_type" as any,
+				}),
 			).rejects.toThrow(HTTPError);
 		});
 	});
