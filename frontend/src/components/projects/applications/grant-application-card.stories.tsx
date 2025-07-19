@@ -44,6 +44,8 @@ export const Draft: Story = {
 			id: "1",
 			title: "Climate Change Research Grant",
 		}),
+		organizationId: "org-1",
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -57,6 +59,7 @@ export const Completed: Story = {
 			id: "2",
 			title: "NSF Research Proposal",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -69,6 +72,7 @@ export const LongTitle: Story = {
 			id: "3",
 			title: "Comprehensive Research Proposal for Sustainable Environmental Solutions and Climate Change Mitigation Strategies in Urban Areas",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -82,6 +86,7 @@ export const RecentlyCompleted: Story = {
 			id: "4",
 			title: "Holiday Research Grant",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -93,6 +98,7 @@ export const ShortTitle: Story = {
 			id: "5",
 			title: "AI Grant",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -105,6 +111,7 @@ export const SpecialCharacters: Story = {
 			id: "6",
 			title: "Research & Development / Innovation <Lab> Grant",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -120,6 +127,8 @@ export const GridLayout: Story = {
 						id: "1",
 						title: "Climate Research Draft",
 					})}
+					organizationId="org-1"
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>
@@ -129,6 +138,7 @@ export const GridLayout: Story = {
 						id: "2",
 						title: "Completed NSF Grant",
 					})}
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>
@@ -137,6 +147,7 @@ export const GridLayout: Story = {
 						id: "3",
 						title: "Medical Research Proposal",
 					})}
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>
@@ -146,6 +157,7 @@ export const GridLayout: Story = {
 						id: "4",
 						title: "Technology Innovation Grant",
 					})}
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>
@@ -164,6 +176,7 @@ export const HoverInteraction: Story = {
 			id: "7",
 			title: "Interactive Application Card",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -194,6 +207,7 @@ export const EmptyTitle: Story = {
 			id: "8",
 			title: "",
 		}),
+		organizationId: "org-1",
 		projectId: "project-1",
 		projectName: "Climate Research Project",
 	},
@@ -211,6 +225,7 @@ export const AllCompleted: Story = {
 						id: "1",
 						title: "January Grant Submission",
 					})}
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>
@@ -220,6 +235,7 @@ export const AllCompleted: Story = {
 						id: "2",
 						title: "February Research Proposal",
 					})}
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>
@@ -229,6 +245,7 @@ export const AllCompleted: Story = {
 						id: "3",
 						title: "March Innovation Grant",
 					})}
+					organizationId="org-1"
 					projectId="project-1"
 					projectName="Climate Research Project"
 				/>

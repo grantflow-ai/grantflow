@@ -19,6 +19,7 @@ vi.mock("@/utils/logger", () => ({
 
 describe("CreateProjectForm", () => {
 	const mockCloseModal = vi.fn();
+	const mockOrganizationId = "mock-org-id";
 	const mockCreateProject = vi.mocked(createProject);
 
 	beforeEach(() => {
@@ -27,7 +28,7 @@ describe("CreateProjectForm", () => {
 	});
 
 	it("renders the form correctly", () => {
-		render(<CreateProjectForm closeModal={mockCloseModal} />);
+		render(<CreateProjectForm closeModal={mockCloseModal} organizationId={mockOrganizationId} />);
 
 		expect(screen.getByTestId("create-project-form")).toBeInTheDocument();
 		expect(screen.getByLabelText("Name *")).toBeInTheDocument();
@@ -37,7 +38,7 @@ describe("CreateProjectForm", () => {
 	});
 
 	it("validates project name length", async () => {
-		render(<CreateProjectForm closeModal={mockCloseModal} />);
+		render(<CreateProjectForm closeModal={mockCloseModal} organizationId={mockOrganizationId} />);
 
 		const nameInput = screen.getByTestId("create-project-name-input");
 		await userEvent.type(nameInput, "ab");
@@ -53,7 +54,7 @@ describe("CreateProjectForm", () => {
 	});
 
 	it("submits the form with valid data", async () => {
-		render(<CreateProjectForm closeModal={mockCloseModal} />);
+		render(<CreateProjectForm closeModal={mockCloseModal} organizationId={mockOrganizationId} />);
 
 		const nameInput = screen.getByTestId("create-project-name-input");
 		const descriptionTextarea = screen.getByTestId("create-project-description-textarea");
@@ -76,7 +77,7 @@ describe("CreateProjectForm", () => {
 	it("handles API errors gracefully", async () => {
 		mockCreateProject.mockRejectedValue(new Error("API Error"));
 
-		render(<CreateProjectForm closeModal={mockCloseModal} />);
+		render(<CreateProjectForm closeModal={mockCloseModal} organizationId={mockOrganizationId} />);
 
 		const nameInput = screen.getByTestId("create-project-name-input");
 		await userEvent.type(nameInput, "Test Project");
@@ -98,7 +99,7 @@ describe("CreateProjectForm", () => {
 				}),
 		);
 
-		render(<CreateProjectForm closeModal={mockCloseModal} />);
+		render(<CreateProjectForm closeModal={mockCloseModal} organizationId={mockOrganizationId} />);
 
 		const nameInput = screen.getByTestId("create-project-name-input");
 		await userEvent.type(nameInput, "Test Project");
