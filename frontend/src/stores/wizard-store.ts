@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
 import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger";
@@ -151,9 +152,10 @@ const initialWizardState: WizardState = {
 
 const debouncedUpdateTitle = createDebounce((title: string) => {
 	const { application, updateApplicationTitle } = useApplicationStore.getState();
+	const { selectedOrganizationId } = useOrganizationStore.getState();
 
-	if (application?.project_id && title !== application.title) {
-		void updateApplicationTitle(application.project_id, application.id, title);
+	if (application?.project_id && title !== application.title && selectedOrganizationId) {
+		void updateApplicationTitle(selectedOrganizationId, application.project_id, application.id, title);
 	}
 }, DEBOUNCE_DELAY_MS);
 
@@ -232,7 +234,10 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 
 					try {
-						await getApplication(application.project_id, application.id);
+						const { selectedOrganizationId } = useOrganizationStore.getState();
+						if (!selectedOrganizationId) return;
+
+						await getApplication(selectedOrganizationId, application.project_id, application.id);
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
@@ -264,7 +269,10 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 
 					try {
-						await getApplication(application.project_id, application.id);
+						const { selectedOrganizationId } = useOrganizationStore.getState();
+						if (!selectedOrganizationId) return;
+
+						await getApplication(selectedOrganizationId, application.project_id, application.id);
 
 						const { application: updatedApplication } = useApplicationStore.getState();
 
@@ -301,7 +309,10 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 
 					try {
-						await generateApplication(application.project_id, application.id);
+						const { selectedOrganizationId } = useOrganizationStore.getState();
+						if (!selectedOrganizationId) return;
+
+						await generateApplication(selectedOrganizationId, application.project_id, application.id);
 
 						set((state) => ({
 							...state,
@@ -325,7 +336,12 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 				handleApplicationInit: async (projectId: string, applicationId?: string) => {
 					const { createApplication, getApplication } = useApplicationStore.getState();
-					await (applicationId ? getApplication(projectId, applicationId) : createApplication(projectId));
+					const { selectedOrganizationId } = useOrganizationStore.getState();
+					if (!selectedOrganizationId) return;
+
+					await (applicationId
+						? getApplication(selectedOrganizationId, projectId, applicationId)
+						: createApplication(selectedOrganizationId, projectId));
 				},
 
 				handleObjectiveDragEnd: (event: DragEndEvent) => {
@@ -681,10 +697,18 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							},
 						}));
 
-						const response = await triggerAutofillAction(application.project_id, application.id, {
-							autofill_type: type,
-							...(fieldName && { field_name: fieldName }),
-						});
+						const { selectedOrganizationId } = useOrganizationStore.getState();
+						if (!selectedOrganizationId) return;
+
+						const response = await triggerAutofillAction(
+							selectedOrganizationId,
+							application.project_id,
+							application.id,
+							{
+								autofill_type: type,
+								...(fieldName && { field_name: fieldName }),
+							},
+						);
 
 						log.info("Autofill triggered successfully", {
 							application_id: application.id,

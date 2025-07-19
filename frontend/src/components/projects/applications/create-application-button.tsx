@@ -11,17 +11,20 @@ import { log } from "@/utils/logger";
 
 interface CreateApplicationButtonProps {
 	className?: string;
+	organizationId: string;
 	projectId: string;
 }
 
-export function CreateApplicationButton({ className, projectId }: CreateApplicationButtonProps) {
+export function CreateApplicationButton({ className, organizationId, projectId }: CreateApplicationButtonProps) {
 	const router = useRouter();
 	const [isCreating, setIsCreating] = useState(false);
 
 	const handleCreateApplication = async () => {
 		setIsCreating(true);
 		try {
-			const application = await createApplication(projectId, { title: DEFAULT_APPLICATION_TITLE });
+			const application = await createApplication(organizationId, projectId, {
+				title: DEFAULT_APPLICATION_TITLE,
+			});
 			const wizardPath = PagePath.APPLICATION_WIZARD.replace(":projectId", projectId).replace(
 				":applicationId",
 				application.id,

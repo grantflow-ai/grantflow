@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { GrantApplicationCard } from "@/components/projects";
 
 describe("GrantApplicationCard", () => {
+	const mockOrganizationId = "org-123";
 	const mockProjectId = "project-123";
 	const mockProjectName = "Climate Research Project";
 
@@ -21,6 +22,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
@@ -34,6 +36,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
@@ -48,6 +51,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockCompletedApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
@@ -62,6 +66,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
@@ -75,6 +80,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockCompletedApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
@@ -90,6 +96,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
@@ -102,6 +109,7 @@ describe("GrantApplicationCard", () => {
 		render(
 			<GrantApplicationCard
 				application={mockApplication}
+				organizationId={mockOrganizationId}
 				projectId={mockProjectId}
 				projectName={mockProjectName}
 			/>,
