@@ -23,6 +23,7 @@ vi.mock("@/actions/grant-applications", () => ({
 describe("CreateApplicationButton", () => {
 	const mockPush = vi.fn();
 	const mockApplication = ApplicationFactory.build();
+	const mockOrganizationId = "mock-org-id";
 	const mockProjectId = mockApplication.project_id;
 
 	beforeEach(() => {
@@ -33,7 +34,7 @@ describe("CreateApplicationButton", () => {
 	});
 
 	it("renders create button with correct text", () => {
-		render(<CreateApplicationButton projectId={mockProjectId} />);
+		render(<CreateApplicationButton organizationId={mockOrganizationId} projectId={mockProjectId} />);
 
 		const button = screen.getByTestId("create-application-button");
 		expect(button).toBeInTheDocument();
@@ -46,7 +47,7 @@ describe("CreateApplicationButton", () => {
 		vi.mocked(createApplication).mockResolvedValue(mockApplication);
 		const user = userEvent.setup();
 
-		render(<CreateApplicationButton projectId={mockProjectId} />);
+		render(<CreateApplicationButton organizationId={mockOrganizationId} projectId={mockProjectId} />);
 
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
@@ -70,7 +71,7 @@ describe("CreateApplicationButton", () => {
 		vi.mocked(createApplication).mockReturnValue(createPromise);
 		const user = userEvent.setup();
 
-		render(<CreateApplicationButton projectId={mockProjectId} />);
+		render(<CreateApplicationButton organizationId={mockOrganizationId} projectId={mockProjectId} />);
 
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
@@ -93,7 +94,7 @@ describe("CreateApplicationButton", () => {
 		vi.mocked(createApplication).mockRejectedValue(error);
 		const user = userEvent.setup();
 
-		render(<CreateApplicationButton projectId={mockProjectId} />);
+		render(<CreateApplicationButton organizationId={mockOrganizationId} projectId={mockProjectId} />);
 
 		const button = screen.getByTestId("create-application-button");
 		await user.click(button);
@@ -109,7 +110,13 @@ describe("CreateApplicationButton", () => {
 
 	it("applies custom className when provided", () => {
 		const customClass = "custom-button-class";
-		render(<CreateApplicationButton className={customClass} projectId={mockProjectId} />);
+		render(
+			<CreateApplicationButton
+				className={customClass}
+				organizationId={mockOrganizationId}
+				projectId={mockProjectId}
+			/>,
+		);
 
 		const button = screen.getByTestId("create-application-button");
 		expect(button).toHaveClass(customClass);

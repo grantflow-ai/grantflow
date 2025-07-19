@@ -13,10 +13,12 @@ import { routes } from "@/utils/navigation";
 
 export function GrantApplicationCard({
 	application,
+	organizationId,
 	projectId,
 	projectName,
 }: {
 	application: API.GetProject.Http200.ResponseBody["grant_applications"][0];
+	organizationId: string;
 	projectId: string;
 	projectName: string;
 }) {
@@ -41,7 +43,7 @@ export function GrantApplicationCard({
 
 		setIsDeleting(true);
 		try {
-			await deleteApplication(projectId, application.id);
+			await deleteApplication(organizationId, projectId, application.id);
 			toast.success("Application deleted successfully");
 			router.refresh();
 		} catch {
