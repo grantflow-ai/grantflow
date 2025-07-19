@@ -104,7 +104,6 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         try:
             admin_conn = await connect(admin_connection_string)
 
-            
             template_db_name = f"{test_db_name}_template"
 
             for db_name in [test_db_name, template_db_name]:
@@ -141,31 +140,26 @@ async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmake
 @pytest.fixture(scope="session")
 async def database_snapshot(db_connection_string: str, async_session_maker: async_sessionmaker[Any]) -> str:
     """Create a database snapshot after seeding for fast test isolation."""
-    
+
     await seed_db()
 
-    
     f"test_snapshot_{os.getpid()}"
 
-    
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
     admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
 
     admin_conn = await connect(admin_connection_string)
 
     try:
-        
         db_name = parsed.path.lstrip("/")
         template_db_name = f"{db_name}_template"
 
-        
         await admin_conn.execute(f"""
             SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
             WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
         """)
 
-        
         with contextlib.suppress(Exception):
             await admin_conn.execute(f'DROP DATABASE IF EXISTS "{template_db_name}"')
 
@@ -179,9 +173,7 @@ async def database_snapshot(db_connection_string: str, async_session_maker: asyn
 
 @pytest.fixture(autouse=True)
 async def restore_database_snapshot(
-    database_snapshot: str,
-    db_connection_string: str,
-    request: pytest.FixtureRequest
+    database_snapshot: str, db_connection_string: str, request: pytest.FixtureRequest
 ) -> AsyncGenerator[None]:
     """Restore database to clean snapshot state before each test."""
 
@@ -189,13 +181,9 @@ async def restore_database_snapshot(
         yield
         return
 
-    
     await _restore_from_snapshot(database_snapshot, db_connection_string)
 
     yield
-
-    
-    
 
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
@@ -207,21 +195,17 @@ async def _restore_from_snapshot(template_db_name: str, db_connection_string: st
     admin_conn = await connect(admin_connection_string)
 
     try:
-        
         await admin_conn.execute(f"""
             SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
             WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
         """)
 
-        
         await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
         await admin_conn.execute(f'CREATE DATABASE "{db_name}" WITH TEMPLATE "{template_db_name}"')
 
     finally:
         await admin_conn.close()
-
-
 
 
 @pytest.fixture
@@ -397,108 +381,108 @@ async def grant_template(
         granting_institution_id = result.scalar_one()
 
         grant_template_data = GrantTemplateFactory.build(
-        grant_application_id=grant_application.id,
-        granting_institution_id=granting_institution_id,
-        grant_sections=[
-            {
-                "title": "Executive Summary",
-                "description": "A brief overview of the research proposal",
-                "topics": [
-                    {"type": "BACKGROUND_CONTEXT", "weight": 0.8},
-                    {"type": "IMPACT", "weight": 0.7},
-                    {"type": "RATIONALE", "weight": 0.5},
-                ],
-                "search_queries": [
-                    "current state of inner ear imaging",
-                    "limitations of current imaging techniques",
-                    "clinical needs in inner ear diagnosis",
-                    "rationale for improved imaging",
-                    "potential impact on patient care",
-                ],
-                "max_words": 400,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 1,
-            },
-            {
-                "title": "Research Significance",
-                "description": "The importance and potential impact of the research",
-                "topics": [
-                    {"type": "IMPACT", "weight": 0.9},
-                    {"type": "RATIONALE", "weight": 0.8},
-                    {"type": "BACKGROUND_CONTEXT", "weight": 0.5},
-                ],
-                "search_queries": [
-                    "importance of inner ear imaging",
-                    "clinical significance of improved resolution",
-                    "impact of inner ear pathology diagnosis",
-                    "current unmet needs in diagnosis and treatment",
-                    "clinical justification",
-                ],
-                "max_words": 600,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 2,
-            },
-            {
-                "title": "Research Innovation",
-                "description": "Novel aspects and innovative approaches of the research",
-                "topics": [
-                    {"type": "NOVELTY_AND_INNOVATION", "weight": 1.0},
-                    {"type": "RESEARCH_FEASIBILITY", "weight": 0.7},
-                    {"type": "BACKGROUND_CONTEXT", "weight": 0.4},
-                ],
-                "search_queries": [
-                    "novel imaging approaches for inner ear",
-                    "innovative aspects of proposed technology",
-                    "feasibility of achieving resolution increase",
-                    "comparison to existing methods",
-                    "technological advancements in imaging",
-                ],
-                "max_words": 600,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 3,
-            },
-            {
-                "title": "Research Plan",
-                "description": "Detailed methodology and implementation plan",
-                "topics": [
-                    {"type": "MILESTONES_AND_TIMELINE", "weight": 0.9},
-                    {"type": "RESEARCH_FEASIBILITY", "weight": 0.8},
-                    {"type": "RISKS_AND_MITIGATIONS", "weight": 0.6},
-                ],
-                "search_queries": [
-                    "timeline for technology development",
-                    "plan for clinical translation",
-                    "steps for non-invasive application",
-                    "limitations of technology",
-                    "alternative paths for clinical use",
-                    "risk assessment in imaging technology",
-                ],
-                "max_words": 1000,
-                "type": "section",
-                "is_research_plan": True,
-                "order": 4,
-            },
-            {
-                "title": "Expected Outcomes",
-                "description": "Anticipated results and impact of the research",
-                "topics": [{"type": "IMPACT", "weight": 1.0}, {"type": "RATIONALE", "weight": 0.7}],
-                "search_queries": [
-                    "impact on clinical decision making",
-                    "improved diagnosis of inner ear pathologies",
-                    "clinical settings for proposed use",
-                    "treatments enabled by improved diagnosis",
-                    "benefits of increased imaging resolution",
-                ],
-                "max_words": 500,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 5,
-            },
-        ],
-    )
+            grant_application_id=grant_application.id,
+            granting_institution_id=granting_institution_id,
+            grant_sections=[
+                {
+                    "title": "Executive Summary",
+                    "description": "A brief overview of the research proposal",
+                    "topics": [
+                        {"type": "BACKGROUND_CONTEXT", "weight": 0.8},
+                        {"type": "IMPACT", "weight": 0.7},
+                        {"type": "RATIONALE", "weight": 0.5},
+                    ],
+                    "search_queries": [
+                        "current state of inner ear imaging",
+                        "limitations of current imaging techniques",
+                        "clinical needs in inner ear diagnosis",
+                        "rationale for improved imaging",
+                        "potential impact on patient care",
+                    ],
+                    "max_words": 400,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 1,
+                },
+                {
+                    "title": "Research Significance",
+                    "description": "The importance and potential impact of the research",
+                    "topics": [
+                        {"type": "IMPACT", "weight": 0.9},
+                        {"type": "RATIONALE", "weight": 0.8},
+                        {"type": "BACKGROUND_CONTEXT", "weight": 0.5},
+                    ],
+                    "search_queries": [
+                        "importance of inner ear imaging",
+                        "clinical significance of improved resolution",
+                        "impact of inner ear pathology diagnosis",
+                        "current unmet needs in diagnosis and treatment",
+                        "clinical justification",
+                    ],
+                    "max_words": 600,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 2,
+                },
+                {
+                    "title": "Research Innovation",
+                    "description": "Novel aspects and innovative approaches of the research",
+                    "topics": [
+                        {"type": "NOVELTY_AND_INNOVATION", "weight": 1.0},
+                        {"type": "RESEARCH_FEASIBILITY", "weight": 0.7},
+                        {"type": "BACKGROUND_CONTEXT", "weight": 0.4},
+                    ],
+                    "search_queries": [
+                        "novel imaging approaches for inner ear",
+                        "innovative aspects of proposed technology",
+                        "feasibility of achieving resolution increase",
+                        "comparison to existing methods",
+                        "technological advancements in imaging",
+                    ],
+                    "max_words": 600,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 3,
+                },
+                {
+                    "title": "Research Plan",
+                    "description": "Detailed methodology and implementation plan",
+                    "topics": [
+                        {"type": "MILESTONES_AND_TIMELINE", "weight": 0.9},
+                        {"type": "RESEARCH_FEASIBILITY", "weight": 0.8},
+                        {"type": "RISKS_AND_MITIGATIONS", "weight": 0.6},
+                    ],
+                    "search_queries": [
+                        "timeline for technology development",
+                        "plan for clinical translation",
+                        "steps for non-invasive application",
+                        "limitations of technology",
+                        "alternative paths for clinical use",
+                        "risk assessment in imaging technology",
+                    ],
+                    "max_words": 1000,
+                    "type": "section",
+                    "is_research_plan": True,
+                    "order": 4,
+                },
+                {
+                    "title": "Expected Outcomes",
+                    "description": "Anticipated results and impact of the research",
+                    "topics": [{"type": "IMPACT", "weight": 1.0}, {"type": "RATIONALE", "weight": 0.7}],
+                    "search_queries": [
+                        "impact on clinical decision making",
+                        "improved diagnosis of inner ear pathologies",
+                        "clinical settings for proposed use",
+                        "treatments enabled by improved diagnosis",
+                        "benefits of increased imaging resolution",
+                    ],
+                    "max_words": 500,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 5,
+                },
+            ],
+        )
     async with async_session_maker() as session, session.begin():
         session.add(grant_template_data)
         await session.commit()

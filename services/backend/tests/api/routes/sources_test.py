@@ -207,12 +207,10 @@ async def test_delete_application_source(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        
         deleted_source = await session.get(RagSource, grant_application_file.rag_source_id)
         assert deleted_source is not None
         assert deleted_source.deleted_at is not None
 
-        
         junction = await session.get(
             GrantApplicationSource,
             {
@@ -265,12 +263,10 @@ async def test_delete_organization_source(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        
         deleted_source = await session.get(RagSource, granting_institution_file.rag_source_id)
         assert deleted_source is not None
         assert deleted_source.deleted_at is not None
 
-        
         junction = await session.get(
             GrantingInstitutionSource,
             {
@@ -299,12 +295,10 @@ async def test_delete_template_source(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     async with async_session_maker() as session:
-        
         deleted_source = await session.get(RagSource, grant_template_file.rag_source_id)
         assert deleted_source is not None
         assert deleted_source.deleted_at is not None
 
-        
         junction = await session.get(
             GrantTemplateSource,
             {
