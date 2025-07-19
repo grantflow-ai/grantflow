@@ -4,7 +4,7 @@
 
 After comprehensive audit of both backend and frontend APIs, the current architecture is **correctly designed** for a multi-tenant SaaS application. The project-scoped URLs are appropriate because projects belong to organizations, and organization context is maintained through authentication and authorization layers.
 
-Only minor fixes needed - no major architectural changes required.
+**Pre-MVP Status**: No legacy compatibility or rollback concerns. All changes are forward-only improvements.
 
 ## Current API Structure (Correct)
 
@@ -48,34 +48,54 @@ Only minor fixes needed - no major architectural changes required.
 - **High Risk**: Proceeding with API changes while existing errors exist
 - **Mitigation**: Must resolve all existing issues before making new changes
 
-### Commit Block 1: Backend Missing Endpoint
-**Fix Missing User Restoration Endpoint**
+### Commit Block 1: Automatic User Restoration on Login
+**Implement Automatic Soft-Delete Recovery**
 
 #### Backend Changes:
-- [ ] Add `POST /user/restore` endpoint in `services/backend/src/api/routes/user.py`
-- [ ] Implement restoration logic with token validation
-- [ ] Add proper error handling and response types
-- [ ] Update API documentation
+- [ ] Update login endpoint in `services/backend/src/api/routes/auth.py`
+- [ ] Add logic to check for soft-deleted user records with matching firebase_uid
+- [ ] Implement automatic restoration of soft-deleted OrganizationUser records
+- [ ] Update `deleted_at` field to `NULL` for restored records
+- [ ] Add logging for restoration events
+- [ ] Ensure organization access is properly restored
 
 #### Frontend Changes:
-- [ ] Verify `restoreAccount()` function in `frontend/src/actions/user.ts` 
-- [ ] Update types if needed after backend implementation
+- [ ] Remove `restoreAccount()` function from `frontend/src/actions/user.ts` (no longer needed)
+- [ ] Remove any UI components for manual restoration process
+- [ ] Update user deletion flow messaging to indicate automatic restoration on login
+- [ ] Remove restoration-related tests and update user flow tests
+
+#### Implementation Code Path:
+```python
+# In services/backend/src/api/routes/auth.py - handle_login function
+async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker[Any]) -> LoginResponse:
+    # ... existing login logic ...
+    
+    # Add after firebase_uid is obtained:
+    # Check for soft-deleted user records and restore them
+    deleted_org_users = await session.scalars(
+        select(OrganizationUser).where(
+            OrganizationUser.firebase_uid == firebase_uid,
+            OrganizationUser.deleted_at.is_not(None)
+        )
+    )
+    
+    if deleted_org_users:
+        for org_user in deleted_org_users:
+            org_user.deleted_at = None
+            logger.info("Restored soft-deleted user", firebase_uid=firebase_uid, org_id=org_user.organization_id)
+    
+    # ... continue with existing logic ...
+```
 
 ### Commit Block 2: Notification Consistency
 **Align Notification Terminology**
 
-#### Decision Required:
-- Current: Frontend `deleteNotification()` vs Backend dismiss functionality
-- Options:
-  - A) Rename frontend to `dismissNotification()`
-  - B) Update backend to support actual deletion
-  - C) Keep both (dismiss for marking read, delete for removal)
-
-#### Implementation (Option A - Rename Frontend):
+#### Implementation (Rename Frontend to Match Backend):
 - [ ] Rename `deleteNotification()` to `dismissNotification()` in `frontend/src/actions/notifications.ts`
 - [ ] Update all components using this function
-- [ ] Update test files
-- [ ] Regenerate API types
+- [ ] Update test files that reference the old function name
+- [ ] Verify backend endpoint behavior (dismiss vs delete)
 
 ### Commit Block 3: WebSocket Notification Types Audit
 **Verify WebSocket Message Structure Alignment**
@@ -94,38 +114,59 @@ Only minor fixes needed - no major architectural changes required.
 - [ ] Check if frontend handles all backend notification types
 - [ ] Update TypeScript interfaces if schema mismatches found
 
-#### Critical Tasks:
-- [ ] Compare frontend expected message format vs backend actual format
-- [ ] Ensure notification types enum matches between frontend/backend
-- [ ] Test connection establishment and message flow
-- [ ] Verify proper cleanup on component unmount
+#### Implementation Code Path:
+```typescript
+// Find WebSocket implementation and verify message structure
+// In frontend/src/hooks/use-websocket.ts or similar:
+
+interface NotificationMessage {
+  type: 'application_updated' | 'generation_complete' | 'error';
+  payload: {
+    application_id: string;
+    project_id: string;
+    timestamp: string;
+    // ... other fields
+  };
+}
+
+// Ensure this matches backend WebSocket message format exactly
+```
 
 ### Commit Block 4: API Type Generation
 **Regenerate and Verify API Types**
 
-#### Tasks:
-- [ ] Run `task generate:api-types` to regenerate frontend types
-- [ ] Verify all new endpoints are properly typed
-- [ ] Fix any TypeScript errors in frontend
-- [ ] Update test files with correct types
+#### Implementation Code Path:
+```bash
+# Run type generation
+task generate:api-types
 
-### Commit Block 5: Testing & Validation
-**Comprehensive Testing of API Alignment**
+# Fix any resulting TypeScript errors
+cd frontend && pnpm typecheck
+cd frontend && pnpm lint
 
-#### Backend Tests:
-- [ ] Run all backend tests to ensure no regressions
-- [ ] Add tests for new `/user/restore` endpoint
-- [ ] Verify organization scoping in existing project tests
+# Update tests
+cd frontend && pnpm test
+```
 
-#### Frontend Tests:
-- [ ] Run all frontend API tests
-- [ ] Update tests for notification changes
-- [ ] Add tests for user restoration flow
+### Commit Block 5: Final Validation
+**Verify All Systems Working**
 
-#### Integration Tests:
-- [ ] Test WebSocket notification flow end-to-end
-- [ ] Verify organization context is maintained across all operations
-- [ ] Test authentication and authorization boundaries
+#### Implementation Code Path:
+```bash
+# Backend validation
+cd services/backend && task test
+cd services/backend && task lint:python
+
+# Frontend validation  
+cd frontend && pnpm test
+cd frontend && pnpm lint
+
+# Integration test
+task dev  # Start full system
+# Test user deletion and login restoration flow
+# Test WebSocket notifications
+# Test all API endpoints work correctly
+```
 
 ## Architecture Validation
 
@@ -164,7 +205,7 @@ Only minor fixes needed - no major architectural changes required.
 0. Resolve existing TypeScript/test issues (Commit Block 0)
 
 ### Phase 1 (Critical - Complete Second)
-1. Backend missing endpoint (Commit Block 1)
+1. Automatic user restoration on login (Commit Block 1)
 2. Notification consistency (Commit Block 2)
 
 ### Phase 2 (Important - Complete Third)
@@ -172,80 +213,21 @@ Only minor fixes needed - no major architectural changes required.
 4. Type generation (Commit Block 4)
 
 ### Phase 3 (Validation - Final Step)
-5. Testing & validation (Commit Block 5)
+5. Final validation (Commit Block 5)
 
-## Dependencies
+## Execution Order
 
-### Critical Dependencies:
-- **Block 0 → All Others**: Must fix existing issues before proceeding
-- **Block 1 → Block 4**: Backend changes must complete before type generation
-- **Block 2 → Block 4**: Frontend function changes need type updates
-- **Block 3 → Block 5**: WebSocket changes need integration testing
-
-### Parallel Work Possible:
-- Blocks 1 and 2 can be developed in parallel
-- Block 3 can start after Block 0 completes
-- Block 4 depends on Blocks 1-3 completion
-
-## Risk Assessment
-
-### Low Risk Changes
-- Adding missing backend endpoint (isolated addition)
-- Renaming frontend functions (simple refactor)
-- Type regeneration (automated process)
-
-### Medium Risk Changes
-- WebSocket message format changes (affects real-time features)
-- Notification type alignment (user-facing changes)
-- Fixing existing TypeScript errors (may uncover hidden issues)
-
-### High Risk Changes
-- **Block 0 Prerequisites**: Large number of existing errors suggests deeper issues
-- **Integration Risk**: Changes across multiple systems (frontend, backend, websocket)
-- **User Impact**: Notification changes affect user experience
-
-### Mitigation Strategies
-- **Incremental Deployment**: Deploy each block separately with rollback capability
-- **Feature Flags**: Use flags to enable/disable new functionality
-- **Staging Testing**: Full end-to-end testing in staging environment
-- **User Communication**: Notify users of any notification behavior changes
-
-### Red Flags to Watch For
-- TypeScript errors that suggest architectural problems
-- Test failures indicating broken functionality
-- WebSocket connection failures in production
-- Cross-organization data leakage (security issue)
-
-## Success Criteria
-
-### Must Have
-- [ ] All frontend API calls successfully connect to backend endpoints
-- [ ] No 404 or routing errors
-- [ ] Organization context properly maintained
-- [ ] User restoration flow works end-to-end
-
-### Should Have
-- [ ] WebSocket notifications work consistently
-- [ ] All API types are properly generated and typed
-- [ ] Test coverage maintained above 90%
-
-### Nice to Have
-- [ ] Performance improvements in API response times
-- [ ] Enhanced error messaging
-- [ ] Better API documentation
-
-## Rollback Plan
-
-If issues arise during implementation:
-
-1. **Immediate Rollback**: Revert specific commit blocks independently
-2. **Type Issues**: Regenerate types from known-good backend state
-3. **WebSocket Issues**: Disable real-time features temporarily
-4. **Database Issues**: Use migration rollback scripts
+1. **Block 0**: Fix existing issues (prerequisite)
+2. **Block 1**: Implement auto-restoration in login
+3. **Block 2**: Align notification terminology  
+4. **Block 3**: Verify WebSocket alignment
+5. **Block 4**: Regenerate API types
+6. **Block 5**: Final validation
 
 ## Notes
 
+- **Pre-MVP**: No backward compatibility concerns
 - Current API structure follows multi-tenant SaaS best practices
-- Organization scoping is correctly implemented through authentication
-- No major architectural changes needed
-- Focus on fixing identified gaps rather than restructuring
+- Organization scoping correctly implemented through authentication
+- Focus on fixing identified gaps, not restructuring
+- All changes are forward-only improvements
