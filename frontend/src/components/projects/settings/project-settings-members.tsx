@@ -142,6 +142,7 @@ export function ProjectSettingsMembers({
 			const result = await inviteCollaborator({
 				email,
 				inviterName: user.displayName,
+				organizationId,
 				projectId,
 				projectName,
 				role: permission === "admin" ? "admin" : "member",

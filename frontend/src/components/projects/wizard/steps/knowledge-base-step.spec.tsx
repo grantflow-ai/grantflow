@@ -243,12 +243,17 @@ describe("KnowledgeBaseStep", () => {
 
 			await waitFor(async () => {
 				if (mockFile.id) {
-					await mockDeleteApplicationSource("test-project", "test-app-id", mockFile.id);
+					await mockDeleteApplicationSource("mock-org-id", "test-project", "test-app-id", mockFile.id);
 					mockRemoveFile(mockFile);
 				}
 			});
 
-			expect(mockDeleteApplicationSource).toHaveBeenCalledWith("test-project", "test-app-id", "file-1");
+			expect(mockDeleteApplicationSource).toHaveBeenCalledWith(
+				"mock-org-id",
+				"test-project",
+				"test-app-id",
+				"file-1",
+			);
 			expect(mockRemoveFile).toHaveBeenCalledWith(mockFile);
 		});
 
@@ -274,7 +279,7 @@ describe("KnowledgeBaseStep", () => {
 			render(<KnowledgeBaseStep />);
 
 			try {
-				await mockDeleteApplicationSource("test-project", "test-app-id", "file-1");
+				await mockDeleteApplicationSource("mock-org-id", "test-project", "test-app-id", "file-1");
 			} catch (e) {
 				expect(e).toBe(error);
 			}

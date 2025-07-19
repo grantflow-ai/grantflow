@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
 import { ProjectSettingsAccount, ProjectSettingsMembers } from "@/components/projects";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
@@ -18,6 +19,7 @@ interface ProjectSettingsClientProps {
 export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps) {
 	const router = useRouter();
 	const { project } = useProjectStore();
+	const { selectedOrganizationId } = useOrganizationStore();
 	const [inviteHandler, setInviteHandler] = useState<(() => void) | undefined>();
 
 	// Redirect if no project context
@@ -58,14 +60,15 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 				);
 			}
 			case "members": {
-				return (
+				return selectedOrganizationId ? (
 					<ProjectSettingsMembers
 						currentUserRole={project.role as UserRole}
 						onInviteHandlerChange={setInviteHandler}
+						organizationId={selectedOrganizationId}
 						projectId={project.id}
 						projectName={project.name}
 					/>
-				);
+				) : null;
 			}
 			case "notifications": {
 				return <ProjectSettingsNotifications projectId={project.id} />;

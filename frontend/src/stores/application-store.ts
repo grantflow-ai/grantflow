@@ -405,7 +405,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			templateId: application?.grant_template?.id,
 		});
 
-		await get().getApplication(application!.organization_id, application!.project_id, application!.id);
+		const { selectedOrganizationId } = useOrganizationStore.getState();
+		if (!selectedOrganizationId) return;
+
+		await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
 	},
 
 	addUrl: async (url: string, parentId: string) => {
@@ -418,8 +421,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const isApplicationParent = parentId === application!.id;
 
 		try {
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				throw new Error("No organization selected");
+			}
 			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
-			await crawlUrl(application!.organization_id, application!.project_id, parentId, url);
+			await crawlUrl(selectedOrganizationId, application!.project_id, parentId, url);
 			toast.success("URL added successfully");
 			log.info("[rag_sources_check] URL crawl completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
@@ -428,7 +435,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				templateId: application?.grant_template?.id,
 				url,
 			});
-			await get().getApplication(application!.organization_id, application!.project_id, application!.id);
+
+			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
 		} catch (error) {
 			log.error("addUrl", error);
 			toast.error("Failed to process URL. Please try again.");
@@ -468,7 +476,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		}));
 
 		try {
-			const jobData = await retrieveRagJob(application!.organization_id, projectId, ragJobId);
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				throw new Error("No organization selected");
+			}
+			const jobData = await retrieveRagJob(selectedOrganizationId, projectId, ragJobId);
 			handleRagJobDataResponse(jobData, ragJobId, set);
 		} catch (error) {
 			set((state) => ({
@@ -559,13 +571,18 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			});
 
 			const traceId = await withRetry(
-				() =>
-					generateGrantTemplate(
-						application.organization_id,
+				() => {
+					const { selectedOrganizationId } = useOrganizationStore.getState();
+					if (!selectedOrganizationId) {
+						throw new Error("No organization selected");
+					}
+					return generateGrantTemplate(
+						selectedOrganizationId,
 						application.project_id,
 						application.id,
 						templateId,
-					),
+					);
+				},
 				{
 					initialDelay: 1000,
 					maxRetries: 3,
@@ -633,8 +650,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const isApplicationParent = parentId === application!.id;
 
 		try {
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				throw new Error("No organization selected");
+			}
 			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(application!.organization_id, application!.project_id, parentId, fileToRemove.id);
+			await deleteSource(selectedOrganizationId, application!.project_id, parentId, fileToRemove.id);
 			toast.success(`File ${fileToRemove.name} removed`);
 			log.info("[rag_sources_check] File removal completed, triggering getApplication", {
 				beforeRagSources: formatRagSources(application),
@@ -644,7 +665,8 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				parentId,
 				templateId: application?.grant_template?.id,
 			});
-			await get().getApplication(application!.organization_id, application!.project_id, application!.id);
+
+			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
 		} catch (error) {
 			log.error("removeFile", error);
 			toast.error("Failed to remove file. Please try again.");
@@ -703,7 +725,11 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				sourceId: ragSource.sourceId,
 			});
 
-			await deleteSource(application!.organization_id, application!.project_id, parentId, ragSource.sourceId);
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				throw new Error("No organization selected");
+			}
+			await deleteSource(selectedOrganizationId, application!.project_id, parentId, ragSource.sourceId);
 
 			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");
@@ -716,7 +742,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				url: urlToRemove,
 			});
 
-			await get().getApplication(application!.organization_id, application!.project_id, application!.id);
+			await get().getApplication(selectedOrganizationId, application!.project_id, application!.id);
 			log.info("[removeUrl] getApplication completed");
 		} catch (error) {
 			log.error("[removeUrl] Error occurred", error);
@@ -765,8 +791,12 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application: updatedApplication });
 
 		try {
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) {
+				throw new Error("No organization selected");
+			}
 			const response = await handleUpdateApplication(
-				existingApplication.organization_id,
+				selectedOrganizationId,
 				existingApplication.project_id,
 				existingApplication.id,
 				data,
