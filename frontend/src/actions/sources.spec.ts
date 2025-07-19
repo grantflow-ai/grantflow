@@ -41,6 +41,7 @@ vi.mock("@/utils/server-side", async () => {
 });
 
 describe("Sources Actions", () => {
+	const mockOrganizationId = "mock-organization-id";
 	const mockProjectId = "mock-project-id";
 	const mockApplicationId = "mock-application-id";
 	const mockTemplateId = "mock-template-id";
@@ -79,10 +80,10 @@ describe("Sources Actions", () => {
 	describe("Grant Application Sources", () => {
 		describe("getApplicationSources", () => {
 			it("should call the API with correct parameters", async () => {
-				const result = await getApplicationSources(mockProjectId, mockApplicationId);
+				const result = await getApplicationSources(mockOrganizationId, mockProjectId, mockApplicationId);
 
 				expect(mockGet).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/applications/${mockApplicationId}/sources`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/sources`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -100,7 +101,9 @@ describe("Sources Actions", () => {
 
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-				await expect(getApplicationSources(mockProjectId, mockApplicationId)).rejects.toThrow("API Error");
+				await expect(
+					getApplicationSources(mockOrganizationId, mockProjectId, mockApplicationId),
+				).rejects.toThrow("API Error");
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -123,7 +126,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await getApplicationSources(mockProjectId, mockApplicationId);
+				await getApplicationSources(mockOrganizationId, mockProjectId, mockApplicationId);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -131,10 +134,10 @@ describe("Sources Actions", () => {
 
 		describe("deleteApplicationSource", () => {
 			it("should call the API with correct parameters", async () => {
-				await deleteApplicationSource(mockProjectId, mockApplicationId, mockSourceId);
+				await deleteApplicationSource(mockOrganizationId, mockProjectId, mockApplicationId, mockSourceId);
 
 				expect(mockDelete).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/applications/${mockApplicationId}/sources/${mockSourceId}`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/sources/${mockSourceId}`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -149,9 +152,9 @@ describe("Sources Actions", () => {
 
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-				await expect(deleteApplicationSource(mockProjectId, mockApplicationId, mockSourceId)).rejects.toThrow(
-					"API Error",
-				);
+				await expect(
+					deleteApplicationSource(mockOrganizationId, mockProjectId, mockApplicationId, mockSourceId),
+				).rejects.toThrow("API Error");
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -172,7 +175,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await deleteApplicationSource(mockProjectId, mockApplicationId, mockSourceId);
+				await deleteApplicationSource(mockOrganizationId, mockProjectId, mockApplicationId, mockSourceId);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -180,10 +183,15 @@ describe("Sources Actions", () => {
 
 		describe("createApplicationSourceUploadUrl", () => {
 			it("should call the API with correct parameters", async () => {
-				const result = await createApplicationSourceUploadUrl(mockProjectId, mockApplicationId, mockFileName);
+				const result = await createApplicationSourceUploadUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockFileName,
+				);
 
 				expect(mockPost).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/applications/${mockApplicationId}/sources/upload-url?blob_name=${mockFileName}`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/sources/upload-url?blob_name=${mockFileName}`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -202,7 +210,12 @@ describe("Sources Actions", () => {
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
 				await expect(
-					createApplicationSourceUploadUrl(mockProjectId, mockApplicationId, mockFileName),
+					createApplicationSourceUploadUrl(
+						mockOrganizationId,
+						mockProjectId,
+						mockApplicationId,
+						mockFileName,
+					),
 				).rejects.toThrow("API Error");
 			});
 
@@ -226,7 +239,12 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await createApplicationSourceUploadUrl(mockProjectId, mockApplicationId, mockFileName);
+				await createApplicationSourceUploadUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockFileName,
+				);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -236,10 +254,10 @@ describe("Sources Actions", () => {
 	describe("Grant Template Sources", () => {
 		describe("getTemplateSources", () => {
 			it("should call the API with correct parameters", async () => {
-				const result = await getTemplateSources(mockProjectId, mockTemplateId);
+				const result = await getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId);
 
 				expect(mockGet).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -257,7 +275,9 @@ describe("Sources Actions", () => {
 
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-				await expect(getTemplateSources(mockProjectId, mockTemplateId)).rejects.toThrow("API Error");
+				await expect(getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId)).rejects.toThrow(
+					"API Error",
+				);
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -280,7 +300,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await getTemplateSources(mockProjectId, mockTemplateId);
+				await getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -288,10 +308,10 @@ describe("Sources Actions", () => {
 
 		describe("deleteTemplateSource", () => {
 			it("should call the API with correct parameters", async () => {
-				await deleteTemplateSource(mockProjectId, mockTemplateId, mockSourceId);
+				await deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId);
 
 				expect(mockDelete).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/${mockSourceId}`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/${mockSourceId}`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -306,9 +326,9 @@ describe("Sources Actions", () => {
 
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-				await expect(deleteTemplateSource(mockProjectId, mockTemplateId, mockSourceId)).rejects.toThrow(
-					"API Error",
-				);
+				await expect(
+					deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId),
+				).rejects.toThrow("API Error");
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -329,7 +349,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await deleteTemplateSource(mockProjectId, mockTemplateId, mockSourceId);
+				await deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -337,10 +357,15 @@ describe("Sources Actions", () => {
 
 		describe("createTemplateSourceUploadUrl", () => {
 			it("should call the API with correct parameters", async () => {
-				const result = await createTemplateSourceUploadUrl(mockProjectId, mockTemplateId, mockFileName);
+				const result = await createTemplateSourceUploadUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockTemplateId,
+					mockFileName,
+				);
 
 				expect(mockPost).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/upload-url?blob_name=${mockFileName}`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/upload-url?blob_name=${mockFileName}`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -359,7 +384,7 @@ describe("Sources Actions", () => {
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
 				await expect(
-					createTemplateSourceUploadUrl(mockProjectId, mockTemplateId, mockFileName),
+					createTemplateSourceUploadUrl(mockOrganizationId, mockProjectId, mockTemplateId, mockFileName),
 				).rejects.toThrow("API Error");
 			});
 
@@ -383,7 +408,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await createTemplateSourceUploadUrl(mockProjectId, mockTemplateId, mockFileName);
+				await createTemplateSourceUploadUrl(mockOrganizationId, mockProjectId, mockTemplateId, mockFileName);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -400,10 +425,15 @@ describe("Sources Actions", () => {
 			});
 
 			it("should call the API with correct parameters", async () => {
-				const result = await crawlTemplateUrl(mockProjectId, mockTemplateId, urlRequest.url);
+				const result = await crawlTemplateUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockTemplateId,
+					urlRequest.url,
+				);
 
 				expect(mockPost).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/crawl-url`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/crawl-url`,
 					{
 						headers: mockAuthHeaders,
 						json: { url: urlRequest.url },
@@ -422,9 +452,9 @@ describe("Sources Actions", () => {
 
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-				await expect(crawlTemplateUrl(mockProjectId, mockTemplateId, urlRequest.url)).rejects.toThrow(
-					"API Error",
-				);
+				await expect(
+					crawlTemplateUrl(mockOrganizationId, mockProjectId, mockTemplateId, urlRequest.url),
+				).rejects.toThrow("API Error");
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -447,7 +477,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await crawlTemplateUrl(mockProjectId, mockTemplateId, urlRequest.url);
+				await crawlTemplateUrl(mockOrganizationId, mockProjectId, mockTemplateId, urlRequest.url);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -464,10 +494,15 @@ describe("Sources Actions", () => {
 			});
 
 			it("should call the API with correct parameters", async () => {
-				const result = await crawlApplicationUrl(mockProjectId, mockApplicationId, urlRequest.url);
+				const result = await crawlApplicationUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					urlRequest.url,
+				);
 
 				expect(mockPost).toHaveBeenCalledWith(
-					`projects/${mockProjectId}/applications/${mockApplicationId}/sources/crawl-url`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/sources/crawl-url`,
 					{
 						headers: mockAuthHeaders,
 						json: { url: urlRequest.url },
@@ -486,9 +521,9 @@ describe("Sources Actions", () => {
 
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-				await expect(crawlApplicationUrl(mockProjectId, mockApplicationId, urlRequest.url)).rejects.toThrow(
-					"API Error",
-				);
+				await expect(
+					crawlApplicationUrl(mockOrganizationId, mockProjectId, mockApplicationId, urlRequest.url),
+				).rejects.toThrow("API Error");
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -511,7 +546,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await crawlApplicationUrl(mockProjectId, mockApplicationId, urlRequest.url);
+				await crawlApplicationUrl(mockOrganizationId, mockProjectId, mockApplicationId, urlRequest.url);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});

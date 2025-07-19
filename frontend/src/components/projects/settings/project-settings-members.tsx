@@ -26,6 +26,7 @@ interface ProjectMember {
 interface ProjectSettingsMembersProps {
 	currentUserRole: UserRole;
 	onInviteHandlerChange?: (handler: (() => void) | undefined) => void;
+	organizationId: string;
 	projectId: string;
 	projectName: string;
 }
@@ -49,6 +50,7 @@ const ROLE_LABELS = {
 export function ProjectSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
+	organizationId,
 	projectId,
 	projectName,
 }: ProjectSettingsMembersProps) {
@@ -60,8 +62,8 @@ export function ProjectSettingsMembers({
 
 	// Fetch project members
 	const { data: members = [], isLoading } = useSWR(
-		`/projects/${projectId}/members`,
-		() => getProjectMembers(projectId),
+		`/organizations/${organizationId}/projects/${projectId}/members`,
+		() => getProjectMembers(organizationId, projectId),
 		{
 			revalidateOnFocus: false,
 		},
@@ -69,8 +71,8 @@ export function ProjectSettingsMembers({
 
 	const handleRemoveMember = async (firebaseUid: string) => {
 		try {
-			await removeProjectMember(projectId, firebaseUid);
-			await mutate(`/projects/${projectId}/members`);
+			await removeProjectMember(organizationId, projectId, firebaseUid);
+			await mutate(`/organizations/${organizationId}/projects/${projectId}/members`);
 			addNotification({
 				message: "The member has been removed from the project",
 				projectName,
@@ -90,8 +92,8 @@ export function ProjectSettingsMembers({
 
 	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole) => {
 		try {
-			await updateProjectMemberRole(projectId, firebaseUid, { role: newRole });
-			await mutate(`/projects/${projectId}/members`);
+			await updateProjectMemberRole(organizationId, projectId, firebaseUid, { role: newRole });
+			await mutate(`/organizations/${organizationId}/projects/${projectId}/members`);
 			addNotification({
 				message: `Member role has been updated to ${ROLE_LABELS[newRole]}`,
 				projectName,
@@ -111,7 +113,7 @@ export function ProjectSettingsMembers({
 
 	const handleCancelInvitation = async (invitationId: string, email: string) => {
 		try {
-			await deleteInvitation(projectId, invitationId);
+			await deleteInvitation(organizationId, projectId, invitationId);
 			setPendingInvitations((prev) => prev.filter((inv) => inv.invitationId !== invitationId));
 			addNotification({
 				message: `Invitation to ${email} has been cancelled`,
