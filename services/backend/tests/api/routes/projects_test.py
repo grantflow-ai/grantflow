@@ -385,11 +385,8 @@ async def test_delete_project_success(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-    
     async with async_session_maker() as session:
-        deleted_project = await session.scalar(
-            select(Project).where(Project.id == project.id)
-        )
+        deleted_project = await session.scalar(select(Project).where(Project.id == project.id))
         assert deleted_project is not None
         assert deleted_project.deleted_at is not None
 
@@ -582,7 +579,6 @@ async def test_delete_invitation_success(
 ) -> None:
     async with async_session_maker() as session, session.begin():
         try:
-            
             await session.execute(
                 insert(OrganizationUser).values(
                     {
@@ -623,7 +619,7 @@ async def test_delete_invitation_success(
             .where(OrganizationInvitation.id == invitation.id)
             .where(OrganizationInvitation.organization_id == project.organization_id)
         )
-        
+
         assert deleted_invitation is not None
         assert deleted_invitation.deleted_at is not None
 

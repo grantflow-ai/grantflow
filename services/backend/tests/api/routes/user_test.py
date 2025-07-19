@@ -213,15 +213,10 @@ async def test_get_sole_owned_projects(
     """Test getting list of sole-owned organizations (API returns organizations despite endpoint name)."""
 
     async with async_session_maker() as session, session.begin():
-        
-        shared_org = Organization(
-            name="Shared Organization",
-            description="Organization with multiple owners"
-        )
+        shared_org = Organization(name="Shared Organization", description="Organization with multiple owners")
         session.add(shared_org)
         await session.flush()
 
-        
         session.add(
             ProjectMember(
                 organization_id=shared_org.id,
@@ -231,7 +226,6 @@ async def test_get_sole_owned_projects(
             )
         )
 
-        
         session.add(
             ProjectMember(
                 organization_id=shared_org.id,
@@ -249,7 +243,7 @@ async def test_get_sole_owned_projects(
 
     assert response.status_code == 200
     data = response.json()
-    
+
     assert data["count"] == 1
     assert len(data["projects"]) == 1
     assert data["projects"][0]["id"] == str(organization.id)

@@ -5,13 +5,12 @@ Migrate from project-based to organization-based architecture across both backen
 
 ## Backend Changes Required
 
-### Block 1: Backend Organization User Management
-- **Scope**: Update user authentication and organization selection logic
+### Block 1: Backend JWT Organization Context ✓
+- **Scope**: Enhance JWT infrastructure with default organization context
 - **Changes**:
-  - Add endpoint to get user's organizations with role priority
-  - Implement organization selection logic (OWNER > ADMIN > COLLABORATOR, by updated_at DESC)
-  - Update auth middleware to include organization context
-  - Add organization validation for all protected endpoints
+  - ✓ Extend JWT payload to include default organization_id and role
+  - ✓ Update login endpoint to determine and include default organization using priority logic
+  - Backend remains stateless - organization context comes from URL paths
 
 ### Block 2: Backend API Route Updates  
 - **Scope**: Update all existing API routes to include organization_id
@@ -34,10 +33,11 @@ Migrate from project-based to organization-based architecture across both backen
 ### Block 4: Frontend Authentication & Organization Context
 - **Scope**: Update auth flow and organization selection
 - **Changes**:
-  - Create organization context provider
-  - Implement organization selection logic after login
-  - Update auth state to include selected organization
-  - Add organization switching capability (for future use)
+  - Extract default organization_id from JWT after login
+  - Implement organization switching via Next.js cookies (client-side state)
+  - Create organization selector component
+  - Use cookie to persist selected organization across sessions
+  - Frontend manages organization UI state, backend expects it in URL paths
 
 ### Block 5: Frontend API Layer Updates
 - **Scope**: Update all API calls and client functions
@@ -94,20 +94,27 @@ Migrate from project-based to organization-based architecture across both backen
 3. **Validation**: Ensure application remains functional after each block
 4. **Documentation**: Update relevant documentation as changes are made
 
-## Organization Selection Logic
-```typescript
-// Backend endpoint: GET /user/organizations
-// Returns user's organizations with role and updated_at
-// Frontend selects default organization:
-// Priority: OWNER > ADMIN > COLLABORATOR
-// Within same role: most recent updated_at first
+## Architecture Approach
 
-const selectDefaultOrganization = (organizations) => {
-  const priorityOrder = { OWNER: 3, ADMIN: 2, COLLABORATOR: 1 };
-  return organizations
-    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-    .sort((a, b) => priorityOrder[b.role] - priorityOrder[a.role])[0];
-};
+### Backend (Stateless)
+- JWT contains default organization_id and role (from login logic)
+- Organization context MUST come from URL path parameters
+- Backend has no knowledge of UI state or user preferences
+- All routes expect `/organizations/{org_id}/...` pattern
+
+### Frontend (Stateful UI)
+- Extracts default organization_id from JWT after login
+- Uses Next.js cookies to persist user's selected organization
+- Organization switching is purely a frontend concern
+- Updates all API calls to include selected organization in URL path
+
+```typescript
+// Frontend organization management:
+// 1. After login: decode JWT to get default organization
+// 2. Check cookie for previously selected organization
+// 3. If no cookie or invalid, use JWT default
+// 4. When user switches: update cookie and redirect to new org URL
+// 5. All API calls use: `/organizations/${selectedOrgId}/...`
 ```
 
 ## Success Criteria
