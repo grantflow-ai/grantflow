@@ -1,5 +1,6 @@
 export const FIREBASE_LOCAL_STORAGE_KEY = "firebase-signin-email";
 export const SESSION_COOKIE = "grantflow_session";
+export const SELECTED_ORGANIZATION_COOKIE = "grantflow_selected_organization";
 export const WIZARD_STORAGE_KEY = "grantflow-wizard-state";
 export const DEFAULT_APPLICATION_TITLE = "Untitled Application";
 
