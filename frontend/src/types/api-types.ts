@@ -68,6 +68,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: string;
 	project_id: null | string;
 };
 
@@ -92,6 +93,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: null | string;
 	template_id: null | string;
 };
@@ -117,7 +119,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: null | string;
+	organization_id: string;
 };
 
 	export type RequestBody = {
@@ -220,6 +222,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
@@ -247,6 +250,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: string;
 	project_id: null | string;
 };
 
@@ -271,6 +275,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: string;
 	grant_template_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -292,6 +297,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: null | string;
 	template_id: null | string;
 };
@@ -341,7 +347,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: null | string;
+	organization_id: string;
 };
 
 	export interface QueryParameters {
@@ -365,6 +371,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
@@ -443,6 +450,10 @@ export namespace API {
 };
 };
 
+	export interface PathParameters {
+	organization_id: string;
+};
+
 	export type RequestBody = {
 	description: null | string;
 	logo_url?: null | string;
@@ -465,6 +476,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -484,6 +496,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: string;
 	project_id: string;
 	source_id: string;
 };
@@ -503,6 +516,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 	source_id: string;
 	template_id: null | string;
@@ -541,7 +555,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: null | string;
+	organization_id: string;
 	source_id: string;
 };
 };
@@ -561,6 +575,7 @@ export namespace API {
 
 	export interface PathParameters {
 	invitation_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -621,6 +636,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -753,6 +769,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -776,6 +793,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -849,6 +867,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -917,6 +936,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1063,6 +1083,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -1084,6 +1105,18 @@ export namespace API {
 	name: string;
 	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
 };
 };
 
@@ -1141,6 +1174,7 @@ export namespace API {
 
 	export interface PathParameters {
 	firebase_uid: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -1270,6 +1304,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -1303,6 +1338,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -1335,6 +1371,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 	template_id: null | string;
 };
@@ -1368,7 +1405,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: null | string;
+	organization_id: string;
 };
 };
 
@@ -1417,6 +1454,7 @@ export namespace API {
 
 	export interface PathParameters {
 	job_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -1441,6 +1479,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1549,6 +1588,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1597,6 +1637,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: string;
 	grant_template_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1663,6 +1704,7 @@ export namespace API {
 
 	export interface PathParameters {
 	invitation_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1787,6 +1829,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1819,6 +1862,7 @@ export namespace API {
 
 	export interface PathParameters {
 	firebase_uid: string;
+	organization_id: string;
 	project_id: string;
 };
 

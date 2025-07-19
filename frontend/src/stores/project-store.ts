@@ -28,25 +28,25 @@ const initialState: ProjectState = {
 };
 
 interface ProjectActions {
-	createProject: (data: API.CreateProject.RequestBody) => Promise<void>;
-	deleteProject: (projectId: string) => Promise<void>;
-	duplicateProject: (projectId: string) => Promise<void>;
-	getProject: (projectId: string) => Promise<void>;
-	getProjects: () => Promise<void>;
+	createProject: (organizationId: string, data: API.CreateProject.RequestBody) => Promise<void>;
+	deleteProject: (organizationId: string, projectId: string) => Promise<void>;
+	duplicateProject: (organizationId: string, projectId: string) => Promise<void>;
+	getProject: (organizationId: string, projectId: string) => Promise<void>;
+	getProjects: (organizationId: string) => Promise<void>;
 	reset: () => void;
 	setProject: (project: NonNullable<ProjectType>) => void;
-	updateProject: (projectId: string, data: API.UpdateProject.RequestBody) => Promise<void>;
+	updateProject: (organizationId: string, projectId: string, data: API.UpdateProject.RequestBody) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectActions & ProjectState>((set, get) => ({
 	...initialState,
 
-	createProject: async (data: API.CreateProject.RequestBody) => {
+	createProject: async (organizationId: string, data: API.CreateProject.RequestBody) => {
 		set({ areOperationsInProgress: true });
 		try {
-			const response = await handleCreateProject(data);
+			const response = await handleCreateProject(organizationId, data);
 
-			const projectsResponse = await handleGetProjects();
+			const projectsResponse = await handleGetProjects(organizationId);
 
 			set({
 				areOperationsInProgress: false,
@@ -66,10 +66,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		}
 	},
 
-	deleteProject: async (projectId: string) => {
+	deleteProject: async (organizationId: string, projectId: string) => {
 		set({ areOperationsInProgress: true });
 		try {
-			await handleDeleteProject(projectId);
+			await handleDeleteProject(organizationId, projectId);
 			set((state) => ({
 				areOperationsInProgress: false,
 				project: state.project?.id === projectId ? null : state.project,
@@ -84,11 +84,11 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		}
 	},
 
-	duplicateProject: async (projectId: string) => {
+	duplicateProject: async (organizationId: string, projectId: string) => {
 		set({ areOperationsInProgress: true });
 		try {
-			await handleDuplicateProject(projectId);
-			const projectsResponse = await handleGetProjects();
+			await handleDuplicateProject(organizationId, projectId);
+			const projectsResponse = await handleGetProjects(organizationId);
 
 			set({
 				areOperationsInProgress: false,
@@ -103,10 +103,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		}
 	},
 
-	getProject: async (projectId: string) => {
+	getProject: async (organizationId: string, projectId: string) => {
 		set({ areOperationsInProgress: true });
 		try {
-			const response = await handleGetProject(projectId);
+			const response = await handleGetProject(organizationId, projectId);
 			set({
 				areOperationsInProgress: false,
 				project: response,
@@ -122,10 +122,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		}
 	},
 
-	getProjects: async () => {
+	getProjects: async (organizationId: string) => {
 		set({ areOperationsInProgress: true });
 		try {
-			const response = await handleGetProjects();
+			const response = await handleGetProjects(organizationId);
 			set({
 				areOperationsInProgress: false,
 				projects: response,
@@ -149,7 +149,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		set({ project });
 	},
 
-	updateProject: async (projectId: string, data: API.UpdateProject.RequestBody) => {
+	updateProject: async (organizationId: string, projectId: string, data: API.UpdateProject.RequestBody) => {
 		const { project, projects } = get();
 		const previousProject = project;
 		const previousProjects = projects;
@@ -157,10 +157,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		set({ areOperationsInProgress: true });
 
 		try {
-			await handleUpdateProject(projectId, data);
+			await handleUpdateProject(organizationId, projectId, data);
 
-			const updatedProject = await handleGetProject(projectId);
-			const projectsResponse = await handleGetProjects();
+			const updatedProject = await handleGetProject(organizationId, projectId);
+			const projectsResponse = await handleGetProjects(organizationId);
 
 			set({
 				areOperationsInProgress: false,

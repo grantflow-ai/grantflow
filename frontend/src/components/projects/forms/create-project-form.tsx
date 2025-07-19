@@ -16,9 +16,14 @@ const projectSchema = z.object({
 	name: z.string().min(3, { message: "Project name must be at least 3 characters long" }),
 });
 
+interface CreateProjectFormProps {
+	closeModal: (projectId?: string) => void;
+	organizationId: string;
+}
+
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
-export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: string) => void }) {
+export function CreateProjectForm({ closeModal, organizationId }: CreateProjectFormProps) {
 	const form = useForm<ProjectFormValues>({
 		defaultValues: { description: "", name: "" },
 		resolver: zodResolver(projectSchema),
@@ -29,8 +34,9 @@ export function CreateProjectForm({ closeModal }: { closeModal: (projectId?: str
 			log.info("[CreateProjectForm] Submitting project", {
 				hasDescription: !!values.description,
 				name: values.name,
+				organizationId,
 			});
-			const { id: projectId } = await createProject(values);
+			const { id: projectId } = await createProject(organizationId, values);
 			log.info("[CreateProjectForm] Project created successfully", { projectId });
 			closeModal(projectId);
 		} catch (error) {
