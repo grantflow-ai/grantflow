@@ -353,9 +353,7 @@ async def handle_delete_rag_source(
             result = await session.execute(statement)
             source = result.scalar_one()
 
-            
             if application_id:
-                
                 app_with_project = await session.scalar(
                     select(GrantApplication)
                     .join(Project)
@@ -367,7 +365,6 @@ async def handle_delete_rag_source(
                 )
                 audit_org_id = app_with_project.project.organization_id if app_with_project else None
             elif template_id:
-                
                 template_with_app = await session.scalar(
                     select(GrantTemplate)
                     .join(GrantApplication)
@@ -383,10 +380,8 @@ async def handle_delete_rag_source(
                     template_with_app.grant_application.project.organization_id if template_with_app else None
                 )
             else:
-                
                 audit_org_id = organization_id
 
-            
             if audit_org_id:
                 await log_organization_audit_from_request(
                     session=session,
