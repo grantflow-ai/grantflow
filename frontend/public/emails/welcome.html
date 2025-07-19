@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Email Template</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
+      /* Reset styles */
+      body,
+      #bodyTable,
+      #bodyCell {
+        height: 100% !important;
+        margin: 0;
+        padding: 0;
+        width: 100% !important;
+        font-family: 'Cabin', Arial, sans-serif;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      img,
+      a img {
+        border: 0;
+        outline: none;
+        text-decoration: none;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin: 0;
+        padding: 0;
+      }
+      p {
+        margin: 0;
+      }
+
+      /* Client-specific styles */
+      .ReadMsgBody {
+        width: 100%;
+      }
+      .ExternalClass {
+        width: 100%;
+      }
+      .ExternalClass,
+      .ExternalClass p,
+      .ExternalClass span,
+      .ExternalClass font,
+      .ExternalClass td,
+      .ExternalClass div {
+        line-height: 100%;
+      }
+      table,
+      td {
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+      }
+      #outlook a {
+        padding: 0;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+      }
+      body,
+      table,
+      td,
+      p,
+      a,
+      li,
+      blockquote {
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      @media screen and (max-width: 600px) {
+        #templateContainer {
+          width: 100% !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f6f6f6">
+    <center>
+      <table
+        align="center"
+        border="0"
+        cellpadding="0"
+        cellspacing="0"
+        width="100%"
+        id="bodyTable"
+        style="height: 100%"
+      >
+        <tr>
+          <td align="center" valign="top" id="bodyCell">
+            <!-- EMAIL CONTAINER // -->
+            <table
+              border="0"
+              cellpadding="0"
+              cellspacing="0"
+              width="592"
+              id="templateContainer"
+              style="background-color: #ffffff; border: 1px solid #dddddd"
+            >
+              <!-- HEADER // -->
+              <tr>
+                <td align="center" valign="top">
+                  <table
+                    border="0"
+                    cellpadding="0"
+                    cellspacing="0"
+                    width="100%"
+                    id="templateHeader"
+                  >
+                    <tr>
+                      <td
+                        valign="top"
+                        class="headerContent"
+                        style="padding: 32px 20px 0; text-align: left"
+                      >
+                        <!-- Your Logo Here -->
+                        <div style="width: fit-content">
+                          <img
+                            src="./logo-horizontal.svg"
+                            alt="Logo"
+                            style="max-width: 150px"
+                          />
+                          <div>
+                            <p
+                              style="
+                                color: #211962;
+                                font-size: 14px;
+                                font-weight: 500;
+                              "
+                            >
+                              GrantFlow
+                            </p>
+                            <p
+                              style="
+                                color: #211962;
+                                font-size: 10px;
+                                font-weight: 500;
+                                text-align: center;
+                              "
+                            >
+                              By Vsphera
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- // HEADER -->
+
+              <!-- BODY // -->
+              <tr>
+                <td align="center" valign="top">
+                  <table
+                    border="0"
+                    cellpadding="0"
+                    cellspacing="0"
+                    width="100%"
+                    id="templateBody"
+                  >
+                    <tr>
+                      <td
+                        valign="top"
+                        class="bodyContent"
+                        style="
+                          padding: 32px 24px;
+                          color: #505050;
+                          font-family: Cabin, sans-serif;
+                          font-size: 16px;
+                          line-height: 150%;
+                          text-align: left;
+                        "
+                      >
+                        <h1
+                          style="
+                            font-size: 24px;
+                            color: #2e2d36;
+                            font-weight: 600;
+                            line-height: 22px;
+                            margin-bottom: 16px;
+                          "
+                        >
+                          Dear Researcher
+                        </h1>
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                          "
+                        >
+                          You have been invited to collaborate on the research
+                          project
+                          <span
+                            style="
+                              font-size: 16px;
+                              color: #2e2d36;
+                              font-weight: 600;
+                               line-height: 20px;
+                            "
+                            >"[Project <br />
+                            Name]"</span
+                          > within the GrantFlow platform.
+                        </p>
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                             line-height: 20px;
+                          "
+                        >
+                          GrantFlow is designed to help research teams
+                          streamline and manage the grant application process.
+                        </p>
+
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                            margin-bottom: 16px;
+                             line-height: 20px;
+                          "
+                        >
+                          As a collaborator, you will gain access to the project
+                          workspace and will be able to contribute to grant
+                          applications and related documentation.
+                        </p>
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                             line-height: 20px;
+                          "
+                        >
+                          To accept the invitation, please click the link below:
+                        </p>
+
+                        <button
+                          style="
+                            margin: 32px 0;
+                            font-weight: 400;
+                            color: #ffffff;
+                            font-size: 14px;
+                            background-color: #1e13f8;
+                            padding: 8px 12px;
+                            border: 0;
+                            width: 167px;
+                            border-radius: 4px;
+                            font-family: Sora, sans-serif;
+                          "
+                        >
+                          Accept Invitation
+                        </button>
+
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                            margin-bottom: 16px;
+                            line-height: 20px;
+                          "
+                        >
+                          If you do not yet have a GrantFlow account, you will
+                          be guided through a brief sign-up process before
+                          accessing the project.
+                        </p>
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                            line-height: 20px;
+                            margin-bottom: 16px;
+                          "
+                        >
+                          We look forward to your participation.
+                        </p>
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                            line-height: 20px;
+                          "
+                        >
+                          Warm regards,
+                        </p>
+                        <p
+                          style="
+                            font-size: 16px;
+                            color: #2e2d36;
+                            font-weight: 400;
+                            line-height: 20px;
+                          "
+                        >
+                          Vsphera Team
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- // BODY -->
+
+              <!-- FOOTER // -->
+              <tr>
+                <td align="center" valign="top" style="padding: 0px 24px;">
+                  <table
+                    border="0"
+                    cellpadding="0"
+                    cellspacing="0"
+                    width="100%"
+                    id="templateFooter"
+                  >
+                    <tr>
+                      <td
+                        valign="top"
+                        class="footerContent"
+                        style="
+                          padding-top: 24px;
+                          padding-bottom: 32px;
+                          color: #707070;
+                          font-family: Arial, sans-serif;
+                          font-size: 12px;
+                          line-height: 125%;
+                          text-align: center;
+                          border-top: 1px solid #E1DFEB;
+                        "
+                      >
+                      
+
+                          <img src="https://static.cdnlogo.com/logos/l/78/linkedin-icon.svg" alt="LinkedIn" style="width: 32px ; height: 27px; display: block; margin: 0 auto;">
+                   
+                      <p style="font-weight: 400; font-size: 14px; line-height: 18px; font-family: Cabin, sans-serif; color: #2E2D36; ">
+                        Want to change how you receive these emails? <br/> You can <a href="" style="text-decoration: underline; cursor: pointer; color: #2E2D36;"> update your preferences </a>  
+                      </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- // FOOTER -->
+            </table>
+            <!-- // EMAIL CONTAINER -->
+          </td>
+        </tr>
+      </table>
+    </center>
+  </body>
+</html>
