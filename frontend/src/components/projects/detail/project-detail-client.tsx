@@ -12,6 +12,7 @@ import {
 	listApplications,
 } from "@/actions/grant-applications";
 import { getProjectMembers } from "@/actions/project";
+import { AppButton } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -21,7 +22,6 @@ import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import { DeleteApplicationModal } from "../applications/delete-application-modal";
 import { ApplicationList } from "./application-list";
-import { AppButton } from "@/components/app";
 
 export function ProjectDetailClient() {
 	const router = useRouter();
