@@ -5,8 +5,7 @@ import { sendSignInLinkToEmail, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -23,7 +22,6 @@ import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/back
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { initializeMockAuth, isMockAuthEnabled } from "@/dev-tools/mock-auth";
 import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
@@ -39,18 +37,9 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function Login() {
 	const auth = getFirebaseAuth();
-	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
-
-	useEffect(() => {
-		if (isMockAuthEnabled()) {
-			log.info("Mock auth enabled - bypassing login page", { page: "login" });
-			initializeMockAuth();
-			router.push(PagePath.PROJECTS);
-		}
-	}, [router]);
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",

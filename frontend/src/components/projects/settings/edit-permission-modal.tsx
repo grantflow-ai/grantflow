@@ -32,7 +32,7 @@ const PERMISSION_OPTIONS = [
 	{
 		description: "Limited access to specific projects only",
 		label: "Collaborator (can access applications within specific project)",
-		value: UserRole.MEMBER,
+		value: UserRole.COLLABORATOR,
 	},
 	{
 		description: "Full access to all projects and management functions",
@@ -58,7 +58,7 @@ export function EditPermissionModal({
 	onClose,
 	onUpdateRole,
 }: EditPermissionModalProps) {
-	const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.MEMBER);
+	const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.COLLABORATOR);
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -94,7 +94,7 @@ export function EditPermissionModal({
 	}, [isDropdownOpen, isProjectSearchOpen]);
 
 	const handleClose = () => {
-		setSelectedRole(UserRole.MEMBER);
+		setSelectedRole(UserRole.COLLABORATOR);
 		setSelectedProjects([]);
 		setSearchQuery("");
 		setIsDropdownOpen(false);
@@ -111,7 +111,7 @@ export function EditPermissionModal({
 			await onUpdateRole(
 				member.firebaseUid,
 				selectedRole,
-				selectedRole === UserRole.MEMBER ? selectedProjects : undefined,
+				selectedRole === UserRole.COLLABORATOR ? selectedProjects : undefined,
 			);
 			handleClose();
 		} catch (error) {
@@ -266,7 +266,7 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{selectedRole === UserRole.MEMBER && (
+					{selectedRole === UserRole.COLLABORATOR && (
 						<div className="flex flex-col gap-3">
 							<span className="font-body text-[14px] text-app-gray-600">Research Project Access</span>
 

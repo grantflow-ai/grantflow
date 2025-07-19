@@ -40,7 +40,7 @@ const mockMember = {
 	joinedAt: "2024-01-01",
 	photoUrl: undefined,
 	projectAccess: ["1", "2"],
-	role: UserRole.MEMBER,
+	role: UserRole.COLLABORATOR,
 	status: "active" as const,
 };
 
@@ -197,7 +197,7 @@ describe("EditPermissionModal", () => {
 
 		await user.click(dropdown);
 		expect(screen.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
-		expect(screen.getByTestId("permission-option-MEMBER")).toBeInTheDocument();
+		expect(screen.getByTestId("permission-option-COLLABORATOR")).toBeInTheDocument();
 		expect(screen.getByTestId("permission-option-ADMIN")).toBeInTheDocument();
 
 		await user.click(screen.getByTestId("permission-option-ADMIN"));
@@ -359,7 +359,7 @@ describe("EditPermissionModal", () => {
 		render(
 			<EditPermissionModal
 				availableProjects={mockProjects}
-				currentUserRole={UserRole.MEMBER}
+				currentUserRole={UserRole.COLLABORATOR}
 				isOpen={true}
 				member={mockMember}
 				onClose={mockOnClose}
@@ -395,7 +395,7 @@ describe("EditPermissionModal", () => {
 
 		await user.click(screen.getByTestId("update-button"));
 
-		expect(mockOnUpdateRole).toHaveBeenCalledWith("firebase123", UserRole.MEMBER, ["1", "2", "3"]);
+		expect(mockOnUpdateRole).toHaveBeenCalledWith("firebase123", UserRole.COLLABORATOR, ["1", "2", "3"]);
 	});
 
 	it("calls onUpdateRole without projects for admin role", async () => {

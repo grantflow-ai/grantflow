@@ -1,11 +1,11 @@
-import type { UserRoleEnum } from "@/types/api-types";
+import type { UserRole } from "@/types/user";
 
 export interface JWTClaims {
 	exp?: number;
 	iat: number;
 	jti: string;
 	organization_id?: string;
-	role?: UserRoleEnum;
+	role?: UserRole;
 	sub: string; // Firebase UID
 }
 
@@ -31,7 +31,7 @@ export function getOrganizationFromJWT(token: string): null | string {
 	return claims?.organization_id ?? null;
 }
 
-export function getRoleFromJWT(token: string): null | UserRoleEnum {
+export function getRoleFromJWT(token: string): null | UserRole {
 	const claims = decodeJWT(token);
 	return claims?.role ?? null;
 }

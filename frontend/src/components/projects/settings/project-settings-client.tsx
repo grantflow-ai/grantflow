@@ -29,7 +29,7 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 
 	// Check role for restricted pages - only OWNER and ADMIN can access billing and members
 	useEffect(() => {
-		if (project && project.role === "MEMBER" && (activeTab === "billing" || activeTab === "members")) {
+		if (project && project.role === "COLLABORATOR" && (activeTab === "billing" || activeTab === "members")) {
 			router.replace(routes.project.settings.account());
 		}
 	}, [project, activeTab, router]);

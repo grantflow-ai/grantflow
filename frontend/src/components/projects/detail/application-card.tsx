@@ -26,12 +26,6 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 		label: "Cancelled",
 		text: "text-white",
 	},
-	DRAFT: {
-		bg: "bg-app-dark-blue",
-		icon: "/icons/working-draft-white.svg",
-		label: "Working Draft",
-		text: "text-white",
-	},
 	GENERATING: {
 		bg: "bg-primary",
 		icon: "/icons/piechart.svg",
@@ -43,6 +37,12 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 		icon: "/icons/draft-in-progress.svg",
 		label: "In Progress",
 		text: "text-app-dark-blue",
+	},
+	WORKING_DRAFT: {
+		bg: "bg-app-dark-blue",
+		icon: "/icons/working-draft-white.svg",
+		label: "Working Draft",
+		text: "text-white",
 	},
 };
 

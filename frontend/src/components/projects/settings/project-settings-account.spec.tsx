@@ -69,7 +69,7 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("renders account settings with user information", () => {
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		expect(screen.getByTestId("project-settings-account")).toBeInTheDocument();
 		expect(screen.getByText("Profile Image")).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("displays user initials when no photo URL", () => {
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		const profileContainer = screen.getByTestId("profile-image-container");
 		expect(profileContainer).toHaveTextContent("JD");
@@ -98,7 +98,7 @@ describe("ProjectSettingsAccount", () => {
 			user: mockUserWithPhoto,
 		} as any);
 
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		const profileContainer = screen.getByTestId("profile-image-container");
 		expect(profileContainer).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe("ProjectSettingsAccount", () => {
 			user: { ...mockUser, displayName: null },
 		} as any);
 
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		const profileContainer = screen.getByTestId("profile-image-container");
 		expect(profileContainer).toHaveTextContent("JO");
@@ -121,7 +121,7 @@ describe("ProjectSettingsAccount", () => {
 
 	it("shows email tooltip on hover", async () => {
 		const user = userEvent.setup();
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		const infoButton = screen.getByTestId("email-info-button");
 
@@ -139,7 +139,7 @@ describe("ProjectSettingsAccount", () => {
 
 	it("updates name input when typing", async () => {
 		const user = userEvent.setup();
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		const nameInput = screen.getByTestId("name-input");
 
@@ -151,7 +151,7 @@ describe("ProjectSettingsAccount", () => {
 
 	it("email input is editable", async () => {
 		const user = userEvent.setup();
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		const emailInput = screen.getByTestId("email-input");
 		expect(emailInput).not.toBeDisabled();
@@ -163,7 +163,9 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("displays correct role badges", () => {
-		const { rerender } = render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		const { rerender } = render(
+			<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />,
+		);
 		expect(screen.getByTestId("role-badge")).toHaveTextContent("Collaborator");
 
 		rerender(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.ADMIN} />);
@@ -174,7 +176,9 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("shows delete account button only for owners", () => {
-		const { rerender } = render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		const { rerender } = render(
+			<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />,
+		);
 		expect(screen.queryByTestId("delete-account-button")).not.toBeInTheDocument();
 
 		rerender(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.ADMIN} />);
@@ -203,7 +207,7 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("displays upload and delete photo buttons", () => {
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		expect(screen.getByTestId("upload-photo-button")).toBeInTheDocument();
 		expect(screen.getByTestId("upload-photo-button")).toHaveTextContent("Upload");
@@ -211,7 +215,7 @@ describe("ProjectSettingsAccount", () => {
 	});
 
 	it("shows support text for image upload", () => {
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		expect(screen.getByText("We support PNG's, JPG's, GIF's under 10MB")).toBeInTheDocument();
 	});
@@ -225,7 +229,7 @@ describe("ProjectSettingsAccount", () => {
 			user: null,
 		} as any);
 
-		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+		render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 		expect(screen.getByTestId("name-input")).toHaveValue("");
 		expect(screen.getByTestId("email-input")).toHaveValue("");
@@ -241,14 +245,14 @@ describe("ProjectSettingsAccount", () => {
 	// New tests for profile update functionality
 	describe("Profile updates", () => {
 		it("displays save button", () => {
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			expect(screen.getByTestId("save-profile-button")).toBeInTheDocument();
 			expect(screen.getByTestId("save-profile-button")).toHaveTextContent("Save Changes");
 		});
 
 		it("disables save button when no changes made", () => {
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const saveButton = screen.getByTestId("save-profile-button");
 			expect(saveButton).toBeDisabled();
@@ -256,7 +260,7 @@ describe("ProjectSettingsAccount", () => {
 
 		it("enables save button when name is changed", async () => {
 			const user = userEvent.setup();
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const nameInput = screen.getByTestId("name-input");
 			const saveButton = screen.getByTestId("save-profile-button");
@@ -271,7 +275,7 @@ describe("ProjectSettingsAccount", () => {
 
 		it("enables save button when email is changed", async () => {
 			const user = userEvent.setup();
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const emailInput = screen.getByTestId("email-input");
 			const saveButton = screen.getByTestId("save-profile-button");
@@ -289,7 +293,7 @@ describe("ProjectSettingsAccount", () => {
 			mockUpdateDisplayName.mockResolvedValueOnce(undefined);
 			mockUpdateEmail.mockResolvedValueOnce(undefined);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const nameInput = screen.getByTestId("name-input");
 			const emailInput = screen.getByTestId("email-input");
@@ -313,7 +317,7 @@ describe("ProjectSettingsAccount", () => {
 			const user = userEvent.setup();
 			mockUpdateDisplayName.mockResolvedValueOnce(undefined);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const nameInput = screen.getByTestId("name-input");
 			const saveButton = screen.getByTestId("save-profile-button");
@@ -335,7 +339,7 @@ describe("ProjectSettingsAccount", () => {
 			const error = new Error("Update failed");
 			mockUpdateDisplayName.mockRejectedValueOnce(error);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const nameInput = screen.getByTestId("name-input");
 			const saveButton = screen.getByTestId("save-profile-button");
@@ -355,7 +359,7 @@ describe("ProjectSettingsAccount", () => {
 			const error = new Error("auth/requires-recent-login");
 			mockUpdateEmail.mockRejectedValueOnce(error);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const emailInput = screen.getByTestId("email-input");
 			const saveButton = screen.getByTestId("save-profile-button");
@@ -377,7 +381,7 @@ describe("ProjectSettingsAccount", () => {
 			const mockFile = new File(["test"], "test.jpg", { type: "image/jpeg" });
 			mockUpdateProfilePhoto.mockResolvedValueOnce(undefined);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const fileInput = document.querySelector('input[type="file"]');
 			if (!fileInput) throw new Error("File input not found");
@@ -393,7 +397,7 @@ describe("ProjectSettingsAccount", () => {
 		it("validates file type", async () => {
 			const mockFile = new File(["test"], "test.txt", { type: "text/plain" });
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const fileInput = document.querySelector('input[type="file"]');
 			if (!fileInput) throw new Error("File input not found");
@@ -410,7 +414,7 @@ describe("ProjectSettingsAccount", () => {
 			const user = userEvent.setup();
 			const largeFile = new File(["x".repeat(11 * 1024 * 1024)], "large.jpg", { type: "image/jpeg" });
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const fileInput = document.querySelector('input[type="file"]');
 			if (!fileInput) throw new Error("File input not found");
@@ -429,7 +433,7 @@ describe("ProjectSettingsAccount", () => {
 			const error = new Error("Upload failed");
 			mockUpdateProfilePhoto.mockRejectedValueOnce(error);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const fileInput = document.querySelector('input[type="file"]');
 			if (!fileInput) throw new Error("File input not found");
@@ -450,7 +454,7 @@ describe("ProjectSettingsAccount", () => {
 			});
 			mockUpdateProfilePhoto.mockReturnValueOnce(uploadPromise);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const uploadButton = screen.getByTestId("upload-photo-button");
 			const fileInput = document.querySelector('input[type="file"]');
@@ -487,7 +491,7 @@ describe("ProjectSettingsAccount", () => {
 			const user = userEvent.setup();
 			mockDeleteProfilePhoto.mockResolvedValueOnce(undefined);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const deleteButton = screen.getByTestId("delete-photo-button");
 			await user.click(deleteButton);
@@ -503,7 +507,7 @@ describe("ProjectSettingsAccount", () => {
 			const error = new Error("Delete failed");
 			mockDeleteProfilePhoto.mockRejectedValueOnce(error);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const deleteButton = screen.getByTestId("delete-photo-button");
 			await user.click(deleteButton);
@@ -522,7 +526,7 @@ describe("ProjectSettingsAccount", () => {
 				user: mockUser,
 			} as any);
 
-			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.MEMBER} />);
+			render(<ProjectSettingsAccount projectId={mockProject.id} userRole={UserRole.COLLABORATOR} />);
 
 			const deleteButton = screen.getByTestId("delete-photo-button");
 			expect(deleteButton).toBeDisabled();

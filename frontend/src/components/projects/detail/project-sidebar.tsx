@@ -32,7 +32,7 @@ interface ProjectSidebarProps {
 	applications?: {
 		id: string;
 		name: string;
-		status: "CANCELLED" | "COMPLETED" | "DRAFT" | "IN_PROGRESS";
+		status: "CANCELLED" | "COMPLETED" | "IN_PROGRESS" | "WORKING_DRAFT";
 	}[];
 	isCollapsed?: boolean;
 	isCreatingApplication?: boolean;
@@ -51,7 +51,7 @@ export function ProjectSidebar({
 	onCreateApplication,
 	onExpand,
 	projectId,
-	userRole = UserRole.MEMBER,
+	userRole = UserRole.COLLABORATOR,
 }: ProjectSidebarProps) {
 	const pathname = usePathname();
 	const router = useRouter();
@@ -62,8 +62,8 @@ export function ProjectSidebar({
 	const statusColors = {
 		CANCELLED: "bg-[#636170]",
 		COMPLETED: "bg-[#1e13f8]",
-		DRAFT: "bg-[#211968]",
 		IN_PROGRESS: "bg-[#9747ff]",
+		WORKING_DRAFT: "bg-[#211968]",
 	};
 
 	const handleLogout = () => {

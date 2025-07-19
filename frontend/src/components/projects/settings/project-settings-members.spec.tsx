@@ -106,7 +106,7 @@ const mockMembers: API.ListProjectMembers.Http200.ResponseBody = [
 		email: "member@example.com",
 		firebase_uid: "firebase-uid-3",
 		joined_at: "2025-01-25T10:00:00Z",
-		role: UserRole.MEMBER,
+		role: UserRole.COLLABORATOR,
 	}),
 ];
 
@@ -225,7 +225,7 @@ describe("ProjectSettingsMembers", () => {
 
 		renderWithSWR(
 			<ProjectSettingsMembers
-				currentUserRole={UserRole.MEMBER}
+				currentUserRole={UserRole.COLLABORATOR}
 				projectId={mockProject.id}
 				projectName={mockProject.name}
 			/>,

@@ -47,7 +47,7 @@ export function getRoleLabel(role: UserRole): string {
 		case UserRole.ADMIN: {
 			return "Admin";
 		}
-		case UserRole.MEMBER: {
+		case UserRole.COLLABORATOR: {
 			return "Collaborator";
 		}
 		case UserRole.OWNER: {
