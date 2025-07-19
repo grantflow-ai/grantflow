@@ -47,7 +47,11 @@ export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
 	(value: unknown) => isRecord(value) && "type" in value,
 );
 export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProcessingNotificationMessage>(
-	(value: unknown) => isWebsocketMessage(value) && isRecord(value.data) && "indexing_status" in value.data && "source_id" in value.data,
+	(value: unknown) =>
+		isWebsocketMessage(value) &&
+		isRecord(value.data) &&
+		"indexing_status" in value.data &&
+		"source_id" in value.data,
 );
 export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>(
 	(value: unknown) =>

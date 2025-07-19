@@ -11,41 +11,40 @@ export async function createGrantingInstitution(data: API.CreateGrantingInstitut
 				headers: await createAuthHeaders(),
 				json: data,
 			})
-			.json<API.CreateGrantingInstitution.ResponseBody>(),
+			.json<API.CreateGrantingInstitution.Http201.ResponseBody>(),
 	);
 }
 
-export async function deleteGrantingInstitution(institutionId: string) {
+export async function deleteGrantingInstitution(organizationId: string) {
 	return withAuthRedirect(
 		getClient()
-			.delete(`granting-institutions/${institutionId}`, {
+			.delete(`granting-institutions/${organizationId}`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.DeleteGrantingInstitution.ResponseBody>(),
+			.json<API.DeleteGrantingInstitution.Http204.ResponseBody>(),
 	);
 }
 
-// Global Granting Institutions Management (Admin only)
 export async function getGrantingInstitutions() {
 	return withAuthRedirect(
 		getClient()
 			.get("granting-institutions", {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.ListGrantingInstitutions.ResponseBody>(),
+			.json<API.ListGrantingInstitutions.Http200.ResponseBody>(),
 	);
 }
 
 export async function updateGrantingInstitution(
-	institutionId: string,
+	organizationId: string,
 	data: API.UpdateGrantingInstitution.RequestBody,
 ) {
 	return withAuthRedirect(
 		getClient()
-			.patch(`granting-institutions/${institutionId}`, {
+			.patch(`granting-institutions/${organizationId}`, {
 				headers: await createAuthHeaders(),
 				json: data,
 			})
-			.json<API.UpdateGrantingInstitution.ResponseBody>(),
+			.json<API.UpdateGrantingInstitution.Http200.ResponseBody>(),
 	);
 }

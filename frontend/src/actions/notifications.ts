@@ -5,16 +5,16 @@ import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 /**
- * Delete a specific notification
- * @param notificationId - The ID of the notification to delete
+ * Dismiss a specific notification
+ * @param notificationId - The ID of the notification to dismiss
  */
-export async function deleteNotification(notificationId: string) {
+export async function dismissNotification(notificationId: string) {
 	return withAuthRedirect(
 		getClient()
 			.delete(`notifications/${notificationId}`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.DeleteNotification.Http200.ResponseBody>(),
+			.json<API.DismissNotification.Http200.ResponseBody>(),
 	);
 }
 
@@ -27,6 +27,6 @@ export async function getNotifications() {
 			.get("notifications", {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.GetNotifications.Http200.ResponseBody>(),
+			.json<API.ListNotifications.Http200.ResponseBody>(),
 	);
 }
