@@ -1,8 +1,8 @@
 import { mockGetCookie } from "./global-mocks";
 
 export function clearAuthenticatedTest() {
-	// Reset to no cookie
-	mockGetCookie.mockReturnValue(null);
+	// Reset to no cookie - return undefined rather than null to avoid "cookie.value cannot be null" errors
+	mockGetCookie.mockReturnValue(undefined);
 }
 
 export function setupAuthenticatedTest() {

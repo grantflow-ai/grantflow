@@ -32,6 +32,18 @@ beforeAll(() => {
 
 	// Mock scrollIntoView
 	HTMLElement.prototype.scrollIntoView = vi.fn();
+
+	// Mock crypto.randomUUID for tracing
+	if (!globalThis.crypto) {
+		globalThis.crypto = {} as Crypto;
+	}
+	
+	// Generate unique UUIDs for tests that match the expected hexadecimal format
+	let uuidCounter = 0;
+	globalThis.crypto.randomUUID = vi.fn(() => {
+		const counter = (++uuidCounter).toString(16).padStart(12, '0');
+		return `${counter.slice(0, 8)}-${counter.slice(8, 12)}-4000-8000-${counter.padEnd(12, '0')}`;
+	});
 });
 
 vi.mock("react", async (importOriginal) => {
