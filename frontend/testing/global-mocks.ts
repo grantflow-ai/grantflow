@@ -6,6 +6,7 @@ import type { Env } from "@/types/env-types";
 
 const {
 	mockCookies,
+	mockGetCookie,
 	mockRedirect,
 	mockResizeObserver,
 	mockSetCookie,
@@ -26,8 +27,13 @@ const {
 	Reflect.set(mockToast, "promise", vi.fn());
 
 	const mockSetCookie = vi.fn();
+	const mockGetCookie = vi.fn().mockReturnValue(null);
 	const mockCookies = vi.fn().mockImplementation(() =>
 		Promise.resolve({
+			delete: vi.fn(),
+			get: mockGetCookie,
+			getAll: vi.fn().mockReturnValue([]),
+			has: vi.fn().mockReturnValue(false),
 			set: mockSetCookie,
 		}),
 	);
@@ -40,6 +46,7 @@ const {
 
 	return {
 		mockCookies,
+		mockGetCookie,
 		mockRedirect: vi.fn(),
 		mockRefresh: vi.fn(),
 		mockResizeObserver,
@@ -182,6 +189,7 @@ vi.mock("@/utils/segment", () => ({
 
 export {
 	mockCookies,
+	mockGetCookie,
 	mockRedirect,
 	mockResizeObserver,
 	mockSetCookie,
