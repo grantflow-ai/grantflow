@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
@@ -79,6 +80,7 @@ describe("Application Store", () => {
 	beforeEach(() => {
 		// Reset all stores to ensure test isolation
 		resetAllStores();
+		setupAuthenticatedTest();
 
 		// Clear all mocks completely
 		vi.clearAllMocks();

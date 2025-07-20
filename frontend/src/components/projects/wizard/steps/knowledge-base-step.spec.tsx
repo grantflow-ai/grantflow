@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationFactory, FileWithIdFactory, RagSourceFactory } from "::testing/factories";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,6 +48,7 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setupAuthenticatedTest();
 
 		useWizardStore.setState({
 			currentStep: WizardStep.KNOWLEDGE_BASE,

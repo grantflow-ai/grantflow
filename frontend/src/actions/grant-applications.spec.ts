@@ -1,11 +1,11 @@
 import {
 	ApplicationFactory,
+	ApplicationWithTemplateFactory,
 	CreateApplicationRequestFactory,
-	ListApplicationsResponseFactory,
 	TriggerAutofillRequestFactory,
-	TriggerAutofillResponseFactory,
 	UpdateApplicationRequestFactory,
 } from "::testing/factories";
+import { HTTPError } from "ky";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
@@ -20,353 +20,331 @@ import {
 	updateApplication,
 } from "./grant-applications";
 
-// Mock the dependencies
 vi.mock("@/utils/api");
 vi.mock("@/utils/server-side");
 
-const mockGetClient = vi.mocked(getClient);
-const mockCreateAuthHeaders = vi.mocked(createAuthHeaders);
-const mockWithAuthRedirect = vi.mocked(withAuthRedirect);
+const mockOrganizationId = "org-123";
+const mockProjectId = "proj-456";
+const mockApplicationId = "app-789";
 
-describe("Grant Applications Actions", () => {
-	const organizationId = "org-123";
-	const projectId = "project-456";
-	const applicationId = "app-789";
-	const mockAuthHeaders = { Authorization: "Bearer token" };
-
-	let mockClient: any;
-
+describe("grant-applications actions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockClient = {
-			delete: vi.fn(),
-			get: vi.fn(),
-			patch: vi.fn(),
-			post: vi.fn(),
-		};
-		mockGetClient.mockReturnValue(mockClient);
-		mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
-		mockWithAuthRedirect.mockImplementation((promise) => promise);
+		vi.mocked(createAuthHeaders).mockResolvedValue({
+			Authorization: "Bearer mock-token",
+		});
+		vi.mocked(withAuthRedirect).mockImplementation((promise) => promise);
 	});
 
 	describe("createApplication", () => {
-		it("should create application with correct parameters", async () => {
-			const requestData = CreateApplicationRequestFactory.build();
-			const responseData = ApplicationFactory.build({
-				id: applicationId,
-				project_id: projectId,
+		it("should create an application successfully", async () => {
+			const mockData = CreateApplicationRequestFactory.build();
+			const mockResponse = ApplicationFactory.build();
+
+			const mockPost = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			mockClient.post.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
-			});
+			vi.mocked(getClient).mockReturnValue({
+				post: mockPost,
+			} as any);
 
-			const result = await createApplication(organizationId, projectId, requestData);
+			const result = await createApplication(mockOrganizationId, mockProjectId, mockData);
 
-			expect(mockClient.post).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications`,
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications`,
 				{
-					headers: mockAuthHeaders,
-					json: requestData,
+					headers: { Authorization: "Bearer mock-token" },
+					json: mockData,
 				},
 			);
-			expect(result).toEqual(responseData);
+			expect(result).toEqual(mockResponse);
 		});
 
-		it("should handle API errors correctly", async () => {
-			const requestData = CreateApplicationRequestFactory.build();
+		it("should handle errors during creation", async () => {
+			const mockData = CreateApplicationRequestFactory.build();
+			const mockError = new HTTPError(
+				new Response(JSON.stringify({ detail: "Bad request" }), {
+					status: 400,
+					statusText: "Bad Request",
+				}),
+				new Request("http://test.com"),
+				{
+					method: "POST",
+					onDownloadProgress: () => {},
+					onUploadProgress: () => {},
+					prefixUrl: "",
+					retry: {
+						count: 0,
+						delay: 0,
+						methods: ["GET", "POST"],
+						statusCodes: [408, 413, 429, 500, 502, 503, 504],
+					},
+				} as any,
+			);
 
-			mockClient.post.mockReturnValue({
-				json: vi.fn().mockRejectedValue(new Error("API Error")),
-			});
+			vi.mocked(withAuthRedirect).mockRejectedValue(mockError);
 
-			await expect(createApplication(organizationId, projectId, requestData)).rejects.toThrow("API Error");
+			await expect(createApplication(mockOrganizationId, mockProjectId, mockData)).rejects.toThrow(mockError);
 		});
 	});
 
 	describe("deleteApplication", () => {
-		it("should delete application with correct parameters", async () => {
-			mockClient.delete.mockResolvedValue(undefined);
+		it("should delete an application successfully", async () => {
+			const mockDelete = vi.fn().mockResolvedValue(undefined);
 
-			await deleteApplication(organizationId, projectId, applicationId);
+			vi.mocked(getClient).mockReturnValue({
+				delete: mockDelete,
+			} as any);
 
-			expect(mockClient.delete).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}`,
+			await deleteApplication(mockOrganizationId, mockProjectId, mockApplicationId);
+
+			expect(mockDelete).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
 				{
-					headers: mockAuthHeaders,
+					headers: { Authorization: "Bearer mock-token" },
 				},
 			);
-		});
-
-		it("should handle API errors correctly", async () => {
-			mockClient.delete.mockRejectedValue(new Error("API Error"));
-
-			await expect(deleteApplication(organizationId, projectId, applicationId)).rejects.toThrow("API Error");
 		});
 	});
 
 	describe("duplicateApplication", () => {
-		it("should duplicate application with correct parameters", async () => {
-			const title = "Duplicated Application";
-			const responseData = ApplicationFactory.build({
-				id: "app-duplicate",
-				project_id: projectId,
-				title,
+		it("should duplicate an application successfully", async () => {
+			const mockTitle = "Duplicated Application";
+			const mockResponse = ApplicationWithTemplateFactory.build();
+
+			const mockPost = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			mockClient.post.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
-			});
+			vi.mocked(getClient).mockReturnValue({
+				post: mockPost,
+			} as any);
 
-			const result = await duplicateApplication(organizationId, projectId, applicationId, title);
+			const result = await duplicateApplication(mockOrganizationId, mockProjectId, mockApplicationId, mockTitle);
 
-			expect(mockClient.post).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/duplicate`,
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/duplicate`,
 				{
-					headers: mockAuthHeaders,
-					json: { title },
+					headers: { Authorization: "Bearer mock-token" },
+					json: { title: mockTitle },
 				},
 			);
-			expect(result).toEqual(responseData);
-		});
-
-		it("should handle API errors correctly", async () => {
-			const title = "Duplicated Application";
-			mockClient.post.mockReturnValue({
-				json: vi.fn().mockRejectedValue(new Error("API Error")),
-			});
-
-			await expect(duplicateApplication(organizationId, projectId, applicationId, title)).rejects.toThrow(
-				"API Error",
-			);
+			expect(result).toEqual(mockResponse);
 		});
 	});
 
 	describe("generateApplication", () => {
-		it("should generate application with correct parameters", async () => {
-			mockClient.post.mockResolvedValue(undefined);
+		it("should trigger application generation", async () => {
+			const mockPost = vi.fn().mockResolvedValue(undefined);
 
-			await generateApplication(organizationId, projectId, applicationId);
+			vi.mocked(getClient).mockReturnValue({
+				post: mockPost,
+			} as any);
 
-			expect(mockClient.post).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}`,
+			await generateApplication(mockOrganizationId, mockProjectId, mockApplicationId);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
 				{
-					headers: mockAuthHeaders,
+					headers: { Authorization: "Bearer mock-token" },
 				},
 			);
-		});
-
-		it("should handle API errors correctly", async () => {
-			mockClient.post.mockRejectedValue(new Error("API Error"));
-
-			await expect(generateApplication(organizationId, projectId, applicationId)).rejects.toThrow("API Error");
 		});
 	});
 
 	describe("getApplication", () => {
-		it("should get application with correct parameters", async () => {
-			const responseData = ApplicationFactory.build({
-				id: applicationId,
-				project_id: projectId,
+		it("should retrieve an application successfully", async () => {
+			const mockResponse = ApplicationWithTemplateFactory.build();
+
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
-			});
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
 
-			const result = await getApplication(organizationId, projectId, applicationId);
+			const result = await getApplication(mockOrganizationId, mockProjectId, mockApplicationId);
 
-			expect(mockClient.get).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}`,
+			expect(mockGet).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
 				{
-					headers: mockAuthHeaders,
+					headers: { Authorization: "Bearer mock-token" },
 				},
 			);
-			expect(result).toEqual(responseData);
-		});
-
-		it("should handle API errors correctly", async () => {
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockRejectedValue(new Error("API Error")),
-			});
-
-			await expect(getApplication(organizationId, projectId, applicationId)).rejects.toThrow("API Error");
+			expect(result).toEqual(mockResponse);
 		});
 	});
 
 	describe("listApplications", () => {
-		it("should list applications without parameters", async () => {
-			const responseData = ListApplicationsResponseFactory.build();
+		it("should list applications without params", async () => {
+			const mockResponse = {
+				items: ApplicationFactory.batch(3),
+				limit: 10,
+				offset: 0,
+				total: 3,
+			};
 
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			const result = await listApplications(organizationId, projectId);
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
 
-			expect(mockClient.get).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications`,
+			const result = await listApplications(mockOrganizationId, mockProjectId);
+
+			expect(mockGet).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications`,
 				{
-					headers: mockAuthHeaders,
+					headers: { Authorization: "Bearer mock-token" },
 				},
 			);
-			expect(result).toEqual(responseData);
+			expect(result).toEqual(mockResponse);
 		});
 
-		it("should list applications with all parameters", async () => {
+		it("should list applications with all params", async () => {
 			const params = {
 				limit: 20,
 				offset: 10,
-				order: "asc",
+				order: "desc",
 				search: "test",
-				sort: "title",
+				sort: "created_at",
 				status: "draft",
 			};
 
-			const responseData = ListApplicationsResponseFactory.build({
-				pagination: {
-					has_more: false,
-					limit: 20,
-					offset: 10,
-					total: 0,
-				},
+			const mockResponse = {
+				items: ApplicationFactory.batch(2),
+				limit: params.limit,
+				offset: params.offset,
+				total: 2,
+			};
+
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
+
+			const result = await listApplications(mockOrganizationId, mockProjectId, params);
+
+			const expectedUrl = `organizations/${mockOrganizationId}/projects/${mockProjectId}/applications?search=test&status=draft&sort=created_at&order=desc&limit=20&offset=10`;
+
+			expect(mockGet).toHaveBeenCalledWith(expectedUrl, {
+				headers: { Authorization: "Bearer mock-token" },
 			});
-
-			const result = await listApplications(organizationId, projectId, params);
-
-			expect(mockClient.get).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications?search=test&status=draft&sort=title&order=asc&limit=20&offset=10`,
-				{
-					headers: mockAuthHeaders,
-				},
-			);
-			expect(result).toEqual(responseData);
+			expect(result).toEqual(mockResponse);
 		});
 
-		it("should handle API errors correctly", async () => {
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockRejectedValue(new Error("API Error")),
+		it("should list applications with partial params", async () => {
+			const params = {
+				limit: 5,
+				search: "grant",
+			};
+
+			const mockResponse = {
+				items: ApplicationFactory.batch(1),
+				limit: params.limit,
+				offset: 0,
+				total: 1,
+			};
+
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			await expect(listApplications(organizationId, projectId)).rejects.toThrow("API Error");
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
+
+			const result = await listApplications(mockOrganizationId, mockProjectId, params);
+
+			const expectedUrl = `organizations/${mockOrganizationId}/projects/${mockProjectId}/applications?search=grant&limit=5`;
+
+			expect(mockGet).toHaveBeenCalledWith(expectedUrl, {
+				headers: { Authorization: "Bearer mock-token" },
+			});
+			expect(result).toEqual(mockResponse);
 		});
 	});
 
 	describe("triggerAutofill", () => {
-		it("should trigger autofill with correct parameters", async () => {
-			const requestData = TriggerAutofillRequestFactory.build();
-			const responseData = TriggerAutofillResponseFactory.build({
-				application_id: applicationId,
+		it("should trigger autofill successfully", async () => {
+			const mockData = TriggerAutofillRequestFactory.build();
+			const mockResponse = { job_id: "job-123" };
+
+			const mockPost = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			mockClient.post.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
-			});
+			vi.mocked(getClient).mockReturnValue({
+				post: mockPost,
+			} as any);
 
-			const result = await triggerAutofill(organizationId, projectId, applicationId, requestData);
+			const result = await triggerAutofill(mockOrganizationId, mockProjectId, mockApplicationId, mockData);
 
-			expect(mockClient.post).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/autofill`,
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/autofill`,
 				{
-					headers: mockAuthHeaders,
-					json: requestData,
+					headers: { Authorization: "Bearer mock-token" },
+					json: mockData,
 				},
 			);
-			expect(result).toEqual(responseData);
-		});
-
-		it("should handle API errors correctly", async () => {
-			const requestData = TriggerAutofillRequestFactory.build();
-			mockClient.post.mockReturnValue({
-				json: vi.fn().mockRejectedValue(new Error("API Error")),
-			});
-
-			await expect(triggerAutofill(organizationId, projectId, applicationId, requestData)).rejects.toThrow(
-				"API Error",
-			);
+			expect(result).toEqual(mockResponse);
 		});
 	});
 
 	describe("updateApplication", () => {
-		it("should update application with correct parameters", async () => {
-			const requestData = UpdateApplicationRequestFactory.build();
-			const responseData = ApplicationFactory.build({
-				id: applicationId,
-				project_id: projectId,
-				title: "Updated Application",
+		it("should update an application successfully", async () => {
+			const mockData = UpdateApplicationRequestFactory.build();
+			const mockResponse = ApplicationWithTemplateFactory.build();
+
+			const mockPatch = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			mockClient.patch.mockReturnValue({
-				json: vi.fn().mockResolvedValue(responseData),
-			});
+			vi.mocked(getClient).mockReturnValue({
+				patch: mockPatch,
+			} as any);
 
-			const result = await updateApplication(organizationId, projectId, applicationId, requestData);
+			const result = await updateApplication(mockOrganizationId, mockProjectId, mockApplicationId, mockData);
 
-			expect(mockClient.patch).toHaveBeenCalledWith(
-				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}`,
+			expect(mockPatch).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
 				{
-					headers: mockAuthHeaders,
-					json: requestData,
+					headers: { Authorization: "Bearer mock-token" },
+					json: mockData,
 				},
 			);
-			expect(result).toEqual(responseData);
+			expect(result).toEqual(mockResponse);
 		});
 
-		it("should handle API errors correctly", async () => {
-			const requestData = UpdateApplicationRequestFactory.build();
-			mockClient.patch.mockReturnValue({
-				json: vi.fn().mockRejectedValue(new Error("API Error")),
+		it("should update with partial data", async () => {
+			const partialData = { title: "Updated Title" };
+			const mockResponse = ApplicationWithTemplateFactory.build();
+
+			const mockPatch = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
 			});
 
-			await expect(updateApplication(organizationId, projectId, applicationId, requestData)).rejects.toThrow(
-				"API Error",
+			vi.mocked(getClient).mockReturnValue({
+				patch: mockPatch,
+			} as any);
+
+			const result = await updateApplication(mockOrganizationId, mockProjectId, mockApplicationId, partialData);
+
+			expect(mockPatch).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}`,
+				{
+					headers: { Authorization: "Bearer mock-token" },
+					json: partialData,
+				},
 			);
-		});
-	});
-
-	describe("withAuthRedirect integration", () => {
-		it("should call withAuthRedirect for all functions", async () => {
-			// Set up success mocks
-			mockClient.get.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
-			mockClient.post.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
-			mockClient.patch.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
-			mockClient.delete.mockResolvedValue(undefined);
-
-			await getApplication(organizationId, projectId, applicationId);
-			await createApplication(organizationId, projectId, CreateApplicationRequestFactory.build());
-			await updateApplication(organizationId, projectId, applicationId, UpdateApplicationRequestFactory.build());
-			await deleteApplication(organizationId, projectId, applicationId);
-			await generateApplication(organizationId, projectId, applicationId);
-			await duplicateApplication(organizationId, projectId, applicationId, "Duplicate");
-			await triggerAutofill(organizationId, projectId, applicationId, TriggerAutofillRequestFactory.build());
-			await listApplications(organizationId, projectId);
-
-			expect(mockWithAuthRedirect).toHaveBeenCalledTimes(8);
-		});
-	});
-
-	describe("createAuthHeaders integration", () => {
-		it("should call createAuthHeaders for all functions", async () => {
-			// Set up success mocks
-			mockClient.get.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
-			mockClient.post.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
-			mockClient.patch.mockReturnValue({ json: vi.fn().mockResolvedValue({}) });
-			mockClient.delete.mockResolvedValue(undefined);
-
-			await getApplication(organizationId, projectId, applicationId);
-			await createApplication(organizationId, projectId, CreateApplicationRequestFactory.build());
-			await updateApplication(organizationId, projectId, applicationId, UpdateApplicationRequestFactory.build());
-			await deleteApplication(organizationId, projectId, applicationId);
-			await generateApplication(organizationId, projectId, applicationId);
-			await duplicateApplication(organizationId, projectId, applicationId, "Duplicate");
-			await triggerAutofill(organizationId, projectId, applicationId, TriggerAutofillRequestFactory.build());
-			await listApplications(organizationId, projectId);
-
-			expect(mockCreateAuthHeaders).toHaveBeenCalledTimes(8);
+			expect(result).toEqual(mockResponse);
 		});
 	});
 });

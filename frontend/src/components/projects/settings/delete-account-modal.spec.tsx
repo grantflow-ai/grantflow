@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,7 @@ describe.sequential("DeleteAccountModal", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setupAuthenticatedTest();
 		vi.mocked(useRouter).mockReturnValue({
 			push: mockPush,
 		} as any);

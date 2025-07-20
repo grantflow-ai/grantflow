@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import {
 	ApplicationCardDataFactory,
 	ApplicationFactory,
@@ -96,6 +97,7 @@ describe("ProjectDetailClient", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setupAuthenticatedTest();
 
 		// Setup default mock returns
 		mockUseRouter.mockReturnValue(mockRouter);

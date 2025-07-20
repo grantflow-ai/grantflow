@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { cleanup, render, screen } from "@testing-library/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +22,7 @@ const mockGet = vi.fn();
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	setupAuthenticatedTest();
 
 	(useRouter as any).mockReturnValue({
 		push: mockPush,
