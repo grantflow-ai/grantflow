@@ -1,20 +1,25 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CustomSidebarTrigger } from "./customer-trigger";
 
+afterEach(() => {
+	cleanup();
+});
+
 describe("CustomSidebarTrigger", () => {
 	it("renders the sidebar trigger button and toggles sidebar state on click", () => {
-		render(
+		const { container } = render(
 			<SidebarProvider>
 				<CustomSidebarTrigger data-testid="sidebar-trigger" />
 			</SidebarProvider>,
 		);
 
-		const trigger = screen.getByTestId("sidebar-trigger");
+		const trigger = container.querySelector('[data-testid="sidebar-trigger"]');
 		expect(trigger).toBeInTheDocument();
 
 		// optional: simulate a click to make sure it doesn't throw
-		fireEvent.click(trigger);
+		fireEvent.click(trigger!);
 		expect(trigger).toBeInTheDocument();
 	});
 });

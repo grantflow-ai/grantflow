@@ -1,7 +1,8 @@
 import { UrlResponseFactory } from "::testing/factories";
-import { render, screen } from "@testing-library/react";
+import { resetAllStores } from "::testing/store-reset";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
 import * as validation from "@/utils/validation";
 
@@ -16,6 +17,7 @@ describe("UrlInput", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		resetAllStores();
 		mockIsValidUrl.mockReturnValue(true);
 
 		const store = useApplicationStore.getState();
@@ -23,6 +25,10 @@ describe("UrlInput", () => {
 		vi.spyOn(store, "addUrl").mockResolvedValue();
 
 		useApplicationStore.setState({ application: null });
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	describe("Basic Rendering", () => {
@@ -44,11 +50,11 @@ describe("UrlInput", () => {
 		});
 
 		it("renders with globe icon", () => {
-			render(<UrlInput parentId={defaultParentId} />);
+			const { container } = render(<UrlInput parentId={defaultParentId} />);
 
-			const iconContainer = screen.getByTestId("url-input-icon");
+			const iconContainer = container.querySelector('[data-testid="url-input-icon"]');
 			expect(iconContainer).toBeInTheDocument();
-			expect(iconContainer.querySelector("img")).toBeInTheDocument();
+			expect(iconContainer?.querySelector("img")).toBeInTheDocument();
 		});
 	});
 

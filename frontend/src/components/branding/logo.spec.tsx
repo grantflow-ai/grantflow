@@ -1,18 +1,23 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import { Logo } from "@/components/branding/logo";
 
 describe("Logo Component", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders logo SVG", () => {
-		render(<Logo />);
-		const logoElement = screen.getByTestId("logo");
+		const { container } = render(<Logo />);
+		const logoElement = container.querySelector('[data-testid="logo"]');
 		expect(logoElement).toBeInTheDocument();
-		expect(logoElement.tagName).toBe("svg");
+		expect(logoElement?.tagName).toBe("svg");
 	});
 
 	it("has accessible attributes", () => {
-		render(<Logo />);
-		const logoElement = screen.getByTestId("logo");
+		const { container } = render(<Logo />);
+		const logoElement = container.querySelector('[data-testid="logo"]');
 		expect(logoElement).toHaveAttribute("role", "img");
 		expect(logoElement).toHaveAttribute("aria-label");
 	});

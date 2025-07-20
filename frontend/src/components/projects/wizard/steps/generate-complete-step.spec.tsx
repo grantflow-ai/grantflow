@@ -1,15 +1,19 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { GenerateCompleteStep } from "@/components/projects";
 
+afterEach(() => {
+	cleanup();
+});
+
 describe("GenerateCompleteStep", () => {
 	it("renders step content", () => {
-		render(<GenerateCompleteStep />);
+		const { container } = render(<GenerateCompleteStep />);
 
-		expect(screen.getByTestId("generate-complete-step")).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="generate-complete-step"]')).toBeInTheDocument();
 		expect(screen.getByText("Generate and Complete")).toBeInTheDocument();
 		expect(screen.getByText("Ready to Generate")).toBeInTheDocument();
-		expect(screen.getByTestId("generate-application-button")).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="generate-application-button"]')).toBeInTheDocument();
 	});
 });
