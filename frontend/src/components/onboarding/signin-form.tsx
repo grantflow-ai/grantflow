@@ -1,10 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
 import AppInput from "@/components/app/forms/input-field";
 import { IconGoAhead } from "@/components/branding/icons";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
 
 const signInFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -14,6 +23,9 @@ const signInFormSchema = z.object({
 		.regex(/^[A-Za-z\s]+$/, {
 			message: "Name must contain only letters and spaces.",
 		}),
+	gdprConsent: z.boolean().refine((val) => val, {
+		message: "Please agree to the Terms and Privacy Policy to continue.",
+	}),
 	lastName: z
 		.string()
 		.min(2, { message: "Please enter your last name." })
@@ -34,7 +46,12 @@ export function SigninForm({
 	socialSignInError?: null | React.ReactNode | string;
 }) {
 	const form = useForm<SignInFormValues>({
-		defaultValues: { email: "", firstName: "", lastName: "" },
+		defaultValues: {
+			email: "",
+			firstName: "",
+			gdprConsent: false,
+			lastName: "",
+		},
 		delayError: 5,
 		mode: "onChange",
 		resolver: zodResolver(signInFormSchema),
@@ -43,7 +60,11 @@ export function SigninForm({
 	return (
 		<div data-testid="email-signin-form-container">
 			<Form {...form}>
-				<form className="" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
+				<form
+					className=""
+					data-testid="email-signin-form"
+					onSubmit={form.handleSubmit(onSubmit)}
+				>
 					<FormField
 						control={form.control}
 						name="firstName"
@@ -104,7 +125,9 @@ export function SigninForm({
 										autoCorrect="off"
 										className="form-input"
 										disabled={isLoading}
-										errorMessage={socialSignInError ?? form.formState.errors.email?.message}
+										errorMessage={
+											socialSignInError ?? form.formState.errors.email?.message
+										}
 										id="email"
 										label="Email"
 										placeholder="name@example.com"
@@ -116,8 +139,44 @@ export function SigninForm({
 							</FormItem>
 						)}
 					/>
+					<FormField
+						control={form.control}
+						name="gdprConsent"
+						render={({ field }) => (
+							<FormItem className="mt-2 flex flex-row items-start space-x-3 space-y-0">
+								<FormControl>
+									<Checkbox
+										checked={field.value}
+										data-testid="email-signin-form-gdpr-checkbox"
+										disabled={isLoading}
+										onCheckedChange={field.onChange}
+									/>
+								</FormControl>
+								<div className="space-y-1 leading-none">
+									<FormLabel className="text-xs font-normal text-gray-600">
+										By signing up, you agree to our{" "}
+										<Link
+											className="text-primary hover:underline"
+											href="/terms"
+										>
+											Terms
+										</Link>{" "}
+										and{" "}
+										<Link
+											className="text-primary hover:underline"
+											href="/privacy"
+										>
+											Privacy Policy
+										</Link>
+										.
+									</FormLabel>
+									<FormMessage data-testid="email-signin-form-gdpr-error" />
+								</div>
+							</FormItem>
+						)}
+					/>
 					<SubmitButton
-						className="mb-8 mt-3 w-full"
+						className="mb-8 mt-6 w-full"
 						data-testid="email-signin-form-submit-button"
 						disabled={!form.formState.isValid || isLoading}
 						isLoading={isLoading}
