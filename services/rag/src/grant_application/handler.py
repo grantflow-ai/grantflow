@@ -92,7 +92,7 @@ async def generate_work_plan_text(
     # Wikidata enhancement step
     await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="enhancing_with_wikidata",
+        event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
         message="Enhancing objectives with Wikidata scientific context...",
         notification_type="info",
         current_pipeline_stage=6,
@@ -116,7 +116,7 @@ async def generate_work_plan_text(
 
     await job_manager.add_notification(
         parent_id=UUID(application_id),
-        event="wikidata_enhancement_complete",
+        event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
         message="Wikidata enhancement completed",
         notification_type="info",
         data={
