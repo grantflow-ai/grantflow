@@ -107,9 +107,10 @@ describe("ProjectSettingsAccount", () => {
 
 		// Simulate file selection
 		const fileInput = screen.getByRole("button", { hidden: true });
-		if (fileInput.parentElement?.querySelector('input[type="file"]')) {
-			const hiddenInput = fileInput.parentElement.querySelector('input[type="file"]')!;
-			await user.upload(hiddenInput, file);
+		const fileInputParent = fileInput.parentElement;
+		if (fileInputParent) {
+			const hiddenInput = fileInputParent.querySelector('input[type="file"]')!;
+			await user.upload(hiddenInput as HTMLInputElement, file);
 		}
 
 		await waitFor(() => {
