@@ -617,3 +617,267 @@ export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((fact
 	title: factory.lorem.sentence({ max: 8, min: 3 }),
 	updated_at: factory.date.recent().toISOString(),
 }));
+
+// Organization API Response Factories
+export const AddOrganizationMemberResponseFactory = new Factory<API.AddOrganizationMember.Http201.ResponseBody>(
+	(factory) => ({
+		firebase_uid: factory.string.alphanumeric(28),
+		message: factory.lorem.sentence(),
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+	}),
+);
+
+export const CreateOrganizationResponseFactory = new Factory<API.CreateOrganization.Http201.ResponseBody>(
+	(factory) => ({
+		id: factory.string.uuid(),
+	}),
+);
+
+export const CreateOrganizationInvitationResponseFactory =
+	new Factory<API.CreateOrganizationInvitation.Http201.ResponseBody>((factory) => ({
+		expires_at: factory.date.future().toISOString(),
+		token: factory.string.alphanumeric(64),
+	}));
+
+export const CreateGrantingInstitutionRagSourceUploadUrlResponseFactory =
+	new Factory<API.CreateGrantingInstitutionRagSourceUploadUrl.Http201.ResponseBody>((factory) => ({
+		source_id: factory.string.uuid(),
+		url: factory.internet.url(),
+	}));
+
+export const GetOrganizationResponseFactory = new Factory<API.GetOrganization.Http200.ResponseBody>((factory) => ({
+	contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
+	contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+	created_at: factory.date.past().toISOString(),
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+	id: factory.string.uuid(),
+	institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
+	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+	name: factory.company.name(),
+	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+	updated_at: factory.date.recent().toISOString(),
+}));
+
+export const ListOrganizationInvitationsResponseFactory =
+	new Factory<API.ListOrganizationInvitations.Http200.ResponseBody>((factory) =>
+		factory.helpers.multiple(
+			() => ({
+				accepted_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : null,
+				email: factory.internet.email(),
+				id: factory.string.uuid(),
+				invitation_sent_at: factory.date.past().toISOString(),
+				role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+			}),
+			{ count: { max: 5, min: 0 } },
+		),
+	);
+
+export const ListOrganizationMembersResponseFactory = new Factory<API.ListOrganizationMembers.Http200.ResponseBody>(
+	(factory) =>
+		factory.helpers.multiple(
+			() => ({
+				created_at: factory.date.past().toISOString(),
+				firebase_uid: factory.string.alphanumeric(28),
+				has_all_projects_access: factory.datatype.boolean(),
+				project_access: factory.helpers.multiple(
+					() => ({
+						granted_at: factory.date.past().toISOString(),
+						project_id: factory.string.uuid(),
+						project_name: factory.company.name(),
+					}),
+					{ count: { max: 3, min: 0 } },
+				),
+				role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+				updated_at: factory.date.recent().toISOString(),
+			}),
+			{ count: { max: 5, min: 1 } },
+		),
+);
+
+export const ListOrganizationsResponseFactory = new Factory<API.ListOrganizations.Http200.ResponseBody>((factory) =>
+	factory.helpers.multiple(
+		() => ({
+			description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+			id: factory.string.uuid(),
+			logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+			members_count: factory.number.int({ max: 20, min: 1 }),
+			name: factory.company.name(),
+			projects_count: factory.number.int({ max: 10, min: 0 }),
+			role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+		}),
+		{ count: { max: 5, min: 1 } },
+	),
+);
+
+export const RestoreOrganizationResponseFactory = new Factory<API.RestoreOrganization.Http201.ResponseBody>(
+	(factory) => ({
+		contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
+		contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+		created_at: factory.date.past().toISOString(),
+		description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+		id: factory.string.uuid(),
+		institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
+		logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+		name: factory.company.name(),
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+		updated_at: factory.date.recent().toISOString(),
+	}),
+);
+
+export const UpdateOrganizationResponseFactory = new Factory<API.UpdateOrganization.Http200.ResponseBody>(
+	(factory) => ({
+		contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
+		contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
+		created_at: factory.date.past().toISOString(),
+		description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+		id: factory.string.uuid(),
+		institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
+		logo_url: factory.datatype.boolean() ? factory.image.url() : null,
+		name: factory.company.name(),
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+		updated_at: factory.date.recent().toISOString(),
+	}),
+);
+
+export const UpdateOrganizationInvitationResponseFactory =
+	new Factory<API.UpdateOrganizationInvitation.Http200.ResponseBody>((factory) => ({
+		accepted_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : null,
+		email: factory.internet.email(),
+		id: factory.string.uuid(),
+		invitation_sent_at: factory.date.past().toISOString(),
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+	}));
+
+export const UpdateMemberRoleResponseFactory = new Factory<API.UpdateMemberRole.Http200.ResponseBody>((factory) => ({
+	firebase_uid: factory.string.alphanumeric(28),
+	message: factory.lorem.sentence(),
+	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+}));
+
+// Grant Application API Response Factories
+export const ListApplicationsResponseFactory = new Factory<API.ListApplications.Http200.ResponseBody>((factory) => ({
+	applications: factory.helpers.multiple(
+		() => ({
+			completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
+			created_at: factory.date.past().toISOString(),
+			deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+			description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+			id: factory.string.uuid(),
+			parent_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
+			project_id: factory.string.uuid(),
+			status: factory.helpers.arrayElement<ApplicationStatus>([
+				"WORKING_DRAFT",
+				"IN_PROGRESS",
+				"GENERATING",
+				"CANCELLED",
+			]),
+			submission_date: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+			title: factory.lorem.sentence(),
+			updated_at: factory.date.recent().toISOString(),
+		}),
+		{ count: { max: 10, min: 0 } },
+	),
+	pagination: {
+		has_more: factory.datatype.boolean(),
+		limit: factory.number.int({ max: 50, min: 10 }),
+		offset: factory.number.int({ max: 100, min: 0 }),
+		total: factory.number.int({ max: 100, min: 0 }),
+	},
+}));
+
+export const TriggerAutofillResponseFactory = new Factory<API.TriggerAutofill.Http201.ResponseBody>((factory) => ({
+	application_id: factory.string.uuid(),
+	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
+	field_name: factory.datatype.boolean()
+		? factory.helpers.arrayElement([
+				"background_context",
+				"hypothesis",
+				"impact",
+				"novelty_and_innovation",
+				"preliminary_data",
+				"rationale",
+				"research_feasibility",
+				"scientific_infrastructure",
+				"team_excellence",
+			])
+		: undefined,
+	message_id: factory.string.uuid(),
+}));
+
+export const TriggerAutofillRequestFactory = new Factory<API.TriggerAutofill.RequestBody>((factory) => ({
+	autofill_type: factory.helpers.arrayElement(["research_deep_dive", "research_plan"]),
+	context: factory.datatype.boolean() ? {} : undefined,
+	field_name: factory.datatype.boolean()
+		? factory.helpers.arrayElement([
+				"background_context",
+				"hypothesis",
+				"impact",
+				"novelty_and_innovation",
+				"preliminary_data",
+				"rationale",
+				"research_feasibility",
+				"scientific_infrastructure",
+				"team_excellence",
+			])
+		: undefined,
+}));
+
+// Notification API Response Factories
+export const DismissNotificationResponseFactory = new Factory<API.DismissNotification.Http200.ResponseBody>(
+	(factory) => ({
+		notification_id: factory.string.uuid(),
+		success: true,
+	}),
+);
+
+export const ListNotificationsResponseFactory = new Factory<API.ListNotifications.Http200.ResponseBody>((factory) => ({
+	notifications: factory.helpers.multiple(
+		() => ({
+			created_at: factory.date.past().toISOString(),
+			dismissed: factory.datatype.boolean(),
+			expires_at: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+			extra_data: factory.datatype.boolean() ? {} : undefined,
+			id: factory.string.uuid(),
+			message: factory.lorem.sentence(),
+			project_id: factory.datatype.boolean() ? factory.string.uuid() : undefined,
+			project_name: factory.datatype.boolean() ? factory.company.name() : undefined,
+			read: factory.datatype.boolean(),
+			title: factory.lorem.sentence(),
+			type: factory.helpers.arrayElement(["info", "warning", "error", "success"]),
+		}),
+		{ count: { max: 10, min: 0 } },
+	),
+	total: factory.number.int({ max: 100, min: 0 }),
+}));
+
+// Organization Request Factories (for member management)
+export const AddOrganizationMemberRequestFactory = new Factory<API.AddOrganizationMember.RequestBody>((factory) => ({
+	firebase_uid: factory.string.alphanumeric(28),
+	has_all_projects_access: factory.datatype.boolean(),
+	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+}));
+
+export const CreateOrganizationInvitationRequestFactory = new Factory<API.CreateOrganizationInvitation.RequestBody>(
+	(factory) => ({
+		email: factory.internet.email(),
+		has_all_projects_access: factory.datatype.boolean(),
+		project_ids: factory.datatype.boolean()
+			? factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 3, min: 1 } })
+			: undefined,
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+	}),
+);
+
+export const UpdateOrganizationInvitationRequestFactory = new Factory<API.UpdateOrganizationInvitation.RequestBody>(
+	(factory) => ({
+		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+	}),
+);
+
+export const UpdateMemberRoleOrgRequestFactory = new Factory<API.UpdateMemberRole.RequestBody>((factory) => ({
+	has_all_projects_access: factory.datatype.boolean(),
+	project_ids: factory.datatype.boolean()
+		? factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 3, min: 1 } })
+		: undefined,
+	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
+}));
