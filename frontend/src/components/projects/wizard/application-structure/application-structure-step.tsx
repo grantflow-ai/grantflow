@@ -197,7 +197,7 @@ function ApplicationStructurePreview() {
 				order: newSectionOrder,
 				parent_id: parentId,
 				search_queries: [],
-				title: isSubsection ? "Secondary Category Name" : "Category Name",
+				title: isSubsection ? "New Sub-section" : "New Section",
 				topics: [],
 			};
 
