@@ -7,8 +7,19 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { AppButton, AppTextarea, InputField } from "@/components/app";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -42,6 +53,7 @@ interface SectionHeaderProps {
 	listeners: any;
 	onAddSubsection?: (parentId: string) => void;
 	onDelete: () => void;
+	onHeaderClick: (e: React.MouseEvent) => void;
 	onToggleExpand: () => void;
 	section: GrantSection;
 }
@@ -84,7 +96,10 @@ export function SortableSection({
 
 	const [formData, setFormData] = useState<SectionFormData>({
 		aiPrompt: generatedAiPrompt,
-		isResearchPlan: "max_words" in section ? (section.is_detailed_research_plan ?? false) : false,
+		isResearchPlan:
+			"max_words" in section
+				? (section.is_detailed_research_plan ?? false)
+				: false,
 		max_words: "max_words" in section ? section.max_words : 3000,
 		title: section.title,
 		useWords: true,
@@ -93,7 +108,10 @@ export function SortableSection({
 	useEffect(() => {
 		setFormData({
 			aiPrompt: generatedAiPrompt,
-			isResearchPlan: "max_words" in section ? (section.is_detailed_research_plan ?? false) : false,
+			isResearchPlan:
+				"max_words" in section
+					? (section.is_detailed_research_plan ?? false)
+					: false,
 			max_words: "max_words" in section ? section.max_words : 3000,
 			title: section.title,
 			useWords: true,
@@ -112,14 +130,31 @@ export function SortableSection({
 		onUpdate({
 			max_words: formData.max_words,
 			title: formData.title,
-			...(formData.isResearchPlan !== undefined && { is_detailed_research_plan: formData.isResearchPlan }),
+			...(formData.isResearchPlan !== undefined && {
+				is_detailed_research_plan: formData.isResearchPlan,
+			}),
 		});
 		onToggleExpand();
 	}, [formData, onUpdate, onToggleExpand]);
 
+	const handleHeaderClick = useCallback(
+		(e: React.MouseEvent) => {
+			const target = e.target as HTMLElement;
+			const isInteractiveElement =
+				target.closest('[data-interactive="true"]') ??
+				target.closest("button") ??
+				target.closest('[role="button"]');
+
+			if (!isInteractiveElement) {
+				onToggleExpand();
+			}
+		},
+		[onToggleExpand],
+	);
+
 	return (
 		<div
-			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 cursor-pointer hover:outline-2 ${isDragging || isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isDragging || isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 			data-testid="section-container"
 			ref={setNodeRef}
 			style={style}
@@ -132,6 +167,7 @@ export function SortableSection({
 				listeners={listeners}
 				onAddSubsection={onAddSubsection}
 				onDelete={_onDelete}
+				onHeaderClick={handleHeaderClick}
 				onToggleExpand={onToggleExpand}
 				section={section}
 			/>
@@ -155,7 +191,14 @@ export function SortableSection({
 	);
 }
 
-function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, setFormData }: SectionEditFormProps) {
+function SectionEditForm({
+	formData,
+	isSubsection,
+	onCancel,
+	onSave,
+	section,
+	setFormData,
+}: SectionEditFormProps) {
 	return (
 		<div className="px-6 py-3">
 			<div className="space-y-5">
@@ -185,8 +228,8 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 						Words/Characters count
 					</h3>
 					<p className="text-app-gray-600 text-base font-normal leading-tight">
-						This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
-						applies to words or characters.
+						This helps AI generate content that fits the grant&apos;s
+						requirements. Choose if the limit applies to words or characters.
 					</p>
 				</div>
 
@@ -207,14 +250,19 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 						/>
 					</div>
 					<div className="flex-1 items-center w-full">
-						<Label className="block text-start text-xs font-light text-input-label">Words/Characters</Label>
+						<Label className="block text-start text-xs font-light text-input-label">
+							Words/Characters
+						</Label>
 						<Select
 							onValueChange={(value) => {
 								setFormData({ ...formData, useWords: value === "words" });
 							}}
 							value={formData.useWords ? "words" : "characters"}
 						>
-							<SelectTrigger className="w-full" data-testid="word-character-selector">
+							<SelectTrigger
+								className="w-full"
+								data-testid="word-character-selector"
+							>
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
@@ -227,10 +275,12 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 
 				{!isSubsection && (
 					<div className="space-y-2">
-						<h3 className="font-heading leading-snug text-base font-semibold text-app-black">AI Prompt</h3>
+						<h3 className="font-heading leading-snug text-base font-semibold text-app-black">
+							AI Prompt
+						</h3>
 						<p className="text-app-gray-600 text-base font-normal leading-tight">
-							Your AI assistant will follow this instruction. Modify the prompt to reflect your topic and
-							goals for a more relevant draft.
+							Your AI assistant will follow this instruction. Modify the prompt
+							to reflect your topic and goals for a more relevant draft.
 						</p>
 					</div>
 				)}
@@ -254,10 +304,12 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 				</div>
 
 				<div className="space-y-2">
-					<h3 className="font-heading leading-snug text-base font-semibold text-app-black">Research Plan</h3>
+					<h3 className="font-heading leading-snug text-base font-semibold text-app-black">
+						Research Plan
+					</h3>
 					<p className="text-app-gray-600 text-base font-normal leading-tight">
-						Is this section the main Research Plan? Each application can designate one section as the
-						official Research Plan.
+						Is this section the main Research Plan? Each application can
+						designate one section as the official Research Plan.
 					</p>
 				</div>
 
@@ -270,7 +322,10 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 						data-testid="research-plan-checkbox"
 						id={`research-plan-${section.id}`}
 						onClick={() => {
-							setFormData({ ...formData, isResearchPlan: !formData.isResearchPlan });
+							setFormData({
+								...formData,
+								isResearchPlan: !formData.isResearchPlan,
+							});
 						}}
 						role="switch"
 						type="button"
@@ -286,7 +341,10 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 						data-testid="research-plan-label"
 						htmlFor={`research-plan-${section.id}`}
 						onClick={() => {
-							setFormData({ ...formData, isResearchPlan: !formData.isResearchPlan });
+							setFormData({
+								...formData,
+								isResearchPlan: !formData.isResearchPlan,
+							});
 						}}
 					>
 						This section is the main Research Plan
@@ -295,7 +353,11 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 			</div>
 
 			<div className="flex justify-between gap-2 pt-6">
-				<AppButton data-testid="cancel-button" onClick={onCancel} variant="secondary">
+				<AppButton
+					data-testid="cancel-button"
+					onClick={onCancel}
+					variant="secondary"
+				>
 					Cancel
 				</AppButton>
 				<AppButton data-testid="save-button" onClick={onSave}>
@@ -314,15 +376,28 @@ function SectionHeader({
 	listeners,
 	onAddSubsection,
 	onDelete,
+	onHeaderClick,
 	onToggleExpand,
 	section,
 }: SectionHeaderProps) {
 	return (
-		<div className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}>
+		<div
+			className={`flex items-center justify-start cursor-pointer ${isSubsection ? "gap-2" : "gap-5"}`}
+			onClick={onHeaderClick}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onHeaderClick(e as unknown as React.MouseEvent);
+				}
+			}}
+			role="button"
+			tabIndex={0}
+		>
 			<div
 				{...attributes}
 				{...listeners}
 				className="relative size-6 cursor-grab hover:cursor-grab active:cursor-grabbing"
+				data-interactive="true"
 			>
 				<GripVertical className="size-6 text-gray-400 hover:text-gray-600 transition-colors" />
 			</div>
@@ -346,7 +421,7 @@ function SectionHeader({
 						)}
 					</div>
 				</div>
-				<div className="flex items-center justify-end">
+				<div className="flex items-center justify-end" data-interactive="true">
 					<TooltipProvider delayDuration={300}>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -355,7 +430,12 @@ function SectionHeader({
 									data-testid="delete-section-button"
 									onClick={onDelete}
 								>
-									<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
+									<Image
+										alt="Delete"
+										height={24}
+										src="/icons/delete.svg"
+										width={24}
+									/>
 								</SectionIconButton>
 							</TooltipTrigger>
 							<TooltipContent sideOffset={5}>
@@ -371,7 +451,12 @@ function SectionHeader({
 										data-testid="add-subsection-button"
 										onClick={() => onAddSubsection?.(section.id)}
 									>
-										<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+										<Image
+											alt="Add"
+											height={20}
+											src="/icons/plus.svg"
+											width={20}
+										/>
 									</SectionIconButton>
 								</TooltipTrigger>
 								<TooltipContent sideOffset={5}>
@@ -381,12 +466,18 @@ function SectionHeader({
 						)}
 					</TooltipProvider>
 
-					<SectionIconButton className="ml-5" data-testid="expand-section-button" onClick={onToggleExpand}>
+					<SectionIconButton
+						className="ml-5"
+						data-testid="expand-section-button"
+						onClick={onToggleExpand}
+					>
 						<Image
 							alt={isExpanded ? "Collapse" : "Expand"}
 							className="transition-transform duration-200"
 							height={22}
-							src={isExpanded ? "/icons/chevron-up.svg" : "/icons/chevron-down.svg"}
+							src={
+								isExpanded ? "/icons/chevron-up.svg" : "/icons/chevron-down.svg"
+							}
 							width={22}
 						/>
 					</SectionIconButton>

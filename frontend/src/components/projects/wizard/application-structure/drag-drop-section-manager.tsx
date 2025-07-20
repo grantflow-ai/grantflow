@@ -5,7 +5,10 @@ import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
+import {
+	type DragDropHandlers,
+	useDragAndDrop,
+} from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { log } from "@/utils/logger";
@@ -16,7 +19,10 @@ interface SectionListProps {
 	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
-	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
+	handleUpdateSection: (
+		sectionId: string,
+		updates: Partial<GrantSection>,
+	) => Promise<void>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	mainSections: GrantSection[];
 	subsectionsByParent: Record<string, GrantSection[]>;
@@ -31,8 +37,12 @@ export function DragDropSectionManager({
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
 	const application = useApplicationStore((state) => state.application);
-	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
-	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
+	const updateGrantSections = useApplicationStore(
+		(state) => state.updateGrantSections,
+	);
+	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(
+		null,
+	);
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 
@@ -63,7 +73,9 @@ export function DragDropSectionManager({
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
-				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
+				const hasChildren = grantSections.some(
+					(section) => section.parent_id === activeSection.id,
+				);
 				if (hasChildren) {
 					return true;
 				}
@@ -74,20 +86,23 @@ export function DragDropSectionManager({
 		[grantSections],
 	);
 
-	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
-		const activeIsChild = activeSection.parent_id !== null;
-		const overIsChild = overSection.parent_id !== null;
+	const determineNewParentId = useCallback(
+		(activeSection: GrantSection, overSection: GrantSection) => {
+			const activeIsChild = activeSection.parent_id !== null;
+			const overIsChild = overSection.parent_id !== null;
 
-		if (overIsChild) {
-			return overSection.parent_id;
-		}
+			if (overIsChild) {
+				return overSection.parent_id;
+			}
 
-		if (activeIsChild) {
-			return overSection.id;
-		}
+			if (activeIsChild) {
+				return overSection.id;
+			}
 
-		return null;
-	}, []);
+			return null;
+		},
+		[],
+	);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
 		setExpandedSectionId((prev) => {
@@ -174,15 +189,25 @@ export function DragDropSectionManager({
 						return toUpdateGrantSection(section);
 					});
 
-					log.info("Drag over: Updating sections", { sectionCount: updatedSections.length });
+					log.info("Drag over: Updating sections", {
+						sectionCount: updatedSections.length,
+					});
 					await updateGrantSections(updatedSections);
 				}
 			},
 			onDragStart: (_event, item) => {
-				log.info("Drag started", { sectionId: item?.id, sectionTitle: item?.title });
+				log.info("Drag started", {
+					sectionId: item?.id,
+					sectionTitle: item?.title,
+				});
+				setExpandedSectionId(null);
 			},
 			onReorder: async (sections, oldIndex, newIndex) => {
-				log.info("Reordering sections", { newIndex, oldIndex, sectionCount: sections.length });
+				log.info("Reordering sections", {
+					newIndex,
+					oldIndex,
+					sectionCount: sections.length,
+				});
 
 				const reorderedSections = arrayMove(sections, oldIndex, newIndex);
 
@@ -193,32 +218,51 @@ export function DragDropSectionManager({
 				}));
 
 				log.info("Reorder: Updating grant sections", {
-					sections: updatedSections.map((s) => ({ id: s.id, order: s.order, title: s.title })),
+					sections: updatedSections.map((s) => ({
+						id: s.id,
+						order: s.order,
+						title: s.title,
+					})),
 					updatedCount: updatedSections.length,
 				});
 				await updateGrantSections(updatedSections.map(toUpdateGrantSection));
 			},
 		}),
-		[grantSections, updateGrantSections, toUpdateGrantSection, wouldCreateInvalidNesting, determineNewParentId],
+		[
+			grantSections,
+			updateGrantSections,
+			toUpdateGrantSection,
+			wouldCreateInvalidNesting,
+			determineNewParentId,
+		],
 	);
 
 	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
 
-	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
+	const sortedSections = useMemo(
+		() => [...grantSections].sort((a, b) => a.order - b.order),
+		[grantSections],
+	);
 
-	const mainSections = useMemo(() => sortedSections.filter((section) => !section.parent_id), [sortedSections]);
+	const mainSections = useMemo(
+		() => sortedSections.filter((section) => !section.parent_id),
+		[sortedSections],
+	);
 
 	const subsectionsByParent = useMemo(
 		() =>
-			sortedSections.reduce<Record<string, typeof grantSections>>((acc, section) => {
-				if (section.parent_id) {
-					if (!(section.parent_id in acc)) {
-						acc[section.parent_id] = [];
+			sortedSections.reduce<Record<string, typeof grantSections>>(
+				(acc, section) => {
+					if (section.parent_id) {
+						if (!(section.parent_id in acc)) {
+							acc[section.parent_id] = [];
+						}
+						acc[section.parent_id].push(section);
 					}
-					acc[section.parent_id].push(section);
-				}
-				return acc;
-			}, {}),
+					return acc;
+				},
+				{},
+			),
 		[sortedSections],
 	);
 
@@ -226,13 +270,16 @@ export function DragDropSectionManager({
 		(activeSection: GrantSection | undefined) => {
 			if (!activeSection) return null;
 
-			return <SectionDragOverlay activeSection={activeSection} isDetailedSection={isDetailedSection} />;
+			return <SectionDragOverlay activeSection={activeSection} />;
 		},
-		[isDetailedSection],
+		[],
 	);
 
 	return (
-		<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
+		<DragDropWrapper
+			items={grantSections}
+			renderDragOverlay={renderDragOverlay}
+		>
 			<div className="mb-3 space-y-2 p-1">
 				{grantSections.length > 0 && (
 					<SectionList
@@ -254,52 +301,66 @@ export function DragDropSectionManager({
 
 function SectionDragOverlay({
 	activeSection,
-	isDetailedSection,
 }: {
 	activeSection: GrantSection;
-	isDetailedSection: (section: GrantSection) => boolean;
 }) {
 	const isSubsection = activeSection.parent_id !== null;
-	const detailedSection = isDetailedSection(activeSection) ? activeSection : null;
-	const maxWords =
-		detailedSection && "max_words" in detailedSection && typeof detailedSection.max_words === "number"
-			? detailedSection.max_words
-			: null;
+	const hasMaxWords =
+		"max_words" in activeSection && Boolean(activeSection.max_words);
 
 	return (
 		<div
-			className={`flex items-center justify-start gap-5 rounded bg-white shadow-2xl border-2 border-blue-500 opacity-90 ${isSubsection ? "ml-[6.875rem] px-2 py-3" : "px-3 py-4"}`}
+			className={`group rounded outline-2 outline-offset-[-1px] outline-primary transition-all duration-200 bg-white shadow-xl ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 			style={{ minWidth: "300px" }}
 		>
-			<div className="relative size-6 cursor-grabbing">
-				<GripVertical className="size-6 text-gray-400" />
-			</div>
-
-			<div className="flex flex-1 items-center justify-between ">
-				<div className="flex flex-1 flex-col items-start justify-start ">
-					<div className="flex w-full items-center justify-start gap-2 ">
-						<h3 className=" text-base font-medium text-gray-900">{activeSection.title}</h3>
-						{maxWords && (
-							<span className=" text-sm font-normal text-gray-500">
-								{maxWords.toLocaleString()} Max words
-							</span>
-						)}
-					</div>
+			<div
+				className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}
+			>
+				<div className="relative size-6 cursor-grabbing">
+					<GripVertical className="size-6 text-gray-400" />
 				</div>
-				<div className="flex items-center justify-end ">
-					<SectionIconButton>
-						<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
-					</SectionIconButton>
 
-					{!isSubsection && (
-						<SectionIconButton className="ml-1">
-							<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+				<div className="flex flex-1 items-center justify-between">
+					<div className="flex flex-1 flex-col items-start justify-start">
+						<div className="flex w-full items-center justify-start gap-1.5">
+							<h3
+								className={`${isSubsection ? "font-normal leading-tight" : "font-heading leading-snug"} text-base font-semibold text-app-black`}
+							>
+								{activeSection.title}
+							</h3>
+							{hasMaxWords && "max_words" in activeSection && (
+								<span className="text-xs font-normal leading-none text-dark-gray">
+									{activeSection.max_words.toLocaleString()} Max words
+								</span>
+							)}
+						</div>
+					</div>
+					<div className="flex items-center justify-end">
+						<SectionIconButton className="size-7 opacity-100">
+							<Image
+								alt="Delete"
+								height={24}
+								src="/icons/delete.svg"
+								width={24}
+							/>
 						</SectionIconButton>
-					)}
 
-					<SectionIconButton className="ml-5">
-						<Image alt="Expand" height={22} src="/icons/chevron-down.svg" width={22} />
-					</SectionIconButton>
+						{!isSubsection && (
+							<SectionIconButton className="ml-1 opacity-100">
+								<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+							</SectionIconButton>
+						)}
+
+						<SectionIconButton className="ml-5">
+							<Image
+								alt="Collapse"
+								className="transition-transform duration-200"
+								height={22}
+								src="/icons/chevron-down.svg"
+								width={22}
+							/>
+						</SectionIconButton>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -316,7 +377,9 @@ function SectionList({
 	subsectionsByParent,
 	toggleSectionExpanded,
 	toUpdateGrantSection,
-}: { toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection } & SectionListProps) {
+}: {
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
+} & SectionListProps) {
 	return (
 		<>
 			{mainSections.map((section) => (
@@ -343,7 +406,9 @@ function SectionList({
 							onToggleExpand={() => {
 								toggleSectionExpanded(subsection.id);
 							}}
-							onUpdate={(updates) => handleUpdateSection(subsection.id, updates)}
+							onUpdate={(updates) =>
+								handleUpdateSection(subsection.id, updates)
+							}
 							section={subsection}
 							toUpdateGrantSection={toUpdateGrantSection}
 						/>

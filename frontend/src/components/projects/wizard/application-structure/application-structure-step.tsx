@@ -4,7 +4,10 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
+import {
+	ApplicationStructureLeftPane,
+	DragDropSectionManager,
+} from "@/components/projects";
 import { WizardRightPane } from "@/components/projects/wizard/shared";
 import { createRagSourcesDialog } from "@/components/projects/wizard/shared/rag-sources-dialog-utils";
 import type { WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
@@ -46,12 +49,20 @@ interface ApplicationStructureStepProps {
 	dialogRef: RefObject<null | WizardDialogRef>;
 }
 
-export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStepProps) {
-	const grantTemplate = useApplicationStore((state) => state.application?.grant_template);
+export function ApplicationStructureStep({
+	dialogRef,
+}: ApplicationStructureStepProps) {
+	const grantTemplate = useApplicationStore(
+		(state) => state.application?.grant_template,
+	);
 	const pollingIsActive = useWizardStore((state) => state.polling.isActive);
-	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const isGeneratingTemplate = useWizardStore(
+		(state) => state.isGeneratingTemplate,
+	);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
-	const startTemplateGeneration = useWizardStore((state) => state.startTemplateGeneration);
+	const startTemplateGeneration = useWizardStore(
+		(state) => state.startTemplateGeneration,
+	);
 
 	const templateRagSources = grantTemplate?.rag_sources ?? [];
 	const dialogDismissedRef = useRef(false);
@@ -66,18 +77,24 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	useEffect(() => {
 		if (templateRagSources.length === 0) return;
 
-		const allFinished = templateRagSources.every((source) => source.status === "FINISHED");
+		const allFinished = templateRagSources.every(
+			(source) => source.status === "FINISHED",
+		);
 		if (allFinished && canStartTemplateGeneration()) {
 			startTemplateGeneration();
 			return;
 		}
 
-		const hasIndexingSources = templateRagSources.some((source) => source.status === "INDEXING");
+		const hasIndexingSources = templateRagSources.some(
+			(source) => source.status === "INDEXING",
+		);
 		if (hasIndexingSources) {
 			return;
 		}
 
-		const hasFailedSources = templateRagSources.some((source) => source.status === "FAILED");
+		const hasFailedSources = templateRagSources.some(
+			(source) => source.status === "FAILED",
+		);
 
 		if (!hasFailedSources && canStartTemplateGeneration()) {
 			startTemplateGeneration();
@@ -85,7 +102,11 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 		}
 
 		// Only show dialog for failed sources if it hasn't been dismissed
-		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
+		if (
+			hasFailedSources &&
+			!dialogDismissedRef.current &&
+			!grantTemplate?.grant_sections.length
+		) {
 			const ragDialog = createRagSourcesDialog({
 				onBackToUploads: () => {
 					dialogDismissedRef.current = true;
@@ -128,14 +149,43 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 
 function ApplicationStructurePreview() {
 	const application = useApplicationStore((state) => state.application);
-	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
-	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const updateGrantSections = useApplicationStore(
+		(state) => state.updateGrantSections,
+	);
+	const isGeneratingTemplate = useWizardStore(
+		(state) => state.isGeneratingTemplate,
+	);
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 
 	const handleAddNewSection = useCallback(
 		async (parentId: null | string = null) => {
 			const isSubsection = parentId !== null;
+			let sectionsToUpdate: UpdateGrantSection[];
+			let newSectionOrder: number;
+
+			if (isSubsection && parentId) {
+				const parentSection = grantSections.find((s) => s.id === parentId);
+				if (!parentSection) return;
+
+				newSectionOrder = parentSection.order + 1;
+
+				sectionsToUpdate = grantSections.map((section) => {
+					const updated = toUpdateGrantSection(section);
+					if (section.order >= newSectionOrder) {
+						updated.order = section.order + 1;
+					}
+					return updated;
+				});
+			} else {
+				newSectionOrder = 0;
+				sectionsToUpdate = grantSections.map((section) => {
+					const updated = toUpdateGrantSection(section);
+					updated.order = section.order + 1;
+					return updated;
+				});
+			}
+
 			const newSection: UpdateGrantSection = {
 				depends_on: [],
 				generation_instructions: "",
@@ -144,22 +194,25 @@ function ApplicationStructurePreview() {
 				is_detailed_research_plan: null,
 				keywords: [],
 				max_words: 3000,
-				order: grantSections.length,
+				order: newSectionOrder,
 				parent_id: parentId,
 				search_queries: [],
 				title: isSubsection ? "Secondary Category Name" : "Category Name",
 				topics: [],
 			};
 
-			const updatedSections: UpdateGrantSection[] = [...grantSections.map(toUpdateGrantSection), newSection];
-			await updateGrantSections(updatedSections);
+			sectionsToUpdate.push(newSection);
+			await updateGrantSections(sectionsToUpdate);
 		},
 		[grantSections, updateGrantSections],
 	);
 
 	if (!application) {
 		return (
-			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+			<WizardRightPane
+				padding="p-5 md:p-6"
+				testId="application-structure-preview-pane"
+			>
 				<EmptyStatePreview />
 			</WizardRightPane>
 		);
@@ -167,7 +220,10 @@ function ApplicationStructurePreview() {
 
 	if (isGeneratingTemplate) {
 		return (
-			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+			<WizardRightPane
+				padding="p-5 md:p-6"
+				testId="application-structure-preview-pane"
+			>
 				<GeneratingLoader />
 			</WizardRightPane>
 		);
@@ -175,15 +231,24 @@ function ApplicationStructurePreview() {
 
 	if (!grantSections.length) {
 		return (
-			<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
+			<WizardRightPane
+				padding="p-5 md:p-6"
+				testId="application-structure-preview-pane"
+			>
 				<EmptyStatePreview />
 			</WizardRightPane>
 		);
 	}
 
 	return (
-		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor isDetailedSection={isDetailedSection} onAddSection={handleAddNewSection} />
+		<WizardRightPane
+			padding="p-5 md:p-6"
+			testId="application-structure-preview-pane"
+		>
+			<SectionEditor
+				isDetailedSection={isDetailedSection}
+				onAddSection={handleAddNewSection}
+			/>
 		</WizardRightPane>
 	);
 }
@@ -202,7 +267,11 @@ function GeneratingLoader() {
 	);
 }
 
-function PreviewHeader({ onAddSection }: { onAddSection: (parentId?: null | string) => Promise<void> }) {
+function PreviewHeader({
+	onAddSection,
+}: {
+	onAddSection: (parentId?: null | string) => Promise<void>;
+}) {
 	return (
 		<div className="mb-2 flex justify-end">
 			<AppButton
@@ -226,10 +295,16 @@ function SectionEditor({
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
 	return (
-		<div className="flex flex-col size-full" data-testid="application-structure-sections">
+		<div
+			className="flex flex-col size-full"
+			data-testid="application-structure-sections"
+		>
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
-				<DragDropSectionManager isDetailedSection={isDetailedSection} onAddSection={onAddSection} />
+				<DragDropSectionManager
+					isDetailedSection={isDetailedSection}
+					onAddSection={onAddSection}
+				/>
 			</ScrollArea>
 		</div>
 	);
