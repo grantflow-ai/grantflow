@@ -43,6 +43,10 @@ export function DragDropSectionManager({
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(
 		null,
 	);
+	const [pendingParentChange, setPendingParentChange] = useState<{
+		newParentId: null | string;
+		sectionId: string;
+	} | null>(null);
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 
@@ -146,7 +150,7 @@ export function DragDropSectionManager({
 
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
-			onDragEnd: (event, activeItem, overItem) => {
+			onDragEnd: async (event, activeItem, overItem) => {
 				log.info("Drag ended", {
 					activeId: activeItem?.id,
 					activeTitle: activeItem?.title,
@@ -155,8 +159,30 @@ export function DragDropSectionManager({
 					overId: overItem?.id,
 					overTitle: overItem?.title,
 				});
+
+				// Apply pending parent changes if any
+				if (pendingParentChange) {
+					const updatedSections = grantSections.map((section) => {
+						if (section.id === pendingParentChange.sectionId) {
+							return toUpdateGrantSection({
+								...section,
+								parent_id: pendingParentChange.newParentId,
+							});
+						}
+						return toUpdateGrantSection(section);
+					});
+
+					log.info("Drag end: Applying pending parent change", {
+						newParentId: pendingParentChange.newParentId,
+						sectionCount: updatedSections.length,
+						sectionId: pendingParentChange.sectionId,
+					});
+					
+					await updateGrantSections(updatedSections);
+					setPendingParentChange(null);
+				}
 			},
-			onDragOver: async (_event, activeSection, overSection) => {
+			onDragOver: (_event, activeSection, overSection) => {
 				if (!(activeSection && overSection)) {
 					// log.warn("Drag over: Missing active or over section");
 					return;
@@ -178,21 +204,16 @@ export function DragDropSectionManager({
 					oldParentId: activeSection.parent_id,
 				});
 
+				// Store pending change but don't apply it yet
 				if (activeSection.parent_id !== newParentId) {
-					const updatedSections = grantSections.map((section) => {
-						if (section.id === activeSection.id) {
-							return toUpdateGrantSection({
-								...section,
-								parent_id: newParentId,
-							});
-						}
-						return toUpdateGrantSection(section);
+					setPendingParentChange({
+						newParentId,
+						sectionId: activeSection.id,
 					});
-
-					log.info("Drag over: Updating sections", {
-						sectionCount: updatedSections.length,
+					log.info("Drag over: Stored pending parent change", {
+						newParentId,
+						sectionId: activeSection.id,
 					});
-					await updateGrantSections(updatedSections);
 				}
 			},
 			onDragStart: (_event, item) => {
@@ -200,7 +221,10 @@ export function DragDropSectionManager({
 					sectionId: item?.id,
 					sectionTitle: item?.title,
 				});
+				// Close any expanded section when dragging starts
 				setExpandedSectionId(null);
+				// Clear any pending parent changes when starting a new drag
+				setPendingParentChange(null);
 			},
 			onReorder: async (sections, oldIndex, newIndex) => {
 				log.info("Reordering sections", {
@@ -234,6 +258,7 @@ export function DragDropSectionManager({
 			toUpdateGrantSection,
 			wouldCreateInvalidNesting,
 			determineNewParentId,
+			pendingParentChange,
 		],
 	);
 
