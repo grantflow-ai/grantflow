@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach } from "vitest";
 
 import {
@@ -29,19 +29,22 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("All Icon Components", () => {
+describe.sequential("All Icon Components", () => {
 	it("should render all icons without crashing", () => {
 		allIcons.forEach(({ Component, name }) => {
-			const { unmount } = render(<Component data-testid={`test-${name}`} />);
-			expect(screen.getByTestId(`test-${name}`)).toBeInTheDocument();
+			const { container, unmount } = render(<Component data-testid={`test-${name}`} />);
+			const icon = container.querySelector(`[data-testid="test-${name}"]`);
+			expect(icon).toBeInTheDocument();
 			unmount();
 		});
 	});
 
 	it("all icons accept and forward custom props", () => {
 		allIcons.forEach(({ Component, name }) => {
-			const { unmount } = render(<Component aria-label="Test icon" data-testid={`test-${name}`} role="img" />);
-			const icon = screen.getByTestId(`test-${name}`);
+			const { container, unmount } = render(
+				<Component aria-label="Test icon" data-testid={`test-${name}`} role="img" />,
+			);
+			const icon = container.querySelector(`[data-testid="test-${name}"]`);
 			expect(icon).toHaveAttribute("aria-label", "Test icon");
 			expect(icon).toHaveAttribute("role", "img");
 			unmount();
@@ -52,8 +55,8 @@ describe("All Icon Components", () => {
 		allIcons
 			.filter(({ hasDefaultSize }) => hasDefaultSize)
 			.forEach(({ Component, name }) => {
-				const { unmount } = render(<Component data-testid={`test-${name}`} />);
-				const icon = screen.getByTestId(`test-${name}`);
+				const { container, unmount } = render(<Component data-testid={`test-${name}`} />);
+				const icon = container.querySelector(`[data-testid="test-${name}"]`);
 				expect(icon).toHaveAttribute("width", "15");
 				expect(icon).toHaveAttribute("height", "15");
 				unmount();

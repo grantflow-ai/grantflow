@@ -22,7 +22,18 @@ vi.mock("sonner", () => ({
 	},
 }));
 
-describe("wizard store", () => {
+// Mock organization store
+vi.mock("@/stores/organization-store", () => ({
+	useOrganizationStore: {
+		getState: vi.fn(() => ({
+			clearOrganization: vi.fn(),
+			selectedOrganizationId: "mock-org-id",
+		})),
+		setState: vi.fn(),
+	},
+}));
+
+describe.sequential("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		resetAllStores();

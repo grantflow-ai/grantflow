@@ -57,9 +57,6 @@ describe("Sources Actions", () => {
 	const mockUploadUrlResponse = UrlResponseFactory.build();
 
 	beforeEach(() => {
-		vi.clearAllMocks();
-		vi.resetAllMocks();
-
 		// Reset all mock implementations to defaults
 		mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
 		mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
@@ -77,11 +74,16 @@ describe("Sources Actions", () => {
 	});
 
 	afterEach(() => {
-		vi.resetAllMocks();
+		// Reset mock implementations to prevent test interference
+		mockCreateAuthHeaders.mockClear();
+		mockWithAuthRedirect.mockClear();
+		mockGet.mockClear();
+		mockPost.mockClear();
+		mockDelete.mockClear();
 	});
 
 	describe("Grant Application Sources", () => {
-		describe("getApplicationSources", () => {
+		describe.sequential("getApplicationSources", () => {
 			it("should call the API with correct parameters", async () => {
 				const result = await getApplicationSources(mockOrganizationId, mockProjectId, mockApplicationId);
 
@@ -138,7 +140,7 @@ describe("Sources Actions", () => {
 			});
 		});
 
-		describe("deleteApplicationSource", () => {
+		describe.sequential("deleteApplicationSource", () => {
 			it("should call the API with correct parameters", async () => {
 				await deleteApplicationSource(mockOrganizationId, mockProjectId, mockApplicationId, mockSourceId);
 
@@ -196,7 +198,7 @@ describe("Sources Actions", () => {
 			});
 		});
 
-		describe("createApplicationSourceUploadUrl", () => {
+		describe.sequential("createApplicationSourceUploadUrl", () => {
 			it("should call the API with correct parameters", async () => {
 				const result = await createApplicationSourceUploadUrl(
 					mockOrganizationId,
@@ -270,7 +272,7 @@ describe("Sources Actions", () => {
 	});
 
 	describe("Grant Template Sources", () => {
-		describe("getTemplateSources", () => {
+		describe.sequential("getTemplateSources", () => {
 			it("should call the API with correct parameters", async () => {
 				const result = await getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId);
 
@@ -327,7 +329,7 @@ describe("Sources Actions", () => {
 			});
 		});
 
-		describe("deleteTemplateSource", () => {
+		describe.sequential("deleteTemplateSource", () => {
 			it("should call the API with correct parameters", async () => {
 				await deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId);
 
@@ -376,7 +378,7 @@ describe("Sources Actions", () => {
 			});
 		});
 
-		describe("createTemplateSourceUploadUrl", () => {
+		describe.sequential("createTemplateSourceUploadUrl", () => {
 			it("should call the API with correct parameters", async () => {
 				const result = await createTemplateSourceUploadUrl(
 					mockOrganizationId,
@@ -435,7 +437,7 @@ describe("Sources Actions", () => {
 			});
 		});
 
-		describe("crawlTemplateUrl", () => {
+		describe.sequential("crawlTemplateUrl", () => {
 			const urlRequest = UrlRequestFactory.build();
 			const mockCrawlResponse = MessageResponseFactory.build();
 
@@ -504,7 +506,7 @@ describe("Sources Actions", () => {
 			});
 		});
 
-		describe("crawlApplicationUrl", () => {
+		describe.sequential("crawlApplicationUrl", () => {
 			const urlRequest = UrlRequestFactory.build();
 			const mockCrawlResponse = MessageResponseFactory.build();
 

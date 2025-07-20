@@ -45,7 +45,7 @@ const createTestItems = (): TestItem[] => [
 	{ id: "item-3", name: "Third Item", order: 3, parent_id: "item-1" },
 ];
 
-describe("useDragAndDrop", () => {
+describe.sequential("useDragAndDrop", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 

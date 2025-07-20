@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import {
 	LegalPageContainer,
@@ -6,7 +7,11 @@ import {
 	UntitledLegalSection,
 } from "@/components/shared/info-legal-page-components";
 
-describe("LegalPageContainer", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("LegalPageContainer", () => {
 	describe("Default Props", () => {
 		it("should render main container with light background and black text by default", () => {
 			render(<LegalPageContainer title="Test Title">Test content</LegalPageContainer>);
