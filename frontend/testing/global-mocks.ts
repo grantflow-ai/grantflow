@@ -27,7 +27,10 @@ const {
 	Reflect.set(mockToast, "promise", vi.fn());
 
 	const mockSetCookie = vi.fn();
-	const mockGetCookie = vi.fn().mockReturnValue(null);
+	const mockGetCookie = vi.fn().mockReturnValue({
+		name: "grantflow_session",
+		value: "mock-session-token"
+	});
 	const mockCookies = vi.fn().mockImplementation(() =>
 		Promise.resolve({
 			delete: vi.fn(),
