@@ -1,4 +1,6 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import { resetAllStores } from "::testing/store-reset";
+import { createElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WizardStep } from "@/constants";
@@ -23,31 +25,9 @@ vi.mock("sonner", () => ({
 describe("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-
-		useApplicationStore.setState({
-			application: null,
-			areAppOperationsInProgress: false,
-			generateTemplate: vi.fn(),
-			ragJobState: {
-				isRestoring: false,
-				restoredJob: null,
-			},
-		});
-
-		const wizardState = useWizardStore.getState();
-		useWizardStore.setState({
-			currentStep: WizardStep.APPLICATION_DETAILS,
-			isAutofillLoading: {
-				research_deep_dive: false,
-				research_plan: false,
-			},
-			isGeneratingTemplate: false,
-			polling: {
-				...wizardState.polling,
-				intervalId: null,
-				isActive: false,
-			},
-		});
+		resetAllStores();
+		vi.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	describe("initial state", () => {
@@ -226,6 +206,46 @@ describe("wizard store", () => {
 		});
 	});
 
+	describe("dialog functionality", () => {
+		it("should open dialog with correct parameters", () => {
+			const mockContent = createElement("div", null, "Test content");
+			const mockFooter = createElement("div", null, "Test footer");
+
+			useWizardStore.getState().openDialog("Test Title", mockContent, {
+				description: "Test description",
+				footer: mockFooter,
+			});
+
+			const state = useWizardStore.getState();
+			expect(state.dialog.isOpen).toBe(true);
+			expect(state.dialog.title).toBe("Test Title");
+			expect(state.dialog.content).toBe(mockContent);
+			expect(state.dialog.description).toBe("Test description");
+			expect(state.dialog.footer).toBe(mockFooter);
+		});
+
+		it("should close dialog", () => {
+			useWizardStore.getState().openDialog("Test Title", createElement("div", null, "Test content"));
+			expect(useWizardStore.getState().dialog.isOpen).toBe(true);
+
+			useWizardStore.getState().closeDialog();
+			expect(useWizardStore.getState().dialog.isOpen).toBe(false);
+		});
+
+		it("should open dialog without optional parameters", () => {
+			const mockContent = createElement("div", null, "Test content");
+
+			useWizardStore.getState().openDialog("Test Title", mockContent);
+
+			const state = useWizardStore.getState();
+			expect(state.dialog.isOpen).toBe(true);
+			expect(state.dialog.title).toBe("Test Title");
+			expect(state.dialog.content).toBe(mockContent);
+			expect(state.dialog.description).toBeUndefined();
+			expect(state.dialog.footer).toBeUndefined();
+		});
+	});
+
 	describe("hasTemplateSourcesWithStatuses", () => {
 		it("should return true when template sources match single status", () => {
 			const application = ApplicationWithTemplateFactory.build({
@@ -332,6 +352,7 @@ describe("wizard store", () => {
 		describe("triggerAutofill", () => {
 			beforeEach(() => {
 				vi.resetModules();
+				vi.clearAllMocks();
 			});
 
 			it("should not trigger autofill when no application exists", async () => {
@@ -395,7 +416,7 @@ describe("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_plan");
 
-				expect(mockTriggerAutofill).toHaveBeenCalledWith("proj-123", "app-123", {
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
 					autofill_type: "research_plan",
 				});
 
@@ -422,7 +443,7 @@ describe("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_deep_dive", "hypothesis");
 
-				expect(mockTriggerAutofill).toHaveBeenCalledWith("proj-123", "app-123", {
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
 					autofill_type: "research_deep_dive",
 					field_name: "hypothesis",
 				});

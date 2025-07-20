@@ -58,10 +58,13 @@ describe("Sources Actions", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.resetAllMocks();
 
+		// Reset all mock implementations to defaults
 		mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
 		mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
+		// Set up default successful responses
 		mockGet.mockReturnValue({
 			json: vi.fn().mockResolvedValue(mockSourcesResponse),
 		});
@@ -99,7 +102,10 @@ describe("Sources Actions", () => {
 					json: vi.fn().mockRejectedValue(mockError),
 				});
 
-				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
+				// Ensure withAuthRedirect passes through the rejection
+				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
+					return await promise; // This will throw the error from json()
+				});
 
 				await expect(
 					getApplicationSources(mockOrganizationId, mockProjectId, mockApplicationId),
@@ -150,7 +156,10 @@ describe("Sources Actions", () => {
 				const mockError = new Error("API Error");
 				mockDelete.mockRejectedValueOnce(mockError);
 
-				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
+				// Ensure withAuthRedirect passes through the rejection
+				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
+					return await promise; // This will throw the error from mockDelete
+				});
 
 				await expect(
 					deleteApplicationSource(mockOrganizationId, mockProjectId, mockApplicationId, mockSourceId),
@@ -169,15 +178,21 @@ describe("Sources Actions", () => {
 					} catch (error) {
 						if (error instanceof HTTPError && error.response.status === 401) {
 							mockRedirect("/signin");
-							return null;
+							return undefined; // Return undefined for void functions
 						}
 						throw error;
 					}
 				});
 
-				await deleteApplicationSource(mockOrganizationId, mockProjectId, mockApplicationId, mockSourceId);
+				const result = await deleteApplicationSource(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockSourceId,
+				);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
+				expect(result).toBeUndefined();
 			});
 		});
 
@@ -207,7 +222,10 @@ describe("Sources Actions", () => {
 					json: vi.fn().mockRejectedValue(mockError),
 				});
 
-				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
+				// Ensure withAuthRedirect passes through the rejection
+				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
+					return await promise; // This will throw the error from json()
+				});
 
 				await expect(
 					createApplicationSourceUploadUrl(
@@ -273,7 +291,10 @@ describe("Sources Actions", () => {
 					json: vi.fn().mockRejectedValue(mockError),
 				});
 
-				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
+				// Ensure withAuthRedirect passes through the rejection
+				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
+					return await promise; // This will throw the error from json()
+				});
 
 				await expect(getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId)).rejects.toThrow(
 					"API Error",

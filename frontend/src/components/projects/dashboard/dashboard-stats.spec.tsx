@@ -1,6 +1,11 @@
 import { ProjectListItemFactory } from "::testing/factories";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { DashboardStats } from "./dashboard-stats";
+
+afterEach(() => {
+	cleanup();
+});
 
 describe("DashboardStats", () => {
 	it("renders correct project and application counts", () => {
@@ -9,12 +14,12 @@ describe("DashboardStats", () => {
 			ProjectListItemFactory.build({ applications_count: 3 }),
 		];
 
-		render(<DashboardStats initialProjects={initialProjects} />);
+		const { container } = render(<DashboardStats initialProjects={initialProjects} />);
 
 		// Assert project count
-		expect(screen.getByTestId("project-count")).toHaveTextContent("2");
+		expect(container.querySelector('[data-testid="project-count"]')).toHaveTextContent("2");
 
 		// Assert total applications count
-		expect(screen.getByTestId("application-count")).toHaveTextContent("5");
+		expect(container.querySelector('[data-testid="application-count"]')).toHaveTextContent("5");
 	});
 });

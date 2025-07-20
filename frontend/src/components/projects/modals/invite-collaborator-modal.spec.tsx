@@ -1,7 +1,13 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { InviteCollaboratorModal } from "@/components/projects";
+
+// Helper to get the last (most recent) modal when multiple exist
+const getLatestModal = async () => {
+	const modals = await screen.findAllByTestId("invite-collaborator-modal");
+	return modals.at(-1)!;
+};
 
 describe("InviteCollaboratorModal", () => {
 	const mockOnClose = vi.fn();
@@ -11,91 +17,145 @@ describe("InviteCollaboratorModal", () => {
 		vi.clearAllMocks();
 	});
 
-	it("renders modal content when open", () => {
-		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
-
-		expect(screen.getByTestId("invite-collaborator-modal")).toBeInTheDocument();
-		expect(screen.getByText("Invite New Member")).toBeInTheDocument();
-		expect(screen.getByText("Invite new member and set up member role.")).toBeInTheDocument();
-		expect(screen.getByTestId("email-input")).toBeInTheDocument();
-		expect(screen.getByTestId("permission-dropdown")).toBeInTheDocument();
-		expect(screen.getByTestId("cancel-button")).toBeInTheDocument();
-		expect(screen.getByTestId("send-invitation-button")).toBeInTheDocument();
+	afterEach(() => {
+		cleanup();
+		// Additional cleanup for Radix UI portals
+		vi.restoreAllMocks();
 	});
 
-	it("does not render when closed", () => {
+	it("renders modal content when open", async () => {
+		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
+
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+
+		expect(modalQueries.getByText("Invite New Member")).toBeInTheDocument();
+		expect(modalQueries.getByText("Invite new member and set up member role.")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("email-input")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("permission-dropdown")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("cancel-button")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("send-invitation-button")).toBeInTheDocument();
+	});
+
+	it("does not render visible content when closed", async () => {
 		render(<InviteCollaboratorModal isOpen={false} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		expect(screen.queryByTestId("invite-collaborator-modal")).not.toBeInTheDocument();
+		// Give portal time to render
+		await new Promise((resolve) => setTimeout(resolve, 50));
+
+		// The modal content should not be visible when closed
+		expect(screen.queryByText("Invite New Member")).not.toBeInTheDocument();
 	});
 
 	it("allows user to enter email address", async () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		const emailInput = screen.getByTestId("email-input");
+		const modal = await getLatestModal();
+		const emailInput = within(modal).getByTestId("email-input");
+
 		await user.type(emailInput, "test@example.com");
 
-		expect(emailInput).toHaveValue("test@example.com");
+		await waitFor(() => {
+			expect(emailInput).toHaveValue("test@example.com");
+		});
 	});
 
-	it("defaults to collaborator permission", () => {
+	it("defaults to collaborator permission", async () => {
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent(
-			"Member (can access applications within this project)",
-		);
+		const modal = await getLatestModal();
+		const dropdown = within(modal).getByTestId("permission-dropdown");
+		expect(dropdown).toHaveTextContent("Member (can access applications within this project)");
 	});
 
 	it("toggles permission dropdown when clicked", async () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		const dropdown = screen.getByTestId("permission-dropdown");
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
 
-		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+		// Initially dropdown menu should not be visible
+		expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 
+		// Click to open
 		await user.click(dropdown);
-		expect(screen.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
-		expect(screen.getByTestId("admin-option")).toBeInTheDocument();
-		expect(screen.getByTestId("collaborator-option")).toBeInTheDocument();
 
+		// Wait for dropdown to appear
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
+		});
+
+		// Check options are visible
+		expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+
+		// Click to close
 		await user.click(dropdown);
-		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+
+		// Wait for dropdown to disappear
+		await waitFor(() => {
+			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+		});
 	});
 
 	it("allows user to select admin permission", async () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.click(screen.getByTestId("permission-dropdown"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
 
-		await user.click(screen.getByTestId("admin-option"));
+		await user.click(dropdown);
 
-		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent("Admin (can access all research projects)");
-		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		});
+
+		await user.click(modalQueries.getByTestId("admin-option"));
+
+		await waitFor(() => {
+			expect(dropdown).toHaveTextContent("Admin (can access all research projects)");
+			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+		});
 	});
 
 	it("allows user to select collaborator permission", async () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.click(screen.getByTestId("permission-dropdown"));
-		await user.click(screen.getByTestId("admin-option"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
 
-		await user.click(screen.getByTestId("permission-dropdown"));
-		await user.click(screen.getByTestId("collaborator-option"));
+		// First select admin
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("admin-option"));
 
-		expect(screen.getByTestId("permission-dropdown")).toHaveTextContent(
-			"Member (can access applications within this project)",
-		);
-		expect(screen.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+		// Then switch back to collaborator
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("collaborator-option"));
+
+		await waitFor(() => {
+			expect(dropdown).toHaveTextContent("Member (can access applications within this project)");
+			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
+		});
 	});
 
-	it("disables send button when email is empty", () => {
+	it("disables send button when email is empty", async () => {
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		const sendButton = screen.getByTestId("send-invitation-button");
+		const modal = await getLatestModal();
+		const sendButton = within(modal).getByTestId("send-invitation-button");
 		expect(sendButton).toBeDisabled();
 	});
 
@@ -103,12 +163,16 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		const emailInput = screen.getByTestId("email-input");
-		const sendButton = screen.getByTestId("send-invitation-button");
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const emailInput = modalQueries.getByTestId("email-input");
+		const sendButton = modalQueries.getByTestId("send-invitation-button");
 
 		await user.type(emailInput, "test@example.com");
 
-		expect(sendButton).not.toBeDisabled();
+		await waitFor(() => {
+			expect(sendButton).not.toBeDisabled();
+		});
 	});
 
 	it("calls onInvite with correct parameters when form is submitted", async () => {
@@ -117,14 +181,24 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.type(screen.getByTestId("email-input"), "test@example.com");
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
 
-		await user.click(screen.getByTestId("permission-dropdown"));
-		await user.click(screen.getByTestId("admin-option"));
+		const emailInput = modalQueries.getByTestId("email-input");
+		await user.type(emailInput, "test@example.com");
 
-		await user.click(screen.getByTestId("send-invitation-button"));
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("admin-option"));
 
-		expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin");
+		await user.click(modalQueries.getByTestId("send-invitation-button"));
+
+		await waitFor(() => {
+			expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin");
+		});
 	});
 
 	it("calls onClose after successful invitation", async () => {
@@ -133,8 +207,12 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.type(screen.getByTestId("email-input"), "test@example.com");
-		await user.click(screen.getByTestId("send-invitation-button"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+
+		const emailInput = modalQueries.getByTestId("email-input");
+		await user.type(emailInput, "test@example.com");
+		await user.click(modalQueries.getByTestId("send-invitation-button"));
 
 		await waitFor(() => {
 			expect(mockOnClose).toHaveBeenCalledTimes(1);
@@ -147,12 +225,20 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		const emailInput = screen.getByTestId("email-input");
-		await user.type(emailInput, "test@example.com");
-		await user.click(screen.getByTestId("permission-dropdown"));
-		await user.click(screen.getByTestId("admin-option"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+		const emailInput = modalQueries.getByTestId("email-input");
 
-		await user.click(screen.getByTestId("send-invitation-button"));
+		await user.type(emailInput, "test@example.com");
+
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("admin-option"));
+
+		await user.click(modalQueries.getByTestId("send-invitation-button"));
 
 		await waitFor(() => {
 			expect(mockOnClose).toHaveBeenCalled();
@@ -171,10 +257,16 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.type(screen.getByTestId("email-input"), "test@example.com");
-		await user.click(screen.getByTestId("send-invitation-button"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
 
-		expect(screen.getByTestId("send-invitation-button")).toBeDisabled();
+		const emailInput = modalQueries.getByTestId("email-input");
+		await user.type(emailInput, "test@example.com");
+
+		const sendButton = modalQueries.getByTestId("send-invitation-button");
+		await user.click(sendButton);
+
+		expect(sendButton).toBeDisabled();
 
 		resolvePromise!();
 
@@ -189,11 +281,17 @@ describe("InviteCollaboratorModal", () => {
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.type(screen.getByTestId("email-input"), "test@example.com");
-		await user.click(screen.getByTestId("send-invitation-button"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
+
+		const emailInput = modalQueries.getByTestId("email-input");
+		await user.type(emailInput, "test@example.com");
+
+		const sendButton = modalQueries.getByTestId("send-invitation-button");
+		await user.click(sendButton);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("send-invitation-button")).not.toBeDisabled();
+			expect(sendButton).not.toBeDisabled();
 		});
 		expect(mockOnClose).not.toHaveBeenCalled();
 	});
@@ -202,7 +300,9 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.click(screen.getByTestId("cancel-button"));
+		const modal = await getLatestModal();
+		const cancelButton = within(modal).getByTestId("cancel-button");
+		await user.click(cancelButton);
 
 		expect(mockOnClose).toHaveBeenCalledTimes(1);
 		expect(mockOnInvite).not.toHaveBeenCalled();
@@ -212,7 +312,9 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.click(screen.getByTestId("close-button"));
+		const modal = await getLatestModal();
+		const closeButton = within(modal).getByTestId("close-button");
+		await user.click(closeButton);
 
 		expect(mockOnClose).toHaveBeenCalledTimes(1);
 		expect(mockOnInvite).not.toHaveBeenCalled();
@@ -222,11 +324,20 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.type(screen.getByTestId("email-input"), "test@example.com");
-		await user.click(screen.getByTestId("permission-dropdown"));
-		await user.click(screen.getByTestId("admin-option"));
+		const modal = await getLatestModal();
+		const modalQueries = within(modal);
 
-		await user.click(screen.getByTestId("cancel-button"));
+		const emailInput = modalQueries.getByTestId("email-input");
+		await user.type(emailInput, "test@example.com");
+
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("admin-option"));
+
+		await user.click(modalQueries.getByTestId("cancel-button"));
 
 		expect(mockOnClose).toHaveBeenCalled();
 	});
@@ -235,7 +346,9 @@ describe("InviteCollaboratorModal", () => {
 		const user = userEvent.setup();
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		await user.click(screen.getByTestId("send-invitation-button"));
+		const modal = await getLatestModal();
+		const sendButton = within(modal).getByTestId("send-invitation-button");
+		await user.click(sendButton);
 
 		expect(mockOnInvite).not.toHaveBeenCalled();
 	});

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
@@ -68,65 +68,99 @@ describe("ResearchPlanPreview Editing Mode", () => {
 		});
 	});
 
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("shows Edit Task option in dropdown menu initially", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
 	});
 
 	it("enters editing mode when Edit Task is clicked", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getByTestId("edit-objective-title")).toBeInTheDocument();
 		expect(screen.getByTestId("save-changes-button")).toBeInTheDocument();
 	});
 
 	it("shows Cancel Editing option when in editing mode", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
-		await user.click(screen.getByTestId("edit-task-menuitem"));
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem1 = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem1);
+		await user.click(dropdownTrigger!);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
 	});
 
 	it("exits editing mode when Cancel Editing is clicked", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
 		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
-		await user.click(screen.getByTestId("edit-task-menuitem"));
-		await user.click(dropdownTrigger);
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await user.click(dropdownTrigger!);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem1 = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem1);
+		await user.click(dropdownTrigger!);
+
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem2 = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem2);
 
 		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
 	});
 
 	it("displays editable form fields when in editing mode", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getByLabelText("Objective name")).toBeInTheDocument();
 		expect(screen.getByLabelText("Objective description")).toBeInTheDocument();
@@ -134,13 +168,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("pre-fills form fields with existing data", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getByDisplayValue("Test objective title")).toBeInTheDocument();
 		expect(screen.getByDisplayValue("Test objective description")).toBeInTheDocument();
@@ -148,13 +187,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("allows editing objective title", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		const titleInput = screen.getByLabelText("Objective name");
 		await user.clear(titleInput);
@@ -164,13 +208,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("allows editing objective description", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		const descriptionInput = screen.getByLabelText("Objective description");
 		await user.clear(descriptionInput);
@@ -180,13 +229,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("allows editing task description", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		const taskInput = screen.getByLabelText("Task description");
 		await user.clear(taskInput);
@@ -196,25 +250,35 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("shows add task button when in editing mode", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 	});
 
 	it("adds new task when add button is clicked", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(1);
 
@@ -224,13 +288,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("shows delete button for tasks when in editing mode", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getByTestId("delete-task-button")).toBeInTheDocument();
 	});
@@ -248,13 +317,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 
 		mockApplicationStore(multipleTasksObjective);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(2);
 
@@ -267,15 +341,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("exits editing mode when Save Changes is clicked", async () => {
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
 		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		const saveButton = screen.getByTestId("save-changes-button");
 		await user.click(saveButton);
@@ -287,13 +364,18 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	it("displays updated content after saving changes", async () => {
 		const mockLog = vi.spyOn(console, "info").mockImplementation(() => {});
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+		});
+		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await user.click(editMenuItem);
 
 		const titleInput = screen.getByLabelText("Objective name");
 		await user.clear(titleInput);
@@ -338,9 +420,9 @@ describe("ResearchPlanPreview Editing Mode", () => {
 
 		mockApplicationStore(multipleObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const allButtons = screen.getAllByTestId("menu-trigger");
+		const allButtons = container.querySelectorAll('[data-testid="menu-trigger"]');
 
 		expect(allButtons).toHaveLength(2);
 
@@ -373,6 +455,10 @@ describe("ResearchPlanPreview Display Mode", () => {
 				removeObjective: mockRemoveObjective,
 			};
 		});
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("shows empty state when no objectives exist", () => {
@@ -434,19 +520,26 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		await user.click(dropdownTrigger);
 
-		expect(screen.getByTestId("remove-menuitem")).toBeInTheDocument();
+		await waitFor(() => {
+			expect(screen.getByTestId("remove-menuitem")).toBeInTheDocument();
+		});
 	});
 
 	it("calls removeObjective when remove is clicked", async () => {
 		mockApplicationStore(mockObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
 
-		await user.click(dropdownTrigger);
+		await user.click(dropdownTrigger!);
 
-		await user.click(screen.getByTestId("remove-menuitem"));
+		await waitFor(() => {
+			expect(screen.getByTestId("remove-menuitem")).toBeInTheDocument();
+		});
+		const removeMenuItem = screen.getByTestId("remove-menuitem");
+		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 		expect(screen.getByTestId("delete-dialog-description")).toBeInTheDocument();
@@ -459,13 +552,14 @@ describe("ResearchPlanPreview Display Mode", () => {
 	it("shows delete confirmation dialog when remove option is clicked", async () => {
 		mockApplicationStore(mockObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
 		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-		await user.click(dropdownTrigger);
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
+		await user.click(dropdownTrigger!);
 		await user.click(screen.getByTestId("remove-menuitem"));
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
@@ -477,10 +571,11 @@ describe("ResearchPlanPreview Display Mode", () => {
 	it("displays correct dialog content for delete confirmation", async () => {
 		mockApplicationStore(mockObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-		await user.click(dropdownTrigger);
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
+		await user.click(dropdownTrigger!);
 		await user.click(screen.getByTestId("remove-menuitem"));
 
 		expect(screen.getByTestId("delete-dialog-title")).toHaveTextContent(
@@ -498,10 +593,11 @@ describe("ResearchPlanPreview Display Mode", () => {
 	it("closes dialog when cancel button is clicked", async () => {
 		mockApplicationStore(mockObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-		await user.click(dropdownTrigger);
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
+		await user.click(dropdownTrigger!);
 		await user.click(screen.getByTestId("remove-menuitem"));
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
@@ -517,10 +613,11 @@ describe("ResearchPlanPreview Display Mode", () => {
 	it("closes dialog when close button (X) is clicked", async () => {
 		mockApplicationStore(mockObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-		await user.click(dropdownTrigger);
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
+		await user.click(dropdownTrigger!);
 		await user.click(screen.getByTestId("remove-menuitem"));
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
@@ -537,10 +634,11 @@ describe("ResearchPlanPreview Display Mode", () => {
 	it("calls removeObjective and closes dialog when confirm button is clicked", async () => {
 		mockApplicationStore(mockObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-		await user.click(dropdownTrigger);
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		expect(dropdownTrigger).toBeTruthy();
+		await user.click(dropdownTrigger!);
 		await user.click(screen.getByTestId("remove-menuitem"));
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
@@ -571,9 +669,9 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		mockApplicationStore(multipleObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTriggers = screen.getAllByTestId("menu-trigger");
+		const dropdownTriggers = container.querySelectorAll('[data-testid="menu-trigger"]');
 		expect(dropdownTriggers).toHaveLength(2);
 
 		await user.click(dropdownTriggers[1]);
@@ -604,9 +702,9 @@ describe("ResearchPlanPreview Display Mode", () => {
 
 		mockApplicationStore(multipleObjectives);
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		const dropdownTriggers = screen.getAllByTestId("menu-trigger");
+		const dropdownTriggers = container.querySelectorAll('[data-testid="menu-trigger"]');
 
 		await user.click(dropdownTriggers[0]);
 		await user.click(screen.getByTestId("remove-menuitem"));
