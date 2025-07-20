@@ -307,7 +307,7 @@ async def enrich_objective_with_wikidata(
             return {
                 "enriched_objective": "",
                 "search_queries": [],
-                "scientific_core_terms": [],
+                "core_scientific_terms": [],
                 "scientific_context": "",
             }
 
@@ -321,7 +321,7 @@ async def enrich_objective_with_wikidata(
         return {
             "enriched_objective": "",
             "search_queries": [],
-            "scientific_core_terms": unique_terms,
+            "core_scientific_terms": unique_terms,
             "scientific_context": formatted_context,
         }
 
@@ -331,7 +331,7 @@ async def enrich_objective_with_wikidata(
         return {
             "enriched_objective": "",
             "search_queries": [],
-            "scientific_core_terms": [],
+            "core_scientific_terms": [],
             "scientific_context": "",
         }
 

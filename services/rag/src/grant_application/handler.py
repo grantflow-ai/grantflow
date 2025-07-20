@@ -21,7 +21,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
-from services.rag.src.grant_application.enrich_research_objective import enrich_objective_with_wikidata
+from services.rag.src.grant_application.enrich_research_objective import (
+    ObjectiveEnrichmentDTO,
+    enrich_objective_with_wikidata,
+)
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import (
     generate_sections_with_shared_retrieval,
@@ -100,7 +103,7 @@ async def generate_work_plan_text(
     )
 
     # Combine all enrichment responses for Wikidata processing
-    combined_enrichment_data = {
+    combined_enrichment_data: ObjectiveEnrichmentDTO = {
         "research_objective": enrichment_responses[0]["research_objective"],
         "research_tasks": [],
     }
@@ -120,7 +123,7 @@ async def generate_work_plan_text(
         message="Wikidata enhancement completed",
         notification_type="info",
         data={
-            "scientific_terms_count": len(wikidata_enrichment["scientific_core_terms"]),
+            "scientific_terms_count": len(wikidata_enrichment["core_scientific_terms"]),
             "has_scientific_context": bool(wikidata_enrichment["scientific_context"]),
         },
         current_pipeline_stage=6,

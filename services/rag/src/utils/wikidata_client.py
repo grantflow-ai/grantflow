@@ -62,18 +62,14 @@ class WikidataClient:
         LIMIT 100
         """
 
-    async def _make_request_with_retry(
-        self, query: str, trace_id: str | None = None
-    ) -> dict[str, Any]:
+    async def _make_request_with_retry(self, query: str, trace_id: str | None = None) -> Any:
         """Make SPARQL request with exponential backoff retry logic."""
         if not self.session:
             raise RuntimeError("Client not initialized. Use async context manager.")
 
         for attempt in range(self.max_retries):
             try:
-                with start_span_with_trace_id(
-                    "wikidata_sparql_query", trace_id=trace_id
-                ) as span:
+                with start_span_with_trace_id("wikidata_sparql_query", trace_id=trace_id) as span:
                     span.set_attribute("query", query)
                     span.set_attribute("attempt", attempt + 1)
 
@@ -136,9 +132,7 @@ class WikidataClient:
 
         return results
 
-    async def expand_scientific_terms(
-        self, terms: list[str], trace_id: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def expand_scientific_terms(self, terms: list[str], trace_id: str | None = None) -> list[dict[str, Any]]:
         """Expand scientific terms using Wikidata knowledge base."""
         if not terms:
             return []
@@ -157,9 +151,7 @@ class WikidataClient:
         for i in range(0, len(terms), self.batch_size):
             batch = terms[i : i + self.batch_size]
 
-            with start_span_with_trace_id(
-                "wikidata_batch_expansion", trace_id=trace_id
-            ) as span:
+            with start_span_with_trace_id("wikidata_batch_expansion", trace_id=trace_id) as span:
                 span.set_attribute("batch_size", len(batch))
                 span.set_attribute("batch_index", i // self.batch_size)
 
@@ -192,9 +184,7 @@ class WikidataClient:
 
         return all_results
 
-    async def get_scientific_context(
-        self, terms: list[str], trace_id: str | None = None
-    ) -> str:
+    async def get_scientific_context(self, terms: list[str], trace_id: str | None = None) -> str:
         """Generate scientific context from expanded terms."""
         if not terms:
             return ""

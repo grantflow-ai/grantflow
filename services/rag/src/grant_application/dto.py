@@ -28,8 +28,11 @@ class EnrichObjectiveInputDTO(TypedDict):
 class EnrichmentDataDTO(TypedDict):
     enriched_objective: str
     search_queries: list[str]
-    scientific_core_terms: list[str]
+    core_scientific_terms: list[str]
     scientific_context: str
+    instructions: NotRequired[str]
+    description: NotRequired[str]
+    guiding_questions: NotRequired[list[str]]
 
 
 class WikidataExpansionResult(TypedDict):

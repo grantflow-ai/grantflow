@@ -75,7 +75,7 @@ def extract_scientific_terms_from_context(context: str) -> list[str]:
 
 def validate_scientific_context(context: str) -> dict[str, Any]:
     """Validate scientific context format and content."""
-    validation_result = {
+    validation_result: dict[str, Any] = {
         "is_valid": False,
         "has_content": False,
         "has_scientific_terms": False,
