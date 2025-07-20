@@ -5,10 +5,12 @@ from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
-from services.rag.src.grant_application.dto import EnrichObjectiveInputDTO
+from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObjectiveInputDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
+from services.rag.src.utils.scientific_context import format_scientific_context
+from services.rag.src.utils.wikidata_client import WikidataClient
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
@@ -174,14 +176,6 @@ research_objective_enrichment_schema = {
 }
 
 
-class EnrichmentDataDTO(TypedDict):
-    core_scientific_terms: list[str]
-    instructions: str
-    description: str
-    guiding_questions: list[str]
-    search_queries: list[str]
-
-
 class ObjectiveEnrichmentDTO(TypedDict):
     research_objective: EnrichmentDataDTO
     research_tasks: list[EnrichmentDataDTO]
@@ -291,6 +285,55 @@ async def enrich_objective_generation(
         system_prompt=ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT,
         validator=partial(validate_enrichment_response, input_objective=input_objective),
     )
+
+
+async def enrich_objective_with_wikidata(
+    enrichment_data: ObjectiveEnrichmentDTO,
+    trace_id: str | None = None,
+) -> EnrichmentDataDTO:
+    """Enhance enrichment data with Wikidata scientific context."""
+    try:
+        # Extract all core scientific terms from objective and tasks
+        all_terms = []
+        all_terms.extend(enrichment_data["research_objective"]["core_scientific_terms"])
+
+        for task in enrichment_data["research_tasks"]:
+            all_terms.extend(task["core_scientific_terms"])
+
+        # Remove duplicates while preserving order
+        unique_terms = list(dict.fromkeys(all_terms))
+
+        if not unique_terms:
+            return {
+                "enriched_objective": "",
+                "search_queries": [],
+                "scientific_core_terms": [],
+                "scientific_context": "",
+            }
+
+        # Get scientific context from Wikidata
+        async with WikidataClient() as wikidata_client:
+            scientific_context = await wikidata_client.get_scientific_context(unique_terms, trace_id)
+
+        # Format the scientific context for LLM consumption
+        formatted_context = format_scientific_context(scientific_context)
+
+        return {
+            "enriched_objective": "",
+            "search_queries": [],
+            "scientific_core_terms": unique_terms,
+            "scientific_context": formatted_context,
+        }
+
+    except Exception:
+        # Log error but don't fail the pipeline
+        # Return empty enrichment data to allow pipeline to continue
+        return {
+            "enriched_objective": "",
+            "search_queries": [],
+            "scientific_core_terms": [],
+            "scientific_context": "",
+        }
 
 
 criteria: list[EvaluationCriterion] = [
