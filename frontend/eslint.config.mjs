@@ -251,6 +251,7 @@ export default eslintTS.config(
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
+			"sonarjs/assertions-in-tests": "off",
 			"sonarjs/cognitive-complexity": "off",
 			"sonarjs/function-return-type": "off",
 			"sonarjs/no-all-duplicated-branches": "off",
