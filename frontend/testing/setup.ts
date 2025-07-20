@@ -1,4 +1,5 @@
 import "@testing-library/react";
+import "./ky-mock"; // Set up ky mock before other imports
 
 import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers";
 import * as matchers from "@testing-library/jest-dom/matchers";
