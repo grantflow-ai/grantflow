@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ListOrganizationsResponseFactory, ProjectListItemFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -112,6 +113,7 @@ describe("DashboardClient", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setupAuthenticatedTest();
 
 		// Setup default mock returns
 		mockUseRouter.mockReturnValue(mockRouter);
