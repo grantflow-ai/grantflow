@@ -66,7 +66,11 @@ vi.mock("next/image", () => ({
 	),
 }));
 
-describe("DragDropSectionManager", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("DragDropSectionManager", () => {
 	const mockUpdateGrantSections = vi.fn();
 	const mockOnAddSection = vi.fn();
 	const mockIsDetailedSection = vi.fn(() => true);

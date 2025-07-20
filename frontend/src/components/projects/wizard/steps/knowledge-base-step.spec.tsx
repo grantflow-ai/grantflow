@@ -42,7 +42,7 @@ vi.mock("@/utils/debounce", () => ({
 	useDebounce: vi.fn((fn) => fn),
 }));
 
-describe("KnowledgeBaseStep", () => {
+describe.sequential("KnowledgeBaseStep", () => {
 	const mockDeleteApplicationSource = vi.mocked(deleteApplicationSource);
 
 	beforeEach(() => {

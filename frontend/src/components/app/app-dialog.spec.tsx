@@ -149,7 +149,7 @@ describe("AppDialogFooter", () => {
 	});
 });
 
-describe("ConfirmDialog", () => {
+describe.sequential("ConfirmDialog", () => {
 	const defaultProps = {
 		onConfirm: vi.fn(),
 		onOpenChange: vi.fn(),

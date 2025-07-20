@@ -1,165 +1,250 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::testing/factories";
+import { resetAllStores } from "::testing/store-reset";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+
 import { ResearchPlanPreview } from "./research-plan-preview";
 
-vi.mock("@/stores/application-store");
-vi.mock("@/stores/wizard-store");
-vi.mock("@/utils/logger");
+// Helper function to clean up portal elements rendered by Radix UI
+function cleanupPortals() {
+	// Remove all Radix portals from the document
+	const portals = document.querySelectorAll("[data-radix-portal]");
+	portals.forEach((portal) => portal.remove());
 
-const mockUseApplicationStore = vi.mocked(useApplicationStore);
-const mockUseWizardStore = vi.mocked(useWizardStore);
-
-const mockApplicationStore = (objectives: any[]) => {
-	mockUseApplicationStore.mockImplementation((selector: any) => {
-		if (typeof selector === "function") {
-			return selector({
-				application: {
-					research_objectives: objectives,
-				},
-			});
-		}
-		return {
-			application: {
-				research_objectives: objectives,
-			},
-		};
-	});
-};
-
-const mockObjectives = [
-	{
-		description: "Test objective description",
-		number: 1,
-		research_tasks: [
-			{
-				description: "Test task description",
-				number: 1,
-				title: "Test task title",
-			},
-		],
-		title: "Test objective title",
-	},
-];
+	// Also remove any dropdown content that might be lingering
+	const dropdownContent = document.querySelectorAll('[data-slot="dropdown-menu-content"]');
+	dropdownContent.forEach((content) => content.remove());
+}
 
 describe("ResearchPlanPreview Editing Mode", () => {
 	const user = userEvent.setup();
-	const mockHandleObjectiveDragEnd = vi.fn();
-	const mockRemoveObjective = vi.fn();
 
 	beforeEach(() => {
-		vi.clearAllMocks();
-
-		mockApplicationStore(mockObjectives);
-
-		mockUseWizardStore.mockReturnValue((state: any) => {
-			if (typeof state === "function") {
-				return state({
-					handleObjectiveDragEnd: mockHandleObjectiveDragEnd,
-					removeObjective: mockRemoveObjective,
-				});
-			}
-			return {
-				handleObjectiveDragEnd: mockHandleObjectiveDragEnd,
-				removeObjective: mockRemoveObjective,
-			};
-		});
+		resetAllStores();
+		cleanupPortals();
 	});
 
 	afterEach(() => {
 		cleanup();
+		cleanupPortals();
 	});
 
 	it("shows Edit Task option in dropdown menu initially", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
+		expect(dropdownTrigger).toBeInTheDocument();
 
-		await user.click(dropdownTrigger!);
+		fireEvent.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it("enters editing mode when Edit Task is clicked", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
-		expect(screen.getByTestId("edit-objective-title")).toBeInTheDocument();
-		expect(screen.getByTestId("save-changes-button")).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="edit-objective-title"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="save-changes-button"]')).toBeInTheDocument();
 	});
 
 	it("shows Cancel Editing option when in editing mode", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+			const menuItem = screen.getByTestId("edit-task-menuitem");
+			expect(menuItem).toBeInTheDocument();
 		});
-		const editMenuItem1 = screen.getByTestId("edit-task-menuitem");
+
+		const editMenuItem1 = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem1);
+
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+				expect(menuItems[0].textContent).toContain("Cancel Editing");
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it("exits editing mode when Cancel Editing is clicked", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+			const menuItem = screen.getByTestId("edit-task-menuitem");
+			expect(menuItem).toBeInTheDocument();
 		});
-		const editMenuItem1 = screen.getByTestId("edit-task-menuitem");
+
+		const editMenuItem1 = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem1);
+
 		await user.click(dropdownTrigger!);
 
 		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
+			const menuItem = screen.getByTestId("edit-task-menuitem");
+			expect(menuItem).toBeInTheDocument();
 		});
-		const editMenuItem2 = screen.getByTestId("edit-task-menuitem");
+
+		const editMenuItem2 = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem2);
 
-		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="edit-objective-title"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="save-changes-button"]')).not.toBeInTheDocument();
 	});
 
 	it("displays editable form fields when in editing mode", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		expect(screen.getByLabelText("Objective name")).toBeInTheDocument();
@@ -168,17 +253,41 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("pre-fills form fields with existing data", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		expect(screen.getByDisplayValue("Test objective title")).toBeInTheDocument();
@@ -187,17 +296,41 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("allows editing objective title", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		const titleInput = screen.getByLabelText("Objective name");
@@ -208,17 +341,41 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("allows editing objective description", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		const descriptionInput = screen.getByLabelText("Objective description");
@@ -229,17 +386,41 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("allows editing task description", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		const taskInput = screen.getByLabelText("Task description");
@@ -250,89 +431,171 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("shows add task button when in editing mode", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
-		expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="add-task-button"]')).toBeInTheDocument();
 	});
 
 	it("adds new task when add button is clicked", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(1);
 
-		await user.click(screen.getByTestId("add-task-button"));
+		const addButton = container.querySelector('[data-testid="add-task-button"]');
+		await user.click(addButton!);
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(2);
 	});
 
 	it("shows delete button for tasks when in editing mode", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
-		expect(screen.getByTestId("delete-task-button")).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="delete-task-button"]')).toBeInTheDocument();
 	});
 
 	it("removes task when delete button is clicked", async () => {
-		const multipleTasksObjective = [
-			{
-				...mockObjectives[0],
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
 				research_tasks: [
 					{ description: "Task 1", number: 1, title: "Task 1" },
 					{ description: "Task 2", number: 2, title: "Task 2" },
 				],
-			},
+				title: "Test objective title",
+			}),
 		];
 
-		mockApplicationStore(multipleTasksObjective);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		expect(screen.getAllByLabelText("Task description")).toHaveLength(2);
 
-		const deleteButtons = screen.getAllByTestId("delete-task-button");
+		const deleteButtons = container.querySelectorAll('[data-testid="delete-task-button"]');
 		await user.click(deleteButtons[0]);
 
 		await waitFor(() => {
@@ -341,66 +604,155 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("exits editing mode when Save Changes is clicked", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
-		const saveButton = screen.getByTestId("save-changes-button");
-		await user.click(saveButton);
+		const saveButton = container.querySelector('[data-testid="save-changes-button"]');
+		await user.click(saveButton!);
 
-		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="edit-objective-title"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="save-changes-button"]')).not.toBeInTheDocument();
 	});
 
 	it("displays updated content after saving changes", async () => {
 		const mockLog = vi.spyOn(console, "info").mockImplementation(() => {});
 
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("edit-task-menuitem")).toBeInTheDocument();
-		});
-		const editMenuItem = screen.getByTestId("edit-task-menuitem");
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
 		await user.click(editMenuItem);
 
 		const titleInput = screen.getByLabelText("Objective name");
 		await user.clear(titleInput);
 		await user.type(titleInput, "Updated title");
 
-		const saveButton = screen.getByTestId("save-changes-button");
-		await user.click(saveButton);
+		const saveButton = container.querySelector('[data-testid="save-changes-button"]');
+		await user.click(saveButton!);
 
-		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="edit-objective-title"]')).not.toBeInTheDocument();
 		expect(screen.getByText("Test objective title")).toBeInTheDocument();
 
 		mockLog.mockRestore();
 	});
 
-	// eslint-disable-next-line sonarjs/assertions-in-tests
 	it("does not show editing controls when not in editing mode", () => {
-		render(<ResearchPlanPreview />);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
 
-		expect(screen.queryByTestId("edit-objective-title")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("save-changes-button")).not.toBeInTheDocument();
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
+		const { container } = render(<ResearchPlanPreview />);
+
+		expect(container.querySelector('[data-testid="edit-objective-title"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="save-changes-button"]')).not.toBeInTheDocument();
 		expect(screen.queryByLabelText("Objective name")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("delete-task-button")).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="delete-task-button"]')).not.toBeInTheDocument();
 	});
 
 	it("shows static content when not in editing mode", () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
 		render(<ResearchPlanPreview />);
 
 		expect(screen.getByText("Test objective title")).toBeInTheDocument();
@@ -409,68 +761,106 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 
 	it("handles multiple objectives independently", async () => {
-		const multipleObjectives = [
-			mockObjectives[0],
-			{
-				...mockObjectives[0],
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "First objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "First task description",
+						number: 1,
+						title: "First task title",
+					},
+				],
+				title: "First objective",
+			}),
+			ResearchObjectiveFactory.build({
+				description: "Second objective description",
 				number: 2,
+				research_tasks: [
+					{
+						description: "Second task description",
+						number: 1,
+						title: "Second task title",
+					},
+				],
 				title: "Second objective",
-			},
+			}),
 		];
 
-		mockApplicationStore(multipleObjectives);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const allButtons = container.querySelectorAll('[data-testid="menu-trigger"]');
-
 		expect(allButtons).toHaveLength(2);
 
 		await user.click(allButtons[0]);
 
-		await user.click(screen.getByTestId("edit-task-menuitem"));
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
 
-		expect(screen.getByTestId("edit-objective-title")).toBeInTheDocument();
+		const editMenuItem = document.querySelector('[data-testid="edit-task-menuitem"]')!;
+		await user.click(editMenuItem);
+
+		expect(container.querySelector('[data-testid="edit-objective-title"]')).toBeInTheDocument();
 		expect(screen.getByText("Second objective")).toBeInTheDocument();
 	});
 });
 
 describe("ResearchPlanPreview Display Mode", () => {
 	const user = userEvent.setup();
-	const mockHandleObjectiveDragEnd = vi.fn();
-	const mockRemoveObjective = vi.fn();
 
 	beforeEach(() => {
-		vi.clearAllMocks();
-
-		mockUseWizardStore.mockImplementation((selector: any) => {
-			if (typeof selector === "function") {
-				return selector({
-					handleObjectiveDragEnd: mockHandleObjectiveDragEnd,
-					removeObjective: mockRemoveObjective,
-				});
-			}
-			return {
-				handleObjectiveDragEnd: mockHandleObjectiveDragEnd,
-				removeObjective: mockRemoveObjective,
-			};
-		});
+		resetAllStores();
+		cleanupPortals();
 	});
 
 	afterEach(() => {
 		cleanup();
+		cleanupPortals();
 	});
 
 	it("shows empty state when no objectives exist", () => {
-		mockApplicationStore([]);
+		useApplicationStore.setState({
+			application: ApplicationWithTemplateFactory.build({ research_objectives: [] }),
+		});
 
-		render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview />);
 
-		expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="empty-state"]')).toBeInTheDocument();
 	});
 
 	it("displays objective cards in grid layout", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
@@ -479,16 +869,54 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("displays task information within objectives", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
 
-		render(<ResearchPlanPreview />);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
 
-		expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
+		useApplicationStore.setState({ application });
+
+		const { container } = render(<ResearchPlanPreview />);
+
+		expect(container.querySelector('[data-testid="tasks-section"]')).toBeInTheDocument();
 		expect(screen.getByText("Task: Test task description")).toBeInTheDocument();
 	});
 
 	it("shows objective index badges", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
@@ -496,7 +924,26 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("shows task index badges", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
@@ -504,7 +951,26 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("displays drag handles for objectives", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
@@ -512,45 +978,111 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("shows remove option in dropdown menu", async () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
 
-		render(<ResearchPlanPreview />);
-
-		const dropdownTrigger = screen.getByTestId("menu-trigger");
-
-		await user.click(dropdownTrigger);
-
-		await waitFor(() => {
-			expect(screen.getByTestId("remove-menuitem")).toBeInTheDocument();
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
 		});
-	});
 
-	it("calls removeObjective when remove is clicked", async () => {
-		mockApplicationStore(mockObjectives);
+		useApplicationStore.setState({ application });
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
-
 		await user.click(dropdownTrigger!);
 
-		await waitFor(() => {
-			expect(screen.getByTestId("remove-menuitem")).toBeInTheDocument();
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+	});
+
+	it("calls removeObjective when remove is clicked", async () => {
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
 		});
-		const removeMenuItem = screen.getByTestId("remove-menuitem");
+
+		useApplicationStore.setState({ application });
+
+		const mockRemoveObjective = vi.spyOn(useWizardStore.getState(), "removeObjective");
+
+		const { container } = render(<ResearchPlanPreview />);
+
+		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
+		await user.click(dropdownTrigger!);
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
 		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 		expect(screen.getByTestId("delete-dialog-description")).toBeInTheDocument();
 
-		await user.click(screen.getByTestId("confirm-delete-button"));
+		const confirmButton = screen.getByTestId("confirm-delete-button");
+		await user.click(confirmButton);
 
 		expect(mockRemoveObjective).toHaveBeenCalledWith(1);
 	});
 
 	it("shows delete confirmation dialog when remove option is clicked", async () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		const { container } = render(<ResearchPlanPreview />);
 
@@ -558,9 +1090,18 @@ describe("ResearchPlanPreview Display Mode", () => {
 		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
 		await user.click(dropdownTrigger!);
-		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 		expect(screen.getByTestId("delete-dialog-description")).toBeInTheDocument();
@@ -569,40 +1110,102 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("displays correct dialog content for delete confirmation", async () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
 		await user.click(dropdownTrigger!);
-		await user.click(screen.getByTestId("remove-menuitem"));
 
-		expect(screen.getByTestId("delete-dialog-title")).toHaveTextContent(
-			"Are you sure you want to delete this objective?",
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
 		);
 
-		expect(screen.getByTestId("delete-dialog-description")).toHaveTextContent(
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem);
+
+		const dialogTitle = screen.getByTestId("delete-dialog-title");
+		expect(dialogTitle.textContent).toBe("Are you sure you want to delete this objective?");
+
+		const dialogDescription = screen.getByTestId("delete-dialog-description");
+		expect(dialogDescription.textContent).toBe(
 			"All content within this objective and all its associated tasks. will be permanently removed. This action cannot be undone.",
 		);
 
-		expect(screen.getByTestId("cancel-delete-button")).toHaveTextContent("Cancel");
-		expect(screen.getByTestId("confirm-delete-button")).toHaveTextContent("Delete Objective");
+		const cancelButton = screen.getByTestId("cancel-delete-button");
+		expect(cancelButton.textContent).toBe("Cancel");
+
+		const confirmButton = screen.getByTestId("confirm-delete-button");
+		expect(confirmButton.textContent).toBe("Delete Objective");
 	});
 
 	it("closes dialog when cancel button is clicked", async () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
+		const mockRemoveObjective = vi.spyOn(useWizardStore.getState(), "removeObjective");
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
 		await user.click(dropdownTrigger!);
-		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 
-		await user.click(screen.getByTestId("cancel-delete-button"));
+		const cancelButton = screen.getByTestId("cancel-delete-button");
+		await user.click(cancelButton);
 
 		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
@@ -611,14 +1214,44 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("closes dialog when close button (X) is clicked", async () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
+		const mockRemoveObjective = vi.spyOn(useWizardStore.getState(), "removeObjective");
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
 		await user.click(dropdownTrigger!);
-		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 
@@ -632,18 +1265,49 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("calls removeObjective and closes dialog when confirm button is clicked", async () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
+		const mockRemoveObjective = vi.spyOn(useWizardStore.getState(), "removeObjective");
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
-		expect(dropdownTrigger).toBeTruthy();
 		await user.click(dropdownTrigger!);
-		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 
-		await user.click(screen.getByTestId("confirm-delete-button"));
+		const confirmButton = screen.getByTestId("confirm-delete-button");
+		await user.click(confirmButton);
 
 		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("delete-dialog-description")).not.toBeInTheDocument();
@@ -652,22 +1316,28 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("handles multiple objectives delete dialogs independently", async () => {
-		const multipleObjectives = [
-			{
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
 				description: "First objective description",
 				number: 1,
 				research_tasks: [{ description: "First task", number: 1, title: "First task" }],
 				title: "First objective",
-			},
-			{
+			}),
+			ResearchObjectiveFactory.build({
 				description: "Second objective description",
 				number: 2,
 				research_tasks: [{ description: "Second task", number: 1, title: "Second task" }],
 				title: "Second objective",
-			},
+			}),
 		];
 
-		mockApplicationStore(multipleObjectives);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
+		const mockRemoveObjective = vi.spyOn(useWizardStore.getState(), "removeObjective");
 
 		const { container } = render(<ResearchPlanPreview />);
 
@@ -675,71 +1345,114 @@ describe("ResearchPlanPreview Display Mode", () => {
 		expect(dropdownTriggers).toHaveLength(2);
 
 		await user.click(dropdownTriggers[1]);
-		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 
-		await user.click(screen.getByTestId("confirm-delete-button"));
+		const confirmButton = screen.getByTestId("confirm-delete-button");
+		await user.click(confirmButton);
 
 		expect(mockRemoveObjective).toHaveBeenCalledWith(2);
 	});
 
 	it("dialog state resets correctly between different objectives", async () => {
-		const multipleObjectives = [
-			{
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
 				description: "First objective description",
 				number: 1,
 				research_tasks: [{ description: "First task", number: 1, title: "First task" }],
 				title: "First objective",
-			},
-			{
+			}),
+			ResearchObjectiveFactory.build({
 				description: "Second objective description",
 				number: 2,
 				research_tasks: [{ description: "Second task", number: 1, title: "Second task" }],
 				title: "Second objective",
-			},
+			}),
 		];
 
-		mockApplicationStore(multipleObjectives);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
+
+		const mockRemoveObjective = vi.spyOn(useWizardStore.getState(), "removeObjective");
 
 		const { container } = render(<ResearchPlanPreview />);
 
 		const dropdownTriggers = container.querySelectorAll('[data-testid="menu-trigger"]');
 
 		await user.click(dropdownTriggers[0]);
-		await user.click(screen.getByTestId("remove-menuitem"));
 
-		await user.click(screen.getByTestId("cancel-delete-button"));
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem1 = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem1);
+
+		const cancelButton = screen.getByTestId("cancel-delete-button");
+		await user.click(cancelButton);
 
 		expect(screen.queryByTestId("delete-dialog-title")).not.toBeInTheDocument();
 
 		await user.click(dropdownTriggers[1]);
-		await user.click(screen.getByTestId("remove-menuitem"));
+
+		await waitFor(
+			() => {
+				const menuItems = document.querySelectorAll('[data-testid="remove-menuitem"]');
+				expect(menuItems.length).toBeGreaterThan(0);
+			},
+			{ timeout: 3000 },
+		);
+
+		const removeMenuItem2 = document.querySelector('[data-testid="remove-menuitem"]')!;
+		await user.click(removeMenuItem2);
 
 		expect(screen.getByTestId("delete-dialog-title")).toBeInTheDocument();
 
-		await user.click(screen.getByTestId("confirm-delete-button"));
+		const confirmButton = screen.getByTestId("confirm-delete-button");
+		await user.click(confirmButton);
 
 		expect(mockRemoveObjective).toHaveBeenCalledWith(2);
 	});
 
 	it("displays multiple objectives with different numbers", () => {
-		const multipleObjectives = [
-			{
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
 				description: "First objective description",
 				number: 1,
 				research_tasks: [{ description: "First task", number: 1, title: "First task" }],
 				title: "First objective",
-			},
-			{
+			}),
+			ResearchObjectiveFactory.build({
 				description: "Second objective description",
 				number: 2,
 				research_tasks: [{ description: "Second task", number: 1, title: "Second task" }],
 				title: "Second objective",
-			},
+			}),
 		];
 
-		mockApplicationStore(multipleObjectives);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
@@ -750,8 +1463,8 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("displays multiple tasks within an objective", () => {
-		const objectiveWithMultipleTasks = [
-			{
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
 				description: "Test objective description",
 				number: 1,
 				research_tasks: [
@@ -759,10 +1472,14 @@ describe("ResearchPlanPreview Display Mode", () => {
 					{ description: "Second task description", number: 2, title: "Second task" },
 				],
 				title: "Test objective title",
-			},
+			}),
 		];
 
-		mockApplicationStore(objectiveWithMultipleTasks);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
@@ -773,37 +1490,79 @@ describe("ResearchPlanPreview Display Mode", () => {
 	});
 
 	it("handles objectives with fallback task titles", () => {
-		const objectiveWithTitleFallback = [
-			{
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
 				description: "Test objective description",
 				number: 1,
-				research_tasks: [{ description: null, number: 1, title: "Fallback task title" }],
+				research_tasks: [{ description: undefined, number: 1, title: "Fallback task title" }],
 				title: "Test objective title",
-			},
+			}),
 		];
 
-		mockApplicationStore(objectiveWithTitleFallback);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
 
-		render(<ResearchPlanPreview />);
+		useApplicationStore.setState({ application });
 
-		expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Fallback task title");
+		const { container } = render(<ResearchPlanPreview />);
+
+		const taskDisplay = container.querySelector('[data-testid="task-display"]');
+		expect(taskDisplay?.textContent).toBe("Task: Fallback task title");
 	});
 
 	it("displays task drag handles", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
+
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
+
+		useApplicationStore.setState({ application });
 
 		render(<ResearchPlanPreview />);
 
 		expect(screen.getByRole("button", { name: /drag to reorder task/i })).toBeInTheDocument();
 	});
 
-	// eslint-disable-next-line sonarjs/assertions-in-tests
 	it("does not show task management controls in display mode", () => {
-		mockApplicationStore(mockObjectives);
+		const mockObjectives = [
+			ResearchObjectiveFactory.build({
+				description: "Test objective description",
+				number: 1,
+				research_tasks: [
+					{
+						description: "Test task description",
+						number: 1,
+						title: "Test task title",
+					},
+				],
+				title: "Test objective title",
+			}),
+		];
 
-		render(<ResearchPlanPreview />);
+		const application = ApplicationWithTemplateFactory.build({
+			research_objectives: mockObjectives,
+		});
 
-		expect(screen.queryByTestId("delete-task-button")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("add-task-button")).not.toBeInTheDocument();
+		useApplicationStore.setState({ application });
+
+		const { container } = render(<ResearchPlanPreview />);
+
+		expect(container.querySelector('[data-testid="delete-task-button"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="add-task-button"]')).not.toBeInTheDocument();
 	});
 });
