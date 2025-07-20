@@ -1,18 +1,27 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import { SeparatorWithText } from "@/components/app";
 
 describe("SeparatorWithText", () => {
-	it("renders with the provided text", () => {
-		render(<SeparatorWithText text="OR" />);
+	afterEach(() => {
+		cleanup();
+	});
 
-		expect(screen.getByTestId("separator")).toBeInTheDocument();
-		expect(screen.getByTestId("separator-text")).toHaveTextContent("OR");
+	it("renders with the provided text", () => {
+		const { container } = render(<SeparatorWithText text="OR" />);
+
+		const separator = container.querySelector('[data-testid="separator"]');
+		const separatorText = container.querySelector('[data-testid="separator-text"]');
+
+		expect(separator).toBeInTheDocument();
+		expect(separatorText).toHaveTextContent("OR");
 	});
 
 	it("displays different text content", () => {
-		render(<SeparatorWithText text="Continue with" />);
+		const { container } = render(<SeparatorWithText text="Continue with" />);
 
-		expect(screen.getByTestId("separator-text")).toHaveTextContent("Continue with");
+		const separatorText = container.querySelector('[data-testid="separator-text"]');
+		expect(separatorText).toHaveTextContent("Continue with");
 	});
 });

@@ -8,15 +8,17 @@ vi.mock("@/stores/user-store");
 
 // Mock data for initialProjects
 const initialProjects = [ProjectListItemFactory.build()];
-const initialOrganizations = [{ 
-	id: "org-1", 
-	name: "Test Org", 
-	description: null,
-	logo_url: null,
-	members_count: 1,
-	projects_count: 1,
-	role: "OWNER" as const 
-}];
+const initialOrganizations = [
+	{
+		description: null,
+		id: "org-1",
+		logo_url: null,
+		members_count: 1,
+		name: "Test Org",
+		projects_count: 1,
+		role: "OWNER" as const,
+	},
+];
 const initialSelectedOrganizationId = "org-1";
 
 describe("DashboardClient", () => {
@@ -29,7 +31,13 @@ describe("DashboardClient", () => {
 	});
 
 	it("renders dashboard header and stats", () => {
-		render(<DashboardClient initialProjects={initialProjects} initialOrganizations={initialOrganizations} initialSelectedOrganizationId={initialSelectedOrganizationId} />);
+		render(
+			<DashboardClient
+				initialOrganizations={initialOrganizations}
+				initialProjects={initialProjects}
+				initialSelectedOrganizationId={initialSelectedOrganizationId}
+			/>,
+		);
 
 		expect(screen.getByTestId("dashboard-header")).toBeInTheDocument();
 		expect(screen.getByTestId("project-count")).toBeInTheDocument();
@@ -37,19 +45,37 @@ describe("DashboardClient", () => {
 	});
 
 	it("renders project cards when projects exist", () => {
-		render(<DashboardClient initialProjects={initialProjects} initialOrganizations={initialOrganizations} initialSelectedOrganizationId={initialSelectedOrganizationId} />);
+		render(
+			<DashboardClient
+				initialOrganizations={initialOrganizations}
+				initialProjects={initialProjects}
+				initialSelectedOrganizationId={initialSelectedOrganizationId}
+			/>,
+		);
 
 		expect(screen.getByTestId("dashboard-project-card")).toBeInTheDocument();
 	});
 
 	it("renders empty state when there are no projects", () => {
-		render(<DashboardClient initialProjects={[]} initialOrganizations={initialOrganizations} initialSelectedOrganizationId={initialSelectedOrganizationId} />);
+		render(
+			<DashboardClient
+				initialOrganizations={initialOrganizations}
+				initialProjects={[]}
+				initialSelectedOrganizationId={initialSelectedOrganizationId}
+			/>,
+		);
 
 		expect(screen.getByTestId("create-first-project-button")).toBeInTheDocument();
 	});
 
 	it("renders invite collaborators button", () => {
-		render(<DashboardClient initialProjects={initialProjects} initialOrganizations={initialOrganizations} initialSelectedOrganizationId={initialSelectedOrganizationId} />);
+		render(
+			<DashboardClient
+				initialOrganizations={initialOrganizations}
+				initialProjects={initialProjects}
+				initialSelectedOrganizationId={initialSelectedOrganizationId}
+			/>,
+		);
 
 		expect(screen.getByTestId("invite-collaborators-button")).toBeInTheDocument();
 	});
