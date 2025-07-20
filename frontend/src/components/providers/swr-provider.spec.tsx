@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import { SWRProvider } from "./swr-provider";
 
@@ -10,7 +11,10 @@ vi.mock("swr", () => ({
 	),
 }));
 
-describe("SWRProvider", () => {
+describe.sequential("SWRProvider", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders children within SWRConfig", () => {
 		render(
 			<SWRProvider>

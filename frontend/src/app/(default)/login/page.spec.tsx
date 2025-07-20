@@ -70,14 +70,13 @@ vi.mock("@/components/ui/toast", () => ({
 	}),
 }));
 
-describe("Login Page", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
+describe.sequential("Login Page", () => {
+	afterEach(() => {
 		cleanup();
-		render(<LoginPage />);
 	});
 
 	it("renders all login page elements correctly with initial state", () => {
+		render(<LoginPage />);
 		expect(screen.getByTestId("login-page")).toBeInTheDocument();
 		expect(screen.getByTestId("login-background-gradient")).toBeInTheDocument();
 
@@ -117,7 +116,7 @@ describe("Login Page", () => {
 		expect(buttonLink).toHaveAttribute("href", PagePath.ONBOARDING);
 	});
 
-	describe("Email Sign-in Flow", () => {
+	describe.sequential("Email Sign-in Flow", () => {
 		const user = userEvent.setup();
 		const testEmail = "test@example.com";
 		let emailInput: HTMLElement;
@@ -125,7 +124,6 @@ describe("Login Page", () => {
 
 		beforeEach(() => {
 			vi.clearAllMocks();
-			cleanup();
 			render(<LoginPage />);
 
 			emailInput = screen.getByTestId("login-form-email-input");

@@ -1,9 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ObjectiveForm, type ObjectiveFormData } from "./objective-form";
 
-describe("ObjectiveForm", () => {
+describe.sequential("ObjectiveForm", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	const defaultProps = {
 		objectiveNumber: 1,
 		onSaveAction: vi.fn(),

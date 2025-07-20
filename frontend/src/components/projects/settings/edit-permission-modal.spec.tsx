@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EditPermissionModal } from "@/components/projects";
 import { UserRole } from "@/types/user";
@@ -44,12 +44,16 @@ const mockMember = {
 	status: "active" as const,
 };
 
-describe("EditPermissionModal", () => {
+describe.sequential("EditPermissionModal", () => {
 	const mockOnClose = vi.fn();
 	const mockOnUpdateRole = vi.fn();
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders modal content when open with member data", () => {

@@ -7,7 +7,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("DashboardStats", () => {
+describe.sequential("DashboardStats", () => {
 	it("renders correct project and application counts", () => {
 		const initialProjects = [
 			ProjectListItemFactory.build({ applications_count: 2 }),

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
 
@@ -23,9 +23,13 @@ vi.mock("./scroll-fade-element", () => ({
 	)),
 }));
 
-describe("CoreFeaturesSection", () => {
+describe.sequential("CoreFeaturesSection", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the section with correct aria label", () => {

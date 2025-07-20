@@ -7,7 +7,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("AnimatedGradientBackground", () => {
+describe.sequential("AnimatedGradientBackground", () => {
 	it("renders with correct default classes", () => {
 		const { container } = render(<AnimatedGradientBackground data-testid="animated-background" />);
 		const element = container.querySelector('[data-testid="animated-background"]');

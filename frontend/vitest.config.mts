@@ -48,7 +48,7 @@ export default defineConfig({
 		globals: true,
 		hookTimeout: 30_000,
 		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
-		// Enable isolation for stability - each test file gets isolated environment
+		// Enable isolation for maximum test stability
 		isolate: true,
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
@@ -60,12 +60,12 @@ export default defineConfig({
 				singleFork: true,
 			},
 		},
-		// Run tests sequentially to avoid concurrency issues
+		// Sequential execution for maximum test stability
 		sequence: {
 			concurrent: false,
 			shuffle: false,
 		},
-		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts", "./vitest.setup.ts"],
+		setupFiles: ["./testing/global-mocks.ts", "./testing/setup.ts", "./vitest.setup.ts"],
 		teardownTimeout: 30_000,
 		testTimeout: 30_000,
 	},

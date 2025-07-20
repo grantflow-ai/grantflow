@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, describe, vi } from "vitest";
 
 // Simplified mock for Radix UI dropdown components
 vi.mock("@/components/ui/dropdown-menu", () => {
@@ -41,11 +41,10 @@ import {
 	DangerMenuItem,
 } from "./app-dropdown";
 
-afterEach(() => {
-	cleanup();
-});
-
-describe("AppDropdownMenu", () => {
+describe.sequential("AppDropdownMenu", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders dropdown menu with children", () => {
 		const { container } = render(
 			<AppDropdownMenu data-testid="test-app-dropdown-menu">
@@ -69,7 +68,10 @@ describe("AppDropdownMenu", () => {
 	});
 });
 
-describe("AppDropdownMenuTrigger", () => {
+describe.sequential("AppDropdownMenuTrigger", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders trigger element", () => {
 		const { container } = render(
 			<AppDropdownMenuTrigger data-testid="test-app-dropdown-menu-trigger">
@@ -82,7 +84,10 @@ describe("AppDropdownMenuTrigger", () => {
 	});
 });
 
-describe("AppDropdownMenuContent", () => {
+describe.sequential("AppDropdownMenuContent", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders content with children", () => {
 		const { container } = render(
 			<AppDropdownMenuContent data-testid="test-app-dropdown-menu-content">Menu items</AppDropdownMenuContent>,
@@ -93,7 +98,10 @@ describe("AppDropdownMenuContent", () => {
 	});
 });
 
-describe("AppDropdownMenuItem", () => {
+describe.sequential("AppDropdownMenuItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with default variant", () => {
 		const { container } = render(
 			<AppDropdownMenuItem data-testid="test-app-dropdown-menu-item-1">Menu item</AppDropdownMenuItem>,
@@ -147,7 +155,10 @@ describe("AppDropdownMenuItem", () => {
 	});
 });
 
-describe("AppDropdownMenuLabel", () => {
+describe.sequential("AppDropdownMenuLabel", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders label", () => {
 		const { container } = render(<AppDropdownMenuLabel>Section Label</AppDropdownMenuLabel>);
 
@@ -156,7 +167,10 @@ describe("AppDropdownMenuLabel", () => {
 	});
 });
 
-describe("AppDropdownMenuSeparator", () => {
+describe.sequential("AppDropdownMenuSeparator", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders separator", () => {
 		const { container } = render(<AppDropdownMenuSeparator />);
 
@@ -164,7 +178,10 @@ describe("AppDropdownMenuSeparator", () => {
 	});
 });
 
-describe("AppDropdownMenuShortcut", () => {
+describe.sequential("AppDropdownMenuShortcut", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders shortcut", () => {
 		const { container } = render(<AppDropdownMenuShortcut>⌘K</AppDropdownMenuShortcut>);
 
@@ -173,7 +190,10 @@ describe("AppDropdownMenuShortcut", () => {
 	});
 });
 
-describe("AppDropdownMenuGroup", () => {
+describe.sequential("AppDropdownMenuGroup", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders group with children", () => {
 		const { container } = render(
 			<AppDropdownMenuGroup>
@@ -187,7 +207,10 @@ describe("AppDropdownMenuGroup", () => {
 	});
 });
 
-describe("AppDropdownMenuCheckboxItem", () => {
+describe.sequential("AppDropdownMenuCheckboxItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders checkbox item", () => {
 		const { container } = render(
 			<AppDropdownMenuCheckboxItem data-testid="test-app-dropdown-menu-checkbox-item">
@@ -200,7 +223,10 @@ describe("AppDropdownMenuCheckboxItem", () => {
 	});
 });
 
-describe("AppDropdownMenuRadioGroup", () => {
+describe.sequential("AppDropdownMenuRadioGroup", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders radio group", () => {
 		const { container } = render(
 			<AppDropdownMenuRadioGroup data-testid="test-app-dropdown-menu-radio-group" value="option1">
@@ -215,7 +241,10 @@ describe("AppDropdownMenuRadioGroup", () => {
 	});
 });
 
-describe("AppDropdownMenuRadioItem", () => {
+describe.sequential("AppDropdownMenuRadioItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders radio item", () => {
 		const { container } = render(
 			<AppDropdownMenuRadioItem data-testid="test-app-dropdown-menu-radio-item" value="option1">
@@ -230,7 +259,10 @@ describe("AppDropdownMenuRadioItem", () => {
 	});
 });
 
-describe("AppDropdownMenuSub", () => {
+describe.sequential("AppDropdownMenuSub", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders sub menu", () => {
 		const { container } = render(
 			<AppDropdownMenuSub data-testid="test-app-dropdown-menu-sub">
@@ -243,7 +275,10 @@ describe("AppDropdownMenuSub", () => {
 	});
 });
 
-describe("AppDropdownMenuSubTrigger", () => {
+describe.sequential("AppDropdownMenuSubTrigger", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders sub trigger", () => {
 		const { container } = render(
 			<AppDropdownMenuSubTrigger data-testid="test-app-dropdown-menu-sub-trigger">
@@ -256,7 +291,10 @@ describe("AppDropdownMenuSubTrigger", () => {
 	});
 });
 
-describe("AppDropdownMenuSubContent", () => {
+describe.sequential("AppDropdownMenuSubContent", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders sub content", () => {
 		const { container } = render(
 			<AppDropdownMenuSubContent data-testid="test-app-dropdown-menu-sub-content">
@@ -269,7 +307,10 @@ describe("AppDropdownMenuSubContent", () => {
 	});
 });
 
-describe("DangerMenuItem", () => {
+describe.sequential("DangerMenuItem", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with danger styling and testid", () => {
 		const { container } = render(<DangerMenuItem>Delete</DangerMenuItem>);
 

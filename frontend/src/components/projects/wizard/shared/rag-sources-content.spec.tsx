@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
 import { RagSourcesContent } from "./rag-sources-content";
 
-describe("RagSourcesContent", () => {
+describe.sequential("RagSourcesContent", () => {
 	beforeEach(() => {
 		useApplicationStore.getState().reset();
 	});

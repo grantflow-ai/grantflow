@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import {
 	AppCard,
@@ -11,7 +12,10 @@ import {
 	InfoCard,
 } from "./app-card";
 
-describe("AppCard", () => {
+describe.sequential("AppCard", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders basic card with testid", () => {
 		render(<AppCard>Card content</AppCard>);
 
@@ -26,7 +30,10 @@ describe("AppCard", () => {
 	});
 });
 
-describe("AppCardHeader", () => {
+describe.sequential("AppCardHeader", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with correct testid and grid classes", () => {
 		render(<AppCardHeader>Header content</AppCardHeader>);
 
@@ -60,7 +67,10 @@ describe("AppCardHeader", () => {
 	});
 });
 
-describe("AppCardTitle", () => {
+describe.sequential("AppCardTitle", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with testid", () => {
 		render(<AppCardTitle>Card Title</AppCardTitle>);
 
@@ -69,7 +79,10 @@ describe("AppCardTitle", () => {
 	});
 });
 
-describe("AppCardDescription", () => {
+describe.sequential("AppCardDescription", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with testid", () => {
 		render(<AppCardDescription>Card description</AppCardDescription>);
 
@@ -78,7 +91,10 @@ describe("AppCardDescription", () => {
 	});
 });
 
-describe("AppCardContent", () => {
+describe.sequential("AppCardContent", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with testid", () => {
 		render(<AppCardContent>Card content</AppCardContent>);
 
@@ -87,7 +103,10 @@ describe("AppCardContent", () => {
 	});
 });
 
-describe("AppCardFooter", () => {
+describe.sequential("AppCardFooter", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with testid", () => {
 		render(<AppCardFooter>Footer content</AppCardFooter>);
 
@@ -96,7 +115,10 @@ describe("AppCardFooter", () => {
 	});
 });
 
-describe("AppCardAction", () => {
+describe.sequential("AppCardAction", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with correct testid and classes", () => {
 		render(<AppCardAction>Action button</AppCardAction>);
 
@@ -113,7 +135,10 @@ describe("AppCardAction", () => {
 	});
 });
 
-describe("InfoCard", () => {
+describe.sequential("InfoCard", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with title only", () => {
 		render(<InfoCard title="Test Title" />);
 

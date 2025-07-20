@@ -1,8 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { PROGRESS_BAR_STEPS } from "@/constants";
 import { ProgressBar } from "./progress-bar";
 
-describe("ProgressBar", () => {
+describe.sequential("ProgressBar", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders the correct number of steps", () => {
 		render(<ProgressBar currentStep={1} />);
 		// Check for step labels

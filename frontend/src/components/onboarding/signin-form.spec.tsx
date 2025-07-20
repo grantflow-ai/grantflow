@@ -1,9 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe } from "vitest";
 
 import { SigninForm } from "./signin-form";
 
-describe("EmailSigninForm", () => {
+describe.sequential("EmailSigninForm", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockOnSubmit = vi.fn();
 
 	beforeEach(() => {

@@ -1,13 +1,12 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, describe } from "vitest";
 
 import { BrandPattern } from "@/components/branding/brand-pattern";
 
-afterEach(() => {
-	cleanup();
-});
-
-describe("BrandPattern Component", () => {
+describe.sequential("BrandPattern Component", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders SVG element", () => {
 		const { container } = render(<BrandPattern data-testid="brand-pattern" />);
 		const svg = container.querySelector('[data-testid="brand-pattern"]');

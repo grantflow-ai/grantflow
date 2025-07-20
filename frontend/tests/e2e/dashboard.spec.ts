@@ -46,7 +46,7 @@ test.describe("Dashboard with Mock API", () => {
 		await expect(page.locator('[data-testid="cancel-button"]')).toBeVisible();
 	});
 
-	test.skip("should create a new project", async ({ page }) => {
+	test("should create a new project", async ({ page }) => {
 		// Open create project modal
 		await page.locator('[data-testid="new-research-project-button"]').click();
 
@@ -95,7 +95,7 @@ test.describe("Dashboard with Mock API", () => {
 		await expect(page.locator("main").locator('[data-testid="new-application-button"]')).toBeVisible();
 	});
 
-	test.skip("should show empty state when no projects", async ({ page }) => {
+	test("should show empty state when no projects", async ({ page }) => {
 		// Set mock API to use empty scenario
 		await page.addInitScript(() => {
 			if ((globalThis as any).getMockAPIClient) {
@@ -155,7 +155,7 @@ test.describe("Project Creation Flow", () => {
 		await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 	});
 
-	test.skip("should validate project creation form", async ({ page }) => {
+	test("should validate project creation form", async ({ page }) => {
 		// Open create project modal
 		await page.locator('[data-testid="new-research-project-button"]').click();
 
@@ -232,7 +232,7 @@ test.describe("Dashboard Navigation", () => {
 		await expect(page).toHaveURL(/\/wizard/);
 	});
 
-	test.skip("should open settings menu", async ({ page }) => {
+	test("should open settings menu", async ({ page }) => {
 		// Click settings trigger to expand the menu
 		await page.locator('[data-testid="settings-trigger"]').click();
 
