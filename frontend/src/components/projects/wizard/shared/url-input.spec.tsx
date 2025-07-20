@@ -12,7 +12,7 @@ vi.mock("@/utils/validation");
 
 const mockIsValidUrl = vi.mocked(validation.isValidUrl);
 
-describe("UrlInput", () => {
+describe.sequential("UrlInput", () => {
 	const defaultParentId = "test-parent-id";
 
 	beforeEach(() => {

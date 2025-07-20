@@ -106,7 +106,7 @@ afterEach(() => {
 	vi.resetAllMocks();
 });
 
-describe("Grant Application Actions", () => {
+describe.sequential("Grant Application Actions", () => {
 	describe("createApplication", () => {
 		it("should call the API with correct parameters", async () => {
 			const applicationData = CreateApplicationRequestFactory.build();

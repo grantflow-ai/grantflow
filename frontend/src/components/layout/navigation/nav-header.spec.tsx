@@ -67,7 +67,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("NavHeader Component", () => {
+describe.sequential("NavHeader Component", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});

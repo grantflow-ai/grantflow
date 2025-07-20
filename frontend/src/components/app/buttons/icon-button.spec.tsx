@@ -9,7 +9,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("IconButton", () => {
+describe.sequential("IconButton", () => {
 	it("renders with default props", () => {
 		const { container } = render(
 			<IconButton data-testid="icon-button">

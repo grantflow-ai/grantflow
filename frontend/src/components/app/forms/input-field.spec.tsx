@@ -1,24 +1,29 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Mail } from "lucide-react";
 import { useState } from "react";
+import { afterEach } from "vitest";
 
 import AppInput from "./input-field";
 
-describe("AppInput Component", () => {
-	it("renders input element", () => {
-		render(<AppInput testId="test-input" />);
+afterEach(() => {
+	cleanup();
+});
 
-		const input = screen.getByTestId("test-input");
+describe.sequential("AppInput Component", () => {
+	it("renders input element", () => {
+		const { container } = render(<AppInput testId="test-input" />);
+
+		const input = container.querySelector('[data-testid="test-input"]');
 		expect(input).toBeInTheDocument();
-		expect(input.tagName).toBe("INPUT");
+		expect(input?.tagName).toBe("INPUT");
 	});
 
 	it("accepts and displays user input", async () => {
 		const user = userEvent.setup();
-		render(<AppInput testId="test-input" />);
+		const { container } = render(<AppInput testId="test-input" />);
 
-		const input = screen.getByTestId("test-input");
+		const input = container.querySelector('[data-testid="test-input"]')!;
 		await user.type(input, "Hello World");
 
 		expect(input).toHaveValue("Hello World");
@@ -63,16 +68,16 @@ describe("AppInput Component", () => {
 	});
 
 	it("displays label when provided", () => {
-		render(<AppInput label="Email Address" testId="test-input" />);
+		const { container } = render(<AppInput label="Email Address" testId="test-input" />);
 
-		const label = screen.getByTestId("test-input-label");
+		const label = container.querySelector('[data-testid="test-input-label"]');
 		expect(label).toHaveTextContent("Email Address");
 	});
 
 	it("renders icon when provided", () => {
-		render(<AppInput icon={<Mail data-testid="mail-icon" />} testId="test-input" />);
+		const { container } = render(<AppInput icon={<Mail data-testid="mail-icon" />} testId="test-input" />);
 
-		const icon = screen.getByTestId("mail-icon");
+		const icon = container.querySelector('[data-testid="mail-icon"]');
 		expect(icon).toBeInTheDocument();
 	});
 
