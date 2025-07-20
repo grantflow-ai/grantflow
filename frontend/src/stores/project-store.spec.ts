@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ProjectFactory, ProjectListItemFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,6 +30,7 @@ describe("Project Store", () => {
 		});
 
 		vi.clearAllMocks();
+		setupAuthenticatedTest();
 	});
 
 	describe("state management", () => {

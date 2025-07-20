@@ -197,7 +197,7 @@ export function DashboardClient({
 		setIsCreatingProject(true);
 		try {
 			const newProjectName = `New Project ${projects.length + 1}`;
-			const { id: projectId } = await createProject(currentOrganizationId, {
+			await createProject(currentOrganizationId, {
 				description: "",
 				name: newProjectName,
 			});

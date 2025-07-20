@@ -1,3 +1,4 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
@@ -27,6 +28,7 @@ describe.sequential("ResearchPlanPreview Editing Mode", () => {
 	beforeEach(() => {
 		resetAllStores();
 		cleanupPortals();
+		setupAuthenticatedTest();
 
 		// Set up organization store with a selected organization for tests that need it
 		useOrganizationStore.setState({
@@ -829,6 +831,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 	beforeEach(() => {
 		resetAllStores();
 		cleanupPortals();
+		setupAuthenticatedTest();
 
 		// Set up organization store with a selected organization for tests that need it
 		useOrganizationStore.setState({
