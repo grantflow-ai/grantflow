@@ -98,6 +98,34 @@ vi.mock("next-themes", () => ({
 	}),
 }));
 
+// Mock Segment analytics
+vi.mock("@segment/analytics-next", () => ({
+	AnalyticsBrowser: {
+		load: vi.fn().mockReturnValue({
+			alias: vi.fn().mockResolvedValue(undefined),
+			group: vi.fn().mockResolvedValue(undefined),
+			identify: vi.fn().mockResolvedValue(undefined),
+			page: vi.fn().mockResolvedValue(undefined),
+			reset: vi.fn().mockResolvedValue(undefined),
+			track: vi.fn().mockResolvedValue(undefined),
+		}),
+	},
+}));
+
+// Mock the segment utils to prevent errors
+vi.mock("@/utils/segment", () => ({
+	analytics: { value: null },
+	analyticsIdentify: vi.fn().mockResolvedValue(undefined),
+	getAnalytics: vi.fn().mockReturnValue({
+		alias: vi.fn().mockResolvedValue(undefined),
+		group: vi.fn().mockResolvedValue(undefined),
+		identify: vi.fn().mockResolvedValue(undefined),
+		page: vi.fn().mockResolvedValue(undefined),
+		reset: vi.fn().mockResolvedValue(undefined),
+		track: vi.fn().mockResolvedValue(undefined),
+	}),
+}));
+
 export {
 	mockCookies,
 	mockRedirect,
@@ -125,6 +153,7 @@ export const mockEnv = {
 	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
+	NEXT_PUBLIC_GCS_EMULATOR_URL: "http://localhost:4443",
 	NEXT_PUBLIC_SITE_URL: "https://example.com",
 	RESEND_API_KEY: "re_test_1234567890abcdef",
 } satisfies Env;

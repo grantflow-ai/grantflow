@@ -1,4 +1,3 @@
-export { AppHeader } from "@/components/layout/app-header";
 export { CreateApplicationButton } from "./applications/create-application-button";
 export { DeleteApplicationModal } from "./applications/delete-application-modal";
 export { GrantApplicationCard } from "./applications/grant-application-card";
@@ -20,3 +19,4 @@ export { ProjectSettingsMembers } from "./settings/project-settings-members";
 export { NotificationHandler } from "./shared/notification-handler";
 export { ThemeBadge } from "./shared/theme-badge";
 export * from "./wizard";
+export { AppHeader } from "@/components/layout/app-header";
