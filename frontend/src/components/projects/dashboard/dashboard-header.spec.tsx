@@ -1,7 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { AppHeader } from "@/components/layout/app-header";
 
-describe("AppHeader", () => {
+describe.sequential("AppHeader", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders notification and avatar group", () => {
 		const teamMembers = [
 			{ backgroundColor: "#369e94", initials: "NH" },

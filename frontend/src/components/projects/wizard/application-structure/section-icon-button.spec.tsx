@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SectionIconButton } from "./section-icon-button";
 
-describe("SectionIconButton", () => {
+describe.sequential("SectionIconButton", () => {
 	afterEach(() => {
 		cleanup();
 	});

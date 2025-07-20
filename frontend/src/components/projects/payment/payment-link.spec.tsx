@@ -7,7 +7,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("PaymentLink", () => {
+describe.sequential("PaymentLink", () => {
 	it("opens the payment modal when the upgrade button is clicked", async () => {
 		const user = userEvent.setup();
 		const { container } = render(<PaymentLink />);

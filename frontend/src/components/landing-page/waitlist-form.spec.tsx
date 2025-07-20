@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { WaitlistForm } from "@/components/landing-page/waitlist-form";
@@ -30,12 +30,16 @@ vi.mock("sonner", async () => {
 	};
 });
 
-describe("WaitlistForm", () => {
+describe.sequential("WaitlistForm", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockSuccess.mockImplementation(() => {});
 		mockError.mockImplementation(() => {});
 		mockAnalyticsIdentify.mockResolvedValue(undefined);
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the form correctly", () => {

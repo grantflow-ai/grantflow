@@ -1,12 +1,16 @@
 import { cleanup, render } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import { IconSocialGoogle, IconSocialOrcid, IconTick } from "@/components/onboarding/icons";
 
-describe("Social Icon Components", () => {
+describe.sequential("Social Icon Components", () => {
 	afterEach(() => {
 		cleanup();
 	});
-	describe("IconSocialGoogle", () => {
+	describe.sequential("IconSocialGoogle", () => {
+		afterEach(() => {
+			cleanup();
+		});
 		it("renders with default props", () => {
 			const { container } = render(<IconSocialGoogle data-testid="test-icon" />);
 			const icon = container.querySelector('[data-testid="test-icon"]');
@@ -42,7 +46,10 @@ describe("Social Icon Components", () => {
 		});
 	});
 
-	describe("IconSocialOrcid", () => {
+	describe.sequential("IconSocialOrcid", () => {
+		afterEach(() => {
+			cleanup();
+		});
 		it("renders with default props", () => {
 			const { container } = render(<IconSocialOrcid data-testid="test-icon" />);
 			const icon = container.querySelector('[data-testid="test-icon"]');
@@ -78,7 +85,10 @@ describe("Social Icon Components", () => {
 		});
 	});
 
-	describe("IconTick", () => {
+	describe.sequential("IconTick", () => {
+		afterEach(() => {
+			cleanup();
+		});
 		it("renders with default props", () => {
 			const { container } = render(<IconTick data-testid="test-icon" />);
 			const icon = container.querySelector('[data-testid="test-icon"]');

@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import {
 	OnboardingGradientBackgroundBottom,
@@ -6,8 +7,14 @@ import {
 	StackedHighlight,
 } from "@/components/onboarding/backgrounds";
 
-describe("Onboarding Background Components", () => {
-	describe("OnboardingGradientBackgroundBottom", () => {
+describe.sequential("Onboarding Background Components", () => {
+	afterEach(() => {
+		cleanup();
+	});
+	describe.sequential("OnboardingGradientBackgroundBottom", () => {
+		afterEach(() => {
+			cleanup();
+		});
 		it("renders an svg", () => {
 			render(<OnboardingGradientBackgroundBottom />);
 			const element = screen.getByTestId("onboarding-gradient-background-bottom");
@@ -25,7 +32,10 @@ describe("Onboarding Background Components", () => {
 		});
 	});
 
-	describe("OnboardingGradientBackgroundTop", () => {
+	describe.sequential("OnboardingGradientBackgroundTop", () => {
+		afterEach(() => {
+			cleanup();
+		});
 		it("renders a svg", () => {
 			render(<OnboardingGradientBackgroundTop />);
 			const element = screen.getByTestId("onboarding-gradient-background-top");
@@ -43,7 +53,10 @@ describe("Onboarding Background Components", () => {
 		});
 	});
 
-	describe("StackedHighlight", () => {
+	describe.sequential("StackedHighlight", () => {
+		afterEach(() => {
+			cleanup();
+		});
 		it("renders a svg", () => {
 			render(<StackedHighlight />);
 			const element = screen.getByTestId("stacked-highlight");

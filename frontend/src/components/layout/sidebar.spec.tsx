@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { usePathname } from "next/navigation";
+import { afterEach } from "vitest";
 
 import { Sidebar } from "./sidebar";
 
@@ -15,7 +16,11 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-describe("Sidebar", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("Sidebar", () => {
 	beforeEach(() => {
 		vi.mocked(usePathname).mockReturnValue("/projects");
 	});

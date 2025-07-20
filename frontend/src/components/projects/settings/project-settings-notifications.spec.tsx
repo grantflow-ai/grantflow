@@ -1,12 +1,15 @@
 import { ProjectFactory } from "::testing/factories";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ProjectSettingsNotifications } from "./project-settings-notifications";
 
 const mockProject = ProjectFactory.build();
 
-describe("ProjectSettingsNotifications", () => {
+describe.sequential("ProjectSettingsNotifications", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders all notification settings", () => {
 		render(<ProjectSettingsNotifications projectId={mockProject.id} />);
 

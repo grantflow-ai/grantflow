@@ -1,10 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ArrowRight, User } from "lucide-react";
+import { afterEach, describe } from "vitest";
 
 import { AppButton } from "@/components/app/buttons/app-button";
 
-describe("AppButton", () => {
+describe.sequential("AppButton", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders children content", () => {
 		render(<AppButton data-testid="test-button">Click Me</AppButton>);
 

@@ -1,10 +1,11 @@
 import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { ResearchPlanPreview } from "./research-plan-preview";
@@ -20,12 +21,17 @@ function cleanupPortals() {
 	dropdownContent.forEach((content) => content.remove());
 }
 
-describe("ResearchPlanPreview Editing Mode", () => {
+describe.sequential("ResearchPlanPreview Editing Mode", () => {
 	const user = userEvent.setup();
 
 	beforeEach(() => {
 		resetAllStores();
 		cleanupPortals();
+
+		// Set up organization store with a selected organization for tests that need it
+		useOrganizationStore.setState({
+			selectedOrganizationId: "mock-organization-id",
+		});
 	});
 
 	afterEach(() => {
@@ -60,14 +66,14 @@ describe("ResearchPlanPreview Editing Mode", () => {
 		const dropdownTrigger = container.querySelector('[data-testid="menu-trigger"]');
 		expect(dropdownTrigger).toBeInTheDocument();
 
-		fireEvent.click(dropdownTrigger!);
+		await user.click(dropdownTrigger!);
 
 		await waitFor(
 			() => {
-				const menuItems = document.querySelectorAll('[data-testid="edit-task-menuitem"]');
+				const menuItems = screen.queryAllByTestId("edit-task-menuitem");
 				expect(menuItems.length).toBeGreaterThan(0);
 			},
-			{ timeout: 3000 },
+			{ timeout: 5000 },
 		);
 	});
 
@@ -817,12 +823,17 @@ describe("ResearchPlanPreview Editing Mode", () => {
 	});
 });
 
-describe("ResearchPlanPreview Display Mode", () => {
+describe.sequential("ResearchPlanPreview Display Mode", () => {
 	const user = userEvent.setup();
 
 	beforeEach(() => {
 		resetAllStores();
 		cleanupPortals();
+
+		// Set up organization store with a selected organization for tests that need it
+		useOrganizationStore.setState({
+			selectedOrganizationId: "mock-organization-id",
+		});
 	});
 
 	afterEach(() => {

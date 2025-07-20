@@ -64,11 +64,14 @@ vi.mock("next/image", () => ({
 	)),
 }));
 
-describe("AboutPage", () => {
+describe.sequential("AboutPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		cleanup();
 		render(<AboutPage />);
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the main content section correctly", () => {

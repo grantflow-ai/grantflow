@@ -1,13 +1,12 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, describe } from "vitest";
 
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 
-afterEach(() => {
-	cleanup();
-});
-
-describe("BenefitsList", () => {
+describe.sequential("BenefitsList", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders the component with correct structure", () => {
 		const { container } = render(<BenefitsList />);
 

@@ -159,8 +159,9 @@ test.describe("Landing Page", () => {
 			// Should navigate to login page
 			await expect(page).toHaveURL(/\/login/);
 		} else {
-			// Skip if login link is not visible (might be hidden on mobile)
-			test.skip();
+			// If login link is not visible, ensure we can still access login directly
+			await page.goto("/login");
+			await expect(page).toHaveURL(/\/login/);
 		}
 	});
 

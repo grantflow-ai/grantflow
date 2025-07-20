@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { deleteAccount } from "@/actions/user";
@@ -26,7 +26,7 @@ vi.mock("@/utils/logger", () => ({
 	},
 }));
 
-describe("DeleteAccountModal", () => {
+describe.sequential("DeleteAccountModal", () => {
 	const mockOnClose = vi.fn();
 	const mockPush = vi.fn();
 	const mockClearUser = vi.fn();
@@ -37,6 +37,10 @@ describe("DeleteAccountModal", () => {
 			push: mockPush,
 		} as any);
 		vi.mocked(useUserStore).mockReturnValue(mockClearUser);
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders modal content when open", () => {

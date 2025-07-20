@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { acceptInvitation } from "@/actions/project";
@@ -35,7 +35,11 @@ beforeEach(() => {
 	});
 });
 
-describe("AcceptInvitationPage", () => {
+describe.sequential("AcceptInvitationPage", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("should show loading spinner initially", () => {
 		mockGet.mockReturnValue("valid.jwt.token");
 

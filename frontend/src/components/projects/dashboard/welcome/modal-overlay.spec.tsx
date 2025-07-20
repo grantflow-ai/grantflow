@@ -1,5 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import { WelcomeModalContent, WelcomeModalOverlay } from "./modal-overlay";
 
@@ -8,7 +9,11 @@ function DialogWrapper({ children }: { children: React.ReactNode }) {
 	return <DialogPrimitive.Root open>{children}</DialogPrimitive.Root>;
 }
 
-describe("WelcomeModalContent", () => {
+describe.sequential("WelcomeModalContent", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders children correctly", () => {
 		render(
 			<DialogWrapper>
@@ -46,7 +51,11 @@ describe("WelcomeModalContent", () => {
 	});
 });
 
-describe("WelcomeModalOverlay", () => {
+describe.sequential("WelcomeModalOverlay", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders overlay with correct class", () => {
 		render(
 			<DialogWrapper>
