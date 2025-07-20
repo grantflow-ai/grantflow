@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import Footer from "@/components/layout/navigation/footer";
 import { PagePath } from "@/enums";
@@ -52,7 +53,11 @@ vi.mock("@/components/branding/logo", () => ({
 	),
 }));
 
-describe("Footer Component", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("Footer Component", () => {
 	describe("Basic Rendering", () => {
 		beforeEach(() => {
 			render(<Footer />);

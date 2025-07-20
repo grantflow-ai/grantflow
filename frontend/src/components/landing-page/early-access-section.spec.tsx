@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
 
@@ -45,9 +45,13 @@ vi.mock("./icons", () => ({
 		.mockImplementation(({ className }) => <svg className={className} data-testid="icon-benefit-4" />),
 }));
 
-describe("EarlyAccessSection", () => {
+describe.sequential("EarlyAccessSection", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the section with correct ID and aria label", () => {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import RootLayout from "@/app/layout";
 import { PagePath } from "@/enums";
@@ -32,7 +32,7 @@ vi.mock("dictionaries/i18n-config", () => ({
 	Locale: { en: "en", fr: "fr" },
 }));
 
-describe("RootLayout", () => {
+describe.sequential("RootLayout", () => {
 	vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://example.com");
 
 	beforeEach(() => {
@@ -47,6 +47,7 @@ describe("RootLayout", () => {
 	});
 
 	afterEach(() => {
+		cleanup();
 		vi.restoreAllMocks();
 	});
 

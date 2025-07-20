@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 const mockScrollYProgress = { get: () => 0.3, onChange: vi.fn() };
 const mockUseScroll = vi.fn().mockReturnValue({ scrollYProgress: mockScrollYProgress });
@@ -59,10 +59,14 @@ vi.mock("motion/react", () => {
 
 import { ScaleElement } from "./scale-element";
 
-describe("ScaleElement", () => {
+describe.sequential("ScaleElement", () => {
 	beforeEach(() => {
 		mockUseScroll.mockClear();
 		mockUseTransform.mockClear();
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders children correctly", () => {

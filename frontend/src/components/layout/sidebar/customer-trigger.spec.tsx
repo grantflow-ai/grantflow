@@ -7,7 +7,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("CustomSidebarTrigger", () => {
+describe.sequential("CustomSidebarTrigger", () => {
 	it("renders the sidebar trigger button and toggles sidebar state on click", () => {
 		const { container } = render(
 			<SidebarProvider>

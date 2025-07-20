@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import LandingPage from "@/app/(public-pages)/page";
 
@@ -81,7 +81,11 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-describe("LandingPage", () => {
+describe.sequential("LandingPage", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders all major sections", async () => {
 		const { container } = render(await LandingPage());
 
@@ -135,7 +139,11 @@ describe("LandingPage", () => {
 	});
 });
 
-describe("Accessibility", () => {
+describe.sequential("Accessibility", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	beforeEach(async () => {
 		render(await LandingPage());
 	});

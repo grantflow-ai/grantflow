@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { SidebarProvider } from "@/components/ui/sidebar"; // adjust path if needed
 import { AppSidebar } from "./app-sidebar";
 
-describe("AppSidebar", () => {
+describe.sequential("AppSidebar", () => {
 	afterEach(() => {
 		cleanup();
 	});

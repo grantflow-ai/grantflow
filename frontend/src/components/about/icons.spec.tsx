@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, describe } from "vitest";
 
 import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/about/icons";
 
@@ -14,7 +14,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("All About Icons", () => {
+describe.sequential("All About Icons", () => {
 	it("should render all icons without crashing", () => {
 		allIcons.forEach(({ Component, name }) => {
 			const { unmount } = render(<Component data-testid={`test-${name}`} />);
@@ -44,7 +44,7 @@ describe("All About Icons", () => {
 	});
 });
 
-describe("IconDraft", () => {
+describe.sequential("IconDraft", () => {
 	it("renders with default props", () => {
 		const { container } = render(<IconDraft data-testid="icon-draft-default" />);
 		const icon = container.querySelector('[data-testid="icon-draft-default"]');
@@ -71,7 +71,7 @@ describe("IconDraft", () => {
 	});
 });
 
-describe("IconHourglass", () => {
+describe.sequential("IconHourglass", () => {
 	it("renders with default props", () => {
 		const { container } = render(<IconHourglass data-testid="icon-hourglass-default" />);
 		const icon = container.querySelector('[data-testid="icon-hourglass-default"]');
@@ -98,7 +98,7 @@ describe("IconHourglass", () => {
 	});
 });
 
-describe("IconOrganize", () => {
+describe.sequential("IconOrganize", () => {
 	it("renders with default props", () => {
 		const { container } = render(<IconOrganize data-testid="icon-organize-default" />);
 		const icon = container.querySelector('[data-testid="icon-organize-default"]');
@@ -125,7 +125,7 @@ describe("IconOrganize", () => {
 	});
 });
 
-describe("IconRefine", () => {
+describe.sequential("IconRefine", () => {
 	it("renders with default props", () => {
 		const { container } = render(<IconRefine data-testid="icon-refine-default" />);
 		const icon = container.querySelector('[data-testid="icon-refine-default"]');

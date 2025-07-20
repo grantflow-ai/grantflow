@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach } from "vitest";
+import { afterEach, describe } from "vitest";
 
 import {
 	AppDialog,
@@ -55,7 +55,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("AppDialog", () => {
+describe.sequential("AppDialog", () => {
 	it("renders children within dialog", () => {
 		const { container } = render(
 			<AppDialog open>
@@ -79,7 +79,7 @@ describe("AppDialog", () => {
 	});
 });
 
-describe("AppDialogContent", () => {
+describe.sequential("AppDialogContent", () => {
 	it("renders with testid and default showCloseButton", () => {
 		const { container } = render(<AppDialogContent>Content</AppDialogContent>);
 
@@ -104,7 +104,7 @@ describe("AppDialogContent", () => {
 	});
 });
 
-describe("AppDialogTrigger", () => {
+describe.sequential("AppDialogTrigger", () => {
 	it("renders trigger element", () => {
 		const { container } = render(
 			<AppDialogTrigger>
@@ -117,7 +117,7 @@ describe("AppDialogTrigger", () => {
 	});
 });
 
-describe("AppDialogHeader", () => {
+describe.sequential("AppDialogHeader", () => {
 	it("renders header with custom className", () => {
 		const { container } = render(<AppDialogHeader className="custom-header">Header</AppDialogHeader>);
 
@@ -125,7 +125,7 @@ describe("AppDialogHeader", () => {
 	});
 });
 
-describe("AppDialogTitle", () => {
+describe.sequential("AppDialogTitle", () => {
 	it("renders title with custom className", () => {
 		const { container } = render(<AppDialogTitle className="custom-title">Title</AppDialogTitle>);
 
@@ -133,7 +133,7 @@ describe("AppDialogTitle", () => {
 	});
 });
 
-describe("AppDialogDescription", () => {
+describe.sequential("AppDialogDescription", () => {
 	it("renders description with custom className", () => {
 		const { container } = render(<AppDialogDescription className="custom-desc">Description</AppDialogDescription>);
 
@@ -141,7 +141,7 @@ describe("AppDialogDescription", () => {
 	});
 });
 
-describe("AppDialogFooter", () => {
+describe.sequential("AppDialogFooter", () => {
 	it("renders footer with custom className", () => {
 		const { container } = render(<AppDialogFooter className="custom-footer">Footer</AppDialogFooter>);
 

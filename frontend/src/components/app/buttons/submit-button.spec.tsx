@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import { SubmitButton } from "./submit-button";
 
-describe("SubmitButton", () => {
+describe.sequential("SubmitButton", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with children when not loading", () => {
 		render(<SubmitButton>Submit</SubmitButton>);
 

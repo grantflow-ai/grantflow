@@ -112,18 +112,72 @@ vi.mock("@segment/analytics-next", () => ({
 	},
 }));
 
+// Mock server actions that use cookies (grant-applications module was removed)
+
 // Mock the segment utils to prevent errors
+const mockAnalyticsInstance = {
+	_loadOptions: {},
+	_writeKey: "M5CP7BfkccD2I8k11pFE5qAcFjibdUyn",
+	addDestinationMiddleware: vi.fn().mockResolvedValue(undefined),
+	addIntegrationMiddleware: vi.fn().mockResolvedValue(undefined),
+	addSourceMiddleware: vi.fn().mockResolvedValue(undefined),
+	alias: vi.fn().mockResolvedValue(undefined),
+	debug: vi.fn().mockResolvedValue(undefined),
+	factory: vi.fn(),
+	group: vi.fn().mockResolvedValue(undefined),
+	identify: vi.fn().mockResolvedValue(undefined),
+	// Properties that Segment might access
+	initialized: true,
+	invoked: true,
+	load: vi.fn(),
+	methods: [
+		"trackSubmit",
+		"trackClick",
+		"trackLink",
+		"trackForm",
+		"pageview",
+		"identify",
+		"reset",
+		"group",
+		"track",
+		"ready",
+		"alias",
+		"debug",
+		"page",
+		"screen",
+		"once",
+		"off",
+		"on",
+		"addSourceMiddleware",
+		"addIntegrationMiddleware",
+		"setAnonymousId",
+		"addDestinationMiddleware",
+		"register",
+	],
+	off: vi.fn().mockResolvedValue(undefined),
+	on: vi.fn().mockResolvedValue(undefined),
+	once: vi.fn().mockResolvedValue(undefined),
+	page: vi.fn().mockResolvedValue(undefined),
+	pageview: vi.fn().mockResolvedValue(undefined),
+	push: vi.fn(),
+	ready: vi.fn().mockResolvedValue(undefined),
+	register: vi.fn().mockResolvedValue(undefined),
+	reset: vi.fn().mockResolvedValue(undefined),
+	screen: vi.fn().mockResolvedValue(undefined),
+	setAnonymousId: vi.fn().mockResolvedValue(undefined),
+	SNIPPET_VERSION: "5.2.0",
+	track: vi.fn().mockResolvedValue(undefined),
+	trackClick: vi.fn().mockResolvedValue(undefined),
+	trackForm: vi.fn().mockResolvedValue(undefined),
+	trackLink: vi.fn().mockResolvedValue(undefined),
+	// Add all the methods that the Segment snippet creates
+	trackSubmit: vi.fn().mockResolvedValue(undefined),
+};
+
 vi.mock("@/utils/segment", () => ({
-	analytics: { value: null },
+	analytics: { value: mockAnalyticsInstance },
 	analyticsIdentify: vi.fn().mockResolvedValue(undefined),
-	getAnalytics: vi.fn().mockReturnValue({
-		alias: vi.fn().mockResolvedValue(undefined),
-		group: vi.fn().mockResolvedValue(undefined),
-		identify: vi.fn().mockResolvedValue(undefined),
-		page: vi.fn().mockResolvedValue(undefined),
-		reset: vi.fn().mockResolvedValue(undefined),
-		track: vi.fn().mockResolvedValue(undefined),
-	}),
+	getAnalytics: vi.fn().mockReturnValue(mockAnalyticsInstance),
 }));
 
 export {
@@ -164,6 +218,59 @@ beforeAll(() => {
 	HTMLDialogElement.prototype.showModal = mockShowModal;
 
 	globalThis.ResizeObserver = mockResizeObserver;
+
+	// Mock IntersectionObserver
+	globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
+		disconnect: vi.fn(),
+		observe: vi.fn(),
+		root: null,
+		rootMargin: "",
+		thresholds: [],
+		unobserve: vi.fn(),
+	})) as any;
+
+	// Set analytics and other browser APIs directly on globalThis
+	// Make analytics behave like an array with push method (as per Segment snippet)
+	(globalThis as any).analytics = Object.assign([], mockAnalyticsInstance);
+
+	// Mock navigator.clipboard if it doesn't exist
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (!globalThis.navigator) {
+		globalThis.navigator = {} as Navigator;
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (!globalThis.navigator.clipboard) {
+		Object.defineProperty(globalThis.navigator, "clipboard", {
+			configurable: true,
+			value: {
+				readText: vi.fn().mockResolvedValue(""),
+				writeText: vi.fn().mockResolvedValue(undefined),
+			} as unknown as Clipboard,
+			writable: true,
+		});
+	}
+
+	// Mock file input .item() method for user-event
+	const originalFileListDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "files");
+	Object.defineProperty(HTMLInputElement.prototype, "files", {
+		configurable: true,
+		get() {
+			const files = originalFileListDescriptor?.get?.call(this) ?? this._files ?? [];
+			if (files && !files.item && Array.isArray(files)) {
+				(files as any).item = (index: number) => files[index] ?? null;
+			}
+			return files;
+		},
+		set(value) {
+			if (originalFileListDescriptor?.set) {
+				originalFileListDescriptor.set.call(this, value);
+			}
+			this._files = value;
+			if (value && !value.item) {
+				value.item = (index: number) => value[index] ?? null;
+			}
+		},
+	});
 });
 
 beforeEach(() => {

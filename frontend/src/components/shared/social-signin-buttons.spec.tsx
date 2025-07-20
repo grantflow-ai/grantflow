@@ -1,9 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, describe } from "vitest";
 
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 
-describe("SocialSigninButton", () => {
+describe.sequential("SocialSigninButton", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders Google button correctly", () => {
 		render(<SocialSigninButton isLoading={false} onClick={async () => {}} platform="google" />);
 

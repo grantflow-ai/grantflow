@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe } from "vitest";
 
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 
-describe("AuthCardHeader", () => {
+describe.sequential("AuthCardHeader", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders the title and description correctly", () => {
 		render(<AuthCardHeader description="Enter your credentials to access your account" title="Sign In" />);
 

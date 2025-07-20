@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -8,7 +9,11 @@ import { NavMain } from "./nav-main";
 vi.mock("@/stores/navigation-store");
 vi.mock("@/stores/project-store");
 
-describe("NavMain", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("NavMain", () => {
 	beforeEach(() => {
 		vi.mocked(useNavigationStore).mockReturnValue({
 			activeApplicationId: null,

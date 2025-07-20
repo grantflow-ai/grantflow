@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import TermsPage from "@/app/(public-pages)/terms/page";
 
@@ -23,7 +23,11 @@ vi.mock("@/components/shared/info-legal-page-components", () => ({
 	),
 }));
 
-describe("TermsPage", () => {
+describe.sequential("TermsPage", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 		render(<TermsPage />);

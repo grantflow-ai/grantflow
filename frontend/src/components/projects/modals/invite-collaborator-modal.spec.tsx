@@ -9,7 +9,7 @@ const getLatestModal = async () => {
 	return modals.at(-1)!;
 };
 
-describe("InviteCollaboratorModal", () => {
+describe.sequential("InviteCollaboratorModal", () => {
 	const mockOnClose = vi.fn();
 	const mockOnInvite = vi.fn();
 

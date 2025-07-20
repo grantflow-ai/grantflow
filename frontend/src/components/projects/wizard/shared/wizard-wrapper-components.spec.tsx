@@ -18,7 +18,7 @@ vi.mock("next/navigation", () => ({
 	}),
 }));
 
-describe("getStepIcon", () => {
+describe.sequential("getStepIcon", () => {
 	it("returns done icon for done status", () => {
 		const icon = getStepIcon("done");
 		expect(icon.props.alt).toBe("Step done");
@@ -38,7 +38,7 @@ describe("getStepIcon", () => {
 	});
 });
 
-describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
+describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
@@ -64,7 +64,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 	});
 
-	describe("Navigation Button Visibility", () => {
+	describe.sequential("Navigation Button Visibility", () => {
 		it("displays back button for steps after the first", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -84,7 +84,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 	});
 
-	describe("Action Button Configuration", () => {
+	describe.sequential("Action Button Configuration", () => {
 		it("displays approval action on step 2", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -117,7 +117,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 	});
 
-	describe("Button State Management", () => {
+	describe.sequential("Button State Management", () => {
 		it("enables continue button when step validation passes", () => {
 			// Mock validateStepNext to return true
 			const mockValidateStepNext = vi.fn(() => true);
@@ -161,7 +161,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 		});
 	});
 
-	describe("Continue Button Behavior", () => {
+	describe.sequential("Continue Button Behavior", () => {
 		it("calls toNextStep when continue button is clicked", async () => {
 			const user = userEvent.setup();
 			const mockToNextStep = vi.fn();
@@ -180,7 +180,7 @@ describe("WizardFooter - Grant Application Wizard Navigation Controls", () => {
 	});
 });
 
-describe("WizardHeader", () => {
+describe.sequential("WizardHeader", () => {
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
@@ -204,7 +204,7 @@ describe("WizardHeader", () => {
 		});
 	});
 
-	describe("Header Information Display", () => {
+	describe.sequential("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
@@ -249,7 +249,7 @@ describe("WizardHeader", () => {
 		});
 	});
 
-	describe("Progress Bar Display", () => {
+	describe.sequential("Progress Bar Display", () => {
 		it("always displays step indicators", () => {
 			render(<WizardHeader />);
 
@@ -263,7 +263,7 @@ describe("WizardHeader", () => {
 		});
 	});
 
-	describe("Exit Button Functionality", () => {
+	describe.sequential("Exit Button Functionality", () => {
 		beforeEach(() => {
 			mockPush.mockClear();
 		});
@@ -330,7 +330,7 @@ describe("WizardHeader", () => {
 	});
 });
 
-describe("StepIndicator", () => {
+describe.sequential("StepIndicator", () => {
 	it("renders active step indicator", () => {
 		render(<StepIndicator isLastStep={false} type="active" />);
 

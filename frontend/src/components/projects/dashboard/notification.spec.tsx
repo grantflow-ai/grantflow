@@ -1,8 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach } from "vitest";
 import { Notification } from "./notification";
 
-describe("Notification component", () => {
+describe.sequential("Notification component", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("shows notification dropdown and items when triggered", async () => {
 		const user = userEvent.setup();
 		render(<Notification />);

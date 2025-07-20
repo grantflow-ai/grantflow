@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { assert, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, describe, expect, it, vi } from "vitest";
 
 import { Editor } from "./editor";
 
@@ -30,7 +30,10 @@ HTMLElement.prototype.getClientRects = (): DOMRectList => new FakeDOMRectList();
 Range.prototype.getBoundingClientRect = getBoundingClientRect;
 Range.prototype.getClientRects = (): DOMRectList => new FakeDOMRectList();
 
-describe("Editor", () => {
+describe.sequential("Editor", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders with initial content", () => {
 		const initialContent = "<p>Initial content</p>";
 		render(<Editor content={initialContent} onContentUpdate={() => {}} />);

@@ -7,7 +7,7 @@ afterEach(() => {
 	cleanup();
 });
 
-describe("GenerateCompleteStep", () => {
+describe.sequential("GenerateCompleteStep", () => {
 	it("renders step content", () => {
 		const { container } = render(<GenerateCompleteStep />);
 

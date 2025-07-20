@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import DefaultLayout from "@/app/(default)/layout";
 
@@ -6,7 +6,11 @@ vi.mock("@/components/layout/shared-layout", () => ({
 	default: vi.fn().mockImplementation(({ children }) => <div data-testid="mock-shared-layout">{children}</div>),
 }));
 
-describe("DefaultLayout", () => {
+describe.sequential("DefaultLayout", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	it("renders with SharedLayout wrapper", () => {
 		render(<DefaultLayout>Test Content</DefaultLayout>);
 

@@ -20,7 +20,7 @@ vi.mock("./rag-sources-footer", () => ({
 	),
 }));
 
-describe("createRagSourcesDialog", () => {
+describe.sequential("createRagSourcesDialog", () => {
 	afterEach(() => {
 		cleanup();
 	});

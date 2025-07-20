@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { AnimatedFeatureArticle } from "./feature-articles-animated";
 
@@ -94,7 +94,7 @@ vi.mock("motion/react", () => {
 	};
 });
 
-describe("Animated Feature Articles", () => {
+describe.sequential("Animated Feature Articles", () => {
 	const props = {
 		className: "test-class",
 		featureDescription: "Test feature description text.",
@@ -103,6 +103,10 @@ describe("Animated Feature Articles", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders with correct structure and content", () => {

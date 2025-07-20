@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import SharedLayout from "./shared-layout";
 
@@ -27,7 +28,11 @@ vi.mock("@/components/ui/sonner", () => ({
 	Toaster: () => <div data-testid="toaster" />,
 }));
 
-describe("SharedLayout", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("SharedLayout", () => {
 	it("renders children within theme provider", () => {
 		render(
 			<SharedLayout>
