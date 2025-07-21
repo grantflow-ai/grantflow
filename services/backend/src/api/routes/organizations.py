@@ -26,6 +26,7 @@ class CreateOrganizationRequestBody(TypedDict):
     contact_email: NotRequired[str | None]
     contact_person_name: NotRequired[str | None]
     institutional_affiliation: NotRequired[str | None]
+    firebase_uid: str  
 
 
 class UpdateOrganizationRequestBody(TypedDict):
@@ -76,16 +77,22 @@ async def handle_create_organization(
     data: CreateOrganizationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
-    logger.info("Creating organization", uid=request.auth)
+    
+    firebase_uid = data["firebase_uid"]
+    logger.info("Creating organization", uid=firebase_uid)
+
+    
+    org_data = {k: v for k, v in data.items() if k != "firebase_uid"}
+
     async with session_maker() as session, session.begin():
         try:
-            organization = await session.scalar(insert(Organization).values(data).returning(Organization))
+            organization = await session.scalar(insert(Organization).values(org_data).returning(Organization))
 
             await session.execute(
                 insert(OrganizationUser).values(
                     {
                         "organization_id": organization.id,
-                        "firebase_uid": request.auth,
+                        "firebase_uid": firebase_uid,
                         "role": UserRoleEnum.OWNER,
                         "has_all_projects_access": True,
                     }
@@ -105,34 +112,50 @@ async def handle_create_organization(
 async def handle_list_organizations(
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
+    firebase_uid: str | None = None,  
 ) -> list[OrganizationListItemResponse]:
-    logger.info("Listing organizations for user", uid=request.auth)
+    
+    uid = firebase_uid if firebase_uid else request.auth
+    if not uid:
+        raise ValidationException("firebase_uid parameter required for admin API calls")
+
+    logger.info("Listing organizations for user", uid=uid)
 
     async with session_maker() as session:
-        organizations = list(
-            await session.scalars(
-                select(Organization)
-                .join(OrganizationUser)
-                .where(OrganizationUser.firebase_uid == request.auth)
-                .where(Organization.deleted_at.is_(None))
+        
+        from sqlalchemy.orm import joinedload
+
+        result_set = await session.execute(
+            select(Organization)
+            .join(OrganizationUser)
+            .where(OrganizationUser.firebase_uid == uid)
+            .where(Organization.deleted_at.is_(None))
+            .options(
+                joinedload(Organization.organization_users),
+                joinedload(Organization.projects),
             )
         )
+        organizations = list(result_set.scalars().unique())
 
-    return [
-        OrganizationListItemResponse(
-            id=str(org.id),
-            name=org.name,
-            description=org.description,
-            logo_url=org.logo_url,
-            role=next(
-                (ou.role for ou in org.organization_users if ou.firebase_uid == request.auth),
-                UserRoleEnum.COLLABORATOR,
-            ),
-            projects_count=len([p for p in org.projects if not p.deleted_at]),
-            members_count=len([ou for ou in org.organization_users if not ou.deleted_at]),
-        )
-        for org in organizations
-    ]
+        
+        result = []
+        for org in organizations:
+            result.append(
+                OrganizationListItemResponse(
+                    id=str(org.id),
+                    name=org.name,
+                    description=org.description,
+                    logo_url=org.logo_url,
+                    role=next(
+                        (ou.role for ou in org.organization_users if ou.firebase_uid == uid),
+                        UserRoleEnum.COLLABORATOR,
+                    ),
+                    projects_count=len([p for p in org.projects if not p.deleted_at]),
+                    members_count=len([ou for ou in org.organization_users if not ou.deleted_at]),
+                )
+            )
+
+    return result
 
 
 @get("/organizations/{organization_id:uuid}", operation_id="GetOrganization")
@@ -288,6 +311,7 @@ async def handle_delete_organization(
     "/organizations/{organization_id:uuid}/restore",
     allowed_roles=[UserRoleEnum.OWNER],
     operation_id="RestoreOrganization",
+    status_code=200,
 )
 async def handle_restore_organization(
     request: APIRequest,
@@ -298,7 +322,11 @@ async def handle_restore_organization(
 
     async with session_maker() as session, session.begin():
         try:
-            organization = await session.scalar(select(Organization).where(Organization.id == organization_id))
+            
+            organization = await session.scalar(
+                select(Organization)
+                .where(Organization.id == organization_id)
+            )
 
             if not organization:
                 raise ValidationException("Organization not found")
@@ -308,10 +336,30 @@ async def handle_restore_organization(
 
             organization.restore()
 
+            
+            await session.flush()
+
+            
+            await session.refresh(organization)
+
             user_org = await session.scalar(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
                 .where(OrganizationUser.firebase_uid == request.auth)
+            )
+
+            
+            response_data = OrganizationResponse(
+                id=str(organization.id),
+                name=organization.name,
+                description=organization.description,
+                logo_url=organization.logo_url,
+                contact_email=organization.contact_email,
+                contact_person_name=organization.contact_person_name,
+                institutional_affiliation=organization.institutional_affiliation,
+                role=user_org.role,
+                created_at=organization.created_at.isoformat(),
+                updated_at=organization.updated_at.isoformat(),
             )
 
             await session.commit()
@@ -338,15 +386,4 @@ async def handle_restore_organization(
     except Exception as e:
         logger.warning("Failed to cancel organization deletion in Firestore", exc_info=e)
 
-    return OrganizationResponse(
-        id=str(organization.id),
-        name=organization.name,
-        description=organization.description,
-        logo_url=organization.logo_url,
-        contact_email=organization.contact_email,
-        contact_person_name=organization.contact_person_name,
-        institutional_affiliation=organization.institutional_affiliation,
-        role=user_org.role,
-        created_at=organization.created_at.isoformat(),
-        updated_at=organization.updated_at.isoformat(),
-    )
+    return response_data
