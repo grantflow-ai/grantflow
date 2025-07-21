@@ -41,10 +41,10 @@ pre-commit:
             glob: "*.py"
             run: uv run mypy {staged_files}
 
-        uncomment:
-            glob: "*.py"
-            run: uv run uncomment --remove-doc {staged_files}
-            stage_fixed: true
+        # uncomment:
+        #     glob: "*.py"
+        #     run: uv run uncomment --remove-doc {staged_files}
+        #     stage_fixed: true
 
         ai-rulez:
             glob: "**/ai-rulez.yaml"
