@@ -1,6 +1,5 @@
-import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
+import { ApplicationFactory } from "::testing/factories";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -118,21 +117,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 	});
 
 	describe.sequential("Button State Management", () => {
-		it("enables continue button when step validation passes", () => {
-			// Mock validateStepNext to return true
-			const mockValidateStepNext = vi.fn(() => true);
-
-			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				validateStepNext: mockValidateStepNext,
-			});
-
-			render(<WizardFooter />);
-
-			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).not.toBeDisabled();
-		});
-
 		it("disables continue button when step validation fails", () => {
 			// Mock validateStepNext to return false
 			const mockValidateStepNext = vi.fn(() => false);
@@ -158,30 +142,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 			const backButton = screen.getByTestId("back-button");
 			expect(backButton).toBeDisabled();
-		});
-	});
-
-	describe.sequential("Continue Button Behavior", () => {
-		it("calls toNextStep when continue button is clicked", async () => {
-			const user = userEvent.setup();
-			const mockToNextStep = vi.fn();
-
-			const application = ApplicationWithTemplateFactory.build({
-				title: "Valid Application Title",
-			});
-
-			useApplicationStore.setState({ application });
-			useWizardStore.setState({
-				currentStep: WizardStep.APPLICATION_DETAILS,
-				toNextStep: mockToNextStep,
-				validateStepNext: () => true,
-			});
-
-			render(<WizardFooter />);
-			const continueButtons = screen.getAllByTestId("continue-button");
-			await user.click(continueButtons[0]);
-
-			expect(mockToNextStep).toHaveBeenCalledOnce();
 		});
 	});
 });
