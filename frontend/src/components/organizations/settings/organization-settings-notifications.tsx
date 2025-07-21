@@ -8,8 +8,8 @@ interface NotificationSettings {
 	emailNotifications: boolean;
 }
 
-interface ProjectSettingsNotificationsProps {
-	projectId: string;
+interface OrganizationSettingsNotificationsProps {
+	organizationId: string;
 }
 
 interface ToggleSwitchProps {
@@ -18,7 +18,9 @@ interface ToggleSwitchProps {
 	onChange: () => void;
 }
 
-export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectSettingsNotificationsProps) {
+export function OrganizationSettingsNotifications({
+	organizationId: _organizationId,
+}: OrganizationSettingsNotificationsProps) {
 	const [settings, setSettings] = useState<NotificationSettings>({
 		collaborationActivity: true,
 		deadlineReminders: true,
@@ -33,7 +35,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 	};
 
 	return (
-		<div className="w-full" data-testid="project-settings-notifications">
+		<div className="w-full" data-testid="organization-settings-notifications">
 			<div className="mb-8">
 				<h2 className="text-[16px] font-heading font-semibold text-app-black mb-2">
 					General Email Notifications
@@ -52,7 +54,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.emailNotifications}
-						data-testid="email-notifications-toggle"
+						data-testid="organization-email-notifications-toggle"
 						onChange={() => {
 							handleToggle("emailNotifications");
 						}}
@@ -68,7 +70,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.deadlineReminders}
-						data-testid="deadline-reminders-toggle"
+						data-testid="organization-deadline-reminders-toggle"
 						onChange={() => {
 							handleToggle("deadlineReminders");
 						}}
@@ -91,7 +93,7 @@ export function ProjectSettingsNotifications({ projectId: _projectId }: ProjectS
 					</div>
 					<ToggleSwitch
 						checked={settings.collaborationActivity}
-						data-testid="collaboration-activity-toggle"
+						data-testid="organization-collaboration-activity-toggle"
 						onChange={() => {
 							handleToggle("collaborationActivity");
 						}}
