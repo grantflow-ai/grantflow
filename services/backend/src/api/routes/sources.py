@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict
 from uuid import UUID
 
 from litestar import delete, get, post
@@ -22,6 +22,7 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import (
+    EntityType,
     construct_object_uri,
     create_signed_upload_url,
     delete_blob,
@@ -74,6 +75,26 @@ class UrlCrawlingResponse(TypedDict):
     source_id: UUID
 
 
+def determine_entity_info(
+    application_id: UUID | None = None,
+    template_id: UUID | None = None,
+    granting_institution_id: UUID | None = None,
+    organization_id: UUID | None = None,
+) -> tuple["ParentType", UUID, EntityType, UUID]:
+    """Determine parent type, parent ID, entity type, and entity ID from parameters."""
+    if application_id:
+        if not organization_id:
+            raise BackendError("organization_id required for grant application sources")
+        return "grant_application", application_id, "organization", organization_id
+    if granting_institution_id:
+        return "granting_institution", granting_institution_id, "granting_institution", granting_institution_id
+    if template_id:
+        if not organization_id:
+            raise BackendError("organization_id required for grant template sources")
+        return "grant_template", template_id, "organization", organization_id
+    raise BackendError("Missing parent_id")
+
+
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
     def _create_operation_id(_: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]) -> str:
         if "applications" in paths:
@@ -87,28 +108,20 @@ def _create_operation_id_creator(key: str) -> OperationIDCreator:
 
 async def handle_create_rag_source(
     session_maker: async_sessionmaker[Any],
-    project_id: UUID | None,
     url: str | None = None,
     blob_name: str | None = None,
     mime_type: str | None = None,
     application_id: UUID | None = None,
     organization_id: UUID | None = None,
+    granting_institution_id: UUID | None = None,
     template_id: UUID | None = None,
 ) -> UUID:
-    parent_type: ParentType
-    parent_id: UUID
-
-    if application_id:
-        parent_type = "grant_application"
-        parent_id = application_id
-    elif organization_id:
-        parent_type = "granting_institution"
-        parent_id = organization_id
-    elif template_id:
-        parent_type = "grant_template"
-        parent_id = template_id
-    else:
-        raise BackendError("Missing parent_id")
+    parent_type, parent_id, entity_type, entity_id = determine_entity_info(
+        application_id=application_id,
+        template_id=template_id,
+        granting_institution_id=granting_institution_id,
+        organization_id=organization_id,
+    )
 
     async with session_maker() as session, session.begin():
         try:
@@ -123,7 +136,7 @@ async def handle_create_rag_source(
             )
             if rag_source:
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
-                    return cast("UUID", rag_source.id)
+                    return UUID(str(rag_source.id))
 
                 rag_source.soft_delete()
 
@@ -157,8 +170,6 @@ async def handle_create_rag_source(
             else:
                 if not blob_name:
                     raise BackendError("Missing blob_name for file source")
-                if not project_id and parent_type != "granting_institution":
-                    raise BackendError("Missing project_id for file source")
 
                 await session.execute(
                     insert(RagFile).values(
@@ -170,8 +181,8 @@ async def handle_create_rag_source(
                                 "size": 0,
                                 "bucket_name": "",
                                 "object_path": construct_object_uri(
-                                    project_id=project_id,
-                                    parent_id=parent_id,
+                                    entity_type=entity_type,
+                                    entity_id=entity_id,
                                     source_id=source_id,
                                     blob_name=blob_name,
                                 ),
@@ -213,7 +224,7 @@ async def handle_create_rag_source(
                 parent_type=parent_type,
                 parent_id=parent_id,
             )
-            return cast("UUID", source_id)
+            return UUID(str(source_id))
         except SQLAlchemyError as e:
             logger.exception(
                 "Error creating rag source",
@@ -229,7 +240,6 @@ async def handle_create_rag_source(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
-        "/organizations/{organization_id:uuid}/sources",
         "/granting-institutions/{granting_institution_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -265,7 +275,6 @@ async def handle_retrieve_rag_sources(
                 .where(GrantTemplateSource.grant_template_id == template_id)
             )
         else:
-            
             institution_id = granting_institution_id if granting_institution_id else organization_id
             stmt = (
                 select(rag_poly)
@@ -310,7 +319,6 @@ async def handle_retrieve_rag_sources(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
-        "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
         "/granting-institutions/{granting_institution_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -348,7 +356,6 @@ async def handle_delete_rag_source(
                 )
             )
         else:
-            
             institution_id = granting_institution_id if granting_institution_id else organization_id
             statement = (
                 select(rag_poly)
@@ -364,21 +371,20 @@ async def handle_delete_rag_source(
             source = result.scalar_one()
 
             if application_id:
-                app_with_project = await session.scalar(
-                    select(GrantApplication)
-                    .join(Project)
+                audit_org_id = await session.scalar(
+                    select(Project.organization_id)
+                    .join(GrantApplication)
                     .where(
                         GrantApplication.id == application_id,
                         GrantApplication.deleted_at.is_(None),
                         Project.deleted_at.is_(None),
                     )
                 )
-                audit_org_id = app_with_project.project.organization_id if app_with_project else None
             elif template_id:
-                template_with_app = await session.scalar(
-                    select(GrantTemplate)
+                audit_org_id = await session.scalar(
+                    select(Project.organization_id)
                     .join(GrantApplication)
-                    .join(Project)
+                    .join(GrantTemplate)
                     .where(
                         GrantTemplate.id == template_id,
                         GrantTemplate.deleted_at.is_(None),
@@ -386,11 +392,7 @@ async def handle_delete_rag_source(
                         Project.deleted_at.is_(None),
                     )
                 )
-                audit_org_id = (
-                    template_with_app.grant_application.project.organization_id if template_with_app else None
-                )
             else:
-                
                 audit_org_id = granting_institution_id if granting_institution_id else organization_id
 
             if audit_org_id:
@@ -442,7 +444,6 @@ async def handle_delete_rag_source(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
-        "/organizations/{organization_id:uuid}/sources/upload-url",
         "/granting-institutions/{granting_institution_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -469,33 +470,32 @@ async def handle_create_upload_url(
             },
         )
 
-    if not project_id and not organization_id:
-        raise ValidationError("Either project_id or organization_id must be provided")
+    if not project_id and not organization_id and not granting_institution_id:
+        raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
 
     source_id = await handle_create_rag_source(
         application_id=application_id,
         blob_name=blob_name,
         mime_type=mime_type,
         organization_id=organization_id,
+        granting_institution_id=granting_institution_id,
         session_maker=session_maker,
         template_id=template_id,
-        project_id=project_id,
     )
 
-    if application_id:
-        parent_id = application_id
-    elif organization_id:
-        parent_id = organization_id
-    elif template_id:
-        parent_id = template_id
-    else:
-        raise ValidationError("One of application_id, organization_id, or template_id must be provided")
+    
+    _, _, entity_type, entity_id = determine_entity_info(
+        application_id=application_id,
+        template_id=template_id,
+        granting_institution_id=granting_institution_id,
+        organization_id=organization_id,
+    )
 
     trace_id = get_trace_id(request)
 
     url = await create_signed_upload_url(
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
         trace_id=trace_id,
@@ -508,7 +508,7 @@ async def handle_create_upload_url(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
-        "/organizations/{organization_id:uuid}/sources/crawl-url",
+        "/granting-institutions/{granting_institution_id:uuid}/sources/crawl-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Crawl{value}Url"),
@@ -517,7 +517,8 @@ async def handle_crawl_url(
     session_maker: async_sessionmaker[Any],
     data: UrlCrawlingRequest,
     request: APIRequest,
-    organization_id: UUID,
+    organization_id: UUID | None = None,
+    granting_institution_id: UUID | None = None,
     application_id: UUID | None = None,
     template_id: UUID | None = None,
     project_id: UUID | None = None,
@@ -531,36 +532,36 @@ async def handle_crawl_url(
         trace_id=trace_id,
         application_id=str(application_id) if application_id else None,
         organization_id=str(organization_id) if organization_id else None,
+        granting_institution_id=str(granting_institution_id) if granting_institution_id else None,
         template_id=str(template_id) if template_id else None,
     )
 
-    if not project_id and not organization_id:
-        raise ValidationError("Either project_id or organization_id must be provided")
+    if not project_id and not organization_id and not granting_institution_id:
+        raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
 
     source_id = await handle_create_rag_source(
         session_maker=session_maker,
-        project_id=project_id,
         url=url,
         application_id=application_id,
         organization_id=organization_id,
+        granting_institution_id=granting_institution_id,
         template_id=template_id,
     )
 
-    if application_id:
-        parent_id = application_id
-    elif organization_id:
-        parent_id = organization_id
-    elif template_id:
-        parent_id = template_id
-    else:
-        raise ValidationError("One of application_id, organization_id, or template_id must be provided")
+    
+    _, _, entity_type, entity_id = determine_entity_info(
+        application_id=application_id,
+        template_id=template_id,
+        granting_institution_id=granting_institution_id,
+        organization_id=organization_id,
+    )
 
     message_id = await publish_url_crawling_task(
         logger=logger,
         url=url,
         source_id=source_id,
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
         trace_id=trace_id,
     )
 
