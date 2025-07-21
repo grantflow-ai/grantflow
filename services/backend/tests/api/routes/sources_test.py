@@ -108,7 +108,7 @@ async def test_retrieve_granting_institution_sources(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     sources = response.json()
-    assert len(sources) == 2  
+    assert len(sources) == 2
 
 
 async def test_retrieve_template_sources(

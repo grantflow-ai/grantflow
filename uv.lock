@@ -2482,11 +2482,11 @@ wheels = [
 
 [[package]]
 name = "playa-pdf"
-version = "0.6.1"
+version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4f/e7/e5f745e91f6c42aeceed67a5a8387a74766b6f609ce4a6a5e2add4726959/playa_pdf-0.6.1.tar.gz", hash = "sha256:e25dc9a2073bad0b4761478fffa458b9d550a6c2bc1f3edd7bfc32598f80fccc", size = 8021414, upload-time = "2025-06-18T01:20:04.689Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/11/be7dffb08e13c3bdc72fd8af02b8ed6476147e8d8b3e0f43bb1f6c2ea9e4/playa_pdf-0.6.2.tar.gz", hash = "sha256:dbbfac048688165a00b0585c8fea0a7c3bae6a7f691f4afd7a6e6e072c7580fe", size = 8022980, upload-time = "2025-07-21T15:05:06.095Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/2e/3c5c2c42e07d620bac7dfe4a3ed191e10f8124cf771ed186645f653f6748/playa_pdf-0.6.1-py3-none-any.whl", hash = "sha256:7eeae71cc4a7931ea5bf8f90ba2c16144bc57f0f5d9cb20ccf4922f44cbaa1ad", size = 5658963, upload-time = "2025-06-18T01:20:02.586Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/02/533b8548fb05988d090f341a315062a63e5468cf6de97fdde2ea06f28759/playa_pdf-0.6.2-py3-none-any.whl", hash = "sha256:47a93348ccd94c7054e19ad26ca6ce833dc07b1d156141dddfaeaf02c0db0b6d", size = 5661207, upload-time = "2025-07-21T15:05:03.997Z" },
 ]
 
 [[package]]
