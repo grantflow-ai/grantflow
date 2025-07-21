@@ -2,7 +2,11 @@
 
 This framework provides comprehensive benchmarking for vector database performance across different dimensions and configurations. The key insight is that we use **synthetic migrations** to modify your production schema temporarily, allowing us to test your real RAG code with different vector configurations.
 
-**Important**: These tests require `BENCHMARK_TESTS=1` environment variable and use the `@benchmark_vector` decorator, which applies the `benchmark` pytest marker.
+**Important**: These tests require:
+- `BENCHMARK_TESTS=1` environment variable 
+- `PYTHONPATH=.` for proper imports
+- Must be run from the repository root directory
+- Use the `@benchmark_vector` decorator, which applies the `benchmark` pytest marker
 
 ## Overview
 
@@ -25,17 +29,19 @@ This approach ensures benchmarks reflect real-world performance!
 ## Quick Start
 
 ```bash
-# Run all vector benchmarks
-BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m benchmark -v
+# Run all vector benchmarks (from repository root)
+PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m benchmark -v
 
 # Run specific test
-BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_baseline_vector_insertion -v
+PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_baseline_vector_insertion -v
 
-# Run with specific configuration
-BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_configuration_baseline -v
+# Run baseline tests only
+PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py -k "baseline" -v
 
-# Run from repository root (always use this location)
-cd /path/to/monorepo && BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m benchmark -v
+# Run dimension scaling test
+PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_vector_dimension_scaling -v
+
+# Important: Always run from repository root with PYTHONPATH=.
 ```
 
 ## Key Components
