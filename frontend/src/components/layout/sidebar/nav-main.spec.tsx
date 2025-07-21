@@ -66,10 +66,10 @@ describe.sequential("NavMain", () => {
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
 
-		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-billing")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-members")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 	});
 
 	it("hides billing and members links for MEMBER role", async () => {
@@ -84,10 +84,10 @@ describe.sequential("NavMain", () => {
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
 
-		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
-		expect(screen.queryByTestId("settings-billing")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("settings-members")).not.toBeInTheDocument();
-		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
+		expect(screen.queryByTestId("organization-settings-billing")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("organization-settings-members")).not.toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 	});
 
 	it("shows billing and members links for ADMIN role", async () => {
@@ -102,9 +102,9 @@ describe.sequential("NavMain", () => {
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
 
-		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-billing")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-members")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 	});
 });
