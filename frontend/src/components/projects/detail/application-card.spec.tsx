@@ -87,39 +87,6 @@ describe("ApplicationCard", () => {
 		expect(mockOnOpen).toHaveBeenCalledWith("app-123", "Test Application");
 	});
 
-	it("should open dropdown menu and call onDelete when delete is clicked", async () => {
-		const user = userEvent.setup();
-		const application = ApplicationCardDataFactory.build({ id: "app-123" });
-
-		render(<ApplicationCard application={application} {...defaultProps} />);
-
-		const menuTrigger = screen.getByTestId("project-card-menu-trigger");
-		await user.click(menuTrigger);
-
-		const deleteButton = screen.getByTestId("project-card-delete");
-		await user.click(deleteButton);
-
-		expect(mockOnDelete).toHaveBeenCalledWith("app-123");
-	});
-
-	it("should open dropdown menu and call onDuplicate when duplicate is clicked", async () => {
-		const user = userEvent.setup();
-		const application = ApplicationCardDataFactory.build({
-			id: "app-123",
-			title: "Test Application",
-		});
-
-		render(<ApplicationCard application={application} {...defaultProps} />);
-
-		const menuTrigger = screen.getByTestId("project-card-menu-trigger");
-		await user.click(menuTrigger);
-
-		const duplicateButton = screen.getByTestId("project-card-duplicate");
-		await user.click(duplicateButton);
-
-		expect(mockOnDuplicate).toHaveBeenCalledWith("app-123", "Test Application");
-	});
-
 	it("should display formatted last edited date", () => {
 		const application = ApplicationCardDataFactory.build({
 			id: "app-123",

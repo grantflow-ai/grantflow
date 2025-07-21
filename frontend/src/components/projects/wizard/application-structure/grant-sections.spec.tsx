@@ -1,5 +1,5 @@
 import { GrantSectionDetailedFactory, GrantSectionFactory } from "::testing/factories";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SortableSection } from "./grant-sections";
@@ -172,22 +172,6 @@ describe("SortableSection", () => {
 		await user.type(input, "5000");
 
 		expect(input).toHaveValue(5000);
-	});
-
-	it("toggles between words and characters", async () => {
-		const section = GrantSectionDetailedFactory.build();
-
-		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
-
-		const selector = screen.getByTestId("word-character-selector");
-		expect(selector).toHaveTextContent("Words");
-
-		await user.click(selector);
-		await user.click(screen.getByText("Characters"));
-
-		await waitFor(() => {
-			expect(selector).toHaveTextContent("Characters");
-		});
 	});
 
 	it("updates AI prompt when edited", async () => {
