@@ -42,27 +42,27 @@ const meta: Meta<typeof SigninForm> = {
 				return (
 					<div className="flex min-h-screen w-full items-center justify-center bg-gray-50 p-4">
 						<div className="w-full max-w-lg space-y-4">
-							<AppCard className="border-primary border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9">
-								<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
+							<AppCard className="w-lg border-primary border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9">
+								<AuthCardHeader
+									className="text-center"
+									description="Get more funding - faster!"
+									title="Create your account"
+								/>
 								<AppCardContent>
 									{formComponent}
 									<SeparatorWithText className="mb-5" text={"Or connect with "} />
 									<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
 										<SocialSigninButton
 											isLoading={false}
-											// eslint-disable-next-line @typescript-eslint/require-await
 											onClick={async () => {
-												// eslint-disable-next-line no-console
-												console.log("Google signin clicked (demo)");
+												await Promise.resolve();
 											}}
 											platform="google"
 										/>
 										<SocialSigninButton
 											isLoading={false}
-											// eslint-disable-next-line @typescript-eslint/require-await
 											onClick={async () => {
-												// eslint-disable-next-line no-console
-												console.log("ORCID signin clicked (demo)");
+												await Promise.resolve();
 											}}
 											platform="orcid"
 										/>
@@ -74,8 +74,6 @@ const meta: Meta<typeof SigninForm> = {
 												href="#"
 												onClick={(e) => {
 													e.preventDefault();
-													// eslint-disable-next-line no-console
-													console.log("Login link clicked (demo)");
 												}}
 											>
 												Login
@@ -92,48 +90,48 @@ const meta: Meta<typeof SigninForm> = {
 
 			return (
 				<div className="flex min-h-screen w-full items-center justify-center bg-gray-50 p-4">
-					<AppCard className="border-primary mx-auto w-full max-w-lg border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9">
-						<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
-						<AppCardContent>
-							<Story />
-							<SeparatorWithText className="mb-5" text={"Or connect with "} />
-							<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-								<SocialSigninButton
-									isLoading={false}
-									// eslint-disable-next-line @typescript-eslint/require-await
-									onClick={async () => {
-										// eslint-disable-next-line no-console
-										console.log("Google signin clicked (demo)");
-									}}
-									platform="google"
-								/>
-								<SocialSigninButton
-									isLoading={false}
-									// eslint-disable-next-line @typescript-eslint/require-await
-									onClick={async () => {
-										// eslint-disable-next-line no-console
-										console.log("ORCID signin clicked (demo)");
-									}}
-									platform="orcid"
-								/>
-							</div>
-							<div className="text-center">
-								<span className="text-dark">Already have an account?</span>
-								<AppButton className="text-primary" size="sm" variant="link">
-									<Link
-										href="#"
-										onClick={(e) => {
-											e.preventDefault();
-											// eslint-disable-next-line no-console
-											console.log("Login link clicked (demo)");
+					<div className="w-full max-w-lg space-y-4">
+						<AppCard className="w-lg border-primary border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9">
+							<AuthCardHeader
+								className="text-center"
+								description="Get more funding - faster!"
+								title="Create your account"
+							/>
+							<AppCardContent>
+								<Story />
+								<SeparatorWithText className="mb-5" text={"Or connect with "} />
+								<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+									<SocialSigninButton
+										isLoading={false}
+										onClick={async () => {
+											await Promise.resolve();
 										}}
-									>
-										Login
-									</Link>
-								</AppButton>
-							</div>
-						</AppCardContent>
-					</AppCard>
+										platform="google"
+									/>
+									<SocialSigninButton
+										isLoading={false}
+										onClick={async () => {
+											await Promise.resolve();
+										}}
+										platform="orcid"
+									/>
+								</div>
+								<div className="text-center">
+									<span className="text-dark">Already have an account?</span>
+									<AppButton className="text-primary" size="sm" variant="link">
+										<Link
+											href="#"
+											onClick={(e) => {
+												e.preventDefault();
+											}}
+										>
+											Login
+										</Link>
+									</AppButton>
+								</div>
+							</AppCardContent>
+						</AppCard>
+					</div>
 				</div>
 			);
 		},
