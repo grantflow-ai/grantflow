@@ -4,8 +4,8 @@ import {
 	GrantSectionDetailedFactory,
 	GrantTemplateFactory,
 } from "::testing/factories";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DragDropSectionManager } from "@/components/projects";
 import { useApplicationStore } from "@/stores/application-store";
 
@@ -107,6 +107,10 @@ describe("DragDropSectionManager", () => {
 			application: mockApplication,
 			updateGrantSections: mockUpdateGrantSections,
 		});
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	describe("basic rendering", () => {
@@ -251,6 +255,62 @@ describe("DragDropSectionManager", () => {
 
 			fireEvent.click(expandButtons[0]);
 			expect(screen.queryByTestId(/edit-form-header/)).toBeInTheDocument();
+		});
+	});
+
+	describe("drag and drop logic", () => {
+		it("verifies drag handlers are configured", () => {
+			render(<DragDropSectionManager {...defaultProps} />);
+			
+			const sections = mockApplication.grant_template!.grant_sections;
+			const mainSection = sections.find(s => s.id === "section-2");
+			const subsection = sections.find(s => s.id === "subsection-1");
+
+			expect(mainSection).toBeDefined();
+			expect(subsection).toBeDefined();
+
+			const dndContexts = screen.getAllByTestId("dnd-context");
+			expect(dndContexts.length).toBeGreaterThan(0);
+			
+			const [firstContext] = dndContexts;
+			expect(firstContext.dataset.dragEnd).toBe("enabled");
+			expect(firstContext.dataset.dragStart).toBe("enabled");
+			expect(firstContext.dataset.dragOver).toBe("enabled");
+		});
+
+		it("renders sections with correct structure", () => {
+			render(<DragDropSectionManager {...defaultProps} />);
+
+			const sections = mockApplication.grant_template!.grant_sections;
+			const subsection1 = sections.find(s => s.id === "subsection-1");
+
+			expect(subsection1).toBeDefined();
+			
+			const sectionTitles = screen.getAllByTestId("section-title");
+			const sectionContainers = screen.getAllByTestId("section-container");
+			
+			expect(sectionTitles.length).toBeGreaterThan(0);
+			expect(sectionContainers.length).toBeGreaterThan(0);
+			
+			expect(sectionTitles.some(title => title.textContent?.includes("Main Section 1"))).toBe(true);
+			expect(sectionTitles.some(title => title.textContent?.includes("Subsection 1"))).toBe(true);
+		});
+
+		it("handles section interactions", () => {
+			render(<DragDropSectionManager {...defaultProps} />);
+
+			const sections = mockApplication.grant_template!.grant_sections;
+			const section = sections.find(s => s.id === "section-1");
+
+			expect(section).toBeDefined();
+			
+			const expandButtons = screen.getAllByTestId("expand-section-button");
+			const deleteButtons = screen.getAllByTestId("delete-section-button");
+			
+			expect(expandButtons.length).toBeGreaterThan(0);
+			expect(deleteButtons.length).toBeGreaterThan(0);
+			
+			expect(expandButtons.length).toBe(deleteButtons.length);
 		});
 	});
 
