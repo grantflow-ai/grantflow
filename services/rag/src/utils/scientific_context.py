@@ -1,22 +1,35 @@
 import logging
 import re
-from typing import Any
+from typing import TypedDict
+
+from services.rag.src.utils.prompt_template import PromptTemplate
 
 logger = logging.getLogger(__name__)
 
-SCIENTIFIC_CONTEXT_TEMPLATE = """## Scientific Foundation Context
-{scientific_context}
+SCIENTIFIC_CONTEXT_TEMPLATE = PromptTemplate(
+    name="scientific_context",
+    template="""## Scientific Foundation Context
+${scientific_context}
 
-This context provides foundational scientific concepts and terminology relevant to the research objective. Use these terms and concepts to enhance the depth and accuracy of your response."""
+This context provides foundational scientific concepts and terminology relevant to the research objective. Use these terms and concepts to enhance the depth and accuracy of your response.""",
+)
+
+
+class ValidationResult(TypedDict):
+    is_valid: bool
+    has_content: bool
+    has_scientific_terms: bool
+    term_count: int
+    errors: list[str]
 
 
 def format_scientific_context(scientific_context: str) -> str:
-    """Format scientific context for LLM consumption."""
     if not scientific_context:
         return ""
 
     try:
-        formatted_context = SCIENTIFIC_CONTEXT_TEMPLATE.format(scientific_context=scientific_context)
+        formatted_template = SCIENTIFIC_CONTEXT_TEMPLATE.substitute(scientific_context=scientific_context)
+        formatted_context = formatted_template.to_string()
 
         logger.info(
             "Scientific context formatted successfully",
@@ -36,20 +49,15 @@ def format_scientific_context(scientific_context: str) -> str:
                 "context_length": len(scientific_context),
             },
         )
-        # Return original context if formatting fails
         return scientific_context
 
 
 def extract_scientific_terms_from_context(context: str) -> list[str]:
-    """Extract scientific terms from formatted context."""
     if not context:
         return []
 
     try:
-        # Simple extraction - look for terms in bold (**term**)
         terms = re.findall(r"\*\*([^*]+)\*\*", context)
-
-        # Remove duplicates and clean up
         unique_terms = list({term.strip() for term in terms if term.strip()})
 
         logger.info(
@@ -73,9 +81,8 @@ def extract_scientific_terms_from_context(context: str) -> list[str]:
         return []
 
 
-def validate_scientific_context(context: str) -> dict[str, Any]:
-    """Validate scientific context format and content."""
-    validation_result: dict[str, Any] = {
+def validate_scientific_context(context: str) -> ValidationResult:
+    validation_result: ValidationResult = {
         "is_valid": False,
         "has_content": False,
         "has_scientific_terms": False,
@@ -90,11 +97,9 @@ def validate_scientific_context(context: str) -> dict[str, Any]:
 
         validation_result["has_content"] = True
 
-        # Check if it follows the expected format
         if "## Scientific Foundation Context" not in context:
             validation_result["errors"].append("Missing scientific context header")
 
-        # Extract and count scientific terms
         terms = extract_scientific_terms_from_context(context)
         validation_result["term_count"] = len(terms)
         validation_result["has_scientific_terms"] = len(terms) > 0
@@ -102,7 +107,6 @@ def validate_scientific_context(context: str) -> dict[str, Any]:
         if not terms:
             validation_result["errors"].append("No scientific terms found")
 
-        # Mark as valid if no errors
         validation_result["is_valid"] = len(validation_result["errors"]) == 0
 
         logger.info(
