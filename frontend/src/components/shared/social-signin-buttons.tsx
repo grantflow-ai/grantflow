@@ -13,16 +13,16 @@ export function SocialSigninButton({
 }) {
 	return (
 		<AppButton
-			className="border-app-gray-400 text-dark text-sm font-normal"
+			className="border-app-gray-400 text-dark text-sm font-normal hover:border-ring hover:before:border-ring hover:before:border-1 active:border-primary active:before:border-primary active:before:border-1"
 			disabled={isLoading}
 			leftIcon={platform === "google" ? <IconSocialGoogle /> : <IconSocialOrcid />}
 			onClick={async () => {
 				await onClick();
 			}}
 			size="lg"
-			{...props}
 			theme="light"
 			variant="secondary"
+			{...props}
 		>
 			{platform === "google" ? "Google" : "ORCID"}
 		</AppButton>
