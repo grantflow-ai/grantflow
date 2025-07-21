@@ -15,6 +15,7 @@ describe("Organization API Actions", () => {
 		it("should create organization", async () => {
 			const createData: API.CreateOrganization.RequestBody = {
 				description: "Test description",
+				firebase_uid: mockFirebaseUid,
 				name: "Test Organization",
 			};
 
@@ -127,6 +128,8 @@ describe("Organization API Actions", () => {
 			const expectedResponse: API.ListOrganizationMembers.Http200.ResponseBody = [
 				{
 					created_at: "2023-01-01T00:00:00Z",
+					display_name: "Test User",
+					email: "test@example.com",
 					firebase_uid: mockFirebaseUid,
 					has_all_projects_access: true,
 					project_access: [],

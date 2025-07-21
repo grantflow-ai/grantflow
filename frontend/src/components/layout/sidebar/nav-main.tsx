@@ -27,7 +27,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const isProjectsActive = pathname === "/projects";
-	const isSettingsActive = pathname.startsWith("/project/settings");
+	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
 	const { activeProjectId } = useNavigationStore();
 	const project = useProjectStore((state) => state.project);
@@ -123,12 +123,15 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
 						<SidebarMenuSub>
 							<SidebarMenuSubItem>
-								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/account"}>
+								<SidebarMenuSubButton
+									asChild
+									isActive={pathname === routes.organization.settings.account()}
+								>
 									<Link
-										data-testid="settings-account"
-										href="/project/settings/account"
+										data-testid="organization-settings-account"
+										href={routes.organization.settings.account()}
 										onClick={(e) => {
-											handleSettingsClick(e, "/project/settings/account");
+											handleSettingsClick(e, routes.organization.settings.account());
 										}}
 									>
 										Account Settings
@@ -137,12 +140,15 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 							</SidebarMenuSubItem>
 							{userRole && userRole !== "COLLABORATOR" && (
 								<SidebarMenuSubItem>
-									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/billing"}>
+									<SidebarMenuSubButton
+										asChild
+										isActive={pathname === routes.organization.settings.billing()}
+									>
 										<Link
-											data-testid="settings-billing"
-											href="/project/settings/billing"
+											data-testid="organization-settings-billing"
+											href={routes.organization.settings.billing()}
 											onClick={(e) => {
-												handleSettingsClick(e, "/project/settings/billing");
+												handleSettingsClick(e, routes.organization.settings.billing());
 											}}
 										>
 											Billing & Payments
@@ -152,12 +158,15 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 							)}
 							{userRole && userRole !== "COLLABORATOR" && (
 								<SidebarMenuSubItem>
-									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/members"}>
+									<SidebarMenuSubButton
+										asChild
+										isActive={pathname === routes.organization.settings.members()}
+									>
 										<Link
-											data-testid="settings-members"
-											href="/project/settings/members"
+											data-testid="organization-settings-members"
+											href={routes.organization.settings.members()}
 											onClick={(e) => {
-												handleSettingsClick(e, "/project/settings/members");
+												handleSettingsClick(e, routes.organization.settings.members());
 											}}
 										>
 											Members
@@ -166,12 +175,15 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 								</SidebarMenuSubItem>
 							)}
 							<SidebarMenuSubItem>
-								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/notifications"}>
+								<SidebarMenuSubButton
+									asChild
+									isActive={pathname === routes.organization.settings.notifications()}
+								>
 									<Link
-										data-testid="settings-notifications"
-										href="/project/settings/notifications"
+										data-testid="organization-settings-notifications"
+										href={routes.organization.settings.notifications()}
 										onClick={(e) => {
-											handleSettingsClick(e, "/project/settings/notifications");
+											handleSettingsClick(e, routes.organization.settings.notifications());
 										}}
 									>
 										Notifications

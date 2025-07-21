@@ -250,7 +250,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	organization_id: string;
+	organization_id: null | string;
 	project_id: null | string;
 };
 
@@ -297,7 +297,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	organization_id: null | string;
 	project_id: null | string;
 	template_id: null | string;
 };
@@ -347,7 +347,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	granting_institution_id: null | string;
 };
 
 	export interface QueryParameters {
@@ -401,6 +401,7 @@ export namespace API {
 	contact_email?: null | string;
 	contact_person_name?: null | string;
 	description?: null | string;
+	firebase_uid: string;
 	institutional_affiliation?: null | string;
 	logo_url?: null | string;
 	name: string;
@@ -496,7 +497,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	organization_id: string;
+	organization_id: null | string;
 	project_id: string;
 	source_id: string;
 };
@@ -516,7 +517,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	organization_id: null | string;
 	project_id: string;
 	source_id: string;
 	template_id: null | string;
@@ -555,7 +556,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	granting_institution_id: null | string;
 	source_id: string;
 };
 };
@@ -1023,8 +1024,11 @@ export namespace API {
 	export namespace Http200 {
 	export type ResponseBody = {
 	created_at: string;
+	display_name: string;
+	email: string;
 	firebase_uid: string;
 	has_all_projects_access: boolean;
+	photo_url?: string;
 	project_access: {
 	granted_at: string;
 	project_id: string;
@@ -1059,6 +1063,18 @@ export namespace API {
 	projects_count: number;
 	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface QueryParameters {
+	firebase_uid?: null | string;
 };
 };
 
@@ -1180,7 +1196,7 @@ export namespace API {
 };
 
 	export namespace RestoreOrganization {
-	export namespace Http201 {
+	export namespace Http200 {
 	export type ResponseBody = {
 	contact_email: null | string;
 	contact_person_name: null | string;
@@ -1338,7 +1354,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	organization_id: string;
+	organization_id: null | string;
 	project_id: string;
 };
 };
@@ -1371,7 +1387,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	organization_id: null | string;
 	project_id: string;
 	template_id: null | string;
 };
@@ -1405,7 +1421,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	granting_institution_id: null | string;
 };
 };
 

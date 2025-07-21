@@ -3,32 +3,37 @@
 import { Edit, MoreVertical, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
-import { deleteInvitation, getProjectMembers, removeProjectMember, updateProjectMemberRole } from "@/actions/project";
-import { inviteCollaborator } from "@/actions/project-invitation";
-import { EditPermissionModal, InviteCollaboratorModal } from "@/components/projects";
+import {
+	createOrganizationInvitation,
+	deleteOrganizationInvitation,
+	getOrganizationInvitations,
+	getOrganizationMembers,
+	removeOrganizationMember,
+	updateOrganizationMemberRole,
+} from "@/actions/organization";
+import { InviteCollaboratorModal } from "@/components/organizations";
 import { useNotificationStore } from "@/stores/notification-store";
-import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 import { generateInitials } from "@/utils/user";
+import { EditPermissionModal } from "./edit-permission-modal";
 
-interface ProjectMember {
-	email: string;
+interface OrganizationMember {
+	displayName?: string;
+	// User data
+	email?: string;
 	firebaseUid: string;
-	fullName?: null | string;
 	invitationId?: string;
 	joinedAt: string;
-	photoUrl?: null | string;
+	photoUrl?: string;
 	role: UserRole;
 	status: "active" | "pending";
 }
 
-interface ProjectSettingsMembersProps {
+interface OrganizationSettingsMembersProps {
 	currentUserRole: UserRole;
 	onInviteHandlerChange?: (handler: (() => void) | undefined) => void;
 	organizationId: string;
-	projectId: string;
-	projectName: string;
 }
 
 // Avatar colors based on email hash
@@ -47,23 +52,28 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
-export function ProjectSettingsMembers({
+export function OrganizationSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
 	organizationId,
-	projectId,
-	projectName,
-}: ProjectSettingsMembersProps) {
+}: OrganizationSettingsMembersProps) {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-	const [editingMember, setEditingMember] = useState<null | ProjectMember>(null);
-	const [pendingInvitations, setPendingInvitations] = useState<ProjectMember[]>([]);
-	const { user } = useUserStore();
+	const [editingMember, setEditingMember] = useState<null | OrganizationMember>(null);
 	const { addNotification } = useNotificationStore();
 
-	// Fetch project members
+	// Fetch organization members
 	const { data: members = [], isLoading } = useSWR(
-		`/organizations/${organizationId}/projects/${projectId}/members`,
-		() => getProjectMembers(organizationId, projectId),
+		`/organizations/${organizationId}/members`,
+		() => getOrganizationMembers(organizationId),
+		{
+			revalidateOnFocus: false,
+		},
+	);
+
+	// Fetch pending invitations
+	const { data: invitations = [] } = useSWR(
+		`/organizations/${organizationId}/invitations`,
+		() => getOrganizationInvitations(organizationId),
 		{
 			revalidateOnFocus: false,
 		},
@@ -71,19 +81,19 @@ export function ProjectSettingsMembers({
 
 	const handleRemoveMember = async (firebaseUid: string) => {
 		try {
-			await removeProjectMember(organizationId, projectId, firebaseUid);
-			await mutate(`/organizations/${organizationId}/projects/${projectId}/members`);
+			await removeOrganizationMember(organizationId, firebaseUid);
+			await mutate(`/organizations/${organizationId}/members`);
 			addNotification({
-				message: "The member has been removed from the project",
-				projectName,
+				message: "The member has been removed from the organization",
+				projectName: "", // Organization-level notification
 				title: "Member removed",
 				type: "success",
 			});
 		} catch (error) {
 			log.error("Error removing member", error, { firebaseUid });
 			addNotification({
-				message: "Failed to remove member from the project",
-				projectName,
+				message: "Failed to remove member from the organization",
+				projectName: "", // Organization-level notification
 				title: "Error",
 				type: "warning",
 			});
@@ -92,11 +102,11 @@ export function ProjectSettingsMembers({
 
 	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole) => {
 		try {
-			await updateProjectMemberRole(organizationId, projectId, firebaseUid, { role: newRole });
-			await mutate(`/organizations/${organizationId}/projects/${projectId}/members`);
+			await updateOrganizationMemberRole(organizationId, firebaseUid, { role: newRole });
+			await mutate(`/organizations/${organizationId}/members`);
 			addNotification({
 				message: `Member role has been updated to ${ROLE_LABELS[newRole]}`,
-				projectName,
+				projectName: "", // Organization-level notification
 				title: "Role updated",
 				type: "success",
 			});
@@ -104,7 +114,7 @@ export function ProjectSettingsMembers({
 			log.error("Error updating member role", error, { firebaseUid, newRole });
 			addNotification({
 				message: "Failed to update member role",
-				projectName,
+				projectName: "", // Organization-level notification
 				title: "Error",
 				type: "warning",
 			});
@@ -113,11 +123,11 @@ export function ProjectSettingsMembers({
 
 	const handleCancelInvitation = async (invitationId: string, email: string) => {
 		try {
-			await deleteInvitation(organizationId, projectId, invitationId);
-			setPendingInvitations((prev) => prev.filter((inv) => inv.invitationId !== invitationId));
+			await deleteOrganizationInvitation(organizationId, invitationId);
+			await mutate(`/organizations/${organizationId}/invitations`);
 			addNotification({
 				message: `Invitation to ${email} has been cancelled`,
-				projectName,
+				projectName: "", // Organization-level notification
 				title: "Invitation cancelled",
 				type: "success",
 			});
@@ -125,7 +135,7 @@ export function ProjectSettingsMembers({
 			log.error("Error cancelling invitation", error, { email, invitationId });
 			addNotification({
 				message: "Failed to cancel invitation",
-				projectName,
+				projectName: "", // Organization-level notification
 				title: "Error",
 				type: "warning",
 			});
@@ -133,47 +143,17 @@ export function ProjectSettingsMembers({
 	};
 
 	const handleInvite = async (email: string, permission: "admin" | "collaborator") => {
-		if (!user?.displayName) {
-			log.error("User display name not available for invitation", undefined, { email, permission });
-			return;
-		}
-
 		try {
-			const result = await inviteCollaborator({
+			await createOrganizationInvitation(organizationId, {
 				email,
-				inviterName: user.displayName,
-				organizationId,
-				projectId,
-				projectName,
-				role: permission === "admin" ? "admin" : "member",
+				has_all_projects_access: true, // Default to all projects access
+				role: permission === "admin" ? "ADMIN" : "COLLABORATOR",
 			});
 
-			if (!result.success) {
-				log.error("Failed to invite collaborator", new Error(result.error), { email });
-				addNotification({
-					message: result.error ?? "Failed to send invitation",
-					projectName,
-					title: "Invitation failed",
-					type: "warning",
-				});
-				return;
-			}
-
-			const newPendingInvitation: ProjectMember = {
-				email,
-				firebaseUid: "",
-				fullName: null,
-				invitationId: result.invitationId,
-				joinedAt: new Date().toISOString(),
-				photoUrl: null,
-				role: permission === "admin" ? UserRole.ADMIN : UserRole.COLLABORATOR,
-				status: "pending",
-			};
-
-			setPendingInvitations((prev) => [...prev, newPendingInvitation]);
+			await mutate(`/organizations/${organizationId}/invitations`);
 			addNotification({
 				message: `Invitation sent to ${email}`,
-				projectName,
+				projectName: "", // Organization-level notification
 				title: "Invitation sent",
 				type: "success",
 			});
@@ -184,7 +164,7 @@ export function ProjectSettingsMembers({
 			});
 			addNotification({
 				message: "Failed to send invitation",
-				projectName,
+				projectName: "", // Organization-level notification
 				title: "Error",
 				type: "warning",
 			});
@@ -205,19 +185,29 @@ export function ProjectSettingsMembers({
 		}
 	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
-	// Map API response to component format and combine with pending invitations
-	const mappedMembers: ProjectMember[] = members.map((member) => ({
+	// Map API response to component format
+	const mappedMembers: OrganizationMember[] = members.map((member) => ({
+		displayName: member.display_name,
 		email: member.email,
 		firebaseUid: member.firebase_uid,
-		fullName: member.display_name,
-		joinedAt: member.joined_at,
+		joinedAt: member.created_at,
 		photoUrl: member.photo_url,
 		role: member.role as UserRole,
 		status: "active" as const,
 	}));
 
+	// Map invitations to pending members
+	const pendingMembers: OrganizationMember[] = invitations.map((invitation) => ({
+		email: invitation.email,
+		firebaseUid: "",
+		invitationId: invitation.id,
+		joinedAt: invitation.invitation_sent_at,
+		role: invitation.role as UserRole,
+		status: "pending" as const,
+	}));
+
 	// Combine active members and pending invitations
-	const allMembers = [...mappedMembers, ...pendingInvitations];
+	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
 		return (
@@ -228,7 +218,7 @@ export function ProjectSettingsMembers({
 	}
 
 	return (
-		<div className="w-full" data-testid="project-settings-members">
+		<div className="w-full" data-testid="organization-settings-members">
 			{/* Table Structure */}
 			<div className="w-full">
 				<div className="flex w-full">
@@ -244,11 +234,11 @@ export function ProjectSettingsMembers({
 								className={`h-[41px] border-b border-app-gray-100 flex items-center justify-center px-2 ${
 									member.status === "pending" ? "bg-app-gray-20" : ""
 								}`}
-								key={member.firebaseUid || member.email}
+								key={member.firebaseUid || member.invitationId}
 							>
 								<ColoredAvatar
-									email={member.email}
-									initials={generateInitials(member.fullName ?? undefined, member.email)}
+									email={member.email ?? member.firebaseUid}
+									initials={generateInitials(undefined, member.email ?? member.firebaseUid)}
 								/>
 							</div>
 						))}
@@ -266,10 +256,10 @@ export function ProjectSettingsMembers({
 								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
 									member.status === "pending" ? "bg-app-gray-20" : ""
 								}`}
-								key={member.firebaseUid || member.email}
+								key={member.firebaseUid || member.invitationId}
 							>
 								<div className="font-body text-[14px] text-app-gray-600">
-									{member.fullName ?? "Name name"}
+									{member.displayName ?? member.email ?? "Unknown User"}
 								</div>
 							</div>
 						))}
@@ -287,7 +277,7 @@ export function ProjectSettingsMembers({
 								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
 									member.status === "pending" ? "bg-app-gray-20" : ""
 								}`}
-								key={member.firebaseUid || member.email}
+								key={member.firebaseUid || member.invitationId}
 							>
 								<div className="font-body text-[14px] text-app-gray-600">{member.email}</div>
 							</div>
@@ -306,7 +296,7 @@ export function ProjectSettingsMembers({
 								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
 									member.status === "pending" ? "bg-app-gray-20" : ""
 								}`}
-								key={member.firebaseUid || member.email}
+								key={member.firebaseUid || member.invitationId}
 							>
 								<FigmaRoleBadge role={member.role} />
 							</div>
@@ -325,14 +315,14 @@ export function ProjectSettingsMembers({
 								className={`h-[41px] border-b border-app-gray-100 flex items-center justify-center px-2 ${
 									member.status === "pending" ? "bg-app-gray-20" : ""
 								}`}
-								key={member.firebaseUid || member.email}
+								key={member.firebaseUid || member.invitationId}
 							>
 								<MemberActionMenu
 									currentUserRole={currentUserRole}
 									member={member}
 									onCancelInvitation={
 										member.status === "pending" && member.invitationId
-											? () => handleCancelInvitation(member.invitationId!, member.email)
+											? () => handleCancelInvitation(member.invitationId!, member.email!)
 											: undefined
 									}
 									onEditPermissions={(member) => {
@@ -347,8 +337,8 @@ export function ProjectSettingsMembers({
 
 				{/* Empty State */}
 				{allMembers.length === 0 && (
-					<div className="px-6 py-12 text-center" data-testid="empty-state">
-						<p className="text-[16px] text-app-gray-600 mb-4 font-body">No team members yet.</p>
+					<div className="px-6 py-12 text-center" data-testid="organization-empty-state">
+						<p className="text-[16px] text-app-gray-600 mb-4 font-body">No organization members yet.</p>
 					</div>
 				)}
 			</div>
@@ -369,7 +359,7 @@ export function ProjectSettingsMembers({
 				onClose={() => {
 					setEditingMember(null);
 				}}
-				onUpdateRole={(firebaseUid, newRole) => handleUpdateRole(firebaseUid, newRole)}
+				onUpdateRole={(firebaseUid: string, newRole: UserRole) => handleUpdateRole(firebaseUid, newRole)}
 			/>
 		</div>
 	);
@@ -413,9 +403,9 @@ function MemberActionMenu({
 	onRemoveMember,
 }: {
 	currentUserRole: UserRole;
-	member: ProjectMember;
+	member: OrganizationMember;
 	onCancelInvitation?: () => void;
-	onEditPermissions: (member: ProjectMember) => void;
+	onEditPermissions: (member: OrganizationMember) => void;
 	onRemoveMember: () => void;
 }) {
 	const [isOpen, setIsOpen] = useState(false);

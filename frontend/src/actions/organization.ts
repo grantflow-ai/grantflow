@@ -130,7 +130,7 @@ export async function restoreOrganization(organizationId: string) {
 			.post(`organizations/${organizationId}/restore`, {
 				headers: await createAuthHeaders(),
 			})
-			.json<API.RestoreOrganization.Http201.ResponseBody>(),
+			.json<API.RestoreOrganization.Http200.ResponseBody>(),
 	);
 }
 

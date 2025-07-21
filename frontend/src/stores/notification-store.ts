@@ -1,6 +1,12 @@
 import { create } from "zustand";
 
-import type { NotificationData } from "@/components/app/feedback/notification-banner";
+export interface NotificationData {
+	id: string;
+	message: string;
+	projectName: string;
+	title: string;
+	type?: "deadline" | "error" | "info" | "success" | "warning";
+}
 
 interface NotificationActions {
 	addNotification: (notification: Omit<NotificationData, "id">) => void;

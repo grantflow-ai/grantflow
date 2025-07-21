@@ -309,6 +309,7 @@ export const OrganizationRequestFactory = new Factory<API.CreateOrganization.Req
 	contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
 	contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
+	firebase_uid: factory.string.alphanumeric(28),
 	institutional_affiliation: factory.datatype.boolean() ? factory.company.name() : null,
 	logo_url: factory.datatype.boolean() ? factory.image.url() : null,
 	name: factory.company.name(),
@@ -672,8 +673,11 @@ export const ListOrganizationMembersResponseFactory = new Factory<API.ListOrgani
 		factory.helpers.multiple(
 			() => ({
 				created_at: factory.date.past().toISOString(),
+				display_name: factory.person.fullName(),
+				email: factory.internet.email(),
 				firebase_uid: factory.string.alphanumeric(28),
 				has_all_projects_access: factory.datatype.boolean(),
+				photo_url: factory.datatype.boolean() ? factory.image.avatar() : undefined,
 				project_access: factory.helpers.multiple(
 					() => ({
 						granted_at: factory.date.past().toISOString(),
@@ -704,7 +708,7 @@ export const ListOrganizationsResponseFactory = new Factory<API.ListOrganization
 	),
 );
 
-export const RestoreOrganizationResponseFactory = new Factory<API.RestoreOrganization.Http201.ResponseBody>(
+export const RestoreOrganizationResponseFactory = new Factory<API.RestoreOrganization.Http200.ResponseBody>(
 	(factory) => ({
 		contact_email: factory.datatype.boolean() ? factory.internet.email() : null,
 		contact_person_name: factory.datatype.boolean() ? factory.person.fullName() : null,
