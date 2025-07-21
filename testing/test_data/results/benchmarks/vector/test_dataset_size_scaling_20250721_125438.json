@@ -1,0 +1,25 @@
+{
+  "test_name": "test_dataset_size_scaling",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 19.811502933502197,
+    "min_time": 19.811502933502197,
+    "max_time": 19.811502933502197,
+    "std_deviation": 0.0,
+    "individual_times": [
+      19.811502933502197
+    ],
+    "timeout_utilization": 0.06603834311167399
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 300,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-21T12:54:38.735803+00:00"
+}

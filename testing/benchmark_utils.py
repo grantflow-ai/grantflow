@@ -165,10 +165,10 @@ def benchmark[F: Callable[..., Any]](
 
                     if logger:
                         logger.error(
-                            "Benchmark iteration failed",
-                            iteration=iteration + 1,
-                            execution_time=execution_time,
-                            error=str(e),
+                            "Benchmark iteration failed - iteration %d, execution_time=%.3fs, error=%s",
+                            iteration + 1,
+                            execution_time,
+                            str(e),
                         )
 
             if iteration_times:

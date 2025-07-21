@@ -8,13 +8,13 @@ Key Components:
 - schema.py: Database tables for different vector dimensions
 - database.py: Manages isolated test database creation/cleanup
 - framework.py: Core benchmarking logic and performance measurement
-- test_data.py: Generates realistic test data
+- data_test.py: Generates realistic test data
 - benchmark_tests.py: Actual benchmark test cases
 
 Usage:
-    # Run vector benchmarks (requires E2E_TESTS=1)
-    E2E_TESTS=1 pytest services/rag/tests/vector_benchmarks/ -m "vector_benchmark"
+    # Run vector benchmarks (requires BENCHMARK_TESTS=1)
+    BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m benchmark -v
 
     # Run specific test
-    E2E_TESTS=1 pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_vector_dimension_comparison
+    BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_dimension_comparison -v
 """

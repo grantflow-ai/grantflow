@@ -1,0 +1,25 @@
+{
+  "test_name": "test_baseline_vector_insertion",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 14.974831104278564,
+    "min_time": 14.974831104278564,
+    "max_time": 14.974831104278564,
+    "std_deviation": 0.0,
+    "individual_times": [
+      14.974831104278564
+    ],
+    "timeout_utilization": 0.049916103680928546
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 300,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-21T10:23:49.517359+00:00"
+}

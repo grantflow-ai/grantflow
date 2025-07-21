@@ -13,6 +13,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testing.benchmark_utils import benchmark_vector
 
+from .data_test import BenchmarkDataGenerator
 from .framework import VectorBenchmarkFramework
 from .parameter_matrix import (
     BATCH_OPTIMIZATION_MATRIX,
@@ -25,7 +26,6 @@ from .parameter_matrix import (
     VectorTestParameters,
 )
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
@@ -76,7 +76,7 @@ async def test_dimension_optimization_matrix(
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -155,7 +155,7 @@ async def test_hnsw_optimization_matrix(
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -238,7 +238,7 @@ async def test_scale_optimization_matrix(
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -322,7 +322,7 @@ async def test_batch_optimization_matrix(
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -389,7 +389,7 @@ async def test_search_optimization_matrix(
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
@@ -466,7 +466,7 @@ async def test_production_candidates_matrix(
         session.add(app_rag)
         await session.commit()
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(params.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, params.dimension)
 
