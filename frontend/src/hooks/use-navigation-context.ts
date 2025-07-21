@@ -15,7 +15,7 @@ export function useNavigationContext(options: UseNavigationContextOptions = {}) 
 	const router = useRouter();
 	const { activeApplicationId, activeApplicationTitle, activeProjectId, activeProjectName } = useNavigationStore();
 
-	const { redirectTo = routes.projects(), requireApplication = false, requireProject = false } = options;
+	const { redirectTo = routes.organization.root(), requireApplication = false, requireProject = false } = options;
 
 	useEffect(() => {
 		// Check if required context is missing

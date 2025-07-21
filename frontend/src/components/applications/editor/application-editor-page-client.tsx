@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
-import { GrantApplicationEditor } from "@/components/projects/applications/grant-application-editor";
+import { GrantApplicationEditor } from "@/components/organizations/project/applications/grant-application-editor";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -21,7 +21,7 @@ export function ApplicationEditorPageClient() {
 	useEffect(() => {
 		async function loadApplication() {
 			if (!(project && activeApplicationId && selectedOrganizationId)) {
-				router.replace(routes.projects());
+				router.replace(routes.organization.root());
 				return;
 			}
 
@@ -32,7 +32,7 @@ export function ApplicationEditorPageClient() {
 			} catch {
 				setError("Failed to load application");
 				setTimeout(() => {
-					router.replace(routes.project.detail());
+					router.replace(routes.organization.project.detail());
 				}, 2000);
 			} finally {
 				setIsLoading(false);
@@ -72,7 +72,7 @@ export function ApplicationEditorPageClient() {
 						<button
 							className="px-4 py-2 text-gray-600 hover:text-gray-900"
 							onClick={() => {
-								router.push(routes.project.detail());
+								router.push(routes.organization.project.detail());
 							}}
 							type="button"
 						>

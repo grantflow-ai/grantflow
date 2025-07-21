@@ -22,12 +22,12 @@ import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/back
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger";
+import { routes } from "@/utils/navigation";
 
 const loginFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -95,7 +95,7 @@ export default function Login() {
 	const handleEmailSignin = async (email: string) => {
 		setIsLoading(true);
 
-		const url = new URL(PagePath.FINISH_EMAIL_SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
+		const url = new URL(routes.finishEmailSignin(), getEnv().NEXT_PUBLIC_SITE_URL).toString();
 
 		try {
 			await sendSignInLinkToEmail(auth, email, {
@@ -191,7 +191,7 @@ export default function Login() {
 										size="sm"
 										variant="link"
 									>
-										<Link data-testid="login-create-account-button-link" href={PagePath.ONBOARDING}>
+										<Link data-testid="login-create-account-button-link" href={routes.onboarding()}>
 											Create an Account
 										</Link>
 									</AppButton>

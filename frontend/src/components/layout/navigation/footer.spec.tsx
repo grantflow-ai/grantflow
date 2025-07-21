@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach } from "vitest";
 
 import Footer from "@/components/layout/navigation/footer";
-import { PagePath } from "@/enums";
 
 vi.mock("next/image", () => ({
 	default: vi
@@ -118,7 +117,7 @@ describe.sequential("Footer Component", () => {
 			const homeLinks = screen.getAllByLabelText("Go to homepage");
 			expect(homeLinks.length).toBeGreaterThanOrEqual(1);
 			homeLinks.forEach((link) => {
-				expect(link).toHaveAttribute("href", PagePath.ROOT);
+				expect(link).toHaveAttribute("href", "/");
 			});
 		});
 	});
@@ -137,21 +136,21 @@ describe.sequential("Footer Component", () => {
 
 			termsLinks.forEach((link) => {
 				const correctTermsLink = link.closest("a");
-				expect(correctTermsLink).toHaveAttribute("href", PagePath.TERMS);
+				expect(correctTermsLink).toHaveAttribute("href", "/terms");
 			});
 
 			privacyLinks.forEach((link) => {
 				const correctPrivacyLink = link.closest("a");
-				expect(correctPrivacyLink).toHaveAttribute("href", PagePath.PRIVACY);
+				expect(correctPrivacyLink).toHaveAttribute("href", "/privacy");
 			});
 
 			imprintLinks.forEach((link) => {
 				const correctImprintLink = link.closest("a");
-				expect(correctImprintLink).toHaveAttribute("href", PagePath.IMPRINT);
+				expect(correctImprintLink).toHaveAttribute("href", "/imprint");
 			});
 
 			homeLinks.forEach((homeLink) => {
-				expect(homeLink).toHaveAttribute("href", PagePath.ROOT);
+				expect(homeLink).toHaveAttribute("href", "/");
 			});
 		});
 	});

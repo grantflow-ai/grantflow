@@ -2,7 +2,7 @@ import { JwtResponseFactory, LoginRequestFactory } from "::testing/factories";
 import { mockRedirect, mockSetCookie } from "::testing/global-mocks";
 import { vi } from "vitest";
 import { SESSION_COOKIE } from "@/constants";
-import { PagePath } from "@/enums";
+import { routes } from "@/utils/navigation";
 
 import { login } from "./login";
 
@@ -73,9 +73,9 @@ describe("login", () => {
 		);
 	});
 
-	it("should redirect to projects page after successful login", async () => {
+	it("should redirect to organizations page after successful login", async () => {
 		await login(loginRequest.id_token);
 
-		expect(mockRedirect).toHaveBeenCalledWith(PagePath.PROJECTS);
+		expect(mockRedirect).toHaveBeenCalledWith(routes.organization.root());
 	});
 });

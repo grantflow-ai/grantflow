@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
+import { routes } from "@/utils/navigation";
 
 import LoginPage from "./page";
 
@@ -113,7 +113,7 @@ describe.sequential("Login Page", () => {
 		expect(createAccountLink).toBeInTheDocument();
 
 		const buttonLink = screen.getByTestId("login-create-account-button-link");
-		expect(buttonLink).toHaveAttribute("href", PagePath.ONBOARDING);
+		expect(buttonLink).toHaveAttribute("href", routes.onboarding());
 	});
 
 	describe.sequential("Email Sign-in Flow", () => {

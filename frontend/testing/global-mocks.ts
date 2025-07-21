@@ -1,7 +1,6 @@
 import process from "node:process";
 import type { toast } from "sonner";
 import { beforeAll, beforeEach, type Mock, vi } from "vitest";
-import { PagePath } from "@/enums";
 import type { Env } from "@/types/env-types";
 
 const {
@@ -290,7 +289,7 @@ beforeEach(() => {
 	mockShow.mockReset();
 	mockShowModal.mockReset();
 	mockToast.mockReset();
-	mockUsePathname.mockReset().mockReturnValue(PagePath.ROOT);
+	mockUsePathname.mockReset().mockReturnValue("/");
 	mockSetCookie.mockReset();
 	mockFetch.mockReset().mockResolvedValue({
 		json: () => Promise.resolve({}),
