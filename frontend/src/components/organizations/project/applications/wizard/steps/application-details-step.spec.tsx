@@ -8,6 +8,14 @@ import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationDetailsStep } from "./application-details-step";
 
 vi.mock("@/components/organizations/project/applications/wizard/shared", () => ({
+	TemplateFileUploader: vi.fn(({ parentId }) => (
+		<div data-testid="template-file-uploader">
+			<span data-testid="uploader-parent-id">{parentId}</span>
+		</div>
+	)),
+}));
+
+vi.mock("../shared/application-preview", () => ({
 	ApplicationPreview: vi.fn(({ connectionStatus, connectionStatusColor, draftTitle, parentId }) => (
 		<div data-testid="application-preview">
 			<span data-testid="preview-title">{draftTitle}</span>
@@ -16,11 +24,9 @@ vi.mock("@/components/organizations/project/applications/wizard/shared", () => (
 			<span data-testid="preview-parent-id">{parentId}</span>
 		</div>
 	)),
-	TemplateFileUploader: vi.fn(({ parentId }) => (
-		<div data-testid="template-file-uploader">
-			<span data-testid="uploader-parent-id">{parentId}</span>
-		</div>
-	)),
+}));
+
+vi.mock("../shared/wizard-left-pane", () => ({
 	WizardLeftPane: vi.fn(({ children }) => <div data-testid="wizard-left-pane">{children}</div>),
 }));
 
