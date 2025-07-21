@@ -230,6 +230,7 @@ async def handle_create_rag_source(
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/sources",
+        "/granting-institutions/{granting_institution_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Retrieve{value}RagSources"),
@@ -237,7 +238,8 @@ async def handle_create_rag_source(
 async def handle_retrieve_rag_sources(
     *,
     session_maker: async_sessionmaker[Any],
-    organization_id: UUID,
+    organization_id: UUID | None = None,
+    granting_institution_id: UUID | None = None,
     application_id: UUID | None = None,
     template_id: UUID | None = None,
 ) -> list[RagFileResponse | RagUrlResponse]:
@@ -263,13 +265,15 @@ async def handle_retrieve_rag_sources(
                 .where(GrantTemplateSource.grant_template_id == template_id)
             )
         else:
+            
+            institution_id = granting_institution_id if granting_institution_id else organization_id
             stmt = (
                 select(rag_poly)
                 .join(
                     GrantingInstitutionSource,
                     GrantingInstitutionSource.rag_source_id == rag_poly.id,
                 )
-                .where(GrantingInstitutionSource.granting_institution_id == organization_id)
+                .where(GrantingInstitutionSource.granting_institution_id == institution_id)
             )
 
         results = await session.scalars(stmt)
@@ -307,6 +311,7 @@ async def handle_retrieve_rag_sources(
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/sources/{source_id:uuid}",
+        "/granting-institutions/{granting_institution_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Delete{value}RagSource"),
@@ -315,7 +320,8 @@ async def handle_delete_rag_source(
     *,
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
-    organization_id: UUID,
+    organization_id: UUID | None = None,
+    granting_institution_id: UUID | None = None,
     source_id: UUID,
     application_id: UUID | None = None,
     template_id: UUID | None = None,
@@ -342,11 +348,13 @@ async def handle_delete_rag_source(
                 )
             )
         else:
+            
+            institution_id = granting_institution_id if granting_institution_id else organization_id
             statement = (
                 select(rag_poly)
                 .join(GrantingInstitutionSource)
                 .where(
-                    GrantingInstitutionSource.granting_institution_id == organization_id,
+                    GrantingInstitutionSource.granting_institution_id == institution_id,
                     rag_poly.id == source_id,
                 )
             )
@@ -382,7 +390,8 @@ async def handle_delete_rag_source(
                     template_with_app.grant_application.project.organization_id if template_with_app else None
                 )
             else:
-                audit_org_id = organization_id
+                
+                audit_org_id = granting_institution_id if granting_institution_id else organization_id
 
             if audit_org_id:
                 await log_organization_audit_from_request(
@@ -396,6 +405,7 @@ async def handle_delete_rag_source(
                         "application_id": str(application_id) if application_id else None,
                         "template_id": str(template_id) if template_id else None,
                         "organization_id": str(organization_id) if organization_id else None,
+                        "granting_institution_id": str(granting_institution_id) if granting_institution_id else None,
                     },
                 )
 
@@ -433,6 +443,7 @@ async def handle_delete_rag_source(
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/sources/upload-url",
+        "/granting-institutions/{granting_institution_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
     operation_id=_create_operation_id_creator("Create{value}RagSourceUploadUrl"),
@@ -441,7 +452,8 @@ async def handle_create_upload_url(
     session_maker: async_sessionmaker[Any],
     blob_name: str,
     request: APIRequest,
-    organization_id: UUID,
+    organization_id: UUID | None = None,
+    granting_institution_id: UUID | None = None,
     application_id: UUID | None = None,
     template_id: UUID | None = None,
     project_id: UUID | None = None,
