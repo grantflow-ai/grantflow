@@ -1,0 +1,25 @@
+{
+  "test_name": "test_dimension_comparison",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 37.16082715988159,
+    "min_time": 37.16082715988159,
+    "max_time": 37.16082715988159,
+    "std_deviation": 0.0,
+    "individual_times": [
+      37.16082715988159
+    ],
+    "timeout_utilization": 0.06193471193313599
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 600,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-21T12:55:30.513087+00:00"
+}
