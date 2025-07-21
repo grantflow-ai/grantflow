@@ -17,7 +17,6 @@ async def test_create_organization_success(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
-    mock_admin_code: None,
 ) -> None:
     org_data = {
         "name": "Test Organization",
@@ -31,7 +30,7 @@ async def test_create_organization_success(
 
     response = await test_client.post(
         "/organizations",
-        headers={"Authorization": "test-admin-code"},
+        headers={"Authorization": "Bearer some_token"},
         json=org_data,
     )
 
@@ -59,7 +58,6 @@ async def test_create_organization_minimal_data(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
-    mock_admin_code: None,
 ) -> None:
     org_data = {
         "name": "Minimal Organization",
@@ -68,7 +66,7 @@ async def test_create_organization_minimal_data(
 
     response = await test_client.post(
         "/organizations",
-        headers={"Authorization": "test-admin-code"},
+        headers={"Authorization": "Bearer some_token"},
         json=org_data,
     )
 
@@ -87,7 +85,6 @@ async def test_create_organization_minimal_data(
 async def test_create_organization_database_error(
     test_client: TestingClientType,
     firebase_uid: str,
-    mock_admin_code: None,
     mocker: Any,
 ) -> None:
     mocker.patch(
@@ -97,7 +94,7 @@ async def test_create_organization_database_error(
 
     response = await test_client.post(
         "/organizations",
-        headers={"Authorization": "test-admin-code"},
+        headers={"Authorization": "Bearer some_token"},
         json={"name": "Error Organization", "firebase_uid": firebase_uid},
     )
 
@@ -112,7 +109,6 @@ async def test_list_organizations_success(
     project_owner_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
-    mock_admin_code: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         org2 = Organization(
@@ -141,8 +137,8 @@ async def test_list_organizations_success(
         await session.commit()
 
     response = await test_client.get(
-        f"/organizations?firebase_uid={firebase_uid}",
-        headers={"Authorization": "test-admin-code"},
+        "/organizations",
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -162,11 +158,10 @@ async def test_list_organizations_success(
 
 async def test_list_organizations_empty(
     test_client: TestingClientType,
-    mock_admin_code: None,
 ) -> None:
     response = await test_client.get(
-        "/organizations?firebase_uid=nonexistent123",
-        headers={"Authorization": "test-admin-code"},
+        "/organizations",
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -180,7 +175,6 @@ async def test_list_organizations_excludes_deleted(
     project_owner_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
-    mock_admin_code: None,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         org = await session.scalar(select(Organization).where(Organization.id == organization.id))
@@ -188,8 +182,8 @@ async def test_list_organizations_excludes_deleted(
         await session.commit()
 
     response = await test_client.get(
-        f"/organizations?firebase_uid={firebase_uid}",
-        headers={"Authorization": "test-admin-code"},
+        "/organizations",
+        headers={"Authorization": "Bearer some_token"},
     )
 
     assert response.status_code == HTTPStatus.OK

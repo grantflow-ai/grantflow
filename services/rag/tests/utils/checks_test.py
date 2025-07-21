@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
     GrantApplicationFactory,
     GrantTemplateFactory,
+    OrganizationFactory,
     ProjectFactory,
     RagSourceFactory,
 )
@@ -26,7 +27,11 @@ from services.rag.src.utils.checks import verify_rag_sources_indexed
 @pytest.fixture
 async def test_project(async_session_maker: async_sessionmaker[Any]) -> tuple[Any, Any]:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
         return project, session
@@ -37,7 +42,11 @@ async def test_grant_application(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantApplication:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
@@ -52,7 +61,11 @@ async def test_grant_template(
     async_session_maker: async_sessionmaker[Any],
 ) -> GrantTemplate:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
