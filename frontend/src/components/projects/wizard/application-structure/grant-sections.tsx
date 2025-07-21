@@ -143,7 +143,8 @@ export function SortableSection({
 			const isInteractiveElement =
 				target.closest('[data-interactive="true"]') ??
 				target.closest("button") ??
-				target.closest('[role="button"]');
+				(target.closest('[role="button"]') &&
+					!target.closest('[data-header="true"]'));
 
 			if (!isInteractiveElement) {
 				onToggleExpand();
@@ -382,7 +383,10 @@ function SectionHeader({
 }: SectionHeaderProps) {
 	return (
 		<div
+			aria-expanded={isExpanded}
+			aria-label={`${isExpanded ? "Collapse" : "Expand"} ${section.title} section`}
 			className={`flex items-center justify-start cursor-pointer ${isSubsection ? "gap-2" : "gap-5"}`}
+			data-header="true"
 			onClick={onHeaderClick}
 			onKeyDown={(e) => {
 				if (e.key === "Enter" || e.key === " ") {
