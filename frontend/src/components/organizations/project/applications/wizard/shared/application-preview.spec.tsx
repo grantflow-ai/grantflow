@@ -6,12 +6,12 @@ import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import { ApplicationPreview } from "./application-preview";
 
-vi.mock("@/components/organizations/shared/theme-badge", () => ({
+vi.mock("@/components/shared/theme-badge", () => ({
 	ThemeBadge: vi.fn(({ children, className, leftIcon }) => (
-		<div className={className} data-testid="theme-badge">
+		<span className={className} data-testid="theme-badge">
 			{leftIcon && <span data-testid="badge-icon">{leftIcon}</span>}
 			{children}
-		</div>
+		</span>
 	)),
 }));
 

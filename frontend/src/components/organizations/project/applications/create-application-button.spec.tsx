@@ -57,7 +57,7 @@ describe("CreateApplicationButton", () => {
 		expect(mockCreateApplication).toHaveBeenCalledWith(defaultProps.organizationId, defaultProps.projectId, {
 			title: "Untitled Application",
 		});
-		expect(mockPush).toHaveBeenCalledWith("/projects/project-456/applications/app-789/wizard");
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
 	});
 
 	it("should show loading state during creation", async () => {
