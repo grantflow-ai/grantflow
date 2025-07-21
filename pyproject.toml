@@ -36,9 +36,7 @@ dev = [
   "pytest-asyncio>=0.25.3",
   "pytest-cov>=6.0.0",
   "pytest-mock>=3.14.0",
-  "pytest-rerunfailures>=15.1",
   "pytest-timeout>=2.3.1",
-  "pytest-xdist>=3.7.0",
   "python-dotenv>=1.0.1",
   "pyyaml>=6.0.2",
   "ruff>=0.11.1",
@@ -153,7 +151,6 @@ markers = [
   "slow: All slow tests",
   "semantic_evaluation: Semantic similarity evaluation tests",
   "ai_eval: AI-powered evaluation tests",
-  "xdist_group(name): Mark tests to run in the same xdist worker",
   "vector_benchmark: Vector database performance benchmarks",
   "benchmark: All benchmark tests",
   "benchmark_vector: Vector-specific benchmarks",
@@ -170,18 +167,10 @@ filterwarnings = [
   "ignore::DeprecationWarning:spacy.*",
   "ignore::DeprecationWarning:weasel.*",
 ]
-# Enable pytest-xdist for parallel execution with increased retries
+# Run tests serially without retries for stability
 addopts = [
-  "-n",
-  "auto",             # Use all available CPU cores
-  "--dist",
-  "worksteal",        # Dynamic test distribution for better load balancing
-  "--maxprocesses",
-  "4",                # Limit to 4 workers max
   "--strict-markers", # Ensure all markers are registered
   "--tb=short",       # Shorter traceback format for better readability in CI
-  "--reruns=5",       # Rerun failed tests up to 5 times
-  "--reruns-delay=1", # Wait 1 second between reruns
 ]
 testpaths = [
   "packages/*/tests",

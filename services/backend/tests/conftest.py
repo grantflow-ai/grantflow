@@ -14,45 +14,6 @@ from services.backend.src.utils.jwt import create_jwt
 pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 
-def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """
-    Override the default xdist grouping to provide better test isolation for backend tests.
-
-    Strategy:
-    1. Group tests by their test file to reduce inter-file conflicts
-    2. Tests that modify shared state (write operations) are grouped separately
-    3. This ensures tests don't interfere with each other's database state
-    """
-
-    test_groups = {
-        "applications_test.py": "backend_applications",
-        "projects_test.py": "backend_projects",
-        "login_test.py": "backend_login",
-        "organizations_members_test.py": "backend_org_members",
-        "organization_invitations_test.py": "backend_org_invitations",
-        "notifications_test.py": "backend_notifications",
-        "files_test.py": "backend_files",
-        "health_test.py": "backend_health",
-        "grants_test.py": "backend_grants",
-        "sources_test.py": "backend_sources",
-        "user_test.py": "backend_user",
-    }
-
-    for item in items:
-        test_file = item.fspath.basename if hasattr(item.fspath, "basename") else str(item.fspath).split("/")[-1]
-
-        group_name = None
-        for pattern, group in test_groups.items():
-            if pattern in test_file:
-                group_name = group
-                break
-
-        if not group_name:
-            group_name = "backend_other"
-
-        item.add_marker(pytest.mark.xdist_group(group_name))
-
-
 TestingClientType = AsyncTestClient[Litestar]
 
 
