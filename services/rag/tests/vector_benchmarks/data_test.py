@@ -285,7 +285,6 @@ class BenchmarkDataGenerator:
         if not vectors:
             return
 
-        
         await self._ensure_rag_sources_exist(vectors)
 
         first_vector_dim = len(vectors[0]["embedding"])
@@ -371,16 +370,13 @@ class BenchmarkDataGenerator:
         from packages.db.src.tables import RagSource
         from sqlalchemy import select
 
-        
         rag_source_ids = {uuid.UUID(vector["rag_source_id"]) for vector in vectors}
 
         for rag_source_id in rag_source_ids:
-            
             result = await self.session.execute(select(RagSource).filter_by(id=rag_source_id))
             existing_source = result.scalar_one_or_none()
 
             if not existing_source:
-                
                 rag_source = RagSource(
                     id=rag_source_id,
                     indexing_status=SourceIndexingStatusEnum.CREATED,
