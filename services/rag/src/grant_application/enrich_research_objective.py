@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from typing import Final, TypedDict
 
@@ -10,7 +11,9 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
 from services.rag.src.utils.scientific_context import format_scientific_context
-from services.rag.src.utils.wikidata_client import WikidataClient
+from services.rag.src.utils.wikidata_client import get_scientific_context
+
+logger = logging.getLogger(__name__)
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
@@ -293,14 +296,12 @@ async def enrich_objective_with_wikidata(
 ) -> EnrichmentDataDTO:
     """Enhance enrichment data with Wikidata scientific context."""
     try:
-        # Extract all core scientific terms from objective and tasks
         all_terms = []
         all_terms.extend(enrichment_data["research_objective"]["core_scientific_terms"])
 
         for task in enrichment_data["research_tasks"]:
             all_terms.extend(task["core_scientific_terms"])
 
-        # Remove duplicates while preserving order
         unique_terms = list(dict.fromkeys(all_terms))
 
         if not unique_terms:
@@ -311,11 +312,7 @@ async def enrich_objective_with_wikidata(
                 "scientific_context": "",
             }
 
-        # Get scientific context from Wikidata
-        async with WikidataClient() as wikidata_client:
-            scientific_context = await wikidata_client.get_scientific_context(unique_terms, trace_id)
-
-        # Format the scientific context for LLM consumption
+        scientific_context = await get_scientific_context(unique_terms, trace_id)
         formatted_context = format_scientific_context(scientific_context)
 
         return {
@@ -325,9 +322,14 @@ async def enrich_objective_with_wikidata(
             "scientific_context": formatted_context,
         }
 
-    except Exception:
-        # Log error but don't fail the pipeline
-        # Return empty enrichment data to allow pipeline to continue
+    except Exception as e:
+        logger.error(
+            "Failed to enrich objective with Wikidata",
+            extra={
+                "error": str(e),
+                "trace_id": trace_id,
+            },
+        )
         return {
             "enriched_objective": "",
             "search_queries": [],
