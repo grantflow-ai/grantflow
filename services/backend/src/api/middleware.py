@@ -29,7 +29,7 @@ ADMIN_SOURCES_PATTERNS = [
     "/granting-institutions/{granting_institution_id}/sources",
     "/granting-institutions/{granting_institution_id}/sources/{source_id}",
     "/granting-institutions/{granting_institution_id}/sources/upload-url",
-    "/granting-institutions/{granting_institution_id}/sources/crawl-url"
+    "/granting-institutions/{granting_institution_id}/sources/crawl-url",
 ]
 DEV_BYPASS_PREFIX = "/dev/"
 
@@ -51,10 +51,7 @@ def _matches_source_pattern(path: str, pattern: str) -> bool:
 class AuthMiddleware(AbstractAuthenticationMiddleware):
     def _is_public_path(self, path: str) -> bool:
         """Check if path is public (no authentication required)."""
-        return (
-            any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or
-            path.startswith("/schema")
-        )
+        return any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema")
 
     def _is_dev_bypass(self, path: str) -> bool:
         """Check if path uses dev bypass."""
@@ -62,21 +59,18 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
     def _is_admin_path(self, path: str) -> bool:
         """Check if path requires admin authentication."""
-        
+
         if path in ADMIN_EXACT_PATHS:
             return True
 
-        
         if any(
-            path == f"/{admin_path}" or (
-                path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3
-            )
+            path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
             for admin_path in ADMIN_PATHS
         ):
             return True
 
-        
         return any(_matches_source_pattern(path, pattern) for pattern in ADMIN_SOURCES_PATTERNS)
+
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:

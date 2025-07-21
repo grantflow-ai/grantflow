@@ -30,6 +30,7 @@ def project_member_user(project_owner_user: OrganizationUser) -> OrganizationUse
 @pytest.fixture
 def otp_code(firebase_uid: str) -> str:
     from services.backend.src.utils.jwt import create_jwt
+
     return create_jwt(firebase_uid)
 
 
@@ -241,7 +242,6 @@ async def test_retrieve_template_job_wrong_project(
     project_member_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         other_project = ProjectFactory.build(organization_id=organization.id)
         session.add(other_project)
@@ -269,7 +269,6 @@ async def test_retrieve_template_job_wrong_project(
         await session.commit()
         job_id = job.id
 
-    
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -287,7 +286,6 @@ async def test_retrieve_application_job_wrong_project(
     project_member_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         other_project = ProjectFactory.build(organization_id=organization.id)
         session.add(other_project)
@@ -308,7 +306,6 @@ async def test_retrieve_application_job_wrong_project(
         await session.commit()
         job_id = job.id
 
-    
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -394,7 +391,6 @@ async def test_retrieve_template_job_minimal_data(
     project_member_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         job = GrantTemplateGenerationJobFactory.build(
             grant_template_id=grant_template.id,
@@ -427,7 +423,6 @@ async def test_retrieve_application_job_minimal_data(
     project_member_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         job = GrantApplicationGenerationJobFactory.build(
             grant_application_id=grant_application.id,
@@ -460,9 +455,7 @@ async def test_retrieve_template_job_no_subclass(
     project_member_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        
         template_job = GrantTemplateGenerationJobFactory.build(
             grant_template_id=grant_template.id,
             status=RagGenerationStatusEnum.PROCESSING,
@@ -471,14 +464,11 @@ async def test_retrieve_template_job_no_subclass(
         await session.flush()
         job_id = template_job.id
 
-        
         from sqlalchemy import text
-        await session.execute(
-            text(f"DELETE FROM grant_template_generation_jobs WHERE id = '{job_id}'")
-        )
+
+        await session.execute(text(f"DELETE FROM grant_template_generation_jobs WHERE id = '{job_id}'"))
         await session.commit()
 
-    
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -495,9 +485,7 @@ async def test_retrieve_application_job_no_subclass(
     project_member_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        
         app_job = GrantApplicationGenerationJobFactory.build(
             grant_application_id=grant_application.id,
             status=RagGenerationStatusEnum.PROCESSING,
@@ -506,14 +494,11 @@ async def test_retrieve_application_job_no_subclass(
         await session.flush()
         job_id = app_job.id
 
-        
         from sqlalchemy import text
-        await session.execute(
-            text(f"DELETE FROM grant_application_generation_jobs WHERE id = '{job_id}'")
-        )
+
+        await session.execute(text(f"DELETE FROM grant_application_generation_jobs WHERE id = '{job_id}'"))
         await session.commit()
 
-    
     response = await test_client.get(
         f"/organizations/{project.organization_id}/projects/{project.id}/rag-jobs/{job_id}",
         headers={"Authorization": f"Bearer {otp_code}"},

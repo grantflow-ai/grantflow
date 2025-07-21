@@ -91,7 +91,7 @@ async def test_retrieve_application_sources_empty(
     assert sources == []
 
 
-async def test_retrieve_organization_sources(
+async def test_retrieve_granting_institution_sources(
     test_client: TestingClientType,
     project: Project,
     granting_institution: GrantingInstitution,
@@ -100,16 +100,15 @@ async def test_retrieve_organization_sources(
     rag_file: RagFile,
     rag_url: RagUrl,
     project_member_user: OrganizationUser,
-    otp_code: str,
+    mock_admin_code: Mock,
 ) -> None:
     response = await test_client.get(
-        f"/organizations/{project.organization_id}/sources",
-        headers={"Authorization": f"Bearer {otp_code}"},
+        f"/granting-institutions/{granting_institution.id}/sources",
+        headers={"Authorization": "test-admin-code"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
     sources = response.json()
-    assert len(sources) == 0
-    assert sources == []
+    assert len(sources) == 2  
 
 
 async def test_retrieve_template_sources(
@@ -234,7 +233,7 @@ async def test_delete_application_source_deletes_from_gcs(
 
 
 @patch("services.backend.src.api.routes.sources.delete_blob", new_callable=AsyncMock)
-async def test_delete_organization_source(
+async def test_delete_granting_institution_source(
     mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
     granting_institution: GrantingInstitution,
@@ -243,7 +242,7 @@ async def test_delete_organization_source(
     mock_admin_code: Mock,
 ) -> None:
     response = await test_client.delete(
-        f"/organizations/{granting_institution.id}/sources/{granting_institution_file.rag_source_id}",
+        f"/granting-institutions/{granting_institution.id}/sources/{granting_institution_file.rag_source_id}",
         headers={"Authorization": "test-admin-code"},
     )
 
@@ -365,15 +364,15 @@ async def test_create_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        project_id=project.id,
-        parent_id=grant_application.id,
+        entity_type="organization",
+        entity_id=project.organization_id,
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
     )
 
 
-async def test_create_organization_upload_url(
+async def test_create_granting_institution_upload_url(
     test_client: TestingClientType,
     granting_institution: GrantingInstitution,
     mock_admin_code: Mock,
@@ -387,7 +386,7 @@ async def test_create_organization_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/organizations/{granting_institution.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/granting-institutions/{granting_institution.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "test-admin-code"},
     )
 
@@ -397,8 +396,8 @@ async def test_create_organization_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        project_id=None,
-        parent_id=granting_institution.id,
+        entity_type="granting_institution",
+        entity_id=granting_institution.id,
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
@@ -430,8 +429,8 @@ async def test_create_template_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        project_id=project.id,
-        parent_id=grant_template.id,
+        entity_type="organization",
+        entity_id=project.organization_id,
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
@@ -491,13 +490,13 @@ async def test_handle_crawl_url_grant_application(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        project_id=project.id,
-        parent_id=grant_application.id,
+        entity_type="organization",
+        entity_id=project.organization_id,
         trace_id=ANY,
     )
 
 
-async def test_handle_crawl_url_funding_organization(
+async def test_handle_crawl_url_granting_institution(
     test_client: TestingClientType,
     mock_publish_url_crawling_task: AsyncMock,
     granting_institution: GrantingInstitution,
@@ -506,7 +505,7 @@ async def test_handle_crawl_url_funding_organization(
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/organizations/{granting_institution.id}/sources/crawl-url",
+        f"/granting-institutions/{granting_institution.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "test-admin-code"},
     )
@@ -519,8 +518,8 @@ async def test_handle_crawl_url_funding_organization(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        project_id=None,
-        parent_id=granting_institution.id,
+        entity_type="granting_institution",
+        entity_id=granting_institution.id,
         trace_id=ANY,
     )
 
@@ -548,8 +547,8 @@ async def test_handle_crawl_url_grant_template(
         logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
-        project_id=project.id,
-        parent_id=grant_template.id,
+        entity_type="organization",
+        entity_id=project.organization_id,
         trace_id=ANY,
     )
 

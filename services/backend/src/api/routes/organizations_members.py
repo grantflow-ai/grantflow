@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import log_organization_audit_from_request
+from services.backend.src.utils.firebase import get_users
 
 logger = get_logger(__name__)
 
@@ -49,6 +50,10 @@ class OrganizationMemberResponse(TypedDict):
     project_access: list[ProjectAccessInfo]
     created_at: str
     updated_at: str
+    
+    email: str
+    display_name: str
+    photo_url: NotRequired[str]
 
 
 class MemberActionResponse(TypedDict):
@@ -93,8 +98,15 @@ async def handle_list_organization_members(
             )
         }
 
-    return [
-        OrganizationMemberResponse(
+    
+    firebase_uids = [member.firebase_uid for member in members]
+    users_data = await get_users(firebase_uids)
+
+    result = []
+    for member in members:
+        user_data = users_data.get(member.firebase_uid, {})
+
+        member_response = OrganizationMemberResponse(
             firebase_uid=member.firebase_uid,
             role=member.role,
             has_all_projects_access=member.has_all_projects_access,
@@ -108,9 +120,17 @@ async def handle_list_organization_members(
             ],
             created_at=member.created_at.isoformat(),
             updated_at=member.updated_at.isoformat(),
+            email=user_data.get("email", ""),
+            display_name=user_data.get("displayName", ""),
         )
-        for member in members
-    ]
+
+        
+        if photo_url := user_data.get("photoURL"):
+            member_response["photo_url"] = photo_url
+
+        result.append(member_response)
+
+    return result
 
 
 @post(

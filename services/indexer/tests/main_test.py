@@ -103,20 +103,20 @@ async def test_get_gcs_notification_data() -> None:
 
 async def test_handle_pubsub_message(mock_parse_object_uri: MagicMock) -> None:
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": UUID("987e4567-e89b-12d3-a456-426614174000"),
+        "entity_type": "organization",
+        "entity_id": UUID("987e4567-e89b-12d3-a456-426614174000"),
         "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
         "blob_name": "test.pdf",
     }
 
-    object_path = "123e4567-e89b-12d3-a456-426614174000/987e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/test.pdf"
+    object_path = "organization/987e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/test.pdf"
     event = create_pubsub_event(object_path)
 
     result, obj_path, trace_id = await handle_pubsub_message(event)
 
     assert isinstance(result, dict)
-    assert result["project_id"] == UUID("123e4567-e89b-12d3-a456-426614174000")
-    assert result["parent_id"] == UUID("987e4567-e89b-12d3-a456-426614174000")
+    assert result["entity_type"] == "organization"
+    assert result["entity_id"] == UUID("987e4567-e89b-12d3-a456-426614174000")
     assert result["source_id"] == UUID("550e8400-e29b-41d4-a716-446655440000")
     assert result["blob_name"] == "test.pdf"
     assert obj_path == object_path
@@ -153,7 +153,7 @@ async def test_handle_file_indexing_grant_application(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"123e4567-e89b-12d3-a456-426614174000/{grant_application.id}/{source_id}/document.pdf",
+                    "object_path": f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id}/document.pdf",
                 }
             )
         )
@@ -167,13 +167,13 @@ async def test_handle_file_indexing_grant_application(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
-    file_path = f"123e4567-e89b-12d3-a456-426614174000/{grant_application.id}/{source_id}/document.pdf"
+    file_path = f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -240,7 +240,7 @@ async def test_handle_file_indexing_funding_organization(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"{granting_institution.id}/{granting_institution.id}/{source_id}/guidelines.pdf",
+                    "object_path": f"granting_institution/{granting_institution.id}/{source_id}/guidelines.pdf",
                 }
             )
         )
@@ -254,13 +254,13 @@ async def test_handle_file_indexing_funding_organization(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": granting_institution.id,
-        "parent_id": granting_institution.id,
+        "entity_type": "granting_institution",
+        "entity_id": granting_institution.id,
         "source_id": source_id,
         "blob_name": "guidelines.pdf",
     }
 
-    file_path = f"{granting_institution.id}/{granting_institution.id}/{source_id}/guidelines.pdf"
+    file_path = f"granting_institution/{granting_institution.id}/{source_id}/guidelines.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -321,7 +321,7 @@ async def test_handle_file_indexing_grant_template(
                     "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"{project_id}/{grant_template.id}/{source_id}/template.docx",
+                    "object_path": f"organization/{project_id}/{source_id}/template.docx",
                 }
             )
         )
@@ -335,13 +335,13 @@ async def test_handle_file_indexing_grant_template(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": project_id,
-        "parent_id": grant_template.id,
+        "entity_type": "organization",
+        "entity_id": project_id,
         "source_id": source_id,
         "blob_name": "template.docx",
     }
 
-    file_path = f"{project_id}/{grant_template.id}/{source_id}/template.docx"
+    file_path = f"organization/{project_id}/{source_id}/template.docx"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -400,13 +400,15 @@ async def test_handle_file_indexing_unsupported_extension(
     mock_publish_notification: AsyncMock,
 ) -> None:
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
         "blob_name": "document.unsupported",
     }
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.unsupported"
+    file_path = (
+        "organization/123e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/document.unsupported"
+    )
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -423,15 +425,15 @@ async def test_handle_file_indexing_download_error(
     mock_publish_notification: AsyncMock,
 ) -> None:
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": UUID("550e8400-e29b-41d4-a716-446655440000"),
         "blob_name": "document.pdf",
     }
 
     mock_download_blob.side_effect = Exception("Download error")
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+    file_path = "organization/123e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -471,7 +473,7 @@ async def test_handle_file_indexing_processing_error(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"project/ws-123/grant_application/{grant_application.id}/document.pdf",
+                    "object_path": f"organization/{project_id}/{source_id}/document.pdf",
                 }
             )
         )
@@ -485,15 +487,15 @@ async def test_handle_file_indexing_processing_error(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": project_id,
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": project_id,
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
     mock_process_source.side_effect = Exception("Processing error")
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+    file_path = f"organization/{project_id}/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -543,14 +545,14 @@ async def test_handle_database_error(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"project/ws-123/grant_application/{grant_application.id}/document.pdf",
+                    "object_path": f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id}/document.pdf",
                 }
             )
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
@@ -558,7 +560,7 @@ async def test_handle_database_error(
     with patch("services.indexer.src.main.update_source_indexing_status") as mock_update:
         mock_update.side_effect = Exception("Database error")
 
-        file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+        file_path = f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id}/document.pdf"
         pubsub_event = create_pubsub_event(file_path)
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -596,7 +598,8 @@ async def test_handle_file_indexing_existing_file(
     grant_application: GrantApplication,
     mock_publish_notification: AsyncMock,
 ) -> None:
-    object_path = f"project/ws-123/grant_application/{grant_application.id}/existing.pdf"
+    source_id_placeholder = "550e8400-e29b-41d4-a716-446655440000"
+    object_path = f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id_placeholder}/existing.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -631,8 +634,8 @@ async def test_handle_file_indexing_existing_file(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": source_id,
         "blob_name": "existing.pdf",
     }
@@ -684,21 +687,29 @@ async def test_handle_file_indexing_file_parsing_error(
                     "mime_type": "application/pdf",
                     "size": 0,
                     "bucket_name": "test-bucket",
-                    "object_path": f"project/ws-123/grant_application/{grant_application.id}/document.pdf",
+                    "object_path": f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id}/document.pdf",
+                }
+            )
+        )
+        await session.execute(
+            insert(GrantApplicationSource).values(
+                {
+                    "rag_source_id": source_id,
+                    "grant_application_id": grant_application.id,
                 }
             )
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": source_id,
         "blob_name": "document.pdf",
     }
 
     mock_process_source.side_effect = FileParsingError("Failed to parse file", context={"filename": "document.pdf"})
 
-    file_path = f"project/ws-123/grant_application/{grant_application.id}/document.pdf"
+    file_path = f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id}/document.pdf"
     pubsub_event = create_pubsub_event(file_path)
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -728,7 +739,8 @@ async def test_handle_file_indexing_retry_failed_file(
     mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    object_path = f"project/ws-123/grant_application/{grant_application.id}/failed.pdf"
+    source_id_placeholder = "550e8400-e29b-41d4-a716-446655440000"
+    object_path = f"organization/123e4567-e89b-12d3-a456-426614174000/{source_id_placeholder}/failed.pdf"
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -763,8 +775,8 @@ async def test_handle_file_indexing_retry_failed_file(
         )
 
     mock_parse_object_uri.return_value = {
-        "project_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
-        "parent_id": grant_application.id,
+        "entity_type": "organization",
+        "entity_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "source_id": source_id,
         "blob_name": "failed.pdf",
     }

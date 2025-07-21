@@ -108,11 +108,9 @@ async def test_create_organization_invitation_success(
     assert "token" in result
     assert "expires_at" in result
 
-    
     decoded = verify_jwt_token(result["token"])
     assert decoded.startswith("invitation:")
 
-    
     async with async_session_maker() as session:
         invitation = await session.scalar(
             select(OrganizationInvitation)
@@ -150,8 +148,6 @@ async def test_create_organization_invitation_admin_cannot_invite_owner(
     admin_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
-    
     response = await test_client.post(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -161,7 +157,6 @@ async def test_create_organization_invitation_admin_cannot_invite_owner(
         },
     )
 
-    
     assert response.status_code == HTTPStatus.CREATED
 
 
@@ -191,7 +186,6 @@ async def test_create_organization_invitation_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -231,11 +225,9 @@ async def test_update_organization_invitation_success(
     assert result["id"] == str(existing_invitation.id)
     assert result["role"] == UserRoleEnum.ADMIN.value
 
-    
     async with async_session_maker() as session:
         invitation = await session.scalar(
-            select(OrganizationInvitation)
-            .where(OrganizationInvitation.id == existing_invitation.id)
+            select(OrganizationInvitation).where(OrganizationInvitation.id == existing_invitation.id)
         )
         assert invitation is not None
         assert invitation.role == UserRoleEnum.ADMIN
@@ -287,8 +279,6 @@ async def test_update_organization_invitation_admin_cannot_promote_to_owner(
     existing_invitation: OrganizationInvitation,
     otp_code: str,
 ) -> None:
-    
-    
     response = await test_client.patch(
         f"/organizations/{organization.id}/invitations/{existing_invitation.id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -297,7 +287,6 @@ async def test_update_organization_invitation_admin_cannot_promote_to_owner(
         },
     )
 
-    
     assert response.status_code == HTTPStatus.OK
 
 
@@ -309,7 +298,6 @@ async def test_update_organization_invitation_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -342,11 +330,9 @@ async def test_delete_organization_invitation_success(
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    
     async with async_session_maker() as session:
         invitation = await session.scalar(
-            select(OrganizationInvitation)
-            .where(OrganizationInvitation.id == existing_invitation.id)
+            select(OrganizationInvitation).where(OrganizationInvitation.id == existing_invitation.id)
         )
         assert invitation is not None
         assert invitation.deleted_at is not None
@@ -393,7 +379,6 @@ async def test_delete_organization_invitation_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -416,7 +401,6 @@ async def test_list_invitations_as_admin(
     existing_invitation: OrganizationInvitation,
     otp_code: str,
 ) -> None:
-    
     response = await test_client.get(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -434,7 +418,6 @@ async def test_create_invitation_with_expired_invitation(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         accepted_invitation = OrganizationInvitation(
             organization_id=organization.id,
@@ -446,7 +429,6 @@ async def test_create_invitation_with_expired_invitation(
         session.add(accepted_invitation)
         await session.commit()
 
-    
     response = await test_client.post(
         f"/organizations/{organization.id}/invitations",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -456,7 +438,6 @@ async def test_create_invitation_with_expired_invitation(
         },
     )
 
-    
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "already exists" in response.json()["detail"].lower()
 
@@ -479,11 +460,9 @@ async def test_invitation_token_expiry(
     assert response.status_code == HTTPStatus.CREATED
     result = response.json()
 
-    
     expires_at = datetime.fromisoformat(result["expires_at"])
     expected_expiry = datetime.now(UTC) + timedelta(hours=72)
 
-    
     assert abs((expires_at - expected_expiry).total_seconds()) < 60
 
 
@@ -493,7 +472,6 @@ async def test_create_invitation_inviter_not_found(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         other_org = Organization(name="Other Org")
         session.add(other_org)
@@ -520,7 +498,6 @@ async def test_create_invitation_with_project_ids(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         project2 = Project(
             name="Project 2",
@@ -553,7 +530,6 @@ async def test_update_invitation_accepted_invitation(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         accepted_invitation = OrganizationInvitation(
             organization_id=organization.id,
@@ -586,7 +562,6 @@ async def test_update_invitation_no_changes(
     existing_invitation: OrganizationInvitation,
     otp_code: str,
 ) -> None:
-    
     response = await test_client.patch(
         f"/organizations/{organization.id}/invitations/{existing_invitation.id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -605,7 +580,6 @@ async def test_list_invitations_with_multiple_invitations(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         invitations = []
         for i in range(3):
@@ -628,7 +602,6 @@ async def test_list_invitations_with_multiple_invitations(
     result = response.json()
     assert len(result) >= 3
 
-    
     emails = {inv["email"] for inv in result}
     for i in range(3):
         assert f"user{i}@example.com" in emails
@@ -655,8 +628,8 @@ async def test_create_invitation_check_audit_log(
 
     assert response.status_code == HTTPStatus.CREATED
 
-    
     from packages.db.src.tables import OrganizationAuditLog
+
     async with async_session_maker() as session:
         audit_log = await session.scalar(
             select(OrganizationAuditLog)
@@ -686,11 +659,9 @@ async def test_delete_invitation_check_soft_delete_timestamp(
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    
     async with async_session_maker() as session:
         invitation = await session.scalar(
-            select(OrganizationInvitation)
-            .where(OrganizationInvitation.id == existing_invitation.id)
+            select(OrganizationInvitation).where(OrganizationInvitation.id == existing_invitation.id)
         )
         assert invitation is not None
         assert invitation.deleted_at is not None
@@ -703,7 +674,6 @@ async def test_list_invitations_deleted_organization(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         deleted_org = Organization(name="Deleted Org")
         deleted_org.soft_delete()
@@ -725,7 +695,6 @@ async def test_create_invitation_deleted_organization(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         deleted_org = Organization(name="Deleted Org")
         deleted_org.soft_delete()
@@ -752,7 +721,6 @@ async def test_update_invitation_deleted_organization(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         deleted_org = Organization(name="Deleted Org")
         deleted_org.soft_delete()
@@ -778,7 +746,6 @@ async def test_delete_invitation_deleted_organization(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         deleted_org = Organization(name="Deleted Org")
         deleted_org.soft_delete()
@@ -800,15 +767,13 @@ async def test_create_invitation_deleted_inviter(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         new_org = Organization(name="New Org")
         session.add(new_org)
-        await session.flush()  
+        await session.flush()
 
-        
         deleted_member = OrganizationUser(
-            firebase_uid="a" * 128,  
+            firebase_uid="a" * 128,
             organization_id=new_org.id,
             role=UserRoleEnum.OWNER,
             has_all_projects_access=True,
@@ -838,7 +803,6 @@ async def test_update_invitation_deleted_invitation(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         deleted_invitation = OrganizationInvitation(
             organization_id=organization.id,
@@ -870,7 +834,6 @@ async def test_delete_invitation_deleted_invitation(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         deleted_invitation = OrganizationInvitation(
             organization_id=organization.id,
@@ -899,17 +862,15 @@ async def test_update_invitation_admin_checking_role(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         admin_user = OrganizationUser(
-            firebase_uid="a" * 128,  
+            firebase_uid="a" * 128,
             organization_id=organization.id,
             role=UserRoleEnum.ADMIN,
             has_all_projects_access=True,
         )
         session.add(admin_user)
 
-        
         owner = await session.scalar(
             select(OrganizationUser)
             .where(OrganizationUser.organization_id == organization.id)
@@ -920,7 +881,6 @@ async def test_update_invitation_admin_checking_role(
 
         await session.commit()
 
-    
     response = await test_client.patch(
         f"/organizations/{organization.id}/invitations/{existing_invitation.id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -929,6 +889,5 @@ async def test_update_invitation_admin_checking_role(
         },
     )
 
-    
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "admin cannot invite users as owner" in response.json()["detail"].lower()

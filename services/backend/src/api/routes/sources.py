@@ -483,7 +483,6 @@ async def handle_create_upload_url(
         template_id=template_id,
     )
 
-    
     _, _, entity_type, entity_id = determine_entity_info(
         application_id=application_id,
         template_id=template_id,
@@ -548,7 +547,6 @@ async def handle_crawl_url(
         template_id=template_id,
     )
 
-    
     _, _, entity_type, entity_id = determine_entity_info(
         application_id=application_id,
         template_id=template_id,
