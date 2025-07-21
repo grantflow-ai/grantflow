@@ -636,7 +636,7 @@ async def test_configuration_baseline(configured_vector_db: dict[str, Any], proj
         await generator.insert_vectors_to_database(vectors)
 
         query_vectors = await generator.generate_query_vectors(1, dimension)
-        framework = VectorBenchmarkFramework(session)
+        framework = VectorBenchmarkFramework(session_maker)
 
         benchmark_result = await framework.benchmark_similarity_search(
             query_vectors=query_vectors, k=10, test_name=config_name
