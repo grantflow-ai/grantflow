@@ -113,9 +113,9 @@ async def test_retrieve_projects(
     firebase_users = {
         firebase_uid: {
             "uid": firebase_uid,
-            "email": "user@example.com",
-            "displayName": "Test User",
-            "photoURL": "https://example.com/photo.jpg",
+            "email": f"test-{firebase_uid}@example.com",
+            "displayName": f"Test User {firebase_uid}",
+            "photoURL": f"https://example.com/photo-{firebase_uid}.jpg",
         }
     }
     mocker.patch(
@@ -146,7 +146,7 @@ async def test_retrieve_projects(
         assert len(project_response["members"]) > 0
 
         user_member = next(m for m in project_response["members"] if m["firebase_uid"] == firebase_uid)
-        assert user_member["email"] == "user@example.com"
+        assert user_member["email"] == f"test-{firebase_uid}@example.com"
         assert user_member["role"] in [UserRoleEnum.OWNER.value, UserRoleEnum.ADMIN.value, UserRoleEnum.MEMBER.value]
 
         members = project_response["members"]
@@ -154,9 +154,9 @@ async def test_retrieve_projects(
 
         member = members[0]
         assert member["firebase_uid"] == firebase_uid
-        assert member["email"] == "user@example.com"
-        assert member["display_name"] == "Test User"
-        assert member["photo_url"] == "https://example.com/photo.jpg"
+        assert member["email"] == f"test-{firebase_uid}@example.com"
+        assert member["display_name"] == f"Test User {firebase_uid}"
+        assert member["photo_url"] == f"https://example.com/photo-{firebase_uid}.jpg"
 
     assert all(value["id"] != str(project_without_user_access.id) for value in values)
 

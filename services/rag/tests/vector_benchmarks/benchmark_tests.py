@@ -23,8 +23,8 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testing.benchmark_utils import benchmark_vector
 
+from .data_test import BenchmarkDataGenerator
 from .framework import BenchmarkResult, VectorBenchmarkFramework
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
@@ -51,7 +51,7 @@ async def test_baseline_vector_insertion(
     rag_source = benchmark_entities["rag_source"]
 
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(1000, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
 
@@ -96,7 +96,7 @@ async def test_baseline_similarity_search(
     rag_source = benchmark_entities["rag_source"]
 
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(1000, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
         await generator.insert_vectors_to_database(vectors)
@@ -200,7 +200,7 @@ async def test_dimension_comparison(
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             chunks = await generator.generate_test_chunks(test_size, rag_source.id)
             vectors = await generator.create_test_vectors(chunks, rag_source.id, dimension)
 
@@ -321,7 +321,7 @@ async def test_index_parameter_comparison(
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             chunks = await generator.generate_test_chunks(test_size, rag_source.id)
             vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
 
@@ -400,18 +400,48 @@ async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], pr
         logger.info("Testing dimension", dimension=dim)
 
         async with db_config["session_maker"]() as session:
-            generator = TestDataGenerator(session)
-
             await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
             await session.commit()
 
-            chunks = await generator.generate_test_chunks(100, uuid.uuid4())
-            vectors = await generator.create_test_vectors(chunks, uuid.uuid4(), dim)
+        async with db_config["session_maker"]() as session:
+            from .synthetic_migrations import VectorTableModifier
+
+            modifier = VectorTableModifier(session)
+            await modifier.modify_vector_dimension(dim)
+
+        async with db_config["session_maker"]() as session:
+            generator = BenchmarkDataGenerator(session)
+
+            from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+            from sqlalchemy import select
+            from testing.factories import RagFileFactory
+
+            result = await session.execute(select(GrantApplication).filter_by(project_id=project.id))
+            grant_app = result.scalar_one_or_none()
+            if not grant_app:
+                from testing.factories import GrantApplicationFactory
+
+                grant_app = GrantApplicationFactory.build(project_id=project.id)
+                session.add(grant_app)
+                await session.commit()
+                await session.refresh(grant_app)
+
+            rag_source = RagFileFactory.build()
+            session.add(rag_source)
+            await session.commit()
+            await session.refresh(rag_source)
+
+            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            session.add(app_rag)
+            await session.commit()
+
+            chunks = await generator.generate_test_chunks(100, rag_source.id)
+            vectors = await generator.create_test_vectors(chunks, rag_source.id, dim)
             await generator.insert_vectors_to_database(vectors)
 
             query_vectors = await generator.generate_query_vectors(1, dim)
 
-            framework = VectorBenchmarkFramework(session)
+            framework = VectorBenchmarkFramework(db_config["session_maker"])
             benchmark_result = await framework.benchmark_similarity_search(
                 query_vectors=query_vectors, k=10, test_name=f"dimension_{dim}"
             )
@@ -490,20 +520,41 @@ async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], projec
         logger.info("Testing dataset size", size=size)
 
         async with db_config["session_maker"]() as session:
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
 
             await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
             await session.commit()
 
-            source_id = uuid.uuid4()
+            from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+            from sqlalchemy import select
+            from testing.factories import RagFileFactory
 
-            chunks = await generator.generate_test_chunks(size, source_id)
-            vectors = await generator.create_test_vectors(chunks, source_id, dimension)
+            result = await session.execute(select(GrantApplication).filter_by(project_id=project.id))
+            grant_app = result.scalar_one_or_none()
+            if not grant_app:
+                from testing.factories import GrantApplicationFactory
+
+                grant_app = GrantApplicationFactory.build(project_id=project.id)
+                session.add(grant_app)
+                await session.commit()
+                await session.refresh(grant_app)
+
+            rag_source = RagFileFactory.build()
+            session.add(rag_source)
+            await session.commit()
+            await session.refresh(rag_source)
+
+            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            session.add(app_rag)
+            await session.commit()
+
+            chunks = await generator.generate_test_chunks(size, rag_source.id)
+            vectors = await generator.create_test_vectors(chunks, rag_source.id, dimension)
             await generator.insert_vectors_to_database(vectors)
 
             query_vectors = await generator.generate_query_vectors(1, dimension)
 
-            framework = VectorBenchmarkFramework(session)
+            framework = VectorBenchmarkFramework(db_config["session_maker"])
             benchmark_result = await framework.benchmark_similarity_search(
                 query_vectors=query_vectors, k=10, test_name=f"size_{size}"
             )
@@ -575,7 +626,7 @@ async def test_configuration_baseline(configured_vector_db: dict[str, Any], proj
     dimension = int(str(dimension_val)) if dimension_val is not None else 384
 
     async with session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
 
         await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
         await session.commit()
@@ -585,7 +636,7 @@ async def test_configuration_baseline(configured_vector_db: dict[str, Any], proj
         await generator.insert_vectors_to_database(vectors)
 
         query_vectors = await generator.generate_query_vectors(1, dimension)
-        framework = VectorBenchmarkFramework(session)
+        framework = VectorBenchmarkFramework(session_maker)
 
         benchmark_result = await framework.benchmark_similarity_search(
             query_vectors=query_vectors, k=10, test_name=config_name

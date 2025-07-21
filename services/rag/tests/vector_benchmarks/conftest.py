@@ -29,8 +29,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testing.factories import RagFileFactory
 
+from .data_test import BenchmarkDataGenerator
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
@@ -94,7 +94,7 @@ async def benchmark_rag_source(
 
 
 @pytest.fixture
-async def test_data_generator(async_session_maker: async_sessionmaker[AsyncSession]) -> TestDataGenerator:
+async def test_data_generator(async_session_maker: async_sessionmaker[AsyncSession]) -> BenchmarkDataGenerator:
     """
     Test data generator for creating realistic benchmark data.
 
@@ -107,7 +107,7 @@ async def test_data_generator(async_session_maker: async_sessionmaker[AsyncSessi
             chunks = await test_data_generator.generate_test_chunks(1000, benchmark_rag_source.id)
     """
     async with async_session_maker() as session:
-        return TestDataGenerator(session)
+        return BenchmarkDataGenerator(session)
 
 
 @pytest.fixture
@@ -188,7 +188,7 @@ async def small_dataset(
             vectors = small_dataset["vectors"]
     """
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
 
         source_id = uuid.uuid4()
         chunks = await generator.generate_test_chunks(50, source_id)
@@ -220,7 +220,7 @@ async def medium_dataset(
             # 10000 vectors ready for testing
     """
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         rag_source = benchmark_entities["rag_source"]
         chunks = await generator.generate_test_chunks(10000, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
@@ -242,7 +242,7 @@ async def large_dataset(
             # 50000 vectors ready for testing
     """
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         rag_source = benchmark_entities["rag_source"]
         chunks = await generator.generate_test_chunks(50000, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)

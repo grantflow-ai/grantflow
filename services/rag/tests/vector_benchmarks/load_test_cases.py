@@ -13,6 +13,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from testing.benchmark_utils import benchmark_vector
 
+from .data_test import BenchmarkDataGenerator
 from .load_testing import (
     LOAD_TEST_CONFIGURATIONS,
     LoadTestConfiguration,
@@ -21,7 +22,6 @@ from .load_testing import (
     format_load_test_results,
 )
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
@@ -72,7 +72,7 @@ async def test_vector_search_load(
         await session.commit()
         await session.refresh(app_rag)
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(config.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, config.vector_dimension)
         await generator.insert_vectors_to_database(vectors)
@@ -180,7 +180,7 @@ async def test_dimension_load_comparison(
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             await generator.generate_test_chunks(load_config.dataset_size, rag_source.id)
             query_vectors = await generator.generate_query_vectors(50, dimension)
 
@@ -285,7 +285,7 @@ async def test_index_parameter_load_comparison(
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             await generator.generate_test_chunks(load_config.dataset_size, rag_source.id)
             query_vectors = await generator.generate_query_vectors(50, 384)
 
@@ -357,7 +357,7 @@ async def test_result_quality_by_dimension(
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             chunks = await generator.generate_test_chunks(500, rag_source.id)
 
             vectors = await generator.create_test_vectors(chunks[:1], rag_source.id, dimension)
