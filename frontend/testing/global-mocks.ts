@@ -29,7 +29,7 @@ const {
 	const mockSetCookie = vi.fn();
 	const mockGetCookie = vi.fn().mockReturnValue({
 		name: "grantflow_session",
-		value: "mock-session-token"
+		value: "mock-session-token",
 	});
 	const mockCookies = vi.fn().mockImplementation(() =>
 		Promise.resolve({

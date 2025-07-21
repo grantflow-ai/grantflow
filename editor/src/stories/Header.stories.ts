@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { fn } from "storybook/test";
 
-import { Header } from "./Header";
+import { Header } from "./header";
 
 const meta = {
 	args: {
