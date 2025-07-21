@@ -8,19 +8,6 @@ import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 
 vi.mock("@/components/organizations/project/applications/wizard/shared", () => ({
-	PreviewCard: vi.fn(({ children, className, ...props }) => (
-		<div className={className} {...props}>
-			{children}
-		</div>
-	)),
-	WizardLeftPane: vi.fn(({ children, contentSpacing, testId }) => (
-		<div className={contentSpacing} data-testid={testId}>
-			{children}
-		</div>
-	)),
-}));
-
-vi.mock("../shared/file-preview-card", () => ({
 	FilePreviewCard: vi.fn(({ file, parentId, sourceStatus }) => (
 		<div data-testid="file-preview-card">
 			<span data-testid="file-name">{file.name}</span>
@@ -33,6 +20,16 @@ vi.mock("../shared/file-preview-card", () => ({
 			<span data-testid="link-url">{url}</span>
 			<span data-testid="link-parent-id">{parentId}</span>
 			<span data-testid="link-source-status">{sourceStatus}</span>
+		</div>
+	)),
+	PreviewCard: vi.fn(({ children, className, ...props }) => (
+		<div className={className} {...props}>
+			{children}
+		</div>
+	)),
+	WizardLeftPane: vi.fn(({ children, contentSpacing, testId }) => (
+		<div className={contentSpacing} data-testid={testId}>
+			{children}
 		</div>
 	)),
 }));

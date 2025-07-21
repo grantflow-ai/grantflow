@@ -258,7 +258,7 @@ describe.sequential("WizardHeader", () => {
 			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(false);
 
-			expect(mockPush).toHaveBeenCalledWith("/project");
+			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 		});
 
 		it("navigates to projects list if no project_id available", () => {
@@ -277,7 +277,7 @@ describe.sequential("WizardHeader", () => {
 			const exitButton = screen.getByTestId("exit-button");
 			fireEvent.click(exitButton);
 
-			expect(mockPush).toHaveBeenCalledWith("/project");
+			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 		});
 
 		it("navigates to projects list if no application available", () => {
@@ -291,7 +291,7 @@ describe.sequential("WizardHeader", () => {
 			const exitButton = screen.getByTestId("exit-button");
 			fireEvent.click(exitButton);
 
-			expect(mockPush).toHaveBeenCalledWith("/project");
+			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 		});
 	});
 });

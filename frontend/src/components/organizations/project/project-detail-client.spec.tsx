@@ -49,7 +49,7 @@ vi.mock("@/components/layout/app-header", () => ({
 vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
 }));
-vi.mock("../applications/delete-application-modal", () => ({
+vi.mock("./applications/delete-application-modal", () => ({
 	DeleteApplicationModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
 }));
 vi.mock("./application-list", () => ({
@@ -169,7 +169,7 @@ describe("ProjectDetailClient", () => {
 
 		render(<ProjectDetailClient />);
 
-		expect(mockReplace).toHaveBeenCalledWith("/projects");
+		expect(mockReplace).toHaveBeenCalledWith("/organization");
 	});
 
 	it("should handle creating new application", async () => {
@@ -208,7 +208,7 @@ describe("ProjectDetailClient", () => {
 			"app-new",
 			expect.any(String),
 		);
-		expect(mockPush).toHaveBeenCalledWith("/application/wizard");
+		expect(mockPush).toHaveBeenCalledWith("/organization/project/application/wizard");
 	});
 
 	it("should show creating state when creating application", async () => {

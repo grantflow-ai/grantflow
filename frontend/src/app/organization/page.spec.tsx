@@ -7,7 +7,7 @@ import DashboardPage from "./page";
 vi.mock("@/actions/organization");
 vi.mock("@/actions/project");
 vi.mock("@/utils/organization-context");
-vi.mock("@/components/projects/dashboard/dashboard-client");
+vi.mock("@/components/organizations/dashboard/dashboard-client");
 
 const mockGetOrganizations = vi.mocked(await import("@/actions/organization").then((m) => m.getOrganizations));
 const mockGetProjects = vi.mocked(await import("@/actions/project").then((m) => m.getProjects));
