@@ -37,8 +37,8 @@ class PubSubEvent(msgspec.Struct, rename="camel"):
 
 class CrawlingRequest(TypedDict):
     source_id: UUID
-    project_id: UUID | None
-    parent_id: UUID
+    entity_type: Literal["organization", "granting_institution"]
+    entity_id: UUID
     url: str
     trace_id: NotRequired[str]
 
@@ -130,8 +130,8 @@ async def publish_url_crawling_task(
     logger: "FilteringBoundLogger",
     url: str,
     source_id: str | UUID,
-    project_id: str | UUID | None,
-    parent_id: str | UUID,
+    entity_type: Literal["organization", "granting_institution"],
+    entity_id: str | UUID,
     trace_id: str | None = None,
 ) -> str:
     from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
@@ -141,8 +141,8 @@ async def publish_url_crawling_task(
     data = CrawlingRequest(
         url=url,
         source_id=UUID(str(source_id)),
-        project_id=UUID(str(project_id)) if project_id else None,
-        parent_id=UUID(str(parent_id)),
+        entity_type=entity_type,
+        entity_id=UUID(str(entity_id)),
     )
 
     if trace_id:
