@@ -151,10 +151,8 @@ async def handle_file_indexing(
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
-        
-        parent_id = parse_result["entity_id"]  
+        parent_id = parse_result["entity_id"]
 
-        
         if grant_app_source := await session.scalar(
             select(GrantApplicationSource.grant_application_id).where(
                 GrantApplicationSource.rag_source_id == parse_result["source_id"]
@@ -163,7 +161,6 @@ async def handle_file_indexing(
             parent_id = grant_app_source
             logger.debug("Found grant application association", parent_id=str(parent_id), trace_id=trace_id)
 
-        
         elif grant_template_source := await session.scalar(
             select(GrantTemplateSource.grant_template_id).where(
                 GrantTemplateSource.rag_source_id == parse_result["source_id"]
@@ -172,7 +169,6 @@ async def handle_file_indexing(
             parent_id = grant_template_source
             logger.debug("Found grant template association", parent_id=str(parent_id), trace_id=trace_id)
 
-        
         elif granting_inst_source := await session.scalar(
             select(GrantingInstitutionSource.granting_institution_id).where(
                 GrantingInstitutionSource.rag_source_id == parse_result["source_id"]

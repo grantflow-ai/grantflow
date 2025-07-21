@@ -18,6 +18,7 @@ from packages.db.src.tables import (
     GrantingInstitutionSource,
     GrantTemplate,
     GrantTemplateSource,
+    Project,
     RagSource,
     RagUrl,
 )
@@ -72,15 +73,12 @@ def mock_construct_object_uri() -> Generator[Mock]:
 
         def side_effect(
             *,
-            project_id: str | None = None,
-            parent_id: str | None = None,
-            source_id: str | None = None,
-            blob_name: str | None = None,
+            entity_type: str,
+            entity_id: str,
+            source_id: str,
+            blob_name: str,
         ) -> str:
-            if project_id:
-                return f"{project_id}/{parent_id}/{source_id}/{blob_name}"
-            else:
-                return f"{parent_id}/{source_id}/{blob_name}"
+            return f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
         mock.side_effect = side_effect
         yield mock
@@ -94,32 +92,32 @@ def mock_publish_notification() -> Generator[AsyncMock]:
 
 
 def create_crawling_request(
-    parent_id: UUID,
+    entity_id: UUID,
     source_id: UUID,
+    entity_type: str = "organization",
     url: str = "https://example.org/docs",
-    project_id: UUID | None = None,
 ) -> dict[str, str]:
     request: dict[str, str] = {
-        "parent_id": str(parent_id),
+        "entity_id": str(entity_id),
+        "entity_type": entity_type,
         "source_id": str(source_id),
         "url": url,
-        "project_id": str(project_id) if project_id else str(parent_id),
     }
 
     return request
 
 
 def create_pubsub_event(
-    parent_id: UUID,
+    entity_id: UUID,
     source_id: UUID,
+    entity_type: str = "organization",
     url: str = "https://example.org/docs",
-    project_id: UUID | None = None,
 ) -> PubSubEvent:
     message_data = {
-        "parent_id": str(parent_id),
+        "entity_id": str(entity_id),
+        "entity_type": entity_type,
         "source_id": str(source_id),
         "url": url,
-        "project_id": str(project_id) if project_id else str(parent_id),
     }
 
     return PubSubEvent(
@@ -140,9 +138,8 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
     mock_publish_notification: AsyncMock,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    project: Project,
 ) -> None:
-    project_id = uuid4()
-
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -177,9 +174,9 @@ async def test_handle_url_crawling_pubsub_event_grant_application(
         )
 
     pubsub_event = create_pubsub_event(
-        parent_id=grant_application.id,
+        entity_id=project.organization_id,
         source_id=source_id,
-        project_id=project_id,
+        entity_type="organization",
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -250,8 +247,9 @@ async def test_handle_url_crawling_funding_organization(
         )
 
     pubsub_event = create_pubsub_event(
-        parent_id=granting_institution.id,
+        entity_id=granting_institution.id,
         source_id=source_id,
+        entity_type="granting_institution",
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -274,9 +272,8 @@ async def test_handle_url_crawling_grant_template(
     mock_construct_object_uri: Mock,
     async_session_maker: async_sessionmaker[Any],
     grant_template: GrantTemplate,
+    project: Project,
 ) -> None:
-    project_id = uuid4()
-
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -311,9 +308,9 @@ async def test_handle_url_crawling_grant_template(
         )
 
     pubsub_event = create_pubsub_event(
-        parent_id=grant_template.id,
+        entity_id=project.organization_id,
         source_id=source_id,
-        project_id=project_id,
+        entity_type="organization",
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -333,6 +330,7 @@ async def test_handle_url_crawling_no_files_returned(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    project: Project,
     mock_upload_blob: AsyncMock,
 ) -> None:
     async with async_session_maker() as session, session.begin():
@@ -389,8 +387,9 @@ async def test_handle_url_crawling_no_files_returned(
         mock_crawl.side_effect = crawl_url_side_effect
 
         pubsub_event = create_pubsub_event(
-            parent_id=grant_application.id,
+            entity_id=project.organization_id,
             source_id=source_id,
+            entity_type="organization",
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -402,6 +401,7 @@ async def test_handle_url_crawling_no_files_returned(
 async def test_handle_url_crawling_database_error(
     test_client: AsyncTestClient[Any],
     grant_application: GrantApplication,
+    project: Project,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session, session.begin():
@@ -443,8 +443,9 @@ async def test_handle_url_crawling_database_error(
         mock_update.side_effect = Exception("Database error")
 
         pubsub_event = create_pubsub_event(
-            parent_id=grant_application.id,
+            entity_id=project.organization_id,
             source_id=source_id,
+            entity_type="organization",
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -455,6 +456,7 @@ async def test_handle_url_crawling_extraction_error(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
     from packages.shared_utils.src.exceptions import UrlParsingError
@@ -498,8 +500,9 @@ async def test_handle_url_crawling_extraction_error(
         mock_crawl.side_effect = UrlParsingError("Failed to parse URL")
 
         pubsub_event = create_pubsub_event(
-            parent_id=grant_application.id,
+            entity_id=project.organization_id,
             source_id=source_id,
+            entity_type="organization",
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -529,6 +532,7 @@ async def test_handle_url_crawling_network_error(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
     from httpx import ConnectError
@@ -572,8 +576,9 @@ async def test_handle_url_crawling_network_error(
         mock_crawl.side_effect = ConnectError("[Errno -2] Name or service not known")
 
         pubsub_event = create_pubsub_event(
-            parent_id=grant_application.id,
+            entity_id=project.organization_id,
             source_id=source_id,
+            entity_type="organization",
         )
 
         response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -604,10 +609,9 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     mock_upload_blob: AsyncMock,
     mock_construct_object_uri: Mock,
     grant_application: GrantApplication,
+    project: Project,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    project_id = uuid4()
-
     async with async_session_maker() as session, session.begin():
         source_id = await session.scalar(
             insert(RagSource)
@@ -642,9 +646,9 @@ async def test_handle_upload_blob_called_with_correct_parameters(
         )
 
     pubsub_event = create_pubsub_event(
-        parent_id=grant_application.id,
+        entity_id=project.organization_id,
         source_id=source_id,
-        project_id=project_id,
+        entity_type="organization",
     )
 
     response = await test_client.post("/", json=msgspec.to_builtins(pubsub_event))
@@ -652,8 +656,8 @@ async def test_handle_upload_blob_called_with_correct_parameters(
 
     assert mock_construct_object_uri.call_count == 2
     first_call_kwargs = mock_construct_object_uri.call_args_list[0][1]
-    assert first_call_kwargs["project_id"] == project_id
-    assert first_call_kwargs["parent_id"] == grant_application.id
+    assert first_call_kwargs["entity_type"] == "organization"
+    assert first_call_kwargs["entity_id"] == str(project.organization_id)
     assert "source_id" in first_call_kwargs
     assert "blob_name" in first_call_kwargs
 
@@ -661,27 +665,27 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     first_upload_call_args = mock_upload_blob.call_args_list[0][0]
     assert len(first_upload_call_args) >= 1
     blob_path = first_upload_call_args[0]
-    assert str(project_id) in blob_path
+    assert str(project.organization_id) in blob_path
 
 
 async def test_decode_pubsub_message(
     test_client: AsyncTestClient[Any],
     grant_application: GrantApplication,
+    project: Project,
 ) -> None:
-    project_id = uuid4()
     source_id = uuid4()
     pubsub_event = create_pubsub_event(
-        parent_id=grant_application.id,
+        entity_id=project.organization_id,
         source_id=source_id,
-        project_id=project_id,
+        entity_type="organization",
         url="https://example.com/test",
     )
 
     with patch("services.crawler.src.main.decode_pubsub_message") as mock_decode:
         mock_decode.return_value = CrawlingRequest(
-            parent_id=grant_application.id,
+            entity_id=project.organization_id,
+            entity_type="organization",
             source_id=source_id,
-            project_id=project_id,
             url="https://example.com/test",
         )
 
@@ -711,7 +715,7 @@ async def test_pubsub_message_missing_required_fields(
     test_client: AsyncTestClient[Any],
 ) -> None:
     message_data = {
-        "parent_id": str(uuid4()),
+        "entity_id": str(uuid4()),
         "url": "https://example.org/docs",
     }
 
@@ -732,12 +736,14 @@ async def test_handle_url_crawling_skipped_url(
     test_client: AsyncTestClient[Any],
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
+    project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
     source_id = uuid4()
     pubsub_event = create_pubsub_event(
-        parent_id=grant_application.id,
+        entity_id=project.organization_id,
         source_id=source_id,
+        entity_type="organization",
         url="https://x.com/NIHFunding",
     )
 

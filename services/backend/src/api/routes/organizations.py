@@ -12,6 +12,7 @@ from sqlalchemy import delete as sa_delete
 from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest, TableIdResponse
 from services.backend.src.utils.firebase import schedule_organization_deletion
@@ -26,7 +27,7 @@ class CreateOrganizationRequestBody(TypedDict):
     contact_email: NotRequired[str | None]
     contact_person_name: NotRequired[str | None]
     institutional_affiliation: NotRequired[str | None]
-    firebase_uid: str  
+    firebase_uid: str
 
 
 class UpdateOrganizationRequestBody(TypedDict):
@@ -73,15 +74,12 @@ ORGANIZATION_DELETION_GRACE_PERIOD_DAYS = 30
 
 @post("/organizations", operation_id="CreateOrganization")
 async def handle_create_organization(
-    request: APIRequest,
     data: CreateOrganizationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> TableIdResponse:
-    
     firebase_uid = data["firebase_uid"]
     logger.info("Creating organization", uid=firebase_uid)
 
-    
     org_data = {k: v for k, v in data.items() if k != "firebase_uid"}
 
     async with session_maker() as session, session.begin():
@@ -112,9 +110,8 @@ async def handle_create_organization(
 async def handle_list_organizations(
     request: APIRequest,
     session_maker: async_sessionmaker[Any],
-    firebase_uid: str | None = None,  
+    firebase_uid: str | None = None,
 ) -> list[OrganizationListItemResponse]:
-    
     uid = firebase_uid if firebase_uid else request.auth
     if not uid:
         raise ValidationException("firebase_uid parameter required for admin API calls")
@@ -122,40 +119,33 @@ async def handle_list_organizations(
     logger.info("Listing organizations for user", uid=uid)
 
     async with session_maker() as session:
-        
-        from sqlalchemy.orm import joinedload
-
         result_set = await session.execute(
             select(Organization)
             .join(OrganizationUser)
             .where(OrganizationUser.firebase_uid == uid)
             .where(Organization.deleted_at.is_(None))
             .options(
-                joinedload(Organization.organization_users),
-                joinedload(Organization.projects),
+                selectinload(Organization.organization_users),
+                selectinload(Organization.projects),
             )
         )
         organizations = list(result_set.scalars().unique())
 
-        
-        result = []
-        for org in organizations:
-            result.append(
-                OrganizationListItemResponse(
-                    id=str(org.id),
-                    name=org.name,
-                    description=org.description,
-                    logo_url=org.logo_url,
-                    role=next(
-                        (ou.role for ou in org.organization_users if ou.firebase_uid == uid),
-                        UserRoleEnum.COLLABORATOR,
-                    ),
-                    projects_count=len([p for p in org.projects if not p.deleted_at]),
-                    members_count=len([ou for ou in org.organization_users if not ou.deleted_at]),
-                )
+        return [
+            OrganizationListItemResponse(
+                id=str(org.id),
+                name=org.name,
+                description=org.description,
+                logo_url=org.logo_url,
+                role=next(
+                    (ou.role for ou in org.organization_users if ou.firebase_uid == uid),
+                    UserRoleEnum.COLLABORATOR,
+                ),
+                projects_count=len([p for p in org.projects if not p.deleted_at]),
+                members_count=len([ou for ou in org.organization_users if not ou.deleted_at]),
             )
-
-    return result
+            for org in organizations
+        ]
 
 
 @get("/organizations/{organization_id:uuid}", operation_id="GetOrganization")
@@ -322,11 +312,7 @@ async def handle_restore_organization(
 
     async with session_maker() as session, session.begin():
         try:
-            
-            organization = await session.scalar(
-                select(Organization)
-                .where(Organization.id == organization_id)
-            )
+            organization = await session.scalar(select(Organization).where(Organization.id == organization_id))
 
             if not organization:
                 raise ValidationException("Organization not found")
@@ -336,10 +322,8 @@ async def handle_restore_organization(
 
             organization.restore()
 
-            
             await session.flush()
 
-            
             await session.refresh(organization)
 
             user_org = await session.scalar(
@@ -348,7 +332,6 @@ async def handle_restore_organization(
                 .where(OrganizationUser.firebase_uid == request.auth)
             )
 
-            
             response_data = OrganizationResponse(
                 id=str(organization.id),
                 name=organization.name,

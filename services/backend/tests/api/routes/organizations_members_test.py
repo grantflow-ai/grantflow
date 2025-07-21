@@ -56,7 +56,6 @@ async def limited_collaborator_user(
         )
         session.add(user)
 
-        
         access = ProjectAccess(
             firebase_uid=third_user_uid,
             organization_id=organization.id,
@@ -87,19 +86,16 @@ async def test_list_organization_members_success(
 
     assert len(members) == 3
 
-    
     owner_member = next(m for m in members if m["firebase_uid"] == project_owner_user.firebase_uid)
     assert owner_member["role"] == UserRoleEnum.OWNER.value
     assert owner_member["has_all_projects_access"] is True
     assert len(owner_member["project_access"]) == 0
 
-    
     collab_member = next(m for m in members if m["firebase_uid"] == collaborator_user.firebase_uid)
     assert collab_member["role"] == UserRoleEnum.COLLABORATOR.value
     assert collab_member["has_all_projects_access"] is True
     assert len(collab_member["project_access"]) == 0
 
-    
     limited_member = next(m for m in members if m["firebase_uid"] == limited_collaborator_user.firebase_uid)
     assert limited_member["role"] == UserRoleEnum.COLLABORATOR.value
     assert limited_member["has_all_projects_access"] is False
@@ -147,7 +143,6 @@ async def test_add_organization_member_success(
     assert result["firebase_uid"] == new_member_uid
     assert result["role"] == UserRoleEnum.ADMIN.value
 
-    
     async with async_session_maker() as session:
         member = await session.scalar(
             select(OrganizationUser)
@@ -183,7 +178,6 @@ async def test_add_organization_member_collaborator_with_limited_access(
     assert result["firebase_uid"] == new_member_uid
     assert result["role"] == UserRoleEnum.COLLABORATOR.value
 
-    
     async with async_session_maker() as session:
         member = await session.scalar(
             select(OrganizationUser)
@@ -257,7 +251,6 @@ async def test_update_member_role_to_admin(
     assert result["firebase_uid"] == collaborator_user.firebase_uid
     assert result["role"] == UserRoleEnum.ADMIN.value
 
-    
     async with async_session_maker() as session:
         member = await session.scalar(
             select(OrganizationUser)
@@ -278,7 +271,6 @@ async def test_update_member_role_collaborator_with_project_access(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         project2 = Project(
             name="Project 2",
@@ -300,7 +292,6 @@ async def test_update_member_role_collaborator_with_project_access(
 
     assert response.status_code == HTTPStatus.OK
 
-    
     async with async_session_maker() as session:
         access_count = await session.scalar(
             select(func.count())
@@ -337,7 +328,6 @@ async def test_update_member_role_admin_cannot_promote_to_owner(
     collaborator_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     admin_uid = "d" * 128
     async with async_session_maker() as session, session.begin():
         admin_user = OrganizationUser(
@@ -349,12 +339,10 @@ async def test_update_member_role_admin_cannot_promote_to_owner(
         session.add(admin_user)
         await session.commit()
 
-    
     from services.backend.src.utils.jwt import create_jwt
+
     admin_otp = create_jwt(admin_uid)
 
-    
-    
     response = await test_client.patch(
         f"/organizations/{organization.id}/members/{collaborator_user.firebase_uid}",
         headers={"Authorization": f"Bearer {admin_otp}"},
@@ -363,7 +351,6 @@ async def test_update_member_role_admin_cannot_promote_to_owner(
         },
     )
 
-    
     assert response.status_code == HTTPStatus.OK
 
 
@@ -402,7 +389,6 @@ async def test_remove_member_success(
 
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    
     async with async_session_maker() as session:
         member = await session.scalar(
             select(OrganizationUser)
@@ -434,7 +420,6 @@ async def test_remove_member_cannot_remove_owner(
     project_owner_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     other_owner_uid = "f" * 128
     async with async_session_maker() as session, session.begin():
         other_owner = OrganizationUser(
@@ -446,22 +431,20 @@ async def test_remove_member_cannot_remove_owner(
         session.add(other_owner)
         await session.commit()
 
-    
     from services.backend.src.utils.jwt import create_jwt
+
     other_owner_otp = create_jwt(other_owner_uid)
 
-    
-    
     response = await test_client.delete(
         f"/organizations/{organization.id}/members/{project_owner_user.firebase_uid}",
         headers={"Authorization": f"Bearer {other_owner_otp}"},
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
-    
+
     error_detail = response.json()["detail"].lower()
     assert "cannot remove" in error_detail
-    assert ("yourself" in error_detail or "owner" in error_detail)
+    assert "yourself" in error_detail or "owner" in error_detail
 
 
 async def test_remove_member_not_found(
@@ -503,8 +486,8 @@ async def test_list_members_as_collaborator(
     collaborator_user: OrganizationUser,
     second_user_uid: str,
 ) -> None:
-    
     from services.backend.src.utils.jwt import create_jwt
+
     collab_otp = create_jwt(second_user_uid)
 
     response = await test_client.get(
@@ -514,7 +497,7 @@ async def test_list_members_as_collaborator(
 
     assert response.status_code == HTTPStatus.OK
     members = response.json()
-    assert len(members) >= 2  
+    assert len(members) >= 2
 
 
 async def test_add_member_as_collaborator_forbidden(
@@ -524,12 +507,10 @@ async def test_add_member_as_collaborator_forbidden(
     collaborator_user: OrganizationUser,
     second_user_uid: str,
 ) -> None:
-    
     from services.backend.src.utils.jwt import create_jwt
+
     collab_otp = create_jwt(second_user_uid)
 
-    
-    
     response = await test_client.post(
         f"/organizations/{organization.id}/members",
         headers={"Authorization": f"Bearer {collab_otp}"},
@@ -540,7 +521,6 @@ async def test_add_member_as_collaborator_forbidden(
         },
     )
 
-    
     assert response.status_code == HTTPStatus.CREATED
 
 
@@ -551,7 +531,6 @@ async def test_add_member_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -579,7 +558,6 @@ async def test_update_member_role_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -606,7 +584,6 @@ async def test_remove_member_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -629,7 +606,6 @@ async def test_update_member_role_collaborator_remove_project_access(
     otp_code: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    
     response = await test_client.patch(
         f"/organizations/{organization.id}/members/{limited_collaborator_user.firebase_uid}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -641,7 +617,6 @@ async def test_update_member_role_collaborator_remove_project_access(
 
     assert response.status_code == HTTPStatus.OK
 
-    
     async with async_session_maker() as session:
         access_count = await session.scalar(
             select(func.count())
