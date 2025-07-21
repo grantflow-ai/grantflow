@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = get_logger(__name__)
 
 
-class TestDataGenerator:
+class BenchmarkDataGenerator:
     """
     Generates realistic test data for vector benchmarking.
 
@@ -34,7 +34,7 @@ class TestDataGenerator:
     so we can test the real RAG pipeline with different vector configurations.
 
     Example:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
 
         # Create base entities
         user, project, rag_source = await generator.create_test_entities()
@@ -255,9 +255,8 @@ class TestDataGenerator:
         """
         query_vectors = []
         for i in range(count):
-            # Create a query vector with predictable pattern
             query_vector = [0.1 * ((i + 1) % 10)] * dimension
-            # Normalize vector
+
             norm = sum(x * x for x in query_vector) ** 0.5
             if norm > 0:
                 query_vector = [x / norm for x in query_vector]
@@ -271,6 +270,8 @@ class TestDataGenerator:
         Inserts vectors into the database using production models.
 
         This tests the real database insertion code with your test vectors.
+        For benchmark tests with non-standard dimensions, uses raw SQL to bypass
+        SQLAlchemy's hardcoded dimension validation.
 
         Args:
             vectors: List of VectorDTO objects to insert
@@ -281,6 +282,23 @@ class TestDataGenerator:
         """
         logger.info("Inserting vectors into database", vectors_count=len(vectors))
 
+        if not vectors:
+            return
+
+        first_vector_dim = len(vectors[0]["embedding"])
+        use_raw_sql = first_vector_dim != 384
+
+        if use_raw_sql:
+            logger.info("Using raw SQL insertion for non-standard dimensions", dimension=first_vector_dim)
+            await self._insert_vectors_raw_sql(vectors)
+        else:
+            logger.info("Using SQLAlchemy ORM insertion for standard dimensions")
+            await self._insert_vectors_orm(vectors)
+
+        logger.info("Successfully inserted vectors", vectors_count=len(vectors))
+
+    async def _insert_vectors_orm(self, vectors: list[VectorDTO]) -> None:
+        """Insert vectors using SQLAlchemy ORM (for standard 384-dimension vectors)."""
         batch_size = 1000
         for i in range(0, len(vectors), batch_size):
             batch = vectors[i : i + batch_size]
@@ -298,9 +316,46 @@ class TestDataGenerator:
             await self.session.commit()
 
             logger.info(
-                "Inserted batch",
+                "Inserted ORM batch",
                 batch_num=i // batch_size + 1,
                 total_batches=(len(vectors) + batch_size - 1) // batch_size,
             )
 
-        logger.info("Successfully inserted vectors", vectors_count=len(vectors))
+    async def _insert_vectors_raw_sql(self, vectors: list[VectorDTO]) -> None:
+        """Insert vectors using raw SQL (for non-standard dimensions in benchmark tests)."""
+        import json
+
+        from sqlalchemy import text
+
+        batch_size = 1000
+        for i in range(0, len(vectors), batch_size):
+            batch = vectors[i : i + batch_size]
+
+            values_list = []
+            params = {}
+
+            for idx, vector_dto in enumerate(batch):
+                param_prefix = f"v{i}_{idx}"
+                values_list.append(
+                    f"(gen_random_uuid(), :{param_prefix}_chunk, :{param_prefix}_embedding, :{param_prefix}_rag_source_id, now(), now())"
+                )
+
+                params[f"{param_prefix}_chunk"] = json.dumps(vector_dto["chunk"])
+
+                vector_str = "[" + ",".join(str(float(x)) for x in vector_dto["embedding"]) + "]"
+                params[f"{param_prefix}_embedding"] = vector_str
+                params[f"{param_prefix}_rag_source_id"] = vector_dto["rag_source_id"]
+
+            insert_sql = f"""
+            INSERT INTO text_vectors (id, chunk, embedding, rag_source_id, created_at, updated_at)
+            VALUES {", ".join(values_list)}
+            """
+
+            await self.session.execute(text(insert_sql), params)
+            await self.session.commit()
+
+            logger.info(
+                "Inserted raw SQL batch",
+                batch_num=i // batch_size + 1,
+                total_batches=(len(vectors) + batch_size - 1) // batch_size,
+            )
