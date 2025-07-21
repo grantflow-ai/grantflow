@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
-import { WizardClientComponent } from "@/components/projects/wizard";
+import { WizardClientComponent } from "@/components/organizations/project/applications/wizard";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -21,7 +21,7 @@ export function ApplicationWizardPageClient() {
 	useEffect(() => {
 		async function loadApplication() {
 			if (!(project && activeApplicationId && selectedOrganizationId)) {
-				router.replace(routes.projects());
+				router.replace(routes.organization.root());
 				return;
 			}
 
@@ -33,7 +33,7 @@ export function ApplicationWizardPageClient() {
 				setError("Application not found");
 				// Redirect after a short delay to show the error
 				setTimeout(() => {
-					router.replace(routes.project.detail());
+					router.replace(routes.organization.project.detail());
 				}, 2000);
 			} finally {
 				setIsLoading(false);

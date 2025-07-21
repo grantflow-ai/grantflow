@@ -1,14 +1,13 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
 export const metadata: Metadata = {
 	alternates: {
-		canonical: PagePath.ROOT,
+		canonical: "/",
 	},
 	authors: [{ name: "GrantFlow.AI" }],
 	description:

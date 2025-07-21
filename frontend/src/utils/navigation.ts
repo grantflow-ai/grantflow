@@ -1,5 +1,3 @@
-import { PagePath } from "@/enums";
-
 interface BaseNavigationParams {
 	query?: Record<string, string>;
 }
@@ -7,7 +5,7 @@ interface BaseNavigationParams {
 /**
  * Clean navigation routes without URL parameters or exposed IDs
  *
- * - All routes are static (e.g., /project, /application/editor)
+ * - All routes are static (e.g., /organization/project, /organization/project/application/editor)
  * - Entity context is managed through the navigation store
  * - UUIDs are used for API calls but never in URLs
  */
@@ -17,24 +15,33 @@ export const routes = {
 		const queryString = params.toString();
 		return queryString ? `/accept-invitation?${queryString}` : "/accept-invitation";
 	},
+	finishEmailSignin: () => "/onboarding/email",
 
-	// Application routes (context from store)
-	application: {
-		detail: () => "/application",
-		editor: () => "/application/editor",
-		wizard: () => "/application/wizard",
-	},
 	// Public routes
 	home: () => "/",
-	login: () => PagePath.LOGIN,
+	login: () => "/login",
 
 	// API routes
 	notifications: {
 		dismiss: (notificationId: string) => `/api/notifications/${notificationId}/dismiss`,
 	},
+	onboarding: () => "/onboarding",
 
-	// Organization routes (context from store)
+	// Organization nested routes
 	organization: {
+		// Project routes (nested under organization)
+		project: {
+			// Application routes (nested under project)
+			application: {
+				detail: () => "/organization/project/application",
+				editor: () => "/organization/project/application/editor",
+				list: () => "/organization/project/application",
+				new: () => "/organization/project/application/new",
+				wizard: () => "/organization/project/application/wizard",
+			},
+			detail: () => "/organization/project",
+		},
+		root: () => "/organization",
 		settings: {
 			account: () => "/organization/settings/account",
 			billing: () => "/organization/settings/billing",
@@ -42,18 +49,6 @@ export const routes = {
 			notifications: () => "/organization/settings/notifications",
 		},
 	},
-
-	// Project routes (context from store)
-	project: {
-		applications: {
-			list: () => "/project/applications",
-			new: () => "/project/applications/new",
-		},
-		detail: () => "/project",
-	},
-
-	// Dashboard
-	projects: () => PagePath.PROJECTS,
 };
 
 export interface NavigationOptions {

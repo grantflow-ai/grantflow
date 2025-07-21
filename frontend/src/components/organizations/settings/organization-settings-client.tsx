@@ -3,15 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
+import {
+	OrganizationSettingsAccount,
+	OrganizationSettingsLayout,
+	OrganizationSettingsMembers,
+	OrganizationSettingsNotifications,
+} from "@/components/organizations";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { OrganizationSettingsAccount } from "./organization-settings-account";
-import { OrganizationSettingsLayout } from "./organization-settings-layout";
-import { OrganizationSettingsMembers } from "./organization-settings-members";
-import { OrganizationSettingsNotifications } from "./organization-settings-notifications";
 
 interface OrganizationSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications";
@@ -26,7 +28,7 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 	// Redirect if no project context
 	useEffect(() => {
 		if (!project) {
-			router.replace(routes.projects());
+			router.replace(routes.organization.root());
 		}
 	}, [project, router]);
 

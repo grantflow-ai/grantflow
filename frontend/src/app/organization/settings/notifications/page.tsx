@@ -4,7 +4,7 @@ import { routes } from "@/utils/navigation";
 
 export default function OrganizationSettingsNotificationsPage() {
 	return (
-		<NavigationContextProvider redirectTo={routes.projects()} requireProject>
+		<NavigationContextProvider redirectTo={routes.organization.root()} requireProject>
 			<OrganizationSettingsClient activeTab="notifications" />
 		</NavigationContextProvider>
 	);

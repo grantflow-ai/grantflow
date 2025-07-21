@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SELECTED_ORGANIZATION_COOKIE } from "@/constants";
-import { PagePath } from "@/enums";
 import { log } from "@/utils/logger";
+import { routes } from "@/utils/navigation";
 
 /**
  * Get the selected organization ID from cookies (server-side)
@@ -29,7 +29,7 @@ export async function getOrganizationId(): Promise<null | string> {
  * @param redirectPath - Path to redirect to if no organization is selected
  * @returns The organization ID
  */
-export async function getOrganizationIdOrRedirect(redirectPath: PagePath = PagePath.PROJECTS): Promise<string> {
+export async function getOrganizationIdOrRedirect(redirectPath: string = routes.organization.root()): Promise<string> {
 	const organizationId = await getOrganizationId();
 
 	if (!organizationId) {

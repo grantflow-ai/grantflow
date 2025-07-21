@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { IconGoAhead } from "@/components/branding/icons";
 import { LogoDark } from "@/components/branding/logo";
 import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
-import { PagePath } from "@/enums";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { disableScroll, enableScroll } from "@/utils/window";
@@ -54,7 +53,7 @@ const NavLink = ({
 const LogoSection = () => {
 	const isMobile = useIsMobile();
 	return (
-		<Link aria-label="Go to homepage" href={PagePath.ROOT}>
+		<Link aria-label="Go to homepage" href="/">
 			<LogoDark
 				className={"my-1 transition-opacity duration-300 md:my-2 lg:my-4 xl:my-6"}
 				height={isMobile ? 29 : 57}
@@ -67,11 +66,8 @@ const LogoSection = () => {
 export function NavHeader() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const pathname = usePathname();
-	const isHomePage = pathname === PagePath.ROOT.toString();
-	const isTermsPage =
-		pathname === PagePath.TERMS.toString() ||
-		pathname === PagePath.PRIVACY.toString() ||
-		pathname === PagePath.IMPRINT.toString();
+	const isHomePage = pathname === "/";
+	const isTermsPage = pathname === "/terms" || pathname === "/privacy" || pathname === "/imprint";
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -110,8 +106,8 @@ export function NavHeader() {
 				<div className="hidden items-center md:flex" data-testid="nav-header-links">
 					<NavLink
 						className="text-app-slate-blue"
-						href={PagePath.ROOT}
-						isActive={pathname === PagePath.ROOT.toString()}
+						href="/"
+						isActive={pathname === "/"}
 						label="Home"
 						theme="light"
 					/>
@@ -129,7 +125,7 @@ export function NavHeader() {
 							Prices
 						</LandingPageScrollButton>
 					)}
-					<NavLink href={PagePath.ABOUT_US} isActive={false} label="About us" theme="dark" />
+					<NavLink href="/about" isActive={false} label="About us" theme="dark" />
 					{isHomePage && (
 						<LandingPageScrollButton
 							aria-label="Go to Waitlist Form"
@@ -194,8 +190,8 @@ export function NavHeader() {
 				</button>
 				<NavLink
 					className="text-app-slate-blue mt-3"
-					href={PagePath.ROOT}
-					isActive={pathname === PagePath.ROOT.toString()}
+					href="/"
+					isActive={pathname === "/"}
 					label="Home"
 					onClick={() => {
 						setIsMobileMenuOpen(false);
@@ -216,8 +212,8 @@ export function NavHeader() {
 					</LandingPageScrollButton>
 				)}
 				<NavLink
-					href={PagePath.ABOUT_US}
-					isActive={pathname === PagePath.ABOUT_US.toString()}
+					href="/about"
+					isActive={pathname === "/about"}
 					label="About us"
 					onClick={() => {
 						setIsMobileMenuOpen(false);
