@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization, OrganizationUser, Project
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -39,16 +39,12 @@ async def test_create_organization_success(
     result = response.json()
     assert "id" in result
 
-    
     async with async_session_maker() as session:
-        organization = await session.scalar(
-            select(Organization).where(Organization.id == result["id"])
-        )
+        organization = await session.scalar(select(Organization).where(Organization.id == result["id"]))
         assert organization is not None
         assert organization.name == org_data["name"]
         assert organization.description == org_data["description"]
 
-        
         user_org = await session.scalar(
             select(OrganizationUser)
             .where(OrganizationUser.organization_id == organization.id)
@@ -80,11 +76,8 @@ async def test_create_organization_minimal_data(
     result = response.json()
     assert "id" in result
 
-    
     async with async_session_maker() as session:
-        organization = await session.scalar(
-            select(Organization).where(Organization.id == result["id"])
-        )
+        organization = await session.scalar(select(Organization).where(Organization.id == result["id"]))
         assert organization is not None
         assert organization.name == org_data["name"]
         assert organization.description is None
@@ -97,7 +90,6 @@ async def test_create_organization_database_error(
     mock_admin_code: None,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -122,7 +114,6 @@ async def test_list_organizations_success(
     firebase_uid: str,
     mock_admin_code: None,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         org2 = Organization(
             name="Second Organization",
@@ -139,7 +130,6 @@ async def test_list_organizations_success(
         )
         session.add(user_org2)
 
-        
         other_member = OrganizationUser(
             organization_id=org2.id,
             firebase_uid="other_user",
@@ -160,23 +150,20 @@ async def test_list_organizations_success(
 
     assert len(organizations) == 2
 
-    
     org1_data = next(o for o in organizations if o["name"] == organization.name)
     assert org1_data["role"] == UserRoleEnum.OWNER.value
-    assert org1_data["projects_count"] == 1  
-    assert org1_data["members_count"] == 1  
+    assert org1_data["projects_count"] == 1
+    assert org1_data["members_count"] == 1
 
-    
     org2_data = next(o for o in organizations if o["name"] == "Second Organization")
     assert org2_data["role"] == UserRoleEnum.ADMIN.value
-    assert org2_data["members_count"] == 2  
+    assert org2_data["members_count"] == 2
 
 
 async def test_list_organizations_empty(
     test_client: TestingClientType,
     mock_admin_code: None,
 ) -> None:
-    
     response = await test_client.get(
         "/organizations?firebase_uid=nonexistent123",
         headers={"Authorization": "test-admin-code"},
@@ -195,11 +182,8 @@ async def test_list_organizations_excludes_deleted(
     firebase_uid: str,
     mock_admin_code: None,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         org.soft_delete()
         await session.commit()
 
@@ -255,7 +239,6 @@ async def test_get_organization_not_member(
     organization: Organization,
     otp_code: str,
 ) -> None:
-    
     response = await test_client.get(
         f"/organizations/{organization.id}",
         headers={"Authorization": f"Bearer {otp_code}"},
@@ -272,11 +255,8 @@ async def test_get_organization_deleted(
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         org.soft_delete()
         await session.commit()
 
@@ -315,11 +295,8 @@ async def test_update_organization_success(
     assert org_data["description"] == update_data["description"]
     assert org_data["contact_email"] == update_data["contact_email"]
 
-    
     async with async_session_maker() as session:
-        updated_org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        updated_org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         assert updated_org.name == update_data["name"]
         assert updated_org.description == update_data["description"]
 
@@ -342,7 +319,7 @@ async def test_update_organization_partial(
     org_data = response.json()
 
     assert org_data["name"] == update_data["name"]
-    
+
     assert org_data["description"] == organization.description
 
 
@@ -369,7 +346,6 @@ async def test_update_organization_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -392,7 +368,6 @@ async def test_delete_organization_success(
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
         collaborator = OrganizationUser(
             organization_id=organization.id,
@@ -403,7 +378,6 @@ async def test_delete_organization_success(
         session.add(collaborator)
         await session.commit()
 
-    
     with patch("services.backend.src.api.routes.organizations.schedule_organization_deletion") as mock_schedule:
         mock_schedule.return_value = {
             "scheduled_hard_delete_at": datetime.now(UTC) + timedelta(days=30),
@@ -423,14 +397,10 @@ async def test_delete_organization_success(
     assert "scheduled_deletion_date" in result
     assert "restoration_info" in result
 
-    
     async with async_session_maker() as session:
-        org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         assert org.deleted_at is not None
 
-        
         collaborator_count = await session.scalar(
             select(func.count())
             .select_from(OrganizationUser)
@@ -439,7 +409,6 @@ async def test_delete_organization_success(
         )
         assert collaborator_count == 0
 
-        
         owner = await session.scalar(
             select(OrganizationUser)
             .where(OrganizationUser.organization_id == organization.id)
@@ -470,7 +439,6 @@ async def test_delete_organization_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -491,7 +459,6 @@ async def test_delete_organization_schedule_error(
     project_owner_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    
     with patch("services.backend.src.utils.firebase.schedule_organization_deletion") as mock_schedule:
         mock_schedule.side_effect = Exception("Firebase error")
 
@@ -511,15 +478,11 @@ async def test_restore_organization_success(
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         org.soft_delete()
         await session.commit()
 
-    
     mock_db = AsyncMock()
     mock_doc_ref = AsyncMock()
     mock_db.collection.return_value.document.return_value = mock_doc_ref
@@ -575,15 +538,11 @@ async def test_restore_organization_database_error(
     otp_code: str,
     mocker: Any,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         org.soft_delete()
         await session.commit()
 
-    
     mocker.patch(
         "sqlalchemy.ext.asyncio.AsyncSession.commit",
         side_effect=SQLAlchemyError("Database error"),
@@ -605,15 +564,11 @@ async def test_restore_organization_firestore_error(
     async_session_maker: async_sessionmaker[Any],
     otp_code: str,
 ) -> None:
-    
     async with async_session_maker() as session, session.begin():
-        org = await session.scalar(
-            select(Organization).where(Organization.id == organization.id)
-        )
+        org = await session.scalar(select(Organization).where(Organization.id == organization.id))
         org.soft_delete()
         await session.commit()
 
-    
     mock_db = AsyncMock()
     mock_db.collection.return_value.document.return_value.update.side_effect = Exception("Firestore error")
 
@@ -623,11 +578,6 @@ async def test_restore_organization_firestore_error(
             headers={"Authorization": f"Bearer {otp_code}"},
         )
 
-    
     assert response.status_code == HTTPStatus.OK
     org_data = response.json()
     assert org_data["id"] == str(organization.id)
-
-
-
-from sqlalchemy import func
