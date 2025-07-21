@@ -1,12 +1,10 @@
 import time
 from typing import Any, TypedDict
+from uuid import UUID
 
 from litestar import post
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    GrantApplicationSource,
-    GrantingInstitutionSource,
-    GrantTemplateSource,
     RagFile,
     RagSource,
 )
@@ -16,7 +14,12 @@ from packages.shared_utils.src.exceptions import (
     FileParsingError,
     ValidationError,
 )
-from packages.shared_utils.src.gcs import URIParseResult, download_blob, parse_object_uri
+from packages.shared_utils.src.gcs import (
+    URIParseResult,
+    download_blob,
+    parse_object_uri,
+    resolve_parent_id_for_notification,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import PubSubEvent
@@ -151,31 +154,13 @@ async def handle_file_indexing(
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
-        parent_id = parse_result["entity_id"]
-
-        if grant_app_source := await session.scalar(
-            select(GrantApplicationSource.grant_application_id).where(
-                GrantApplicationSource.rag_source_id == parse_result["source_id"]
-            )
-        ):
-            parent_id = grant_app_source
-            logger.debug("Found grant application association", parent_id=str(parent_id), trace_id=trace_id)
-
-        elif grant_template_source := await session.scalar(
-            select(GrantTemplateSource.grant_template_id).where(
-                GrantTemplateSource.rag_source_id == parse_result["source_id"]
-            )
-        ):
-            parent_id = grant_template_source
-            logger.debug("Found grant template association", parent_id=str(parent_id), trace_id=trace_id)
-
-        elif granting_inst_source := await session.scalar(
-            select(GrantingInstitutionSource.granting_institution_id).where(
-                GrantingInstitutionSource.rag_source_id == parse_result["source_id"]
-            )
-        ):
-            parent_id = granting_inst_source
-            logger.debug("Found granting institution association", parent_id=str(parent_id), trace_id=trace_id)
+        
+        parent_id = await resolve_parent_id_for_notification(
+            session=session,
+            source_id=parse_result["source_id"],
+            entity_type=parse_result["entity_type"],
+            entity_id=parse_result["entity_id"],
+        )
 
     db_duration = time.time() - db_start
     logger.debug(
@@ -207,7 +192,7 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parent_id,
+            parent_id=UUID(parent_id),
             identifier=parse_result["blob_name"],
             text_content=rag_source.text_content,
             vectors=None,
@@ -252,7 +237,7 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parent_id,
+            parent_id=UUID(parent_id),
             identifier=parse_result["blob_name"],
             text_content=text_content,
             vectors=vectors,
@@ -290,7 +275,7 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parent_id,
+            parent_id=UUID(parent_id),
             identifier=parse_result["blob_name"],
             text_content="",
             vectors=None,

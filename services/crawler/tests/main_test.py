@@ -74,8 +74,8 @@ def mock_construct_object_uri() -> Generator[Mock]:
         def side_effect(
             *,
             entity_type: str,
-            entity_id: str,
-            source_id: str,
+            entity_id: str | UUID,
+            source_id: str | UUID,
             blob_name: str,
         ) -> str:
             return f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
@@ -657,7 +657,7 @@ async def test_handle_upload_blob_called_with_correct_parameters(
     assert mock_construct_object_uri.call_count == 2
     first_call_kwargs = mock_construct_object_uri.call_args_list[0][1]
     assert first_call_kwargs["entity_type"] == "organization"
-    assert first_call_kwargs["entity_id"] == str(project.organization_id)
+    assert str(first_call_kwargs["entity_id"]) == str(project.organization_id)
     assert "source_id" in first_call_kwargs
     assert "blob_name" in first_call_kwargs
 
