@@ -137,11 +137,11 @@ async def test_authenticate_with_allowed_roles(app: MagicMock, mock_verify_jwt_t
     middleware = AuthMiddleware(app=app)
     mock_verify_jwt_token.return_value = "test-uid"
 
-    project_user: MagicMock = MagicMock()
-    project_user.role = UserRoleEnum.ADMIN
+    organization_user: MagicMock = MagicMock()
+    organization_user.role = UserRoleEnum.ADMIN
 
     session_result = MagicMock()
-    session_result.scalar_one_or_none.return_value = project_user
+    session_result.scalar_one_or_none.return_value = organization_user
 
     session = AsyncMock()
     session.execute.return_value = session_result
@@ -154,9 +154,9 @@ async def test_authenticate_with_allowed_roles(app: MagicMock, mock_verify_jwt_t
     app.state.session_maker = session_maker
 
     connection = MockASGIConnection(
-        url_path="/projects/test-project-id/something",
+        url_path="/organizations/test-org-id/projects/test-project-id/something",
         headers={"Authorization": "Bearer test-token"},
-        path_params={"project_id": "test-project-id"},
+        path_params={"organization_id": "test-org-id", "project_id": "test-project-id"},
         route_handler_opt={"allowed_roles": [UserRoleEnum.ADMIN, UserRoleEnum.OWNER]},
         app=app,
     )

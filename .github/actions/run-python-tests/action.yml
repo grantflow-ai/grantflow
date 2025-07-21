@@ -72,8 +72,8 @@ runs:
               elif [[ "${{ inputs.target }}" == "cloud_functions" ]]; then
                 PYTHONPATH=. uv run pytest cloud_functions -v
               elif [[ "${{ inputs.target }}" == "backend" ]]; then
-                # Run backend tests serially to avoid race conditions
-                PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v -n 0
+                # Run backend tests serially (xdist removed)
+                PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi
