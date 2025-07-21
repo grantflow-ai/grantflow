@@ -70,8 +70,8 @@ async with session_maker() as session:
 - `medium_balanced`: 256d vectors, balanced index (good compromise)
 - `current_production`: 384d vectors, current index (baseline)
 - `large_quality`: 512d vectors, quality index (accuracy-optimized)
-- `xl_experimental`: 768d vectors, experimental
-- `xxl_research`: 1024d vectors, research use
+- `xl_experimental`: 768d vectors, experimental settings
+- `xxl_research`: 1536d vectors, research use
 
 ### 2. Database Management (`database.py`)
 
@@ -94,7 +94,7 @@ async with session_maker() as session:
 
 ### 3. Test Data Generation (`data_test.py`)
 
-Creates realistic test data using production models:
+Creates realistic test data using production models with smart vector insertion:
 
 ```python
 from .data_test import BenchmarkDataGenerator
@@ -111,8 +111,9 @@ rag_source = entities["rag_sources"][0]
 chunks = await generator.generate_test_chunks(1000, rag_source.id)
 vectors = await generator.create_test_vectors(chunks, rag_source.id, 256)
 
-# Insert using production code
+# Insert using production code with smart dimension detection
 await generator.insert_vectors_to_database(vectors)
+# Automatically uses raw SQL for non-384d vectors, ORM for 384d
 ```
 
 ### 4. Benchmark Framework (`framework.py`)
@@ -142,11 +143,11 @@ results = await framework.run_comprehensive_benchmark(vectors, queries)
 
 1. **`test_baseline_vector_insertion`** - Tests basic insertion performance
    - Creates 1000 vectors, measures insertion speed
-   - Baseline: >100 vectors/sec, <30s, <100MB memory
+   - Baseline: >50 vectors/sec, <30s, <200MB memory
 
 2. **`test_baseline_similarity_search`** - Tests basic search performance
    - 100 queries on 1000 vectors
-   - Baseline: >10 queries/sec, <100ms avg, <50MB memory
+   - Baseline: >5 queries/sec, <200ms avg, <100MB memory
 
 ### Comparison Tests
 
@@ -159,10 +160,14 @@ results = await framework.run_comprehensive_benchmark(vectors, queries)
    - Demonstrates speed vs accuracy tuning
 
 5. **`test_dataset_size_scaling`** - Tests scalability
-   - 500, 1000, 2000 vectors
-   - Verifies performance doesn't degrade significantly
+   - 100, 1000, 10000 vectors
+   - Verifies performance scaling patterns
 
-6. **`test_configuration_baseline`** - Tests predefined configurations
+6. **`test_vector_dimension_scaling`** - Tests dimension scaling performance
+   - Tests 96d, 384d, 768d, 1536d vectors using synthetic migrations
+   - Measures scaling factors and performance patterns
+
+7. **`test_configuration_baseline`** - Tests predefined configurations
    - Automatically tests multiple configurations
    - Uses parametrized fixture for easy comparison
 
@@ -223,10 +228,10 @@ The tests include conservative baseline expectations that should pass on most sy
 
 | Metric | Baseline | Description |
 |--------|----------|-------------|
-| Vector Insertion | >100 vectors/sec | Basic insertion rate |
-| Similarity Search | >10 queries/sec | Basic search rate |
-| Memory Usage | <100MB | Memory for 1000 vectors |
-| Query Time | <100ms avg | Average query response time |
+| Vector Insertion | >50 vectors/sec | Basic insertion rate |
+| Similarity Search | >5 queries/sec | Basic search rate |
+| Memory Usage | <200MB | Memory for 1000 vectors |
+| Query Time | <200ms avg | Average query response time |
 
 ## Extending the Framework
 
