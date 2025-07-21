@@ -26,7 +26,6 @@ async def test_duplicate_application_success(
         app.text = "Original text content"
         await session.commit()
 
-    
     async with async_session_maker() as session:
         project = await session.get(Project, project_id)
         organization_id = project.organization_id
@@ -118,7 +117,6 @@ async def test_duplicate_with_grant_template(
         project = await session.get(GrantApplication, app_id)
         project_id = project.project_id
 
-    
     async with async_session_maker() as session:
         project_obj = await session.get(Project, project_id)
         organization_id = project_obj.organization_id
@@ -154,7 +152,6 @@ async def test_duplicate_preserves_rag_sources(
         original_rag_count = len(app.rag_sources)
         assert original_rag_count > 0
 
-    
     async with async_session_maker() as session:
         project_obj = await session.get(Project, project_id)
         organization_id = project_obj.organization_id
@@ -186,7 +183,6 @@ async def test_duplicate_application_validation_error(
 
     project_id = grant_application.project_id
 
-    
     async with async_session_maker() as session:
         project = await session.get(Project, project_id)
         organization_id = project.organization_id
@@ -215,7 +211,6 @@ async def test_duplicate_application_preserves_status_as_draft(
         app.status = ApplicationStatusEnum.GENERATING
         await session.commit()
 
-    
     async with async_session_maker() as session:
         project = await session.get(Project, project_id)
         organization_id = project.organization_id
@@ -242,7 +237,6 @@ async def test_duplicate_application_long_title(
     project_id = grant_application.project_id
     long_title = "A" * 300
 
-    
     async with async_session_maker() as session:
         project = await session.get(Project, project_id)
         organization_id = project.organization_id

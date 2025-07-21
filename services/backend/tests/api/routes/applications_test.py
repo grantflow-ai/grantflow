@@ -34,7 +34,6 @@ async def test_create_application_unauthorized(
 ) -> None:
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
-    
     response = await test_client.post(
         f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications",
         json={"title": "Test Grant Application"},
@@ -165,7 +164,6 @@ async def test_delete_application_unauthorized(
 ) -> None:
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
-    
     response = await test_client.delete(
         f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
@@ -1028,7 +1026,6 @@ async def test_application_status_transitions_preserve_generating(
         app.status = ApplicationStatusEnum.GENERATING
         await session.commit()
 
-    
     async with async_session_maker() as session:
         project = await session.get(Project, grant_application.project_id)
         organization_id = project.organization_id
