@@ -50,7 +50,7 @@ class OrganizationMemberResponse(TypedDict):
     project_access: list[ProjectAccessInfo]
     created_at: str
     updated_at: str
-    
+
     email: str
     display_name: str
     photo_url: NotRequired[str]
@@ -98,7 +98,6 @@ async def handle_list_organization_members(
             )
         }
 
-    
     firebase_uids = [member.firebase_uid for member in members]
     users_data = await get_users(firebase_uids)
 
@@ -124,7 +123,6 @@ async def handle_list_organization_members(
             display_name=user_data.get("displayName", ""),
         )
 
-        
         if photo_url := user_data.get("photoURL"):
             member_response["photo_url"] = photo_url
 
