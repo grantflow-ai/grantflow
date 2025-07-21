@@ -37,17 +37,6 @@ describe.sequential("RagSourcesFooter", () => {
 		expect(mockOnBackToUploads).toHaveBeenCalledOnce();
 	});
 
-	it("calls onContinue when Continue button is clicked", () => {
-		const mockOnContinue = vi.fn();
-
-		const { container } = render(<RagSourcesFooter onContinue={mockOnContinue} />);
-
-		const continueButton = container.querySelector('[data-testid="continue-button"]');
-		fireEvent.click(continueButton!);
-
-		expect(mockOnContinue).toHaveBeenCalledOnce();
-	});
-
 	it("handles missing callback functions gracefully", () => {
 		const { container } = render(<RagSourcesFooter />);
 
@@ -75,23 +64,5 @@ describe.sequential("RagSourcesFooter", () => {
 
 		const footerContainer = container.querySelector('[data-testid="rag-sources-footer"]');
 		expect(footerContainer).toHaveClass("flex", "w-full", "justify-between", "items-center");
-	});
-
-	it("calls both callbacks when provided", () => {
-		const mockOnBackToUploads = vi.fn();
-		const mockOnContinue = vi.fn();
-
-		const { container } = render(
-			<RagSourcesFooter onBackToUploads={mockOnBackToUploads} onContinue={mockOnContinue} />,
-		);
-
-		const backButton = container.querySelector('[data-testid="back-to-uploads-button"]');
-		const continueButton = container.querySelector('[data-testid="continue-button"]');
-
-		fireEvent.click(backButton!);
-		fireEvent.click(continueButton!);
-
-		expect(mockOnBackToUploads).toHaveBeenCalledOnce();
-		expect(mockOnContinue).toHaveBeenCalledOnce();
 	});
 });

@@ -11,6 +11,39 @@ declare module "vitest" {
 
 expect.extend(matchers);
 
+// Mock Radix UI Select components to work in JSDOM
+vi.mock("@/components/ui/select", async () => {
+	const mocks = await import("./radix-ui-mocks");
+	return {
+		Select: mocks.Select,
+		SelectContent: mocks.SelectContent,
+		SelectItem: mocks.SelectItem,
+		SelectTrigger: mocks.SelectTrigger,
+		SelectValue: mocks.SelectValue,
+	};
+});
+
+// Mock Radix UI DropdownMenu components to work in JSDOM
+vi.mock("@/components/ui/dropdown-menu", async () => {
+	const mocks = await import("./radix-ui-mocks");
+	return {
+		DropdownMenu: mocks.DropdownMenu,
+		DropdownMenuCheckboxItem: mocks.DropdownMenuCheckboxItem,
+		DropdownMenuContent: mocks.DropdownMenuContent,
+		DropdownMenuGroup: mocks.DropdownMenuGroup,
+		DropdownMenuItem: mocks.DropdownMenuItem,
+		DropdownMenuLabel: mocks.DropdownMenuLabel,
+		DropdownMenuRadioGroup: mocks.DropdownMenuRadioGroup,
+		DropdownMenuRadioItem: mocks.DropdownMenuRadioItem,
+		DropdownMenuSeparator: mocks.DropdownMenuSeparator,
+		DropdownMenuShortcut: mocks.DropdownMenuShortcut,
+		DropdownMenuSub: mocks.DropdownMenuSub,
+		DropdownMenuSubContent: mocks.DropdownMenuSubContent,
+		DropdownMenuSubTrigger: mocks.DropdownMenuSubTrigger,
+		DropdownMenuTrigger: mocks.DropdownMenuTrigger,
+	};
+});
+
 beforeAll(() => {
 	// @ts-ignore
 	globalThis.IS_REACT_ACT_ENVIRONMENT = false;
@@ -38,12 +71,10 @@ beforeAll(() => {
 		disconnect = vi.fn();
 		observe = vi.fn();
 		unobserve = vi.fn();
-		constructor(_callback: ResizeObserverCallback) {
-			// Mock implementation
-		}
 	};
 
-	// Mock crypto.randomUUID for tracing
+	// Mock crypto.randomUUID for tracing - ensure crypto exists
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!globalThis.crypto) {
 		globalThis.crypto = {} as Crypto;
 	}
