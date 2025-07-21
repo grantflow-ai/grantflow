@@ -60,7 +60,6 @@ interface SectionHeaderProps {
 
 interface SortableSectionProps {
 	isDetailedSection: (section: GrantSection) => boolean;
-	isDragging?: boolean;
 	isExpanded: boolean;
 	isSubsection?: boolean;
 	onAddSubsection?: (parentId: string) => void;
@@ -73,7 +72,6 @@ interface SortableSectionProps {
 
 export function SortableSection({
 	isDetailedSection: _isDetailedSection,
-	isDragging = false,
 	isExpanded,
 	isSubsection = false,
 	onAddSubsection,
@@ -84,13 +82,16 @@ export function SortableSection({
 	toUpdateGrantSection: _toUpdateGrantSection,
 }: SortableSectionProps) {
 	const {
+		active,
 		attributes,
 		isDragging: isCurrentlyDragging,
 		listeners,
 		setNodeRef,
 		transform,
 		transition,
-	} = useSortable({ id: section.id });
+	} = useSortable({
+		id: section.id,
+	});
 
 	const generatedAiPrompt = aiPrompt(section.title);
 
@@ -120,8 +121,8 @@ export function SortableSection({
 
 	const style = {
 		opacity: isCurrentlyDragging ? 0.5 : 1,
-		transform: CSS.Transform.toString(transform),
-		transition,
+		transform: active ? 'none' : CSS.Transform.toString(transform),
+		transition: isCurrentlyDragging ? 'none' : transition,
 	};
 
 	const hasMaxWords = "max_words" in section && Boolean(section.max_words);
@@ -155,7 +156,7 @@ export function SortableSection({
 
 	return (
 		<div
-			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isDragging || isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 			data-testid="section-container"
 			ref={setNodeRef}
 			style={style}
