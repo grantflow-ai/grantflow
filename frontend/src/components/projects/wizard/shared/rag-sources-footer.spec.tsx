@@ -1,11 +1,20 @@
+import { ApplicationWithTemplateFactory } from "::testing/factories";
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useApplicationStore } from "@/stores/application-store";
 import { RagSourcesFooter } from "./rag-sources-footer";
 
 describe.sequential("RagSourcesFooter", () => {
+	beforeEach(() => {
+		// Set up default application state with valid rag sources
+		const application = ApplicationWithTemplateFactory.build();
+		useApplicationStore.setState({ application });
+	});
+
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
+		useApplicationStore.setState({ application: null });
 	});
 
 	it("renders both buttons", () => {

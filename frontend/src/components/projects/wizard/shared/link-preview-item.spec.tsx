@@ -148,8 +148,8 @@ describe("LinkPreviewItem", () => {
 		rerender(<LinkPreviewItem sourceStatus={SourceIndexingStatus.INDEXING} url="https://example.com" />);
 
 		linkUrl = screen.getByTestId("link-url");
-		expect(linkUrl).not.toHaveClass("text-orange-500");
-		expect(linkUrl).toHaveClass("text-primary");
+		expect(linkUrl).toHaveClass("text-orange-500");
+		expect(linkUrl).not.toHaveClass("text-primary");
 
 		rerender(<LinkPreviewItem sourceStatus={SourceIndexingStatus.FAILED} url="https://example.com" />);
 

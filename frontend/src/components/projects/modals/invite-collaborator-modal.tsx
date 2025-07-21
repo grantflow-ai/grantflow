@@ -53,7 +53,10 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 	};
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
-			<DialogContent className="p-8 w-[464px] h-[492px] flex flex-col gap-8 bg-white [&>button]:cursor-pointer [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100">
+			<DialogContent
+				className="p-8 w-[464px] h-[492px] flex flex-col gap-8 bg-white [&>button]:cursor-pointer [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100"
+				data-testid="invite-collaborator-modal"
+			>
 				<DialogHeader className="flex flex-col gap-2 text-left">
 					<DialogTitle className="font-medium text-2xl leading-[30px] text-app-black">
 						Invite New Member
@@ -111,16 +114,20 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 									placeholder="Choose permission level"
 								/>
 							</SelectTrigger>
-							<SelectContent className="[&>*]:p-0 border border-gray-200 w-full shadow-none ">
+							<SelectContent
+								className="[&>*]:p-0 border border-gray-200 w-full shadow-none"
+								data-testid="permission-dropdown-menu"
+							>
 								<SelectItem
 									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-									data-testid="select-item-first"
+									data-testid="collaborator-option"
 									value="collaborator"
 								>
 									Collaborator - Can edit specific Research Projects.
 								</SelectItem>
 								<SelectItem
 									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
+									data-testid="admin-option"
 									value="admin"
 								>
 									Admin - Access to R.projects, payments & members
@@ -149,6 +156,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						<AppButton
 							className="rounded px-4 py-2"
 							data-testid="send-invitation-button"
+							disabled={!email || isSubmitting}
 							onClick={handleSubmit}
 							variant="primary"
 						>

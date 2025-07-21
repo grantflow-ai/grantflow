@@ -33,16 +33,26 @@ beforeAll(() => {
 	// Mock scrollIntoView
 	HTMLElement.prototype.scrollIntoView = vi.fn();
 
+	// Mock ResizeObserver for floating-ui compatibility
+	globalThis.ResizeObserver = class ResizeObserver {
+		disconnect = vi.fn();
+		observe = vi.fn();
+		unobserve = vi.fn();
+		constructor(_callback: ResizeObserverCallback) {
+			// Mock implementation
+		}
+	};
+
 	// Mock crypto.randomUUID for tracing
 	if (!globalThis.crypto) {
 		globalThis.crypto = {} as Crypto;
 	}
-	
+
 	// Generate unique UUIDs for tests that match the expected hexadecimal format
 	let uuidCounter = 0;
-	globalThis.crypto.randomUUID = vi.fn(() => {
-		const counter = (++uuidCounter).toString(16).padStart(12, '0');
-		return `${counter.slice(0, 8)}-${counter.slice(8, 12)}-4000-8000-${counter.padEnd(12, '0')}`;
+	globalThis.crypto.randomUUID = vi.fn((): `${string}-${string}-${string}-${string}-${string}` => {
+		const counter = (++uuidCounter).toString(16).padStart(12, "0");
+		return `${counter.slice(0, 8)}-${counter.slice(8, 12)}-4000-8000-${counter.padEnd(12, "0")}` as `${string}-${string}-${string}-${string}-${string}`;
 	});
 });
 

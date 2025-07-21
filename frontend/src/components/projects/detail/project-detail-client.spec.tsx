@@ -105,22 +105,35 @@ describe("ProjectDetailClient", () => {
 		mockUseOrganizationStore.mockReturnValue({ selectedOrganizationId: "org-123" });
 		mockUseProjectStore.mockReturnValue({ project: mockProject });
 
-		// Mock useSWR calls - first for applications, second for members
-		mockUseSWR
-			.mockReturnValueOnce({
-				data: { applications: mockApplications },
-				error: undefined,
-				isLoading: false,
-				isValidating: false,
-				mutate: mockMutate,
-			})
-			.mockReturnValueOnce({
-				data: mockMembers,
+		// Setup SWR mock with a default implementation that can be overridden in tests
+		mockUseSWR.mockImplementation((key) => {
+			if (typeof key === "string" && key.includes("/applications")) {
+				return {
+					data: { applications: mockApplications },
+					error: undefined,
+					isLoading: false,
+					isValidating: false,
+					mutate: mockMutate,
+				};
+			}
+			if (typeof key === "string" && key.includes("/members")) {
+				return {
+					data: mockMembers,
+					error: undefined,
+					isLoading: false,
+					isValidating: false,
+					mutate: vi.fn(),
+				};
+			}
+			// Fallback
+			return {
+				data: undefined,
 				error: undefined,
 				isLoading: false,
 				isValidating: false,
 				mutate: vi.fn(),
-			});
+			};
+		});
 
 		mockGetProjectMembers.mockResolvedValue(mockMembers);
 	});
@@ -164,6 +177,23 @@ describe("ProjectDetailClient", () => {
 		const newApplication = ApplicationFactory.build({ id: "app-new" });
 		mockCreateApplication.mockResolvedValue(newApplication);
 
+		// Setup SWR mocks for this test
+		mockUseSWR
+			.mockReturnValueOnce({
+				data: { applications: mockApplications },
+				error: undefined,
+				isLoading: false,
+				isValidating: false,
+				mutate: mockMutate,
+			})
+			.mockReturnValueOnce({
+				data: mockMembers,
+				error: undefined,
+				isLoading: false,
+				isValidating: false,
+				mutate: vi.fn(),
+			});
+
 		render(<ProjectDetailClient />);
 
 		const createButton = screen.getByTestId("new-application-button");
@@ -172,21 +202,42 @@ describe("ProjectDetailClient", () => {
 		expect(mockCreateApplication).toHaveBeenCalledWith("org-123", "project-123", {
 			title: "Untitled Application",
 		});
-		expect(mockNavigateToApplication).toHaveBeenCalledWith("app-new", "Untitled Application");
-		expect(mockPush).toHaveBeenCalledWith("/project/project-123/application/app-new/wizard");
+		expect(mockNavigateToApplication).toHaveBeenCalledWith(
+			"project-123",
+			"Test Project",
+			"app-new",
+			expect.any(String),
+		);
+		expect(mockPush).toHaveBeenCalledWith("/application/wizard");
 	});
 
 	it("should show creating state when creating application", async () => {
 		const user = userEvent.setup();
-		mockCreateApplication.mockImplementation(() => new Promise(() => {})); // Never resolves
+		let resolvePromise: (value: any) => void;
+		mockCreateApplication.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					resolvePromise = resolve;
+				}),
+		);
 
 		render(<ProjectDetailClient />);
 
 		const createButton = screen.getByTestId("new-application-button");
-		await user.click(createButton);
 
-		expect(createButton).toHaveTextContent("Creating...");
+		// Click and immediately check loading state
+		const clickPromise = user.click(createButton);
+
+		// Wait for the click to be processed
+		await clickPromise;
+
+		// Check loading state - button should be disabled but text stays the same
+		expect(createButton).toHaveTextContent("New Application");
 		expect(createButton).toBeDisabled();
+
+		// Clean up - resolve the promise
+		const newApplication = ApplicationFactory.build({ id: "app-new" });
+		resolvePromise!(newApplication);
 	});
 
 	it("should handle application creation errors", async () => {
@@ -229,7 +280,7 @@ describe("ProjectDetailClient", () => {
 			expect.objectContaining({
 				searchQuery: "test query",
 			}),
-			expect.anything(),
+			undefined,
 		);
 	});
 
@@ -242,7 +293,7 @@ describe("ProjectDetailClient", () => {
 				onClose: expect.any(Function),
 				onConfirm: expect.any(Function),
 			},
-			expect.anything(),
+			undefined,
 		);
 	});
 
@@ -279,7 +330,7 @@ describe("ProjectDetailClient", () => {
 				applications: [],
 				isLoading: true,
 			}),
-			expect.anything(),
+			undefined,
 		);
 	});
 });

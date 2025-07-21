@@ -267,9 +267,13 @@ function SectionEditForm({
 							>
 								<SelectValue />
 							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="words">Words</SelectItem>
-								<SelectItem value="characters">Characters</SelectItem>
+							<SelectContent data-testid="word-character-dropdown">
+								<SelectItem data-testid="words-option" value="words">
+									Words
+								</SelectItem>
+								<SelectItem data-testid="characters-option" value="characters">
+									Characters
+								</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>

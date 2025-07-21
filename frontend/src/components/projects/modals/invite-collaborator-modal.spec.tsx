@@ -66,7 +66,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		const modal = await getLatestModal();
 		const dropdown = within(modal).getByTestId("permission-dropdown");
-		expect(dropdown).toHaveTextContent("Member (can access applications within this project)");
+		expect(dropdown).toHaveTextContent("Collaborator - Can edit specific Research Projects.");
 	});
 
 	it("toggles permission dropdown when clicked", async () => {
@@ -146,7 +146,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 		await user.click(modalQueries.getByTestId("collaborator-option"));
 
 		await waitFor(() => {
-			expect(dropdown).toHaveTextContent("Member (can access applications within this project)");
+			expect(dropdown).toHaveTextContent("Collaborator - Can edit specific Research Projects.");
 			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 		});
 	});
@@ -313,7 +313,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
 		const modal = await getLatestModal();
-		const closeButton = within(modal).getByTestId("close-button");
+		const closeButton = within(modal).getByRole("button", { name: "Close" });
 		await user.click(closeButton);
 
 		expect(mockOnClose).toHaveBeenCalledTimes(1);
