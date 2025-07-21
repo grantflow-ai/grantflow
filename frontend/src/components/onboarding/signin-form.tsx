@@ -6,14 +6,7 @@ import { SubmitButton } from "@/components/app/buttons/submit-button";
 import AppInput from "@/components/app/forms/input-field";
 import { IconGoAhead } from "@/components/branding/icons";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 
 const signInFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -60,11 +53,7 @@ export function SigninForm({
 	return (
 		<div data-testid="email-signin-form-container">
 			<Form {...form}>
-				<form
-					className=""
-					data-testid="email-signin-form"
-					onSubmit={form.handleSubmit(onSubmit)}
-				>
+				<form className="" data-testid="email-signin-form" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						control={form.control}
 						name="firstName"
@@ -125,9 +114,7 @@ export function SigninForm({
 										autoCorrect="off"
 										className="form-input"
 										disabled={isLoading}
-										errorMessage={
-											socialSignInError ?? form.formState.errors.email?.message
-										}
+										errorMessage={socialSignInError ?? form.formState.errors.email?.message}
 										id="email"
 										label="Email"
 										placeholder="name@example.com"
@@ -143,7 +130,7 @@ export function SigninForm({
 						control={form.control}
 						name="gdprConsent"
 						render={({ field }) => (
-							<FormItem className="mt-2 flex flex-row items-start space-x-3 space-y-0">
+							<FormItem className="mt-2 flex flex-row items-start gap-1">
 								<FormControl>
 									<Checkbox
 										checked={field.value}
@@ -153,28 +140,41 @@ export function SigninForm({
 									/>
 								</FormControl>
 								<div className="space-y-1 leading-none">
-									<FormLabel className="text-xs font-normal text-gray-600">
+									<FormLabel className="text-xs font-normal text-gray-500 gap-0.5">
 										By signing up, you agree to our{" "}
 										<Link
 											className="text-primary hover:underline"
 											href="/terms"
+											rel="noopener noreferrer"
+											target="_blank"
 										>
 											Terms
-										</Link>{" "}
-										and{" "}
+										</Link>
+										and
 										<Link
 											className="text-primary hover:underline"
 											href="/privacy"
+											rel="noopener noreferrer"
+											target="_blank"
 										>
 											Privacy Policy
 										</Link>
 										.
 									</FormLabel>
-									<FormMessage data-testid="email-signin-form-gdpr-error" />
 								</div>
 							</FormItem>
 						)}
 					/>
+					{form.formState.errors.gdprConsent && (
+						<div className="mt-5">
+							<p
+								className="text-base text-destructive text-start font-semibold font-heading leading-snug"
+								data-testid="email-signin-form-general-error"
+							>
+								{form.formState.errors.gdprConsent.message}
+							</p>
+						</div>
+					)}
 					<SubmitButton
 						className="mb-8 mt-6 w-full"
 						data-testid="email-signin-form-submit-button"
