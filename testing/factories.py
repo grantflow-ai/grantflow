@@ -23,6 +23,7 @@ from packages.db.src.tables import (
     GrantTemplateGenerationJob,
     GrantTemplateSource,
     Organization,
+    OrganizationInvitation,
     OrganizationUser,
     Project,
     ProjectAccess,
@@ -140,12 +141,14 @@ class OrganizationFactory(SQLAlchemyFactory[Organization]):
     __model__ = Organization
     __set_relationships__ = False
     __set_association_proxy__ = False
+    deleted_at = None
 
 
 class ProjectFactory(SQLAlchemyFactory[Project]):
     __model__ = Project
     __set_relationships__ = False
     __set_association_proxy__ = False
+    deleted_at = None
 
     organization_id = Use(lambda: faker.uuid4())
 
@@ -164,6 +167,7 @@ class OrganizationUserFactory(SQLAlchemyFactory[OrganizationUser]):
     __model__ = OrganizationUser
     __set_relationships__ = False
     __set_association_proxy__ = False
+    deleted_at = None
 
     firebase_uid = Use(lambda: faker.uuid4()[:128])
     organization_id = Use(lambda: faker.uuid4())
@@ -172,6 +176,18 @@ class OrganizationUserFactory(SQLAlchemyFactory[OrganizationUser]):
 
 
 ProjectUserFactory = OrganizationUserFactory
+
+
+class OrganizationInvitationFactory(SQLAlchemyFactory[OrganizationInvitation]):
+    __model__ = OrganizationInvitation
+    __set_relationships__ = False
+    __set_association_proxy__ = False
+    deleted_at = None
+
+    organization_id = Use(lambda: faker.uuid4())
+    email = Use(lambda: faker.email())
+    role = Use(lambda: choice(list(UserRoleEnum)))
+    invitation_sent_at = Use(lambda: faker.date_time())
 
 
 class RagGenerationJobFactory(SQLAlchemyFactory[RagGenerationJob]):
