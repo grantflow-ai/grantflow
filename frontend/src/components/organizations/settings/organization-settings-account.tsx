@@ -4,21 +4,21 @@ import { Info, Mail, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { DeleteAccountModal } from "@/components/projects/settings/delete-account-modal";
+import { DeleteAccountModal } from "@/components/organizations/settings/delete-account-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 
-interface ProjectSettingsAccountProps {
-	projectId: string;
+interface OrganizationSettingsAccountProps {
+	organizationId: string;
 	userRole?: UserRole;
 }
 
-export function ProjectSettingsAccount({
-	projectId: _projectId,
+export function OrganizationSettingsAccount({
+	organizationId: _organizationId,
 	userRole = UserRole.COLLABORATOR,
-}: ProjectSettingsAccountProps) {
+}: OrganizationSettingsAccountProps) {
 	const { deleteProfilePhoto, updateProfilePhoto, user } = useUserStore();
 	const [name, setName] = useState(user?.displayName ?? "");
 	const [email, setEmail] = useState(user?.email ?? "");
@@ -107,8 +107,7 @@ export function ProjectSettingsAccount({
 
 	return (
 		<>
-			<div className="  flex flex-col gap-6 px-6 max-w-[340px]" data-testid="project-settings-account">
-				{}
+			<div className="flex flex-col gap-6 px-6 max-w-[340px]" data-testid="organization-settings-account">
 				<div className="flex flex-col gap-3">
 					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 						Profile Image
@@ -116,7 +115,7 @@ export function ProjectSettingsAccount({
 					<div className="flex items-end gap-3">
 						<div
 							className="size-[93px] rounded bg-[#369e94] flex items-center justify-center relative overflow-hidden"
-							data-testid="profile-image-container"
+							data-testid="organization-profile-image-container"
 						>
 							{user?.photoURL ? (
 								<Image alt="Profile" className="rounded object-cover" fill src={user.photoURL} />
@@ -135,7 +134,7 @@ export function ProjectSettingsAccount({
 							/>
 							<button
 								className="flex items-center gap-1 px-1 py-0.5 border border-primary rounded bg-white text-primary font-button text-[14px] hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-								data-testid="upload-photo-button"
+								data-testid="organization-upload-photo-button"
 								disabled={isUploading}
 								onClick={() => fileInputRef.current?.click()}
 								type="button"
@@ -145,7 +144,7 @@ export function ProjectSettingsAccount({
 							</button>
 							<button
 								className="p-1 rounded-sm hover:bg-app-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-								data-testid="delete-photo-button"
+								data-testid="organization-delete-photo-button"
 								disabled={isUploading || !user?.photoURL}
 								onClick={handlePhotoDelete}
 								type="button"
@@ -159,12 +158,11 @@ export function ProjectSettingsAccount({
 					</p>
 				</div>
 
-				{}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Name</h3>
 					<input
 						className="w-full h-10 px-3 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 focus:outline-none focus:border-primary"
-						data-testid="name-input"
+						data-testid="organization-name-input"
 						onChange={(e) => {
 							setName(e.target.value);
 						}}
@@ -174,7 +172,6 @@ export function ProjectSettingsAccount({
 					/>
 				</div>
 
-				{}
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center gap-1">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
@@ -183,7 +180,11 @@ export function ProjectSettingsAccount({
 						<TooltipProvider>
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<button className="relative" data-testid="email-info-button" type="button">
+									<button
+										className="relative"
+										data-testid="organization-email-info-button"
+										type="button"
+									>
 										<Info className="size-3 text-app-gray-600" />
 									</button>
 								</TooltipTrigger>
@@ -197,7 +198,7 @@ export function ProjectSettingsAccount({
 					<div className="relative">
 						<input
 							className="w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 focus:outline-none focus:border-primary"
-							data-testid="email-input"
+							data-testid="organization-email-input"
 							onChange={(e) => {
 								setEmail(e.target.value);
 							}}
@@ -209,13 +210,12 @@ export function ProjectSettingsAccount({
 					</div>
 				</div>
 
-				{}
 				<div className="flex flex-col gap-3">
 					<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Role</h3>
 					<div className="inline-flex">
 						<span
 							className="px-2 py-0 bg-app-gray-100 rounded-[20px] text-[12px] font-body text-app-dark-blue"
-							data-testid="role-badge"
+							data-testid="organization-role-badge"
 						>
 							{getRoleLabel(userRole)}
 						</span>
@@ -229,7 +229,7 @@ export function ProjectSettingsAccount({
 						</h3>
 						<button
 							className="flex items-center gap-1 px-1 py-0.5 border border-error rounded bg-white text-error font-button text-[14px] hover:bg-error hover:text-white transition-colors self-start"
-							data-testid="delete-account-button"
+							data-testid="organization-delete-account-button"
 							onClick={() => {
 								setShowDeleteModal(true);
 							}}

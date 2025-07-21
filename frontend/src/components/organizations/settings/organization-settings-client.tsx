@@ -3,20 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
-import { ProjectSettingsAccount, ProjectSettingsMembers } from "@/components/projects";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { ProjectSettingsLayout } from "./project-settings-layout";
-import { ProjectSettingsNotifications } from "./project-settings-notifications";
+import { OrganizationSettingsAccount } from "./organization-settings-account";
+import { OrganizationSettingsLayout } from "./organization-settings-layout";
+import { OrganizationSettingsMembers } from "./organization-settings-members";
+import { OrganizationSettingsNotifications } from "./organization-settings-notifications";
 
-interface ProjectSettingsClientProps {
+interface OrganizationSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications";
 }
 
-export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps) {
+export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsClientProps) {
 	const router = useRouter();
 	const { project } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
@@ -32,7 +33,7 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 	// Check role for restricted pages - only OWNER and ADMIN can access billing and members
 	useEffect(() => {
 		if (project && project.role === "COLLABORATOR" && (activeTab === "billing" || activeTab === "members")) {
-			router.replace(routes.project.settings.account());
+			router.replace(routes.organization.settings.account());
 		}
 	}, [project, activeTab, router]);
 
@@ -50,45 +51,58 @@ export function ProjectSettingsClient({ activeTab }: ProjectSettingsClientProps)
 	const renderSettingsContent = () => {
 		switch (activeTab) {
 			case "account": {
-				return <ProjectSettingsAccount projectId={project.id} userRole={project.role as UserRole} />;
+				return (
+					<OrganizationSettingsAccount
+						organizationId={selectedOrganizationId!}
+						userRole={project.role as UserRole}
+					/>
+				);
 			}
 			case "billing": {
 				return (
-					<div className="flex items-center justify-center h-full" data-testid="billing-settings">
+					<div
+						className="flex items-center justify-center h-full"
+						data-testid="organization-billing-settings"
+					>
 						<p className="text-app-gray-600">Billing settings coming soon...</p>
 					</div>
 				);
 			}
 			case "members": {
 				return selectedOrganizationId ? (
-					<ProjectSettingsMembers
+					<OrganizationSettingsMembers
 						currentUserRole={project.role as UserRole}
 						onInviteHandlerChange={setInviteHandler}
 						organizationId={selectedOrganizationId}
-						projectId={project.id}
-						projectName={project.name}
 					/>
 				) : null;
 			}
 			case "notifications": {
-				return <ProjectSettingsNotifications projectId={project.id} />;
+				return <OrganizationSettingsNotifications organizationId={selectedOrganizationId!} />;
 			}
 		}
 	};
 
 	return (
-		<div className="relative size-full overflow-y-scroll bg-preview-bg" data-testid="settings-container">
+		<div
+			className="relative size-full overflow-y-scroll bg-preview-bg"
+			data-testid="organization-settings-container"
+		>
 			<section className="w-full h-full">
 				<main className="w-full h-full flex flex-col">
-					<AppHeader data-testid="settings-header" projectTeamMembers={projectTeamMembers} />
+					<AppHeader data-testid="organization-settings-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
 						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 flex-grow rounded-lg border border-app-gray-100 min-h-0"
-						data-testid="settings-main-content"
+						data-testid="organization-settings-main-content"
 					>
-						<ProjectSettingsLayout activeTab={activeTab} onInviteClick={inviteHandler} project={project}>
+						<OrganizationSettingsLayout
+							activeTab={activeTab}
+							onInviteClick={inviteHandler}
+							project={project}
+						>
 							{renderSettingsContent()}
-						</ProjectSettingsLayout>
+						</OrganizationSettingsLayout>
 					</main>
 				</main>
 			</section>

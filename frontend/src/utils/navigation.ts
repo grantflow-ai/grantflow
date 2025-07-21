@@ -33,6 +33,16 @@ export const routes = {
 		dismiss: (notificationId: string) => `/api/notifications/${notificationId}/dismiss`,
 	},
 
+	// Organization routes (context from store)
+	organization: {
+		settings: {
+			account: () => "/organization/settings/account",
+			billing: () => "/organization/settings/billing",
+			members: () => "/organization/settings/members",
+			notifications: () => "/organization/settings/notifications",
+		},
+	},
+
 	// Project routes (context from store)
 	project: {
 		applications: {
@@ -40,12 +50,6 @@ export const routes = {
 			new: () => "/project/applications/new",
 		},
 		detail: () => "/project",
-		settings: {
-			account: () => "/project/settings/account",
-			billing: () => "/project/settings/billing",
-			members: () => "/project/settings/members",
-			notifications: () => "/project/settings/notifications",
-		},
 	},
 
 	// Dashboard

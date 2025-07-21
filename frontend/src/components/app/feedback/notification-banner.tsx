@@ -4,13 +4,7 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export interface NotificationData {
-	id: string;
-	message: string;
-	projectName: string;
-	title: string;
-	type?: "deadline" | "error" | "info" | "success" | "warning";
-}
+import type { NotificationData } from "@/stores/notification-store";
 
 interface NotificationBannerProps {
 	className?: string;

@@ -91,7 +91,7 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 
 	return (
 		<BaseModal isOpen={isOpen} onClose={onClose} title="Delete Account">
-			<div className="flex flex-col gap-8" data-testid="delete-account-modal">
+			<div className="flex flex-col gap-8" data-testid="organization-delete-account-modal">
 				{isChecking && (
 					<div className="flex items-center justify-center py-8">
 						<p className="text-gray-600">Checking project ownership...</p>
@@ -136,7 +136,7 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 						<div className="flex flex-row items-end justify-between">
 							<AppButton
 								className="w-[90px]"
-								data-testid="cancel-button"
+								data-testid="organization-cancel-button"
 								onClick={onClose}
 								variant="secondary"
 							>
@@ -162,7 +162,7 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 						<div className="flex flex-row items-end justify-between">
 							<AppButton
 								className="w-[90px]"
-								data-testid="cancel-button"
+								data-testid="organization-cancel-button"
 								disabled={isDeleting}
 								onClick={onClose}
 								variant="secondary"
@@ -171,7 +171,7 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 							</AppButton>
 							<AppButton
 								className="bg-[#1e13f8] hover:bg-[#1e13f8]/90"
-								data-testid="delete-button"
+								data-testid="organization-delete-button"
 								disabled={isDeleting}
 								onClick={handleDelete}
 								variant="primary"

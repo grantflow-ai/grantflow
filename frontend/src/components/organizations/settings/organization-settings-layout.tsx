@@ -7,36 +7,41 @@ import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 
-interface ProjectSettingsLayoutProps {
+interface OrganizationSettingsLayoutProps {
 	activeTab: string;
 	children: React.ReactNode;
 	onInviteClick?: () => void;
 	project: API.GetProject.Http200.ResponseBody;
 }
 
-export function ProjectSettingsLayout({ activeTab, children, onInviteClick, project }: ProjectSettingsLayoutProps) {
+export function OrganizationSettingsLayout({
+	activeTab,
+	children,
+	onInviteClick,
+	project,
+}: OrganizationSettingsLayoutProps) {
 	const userRole = project.role as UserRole;
 
 	const allTabs = [
 		{
-			href: routes.project.settings.account(),
+			href: routes.organization.settings.account(),
 			key: "account",
 			label: "Account Settings",
 		},
 		{
-			href: routes.project.settings.billing(),
+			href: routes.organization.settings.billing(),
 			key: "billing",
 			label: "Billing & Payments",
 			requiresRole: [UserRole.OWNER, UserRole.ADMIN],
 		},
 		{
-			href: routes.project.settings.members(),
+			href: routes.organization.settings.members(),
 			key: "members",
 			label: "Members",
 			requiresRole: [UserRole.OWNER, UserRole.ADMIN],
 		},
 		{
-			href: routes.project.settings.notifications(),
+			href: routes.organization.settings.notifications(),
 			key: "notifications",
 			label: "Notifications",
 		},
@@ -50,7 +55,9 @@ export function ProjectSettingsLayout({ activeTab, children, onInviteClick, proj
 	return (
 		<div className="flex flex-col gap-8">
 			<div className="flex w-full flex-col gap-8">
-				<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">Settings</h1>
+				<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">
+					Organization Settings
+				</h1>
 
 				<div className="flex items-center justify-between w-full">
 					<div className="flex items-center gap-6">
@@ -62,7 +69,7 @@ export function ProjectSettingsLayout({ activeTab, children, onInviteClick, proj
 										? "font-heading font-semibold text-app-black border-b-[3px] border-primary"
 										: "font-body text-app-black hover:text-app-gray-600",
 								)}
-								data-testid={`settings-tab-${tab.key}`}
+								data-testid={`organization-settings-tab-${tab.key}`}
 								href={tab.href}
 								key={tab.href}
 							>
