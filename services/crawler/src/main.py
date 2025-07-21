@@ -3,10 +3,11 @@ import binascii
 import time
 from asyncio import gather
 from typing import Any
+from uuid import UUID
 
 from litestar import post
 from litestar.exceptions import ValidationException
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from packages.db.src.utils import update_source_indexing_status
@@ -16,7 +17,11 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
     DatabaseError,
 )
-from packages.shared_utils.src.gcs import construct_object_uri, upload_blob
+from packages.shared_utils.src.gcs import (
+    construct_object_uri,
+    resolve_parent_id_for_notification,
+    upload_blob,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import (
@@ -90,15 +95,15 @@ async def handle_gcs_file_upload(
     file: FileContent,
     crawling_request: CrawlingRequest,
     session_maker: async_sessionmaker[Any],
-    parent_type: str,
+    original_source_id: str,
 ) -> None:
     start_time = time.time()
     logger.debug(
         "Starting GCS file upload",
         filename=file["filename"],
         file_size=len(file["content"]),
-        parent_type=parent_type,
         entity_id=str(crawling_request["entity_id"]),
+        original_source_id=original_source_id,
     )
 
     async with session_maker() as session, session.begin():
@@ -155,35 +160,59 @@ async def handle_gcs_file_upload(
                 )
             )
 
-            logger.debug("Creating parent association", parent_type=parent_type)
+            logger.debug("Creating parent association")
 
-            if parent_type == "grant_application":
-                await session.execute(
-                    insert(GrantApplicationSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "grant_application_id": crawling_request["entity_id"],
-                        }
-                    )
-                )
-            elif parent_type == "granting_institution":
+            
+            
+            parent_id = await resolve_parent_id_for_notification(
+                session=session,
+                source_id=original_source_id,
+                entity_type=crawling_request["entity_type"],
+                entity_id=str(crawling_request["entity_id"]),
+            )
+
+            if crawling_request["entity_type"] == "granting_institution":
                 await session.execute(
                     insert(GrantingInstitutionSource).values(
                         {
                             "rag_source_id": source_id,
-                            "granting_institution_id": crawling_request["entity_id"],
+                            "granting_institution_id": UUID(parent_id),
                         }
                     )
                 )
             else:
-                await session.execute(
-                    insert(GrantTemplateSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "grant_template_id": crawling_request["entity_id"],
-                        }
+                
+                
+                grant_app_source = await session.scalar(
+                    select(GrantApplicationSource.grant_application_id).where(
+                        GrantApplicationSource.rag_source_id == original_source_id
                     )
                 )
+                if grant_app_source:
+                    await session.execute(
+                        insert(GrantApplicationSource).values(
+                            {
+                                "rag_source_id": source_id,
+                                "grant_application_id": grant_app_source,
+                            }
+                        )
+                    )
+                else:
+                    
+                    grant_template_source = await session.scalar(
+                        select(GrantTemplateSource.grant_template_id).where(
+                            GrantTemplateSource.rag_source_id == original_source_id
+                        )
+                    )
+                    if grant_template_source:
+                        await session.execute(
+                            insert(GrantTemplateSource).values(
+                                {
+                                    "rag_source_id": source_id,
+                                    "grant_template_id": grant_template_source,
+                                }
+                            )
+                        )
 
             commit_start = time.time()
             await session.commit()
@@ -257,11 +286,21 @@ async def handle_url_crawling(
         source_id=str(crawling_request["source_id"]),
         trace_id=trace_id,
     )
+
+    
+    async with session_maker() as session:
+        parent_id = await resolve_parent_id_for_notification(
+            session=session,
+            source_id=str(crawling_request["source_id"]),
+            entity_type=crawling_request["entity_type"],
+            entity_id=str(crawling_request["entity_id"]),
+        )
+
     await update_source_indexing_status(
         logger=logger,
         session_maker=session_maker,
         source_id=crawling_request["source_id"],
-        parent_id=crawling_request["entity_id"],
+        parent_id=UUID(parent_id),
         identifier=crawling_request["url"],
         text_content="",
         vectors=None,
@@ -311,7 +350,7 @@ async def handle_url_crawling(
                         file=file,
                         crawling_request=crawling_request,
                         session_maker=session_maker,
-                        parent_type=crawling_request["entity_type"],
+                        original_source_id=str(crawling_request["source_id"]),
                     )
                     for file in files_to_uploads
                 ]
@@ -335,11 +374,21 @@ async def handle_url_crawling(
             source_id=str(crawling_request["source_id"]),
             trace_id=trace_id,
         )
+
+        
+        async with session_maker() as session:
+            parent_id = await resolve_parent_id_for_notification(
+                session=session,
+                source_id=str(crawling_request["source_id"]),
+                entity_type=crawling_request["entity_type"],
+                entity_id=str(crawling_request["entity_id"]),
+            )
+
         await update_source_indexing_status(
             logger=logger,
             session_maker=session_maker,
             source_id=crawling_request["source_id"],
-            parent_id=crawling_request["entity_id"],
+            parent_id=UUID(parent_id),
             identifier=crawling_request["url"],
             text_content=content,
             vectors=vectors,
@@ -368,11 +417,20 @@ async def handle_url_crawling(
             trace_id=trace_id,
             error_duration_ms=round(error_duration * 1000, 2),
         )
+        
+        async with session_maker() as session:
+            parent_id = await resolve_parent_id_for_notification(
+                session=session,
+                source_id=str(crawling_request["source_id"]),
+                entity_type=crawling_request["entity_type"],
+                entity_id=str(crawling_request["entity_id"]),
+            )
+
         await update_source_indexing_status(
             logger=logger,
             session_maker=session_maker,
             source_id=crawling_request["source_id"],
-            parent_id=crawling_request["entity_id"],
+            parent_id=UUID(parent_id),
             identifier=crawling_request["url"],
             text_content="",
             vectors=None,

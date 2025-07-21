@@ -24,7 +24,6 @@ logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema"}
 ADMIN_PATHS = {"granting-institutions"}
-ADMIN_EXACT_PATHS = {"/organizations"}
 ADMIN_SOURCES_PATTERNS = [
     "/granting-institutions/{granting_institution_id}/sources",
     "/granting-institutions/{granting_institution_id}/sources/{source_id}",
@@ -59,10 +58,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
     def _is_admin_path(self, path: str) -> bool:
         """Check if path requires admin authentication."""
-
-        if path in ADMIN_EXACT_PATHS:
-            return True
-
         if any(
             path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
             for admin_path in ADMIN_PATHS
