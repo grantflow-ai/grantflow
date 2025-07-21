@@ -25,7 +25,12 @@ async def handle_grant_application_notifications(
     application_id: UUID,
 ) -> AsyncGenerator[WebsocketMessage[dict[str, Any]]]:
     while True:
-        logger.info("Polling for source updates", organization_id=str(organization_id), project_id=str(project_id), application_id=str(application_id))
+        logger.info(
+            "Polling for source updates",
+            organization_id=str(organization_id),
+            project_id=str(project_id),
+            application_id=str(application_id),
+        )
         try:
             messages = await pull_notifications(
                 logger=logger,

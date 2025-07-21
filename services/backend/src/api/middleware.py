@@ -23,7 +23,7 @@ from services.backend.src.utils.jwt import verify_jwt_token
 logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema"}
-ADMIN_PATHS = {"organizations"}  
+ADMIN_PATHS = {"organizations"}
 DEV_BYPASS_PREFIX = "/dev/"
 
 
@@ -47,12 +47,10 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
         auth_header = connection.headers.get("Authorization", "").strip()
 
-        
         is_admin_path = False
         for admin_path in ADMIN_PATHS:
             if connection.url.path == f"/{admin_path}" or (
-                connection.url.path.startswith(f"/{admin_path}/")
-                and len(connection.url.path.split("/")) <= 3  
+                connection.url.path.startswith(f"/{admin_path}/") and len(connection.url.path.split("/")) <= 3
             ):
                 is_admin_path = True
                 break

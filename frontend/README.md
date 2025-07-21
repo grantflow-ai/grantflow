@@ -1,6 +1,15 @@
 # GrantFlow.AI Frontend
 
-This is the frontend application for GrantFlow.AI, built with Next.js 15, TypeScript, and shadcn/ui components.
+This is the main frontend application for GrantFlow.AI, built with Next.js 15, TypeScript, and shadcn/ui components.
+
+## Workspace Structure
+
+GrantFlow uses a monorepo with two frontend applications:
+
+- **`frontend/`** - Main Next.js application (this directory)
+- **`editor/`** - Standalone rich text editor built with Vite + React + TipTap
+
+Both applications share dependencies through the pnpm workspace and follow aligned development patterns.
 
 ## Project Structure
 
@@ -56,6 +65,67 @@ gcloud secrets create SECRET_NAME --data-file=- <<< "secret-value"
 
 # Granting Firebase App Hosting access to the secret
 firebase apphosting:secrets:grantaccess SECRET_NAME --backend monorepo
+```
+
+## Development
+
+### Available Scripts
+
+```bash
+# Development
+pnpm dev              # Start Next.js development server
+pnpm build            # Build for production
+pnpm start            # Start production server
+
+# Testing
+pnpm test             # Run unit tests
+pnpm test:watch       # Run tests in watch mode
+pnpm test:coverage    # Run tests with coverage
+pnpm test:e2e         # Run E2E tests with Playwright
+pnpm test:e2e:ui      # Run E2E tests with Playwright UI
+
+# Linting & Formatting
+pnpm lint             # Run Biome + ESLint with auto-fix
+pnpm format           # Format code with Biome
+pnpm typecheck        # Type check with TypeScript
+pnpm check            # Run Biome check + ESLint
+
+# Storybook
+pnpm storybook        # Start Storybook dev server
+pnpm build-storybook  # Build Storybook for production
+
+# UI Components
+pnpm ui add <name>    # Add shadcn/ui component
+```
+
+### Using the Taskfile
+
+From the repository root, you can use Taskfile commands that work across both frontend applications:
+
+```bash
+# Development
+task frontend:dev          # Start main frontend dev server
+task editor:dev            # Start editor dev server
+
+# Installation & Updates
+task frontend:install      # Install dependencies for both apps
+task frontend:update       # Update dependencies for both apps
+
+# Building
+task frontend:build        # Build both applications
+task frontend:main:build   # Build main frontend only
+task editor:build          # Build editor only
+
+# Testing
+task frontend:test         # Run tests for both apps
+task frontend:main:test    # Run main frontend tests only
+task editor:test           # Run editor tests only
+
+# Linting (runs on both frontend apps concurrently)
+task lint:frontend         # Run all frontend linters
+task lint:typescript       # TypeScript check for both apps
+task lint:biome            # Biome linting for both apps
+task lint:eslint           # ESLint for both apps
 ```
 
 ## Working with Components

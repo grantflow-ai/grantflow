@@ -153,7 +153,7 @@ describe("DashboardClient", () => {
 
 	it("should render welcome modal for single project with no applications", () => {
 		const singleProject = ProjectListItemFactory.build({ applications_count: 0 });
-		
+
 		// Mock SWR to return the single project for this test
 		mockUseSWR.mockReturnValue({
 			data: [singleProject],
@@ -165,9 +165,12 @@ describe("DashboardClient", () => {
 
 		render(<DashboardClient {...defaultProps} initialProjects={[singleProject]} />);
 
-		expect(MockWelcomeModal).toHaveBeenCalledWith({
-			onStartApplication: expect.any(Function),
-		}, undefined);
+		expect(MockWelcomeModal).toHaveBeenCalledWith(
+			{
+				onStartApplication: expect.any(Function),
+			},
+			undefined,
+		);
 	});
 
 	it("should not render welcome modal for multiple projects", () => {
@@ -237,11 +240,14 @@ describe("DashboardClient", () => {
 		await user.click(inviteButton);
 
 		// Check that modal was called with isOpen: true (should be the second call after initial render)
-		expect(MockInviteCollaboratorModal).toHaveBeenCalledWith({
-			isOpen: true,
-			onClose: expect.any(Function),
-			onInvite: expect.any(Function),
-		}, undefined);
+		expect(MockInviteCollaboratorModal).toHaveBeenCalledWith(
+			{
+				isOpen: true,
+				onClose: expect.any(Function),
+				onInvite: expect.any(Function),
+			},
+			undefined,
+		);
 	});
 
 	it("should initialize organization store with server data", () => {
@@ -289,10 +295,7 @@ describe("DashboardClient", () => {
 	it("should render dashboard stats component", () => {
 		render(<DashboardClient {...defaultProps} />);
 
-		expect(MockDashboardStats).toHaveBeenCalledWith(
-			{ initialProjects: defaultProps.initialProjects },
-			undefined,
-		);
+		expect(MockDashboardStats).toHaveBeenCalledWith({ initialProjects: defaultProps.initialProjects }, undefined);
 	});
 
 	it("should render payment link component", () => {

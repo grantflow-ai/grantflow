@@ -145,7 +145,6 @@ async def handle_retrieve_projects(
             )
         )
 
-        
         org_users = list(
             await session.scalars(
                 select(OrganizationUser)
