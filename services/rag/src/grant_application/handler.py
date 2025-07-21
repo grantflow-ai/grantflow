@@ -21,6 +21,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.rag.src.constants import GRANT_APPLICATION_PIPELINE_STAGES, NotificationEvents
 from services.rag.src.dto import ResearchComponentGenerationDTO
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
+from services.rag.src.grant_application.enrich_research_objective import (
+    ObjectiveEnrichmentDTO,
+    enrich_objective_with_wikidata,
+)
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
 from services.rag.src.grant_application.generate_section_text import (
     generate_sections_with_shared_retrieval,
@@ -85,6 +89,44 @@ async def generate_work_plan_text(
             "total_tasks": sum(len(objective["research_tasks"]) for objective in research_objectives),
         },
         current_pipeline_stage=5,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+    )
+
+    # Wikidata enhancement step
+    await job_manager.add_notification(
+        parent_id=UUID(application_id),
+        event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
+        message="Enhancing objectives with Wikidata scientific context...",
+        notification_type="info",
+        current_pipeline_stage=6,
+        total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
+    )
+
+    # Combine all enrichment responses for Wikidata processing
+    combined_enrichment_data: ObjectiveEnrichmentDTO = {
+        "research_objective": enrichment_responses[0]["research_objective"],
+        "research_tasks": [],
+    }
+
+    for response in enrichment_responses:
+        combined_enrichment_data["research_tasks"].extend(response["research_tasks"])
+
+    # Get Wikidata scientific context
+    wikidata_enrichment = await enrich_objective_with_wikidata(
+        combined_enrichment_data,
+        trace_id=application_id,
+    )
+
+    await job_manager.add_notification(
+        parent_id=UUID(application_id),
+        event=NotificationEvents.WIKIDATA_ENHANCEMENT_COMPLETE,
+        message="Wikidata enhancement completed",
+        notification_type="info",
+        data={
+            "scientific_terms_count": len(wikidata_enrichment["core_scientific_terms"]),
+            "has_scientific_context": bool(wikidata_enrichment["scientific_context"]),
+        },
+        current_pipeline_stage=6,
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 

@@ -7,7 +7,7 @@ MAX_SOURCE_SIZE: Final[int] = 8000
 MAX_CHUNK_SIZE: Final[int] = 800
 
 
-GRANT_APPLICATION_PIPELINE_STAGES: Final[int] = 9
+GRANT_APPLICATION_PIPELINE_STAGES: Final[int] = 10
 GRANT_TEMPLATE_PIPELINE_STAGES: Final[int] = 6
 
 
@@ -25,6 +25,8 @@ class NotificationEvents(StrEnum):
     EXTRACTING_RELATIONSHIPS = "extracting_relationships"
     ENRICHING_OBJECTIVES = "enriching_objectives"
     OBJECTIVES_ENRICHED = "objectives_enriched"
+    ENHANCING_WITH_WIKIDATA = "enhancing_with_wikidata"
+    WIKIDATA_ENHANCEMENT_COMPLETE = "wikidata_enhancement_complete"
     GENERATING_RESEARCH_PLAN = "generating_research_plan"
     GENERATING_OBJECTIVE = "generating_objective"
     GENERATING_TASKS = "generating_tasks"
