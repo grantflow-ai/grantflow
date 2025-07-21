@@ -71,7 +71,7 @@ describe("ApplicationPreview", () => {
 	});
 
 	it("renders 'Untitled Application' when title is empty but has files or urls", () => {
-		const mockSources = [RagSourceFactory.build({ filename: "test.pdf", url: undefined })];
+		const mockSources = [RagSourceFactory.build({ filename: "test.pdf", url: undefined, status: "FINISHED" })];
 		const mockTemplate = GrantTemplateFactory.build({ rag_sources: mockSources });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 
