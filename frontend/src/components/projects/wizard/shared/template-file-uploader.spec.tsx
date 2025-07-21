@@ -58,10 +58,10 @@ describe("TemplateFileUploader", () => {
 
 		expect(acceptAttribute).toContain("application/pdf");
 		expect(acceptAttribute).toContain("application/msword");
-		expect(acceptAttribute).toContain(".docx");
+		expect(acceptAttribute).toContain("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 		expect(acceptAttribute).toContain("text/plain");
-		expect(acceptAttribute).toContain(".xlsx");
-		expect(acceptAttribute).toContain(".pptx");
+		expect(acceptAttribute).toContain("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+		expect(acceptAttribute).toContain("application/vnd.openxmlformats-officedocument.presentationml.presentation");
 	});
 
 	it("allows multiple file selection", () => {
@@ -115,7 +115,8 @@ describe("TemplateFileUploader", () => {
 		render(<TemplateFileUploader parentId="parent-123" />);
 
 		const largeSize = 101 * 1024 * 1024; // 101 MB
-		const largeFile = new File(["x".repeat(largeSize)], "large.pdf", { type: "application/pdf" });
+		// Create a small file but override its size property
+		const largeFile = new File(["test"], "large.pdf", { type: "application/pdf" });
 		Object.defineProperty(largeFile, "size", { value: largeSize });
 
 		const fileInput = screen.getByTestId("file-input");
@@ -171,12 +172,11 @@ describe("TemplateFileUploader", () => {
 	it("validates all files before uploading any", async () => {
 		render(<TemplateFileUploader parentId="parent-123" />);
 
-		const files = [
-			new File(["content 1"], "valid.pdf", { type: "application/pdf" }),
-			new File(["x".repeat(101 * 1024 * 1024)], "large.pdf", { type: "application/pdf" }),
-		];
+		const validFile = new File(["content 1"], "valid.pdf", { type: "application/pdf" });
+		const largeFile = new File(["test"], "large.pdf", { type: "application/pdf" });
+		Object.defineProperty(largeFile, "size", { value: 101 * 1024 * 1024 });
 
-		Object.defineProperty(files[1], "size", { value: 101 * 1024 * 1024 });
+		const files = [validFile, largeFile];
 
 		const fileInput = screen.getByTestId("file-input");
 		await user.upload(fileInput, files);

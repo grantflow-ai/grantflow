@@ -599,13 +599,8 @@ type ApplicationCardData = {
 export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory) => ({
 	completed_at: factory.helpers.maybe(() => factory.date.past().toISOString()),
 	created_at: factory.date.past().toISOString(),
-	deadline: factory.datatype.boolean()
-		? `${factory.number.int({ max: 12, min: 1 })} weeks and ${factory.number.int({
-				max: 6,
-				min: 1,
-			})} days to the deadline`
-		: undefined,
-	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	deadline: factory.helpers.maybe(() => factory.date.future().toISOString()),
+	description: factory.helpers.maybe(() => factory.lorem.paragraph()),
 	id: factory.string.uuid(),
 	project_id: factory.string.uuid(),
 	status: factory.helpers.arrayElement<ApplicationStatus>([

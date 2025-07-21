@@ -26,6 +26,7 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 export function CreateProjectForm({ closeModal, organizationId }: CreateProjectFormProps) {
 	const form = useForm<ProjectFormValues>({
 		defaultValues: { description: "", name: "" },
+		mode: "onChange",
 		resolver: zodResolver(projectSchema),
 	});
 
@@ -105,7 +106,7 @@ export function CreateProjectForm({ closeModal, organizationId }: CreateProjectF
 							<SubmitButton
 								className="flex-1"
 								data-testid="create-project-submit-button"
-								disabled={!form.formState.isValid}
+								disabled={!form.formState.isValid || form.formState.isSubmitting}
 								isLoading={form.formState.isSubmitting}
 							>
 								Create Project

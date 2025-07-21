@@ -280,7 +280,7 @@ describe.sequential("NavHeader Component", () => {
 					const mobileMenuButton = container.querySelector('[aria-label="Open Navigation Menu"]')!;
 					fireEvent.click(mobileMenuButton);
 
-					const mobileMenuContainer = container.querySelector(".absolute.inset-x-0.top-full.flex.flex-col");
+					const mobileMenuContainer = container.querySelector('[data-testid="mobile-menu"]');
 					const mobileMenuLinks = mobileMenuContainer?.querySelectorAll("a, button");
 					expect(mobileMenuLinks).toBeTruthy();
 					expect(mobileMenuLinks?.length).toBeGreaterThan(0);

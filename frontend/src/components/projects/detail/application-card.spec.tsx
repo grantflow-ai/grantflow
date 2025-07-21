@@ -132,10 +132,15 @@ describe("ApplicationCard", () => {
 	});
 
 	it("should display deadline when provided", () => {
-		const application = ApplicationCardDataFactory.build({
-			deadline: "2024-01-15T23:59:59Z",
+		const application = {
+			created_at: "2023-12-01T10:00:00Z",
+			deadline: "2024-01-15T12:00:00Z",
 			id: "app-123",
-		});
+			project_id: "project-123",
+			status: "WORKING_DRAFT" as const,
+			title: "Test Application",
+			updated_at: "2023-12-15T10:30:00Z",
+		};
 
 		render(<ApplicationCard application={application} {...defaultProps} />);
 
