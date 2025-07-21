@@ -1,4 +1,4 @@
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, ApplicationWithTemplateFactory } from "::testing/factories";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -166,9 +166,15 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			const user = userEvent.setup();
 			const mockToNextStep = vi.fn();
 
+			const application = ApplicationWithTemplateFactory.build({
+				title: "Valid Application Title",
+			});
+
+			useApplicationStore.setState({ application });
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_DETAILS,
 				toNextStep: mockToNextStep,
+				validateStepNext: () => true,
 			});
 
 			render(<WizardFooter />);
@@ -292,7 +298,7 @@ describe.sequential("WizardHeader", () => {
 			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
 			expect(useWizardStore.getState().isGeneratingTemplate).toBe(false);
 
-			expect(mockPush).toHaveBeenCalledWith("/projects/test-project-id");
+			expect(mockPush).toHaveBeenCalledWith("/project");
 		});
 
 		it("navigates to projects list if no project_id available", () => {

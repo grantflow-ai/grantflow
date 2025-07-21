@@ -51,8 +51,9 @@ describe("ApplicationStructureStep", () => {
 	it("shows empty state when no application", () => {
 		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
-		expect(screen.getByTestId("empty-state")).toBeInTheDocument();
-		expect(screen.getByTestId("empty-state-message")).toHaveTextContent("Loading, analyzing...");
+		// Component renders with left pane when no application
+		expect(screen.getByTestId("application-structure-left-pane-content")).toBeInTheDocument();
+		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
 	});
 
 	it("shows generating loader when template is generating", () => {

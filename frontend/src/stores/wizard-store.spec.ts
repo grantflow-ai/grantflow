@@ -107,6 +107,7 @@ describe.sequential("wizard store", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					id: "template-id",
+					rag_sources: [], // Ensure no RAG sources to trigger template generation
 				}),
 			});
 

@@ -127,7 +127,7 @@ describe.sequential("AppDropdownMenuItem", () => {
 
 	it("renders with inset prop", () => {
 		const { container } = render(
-			<AppDropdownMenuItem data-testid="test-app-dropdown-menu-item-3" inset>
+			<AppDropdownMenuItem data-testid="test-app-dropdown-menu-item-3" inset={true}>
 				Inset item
 			</AppDropdownMenuItem>,
 		);

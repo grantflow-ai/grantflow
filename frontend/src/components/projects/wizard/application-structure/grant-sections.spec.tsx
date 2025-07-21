@@ -286,8 +286,8 @@ describe("SortableSection", () => {
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
 		const aiPrompt = screen.getByLabelText("AI Prompt");
-		expect(aiPrompt).toHaveValue(expect.stringContaining("Background"));
-		expect(aiPrompt).toHaveValue(expect.stringContaining("research grant application"));
+		expect(aiPrompt.value).toContain("'Background' section for a research grant application");
+		expect(aiPrompt.value).toContain("research grant application");
 	});
 
 	it("applies dragging styles when isDragging is true", () => {
