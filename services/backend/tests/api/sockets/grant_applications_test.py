@@ -64,7 +64,9 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_otp(
     with (
         pytest.raises(WebSocketDisconnect),
         sync_test_client as client,
-        client.websocket_connect(f"/projects/{project.id}/applications/{application.id}/notifications?otp=") as ws,
+        client.websocket_connect(
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp="
+        ) as ws,
     ):
         ws.receive_json()
 
@@ -80,7 +82,7 @@ async def test_handle_grant_application_notifications_unauthorized_error_no_proj
         pytest.raises(WebSocketDisconnect),
         sync_test_client as client,
         client.websocket_connect(
-            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         ws.receive_json()
@@ -125,7 +127,7 @@ async def test_handle_grant_application_notifications_success(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message1 = ws.receive_json()
@@ -185,7 +187,7 @@ async def test_handle_grant_application_notifications_failed_status(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message = ws.receive_json()
@@ -209,7 +211,9 @@ async def test_handle_grant_application_notifications_empty_notifications(
 
     with (
         sync_test_client as client,
-        client.websocket_connect(f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"),
+        client.websocket_connect(
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
+        ),
     ):
         pass
 
@@ -250,7 +254,7 @@ async def test_handle_grant_application_notifications_different_roles(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message = ws.receive_json()
@@ -313,7 +317,7 @@ async def test_handle_grant_application_notifications_continuous_updates(
     with (
         sync_test_client as client,
         client.websocket_connect(
-            f"/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
+            f"/organizations/{project.organization_id}/projects/{project.id}/applications/{application.id}/notifications?otp={otp_code}"
         ) as ws,
     ):
         message1 = ws.receive_json()

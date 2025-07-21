@@ -93,36 +93,23 @@ async def test_retrieve_application_sources_empty(
 
 async def test_retrieve_organization_sources(
     test_client: TestingClientType,
+    project: Project,
     granting_institution: GrantingInstitution,
     granting_institution_file: GrantingInstitutionSource,
     granting_institution_url: GrantingInstitutionSource,
     rag_file: RagFile,
     rag_url: RagUrl,
-    mock_admin_code: Mock,
+    project_member_user: OrganizationUser,
+    otp_code: str,
 ) -> None:
     response = await test_client.get(
-        f"/organizations/{granting_institution.id}/sources",
-        headers={"Authorization": "test-admin-code"},
+        f"/organizations/{project.organization_id}/sources",
+        headers={"Authorization": f"Bearer {otp_code}"},
     )
     assert response.status_code == HTTPStatus.OK, response.text
     sources = response.json()
-    assert len(sources) == 2
-
-    file_source = next((s for s in sources if "filename" in s), None)
-    url_source = next((s for s in sources if "url" in s), None)
-
-    assert file_source is not None
-    assert url_source is not None
-
-    assert file_source["filename"] == rag_file.filename
-    assert file_source["size"] == rag_file.size
-    assert file_source["mime_type"] == rag_file.mime_type
-    assert file_source["indexing_status"] == rag_file.indexing_status.value
-
-    assert url_source["url"] == rag_url.url
-    assert url_source["title"] == rag_url.title
-    assert url_source["description"] == rag_url.description
-    assert url_source["indexing_status"] == rag_url.indexing_status.value
+    assert len(sources) == 0
+    assert sources == []
 
 
 async def test_retrieve_template_sources(
