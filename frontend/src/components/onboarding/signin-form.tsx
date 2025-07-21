@@ -140,7 +140,7 @@ export function SigninForm({
 									/>
 								</FormControl>
 								<div className="space-y-1 leading-none">
-									<FormLabel className="text-xs font-normal text-gray-500 gap-0.5">
+									<FormLabel className="text-xs font-normal text-gray-500 gap-0.5 data-[error=true]:text-gray-500">
 										By signing up, you agree to our{" "}
 										<Link
 											className="text-primary hover:underline"
