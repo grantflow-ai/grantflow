@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
 import RootLayout from "@/app/layout";
-import { PagePath } from "@/enums";
 
 vi.mock("@/utils/env", () => ({
 	getEnv: () => ({ NEXT_PUBLIC_SITE_URL: "https://example.com" }),
@@ -79,7 +78,7 @@ describe.sequential("RootLayout", () => {
 
 		expect(metadata.title).toBe("GrantFlow.AI");
 		expect(metadata.description).toContain("GrantFlow.ai transforms");
-		expect(metadata.alternates?.canonical).toBe(PagePath.ROOT);
+		expect(metadata.alternates?.canonical).toBe("/");
 
 		expect(metadata.openGraph?.title).toBe("Ready to Focus on Research, Not Paperwork?");
 		expect((metadata.openGraph as any)?.type).toBe("website");

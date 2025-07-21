@@ -2,7 +2,7 @@
 
 import { AvatarGroup } from "@/components/app";
 
-import { Notification } from "@/components/projects/dashboard/notification";
+import { Notification } from "@/components/organizations/dashboard/notification";
 
 interface AppHeaderProps {
 	projectTeamMembers: {

@@ -43,7 +43,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 		// Ensure we have project context before navigating
 		if (!(activeProjectId && project)) {
 			// If no project context, redirect to projects page
-			router.push(routes.projects());
+			router.push(routes.organization.root());
 			return;
 		}
 		// Navigate with project context maintained
@@ -61,7 +61,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					isActive={isProjectsActive}
 					tooltip="Dashboard"
 				>
-					<Link className="flex items-center gap-2" href={routes.projects()}>
+					<Link className="flex items-center gap-2" href={routes.organization.root()}>
 						<LayoutDashboard className={`size-4 shrink-0 ${isProjectsActive ? "text-primary" : ""}`} />
 						<span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
 					</Link>

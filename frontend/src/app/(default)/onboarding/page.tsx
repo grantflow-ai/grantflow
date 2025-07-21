@@ -22,11 +22,11 @@ import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 import { SigninForm } from "@/components/onboarding/signin-form";
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
+import { routes } from "@/utils/navigation";
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
@@ -84,7 +84,7 @@ export default function SignIn() {
 	const handleEmailSignin = async (email: string) => {
 		setIsLoading(true);
 
-		const url = new URL(PagePath.FINISH_EMAIL_SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
+		const url = new URL(routes.finishEmailSignin(), getEnv().NEXT_PUBLIC_SITE_URL).toString();
 
 		try {
 			await sendSignInLinkToEmail(auth, email, {
@@ -170,7 +170,7 @@ export default function SignIn() {
 							<div className="text-center">
 								<span className="text-dark">Already have an account?</span>
 								<AppButton className="text-primary" size="sm" variant="link">
-									<Link href={PagePath.LOGIN}>Login</Link>
+									<Link href={routes.login()}>Login</Link>
 								</AppButton>
 							</div>
 						</AppCardContent>

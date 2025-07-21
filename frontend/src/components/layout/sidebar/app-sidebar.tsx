@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { useState } from "react";
-import NewApplicationModal from "@/components/projects/modals/new-application-modal";
+import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import {
 	Sidebar,
 	SidebarContent,

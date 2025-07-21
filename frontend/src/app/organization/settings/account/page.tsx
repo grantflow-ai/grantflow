@@ -4,7 +4,7 @@ import { routes } from "@/utils/navigation";
 
 export default function OrganizationSettingsAccountPage() {
 	return (
-		<NavigationContextProvider redirectTo={routes.projects()} requireProject>
+		<NavigationContextProvider redirectTo={routes.organization.root()} requireProject>
 			<OrganizationSettingsClient activeTab="account" />
 		</NavigationContextProvider>
 	);

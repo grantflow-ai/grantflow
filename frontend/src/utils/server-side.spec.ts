@@ -2,9 +2,9 @@ import { mockCookies, mockEnv, mockRedirect } from "::testing/global-mocks";
 import { HTTPError, type NormalizedOptions } from "ky";
 
 import { SESSION_COOKIE } from "@/constants";
-import { PagePath } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
+import { routes } from "@/utils/navigation";
 import { createAuthHeaders, redirectWithToastParams, withAuthRedirect, withErrorToast } from "./server-side";
 
 vi.mock("@/utils/logger", () => ({
@@ -57,7 +57,7 @@ describe("Server-side Utils", () => {
 		it("should handle info type", async () => {
 			await redirectWithToastParams({
 				message: "Information message",
-				path: PagePath.DASHBOARD,
+				path: "/dashboard",
 				type: "info",
 			});
 
@@ -102,7 +102,7 @@ describe("Server-side Utils", () => {
 				withErrorToast({
 					identifier: "create-user",
 					message: "Failed to create user",
-					path: PagePath.DASHBOARD,
+					path: "/dashboard",
 					value: failingPromise,
 				}),
 			).rejects.toThrow("Something went wrong");
@@ -168,7 +168,7 @@ describe("Server-side Utils", () => {
 			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
 			expect(mockCookieStore.get).toHaveBeenCalledWith(SESSION_COOKIE);
-			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
 		});
 
 		it("should redirect to onboarding when session cookie has no value", async () => {
@@ -179,7 +179,7 @@ describe("Server-side Utils", () => {
 
 			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
 		});
 
 		it("should redirect to onboarding when session cookie has null value", async () => {
@@ -190,7 +190,7 @@ describe("Server-side Utils", () => {
 
 			await expect(createAuthHeaders()).rejects.toThrow("NEXT_REDIRECT");
 
-			expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+			expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
 		});
 	});
 
@@ -216,7 +216,7 @@ describe("Server-side Utils", () => {
 
 				expect(true).toBe(false);
 			} catch {
-				expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+				expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
 			}
 		});
 
@@ -232,7 +232,7 @@ describe("Server-side Utils", () => {
 				expect(true).toBe(false);
 			} catch (error) {
 				expect(error).toBeInstanceOf(HTTPError);
-				expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+				expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
 			}
 		});
 
@@ -291,7 +291,7 @@ describe("Server-side Utils", () => {
 					expect(error).toBeInstanceOf(HTTPError);
 
 					if (shouldRedirect) {
-						expect(mockRedirect).toHaveBeenCalledWith(PagePath.ONBOARDING);
+						expect(mockRedirect).toHaveBeenCalledWith(routes.onboarding());
 					} else {
 						expect(mockRedirect).not.toHaveBeenCalled();
 					}

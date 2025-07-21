@@ -4,11 +4,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
-import { PagePath } from "@/enums";
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { getEnv } from "@/utils/env";
 import { getOrganizationFromJWT } from "@/utils/jwt";
+import { routes } from "@/utils/navigation";
 
 export async function login(idToken: string) {
 	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
@@ -41,5 +41,5 @@ export async function login(idToken: string) {
 		});
 	}
 
-	redirect(PagePath.PROJECTS);
+	redirect(routes.organization.root());
 }

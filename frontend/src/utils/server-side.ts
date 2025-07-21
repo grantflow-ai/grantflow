@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
-import { PagePath } from "@/enums";
 import { log } from "@/utils/logger";
+import { routes } from "@/utils/navigation";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function redirectWithToastParams({
@@ -15,7 +15,7 @@ export async function redirectWithToastParams({
 	type,
 }: {
 	message: string;
-	path: PagePath | string;
+	path: string;
 	type: "error" | "info" | "success";
 }) {
 	redirect(`${path}?toastType=${type}&toastContent=${message}`);
@@ -29,7 +29,7 @@ export async function withErrorToast<T>({
 }: {
 	identifier: string;
 	message: string;
-	path: PagePath | string;
+	path: string;
 	value: Promise<T>;
 }): Promise<T> {
 	try {
@@ -48,9 +48,9 @@ export const createAuthHeaders = async () => {
 	if (!cookie?.value) {
 		log.warn("No session cookie found, redirecting to onboarding", {
 			cookie_name: SESSION_COOKIE,
-			redirect_path: PagePath.ONBOARDING,
+			redirect_path: routes.onboarding(),
 		});
-		redirect(PagePath.ONBOARDING);
+		redirect(routes.onboarding());
 	}
 
 	log.info("Auth headers created", {
@@ -67,11 +67,11 @@ export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
 	} catch (error) {
 		if (error instanceof HTTPError && error.response.status === 401) {
 			log.warn("Unauthorized request, redirecting to onboarding", {
-				redirect_path: PagePath.ONBOARDING,
+				redirect_path: routes.onboarding(),
 				status: error.response.status,
 				url: error.request.url,
 			});
-			redirect(PagePath.ONBOARDING);
+			redirect(routes.onboarding());
 		}
 
 		log.error("API request failed", error, {
