@@ -9,6 +9,7 @@ const nextConfig = {
 			bodySizeLimit: "100mb",
 		},
 	},
+	reactStrictMode: false,
 } satisfies NextConfig;
 
 export default nextConfig;

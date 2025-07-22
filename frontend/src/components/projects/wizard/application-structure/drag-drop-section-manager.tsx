@@ -11,7 +11,6 @@ import {
 } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { log } from "@/utils/logger";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -36,10 +35,7 @@ export function DragDropSectionManager({
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
-	const application = useApplicationStore((state) => state.application);
-	const updateGrantSections = useApplicationStore(
-		(state) => state.updateGrantSections,
-	);
+	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections) ?? [];
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(
 		null,
 	);
@@ -48,7 +44,6 @@ export function DragDropSectionManager({
 		sectionId: string;
 	} | null>(null);
 
-	const grantSections = application?.grant_template?.grant_sections ?? [];
 
 	const toUpdateGrantSection = useCallback(
 		(section: GrantSection): UpdateGrantSection => {
@@ -76,6 +71,7 @@ export function DragDropSectionManager({
 
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
+			// to prevent main section to become a sub-section
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
 				const hasChildren = grantSections.some(
 					(section) => section.parent_id === activeSection.id,
@@ -92,18 +88,28 @@ export function DragDropSectionManager({
 
 	const determineNewParentId = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
-			const activeIsChild = activeSection.parent_id !== null;
-			const overIsChild = overSection.parent_id !== null;
+			const activeIsMain = activeSection.parent_id === null;
+			const overIsMain = overSection.parent_id === null;
 
-			if (overIsChild) {
+			if (activeIsMain && overIsMain) {
+				return null;
+			}
+
+			if (activeIsMain && !overIsMain) {
+				return activeSection.parent_id;
+			}
+
+			if (!activeIsMain && overIsMain) {
+				return activeSection.parent_id === overSection.id
+					? activeSection.parent_id 
+					: overSection.id;
+			}
+
+			if (!activeIsMain && !overIsMain) {
 				return overSection.parent_id;
 			}
 
-			if (activeIsChild) {
-				return overSection.id;
-			}
-
-			return null;
+			return activeSection.parent_id;
 		},
 		[],
 	);
@@ -125,9 +131,9 @@ export function DragDropSectionManager({
 				}
 				return toUpdateGrantSection(section);
 			});
-			await updateGrantSections(updatedSections);
+			await useApplicationStore.getState().updateGrantSections(updatedSections);
 		},
-		[grantSections, updateGrantSections, toUpdateGrantSection],
+		[grantSections, toUpdateGrantSection],
 	);
 
 	const handleDeleteSection = useCallback(
@@ -135,10 +141,10 @@ export function DragDropSectionManager({
 			const updatedSections = grantSections
 				.filter((section) => section.id !== sectionId)
 				.map(toUpdateGrantSection);
-			await updateGrantSections(updatedSections);
+			await useApplicationStore.getState().updateGrantSections(updatedSections);
 			setExpandedSectionId((prev) => (prev === sectionId ? null : prev));
 		},
-		[grantSections, updateGrantSections, toUpdateGrantSection],
+		[grantSections, toUpdateGrantSection],
 	);
 
 	const handleAddNewSection = useCallback(
@@ -150,89 +156,35 @@ export function DragDropSectionManager({
 
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
-			onDragEnd: async (event, activeItem, overItem) => {
-				log.info("Drag ended", {
-					activeId: activeItem?.id,
-					activeTitle: activeItem?.title,
-					eventActive: event.active.id,
-					eventOver: event.over?.id,
-					overId: overItem?.id,
-					overTitle: overItem?.title,
-				});
+			onDragEnd: async (_, activeItem, overItem) => {
+				if (activeItem && overItem && activeItem.id !== overItem.id) {
+					const newParentId = determineNewParentId(activeItem, overItem);
+					const hasParentChanged = activeItem.parent_id !== newParentId;
 
-				// Apply pending parent changes if any
+					if (hasParentChanged) {
+						await handleUpdateSection(activeItem.id, { parent_id: newParentId });
+					}
+				}
+
 				if (pendingParentChange) {
-					const updatedSections = grantSections.map((section) => {
-						if (section.id === pendingParentChange.sectionId) {
-							return toUpdateGrantSection({
-								...section,
-								parent_id: pendingParentChange.newParentId,
-							});
-						}
-						return toUpdateGrantSection(section);
-					});
-
-					log.info("Drag end: Applying pending parent change", {
-						newParentId: pendingParentChange.newParentId,
-						sectionCount: updatedSections.length,
-						sectionId: pendingParentChange.sectionId,
-					});
-					
-					await updateGrantSections(updatedSections);
 					setPendingParentChange(null);
 				}
 			},
 			onDragOver: (_event, activeSection, overSection) => {
 				if (!(activeSection && overSection)) {
-					// log.warn("Drag over: Missing active or over section");
 					return;
 				}
 
 				if (wouldCreateInvalidNesting(activeSection, overSection)) {
-					log.warn("Drag over: Would create invalid nesting", {
-						activeId: activeSection.id,
-						overId: overSection.id,
-					});
 					toast.error("Cannot create more than 2 levels of nesting");
-					return;
-				}
-
-				const newParentId = determineNewParentId(activeSection, overSection);
-				log.info("Drag over: Determined new parent", {
-					activeId: activeSection.id,
-					newParentId,
-					oldParentId: activeSection.parent_id,
-				});
-
-				// Store pending change but don't apply it yet
-				if (activeSection.parent_id !== newParentId) {
-					setPendingParentChange({
-						newParentId,
-						sectionId: activeSection.id,
-					});
-					log.info("Drag over: Stored pending parent change", {
-						newParentId,
-						sectionId: activeSection.id,
-					});
 				}
 			},
-			onDragStart: (_event, item) => {
-				log.info("Drag started", {
-					sectionId: item?.id,
-					sectionTitle: item?.title,
-				});
-				// Close any expanded section when dragging starts
-				setExpandedSectionId(null);
-				// Clear any pending parent changes when starting a new drag
-				setPendingParentChange(null);
+			onDragStart: (_event, ) => {
+				if (expandedSectionId !== null) {
+					setExpandedSectionId(null);
+				}
 			},
 			onReorder: async (sections, oldIndex, newIndex) => {
-				log.info("Reordering sections", {
-					newIndex,
-					oldIndex,
-					sectionCount: sections.length,
-				});
-
 				const reorderedSections = arrayMove(sections, oldIndex, newIndex);
 
 				const updatedSections = reorderedSections.map((section, index) => ({
@@ -241,20 +193,11 @@ export function DragDropSectionManager({
 					parent_id: section.parent_id ?? null,
 				}));
 
-				log.info("Reorder: Updating grant sections", {
-					sections: updatedSections.map((s) => ({
-						id: s.id,
-						order: s.order,
-						title: s.title,
-					})),
-					updatedCount: updatedSections.length,
-				});
-				await updateGrantSections(updatedSections.map(toUpdateGrantSection));
+				await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
 			},
 		}),
 		[
 			grantSections,
-			updateGrantSections,
 			toUpdateGrantSection,
 			wouldCreateInvalidNesting,
 			determineNewParentId,
@@ -405,41 +348,34 @@ function SectionList({
 }: {
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 } & SectionListProps) {
+	// Flatten sections for optimal SortableContext performance
+	// Keep efficient data structures while creating flat DOM
+	const allSectionsFlattened = useMemo(() => {
+		const result: GrantSection[] = [];
+		mainSections.forEach(main => {
+			result.push(main);
+			const subsections = subsectionsByParent[main.id] ?? [];
+			result.push(...subsections);
+		});
+		return result;
+	}, [mainSections, subsectionsByParent]);
+
 	return (
-		<>
-			{mainSections.map((section) => (
-				<div className="space-y-2" key={section.id}>
-					<SortableSection
-						isDetailedSection={isDetailedSection}
-						isExpanded={expandedSectionId === section.id}
-						onAddSubsection={() => handleAddNewSection(section.id)}
-						onDelete={() => handleDeleteSection(section.id)}
-						onToggleExpand={() => {
-							toggleSectionExpanded(section.id);
-						}}
-						onUpdate={(updates) => handleUpdateSection(section.id, updates)}
-						section={section}
-						toUpdateGrantSection={toUpdateGrantSection}
-					/>
-					{(subsectionsByParent[section.id] ?? []).map((subsection) => (
-						<SortableSection
-							isDetailedSection={isDetailedSection}
-							isExpanded={expandedSectionId === subsection.id}
-							isSubsection
-							key={subsection.id}
-							onDelete={() => handleDeleteSection(subsection.id)}
-							onToggleExpand={() => {
-								toggleSectionExpanded(subsection.id);
-							}}
-							onUpdate={(updates) =>
-								handleUpdateSection(subsection.id, updates)
-							}
-							section={subsection}
-							toUpdateGrantSection={toUpdateGrantSection}
-						/>
-					))}
-				</div>
+		<div className="space-y-2">
+			{allSectionsFlattened.map((section) => (
+				<SortableSection
+					isDetailedSection={isDetailedSection}
+					isExpanded={expandedSectionId === section.id}
+					isSubsection={!!section.parent_id}
+					key={section.id}
+					onAddSubsection={section.parent_id ? undefined : () => handleAddNewSection(section.id)}
+					onDelete={() => handleDeleteSection(section.id)}
+					onToggleExpand={() => { toggleSectionExpanded(section.id); }}
+					onUpdate={(updates) => handleUpdateSection(section.id, updates)}
+					section={section}
+					toUpdateGrantSection={toUpdateGrantSection}
+				/>
 			))}
-		</>
+		</div>
 	);
 }
