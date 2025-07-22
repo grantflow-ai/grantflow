@@ -21,9 +21,7 @@ vi.mock("@dnd-kit/core", () => ({
 			{children}
 		</div>
 	),
-	DragOverlay: ({ children }: any) => (
-		<div data-testid="drag-overlay">{children}</div>
-	),
+	DragOverlay: ({ children }: any) => <div data-testid="drag-overlay">{children}</div>,
 	KeyboardSensor: vi.fn(),
 	PointerSensor: vi.fn(),
 	useSensor: vi.fn(),
@@ -37,9 +35,7 @@ vi.mock("@dnd-kit/sortable", () => ({
 		newArray.splice(newIndex, 0, removed);
 		return newArray;
 	}),
-	SortableContext: ({ children }: any) => (
-		<div data-testid="sortable-context">{children}</div>
-	),
+	SortableContext: ({ children }: any) => <div data-testid="sortable-context">{children}</div>,
 	sortableKeyboardCoordinates: vi.fn(),
 	useSortable: vi.fn(() => ({
 		attributes: {},
@@ -53,15 +49,7 @@ vi.mock("@dnd-kit/sortable", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: ({
-		alt,
-		className,
-		src,
-	}: {
-		alt: string;
-		className?: string;
-		src: string;
-	}) => (
+	default: ({ alt, className, src }: { alt: string; className?: string; src: string }) => (
 		<div className={className} data-src={src} data-testid={`image-${alt}`} />
 	),
 }));
@@ -123,9 +111,7 @@ describe.sequential("DragDropSectionManager", () => {
 
 			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
 			expect(screen.getByTestId("drag-overlay")).toBeInTheDocument();
-			expect(screen.getAllByTestId("sortable-context").length).toBeGreaterThan(
-				0,
-			);
+			expect(screen.getAllByTestId("sortable-context").length).toBeGreaterThan(0);
 		});
 
 		it("renders sections with interactive elements", () => {
@@ -133,12 +119,8 @@ describe.sequential("DragDropSectionManager", () => {
 
 			expect(screen.getAllByTestId("section-title").length).toBeGreaterThan(0);
 
-			expect(
-				screen.getAllByTestId("delete-section-button").length,
-			).toBeGreaterThan(0);
-			expect(
-				screen.getAllByTestId("expand-section-button").length,
-			).toBeGreaterThan(0);
+			expect(screen.getAllByTestId("delete-section-button").length).toBeGreaterThan(0);
+			expect(screen.getAllByTestId("expand-section-button").length).toBeGreaterThan(0);
 		});
 	});
 
@@ -265,17 +247,17 @@ describe.sequential("DragDropSectionManager", () => {
 	describe("drag and drop logic", () => {
 		it("verifies drag handlers are configured", () => {
 			render(<DragDropSectionManager {...defaultProps} />);
-			
+
 			const sections = mockApplication.grant_template!.grant_sections;
-			const mainSection = sections.find(s => s.id === "section-2");
-			const subsection = sections.find(s => s.id === "subsection-1");
+			const mainSection = sections.find((s) => s.id === "section-2");
+			const subsection = sections.find((s) => s.id === "subsection-1");
 
 			expect(mainSection).toBeDefined();
 			expect(subsection).toBeDefined();
 
 			const dndContexts = screen.getAllByTestId("dnd-context");
 			expect(dndContexts.length).toBeGreaterThan(0);
-			
+
 			const [firstContext] = dndContexts;
 			expect(firstContext.dataset.dragEnd).toBe("enabled");
 			expect(firstContext.dataset.dragStart).toBe("enabled");
@@ -286,34 +268,34 @@ describe.sequential("DragDropSectionManager", () => {
 			render(<DragDropSectionManager {...defaultProps} />);
 
 			const sections = mockApplication.grant_template!.grant_sections;
-			const subsection1 = sections.find(s => s.id === "subsection-1");
+			const subsection1 = sections.find((s) => s.id === "subsection-1");
 
 			expect(subsection1).toBeDefined();
-			
+
 			const sectionTitles = screen.getAllByTestId("section-title");
 			const sectionContainers = screen.getAllByTestId("section-container");
-			
+
 			expect(sectionTitles.length).toBeGreaterThan(0);
 			expect(sectionContainers.length).toBeGreaterThan(0);
-			
-			expect(sectionTitles.some(title => title.textContent?.includes("Main Section 1"))).toBe(true);
-			expect(sectionTitles.some(title => title.textContent?.includes("Subsection 1"))).toBe(true);
+
+			expect(sectionTitles.some((title) => title.textContent?.includes("Main Section 1"))).toBe(true);
+			expect(sectionTitles.some((title) => title.textContent?.includes("Subsection 1"))).toBe(true);
 		});
 
 		it("handles section interactions", () => {
 			render(<DragDropSectionManager {...defaultProps} />);
 
 			const sections = mockApplication.grant_template!.grant_sections;
-			const section = sections.find(s => s.id === "section-1");
+			const section = sections.find((s) => s.id === "section-1");
 
 			expect(section).toBeDefined();
-			
+
 			const expandButtons = screen.getAllByTestId("expand-section-button");
 			const deleteButtons = screen.getAllByTestId("delete-section-button");
-			
+
 			expect(expandButtons.length).toBeGreaterThan(0);
 			expect(deleteButtons.length).toBeGreaterThan(0);
-			
+
 			expect(expandButtons.length).toBe(deleteButtons.length);
 		});
 	});
