@@ -12,10 +12,13 @@ import {
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import type React from "react";
 import { useCallback, useState } from "react";
-import { log } from "@/utils/logger";
 
 export interface DragDropConfig {
 	enableKeyboard?: boolean;
@@ -86,22 +89,22 @@ export function useDragAndDrop<T extends DragDropItem>(
 			items: T[];
 			renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
 		}) {
+
 			const handleDragStart = (event: DragStartEvent) => {
-				log.info("useDragAndDrop: handleDragStart", { activeId: event.active.id });
 				const draggedItem = items.find((item) => item.id === event.active.id);
-				setActiveId(event.active.id as string);
+				
 				onDragStart?.(event, draggedItem);
+				
+				setTimeout(() => {
+					setActiveId(event.active.id as string);
+				}, 0);
 			};
 
 			const handleDragOver = async (event: DragOverEvent) => {
 				const { active, over } = event;
 
-				if (!over || active.id === over.id) {
-					return;
-				}
-
 				const activeItem = items.find((item) => item.id === active.id);
-				const overItem = items.find((item) => item.id === over.id);
+				const overItem = over ? items.find((item) => item.id === over.id) : undefined;
 
 				if (onDragOver) {
 					await onDragOver(event, activeItem, overItem);
@@ -110,19 +113,11 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 			const handleReorder = async (activeItem: T, overItem: T) => {
 				if (!onReorder) {
-					log.warn("useDragAndDrop: No onReorder handler provided");
 					return;
 				}
 
 				const oldIndex = items.findIndex((item) => item.id === activeItem.id);
 				const newIndex = items.findIndex((item) => item.id === overItem.id);
-
-				log.info("useDragAndDrop: handleReorder", {
-					activeId: activeItem.id,
-					newIndex,
-					oldIndex,
-					overId: overItem.id,
-				});
 
 				if (oldIndex !== -1 && newIndex !== -1) {
 					await onReorder(items, oldIndex, newIndex);
@@ -131,16 +126,18 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 			const handleDragEnd = async (event: DragEndEvent) => {
 				const { active, over } = event;
-				log.info("useDragAndDrop: handleDragEnd", {
-					activeId: active.id,
-					hasOver: !!over,
-					overId: over?.id,
-					sameItem: active.id === over?.id,
-				});
+				
 				setActiveId(null);
 
-				if (!over || active.id === over.id) {
-					log.info("useDragAndDrop: Drag ended without change");
+				if (!over) {
+					return;
+				}
+
+				if (active.id === over.id) {
+					const activeItem = items.find((item) => item.id === active.id);
+					if (onDragEnd) {
+						await onDragEnd(event, activeItem, activeItem);
+					}
 					return;
 				}
 
@@ -148,28 +145,20 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const overItem = items.find((item) => item.id === over.id);
 
 				if (activeItem && overItem) {
-					log.info("useDragAndDrop: Calling handleReorder");
-					await handleReorder(activeItem, overItem);
-				} else {
-					log.warn("useDragAndDrop: Could not find items", {
-						activeFound: !!activeItem,
-						itemCount: items.length,
-						overFound: !!overItem,
-					});
+					const shouldReorder = activeItem.parent_id === overItem.parent_id;
+					
+					if (shouldReorder) {
+						await handleReorder(activeItem, overItem);
+					}
 				}
 
 				if (onDragEnd) {
-					log.info("useDragAndDrop: Calling onDragEnd handler");
 					await onDragEnd(event, activeItem, overItem);
 				}
 			};
 
 			const activeItem = items.find((item) => item.id === activeId);
 			const sortableIds = items.map((item) => item.id);
-
-			if (activeId) {
-				log.info("DragDropWrapper: Active drag", { activeId, hasActiveItem: !!activeItem });
-			}
 
 			return (
 				<DndContext
@@ -186,12 +175,12 @@ export function useDragAndDrop<T extends DragDropItem>(
 				</DndContext>
 			);
 		},
-		[sensors, onDragStart, onDragOver, onDragEnd, onReorder, activeId],
+		[sensors, onDragStart, onDragOver, onDragEnd, onReorder],
 	);
 
 	return {
 		activeItem: undefined,
 		DragDropWrapper,
-		isItemDragging,
+		isItemDragging
 	};
 }
