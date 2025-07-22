@@ -3,7 +3,6 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 
@@ -11,22 +10,20 @@ interface OrganizationSettingsLayoutProps {
 	activeTab: string;
 	children: React.ReactNode;
 	onInviteClick?: () => void;
-	project: API.GetProject.Http200.ResponseBody;
+	userRole: UserRole;
 }
 
 export function OrganizationSettingsLayout({
 	activeTab,
 	children,
 	onInviteClick,
-	project,
+	userRole,
 }: OrganizationSettingsLayoutProps) {
-	const userRole = project.role as UserRole;
-
 	const allTabs = [
 		{
 			href: routes.organization.settings.account(),
 			key: "account",
-			label: "Account Settings",
+			label: "Organisation Settings",
 		},
 		{
 			href: routes.organization.settings.billing(),
@@ -39,6 +36,11 @@ export function OrganizationSettingsLayout({
 			key: "members",
 			label: "Members",
 			requiresRole: [UserRole.OWNER, UserRole.ADMIN],
+		},
+		{
+			href: "/organization/settings/personal", // TODO: Add to routes
+			key: "personal",
+			label: "Personal Settings",
 		},
 		{
 			href: routes.organization.settings.notifications(),
@@ -55,9 +57,7 @@ export function OrganizationSettingsLayout({
 	return (
 		<div className="flex flex-col gap-8">
 			<div className="flex w-full flex-col gap-8">
-				<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">
-					Organization Settings
-				</h1>
+				<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">Settings</h1>
 
 				<div className="flex items-center justify-between w-full">
 					<div className="flex items-center gap-6">
