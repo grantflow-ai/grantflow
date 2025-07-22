@@ -5,10 +5,7 @@ import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-	type DragDropHandlers,
-	useDragAndDrop,
-} from "@/hooks/use-drag-and-drop";
+import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { SortableSection } from "./grant-sections";
@@ -18,10 +15,7 @@ interface SectionListProps {
 	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
-	handleUpdateSection: (
-		sectionId: string,
-		updates: Partial<GrantSection>,
-	) => Promise<void>;
+	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	mainSections: GrantSection[];
 	subsectionsByParent: Record<string, GrantSection[]>;
@@ -36,14 +30,11 @@ export function DragDropSectionManager({
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
 	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections) ?? [];
-	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(
-		null,
-	);
+	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 	const [pendingParentChange, setPendingParentChange] = useState<{
 		newParentId: null | string;
 		sectionId: string;
 	} | null>(null);
-
 
 	const toUpdateGrantSection = useCallback(
 		(section: GrantSection): UpdateGrantSection => {
@@ -73,9 +64,7 @@ export function DragDropSectionManager({
 		(activeSection: GrantSection, overSection: GrantSection) => {
 			// to prevent main section to become a sub-section
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
-				const hasChildren = grantSections.some(
-					(section) => section.parent_id === activeSection.id,
-				);
+				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
 				if (hasChildren) {
 					return true;
 				}
@@ -86,33 +75,28 @@ export function DragDropSectionManager({
 		[grantSections],
 	);
 
-	const determineNewParentId = useCallback(
-		(activeSection: GrantSection, overSection: GrantSection) => {
-			const activeIsMain = activeSection.parent_id === null;
-			const overIsMain = overSection.parent_id === null;
+	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
+		const activeIsMain = activeSection.parent_id === null;
+		const overIsMain = overSection.parent_id === null;
 
-			if (activeIsMain && overIsMain) {
-				return null;
-			}
+		if (activeIsMain && overIsMain) {
+			return null;
+		}
 
-			if (activeIsMain && !overIsMain) {
-				return activeSection.parent_id;
-			}
-
-			if (!activeIsMain && overIsMain) {
-				return activeSection.parent_id === overSection.id
-					? activeSection.parent_id 
-					: overSection.id;
-			}
-
-			if (!activeIsMain && !overIsMain) {
-				return overSection.parent_id;
-			}
-
+		if (activeIsMain && !overIsMain) {
 			return activeSection.parent_id;
-		},
-		[],
-	);
+		}
+
+		if (!activeIsMain && overIsMain) {
+			return activeSection.parent_id === overSection.id ? activeSection.parent_id : overSection.id;
+		}
+
+		if (!(activeIsMain || overIsMain)) {
+			return overSection.parent_id;
+		}
+
+		return activeSection.parent_id;
+	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
 		setExpandedSectionId((prev) => {
@@ -179,7 +163,7 @@ export function DragDropSectionManager({
 					toast.error("Cannot create more than 2 levels of nesting");
 				}
 			},
-			onDragStart: (_event, ) => {
+			onDragStart: (_event) => {
 				if (expandedSectionId !== null) {
 					setExpandedSectionId(null);
 				}
@@ -197,57 +181,43 @@ export function DragDropSectionManager({
 			},
 		}),
 		[
-			grantSections,
 			toUpdateGrantSection,
 			wouldCreateInvalidNesting,
 			determineNewParentId,
 			pendingParentChange,
+			expandedSectionId,
+			handleUpdateSection,
 		],
 	);
 
 	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
 
-	const sortedSections = useMemo(
-		() => [...grantSections].sort((a, b) => a.order - b.order),
-		[grantSections],
-	);
+	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
 
-	const mainSections = useMemo(
-		() => sortedSections.filter((section) => !section.parent_id),
-		[sortedSections],
-	);
+	const mainSections = useMemo(() => sortedSections.filter((section) => !section.parent_id), [sortedSections]);
 
 	const subsectionsByParent = useMemo(
 		() =>
-			sortedSections.reduce<Record<string, typeof grantSections>>(
-				(acc, section) => {
-					if (section.parent_id) {
-						if (!(section.parent_id in acc)) {
-							acc[section.parent_id] = [];
-						}
-						acc[section.parent_id].push(section);
+			sortedSections.reduce<Record<string, typeof grantSections>>((acc, section) => {
+				if (section.parent_id) {
+					if (!(section.parent_id in acc)) {
+						acc[section.parent_id] = [];
 					}
-					return acc;
-				},
-				{},
-			),
+					acc[section.parent_id].push(section);
+				}
+				return acc;
+			}, {}),
 		[sortedSections],
 	);
 
-	const renderDragOverlay = useCallback(
-		(activeSection: GrantSection | undefined) => {
-			if (!activeSection) return null;
+	const renderDragOverlay = useCallback((activeSection: GrantSection | undefined) => {
+		if (!activeSection) return null;
 
-			return <SectionDragOverlay activeSection={activeSection} />;
-		},
-		[],
-	);
+		return <SectionDragOverlay activeSection={activeSection} />;
+	}, []);
 
 	return (
-		<DragDropWrapper
-			items={grantSections}
-			renderDragOverlay={renderDragOverlay}
-		>
+		<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
 			<div className="mb-3 space-y-2 p-1">
 				{grantSections.length > 0 && (
 					<SectionList
@@ -267,23 +237,16 @@ export function DragDropSectionManager({
 	);
 }
 
-function SectionDragOverlay({
-	activeSection,
-}: {
-	activeSection: GrantSection;
-}) {
+function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) {
 	const isSubsection = activeSection.parent_id !== null;
-	const hasMaxWords =
-		"max_words" in activeSection && Boolean(activeSection.max_words);
+	const hasMaxWords = "max_words" in activeSection && Boolean(activeSection.max_words);
 
 	return (
 		<div
 			className={`group rounded outline-2 outline-offset-[-1px] outline-primary transition-all duration-200 bg-white shadow-xl ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 			style={{ minWidth: isSubsection ? "410px" : "300px" }}
 		>
-			<div
-				className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}
-			>
+			<div className={`flex items-center justify-start ${isSubsection ? "gap-2" : "gap-5"}`}>
 				<div className="relative size-6 cursor-grabbing">
 					<GripVertical className="size-6 text-gray-400" />
 				</div>
@@ -305,12 +268,7 @@ function SectionDragOverlay({
 					</div>
 					<div className="flex items-center justify-end">
 						<SectionIconButton className="size-7 opacity-100">
-							<Image
-								alt="Delete"
-								height={24}
-								src="/icons/delete.svg"
-								width={24}
-							/>
+							<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
 						</SectionIconButton>
 
 						{!isSubsection && (
@@ -352,7 +310,7 @@ function SectionList({
 	// Keep efficient data structures while creating flat DOM
 	const allSectionsFlattened = useMemo(() => {
 		const result: GrantSection[] = [];
-		mainSections.forEach(main => {
+		mainSections.forEach((main) => {
 			result.push(main);
 			const subsections = subsectionsByParent[main.id] ?? [];
 			result.push(...subsections);
@@ -370,7 +328,9 @@ function SectionList({
 					key={section.id}
 					onAddSubsection={section.parent_id ? undefined : () => handleAddNewSection(section.id)}
 					onDelete={() => handleDeleteSection(section.id)}
-					onToggleExpand={() => { toggleSectionExpanded(section.id); }}
+					onToggleExpand={() => {
+						toggleSectionExpanded(section.id);
+					}}
 					onUpdate={(updates) => handleUpdateSection(section.id, updates)}
 					section={section}
 					toUpdateGrantSection={toUpdateGrantSection}
