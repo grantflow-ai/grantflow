@@ -55,18 +55,15 @@ export function DashboardClient({
 	// Initialize organization store with server data
 	useEffect(() => {
 		setOrganizations(initialOrganizations);
+	}, [initialOrganizations, setOrganizations]);
 
+	// Handle initial organization selection
+	useEffect(() => {
 		// If no organization is selected in cookies but we have an initial one, set it
 		if (!selectedOrganizationId && initialSelectedOrganizationId) {
 			switchOrganization(initialSelectedOrganizationId);
 		}
-	}, [
-		initialOrganizations,
-		initialSelectedOrganizationId,
-		selectedOrganizationId,
-		setOrganizations,
-		switchOrganization,
-	]);
+	}, [initialSelectedOrganizationId]); // Don't include selectedOrganizationId to avoid infinite loop
 
 	// Use the organization ID from cookies (client-side) or initial (server-side)
 	const currentOrganizationId = selectedOrganizationId ?? initialSelectedOrganizationId;
