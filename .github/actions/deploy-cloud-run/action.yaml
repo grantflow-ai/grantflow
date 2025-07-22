@@ -63,10 +63,11 @@ runs:
               REVISION_COUNT=$(echo "$REVISIONS" | wc -l)
               echo "Found $REVISION_COUNT revisions"
               
-              # If more than 5 revisions, delete oldest ones that have no traffic
-              if [ $REVISION_COUNT -gt 5 ]; then
+              # If more than 10 revisions, delete oldest ones that have no traffic
+              # Keep at least 10 revisions to avoid issues with Cloud Run
+              if [ $REVISION_COUNT -gt 10 ]; then
                 echo "Cleaning up old revisions..."
-                OLD_REVISIONS=$(echo "$REVISIONS" | tail -n +6)
+                OLD_REVISIONS=$(echo "$REVISIONS" | tail -n +11)
                 for rev in $OLD_REVISIONS; do
                   TRAFFIC=$(gcloud run services describe ${{ inputs.service }} \
                     --region=${{ inputs.region }} \
@@ -79,6 +80,8 @@ runs:
                       --region=${{ inputs.region }} \
                       --project=${{ inputs.project_id }} \
                       --quiet || true
+                  else
+                    echo "Keeping revision $rev (has traffic: ${TRAFFIC}%)"
                   fi
                 done
               fi
