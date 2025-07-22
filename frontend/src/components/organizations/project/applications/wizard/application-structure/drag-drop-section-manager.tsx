@@ -24,7 +24,7 @@ interface SectionListProps {
 
 import type { RefObject } from "react";
 import { AppButton } from "@/components/app";
-import type { WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 
 export function DragDropSectionManager({
 	dialogRef,
@@ -68,7 +68,6 @@ export function DragDropSectionManager({
 
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
-			// to prevent main section to become a sub-section
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
 				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
 				if (hasChildren) {
@@ -85,17 +84,14 @@ export function DragDropSectionManager({
 		const activeIsMain = activeSection.parent_id === null;
 		const overIsMain = overSection.parent_id === null;
 
-		// Main sections always stay at main level (can't be nested)
 		if (activeIsMain) {
 			return null;
 		}
 
-		// Sub-to-main: become sub-section of the target
 		if (overIsMain) {
 			return overSection.id;
 		}
 
-		// Sub-to-sub: move to same parent as target
 		return overSection.parent_id;
 	}, []);
 
@@ -126,7 +122,6 @@ export function DragDropSectionManager({
 			const sectionToDelete = grantSections.find((section) => section.id === sectionId);
 			if (!sectionToDelete) return;
 
-			// If it's a main section, also delete its sub-sections
 			const sectionsToDelete = [sectionId];
 			if (sectionToDelete.parent_id === null) {
 				const subSections = grantSections.filter((section) => section.parent_id === sectionId);

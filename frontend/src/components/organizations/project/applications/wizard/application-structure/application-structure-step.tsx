@@ -4,10 +4,13 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { ApplicationStructureLeftPane, DragDropSectionManager } from "@/components/projects";
-import { WizardRightPane } from "@/components/projects/wizard/shared";
-import { createRagSourcesDialog } from "@/components/projects/wizard/shared/rag-sources-dialog-utils";
-import type { WizardDialogRef } from "@/components/projects/wizard/shared/wizard-dialog";
+import {
+	ApplicationStructureLeftPane,
+	DragDropSectionManager,
+} from "@/components/organizations/project/applications/wizard/application-structure";
+import { WizardRightPane } from "@/components/organizations/project/applications/wizard/shared";
+import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/shared/rag-sources-dialog-utils";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
@@ -84,7 +87,6 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 			return;
 		}
 
-		// Only show dialog for failed sources if it hasn't been dismissed
 		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
 			const ragDialog = createRagSourcesDialog({
 				onBackToUploads: () => {
