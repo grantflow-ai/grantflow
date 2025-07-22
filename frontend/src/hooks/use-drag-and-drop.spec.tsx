@@ -45,7 +45,7 @@ const createTestItems = (): TestItem[] => [
 	{ id: "item-3", name: "Third Item", order: 3, parent_id: "item-1" },
 ];
 
-describe("useDragAndDrop", () => {
+describe.sequential("useDragAndDrop", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
@@ -135,7 +135,7 @@ describe("useDragAndDrop", () => {
 			expect(dragStartHandler).toBeDefined();
 
 			const event = { active: { id: "item-1" } };
-			
+
 			act(() => {
 				dragStartHandler(event);
 			});
@@ -166,7 +166,7 @@ describe("useDragAndDrop", () => {
 			const dndContexts = screen.getAllByTestId("dnd-context");
 			const sortableContexts = screen.getAllByTestId("sortable-context");
 			const dragOverlays = screen.getAllByTestId("drag-overlay");
-			
+
 			expect(dndContexts.length).toBeGreaterThan(0);
 			expect(sortableContexts.length).toBeGreaterThan(0);
 			expect(dragOverlays.length).toBeGreaterThan(0);
@@ -467,7 +467,7 @@ describe("useDragAndDrop", () => {
 
 			const dragOverHandler = (globalThis as any).testDragOver;
 			expect(dragOverHandler).toBeDefined();
-			
+
 			const dndContexts = screen.getAllByTestId("dnd-context");
 			expect(dndContexts.length).toBeGreaterThan(0);
 		});

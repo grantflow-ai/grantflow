@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 import pytest
-from packages.db.src.tables import GrantApplicationRagSource
+from packages.db.src.tables import GrantApplicationSource
 from packages.shared_utils.src.exceptions import (
     ExternalOperationError,
     UrlParsingError,
@@ -105,7 +105,7 @@ async def test_link_extraction_smoke(logger: logging.Logger) -> None:
 
 @e2e_test(category=E2ETestCategory.SMOKE, timeout=120)
 async def test_content_processing_smoke(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running smoke test for content processing")
 
@@ -157,7 +157,7 @@ async def test_content_processing_smoke(
 async def test_crawling_quality_assessment(
     logger: logging.Logger,
     test_url: str,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Running quality assessment for crawling: %s", test_url)
@@ -278,7 +278,7 @@ async def test_link_relevance_assessment(logger: logging.Logger) -> None:
 
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
 async def test_document_processing_quality(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running document processing quality test")
 
@@ -333,7 +333,7 @@ async def test_document_processing_quality(
 async def test_comprehensive_crawling_pipeline(
     logger: logging.Logger,
     test_url: str,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     logger.info("Running comprehensive crawling pipeline evaluation for %s", test_url)
@@ -406,7 +406,7 @@ async def test_comprehensive_crawling_pipeline(
 
 @e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=240)
 async def test_content_semantic_quality(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running content semantic quality evaluation")
 

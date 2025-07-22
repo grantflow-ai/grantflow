@@ -1,5 +1,6 @@
 import time
 from typing import Any, TypedDict
+from uuid import UUID
 
 from litestar import post
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -13,7 +14,12 @@ from packages.shared_utils.src.exceptions import (
     FileParsingError,
     ValidationError,
 )
-from packages.shared_utils.src.gcs import URIParseResult, download_blob, parse_object_uri
+from packages.shared_utils.src.gcs import (
+    URIParseResult,
+    download_blob,
+    parse_object_uri,
+    resolve_parent_id_for_notification,
+)
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import PubSubEvent
@@ -94,7 +100,8 @@ async def handle_pubsub_message(
         logger.debug(
             "Parsed object URI",
             source_id=str(parsed["source_id"]),
-            parent_id=str(parsed["parent_id"]),
+            entity_type=parsed["entity_type"],
+            entity_id=str(parsed["entity_id"]),
             blob_name=parsed["blob_name"],
             trace_id=trace_id,
         )
@@ -147,6 +154,13 @@ async def handle_file_indexing(
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
+        parent_id = await resolve_parent_id_for_notification(
+            session=session,
+            source_id=parse_result["source_id"],
+            entity_type=parse_result["entity_type"],
+            entity_id=parse_result["entity_id"],
+        )
+
     db_duration = time.time() - db_start
     logger.debug(
         "Database queries completed",
@@ -177,7 +191,7 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parse_result["parent_id"],
+            parent_id=UUID(parent_id),
             identifier=parse_result["blob_name"],
             text_content=rag_source.text_content,
             vectors=None,
@@ -222,7 +236,7 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parse_result["parent_id"],
+            parent_id=UUID(parent_id),
             identifier=parse_result["blob_name"],
             text_content=text_content,
             vectors=vectors,
@@ -260,7 +274,7 @@ async def handle_file_indexing(
             logger=logger,
             session_maker=session_maker,
             source_id=parse_result["source_id"],
-            parent_id=parse_result["parent_id"],
+            parent_id=UUID(parent_id),
             identifier=parse_result["blob_name"],
             text_content="",
             vectors=None,

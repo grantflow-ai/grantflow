@@ -1,4 +1,6 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
+import { resetAllStores } from "::testing/store-reset";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WizardStep } from "@/constants";
@@ -20,34 +22,24 @@ vi.mock("sonner", () => ({
 	},
 }));
 
-describe("wizard store", () => {
+// Mock organization store
+vi.mock("@/stores/organization-store", () => ({
+	useOrganizationStore: {
+		getState: vi.fn(() => ({
+			clearOrganization: vi.fn(),
+			selectedOrganizationId: "mock-org-id",
+		})),
+		setState: vi.fn(),
+	},
+}));
+
+describe.sequential("wizard store", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-
-		useApplicationStore.setState({
-			application: null,
-			areAppOperationsInProgress: false,
-			generateTemplate: vi.fn(),
-			ragJobState: {
-				isRestoring: false,
-				restoredJob: null,
-			},
-		});
-
-		const wizardState = useWizardStore.getState();
-		useWizardStore.setState({
-			currentStep: WizardStep.APPLICATION_DETAILS,
-			isAutofillLoading: {
-				research_deep_dive: false,
-				research_plan: false,
-			},
-			isGeneratingTemplate: false,
-			polling: {
-				...wizardState.polling,
-				intervalId: null,
-				isActive: false,
-			},
-		});
+		resetAllStores();
+		setupAuthenticatedTest();
+		vi.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	describe("initial state", () => {
@@ -115,6 +107,7 @@ describe("wizard store", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					id: "template-id",
+					rag_sources: [], // Ensure no RAG sources to trigger template generation
 				}),
 			});
 
@@ -332,6 +325,7 @@ describe("wizard store", () => {
 		describe("triggerAutofill", () => {
 			beforeEach(() => {
 				vi.resetModules();
+				vi.clearAllMocks();
 			});
 
 			it("should not trigger autofill when no application exists", async () => {
@@ -395,7 +389,7 @@ describe("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_plan");
 
-				expect(mockTriggerAutofill).toHaveBeenCalledWith("proj-123", "app-123", {
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
 					autofill_type: "research_plan",
 				});
 
@@ -422,7 +416,7 @@ describe("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_deep_dive", "hypothesis");
 
-				expect(mockTriggerAutofill).toHaveBeenCalledWith("proj-123", "app-123", {
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
 					autofill_type: "research_deep_dive",
 					field_name: "hypothesis",
 				});

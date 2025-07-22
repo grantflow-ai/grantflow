@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { useState } from "react";
-import NewApplicationModal from "@/components/projects/modals/new-application-modal";
+import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import {
 	Sidebar,
 	SidebarContent,
@@ -16,7 +16,7 @@ import {
 	SidebarMenuItem,
 	//SidebarRail,
 } from "@/components/ui/sidebar";
-import { useProjectStore } from "@/stores/project-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
@@ -24,11 +24,11 @@ import { NavMain } from "./nav-main";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
-	const project = useProjectStore((state) => state.project);
+	const organization = useOrganizationStore((state) => state.organization);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleLogout = () => {
-		// Clear mock user data
+		// Clear user data
 		setUser(null);
 		// Redirect to login
 		router.push("/login");
@@ -73,6 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
 						<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
 					</div>
+
 					<button
 						className="bg-primary text-white rounded px-4 py-2 flex items-center justify-center gap-1 hover:bg-link-hover-dark transition-colors mt-10 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:mx-auto"
 						data-testid="new-application-button"
@@ -87,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarHeader>
 
 				<SidebarContent className="flex-grow gap-0 py-4 group-data-[collapsible=icon]:px-2">
-					<NavMain data-testid="nav-main" userRole={project?.role} />
+					<NavMain data-testid="nav-main" userRole={organization?.role} />
 				</SidebarContent>
 
 				<SidebarFooter className="pb-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-4">

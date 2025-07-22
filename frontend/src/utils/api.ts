@@ -1,6 +1,4 @@
 import ky, { type KyInstance } from "ky";
-import { createMockResponse } from "@/dev-tools/mock-api/mock-response";
-import { shouldSkipLogging } from "@/dev-tools/utils/dev-helpers";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
@@ -24,10 +22,6 @@ export function getClient(): KyInstance {
 		hooks: {
 			afterResponse: [
 				async (request, _options, response) => {
-					if (shouldSkipLogging()) {
-						return response;
-					}
-
 					// Clone response to read body for debugging
 					const clonedResponse = response.clone();
 					let responseBody: unknown;
@@ -56,10 +50,6 @@ export function getClient(): KyInstance {
 			],
 			beforeError: [
 				async (error) => {
-					if (shouldSkipLogging()) {
-						return error;
-					}
-
 					let responseBody: unknown;
 					let responseText: string | undefined;
 
@@ -96,38 +86,30 @@ export function getClient(): KyInstance {
 				},
 			],
 			beforeRequest: [
-				async (request, options) => {
-					const mockResponse = await createMockResponse(request, options);
-					if (mockResponse) {
-						return mockResponse;
-					}
-
+				(request, options) => {
 					// Log the full request details
-					if (!shouldSkipLogging()) {
-						let requestBody: unknown;
+					let requestBody: unknown;
 
-						// Extract request body if available
-						if (options.body) {
-							try {
-								requestBody =
-									typeof options.body === "string" ? JSON.parse(options.body) : options.body;
-							} catch {
-								requestBody = options.body;
-							}
+					// Extract request body if available
+					if (options.body) {
+						try {
+							requestBody = typeof options.body === "string" ? JSON.parse(options.body) : options.body;
+						} catch {
+							requestBody = options.body;
 						}
-
-						log.info(`API REQUEST ${request.method} ${request.url}`, {
-							base_url: backendUrl,
-							full_url: new URL(request.url).href,
-							method: request.method,
-							operation: request.headers.get("X-Operation"),
-							pathname: new URL(request.url).pathname,
-							request_body: requestBody,
-							request_headers: Object.fromEntries(request.headers.entries()),
-							trace_id: request.headers.get("X-Trace-ID"),
-							url: request.url,
-						});
 					}
+
+					log.info(`API REQUEST ${request.method} ${request.url}`, {
+						base_url: backendUrl,
+						full_url: new URL(request.url).href,
+						method: request.method,
+						operation: request.headers.get("X-Operation"),
+						pathname: new URL(request.url).pathname,
+						request_body: requestBody,
+						request_headers: Object.fromEntries(request.headers.entries()),
+						trace_id: request.headers.get("X-Trace-ID"),
+						url: request.url,
+					});
 				},
 			],
 		},

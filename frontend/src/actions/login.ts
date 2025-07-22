@@ -3,11 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { SESSION_COOKIE } from "@/constants";
-import { PagePath } from "@/enums";
+import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 import { getEnv } from "@/utils/env";
+import { getOrganizationFromJWT } from "@/utils/jwt";
+import { routes } from "@/utils/navigation";
 
 export async function login(idToken: string) {
 	const loginUrl = new URL("/login", getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL);
@@ -27,5 +28,18 @@ export async function login(idToken: string) {
 		value: jwt_token,
 	});
 
-	redirect(PagePath.PROJECTS);
+	// Extract organization from JWT and set as default if not already set
+	const defaultOrganizationId = getOrganizationFromJWT(jwt_token);
+	if (defaultOrganizationId && !cookieStore.get(SELECTED_ORGANIZATION_COOKIE)) {
+		cookieStore.set({
+			httpOnly: false, // Allow client-side access for organization switching
+			maxAge: 60 * 60 * 24 * 30, // 30 days
+			name: SELECTED_ORGANIZATION_COOKIE,
+			sameSite: "strict",
+			secure: getEnv().NEXT_PUBLIC_SITE_URL.startsWith("https"),
+			value: defaultOrganizationId,
+		});
+	}
+
+	redirect(routes.organization.root());
 }

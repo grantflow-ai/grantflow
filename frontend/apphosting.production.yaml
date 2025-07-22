@@ -32,8 +32,3 @@ env:
       secret: NEXT_PUBLIC_MAILGUN_API_KEY_PRODUCTION
     - variable: RESEND_API_KEY
       secret: RESEND_API_KEY_PRODUCTION
-    # Disable mock features for production
-    - variable: NEXT_PUBLIC_MOCK_API
-      value: "false"
-    - variable: NEXT_PUBLIC_MOCK_AUTH
-      value: "false"

@@ -23,7 +23,6 @@ import eslintPluginUnusedImports from "eslint-plugin-unused-imports";
 import eslintPluginVitest from "eslint-plugin-vitest";
 import globals from "globals";
 import eslintTS from "typescript-eslint";
-import reactRefresh from 'eslint-plugin-react-refresh';
 
 const compat = new FlatCompat();
 
@@ -46,18 +45,7 @@ export default eslintTS.config(
 	eslintPluginImportX.flatConfigs.typescript,
 	sonarjs.configs.recommended,
 	{
-		plugins: {
-			'react-refresh': reactRefresh,
-		},
-		rules: {
-			'react-refresh/only-export-components': [
-				'warn',
-				{ allowConstantExport: true },
-			],
-		}
-	},
-	{
-		ignores: ["!.storybook", "dist"],
+		ignores: ["!.storybook"],
 		languageOptions: {
 			globals: {
 				...globals.browser,
@@ -141,23 +129,6 @@ export default eslintTS.config(
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
 			"no-console": "error",
-			"no-restricted-imports": [
-				"error",
-				{
-					"paths": [
-						{
-							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
-							"name": "@/utils/logging"
-						}
-					],
-					"patterns": [
-						{
-							"group": ["*/utils/logging", "*/logging"],
-							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error()."
-						}
-					]
-				}
-			],
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
 			"paths/alias": "error",
@@ -174,6 +145,7 @@ export default eslintTS.config(
 			"storybook/no-renderer-packages": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
+			"unicorn/filename-case": "off",
 			"unicorn/no-array-callback-reference": "off",
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-array-reduce": "off",
@@ -188,12 +160,12 @@ export default eslintTS.config(
 			"unused-imports/no-unused-imports": "error",
 		},
 		settings: {
-			"import-x/resolver": {
-				typescript: createTypeScriptImportResolver({
+			"import-x/resolver-next": [
+				createTypeScriptImportResolver({
 					alwaysTryTypes: true,
 					project: ["./tsconfig.json"],
 				}),
-			},
+			],
 			"react": {
 				version: "detect",
 			},
@@ -216,18 +188,6 @@ export default eslintTS.config(
 		ignores: ["**/coverage"],
 		rules: {
 			"@typescript-eslint/no-misused-promises": "off",
-		},
-	},
-	{
-		files: ["**/src/components/app/**/*.{ts,tsx}", "**/src/components/landing-page/**/*.{ts,tsx}"],
-		rules: {
-			"no-restricted-imports": "off",
-		},
-	},
-	{
-		files: ["**/*.spec.{ts,tsx}", "**/*.test.{ts,tsx}", "**/scripts/**/*.ts", "**/src/components/ui/**/*.{ts,tsx}"],
-		rules: {
-			"no-restricted-imports": "off",
 		},
 	},
 	{
@@ -260,6 +220,7 @@ export default eslintTS.config(
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
+			"sonarjs/assertions-in-tests": "off",
 			"sonarjs/cognitive-complexity": "off",
 			"sonarjs/function-return-type": "off",
 			"sonarjs/no-all-duplicated-branches": "off",
@@ -281,8 +242,8 @@ export default eslintTS.config(
 			"target",
 			"coverage",
 			".coverage",
-			"**/api-types.ts",
 			"**/storybook-static",
+			".storybook",
 			"dist",
 			"build",
 		],
@@ -291,52 +252,6 @@ export default eslintTS.config(
 		files: ["**/*.spec.*"],
 		rules: {
 			"react-perf/jsx-no-new-array-as-prop": "off",
-		},
-	},
-	{
-		files: ["**/tests/e2e/**/*.{ts,tsx}"],
-		rules: {
-			"react-hooks/rules-of-hooks": "off",
-		},
-	},
-	{
-		files: ["**/dev-*.{ts,tsx}"],
-		rules: {
-			"sonarjs/cognitive-complexity": "off",
-			"sonarjs/pseudo-random": "off",
-		},
-	},
-	{
-		files: ["**/utils/logger.ts", "**/utils/logging.ts", "**/scripts/migrate-to-new-logger.ts"],
-		rules: {
-			"custom/no-console-use-logger": "off",
-			"no-console": "off",
-		},
-	},
-	{
-		files: ["**/src/dev-tools/**/*.{ts,tsx}"],
-		rules: {
-			"@typescript-eslint/no-unnecessary-condition": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			// Allow dev-tools specific patterns
-			"@typescript-eslint/require-await": "off",
-			// Import warnings for development packages
-			"import-x/no-named-as-default": "off",
-			// Only allow console statements in dev tools since they're for development debugging
-			"no-console": "off",
-			"prefer-destructuring": "off",
-			// React dev tools specific
-			"react/no-unescaped-entities": "off",
-			"sonarjs/function-return-type": "off",
-			// Allow http in mock URLs since they're for testing
-			"sonarjs/no-clear-text-protocols": "off",
-			"sonarjs/no-nested-functions": "off",
-			"sonarjs/prefer-single-boolean-return": "off",
-			"unicorn/consistent-function-scoping": "off",
-			"unicorn/prefer-add-event-listener": "off",
 		},
 	},
 

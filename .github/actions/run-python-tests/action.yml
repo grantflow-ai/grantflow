@@ -71,6 +71,9 @@ runs:
                 PYTHONPATH=. uv run pytest packages/${{ inputs.target }} -v
               elif [[ "${{ inputs.target }}" == "cloud_functions" ]]; then
                 PYTHONPATH=. uv run pytest cloud_functions -v
+              elif [[ "${{ inputs.target }}" == "backend" ]]; then
+                # Run backend tests serially (xdist removed)
+                PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi

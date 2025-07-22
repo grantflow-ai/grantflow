@@ -1,15 +1,13 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { DevMenuWrapper } from "@/components/dev-menu-wrapper";
-import { PagePath } from "@/enums";
 import { cn } from "@/lib/utils";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
 
-export const metadata = {
+export const metadata: Metadata = {
 	alternates: {
-		canonical: PagePath.ROOT,
+		canonical: "/",
 	},
 	authors: [{ name: "GrantFlow.AI" }],
 	description:
@@ -41,7 +39,7 @@ export const metadata = {
 	publisher: "GrantFlow.ai",
 	referrer: "origin-when-cross-origin",
 	title: "GrantFlow.AI",
-} satisfies Metadata;
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
@@ -69,7 +67,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				suppressHydrationWarning
 			>
 				{children}
-				<DevMenuWrapper />
 			</body>
 		</html>
 	);

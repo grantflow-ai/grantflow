@@ -1,6 +1,5 @@
 import ky from "ky";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { shouldSkipLogging } from "@/dev-tools/utils/dev-helpers";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
 import { Ref } from "@/utils/state";
@@ -18,14 +17,6 @@ vi.mock("@/utils/state", () => ({
 	Ref: vi.fn(() => ({
 		value: undefined,
 	})),
-}));
-
-vi.mock("@/dev-tools/mock-api/mock-response", () => ({
-	createMockResponse: vi.fn(() => Promise.resolve(undefined)),
-}));
-
-vi.mock("@/dev-tools/utils/dev-helpers", () => ({
-	shouldSkipLogging: vi.fn(() => false),
 }));
 
 describe("api", () => {
@@ -67,7 +58,6 @@ describe("api", () => {
 
 	const mockEnv = {
 		NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.example.com",
-		NEXT_PUBLIC_MOCK_API: false,
 	};
 
 	beforeEach(() => {
@@ -75,7 +65,6 @@ describe("api", () => {
 		vi.resetModules();
 		vi.mocked(getEnv).mockReturnValue(mockEnv as any);
 		vi.mocked(ky.create).mockReturnValue(mockKyInstance as any);
-		vi.mocked(shouldSkipLogging).mockReturnValue(false);
 
 		vi.mocked(Ref).mockReturnValue({
 			value: undefined,
@@ -202,23 +191,6 @@ describe("api", () => {
 			}
 		});
 
-		it("should call createMockResponse in beforeRequest hook", async () => {
-			const { createMockResponse } = await import("@/dev-tools/mock-api/mock-response");
-			const { getClient } = await import("./api");
-			getClient();
-
-			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
-			expect(createCall).toBeDefined();
-			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
-
-			if (beforeRequestHook) {
-				vi.clearAllMocks(); // Clear the "Initializing API client" log
-				await beforeRequestHook(mockRequest as any, {} as any);
-
-				expect(createMockResponse).toHaveBeenCalledWith(mockRequest, {});
-			}
-		});
-
 		it("should handle missing headers gracefully", async () => {
 			const { getClient } = await import("./api");
 			getClient();
@@ -335,65 +307,6 @@ describe("api", () => {
 					prefixUrl: "https://custom-api.example.com",
 				}),
 			);
-		});
-
-		it("should skip response logging when mock API is enabled", async () => {
-			vi.mocked(shouldSkipLogging).mockReturnValue(true);
-
-			const { getClient } = await import("./api");
-			vi.clearAllMocks(); // Clear all mocks including the init log
-			getClient();
-
-			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
-			expect(createCall).toBeDefined();
-			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
-
-			if (afterResponseHook) {
-				const result = await afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
-
-				// Should not log API response when mock API is enabled
-				expect(log.info).not.toHaveBeenCalledWith(expect.stringContaining("API GET"), expect.any(Object));
-				expect(result).toBe(mockResponse);
-			}
-		});
-
-		it("should skip error logging when mock API is enabled", async () => {
-			vi.mocked(shouldSkipLogging).mockReturnValue(true);
-
-			const { getClient } = await import("./api");
-			vi.clearAllMocks(); // Clear all mocks including the init log
-			getClient();
-
-			const createCall = vi.mocked(ky.create).mock.calls[0]?.[0];
-			expect(createCall).toBeDefined();
-			const beforeErrorHook = createCall!.hooks?.beforeError?.[0];
-
-			if (beforeErrorHook) {
-				const mockError = {
-					message: "Network error",
-					request: mockRequest,
-					response: {
-						clone: () => ({
-							json: () => Promise.resolve({}),
-						}),
-						headers: {
-							entries: () => [].entries(),
-							get: () => "application/json",
-						},
-						status: 500,
-					},
-				};
-
-				const result = await beforeErrorHook(mockError as any);
-
-				// Should not log API errors when mock API is enabled
-				expect(log.error).not.toHaveBeenCalledWith(
-					expect.stringContaining("API ERROR"),
-					expect.any(Object),
-					expect.any(Object),
-				);
-				expect(result).toBe(mockError);
-			}
 		});
 	});
 });

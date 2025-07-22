@@ -30,7 +30,3 @@ env:
       secret: NEXT_PUBLIC_MAILGUN_API_KEY_STAGING
     - variable: RESEND_API_KEY
       secret: RESEND_API_KEY_STAGING
-    - variable: NEXT_PUBLIC_MOCK_API
-      secret: NEXT_PUBLIC_MOCK_API_STAGING
-    - variable: NEXT_PUBLIC_MOCK_AUTH
-      secret: NEXT_PUBLIC_MOCK_AUTH_STAGING

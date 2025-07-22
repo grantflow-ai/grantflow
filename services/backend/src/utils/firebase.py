@@ -269,3 +269,78 @@ async def cancel_user_deletion(uid: str) -> bool:
     except Exception as e:
         logger.warning("Error cancelling user deletion", firebase_uid=uid, exc_info=e)
         raise ExternalOperationError("Error cancelling user deletion") from e
+
+
+async def schedule_organization_deletion(organization_id: str, grace_period_days: int = 30) -> dict[str, Any]:
+    """Schedule an organization for deletion in Firestore"""
+    db = get_firestore_client()
+    scheduled_hard_delete_at = datetime.now(UTC) + timedelta(days=grace_period_days)
+
+    doc_data = {
+        "organization_id": organization_id,
+        "status": "scheduled",
+        "scheduled_at": SERVER_TIMESTAMP,
+        "scheduled_hard_delete_at": scheduled_hard_delete_at,
+        "grace_period_days": grace_period_days,
+        "created_at": SERVER_TIMESTAMP,
+        "updated_at": SERVER_TIMESTAMP,
+    }
+
+    try:
+        await db.collection("organization-deletion-requests").document(organization_id).set(doc_data)
+        logger.info(
+            "Scheduled organization for deletion",
+            organization_id=organization_id,
+            scheduled_hard_delete_at=scheduled_hard_delete_at.isoformat(),
+        )
+        return doc_data
+    except Exception as e:
+        logger.warning("Error scheduling organization deletion", organization_id=organization_id, exc_info=e)
+        raise ExternalOperationError("Error scheduling organization deletion") from e
+
+
+async def get_organization_deletion_status(organization_id: str) -> dict[str, Any] | None:
+    """Get organization deletion status from Firestore"""
+    db = get_firestore_client()
+
+    try:
+        doc = await db.collection("organization-deletion-requests").document(organization_id).get()
+        if doc.exists:
+            data = doc.to_dict()
+            logger.debug(
+                "Retrieved organization deletion status",
+                organization_id=organization_id,
+                status=data.get("status") if data else None,
+            )
+            return cast("dict[str, Any]", data)
+        return None
+    except Exception as e:
+        logger.warning("Error getting organization deletion status", organization_id=organization_id, exc_info=e)
+        raise ExternalOperationError("Error getting organization deletion status") from e
+
+
+async def cancel_organization_deletion(organization_id: str) -> bool:
+    """Cancel scheduled organization deletion"""
+    db = get_firestore_client()
+
+    try:
+        doc_ref = db.collection("organization-deletion-requests").document(organization_id)
+        doc = await doc_ref.get()
+
+        if not doc.exists:
+            logger.warning("No deletion request found to cancel", organization_id=organization_id)
+            return False
+
+        await doc_ref.update(
+            {
+                "status": "cancelled",
+                "cancelled_at": SERVER_TIMESTAMP,
+                "updated_at": SERVER_TIMESTAMP,
+            }
+        )
+
+        logger.info("Cancelled organization deletion", organization_id=organization_id)
+        return True
+    except Exception as e:
+        logger.warning("Error cancelling organization deletion", organization_id=organization_id, exc_info=e)
+        raise ExternalOperationError("Error cancelling organization deletion") from e

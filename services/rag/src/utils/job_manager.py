@@ -4,12 +4,12 @@ from uuid import UUID
 
 from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
+    GenerationNotification,
     GrantApplication,
     GrantApplicationGenerationJob,
     GrantTemplate,
     GrantTemplateGenerationJob,
     RagGenerationJob,
-    RagGenerationNotification,
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import RagProcessingStatus, publish_notification
@@ -211,7 +211,7 @@ class JobManager:
             raise ValueError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
-            notification = RagGenerationNotification(
+            notification = GenerationNotification(
                 rag_job_id=self.job_id,
                 event=event,
                 message=message,
@@ -272,16 +272,16 @@ class JobManager:
                 await session.scalar(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id)),
             )
 
-    async def get_job_notifications(self, limit: int | None = None) -> list[RagGenerationNotification]:
+    async def get_job_notifications(self, limit: int | None = None) -> list[GenerationNotification]:
         """Get notifications for the current job, ordered by creation time."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
         async with self.session_maker() as session:
             query = (
-                select(RagGenerationNotification)
-                .where(RagGenerationNotification.rag_job_id == self.job_id)
-                .order_by(RagGenerationNotification.created_at.desc())
+                select(GenerationNotification)
+                .where(GenerationNotification.rag_job_id == self.job_id)
+                .order_by(GenerationNotification.created_at.desc())
             )
 
             if limit:

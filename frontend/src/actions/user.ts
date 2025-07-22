@@ -19,6 +19,20 @@ export async function deleteAccount() {
 }
 
 /**
+ * Get list of organizations where the user is the sole owner
+ * These must be handled before account deletion
+ */
+export async function getSoleOwnedOrganizations() {
+	return withAuthRedirect(
+		getClient()
+			.get("user/sole-owned-organizations", {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.GetSoleOwnedOrganizations.Http200.ResponseBody>(),
+	);
+}
+
+/**
  * Get list of projects where the user is the sole owner
  * These must be handled before account deletion
  */

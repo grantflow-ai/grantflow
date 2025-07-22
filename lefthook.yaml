@@ -6,30 +6,80 @@ pre-commit:
     parallel: false
     commands:
         biome:
-            glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"
+            glob: "{frontend,editor}/**/*.{js,jsx,ts,tsx,mjs,mts,json,jsonc,css}"
             run: |
-                # Convert absolute paths to relative paths from frontend directory
-                relative_files=""
+                # Process frontend files
+                frontend_files=""
+                editor_files=""
                 for file in {staged_files}; do
-                    relative_files="$relative_files ${file#frontend/}"
+                    case "$file" in
+                        frontend/*)
+                            frontend_files="$frontend_files ${file#frontend/}"
+                            ;;
+                        editor/*)
+                            editor_files="$editor_files ${file#editor/}"
+                            ;;
+                    esac
                 done
-                cd frontend && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $relative_files
+                
+                if [ -n "$frontend_files" ]; then
+                    cd frontend && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $frontend_files
+                fi
+                
+                if [ -n "$editor_files" ]; then
+                    cd editor && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $editor_files
+                fi
             stage_fixed: true
 
         eslint:
-            glob: "frontend/**/*.{js,jsx,ts,tsx,mjs,mts}"
+            glob: "{frontend,editor}/**/*.{js,jsx,ts,tsx,mjs,mts}"
             run: |
-                # Convert absolute paths to relative paths from frontend directory
-                relative_files=""
+                # Process frontend files
+                frontend_files=""
+                editor_files=""
                 for file in {staged_files}; do
-                    relative_files="$relative_files ${file#frontend/}"
+                    case "$file" in
+                        frontend/*)
+                            frontend_files="$frontend_files ${file#frontend/}"
+                            ;;
+                        editor/*)
+                            editor_files="$editor_files ${file#editor/}"
+                            ;;
+                    esac
                 done
-                cd frontend && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $relative_files
+                
+                if [ -n "$frontend_files" ]; then
+                    cd frontend && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $frontend_files
+                fi
+                
+                if [ -n "$editor_files" ]; then
+                    cd editor && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $editor_files
+                fi
             stage_fixed: true
 
         typescript:
-            glob: "frontend/**/*.{ts,tsx,mts}"
-            run: cd frontend && pnpm tsc --noEmit --skipLibCheck
+            glob: "{frontend,editor}/**/*.{ts,tsx,mts}"
+            run: |
+                # Check if we have files in each directory
+                has_frontend=false
+                has_editor=false
+                for file in {staged_files}; do
+                    case "$file" in
+                        frontend/*) has_frontend=true ;;
+                        editor/*) has_editor=true ;;
+                    esac
+                done
+                
+                # Run TypeScript checks concurrently if files exist
+                if [ "$has_frontend" = true ] && [ "$has_editor" = true ]; then
+                    (cd frontend && pnpm tsc --noEmit --skipLibCheck) &
+                    (cd editor && pnpm tsc --noEmit --skipLibCheck) &
+                    wait
+                elif [ "$has_frontend" = true ]; then
+                    cd frontend && pnpm tsc --noEmit --skipLibCheck
+                elif [ "$has_editor" = true ]; then
+                    cd editor && pnpm tsc --noEmit --skipLibCheck
+                fi
             exclude: "frontend/src/types/api-types.ts"
 
         ruff:

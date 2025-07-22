@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
 from testing.factories import (
     GrantApplicationFactory,
+    OrganizationFactory,
     ProjectFactory,
 )
 
@@ -196,7 +197,11 @@ def mock_grant_sections() -> list[GrantElement | GrantLongFormSection]:
 @pytest.fixture
 async def test_application(async_session_maker: async_sessionmaker[Any]) -> GrantApplication:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
@@ -438,7 +443,11 @@ async def test_pipeline_missing_grant_template(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 
@@ -464,7 +473,11 @@ async def test_pipeline_missing_research_objectives(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     async with async_session_maker() as session:
-        project = ProjectFactory.build()
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
         session.add(project)
         await session.flush()
 

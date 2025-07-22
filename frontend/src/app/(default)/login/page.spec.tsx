@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { PagePath } from "@/enums";
+import { routes } from "@/utils/navigation";
 
 import LoginPage from "./page";
 
@@ -33,7 +33,6 @@ vi.mock("@/utils/env", () => ({
 	getEnv: () => ({
 		NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
 	}),
-	getMockAuthEnabled: vi.fn(() => false),
 }));
 
 vi.mock("@/utils/firebase", () => ({
@@ -43,11 +42,6 @@ vi.mock("@/utils/firebase", () => ({
 vi.mock("@/utils/auth-providers", () => ({
 	handleGoogleLogin: (...args: unknown[]) => mockHandleGoogleLogin(...args),
 	handleOrcidLogin: (...args: unknown[]) => mockHandleOrcidLogin(...args),
-}));
-
-vi.mock("@/dev-tools/mock-auth", () => ({
-	initializeMockAuth: vi.fn(),
-	isMockAuthEnabled: vi.fn(() => false),
 }));
 
 const localStorageMock = (() => {
@@ -76,14 +70,13 @@ vi.mock("@/components/ui/toast", () => ({
 	}),
 }));
 
-describe("Login Page", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
+describe.sequential("Login Page", () => {
+	afterEach(() => {
 		cleanup();
-		render(<LoginPage />);
 	});
 
 	it("renders all login page elements correctly with initial state", () => {
+		render(<LoginPage />);
 		expect(screen.getByTestId("login-page")).toBeInTheDocument();
 		expect(screen.getByTestId("login-background-gradient")).toBeInTheDocument();
 
@@ -120,10 +113,10 @@ describe("Login Page", () => {
 		expect(createAccountLink).toBeInTheDocument();
 
 		const buttonLink = screen.getByTestId("login-create-account-button-link");
-		expect(buttonLink).toHaveAttribute("href", PagePath.ONBOARDING);
+		expect(buttonLink).toHaveAttribute("href", routes.onboarding());
 	});
 
-	describe("Email Sign-in Flow", () => {
+	describe.sequential("Email Sign-in Flow", () => {
 		const user = userEvent.setup();
 		const testEmail = "test@example.com";
 		let emailInput: HTMLElement;
@@ -131,7 +124,6 @@ describe("Login Page", () => {
 
 		beforeEach(() => {
 			vi.clearAllMocks();
-			cleanup();
 			render(<LoginPage />);
 
 			emailInput = screen.getByTestId("login-form-email-input");

@@ -1,4 +1,4 @@
-from typing import Any, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 from uuid import UUID
 
 from google.api_core import exceptions
@@ -7,6 +7,8 @@ from google.cloud import storage
 from google.cloud.exceptions import ClientError
 from google.cloud.storage import Bucket
 from google.oauth2.service_account import Credentials
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.shared_utils.src.constants import ONE_MINUTE_SECONDS
 from packages.shared_utils.src.env import get_env
@@ -22,9 +24,12 @@ storage_client_ref = Ref[storage.Client]()
 bucket_ref = Ref[Bucket]()
 
 
+EntityType = Literal["organization", "granting_institution"]
+
+
 class URIParseResult(TypedDict):
-    project_id: UUID | None
-    parent_id: UUID
+    entity_type: EntityType
+    entity_id: UUID
     source_id: UUID
     blob_name: str
 
@@ -109,16 +114,12 @@ async def download_blob(blob_name: str) -> bytes:
 
 def construct_object_uri(
     *,
-    project_id: UUID | str | None,
-    parent_id: UUID | str,
+    entity_type: EntityType,
+    entity_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
 ) -> str:
-    return (
-        f"{project_id}/{parent_id}/{source_id}/{blob_name}"
-        if project_id
-        else f"{parent_id}/{source_id}/{blob_name}"
-    )
+    return f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
 
 def parse_object_uri(
@@ -127,22 +128,27 @@ def parse_object_uri(
 ) -> URIParseResult:
     components = object_path.split("/")
 
-    if len(components) == 4 or len(components) == 3:
-        if len(components) == 4:
-            project_id, parent_id, source_id, blob_name = components
-        else:
-            project_id = None
-            parent_id, source_id, blob_name = components
+    if len(components) == 4:
+        entity_type_str, entity_id_str, source_id_str, blob_name = components
+
+        if entity_type_str not in ("organization", "granting_institution"):
+            raise ValidationError(
+                "Invalid entity type. Must be 'organization' or 'granting_institution'",
+                context={
+                    "entity_type": entity_type_str,
+                    "object_path": object_path,
+                },
+            )
 
         return URIParseResult(
-            project_id=UUID(project_id) if project_id else None,
-            parent_id=UUID(parent_id),
-            source_id=UUID(source_id),
+            entity_type=entity_type_str,  # type: ignore[typeddict-item]
+            entity_id=UUID(entity_id_str),
+            source_id=UUID(source_id_str),
             blob_name=blob_name,
         )
 
     raise ValidationError(
-        "Invalid object path format. Expected format: <project_id>/<parent_id>/<source_id>/<blob_name> or <parent_id>/<source_id>/<blob_name>",
+        "Invalid object path format. Expected format: <entity_type>/<entity_id>/<source_id>/<blob_name>",
         context={
             "object_path": object_path,
         },
@@ -150,15 +156,15 @@ def parse_object_uri(
 
 
 async def create_signed_upload_url(
-    project_id: UUID | str | None,
-    parent_id: UUID | str,
+    entity_type: EntityType,
+    entity_id: UUID | str,
     source_id: UUID | str,
     blob_name: str,
     trace_id: str | None = None,
 ) -> str:
     blob_path = construct_object_uri(
-        project_id=project_id,
-        parent_id=parent_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
     )
@@ -273,3 +279,65 @@ async def delete_blob(blob_path: str) -> None:
                 "error": str(e),
             },
         ) from e
+
+
+async def resolve_parent_id_for_notification(
+    session: AsyncSession,
+    source_id: str | UUID,
+    entity_type: str,
+    entity_id: str | UUID,
+) -> str:
+    """Resolve the actual parent ID for notifications.
+
+    For granting institutions, entity_id == parent_id.
+    For organizations, we need to find the grant application or template that owns this source.
+
+    Args:
+        session: SQLAlchemy async session
+        source_id: The RAG source ID to look up
+        entity_type: Either "organization" or "granting_institution"
+        entity_id: The entity ID from the GCS path
+
+    Returns:
+        The parent ID as a string (grant application ID, template ID, or granting institution ID)
+    """
+    from packages.db.src.tables import (
+        GrantApplicationSource,
+        GrantTemplateSource,
+    )
+
+    if entity_type == "granting_institution":
+        return str(entity_id)
+
+    grant_app_source = await session.scalar(
+        select(GrantApplicationSource.grant_application_id).where(
+            GrantApplicationSource.rag_source_id == str(source_id)
+        )
+    )
+    if grant_app_source:
+        logger.debug(
+            "Found grant application parent",
+            source_id=str(source_id),
+            parent_id=str(grant_app_source),
+        )
+        return str(grant_app_source)
+
+    grant_template_source = await session.scalar(
+        select(GrantTemplateSource.grant_template_id).where(
+            GrantTemplateSource.rag_source_id == str(source_id)
+        )
+    )
+    if grant_template_source:
+        logger.debug(
+            "Found grant template parent",
+            source_id=str(source_id),
+            parent_id=str(grant_template_source),
+        )
+        return str(grant_template_source)
+
+    logger.warning(
+        "No parent association found for source, using entity_id",
+        source_id=str(source_id),
+        entity_id=str(entity_id),
+    )
+    return str(entity_id)
