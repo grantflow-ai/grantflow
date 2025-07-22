@@ -79,6 +79,10 @@ export function SortableSection({
 		transform,
 		transition,
 	} = useSortable({
+		data: {
+			section,
+			type: "section",
+		},
 		id: section.id,
 	});
 
@@ -139,6 +143,7 @@ export function SortableSection({
 	return (
 		<div
 			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+			data-sortable-id={section.id}
 			data-testid="section-container"
 			ref={setNodeRef}
 			style={style}
@@ -362,7 +367,7 @@ function SectionHeader({
 					onHeaderClick(e as unknown as React.MouseEvent);
 				}
 			}}
-			role="button"
+			role="button" // biome-ignore lint/a11y/useSemanticElements: Nested interactive elements prevent using button
 			tabIndex={0}
 		>
 			<div
