@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
+import { DeleteOrganizationModal } from "./delete-organization-modal";
 
 interface OrganizationSettingsGeneralProps {
 	organizationId: string;
@@ -24,6 +25,7 @@ export function OrganizationSettingsGeneral({
 	const [contactEmail, setContactEmail] = useState(organization?.contact_email ?? "");
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	// Update form values when organization data changes
@@ -259,8 +261,7 @@ export function OrganizationSettingsGeneral({
 								className="flex items-center gap-1 px-1 py-0.5 border border-error rounded bg-white text-error font-button text-[14px] hover:bg-error hover:text-white transition-colors"
 								data-testid="organization-delete-button"
 								onClick={() => {
-									// TODO: Implement organization deletion
-									toast.error("Organization deletion coming soon");
+									setShowDeleteModal(true);
 								}}
 								type="button"
 							>
@@ -284,6 +285,18 @@ export function OrganizationSettingsGeneral({
 					{isUpdating ? "Saving..." : "Save Changes"}
 				</button>
 			</div>
+
+			{/* Delete Organization Modal */}
+			{organization && (
+				<DeleteOrganizationModal
+					isOpen={showDeleteModal}
+					onClose={() => {
+						setShowDeleteModal(false);
+					}}
+					organizationId={organizationId}
+					organizationName={organization.name}
+				/>
+			)}
 		</div>
 	);
 }
