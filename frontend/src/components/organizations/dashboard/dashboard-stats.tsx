@@ -1,8 +1,5 @@
 "use client";
 
-import useSWR from "swr";
-
-import { getProjects } from "@/actions/project";
 import type { API } from "@/types/api-types";
 
 interface DashboardStatsProps {
@@ -10,10 +7,7 @@ interface DashboardStatsProps {
 }
 
 export function DashboardStats({ initialProjects }: DashboardStatsProps) {
-	const { data: projects = initialProjects } = useSWR("projects", getProjects, {
-		fallbackData: initialProjects,
-		revalidateOnFocus: false,
-	});
+	const projects = initialProjects;
 
 	const projectCount = projects.length;
 	const applicationCount = projects.reduce(
