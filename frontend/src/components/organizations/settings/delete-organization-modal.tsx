@@ -79,6 +79,7 @@ export function DeleteOrganizationModal({
 			}}
 			type="button"
 		>
+			{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
 			<div
 				aria-labelledby="delete-organization-modal-title"
 				aria-modal="true"
