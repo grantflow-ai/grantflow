@@ -14,8 +14,6 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
 
 interface NavMainProps {
@@ -29,8 +27,6 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const isProjectsActive = pathname === "/projects";
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
-	const { activeProjectId } = useNavigationStore();
-	const project = useProjectStore((state) => state.project);
 
 	const handleExpandSidebar = () => {
 		if (state === "collapsed") {
@@ -40,13 +36,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 
 	const handleSettingsClick = (e: React.MouseEvent, href: string) => {
 		e.preventDefault();
-		// Ensure we have project context before navigating
-		if (!(activeProjectId && project)) {
-			// If no project context, redirect to projects page
-			router.push(routes.organization.root());
-			return;
-		}
-		// Navigate with project context maintained
+		// Settings pages don't require project context
 		router.push(href);
 	};
 
