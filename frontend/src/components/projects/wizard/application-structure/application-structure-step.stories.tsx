@@ -117,19 +117,19 @@ export const PartiallyCompleted: Story = {
 						grant_sections: [
 							{
 								id: "section-1",
-								order: 1,
+								order: 0,
 								parent_id: null,
 								title: "Project Summary",
 							},
 							{
 								id: "section-2",
-								order: 2,
+								order: 1,
 								parent_id: null,
 								title: "Research Methodology",
 							},
 							{
 								id: "section-3",
-								order: 3,
+								order: 2,
 								parent_id: null,
 								title: "Budget Justification",
 							},
@@ -161,25 +161,25 @@ export const AllSectionsCompleted: Story = {
 						grant_sections: [
 							{
 								id: "section-1",
-								order: 1,
+								order: 0,
 								parent_id: null,
 								title: "Executive Summary",
 							},
 							{
 								id: "section-2",
-								order: 2,
+								order: 1,
 								parent_id: null,
 								title: "Technical Approach",
 							},
 							{
 								id: "section-3",
-								order: 3,
+								order: 2,
 								parent_id: null,
 								title: "Market Impact",
 							},
 							{
 								id: "section-4",
-								order: 4,
+								order: 3,
 								parent_id: null,
 								title: "Risk Assessment",
 							},
@@ -211,7 +211,7 @@ export const MinimalSingleSection: Story = {
 						grant_sections: [
 							{
 								id: "section-1",
-								order: 1,
+								order: 0,
 								parent_id: null,
 								title: "Business Plan",
 							},
@@ -239,7 +239,7 @@ export const Manysections: Story = {
 			useEffect(() => {
 				const sections = Array.from({ length: 8 }, (_, i) => ({
 					id: `section-${i + 1}`,
-					order: i + 1,
+					order: i, // Start from 0 for proper sequential ordering
 					parent_id: null,
 					title: [
 						"Project Overview",
