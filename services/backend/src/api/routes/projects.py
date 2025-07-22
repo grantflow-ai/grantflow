@@ -3,7 +3,7 @@ from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from secrets import token_hex
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict
 from uuid import UUID
 
 import msgspec
@@ -44,7 +44,6 @@ class ProjectBaseResponse(TableIdResponse):
     name: str
     description: str | None
     logo_url: str | None
-    role: UserRoleEnum
 
 
 class ProjectListItemResponse(ProjectBaseResponse):
@@ -176,10 +175,6 @@ async def handle_retrieve_projects(
             name=project.name,
             description=project.description,
             logo_url=project.logo_url,
-            role=next(
-                (ou.role for ou in org_users if ou.firebase_uid == request.auth),
-                UserRoleEnum.COLLABORATOR,
-            ),
             applications_count=len(project.grant_applications),
             members=[
                 ProjectMemberInfo(
@@ -206,7 +201,6 @@ async def handle_retrieve_projects(
     operation_id="UpdateProject",
 )
 async def handle_update_project(
-    request: APIRequest,
     organization_id: UUID,
     data: UpdateProjectRequestBody,
     project_id: UUID,
@@ -235,7 +229,6 @@ async def handle_update_project(
         name=project.name,
         description=project.description,
         logo_url=project.logo_url,
-        role=cast("UserRoleEnum", request.user),
     )
 
 
@@ -303,7 +296,6 @@ async def handle_retrieve_project(
         name=project.name,
         description=project.description,
         logo_url=project.logo_url,
-        role=cast("UserRoleEnum", request.user),
         grant_applications=[
             BaseApplicationResponse(
                 id=str(grant_application.id),
