@@ -14,23 +14,19 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
 
 interface NavMainProps {
 	"data-testid"?: string;
-	userRole?: "ADMIN" | "MEMBER" | "OWNER";
+	userRole?: "ADMIN" | "COLLABORATOR" | "OWNER";
 }
 
 export function NavMain({ userRole, ...props }: NavMainProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const isProjectsActive = pathname === "/projects";
-	const isSettingsActive = pathname.startsWith("/project/settings");
+	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
-	const { activeProjectId } = useNavigationStore();
-	const project = useProjectStore((state) => state.project);
 
 	const handleExpandSidebar = () => {
 		if (state === "collapsed") {
@@ -40,13 +36,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 
 	const handleSettingsClick = (e: React.MouseEvent, href: string) => {
 		e.preventDefault();
-		// Ensure we have project context before navigating
-		if (!(activeProjectId && project)) {
-			// If no project context, redirect to projects page
-			router.push(routes.projects());
-			return;
-		}
-		// Navigate with project context maintained
+		// Settings pages don't require project context
 		router.push(href);
 	};
 
@@ -61,7 +51,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					isActive={isProjectsActive}
 					tooltip="Dashboard"
 				>
-					<Link className="flex items-center gap-2" href={routes.projects()}>
+					<Link className="flex items-center gap-2" href={routes.organization.root()}>
 						<LayoutDashboard className={`size-4 shrink-0 ${isProjectsActive ? "text-primary" : ""}`} />
 						<span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
 					</Link>
@@ -123,26 +113,32 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
 						<SidebarMenuSub>
 							<SidebarMenuSubItem>
-								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/account"}>
+								<SidebarMenuSubButton
+									asChild
+									isActive={pathname === routes.organization.settings.account()}
+								>
 									<Link
-										data-testid="settings-account"
-										href="/project/settings/account"
+										data-testid="organization-settings-account"
+										href={routes.organization.settings.account()}
 										onClick={(e) => {
-											handleSettingsClick(e, "/project/settings/account");
+											handleSettingsClick(e, routes.organization.settings.account());
 										}}
 									>
-										Account Settings
+										Organisation Settings
 									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
-							{userRole && userRole !== "MEMBER" && (
+							{userRole && userRole !== "COLLABORATOR" && (
 								<SidebarMenuSubItem>
-									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/billing"}>
+									<SidebarMenuSubButton
+										asChild
+										isActive={pathname === routes.organization.settings.billing()}
+									>
 										<Link
-											data-testid="settings-billing"
-											href="/project/settings/billing"
+											data-testid="organization-settings-billing"
+											href={routes.organization.settings.billing()}
 											onClick={(e) => {
-												handleSettingsClick(e, "/project/settings/billing");
+												handleSettingsClick(e, routes.organization.settings.billing());
 											}}
 										>
 											Billing & Payments
@@ -150,14 +146,17 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							)}
-							{userRole && userRole !== "MEMBER" && (
+							{userRole && userRole !== "COLLABORATOR" && (
 								<SidebarMenuSubItem>
-									<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/members"}>
+									<SidebarMenuSubButton
+										asChild
+										isActive={pathname === routes.organization.settings.members()}
+									>
 										<Link
-											data-testid="settings-members"
-											href="/project/settings/members"
+											data-testid="organization-settings-members"
+											href={routes.organization.settings.members()}
 											onClick={(e) => {
-												handleSettingsClick(e, "/project/settings/members");
+												handleSettingsClick(e, routes.organization.settings.members());
 											}}
 										>
 											Members
@@ -166,12 +165,31 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 								</SidebarMenuSubItem>
 							)}
 							<SidebarMenuSubItem>
-								<SidebarMenuSubButton asChild isActive={pathname === "/project/settings/notifications"}>
+								<SidebarMenuSubButton
+									asChild
+									isActive={pathname === routes.organization.settings.personal()}
+								>
 									<Link
-										data-testid="settings-notifications"
-										href="/project/settings/notifications"
+										data-testid="organization-settings-personal"
+										href={routes.organization.settings.personal()}
 										onClick={(e) => {
-											handleSettingsClick(e, "/project/settings/notifications");
+											handleSettingsClick(e, routes.organization.settings.personal());
+										}}
+									>
+										Personal Settings
+									</Link>
+								</SidebarMenuSubButton>
+							</SidebarMenuSubItem>
+							<SidebarMenuSubItem>
+								<SidebarMenuSubButton
+									asChild
+									isActive={pathname === routes.organization.settings.notifications()}
+								>
+									<Link
+										data-testid="organization-settings-notifications"
+										href={routes.organization.settings.notifications()}
+										onClick={(e) => {
+											handleSettingsClick(e, routes.organization.settings.notifications());
 										}}
 									>
 										Notifications

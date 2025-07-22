@@ -11,10 +11,10 @@ from structlog import BoundLogger
 from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     RagFile,
     RagSource,
 )
@@ -26,7 +26,7 @@ from packages.shared_utils.src.exceptions import ValidationError
 async def test_check_exists_files_being_indexed_application_success(
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
@@ -53,7 +53,7 @@ async def test_check_exists_files_being_indexed_application_success(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "grant_application_id": grant_application.id,
                     "rag_source_id": file_id,
@@ -102,7 +102,7 @@ async def test_check_exists_files_being_indexed_application_non_indexing_status(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "grant_application_id": grant_application.id,
                     "rag_source_id": file_id,
@@ -130,7 +130,7 @@ async def test_check_exists_files_being_indexed_application_no_files(
 
 async def test_check_exists_files_being_indexed_organization_success(
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
 ) -> None:
     file_id: UUID = uuid4()
     async with async_session_maker() as session, session.begin():
@@ -157,16 +157,16 @@ async def test_check_exists_files_being_indexed_organization_success(
             )
         )
         await session.execute(
-            insert(FundingOrganizationRagSource).values(
+            insert(GrantingInstitutionSource).values(
                 {
-                    "funding_organization_id": funding_organization.id,
+                    "granting_institution_id": granting_institution.id,
                     "rag_source_id": file_id,
                 }
             )
         )
 
     result: bool = await check_exists_files_being_indexed(
-        organization_id=funding_organization.id,
+        organization_id=granting_institution.id,
         session_maker=async_session_maker,
     )
     assert result is True
@@ -178,7 +178,7 @@ async def test_check_exists_files_being_indexed_organization_success(
 )
 async def test_check_exists_files_being_indexed_organization_non_indexing_status(
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
     indexing_status: SourceIndexingStatusEnum,
 ) -> None:
     file_id: UUID = uuid4()
@@ -206,16 +206,16 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
             )
         )
         await session.execute(
-            insert(FundingOrganizationRagSource).values(
+            insert(GrantingInstitutionSource).values(
                 {
-                    "funding_organization_id": funding_organization.id,
+                    "granting_institution_id": granting_institution.id,
                     "rag_source_id": file_id,
                 }
             )
         )
 
     result: bool = await check_exists_files_being_indexed(
-        organization_id=funding_organization.id,
+        organization_id=granting_institution.id,
         session_maker=async_session_maker,
     )
     assert result is False
@@ -223,10 +223,10 @@ async def test_check_exists_files_being_indexed_organization_non_indexing_status
 
 async def test_check_exists_files_being_indexed_organization_no_files(
     async_session_maker: async_sessionmaker[Any],
-    funding_organization: FundingOrganization,
+    granting_institution: GrantingInstitution,
 ) -> None:
     result: bool = await check_exists_files_being_indexed(
-        organization_id=funding_organization.id,
+        organization_id=granting_institution.id,
         session_maker=async_session_maker,
     )
     assert result is False
@@ -272,7 +272,7 @@ async def test_update_source_indexing_status_success(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "grant_application_id": parent_id,
                     "rag_source_id": file_id,
@@ -351,7 +351,7 @@ async def test_update_source_indexing_status_no_vectors(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
+            insert(GrantApplicationSource).values(
                 {
                     "grant_application_id": parent_id,
                     "rag_source_id": file_id,

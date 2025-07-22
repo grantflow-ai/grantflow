@@ -72,7 +72,7 @@ export default defineConfig({
 
 	/* Run your local dev server before starting the tests */
 	webServer: {
-		command: "NEXT_PUBLIC_MOCK_API=true NEXT_PUBLIC_MOCK_AUTH=true PORT=3001 pnpm dev",
+		command: "PORT=3001 pnpm dev",
 		port: 3001,
 		reuseExistingServer: !process.env.CI,
 		timeout: 120 * 1000,

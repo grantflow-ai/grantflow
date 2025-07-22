@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
 import ImprintPage from "@/app/(public-pages)/imprint/page";
@@ -15,7 +15,11 @@ vi.mock("@/components/shared/info-legal-page-components", () => ({
 	),
 }));
 
-describe("ImprintPage", () => {
+describe.sequential("ImprintPage", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 		render(<ImprintPage />);

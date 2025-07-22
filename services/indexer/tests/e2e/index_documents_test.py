@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
-from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+from packages.db.src.tables import GrantApplication, GrantApplicationSource
 from packages.shared_utils.src.chunking import chunk_text
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError, FileParsingError, ValidationError
@@ -21,7 +21,7 @@ async def test_index_chunks(
     data_file: Path,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    grant_application_file: GrantApplicationRagSource,
+    grant_application_file: GrantApplicationSource,
 ) -> None:
     logger.info("Running end-to-end test for creating embeddings from %s", data_file.name)
 

@@ -177,7 +177,7 @@ async def test_dimension_comparison(
             row = result.fetchone()
             logger.info("Vector column type after modification", row=row)
 
-        from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+        from packages.db.src.tables import GrantApplication, GrantApplicationSource
         from testing.factories import RagFileFactory
 
         async with async_session_maker() as session:
@@ -196,7 +196,7 @@ async def test_dimension_comparison(
             await session.commit()
             await session.refresh(rag_source)
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
@@ -298,7 +298,7 @@ async def test_index_parameter_comparison(
 
             await modifier.modify_index_parameters(m=m, ef_construction=ef_construction)
 
-        from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+        from packages.db.src.tables import GrantApplication, GrantApplicationSource
         from testing.factories import RagFileFactory
 
         async with async_session_maker() as session:
@@ -317,7 +317,7 @@ async def test_index_parameter_comparison(
             await session.commit()
             await session.refresh(rag_source)
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
@@ -412,7 +412,7 @@ async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], pr
         async with db_config["session_maker"]() as session:
             generator = BenchmarkDataGenerator(session)
 
-            from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplication, GrantApplicationSource
             from sqlalchemy import select
             from testing.factories import RagFileFactory
 
@@ -431,7 +431,7 @@ async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], pr
             await session.commit()
             await session.refresh(rag_source)
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
@@ -525,7 +525,7 @@ async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], projec
             await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
             await session.commit()
 
-            from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplication, GrantApplicationSource
             from sqlalchemy import select
             from testing.factories import RagFileFactory
 
@@ -544,7 +544,7 @@ async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], projec
             await session.commit()
             await session.refresh(rag_source)
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 

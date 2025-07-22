@@ -1,37 +1,42 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { SidebarProvider } from "@/components/ui/sidebar"; // adjust path if needed
 import { AppSidebar } from "./app-sidebar";
 
-describe("AppSidebar", () => {
+describe.sequential("AppSidebar", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	function renderWithProvider() {
-		return render(
+		const { container } = render(
 			<SidebarProvider>
 				<AppSidebar />
 			</SidebarProvider>,
 		);
+		return { container };
 	}
 
 	it("renders logo and title", () => {
-		renderWithProvider();
-		expect(screen.getByTestId("sidebar-logo")).toBeInTheDocument();
-		expect(screen.getByTestId("sidebar-title")).toBeInTheDocument();
+		const { container } = renderWithProvider();
+		expect(container.querySelector('[data-testid="sidebar-logo"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="sidebar-title"]')).toBeInTheDocument();
 	});
 
 	it("renders New Application button", () => {
-		renderWithProvider();
-		expect(screen.getByTestId("new-application-button")).toBeInTheDocument();
+		const { container } = renderWithProvider();
+		expect(container.querySelector('[data-testid="new-application-button"]')).toBeInTheDocument();
 	});
 
 	it("renders Support and Logout buttons", () => {
-		renderWithProvider();
-		expect(screen.getByTestId("support-button")).toBeInTheDocument();
-		expect(screen.getByTestId("logout-button")).toBeInTheDocument();
+		const { container } = renderWithProvider();
+		expect(container.querySelector('[data-testid="support-button"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="logout-button"]')).toBeInTheDocument();
 	});
 
 	it("renders CustomSidebarTrigger and NavMain", () => {
-		renderWithProvider();
-		expect(screen.getByTestId("sidebar-trigger")).toBeInTheDocument();
-		expect(screen.getByTestId("nav-main")).toBeInTheDocument();
+		const { container } = renderWithProvider();
+		expect(container.querySelector('[data-testid="sidebar-trigger"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="nav-main"]')).toBeInTheDocument();
 	});
 });

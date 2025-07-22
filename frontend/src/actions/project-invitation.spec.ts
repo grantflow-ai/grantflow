@@ -34,6 +34,7 @@ describe("inviteCollaborator", () => {
 	const defaultParams = {
 		email: "test@example.com",
 		inviterName: "John Doe",
+		organizationId: "org-123",
 		projectId: "proj-123",
 		projectName: "Test Project",
 		role: "member" as const,
@@ -52,9 +53,9 @@ describe("inviteCollaborator", () => {
 
 		const result = await inviteCollaborator(defaultParams);
 
-		expect(mockCreateInvitation).toHaveBeenCalledWith("proj-123", {
+		expect(mockCreateInvitation).toHaveBeenCalledWith("org-123", "proj-123", {
 			email: "test@example.com",
-			role: "MEMBER",
+			role: "COLLABORATOR",
 		});
 
 		expect(mockEmailSend).toHaveBeenCalledWith({
@@ -84,7 +85,7 @@ describe("inviteCollaborator", () => {
 			role: "admin",
 		});
 
-		expect(mockCreateInvitation).toHaveBeenCalledWith("proj-123", {
+		expect(mockCreateInvitation).toHaveBeenCalledWith("org-123", "proj-123", {
 			email: "test@example.com",
 			role: "ADMIN",
 		});

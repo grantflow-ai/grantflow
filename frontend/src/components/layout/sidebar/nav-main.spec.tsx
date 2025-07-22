@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -8,7 +9,11 @@ import { NavMain } from "./nav-main";
 vi.mock("@/stores/navigation-store");
 vi.mock("@/stores/project-store");
 
-describe("NavMain", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("NavMain", () => {
 	beforeEach(() => {
 		vi.mocked(useNavigationStore).mockReturnValue({
 			activeApplicationId: null,
@@ -61,10 +66,10 @@ describe("NavMain", () => {
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
 
-		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-billing")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-members")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 	});
 
 	it("hides billing and members links for MEMBER role", async () => {
@@ -72,17 +77,17 @@ describe("NavMain", () => {
 
 		render(
 			<SidebarProvider>
-				<NavMain data-testid="nav-main" userRole="MEMBER" />
+				<NavMain data-testid="nav-main" userRole="COLLABORATOR" />
 			</SidebarProvider>,
 		);
 
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
 
-		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
-		expect(screen.queryByTestId("settings-billing")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("settings-members")).not.toBeInTheDocument();
-		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
+		expect(screen.queryByTestId("organization-settings-billing")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("organization-settings-members")).not.toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 	});
 
 	it("shows billing and members links for ADMIN role", async () => {
@@ -97,9 +102,9 @@ describe("NavMain", () => {
 		const settingsTrigger = screen.getByTestId("settings-trigger");
 		await user.click(settingsTrigger);
 
-		expect(screen.getByTestId("settings-account")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-billing")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-members")).toBeInTheDocument();
-		expect(screen.getByTestId("settings-notifications")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
+		expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 	});
 });

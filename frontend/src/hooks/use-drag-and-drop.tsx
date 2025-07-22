@@ -12,11 +12,7 @@ import {
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import {
-	SortableContext,
-	sortableKeyboardCoordinates,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type React from "react";
 import { useCallback, useState } from "react";
 
@@ -89,12 +85,11 @@ export function useDragAndDrop<T extends DragDropItem>(
 			items: T[];
 			renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
 		}) {
-
 			const handleDragStart = (event: DragStartEvent) => {
 				const draggedItem = items.find((item) => item.id === event.active.id);
-				
+
 				onDragStart?.(event, draggedItem);
-				
+
 				setTimeout(() => {
 					setActiveId(event.active.id as string);
 				}, 0);
@@ -124,9 +119,10 @@ export function useDragAndDrop<T extends DragDropItem>(
 				}
 			};
 
+			// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex drag-and-drop logic needs to stay cohesive
 			const handleDragEnd = async (event: DragEndEvent) => {
 				const { active, over } = event;
-				
+
 				setActiveId(null);
 
 				if (!over) {
@@ -146,7 +142,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 				if (activeItem && overItem) {
 					const shouldReorder = activeItem.parent_id === overItem.parent_id;
-					
+
 					if (shouldReorder) {
 						await handleReorder(activeItem, overItem);
 					}
@@ -175,12 +171,12 @@ export function useDragAndDrop<T extends DragDropItem>(
 				</DndContext>
 			);
 		},
-		[sensors, onDragStart, onDragOver, onDragEnd, onReorder],
+		[sensors, onDragStart, onDragOver, onDragEnd, onReorder, activeId],
 	);
 
 	return {
 		activeItem: undefined,
 		DragDropWrapper,
-		isItemDragging
+		isItemDragging,
 	};
 }

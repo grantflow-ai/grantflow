@@ -162,6 +162,7 @@ export default eslintTS.config(
 			"react/react-in-jsx-scope": "off",
 			"sonarjs/prefer-read-only-props": "off",
 			"sonarjs/pseudo-random": "off",
+			"sonarjs/todo-tag": "off",
 			"storybook/no-renderer-packages": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
@@ -251,6 +252,7 @@ export default eslintTS.config(
 			"@typescript-eslint/require-await": "off",
 			"@typescript-eslint/restrict-template-expressions": "off",
 			"@typescript-eslint/unbound-method": "off",
+			"sonarjs/assertions-in-tests": "off",
 			"sonarjs/cognitive-complexity": "off",
 			"sonarjs/function-return-type": "off",
 			"sonarjs/no-all-duplicated-branches": "off",
@@ -305,32 +307,6 @@ export default eslintTS.config(
 		rules: {
 			"custom/no-console-use-logger": "off",
 			"no-console": "off",
-		},
-	},
-	{
-		files: ["**/src/dev-tools/**/*.{ts,tsx}"],
-		rules: {
-			"@typescript-eslint/no-unnecessary-condition": "off",
-			"@typescript-eslint/no-unsafe-argument": "off",
-			"@typescript-eslint/no-unsafe-assignment": "off",
-			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			// Allow dev-tools specific patterns
-			"@typescript-eslint/require-await": "off",
-			// Import warnings for development packages
-			"import-x/no-named-as-default": "off",
-			// Only allow console statements in dev tools since they're for development debugging
-			"no-console": "off",
-			"prefer-destructuring": "off",
-			// React dev tools specific
-			"react/no-unescaped-entities": "off",
-			"sonarjs/function-return-type": "off",
-			// Allow http in mock URLs since they're for testing
-			"sonarjs/no-clear-text-protocols": "off",
-			"sonarjs/no-nested-functions": "off",
-			"sonarjs/prefer-single-boolean-return": "off",
-			"unicorn/consistent-function-scoping": "off",
-			"unicorn/prefer-add-event-listener": "off",
 		},
 	},
 

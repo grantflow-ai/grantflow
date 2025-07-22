@@ -83,7 +83,7 @@ async def test_list_notifications_with_data(
     assert len(data["notifications"]) == 1
     assert data["total"] == 1
     assert data["notifications"][0]["title"] == "Grant Deadline Approaching"
-    assert data["notifications"][0]["type"] == "deadline"
+    assert data["notifications"][0]["type"] == NotificationTypeEnum.DEADLINE.value
     assert data["notifications"][0]["read"] is False
     assert data["notifications"][0]["dismissed"] is False
     assert "project_id" in data["notifications"][0]
@@ -290,7 +290,7 @@ async def test_notification_with_extra_data(
 
     assert len(data["notifications"]) == 1
     notification = data["notifications"][0]
-    assert notification["type"] == "warning"
+    assert notification["type"] == "WARNING"
     assert "extra_data" in notification
     assert notification["extra_data"]["action_url"] == "/projects/123/applications/456"
     assert notification["extra_data"]["priority"] == "high"

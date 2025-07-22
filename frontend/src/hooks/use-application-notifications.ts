@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { getOtp } from "@/actions/otp";
-import { getMockWebSocketUrl, isDevModeWithMockAPI } from "@/dev-tools/utils/dev-helpers";
 import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger";
@@ -31,9 +30,8 @@ export type RagProcessingStatusMessage = WebsocketMessage<RagProcessingStatus>;
 export interface SourceProcessingNotification {
 	identifier: string;
 	indexing_status: SourceIndexingStatus;
-	parent_id: string;
-	parent_type: string;
-	rag_source_id: string;
+	source_id: string;
+	trace_id?: string;
 }
 export type SourceProcessingNotificationMessage = WebsocketMessage<SourceProcessingNotification>;
 
@@ -41,6 +39,7 @@ export interface WebsocketMessage<T> {
 	data: T;
 	event: string;
 	parent_id: string;
+	trace_id?: string;
 	type: "data" | "error" | "info";
 }
 
@@ -48,7 +47,11 @@ export const isWebsocketMessage = createTypeGuard<WebsocketMessage<unknown>>(
 	(value: unknown) => isRecord(value) && "type" in value,
 );
 export const isSourceProcessingNotificationMessage = createTypeGuard<SourceProcessingNotificationMessage>(
-	(value: unknown) => isWebsocketMessage(value) && isRecord(value.data) && "indexing_status" in value.data,
+	(value: unknown) =>
+		isWebsocketMessage(value) &&
+		isRecord(value.data) &&
+		"indexing_status" in value.data &&
+		"source_id" in value.data,
 );
 export const isRagProcessingStatusMessage = createTypeGuard<RagProcessingStatusMessage>(
 	(value: unknown) =>
@@ -77,6 +80,7 @@ export const CONNECTION_STATUS_COLOR_MAP = {
 
 interface UseApplicationNotificationsProps {
 	applicationId: null | string | undefined;
+	organizationId: string | undefined;
 	projectId: string | undefined;
 }
 
@@ -94,24 +98,15 @@ const RECONNECT_ATTEMPTS_MAX = 10;
 
 export function useApplicationNotifications({
 	applicationId,
+	organizationId,
 	projectId,
 }: UseApplicationNotificationsProps): UseApplicationNotificationsReturn {
 	const [notifications, setNotifications] = useState<WebsocketMessage<unknown>[]>([]);
 	const reconnectAttemptRef = useRef(0);
 
 	const getSocketUrl = useCallback(async () => {
-		if (!(projectId && applicationId)) {
-			throw new Error("Project ID and Application ID are required");
-		}
-
-		if (isDevModeWithMockAPI()) {
-			const url = getMockWebSocketUrl(projectId, applicationId);
-			log.info("[useApplicationNotifications] Using mock WebSocket URL", {
-				applicationId,
-				projectId,
-				url,
-			});
-			return url;
+		if (!(organizationId && projectId && applicationId)) {
+			throw new Error("Organization ID, Project ID and Application ID are required");
 		}
 
 		const response = await getOtp();
@@ -120,17 +115,18 @@ export function useApplicationNotifications({
 			.replace(/^http/, "ws");
 
 		return new URL(
-			`projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
+			`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
 			baseUrl,
 		).toString();
-	}, [projectId, applicationId]);
+	}, [organizationId, projectId, applicationId]);
 
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
-		projectId && applicationId ? getSocketUrl : null,
+		organizationId && projectId && applicationId ? getSocketUrl : null,
 		{
 			onOpen: () => {
 				log.info("[useApplicationNotifications] WebSocket opened", {
 					applicationId,
+					organizationId,
 					projectId,
 				});
 				reconnectAttemptRef.current = 0;
@@ -151,6 +147,7 @@ export function useApplicationNotifications({
 			isValidMessage: isWebsocketMessage(lastJsonMessage),
 			message: lastJsonMessage,
 			messageType: typeof lastJsonMessage,
+			organizationId,
 			projectId,
 		});
 
@@ -160,13 +157,14 @@ export function useApplicationNotifications({
 				log.info("[useApplicationNotifications] Added message to notifications", {
 					applicationId,
 					messageEvent: lastJsonMessage.event,
+					organizationId,
 					projectId,
 					totalNotifications: newNotifications.length,
 				});
 				return newNotifications;
 			});
 		}
-	}, [lastJsonMessage, projectId, applicationId]);
+	}, [lastJsonMessage, organizationId, projectId, applicationId]);
 
 	const connectionStatus = CONNECTION_STATUS_MAP[readyState];
 	const connectionStatusColor = CONNECTION_STATUS_COLOR_MAP[readyState];

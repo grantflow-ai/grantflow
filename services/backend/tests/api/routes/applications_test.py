@@ -8,16 +8,15 @@ from faker import Faker
 from packages.db.src.enums import (
     ApplicationStatusEnum,
     SourceIndexingStatusEnum,
-    UserRoleEnum,
 )
 from packages.db.src.tables import (
-    FundingOrganization,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
+    GrantingInstitution,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
+    OrganizationUser,
     Project,
-    ProjectUser,
     RagFile,
     RagUrl,
 )
@@ -36,7 +35,7 @@ async def test_create_application_unauthorized(
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
-        f"/projects/{different_project_id}/applications",
+        f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications",
         json={"title": "Test Grant Application"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -49,8 +48,14 @@ async def test_update_application_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
+    async with async_session_maker() as session:
+        app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        assert app is not None
+        assert app.project_id == project.id
+        assert app.deleted_at is None
+
     update_data = {
         "title": "Updated Title",
         "status": ApplicationStatusEnum.IN_PROGRESS.value,
@@ -82,7 +87,7 @@ async def test_update_application_success(
     }
 
     response = await test_client.patch(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         json=update_data,
         headers={"Authorization": "Bearer some_token"},
     )
@@ -112,12 +117,12 @@ async def test_update_application_success(
 async def test_update_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.patch(
-        f"/projects/{project.id}/applications/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
         json={"title": "Updated Title"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -131,10 +136,16 @@ async def test_delete_application_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
+    async with async_session_maker() as session:
+        app = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
+        assert app is not None
+        assert app.project_id == project.id
+        assert app.deleted_at is None
+
     response = await test_client.delete(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -142,7 +153,8 @@ async def test_delete_application_success(
 
     async with async_session_maker() as session:
         result = await session.scalar(select(GrantApplication).where(GrantApplication.id == grant_application.id))
-        assert result is None
+        assert result is not None
+        assert result.deleted_at is not None
 
 
 async def test_delete_application_unauthorized(
@@ -153,7 +165,7 @@ async def test_delete_application_unauthorized(
     different_project_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.delete(
-        f"/projects/{different_project_id}/applications/{grant_application.id}",
+        f"/organizations/00000000-0000-0000-0000-000000000000/projects/{different_project_id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -170,7 +182,7 @@ async def test_generate_application_success(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         grant_application.research_objectives = [
@@ -213,7 +225,7 @@ async def test_generate_application_success(
         session.add(rag_source)
         await session.flush()
 
-        app_source = GrantApplicationRagSource(
+        app_source = GrantApplicationSource(
             grant_application_id=grant_application.id,
             rag_source_id=rag_source.id,
         )
@@ -221,7 +233,7 @@ async def test_generate_application_success(
         await session.commit()
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -238,10 +250,10 @@ async def test_generate_application_insufficient_data(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -254,7 +266,7 @@ async def test_generate_application_no_rag_sources(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         grant_application.research_objectives = [
@@ -289,7 +301,7 @@ async def test_generate_application_no_rag_sources(
         await session.commit()
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -300,12 +312,12 @@ async def test_generate_application_no_rag_sources(
 async def test_generate_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -316,10 +328,10 @@ async def test_retrieve_application_success(
     test_client: TestingClientType,
     project: Project,
     grant_application: GrantApplication,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -341,10 +353,10 @@ async def test_retrieve_application_with_grant_template(
     project: Project,
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -358,13 +370,13 @@ async def test_retrieve_application_with_grant_template(
     template_data = data["grant_template"]
     assert template_data["id"] == str(grant_template.id)
     assert "grant_sections" in template_data
-    assert "funding_organization_id" in template_data
+    assert "granting_institution_id" in template_data
     assert "rag_sources" in template_data
     assert template_data["rag_sources"] == []
     assert "rag_job_id" not in template_data
 
-    if "funding_organization" in template_data:
-        org_data = template_data["funding_organization"]
+    if "granting_institution" in template_data:
+        org_data = template_data["granting_institution"]
         assert "id" in org_data
         assert "full_name" in org_data
 
@@ -374,12 +386,12 @@ async def test_retrieve_application_with_grant_template(
 async def test_retrieve_application_not_found(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{non_existent_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{non_existent_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -391,24 +403,15 @@ async def test_retrieve_application_wrong_project(
     project: Project,
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
-        different_project = Project(name="Different Project")
+        different_project = Project(name="Different Project", organization_id=project.organization_id)
         session.add(different_project)
-        await session.flush()
-
-        firebase_uid = "a" * 128
-        project_user = ProjectUser(
-            project_id=different_project.id,
-            firebase_uid=firebase_uid,
-            role=UserRoleEnum.MEMBER,
-        )
-        session.add(project_user)
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{different_project.id}/applications/{grant_application.id}",
+        f"/organizations/{different_project.organization_id}/projects/{different_project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -421,7 +424,7 @@ async def test_retrieve_application_unauthorized(
     grant_application: GrantApplication,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -433,20 +436,20 @@ async def test_retrieve_application_with_complete_data(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = await session.get(GrantApplication, grant_application.id)
         template = await session.get(GrantTemplate, grant_template.id)
 
-        funding_org = FundingOrganization(
+        granting_institution = GrantingInstitution(
             full_name="Test Funding Organization Complete",
             abbreviation="TFOC",
         )
-        session.add(funding_org)
+        session.add(granting_institution)
         await session.flush()
 
-        template.funding_organization_id = funding_org.id
+        template.granting_institution_id = granting_institution.id
         template.submission_date = date(2024, 12, 31)
 
         app.form_inputs = {"principal_investigator": "Dr. Smith", "budget": "500000"}
@@ -464,7 +467,7 @@ async def test_retrieve_application_with_complete_data(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -488,8 +491,8 @@ async def test_retrieve_application_with_complete_data(
     template_data = data["grant_template"]
     assert template_data["id"] == str(grant_template.id)
     assert template_data["submission_date"] == "2024-12-31"
-    assert "funding_organization" in template_data
-    org_data = template_data["funding_organization"]
+    assert "granting_institution" in template_data
+    org_data = template_data["granting_institution"]
     assert org_data["full_name"] == "Test Funding Organization Complete"
     assert org_data["abbreviation"] == "TFOC"
 
@@ -505,7 +508,7 @@ async def test_retrieve_application_with_rag_job_ids(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     from testing.factories import (
         GrantApplicationGenerationJobFactory,
@@ -530,7 +533,7 @@ async def test_retrieve_application_with_rag_job_ids(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -553,7 +556,7 @@ async def test_retrieve_application_with_rag_sources(
     grant_application: GrantApplication,
     grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app = await session.get(GrantApplication, grant_application.id)
@@ -591,18 +594,18 @@ async def test_retrieve_application_with_rag_sources(
         session.add(template_rag_file)
         await session.flush()
 
-        app_rag_file = GrantApplicationRagSource(
+        app_rag_file = GrantApplicationSource(
             grant_application_id=app.id,
             rag_source_id=rag_file.id,
         )
-        app_rag_url = GrantApplicationRagSource(
+        app_rag_url = GrantApplicationSource(
             grant_application_id=app.id,
             rag_source_id=rag_url.id,
         )
         session.add(app_rag_file)
         session.add(app_rag_url)
 
-        template_rag_source = GrantTemplateRagSource(
+        template_rag_source = GrantTemplateSource(
             grant_template_id=template.id,
             rag_source_id=template_rag_file.id,
         )
@@ -611,7 +614,7 @@ async def test_retrieve_application_with_rag_sources(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -653,7 +656,7 @@ async def test_list_applications_basic(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         applications = []
@@ -661,7 +664,7 @@ async def test_list_applications_basic(
             app = GrantApplication(
                 project_id=project.id,
                 title=f"Test Application {i}",
-                status=ApplicationStatusEnum.DRAFT,
+                status=ApplicationStatusEnum.WORKING_DRAFT,
                 text=f"Description for application {i}",
             )
             session.add(app)
@@ -669,7 +672,7 @@ async def test_list_applications_basic(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -689,7 +692,7 @@ async def test_list_applications_with_submission_dates(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session:
         applications = await session.scalars(
@@ -699,7 +702,7 @@ async def test_list_applications_with_submission_dates(
                     {
                         "project_id": project.id,
                         "title": f"Test Application {i}",
-                        "status": ApplicationStatusEnum.DRAFT,
+                        "status": ApplicationStatusEnum.WORKING_DRAFT,
                         "description": f"Description for application {i}",
                     }
                     for i in range(5)
@@ -711,14 +714,14 @@ async def test_list_applications_with_submission_dates(
         for _i, application in enumerate(applications):
             grant_template = GrantTemplateFactory.build(
                 grant_application_id=application.id,
-                funding_organization_id=None,
+                granting_institution_id=None,
                 submission_date=faker.date_between(start_date="-2y", end_date="+1y"),
             )
             session.add(grant_template)
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -736,32 +739,32 @@ async def test_list_applications_with_search(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app1 = GrantApplication(
             project_id=project.id,
             title="Research Grant Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
             text="This is about machine learning research",
         )
         app2 = GrantApplication(
             project_id=project.id,
             title="Equipment Purchase Request",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
             text="We need new research equipment",
         )
         app3 = GrantApplication(
             project_id=project.id,
             title="Conference Travel Grant",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
             text="Travel funding for research conference",
         )
         session.add_all([app1, app2, app3])
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"search": "research"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -777,13 +780,13 @@ async def test_list_applications_with_status_filter(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app_draft = GrantApplication(
             project_id=project.id,
             title="Draft Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         app_in_progress = GrantApplication(
             project_id=project.id,
@@ -800,7 +803,7 @@ async def test_list_applications_with_status_filter(
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"status": "IN_PROGRESS"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -817,20 +820,20 @@ async def test_list_applications_with_pagination(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         for i in range(15):
             app = GrantApplication(
                 project_id=project.id,
                 title=f"Application {i:02d}",
-                status=ApplicationStatusEnum.DRAFT,
+                status=ApplicationStatusEnum.WORKING_DRAFT,
             )
             session.add(app)
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"limit": 10, "offset": 0},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -845,7 +848,7 @@ async def test_list_applications_with_pagination(
     assert data["pagination"]["has_more"] is True
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"limit": 10, "offset": 10},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -862,29 +865,29 @@ async def test_list_applications_with_sorting(
     test_client: TestingClientType,
     project: Project,
     async_session_maker: async_sessionmaker[Any],
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
         app1 = GrantApplication(
             project_id=project.id,
             title="Zebra Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         app2 = GrantApplication(
             project_id=project.id,
             title="Alpha Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         app3 = GrantApplication(
             project_id=project.id,
             title="Beta Application",
-            status=ApplicationStatusEnum.DRAFT,
+            status=ApplicationStatusEnum.WORKING_DRAFT,
         )
         session.add_all([app1, app2, app3])
         await session.commit()
 
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         params={"sort": "title", "order": "asc"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -903,7 +906,7 @@ async def test_list_applications_unauthorized(
     project: Project,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -912,10 +915,10 @@ async def test_list_applications_unauthorized(
 async def test_list_applications_empty_project(
     test_client: TestingClientType,
     project: Project,
-    project_member_user: None,
+    project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/projects/{project.id}/applications",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -937,12 +940,12 @@ async def test_generate_application_status_transition_to_generating(
     async_session_maker: async_sessionmaker[Any],
     project: Project,
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that application status transitions to GENERATING when RAG generation starts"""
 
     async with async_session_maker() as session, session.begin():
-        grant_application.status = ApplicationStatusEnum.DRAFT
+        grant_application.status = ApplicationStatusEnum.WORKING_DRAFT
         grant_application.title = "Test Application"
         grant_application.research_objectives = [
             {
@@ -984,7 +987,7 @@ async def test_generate_application_status_transition_to_generating(
         session.add(rag_source)
         await session.flush()
 
-        app_source = GrantApplicationRagSource(
+        app_source = GrantApplicationSource(
             grant_application_id=grant_application.id,
             rag_source_id=rag_source.id,
         )
@@ -992,7 +995,7 @@ async def test_generate_application_status_transition_to_generating(
         await session.commit()
 
     response = await test_client.post(
-        f"/projects/{project.id}/applications/{grant_application.id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -1014,7 +1017,7 @@ async def test_application_status_transitions_preserve_generating(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
     grant_application: GrantApplication,
-    project_owner_user: ProjectUser,
+    project_owner_user: OrganizationUser,
 ) -> None:
     """Test that GENERATING status is preserved and displayed correctly"""
 
@@ -1023,8 +1026,12 @@ async def test_application_status_transitions_preserve_generating(
         app.status = ApplicationStatusEnum.GENERATING
         await session.commit()
 
+    async with async_session_maker() as session:
+        project = await session.get(Project, grant_application.project_id)
+        organization_id = project.organization_id
+
     response = await test_client.get(
-        f"/projects/{grant_application.project_id}/applications/{grant_application.id}",
+        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications/{grant_application.id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -1033,7 +1040,7 @@ async def test_application_status_transitions_preserve_generating(
     assert data["status"] == ApplicationStatusEnum.GENERATING.value
 
     response = await test_client.get(
-        f"/projects/{grant_application.project_id}/applications",
+        f"/organizations/{organization_id}/projects/{grant_application.project_id}/applications",
         headers={"Authorization": "Bearer some_token"},
     )
 

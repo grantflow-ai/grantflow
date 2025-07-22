@@ -7,10 +7,10 @@ from packages.db.src.constants import RAG_FILE
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import (
-    FundingOrganization,
-    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
     Project,
     RagFile,
@@ -27,15 +27,15 @@ from sqlalchemy.orm import selectinload
 from testing import FIXTURES_FOLDER, SOURCES_FOLDER
 
 
-async def get_funding_organization(
+async def get_granting_institution(
     async_session_maker: async_sessionmaker[Any], abbreviation: str
-) -> FundingOrganization:
+) -> GrantingInstitution:
     async with async_session_maker() as session:
         result = await session.execute(
-            select(FundingOrganization).where(FundingOrganization.abbreviation == abbreviation)
+            select(GrantingInstitution).where(GrantingInstitution.abbreviation == abbreviation)
         )
-        funding_org: FundingOrganization = result.scalar_one()
-        return funding_org
+        granting_institution: GrantingInstitution = result.scalar_one()
+        return granting_institution
 
 
 def ensure_directory_exists(directory: Path) -> None:
@@ -52,7 +52,7 @@ def get_source_files(source_folder: Path) -> list[Path]:
 
 
 async def parse_and_store_source_files(
-    funding_organization_id: str,
+    granting_institution_id: str,
     source_files: list[Path],
     async_session_maker: async_sessionmaker[Any],
     target_folder: Path,
@@ -60,7 +60,7 @@ async def parse_and_store_source_files(
     await asyncio.gather(
         *[
             parse_source_file(
-                organization_id=funding_organization_id,
+                organization_id=granting_institution_id,
                 source_file=source_file,
                 async_session_maker=async_session_maker,
                 target_folder=target_folder,
@@ -71,7 +71,7 @@ async def parse_and_store_source_files(
 
 
 async def process_organization_files(
-    funding_organization: FundingOrganization, data_fixture_folder: Path, async_session_maker: async_sessionmaker[Any]
+    granting_institution: GrantingInstitution, data_fixture_folder: Path, async_session_maker: async_sessionmaker[Any]
 ) -> None:
     async with async_session_maker() as session, session.begin():
         for organization_file in data_fixture_folder.glob("*.json"):
@@ -117,14 +117,14 @@ async def process_organization_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(FundingOrganizationRagSource)
+                insert(GrantingInstitutionSource)
                 .values(
                     {
-                        "funding_organization_id": funding_organization.id,
+                        "granting_institution_id": granting_institution.id,
                         "rag_source_id": rag_source_id,
                     }
                 )
-                .on_conflict_do_nothing(index_elements=["funding_organization_id", "rag_source_id"])
+                .on_conflict_do_nothing(index_elements=["granting_institution_id", "rag_source_id"])
             )
             await session.execute(
                 insert(TextVector)
@@ -143,10 +143,10 @@ async def process_organization_files(
         await session.commit()
 
 
-async def process_funding_organization(
+async def process_granting_institution(
     async_session_maker: async_sessionmaker[Any], abbreviation: str
-) -> FundingOrganization:
-    funding_organization = await get_funding_organization(async_session_maker, abbreviation)
+) -> GrantingInstitution:
+    granting_institution = await get_granting_institution(async_session_maker, abbreviation)
     data_fixture_folder = FIXTURES_FOLDER / "organization_files" / abbreviation.lower() / "files"
     ensure_directory_exists(data_fixture_folder)
 
@@ -155,11 +155,11 @@ async def process_funding_organization(
         source_folder = SOURCES_FOLDER / "guidelines" / abbreviation.lower()
         source_files = get_source_files(source_folder)
         await parse_and_store_source_files(
-            str(funding_organization.id), source_files, async_session_maker, data_fixture_folder
+            str(granting_institution.id), source_files, async_session_maker, data_fixture_folder
         )
 
-    await process_organization_files(funding_organization, data_fixture_folder, async_session_maker)
-    return funding_organization
+    await process_organization_files(granting_institution, data_fixture_folder, async_session_maker)
+    return granting_institution
 
 
 async def parse_source_file(
@@ -203,12 +203,10 @@ async def parse_source_file(
             )
         )
         await session.execute(
-            insert(GrantApplicationRagSource).values(
-                [{"grant_application_id": application_id, "rag_source_id": file_id}]
-            )
+            insert(GrantApplicationSource).values([{"grant_application_id": application_id, "rag_source_id": file_id}])
             if application_id
-            else insert(FundingOrganizationRagSource).values(
-                [{"funding_organization_id": organization_id, "rag_source_id": file_id}]
+            else insert(GrantingInstitutionSource).values(
+                [{"granting_institution_id": organization_id, "rag_source_id": file_id}]
             )
         )
         await session.commit()
@@ -216,17 +214,17 @@ async def parse_source_file(
     async with async_session_maker() as session:
         if application_id:
             stmt = (
-                select(GrantApplicationRagSource)
-                .options(selectinload(GrantApplicationRagSource.rag_source).selectinload(RagFile.text_vectors))
-                .where(GrantApplicationRagSource.rag_source_id == file_id)
-                .where(GrantApplicationRagSource.grant_application_id == application_id)
+                select(GrantApplicationSource)
+                .options(selectinload(GrantApplicationSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(GrantApplicationSource.rag_source_id == file_id)
+                .where(GrantApplicationSource.grant_application_id == application_id)
             )
         else:
             stmt = (
-                select(FundingOrganizationRagSource)  # type: ignore[assignment]
-                .options(selectinload(FundingOrganizationRagSource.rag_source).selectinload(RagFile.text_vectors))
-                .where(FundingOrganizationRagSource.rag_source_id == file_id)
-                .where(FundingOrganizationRagSource.funding_organization_id == organization_id)
+                select(GrantingInstitutionSource)  # type: ignore[assignment]
+                .options(selectinload(GrantingInstitutionSource.rag_source).selectinload(RagFile.text_vectors))
+                .where(GrantingInstitutionSource.rag_source_id == file_id)
+                .where(GrantingInstitutionSource.granting_institution_id == organization_id)
             )
 
         file_datum = await session.scalar(stmt)
@@ -331,7 +329,7 @@ async def process_application_files(
                 .on_conflict_do_nothing(index_elements=["id"])
             )
             await session.execute(
-                insert(GrantApplicationRagSource)
+                insert(GrantApplicationSource)
                 .values({"grant_application_id": application_id, "rag_source_id": rag_source_id})
                 .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_source_id"])
             )

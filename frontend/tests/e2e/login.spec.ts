@@ -105,12 +105,17 @@ test.describe("Login Journey with Mock Auth", () => {
 	test("should verify dev bypass is active", async ({ page }) => {
 		await page.goto("/projects");
 
-		// In mock mode, the dev tools might not be available or might have different UI
-		// Let's skip this test for now as it depends on dev tools implementation
-		test.skip();
+		// In mock mode, verify we can access the projects page directly (dev bypass active)
+		await expect(page).toHaveURL(/\/projects/);
+
+		// Dismiss welcome modal if present
+		await dismissWelcomeModal(page);
+
+		// Verify dashboard is visible
+		await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 	});
 
-	test.skip("should handle logout gracefully", async ({ page }) => {
+	test("should handle logout gracefully", async ({ page }) => {
 		// NOTE: Mock auth logout behavior needs to be implemented properly
 		await page.goto("/projects");
 

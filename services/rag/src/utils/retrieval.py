@@ -2,7 +2,7 @@ import time
 from typing import Any, Final, TypedDict, cast
 
 from packages.db.src.connection import get_session_maker
-from packages.db.src.tables import FundingOrganizationRagSource, GrantApplicationRagSource, RagSource, TextVector
+from packages.db.src.tables import GrantApplicationSource, GrantingInstitutionSource, RagSource, TextVector
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, GENERATION_MODEL
 from packages.shared_utils.src.embeddings import generate_embeddings
 from packages.shared_utils.src.logger import get_logger
@@ -136,7 +136,7 @@ async def retrieve_vectors_for_embedding(
     *,
     application_id: str | None = None,
     embeddings: list[list[float]],
-    file_table_cls: type[GrantApplicationRagSource | FundingOrganizationRagSource],
+    file_table_cls: type[GrantApplicationSource | GrantingInstitutionSource],
     iteration: int = 1,
     limit: int = MAX_RESULTS,
     organization_id: str | None = None,
@@ -156,7 +156,7 @@ async def retrieve_vectors_for_embedding(
                 .where(
                     file_table_cls.grant_application_id == application_id
                     if hasattr(file_table_cls, "grant_application_id")
-                    else file_table_cls.funding_organization_id == organization_id
+                    else file_table_cls.granting_institution_id == organization_id
                 )
                 .where(or_(*similarity_conditions))
                 .order_by(func.least(*[TextVector.embedding.cosine_distance(embedding) for embedding in embeddings]))
@@ -188,7 +188,7 @@ async def handle_retrieval(
     search_queries: list[str],
 ) -> list[TextVector]:
     query_embeddings = await generate_embeddings(search_queries)
-    file_table_cls = GrantApplicationRagSource if application_id else FundingOrganizationRagSource
+    file_table_cls = GrantApplicationSource if application_id else GrantingInstitutionSource
 
     return (
         await retrieve_vectors_for_embedding(
