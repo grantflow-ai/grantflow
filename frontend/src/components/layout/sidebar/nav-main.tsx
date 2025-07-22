@@ -124,7 +124,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 											handleSettingsClick(e, routes.organization.settings.account());
 										}}
 									>
-										Account Settings
+										Organisation Settings
 									</Link>
 								</SidebarMenuSubButton>
 							</SidebarMenuSubItem>
@@ -164,6 +164,22 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							)}
+							<SidebarMenuSubItem>
+								<SidebarMenuSubButton
+									asChild
+									isActive={pathname === routes.organization.settings.personal()}
+								>
+									<Link
+										data-testid="organization-settings-personal"
+										href={routes.organization.settings.personal()}
+										onClick={(e) => {
+											handleSettingsClick(e, routes.organization.settings.personal());
+										}}
+									>
+										Personal Settings
+									</Link>
+								</SidebarMenuSubButton>
+							</SidebarMenuSubItem>
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton
 									asChild

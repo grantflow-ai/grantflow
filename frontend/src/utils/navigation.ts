@@ -47,6 +47,7 @@ export const routes = {
 			billing: () => "/organization/settings/billing",
 			members: () => "/organization/settings/members",
 			notifications: () => "/organization/settings/notifications",
+			personal: () => "/organization/settings/personal",
 		},
 	},
 };
