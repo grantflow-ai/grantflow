@@ -135,7 +135,6 @@ async def test_handle_file_indexing_grant_application(
     project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
-    
     organization_id = project.organization_id
 
     async with async_session_maker() as session, session.begin():
@@ -305,7 +304,6 @@ async def test_handle_file_indexing_grant_template(
     project: Project,
     mock_publish_notification: AsyncMock,
 ) -> None:
-    
     organization_id = project.organization_id
 
     async with async_session_maker() as session, session.begin():

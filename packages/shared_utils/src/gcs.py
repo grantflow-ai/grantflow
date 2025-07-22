@@ -309,7 +309,6 @@ async def resolve_parent_id_for_notification(
     if entity_type == "granting_institution":
         return str(entity_id)
 
-    
     grant_app_source = await session.scalar(
         select(GrantApplicationSource.grant_application_id).where(
             GrantApplicationSource.rag_source_id == str(source_id)
@@ -336,7 +335,6 @@ async def resolve_parent_id_for_notification(
         )
         return str(grant_template_source)
 
-    
     logger.warning(
         "No parent association found for source, using entity_id",
         source_id=str(source_id),

@@ -68,7 +68,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
-	organization_id: string;
+	organization_id: null | string;
 	project_id: null | string;
 };
 
@@ -93,7 +93,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	organization_id: null | string;
 	project_id: null | string;
 	template_id: null | string;
 };
@@ -119,7 +119,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: string;
+	granting_institution_id: null | string;
 };
 
 	export type RequestBody = {
@@ -855,7 +855,6 @@ export namespace API {
 	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
 	name: string;
-	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 
@@ -1119,7 +1118,6 @@ export namespace API {
 	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
 	name: string;
-	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
 };
 
@@ -1832,7 +1830,6 @@ export namespace API {
 	id: string;
 	logo_url: null | string;
 	name: string;
-	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 

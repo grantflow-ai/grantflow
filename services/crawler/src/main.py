@@ -162,8 +162,6 @@ async def handle_gcs_file_upload(
 
             logger.debug("Creating parent association")
 
-            
-            
             parent_id = await resolve_parent_id_for_notification(
                 session=session,
                 source_id=original_source_id,
@@ -181,8 +179,6 @@ async def handle_gcs_file_upload(
                     )
                 )
             else:
-                
-                
                 grant_app_source = await session.scalar(
                     select(GrantApplicationSource.grant_application_id).where(
                         GrantApplicationSource.rag_source_id == original_source_id
@@ -198,7 +194,6 @@ async def handle_gcs_file_upload(
                         )
                     )
                 else:
-                    
                     grant_template_source = await session.scalar(
                         select(GrantTemplateSource.grant_template_id).where(
                             GrantTemplateSource.rag_source_id == original_source_id
@@ -287,7 +282,6 @@ async def handle_url_crawling(
         trace_id=trace_id,
     )
 
-    
     async with session_maker() as session:
         parent_id = await resolve_parent_id_for_notification(
             session=session,
@@ -375,7 +369,6 @@ async def handle_url_crawling(
             trace_id=trace_id,
         )
 
-        
         async with session_maker() as session:
             parent_id = await resolve_parent_id_for_notification(
                 session=session,
@@ -417,7 +410,7 @@ async def handle_url_crawling(
             trace_id=trace_id,
             error_duration_ms=round(error_duration * 1000, 2),
         )
-        
+
         async with session_maker() as session:
             parent_id = await resolve_parent_id_for_notification(
                 session=session,
