@@ -716,6 +716,8 @@ async def handle_duplicate_application(
         new_title=data["title"],
     )
 
+    new_app_id = None
+
     async with session_maker() as session, session.begin():
         try:
             original_app = await session.scalar(
@@ -756,7 +758,7 @@ async def handle_duplicate_application(
             new_app_id = new_app.id
 
             if template:
-                await session.scalar(
+                new_template = await session.scalar(
                     insert(GrantTemplate)
                     .values(
                         {
@@ -767,6 +769,12 @@ async def handle_duplicate_application(
                         }
                     )
                     .returning(GrantTemplate)
+                )
+                logger.info(
+                    "Grant template duplicated",
+                    original_template_id=str(template.id),
+                    new_template_id=str(new_template.id),
+                    new_app_id=str(new_app.id),
                 )
 
             rag_sources = await session.execute(
