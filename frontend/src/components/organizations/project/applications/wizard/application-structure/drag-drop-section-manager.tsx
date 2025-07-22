@@ -14,7 +14,7 @@ import { SectionIconButton } from "./section-icon-button";
 interface SectionListProps {
 	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
-	handleDeleteSection: (sectionId: string, sectionParentId: string) => Promise<void>;
+	handleDeleteSection: (sectionId: string) => Promise<void>;
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	mainSections: GrantSection[];
@@ -35,7 +35,12 @@ export function DragDropSectionManager({
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
+<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
 	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections) ?? [];
+=======
+	const application = useApplicationStore((state) => state.application);
+	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
+>>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 	const [pendingParentChange, setPendingParentChange] = useState<{
 		newParentId: null | string;
@@ -81,6 +86,7 @@ export function DragDropSectionManager({
 	);
 
 	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
+<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
 		const activeIsMain = activeSection.parent_id === null;
 		const overIsMain = overSection.parent_id === null;
 
@@ -93,6 +99,20 @@ export function DragDropSectionManager({
 		}
 
 		return overSection.parent_id;
+=======
+		const activeIsChild = activeSection.parent_id !== null;
+		const overIsChild = overSection.parent_id !== null;
+
+		if (overIsChild) {
+			return overSection.parent_id;
+		}
+
+		if (activeIsChild) {
+			return overSection.id;
+		}
+
+		return null;
+>>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
 	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
@@ -210,6 +230,26 @@ export function DragDropSectionManager({
 				}
 
 				if (pendingParentChange) {
+<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
+=======
+					const updatedSections = grantSections.map((section) => {
+						if (section.id === pendingParentChange.sectionId) {
+							return toUpdateGrantSection({
+								...section,
+								parent_id: pendingParentChange.newParentId,
+							});
+						}
+						return toUpdateGrantSection(section);
+					});
+
+					log.info("Drag end: Applying pending parent change", {
+						newParentId: pendingParentChange.newParentId,
+						sectionCount: updatedSections.length,
+						sectionId: pendingParentChange.sectionId,
+					});
+
+					await updateGrantSections(updatedSections);
+>>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
 					setPendingParentChange(null);
 				}
 			},
@@ -378,6 +418,7 @@ function SectionList({
 	}, [mainSections, subsectionsByParent]);
 
 	return (
+<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
 		<div className="space-y-2">
 			{allSectionsFlattened.map((section) => (
 				<SortableSection
@@ -395,6 +436,39 @@ function SectionList({
 					section={section}
 					toUpdateGrantSection={toUpdateGrantSection}
 				/>
+=======
+		<>
+			{mainSections.map((section) => (
+				<div className="space-y-2" key={section.id}>
+					<SortableSection
+						isDetailedSection={isDetailedSection}
+						isExpanded={expandedSectionId === section.id}
+						onAddSubsection={() => handleAddNewSection(section.id)}
+						onDelete={() => handleDeleteSection(section.id)}
+						onToggleExpand={() => {
+							toggleSectionExpanded(section.id);
+						}}
+						onUpdate={(updates) => handleUpdateSection(section.id, updates)}
+						section={section}
+						toUpdateGrantSection={toUpdateGrantSection}
+					/>
+					{(subsectionsByParent[section.id] ?? []).map((subsection) => (
+						<SortableSection
+							isDetailedSection={isDetailedSection}
+							isExpanded={expandedSectionId === subsection.id}
+							isSubsection
+							key={subsection.id}
+							onDelete={() => handleDeleteSection(subsection.id)}
+							onToggleExpand={() => {
+								toggleSectionExpanded(subsection.id);
+							}}
+							onUpdate={(updates) => handleUpdateSection(subsection.id, updates)}
+							section={subsection}
+							toUpdateGrantSection={toUpdateGrantSection}
+						/>
+					))}
+				</div>
+>>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
 			))}
 		</div>
 	);

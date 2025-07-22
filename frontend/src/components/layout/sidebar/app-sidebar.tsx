@@ -14,8 +14,13 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	//SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
@@ -26,6 +31,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const setUser = useUserStore((state) => state.setUser);
 	const organization = useOrganizationStore((state) => state.organization);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const { state, isMobile } = useSidebar();
 
 	const handleLogout = () => {
 		// Clear user data
@@ -42,9 +48,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<Sidebar
 				collapsible="icon"
 				{...props}
-				className="!border-r-0 flex h-full flex-col bg-preview-bg [&>div]:!border-0 [&>div]:!border-r-0 [&>div>div]:!border-0 [&>div>div]:!border-r-0 [&>div]:!border-l-0 [&>div]:!shadow-none"
+				className="!border-r-0 flex h-full flex-col bg-preview-bg p-3 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-2 [&>div]:!border-0 [&>div]:!border-r-0 [&>div>div]:!border-0 [&>div>div]:!border-r-0 [&>div]:!border-l-0 [&>div]:!shadow-none"
 			>
-				<SidebarHeader className="flex flex-col gap-2 p-3 group-data-[collapsible=icon]:p-2">
+				<SidebarHeader className="flex flex-col mb-10 group-data-[collapsible=icon]:p-0">
 					<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
 						<div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
 							<div className="flex items-center gap-2">
@@ -59,7 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 									/>
 								</div>
 								<h2
-									className="text-xl font-semibold group-data-[collapsible=icon]:hidden"
+									className="text-2xl font-medium leading-[30px] group-data-[collapsible=icon]:hidden"
 									data-testid="sidebar-title"
 								>
 									GrantFlow
@@ -73,25 +79,35 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
 						<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
 					</div>
-
-					<button
-						className="bg-primary text-white rounded px-4 py-2 flex items-center justify-center gap-1 hover:bg-link-hover-dark transition-colors mt-10 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:mx-auto"
-						data-testid="new-application-button"
-						onClick={() => {
-							setIsModalOpen(true);
-						}}
-						type="button"
-					>
-						<Plus className="size-4 shrink-0" />
-						<span className="group-data-[collapsible=icon]:hidden font-button">New Application</span>
-					</button>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<button
+								className="bg-primary text-white rounded px-4 py-2 flex items-center justify-center gap-1 hover:bg-link-hover-dark transition-colors mt-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
+								data-testid="new-application-button"
+								onClick={() => {
+									setIsModalOpen(true);
+								}}
+								type="button"
+							>
+								<Plus className="size-4 shrink-0" />
+								<span className="group-data-[collapsible=icon]:hidden font-button">New Application</span>
+							</button>
+						</TooltipTrigger>
+						<TooltipContent
+							align="center"
+							hidden={state !== "collapsed" || isMobile}
+							side="right"
+						>
+							<p>New Application</p>
+						</TooltipContent>
+					</Tooltip>
 				</SidebarHeader>
 
-				<SidebarContent className="flex-grow gap-0 py-4 group-data-[collapsible=icon]:px-2">
+				<SidebarContent className="flex-grow gap-0 ">
 					<NavMain data-testid="nav-main" userRole={organization?.role} />
 				</SidebarContent>
 
-				<SidebarFooter className="pb-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-4">
+				<SidebarFooter>
 					<SidebarMenu>
 						<SidebarMenuItem>
 							<SidebarMenuButton
