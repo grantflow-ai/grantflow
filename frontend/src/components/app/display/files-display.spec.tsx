@@ -1,5 +1,6 @@
 import { FileWithIdFactory } from "::testing/factories";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe } from "vitest";
 
 import { formatBytes } from "@/utils/format";
 
@@ -9,7 +10,10 @@ vi.mock("@/utils/format", () => ({
 	formatBytes: vi.fn().mockReturnValue("10 KB"),
 }));
 
-describe("FileCard", () => {
+describe.sequential("FileCard", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockFile = FileWithIdFactory.build({ name: "test-document.pdf", type: "application/pdf" });
 	const mockHandleRemoveFile = vi.fn();
 
@@ -37,7 +41,10 @@ describe("FileCard", () => {
 	});
 });
 
-describe("FilesDisplay", () => {
+describe.sequential("FilesDisplay", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockFiles = [
 		FileWithIdFactory.build({ name: "document1.pdf", type: "application/pdf" }),
 		FileWithIdFactory.build({

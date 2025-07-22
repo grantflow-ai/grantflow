@@ -31,6 +31,7 @@ vi.mock("@/utils/server-side", async () => {
 	};
 });
 
+const mockOrganizationId = "mock-organization-id";
 const mockProjectId = "mock-project-id";
 const mockApplicationId = "mock-application-id";
 const mockTemplateId = "mock-template-id";
@@ -53,10 +54,10 @@ afterEach(() => {
 describe("Grant Template Actions", () => {
 	describe("generateGrantTemplate", () => {
 		it("should call the API with correct parameters", async () => {
-			await generateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId);
+			await generateGrantTemplate(mockOrganizationId, mockProjectId, mockApplicationId, mockTemplateId);
 
 			expect(mockPost).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: expect.objectContaining({
 						...mockAuthHeaders,
@@ -72,7 +73,12 @@ describe("Grant Template Actions", () => {
 		});
 
 		it("should return a trace ID", async () => {
-			const traceId = await generateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId);
+			const traceId = await generateGrantTemplate(
+				mockOrganizationId,
+				mockProjectId,
+				mockApplicationId,
+				mockTemplateId,
+			);
 
 			expect(traceId).toEqual(expect.any(String));
 			expect(traceId.length).toBeGreaterThan(0);
@@ -101,10 +107,10 @@ describe("Grant Template Actions", () => {
 				submission_date: "2024-12-31",
 			});
 
-			await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, updateData);
+			await updateGrantTemplate(mockOrganizationId, mockProjectId, mockApplicationId, mockTemplateId, updateData);
 
 			expect(mockPatch).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: mockAuthHeaders,
 					json: updateData,
@@ -119,10 +125,16 @@ describe("Grant Template Actions", () => {
 				submission_date: "2024-12-31",
 			};
 
-			await updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, partialUpdateData);
+			await updateGrantTemplate(
+				mockOrganizationId,
+				mockProjectId,
+				mockApplicationId,
+				mockTemplateId,
+				partialUpdateData,
+			);
 
 			expect(mockPatch).toHaveBeenCalledWith(
-				`projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				{
 					headers: mockAuthHeaders,
 					json: partialUpdateData,
@@ -139,7 +151,7 @@ describe("Grant Template Actions", () => {
 			const mockError = new HTTPError(
 				mockResponse,
 				{
-					path: `projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+					path: `organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				} as any,
 				{} as any,
 			);
@@ -147,7 +159,9 @@ describe("Grant Template Actions", () => {
 			mockPost.mockRejectedValue(mockError);
 			mockWithAuthRedirect.mockRejectedValue(mockError);
 
-			await expect(generateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId)).rejects.toThrow();
+			await expect(
+				generateGrantTemplate(mockOrganizationId, mockProjectId, mockApplicationId, mockTemplateId),
+			).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});
 
@@ -156,7 +170,7 @@ describe("Grant Template Actions", () => {
 			const mockError = new HTTPError(
 				mockResponse,
 				{
-					path: `projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
+					path: `organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant-template/${mockTemplateId}`,
 				} as any,
 				{} as any,
 			);
@@ -168,7 +182,7 @@ describe("Grant Template Actions", () => {
 			};
 
 			await expect(
-				updateGrantTemplate(mockProjectId, mockApplicationId, mockTemplateId, updateData),
+				updateGrantTemplate(mockOrganizationId, mockProjectId, mockApplicationId, mockTemplateId, updateData),
 			).rejects.toThrow();
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
 		});

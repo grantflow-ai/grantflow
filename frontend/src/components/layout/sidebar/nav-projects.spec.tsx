@@ -1,8 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NavProjects } from "./nav-projects";
 
-describe("NavProjects", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("NavProjects", () => {
 	it("renders workspace trigger and items correctly", () => {
 		render(
 			<SidebarProvider>

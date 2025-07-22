@@ -1,8 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 
-describe("Background Components", () => {
+describe.sequential("Background Components", () => {
+	afterEach(() => {
+		cleanup();
+	});
+
 	describe("GradientBackground Component", () => {
 		it("renders the component", () => {
 			render(<GradientBackground data-testid="gradient-bg" />);

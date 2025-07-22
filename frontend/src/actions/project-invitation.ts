@@ -8,6 +8,7 @@ import { getEnv } from "@/utils/env";
 interface InviteCollaboratorParams {
 	email: string;
 	inviterName: string;
+	organizationId: string;
 	projectId: string;
 	projectName: string;
 	role: "admin" | "member";
@@ -16,6 +17,7 @@ interface InviteCollaboratorParams {
 export async function inviteCollaborator({
 	email,
 	inviterName,
+	organizationId,
 	projectId,
 	projectName,
 	role,
@@ -29,8 +31,8 @@ export async function inviteCollaborator({
 		const resend = new Resend(getEnv().RESEND_API_KEY);
 
 		// First create the invitation in our backend
-		const backendRole = role === "admin" ? "ADMIN" : "MEMBER";
-		const invitationResult = await createInvitation(projectId, {
+		const backendRole = role === "admin" ? "ADMIN" : "COLLABORATOR";
+		const invitationResult = await createInvitation(organizationId, projectId, {
 			email,
 			role: backendRole,
 		});

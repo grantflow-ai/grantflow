@@ -1,32 +1,36 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { Plus } from "lucide-react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 
 import { IconButton } from "./icon-button";
 
-describe("IconButton", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("IconButton", () => {
 	it("renders with default props", () => {
-		render(
-			<IconButton>
+		const { container } = render(
+			<IconButton data-testid="icon-button">
 				<Plus className="size-4" />
 			</IconButton>,
 		);
 
-		const button = screen.getByRole("button");
+		const button = container.querySelector('[data-testid="icon-button"]');
 		expect(button).toBeInTheDocument();
 		expect(button).toHaveClass("size-8"); // default md size
 		expect(button).toHaveClass("bg-primary"); // default solid variant
 	});
 
 	it("renders with custom className", () => {
-		render(
-			<IconButton className="custom-class">
+		const { container } = render(
+			<IconButton className="custom-class" data-testid="icon-button-custom">
 				<Plus className="size-4" />
 			</IconButton>,
 		);
 
-		const button = screen.getByRole("button");
+		const button = container.querySelector('[data-testid="icon-button-custom"]');
 		expect(button).toHaveClass("custom-class");
 	});
 
@@ -34,13 +38,13 @@ describe("IconButton", () => {
 		const user = userEvent.setup();
 		const onClick = vi.fn();
 
-		render(
-			<IconButton onClick={onClick}>
+		const { getByTestId } = render(
+			<IconButton data-testid="icon-button-click" onClick={onClick}>
 				<Plus className="size-4" />
 			</IconButton>,
 		);
 
-		const button = screen.getByRole("button");
+		const button = getByTestId("icon-button-click");
 		await user.click(button);
 
 		expect(onClick).toHaveBeenCalledOnce();
@@ -50,14 +54,14 @@ describe("IconButton", () => {
 		const user = userEvent.setup();
 		const onClick = vi.fn();
 
-		render(
-			<IconButton disabled onClick={onClick}>
+		const { container } = render(
+			<IconButton data-testid="icon-button-disabled" disabled onClick={onClick}>
 				<Plus className="size-4" />
 			</IconButton>,
 		);
 
-		const button = screen.getByRole("button");
-		await user.click(button);
+		const button = container.querySelector('[data-testid="icon-button-disabled"]');
+		await user.click(button!);
 
 		expect(onClick).not.toHaveBeenCalled();
 		expect(button).toBeDisabled();
@@ -65,25 +69,25 @@ describe("IconButton", () => {
 
 	describe("variants", () => {
 		it("renders solid variant", () => {
-			render(
-				<IconButton variant="solid">
+			const { container } = render(
+				<IconButton data-testid="icon-button-solid" variant="solid">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-solid"]');
 			expect(button).toHaveClass("bg-primary");
 			expect(button).toHaveClass("text-primary-foreground");
 		});
 
 		it("renders float variant", () => {
-			render(
-				<IconButton variant="float">
+			const { container } = render(
+				<IconButton data-testid="icon-button-float" variant="float">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-float"]');
 			expect(button).toHaveClass("bg-transparent");
 			expect(button).toHaveClass("text-primary");
 		});
@@ -91,60 +95,60 @@ describe("IconButton", () => {
 
 	describe("sizes", () => {
 		it("renders small size", () => {
-			render(
-				<IconButton size="sm">
+			const { container } = render(
+				<IconButton data-testid="icon-button-size-sm" size="sm">
 					<Plus className="size-3" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-size-sm"]');
 			expect(button).toHaveClass("size-6");
 		});
 
 		it("renders medium size (default)", () => {
-			render(
-				<IconButton size="md">
+			const { container } = render(
+				<IconButton data-testid="icon-button-size-md" size="md">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-size-md"]');
 			expect(button).toHaveClass("size-8");
 		});
 
 		it("renders large size", () => {
-			render(
-				<IconButton size="lg">
+			const { container } = render(
+				<IconButton data-testid="icon-button-size-lg" size="lg">
 					<Plus className="size-5" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-size-lg"]');
 			expect(button).toHaveClass("size-10");
 		});
 	});
 
 	describe("disabled state", () => {
 		it("applies disabled styles for solid variant", () => {
-			render(
-				<IconButton disabled variant="solid">
+			const { container } = render(
+				<IconButton data-testid="icon-button-disabled-solid" disabled variant="solid">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-disabled-solid"]');
 			expect(button).toBeDisabled();
 			expect(button).toHaveClass("disabled:bg-gray-200");
 		});
 
 		it("applies disabled styles for float variant", () => {
-			render(
-				<IconButton disabled variant="float">
+			const { container } = render(
+				<IconButton data-testid="icon-button-disabled-float" disabled variant="float">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-disabled-float"]');
 			expect(button).toBeDisabled();
 			expect(button).toHaveClass("disabled:text-gray-100");
 		});
@@ -152,64 +156,65 @@ describe("IconButton", () => {
 
 	describe("asChild prop", () => {
 		it("renders as child component when asChild is true", () => {
-			render(
-				<IconButton asChild>
+			const { container } = render(
+				<IconButton asChild data-testid="icon-button-as-child">
 					<a href="/test">
 						<Plus className="size-4" />
 					</a>
 				</IconButton>,
 			);
 
-			const link = screen.getByRole("link");
+			const link = container.querySelector('[data-testid="icon-button-as-child"]');
 			expect(link).toBeInTheDocument();
 			expect(link).toHaveAttribute("href", "/test");
 			expect(link).toHaveClass("size-8"); // IconButton classes applied
 		});
 
 		it("renders as button when asChild is false", () => {
-			render(
-				<IconButton asChild={false}>
+			const { container } = render(
+				<IconButton asChild={false} data-testid="icon-button-as-button">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-as-button"]');
 			expect(button).toBeInTheDocument();
-			expect(button.tagName).toBe("BUTTON");
+			expect(button!.tagName).toBe("BUTTON");
 		});
 	});
 
 	describe("accessibility", () => {
 		it("supports aria-label", () => {
-			render(
-				<IconButton aria-label="Add item">
+			const { container } = render(
+				<IconButton aria-label="Add item" data-testid="icon-button-aria-label">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button", { name: "Add item" });
+			const button = container.querySelector('[data-testid="icon-button-aria-label"]');
 			expect(button).toBeInTheDocument();
+			expect(button).toHaveAttribute("aria-label", "Add item");
 		});
 
 		it("supports custom type attribute", () => {
-			render(
-				<IconButton type="submit">
+			const { container } = render(
+				<IconButton data-testid="icon-button-type-submit" type="submit">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-type-submit"]');
 			expect(button).toHaveAttribute("type", "submit");
 		});
 
 		it("has proper focus styles", () => {
-			render(
-				<IconButton>
+			const { container } = render(
+				<IconButton data-testid="icon-button-focus-styles">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-focus-styles"]');
 			expect(button).toHaveClass("focus-visible:outline-2");
 			expect(button).toHaveClass("focus-visible:outline-offset-2");
 			expect(button).toHaveClass("focus-visible:outline-ring");
@@ -221,14 +226,14 @@ describe("IconButton", () => {
 			const user = userEvent.setup();
 			const onClick = vi.fn();
 
-			render(
-				<IconButton onClick={onClick}>
+			const { getByTestId } = render(
+				<IconButton data-testid="icon-button-keyboard" onClick={onClick}>
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
-			await user.tab();
+			const button = getByTestId("icon-button-keyboard");
+			button.focus();
 			expect(button).toHaveFocus();
 
 			await user.keyboard("{Enter}");
@@ -242,13 +247,13 @@ describe("IconButton", () => {
 			const user = userEvent.setup();
 			const onClick = vi.fn();
 
-			render(
-				<IconButton disabled onClick={onClick}>
+			const { container } = render(
+				<IconButton data-testid="icon-button-keyboard-disabled" disabled onClick={onClick}>
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = container.querySelector('[data-testid="icon-button-keyboard-disabled"]');
 			await user.tab();
 			expect(button).not.toHaveFocus();
 
@@ -260,13 +265,13 @@ describe("IconButton", () => {
 
 	describe("custom props", () => {
 		it("forwards custom data attributes", () => {
-			render(
-				<IconButton data-custom="value" data-testid="custom-button">
+			const { container } = render(
+				<IconButton data-custom="value" data-testid="icon-button-custom-data">
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByTestId("custom-button");
+			const button = container.querySelector('[data-testid="icon-button-custom-data"]');
 			expect(button).toHaveAttribute("data-custom", "value");
 		});
 
@@ -275,13 +280,17 @@ describe("IconButton", () => {
 			const onMouseEnter = vi.fn();
 			const onMouseLeave = vi.fn();
 
-			render(
-				<IconButton onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+			const { getByTestId } = render(
+				<IconButton
+					data-testid="icon-button-custom-events"
+					onMouseEnter={onMouseEnter}
+					onMouseLeave={onMouseLeave}
+				>
 					<Plus className="size-4" />
 				</IconButton>,
 			);
 
-			const button = screen.getByRole("button");
+			const button = getByTestId("icon-button-custom-events");
 			await user.hover(button);
 			expect(onMouseEnter).toHaveBeenCalledOnce();
 

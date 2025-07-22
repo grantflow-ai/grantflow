@@ -5,9 +5,9 @@ from uuid import UUID
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagSource,
 )
 from packages.shared_utils.src.exceptions import DatabaseError, ValidationError
@@ -34,18 +34,18 @@ async def verify_rag_sources_indexed(
                 rag_sources = list(
                     await session.scalars(
                         select(RagSource)
-                        .join(GrantApplicationRagSource)
+                        .join(GrantApplicationSource)
                         .join(GrantApplication)
-                        .where(GrantApplicationRagSource.grant_application_id == parent_id)
+                        .where(GrantApplicationSource.grant_application_id == parent_id)
                     )
                 )
             else:
                 rag_sources = list(
                     await session.scalars(
                         select(RagSource)
-                        .join(GrantTemplateRagSource)
+                        .join(GrantTemplateSource)
                         .join(GrantTemplate)
-                        .where(GrantTemplateRagSource.grant_template_id == parent_id)
+                        .where(GrantTemplateSource.grant_template_id == parent_id)
                     )
                 )
 

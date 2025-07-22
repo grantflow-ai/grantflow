@@ -10,7 +10,8 @@ from litestar.middleware import (
     AuthenticationResult,
 )
 from litestar.types import ASGIApp, Receive, Scope, Send
-from packages.db.src.tables import ProjectUser
+from packages.db.src.enums import UserRoleEnum
+from packages.db.src.tables import OrganizationUser, ProjectAccess
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.tracing import start_span_with_trace_id
@@ -22,31 +23,68 @@ from services.backend.src.utils.jwt import verify_jwt_token
 logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema"}
-ADMIN_PATHS = {"organizations"}
+ADMIN_PATHS = {"granting-institutions"}
+ADMIN_SOURCES_PATTERNS = [
+    "/granting-institutions/{granting_institution_id}/sources",
+    "/granting-institutions/{granting_institution_id}/sources/{source_id}",
+    "/granting-institutions/{granting_institution_id}/sources/upload-url",
+    "/granting-institutions/{granting_institution_id}/sources/crawl-url",
+]
 DEV_BYPASS_PREFIX = "/dev/"
 
 
+def _matches_source_pattern(path: str, pattern: str) -> bool:
+    """Check if a path matches an admin sources pattern with path parameters."""
+    pattern_parts = pattern.split("/")
+    path_parts = path.split("/")
+
+    if len(pattern_parts) != len(path_parts):
+        return False
+
+    return all(
+        pattern_part == path_part or (pattern_part.startswith("{") and pattern_part.endswith("}"))
+        for pattern_part, path_part in zip(pattern_parts, path_parts, strict=False)
+    )
+
+
 class AuthMiddleware(AbstractAuthenticationMiddleware):
+    def _is_public_path(self, path: str) -> bool:
+        """Check if path is public (no authentication required)."""
+        return any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema")
+
+    def _is_dev_bypass(self, path: str) -> bool:
+        """Check if path uses dev bypass."""
+        return path.startswith(DEV_BYPASS_PREFIX)
+
+    def _is_admin_path(self, path: str) -> bool:
+        """Check if path requires admin authentication."""
+        if any(
+            path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
+            for admin_path in ADMIN_PATHS
+        ):
+            return True
+
+        return any(_matches_source_pattern(path, pattern) for pattern in ADMIN_SOURCES_PATTERNS)
+
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
         if isinstance(connection, Request) and connection.method == "OPTIONS":
             return AuthenticationResult(user=None, auth=None)
 
-        if any(connection.url.path == f"/{path}" for path in PUBLIC_PATHS):
+        path = connection.url.path
+
+        if self._is_public_path(path):
             return AuthenticationResult(user=None, auth=None)
 
-        if connection.url.path.startswith("/schema"):
-            return AuthenticationResult(user=None, auth=None)
-
-        if connection.url.path.startswith(DEV_BYPASS_PREFIX):
+        if self._is_dev_bypass(path):
             if get_env("ENABLE_DEV_BYPASS", False):
                 return AuthenticationResult(user=None, auth="dev-bypass-user")
             raise NotAuthorizedException("Dev bypass not enabled")
 
         auth_header = connection.headers.get("Authorization", "").strip()
 
-        if any(connection.url.path.startswith(f"/{path}") for path in ADMIN_PATHS):
+        if self._is_admin_path(path):
             access_code = get_env("ADMIN_ACCESS_CODE")
             if auth_header and auth_header == access_code:
                 return AuthenticationResult(user=None, auth=None)
@@ -60,26 +98,45 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             firebase_uid = verify_jwt_token(otp)
 
         if allowed_roles := connection.route_handler.opt.get("allowed_roles"):
+            organization_id = connection.path_params.get("organization_id")
             project_id = connection.path_params.get("project_id")
-            if not project_id:
-                raise NotAuthorizedException
+
+            if not organization_id:
+                raise NotAuthorizedException("Organization context required")
 
             if not firebase_uid:
                 raise NotAuthorizedException
 
             async with connection.app.state.session_maker() as session:
-                stmt = (
-                    select(ProjectUser)
-                    .where(ProjectUser.firebase_uid == firebase_uid)
-                    .where(ProjectUser.project_id == project_id)
+                stmt = select(OrganizationUser).where(
+                    OrganizationUser.firebase_uid == firebase_uid,
+                    OrganizationUser.organization_id == organization_id,
+                    OrganizationUser.deleted_at.is_(None),
                 )
                 if allowed_roles is not None:
-                    stmt = stmt.where(ProjectUser.role.in_(allowed_roles))
+                    stmt = stmt.where(OrganizationUser.role.in_(allowed_roles))
 
                 result = await session.execute(stmt)
+                organization_user = result.scalar_one_or_none()
 
-            if project_user := result.scalar_one_or_none():
-                return AuthenticationResult(user=project_user.role, auth=firebase_uid)
+                if organization_user:
+                    if (
+                        organization_user.role == UserRoleEnum.COLLABORATOR
+                        and not organization_user.has_all_projects_access
+                        and project_id
+                    ):
+                        project_access = await session.scalar(
+                            select(ProjectAccess).where(
+                                ProjectAccess.firebase_uid == firebase_uid,
+                                ProjectAccess.organization_id == organization_id,
+                                ProjectAccess.project_id == project_id,
+                            )
+                        )
+                        if not project_access:
+                            raise NotAuthorizedException("Project access required")
+
+                    return AuthenticationResult(user=organization_user.role, auth=firebase_uid)
+
             raise NotAuthorizedException
 
         if firebase_uid:

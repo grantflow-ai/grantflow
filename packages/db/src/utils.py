@@ -8,11 +8,11 @@ from sqlalchemy.orm import selectinload, with_polymorphic
 
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.db.src.tables import (
-    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
+    GrantingInstitutionSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
     RagFile,
     RagSource,
     RagUrl,
@@ -35,7 +35,7 @@ async def check_exists_files_being_indexed(
     if not application_id and not organization_id:
         raise ValidationError("Either application_id or organization_id must be provided.")
 
-    file_table_cls = GrantApplicationRagSource if application_id else FundingOrganizationRagSource
+    file_table_cls = GrantApplicationSource if application_id else GrantingInstitutionSource
 
     async with session_maker() as session:
         return cast(
@@ -48,7 +48,7 @@ async def check_exists_files_being_indexed(
                         .where(
                             file_table_cls.grant_application_id == application_id
                             if hasattr(file_table_cls, "grant_application_id")
-                            else file_table_cls.funding_organization_id == organization_id
+                            else file_table_cls.granting_institution_id == organization_id
                         )
                         .where(RagFile.indexing_status == SourceIndexingStatusEnum.INDEXING)
                     )
@@ -63,18 +63,21 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
     try:
         result = await session.execute(
             select(GrantApplication)
-            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.funding_organization))
+            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution))
             .options(
                 selectinload(GrantApplication.grant_template)
                 .selectinload(GrantTemplate.rag_sources)
-                .selectinload(GrantTemplateRagSource.rag_source.of_type(poly_rag_source))
+                .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source))
             )
             .options(
                 selectinload(GrantApplication.rag_sources).selectinload(
-                    GrantApplicationRagSource.rag_source.of_type(poly_rag_source)
+                    GrantApplicationSource.rag_source.of_type(poly_rag_source)
                 )
             )
-            .where(GrantApplication.id == application_id)
+            .where(
+                GrantApplication.id == application_id,
+                GrantApplication.deleted_at.is_(None),
+            )
         )
         return result.scalar_one()
     except NoResultFound as e:
@@ -96,7 +99,10 @@ async def update_source_indexing_status(
         try:
             await session.execute(
                 update(RagSource)
-                .where(RagSource.id == source_id)
+                .where(
+                    RagSource.id == source_id,
+                    RagSource.deleted_at.is_(None),
+                )
                 .values({"indexing_status": indexing_status, "text_content": text_content})
             )
             if vectors:

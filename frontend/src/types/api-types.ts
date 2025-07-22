@@ -17,12 +17,18 @@ export namespace API {
 	export interface PathParameters {
 	invitation_id: string;
 };
+
+	export type RequestBody = {
+	token: string;
+};
 };
 
-	export namespace CrawlFundingOrganizationUrl {
+	export namespace AddOrganizationMember {
 	export namespace Http201 {
 	export type ResponseBody = {
-	source_id: string;
+	firebase_uid: string;
+	message: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 
@@ -35,11 +41,13 @@ export namespace API {
 };
 
 	export interface PathParameters {
-	organization_id: null | string;
+	organization_id: string;
 };
 
 	export type RequestBody = {
-	url: string;
+	firebase_uid: string;
+	has_all_projects_access?: boolean;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 
@@ -60,6 +68,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: null | string;
 	project_id: null | string;
 };
 
@@ -84,8 +93,33 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: null | string;
 	project_id: null | string;
 	template_id: null | string;
+};
+
+	export type RequestBody = {
+	url: string;
+};
+};
+
+	export namespace CrawlGrantingInstitutionUrl {
+	export namespace Http201 {
+	export type ResponseBody = {
+	source_id: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: null | string;
 };
 
 	export type RequestBody = {
@@ -113,14 +147,6 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
-	abbreviation?: string;
-	created_at: string;
-	full_name: string;
-	id: string;
-	updated_at: string;
-};
-	funding_organization_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -141,6 +167,14 @@ export namespace API {
 	parent_id: null | string;
 	title: string;
 })[];
+	granting_institution?: {
+	abbreviation?: string;
+	created_at: string;
+	full_name: string;
+	id: string;
+	updated_at: string;
+};
+	granting_institution_id?: string;
 	id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -172,7 +206,7 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 	text?: string;
 	title: string;
 	updated_at: string;
@@ -188,37 +222,13 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
 	export type RequestBody = {
 	description?: string;
 	title: string;
-};
-};
-
-	export namespace CreateFundingOrganizationRagSourceUploadUrl {
-	export namespace Http201 {
-	export type ResponseBody = {
-	source_id: string;
-	url: string;
-};
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export interface PathParameters {
-	organization_id: null | string;
-};
-
-	export interface QueryParameters {
-	blob_name: string;
 };
 };
 
@@ -240,6 +250,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: null | string;
 	project_id: null | string;
 };
 
@@ -264,6 +275,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: string;
 	grant_template_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -285,8 +297,57 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: null | string;
 	project_id: null | string;
 	template_id: null | string;
+};
+
+	export interface QueryParameters {
+	blob_name: string;
+};
+};
+
+	export namespace CreateGrantingInstitution {
+	export namespace Http201 {
+	export type ResponseBody = {
+	abbreviation: null | string;
+	full_name: string;
+	id: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export type RequestBody = {
+	abbreviation: null | string;
+	full_name: string;
+};
+};
+
+	export namespace CreateGrantingInstitutionRagSourceUploadUrl {
+	export namespace Http201 {
+	export type ResponseBody = {
+	source_id: string;
+	url: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: null | string;
 };
 
 	export interface QueryParameters {
@@ -310,20 +371,20 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
 	export type RequestBody = {
 	email: string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	project_ids?: string[];
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 
 	export namespace CreateOrganization {
 	export namespace Http201 {
 	export type ResponseBody = {
-	abbreviation: null | string;
-	full_name: string;
 	id: string;
 };
 };
@@ -337,8 +398,41 @@ export namespace API {
 };
 
 	export type RequestBody = {
-	abbreviation: null | string;
-	full_name: string;
+	contact_email?: null | string;
+	contact_person_name?: null | string;
+	description?: null | string;
+	firebase_uid: string;
+	institutional_affiliation?: null | string;
+	logo_url?: null | string;
+	name: string;
+};
+};
+
+	export namespace CreateOrganizationInvitation {
+	export namespace Http201 {
+	export type ResponseBody = {
+	expires_at: string;
+	token: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+
+	export type RequestBody = {
+	email: string;
+	has_all_projects_access?: boolean;
+	project_ids?: string[];
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 
@@ -355,6 +449,10 @@ export namespace API {
 	extra?: Record<string, unknown> | null | unknown[];
 	status_code: number;
 };
+};
+
+	export interface PathParameters {
+	organization_id: string;
 };
 
 	export type RequestBody = {
@@ -379,26 +477,8 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
-};
-};
-
-	export namespace DeleteFundingOrganizationRagSource {
-	export namespace Http204 {
-	export type ResponseBody = undefined;
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export interface PathParameters {
-	organization_id: null | string;
-	source_id: string;
 };
 };
 
@@ -417,6 +497,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: null | string;
 	project_id: string;
 	source_id: string;
 };
@@ -436,9 +517,47 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: null | string;
 	project_id: string;
 	source_id: string;
 	template_id: null | string;
+};
+};
+
+	export namespace DeleteGrantingInstitution {
+	export namespace Http204 {
+	export type ResponseBody = undefined;
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+};
+
+	export namespace DeleteGrantingInstitutionRagSource {
+	export namespace Http204 {
+	export type ResponseBody = undefined;
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: null | string;
+	source_id: string;
 };
 };
 
@@ -457,11 +576,35 @@ export namespace API {
 
 	export interface PathParameters {
 	invitation_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
 
 	export namespace DeleteOrganization {
+	export namespace Http200 {
+	export type ResponseBody = {
+	grace_period_days: number;
+	message: string;
+	restoration_info: string;
+	scheduled_deletion_date: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+};
+
+	export namespace DeleteOrganizationInvitation {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
 };
@@ -475,6 +618,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	invitation_id: string;
 	organization_id: string;
 };
 };
@@ -493,6 +637,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -549,14 +694,6 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
-	abbreviation?: string;
-	created_at: string;
-	full_name: string;
-	id: string;
-	updated_at: string;
-};
-	funding_organization_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -577,6 +714,14 @@ export namespace API {
 	parent_id: null | string;
 	title: string;
 })[];
+	granting_institution?: {
+	abbreviation?: string;
+	created_at: string;
+	full_name: string;
+	id: string;
+	updated_at: string;
+};
+	granting_institution_id?: string;
 	id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -608,7 +753,7 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 	text?: string;
 	title: string;
 	updated_at: string;
@@ -625,6 +770,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -648,6 +794,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -657,6 +804,35 @@ export namespace API {
 	export type ResponseBody = {
 	otp: string;
 };
+};
+};
+
+	export namespace GetOrganization {
+	export namespace Http200 {
+	export type ResponseBody = {
+	contact_email: null | string;
+	contact_person_name: null | string;
+	created_at: string;
+	description: null | string;
+	id: string;
+	institutional_affiliation: null | string;
+	logo_url: null | string;
+	name: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
 };
 };
 
@@ -676,10 +852,9 @@ export namespace API {
 	email: string;
 	firebase_uid: string;
 	photo_url: null | string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
 	name: string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
 };
 };
 
@@ -692,7 +867,20 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
+};
+};
+
+	export namespace GetSoleOwnedOrganizations {
+	export namespace Http200 {
+	export type ResponseBody = {
+	count: number;
+	organizations: {
+	id: string;
+	name: string;
+}[];
+};
 };
 };
 
@@ -725,7 +913,7 @@ export namespace API {
 	id: string;
 	parent_id?: string;
 	project_id: string;
-	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 	submission_date?: string;
 	title: string;
 	updated_at: string;
@@ -748,6 +936,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
@@ -757,7 +946,17 @@ export namespace API {
 	order?: string;
 	search?: null | string;
 	sort?: string;
-	status?: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS" | null;
+	status?: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT" | null;
+};
+};
+
+	export namespace ListGrantingInstitutions {
+	export namespace Http200 {
+	export type ResponseBody = {
+	abbreviation: null | string;
+	full_name: string;
+	id: string;
+}[];
 };
 };
 
@@ -796,25 +995,14 @@ export namespace API {
 };
 };
 
-	export namespace ListOrganizations {
+	export namespace ListOrganizationInvitations {
 	export namespace Http200 {
 	export type ResponseBody = {
-	abbreviation: null | string;
-	full_name: string;
-	id: string;
-}[];
-};
-};
-
-	export namespace ListProjectMembers {
-	export namespace Http200 {
-	export type ResponseBody = {
-	display_name: null | string;
+	accepted_at: null | string;
 	email: string;
-	firebase_uid: string;
-	joined_at: string;
-	photo_url: null | string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	id: string;
+	invitation_sent_at: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
 };
 
@@ -827,6 +1015,90 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: string;
+};
+};
+
+	export namespace ListOrganizationMembers {
+	export namespace Http200 {
+	export type ResponseBody = {
+	created_at: string;
+	display_name: string;
+	email: string;
+	firebase_uid: string;
+	has_all_projects_access: boolean;
+	photo_url?: string;
+	project_access: {
+	granted_at: string;
+	project_id: string;
+	project_name: string;
+}[];
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+	updated_at: string;
+}[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+};
+
+	export namespace ListOrganizations {
+	export namespace Http200 {
+	export type ResponseBody = {
+	description: null | string;
+	id: string;
+	logo_url: null | string;
+	members_count: number;
+	name: string;
+	projects_count: number;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+}[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface QueryParameters {
+	firebase_uid?: null | string;
+};
+};
+
+	export namespace ListProjectMembers {
+	export namespace Http200 {
+	export type ResponseBody = {
+	display_name: null | string;
+	email: string;
+	firebase_uid: string;
+	joined_at: string;
+	photo_url: null | string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+}[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -843,11 +1115,22 @@ export namespace API {
 	email: string;
 	firebase_uid: string;
 	photo_url: null | string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 }[];
 	name: string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
 }[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
 };
 };
 
@@ -871,6 +1154,25 @@ export namespace API {
 };
 };
 
+	export namespace RemoveMember {
+	export namespace Http204 {
+	export type ResponseBody = undefined;
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	firebase_uid: string;
+	organization_id: string;
+};
+};
+
 	export namespace RemoveProjectMember {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
@@ -886,7 +1188,37 @@ export namespace API {
 
 	export interface PathParameters {
 	firebase_uid: string;
+	organization_id: string;
 	project_id: string;
+};
+};
+
+	export namespace RestoreOrganization {
+	export namespace Http200 {
+	export type ResponseBody = {
+	contact_email: null | string;
+	contact_person_name: null | string;
+	created_at: string;
+	description: null | string;
+	id: string;
+	institutional_affiliation: null | string;
+	logo_url: null | string;
+	name: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
 };
 };
 
@@ -910,14 +1242,6 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
-	abbreviation?: string;
-	created_at: string;
-	full_name: string;
-	id: string;
-	updated_at: string;
-};
-	funding_organization_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -938,6 +1262,14 @@ export namespace API {
 	parent_id: null | string;
 	title: string;
 })[];
+	granting_institution?: {
+	abbreviation?: string;
+	created_at: string;
+	full_name: string;
+	id: string;
+	updated_at: string;
+};
+	granting_institution_id?: string;
 	id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -969,7 +1301,7 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 	text?: string;
 	title: string;
 	updated_at: string;
@@ -986,39 +1318,8 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
-};
-};
-
-	export namespace RetrieveFundingOrganizationRagSources {
-	export namespace Http200 {
-	export type ResponseBody = ({
-	created_at: string;
-	description: null | string;
-	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
-	title: null | string;
-	url: string;
-} | {
-	created_at: string;
-	filename: string;
-	id: string;
-	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
-	mime_type: string;
-	size: number;
-})[];
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export interface PathParameters {
-	organization_id: null | string;
 };
 };
 
@@ -1051,6 +1352,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: null | string;
+	organization_id: null | string;
 	project_id: string;
 };
 };
@@ -1083,8 +1385,41 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	organization_id: null | string;
 	project_id: string;
 	template_id: null | string;
+};
+};
+
+	export namespace RetrieveGrantingInstitutionRagSources {
+	export namespace Http200 {
+	export type ResponseBody = ({
+	created_at: string;
+	description: null | string;
+	id: string;
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	title: null | string;
+	url: string;
+} | {
+	created_at: string;
+	filename: string;
+	id: string;
+	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING";
+	mime_type: string;
+	size: number;
+})[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	granting_institution_id: null | string;
 };
 };
 
@@ -1133,6 +1468,7 @@ export namespace API {
 
 	export interface PathParameters {
 	job_id: string;
+	organization_id: string;
 	project_id: string;
 };
 };
@@ -1157,6 +1493,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1189,14 +1526,6 @@ export namespace API {
 };
 	grant_template?: {
 	created_at: string;
-	funding_organization?: {
-	abbreviation?: string;
-	created_at: string;
-	full_name: string;
-	id: string;
-	updated_at: string;
-};
-	funding_organization_id?: string;
 	grant_application_id: string;
 	grant_sections: ({
 	depends_on: string[];
@@ -1217,6 +1546,14 @@ export namespace API {
 	parent_id: null | string;
 	title: string;
 })[];
+	granting_institution?: {
+	abbreviation?: string;
+	created_at: string;
+	full_name: string;
+	id: string;
+	updated_at: string;
+};
+	granting_institution_id?: string;
 	id: string;
 	rag_job_id?: string;
 	rag_sources: {
@@ -1248,7 +1585,7 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 	text?: string;
 	title: string;
 	updated_at: string;
@@ -1265,6 +1602,7 @@ export namespace API {
 
 	export interface PathParameters {
 	application_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1291,7 +1629,7 @@ export namespace API {
 }[];
 	title: string;
 }[];
-	status: "CANCELLED" | "DRAFT" | "GENERATING" | "IN_PROGRESS";
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
 	text: string;
 	title: string;
 };
@@ -1313,6 +1651,7 @@ export namespace API {
 	export interface PathParameters {
 	application_id: string;
 	grant_template_id: string;
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1335,32 +1674,7 @@ export namespace API {
 };
 };
 
-	export namespace UpdateInvitationRole {
-	export namespace Http200 {
-	export type ResponseBody = {
-	token: string;
-};
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export interface PathParameters {
-	invitation_id: string;
-	project_id: string;
-};
-
-	export type RequestBody = {
-	role: "ADMIN" | "MEMBER" | "OWNER";
-};
-};
-
-	export namespace UpdateOrganization {
+	export namespace UpdateGrantingInstitution {
 	export namespace Http200 {
 	export type ResponseBody = {
 	abbreviation: null | string;
@@ -1387,14 +1701,10 @@ export namespace API {
 };
 };
 
-	export namespace UpdateProject {
+	export namespace UpdateInvitationRole {
 	export namespace Http200 {
 	export type ResponseBody = {
-	description: null | string;
-	id: string;
-	logo_url: null | string;
-	name: string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	token: string;
 };
 };
 
@@ -1407,6 +1717,132 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	invitation_id: string;
+	organization_id: string;
+	project_id: string;
+};
+
+	export type RequestBody = {
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+};
+};
+
+	export namespace UpdateMemberRole {
+	export namespace Http200 {
+	export type ResponseBody = {
+	firebase_uid: string;
+	message: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	firebase_uid: string;
+	organization_id: string;
+};
+
+	export type RequestBody = {
+	has_all_projects_access?: boolean;
+	project_ids?: string[];
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+};
+};
+
+	export namespace UpdateOrganization {
+	export namespace Http200 {
+	export type ResponseBody = {
+	contact_email: null | string;
+	contact_person_name: null | string;
+	created_at: string;
+	description: null | string;
+	id: string;
+	institutional_affiliation: null | string;
+	logo_url: null | string;
+	name: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+	updated_at: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+
+	export type RequestBody = {
+	contact_email: null | string;
+	contact_person_name: null | string;
+	description: null | string;
+	institutional_affiliation: null | string;
+	logo_url: null | string;
+	name: string;
+};
+};
+
+	export namespace UpdateOrganizationInvitation {
+	export namespace Http200 {
+	export type ResponseBody = {
+	accepted_at: null | string;
+	email: string;
+	id: string;
+	invitation_sent_at: string;
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	invitation_id: string;
+	organization_id: string;
+};
+
+	export type RequestBody = {
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
+};
+};
+
+	export namespace UpdateProject {
+	export namespace Http200 {
+	export type ResponseBody = {
+	description: null | string;
+	id: string;
+	logo_url: null | string;
+	name: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
 	project_id: string;
 };
 
@@ -1425,7 +1861,7 @@ export namespace API {
 	firebase_uid: string;
 	joined_at: string;
 	photo_url: null | string;
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 
@@ -1439,11 +1875,12 @@ export namespace API {
 
 	export interface PathParameters {
 	firebase_uid: string;
+	organization_id: string;
 	project_id: string;
 };
 
 	export type RequestBody = {
-	role: "ADMIN" | "MEMBER" | "OWNER";
+	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
 };

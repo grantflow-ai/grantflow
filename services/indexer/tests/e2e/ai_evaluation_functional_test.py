@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from packages.db.src.tables import GrantApplicationRagSource
+from packages.db.src.tables import GrantApplicationSource
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, get_anthropic_client
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 @e2e_test(category=E2ETestCategory.AI_EVAL, timeout=180)
 async def test_content_relevance_evaluation(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running AI content relevance evaluation")
 
@@ -99,9 +99,7 @@ async def test_content_relevance_evaluation(
 
 
 @e2e_test(category=E2ETestCategory.AI_EVAL, timeout=240)
-async def test_hallucination_detection(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
-) -> None:
+async def test_hallucination_detection(logger: logging.Logger, grant_application_file: GrantApplicationSource) -> None:
     logger.info("Running AI hallucination detection test")
 
     test_cases = [
@@ -173,7 +171,7 @@ async def test_hallucination_detection(
 
 @e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=120)
 async def test_semantic_similarity_thresholds(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running semantic similarity threshold evaluation")
 
@@ -224,7 +222,7 @@ async def test_semantic_similarity_thresholds(
 @e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
 @pytest.mark.parametrize("data_file", TEST_DATA_SOURCES[:3])
 async def test_comprehensive_quality_with_ai_validation(
-    logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running comprehensive quality assessment with AI validation for %s", data_file.name)
 
@@ -315,7 +313,7 @@ async def test_comprehensive_quality_with_ai_validation(
 
 @e2e_test(category=E2ETestCategory.AI_EVAL, timeout=200)
 async def test_citation_accuracy_validation(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running citation accuracy validation test")
 

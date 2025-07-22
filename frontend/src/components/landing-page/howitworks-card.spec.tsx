@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { HowItWorksCard } from "@/components/landing-page/howitworks-card";
 
@@ -40,7 +40,10 @@ vi.mock("@/lib/utils", () => ({
 	cn: (...inputs: any[]) => inputs.filter(Boolean).join(" "),
 }));
 
-describe("HowItWorksCard", () => {
+describe.sequential("HowItWorksCard", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const defaultProps = {
 		className: "custom-class",
 		headerStyle: "text-blue-500 text-3xl",

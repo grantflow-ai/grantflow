@@ -52,7 +52,7 @@ async def test_dimension_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -72,7 +72,7 @@ async def test_dimension_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
@@ -131,7 +131,7 @@ async def test_hnsw_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -151,7 +151,7 @@ async def test_hnsw_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
@@ -214,7 +214,7 @@ async def test_scale_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -234,7 +234,7 @@ async def test_scale_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
@@ -298,7 +298,7 @@ async def test_batch_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -318,7 +318,7 @@ async def test_batch_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
@@ -365,7 +365,7 @@ async def test_search_optimization_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -385,7 +385,7 @@ async def test_search_optimization_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 
@@ -442,7 +442,7 @@ async def test_production_candidates_matrix(
         await modifier.modify_vector_dimension(params.dimension)
         await modifier.modify_index_parameters(params.m, params.ef_construction)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -462,7 +462,7 @@ async def test_production_candidates_matrix(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
 

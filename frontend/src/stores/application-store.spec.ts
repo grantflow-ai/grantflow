@@ -1,30 +1,63 @@
+import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import {
 	ApplicationFactory,
 	ApplicationWithTemplateFactory,
 	GrantSectionDetailedFactory,
 	GrantTemplateFactory,
 } from "::testing/factories";
+import { resetAllStores } from "::testing/store-reset";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getApplication, updateApplication } from "@/actions/grant-applications";
 import { updateGrantTemplate } from "@/actions/grant-template";
 import { retrieveRagJob } from "@/actions/rag-jobs";
+import { crawlTemplateUrl, createTemplateSourceUploadUrl, deleteTemplateSource } from "@/actions/sources";
+import type { API } from "@/types/api-types";
+import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 
 import { useApplicationStore } from "./application-store";
 
-vi.mock("@/actions/grant-applications");
-vi.mock("@/actions/grant-template");
-vi.mock("@/actions/rag-jobs");
+vi.mock("@/actions/grant-applications", () => ({
+	createApplication: vi.fn(),
+	generateApplication: vi.fn(),
+	getApplication: vi.fn(),
+	updateApplication: vi.fn(),
+}));
+vi.mock("@/actions/grant-template", () => ({
+	generateGrantTemplate: vi.fn(),
+	updateGrantTemplate: vi.fn(),
+}));
+vi.mock("@/actions/rag-jobs", () => ({
+	retrieveRagJob: vi.fn(),
+}));
 vi.mock("@/actions/sources", () => ({
 	crawlApplicationUrl: vi.fn(),
 	crawlTemplateUrl: vi.fn(),
 	createApplicationSourceUploadUrl: vi.fn(),
-	createTemplateSourceUploadUrl: vi.fn(),
+	createTemplateSourceUploadUrl: vi.fn(() =>
+		Promise.resolve({
+			source_id: "source-123",
+			url: "https://upload.url",
+		}),
+	),
 	deleteApplicationSource: vi.fn(),
 	deleteTemplateSource: vi.fn(),
 }));
-vi.mock("@/utils/dev-indexing-patch");
+vi.mock("@/utils/dev-indexing-patch", () => ({
+	extractObjectPathFromUrl: vi.fn(),
+	triggerDevIndexing: vi.fn(),
+}));
+
+import ky from "ky";
+
 vi.mock("ky", () => ({
-	default: vi.fn(() => Promise.resolve({ ok: true })),
+	default: vi.fn(),
+	HTTPError: class HTTPError extends Error {
+		response: { status: number };
+		constructor(message: string, status: number) {
+			super(message);
+			this.response = { status };
+		}
+	},
 }));
 vi.mock("sonner", () => ({
 	toast: {
@@ -33,19 +66,31 @@ vi.mock("sonner", () => ({
 		success: vi.fn(),
 	},
 }));
+vi.mock("@/stores/organization-store", () => ({
+	useOrganizationStore: {
+		getState: vi.fn(() => ({
+			clearOrganization: vi.fn(),
+			selectedOrganizationId: "mock-org-id",
+		})),
+		setState: vi.fn(),
+	},
+}));
 
 describe("Application Store", () => {
 	beforeEach(() => {
-		useApplicationStore.setState({
-			application: null,
-			areAppOperationsInProgress: false,
-			ragJobState: {
-				isRestoring: false,
-				restoredJob: null,
-			},
-		});
+		// Reset all stores to ensure test isolation
+		resetAllStores();
+		setupAuthenticatedTest();
 
+		// Clear all mocks completely
 		vi.clearAllMocks();
+		vi.resetAllMocks();
+
+		// Reset all mocks to their default implementations
+		vi.mocked(updateApplication).mockReset();
+		vi.mocked(getApplication).mockReset();
+		vi.mocked(updateGrantTemplate).mockReset();
+		vi.mocked(retrieveRagJob).mockReset();
 	});
 
 	describe("state management", () => {
@@ -56,27 +101,48 @@ describe("Application Store", () => {
 		});
 	});
 
-	describe("updateApplicationTitle", () => {
+	describe.sequential("updateApplicationTitle", () => {
 		it("should call updateApplication API and update state on success", async () => {
-			const application = ApplicationFactory.build({ title: "Old Title" });
-			const updatedApplication = { ...application, title: "New Title" };
+			const application = {
+				...ApplicationFactory.build(),
+				id: "app-id-1",
+				project_id: "project-id-1",
+				title: "Old Title",
+			} as const;
 
+			// Create updated application with new title - should match the API response type
+			const updatedApplication = {
+				...application,
+				title: "New Title",
+			};
+
+			// Mock the imported function - need to handle the organization parameter
 			vi.mocked(updateApplication).mockResolvedValue(updatedApplication);
 
 			useApplicationStore.setState({ application });
 
 			const { updateApplicationTitle } = useApplicationStore.getState();
 
-			await updateApplicationTitle("project-id", "app-id", "New Title");
+			await updateApplicationTitle("mock-org-id", "project-id-1", "app-id-1", "New Title");
 
-			expect(updateApplication).toHaveBeenCalledWith("project-id", "app-id", { title: "New Title" });
+			expect(updateApplication).toHaveBeenCalledWith("mock-org-id", "project-id-1", "app-id-1", {
+				title: "New Title",
+			});
 
-			const state = useApplicationStore.getState();
-			expect(state.application).toEqual(updatedApplication);
+			// Immediately check state after the async operation
+			const finalState = useApplicationStore.getState();
+			expect(finalState.application?.title).toBe("New Title");
+			expect(finalState.application?.id).toBe("app-id-1");
 		});
 
 		it("should rollback on API error", async () => {
-			const application = ApplicationFactory.build({ title: "Old Title" });
+			// Create a specific application with a known title
+			const application = {
+				...ApplicationFactory.build(),
+				id: "app-id-2",
+				project_id: "project-id-2",
+				title: "Old Title",
+			} as const;
 
 			vi.mocked(updateApplication).mockRejectedValue(new Error("API Error"));
 
@@ -84,10 +150,11 @@ describe("Application Store", () => {
 
 			const { updateApplicationTitle } = useApplicationStore.getState();
 
-			await updateApplicationTitle("project-id", "app-id", "New Title");
+			await updateApplicationTitle("mock-org-id", "project-id-2", "app-id-2", "New Title");
 
 			const state = useApplicationStore.getState();
 			expect(state.application?.title).toBe("Old Title");
+			expect(state.application?.id).toBe("app-id-2");
 		});
 	});
 
@@ -99,9 +166,9 @@ describe("Application Store", () => {
 
 			const { getApplication: retrieveApp } = useApplicationStore.getState();
 
-			await retrieveApp("project-id", "app-id");
+			await retrieveApp("mock-org-id", "project-id", "app-id");
 
-			expect(getApplication).toHaveBeenCalledWith("project-id", "app-id");
+			expect(getApplication).toHaveBeenCalledWith("mock-org-id", "project-id", "app-id");
 
 			const state = useApplicationStore.getState();
 			expect(state.application).toEqual(application);
@@ -113,6 +180,9 @@ describe("Application Store", () => {
 		it("should update application", () => {
 			const application = ApplicationFactory.build({ title: "Test App" });
 
+			// Clear any existing application first
+			useApplicationStore.setState({ application: null });
+
 			const { setApplication } = useApplicationStore.getState();
 
 			setApplication(application);
@@ -122,8 +192,10 @@ describe("Application Store", () => {
 		});
 	});
 
-	describe("updateGrantSections", () => {
+	describe.sequential("updateGrantSections", () => {
 		it("should update grant template sections", async () => {
+			// Reset store state explicitly
+			useApplicationStore.getState().reset();
 			const sections = [
 				GrantSectionDetailedFactory.build({
 					id: "1",
@@ -133,12 +205,26 @@ describe("Application Store", () => {
 				}),
 			];
 
-			const application = ApplicationWithTemplateFactory.build({
+			const application: API.RetrieveApplication.Http200.ResponseBody = {
+				completed_at: undefined,
+				created_at: "2023-01-01T00:00:00Z",
+				deadline: undefined,
+				form_inputs: undefined,
 				grant_template: {
 					...GrantTemplateFactory.build(),
 					grant_sections: [],
+					id: "test-template-id",
 				},
-			});
+				id: "test-app-id",
+				project_id: "test-project-id",
+				rag_job_id: undefined,
+				rag_sources: [],
+				research_objectives: undefined,
+				status: "WORKING_DRAFT",
+				text: undefined,
+				title: "Test Application",
+				updated_at: "2023-01-01T00:00:00Z",
+			};
 
 			vi.mocked(updateGrantTemplate).mockResolvedValue({} as any);
 
@@ -148,18 +234,38 @@ describe("Application Store", () => {
 
 			await updateGrantSections(sections);
 
-			if (application.grant_template?.id) {
-				expect(updateGrantTemplate).toHaveBeenCalledWith(
-					application.project_id,
-					application.id,
-					application.grant_template.id,
-					{ grant_sections: sections },
-				);
-			}
+			expect(updateGrantTemplate).toHaveBeenCalledWith(
+				"mock-org-id",
+				"test-project-id",
+				"test-app-id",
+				"test-template-id",
+				{ grant_sections: sections },
+			);
 		});
 
 		it("should handle missing grant template gracefully", async () => {
-			const application = ApplicationFactory.build({ grant_template: undefined });
+			// Reset store state explicitly
+			useApplicationStore.getState().reset();
+			// Create an application without grant_template
+			const application: API.RetrieveApplication.Http200.ResponseBody = {
+				completed_at: undefined,
+				created_at: "2023-01-01T00:00:00Z",
+				deadline: undefined,
+				form_inputs: undefined,
+				grant_template: undefined,
+				id: "test-app-id-2",
+				project_id: "test-project-id-2",
+				rag_job_id: undefined,
+				rag_sources: [],
+				research_objectives: undefined,
+				status: "WORKING_DRAFT",
+				text: undefined,
+				title: "Test Application 2",
+				updated_at: "2023-01-01T00:00:00Z",
+			};
+
+			// Reset the mock before the test to ensure clean state
+			vi.mocked(updateGrantTemplate).mockClear();
 
 			useApplicationStore.setState({ application });
 
@@ -191,6 +297,20 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
+			// Mock the required functions
+			const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
+			const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
+
+			vi.mocked(createTemplateSourceUploadUrl).mockImplementation(() =>
+				Promise.resolve({
+					source_id: "source-123",
+					url: "https://upload.url",
+				}),
+			);
+			vi.mocked(extractObjectPathFromUrl).mockImplementation(() => "path");
+			vi.mocked(triggerDevIndexing).mockImplementation(() => Promise.resolve());
+			vi.mocked(getApplication).mockResolvedValue(application);
+
 			useApplicationStore.setState({ application });
 
 			const { addFile } = useApplicationStore.getState();
@@ -207,17 +327,16 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
-			const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
-			const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
-
+			// Set up the mock implementations using the already mocked modules
 			vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
 				source_id: "source-123",
 				url: "https://upload.url",
 			});
 			vi.mocked(extractObjectPathFromUrl).mockReturnValue("path");
-			vi.mocked(triggerDevIndexing).mockImplementation(() => Promise.resolve());
-
+			vi.mocked(triggerDevIndexing).mockResolvedValue(undefined);
+			vi.mocked(ky).mockReturnValue({ ok: true } as any);
 			vi.mocked(getApplication).mockResolvedValue(application);
+
 			useApplicationStore.setState({ application });
 
 			const { addFile } = useApplicationStore.getState();
@@ -226,15 +345,14 @@ describe("Application Store", () => {
 				await addFile(file as any, application.grant_template.id);
 			}
 
+			// Check that createTemplateSourceUploadUrl was called
 			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
 		});
 
 		it("should add URLs with parentId", async () => {
 			const application = ApplicationWithTemplateFactory.build();
 
-			const { crawlTemplateUrl } = await import("@/actions/sources");
 			vi.mocked(crawlTemplateUrl).mockResolvedValue({ source_id: "source-123" });
-
 			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
@@ -243,6 +361,7 @@ describe("Application Store", () => {
 			await addUrl("https://example.com", application.grant_template?.id ?? "");
 
 			expect(crawlTemplateUrl).toHaveBeenCalledWith(
+				"mock-org-id",
 				application.project_id,
 				application.grant_template?.id,
 				"https://example.com",
@@ -253,9 +372,6 @@ describe("Application Store", () => {
 			const file1 = { id: "1", name: "test1.pdf", size: 1000 };
 			const application = ApplicationWithTemplateFactory.build();
 
-			const { deleteTemplateSource } = await import("@/actions/sources");
-			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
-
 			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
@@ -264,7 +380,9 @@ describe("Application Store", () => {
 			if (application.grant_template?.id) {
 				await removeFile(file1 as any, application.grant_template.id);
 
+				const { deleteTemplateSource } = await import("@/actions/sources");
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
+					"mock-org-id",
 					application.project_id,
 					application.grant_template.id,
 					"1",
@@ -281,9 +399,7 @@ describe("Application Store", () => {
 				},
 			});
 
-			const { deleteTemplateSource } = await import("@/actions/sources");
 			vi.mocked(deleteTemplateSource).mockResolvedValue(undefined);
-
 			vi.mocked(getApplication).mockResolvedValue(application);
 			useApplicationStore.setState({ application });
 
@@ -293,6 +409,7 @@ describe("Application Store", () => {
 				await removeUrl("https://example.com", application.grant_template.id);
 
 				expect(deleteTemplateSource).toHaveBeenCalledWith(
+					"mock-org-id",
 					application.project_id,
 					application.grant_template.id,
 					"source-1",
@@ -302,8 +419,11 @@ describe("Application Store", () => {
 	});
 
 	describe("RAG job restoration", () => {
-		describe("checkAndRestoreJobState", () => {
+		describe.sequential("checkAndRestoreJobState", () => {
 			it("should not restore when application is null", async () => {
+				// Ensure application is null
+				useApplicationStore.setState({ application: null });
+
 				const { checkAndRestoreJobState } = useApplicationStore.getState();
 
 				await checkAndRestoreJobState();
@@ -314,10 +434,14 @@ describe("Application Store", () => {
 			});
 
 			it("should not restore when no rag_job_id exists", async () => {
-				const application = ApplicationFactory.build({
-					grant_template: undefined,
-					rag_job_id: undefined,
-				});
+				// Clear the mock before this test
+				vi.mocked(retrieveRagJob).mockClear();
+
+				const application = ApplicationFactory.build();
+				// Explicitly set both rag_job_id fields to undefined
+				application.rag_job_id = undefined;
+				application.grant_template = undefined;
+
 				useApplicationStore.setState({ application });
 
 				const { checkAndRestoreJobState } = useApplicationStore.getState();
@@ -330,6 +454,8 @@ describe("Application Store", () => {
 			});
 
 			it("should restore PROCESSING job state", async () => {
+				// Reset store state explicitly
+				useApplicationStore.getState().reset();
 				const application = ApplicationFactory.build({
 					project_id: "project-id",
 					rag_job_id: "job-123",
@@ -352,7 +478,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 				expect(state.ragJobState.isRestoring).toBe(false);
@@ -381,7 +507,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 			});
@@ -409,7 +535,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
@@ -438,7 +564,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 			});
@@ -467,7 +593,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "template-job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "template-job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toEqual(jobData);
 			});
@@ -485,7 +611,7 @@ describe("Application Store", () => {
 
 				await checkAndRestoreJobState();
 
-				expect(retrieveRagJob).toHaveBeenCalledWith("project-id", "job-123");
+				expect(retrieveRagJob).toHaveBeenCalledWith("mock-org-id", "project-id", "job-123");
 				const state = useApplicationStore.getState();
 				expect(state.ragJobState.restoredJob).toBeNull();
 				expect(state.ragJobState.isRestoring).toBe(false);

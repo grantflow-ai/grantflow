@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
+import { afterEach } from "vitest";
 
 import {
 	IconBenefitFirst,
@@ -24,19 +25,26 @@ const allIcons = [
 	{ Component: IconHamburger, hasDefaultSize: true, name: "IconHamburger" },
 ];
 
-describe("All Icon Components", () => {
+afterEach(() => {
+	cleanup();
+});
+
+describe.sequential("All Icon Components", () => {
 	it("should render all icons without crashing", () => {
 		allIcons.forEach(({ Component, name }) => {
-			const { unmount } = render(<Component data-testid={`test-${name}`} />);
-			expect(screen.getByTestId(`test-${name}`)).toBeInTheDocument();
+			const { container, unmount } = render(<Component data-testid={`test-${name}`} />);
+			const icon = container.querySelector(`[data-testid="test-${name}"]`);
+			expect(icon).toBeInTheDocument();
 			unmount();
 		});
 	});
 
 	it("all icons accept and forward custom props", () => {
 		allIcons.forEach(({ Component, name }) => {
-			const { unmount } = render(<Component aria-label="Test icon" data-testid={`test-${name}`} role="img" />);
-			const icon = screen.getByTestId(`test-${name}`);
+			const { container, unmount } = render(
+				<Component aria-label="Test icon" data-testid={`test-${name}`} role="img" />,
+			);
+			const icon = container.querySelector(`[data-testid="test-${name}"]`);
 			expect(icon).toHaveAttribute("aria-label", "Test icon");
 			expect(icon).toHaveAttribute("role", "img");
 			unmount();
@@ -47,8 +55,8 @@ describe("All Icon Components", () => {
 		allIcons
 			.filter(({ hasDefaultSize }) => hasDefaultSize)
 			.forEach(({ Component, name }) => {
-				const { unmount } = render(<Component data-testid={`test-${name}`} />);
-				const icon = screen.getByTestId(`test-${name}`);
+				const { container, unmount } = render(<Component data-testid={`test-${name}`} />);
+				const icon = container.querySelector(`[data-testid="test-${name}"]`);
 				expect(icon).toHaveAttribute("width", "15");
 				expect(icon).toHaveAttribute("height", "15");
 				unmount();
@@ -58,25 +66,25 @@ describe("All Icon Components", () => {
 
 describe("IconBenefitFirst", () => {
 	it("renders with default props", () => {
-		render(<IconBenefitFirst data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconBenefitFirst data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 		expect(icon).toHaveAttribute("width", "15");
 		expect(icon).toHaveAttribute("height", "15");
 		expect(icon).toHaveAttribute("fill", "currentColor");
 	});
 
 	it("applies custom className", () => {
-		render(<IconBenefitFirst className="custom-class" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconBenefitFirst className="custom-class" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveClass("custom-class");
 	});
 
 	it("applies custom width and height", () => {
-		render(<IconBenefitFirst data-testid="test-icon" height={40} width={30} />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconBenefitFirst data-testid="test-icon" height={40} width={30} />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("width", "30");
 		expect(icon).toHaveAttribute("height", "40");
@@ -85,25 +93,25 @@ describe("IconBenefitFirst", () => {
 
 describe("IconBenefitSecond", () => {
 	it("renders with default props", () => {
-		render(<IconBenefitSecond data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconBenefitSecond data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 		expect(icon).toHaveAttribute("width", "15");
 		expect(icon).toHaveAttribute("height", "15");
 		expect(icon).toHaveAttribute("fill", "currentColor");
 	});
 
 	it("applies custom className", () => {
-		render(<IconBenefitSecond className="custom-class" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconBenefitSecond className="custom-class" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveClass("custom-class");
 	});
 
 	it("applies custom width and height", () => {
-		render(<IconBenefitSecond data-testid="test-icon" height={40} width={30} />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconBenefitSecond data-testid="test-icon" height={40} width={30} />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("width", "30");
 		expect(icon).toHaveAttribute("height", "40");
@@ -112,18 +120,18 @@ describe("IconBenefitSecond", () => {
 
 describe("IconCalendar", () => {
 	it("renders with default props", () => {
-		render(<IconCalendar data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconCalendar data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 		expect(icon).toHaveAttribute("width", "15");
 		expect(icon).toHaveAttribute("height", "15");
 		expect(icon).toHaveAttribute("fill", "currentColor");
 	});
 
 	it("applies custom width and height", () => {
-		render(<IconCalendar data-testid="test-icon" height={40} width={30} />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconCalendar data-testid="test-icon" height={40} width={30} />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("width", "30");
 		expect(icon).toHaveAttribute("height", "40");
@@ -132,25 +140,25 @@ describe("IconCalendar", () => {
 
 describe("IconCancel", () => {
 	it("renders with default props", () => {
-		render(<IconCancel data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconCancel data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 		expect(icon).toHaveAttribute("width", "15");
 		expect(icon).toHaveAttribute("height", "15");
 		expect(icon).toHaveAttribute("fill", "currentColor");
 	});
 
 	it("applies custom className", () => {
-		render(<IconCancel className="custom-class" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconCancel className="custom-class" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveClass("custom-class");
 	});
 
 	it("applies custom width and height", () => {
-		render(<IconCancel data-testid="test-icon" height={40} width={30} />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconCancel data-testid="test-icon" height={40} width={30} />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("width", "30");
 		expect(icon).toHaveAttribute("height", "40");
@@ -159,16 +167,16 @@ describe("IconCancel", () => {
 
 describe("IconEarlyAccessBenefit1", () => {
 	it("renders with default props", () => {
-		render(<IconEarlyAccessBenefit1 data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit1 data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toBeInTheDocument();
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 	});
 
 	it("forwards additional props", () => {
-		render(<IconEarlyAccessBenefit1 aria-label="Benefit icon" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit1 aria-label="Benefit icon" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("aria-label", "Benefit icon");
 	});
@@ -176,15 +184,15 @@ describe("IconEarlyAccessBenefit1", () => {
 
 describe("IconEarlyAccessBenefit2", () => {
 	it("renders with default props", () => {
-		render(<IconEarlyAccessBenefit2 data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit2 data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 	});
 
 	it("forwards additional props", () => {
-		render(<IconEarlyAccessBenefit2 aria-label="Benefit icon" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit2 aria-label="Benefit icon" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("aria-label", "Benefit icon");
 	});
@@ -192,15 +200,15 @@ describe("IconEarlyAccessBenefit2", () => {
 
 describe("IconEarlyAccessBenefit3", () => {
 	it("renders with default props", () => {
-		render(<IconEarlyAccessBenefit3 data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit3 data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 	});
 
 	it("forwards additional props", () => {
-		render(<IconEarlyAccessBenefit3 aria-label="Benefit icon" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit3 aria-label="Benefit icon" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("aria-label", "Benefit icon");
 	});
@@ -208,16 +216,16 @@ describe("IconEarlyAccessBenefit3", () => {
 
 describe("IconEarlyAccessBenefit4", () => {
 	it("renders with default props", () => {
-		render(<IconEarlyAccessBenefit4 data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit4 data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toBeInTheDocument();
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 	});
 
 	it("forwards additional props", () => {
-		render(<IconEarlyAccessBenefit4 aria-label="Benefit icon" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconEarlyAccessBenefit4 aria-label="Benefit icon" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("aria-label", "Benefit icon");
 	});
@@ -225,26 +233,26 @@ describe("IconEarlyAccessBenefit4", () => {
 
 describe("IconHamburger", () => {
 	it("renders with default props", () => {
-		render(<IconHamburger data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconHamburger data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toBeInTheDocument();
-		expect(icon.tagName).toBe("svg");
+		expect(icon?.tagName).toBe("svg");
 		expect(icon).toHaveAttribute("width", "15");
 		expect(icon).toHaveAttribute("height", "15");
 		expect(icon).toHaveAttribute("fill", "currentColor");
 	});
 
 	it("applies custom className", () => {
-		render(<IconHamburger className="custom-class" data-testid="test-icon" />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconHamburger className="custom-class" data-testid="test-icon" />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveClass("custom-class");
 	});
 
 	it("applies custom width and height", () => {
-		render(<IconHamburger data-testid="test-icon" height={40} width={30} />);
-		const icon = screen.getByTestId("test-icon");
+		const { container } = render(<IconHamburger data-testid="test-icon" height={40} width={30} />);
+		const icon = container.querySelector('[data-testid="test-icon"]');
 
 		expect(icon).toHaveAttribute("width", "30");
 		expect(icon).toHaveAttribute("height", "40");
