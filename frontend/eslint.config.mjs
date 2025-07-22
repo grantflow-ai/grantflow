@@ -162,6 +162,7 @@ export default eslintTS.config(
 			"react/react-in-jsx-scope": "off",
 			"sonarjs/prefer-read-only-props": "off",
 			"sonarjs/pseudo-random": "off",
+			"sonarjs/todo-tag": "off",
 			"storybook/no-renderer-packages": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
