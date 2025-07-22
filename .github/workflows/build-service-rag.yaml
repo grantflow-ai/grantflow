@@ -1,4 +1,4 @@
-name: "Build: RAG"
+name: "Build & Deploy: RAG"
 
 on:
     push:
@@ -16,9 +16,9 @@ on:
     workflow_dispatch:
 
 jobs:
-    build-and-push:
-        runs-on: docker-build-runner
-        timeout-minutes: 15
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
         permissions:
             contents: read
             id-token: write
@@ -26,8 +26,8 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Set image tag
-              id: tag
+            - name: Set image tag and environment
+              id: config
               run: |
                   if [[ "${{ github.event_name }}" == "release" ]]; then
                       echo "image_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
@@ -36,44 +36,29 @@ jobs:
                   else
                       echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
                   fi
+                  
+                  if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+                      echo "project_id=grantflow" >> $GITHUB_OUTPUT
+                      echo "environment=production" >> $GITHUB_OUTPUT
+                  else
+                      echo "project_id=grantflow" >> $GITHUB_OUTPUT
+                      echo "environment=staging" >> $GITHUB_OUTPUT
+                  fi
 
             - name: Build and push service
               uses: ./.github/actions/build-service
               with:
                   service: rag
-                  image_tag: ${{ steps.tag.outputs.image_tag }}
+                  image_tag: ${{ steps.config.outputs.image_tag }}
                   workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
                   service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
-        outputs:
-            image_tag: ${{ steps.tag.outputs.image_tag }}
-
-    deploy:
-        needs: build-and-push
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
-        permissions:
-            contents: read
-            id-token: write
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Set environment variables
-              run: |
-                  if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-                      echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
-                      echo "ENVIRONMENT=production" >> $GITHUB_ENV
-                  else
-                      echo "PROJECT_ID=grantflow" >> $GITHUB_ENV
-                      echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-                  fi
 
             - name: Deploy to Cloud Run
               uses: ./.github/actions/deploy-cloud-run
               with:
                   service: rag
-                  image_tag: ${{ needs.build-and-push.outputs.image_tag }}
-                  environment: ${{ env.ENVIRONMENT }}
-                  project_id: ${{ env.PROJECT_ID }}
+                  image_tag: ${{ steps.config.outputs.image_tag }}
+                  environment: ${{ steps.config.outputs.environment }}
+                  project_id: ${{ steps.config.outputs.project_id }}
                   workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
                   service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
