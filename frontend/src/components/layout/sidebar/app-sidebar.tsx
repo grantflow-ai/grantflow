@@ -16,7 +16,7 @@ import {
 	SidebarMenuItem,
 	//SidebarRail,
 } from "@/components/ui/sidebar";
-import { useProjectStore } from "@/stores/project-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
@@ -24,7 +24,7 @@ import { NavMain } from "./nav-main";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
-	const project = useProjectStore((state) => state.project);
+	const organization = useOrganizationStore((state) => state.organization);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleLogout = () => {
@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarHeader>
 
 				<SidebarContent className="flex-grow gap-0 py-4 group-data-[collapsible=icon]:px-2">
-					<NavMain data-testid="nav-main" userRole={project?.role} />
+					<NavMain data-testid="nav-main" userRole={organization?.role} />
 				</SidebarContent>
 
 				<SidebarFooter className="pb-6 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pb-4">
