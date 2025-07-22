@@ -500,7 +500,6 @@ describe.sequential("useDragAndDrop", () => {
 				event,
 				items.find((item) => item.id === "item-1"),
 				items.find((item) => item.id === "item-2"),
-				false, // shouldPromote parameter
 			);
 		});
 	});
