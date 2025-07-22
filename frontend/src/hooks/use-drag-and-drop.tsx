@@ -119,6 +119,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				}
 			};
 
+			// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex drag-and-drop logic needs to stay cohesive
 			const handleDragEnd = async (event: DragEndEvent) => {
 				const { active, over } = event;
 

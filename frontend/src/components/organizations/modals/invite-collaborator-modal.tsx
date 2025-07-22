@@ -81,7 +81,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 									Invite New Member
 								</DialogTitle>
 								<DialogDescription className="font-body text-[16px] text-app-gray-600">
-									Invite new member and set up member role
+									Invite new member and set up member role.
 								</DialogDescription>
 							</div>
 							<button
@@ -154,15 +154,20 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 									<SelectValue placeholder="Select permission" />
 									<ChevronDown className="size-4 text-app-gray-600" />
 								</SelectTrigger>
-								<SelectContent className="border border-app-gray-200 bg-white">
+								<SelectContent
+									className="border border-app-gray-200 bg-white"
+									data-testid="permission-dropdown-menu"
+								>
 									<SelectItem
 										className="px-3 py-2 cursor-pointer hover:bg-app-gray-50 focus:bg-app-gray-50 text-app-black text-[14px]"
+										data-testid="collaborator-option"
 										value="collaborator"
 									>
 										Collaborator
 									</SelectItem>
 									<SelectItem
 										className="px-3 py-2 cursor-pointer hover:bg-app-gray-50 focus:bg-app-gray-50 text-app-black text-[14px]"
+										data-testid="admin-option"
 										value="admin"
 									>
 										Admin
@@ -234,7 +239,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</button>
 						<button
 							className="px-4 py-2 bg-primary text-white rounded font-button text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-							data-testid="invite-button"
+							data-testid="send-invitation-button"
 							disabled={!email || isSubmitting}
 							onClick={handleSubmit}
 							type="button"
