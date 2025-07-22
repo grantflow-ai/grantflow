@@ -38,7 +38,7 @@ export function DashboardClient({
 	const router = useRouter();
 	const { navigateToProject } = useNavigationStore();
 	const { selectedOrganizationId, switchOrganization } = useOrganization();
-	const { setOrganizations } = useOrganizationStore();
+	const { selectOrganization, setOrganizations } = useOrganizationStore();
 
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
@@ -57,16 +57,24 @@ export function DashboardClient({
 		setOrganizations(initialOrganizations);
 	}, [initialOrganizations, setOrganizations]);
 
+	// Use the organization ID from cookies (client-side) or initial (server-side)
+	const currentOrganizationId = selectedOrganizationId ?? initialSelectedOrganizationId;
+
 	// Handle initial organization selection
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally omitting selectedOrganizationId and switchOrganization to avoid infinite loop
 	useEffect(() => {
 		// If no organization is selected in cookies but we have an initial one, set it
 		if (!selectedOrganizationId && initialSelectedOrganizationId) {
 			switchOrganization(initialSelectedOrganizationId);
 		}
-	}, [initialSelectedOrganizationId]); // Don't include selectedOrganizationId to avoid infinite loop
+	}, [initialSelectedOrganizationId]);
 
-	// Use the organization ID from cookies (client-side) or initial (server-side)
-	const currentOrganizationId = selectedOrganizationId ?? initialSelectedOrganizationId;
+	// Sync organization store with cookie value
+	useEffect(() => {
+		if (currentOrganizationId) {
+			selectOrganization(currentOrganizationId);
+		}
+	}, [currentOrganizationId, selectOrganization]);
 
 	const handleDuplicateProject = async (projectId: string) => {
 		if (!currentOrganizationId) {
