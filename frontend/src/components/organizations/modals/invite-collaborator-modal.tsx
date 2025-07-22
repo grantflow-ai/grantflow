@@ -10,7 +10,12 @@ type CollaboratorPermission = "admin" | "collaborator";
 interface InviteCollaboratorModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onInvite: (email: string, permission: CollaboratorPermission) => Promise<void>;
+	onInvite: (
+		email: string,
+		permission: CollaboratorPermission,
+		hasAllProjectsAccess?: boolean,
+		projectIds?: string[],
+	) => Promise<void>;
 }
 
 export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCollaboratorModalProps) {
@@ -25,7 +30,17 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 
 		setIsSubmitting(true);
 		try {
-			await onInvite(email, permission);
+			// Admin always has all projects access
+			// Collaborator can have all or specific projects
+			const hasAllProjectsAccess = permission === "admin" || projectAccess === "all";
+
+			// TODO: Implement project selection for specific projects
+			const projectIds: string[] = [];
+
+			// TODO: Add name field to API when backend supports it
+			// Currently the API only accepts email, role, has_all_projects_access, and project_ids
+
+			await onInvite(email, permission, hasAllProjectsAccess, projectIds);
 			setName("");
 			setEmail("");
 			setPermission("collaborator");
@@ -90,7 +105,9 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 								className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary"
 								data-testid="name-input"
 								id="member-name"
-								onChange={(e) => { setName(e.target.value); }}
+								onChange={(e) => {
+									setName(e.target.value);
+								}}
 								placeholder="Name Name"
 								type="text"
 								value={name}
@@ -107,7 +124,9 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 									className="w-full h-10 px-3 pr-10 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary"
 									data-testid="email-input"
 									id="member-email"
-									onChange={(e) => { setEmail(e.target.value); }}
+									onChange={(e) => {
+										setEmail(e.target.value);
+									}}
 									placeholder="email@address.com"
 									type="email"
 									value={email}
@@ -122,7 +141,9 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 								Permission
 							</label>
 							<Select
-								onValueChange={(value: "admin" | "collaborator") => { setPermission(value); }}
+								onValueChange={(value: "admin" | "collaborator") => {
+									setPermission(value);
+								}}
 								value={permission}
 							>
 								<SelectTrigger
