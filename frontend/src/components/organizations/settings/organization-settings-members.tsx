@@ -265,13 +265,13 @@ export function OrganizationSettingsMembers({
 											)}
 										/>
 										<span className="font-body text-[14px] text-app-gray-700">
-											{member.displayName || "Name name"}
+											{member.displayName ?? "Name name"}
 										</span>
 									</div>
 								</td>
 								<td className="h-[64px] px-6">
 									<span className="font-body text-[14px] text-app-gray-600">
-										{member.email || "Text@gmail.com"}
+										{member.email ?? "Text@gmail.com"}
 									</span>
 								</td>
 								<td className="h-[64px] px-6">
@@ -357,6 +357,9 @@ function FigmaRoleBadge({ role }: { role: UserRole }) {
 		switch (role) {
 			case UserRole.ADMIN: {
 				return "bg-link-hover text-white";
+			}
+			case UserRole.COLLABORATOR: {
+				return "bg-app-gray-100 text-app-gray-700";
 			}
 			case UserRole.OWNER: {
 				return "bg-primary text-white";
