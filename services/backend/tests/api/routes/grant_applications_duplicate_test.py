@@ -106,23 +106,52 @@ async def test_duplicate_application_wrong_project(
 async def test_duplicate_with_grant_template(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],
-    grant_template: GrantTemplate,
+    grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
     """Test that grant template is properly duplicated"""
 
+    
     async with async_session_maker() as session:
-        template = await session.get(GrantTemplate, grant_template.id)
-        app_id = template.grant_application_id
-        project = await session.get(GrantApplication, app_id)
-        project_id = project.project_id
+        from sqlalchemy import select
 
+        
+        existing_template = await session.execute(
+            select(GrantTemplate).where(
+                GrantTemplate.grant_application_id == grant_application.id, GrantTemplate.deleted_at.is_(None)
+            )
+        )
+        for template in existing_template.scalars():
+            template.soft_delete()
+
+        
+        test_grant_sections = [
+            {
+                "title": "Test Section",
+                "description": "Test description",
+                "type": "section",
+                "order": 1,
+                "max_words": 100,
+            }
+        ]
+
+        new_template = GrantTemplate(
+            grant_application_id=grant_application.id, grant_sections=test_grant_sections, granting_institution_id=None
+        )
+        session.add(new_template)
+        await session.commit()
+
+        template_id = new_template.id
+
+    
     async with async_session_maker() as session:
-        project_obj = await session.get(Project, project_id)
-        organization_id = project_obj.organization_id
+        app = await session.get(GrantApplication, grant_application.id)
+        project_id = app.project_id
+        project = await session.get(Project, project_id)
+        organization_id = project.organization_id
 
     response = await test_client.post(
-        f"/organizations/{organization_id}/projects/{project_id}/applications/{app_id}/duplicate",
+        f"/organizations/{organization_id}/projects/{project_id}/applications/{grant_application.id}/duplicate",
         json={"title": "Copy with Template"},
         headers={"Authorization": "Bearer some_token"},
     )
@@ -131,8 +160,8 @@ async def test_duplicate_with_grant_template(
     data = response.json()
 
     assert "grant_template" in data
-    assert data["grant_template"]["id"] != str(grant_template.id)
-    assert data["grant_template"]["grant_sections"] == grant_template.grant_sections
+    assert data["grant_template"]["id"] != str(template_id)
+    assert data["grant_template"]["grant_sections"] == test_grant_sections
 
 
 async def test_duplicate_preserves_rag_sources(
