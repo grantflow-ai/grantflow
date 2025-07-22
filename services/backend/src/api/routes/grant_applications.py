@@ -778,6 +778,7 @@ async def handle_duplicate_application(
                     new_app_id=str(new_app.id),
                 )
 
+            # Copy rag sources
             rag_sources = await session.execute(
                 select(GrantApplicationSource).where(
                     GrantApplicationSource.grant_application_id == application_id,
@@ -796,9 +797,6 @@ async def handle_duplicate_application(
 
             await session.commit()
 
-            # Ensure all data is flushed to the database
-            await session.flush()
-
             logger.info(
                 "Application duplicated successfully",
                 original_id=str(application_id),
@@ -811,9 +809,9 @@ async def handle_duplicate_application(
             logger.error("Error duplicating application", exc_info=e)
             raise DatabaseError("Error duplicating application", context=str(e)) from e
 
-    # Small delay to ensure committed data is visible across sessions
-    # This addresses a race condition in tests and potentially in production
-    await asyncio.sleep(0.1)
+    # Add a small delay to mitigate PostgreSQL MVCC race conditions
+    # where a new session might not immediately see just-committed data
+    await asyncio.sleep(0.2)
 
     return await _handle_retrieve_application(
         organization_id=organization_id,
