@@ -142,15 +142,17 @@ export function OrganizationSettingsMembers({
 		}
 	};
 
-	const handleInvite = async (email: string, permission: "admin" | "collaborator") => {
+	const handleInvite = async (
+		email: string,
+		permission: "admin" | "collaborator",
+		hasAllProjectsAccess?: boolean,
+		projectIds?: string[],
+	) => {
 		try {
-			// Admin and Owner roles always have all projects access
-			// Collaborators can have specific project access (to be implemented with project selection)
-			const hasAllProjectsAccess = permission === "admin";
-
 			await createOrganizationInvitation(organizationId, {
 				email,
 				has_all_projects_access: hasAllProjectsAccess,
+				project_ids: projectIds,
 				role: permission === "admin" ? "ADMIN" : "COLLABORATOR",
 			});
 
