@@ -2,15 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
+import { getOrganizationMembers } from "@/actions/organization";
 import { AppHeader } from "@/components/layout/app-header";
 import {
-	OrganizationSettingsAccount,
+	OrganizationSettingsGeneral,
 	OrganizationSettingsLayout,
 	OrganizationSettingsMembers,
 	OrganizationSettingsNotifications,
 } from "@/components/organizations";
 import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
@@ -21,32 +22,51 @@ interface OrganizationSettingsClientProps {
 
 export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsClientProps) {
 	const router = useRouter();
-	const { project } = useProjectStore();
-	const { selectedOrganizationId } = useOrganizationStore();
+	const { getOrganization, organization, selectedOrganizationId } = useOrganizationStore();
 	const [inviteHandler, setInviteHandler] = useState<(() => void) | undefined>();
 
-	// Redirect if no project context
+	// Fetch organization members
+	const { data: organizationMembers = [] } = useSWR(
+		selectedOrganizationId ? ["organization-members", selectedOrganizationId] : null,
+		([, orgId]) => getOrganizationMembers(orgId),
+		{
+			revalidateOnFocus: false,
+		},
+	);
+
+	// Redirect if no organization context
 	useEffect(() => {
-		if (!project) {
+		if (!selectedOrganizationId) {
 			router.replace(routes.organization.root());
 		}
-	}, [project, router]);
+	}, [selectedOrganizationId, router]);
 
 	// Check role for restricted pages - only OWNER and ADMIN can access billing and members
 	useEffect(() => {
-		if (project && project.role === "COLLABORATOR" && (activeTab === "billing" || activeTab === "members")) {
+		if (
+			organization &&
+			organization.role === "COLLABORATOR" &&
+			(activeTab === "billing" || activeTab === "members")
+		) {
 			router.replace(routes.organization.settings.account());
 		}
-	}, [project, activeTab, router]);
+	}, [organization, activeTab, router]);
 
-	if (!project) {
+	// Load organization data
+	useEffect(() => {
+		if (selectedOrganizationId) {
+			void getOrganization(selectedOrganizationId);
+		}
+	}, [selectedOrganizationId, getOrganization]);
+
+	if (!organization) {
 		return null; // Will redirect
 	}
 
-	// Generate team members for AppHeader (similar to dashboard)
-	const projectTeamMembers = project.members.map((member) => ({
+	// Generate team members for AppHeader from organization members
+	const projectTeamMembers = organizationMembers.map((member) => ({
 		backgroundColor: generateBackgroundColor(member.firebase_uid),
-		initials: generateInitials(member.display_name ?? undefined, member.email),
+		initials: generateInitials(member.display_name, member.email),
 		...(member.photo_url && { imageUrl: member.photo_url }),
 	}));
 
@@ -54,9 +74,9 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 		switch (activeTab) {
 			case "account": {
 				return (
-					<OrganizationSettingsAccount
+					<OrganizationSettingsGeneral
 						organizationId={selectedOrganizationId!}
-						userRole={project.role as UserRole}
+						userRole={organization.role as UserRole}
 					/>
 				);
 			}
@@ -73,7 +93,7 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 			case "members": {
 				return selectedOrganizationId ? (
 					<OrganizationSettingsMembers
-						currentUserRole={project.role as UserRole}
+						currentUserRole={organization.role as UserRole}
 						onInviteHandlerChange={setInviteHandler}
 						organizationId={selectedOrganizationId}
 					/>
@@ -95,13 +115,13 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 					<AppHeader data-testid="organization-settings-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 flex-grow rounded-lg border border-app-gray-100 min-h-0"
+						className="mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 flex-grow rounded-lg border border-app-gray-100 min-h-0 bg-white"
 						data-testid="organization-settings-main-content"
 					>
 						<OrganizationSettingsLayout
 							activeTab={activeTab}
 							onInviteClick={inviteHandler}
-							project={project}
+							userRole={organization.role as UserRole}
 						>
 							{renderSettingsContent()}
 						</OrganizationSettingsLayout>
