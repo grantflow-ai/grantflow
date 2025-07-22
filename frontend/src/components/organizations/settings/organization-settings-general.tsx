@@ -28,6 +28,10 @@ export function OrganizationSettingsGeneral({
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
+	// Only OWNER can edit, ADMIN and COLLABORATOR have read-only access
+	const canEdit = userRole === UserRole.OWNER;
+	const isReadOnly = !canEdit;
+
 	// Update form values when organization data changes
 	useEffect(() => {
 		if (organization) {
@@ -39,6 +43,8 @@ export function OrganizationSettingsGeneral({
 	}, [organization]);
 
 	const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (!canEdit) return;
+
 		const file = event.target.files?.[0];
 		if (!file) return;
 
@@ -71,7 +77,7 @@ export function OrganizationSettingsGeneral({
 	};
 
 	const handleSave = async () => {
-		if (!organizationId) return;
+		if (!(organizationId && canEdit)) return;
 
 		setIsUpdating(true);
 		try {
@@ -108,9 +114,12 @@ export function OrganizationSettingsGeneral({
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Logo</h3>
 						<div className="flex flex-col gap-3">
 							<button
-								className="size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden cursor-pointer hover:border-primary transition-colors"
+								className={`size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors ${
+									canEdit ? "cursor-pointer hover:border-primary" : "cursor-not-allowed opacity-60"
+								}`}
 								data-testid="organization-logo-container"
-								onClick={() => fileInputRef.current?.click()}
+								disabled={!canEdit}
+								onClick={() => canEdit && fileInputRef.current?.click()}
 								type="button"
 							>
 								{organization?.logo_url ? (
@@ -127,7 +136,7 @@ export function OrganizationSettingsGeneral({
 							<input
 								accept="image/*"
 								className="hidden"
-								disabled={isUploading}
+								disabled={isUploading || !canEdit}
 								onChange={handleLogoUpload}
 								ref={fileInputRef}
 								type="file"
@@ -144,12 +153,17 @@ export function OrganizationSettingsGeneral({
 							Organisation Name
 						</h3>
 						<input
-							className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none focus:border-primary"
+							className={`w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+								canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
+							}`}
 							data-testid="organization-name-input"
 							onChange={(e) => {
-								setOrganizationName(e.target.value);
+								if (canEdit) {
+									setOrganizationName(e.target.value);
+								}
 							}}
 							placeholder="Name Name"
+							readOnly={isReadOnly}
 							type="text"
 							value={organizationName}
 						/>
@@ -161,12 +175,17 @@ export function OrganizationSettingsGeneral({
 							Institution or Affiliation
 						</h3>
 						<input
-							className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none focus:border-primary"
+							className={`w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+								canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
+							}`}
 							data-testid="organization-institution-input"
 							onChange={(e) => {
-								setInstitutionName(e.target.value);
+								if (canEdit) {
+									setInstitutionName(e.target.value);
+								}
 							}}
 							placeholder="Name Name"
+							readOnly={isReadOnly}
 							type="text"
 							value={institutionName}
 						/>
@@ -189,12 +208,17 @@ export function OrganizationSettingsGeneral({
 							Contact Person Name
 						</h3>
 						<input
-							className="w-full h-10 px-3 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary"
+							className={`w-full h-10 px-3 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none ${
+								canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
+							}`}
 							data-testid="organization-contact-name-input"
 							onChange={(e) => {
-								setContactName(e.target.value);
+								if (canEdit) {
+									setContactName(e.target.value);
+								}
 							}}
 							placeholder="Name Name"
+							readOnly={isReadOnly}
 							type="text"
 							value={contactName}
 						/>
@@ -207,12 +231,17 @@ export function OrganizationSettingsGeneral({
 						</h3>
 						<div className="relative">
 							<input
-								className="w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary"
+								className={`w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none ${
+									canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
+								}`}
 								data-testid="organization-contact-email-input"
 								onChange={(e) => {
-									setContactEmail(e.target.value);
+									if (canEdit) {
+										setContactEmail(e.target.value);
+									}
 								}}
 								placeholder="Email@address.com"
+								readOnly={isReadOnly}
 								type="email"
 								value={contactEmail}
 							/>
@@ -273,18 +302,20 @@ export function OrganizationSettingsGeneral({
 				</div>
 			)}
 
-			{/* Save Button */}
-			<div className="flex justify-end">
-				<button
-					className="px-4 py-2 bg-primary text-white rounded font-button text-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					data-testid="organization-save-button"
-					disabled={isUpdating}
-					onClick={handleSave}
-					type="button"
-				>
-					{isUpdating ? "Saving..." : "Save Changes"}
-				</button>
-			</div>
+			{/* Save Button - Only visible to owners */}
+			{canEdit && (
+				<div className="flex justify-end">
+					<button
+						className="px-4 py-2 bg-primary text-white rounded font-button text-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						data-testid="organization-save-button"
+						disabled={isUpdating}
+						onClick={handleSave}
+						type="button"
+					>
+						{isUpdating ? "Saving..." : "Save Changes"}
+					</button>
+				</div>
+			)}
 
 			{/* Delete Organization Modal */}
 			{organization && (
