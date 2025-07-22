@@ -79,23 +79,18 @@ export function DragDropSectionManager({
 		const activeIsMain = activeSection.parent_id === null;
 		const overIsMain = overSection.parent_id === null;
 
-		if (activeIsMain && overIsMain) {
+		// Main sections always stay at main level (can't be nested)
+		if (activeIsMain) {
 			return null;
 		}
 
-		if (activeIsMain && !overIsMain) {
-			return activeSection.parent_id;
+		// Sub-to-main: become sub-section of the target
+		if (overIsMain) {
+			return overSection.id;
 		}
 
-		if (!activeIsMain && overIsMain) {
-			return activeSection.parent_id === overSection.id ? activeSection.parent_id : overSection.id;
-		}
-
-		if (!(activeIsMain || overIsMain)) {
-			return overSection.parent_id;
-		}
-
-		return activeSection.parent_id;
+		// Sub-to-sub: move to same parent as target
+		return overSection.parent_id;
 	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
@@ -323,6 +318,7 @@ function SectionList({
 			{allSectionsFlattened.map((section) => (
 				<SortableSection
 					isDetailedSection={isDetailedSection}
+					isDragDisabled={allSectionsFlattened.length === 1}
 					isExpanded={expandedSectionId === section.id}
 					isSubsection={!!section.parent_id}
 					key={section.id}
