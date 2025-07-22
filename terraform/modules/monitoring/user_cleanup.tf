@@ -219,7 +219,7 @@ resource "google_monitoring_alert_policy" "organization_cleanup_failures" {
     display_name = "High error rate in organization cleanup"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND jsonPayload.organization_cleanup.errors>0"
+      filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND metric.type=\"logging.googleapis.com/user/entity_cleanup_operations\" AND metric.labels.error=\"true\""
       duration        = "300s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
