@@ -158,7 +158,6 @@ describe("Project Store", () => {
 				id: project.id,
 				logo_url: null,
 				name: "Updated Name",
-				role: "OWNER",
 			});
 			vi.mocked(getProject).mockResolvedValue(updatedProject);
 			vi.mocked(getProjects).mockResolvedValue([updatedProjectListItem]);

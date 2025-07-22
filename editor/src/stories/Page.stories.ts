@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { expect, userEvent, within } from "storybook/test";
 
-import { Page } from "./page";
+import { Page } from "./Page";
 
 const meta = {
 	component: Page,

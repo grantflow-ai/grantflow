@@ -154,7 +154,6 @@ async def handle_file_indexing(
         rag_file = await session.scalar(select(RagFile).where(RagFile.id == parse_result["source_id"]))
         rag_source = await session.scalar(select(RagSource).where(RagSource.id == parse_result["source_id"]))
 
-        
         parent_id = await resolve_parent_id_for_notification(
             session=session,
             source_id=parse_result["source_id"],

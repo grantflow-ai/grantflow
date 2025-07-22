@@ -63,7 +63,6 @@ export const ProjectListItemFactory = new Factory<API.ListProjects.Http200.Respo
 		{ count: { max: 5, min: 1 } },
 	),
 	name: factory.company.name(),
-	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((factory) => ({
@@ -89,7 +88,6 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 		{ count: { max: 5, min: 1 } },
 	),
 	name: factory.company.name(),
-	role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"]),
 }));
 
 type IndexingStatus = RagSource["status"];
