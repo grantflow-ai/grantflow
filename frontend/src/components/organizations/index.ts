@@ -9,6 +9,7 @@ export { DeleteAccountModal } from "@/components/organizations/settings/delete-a
 export { EditPermissionModal } from "@/components/organizations/settings/edit-permission-modal";
 export { OrganizationSettingsAccount } from "@/components/organizations/settings/organization-settings-account";
 export { OrganizationSettingsClient } from "@/components/organizations/settings/organization-settings-client";
+export { OrganizationSettingsGeneral } from "@/components/organizations/settings/organization-settings-general";
 export { OrganizationSettingsLayout } from "@/components/organizations/settings/organization-settings-layout";
 export { OrganizationSettingsMembers } from "@/components/organizations/settings/organization-settings-members";
 export { OrganizationSettingsNotifications } from "@/components/organizations/settings/organization-settings-notifications";
