@@ -306,7 +306,7 @@ async def test_generate_application_no_rag_sources(
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "No rag sources found" in response.text
+    assert "Insufficient data to generate application" in response.text
 
 
 async def test_generate_application_not_found(
