@@ -46,6 +46,43 @@ runs:
               workload_identity_provider: ${{ inputs.workload_identity_provider }}
               service_account: ${{ inputs.service_account }}
 
+        - name: Check if old images need cleanup
+          shell: bash
+          run: |
+              echo "Checking for stale revisions..."
+              
+              # Get all revisions
+              REVISIONS=$(gcloud run revisions list \
+                --service=${{ inputs.service }} \
+                --region=${{ inputs.region }} \
+                --project=${{ inputs.project_id }} \
+                --format='value(name)' \
+                --limit=10)
+              
+              # Count revisions
+              REVISION_COUNT=$(echo "$REVISIONS" | wc -l)
+              echo "Found $REVISION_COUNT revisions"
+              
+              # If more than 5 revisions, delete oldest ones that have no traffic
+              if [ $REVISION_COUNT -gt 5 ]; then
+                echo "Cleaning up old revisions..."
+                OLD_REVISIONS=$(echo "$REVISIONS" | tail -n +6)
+                for rev in $OLD_REVISIONS; do
+                  TRAFFIC=$(gcloud run services describe ${{ inputs.service }} \
+                    --region=${{ inputs.region }} \
+                    --project=${{ inputs.project_id }} \
+                    --format="value(status.traffic[?revisionName=='$rev'].percent)" | tr -d '\n')
+                  
+                  if [ -z "$TRAFFIC" ] || [ "$TRAFFIC" = "0" ]; then
+                    echo "Deleting revision: $rev"
+                    gcloud run revisions delete $rev \
+                      --region=${{ inputs.region }} \
+                      --project=${{ inputs.project_id }} \
+                      --quiet || true
+                  fi
+                done
+              fi
+
         - name: Deploy to Cloud Run
           id: deploy
           uses: google-github-actions/deploy-cloudrun@v2
@@ -61,6 +98,8 @@ runs:
                   environment=${{ inputs.environment }}
               env_vars: |
                   DEPLOYMENT_TIMESTAMP=${{ github.run_id }}
+              flags: |
+                  --max-instances=10
 
         - name: Get revision name
           id: get-revision
