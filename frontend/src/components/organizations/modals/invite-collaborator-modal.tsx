@@ -1,16 +1,8 @@
 "use client";
 
-import { Mail } from "lucide-react";
+import { ChevronDown, Mail, X } from "lucide-react";
 import { useState } from "react";
-import { AppButton } from "@/components/app";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type CollaboratorPermission = "admin" | "collaborator";
@@ -22,8 +14,10 @@ interface InviteCollaboratorModalProps {
 }
 
 export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCollaboratorModalProps) {
+	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [permission, setPermission] = useState<CollaboratorPermission>("collaborator");
+	const [projectAccess, setProjectAccess] = useState("all");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const handleSubmit = async () => {
@@ -32,8 +26,10 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 		setIsSubmitting(true);
 		try {
 			await onInvite(email, permission);
+			setName("");
 			setEmail("");
 			setPermission("collaborator");
+			setProjectAccess("all");
 			onClose();
 		} catch {
 		} finally {
@@ -42,128 +38,190 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 	};
 
 	const handleClose = () => {
+		setName("");
 		setEmail("");
 		setPermission("collaborator");
+		setProjectAccess("all");
 		onClose();
 	};
+
 	const handleOpenChange = (open: boolean) => {
 		if (!open) {
-			onClose();
+			handleClose();
 		}
 	};
+
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
-				className="p-8 w-[464px] h-[492px] flex flex-col gap-8 bg-white [&>button]:cursor-pointer [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100"
+				className="w-[511px] p-0 bg-white border border-primary rounded-lg overflow-hidden"
 				data-testid="invite-collaborator-modal"
 			>
-				<DialogHeader className="flex flex-col gap-2 text-left">
-					<DialogTitle className="font-medium text-2xl leading-[30px] text-app-black">
-						Invite New Member
-					</DialogTitle>
-					<DialogDescription className="font-body text-[16px] leading-[20px] text-app-gray-600 w-[360px]">
-						Invite new member and set up member role.
-					</DialogDescription>
-				</DialogHeader>
-
-				<div className="flex flex-col gap-6 w-full">
-					<div className="flex flex-col">
-						<label
-							className="font-body text-[12px] leading-[14px] text-app-gray-400"
-							htmlFor="collaborator-email"
-						>
-							Email address
-						</label>
-						<div className="relative flex items-center">
-							<input
-								className="w-full h-10 pl-3 pr-10 border border-app-gray-100 rounded bg-white font-body text-[14px] text-app-gray-600 placeholder-app-gray-400 outline-none focus:border-primary"
-								data-testid="email-input"
-								id="collaborator-email"
-								onChange={(e) => {
-									setEmail(e.target.value);
-								}}
-								placeholder="Enter the collaborator email address"
-								type="email"
-								value={email}
-							/>
-							<Mail className="absolute right-3 size-4 text-app-gray-700" />
+				<div className="p-8 flex flex-col gap-8">
+					{/* Header */}
+					<div className="flex flex-col gap-3">
+						<div className="flex items-start justify-between">
+							<div className="flex flex-col gap-1">
+								<DialogTitle className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
+									Invite New Member
+								</DialogTitle>
+								<DialogDescription className="font-body text-[16px] text-app-gray-600">
+									Invite new member and set up member role
+								</DialogDescription>
+							</div>
+							<button
+								className="p-0 hover:bg-app-gray-50 rounded transition-colors"
+								onClick={handleClose}
+								type="button"
+							>
+								<X className="size-4 text-app-gray-700" />
+							</button>
 						</div>
 					</div>
 
-					<div className="flex flex-col g">
-						<label
-							className="font-body text-xs leading-[14px] text-app-gray-400 flex items-center justify-between"
-							htmlFor="collaborator-permission"
-						>
-							<p>Access permission</p>
-							<p>00/00</p>
-						</label>
-						<Select
-							onValueChange={(value: "admin" | "collaborator") => {
-								setPermission(value);
-							}}
-							value={permission}
-						>
-							<SelectTrigger
-								className="w-full h-auto min-h-10 px-3 py-2 text-left border border-primary rounded bg-white font-body text-[14px] text-app-gray-600 flex items-center justify-between outline-none"
-								data-testid="permission-dropdown"
-								id="collaborator-permission"
-							>
-								<SelectValue
-									className="placeholder:font-normal placeholder:text-sm"
-									placeholder="Choose permission level"
-								/>
-							</SelectTrigger>
-							<SelectContent
-								className="[&>*]:p-0 border border-gray-200 w-full shadow-none"
-								data-testid="permission-dropdown-menu"
-							>
-								<SelectItem
-									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-									data-testid="collaborator-option"
-									value="collaborator"
-								>
-									Collaborator - Can edit specific Research Projects.
-								</SelectItem>
-								<SelectItem
-									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-									data-testid="admin-option"
-									value="admin"
-								>
-									Admin - Access to R.projects, payments & members
-								</SelectItem>
-								<SelectItem
-									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-									value="owner"
-								>
-									Owner - Full access
-								</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-				</div>
+					{/* Form Fields */}
+					<div className="flex flex-col gap-6">
+						{/* Name Field */}
+						<div className="flex flex-col gap-1">
+							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-name">
+								Name
+							</label>
+							<input
+								className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary"
+								data-testid="name-input"
+								id="member-name"
+								onChange={(e) => { setName(e.target.value); }}
+								placeholder="Name Name"
+								type="text"
+								value={name}
+							/>
+						</div>
 
-				<DialogFooter className="!mt-auto">
-					<div className="flex items-center justify-between w-full">
-						<AppButton
-							className="rounded px-4 py-2"
+						{/* Email Field */}
+						<div className="flex flex-col gap-1">
+							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-email">
+								Email address
+							</label>
+							<div className="relative">
+								<input
+									className="w-full h-10 px-3 pr-10 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary"
+									data-testid="email-input"
+									id="member-email"
+									onChange={(e) => { setEmail(e.target.value); }}
+									placeholder="email@address.com"
+									type="email"
+									value={email}
+								/>
+								<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-app-gray-600" />
+							</div>
+						</div>
+
+						{/* Permission Field */}
+						<div className="flex flex-col gap-1">
+							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-permission">
+								Permission
+							</label>
+							<Select
+								onValueChange={(value: "admin" | "collaborator") => { setPermission(value); }}
+								value={permission}
+							>
+								<SelectTrigger
+									className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 outline-none data-[state=open]:border-primary"
+									data-testid="permission-dropdown"
+									id="member-permission"
+								>
+									<SelectValue placeholder="Select permission" />
+									<ChevronDown className="size-4 text-app-gray-600" />
+								</SelectTrigger>
+								<SelectContent className="border border-app-gray-200 bg-white">
+									<SelectItem
+										className="px-3 py-2 cursor-pointer hover:bg-app-gray-50 focus:bg-app-gray-50 text-app-black text-[14px]"
+										value="collaborator"
+									>
+										Collaborator
+									</SelectItem>
+									<SelectItem
+										className="px-3 py-2 cursor-pointer hover:bg-app-gray-50 focus:bg-app-gray-50 text-app-black text-[14px]"
+										value="admin"
+									>
+										Admin
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						{/* Research Projects Access - Only for Collaborators */}
+						{permission === "collaborator" && (
+							<div className="flex flex-col gap-3">
+								<div className="flex items-center gap-2">
+									<div className="px-2 py-1 bg-primary rounded-full text-white text-[12px] font-body">
+										+ Project name
+									</div>
+									<div className="px-2 py-1 bg-primary rounded-full text-white text-[12px] font-body">
+										+ Project name
+									</div>
+								</div>
+								<label className="font-body text-[12px] text-app-gray-400" htmlFor="project-access">
+									Research Projects Access
+								</label>
+								<Select onValueChange={setProjectAccess} value={projectAccess}>
+									<SelectTrigger
+										className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 outline-none data-[state=open]:border-primary"
+										data-testid="project-access-dropdown"
+										id="project-access"
+									>
+										<SelectValue placeholder="Select project access" />
+										<ChevronDown className="size-4 text-app-gray-600" />
+									</SelectTrigger>
+									<SelectContent className="border border-app-gray-200 bg-white">
+										<SelectItem
+											className="px-3 py-2 cursor-pointer hover:bg-app-gray-50 focus:bg-app-gray-50 text-app-black text-[14px]"
+											value="all"
+										>
+											All Projects
+										</SelectItem>
+										<SelectItem
+											className="px-3 py-2 cursor-pointer hover:bg-app-gray-50 focus:bg-app-gray-50 text-app-black text-[14px]"
+											value="specific"
+										>
+											Specific Projects
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+						)}
+
+						{/* Warning Message */}
+						<div className="flex items-start gap-2 p-3 bg-app-gray-50 rounded">
+							<div className="size-4 bg-warning rounded-full flex-shrink-0 mt-0.5" />
+							<p className="font-body text-[14px] text-app-gray-700">
+								Removing research project permission will revoke access. The user will no longer be able
+								to view or edit content.
+							</p>
+						</div>
+					</div>
+
+					{/* Footer Buttons */}
+					<div className="flex items-center justify-between">
+						<button
+							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-app-gray-50 transition-colors"
 							data-testid="cancel-button"
 							onClick={handleClose}
-							variant="secondary"
+							type="button"
 						>
 							Cancel
-						</AppButton>
-						<AppButton
-							className="rounded px-4 py-2"
-							data-testid="send-invitation-button"
+						</button>
+						<button
+							className="px-4 py-2 bg-primary text-white rounded font-button text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							data-testid="invite-button"
 							disabled={!email || isSubmitting}
 							onClick={handleSubmit}
-							variant="primary"
+							type="button"
 						>
-							{isSubmitting ? "Sending..." : "Send Invitation"}
-						</AppButton>
+							{isSubmitting ? "Inviting..." : "Invite"}
+						</button>
 					</div>
-				</DialogFooter>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);
