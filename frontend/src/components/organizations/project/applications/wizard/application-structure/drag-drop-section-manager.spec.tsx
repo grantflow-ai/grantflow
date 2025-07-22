@@ -62,8 +62,10 @@ describe.sequential("DragDropSectionManager", () => {
 	const mockUpdateGrantSections = vi.fn();
 	const mockOnAddSection = vi.fn();
 	const mockIsDetailedSection = vi.fn(() => true);
+	const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
 
 	const defaultProps = {
+		dialogRef: mockDialogRef,
 		isDetailedSection: mockIsDetailedSection,
 		onAddSection: mockOnAddSection,
 	};
@@ -215,12 +217,28 @@ describe.sequential("DragDropSectionManager", () => {
 	});
 
 	describe("section management", () => {
-		it("handles section deletion", () => {
+		it("shows confirmation dialog for main section deletion", () => {
 			render(<DragDropSectionManager {...defaultProps} />);
 
 			const deleteButtons = screen.getAllByTestId("delete-section-button");
-			fireEvent.click(deleteButtons[0]);
+			fireEvent.click(deleteButtons[0]); // This should be a main section
 
+			// Check that dialog.open was called instead of immediate deletion
+			expect(mockDialogRef.current.open).toHaveBeenCalled();
+			expect(mockUpdateGrantSections).not.toHaveBeenCalled();
+		});
+
+		it("immediately deletes sub-sections without confirmation", () => {
+			render(<DragDropSectionManager {...defaultProps} />);
+
+			const deleteButtons = screen.getAllByTestId("delete-section-button");
+			// Find the delete button for the sub-section (subsection-1 has parent_id: "section-1")
+			// Based on flattened rendering: [0] section-1, [1] subsection-1, [2] section-2
+			const [, subSectionDeleteButton] = deleteButtons; // Second button is for subsection-1
+			fireEvent.click(subSectionDeleteButton);
+
+			// Sub-sections should be deleted immediately without dialog
+			expect(mockDialogRef.current.open).not.toHaveBeenCalled();
 			expect(mockUpdateGrantSections).toHaveBeenCalled();
 		});
 
