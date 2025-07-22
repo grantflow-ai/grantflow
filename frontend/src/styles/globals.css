@@ -64,6 +64,8 @@
 	--color-app-gray-600: var(--app-gray-600);
 	--color-app-gray-700: var(--app-gray-700);
 	--color-app-lavender-gray: var(--app-lavender-gray);
+	--color-light-red: var(--app-light-red);
+	--color-red: var(--app-red);
 
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
@@ -101,6 +103,7 @@
 	--radius: 0.625rem;
 
 	--app-red: oklch(0.67 0.2207 13.38); /* FF456D */
+	--app-light-red: #ffecec;
 	--app-green: oklch(0.86 0.1786 142.59); /* 86EF7F */
 	--app-dark-blue: oklch(0.29 0.1308 278.65); /* 211968 */
 	--app-primary-blue: oklch(0.46 0.2976 266.95); /* 1E13F8 */
