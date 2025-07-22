@@ -6,6 +6,7 @@ export { CreateProjectForm } from "@/components/organizations/forms/create-proje
 export { DeleteProjectModal } from "@/components/organizations/modals/delete-project-modal";
 export { InviteCollaboratorModal } from "@/components/organizations/modals/invite-collaborator-modal";
 export { DeleteAccountModal } from "@/components/organizations/settings/delete-account-modal";
+export { DeleteOrganizationModal } from "@/components/organizations/settings/delete-organization-modal";
 export { EditPermissionModal } from "@/components/organizations/settings/edit-permission-modal";
 export { OrganizationSettingsAccount } from "@/components/organizations/settings/organization-settings-account";
 export { OrganizationSettingsClient } from "@/components/organizations/settings/organization-settings-client";
