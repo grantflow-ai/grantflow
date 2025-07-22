@@ -15,8 +15,16 @@ logger = get_logger(__name__)
 
 
 async def seed_db() -> None:
+    # Load .env file first to get any environment variables
     load_dotenv()
-    environ.setdefault("DATABASE_CONNECTION_STRING", "postgresql+asyncpg://local:local@db:5432/local")
+
+    # If DATABASE_CONNECTION_STRING is not set, use local default
+    if "DATABASE_CONNECTION_STRING" not in environ:
+        environ["DATABASE_CONNECTION_STRING"] = "postgresql+asyncpg://local:local@db:5432/local"
+        logger.info("Using local database connection")
+    else:
+        logger.info("Using configured database connection")
+
     session_maker = get_session_maker()
 
     granting_institutions_json = Path(__file__).parent / "granting_institutions.json"
