@@ -129,7 +129,10 @@ describe("DashboardClient", () => {
 			selectedOrganizationId: "org-123",
 			switchOrganization: mockSwitchOrganization,
 		});
-		mockUseOrganizationStore.mockReturnValue({ setOrganizations: mockSetOrganizations });
+		mockUseOrganizationStore.mockReturnValue({
+			selectOrganization: vi.fn(),
+			setOrganizations: mockSetOrganizations,
+		});
 		mockUseProjectStore.mockReturnValue({
 			deleteProject: mockDeleteProject,
 			duplicateProject: mockDuplicateProject,

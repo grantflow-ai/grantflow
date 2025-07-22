@@ -197,7 +197,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 		await user.click(modalQueries.getByTestId("send-invitation-button"));
 
 		await waitFor(() => {
-			expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin");
+			expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin", true, []);
 		});
 	});
 
@@ -244,7 +244,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 			expect(mockOnClose).toHaveBeenCalled();
 		});
 
-		expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin");
+		expect(mockOnInvite).toHaveBeenCalledWith("test@example.com", "admin", true, []);
 	});
 
 	it("shows loading state during submission", async () => {

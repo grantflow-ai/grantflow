@@ -5,14 +5,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SortableSection } from "./grant-sections";
 
 vi.mock("@dnd-kit/sortable", () => ({
-	useSortable: vi.fn(() => ({
-		attributes: {},
-		isDragging: false,
-		listeners: {},
-		setNodeRef: vi.fn(),
-		transform: null,
-		transition: undefined,
-	})),
+	useSortable: vi.fn(
+		() =>
+			({
+				attributes: {},
+				isDragging: false,
+				listeners: {},
+				setNodeRef: vi.fn(),
+				transform: null,
+				transition: undefined,
+			}) as any,
+	),
 }));
 
 vi.mock("@dnd-kit/utilities", () => ({
@@ -276,13 +279,40 @@ describe("SortableSection", () => {
 		expect((aiPrompt as HTMLTextAreaElement).value).toContain("research grant application");
 	});
 
-	it("applies dragging styles when isDragging is true", () => {
+	it("applies dragging styles when isDragging is true", async () => {
 		const section = GrantSectionFactory.build();
 
-		render(<SortableSection {...defaultProps} isDragging={true} section={section} />);
+		// Get the mocked function from the module
+		const { useSortable } = await import("@dnd-kit/sortable");
+		const mockUseSortable = vi.mocked(useSortable);
+
+		// Clear any previous calls
+		mockUseSortable.mockClear();
+
+		// Override the mock to return isDragging: true for this test
+		mockUseSortable.mockReturnValue({
+			attributes: {},
+			isDragging: true,
+			listeners: {},
+			setNodeRef: vi.fn(),
+			transform: null,
+			transition: undefined,
+		} as any);
+
+		render(<SortableSection {...defaultProps} section={section} />);
 
 		const container = screen.getByTestId("section-container");
 		expect(container).toHaveClass("bg-app-gray-500");
+
+		// Restore the original mock
+		mockUseSortable.mockReturnValue({
+			attributes: {},
+			isDragging: false,
+			listeners: {},
+			setNodeRef: vi.fn(),
+			transform: null,
+			transition: undefined,
+		} as any);
 	});
 
 	it("handles sections without max_words property", () => {
