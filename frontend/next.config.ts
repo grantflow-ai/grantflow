@@ -9,7 +9,15 @@ const nextConfig = {
 			bodySizeLimit: "100mb",
 		},
 	},
-	reactStrictMode: false,
+	images: {
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "lh3.googleusercontent.com",
+				pathname: "/**",
+			},
+		],
+	},
 } satisfies NextConfig;
 
 export default nextConfig;
