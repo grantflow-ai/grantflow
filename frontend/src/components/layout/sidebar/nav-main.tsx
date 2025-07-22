@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Clock, LayoutDashboard, Search, Settings as SettingsIcon } from "lucide-react";
+import { ChevronRight, Search, Settings as SettingsIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -15,6 +15,50 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { routes } from "@/utils/navigation";
+import Image from "next/image";
+import type { API } from "@/types/api-types";
+import { useEffect, useState } from "react";
+import { listApplications } from "@/actions/grant-applications";
+import { toast } from "sonner";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+
+type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
+
+interface SidebarStatusStyle {
+	bg: string;
+	icon: string;
+	label: string;
+	text: string;
+}
+
+const SidebarStatusStyleMap: Record<ApplicationStatus, SidebarStatusStyle> = {
+	CANCELLED: {
+		bg: "bg-red-500",
+		icon: "/icons/close.svg",
+		label: "Cancelled",
+		text: "text-white",
+	},
+	DRAFT: {
+		bg: "bg-app-dark-blue",
+		icon: "/icons/working-draft-white.svg",
+		label: "Working Draft",
+		text: "text-white",
+	},
+	GENERATING: {
+		bg: "bg-primary",
+		icon: "/icons/piechart.svg",
+		label: "Generating",
+		text: "text-white",
+	},
+	IN_PROGRESS: {
+		bg: "bg-app-gray-300",
+		icon: "/icons/draft-in-progress.svg",
+		label: "In Progress",
+		text: "text-app-dark-blue",
+	},
+};
+
 
 interface NavMainProps {
 	"data-testid"?: string;
@@ -27,6 +71,11 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const isProjectsActive = pathname === "/projects";
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
+	const { activeProjectId } = useNavigationStore();
+	const { selectedOrganizationId } = useOrganizationStore();
+	const [recentApplications, setRecentApplications] = useState<
+		API.ListApplications.Http200.ResponseBody["applications"]
+	>([]);
 
 	const handleExpandSidebar = () => {
 		if (state === "collapsed") {
@@ -40,20 +89,37 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 		router.push(href);
 	};
 
+	useEffect(() => {
+		if (activeProjectId && selectedOrganizationId) {
+			const fetchApplications = async () => {
+				try {
+					const response = await listApplications(selectedOrganizationId, activeProjectId, { limit: 8 });
+					setRecentApplications(response.applications);
+				} catch {
+					toast.error("Failed to fetch recent applications.");
+				}
+			};
+			void fetchApplications();
+		}
+	}, [activeProjectId, selectedOrganizationId]);
+
 	return (
-		<SidebarMenu {...props}>
+		<SidebarMenu {...props} className="flex flex-col gap-8 group-data-[collapsible=icon]:gap-6">
 			{/* Dashboard */}
-			<SidebarMenuItem>
-				<SidebarMenuButton
-					asChild
-					className={isProjectsActive ? "bg-white text-primary [&_svg]:text-primary" : ""}
-					data-testid="dashboard-button"
-					isActive={isProjectsActive}
-					tooltip="Dashboard"
-				>
-					<Link className="flex items-center gap-2" href={routes.organization.root()}>
-						<LayoutDashboard className={`size-4 shrink-0 ${isProjectsActive ? "text-primary" : ""}`} />
-						<span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
+			<SidebarMenuItem className="">
+				<SidebarMenuButton asChild className="text-primary" data-testid="dashboard-button" tooltip="Dashboard">
+					<Link className="flex items-center gap-2" href={routes.organization.project.detail()}>
+						{/* <LayoutDashboard className={`size-4 shrink-0 ${isProjectsActive ? "text-primary" : ""}`} /> */}
+						<Image
+							alt="Dashboard"
+							className={` shrink-0 ${isProjectsActive ? "text-primary" : ""}`}
+							height={16}
+							src="/icons/dashboard.svg"
+							width={16}
+						/>
+						<span className="group-data-[collapsible=icon]:hidden text-sm font-normal leading-5 text-app-black">
+							Dashboard
+						</span>
 					</Link>
 				</SidebarMenuButton>
 			</SidebarMenuItem>
@@ -67,28 +133,99 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 							onClick={handleExpandSidebar}
 							tooltip="Recent Applications"
 						>
-							<Clock className="size-4 shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden">Recent Applications</span>
+							{/* <Clock className="size-4 shrink-0" /> */}
+							<Image
+								alt="Recent Applications"
+								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
+								height={16}
+								src="/icons/note-stack-blue.svg"
+								width={16}
+							/>
+							<Image
+								alt="Recent Applications"
+								className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block"
+								height={16}
+								src="/icons/note_stack.svg"
+								width={16}
+							/>
+							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal text-primary">
+								Recent Applications
+							</span>
 							<ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
 						</SidebarMenuButton>
 					</CollapsibleTrigger>
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
 						<div className="px-3 pt-4 pb-2">
 							<div className="relative">
-								<Search className="absolute left-3 top-2.5 h-4 w-4 text-app-gray-400" />
+								<Search className="absolute right-3 top-2.5 h-4 w-4 text-app-black" />
 								<Input
-									className="pl-9 pr-3 py-2 h-9 bg-white border-app-gray-100 placeholder:text-app-gray-400 placeholder:text-sm"
+									className="pl-3 pr-3 py-2 h-10 bg-white rounded border-app-gray-100 placeholder:text-app-gray-400 placeholder:text-sm placeholder:font-normal"
 									data-testid="search-input"
 									placeholder="Search application"
 								/>
 							</div>
 						</div>
-						<SidebarMenuSub>
-							<SidebarMenuSubItem>
-								<div className="px-3 py-2 text-sm text-app-gray-600" data-testid="recent-app-item">
-									No recent applications
-								</div>
-							</SidebarMenuSubItem>
+						<SidebarMenuSub className="pl-0 gap-4">
+							{recentApplications.length > 0 ? (
+								recentApplications.map((application) => {
+									const statusStyles = SidebarStatusStyleMap[application.status];
+									return (
+										<SidebarMenuSubItem key={application.id}>
+											<SidebarMenuSubButton
+												asChild
+												className="h-auto "
+												isActive={pathname === `/application/${application.id}`}
+											>
+												<Link
+													className="flex flex-col items-start "
+													data-testid={`recent-application-${application.id}`}
+													href={`/application/${application.id}`}
+												>
+													<div
+														className={`w-fit px-1 py-0.5 flex items-center gap-0.5 rounded-full ${statusStyles.bg}`}
+													>
+														<Image
+															alt={`${statusStyles.label} icon`}
+															height={7}
+															src={statusStyles.icon}
+															width={7}
+														/>
+														<span className={`text-[7px] font-normal ${statusStyles.text}`}>
+															{statusStyles.label}
+														</span>
+													</div>
+													<span className="text-sm font-normal leading-5 tracking-tighter">
+														{application.title}
+													</span>
+												</Link>
+											</SidebarMenuSubButton>
+										</SidebarMenuSubItem>
+									);
+								})
+							) : (
+								<SidebarMenuSubItem>
+									<div className="px-3 py-2 text-sm text-app-gray-600" data-testid="recent-app-item">
+										No recent applications
+									</div>
+								</SidebarMenuSubItem>
+							)}
+
+							{/* // <SidebarMenuSubItem>
+							// 	<div className="px-3 py-2 text-sm text-app-gray-600" data-testid="recent-app-item">
+							// 		No recent applications
+							// 	</div>
+							// </SidebarMenuSubItem>
+							// <SidebarMenuSubItem>
+							// <main>
+							// 	<div className="bg-primary w-fit px-1 py-0.5 flex items-center gap-0.5">
+							// 		<div></div>
+							// 		<p className="text-[7px] text-white font-normal" >Generating</p>
+							// 	</div>
+							// 	<h3 className="text-sm font-normal leading-5 tracking-tighter">
+							// 		Application name 123456...
+							// 	</h3>
+							// </main>
+							// </SidebarMenuSubItem> */}
 						</SidebarMenuSub>
 					</CollapsibleContent>
 				</SidebarMenuItem>
@@ -96,22 +233,22 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 
 			{/* Settings */}
 			<Collapsible className="group/collapsible">
-				<SidebarMenuItem>
+				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
-							className={`flex items-center gap-2 ${isSettingsActive ? "bg-white text-primary [&_svg]:text-primary" : ""}`}
+							className="flex items-center gap-2  text-primary group-data-[collapsible=icon]:text-app-black"
 							data-testid="settings-trigger"
 							isActive={isSettingsActive}
 							onClick={handleExpandSidebar}
 							tooltip="Settings"
 						>
-							<SettingsIcon className={`size-4 shrink-0 ${isSettingsActive ? "text-primary" : ""}`} />
-							<span className="group-data-[collapsible=icon]:hidden">Settings</span>
+							<SettingsIcon className="size-4 shrink-0" />
+							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal">Settings</span>
 							<ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
 						</SidebarMenuButton>
 					</CollapsibleTrigger>
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
-						<SidebarMenuSub>
+						<SidebarMenuSub className="flex flex-col gap-4">
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton
 									asChild

@@ -196,7 +196,7 @@ export function ProjectDetailClient() {
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
 								<input
-									className="font-medium text-[36px] leading-[42px] text-app-black bg-app-gray-100 outline-none rounded-md px-2 min-w-[200px]"
+									className="font-medium text-2xl leading-[42px]  text-app-black bg-white border border-primary outline-none rounded-md px-2 min-w-[400px]"
 									onBlur={() => {
 										setIsEditingTitle(false);
 									}}
