@@ -33,7 +33,6 @@ async def test_resolve_parent_id_grant_application() -> None:
     entity_id = uuid4()
     grant_app_id = uuid4()
 
-    
     session.scalar.side_effect = [grant_app_id, None]
 
     result = await resolve_parent_id_for_notification(
@@ -55,7 +54,6 @@ async def test_resolve_parent_id_grant_template() -> None:
     entity_id = uuid4()
     grant_template_id = uuid4()
 
-    
     session.scalar.side_effect = [None, grant_template_id]
 
     result = await resolve_parent_id_for_notification(
@@ -76,7 +74,6 @@ async def test_resolve_parent_id_fallback_to_entity_id() -> None:
     source_id = uuid4()
     entity_id = uuid4()
 
-    
     session.scalar.side_effect = [None, None]
 
     result = await resolve_parent_id_for_notification(

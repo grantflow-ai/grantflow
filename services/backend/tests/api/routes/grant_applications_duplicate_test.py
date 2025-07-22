@@ -111,11 +111,9 @@ async def test_duplicate_with_grant_template(
 ) -> None:
     """Test that grant template is properly duplicated"""
 
-    
     async with async_session_maker() as session:
         from sqlalchemy import select
 
-        
         existing_template = await session.execute(
             select(GrantTemplate).where(
                 GrantTemplate.grant_application_id == grant_application.id, GrantTemplate.deleted_at.is_(None)
@@ -124,7 +122,6 @@ async def test_duplicate_with_grant_template(
         for template in existing_template.scalars():
             template.soft_delete()
 
-        
         test_grant_sections = [
             {
                 "title": "Test Section",
@@ -143,7 +140,6 @@ async def test_duplicate_with_grant_template(
 
         template_id = new_template.id
 
-    
     async with async_session_maker() as session:
         app = await session.get(GrantApplication, grant_application.id)
         project_id = app.project_id

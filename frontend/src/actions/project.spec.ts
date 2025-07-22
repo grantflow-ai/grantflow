@@ -58,7 +58,6 @@ const mockGetProjectResponse = ProjectFactory.build({
 	id: mockProjectId,
 	logo_url: "https://example.com/logo.png",
 	name: "Test Project",
-	role: "OWNER",
 });
 
 const mockGetProjectsResponse = [
@@ -67,14 +66,12 @@ const mockGetProjectsResponse = [
 		id: mockProjectId,
 		logo_url: "https://example.com/logo.png",
 		name: "Test Project",
-		role: "OWNER",
 	}),
 	ProjectListItemFactory.build({
 		description: null,
 		id: "project-2",
 		logo_url: null,
 		name: "Another Project",
-		role: "COLLABORATOR",
 	}),
 ];
 
@@ -83,7 +80,6 @@ const mockUpdateProjectResponse = ProjectListItemFactory.build({
 	id: mockProjectId,
 	logo_url: "https://example.com/updated-logo.png",
 	name: "Updated Project",
-	role: "OWNER",
 });
 
 beforeEach(() => {

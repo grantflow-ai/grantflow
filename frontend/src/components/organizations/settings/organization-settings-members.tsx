@@ -13,6 +13,7 @@ import {
 } from "@/actions/organization";
 import { InviteCollaboratorModal } from "@/components/organizations";
 import { useNotificationStore } from "@/stores/notification-store";
+import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger";
 import { generateInitials } from "@/utils/user";
@@ -23,6 +24,7 @@ interface OrganizationMember {
 	// User data
 	email?: string;
 	firebaseUid: string;
+	hasAllProjectsAccess?: boolean;
 	invitationId?: string;
 	joinedAt: string;
 	photoUrl?: string;
@@ -100,9 +102,20 @@ export function OrganizationSettingsMembers({
 		}
 	};
 
-	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole) => {
+	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole, hasAllProjectsAccess?: boolean) => {
 		try {
-			await updateOrganizationMemberRole(organizationId, firebaseUid, { role: newRole });
+			// API supports has_all_projects_access for role updates
+			const updateData: API.UpdateMemberRole.RequestBody = {
+				role: newRole,
+			};
+
+			// Only include has_all_projects_access for COLLABORATOR role
+			// OWNER and ADMIN always have all projects access (handled by backend)
+			if (newRole === UserRole.COLLABORATOR && hasAllProjectsAccess !== undefined) {
+				updateData.has_all_projects_access = hasAllProjectsAccess;
+			}
+
+			await updateOrganizationMemberRole(organizationId, firebaseUid, updateData);
 			await mutate(`/organizations/${organizationId}/members`);
 			addNotification({
 				message: `Member role has been updated to ${ROLE_LABELS[newRole]}`,
@@ -196,6 +209,7 @@ export function OrganizationSettingsMembers({
 		displayName: member.display_name,
 		email: member.email,
 		firebaseUid: member.firebase_uid,
+		hasAllProjectsAccess: member.has_all_projects_access,
 		joinedAt: member.created_at,
 		photoUrl: member.photo_url,
 		role: member.role as UserRole,
@@ -324,7 +338,7 @@ export function OrganizationSettingsMembers({
 				onClose={() => {
 					setEditingMember(null);
 				}}
-				onUpdateRole={(firebaseUid: string, newRole: UserRole) => handleUpdateRole(firebaseUid, newRole)}
+				onUpdateRole={handleUpdateRole}
 			/>
 		</div>
 	);
