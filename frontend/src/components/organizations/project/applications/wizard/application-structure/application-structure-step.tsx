@@ -105,7 +105,9 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 				content: ragDialog.content,
 				description:
 					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
+				dismissOnOutsideClick: false,
 				footer: ragDialog.footer,
+				minWidth: "min-w-3xl",
 				title: "Review Required: Some Uploads Failed",
 			});
 		}
@@ -121,12 +123,12 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<ApplicationStructureLeftPane />
-			<ApplicationStructurePreview />
+			<ApplicationStructurePreview dialogRef={dialogRef} />
 		</div>
 	);
 }
 
-function ApplicationStructurePreview() {
+function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null | WizardDialogRef> }) {
 	const application = useApplicationStore((state) => state.application);
 	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
@@ -208,7 +210,11 @@ function ApplicationStructurePreview() {
 
 	return (
 		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor isDetailedSection={isDetailedSection} onAddSection={handleAddNewSection} />
+			<SectionEditor
+				dialogRef={dialogRef}
+				isDetailedSection={isDetailedSection}
+				onAddSection={handleAddNewSection}
+			/>
 		</WizardRightPane>
 	);
 }
@@ -244,9 +250,11 @@ function PreviewHeader({ onAddSection }: { onAddSection: (parentId?: null | stri
 }
 
 function SectionEditor({
+	dialogRef,
 	isDetailedSection,
 	onAddSection,
 }: {
+	dialogRef: RefObject<null | WizardDialogRef>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
@@ -254,7 +262,11 @@ function SectionEditor({
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
-				<DragDropSectionManager isDetailedSection={isDetailedSection} onAddSection={onAddSection} />
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={isDetailedSection}
+					onAddSection={onAddSection}
+				/>
 			</ScrollArea>
 		</div>
 	);
