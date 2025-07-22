@@ -269,6 +269,7 @@ async def test_generate_application_no_rag_sources(
     project_member_user: OrganizationUser,
 ) -> None:
     async with async_session_maker() as session, session.begin():
+        grant_application.title = "Test Application"
         grant_application.research_objectives = [
             {
                 "number": 1,
@@ -306,7 +307,7 @@ async def test_generate_application_no_rag_sources(
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "Insufficient data to generate application" in response.text
+    assert "No rag sources found" in response.text
 
 
 async def test_generate_application_not_found(
