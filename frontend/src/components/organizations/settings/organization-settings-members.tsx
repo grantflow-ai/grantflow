@@ -221,119 +221,78 @@ export function OrganizationSettingsMembers({
 		<div className="w-full" data-testid="organization-settings-members">
 			{/* Table Structure */}
 			<div className="w-full">
-				<div className="flex w-full">
-					{/* Avatar Column */}
-					<div className="flex flex-col min-w-[60px]">
-						{/* Header */}
-						<div className="h-[41px] border-b border-app-gray-400 flex items-center justify-center px-2">
-							<div className="font-heading font-semibold text-[16px] text-app-black">&nbsp;</div>
-						</div>
-						{/* Rows */}
+				<table className="w-full">
+					<thead>
+						<tr className="border-b border-app-gray-300">
+							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+								Name
+							</th>
+							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+								Email
+							</th>
+							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+								Role
+							</th>
+							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+								Research Projects Access
+							</th>
+							<th className="h-[56px] text-center px-6 font-heading font-medium text-[16px] text-app-black">
+								&nbsp;
+							</th>
+						</tr>
+					</thead>
+					<tbody>
 						{allMembers.map((member) => (
-							<div
-								className={`h-[41px] border-b border-app-gray-100 flex items-center justify-center px-2 ${
-									member.status === "pending" ? "bg-app-gray-20" : ""
+							<tr
+								className={`border-b border-app-gray-100 ${
+									member.status === "pending" ? "bg-app-gray-50" : ""
 								}`}
 								key={member.firebaseUid || member.invitationId}
 							>
-								<ColoredAvatar
-									email={member.email ?? member.firebaseUid}
-									initials={generateInitials(undefined, member.email ?? member.firebaseUid)}
-								/>
-							</div>
+								<td className="h-[64px] px-6">
+									<div className="flex items-center gap-3">
+										<ColoredAvatar
+											email={member.email ?? member.firebaseUid}
+											initials={generateInitials(
+												member.displayName,
+												member.email ?? member.firebaseUid,
+											)}
+										/>
+										<span className="font-body text-[14px] text-app-gray-700">
+											{member.displayName || "Name name"}
+										</span>
+									</div>
+								</td>
+								<td className="h-[64px] px-6">
+									<span className="font-body text-[14px] text-app-gray-600">
+										{member.email || "Text@gmail.com"}
+									</span>
+								</td>
+								<td className="h-[64px] px-6">
+									<FigmaRoleBadge role={member.role} />
+								</td>
+								<td className="h-[64px] px-6">
+									<ResearchProjectsAccess role={member.role} />
+								</td>
+								<td className="h-[64px] px-6 text-center">
+									<MemberActionMenu
+										currentUserRole={currentUserRole}
+										member={member}
+										onCancelInvitation={
+											member.status === "pending" && member.invitationId
+												? () => handleCancelInvitation(member.invitationId!, member.email!)
+												: undefined
+										}
+										onEditPermissions={(member) => {
+											setEditingMember(member);
+										}}
+										onRemoveMember={() => handleRemoveMember(member.firebaseUid)}
+									/>
+								</td>
+							</tr>
 						))}
-					</div>
-
-					{/* Name Column */}
-					<div className="flex-1 flex flex-col min-w-[150px]">
-						{/* Header */}
-						<div className="h-[41px] border-b border-app-gray-400 flex items-center px-2">
-							<div className="font-heading font-semibold text-[16px] text-app-black">Name</div>
-						</div>
-						{/* Rows */}
-						{allMembers.map((member) => (
-							<div
-								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
-									member.status === "pending" ? "bg-app-gray-20" : ""
-								}`}
-								key={member.firebaseUid || member.invitationId}
-							>
-								<div className="font-body text-[14px] text-app-gray-600">
-									{member.displayName ?? member.email ?? "Unknown User"}
-								</div>
-							</div>
-						))}
-					</div>
-
-					{/* Email Column */}
-					<div className="flex-1 flex flex-col min-w-[180px]">
-						{/* Header */}
-						<div className="h-[41px] border-b border-app-gray-400 flex items-center px-2">
-							<div className="font-heading font-semibold text-[16px] text-app-black">Email</div>
-						</div>
-						{/* Rows */}
-						{allMembers.map((member) => (
-							<div
-								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
-									member.status === "pending" ? "bg-app-gray-20" : ""
-								}`}
-								key={member.firebaseUid || member.invitationId}
-							>
-								<div className="font-body text-[14px] text-app-gray-600">{member.email}</div>
-							</div>
-						))}
-					</div>
-
-					{/* Role Column */}
-					<div className="flex-1 flex flex-col min-w-[120px]">
-						{/* Header */}
-						<div className="h-[41px] border-b border-app-gray-400 flex items-center px-2">
-							<div className="font-heading font-semibold text-[16px] text-app-black">Role</div>
-						</div>
-						{/* Rows */}
-						{allMembers.map((member) => (
-							<div
-								className={`h-[41px] border-b border-app-gray-100 flex items-center px-2 ${
-									member.status === "pending" ? "bg-app-gray-20" : ""
-								}`}
-								key={member.firebaseUid || member.invitationId}
-							>
-								<FigmaRoleBadge role={member.role} />
-							</div>
-						))}
-					</div>
-
-					{/* Actions Column */}
-					<div className="flex flex-col min-w-[60px]">
-						{/* Header */}
-						<div className="h-[41px] border-b border-app-gray-400 flex items-center justify-center px-2">
-							<div className="font-heading font-semibold text-[16px] text-app-black">&nbsp;</div>
-						</div>
-						{/* Rows */}
-						{allMembers.map((member) => (
-							<div
-								className={`h-[41px] border-b border-app-gray-100 flex items-center justify-center px-2 ${
-									member.status === "pending" ? "bg-app-gray-20" : ""
-								}`}
-								key={member.firebaseUid || member.invitationId}
-							>
-								<MemberActionMenu
-									currentUserRole={currentUserRole}
-									member={member}
-									onCancelInvitation={
-										member.status === "pending" && member.invitationId
-											? () => handleCancelInvitation(member.invitationId!, member.email!)
-											: undefined
-									}
-									onEditPermissions={(member) => {
-										setEditingMember(member);
-									}}
-									onRemoveMember={() => handleRemoveMember(member.firebaseUid)}
-								/>
-							</div>
-						))}
-					</div>
-				</div>
+					</tbody>
+				</table>
 
 				{/* Empty State */}
 				{allMembers.length === 0 && (
@@ -381,17 +340,29 @@ function ColoredAvatar({ email, initials }: { email: string; initials: string })
 	const colorClass = AVATAR_COLORS[colorIndex];
 
 	return (
-		<div className={`size-[25px] rounded flex items-center justify-center ${colorClass}`}>
-			<span className="font-body font-semibold text-[16px] text-white">{initials}</span>
+		<div className={`size-8 rounded-md flex items-center justify-center ${colorClass}`}>
+			<span className="font-body font-semibold text-[14px] text-white">{initials}</span>
 		</div>
 	);
 }
 
 function FigmaRoleBadge({ role }: { role: UserRole }) {
+	const getRoleColor = () => {
+		switch (role) {
+			case UserRole.ADMIN: {
+				return "bg-link-hover text-white";
+			}
+			case UserRole.OWNER: {
+				return "bg-primary text-white";
+			}
+			default: {
+				return "bg-app-gray-100 text-app-gray-700";
+			}
+		}
+	};
+
 	return (
-		<span className="px-2 py-0 bg-app-gray-100 rounded-[20px] text-[12px] font-body text-app-dark-blue">
-			{ROLE_LABELS[role]}
-		</span>
+		<span className={`px-3 py-1 rounded-full text-[12px] font-body ${getRoleColor()}`}>{ROLE_LABELS[role]}</span>
 	);
 }
 
@@ -439,13 +410,13 @@ function MemberActionMenu({
 	return (
 		<div className="relative" ref={menuRef}>
 			<button
-				className="p-1 hover:bg-app-gray-100 rounded transition-colors"
+				className="p-2 hover:bg-app-gray-50 rounded transition-colors"
 				onClick={() => {
 					setIsOpen(!isOpen);
 				}}
 				type="button"
 			>
-				<MoreVertical className="size-4 text-app-gray-600" />
+				<MoreVertical className="size-4 text-app-gray-700" />
 			</button>
 
 			{isOpen && (
@@ -494,6 +465,35 @@ function MemberActionMenu({
 					</div>
 				</div>
 			)}
+		</div>
+	);
+}
+
+function ResearchProjectsAccess({ role }: { role: UserRole }) {
+	// Mock data for project access - in real implementation this would come from the API
+	const projectAccess = [
+		{ count: 2, name: "Project name" },
+		{ count: 3, name: "Project name" },
+		{ count: 1, name: "Project name" },
+	];
+
+	// Owner and Admin have access to all projects
+	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
+		return <span className="font-body text-[14px] text-app-gray-700">All</span>;
+	}
+
+	// Collaborators have specific project access
+	return (
+		<div className="flex items-center gap-2">
+			{projectAccess.map((project, index) => (
+				<span
+					className="px-3 py-1 bg-app-gray-100 rounded-full text-[12px] font-body text-app-gray-700 inline-flex items-center gap-1"
+					key={index}
+				>
+					{project.name}
+					<span className="text-app-gray-500">+{project.count}</span>
+				</span>
+			))}
 		</div>
 	);
 }
