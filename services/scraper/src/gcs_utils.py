@@ -1,4 +1,5 @@
 """GCS utilities for the scraper service."""
+
 from __future__ import annotations
 
 import time

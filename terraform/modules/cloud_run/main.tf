@@ -127,6 +127,12 @@ variable "backend_service_account_email" {
   default     = ""
 }
 
+variable "scraper_service_account_email" {
+  description = "Service account email for the scraper service"
+  type        = string
+  default     = ""
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -659,6 +665,8 @@ resource "google_cloud_run_v2_service" "scraper" {
   deletion_protection = false
 
   template {
+    service_account = var.scraper_service_account_email
+    
     containers {
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:${var.image_tag_suffix}"
 
@@ -703,7 +711,7 @@ resource "google_cloud_run_v2_service" "scraper" {
       # Scraper-specific bucket name
       env {
         name  = "SCRAPER_GCS_BUCKET_NAME"
-        value = "grantflow-scraper"
+        value = "grantflow-scraper-${var.environment}"
       }
 
       # Environment name

@@ -210,39 +210,15 @@ resource "google_storage_bucket" "scraper" {
   }
 }
 
-# IAM policy for scraper bucket - similar to uploads bucket
-resource "google_storage_bucket_iam_policy" "scraper" {
-  bucket      = google_storage_bucket.scraper.name
-  policy_data = <<POLICY
-{
-  "bindings": [
-    {
-      "members": [
-        "projectEditor:grantflow",
-        "projectOwner:grantflow"
-      ],
-      "role": "roles/storage.legacyBucketOwner"
-    },
-    {
-      "members": [
-        "projectViewer:grantflow"
-      ],
-      "role": "roles/storage.legacyBucketReader"
-    },
-    {
-      "members": [
-        "projectEditor:grantflow",
-        "projectOwner:grantflow"
-      ],
-      "role": "roles/storage.legacyObjectOwner"
-    },
-    {
-      "members": [
-        "projectViewer:grantflow"
-      ],
-      "role": "roles/storage.legacyObjectReader"
-    }
-  ]
+# Grant scraper service account access to the bucket
+resource "google_storage_bucket_iam_member" "scraper_bucket_object_viewer" {
+  bucket = google_storage_bucket.scraper.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:scraper-service@grantflow.iam.gserviceaccount.com"
 }
-POLICY
+
+resource "google_storage_bucket_iam_member" "scraper_bucket_object_creator" {
+  bucket = google_storage_bucket.scraper.name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:scraper-service@grantflow.iam.gserviceaccount.com"
 }
