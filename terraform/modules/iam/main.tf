@@ -181,4 +181,42 @@ resource "google_project_iam_member" "backend_serviceusage_consumer" {
 }
 
 
+resource "google_service_account" "scraper" {
+  account_id   = "scraper-service"
+  display_name = "Scraper Service Account"
+  description  = "Service account for the scraper Cloud Run service"
+}
+
+
+resource "google_project_iam_member" "scraper_storage_object_admin" {
+  project = "grantflow"
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
+resource "google_project_iam_member" "scraper_secret_accessor" {
+  project = "grantflow"
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
+resource "google_project_iam_member" "scraper_logging_writer" {
+  project = "grantflow"
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
+resource "google_project_iam_member" "scraper_monitoring_metric_writer" {
+  project = "grantflow"
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
+resource "google_project_iam_member" "scraper_trace_agent" {
+  project = "grantflow"
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
+
 

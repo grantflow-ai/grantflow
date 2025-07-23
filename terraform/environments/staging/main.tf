@@ -89,6 +89,7 @@ module "cloud_run" {
   image_tag_suffix              = "staging-latest"
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
+  scraper_service_account_email = module.iam.scraper_service_account_email
   min_instances                 = 0     # Scale to zero for cost savings
   max_instances                 = 1     # Limited scaling for staging
   cpu_limit                     = "1"   # Minimum CPU for Cloud Run
