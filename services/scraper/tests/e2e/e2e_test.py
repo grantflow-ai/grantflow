@@ -13,7 +13,7 @@ async def test_run_scraper(logger: logging.Logger) -> None:
     logger.info("Initializing e2e test for NIH grant scraper")
 
     metrics = await run_scraper(SimpleFileStorage())
-    logger.info("Finished scraping", search_results_count=metrics.get("search_results_count", 0))  # type: ignore[call-arg]
+    logger.info("Finished scraping, search_results_count=%s", metrics.get("search_results_count", 0))
 
     today = datetime.now(UTC).date()
     expected_filename = f"grants_search_csv_{today.strftime('%d_%m_%Y')}.json"
@@ -32,7 +32,7 @@ async def test_run_scraper(logger: logging.Logger) -> None:
     assert metrics["total_duration_ms"] > 0, "Scraper should have taken some time to run"
 
     logger.info(
-        "Scraper test completed successfully",
-        search_results_count=metrics.get("search_results_count", 0),
-        new_files_downloaded=metrics.get("new_files_downloaded", 0),
-    )  # type: ignore[call-arg]
+        "Scraper test completed successfully, search_results_count=%s, new_files_downloaded=%s",
+        metrics.get("search_results_count", 0),
+        metrics.get("new_files_downloaded", 0),
+    )

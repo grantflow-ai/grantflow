@@ -5,11 +5,14 @@ on:
         branches:
             - main
             - development
-        # paths:
-        #     - ".github/workflows/build-service-scraper.yaml"
-        #     - ".github/actions/**"
-        #     - "packages/shared_utils/src/**"
-        #     - "services/scraper/src/**"
+        paths:
+            - ".github/workflows/build-service-scraper.yaml"
+            - ".github/actions/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
+            - "services/scraper/**"
+            - "pyproject.toml"
+            - "uv.lock"
     release:
         types: [published]
     workflow_dispatch:

@@ -351,7 +351,7 @@ data "archive_file" "app_hosting_function" {
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/requirements.txt")
+    content  = file("${path.module}/../../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }

@@ -5,12 +5,14 @@ on:
         branches:
             - main
             - development
-        # paths:
-        #     - ".github/workflows/build-service-indexer.yaml"
-        #     - ".github/actions/**"
-        #     - "packages/db/src/**"
-        #     - "packages/shared_utils/src/**"
-        #     - "services/indexer/src/**"
+        paths:
+            - ".github/workflows/build-service-indexer.yaml"
+            - ".github/actions/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
+            - "services/indexer/**"
+            - "pyproject.toml"
+            - "uv.lock"
     release:
         types: [published]
     workflow_dispatch:
