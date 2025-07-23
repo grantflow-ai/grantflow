@@ -36,7 +36,7 @@ data "archive_file" "entity_cleanup_source" {
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/requirements.txt")
+    content  = file("${path.module}/../../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 }

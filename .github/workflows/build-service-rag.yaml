@@ -5,12 +5,14 @@ on:
         branches:
             - main
             - development
-        # paths:
-        #     - ".github/workflows/build-service-rag.yaml"
-        #     - ".github/actions/**"
-        #     - "packages/db/src/**"
-        #     - "packages/shared_utils/src/**"
-        #     - "services/rag/src/**"
+        paths:
+            - ".github/workflows/build-service-rag.yaml"
+            - ".github/actions/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
+            - "services/rag/**"
+            - "pyproject.toml"
+            - "uv.lock"
     release:
         types: [published]
     workflow_dispatch:
