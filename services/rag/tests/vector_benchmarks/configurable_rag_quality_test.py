@@ -8,12 +8,11 @@ This test uses the RAG pipeline to provide retrieval quality metrics:
 - Production-grade performance and quality analysis
 
 """
-# mypy: ignore-errors
 
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -38,7 +37,8 @@ def rag_quality_configurations() -> dict[str, dict[str, Any]]:
     config_path = Path(__file__).parent / "chunking_configs.yaml"
     with config_path.open() as file:
         config_data = yaml.safe_load(file)
-    return config_data["configurations"]
+    configurations: dict[str, dict[str, Any]] = config_data["configurations"]
+    return configurations
 
 
 @pytest.fixture
@@ -372,7 +372,7 @@ async def test_configurable_rag_quality_benchmark(
             search_throughput=f"{search_result.throughput:.1f}",
             avg_relevance=avg_relevance,
             successful_retrievals=successful_retrievals,
-            total_memory=f"{float(result['performance_metrics']['total_memory_mb']):.1f}MB",
+            total_memory=f"{float(cast('dict[str, Any]', result['performance_metrics'])['total_memory_mb']):.1f}MB",
         )
 
     # 6. Generate configurable analysis with RAG metrics
@@ -394,22 +394,40 @@ async def test_configurable_rag_quality_benchmark(
 
     # Assertions for production-grade results
     for result in all_results:
-        config_name: str = result["configuration"]["name"]  # type: ignore[assignment]
-        insertion_throughput: float = result["performance_metrics"]["insertion_benchmark"]["throughput_vectors_per_sec"]  # type: ignore[assignment]
-        search_throughput: float = result["performance_metrics"]["search_benchmark"]["throughput_queries_per_sec"]  # type: ignore[assignment]
-        avg_relevance: float = result["rag_quality_evaluation"]["avg_relevance_score"]  # type: ignore[assignment]
-        success_rate: float = result["rag_quality_evaluation"]["retrieval_success_rate"]  # type: ignore[assignment]
+        result_config_name: str = str(cast("dict[str, Any]", result["configuration"])["name"])
+        result_insertion_throughput: float = float(
+            cast("dict[str, Any]", cast("dict[str, Any]", result["performance_metrics"])["insertion_benchmark"])[
+                "throughput_vectors_per_sec"
+            ]
+        )
+        result_search_throughput: float = float(
+            cast("dict[str, Any]", cast("dict[str, Any]", result["performance_metrics"])["search_benchmark"])[
+                "throughput_queries_per_sec"
+            ]
+        )
+        result_avg_relevance: float = float(
+            cast("dict[str, Any]", result["rag_quality_evaluation"])["avg_relevance_score"]
+        )
+        result_success_rate: float = float(
+            cast("dict[str, Any]", result["rag_quality_evaluation"])["retrieval_success_rate"]
+        )
 
         # Performance assertions
-        assert insertion_throughput > 1, f"Low insertion throughput for {config_name}: {insertion_throughput}"
-        assert search_throughput > 0.1, f"Low search throughput for {config_name}: {search_throughput}"
-        assert result["chunking_analysis"]["chunk_count"] > 0, f"No chunks generated for {config_name}"
+        assert result_insertion_throughput > 1, (
+            f"Low insertion throughput for {result_config_name}: {result_insertion_throughput}"
+        )
+        assert result_search_throughput > 0.1, (
+            f"Low search throughput for {result_config_name}: {result_search_throughput}"
+        )
+        assert cast("dict[str, Any]", result["chunking_analysis"])["chunk_count"] > 0, (
+            f"No chunks generated for {result_config_name}"
+        )
 
         # RAG quality assertions
-        assert success_rate >= 0.5, f"Low retrieval success rate for {config_name}: {success_rate}"
-        assert avg_relevance >= 0, f"Invalid relevance score for {config_name}: {avg_relevance}"
+        assert result_success_rate >= 0.5, f"Low retrieval success rate for {result_config_name}: {result_success_rate}"
+        assert result_avg_relevance >= 0, f"Invalid relevance score for {result_config_name}: {result_avg_relevance}"
 
-        logger.info("✅ All assertions passed for config", config=config_name)
+        logger.info("✅ All assertions passed for config", config=result_config_name)
 
 
 def calculate_std_dev(values: list[int]) -> float:
