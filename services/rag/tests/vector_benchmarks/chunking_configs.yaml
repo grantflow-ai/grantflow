@@ -22,7 +22,7 @@ configurations:
     embedding:
       model: "sentence-transformers/all-MiniLM-L12-v2"
       dimension: 384
-    
+
   # scibert_2000:
   #   description: "SciBERT with large chunks"
   #   chunking:
