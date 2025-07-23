@@ -9,14 +9,12 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.server import create_litestar_app
+from services.scraper.src.gcs_utils import get_existing_file_identifiers
 from services.scraper.src.grant_pages import download_grant_pages
 from services.scraper.src.search_data import DEFAULT_FROM_DATE, TODAY_DATE, download_search_data
-from services.scraper.src.storage import GCSStorage, SimpleFileStorage
 
 if TYPE_CHECKING:
     from datetime import date
-
-    from services.scraper.src.storage import Storage
 
 configure_otel("scraper")
 
@@ -24,12 +22,11 @@ logger = get_logger(__name__)
 
 
 async def run_scraper(
-    storage: Storage, from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE
+    from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE
 ) -> dict[str, int | float]:
     """Run the scraper.
 
     Args:
-        storage: The storage object to save the data.
         from_date: The start date of the search.
         to_date: The end date of the search.
 
@@ -42,17 +39,16 @@ async def run_scraper(
         "Starting scraper run",
         from_date=from_date.isoformat(),
         to_date=to_date.isoformat(),
-        storage_type=type(storage).__name__,
     )
 
-    search_results = await download_search_data(storage=storage, from_date=from_date, to_date=to_date)
+    search_results = await download_search_data(from_date=from_date, to_date=to_date)
     logger.info("Downloaded search results", count=len(search_results))
 
-    existing_file_identifiers = await storage.get_existing_file_identifiers()
+    existing_file_identifiers = await get_existing_file_identifiers()
     logger.info("Found existing file identifiers", count=len(existing_file_identifiers))
 
     new_files_downloaded = await download_grant_pages(
-        storage=storage, search_results=search_results, existing_file_identifiers=existing_file_identifiers
+        search_results=search_results, existing_file_identifiers=existing_file_identifiers
     )
 
     total_duration = time.time() - start_time
@@ -96,19 +92,13 @@ async def handle_scraper_request() -> dict[str, str]:
     environment = get_env("ENVIRONMENT", raise_on_missing=False, fallback="staging")
 
     try:
-        if (
-            get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False, fallback="")
-            or get_env("DEBUG", raise_on_missing=False, fallback="False").lower() == "true"
-        ):
-            storage: Storage = SimpleFileStorage()
-            bucket_name = "local-storage"
-            logger.info("Using local file storage for development")
+        bucket_name = get_env("SCRAPER_GCS_BUCKET_NAME", raise_on_missing=False, fallback="grantflow-scraper")
+        if get_env("STORAGE_EMULATOR_HOST", raise_on_missing=False, fallback=""):
+            logger.info("Using GCS emulator for development")
         else:
-            storage = GCSStorage()
-            bucket_name = get_env("SCRAPER_GCS_BUCKET_NAME", raise_on_missing=False, fallback="grantflow-scraper")
             logger.info("Using GCS storage for production")
 
-        metrics = await run_scraper(storage=storage)
+        metrics = await run_scraper()
 
         total_duration = time.time() - start_time
         logger.info(
@@ -119,12 +109,11 @@ async def handle_scraper_request() -> dict[str, str]:
         if discord_webhook_url:
             try:
                 total_files_in_bucket = None
-                if isinstance(storage, GCSStorage):
-                    try:
-                        all_files = await storage.get_existing_file_identifiers()
-                        total_files_in_bucket = len(all_files)
-                    except (ValueError, RuntimeError, OSError) as ex:
-                        logger.warning("Could not get total file count from storage", error=str(ex))
+                try:
+                    all_files = await get_existing_file_identifiers()
+                    total_files_in_bucket = len(all_files)
+                except (ValueError, RuntimeError, OSError) as ex:
+                    logger.warning("Could not get total file count from storage", error=str(ex))
 
                 await send_scraper_report(
                     webhook_url=discord_webhook_url,
