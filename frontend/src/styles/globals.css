@@ -303,3 +303,9 @@
 		color: var(--text-light);
 	}
 }
+
+@layer components {
+	.tap-effect {
+		@apply duration-75 ease-in-out enabled:active:scale-[.97];
+	}
+}

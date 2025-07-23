@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
-import { GrantApplicationEditor } from "@/components/organizations/project/applications/grant-application-editor";
+import { EditorContainer } from "@/components/projects/applications/editor/editor-container";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -63,25 +63,5 @@ export function ApplicationEditorPageClient() {
 		return null; // Will redirect
 	}
 
-	return (
-		<div className="min-h-screen bg-gray-50">
-			<div className="bg-white border-b border-gray-200">
-				<div className="container mx-auto px-6 py-4">
-					<div className="flex items-center justify-between">
-						<h1 className="text-2xl font-semibold text-gray-900">{application.title}</h1>
-						<button
-							className="px-4 py-2 text-gray-600 hover:text-gray-900"
-							onClick={() => {
-								router.push(routes.organization.project.detail());
-							}}
-							type="button"
-						>
-							Back to Project
-						</button>
-					</div>
-				</div>
-			</div>
-			<GrantApplicationEditor application={{ ...application, text: application.text ?? "" }} />
-		</div>
-	);
+	return <EditorContainer />;
 }
