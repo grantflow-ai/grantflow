@@ -1,0 +1,185 @@
+{
+  "test_id": "configurable_rag_quality_20250723_072802_minilm_1000",
+  "timestamp": "2025-07-23T07:38:09.470660+00:00",
+  "test_type": "configurable_rag_quality_pipeline",
+  "configuration": {
+    "name": "minilm_1000",
+    "description": "MiniLM with small chunks",
+    "chunking": {
+      "max_chars": 1000,
+      "overlap": 100
+    },
+    "embedding": {
+      "model": "sentence-transformers/all-MiniLM-L12-v2",
+      "dimension": 384
+    }
+  },
+  "performance_metrics": {
+    "indexing_pipeline": {
+      "vectors_created": 35,
+      "extracted_text_length": 27138,
+      "source_id": "6556ec68-f30c-44dc-b2bd-09c58896c8f4"
+    },
+    "insertion_benchmark": {
+      "throughput_vectors_per_sec": 784.2082095771277,
+      "execution_time_ms": 44.631004333496094,
+      "memory_usage_mb": 0.078125
+    },
+    "search_benchmark": {
+      "throughput_queries_per_sec": 155.12970921760228,
+      "execution_time_ms": 32.23109245300293,
+      "memory_usage_mb": -3.15625
+    },
+    "total_memory_mb": -3.078125
+  },
+  "chunking_analysis": {
+    "chunk_count": 35,
+    "avg_chunk_size": 784,
+    "min_chunk_size": 139,
+    "max_chunk_size": 991,
+    "total_content_length": 27441,
+    "coverage_ratio": 1.01179897496405,
+    "chunk_size_std": 238.25454403872772
+  },
+  "rag_quality_evaluation": {
+    "evaluation_method": "RAG pipeline with AI assessment",
+    "queries_tested": 5,
+    "total_retrieval_time_seconds": 591.64,
+    "avg_retrieval_time_seconds": 118.33,
+    "total_documents_retrieved": 200,
+    "successful_retrievals": 5,
+    "retrieval_success_rate": 1.0,
+    "avg_relevance_score": 3.08,
+    "individual_query_results": [
+      {
+        "query": "CAR-T cell therapy melanoma brain metastases CD8+ T cells immunosuppression",
+        "query_index": 0,
+        "retrieved_count": 36,
+        "retrieval_time_seconds": 273.111,
+        "ai_evaluation": {
+          "relevance_scores": [
+            4,
+            4,
+            3,
+            3
+          ],
+          "avg_relevance": 3.5,
+          "explanations": [
+            "The document discusses key research priorities for melanoma brain metastases, including understanding the tumor microenvironment, preventing brain metastases, and improving treatment strategies. This is highly relevant to the query.",
+            "Similar to the first document, this one also focuses on research priorities for melanoma brain metastases, which is highly relevant to the query.",
+            "While the document mentions melanoma brain metastases, it is more focused on acral melanoma and the immune response to it. This is only moderately relevant to the specific query.",
+            "This document has a broader focus on melanoma research priorities, including brain metastases, but does not go into the same depth as the first two documents. It is moderately relevant."
+          ],
+          "overall_assessment": "The retrieved documents are generally relevant to the query, with the first two documents being highly relevant as they specifically focus on key research priorities for melanoma brain metastases. The other two documents are moderately relevant as they cover melanoma research more broadly, including brain metastases. Overall, the documents provide a good overview of the current research landscape and priorities related to the query.",
+          "evaluation_enabled": true
+        },
+        "relevance_score": 3.5,
+        "search_queries_generated": 4
+      },
+      {
+        "query": "TREM2 macrophages tumor microenvironment immune checkpoint inhibitors",
+        "query_index": 1,
+        "retrieved_count": 38,
+        "retrieval_time_seconds": 272.097,
+        "ai_evaluation": {
+          "relevance_scores": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "avg_relevance": 3.0,
+          "explanations": [
+            "The document discusses acral melanoma and research priorities, but does not mention TREM2, macrophages, or immune checkpoint inhibitors, which are key aspects of the given query.",
+            "The document discusses acral melanoma and research priorities, but does not mention TREM2, macrophages, or immune checkpoint inhibitors, which are key aspects of the given query.",
+            "The document discusses melanoma immunotherapy, the tumor microenvironment, and combination therapies, which are relevant to the given query. It also mentions the development of biomarkers to predict and monitor response/resistance, which is closely related to the query.",
+            "The document discusses the tumor microenvironment, treatment strategies, and new approaches for including patients with melanoma brain metastases in clinical trials, which are all relevant to the given query."
+          ],
+          "overall_assessment": "The documents provide some relevant information related to the query, particularly in terms of melanoma immunotherapy, the tumor microenvironment, and combination therapies. However, the specific aspects of TREM2, macrophages, and immune checkpoint inhibitors are not discussed in depth. Additional information more directly focused on these specific aspects of the query would be needed to provide a comprehensive assessment.",
+          "evaluation_enabled": true
+        },
+        "relevance_score": 3.0,
+        "search_queries_generated": 5
+      },
+      {
+        "query": "single cell RNA sequencing spatial transcriptomics stereo-seq analysis",
+        "query_index": 2,
+        "retrieved_count": 46,
+        "retrieval_time_seconds": 18.169,
+        "ai_evaluation": {
+          "relevance_scores": [
+            1,
+            1,
+            2,
+            2,
+            1
+          ],
+          "avg_relevance": 1.4,
+          "explanations": [
+            "The document does not mention anything related to single-cell RNA sequencing, spatial transcriptomics, or stereo-seq analysis. It appears to be about application requirements for a research grant.",
+            "The document does not mention anything related to single-cell RNA sequencing, spatial transcriptomics, or stereo-seq analysis. It appears to be about application requirements for a research grant.",
+            "The document mentions the use of state-of-the-art technologies for molecular analysis of brain metastases, which is somewhat relevant to the query. However, it does not specifically mention single-cell RNA sequencing, spatial transcriptomics, or stereo-seq analysis.",
+            "The document mentions the use of state-of-the-art technologies for molecular analysis of brain metastases, which is somewhat relevant to the query. However, it does not specifically mention single-cell RNA sequencing, spatial transcriptomics, or stereo-seq analysis.",
+            "The document is focused on research proposals for melanoma treatment and detection, which is not directly relevant to the query about single-cell RNA sequencing, spatial transcriptomics, and stereo-seq analysis."
+          ],
+          "overall_assessment": "The retrieved documents do not appear to be highly relevant to the given query, as they do not contain information specifically about single-cell RNA sequencing, spatial transcriptomics, or stereo-seq analysis. The documents are more focused on research grant requirements and melanoma-related research proposals.",
+          "evaluation_enabled": true
+        },
+        "relevance_score": 1.4,
+        "search_queries_generated": 7
+      },
+      {
+        "query": "immunocytokines antibody-cytokine fusion proteins cancer immunotherapy",
+        "query_index": 3,
+        "retrieved_count": 40,
+        "retrieval_time_seconds": 15.483,
+        "ai_evaluation": {
+          "relevance_scores": [
+            1,
+            1,
+            4,
+            4,
+            5
+          ],
+          "avg_relevance": 3.0,
+          "explanations": [
+            "The first two documents do not mention anything related to immunocytokines, antibody-cytokine fusion proteins, or cancer immunotherapy, and are therefore not relevant.",
+            "The first two documents do not mention anything related to immunocytokines, antibody-cytokine fusion proteins, or cancer immunotherapy, and are therefore not relevant.",
+            "The third and fourth documents mention clinical trials and treatments for melanoma, which are somewhat related to the query. However, they do not specifically mention immunocytokines or antibody-cytokine fusion proteins.",
+            "The third and fourth documents mention clinical trials and treatments for melanoma, which are somewhat related to the query. However, they do not specifically mention immunocytokines or antibody-cytokine fusion proteins.",
+            "The fifth document discusses several aspects of melanoma immunotherapy, including therapeutic applications based on molecular mechanisms, combination therapies, and the development of novel biomarkers. This is highly relevant to the query, which is focused on cancer immunotherapy."
+          ],
+          "overall_assessment": "The fifth document is the most relevant, as it directly addresses the topic of immunocytokines and antibody-cytokine fusion proteins in the context of cancer immunotherapy. The third and fourth documents are also somewhat relevant, as they discuss clinical trials and treatments for melanoma. However, the first two documents are not relevant to the query.",
+          "evaluation_enabled": true
+        },
+        "relevance_score": 3.0,
+        "search_queries_generated": 7
+      },
+      {
+        "query": "brain metastases blood-brain barrier immunotherapy resistance mechanisms",
+        "query_index": 4,
+        "retrieved_count": 40,
+        "retrieval_time_seconds": 12.784,
+        "ai_evaluation": {
+          "relevance_scores": [
+            5,
+            5,
+            4,
+            4
+          ],
+          "avg_relevance": 4.5,
+          "explanations": [
+            "This document discusses key aspects of the query, including examining the origins and progression of melanoma brain metastases, identifying important cell types in the brain tumor microenvironment, improving treatment strategies for patients with brain metastases, and developing new models for studying metastasis. It is highly relevant to the given query.",
+            "This document is very similar to the first one and covers the same key aspects of the query, making it also highly relevant.",
+            "This document is focused on research priorities for acral melanoma, which is a subtype of melanoma. While it does not directly address the specific query, it discusses some relevant topics such as characterizing the anti-tumor immune response and developing novel treatment approaches, making it moderately relevant.",
+            "This document also discusses several relevant topics, including understanding melanoma brain metastasis and leptomeningeal disease, developing biomarkers, and advancing neoadjuvant/adjuvant therapies for melanoma. It is highly relevant to the query, though not as directly focused as the first two documents."
+          ],
+          "overall_assessment": "The retrieved documents are highly relevant to the given query, providing a comprehensive overview of key research areas and priorities related to brain metastases, the blood-brain barrier, immunotherapy, and resistance mechanisms in melanoma. The first two documents are particularly relevant, covering the major aspects of the query in depth. The other two documents are also relevant, though they focus on slightly different aspects of melanoma research.",
+          "evaluation_enabled": true
+        },
+        "relevance_score": 4.5,
+        "search_queries_generated": 5
+      }
+    ]
+  }
+}
