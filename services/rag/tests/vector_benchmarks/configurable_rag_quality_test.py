@@ -25,10 +25,84 @@ from testing.rag_evaluation import save_evaluation_results
 
 from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
-from services.rag.tests.e2e.conftest import create_and_index_rag_source
 
 from .framework import VectorBenchmarkFramework
 from .synthetic_migrations import VectorTableModifier
+
+
+async def create_and_index_rag_source(
+    content: str,
+    filename: str,
+    session_maker: async_sessionmaker[Any],
+    application_id: str,
+    logger: Any,
+    max_chars: int,
+    overlap_chars: int,
+    model_name: str,
+) -> tuple[str, list[dict[str, Any]], str]:
+    """
+    Create and index RAG source with chunking and embedding generation.
+
+    This is a simplified version for testing that creates chunks and generates
+    mock vectors for benchmarking purposes.
+    """
+    from packages.shared_utils.src.embeddings import generate_embeddings
+    from testing.factories import RagFileFactory
+
+    # Create RagFile source
+    source = RagFileFactory.build(
+        filename=filename,
+        text_content=content,
+        source_type="rag_file",
+        mime_type="text/markdown",
+    )
+
+    # Simple chunking based on max_chars and overlap_chars
+    chunks: list[dict[str, Any]] = []
+    start = 0
+    while start < len(content):
+        end = min(start + max_chars, len(content))
+        chunk_content = content[start:end]
+
+        if chunk_content.strip():  # Only add non-empty chunks
+            chunks.append(
+                {
+                    "content": chunk_content,
+                    "start_idx": start,
+                    "end_idx": end,
+                }
+            )
+
+        # Move start position with overlap
+        start = end - overlap_chars if end < len(content) else end
+        if start >= len(content):
+            break
+
+    logger.info("Created chunks for indexing", chunk_count=len(chunks), filename=filename)
+
+    # Generate embeddings for each chunk
+    chunk_texts: list[str] = [str(chunk["content"]) for chunk in chunks]
+    embeddings = await generate_embeddings(chunk_texts, model_name=model_name)
+
+    # Save source to database
+    async with session_maker() as session:
+        session.add(source)
+        await session.commit()
+        source_id = str(source.id)
+
+    # Create vector DTOs for benchmarking
+    vectors = []
+    for _i, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=False)):
+        vector_dto = {
+            "chunk": chunk,
+            "embedding": embedding,
+            "rag_source_id": source_id,
+        }
+        vectors.append(vector_dto)
+
+    logger.info("Generated embeddings and vectors", vector_count=len(vectors), model=model_name, source_id=source_id)
+
+    return source_id, vectors, content
 
 
 @pytest.fixture
@@ -59,16 +133,14 @@ def cfp_content() -> str:
 @pytest.fixture
 async def cleanup_rag_test_data(async_session_maker: async_sessionmaker[Any]) -> Any:
     """Cleanup RAG test data after configurable tests."""
-    from packages.db.src.tables import GrantApplicationRagSource, RagFile, RagSource, TextVector
+    from packages.db.src.tables import GrantApplicationSource, RagFile, RagSource, TextVector
     from sqlalchemy import delete, select
 
     async def _cleanup(application_id: str, test_filename: str) -> None:
         async with async_session_maker() as session:
             # Clean up grant application RAG sources
             await session.execute(
-                delete(GrantApplicationRagSource).where(
-                    GrantApplicationRagSource.grant_application_id == application_id
-                )
+                delete(GrantApplicationSource).where(GrantApplicationSource.grant_application_id == application_id)
             )
 
             # Find and delete associated RAG sources
