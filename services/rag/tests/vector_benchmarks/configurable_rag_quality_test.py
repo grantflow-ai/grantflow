@@ -378,9 +378,13 @@ async def test_configurable_rag_quality_benchmark(
     # 6. Generate configurable analysis with RAG metrics
     configurable_analysis = generate_rag_quality_analysis(all_results, configurations)
 
-    # Save configurable report
+    # Save configurable report (JSON)
     report_path = rag_quality_results_dir / f"configurable_rag_quality_report_{test_id}.json"
     save_evaluation_results(configurable_analysis, report_path)
+
+    # Save markdown summary report
+    markdown_path = rag_quality_results_dir / f"configurable_rag_quality_summary_{test_id}.md"
+    generate_markdown_summary(configurable_analysis, markdown_path)
 
     # Print configurable summary
     print_rag_quality_summary(configurable_analysis)
@@ -388,7 +392,8 @@ async def test_configurable_rag_quality_benchmark(
     logger.info(
         "🏆 configurable RAG QUALITY BENCHMARK COMPLETED!",
         configurations_tested=len(all_results),
-        report_path=str(report_path),
+        json_report_path=str(report_path),
+        markdown_report_path=str(markdown_path),
         analysis_type="RAG pipeline with AI evaluation",
     )
 
@@ -446,7 +451,7 @@ def generate_rag_quality_analysis(
     """Generate configurable analysis with RAG quality metrics."""
 
     # Extract results by configuration name
-    configs = {result["configuration"]["name"]: result for result in results}
+    {result["configuration"]["name"]: result for result in results}
 
     # Find performance winners
     best_insertion = max(
@@ -465,18 +470,8 @@ def generate_rag_quality_analysis(
     most_chunks = max(results, key=lambda r: r["chunking_analysis"]["chunk_count"])
     largest_chunks = max(results, key=lambda r: r["chunking_analysis"]["avg_chunk_size"])
 
-    # Chunking strategy comparison (MiniLM 1000 vs 2000)
-    minilm_1000 = configs.get("minilm_1000")
-    minilm_2000 = configs.get("minilm_2000")
-
-    chunking_comparison = None
-    if minilm_1000 and minilm_2000:
-        chunking_comparison = {
-            "model_tested": "MiniLM (384d)",
-            "small_chunks_1000": extract_rag_config_summary(minilm_1000),
-            "large_chunks_2000": extract_rag_config_summary(minilm_2000),
-            "comparison_ratios": calculate_rag_comparison_ratios(minilm_1000, minilm_2000),
-        }
+    # Dynamic chunking strategy comparison
+    chunking_comparison = generate_dynamic_chunking_comparison(results)
 
     return {
         "summary": {
@@ -581,6 +576,72 @@ def create_rag_winner_summary(result: dict[str, Any] | None, metric_type: str) -
     return base
 
 
+def generate_dynamic_chunking_comparison(results: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Generate dynamic chunking comparison based on available configurations."""
+    if len(results) < 2:
+        return None
+
+    # Group results by embedding model for fair comparison
+    model_groups: dict[str, list[dict[str, Any]]] = {}
+    for result in results:
+        model_name = result["configuration"]["embedding"]["model"]
+        if model_name not in model_groups:
+            model_groups[model_name] = []
+        model_groups[model_name].append(result)
+
+    # Find the best model group with multiple chunk sizes for comparison
+    best_comparison = None
+    for model_name, group_results in model_groups.items():
+        if len(group_results) >= 2:
+            # Sort by chunk size to get smallest and largest
+            sorted_by_chunk = sorted(group_results, key=lambda r: r["configuration"]["chunking"]["max_chars"])
+            smallest_chunks = sorted_by_chunk[0]
+            largest_chunks = sorted_by_chunk[-1]
+
+            # Only compare if there's actually a difference in chunk size
+            if (
+                smallest_chunks["configuration"]["chunking"]["max_chars"]
+                != largest_chunks["configuration"]["chunking"]["max_chars"]
+            ):
+                dimension = smallest_chunks["configuration"]["embedding"]["dimension"]
+                model_display_name = get_model_display_name(model_name, dimension)
+
+                best_comparison = {
+                    "model_tested": model_display_name,
+                    "config_a": {
+                        "config_name": smallest_chunks["configuration"]["name"],
+                        "chunk_size": smallest_chunks["configuration"]["chunking"]["max_chars"],
+                        "metrics": extract_rag_config_summary(smallest_chunks),
+                    },
+                    "config_b": {
+                        "config_name": largest_chunks["configuration"]["name"],
+                        "chunk_size": largest_chunks["configuration"]["chunking"]["max_chars"],
+                        "metrics": extract_rag_config_summary(largest_chunks),
+                    },
+                    "comparison_ratios": calculate_rag_comparison_ratios(smallest_chunks, largest_chunks),
+                }
+                break  # Use first valid comparison found
+
+    return best_comparison
+
+
+def get_model_display_name(model_name: str, dimension: int) -> str:
+    """Generate a display name for the embedding model."""
+    if "MiniLM" in model_name:
+        return f"MiniLM ({dimension}d)"
+    if "scibert" in model_name.lower():
+        return f"SciBERT ({dimension}d)"
+    if "mpnet" in model_name.lower():
+        return f"MPNet ({dimension}d)"
+    if "ada-002" in model_name.lower():
+        return f"OpenAI Ada ({dimension}d)"
+    if "distilbert" in model_name.lower():
+        return f"DistilBERT ({dimension}d)"
+    # Extract a readable name from the model path
+    model_short = model_name.split("/")[-1] if "/" in model_name else model_name
+    return f"{model_short} ({dimension}d)"
+
+
 def generate_rag_configurable_insights(
     results: list[dict[str, Any]], chunking_comparison: dict[str, Any] | None
 ) -> dict[str, str]:
@@ -588,23 +649,29 @@ def generate_rag_configurable_insights(
 
     insights = {}
 
-    # Chunking strategy insights with RAG metrics
+    # Dynamic chunking strategy insights with RAG metrics
     if chunking_comparison and "comparison_ratios" in chunking_comparison:
         ratios = chunking_comparison["comparison_ratios"]
+        config_a_size = chunking_comparison["config_a"]["chunk_size"]
+        config_b_size = chunking_comparison["config_b"]["chunk_size"]
+        config_a_name = chunking_comparison["config_a"]["config_name"]
+        config_b_name = chunking_comparison["config_b"]["config_name"]
+        model_name = chunking_comparison["model_tested"]
+
         insights["chunking_performance"] = (
-            f"Large chunks (2000) are {ratios['insertion_speed_ratio']:.2f}x insertion speed, {ratios['search_speed_ratio']:.2f}x search speed"
+            f"{config_b_name} ({config_b_size} chars) has {ratios['insertion_speed_ratio']:.2f}x insertion speed, {ratios['search_speed_ratio']:.2f}x search speed vs {config_a_name} ({config_a_size} chars) for {model_name}"
         )
         insights["chunking_memory"] = (
-            f"Large chunks use {ratios['memory_ratio']:.2f}x {'more' if ratios['memory_ratio'] > 1 else 'less'} memory"
+            f"{config_b_name} ({config_b_size} chars) uses {ratios['memory_ratio']:.2f}x {'more' if ratios['memory_ratio'] > 1 else 'less'} memory than {config_a_name} ({config_a_size} chars)"
         )
         insights["chunking_rag_quality"] = (
-            f"Large chunks have {ratios['relevance_ratio']:.2f}x {'better' if ratios['relevance_ratio'] > 1 else 'worse'} RAG relevance score"
+            f"{config_b_name} ({config_b_size} chars) has {ratios['relevance_ratio']:.2f}x {'better' if ratios['relevance_ratio'] > 1 else 'worse'} RAG relevance score than {config_a_name} ({config_a_size} chars)"
         )
         insights["chunking_success_rate"] = (
-            f"Large chunks have {ratios['success_rate_ratio']:.2f}x {'better' if ratios['success_rate_ratio'] > 1 else 'worse'} retrieval success rate"
+            f"{config_b_name} ({config_b_size} chars) has {ratios['success_rate_ratio']:.2f}x {'better' if ratios['success_rate_ratio'] > 1 else 'worse'} retrieval success rate than {config_a_name} ({config_a_size} chars)"
         )
         insights["chunking_retrieval_speed"] = (
-            f"Large chunks are {ratios['retrieval_speed_ratio']:.2f}x {'faster' if ratios['retrieval_speed_ratio'] > 1 else 'slower'} at retrieval"
+            f"{config_b_name} ({config_b_size} chars) is {ratios['retrieval_speed_ratio']:.2f}x {'faster' if ratios['retrieval_speed_ratio'] > 1 else 'slower'} at retrieval than {config_a_name} ({config_a_size} chars)"
         )
 
     # Model dimension insights with RAG metrics
@@ -645,6 +712,238 @@ def generate_rag_configurable_insights(
     return insights
 
 
+def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> None:
+    """Generate a markdown summary report of the RAG quality benchmark results."""
+    markdown_lines = []
+
+    # Build each section
+    markdown_lines.extend(_build_header_section(analysis["summary"]))
+    markdown_lines.extend(_build_configs_section(analysis))
+    markdown_lines.extend(_build_performance_section(analysis["performance_winners"]))
+    markdown_lines.extend(_build_rag_quality_section(analysis["rag_quality_winners"]))
+    markdown_lines.extend(_build_comparison_section(analysis.get("chunking_strategy_analysis")))
+    markdown_lines.extend(_build_insights_section(analysis.get("configurable_insights", {})))
+    markdown_lines.extend(_build_footer_section(analysis["summary"]))
+
+    # Write to file
+    with output_path.open("w") as f:
+        f.write("\n".join(markdown_lines))
+
+
+def _build_header_section(summary: dict[str, Any]) -> list[str]:
+    """Build the header section of the markdown report."""
+    return [
+        "# RAG Quality Benchmark Results",
+        "",
+        f"**Test Purpose**: {summary['test_purpose']}",
+        f"**Evaluation Method**: {summary['evaluation_method']}",
+        f"**Test Timestamp**: {summary['test_timestamp']}",
+        f"**Configurations Tested**: {summary['total_configurations']}",
+        "",
+    ]
+
+
+def _build_configs_section(analysis: dict[str, Any]) -> list[str]:
+    """Build the configurations overview section."""
+    if "detailed_results" not in analysis:
+        return []
+
+    lines = [
+        "## Configurations Overview",
+        "",
+        "| Configuration | Model | Dimension | Chunk Size | Overlap |",
+        "|---------------|-------|-----------|------------|---------|",
+    ]
+
+    for result in analysis["detailed_results"]:
+        config = result["configuration"]
+        embedding = config["embedding"]
+        chunking = config["chunking"]
+        model_short = embedding["model"].split("/")[-1] if "/" in embedding["model"] else embedding["model"]
+
+        lines.append(
+            f"| {config['name']} | {model_short} | {embedding['dimension']}d | {chunking['max_chars']} chars | {chunking['overlap']} chars |"
+        )
+
+    lines.append("")
+    return lines
+
+
+def _build_performance_section(perf_winners: dict[str, Any]) -> list[str]:
+    """Build the performance winners section."""
+    lines = ["## 🏆 Performance Winners", ""]
+
+    categories = {
+        "fastest_insertion": "Fastest Vector Insertion",
+        "fastest_search": "Fastest Similarity Search",
+        "most_memory_efficient": "Most Memory Efficient",
+        "most_chunks_generated": "Most Chunks Generated",
+        "largest_average_chunks": "Largest Average Chunks",
+    }
+
+    for key, title in categories.items():
+        winner = perf_winners.get(key)
+        if winner:
+            lines.extend(_format_winner_section(title, winner))
+
+    return lines
+
+
+def _build_rag_quality_section(rag_winners: dict[str, Any]) -> list[str]:
+    """Build the RAG quality winners section."""
+    lines = ["## 🎯 RAG Quality Winners", ""]
+
+    categories = {
+        "best_relevance_score": "Best Relevance Score",
+        "best_retrieval_success_rate": "Best Retrieval Success Rate",
+        "fastest_retrieval_time": "Fastest Retrieval Time",
+        "most_documents_retrieved": "Most Documents Retrieved",
+    }
+
+    for key, title in categories.items():
+        winner = rag_winners.get(key)
+        if winner:
+            lines.extend(_format_winner_section(title, winner))
+
+    return lines
+
+
+def _format_winner_section(title: str, winner: dict[str, Any]) -> list[str]:
+    """Format a winner section with metrics."""
+    lines = [f"### {title}", f"**Winner**: {winner['config']} - {winner['description']}"]
+
+    # Add metrics based on what's available
+    if "throughput" in winner:
+        lines.append(f"- **Throughput**: {winner['throughput']:.2f} ops/sec")
+    if "total_memory_mb" in winner:
+        lines.append(f"- **Memory Usage**: {winner['total_memory_mb']:.1f} MB")
+    if "chunk_count" in winner:
+        lines.append(f"- **Chunks Generated**: {winner['chunk_count']:,}")
+    if "avg_chunk_size" in winner:
+        lines.append(f"- **Average Chunk Size**: {winner['avg_chunk_size']:,} chars")
+    if "avg_relevance_score" in winner:
+        lines.append(f"- **Relevance Score**: {winner['avg_relevance_score']:.3f}")
+    if "retrieval_success_rate" in winner:
+        lines.append(f"- **Success Rate**: {winner['retrieval_success_rate']:.1%}")
+    if "avg_retrieval_time_seconds" in winner:
+        lines.append(f"- **Retrieval Time**: {winner['avg_retrieval_time_seconds']:.3f}s")
+    if "total_documents_retrieved" in winner:
+        lines.append(f"- **Documents Retrieved**: {winner['total_documents_retrieved']:,}")
+
+    lines.append("")
+    return lines
+
+
+def _build_comparison_section(chunking_analysis: dict[str, Any] | None) -> list[str]:
+    """Build the chunking strategy comparison section."""
+    if not chunking_analysis:
+        return []
+
+    lines = [
+        "## 📊 Chunking Strategy Comparison",
+        "",
+        f"**Model Tested**: {chunking_analysis['model_tested']}",
+        "",
+        "### Configuration Comparison",
+        "",
+    ]
+
+    config_a = chunking_analysis["config_a"]
+    config_b = chunking_analysis["config_b"]
+
+    # Build comparison table
+    header_a = f"{config_a['config_name']} ({config_a['chunk_size']} chars)"
+    header_b = f"{config_b['config_name']} ({config_b['chunk_size']} chars)"
+    lines.extend(
+        [
+            f"| Metric | {header_a} | {header_b} | Ratio |",
+            f"|--------|{'-' * len(header_a)}|{'-' * len(header_b)}|-------|",
+        ]
+    )
+
+    # Add comparison rows
+    lines.extend(
+        _build_comparison_rows(config_a["metrics"], config_b["metrics"], chunking_analysis["comparison_ratios"])
+    )
+    lines.append("")
+
+    return lines
+
+
+def _build_comparison_rows(metrics_a: dict[str, Any], metrics_b: dict[str, Any], ratios: dict[str, float]) -> list[str]:
+    """Build comparison table rows."""
+    metrics = [
+        ("Chunk Count", "chunk_count", "chunk_count_ratio", ""),
+        ("Insertion Throughput", "insertion_throughput", "insertion_speed_ratio", " ops/sec"),
+        ("Search Throughput", "search_throughput", "search_speed_ratio", " ops/sec"),
+        ("Memory Usage", "total_memory_mb", "memory_ratio", " MB"),
+        ("Avg Relevance Score", "avg_relevance_score", "relevance_ratio", ""),
+        ("Retrieval Success Rate", "retrieval_success_rate", "success_rate_ratio", "%"),
+        ("Avg Retrieval Time", "avg_retrieval_time", "retrieval_speed_ratio", "s"),
+    ]
+
+    lines = []
+    for name, key, ratio_key, unit in metrics:
+        if key in metrics_a and key in metrics_b:
+            val_a_str = _format_metric_value(metrics_a[key], unit, key)
+            val_b_str = _format_metric_value(metrics_b[key], unit, key)
+            ratio = ratios.get(ratio_key, 0)
+            lines.append(f"| {name} | {val_a_str} | {val_b_str} | {ratio:.2f}x |")
+
+    return lines
+
+
+def _format_metric_value(value: Any, unit: str, key: str) -> str:
+    """Format a metric value based on its unit and key."""
+    if unit == "%":
+        return f"{value:.1%}"
+    if unit == "s":
+        return f"{value:.3f}{unit}"
+    if unit == " MB":
+        return f"{value:.1f}{unit}"
+    if unit == " ops/sec":
+        return f"{value:.2f}{unit}"
+    if key == "chunk_count":
+        return f"{value:,}"
+    return f"{value:.3f}{unit}"
+
+
+def _build_insights_section(insights: dict[str, str]) -> list[str]:
+    """Build the key insights section."""
+    if not insights:
+        return []
+
+    lines = ["## 💡 Key Insights", ""]
+
+    categories = {
+        "chunking_performance": "Performance Impact",
+        "chunking_memory": "Memory Impact",
+        "chunking_rag_quality": "RAG Quality Impact",
+        "chunking_success_rate": "Success Rate Impact",
+        "chunking_retrieval_speed": "Retrieval Speed Impact",
+        "dimension_memory": "Model Dimension Memory",
+        "dimension_rag_quality": "Model Dimension Quality",
+        "dimension_success_rate": "Model Dimension Success Rate",
+    }
+
+    for key, title in categories.items():
+        if key in insights:
+            lines.extend([f"### {title}", f"{insights[key]}", ""])
+
+    return lines
+
+
+def _build_footer_section(summary: dict[str, Any]) -> list[str]:
+    """Build the footer section."""
+    return [
+        "---",
+        "",
+        f"*Report generated on {summary['test_timestamp']}*",
+        "",
+        "*Full detailed results available in JSON format*",
+    ]
+
+
 def print_rag_quality_summary(analysis: dict[str, Any]) -> None:
     """Print a configurable RAG quality summary."""
 
@@ -666,5 +965,6 @@ def print_rag_quality_summary(analysis: dict[str, Any]) -> None:
 
     if analysis.get("chunking_strategy_analysis"):
         chunk_analysis = analysis["chunking_strategy_analysis"]
-        chunk_analysis["small_chunks_1000"]
-        chunk_analysis["large_chunks_2000"]
+        if chunk_analysis and "config_a" in chunk_analysis and "config_b" in chunk_analysis:
+            chunk_analysis["config_a"]["config_name"]
+            chunk_analysis["config_b"]["config_name"]
