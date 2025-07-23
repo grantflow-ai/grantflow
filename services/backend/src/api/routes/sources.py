@@ -64,7 +64,7 @@ class RagUrlResponse(TypedDict):
 
 class UploadUrlResponse(TypedDict):
     url: str
-    source_id: UUID
+    source_id: str
 
 
 class UrlCrawlingRequest(TypedDict):
@@ -72,7 +72,7 @@ class UrlCrawlingRequest(TypedDict):
 
 
 class UrlCrawlingResponse(TypedDict):
-    source_id: UUID
+    source_id: str
 
 
 def determine_entity_info(
@@ -500,7 +500,7 @@ async def handle_create_upload_url(
         trace_id=trace_id,
     )
 
-    return UploadUrlResponse(url=url, source_id=source_id)
+    return UploadUrlResponse(url=url, source_id=str(source_id))
 
 
 @post(
@@ -571,5 +571,5 @@ async def handle_crawl_url(
     )
 
     return UrlCrawlingResponse(
-        source_id=source_id,
+        source_id=str(source_id),
     )
