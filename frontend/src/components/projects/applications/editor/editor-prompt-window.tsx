@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function EditorPromptWindow() {
 	return (
-		<div className="w-full border border-gray-100 bg-white h-full flex flex-col">
+		<div className="w-full border border-gray-100 bg-white h-full flex flex-col" data-testid="editor-prompt-window">
 			<div className="border-b border-gray-100 flex h-16 px-3 items-center justify-between">
 				<p className="font-semibold text-app-black font-['Cabin']">Application Name</p>
 
@@ -15,7 +15,7 @@ export function EditorPromptWindow() {
 			<div className="flex flex-col p-3 mt-auto">
 				<div>
 					<Image alt="Grantflow" height={31.56} src="/assets/logo-round.svg" width={31.19} />
-					<p className="text-gray-600 mt-3">
+					<p className="text-gray-600 mt-3" data-testid="editor-prompt-window-greeting">
 						Hi, would you like help refining a specific section, checking alignment with the funder’s
 						guidelines, or adding references? Just let me know where you&apos;d like to start.
 					</p>
@@ -24,6 +24,7 @@ export function EditorPromptWindow() {
 				<div className="relative mt-6">
 					<textarea
 						className="border text-sm leading-4.5 placeholder:text-gray-400 text-app-black border-gray-100 rounded-sm p-3 w-full"
+						data-testid="editor-prompt-window-textarea"
 						placeholder="Placeholder"
 						rows={4}
 					/>
