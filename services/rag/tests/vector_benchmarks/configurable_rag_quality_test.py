@@ -453,20 +453,20 @@ def generate_rag_quality_analysis(
     # Extract results by configuration name
     {result["configuration"]["name"]: result for result in results}
 
-    # Find performance winners
+    # Find performance best results
     best_insertion = max(
         results, key=lambda r: r["performance_metrics"]["insertion_benchmark"]["throughput_vectors_per_sec"]
     )
     best_search = max(results, key=lambda r: r["performance_metrics"]["search_benchmark"]["throughput_queries_per_sec"])
     most_memory_efficient = min(results, key=lambda r: r["performance_metrics"]["total_memory_mb"])
 
-    # Find RAG quality winners
+    # Find RAG quality best results
     best_relevance = max(results, key=lambda r: r["rag_quality_evaluation"]["avg_relevance_score"])
     best_success_rate = max(results, key=lambda r: r["rag_quality_evaluation"]["retrieval_success_rate"])
     fastest_retrieval = min(results, key=lambda r: r["rag_quality_evaluation"]["avg_retrieval_time_seconds"])
     most_docs_retrieved = max(results, key=lambda r: r["rag_quality_evaluation"]["total_documents_retrieved"])
 
-    # Chunking winners
+    # Chunking best results
     most_chunks = max(results, key=lambda r: r["chunking_analysis"]["chunk_count"])
     largest_chunks = max(results, key=lambda r: r["chunking_analysis"]["avg_chunk_size"])
 
@@ -481,18 +481,18 @@ def generate_rag_quality_analysis(
             "test_timestamp": datetime.now(UTC).isoformat(),
             "total_configurations": len(results),
         },
-        "performance_winners": {
-            "fastest_insertion": create_rag_winner_summary(best_insertion, "insertion"),
-            "fastest_search": create_rag_winner_summary(best_search, "search"),
-            "most_memory_efficient": create_rag_winner_summary(most_memory_efficient, "memory"),
-            "most_chunks_generated": create_rag_winner_summary(most_chunks, "chunks"),
-            "largest_average_chunks": create_rag_winner_summary(largest_chunks, "chunk_size"),
+        "performance_best": {
+            "fastest_insertion": create_rag_best_summary(best_insertion, "insertion"),
+            "fastest_search": create_rag_best_summary(best_search, "search"),
+            "most_memory_efficient": create_rag_best_summary(most_memory_efficient, "memory"),
+            "most_chunks_generated": create_rag_best_summary(most_chunks, "chunks"),
+            "largest_average_chunks": create_rag_best_summary(largest_chunks, "chunk_size"),
         },
-        "rag_quality_winners": {
-            "best_relevance_score": create_rag_winner_summary(best_relevance, "relevance"),
-            "best_retrieval_success_rate": create_rag_winner_summary(best_success_rate, "success_rate"),
-            "fastest_retrieval_time": create_rag_winner_summary(fastest_retrieval, "retrieval_speed"),
-            "most_documents_retrieved": create_rag_winner_summary(most_docs_retrieved, "doc_count"),
+        "rag_quality_best": {
+            "best_relevance_score": create_rag_best_summary(best_relevance, "relevance"),
+            "best_retrieval_success_rate": create_rag_best_summary(best_success_rate, "success_rate"),
+            "fastest_retrieval_time": create_rag_best_summary(fastest_retrieval, "retrieval_speed"),
+            "most_documents_retrieved": create_rag_best_summary(most_docs_retrieved, "doc_count"),
         },
         "chunking_strategy_analysis": chunking_comparison,
         "configurable_insights": generate_rag_configurable_insights(results, chunking_comparison),
@@ -542,8 +542,8 @@ def calculate_rag_comparison_ratios(config1: dict[str, Any], config2: dict[str, 
     }
 
 
-def create_rag_winner_summary(result: dict[str, Any] | None, metric_type: str) -> dict[str, Any] | None:
-    """Create a summary for a winning RAG configuration."""
+def create_rag_best_summary(result: dict[str, Any] | None, metric_type: str) -> dict[str, Any] | None:
+    """Create a summary for the best RAG configuration."""
     if not result:
         return None
 
@@ -719,8 +719,8 @@ def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> No
     # Build each section
     markdown_lines.extend(_build_header_section(analysis["summary"]))
     markdown_lines.extend(_build_configs_section(analysis))
-    markdown_lines.extend(_build_performance_section(analysis["performance_winners"]))
-    markdown_lines.extend(_build_rag_quality_section(analysis["rag_quality_winners"]))
+    markdown_lines.extend(_build_performance_section(analysis["performance_best"]))
+    markdown_lines.extend(_build_rag_quality_section(analysis["rag_quality_best"]))
     markdown_lines.extend(_build_comparison_section(analysis.get("chunking_strategy_analysis")))
     markdown_lines.extend(_build_insights_section(analysis.get("configurable_insights", {})))
     markdown_lines.extend(_build_footer_section(analysis["summary"]))
@@ -769,66 +769,66 @@ def _build_configs_section(analysis: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _build_performance_section(perf_winners: dict[str, Any]) -> list[str]:
-    """Build the performance winners section."""
-    lines = ["## 🏆 Performance Winners", ""]
+def _build_performance_section(perf_best: dict[str, Any]) -> list[str]:
+    """Build the performance best results section."""
+    lines = ["## Best Performance Results", ""]
 
     categories = {
-        "fastest_insertion": "Fastest Vector Insertion",
-        "fastest_search": "Fastest Similarity Search",
-        "most_memory_efficient": "Most Memory Efficient",
-        "most_chunks_generated": "Most Chunks Generated",
-        "largest_average_chunks": "Largest Average Chunks",
+        "fastest_insertion": "Best Vector Insertion",
+        "fastest_search": "Best Similarity Search",
+        "most_memory_efficient": "Best Memory Efficiency",
+        "most_chunks_generated": "Best Chunk Generation",
+        "largest_average_chunks": "Best Average Chunk Size",
     }
 
     for key, title in categories.items():
-        winner = perf_winners.get(key)
-        if winner:
-            lines.extend(_format_winner_section(title, winner))
+        best = perf_best.get(key)
+        if best:
+            lines.extend(_format_best_section(title, best))
 
     return lines
 
 
-def _build_rag_quality_section(rag_winners: dict[str, Any]) -> list[str]:
-    """Build the RAG quality winners section."""
-    lines = ["## 🎯 RAG Quality Winners", ""]
+def _build_rag_quality_section(rag_best: dict[str, Any]) -> list[str]:
+    """Build the RAG quality best results section."""
+    lines = ["## Best RAG Quality Results", ""]
 
     categories = {
         "best_relevance_score": "Best Relevance Score",
         "best_retrieval_success_rate": "Best Retrieval Success Rate",
-        "fastest_retrieval_time": "Fastest Retrieval Time",
-        "most_documents_retrieved": "Most Documents Retrieved",
+        "fastest_retrieval_time": "Best Retrieval Time",
+        "most_documents_retrieved": "Best Document Retrieval",
     }
 
     for key, title in categories.items():
-        winner = rag_winners.get(key)
-        if winner:
-            lines.extend(_format_winner_section(title, winner))
+        best = rag_best.get(key)
+        if best:
+            lines.extend(_format_best_section(title, best))
 
     return lines
 
 
-def _format_winner_section(title: str, winner: dict[str, Any]) -> list[str]:
-    """Format a winner section with metrics."""
-    lines = [f"### {title}", f"**Winner**: {winner['config']} - {winner['description']}"]
+def _format_best_section(title: str, best: dict[str, Any]) -> list[str]:
+    """Format a best result section with metrics."""
+    lines = [f"### {title}", f"**Best**: {best['config']} - {best['description']}"]
 
     # Add metrics based on what's available
-    if "throughput" in winner:
-        lines.append(f"- **Throughput**: {winner['throughput']:.2f} ops/sec")
-    if "total_memory_mb" in winner:
-        lines.append(f"- **Memory Usage**: {winner['total_memory_mb']:.1f} MB")
-    if "chunk_count" in winner:
-        lines.append(f"- **Chunks Generated**: {winner['chunk_count']:,}")
-    if "avg_chunk_size" in winner:
-        lines.append(f"- **Average Chunk Size**: {winner['avg_chunk_size']:,} chars")
-    if "avg_relevance_score" in winner:
-        lines.append(f"- **Relevance Score**: {winner['avg_relevance_score']:.3f}")
-    if "retrieval_success_rate" in winner:
-        lines.append(f"- **Success Rate**: {winner['retrieval_success_rate']:.1%}")
-    if "avg_retrieval_time_seconds" in winner:
-        lines.append(f"- **Retrieval Time**: {winner['avg_retrieval_time_seconds']:.3f}s")
-    if "total_documents_retrieved" in winner:
-        lines.append(f"- **Documents Retrieved**: {winner['total_documents_retrieved']:,}")
+    if "throughput" in best:
+        lines.append(f"- **Throughput**: {best['throughput']:.2f} ops/sec")
+    if "total_memory_mb" in best:
+        lines.append(f"- **Memory Usage**: {best['total_memory_mb']:.1f} MB")
+    if "chunk_count" in best:
+        lines.append(f"- **Chunks Generated**: {best['chunk_count']:,}")
+    if "avg_chunk_size" in best:
+        lines.append(f"- **Average Chunk Size**: {best['avg_chunk_size']:,} chars")
+    if "avg_relevance_score" in best:
+        lines.append(f"- **Relevance Score**: {best['avg_relevance_score']:.3f}")
+    if "retrieval_success_rate" in best:
+        lines.append(f"- **Success Rate**: {best['retrieval_success_rate']:.1%}")
+    if "avg_retrieval_time_seconds" in best:
+        lines.append(f"- **Retrieval Time**: {best['avg_retrieval_time_seconds']:.3f}s")
+    if "total_documents_retrieved" in best:
+        lines.append(f"- **Documents Retrieved**: {best['total_documents_retrieved']:,}")
 
     lines.append("")
     return lines
@@ -840,7 +840,7 @@ def _build_comparison_section(chunking_analysis: dict[str, Any] | None) -> list[
         return []
 
     lines = [
-        "## 📊 Chunking Strategy Comparison",
+        "## Chunking Strategy Comparison",
         "",
         f"**Model Tested**: {chunking_analysis['model_tested']}",
         "",
@@ -913,7 +913,7 @@ def _build_insights_section(insights: dict[str, str]) -> list[str]:
     if not insights:
         return []
 
-    lines = ["## 💡 Key Insights", ""]
+    lines = ["## Key Insights", ""]
 
     categories = {
         "chunking_performance": "Performance Impact",
@@ -949,14 +949,14 @@ def print_rag_quality_summary(analysis: dict[str, Any]) -> None:
 
     analysis["summary"]
 
-    perf_winners = analysis["performance_winners"]
-    for category, winner in perf_winners.items():
-        if winner:
+    perf_best = analysis["performance_best"]
+    for category, best in perf_best.items():
+        if best:
             category.replace("_", " ").title()
 
-    rag_winners = analysis["rag_quality_winners"]
-    for category, winner in rag_winners.items():
-        if winner:
+    rag_best = analysis["rag_quality_best"]
+    for category, best in rag_best.items():
+        if best:
             category.replace("_", " ").title()
 
     if analysis.get("configurable_insights"):
