@@ -126,6 +126,12 @@ resource "google_project_iam_member" "backend_pubsub_publisher" {
   member  = "serviceAccount:${google_service_account.backend.email}"
 }
 
+resource "google_project_iam_member" "backend_pubsub_editor" {
+  project = "grantflow"
+  role    = "roles/pubsub.editor"
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
 resource "google_project_iam_member" "backend_storage_object_viewer" {
   project = "grantflow"
   role    = "roles/storage.objectViewer"
