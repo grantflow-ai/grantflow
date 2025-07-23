@@ -5,12 +5,14 @@ on:
         branches:
             - main
             - development
-        # paths:
-        #     - ".github/workflows/build-service-backend.yaml"
-        #     - ".github/actions/**"
-        #     - "packages/db/src/**"
-        #     - "packages/shared_utils/src/**"
-        #     - "services/backend/src/**"
+        paths:
+            - ".github/workflows/build-service-backend.yaml"
+            - ".github/actions/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
+            - "services/backend/**"
+            - "pyproject.toml"
+            - "uv.lock"
     release:
         types: [published]
     workflow_dispatch:
