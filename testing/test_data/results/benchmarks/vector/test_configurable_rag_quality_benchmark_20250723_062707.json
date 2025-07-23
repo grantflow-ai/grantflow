@@ -1,0 +1,25 @@
+{
+  "test_name": "test_configurable_rag_quality_benchmark",
+  "benchmark_category": "vector",
+  "status": "completed",
+  "performance": {
+    "iterations": 1,
+    "successful_iterations": 1,
+    "failed_iterations": 0,
+    "average_time": 692.0448191165924,
+    "min_time": 692.0448191165924,
+    "max_time": 692.0448191165924,
+    "std_deviation": 0.0,
+    "individual_times": [
+      692.0448191165924
+    ],
+    "timeout_utilization": 0.38446934395366245
+  },
+  "errors": [],
+  "configuration": {
+    "warm_up_runs": 0,
+    "timeout": 1800,
+    "category": "vector"
+  },
+  "timestamp": "2025-07-23T06:27:07.175824+00:00"
+}
