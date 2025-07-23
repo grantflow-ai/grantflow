@@ -16,7 +16,7 @@ export function GrantApplicationEditor({ application }: GrantApplicationEditorPr
 	}, []);
 
 	return (
-		<div className="container mx-auto max-w-6xl p-6">
+		<div className="container mx-auto max-w-6xl p-6" data-testid="grant-application-editor">
 			<div className="prose prose-sm max-w-none">
 				<Editor content={content} onContentUpdate={handleContentUpdate} />
 			</div>

@@ -9,7 +9,10 @@ export function EditorWarning() {
 	}
 
 	return (
-		<div className="flex justify-between items-center bg-light-gray p-2 rounded-sm border-app-slate-blue border">
+		<div
+			className="flex justify-between items-center bg-light-gray p-2 rounded-sm border-app-slate-blue border"
+			data-testid="editor-warning"
+		>
 			<div className="flex gap-1 items-center">
 				<Image alt="Warning" height={16} src="/icons/info.svg" width={16} />
 				<p className="text-sm text-app-black">
@@ -19,6 +22,7 @@ export function EditorWarning() {
 			</div>
 			<button
 				className="cursor-pointer"
+				data-testid="editor-warning-close"
 				onClick={() => {
 					setVisible(false);
 				}}

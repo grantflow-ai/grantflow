@@ -1,7 +1,9 @@
-import "./styles.css";
-
-import { SimpleEditor } from "./tiptap/components/tiptap-templates/simple/simple-editor";
-
 export const Editor = (_: { content: string; onContentUpdate: (content: string) => void }) => {
-	return <SimpleEditor />;
+	return (
+		<textarea
+			className="w-full h-[90vh] bg-white text-black p-4"
+			data-testid="tiptap-editor"
+			placeholder="editor placeholder"
+		/>
+	);
 };

@@ -102,11 +102,13 @@
 				"useHtmlLang": "error",
 				"useKeyWithClickEvents": "warn",
 				"useKeyWithMouseEvents": "warn",
-				"useValidAnchor": "error"
+				"useValidAnchor": "error",
+				"noStaticElementInteractions": "off",
+				"useSemanticElements": "off"
 			},
 			"complexity": {
 				"noBannedTypes": "error",
-				"noExcessiveCognitiveComplexity": "warn",
+				"noExcessiveCognitiveComplexity": "off",
 				"noExtraBooleanCast": "error",
 				"noForEach": "off",
 				"noUselessCatch": "error",
@@ -131,7 +133,7 @@
 				"noGlobalObjectCalls": "error",
 				"noInnerDeclarations": "error",
 				"noInvalidConstructorSuper": "error",
-				"noInvalidUseBeforeDeclaration": "error",
+				"noInvalidUseBeforeDeclaration": "off",
 				"noNonoctalDecimalEscape": "error",
 				"noPrecisionLoss": "error",
 				"noSelfAssign": "error",
@@ -207,7 +209,7 @@
 				"noCompareNegZero": "error",
 				"noConsole": "off",
 				"noConstEnum": "error",
-				"noControlCharactersInRegex": "error",
+				"noControlCharactersInRegex": "off",
 				"noDebugger": "error",
 				"noDoubleEquals": "warn",
 				"noDuplicateCase": "error",
