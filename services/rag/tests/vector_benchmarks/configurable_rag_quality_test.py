@@ -84,6 +84,23 @@ async def create_and_index_rag_source(
     chunk_texts: list[str] = [str(chunk["content"]) for chunk in chunks]
     embeddings = await generate_embeddings(chunk_texts, model_name=model_name)
 
+    # Validate embedding dimensions match expected model dimensions
+    if embeddings:
+        # Map model names to their expected dimensions
+        model_dimensions = {
+            "sentence-transformers/all-MiniLM-L12-v2": 384,
+            "allenai/scibert_scivocab_uncased": 768,
+            "sentence-transformers/all-mpnet-base-v2": 768,
+        }
+
+        expected_dim = model_dimensions.get(model_name)
+        if expected_dim:
+            actual_dim = len(embeddings[0])
+            assert actual_dim == expected_dim, (
+                f"Vector dimension mismatch for {model_name}: expected {expected_dim}, got {actual_dim}"
+            )
+            logger.info("✅ Embedding dimension validation passed", model=model_name, dimension=actual_dim)
+
     # Save source to database
     async with session_maker() as session:
         session.add(source)
