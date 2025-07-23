@@ -397,9 +397,113 @@ async def test_generate_grant_section_texts_with_mocked_llm(
 
 
 async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
-    test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    # Create application within the test to avoid database snapshot restoration issues
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
+        session.add(project)
+        await session.flush()
+
+        application = GrantApplicationFactory.build(
+            title="Novel Biomarkers for Early Cancer Detection",
+            project_id=project.id,
+            form_inputs={
+                "project_summary": "This project aims to develop novel biomarkers for early cancer detection.",
+                "principal_investigator": "Dr. Jane Smith",
+                "institution": "Research University",
+            },
+        )
+        session.add(application)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=application.id,
+            grant_sections=[
+                {
+                    "id": "abstract",
+                    "title": "Abstract",
+                    "order": 1,
+                    "parent_id": None,
+                    "keywords": ["overview", "summary"],
+                    "topics": ["project_summary"],
+                    "generation_instructions": "Write a concise summary of the research project.",
+                    "depends_on": [],
+                    "max_words": 300,
+                    "search_queries": ["research summary", "project overview"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                },
+                {
+                    "id": "research_plan",
+                    "title": "Research Plan",
+                    "order": 2,
+                    "parent_id": None,
+                    "keywords": ["methodology", "design", "procedures"],
+                    "topics": ["methods", "experimental_design"],
+                    "generation_instructions": "Describe the detailed methodology for the research project.",
+                    "depends_on": [],
+                    "max_words": 1500,
+                    "search_queries": ["research methodology", "experimental design"],
+                    "is_detailed_research_plan": True,
+                    "is_clinical_trial": False,
+                },
+                {
+                    "id": "impact",
+                    "title": "Impact",
+                    "order": 3,
+                    "parent_id": None,
+                    "keywords": ["significance", "outcomes"],
+                    "topics": ["expected_outcomes", "potential_impact"],
+                    "generation_instructions": "Explain the potential impact and significance of the research.",
+                    "depends_on": ["research_plan"],
+                    "max_words": 500,
+                    "search_queries": ["research impact", "project significance"],
+                    "is_detailed_research_plan": False,
+                    "is_clinical_trial": False,
+                },
+            ],
+        )
+        session.add(template)
+
+        application.research_objectives = [
+            {
+                "number": 1,
+                "title": "Develop novel biomarkers for early cancer detection",
+                "research_tasks": [
+                    {
+                        "number": 1,
+                        "title": "Identify candidate biomarkers through proteomics",
+                    },
+                    {
+                        "number": 2,
+                        "title": "Validate biomarkers in clinical samples",
+                    },
+                ],
+            },
+            {
+                "number": 2,
+                "title": "Create a machine learning model for biomarker analysis",
+                "research_tasks": [
+                    {
+                        "number": 1,
+                        "title": "Design feature extraction algorithms",
+                    },
+                    {
+                        "number": 2,
+                        "title": "Train and validate the model on patient data",
+                    },
+                ],
+            },
+        ]
+
+        await session.commit()
+        await session.refresh(application)
+
     mocked_section_texts = {
         "abstract": "This is the abstract text.",
         "research_plan": "This is the research plan text.",
@@ -423,7 +527,7 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
         ),
     ):
         result_text, section_texts = await grant_application_text_generation_pipeline_handler(
-            grant_application_id=test_application.id,
+            grant_application_id=application.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
@@ -434,7 +538,7 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
     assert section_texts == mocked_section_texts
 
     async with async_session_maker() as session:
-        app = await session.get(GrantApplication, test_application.id)
+        app = await session.get(GrantApplication, application.id)
         assert app is not None
         assert app.text == "Complete application text"
 
@@ -458,6 +562,7 @@ async def test_pipeline_missing_grant_template(
         )
         session.add(application)
         await session.commit()
+        await session.refresh(application)
 
     with pytest.raises(ValidationError) as exc_info:
         await grant_application_text_generation_pipeline_handler(
@@ -472,6 +577,7 @@ async def test_pipeline_missing_grant_template(
 async def test_pipeline_missing_research_objectives(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    # Create application within the test to avoid database snapshot restoration issues
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -491,10 +597,26 @@ async def test_pipeline_missing_research_objectives(
 
         template = GrantTemplate(
             grant_application_id=application.id,
-            grant_sections=[{"id": "test", "title": "Test", "order": 1}],
+            grant_sections=[
+                {
+                    "id": "test",
+                    "title": "Test",
+                    "order": 1,
+                    "is_detailed_research_plan": True,
+                    "max_words": 1000,
+                    "generation_instructions": "Test instructions",
+                    "depends_on": [],
+                    "search_queries": ["test"],
+                    "keywords": ["test"],
+                    "topics": ["test"],
+                    "parent_id": None,
+                    "is_clinical_trial": False,
+                }
+            ],
         )
         session.add(template)
         await session.commit()
+        await session.refresh(application)
 
     with pytest.raises(ValidationError) as exc_info:
         await grant_application_text_generation_pipeline_handler(
@@ -582,9 +704,48 @@ async def test_pipeline_database_error_during_save(
 
 
 async def test_pipeline_backend_error_during_generation(
-    test_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
+    # Create application within the test to avoid database snapshot restoration issues
+    async with async_session_maker() as session:
+        organization = OrganizationFactory.build()
+        session.add(organization)
+        await session.flush()
+
+        project = ProjectFactory.build(organization_id=organization.id)
+        session.add(project)
+        await session.flush()
+
+        application = GrantApplicationFactory.build(
+            title="Test Application",
+            project_id=project.id,
+            research_objectives=[{"number": 1, "title": "Test Objective", "research_tasks": []}],
+        )
+        session.add(application)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=application.id,
+            grant_sections=[
+                {
+                    "id": "test",
+                    "title": "Test",
+                    "order": 1,
+                    "is_detailed_research_plan": True,
+                    "max_words": 1000,
+                    "generation_instructions": "Test instructions",
+                    "depends_on": [],
+                    "search_queries": ["test"],
+                    "keywords": ["test"],
+                    "topics": ["test"],
+                    "parent_id": None,
+                    "is_clinical_trial": False,
+                }
+            ],
+        )
+        session.add(template)
+        await session.commit()
+
     mock_job_manager = create_mock_job_manager()
 
     with (
@@ -599,7 +760,7 @@ async def test_pipeline_backend_error_during_generation(
     ):
         with pytest.raises(BackendError) as exc_info:
             await grant_application_text_generation_pipeline_handler(
-                grant_application_id=test_application.id,
+                grant_application_id=application.id,
                 session_maker=async_session_maker,
                 job_manager=mock_job_manager,
             )
