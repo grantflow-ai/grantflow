@@ -16,14 +16,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 // --- Lib ---
 import { isMarkInSchema, isNodeTypeSelected } from "@/lib/tiptap-utils";
 
-export type Mark =
-	| "bold"
-	| "italic"
-	| "strike"
-	| "code"
-	| "underline"
-	| "superscript"
-	| "subscript";
+export type Mark = "bold" | "italic" | "strike" | "code" | "underline" | "superscript" | "subscript";
 
 /**
  * Configuration for the mark functionality
@@ -50,22 +43,22 @@ export interface UseMarkConfig {
 
 export const markIcons = {
 	bold: BoldIcon,
-	italic: ItalicIcon,
-	underline: UnderlineIcon,
-	strike: StrikeIcon,
 	code: Code2Icon,
-	superscript: SuperscriptIcon,
+	italic: ItalicIcon,
+	strike: StrikeIcon,
 	subscript: SubscriptIcon,
+	superscript: SuperscriptIcon,
+	underline: UnderlineIcon,
 };
 
 export const MARK_SHORTCUT_KEYS: Record<Mark, string> = {
 	bold: "mod+b",
-	italic: "mod+i",
-	underline: "mod+u",
-	strike: "mod+shift+s",
 	code: "mod+e",
-	superscript: "mod+.",
+	italic: "mod+i",
+	strike: "mod+shift+s",
 	subscript: "mod+,",
+	superscript: "mod+.",
+	underline: "mod+u",
 };
 
 /**
@@ -73,8 +66,7 @@ export const MARK_SHORTCUT_KEYS: Record<Mark, string> = {
  */
 export function canToggleMark(editor: Editor | null, type: Mark): boolean {
 	if (!editor?.isEditable) return false;
-	if (!isMarkInSchema(type, editor) || isNodeTypeSelected(editor, ["image"]))
-		return false;
+	if (!isMarkInSchema(type, editor) || isNodeTypeSelected(editor, ["image"])) return false;
 
 	return editor.can().toggleMark(type);
 }
@@ -100,11 +92,7 @@ export function toggleMark(editor: Editor | null, type: Mark): boolean {
 /**
  * Determines if the mark button should be shown
  */
-export function shouldShowButton(props: {
-	editor: Editor | null;
-	type: Mark;
-	hideWhenUnavailable: boolean;
-}): boolean {
+export function shouldShowButton(props: { editor: Editor | null; type: Mark; hideWhenUnavailable: boolean }): boolean {
 	const { editor, type, hideWhenUnavailable } = props;
 
 	if (!editor?.isEditable) return false;
@@ -162,12 +150,7 @@ export function getFormattedMarkName(type: Mark): string {
  * ```
  */
 export function useMark(config: UseMarkConfig) {
-	const {
-		editor: providedEditor,
-		type,
-		hideWhenUnavailable = false,
-		onToggled,
-	} = config;
+	const { editor: providedEditor, type, hideWhenUnavailable = false, onToggled } = config;
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState<boolean>(true);
@@ -178,7 +161,7 @@ export function useMark(config: UseMarkConfig) {
 		if (!editor) return;
 
 		const handleSelectionUpdate = () => {
-			setIsVisible(shouldShowButton({ editor, type, hideWhenUnavailable }));
+			setIsVisible(shouldShowButton({ editor, hideWhenUnavailable, type }));
 		};
 
 		handleSelectionUpdate();
@@ -214,12 +197,12 @@ export function useMark(config: UseMarkConfig) {
 	);
 
 	return {
-		isVisible,
-		isActive,
-		handleMark,
 		canToggle,
+		handleMark,
+		Icon: markIcons[type],
+		isActive,
+		isVisible,
 		label: getFormattedMarkName(type),
 		shortcutKeys: MARK_SHORTCUT_KEYS[type],
-		Icon: markIcons[type],
 	};
 }

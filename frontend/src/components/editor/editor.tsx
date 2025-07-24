@@ -1,8 +1,5 @@
-import { SimpleEditor } from "@grantflow/editor";
+import { Editor as GrantflowEditor } from "@grantflow/editor";
 
-export const Editor = (_: {
-	content: string;
-	onContentUpdate: (content: string) => void;
-}) => {
-	return <SimpleEditor />;
+export const Editor = (_: { content: string; onContentUpdate: (content: string) => void }) => {
+	return <GrantflowEditor />;
 };

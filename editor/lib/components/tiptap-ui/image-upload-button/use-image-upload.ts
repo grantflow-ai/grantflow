@@ -36,11 +36,7 @@ export interface UseImageUploadConfig {
  */
 export function canInsertImage(editor: Editor | null): boolean {
 	if (!editor?.isEditable) return false;
-	if (
-		!isExtensionAvailable(editor, "imageUpload") ||
-		isNodeTypeSelected(editor, ["image"])
-	)
-		return false;
+	if (!isExtensionAvailable(editor, "imageUpload") || isNodeTypeSelected(editor, ["image"])) return false;
 
 	return editor.can().insertContent({ type: "imageUpload" });
 }
@@ -76,10 +72,7 @@ export function insertImage(editor: Editor | null): boolean {
 /**
  * Determines if the image button should be shown
  */
-export function shouldShowButton(props: {
-	editor: Editor | null;
-	hideWhenUnavailable: boolean;
-}): boolean {
+export function shouldShowButton(props: { editor: Editor | null; hideWhenUnavailable: boolean }): boolean {
 	const { editor, hideWhenUnavailable } = props;
 
 	if (!editor?.isEditable) return false;
@@ -129,11 +122,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useImageUpload(config?: UseImageUploadConfig) {
-	const {
-		editor: providedEditor,
-		hideWhenUnavailable = false,
-		onInserted,
-	} = config || {};
+	const { editor: providedEditor, hideWhenUnavailable = false, onInserted } = config || {};
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState<boolean>(true);
@@ -180,12 +169,12 @@ export function useImageUpload(config?: UseImageUploadConfig) {
 	);
 
 	return {
-		isVisible,
-		isActive,
-		handleImage,
 		canInsert,
+		handleImage,
+		Icon: ImagePlusIcon,
+		isActive,
+		isVisible,
 		label: "Add image",
 		shortcutKeys: IMAGE_UPLOAD_SHORTCUT_KEY,
-		Icon: ImagePlusIcon,
 	};
 }

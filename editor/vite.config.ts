@@ -1,45 +1,62 @@
 /// <reference types="vitest/config" />
 
+import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
-import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
-// import noBundlePlugin from "vite-plugin-no-bundle";
-// import { libInjectCss } from "vite-plugin-lib-inject-css";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [
-		react({ jsxRuntime: "classic" }),
-		// noBundlePlugin(),
-		tsconfigPaths(),
-		// libInjectCss(),
-		dts({ include: ["lib"] }),
-	],
 	build: {
 		copyPublicDir: false,
+		emptyOutDir: false,
 		lib: {
-			entry: resolve(__dirname, "lib/main.ts"),
-			// name: "SimpleEditor",
-			fileName: "main",
+			entry: {
+				index: resolve(__dirname, "lib/index.ts"),
+			},
+			fileName: (_format, entryName) => `${entryName}.js`,
 			formats: ["es"],
 		},
-		rollupOptions: {
-			// No external CSS or HTML, only JS/TS output
-			// input: resolve(__dirname, "src/index.ts"),
-			// output: {
-			// assetFileNames: () => "[name][extname]", // disables hashed asset output
-			// },
-			output: {
-				generatedCode: "es2015",
-				interop: "auto",
-			},
-			external: ["react", "react/jsx-runtime"],
-		},
 		outDir: "dist",
-		emptyOutDir: true,
+		rollupOptions: {
+			external: [
+				"react",
+				"react-dom",
+				"react/jsx-runtime",
+				"@tiptap/react",
+				"@tiptap/core",
+				"@tiptap/pm",
+				"@tiptap/starter-kit",
+				"@tiptap/extension-highlight",
+				"@tiptap/extension-horizontal-rule",
+				"@tiptap/extension-image",
+				"@tiptap/extension-link",
+				"@tiptap/extension-list",
+				"@tiptap/extension-subscript",
+				"@tiptap/extension-superscript",
+				"@tiptap/extension-task-item",
+				"@tiptap/extension-task-list",
+				"@tiptap/extension-text-align",
+				"@tiptap/extension-typography",
+				"@tiptap/extension-underline",
+				"@tiptap/extensions",
+			],
+			output: {
+				preserveModules: false,
+			},
+		},
+		sourcemap: true,
+		target: "es2020",
 	},
+	plugins: [
+		react(),
+		tsconfigPaths(),
+		dts({
+			insertTypesEntry: true,
+			rollupTypes: true,
+		}),
+	],
 	server: {
 		fs: {
 			// Allow serving files from one level up to the project root

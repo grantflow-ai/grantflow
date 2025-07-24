@@ -16,11 +16,7 @@ import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/imag
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer";
-import {
-	Toolbar,
-	ToolbarGroup,
-	ToolbarSeparator,
-} from "@/components/tiptap-ui-primitive/toolbar";
+import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/tiptap-ui-primitive/toolbar";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -47,11 +43,7 @@ import {
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
-import {
-	LinkButton,
-	LinkContent,
-	LinkPopover,
-} from "@/components/tiptap-ui/link-popover";
+import { LinkButton, LinkContent, LinkPopover } from "@/components/tiptap-ui/link-popover";
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
@@ -91,10 +83,7 @@ const MainToolbarContent = ({
 
 			<ToolbarGroup>
 				<HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-				<ListDropdownMenu
-					types={["bulletList", "orderedList", "taskList"]}
-					portal={isMobile}
-				/>
+				<ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
 				<BlockquoteButton />
 				<CodeBlockButton />
 			</ToolbarGroup>
@@ -107,11 +96,7 @@ const MainToolbarContent = ({
 				<MarkButton type="strike" />
 				<MarkButton type="code" />
 				<MarkButton type="underline" />
-				{!isMobile ? (
-					<ColorHighlightPopover />
-				) : (
-					<ColorHighlightPopoverButton onClick={onHighlighterClick} />
-				)}
+				{!isMobile ? <ColorHighlightPopover /> : <ColorHighlightPopoverButton onClick={onHighlighterClick} />}
 				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
 
@@ -148,13 +133,7 @@ const MainToolbarContent = ({
 	);
 };
 
-const MobileToolbarContent = ({
-	type,
-	onBack,
-}: {
-	type: "highlighter" | "link";
-	onBack: () => void;
-}) => (
+const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
 	<>
 		<ToolbarGroup>
 			<Button data-style="ghost" onClick={onBack}>
@@ -169,31 +148,24 @@ const MobileToolbarContent = ({
 
 		<ToolbarSeparator />
 
-		{type === "highlighter" ? (
-			<ColorHighlightPopoverContent />
-		) : (
-			<LinkContent />
-		)}
+		{type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
 	</>
 );
 
-export function SimpleEditor() {
+export function Editor() {
 	const isMobile = useIsMobile();
 	const windowSize = useWindowSize();
-	const [mobileView, setMobileView] = React.useState<
-		"main" | "highlighter" | "link"
-	>("main");
+	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({
-		immediatelyRender: false,
-		shouldRerenderOnTransaction: false,
+		content,
 		editorProps: {
 			attributes: {
+				"aria-label": "Main content area, start typing to enter text.",
+				autocapitalize: "off",
 				autocomplete: "off",
 				autocorrect: "off",
-				autocapitalize: "off",
-				"aria-label": "Main content area, start typing to enter text.",
 				class: "simple-editor",
 			},
 		},
@@ -201,8 +173,8 @@ export function SimpleEditor() {
 			StarterKit.configure({
 				horizontalRule: false,
 				link: {
-					openOnClick: false,
 					enableClickSelection: true,
+					openOnClick: false,
 				},
 			}),
 			HorizontalRule,
@@ -217,13 +189,14 @@ export function SimpleEditor() {
 			Selection,
 			ImageUploadNode.configure({
 				accept: "image/*",
-				maxSize: MAX_FILE_SIZE,
 				limit: 3,
-				upload: handleImageUpload,
+				maxSize: MAX_FILE_SIZE,
 				onError: (error) => console.error("Upload failed:", error),
+				upload: handleImageUpload,
 			}),
 		],
-		content,
+		immediatelyRender: false,
+		shouldRerenderOnTransaction: false,
 	});
 
 	const bodyRect = useCursorVisibility({
@@ -264,11 +237,7 @@ export function SimpleEditor() {
 					)}
 				</Toolbar>
 
-				<EditorContent
-					editor={editor}
-					role="presentation"
-					className="simple-editor-content"
-				/>
+				<EditorContent editor={editor} role="presentation" className="simple-editor-content" />
 			</EditorContext.Provider>
 		</div>
 	);

@@ -1,23 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getApplication } from "@/actions/grant-applications";
 import { EditorContainer } from "@/components/projects/applications/editor/editor-container";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
-import { routes } from "@/utils/navigation";
 
 export function ApplicationEditorPageClient() {
-	const router = useRouter();
-	const { project } = useProjectStore();
-	const { selectedOrganizationId } = useOrganizationStore();
-	const { activeApplicationId } = useNavigationStore();
-	const [application, setApplication] = useState<Awaited<ReturnType<typeof getApplication>> | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<null | string>(null);
-
 	// useEffect(() => {
 	// 	async function loadApplication() {
 	// 		if (!(project && activeApplicationId && selectedOrganizationId)) {

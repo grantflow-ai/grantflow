@@ -9,12 +9,7 @@ import { CodeBlockIcon } from "@/components/tiptap-icons/code-block-icon";
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 // --- Lib ---
-import {
-	findNodePosition,
-	isNodeInSchema,
-	isNodeTypeSelected,
-	isValidPosition,
-} from "@/lib/tiptap-utils";
+import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition } from "@/lib/tiptap-utils";
 
 export const CODE_BLOCK_SHORTCUT_KEY = "mod+alt+c";
 
@@ -42,11 +37,7 @@ export interface UseCodeBlockConfig {
  */
 export function canToggle(editor: Editor | null, turnInto = true): boolean {
 	if (!editor?.isEditable) return false;
-	if (
-		!isNodeInSchema("codeBlock", editor) ||
-		isNodeTypeSelected(editor, ["image"])
-	)
-		return false;
+	if (!isNodeInSchema("codeBlock", editor) || isNodeTypeSelected(editor, ["image"])) return false;
 
 	if (!turnInto) {
 		return editor.can().toggleNode("codeBlock", "paragraph");
@@ -105,13 +96,9 @@ export function toggleCodeBlock(editor: Editor | null): boolean {
 			const firstChild = selection.node.firstChild?.firstChild;
 			const lastChild = selection.node.lastChild?.lastChild;
 
-			const from = firstChild
-				? selection.from + firstChild.nodeSize
-				: selection.from + 1;
+			const from = firstChild ? selection.from + firstChild.nodeSize : selection.from + 1;
 
-			const to = lastChild
-				? selection.to - lastChild.nodeSize
-				: selection.to - 1;
+			const to = lastChild ? selection.to - lastChild.nodeSize : selection.to - 1;
 
 			chain = chain.setTextSelection({ from, to }).clearNodes();
 		}
@@ -133,10 +120,7 @@ export function toggleCodeBlock(editor: Editor | null): boolean {
 /**
  * Determines if the code block button should be shown
  */
-export function shouldShowButton(props: {
-	editor: Editor | null;
-	hideWhenUnavailable: boolean;
-}): boolean {
+export function shouldShowButton(props: { editor: Editor | null; hideWhenUnavailable: boolean }): boolean {
 	const { editor, hideWhenUnavailable } = props;
 
 	if (!editor?.isEditable) return false;
@@ -193,11 +177,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useCodeBlock(config?: UseCodeBlockConfig) {
-	const {
-		editor: providedEditor,
-		hideWhenUnavailable = false,
-		onToggled,
-	} = config || {};
+	const { editor: providedEditor, hideWhenUnavailable = false, onToggled } = config || {};
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState<boolean>(true);
@@ -244,12 +224,12 @@ export function useCodeBlock(config?: UseCodeBlockConfig) {
 	);
 
 	return {
-		isVisible,
-		isActive,
-		handleToggle,
 		canToggle: canToggleState,
+		handleToggle,
+		Icon: CodeBlockIcon,
+		isActive,
+		isVisible,
 		label: "Code Block",
 		shortcutKeys: CODE_BLOCK_SHORTCUT_KEY,
-		Icon: CodeBlockIcon,
 	};
 }
