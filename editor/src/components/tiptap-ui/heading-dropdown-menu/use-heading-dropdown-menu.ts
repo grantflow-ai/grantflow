@@ -38,10 +38,7 @@ export interface UseHeadingDropdownMenuConfig {
 /**
  * Gets the currently active heading level from the available levels
  */
-export function getActiveHeadingLevel(
-	editor: Editor | null,
-	levels: Level[] = [1, 2, 3, 4, 5, 6],
-): Level | undefined {
+export function getActiveHeadingLevel(editor: Editor | null, levels: Level[] = [1, 2, 3, 4, 5, 6]): Level | undefined {
 	if (!editor?.isEditable) return undefined;
 	return levels.find((level) => isHeadingActive(editor, level));
 }
@@ -86,11 +83,7 @@ export function getActiveHeadingLevel(
  * ```
  */
 export function useHeadingDropdownMenu(config?: UseHeadingDropdownMenuConfig) {
-	const {
-		editor: providedEditor,
-		levels = [1, 2, 3, 4, 5, 6],
-		hideWhenUnavailable = false,
-	} = config || {};
+	const { editor: providedEditor, levels = [1, 2, 3, 4, 5, 6], hideWhenUnavailable = false } = config || {};
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState(true);
@@ -103,9 +96,7 @@ export function useHeadingDropdownMenu(config?: UseHeadingDropdownMenuConfig) {
 		if (!editor) return;
 
 		const handleSelectionUpdate = () => {
-			setIsVisible(
-				shouldShowButton({ editor, hideWhenUnavailable, level: levels }),
-			);
+			setIsVisible(shouldShowButton({ editor, hideWhenUnavailable, level: levels }));
 		};
 
 		handleSelectionUpdate();
@@ -118,12 +109,12 @@ export function useHeadingDropdownMenu(config?: UseHeadingDropdownMenuConfig) {
 	}, [editor, hideWhenUnavailable, levels]);
 
 	return {
-		isVisible,
 		activeLevel,
-		isActive,
 		canToggle: canToggleState,
-		levels,
-		label: "Heading",
 		Icon: activeLevel ? headingIcons[activeLevel] : HeadingIcon,
+		isActive,
+		isVisible,
+		label: "Heading",
+		levels,
 	};
 }

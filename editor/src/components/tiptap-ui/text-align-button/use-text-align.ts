@@ -11,7 +11,7 @@ import { AlignRightIcon } from "@/components/tiptap-icons/align-right-icon";
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 // --- Lib ---
-import { isExtensionAvailable, isNodeTypeSelected } from "@/lib/tiptap-utils";
+import { isExtensionAvailable, isNodeTypeSelected } from "@/tiptap-utils";
 
 export type TextAlign = "left" | "center" | "right" | "justify";
 
@@ -39,46 +39,37 @@ export interface UseTextAlignConfig {
 }
 
 export const TEXT_ALIGN_SHORTCUT_KEYS: Record<TextAlign, string> = {
-	left: "mod+shift+l",
 	center: "mod+shift+e",
-	right: "mod+shift+r",
 	justify: "mod+shift+j",
+	left: "mod+shift+l",
+	right: "mod+shift+r",
 };
 
 export const textAlignIcons = {
-	left: AlignLeftIcon,
 	center: AlignCenterIcon,
-	right: AlignRightIcon,
 	justify: AlignJustifyIcon,
+	left: AlignLeftIcon,
+	right: AlignRightIcon,
 };
 
 export const textAlignLabels: Record<TextAlign, string> = {
-	left: "Align left",
 	center: "Align center",
-	right: "Align right",
 	justify: "Align justify",
+	left: "Align left",
+	right: "Align right",
 };
 
 /**
  * Checks if text alignment can be performed in the current editor state
  */
-export function canSetTextAlign(
-	editor: Editor | null,
-	align: TextAlign,
-): boolean {
+export function canSetTextAlign(editor: Editor | null, align: TextAlign): boolean {
 	if (!editor?.isEditable) return false;
-	if (
-		!isExtensionAvailable(editor, "textAlign") ||
-		isNodeTypeSelected(editor, ["image"])
-	)
-		return false;
+	if (!isExtensionAvailable(editor, "textAlign") || isNodeTypeSelected(editor, ["image"])) return false;
 
 	return editor.can().setTextAlign(align);
 }
 
-export function hasSetTextAlign(
-	commands: ChainedCommands,
-): commands is ChainedCommands & {
+export function hasSetTextAlign(commands: ChainedCommands): commands is ChainedCommands & {
 	setTextAlign: (align: TextAlign) => ChainedCommands;
 } {
 	return "setTextAlign" in commands;
@@ -87,10 +78,7 @@ export function hasSetTextAlign(
 /**
  * Checks if the text alignment is currently active
  */
-export function isTextAlignActive(
-	editor: Editor | null,
-	align: TextAlign,
-): boolean {
+export function isTextAlignActive(editor: Editor | null, align: TextAlign): boolean {
 	if (!editor?.isEditable) return false;
 	return editor.isActive({ textAlign: align });
 }
@@ -168,12 +156,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useTextAlign(config: UseTextAlignConfig) {
-	const {
-		editor: providedEditor,
-		align,
-		hideWhenUnavailable = false,
-		onAligned,
-	} = config;
+	const { editor: providedEditor, align, hideWhenUnavailable = false, onAligned } = config;
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState<boolean>(true);
@@ -184,7 +167,7 @@ export function useTextAlign(config: UseTextAlignConfig) {
 		if (!editor) return;
 
 		const handleSelectionUpdate = () => {
-			setIsVisible(shouldShowButton({ editor, align, hideWhenUnavailable }));
+			setIsVisible(shouldShowButton({ align, editor, hideWhenUnavailable }));
 		};
 
 		handleSelectionUpdate();
@@ -220,12 +203,12 @@ export function useTextAlign(config: UseTextAlignConfig) {
 	);
 
 	return {
-		isVisible,
-		isActive,
-		handleTextAlign,
 		canAlign,
+		handleTextAlign,
+		Icon: textAlignIcons[align],
+		isActive,
+		isVisible,
 		label: textAlignLabels[align],
 		shortcutKeys: TEXT_ALIGN_SHORTCUT_KEYS[align],
-		Icon: textAlignIcons[align],
 	};
 }

@@ -23,5 +23,3 @@ export interface UserInfo {
 	tenantId: null | string;
 	uid: string;
 }
-
-export type UserRoleType = keyof typeof UserRole;
