@@ -45,39 +45,6 @@ export interface TemplateGenerationStatus {
 	message: string;
 }
 
-type RagSourceStatus = NonNullable<
-	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
->["rag_sources"][0]["status"];
-
-export const MAX_OBJECTIVES = 5;
-
-export const EXAMPLE_OBJECTIVES = [
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie. Aenean ut volutpat nisl enim. Ornare dolor cursus erat. Accumsan tempor vestibulum sapien at velit odio. Aliquam vel ornare pulvinar congue porttitor sed nisl rutrum blandit. Elit magna nulla mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus odio fermentum suspendisse mauris. Ullamcorper quis nunc mauris pharetra ipsum, vitae tincidunt nibh risus erat. Risus.",
-		title: "Dissect principles of the inhibitory crosstalk and signaling in the TME by comprehensive single-cell profiling of the tumor microenvironment and signaling in PD-1+ tumor infiltrating T cells in cancer patients",
-	},
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim. Vel cursus ipsum molestie.",
-		title: "Optimize therapeutic targeting strategies",
-	},
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse enim.",
-		title: "Develop novel biomarker identification methods",
-	},
-	{
-		description:
-			"Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus vulputate suspendisse.",
-		title: "Analyze immune cell interactions",
-	},
-	{
-		description: "Lorem ipsum dolor sit amet consectetur. Feugiat faucibus urna ligula risus lacus.",
-		title: "Investigate resistance mechanisms",
-	},
-];
-
 interface PollingActions {
 	start: (apiFunction: () => Promise<void>, duration: number, callImmediately?: boolean) => void;
 	stop: () => void;
@@ -87,6 +54,10 @@ interface PollingState {
 	intervalId: NodeJS.Timeout | null;
 	isActive: boolean;
 }
+
+type RagSourceStatus = NonNullable<
+	API.RetrieveApplication.Http200.ResponseBody["grant_template"]
+>["rag_sources"][0]["status"];
 
 interface WizardActions {
 	checkApplicationGeneration: () => Promise<void>;
