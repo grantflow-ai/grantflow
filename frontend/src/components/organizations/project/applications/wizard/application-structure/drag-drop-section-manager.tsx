@@ -14,7 +14,7 @@ import { SectionIconButton } from "./section-icon-button";
 interface SectionListProps {
 	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
-	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleDeleteSection: (sectionId: string, sectionParentId: string) => Promise<void>;
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	mainSections: GrantSection[];
@@ -22,10 +22,16 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
+import type { RefObject } from "react";
+import { AppButton } from "@/components/app";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
+
 export function DragDropSectionManager({
+	dialogRef,
 	isDetailedSection,
 	onAddSection,
 }: {
+	dialogRef: RefObject<null | WizardDialogRef>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
@@ -62,7 +68,6 @@ export function DragDropSectionManager({
 
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
-			// to prevent main section to become a sub-section
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
 				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
 				if (hasChildren) {
@@ -79,23 +84,15 @@ export function DragDropSectionManager({
 		const activeIsMain = activeSection.parent_id === null;
 		const overIsMain = overSection.parent_id === null;
 
-		if (activeIsMain && overIsMain) {
+		if (activeIsMain) {
 			return null;
 		}
 
-		if (activeIsMain && !overIsMain) {
-			return activeSection.parent_id;
+		if (overIsMain) {
+			return overSection.id;
 		}
 
-		if (!activeIsMain && overIsMain) {
-			return activeSection.parent_id === overSection.id ? activeSection.parent_id : overSection.id;
-		}
-
-		if (!(activeIsMain || overIsMain)) {
-			return overSection.parent_id;
-		}
-
-		return activeSection.parent_id;
+		return overSection.parent_id;
 	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
@@ -120,15 +117,77 @@ export function DragDropSectionManager({
 		[grantSections, toUpdateGrantSection],
 	);
 
-	const handleDeleteSection = useCallback(
+	const performDelete = useCallback(
 		async (sectionId: string) => {
+			const sectionToDelete = grantSections.find((section) => section.id === sectionId);
+			if (!sectionToDelete) return;
+
+			const sectionsToDelete = [sectionId];
+			if (sectionToDelete.parent_id === null) {
+				const subSections = grantSections.filter((section) => section.parent_id === sectionId);
+				sectionsToDelete.push(...subSections.map((section) => section.id));
+			}
+
 			const updatedSections = grantSections
-				.filter((section) => section.id !== sectionId)
+				.filter((section) => !sectionsToDelete.includes(section.id))
 				.map(toUpdateGrantSection);
 			await useApplicationStore.getState().updateGrantSections(updatedSections);
 			setExpandedSectionId((prev) => (prev === sectionId ? null : prev));
 		},
 		[grantSections, toUpdateGrantSection],
+	);
+
+	const showDeleteConfirmation = useCallback(
+		(sectionId: string) => {
+			const section = grantSections.find((s) => s.id === sectionId);
+			if (!section) return;
+
+			const subSections = grantSections.filter((s) => s.parent_id === sectionId);
+			const hasSubSections = subSections.length > 0;
+
+			dialogRef.current?.open({
+				content: null,
+				description: hasSubSections
+					? "All content within this section and its sub-sections will be permanently removed. This action cannot be undone."
+					: "All content within this section will be permanently removed. This action cannot be undone.",
+				dismissOnOutsideClick: false,
+				footer: (
+					<div className="flex justify-between w-full">
+						<AppButton
+							data-testid="cancel-delete-button"
+							onClick={() => dialogRef.current?.close()}
+							variant="secondary"
+						>
+							Cancel
+						</AppButton>
+						<AppButton
+							data-testid="confirm-delete-button"
+							onClick={async () => {
+								await performDelete(sectionId);
+								dialogRef.current?.close();
+							}}
+							variant="primary"
+						>
+							Delete Section
+						</AppButton>
+					</div>
+				),
+				minWidth: "min-w-xl",
+				title: "Are you sure you want to delete this section?",
+			});
+		},
+		[grantSections, dialogRef, performDelete],
+	);
+
+	const handleDeleteSection = useCallback(
+		async (sectionId: string, sectionParentId: string) => {
+			if (sectionParentId) {
+				await performDelete(sectionId);
+				return;
+			}
+			showDeleteConfirmation(sectionId);
+		},
+		[showDeleteConfirmation, performDelete],
 	);
 
 	const handleAddNewSection = useCallback(
@@ -323,11 +382,12 @@ function SectionList({
 			{allSectionsFlattened.map((section) => (
 				<SortableSection
 					isDetailedSection={isDetailedSection}
+					isDragDisabled={allSectionsFlattened.length === 1}
 					isExpanded={expandedSectionId === section.id}
 					isSubsection={!!section.parent_id}
 					key={section.id}
 					onAddSubsection={section.parent_id ? undefined : () => handleAddNewSection(section.id)}
-					onDelete={() => handleDeleteSection(section.id)}
+					onDelete={() => handleDeleteSection(section.id, section.parent_id ?? "")}
 					onToggleExpand={() => {
 						toggleSectionExpanded(section.id);
 					}}
