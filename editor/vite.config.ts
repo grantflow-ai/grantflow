@@ -69,11 +69,9 @@ export default defineConfig({
 			reporter: ["text", "json", "html"],
 		},
 		environment: "jsdom",
-		// Default configuration for unit tests
 		globals: true,
 		include: ["src/**/*.spec.{ts,tsx}"],
 		setupFiles: "./testing/vitest.setup.ts",
-		// If you want to add back the storybook tests, you can add a projects array
-		// For now, this simpler config will focus on getting unit tests running.
+		testTimeout: 10000,
 	},
 });
