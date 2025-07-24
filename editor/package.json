@@ -84,6 +84,9 @@
 		"typescript": "~5.8.3",
 		"typescript-eslint": "^8.37.0",
 		"vite": "^7.0.5",
+		"vite-plugin-dts": "^4.5.4",
+		"vite-plugin-lib-inject-css": "^2.2.2",
+		"vite-plugin-no-bundle": "^4.0.0",
 		"vite-tsconfig-paths": "^5.1.4",
 		"vitest": "^3.2.4"
 	},
@@ -91,7 +94,8 @@
 	"packageManager": "pnpm@10.11.0",
 	"scripts": {
 		"biome": "biome",
-		"build": "tsc -b && vite build",
+		"build2": "tsc -b tsconfig.json --verbose --pretty",
+		"build": "tsc --p ./tsconfig-build.json && vite build",
 		"build-storybook": "storybook build",
 		"check": "biome check --write . && eslint .",
 		"dev": "vite",
@@ -112,5 +116,17 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"type": "module",
-	"version": "0.0.0"
+	"version": "0.0.0",
+	"exports": {
+		".": {
+			"import": "./dist/main.js",
+			"types": "./dist/lib/main.d.ts",
+			"default": "./dist/main.js"
+		}
+	},
+	"main": "./dist/main.js",
+	"types": "./dist/lib/main.d.js",
+	"files": [
+		"dist/"
+	]
 }

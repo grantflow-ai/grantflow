@@ -4,8 +4,8 @@ import { routes } from "@/utils/navigation";
 
 export default function ApplicationEditorPage() {
 	return (
-		<NavigationContextProvider redirectTo={routes.organization.root()} requireApplication requireProject>
+		// <NavigationContextProvider redirectTo={routes.organization.root()} requireApplication requireProject>
 			<ApplicationEditorPageClient />
-		</NavigationContextProvider>
+		// </NavigationContextProvider>
 	);
 }

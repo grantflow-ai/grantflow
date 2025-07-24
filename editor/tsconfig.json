@@ -2,24 +2,32 @@
 	"compilerOptions": {
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
-		"baseUrl": ".",
+		"baseUrl": "./",
+		"outDir": "./dist",
+		// "rootDir": "./src",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"isolatedModules": true,
 		"jsx": "react-jsx",
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
-		"module": "ESNext",
-		"moduleResolution": "node",
-		"noEmit": true,
+		"moduleResolution": "bundler",
+		"noEmit": false,
+		"declaration": true,
+		"declarationDir": "dist",
+		"composite": true,
+		"declarationMap": true,
+		"inlineSources": true,
+		"sourceMap": true,
 		"paths": {
-			"@/*": ["src/*"]
+			"@/*": ["lib/*"]
 		},
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
-		"target": "ESNext",
+		"target": "ES2021",
+		// "module": "commonjs",
 		"types": ["vitest/globals", "@testing-library/jest-dom"]
 	},
-	"include": ["src", "vitest.setup.ts", "vitest.shims.d.ts"],
+	"include": ["src", "lib", "lib/**/*.json"],
 	"references": [{ "path": "./tsconfig.node.json" }]
 }
