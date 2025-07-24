@@ -421,7 +421,23 @@ rules:
       - never use `any` as a type.
       - search for types, including from 3rd party libraries, to determine the correct type to use.
       - use nullish coalescing and optional chaining whenever required.
-      - use type-guards and type predicates (use "@tool-belt/type-predicates" package as required)
+      - use type-guards and type predicates with "@tool-belt/type-predicates" package:
+        ```typescript
+        import { isString, isNumber, isObject, assertIsArray } from '@tool-belt/type-predicates';
+        
+        // Type guards for narrowing
+        if (isString(value)) {
+          // TypeScript knows value is string
+          console.log(value.toUpperCase());
+        }
+        
+        // Type assertions that throw
+        assertIsArray(data); // Throws if not array
+        // TypeScript knows data is array after this
+        
+        // Use with filter
+        const strings = mixedArray.filter(isString); // strings: string[]
+        ```
       - use factories for testings (see: frontend/testing/factories.ts, which s aliased as "::testing/factories")
 
   - name: "Python Guidelines"

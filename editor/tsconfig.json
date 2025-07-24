@@ -17,15 +17,24 @@
 		"noEmit": false,
 		"outDir": "./dist",
 		"paths": {
-			"@/*": ["lib/*"]
+			"::testing/*": ["testing/*"],
+			"@/*": ["src/*"]
 		},
 		"resolveJsonModule": true,
+		"allowArbitraryExtensions": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"target": "ES2021",
+		"strictBindCallApply": true,
+		"strictFunctionTypes": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"target": "ESNext",
 		"types": ["vitest/globals", "@testing-library/jest-dom"]
 	},
-	"include": ["src", "lib", "lib/**/*.json"],
+	"include": ["src", "src/**/*.json", "testing"],
 	"references": [{ "path": "./tsconfig.node.json" }]
 }

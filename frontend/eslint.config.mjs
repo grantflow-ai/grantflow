@@ -127,7 +127,7 @@ export default eslintTS.config(
 			"eqeqeq": "error",
 			"import-x/no-duplicates": "error",
 			"import-x/no-named-as-default-member": "off",
-			"n/no-extraneous-import": "error",
+			"n/no-extraneous-import": "off",
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",

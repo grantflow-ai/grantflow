@@ -1,0 +1,37 @@
+name: "Setup Node.js Package"
+description: "Set up Node.js with pnpm for a specific package in monorepo"
+
+inputs:
+  package:
+    description: "Package to work with (frontend, editor)"
+    required: true
+  node-version:
+    description: "Node.js version to use"
+    required: false
+    default: "22"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        package_json_file: ${{ inputs.package }}/package.json
+        run_install: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+        cache-dependency-path: |
+          pnpm-lock.yaml
+          ${{ inputs.package }}/pnpm-lock.yaml
+
+    - name: Install Root Dependencies
+      shell: bash
+      run: pnpm install
+
+    - name: Install Package Dependencies
+      shell: bash
+      run: cd ${{ inputs.package }} && pnpm install

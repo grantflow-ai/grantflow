@@ -13,7 +13,7 @@ export default defineConfig({
 		emptyOutDir: false,
 		lib: {
 			entry: {
-				index: resolve(__dirname, "lib/index.ts"),
+				index: resolve(__dirname, "src/index.ts"),
 			},
 			fileName: (_format, entryName) => `${entryName}.js`,
 			formats: ["es"],
@@ -72,7 +72,7 @@ export default defineConfig({
 		// Default configuration for unit tests
 		globals: true,
 		include: ["src/**/*.spec.{ts,tsx}"],
-		setupFiles: "./vitest.setup.ts",
+		setupFiles: "./testing/vitest.setup.ts",
 		// If you want to add back the storybook tests, you can add a projects array
 		// For now, this simpler config will focus on getting unit tests running.
 	},
