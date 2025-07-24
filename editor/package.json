@@ -49,6 +49,7 @@
 		"knip": "knip",
 		"lint": "biome lint --write . && eslint . --fix",
 		"playwright": "./node_modules/.bin/playwright",
+		"postinstall": "pnpm build",
 		"preinstall": "npx only-allow pnpm",
 		"preview": "vite preview",
 		"start": "vite preview",

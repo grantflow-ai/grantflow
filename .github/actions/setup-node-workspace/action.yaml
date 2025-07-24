@@ -35,3 +35,8 @@ runs:
     - name: Install Package Dependencies
       shell: bash
       run: cd ${{ inputs.package }} && pnpm install
+
+    - name: Build Editor (if frontend depends on it)
+      if: inputs.package == 'frontend'
+      shell: bash
+      run: cd editor && pnpm build
