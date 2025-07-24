@@ -18,6 +18,7 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [`/packages/db`](./packages/db/README.md) - Shared database models and migrations
 - [`/packages/shared_utils`](./packages/shared_utils/README.md) - Common utilities shared across services
 - [`/frontend`](./frontend/README.md) - NextJS frontend application
+- [`/editor`](./editor/README.md) - TipTap editor library package
 - [`/terraform`](./terraform/README.md) - Terraform configuration for GCP infrastructure
 - [`/cloud_functions`](./cloud_functions/README.md) - Python Cloud Functions for monitoring and alerting
   - `app_hosting_alerts` - Firebase App Hosting deployment alerts
@@ -117,6 +118,11 @@ task lint:typescript    # Type check TypeScript code
 task lint:ruff          # Lint and format Python code
 task lint:mypy          # Type check Python code
 task lint:codespell     # Check for common misspellings
+
+# Dead code analysis
+task knip               # Check for unused dependencies and dead code in frontend/editor
+task knip:frontend      # Check frontend package only
+task knip:editor        # Check editor package only
 
 # Terraform linters (specialized - not included in lint:all)
 task lint:terraform     # Run all Terraform linters
@@ -346,10 +352,11 @@ Backend services are deployed to Cloud Run:
 
 This project uses multiple tools to ensure code quality:
 
-### Frontend
+### Frontend & Editor
 
 - **[Biome](https://biomejs.dev/)**: Primary formatter and linter for JS/TS/JSON/CSS files
 - **[ESLint](https://eslint.org/)**: Additional TypeScript and React-specific rules
+- **[Knip](https://knip.dev/)**: Dead code elimination and unused dependency detection
 - **TypeScript**: Strict type checking
 
 ### Backend

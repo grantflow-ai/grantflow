@@ -95,6 +95,7 @@
 		"enabled": true,
 		"rules": {
 			"a11y": {
+				"noStaticElementInteractions": "off",
 				"noSvgWithoutTitle": "off",
 				"useAltText": "error",
 				"useAriaPropsSupportedByRole": "warn",
@@ -102,9 +103,8 @@
 				"useHtmlLang": "error",
 				"useKeyWithClickEvents": "warn",
 				"useKeyWithMouseEvents": "warn",
-				"useValidAnchor": "error",
-				"noStaticElementInteractions": "off",
-				"useSemanticElements": "off"
+				"useSemanticElements": "off",
+				"useValidAnchor": "error"
 			},
 			"complexity": {
 				"noBannedTypes": "error",
@@ -238,6 +238,18 @@
 			}
 		}
 	},
+	"overrides": [
+		{
+			"assist": {
+				"actions": {
+					"source": {
+						"useSortedKeys": "off"
+					}
+				}
+			},
+			"includes": ["package.json"]
+		}
+	],
 	"vcs": {
 		"clientKind": "git",
 		"enabled": true,

@@ -12,12 +12,7 @@ import { ListTodoIcon } from "@/components/tiptap-icons/list-todo-icon";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 // --- Lib ---
-import {
-	findNodePosition,
-	isNodeInSchema,
-	isNodeTypeSelected,
-	isValidPosition,
-} from "@/lib/tiptap-utils";
+import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition } from "@/tiptap-utils";
 
 export type ListType = "bulletList" | "orderedList" | "taskList";
 
@@ -65,14 +60,9 @@ export const LIST_SHORTCUT_KEYS: Record<ListType, string> = {
 /**
  * Checks if a list can be toggled in the current editor state
  */
-export function canToggleList(
-	editor: Editor | null,
-	type: ListType,
-	turnInto = true,
-): boolean {
+export function canToggleList(editor: Editor | null, type: ListType, turnInto = true): boolean {
 	if (!editor?.isEditable) return false;
-	if (!isNodeInSchema(type, editor) || isNodeTypeSelected(editor, ["image"]))
-		return false;
+	if (!isNodeInSchema(type, editor) || isNodeTypeSelected(editor, ["image"])) return false;
 
 	if (!turnInto) {
 		switch (type) {
@@ -158,25 +148,16 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
 			const firstChild = selection.node.firstChild?.firstChild;
 			const lastChild = selection.node.lastChild?.lastChild;
 
-			const from = firstChild
-				? selection.from + firstChild.nodeSize
-				: selection.from + 1;
+			const from = firstChild ? selection.from + firstChild.nodeSize : selection.from + 1;
 
-			const to = lastChild
-				? selection.to - lastChild.nodeSize
-				: selection.to - 1;
+			const to = lastChild ? selection.to - lastChild.nodeSize : selection.to - 1;
 
 			chain = chain.setTextSelection({ from, to }).clearNodes();
 		}
 
 		if (editor.isActive(type)) {
 			// Unwrap list
-			chain
-				.liftListItem("listItem")
-				.lift("bulletList")
-				.lift("orderedList")
-				.lift("taskList")
-				.run();
+			chain.liftListItem("listItem").lift("bulletList").lift("orderedList").lift("taskList").run();
 		} else {
 			// Wrap in specific list type
 			const toggleMap: Record<ListType, () => typeof chain> = {
@@ -257,12 +238,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useList(config: UseListConfig) {
-	const {
-		editor: providedEditor,
-		type,
-		hideWhenUnavailable = false,
-		onToggled,
-	} = config;
+	const { editor: providedEditor, type, hideWhenUnavailable = false, onToggled } = config;
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState<boolean>(true);
@@ -273,7 +249,7 @@ export function useList(config: UseListConfig) {
 		if (!editor) return;
 
 		const handleSelectionUpdate = () => {
-			setIsVisible(shouldShowButton({ editor, type, hideWhenUnavailable }));
+			setIsVisible(shouldShowButton({ editor, hideWhenUnavailable, type }));
 		};
 
 		handleSelectionUpdate();
@@ -309,12 +285,12 @@ export function useList(config: UseListConfig) {
 	);
 
 	return {
-		isVisible,
-		isActive,
-		handleToggle,
 		canToggle,
+		handleToggle,
+		Icon: listIcons[type],
+		isActive,
+		isVisible,
 		label: listLabels[type],
 		shortcutKeys: LIST_SHORTCUT_KEYS[type],
-		Icon: listIcons[type],
 	};
 }

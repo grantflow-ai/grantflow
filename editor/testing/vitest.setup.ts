@@ -2,6 +2,9 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
+// Import TipTap/ProseMirror DOM mocks
+import "./tiptap-mocks";
+
 // Mock window.matchMedia
 globalThis.matchMedia = vi.fn().mockImplementation((query: string) => ({
 	addEventListener: vi.fn(),
