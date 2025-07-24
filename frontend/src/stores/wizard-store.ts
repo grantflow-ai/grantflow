@@ -829,7 +829,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							const fieldStatus = requiredFields.map((field) => {
 								const value = formInputs[field];
 								const valid = Boolean(value && value.trim().length > 0);
-								return { field, length: value.length, valid };
+								return { field, length: value?.length ?? 0, valid };
 							});
 
 							const result = fieldStatus.every((status) => status.valid);

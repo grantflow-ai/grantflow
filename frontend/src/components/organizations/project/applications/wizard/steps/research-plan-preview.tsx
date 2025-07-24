@@ -46,6 +46,7 @@ interface ObjectiveHeaderProps {
 	isEditing: boolean;
 	listeners: any;
 	objective: Objective;
+	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
 	onRemove: () => void;
@@ -56,6 +57,7 @@ interface SortableObjectiveCardProps {
 	index: number;
 	isEditing: boolean;
 	objective: Objective;
+	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
 	onRemove: () => void;
@@ -145,6 +147,7 @@ export function ResearchPlanPreview() {
 										index={index + 1}
 										isEditing={editingObjectiveId === objective.number}
 										objective={objective}
+										objectivesCount={objectives.length}
 										onCancel={() => {
 											setEditingObjectiveId(null);
 										}}
@@ -306,10 +309,13 @@ function ObjectiveHeader({
 	isEditing,
 	listeners,
 	objective,
+	objectivesCount,
 	onCancel,
 	onEdit,
 	onRemove,
 }: ObjectiveHeaderProps) {
+	const isDragDisabled = objectivesCount <= 1;
+
 	return (
 		<div className="absolute -top-0.5 -left-0.5 right-0 flex items-start justify-between z-10">
 			<div
@@ -319,15 +325,21 @@ function ObjectiveHeader({
 			</div>
 
 			<div className="flex-1 flex justify-center">
-				<button
-					aria-label={`Drag to reorder objective ${index}: ${objective.title}`}
-					className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
-					type="button"
-					{...attributes}
-					{...listeners}
-				>
-					<GripHorizontal className="flex-shrink-0" size={20} />
-				</button>
+				{isDragDisabled ? (
+					<div className="flex items-center justify-center p-2">
+						<GripHorizontal className="flex-shrink-0 text-gray-300" size={20} />
+					</div>
+				) : (
+					<button
+						aria-label={`Drag to reorder objective ${index}: ${objective.title}`}
+						className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
+						type="button"
+						{...attributes}
+						{...listeners}
+					>
+						<GripHorizontal className="flex-shrink-0" size={20} />
+					</button>
+				)}
 			</div>
 
 			<div>
@@ -364,6 +376,7 @@ function SortableObjectiveCard({
 	index,
 	isEditing,
 	objective,
+	objectivesCount,
 	onCancel,
 	onEdit,
 	onRemove,
@@ -389,6 +402,7 @@ function SortableObjectiveCard({
 				isEditing={isEditing}
 				listeners={listeners}
 				objective={objective}
+				objectivesCount={objectivesCount}
 				onCancel={onCancel}
 				onEdit={onEdit}
 				onRemove={onRemove}

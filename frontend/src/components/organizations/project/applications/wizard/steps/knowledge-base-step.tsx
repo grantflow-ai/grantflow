@@ -69,7 +69,6 @@ export function KnowledgeBaseStep() {
 }
 
 function KnowledgeBasePreview() {
-	const applicationTitle = useApplicationStore((state) => state.application?.title);
 	const applicationId = useApplicationStore((state) => state.application?.id);
 	const applicationRagSources = useApplicationStore((state) => state.application?.rag_sources);
 
@@ -92,13 +91,12 @@ function KnowledgeBasePreview() {
 			url: source.url!,
 		}));
 
-	const hasContent = Boolean(applicationTitle) || knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 	const hasFilesOrUrls = knowledgeBaseFiles.length > 0 || knowledgeBaseUrls.length > 0;
 	const hasBothFilesAndUrls = knowledgeBaseFiles.length > 0 && knowledgeBaseUrls.length > 0;
 
-	if (!hasContent) {
+	if (!hasFilesOrUrls) {
 		return (
-			<WizardRightPane padding="p-6">
+			<WizardRightPane>
 				<EmptyStatePreview />
 			</WizardRightPane>
 		);
@@ -108,65 +106,63 @@ function KnowledgeBasePreview() {
 		<WizardRightPane padding="p-6 md:p-4">
 			<div className="flex-1 min-h-0 overflow-y-auto h-full">
 				<div className="space-y-5">
-					{hasFilesOrUrls && (
-						<PreviewCard data-testid="knowledge-base-container">
-							{knowledgeBaseFiles.length > 0 && (
-								<>
-									<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
-										Documents
-									</h4>
-									<div className="flex flex-wrap gap-3" data-testid="knowledge-base-files">
-										{knowledgeBaseFiles.map((file, index) => (
-											<FilePreviewCard
-												file={file}
-												key={file.name + index.toString()}
-												parentId={applicationId}
-												sourceStatus={file.sourceStatus}
-											/>
-										))}
-									</div>
-								</>
-							)}
+					<PreviewCard data-testid="knowledge-base-container">
+						{knowledgeBaseFiles.length > 0 && (
+							<>
+								<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
+									Documents
+								</h4>
+								<div className="flex flex-wrap gap-3" data-testid="knowledge-base-files">
+									{knowledgeBaseFiles.map((file, index) => (
+										<FilePreviewCard
+											file={file}
+											key={file.name + index.toString()}
+											parentId={applicationId}
+											sourceStatus={file.sourceStatus}
+										/>
+									))}
+								</div>
+							</>
+						)}
 
-							{hasBothFilesAndUrls && (
-								<Separator className="bg-gray-200" data-testid="knowledge-base-separator" />
-							)}
+						{hasBothFilesAndUrls && (
+							<Separator className="bg-gray-200" data-testid="knowledge-base-separator" />
+						)}
 
-							{knowledgeBaseUrls.length > 0 && (
-								<>
-									<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
-										Links
-									</h4>
-									<div className="grid grid-cols-2 gap-x-11" data-testid="knowledge-base-urls">
-										<div className="space-y-1">
-											{knowledgeBaseUrls
-												.filter((_, index) => index % 2 === 0)
-												.map((urlSource, index) => (
-													<LinkPreviewItem
-														key={urlSource.url + index.toString()}
-														parentId={applicationId}
-														sourceStatus={urlSource.sourceStatus}
-														url={urlSource.url}
-													/>
-												))}
-										</div>
-										<div className="space-y-1">
-											{knowledgeBaseUrls
-												.filter((_, index) => index % 2 === 1)
-												.map((urlSource, index) => (
-													<LinkPreviewItem
-														key={urlSource.url + index.toString()}
-														parentId={applicationId}
-														sourceStatus={urlSource.sourceStatus}
-														url={urlSource.url}
-													/>
-												))}
-										</div>
+						{knowledgeBaseUrls.length > 0 && (
+							<>
+								<h4 className="font-heading text-base font-semibold leading-snug text-stone-900">
+									Links
+								</h4>
+								<div className="grid grid-cols-2 gap-x-11" data-testid="knowledge-base-urls">
+									<div className="space-y-1">
+										{knowledgeBaseUrls
+											.filter((_, index) => index % 2 === 0)
+											.map((urlSource, index) => (
+												<LinkPreviewItem
+													key={urlSource.url + index.toString()}
+													parentId={applicationId}
+													sourceStatus={urlSource.sourceStatus}
+													url={urlSource.url}
+												/>
+											))}
 									</div>
-								</>
-							)}
-						</PreviewCard>
-					)}
+									<div className="space-y-1">
+										{knowledgeBaseUrls
+											.filter((_, index) => index % 2 === 1)
+											.map((urlSource, index) => (
+												<LinkPreviewItem
+													key={urlSource.url + index.toString()}
+													parentId={applicationId}
+													sourceStatus={urlSource.sourceStatus}
+													url={urlSource.url}
+												/>
+											))}
+									</div>
+								</div>
+							</>
+						)}
+					</PreviewCard>
 				</div>
 			</div>
 		</WizardRightPane>
