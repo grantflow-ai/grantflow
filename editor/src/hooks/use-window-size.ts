@@ -1,30 +1,30 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
 export interface WindowSizeState {
-  /**
-   * The width of the window's visual viewport in pixels.
-   */
-  width: number
-  /**
-   * The height of the window's visual viewport in pixels.
-   */
-  height: number
-  /**
-   * The distance from the top of the visual viewport to the top of the layout viewport.
-   * Particularly useful for handling mobile keyboard appearance.
-   */
-  offsetTop: number
-  /**
-   * The distance from the left of the visual viewport to the left of the layout viewport.
-   */
-  offsetLeft: number
-  /**
-   * The scale factor of the visual viewport.
-   * This is useful for scaling elements based on the current zoom level.
-   */
-  scale: number
+	/**
+	 * The width of the window's visual viewport in pixels.
+	 */
+	width: number;
+	/**
+	 * The height of the window's visual viewport in pixels.
+	 */
+	height: number;
+	/**
+	 * The distance from the top of the visual viewport to the top of the layout viewport.
+	 * Particularly useful for handling mobile keyboard appearance.
+	 */
+	offsetTop: number;
+	/**
+	 * The distance from the left of the visual viewport to the left of the layout viewport.
+	 */
+	offsetLeft: number;
+	/**
+	 * The scale factor of the visual viewport.
+	 * This is useful for scaling elements based on the current zoom level.
+	 */
+	scale: number;
 }
 
 /**
@@ -38,65 +38,59 @@ export interface WindowSizeState {
  * @returns An object containing viewport properties and a CSS transform string
  */
 export function useWindowSize(): WindowSizeState {
-  const [windowSize, setWindowSize] = React.useState<WindowSizeState>({
-    width: 0,
-    height: 0,
-    offsetTop: 0,
-    offsetLeft: 0,
-    scale: 0,
-  })
+	const [windowSize, setWindowSize] = React.useState<WindowSizeState>({
+		height: 0,
+		offsetLeft: 0,
+		offsetTop: 0,
+		scale: 0,
+		width: 0,
+	});
 
-  React.useEffect(() => {
-    function handleViewportChange() {
-      if (typeof window === "undefined") return
+	React.useEffect(() => {
+		function handleViewportChange() {
+			if (typeof window === "undefined") return;
 
-      const vp = window.visualViewport
-      if (!vp) return
+			const vp = window.visualViewport;
+			if (!vp) return;
 
-      const {
-        width = 0,
-        height = 0,
-        offsetTop = 0,
-        offsetLeft = 0,
-        scale = 0,
-      } = vp
+			const { width = 0, height = 0, offsetTop = 0, offsetLeft = 0, scale = 0 } = vp;
 
-      setWindowSize((prevState) => {
-        if (
-          width === prevState.width &&
-          height === prevState.height &&
-          offsetTop === prevState.offsetTop &&
-          offsetLeft === prevState.offsetLeft &&
-          scale === prevState.scale
-        ) {
-          return prevState
-        }
+			setWindowSize((prevState) => {
+				if (
+					width === prevState.width &&
+					height === prevState.height &&
+					offsetTop === prevState.offsetTop &&
+					offsetLeft === prevState.offsetLeft &&
+					scale === prevState.scale
+				) {
+					return prevState;
+				}
 
-        return {
-          width,
-          height,
-          offsetTop,
-          offsetLeft,
-          scale,
-        }
-      })
-    }
+				return {
+					height,
+					offsetLeft,
+					offsetTop,
+					scale,
+					width,
+				};
+			});
+		}
 
-    const visualViewport = window.visualViewport
-    if (visualViewport) {
-      visualViewport.addEventListener("resize", handleViewportChange)
-      visualViewport.addEventListener("scroll", handleViewportChange)
-    }
+		const visualViewport = window.visualViewport;
+		if (visualViewport) {
+			visualViewport.addEventListener("resize", handleViewportChange);
+			visualViewport.addEventListener("scroll", handleViewportChange);
+		}
 
-    handleViewportChange()
+		handleViewportChange();
 
-    return () => {
-      if (visualViewport) {
-        visualViewport.removeEventListener("resize", handleViewportChange)
-        visualViewport.removeEventListener("scroll", handleViewportChange)
-      }
-    }
-  }, [])
+		return () => {
+			if (visualViewport) {
+				visualViewport.removeEventListener("resize", handleViewportChange);
+				visualViewport.removeEventListener("scroll", handleViewportChange);
+			}
+		};
+	}, []);
 
-  return windowSize
+	return windowSize;
 }

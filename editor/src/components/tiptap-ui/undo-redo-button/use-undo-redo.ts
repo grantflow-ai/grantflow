@@ -9,7 +9,7 @@ import { Undo2Icon } from "@/components/tiptap-icons/undo2-icon";
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 // --- Lib ---
-import { isNodeTypeSelected } from "@/lib/tiptap-utils";
+import { isNodeTypeSelected } from "@/tiptap-utils";
 
 export type UndoRedoAction = "undo" | "redo";
 
@@ -37,27 +37,24 @@ export interface UseUndoRedoConfig {
 }
 
 export const UNDO_REDO_SHORTCUT_KEYS: Record<UndoRedoAction, string> = {
-	undo: "mod+z",
 	redo: "mod+shift+z",
+	undo: "mod+z",
 };
 
 export const historyActionLabels: Record<UndoRedoAction, string> = {
-	undo: "Undo",
 	redo: "Redo",
+	undo: "Undo",
 };
 
 export const historyIcons = {
-	undo: Undo2Icon,
 	redo: Redo2Icon,
+	undo: Undo2Icon,
 };
 
 /**
  * Checks if a history action can be executed
  */
-export function canExecuteUndoRedoAction(
-	editor: Editor | null,
-	action: UndoRedoAction,
-): boolean {
+export function canExecuteUndoRedoAction(editor: Editor | null, action: UndoRedoAction): boolean {
 	if (!editor?.isEditable) return false;
 	if (isNodeTypeSelected(editor, ["image"])) return false;
 
@@ -67,10 +64,7 @@ export function canExecuteUndoRedoAction(
 /**
  * Executes a history action on the editor
  */
-export function executeUndoRedoAction(
-	editor: Editor | null,
-	action: UndoRedoAction,
-): boolean {
+export function executeUndoRedoAction(editor: Editor | null, action: UndoRedoAction): boolean {
 	if (!editor?.isEditable) return false;
 	if (!canExecuteUndoRedoAction(editor, action)) return false;
 
@@ -134,12 +128,7 @@ export function shouldShowButton(props: {
  * ```
  */
 export function useUndoRedo(config: UseUndoRedoConfig) {
-	const {
-		editor: providedEditor,
-		action,
-		hideWhenUnavailable = false,
-		onExecuted,
-	} = config;
+	const { editor: providedEditor, action, hideWhenUnavailable = false, onExecuted } = config;
 
 	const { editor } = useTiptapEditor(providedEditor);
 	const [isVisible, setIsVisible] = React.useState<boolean>(true);
@@ -149,7 +138,7 @@ export function useUndoRedo(config: UseUndoRedoConfig) {
 		if (!editor) return;
 
 		const handleUpdate = () => {
-			setIsVisible(shouldShowButton({ editor, hideWhenUnavailable, action }));
+			setIsVisible(shouldShowButton({ action, editor, hideWhenUnavailable }));
 		};
 
 		handleUpdate();
@@ -185,11 +174,11 @@ export function useUndoRedo(config: UseUndoRedoConfig) {
 	);
 
 	return {
-		isVisible,
-		handleAction,
 		canExecute,
+		handleAction,
+		Icon: historyIcons[action],
+		isVisible,
 		label: historyActionLabels[action],
 		shortcutKeys: UNDO_REDO_SHORTCUT_KEYS[action],
-		Icon: historyIcons[action],
 	};
 }
