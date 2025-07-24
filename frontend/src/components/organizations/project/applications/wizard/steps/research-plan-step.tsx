@@ -5,12 +5,13 @@ import Image from "next/image";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
-import { MAX_OBJECTIVES, useWizardStore } from "@/stores/wizard-store";
-import { log } from "@/utils/logger";
+import { useWizardStore } from "@/stores/wizard-store";
 import { WizardLeftPane } from "../shared";
 import { ObjectiveForm, type ObjectiveFormData } from "../shared/objective-form";
 import { PreviewLoadingComponent } from "../shared/preview-loading";
 import { ResearchPlanPreview } from "./research-plan-preview";
+
+export const MAX_OBJECTIVES = 5;
 
 export function ResearchPlanStep() {
 	const application = useApplicationStore((state) => state.application);
@@ -22,7 +23,6 @@ export function ResearchPlanStep() {
 	const [showObjectiveForm, setShowObjectiveForm] = useState(false);
 
 	const objectives = application?.research_objectives ?? [];
-	log.info("objectives in research-plan-step", { objectives });
 
 	const handleSaveObjective = async (data: ObjectiveFormData) => {
 		const objective = {
