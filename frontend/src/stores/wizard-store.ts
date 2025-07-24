@@ -1,4 +1,3 @@
-import type { DragEndEvent } from "@dnd-kit/core";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
@@ -90,32 +89,31 @@ interface PollingState {
 }
 
 interface WizardActions {
-	addNextObjective: () => void;
-	addObjective: (objective: Objective) => void;
-	addTask: (objectiveNumber: number, task: { description?: string; title: string }) => void;
 	checkApplicationGeneration: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
+	createObjective: (objective: Objective) => Promise<void>;
 	generateApplication: () => Promise<void>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
-	handleObjectiveDragEnd: (event: DragEndEvent) => void;
-	handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => void;
 	handleTitleChange: (title: string) => void;
 	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
 	polling: PollingActions;
-	removeObjective: (objectiveNumber: number) => void;
-	removeTask: (objectiveNumber: number, taskNumber: number) => void;
-	reorderObjectives: (objectives: Objective[]) => void;
+	removeObjective: (objectiveNumber: number) => Promise<void>;
 	reset: () => void;
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
 	setGeneratingApplication: (isGenerating: boolean) => void;
+
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
 	startTemplateGeneration: () => void;
+
 	toNextStep: () => void;
 	toPreviousStep: () => void;
 	triggerAutofill: (type: "research_deep_dive" | "research_plan", fieldName?: string) => Promise<void>;
+
 	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
+	updateObjective: (objectiveNumber: number, updates: Partial<Omit<Objective, "number">>) => Promise<void>;
+	updateObjectives: (objectives: Objective[]) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
@@ -159,71 +157,43 @@ const debouncedUpdateTitle = createDebounce((title: string) => {
 	}
 }, DEBOUNCE_DELAY_MS);
 
+const getCurrentObjectives = (): Objective[] => {
+	return useApplicationStore.getState().application?.research_objectives ?? [];
+};
+
+const updateResearchObjectives = async (updatedObjectives: Objective[]): Promise<void> => {
+	const partialUpdate: Partial<API.UpdateApplication.RequestBody> = {
+		research_objectives: updatedObjectives,
+	};
+
+	await useApplicationStore.getState().updateApplication(partialUpdate);
+};
+
+const withErrorHandling = async <T>(operation: () => Promise<T>, errorMessage: string): Promise<T> => {
+	try {
+		return await operation();
+	} catch (error) {
+		log.error("Research objectives operation failed", {
+			error,
+			operation: errorMessage,
+		});
+
+		throw error;
+	}
+};
+
+const renumberObjectives = (objectives: Objective[]): Objective[] => {
+	return objectives.map((obj, index) => ({
+		...obj,
+		number: index + 1,
+	}));
+};
+
 export const useWizardStore = create<WizardActions & WizardState>()(
 	persist(
 		(set, get) => {
 			return {
 				...initialWizardState,
-
-				addNextObjective: () => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (!application) return;
-
-					const currentObjectives = application.research_objectives ?? [];
-					const currentIndex = currentObjectives.length;
-					const exampleObj = EXAMPLE_OBJECTIVES[currentIndex] || EXAMPLE_OBJECTIVES[0];
-
-					const newObjective: Objective = {
-						description: exampleObj.description,
-						number: currentObjectives.length + 1,
-						research_tasks: [],
-						title: exampleObj.title,
-					};
-
-					void updateApplication({
-						research_objectives: [...currentObjectives, newObjective],
-					});
-				},
-
-				addObjective: (objective: Objective) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (!application) return;
-
-					const currentObjectives = application.research_objectives ?? [];
-
-					const newObjective = {
-						...objective,
-						number: currentObjectives.length + 1,
-					};
-
-					void updateApplication({
-						research_objectives: [...currentObjectives, newObjective],
-					});
-				},
-
-				addTask: (objectiveNumber: number, task: { description?: string; title: string }) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (!application) return;
-
-					const objectives = application.research_objectives ?? [];
-					const updatedObjectives = objectives.map((obj) => {
-						if (obj.number === objectiveNumber) {
-							const currentTasks = obj.research_tasks;
-							const newTask = {
-								description: task.description,
-								number: currentTasks.length + 1,
-								title: task.title,
-							};
-							return {
-								...obj,
-								research_tasks: [...currentTasks, newTask],
-							};
-						}
-						return obj;
-					});
-
-					void updateApplication({ research_objectives: updatedObjectives });
-				},
 
 				checkApplicationGeneration: async () => {
 					const { application, getApplication } = useApplicationStore.getState();
@@ -294,6 +264,24 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					}
 				},
 
+				createObjective: async (objective: Objective): Promise<void> => {
+					return withErrorHandling(async () => {
+						if (!objective.title.trim()) {
+							throw new Error("Title is required");
+						}
+						if (!objective.description?.trim()) {
+							throw new Error("Description is required");
+						}
+						if (!objective.research_tasks.length) {
+							throw new Error("At least one task is required");
+						}
+
+						const currentObjectives = getCurrentObjectives();
+						const updatedObjectives = [...currentObjectives, objective];
+						await updateResearchObjectives(updatedObjectives);
+					}, "Create research objective");
+				},
+
 				generateApplication: async () => {
 					const { application, generateApplication } = useApplicationStore.getState();
 					const { polling } = get();
@@ -342,65 +330,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					await (applicationId
 						? getApplication(selectedOrganizationId, projectId, applicationId)
 						: createApplication(selectedOrganizationId, projectId));
-				},
-
-				handleObjectiveDragEnd: (event: DragEndEvent) => {
-					const { active, over } = event;
-					const { application, updateApplication } = useApplicationStore.getState();
-
-					if (!(application && over) || active.id === over.id) return;
-
-					const objectives = application.research_objectives ?? [];
-					const oldIndex = objectives.findIndex((obj) => obj.number === active.id);
-					const newIndex = objectives.findIndex((obj) => obj.number === over.id);
-
-					if (oldIndex !== -1 && newIndex !== -1) {
-						const reorderedObjectives = [...objectives];
-						const [removed] = reorderedObjectives.splice(oldIndex, 1);
-						reorderedObjectives.splice(newIndex, 0, removed);
-
-						const updatedObjectives = reorderedObjectives.map((obj, index) => ({
-							...obj,
-							number: index + 1,
-						}));
-
-						void updateApplication({ research_objectives: updatedObjectives });
-					}
-				},
-
-				handleTaskDragEnd: (objectiveNumber: number, event: DragEndEvent) => {
-					const { active, over } = event;
-					const { application, updateApplication } = useApplicationStore.getState();
-
-					if (!(application && over) || active.id === over.id) return;
-
-					const objectives = application.research_objectives ?? [];
-					const updatedObjectives = objectives.map((obj) => {
-						if (obj.number === objectiveNumber) {
-							const tasks = obj.research_tasks;
-							const oldIndex = tasks.findIndex((task) => task.number === active.id);
-							const newIndex = tasks.findIndex((task) => task.number === over.id);
-
-							if (oldIndex !== -1 && newIndex !== -1) {
-								const reorderedTasks = [...tasks];
-								const [removed] = reorderedTasks.splice(oldIndex, 1);
-								reorderedTasks.splice(newIndex, 0, removed);
-
-								const renumberedTasks = reorderedTasks.map((task, index) => ({
-									...task,
-									number: index + 1,
-								}));
-
-								return {
-									...obj,
-									research_tasks: renumberedTasks,
-								};
-							}
-						}
-						return obj;
-					});
-
-					void updateApplication({ research_objectives: updatedObjectives });
 				},
 
 				handleTitleChange: (title: string) => {
@@ -474,59 +403,14 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					},
 				},
 
-				removeObjective: (objectiveNumber: number) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (!application) return;
+				removeObjective: async (objectiveNumber: number): Promise<void> => {
+					return withErrorHandling(async () => {
+						const currentObjectives = getCurrentObjectives();
+						const filteredObjectives = currentObjectives.filter((obj) => obj.number !== objectiveNumber);
 
-					const objectives = application.research_objectives ?? [];
-					const filteredObjectives = objectives.filter((obj) => obj.number !== objectiveNumber);
-
-					const updatedObjectives = filteredObjectives.map((obj, index) => ({
-						...obj,
-						number: index + 1,
-					}));
-
-					void updateApplication({
-						research_objectives: updatedObjectives,
-					});
-				},
-
-				removeTask: (objectiveNumber: number, taskNumber: number) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (!application) return;
-
-					const objectives = application.research_objectives ?? [];
-					const updatedObjectives = objectives.map((obj) => {
-						if (obj.number === objectiveNumber) {
-							const tasks = obj.research_tasks;
-							const filteredTasks = tasks.filter((task) => task.number !== taskNumber);
-
-							const renumberedTasks = filteredTasks.map((task, index) => ({
-								...task,
-								number: index + 1,
-							}));
-
-							return {
-								...obj,
-								research_tasks: renumberedTasks,
-							};
-						}
-						return obj;
-					});
-
-					void updateApplication({ research_objectives: updatedObjectives });
-				},
-
-				reorderObjectives: (objectives: Objective[]) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-					if (!application) return;
-
-					const numberedObjectives = objectives.map((obj, index) => ({
-						...obj,
-						number: index + 1,
-					}));
-
-					void updateApplication({ research_objectives: numberedObjectives });
+						const renumberedObjectives = renumberObjectives(filteredObjectives);
+						await updateResearchObjectives(renumberedObjectives);
+					}, "Remove research objective");
 				},
 
 				reset: () => {
@@ -751,7 +635,39 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					});
 				},
 
-				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Validation logic needs to be comprehensive
+				updateObjective: async (
+					objectiveNumber: number,
+					updates: Partial<Omit<Objective, "number">>,
+				): Promise<void> => {
+					return withErrorHandling(async () => {
+						const currentObjectives = getCurrentObjectives();
+						const targetObjective = currentObjectives.find((obj) => obj.number === objectiveNumber);
+
+						if (!targetObjective) {
+							throw new Error(`Objective with number ${objectiveNumber} not found`);
+						}
+
+						const updatedObjectives = currentObjectives.map((obj) => {
+							if (obj.number === objectiveNumber) {
+								return {
+									...obj,
+									...updates,
+								};
+							}
+							return obj;
+						});
+
+						await updateResearchObjectives(updatedObjectives);
+					}, "Update research objective");
+				},
+
+				updateObjectives: async (objectives: Objective[]): Promise<void> => {
+					return withErrorHandling(async () => {
+						const renumberedObjectives = renumberObjectives(objectives);
+						await updateResearchObjectives(renumberedObjectives);
+					}, "Update research objectives");
+				},
+
 				validateStepNext: (): boolean => {
 					const { currentStep } = get();
 					const { application } = useApplicationStore.getState();

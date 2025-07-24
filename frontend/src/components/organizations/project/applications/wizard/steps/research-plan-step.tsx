@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import { MAX_OBJECTIVES, useWizardStore } from "@/stores/wizard-store";
+import { log } from "@/utils/logger";
 import { WizardLeftPane } from "../shared";
 import { ObjectiveForm, type ObjectiveFormData } from "../shared/objective-form";
 import { PreviewLoadingComponent } from "../shared/preview-loading";
@@ -13,7 +14,6 @@ import { ResearchPlanPreview } from "./research-plan-preview";
 
 export function ResearchPlanStep() {
 	const application = useApplicationStore((state) => state.application);
-	const addObjective = useWizardStore((state) => state.addObjective);
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
 	const showResearchPlanInfoBanner = useWizardStore((state) => state.showResearchPlanInfoBanner);
@@ -22,12 +22,9 @@ export function ResearchPlanStep() {
 	const [showObjectiveForm, setShowObjectiveForm] = useState(false);
 
 	const objectives = application?.research_objectives ?? [];
+	log.info("objectives in research-plan-step", { objectives });
 
-	const handleAddObjectiveClick = () => {
-		setShowObjectiveForm(true);
-	};
-
-	const handleSaveObjective = (data: ObjectiveFormData) => {
+	const handleSaveObjective = async (data: ObjectiveFormData) => {
 		const objective = {
 			description: data.description,
 			number: objectives.length + 1,
@@ -39,7 +36,7 @@ export function ResearchPlanStep() {
 			title: data.name,
 		};
 
-		addObjective(objective);
+		await useWizardStore.getState().createObjective(objective);
 		setShowObjectiveForm(false);
 	};
 
@@ -85,7 +82,9 @@ export function ResearchPlanStep() {
 							data-testid="add-objective-button"
 							disabled={objectives.length >= MAX_OBJECTIVES}
 							leftIcon={<Plus size={16} />}
-							onClick={handleAddObjectiveClick}
+							onClick={() => {
+								setShowObjectiveForm(true);
+							}}
 							variant="secondary"
 						>
 							{objectives.length === 0 ? "Add First Objective" : "Add Objective"}
