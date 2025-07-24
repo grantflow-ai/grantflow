@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"allowArbitraryExtensions": true,
 		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
 		"baseUrl": "./",
@@ -15,13 +16,15 @@
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
 		"moduleResolution": "bundler",
 		"noEmit": false,
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"outDir": "./dist",
 		"paths": {
 			"::testing/*": ["testing/*"],
 			"@/*": ["src/*"]
 		},
 		"resolveJsonModule": true,
-		"allowArbitraryExtensions": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
@@ -29,9 +32,6 @@
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"noImplicitAny": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"target": "ESNext",
 		"types": ["vitest/globals", "@testing-library/jest-dom"]
 	},

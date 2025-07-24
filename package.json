@@ -7,7 +7,14 @@
     "dev": "pnpm --parallel --filter './frontend' --filter './editor' dev",
     "build": "pnpm --filter './frontend' --filter './editor' build",
     "lint": "pnpm --parallel --filter './frontend' --filter './editor' lint",
-    "test": "pnpm --parallel --filter './frontend' --filter './editor' test"
+    "lint:root": "biome lint --write . && eslint . --fix",
+    "format": "pnpm --parallel --filter './frontend' --filter './editor' format",
+    "format:root": "biome format --write .",
+    "knip": "pnpm --parallel --filter './frontend' --filter './editor' knip",
+    "knip:frontend": "pnpm --filter './frontend' knip",
+    "knip:editor": "pnpm --filter './editor' knip",
+    "test": "pnpm --parallel --filter './frontend' --filter './editor' test",
+    "typecheck": "pnpm --parallel --filter './frontend' --filter './editor' typecheck"
   },
   "keywords": [],
   "author": "",

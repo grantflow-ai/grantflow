@@ -61,6 +61,7 @@ rules:
       - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
       - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
       - **Linting**: Biome (formatting/style), ESLint (TS/React), MyPy (Python types), Ruff (Python), Codespell
+      - **Dead Code Analysis**: Knip for unused dependencies and exports in TypeScript packages
 
   - name: "Core Rules"
     priority: 85
@@ -73,6 +74,7 @@ rules:
       - Use `pnpm`
       - Use `task`
       - Run linters after code changes: `task lint:frontend` for JS/TS, `task lint:python` for Python
+      - Use knip regularly to clean up unused dependencies: `task knip`
 
   - name: "Commands"
     priority: 80
@@ -86,6 +88,9 @@ rules:
       task dev:stop           # Stop all services
       task test               # Run all tests
       task lint               # Run all linters (equivalent to task lint:all)
+      task format             # Format code in all packages
+      task build              # Build both frontend and editor packages
+      task knip               # Check for unused dependencies and dead code
 
       # Linting commands (organized by scope)
       task lint:all           # Run all linters on all files
@@ -99,6 +104,13 @@ rules:
       task lint:ruff          # Lint and format Python code with Ruff
       task lint:mypy          # Type check Python code with MyPy
       task lint:codespell     # Check for common misspellings across all files
+
+      # Dead code analysis and workspace commands
+      task knip               # Check for unused dependencies and dead code in frontend/editor
+      task knip:frontend      # Check frontend package only
+      task knip:editor        # Check editor package only
+      task format             # Format code in all packages
+      task build              # Build both frontend and editor packages
 
       # Terraform linters (specialized - not included in lint:all)
       task lint:terraform     # Run all Terraform linters (validate, tflint, trivy)
@@ -415,6 +427,7 @@ rules:
       - Use object or array destructuring wherever possible
       - Prefer early returns and guard clauses
       - Use `NotRequired` in TypedDict for optional fields
+      - Use knip to identify and remove unused dependencies and dead code
 
       ### Important Conventions
 

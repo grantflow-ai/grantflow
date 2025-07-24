@@ -46,6 +46,7 @@
 		"dev": "vite",
 		"eslint": "eslint",
 		"format": "biome format --write .",
+		"knip": "knip",
 		"lint": "biome lint --write . && eslint . --fix",
 		"playwright": "./node_modules/.bin/playwright",
 		"preinstall": "npx only-allow pnpm",

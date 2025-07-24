@@ -164,6 +164,7 @@ export default eslintTS.config(
 			"sonarjs/pseudo-random": "off",
 			"sonarjs/todo-tag": "off",
 			"storybook/no-renderer-packages": "off",
+			"storybook/no-uninstalled-addons": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
 			"unicorn/no-array-callback-reference": "off",
