@@ -1,4 +1,3 @@
-import os
 from datetime import date
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
@@ -236,24 +235,28 @@ async def test_run_scraper_with_metrics(
     assert isinstance(metrics["total_duration_ms"], float)
 
 
-@patch.dict(
-    os.environ,
-    {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    },
-    clear=False,
-)
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
+@patch("services.scraper.src.main.get_env")
 async def test_handle_scraper_request_success_with_discord(
+    mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     """Test successful scraper request sends Discord notification."""
+
+    # Mock get_env to ensure local storage path is taken
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
+            "DEBUG": "True",  # This also triggers local storage
+        }
+        return env_map.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_metrics = {
         "search_results_count": 25,
@@ -284,24 +287,28 @@ async def test_handle_scraper_request_success_with_discord(
     assert call_kwargs["success"] is True
 
 
-@patch.dict(
-    os.environ,
-    {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    },
-    clear=False,
-)
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
+@patch("services.scraper.src.main.get_env")
 async def test_handle_scraper_request_failure_with_discord(
+    mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     """Test failed scraper request sends Discord failure notification."""
+
+    # Mock get_env to ensure local storage path is taken
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
+            "DEBUG": "True",  # This also triggers local storage
+        }
+        return env_map.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_run_scraper.side_effect = Exception("Test error")
     mock_send_report.return_value = True
@@ -321,24 +328,28 @@ async def test_handle_scraper_request_failure_with_discord(
     assert call_kwargs["error_message"] == "Test error"
 
 
-@patch.dict(
-    os.environ,
-    {
-        "DISCORD_WEBHOOK_URL": "",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    },
-    clear=False,
-)
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
+@patch("services.scraper.src.main.get_env")
 async def test_handle_scraper_request_no_discord_url(
+    mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     """Test scraper request without Discord URL configured."""
+
+    # Mock get_env to ensure local storage path is taken
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
+            "DEBUG": "True",  # This also triggers local storage
+        }
+        return env_map.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_metrics = {
         "search_results_count": 10,
@@ -359,24 +370,28 @@ async def test_handle_scraper_request_no_discord_url(
     mock_send_report.assert_not_called()
 
 
-@patch.dict(
-    os.environ,
-    {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    },
-    clear=False,
-)
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
+@patch("services.scraper.src.main.get_env")
 async def test_handle_scraper_request_discord_send_fails(
+    mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     """Test scraper request when Discord notification fails."""
+
+    # Mock get_env to ensure local storage path is taken
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
+            "DEBUG": "True",  # This also triggers local storage
+        }
+        return env_map.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_metrics = {
         "search_results_count": 10,
