@@ -47,7 +47,7 @@ vi.mock("@/utils/dev-indexing-patch", () => ({
 	triggerDevIndexing: vi.fn(),
 }));
 
-import ky from "ky";
+import ky, { HTTPError } from "ky";
 
 vi.mock("ky", () => ({
 	default: vi.fn(),
@@ -310,6 +310,52 @@ describe("Application Store", () => {
 			expect(true).toBe(true);
 		});
 
+		it("should handle invalid parentId validation", async () => {
+			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			Object.assign(file, { id: "test.pdf" });
+			const application = ApplicationWithTemplateFactory.build();
+
+			useApplicationStore.setState({ application });
+
+			const { addFile } = useApplicationStore.getState();
+			await addFile(file as any, "invalid-parent-id");
+			expect(createTemplateSourceUploadUrl).not.toHaveBeenCalled();
+		});
+
+		it("should handle missing organization selection", async () => {
+			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			Object.assign(file, { id: "test.pdf" });
+			const application = ApplicationWithTemplateFactory.build();
+
+			const { useOrganizationStore } = await import("@/stores/organization-store");
+			vi.mocked(useOrganizationStore.getState).mockReturnValue({
+				clearOrganization: vi.fn(),
+				selectedOrganizationId: null,
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { addFile } = useApplicationStore.getState();
+
+			await expect(addFile(file as any, application.grant_template?.id ?? "")).rejects.toThrow(
+				"No organization selected",
+			);
+		});
+
+		it("should handle file removal with missing file ID", async () => {
+			const fileWithoutId = new File(["content"], "test.pdf", { type: "application/pdf" });
+
+			const application = ApplicationWithTemplateFactory.build();
+
+			useApplicationStore.setState({ application });
+
+			const { removeFile } = useApplicationStore.getState();
+
+			await removeFile(fileWithoutId as any, application.grant_template?.id ?? "");
+
+			expect(deleteTemplateSource).not.toHaveBeenCalled();
+		});
+
 		it("should add files with parentId", async () => {
 			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
 			Object.assign(file, { id: "test.pdf" });
@@ -401,6 +447,85 @@ describe("Application Store", () => {
 					"source-1",
 				);
 			}
+		});
+
+		it("should handle URL removal when URL not found in sources", async () => {
+			const ragSource = {
+				id: "source-1",
+				sourceId: "source-1",
+				status: "FINISHED",
+				url: "https://different.com",
+			};
+			const application = ApplicationWithTemplateFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					rag_sources: [ragSource] as any,
+				},
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { removeUrl } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await removeUrl("https://notfound.com", application.grant_template.id);
+
+				expect(deleteTemplateSource).not.toHaveBeenCalled();
+			}
+		});
+	});
+
+	describe("optimistic updates and rollback", () => {
+		it("should rollback application updates on API failure", async () => {
+			const originalApplication = ApplicationFactory.build({
+				id: "app-id",
+				project_id: "project-id",
+				title: "Original Title",
+			});
+
+			vi.mocked(updateApplication).mockRejectedValue(new Error("API Failed"));
+
+			useApplicationStore.setState({ application: originalApplication });
+
+			const { updateApplication: updateApp } = useApplicationStore.getState();
+
+			await updateApp({ title: "Updated Title" });
+
+			const state = useApplicationStore.getState();
+			expect(state.application?.title).toBe("Original Title");
+			expect(state.areAppOperationsInProgress).toBe(false);
+		});
+
+		it("should handle grant template validation errors (422 status)", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+			const httpError = new HTTPError("Validation failed", 422);
+
+			const { generateGrantTemplate } = await import("@/actions/grant-template");
+			vi.mocked(generateGrantTemplate).mockRejectedValue(httpError);
+
+			useApplicationStore.setState({ application });
+
+			const { generateTemplate } = useApplicationStore.getState();
+
+			await generateTemplate(application.grant_template?.id ?? "");
+
+			expect(generateGrantTemplate).toHaveBeenCalled();
+		});
+
+		it("should handle non-422 errors in template generation", async () => {
+			const application = ApplicationWithTemplateFactory.build();
+			const httpError = new HTTPError("Server error", 500);
+
+			const { generateGrantTemplate } = await import("@/actions/grant-template");
+			vi.mocked(generateGrantTemplate).mockRejectedValue(httpError);
+
+			useApplicationStore.setState({ application });
+
+			const { generateTemplate } = useApplicationStore.getState();
+
+			await generateTemplate(application.grant_template?.id ?? "");
+
+			expect(generateGrantTemplate).toHaveBeenCalled();
 		});
 	});
 

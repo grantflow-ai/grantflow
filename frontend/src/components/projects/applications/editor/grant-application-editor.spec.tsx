@@ -8,12 +8,7 @@ describe.sequential("GrantApplicationEditor", () => {
 	});
 
 	it("renders grant application editor", async () => {
-		render(
-			<GrantApplicationEditor
-				// @ts-expect-error - mock data
-				application={{ text: "hello grantflow editor" }}
-			/>,
-		);
+		render(<GrantApplicationEditor application={{ text: "hello grantflow editor" }} />);
 
 		const editor = screen.getByTestId("grant-application-editor");
 		expect(editor).toBeInTheDocument();

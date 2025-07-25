@@ -517,7 +517,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 										label="Task description"
 										onChange={(e) => onTaskUpdate?.(taskIndex, e.target.value)}
 										placeholder="Describe a step to achieve this objective"
-										value={task.description ?? task.title}
+										value={task.description || task.title}
 										variant="field"
 									/>
 								</div>
@@ -526,7 +526,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 									className="text-app-gray-600 text-sm font-normal leading-none"
 									data-testid="task-display"
 								>
-									Task: {task.description ?? task.title}
+									Task: {task.description || task.title}
 								</div>
 							)}
 						</div>
