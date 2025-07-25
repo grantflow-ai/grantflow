@@ -141,7 +141,6 @@ export default function SignIn() {
 				</div>
 
 				<div className="relative z-20 flex-1 justify-start overflow-hidden">
-					{}
 					<motion.div
 						animate={{
 							opacity: isLoading ? 0 : 1,
@@ -187,8 +186,6 @@ export default function SignIn() {
 							</AppCardContent>
 						</AppCard>
 					</motion.div>
-
-					{}
 					<motion.div
 						animate={{
 							opacity: isLoading ? 1 : 0,

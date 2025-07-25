@@ -12,7 +12,6 @@ export function DeleteApplicationModal({ isOpen, onClose, onConfirm }: DeleteApp
 	return (
 		<BaseModal isOpen={isOpen} onClose={onClose}>
 			<div className="flex flex-col gap-8 p-8 w-[464px] " data-testid="delete-application-modal">
-				{}
 				<button
 					aria-label="Close modal"
 					className="absolute right-4 top-4 flex size-4 items-center justify-center text-app-gray-600 hover:text-app-black"

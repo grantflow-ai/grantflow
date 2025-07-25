@@ -90,7 +90,6 @@ export function EditPermissionModal({
 				data-testid="edit-permission-modal"
 			>
 				<div className="p-8 flex flex-col gap-8">
-					{}
 					<div className="flex flex-col gap-2">
 						<div className="flex items-start justify-between">
 							<div className="flex flex-col gap-1">
@@ -111,9 +110,7 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-6">
-						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-name">
 								Name
@@ -128,7 +125,6 @@ export function EditPermissionModal({
 							/>
 						</div>
 
-						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-email">
 								Email address
@@ -146,7 +142,6 @@ export function EditPermissionModal({
 							</div>
 						</div>
 
-						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-permission">
 								Permission
@@ -194,9 +189,7 @@ export function EditPermissionModal({
 							</Select>
 						</div>
 
-						{}
 						<div className="flex flex-col gap-2">
-							{}
 							{showAllTag && (
 								<div className="flex flex-row gap-1 items-start justify-start w-[180px]">
 									<div className="bg-primary flex flex-row gap-1 items-center justify-start px-2 py-0 rounded-[20px]">
@@ -206,7 +199,6 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{}
 							{selectedRole === UserRole.COLLABORATOR && (
 								<div className="flex flex-col gap-1">
 									<label className="font-body text-[12px] text-app-gray-400" htmlFor="project-access">
@@ -239,7 +231,6 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{}
 							<div className="flex items-start gap-2 p-3 bg-[#faf6ec] border border-[#ffdf77] rounded">
 								<div className="size-4 bg-warning rounded-full flex-shrink-0 mt-0.5" />
 								<p className="font-body text-[14px] text-app-black">
@@ -250,7 +241,6 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{}
 					<div className="flex items-center justify-between">
 						<button
 							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-app-gray-50 transition-colors"

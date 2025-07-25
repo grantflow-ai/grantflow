@@ -151,9 +151,7 @@ function PersonalProfileSettings({ onDeleteAccount, user }: PersonalProfileSetti
 	return (
 		<div className="w-[655px] px-6">
 			<div className="flex flex-col gap-10">
-				{}
 				<div className="flex flex-col gap-6">
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<p className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Profile Image
@@ -169,7 +167,6 @@ function PersonalProfileSettings({ onDeleteAccount, user }: PersonalProfileSetti
 						</p>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<label
 							className="font-heading font-semibold text-[16px] leading-[22px] text-app-black"
@@ -191,7 +188,6 @@ function PersonalProfileSettings({ onDeleteAccount, user }: PersonalProfileSetti
 						</div>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<div className="flex items-center gap-1">
 							<label
@@ -222,7 +218,6 @@ function PersonalProfileSettings({ onDeleteAccount, user }: PersonalProfileSetti
 					</div>
 				</div>
 
-				{}
 				<div className="w-full border border-red rounded p-6">
 					<div className="flex flex-col gap-6">
 						<div className="flex flex-col gap-2">
@@ -255,13 +250,11 @@ function PersonalProfileSettings({ onDeleteAccount, user }: PersonalProfileSetti
 function PersonalSettingsLayout({ activeTab, children }: PersonalSettingsLayoutProps) {
 	return (
 		<div className="w-full h-full flex flex-col gap-14">
-			{}
 			<div className="flex flex-col gap-8">
 				<div className="flex items-center gap-2">
 					<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">Settings</h1>
 				</div>
 
-				{}
 				<div className="flex gap-6 items-center">
 					<div
 						className={`flex items-center justify-center px-2 py-3 relative ${
@@ -294,7 +287,6 @@ function PersonalSettingsLayout({ activeTab, children }: PersonalSettingsLayoutP
 				</div>
 			</div>
 
-			{}
 			<div className="flex-1">{children}</div>
 		</div>
 	);
