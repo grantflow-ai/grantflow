@@ -30,15 +30,12 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 
 		setIsSubmitting(true);
 		try {
-			// Admin always has all projects access
-			// Collaborator can have all or specific projects
 			const hasAllProjectsAccess = permission === "admin" || projectAccess === "all";
 
 			// TODO: Implement project selection for specific projects
 			const projectIds: string[] = [];
 
 			// TODO: Add name field to API when backend supports it
-			// Currently the API only accepts email, role, has_all_projects_access, and project_ids
 
 			await onInvite(email, permission, hasAllProjectsAccess, projectIds);
 			setName("");
@@ -73,7 +70,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				data-testid="invite-collaborator-modal"
 			>
 				<div className="p-8 flex flex-col gap-8">
-					{/* Header */}
+					{}
 					<div className="flex flex-col gap-3">
 						<div className="flex items-start justify-between">
 							<div className="flex flex-col gap-1">
@@ -94,9 +91,9 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</div>
 					</div>
 
-					{/* Form Fields */}
+					{}
 					<div className="flex flex-col gap-6">
-						{/* Name Field */}
+						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-name">
 								Name
@@ -114,7 +111,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							/>
 						</div>
 
-						{/* Email Field */}
+						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-email">
 								Email address
@@ -135,7 +132,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							</div>
 						</div>
 
-						{/* Permission Field */}
+						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-permission">
 								Permission
@@ -176,7 +173,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							</Select>
 						</div>
 
-						{/* Research Projects Access - Only for Collaborators */}
+						{}
 						{permission === "collaborator" && (
 							<div className="flex flex-col gap-3">
 								<div className="flex items-center gap-2">
@@ -217,7 +214,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							</div>
 						)}
 
-						{/* Warning Message */}
+						{}
 						<div className="flex items-start gap-2 p-3 bg-app-gray-50 rounded">
 							<div className="size-4 bg-warning rounded-full flex-shrink-0 mt-0.5" />
 							<p className="font-body text-[14px] text-app-gray-700">
@@ -227,7 +224,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</div>
 					</div>
 
-					{/* Footer Buttons */}
+					{}
 					<div className="flex items-center justify-between">
 						<button
 							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-app-gray-50 transition-colors"

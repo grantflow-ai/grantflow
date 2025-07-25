@@ -143,6 +143,10 @@ importers:
       zustand:
         specifier: 5.0.6
         version: 5.0.6(@types/react@19.1.8)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
+    devDependencies:
+      '@react-email/render':
+        specifier: ^1.1.3
+        version: 1.1.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
 packages:
 

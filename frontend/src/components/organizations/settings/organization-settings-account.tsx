@@ -62,13 +62,11 @@ export function OrganizationSettingsAccount({
 		const file = event.target.files?.[0];
 		if (!(file && user)) return;
 
-		// Validate file type
 		if (!file.type.startsWith("image/")) {
 			toast.error("Please select an image file (PNG, JPG, or GIF)");
 			return;
 		}
 
-		// Validate file size (10MB limit)
 		if (file.size > 10 * 1024 * 1024) {
 			toast.error("Please select an image under 10MB");
 			return;
@@ -83,7 +81,7 @@ export function OrganizationSettingsAccount({
 			toast.error("Failed to upload profile photo");
 		} finally {
 			setIsUploading(false);
-			// Reset file input
+
 			if (fileInputRef.current) {
 				fileInputRef.current.value = "";
 			}

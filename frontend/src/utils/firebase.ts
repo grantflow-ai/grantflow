@@ -19,8 +19,8 @@ const instanceRef: { app: FirebaseApp | null; auth: Auth | null; storage: Fireba
  */
 export function convertFirebaseUser(user: User): UserInfo {
 	return {
-		customClaims: null, // Not available on client-side User object
-		disabled: false, // Firebase Auth User doesn't have this property on client
+		customClaims: null,
+		disabled: false,
 		displayName: user.displayName,
 		email: user.email,
 		emailVerified: user.emailVerified,
@@ -98,18 +98,15 @@ export async function deleteProfilePhoto(user: User): Promise<void> {
 	}
 
 	try {
-		// If user has a photoURL, try to delete it from storage
 		if (user.photoURL) {
 			const storage = getFirebaseStorage();
 
-			// Extract the path from the photoURL if it's a Firebase Storage URL
 			if (user.photoURL.includes("firebase")) {
 				try {
 					const photoRef = ref(storage, user.photoURL);
 					await deleteObject(photoRef);
 					log.info("Profile photo deleted from storage", { uid: user.uid });
 				} catch (error) {
-					// If file doesn't exist or can't be deleted, continue anyway
 					log.warn("Could not delete profile photo from storage", {
 						error: error instanceof Error ? error.message : String(error),
 					});
@@ -117,7 +114,6 @@ export async function deleteProfilePhoto(user: User): Promise<void> {
 			}
 		}
 
-		// Update the user's profile to remove the photo
 		await updateProfile(user, {
 			photoURL: null,
 		});
@@ -186,17 +182,13 @@ export async function uploadProfilePhoto(user: User, file: File): Promise<string
 		throw new Error("User mismatch");
 	}
 
-	// Create a reference to the user's profile photo
 	const photoRef = ref(storage, `profile-photos/${user.uid}/${Date.now()}-${file.name}`);
 
 	try {
-		// Upload the file
 		const snapshot = await uploadBytes(photoRef, file);
 
-		// Get the download URL
 		const downloadURL = await getDownloadURL(snapshot.ref);
 
-		// Update the user's profile
 		await updateProfile(user, {
 			photoURL: downloadURL,
 		});

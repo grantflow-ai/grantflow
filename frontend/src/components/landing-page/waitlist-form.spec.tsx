@@ -108,7 +108,6 @@ describe.sequential("WaitlistForm", () => {
 	});
 
 	it("should show loading state during form submission", async () => {
-		// Delay the resolution of analyticsIdentify to show loading state
 		mockAnalyticsIdentify.mockImplementationOnce(
 			() => new Promise((resolve) => setTimeout(() => resolve(undefined), 100)),
 		);
@@ -192,7 +191,6 @@ describe.sequential("WaitlistForm", () => {
 	});
 
 	it("should display the spinner during loading state", async () => {
-		// Delay the resolution of analyticsIdentify to show loading state
 		mockAnalyticsIdentify.mockImplementationOnce(
 			() => new Promise((resolve) => setTimeout(() => resolve(undefined), 100)),
 		);

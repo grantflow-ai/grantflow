@@ -9,7 +9,7 @@ const config: KnipConfig = {
 		"src/hooks/**/*.ts",
 		"src/utils/**/*.ts",
 		"src/stores/**/*.ts",
-		"src/components/**/index.ts", // Include barrel exports
+		"src/components/**/index.ts",
 	],
 	ignore: [
 		"**/*.spec.{ts,tsx}",

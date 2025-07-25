@@ -40,7 +40,6 @@ export default function SignIn() {
 		provider: "google" | "orcid",
 		signupMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
 	) => {
-		// setIsLoading(true);
 		setSocialSignInError(null);
 
 		try {
@@ -142,7 +141,7 @@ export default function SignIn() {
 				</div>
 
 				<div className="relative z-20 flex-1 justify-start overflow-hidden">
-					{/* Sign-in Card */}
+					{}
 					<motion.div
 						animate={{
 							opacity: isLoading ? 0 : 1,
@@ -189,7 +188,7 @@ export default function SignIn() {
 						</AppCard>
 					</motion.div>
 
-					{/* Verify Email Card - positioned directly on top */}
+					{}
 					<motion.div
 						animate={{
 							opacity: isLoading ? 1 : 0,

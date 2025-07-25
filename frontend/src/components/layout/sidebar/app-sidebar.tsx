@@ -30,9 +30,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const { isMobile, state } = useSidebar();
 
 	const handleLogout = () => {
-		// Clear user data
 		setUser(null);
-		// Redirect to login
+
 		router.push("/login");
 	};
 
@@ -127,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					</SidebarMenu>
 				</SidebarFooter>
 
-				{/* <SidebarRail className="hidden" /> */}
+				{}
 			</Sidebar>
 
 			<NewApplicationModal

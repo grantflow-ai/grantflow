@@ -87,7 +87,6 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 			return;
 		}
 
-		// Only show dialog for failed sources if it hasn't been dismissed
 		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
 			const ragDialog = createRagSourcesDialog({
 				onBackToUploads: () => {

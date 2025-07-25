@@ -16,10 +16,8 @@ describe.sequential("DashboardStats", () => {
 
 		const { container } = render(<DashboardStats initialProjects={initialProjects} />);
 
-		// Assert project count
 		expect(container.querySelector('[data-testid="project-count"]')).toHaveTextContent("2");
 
-		// Assert total applications count
 		expect(container.querySelector('[data-testid="application-count"]')).toHaveTextContent("5");
 	});
 });

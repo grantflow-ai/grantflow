@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardPage from "./page";
 
-// Mock the dependencies
 vi.mock("@/actions/organization");
 vi.mock("@/actions/project");
 vi.mock("@/utils/organization-context");
@@ -54,13 +53,11 @@ describe("DashboardPage", () => {
 
 		render(await DashboardPage());
 
-		// The component has a bug or different behavior than expected
-		// For now, just check that dashboard client is called correctly
 		expect(mockDashboardClient).toHaveBeenCalledWith(
 			{
 				initialOrganizations: organizations,
-				initialProjects: [], // Empty because getProjects wasn't called
-				initialSelectedOrganizationId: null, // Component bug: fallback logic not working
+				initialProjects: [],
+				initialSelectedOrganizationId: null,
 			},
 			undefined,
 		);
@@ -92,12 +89,11 @@ describe("DashboardPage", () => {
 
 		render(await DashboardPage());
 
-		// Same issue as above test - getProjects is not being called as expected
 		expect(mockDashboardClient).toHaveBeenCalledWith(
 			{
 				initialOrganizations: organizations,
-				initialProjects: [], // Empty because getProjects wasn't called
-				initialSelectedOrganizationId: null, // Component bug: fallback logic not working
+				initialProjects: [],
+				initialSelectedOrganizationId: null,
 			},
 			undefined,
 		);

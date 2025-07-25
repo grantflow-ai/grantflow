@@ -632,7 +632,6 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 					) {
 						const ragSources = application.grant_template.rag_sources;
 
-						// Only trigger template generation if all RAG sources are FINISHED
 						if (
 							ragSources.length === 0 ||
 							!hasTemplateSourcesWithStatuses(["CREATED", "INDEXING", "FAILED"])

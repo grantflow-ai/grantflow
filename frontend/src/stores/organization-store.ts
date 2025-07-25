@@ -67,7 +67,6 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 						const response = await handleGetOrganizations();
 						set({ organizations: response });
 
-						// If no organization is selected but we have organizations, select the first one
 						const { selectedOrganizationId } = get();
 						if (!selectedOrganizationId && response.length > 0) {
 							set({ selectedOrganizationId: response[0].id });
@@ -107,7 +106,6 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 					try {
 						await handleUpdateOrganization(organizationId, data);
 
-						// Refresh the organization
 						const updatedOrganization = await handleGetOrganization(organizationId);
 						const updatedOrganizations = await handleGetOrganizations();
 
@@ -118,7 +116,6 @@ export const useOrganizationStore = create<OrganizationActions & OrganizationSta
 
 						toast.success("Organization updated successfully");
 					} catch (error: unknown) {
-						// Rollback on error
 						set({
 							organization: previousOrganization,
 							organizations: previousOrganizations,
