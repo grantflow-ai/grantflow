@@ -205,18 +205,22 @@ services:
             - all
             - frontend
         build:
-            context: ./frontend
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: frontend/Dockerfile
             target: install
         ports:
             - "3000:3000"
         volumes:
-            - ./frontend:/app:cached
+            - ./frontend:/workspace/frontend:cached
+            - ./editor:/workspace/editor:cached
+            - ./package.json:/workspace/package.json:cached
+            - ./pnpm-workspace.yaml:/workspace/pnpm-workspace.yaml:cached
         environment:
             # backend is the alias for the backend service in the docker network
             NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
         env_file:
             - ./.env
+        working_dir: /workspace/frontend
         command: "pnpm dev"
         depends_on:
             - backend
