@@ -156,7 +156,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 	it("displays drag handles for objectives", () => {
 		const mockObjectives = [
 			ResearchObjectiveFactory.build({
-				description: "Test objective description",
+				description: "First objective description",
 				number: 1,
 				research_tasks: [
 					{
@@ -165,7 +165,19 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 						title: "Test task title",
 					},
 				],
-				title: "Test objective title",
+				title: "First objective title",
+			}),
+			ResearchObjectiveFactory.build({
+				description: "Second objective description",
+				number: 2,
+				research_tasks: [
+					{
+						description: "Second task description",
+						number: 1,
+						title: "Second task title",
+					},
+				],
+				title: "Second objective title",
 			}),
 		];
 
@@ -177,7 +189,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		expect(screen.getByRole("button", { name: /drag to reorder objective/i })).toBeInTheDocument();
+		expect(screen.getAllByRole("button", { name: /drag to reorder objective/i })).toHaveLength(2);
 	});
 
 	it("displays multiple objectives with different numbers", () => {
@@ -266,9 +278,14 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 				number: 1,
 				research_tasks: [
 					{
-						description: "Test task description",
+						description: "First task description",
 						number: 1,
-						title: "Test task title",
+						title: "First task title",
+					},
+					{
+						description: "Second task description",
+						number: 2,
+						title: "Second task title",
 					},
 				],
 				title: "Test objective title",
@@ -283,7 +300,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		render(<ResearchPlanPreview />);
 
-		expect(screen.getByRole("button", { name: /drag to reorder task/i })).toBeInTheDocument();
+		expect(screen.getAllByRole("button", { name: /drag to reorder task/i })).toHaveLength(2);
 	});
 
 	it("does not show task management controls in display mode", () => {
@@ -312,5 +329,200 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		expect(container.querySelector('[data-testid="delete-task-button"]')).not.toBeInTheDocument();
 		expect(container.querySelector('[data-testid="add-task-button"]')).not.toBeInTheDocument();
+	});
+
+	describe("Grid Layout Logic", () => {
+		it("applies correct grid classes for different objective counts", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({ number: 1, title: "Obj 1" }),
+				ResearchObjectiveFactory.build({ number: 2, title: "Obj 2" }),
+				ResearchObjectiveFactory.build({ number: 3, title: "Obj 3" }),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { container } = render(<ResearchPlanPreview />);
+
+			const gridContainer = container.querySelector(".grid");
+			expect(gridContainer).toHaveClass("grid-cols-3");
+		});
+
+		it("positions single objective with col-start-1", () => {
+			const mockObjectives = [ResearchObjectiveFactory.build({ number: 1, title: "Single Obj" })];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { container } = render(<ResearchPlanPreview />);
+
+			const singleObjective = container.querySelector(".col-start-1");
+			expect(singleObjective).toBeInTheDocument();
+		});
+
+		it("applies dynamic grid styles for large objective counts", () => {
+			const mockObjectives = Array.from({ length: 6 }, (_, i) =>
+				ResearchObjectiveFactory.build({ number: i + 1, title: `Obj ${i + 1}` }),
+			);
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { container } = render(<ResearchPlanPreview />);
+
+			const gridContainer = container.querySelector(".grid");
+			expect(gridContainer).toBeInTheDocument();
+		});
+	});
+
+	describe("Drag and Drop States", () => {
+		it("disables drag handle for single objective", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({
+					number: 1,
+					research_tasks: [{ description: "Task", number: 1, title: "Task" }],
+					title: "Single Objective",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { container } = render(<ResearchPlanPreview />);
+
+			const disabledGrip = container.querySelector(".text-gray-300");
+			expect(disabledGrip).toBeInTheDocument();
+			expect(screen.queryByRole("button", { name: /drag to reorder objective/i })).not.toBeInTheDocument();
+		});
+
+		it("enables drag handle for multiple objectives", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({ number: 1, title: "Obj 1" }),
+				ResearchObjectiveFactory.build({ number: 2, title: "Obj 2" }),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchPlanPreview />);
+
+			const dragButtons = screen.getAllByRole("button", { name: /drag to reorder objective/i });
+			expect(dragButtons).toHaveLength(2);
+		});
+
+		it("disables task drag handle for single task", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({
+					number: 1,
+					research_tasks: [{ description: "Single task", number: 1, title: "Single task" }],
+					title: "Objective",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			const { container } = render(<ResearchPlanPreview />);
+
+			const disabledTaskGrip = container.querySelector(".text-gray-300");
+			expect(disabledTaskGrip).toBeInTheDocument();
+			expect(screen.queryByRole("button", { name: /drag to reorder task/i })).not.toBeInTheDocument();
+		});
+
+		it("enables task drag handle for multiple tasks", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({
+					number: 1,
+					research_tasks: [
+						{ description: "Task 1", number: 1, title: "Task 1" },
+						{ description: "Task 2", number: 2, title: "Task 2" },
+					],
+					title: "Objective",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchPlanPreview />);
+
+			const taskDragButtons = screen.getAllByRole("button", { name: /drag to reorder task/i });
+			expect(taskDragButtons).toHaveLength(2);
+		});
+	});
+
+	describe("Task Content Fallback", () => {
+		it("displays task description when available", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({
+					number: 1,
+					research_tasks: [
+						{
+							description: "Detailed task description",
+							number: 1,
+							title: "Basic title",
+						},
+					],
+					title: "Objective",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchPlanPreview />);
+
+			expect(screen.getByText("Task: Detailed task description")).toBeInTheDocument();
+		});
+
+		it("falls back to task title when description is empty", () => {
+			const mockObjectives = [
+				ResearchObjectiveFactory.build({
+					number: 1,
+					research_tasks: [
+						{
+							description: "",
+							number: 1,
+							title: "Fallback title",
+						},
+					],
+					title: "Objective",
+				}),
+			];
+
+			const application = ApplicationWithTemplateFactory.build({
+				research_objectives: mockObjectives,
+			});
+
+			useApplicationStore.setState({ application });
+
+			render(<ResearchPlanPreview />);
+
+			expect(screen.getByText("Task: Fallback title")).toBeInTheDocument();
+		});
 	});
 });

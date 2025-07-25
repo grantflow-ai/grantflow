@@ -51,7 +51,7 @@ const formatRagSources = (application: ApplicationType): string => {
 };
 
 const formatApplicationRagSources = (application: ApplicationType): string => {
-	if (!application?.rag_sources) {
+	if (!application?.rag_sources.length) {
 		return "files: [], urls: []";
 	}
 
