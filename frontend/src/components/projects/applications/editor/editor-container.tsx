@@ -8,7 +8,7 @@ import { GrantApplicationEditor } from "./grant-application-editor";
 
 export function EditorContainer() {
 	return (
-		<div className="flex flex-col gap-4 pr-6 h-full">
+		<div className="flex flex-col gap-1 pr-6 h-full">
 			<EditorWarning />
 			<div className="flex gap-3 h-full">
 				<div className="min-w-[326px] w-[326px]">
@@ -18,7 +18,7 @@ export function EditorContainer() {
 					// @ts-expect-error Update the props
 					application={{ text: "hello grantflow editor" }}
 				/>
-				<div className="min-w-[207px] w-[207px] flex flex-col gap-3 mt-6">
+				<div className="min-w-[207px] w-[207px] flex flex-col gap-3 mt-3">
 					<EditorExportButton />
 					<EditorSections />
 				</div>
