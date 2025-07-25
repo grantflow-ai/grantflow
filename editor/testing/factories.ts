@@ -1,7 +1,6 @@
 import type { JSONContent } from "@tiptap/react";
 import { Factory } from "interface-forge";
 
-// TipTap JSONContent for different node types
 export const ParagraphNodeFactory = new Factory<JSONContent>((factory) => ({
 	content: [
 		{
@@ -176,12 +175,10 @@ export const HighlightTextNodeFactory = new Factory<JSONContent>((factory) => ({
 	type: "text",
 }));
 
-// Complete editor document
 export const EditorDocumentFactory = new Factory<JSONContent>((factory) => ({
 	content: factory.helpers.arrayElement([
-		// Simple document
 		[ParagraphNodeFactory.build(), HeadingNodeFactory.build({ attrs: { level: 2 } }), ParagraphNodeFactory.build()],
-		// Rich document with various elements
+
 		[
 			HeadingNodeFactory.build({ attrs: { level: 1 } }),
 			ParagraphNodeFactory.build(),
@@ -192,7 +189,7 @@ export const EditorDocumentFactory = new Factory<JSONContent>((factory) => ({
 			HorizontalRuleNodeFactory.build(),
 			ParagraphNodeFactory.build(),
 		],
-		// Task-focused document
+
 		[
 			HeadingNodeFactory.build({ attrs: { level: 2 } }),
 			TaskListNodeFactory.build(),
@@ -203,7 +200,6 @@ export const EditorDocumentFactory = new Factory<JSONContent>((factory) => ({
 	type: "doc",
 }));
 
-// Mixed content paragraph with multiple text formats
 export const RichParagraphNodeFactory = new Factory<JSONContent>((factory) => ({
 	content: [
 		{
@@ -229,11 +225,10 @@ export const RichParagraphNodeFactory = new Factory<JSONContent>((factory) => ({
 	type: "paragraph",
 }));
 
-// File mock for image uploads
 export const MockFileFactory = new Factory<File>((factory) => {
 	const filename = `${factory.lorem.word()}.${factory.helpers.arrayElement(["jpg", "png", "gif", "webp"])}`;
 	const type = factory.helpers.arrayElement(["image/jpeg", "image/png", "image/gif", "image/webp"]);
-	const size = factory.number.int({ max: 5 * 1024 * 1024, min: 1024 }); // 1KB to 5MB
+	const size = factory.number.int({ max: 5 * 1024 * 1024, min: 1024 });
 
 	return new File([new ArrayBuffer(size)], filename, {
 		lastModified: factory.date.recent().getTime(),
@@ -241,7 +236,6 @@ export const MockFileFactory = new Factory<File>((factory) => {
 	});
 });
 
-// Editor state for testing editor hooks and components
 export const EditorStateFactory = new Factory<{
 	content: JSONContent;
 	selection: { from: number; to: number };

@@ -29,7 +29,9 @@
 		"react-hotkeys-hook": "^5.1.0",
 		"tailwind-merge": "^3.3.1"
 	},
-	"devDependencies": {},
+	"devDependencies": {
+		"vite-plugin-lib-inject-css": "^2.2.2"
+	},
 	"peerDependencies": {
 		"@types/react": "^19.0.0",
 		"@types/react-dom": "^19.0.0",
@@ -64,15 +66,20 @@
 	},
 	"type": "module",
 	"version": "0.0.0",
+	"sideEffects": [
+		"**/*.css",
+		"**/*.scss"
+	],
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		}
+			"import": "./dist/index.es.js",
+			"default": "./dist/index.es.js"
+		},
+		"./styles.css": "./dist/assets/index.css"
 	},
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
+	"main": "./dist/index.es.js",
+	"module": "./dist/index.es.js",
 	"types": "./dist/index.d.ts",
 	"files": [
 		"dist/"

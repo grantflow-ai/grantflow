@@ -1,4 +1,4 @@
-import { Editor } from "@/components/tiptap-templates/simple/simple-editor";
+import { Editor } from "@/editor";
 
 function App() {
 	return (

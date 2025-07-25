@@ -1,9 +1,7 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-	entry: [
-		"vite.config.ts", // Vite will discover src/index.ts through lib.entry
-	],
+	entry: ["vite.config.ts"],
 	ignore: [
 		"**/*.spec.{ts,tsx}",
 		"**/*.test.{ts,tsx}",
@@ -15,10 +13,10 @@ const config: KnipConfig = {
 		"playwright.config.ts",
 		"testing/**",
 		"dist/**",
-		"src/app.tsx", // Vite dev entry point
-		"src/main.tsx", // Vite dev entry point
-		"eslint.config.js", // Legacy config file
-		"knip.config.js", // Legacy config file
+		"src/app.tsx",
+		"src/main.tsx",
+		"eslint.config.js",
+		"knip.config.js",
 	],
 	ignoreBinaries: ["only-allow", "biome", "cross-env", "storybook", "eslint", "playwright", "vitest", "tsc", "vite"],
 	ignoreDependencies: ["@vitejs/plugin-react", "vite", "vite-plugin-dts", "vite-tsconfig-paths", "vitest"],
