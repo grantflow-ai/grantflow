@@ -246,12 +246,16 @@ async def test_handle_scraper_request_success_with_discord(
 ) -> None:
     """Test successful scraper request sends Discord notification."""
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    def mock_get_env_func(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_vars = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DEBUG": "True",
+        }
+        return env_vars.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_func
 
     mock_metrics = {
         "search_results_count": 25,
@@ -293,12 +297,16 @@ async def test_handle_scraper_request_failure_with_discord(
 ) -> None:
     """Test failed scraper request sends Discord failure notification."""
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    def mock_get_env_func(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_vars = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DEBUG": "True",
+        }
+        return env_vars.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_func
 
     mock_run_scraper.side_effect = Exception("Test error")
     mock_send_report.return_value = True
@@ -329,12 +337,16 @@ async def test_handle_scraper_request_no_discord_url(
 ) -> None:
     """Test scraper request without Discord URL configured."""
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    def mock_get_env_func(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_vars = {
+            "DISCORD_WEBHOOK_URL": "",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DEBUG": "True",
+        }
+        return env_vars.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_func
 
     mock_metrics = {
         "search_results_count": 10,
@@ -366,12 +378,16 @@ async def test_handle_scraper_request_discord_send_fails(
 ) -> None:
     """Test scraper request when Discord notification fails."""
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    def mock_get_env_func(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_vars = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DEBUG": "True",
+        }
+        return env_vars.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_func
 
     mock_metrics = {
         "search_results_count": 10,
