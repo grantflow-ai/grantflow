@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { log } from "@/utils/logger";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -35,17 +36,52 @@ export function DragDropSectionManager({
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
-	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections) ?? [];
-=======
 	const application = useApplicationStore((state) => state.application);
 	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
+	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 	const [pendingParentChange, setPendingParentChange] = useState<{
 		newParentId: null | string;
 		sectionId: string;
 	} | null>(null);
+
+	const wouldCreateInvalidNesting = useCallback(
+		(activeSection: GrantSection, overSection: GrantSection) => {
+			if (overSection.parent_id !== null && activeSection.parent_id === null) {
+				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
+				if (hasChildren) {
+					return true;
+				}
+			}
+
+			return false;
+		},
+		[grantSections],
+	);
+
+	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
+		const activeIsChild = activeSection.parent_id !== null;
+		const overIsChild = overSection.parent_id !== null;
+
+		if (overIsChild) {
+			return overSection.parent_id;
+		}
+
+		if (activeIsChild) {
+			return overSection.id;
+		}
+
+		return null;
+	}, []);
+
+	const toggleSectionExpanded = useCallback((sectionId: string) => {
+		setExpandedSectionId((prev) => {
+			if (prev === sectionId) {
+				return null;
+			}
+			return sectionId;
+		});
+	}, []);
 
 	const toUpdateGrantSection = useCallback(
 		(section: GrantSection): UpdateGrantSection => {
@@ -70,59 +106,6 @@ export function DragDropSectionManager({
 		},
 		[isDetailedSection],
 	);
-
-	const wouldCreateInvalidNesting = useCallback(
-		(activeSection: GrantSection, overSection: GrantSection) => {
-			if (overSection.parent_id !== null && activeSection.parent_id === null) {
-				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
-				if (hasChildren) {
-					return true;
-				}
-			}
-
-			return false;
-		},
-		[grantSections],
-	);
-
-	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
-		const activeIsMain = activeSection.parent_id === null;
-		const overIsMain = overSection.parent_id === null;
-
-		if (activeIsMain) {
-			return null;
-		}
-
-		if (overIsMain) {
-			return overSection.id;
-		}
-
-		return overSection.parent_id;
-=======
-		const activeIsChild = activeSection.parent_id !== null;
-		const overIsChild = overSection.parent_id !== null;
-
-		if (overIsChild) {
-			return overSection.parent_id;
-		}
-
-		if (activeIsChild) {
-			return overSection.id;
-		}
-
-		return null;
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
-	}, []);
-
-	const toggleSectionExpanded = useCallback((sectionId: string) => {
-		setExpandedSectionId((prev) => {
-			if (prev === sectionId) {
-				return null;
-			}
-			return sectionId;
-		});
-	}, []);
 
 	const handleUpdateSection = useCallback(
 		async (sectionId: string, updates: Partial<GrantSection>) => {
@@ -200,14 +183,15 @@ export function DragDropSectionManager({
 	);
 
 	const handleDeleteSection = useCallback(
-		async (sectionId: string, sectionParentId: string) => {
-			if (sectionParentId) {
+		async (sectionId: string) => {
+			const section = grantSections.find((s) => s.id === sectionId);
+			if (section?.parent_id) {
 				await performDelete(sectionId);
 				return;
 			}
 			showDeleteConfirmation(sectionId);
 		},
-		[showDeleteConfirmation, performDelete],
+		[showDeleteConfirmation, performDelete, grantSections],
 	);
 
 	const handleAddNewSection = useCallback(
@@ -230,8 +214,6 @@ export function DragDropSectionManager({
 				}
 
 				if (pendingParentChange) {
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
-=======
 					const updatedSections = grantSections.map((section) => {
 						if (section.id === pendingParentChange.sectionId) {
 							return toUpdateGrantSection({
@@ -249,7 +231,6 @@ export function DragDropSectionManager({
 					});
 
 					await updateGrantSections(updatedSections);
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
 					setPendingParentChange(null);
 				}
 			},
@@ -286,6 +267,8 @@ export function DragDropSectionManager({
 			pendingParentChange,
 			expandedSectionId,
 			handleUpdateSection,
+			grantSections,
+			updateGrantSections,
 		],
 	);
 
@@ -405,38 +388,7 @@ function SectionList({
 }: {
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 } & SectionListProps) {
-	// Flatten sections for optimal SortableContext performance
-	// Keep efficient data structures while creating flat DOM
-	const allSectionsFlattened = useMemo(() => {
-		const result: GrantSection[] = [];
-		mainSections.forEach((main) => {
-			result.push(main);
-			const subsections = subsectionsByParent[main.id] ?? [];
-			result.push(...subsections);
-		});
-		return result;
-	}, [mainSections, subsectionsByParent]);
-
 	return (
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/drag-drop-section-manager.tsx
-		<div className="space-y-2">
-			{allSectionsFlattened.map((section) => (
-				<SortableSection
-					isDetailedSection={isDetailedSection}
-					isDragDisabled={allSectionsFlattened.length === 1}
-					isExpanded={expandedSectionId === section.id}
-					isSubsection={!!section.parent_id}
-					key={section.id}
-					onAddSubsection={section.parent_id ? undefined : () => handleAddNewSection(section.id)}
-					onDelete={() => handleDeleteSection(section.id, section.parent_id ?? "")}
-					onToggleExpand={() => {
-						toggleSectionExpanded(section.id);
-					}}
-					onUpdate={(updates) => handleUpdateSection(section.id, updates)}
-					section={section}
-					toUpdateGrantSection={toUpdateGrantSection}
-				/>
-=======
 		<>
 			{mainSections.map((section) => (
 				<div className="space-y-2" key={section.id}>
@@ -468,8 +420,7 @@ function SectionList({
 						/>
 					))}
 				</div>
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/drag-drop-section-manager.tsx
 			))}
-		</div>
+		</>
 	);
 }

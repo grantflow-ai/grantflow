@@ -1,8 +1,12 @@
 "use client";
 
 import { ChevronRight, Search, Settings as SettingsIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { listApplications } from "@/actions/grant-applications";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,14 +18,10 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { routes } from "@/utils/navigation";
-import Image from "next/image";
-import type { API } from "@/types/api-types";
-import { useEffect, useState } from "react";
-import { listApplications } from "@/actions/grant-applications";
-import { toast } from "sonner";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
+import type { API } from "@/types/api-types";
+import { routes } from "@/utils/navigation";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
@@ -39,12 +39,6 @@ const SidebarStatusStyleMap: Record<ApplicationStatus, SidebarStatusStyle> = {
 		label: "Cancelled",
 		text: "text-white",
 	},
-	DRAFT: {
-		bg: "bg-app-dark-blue",
-		icon: "/icons/working-draft-white.svg",
-		label: "Working Draft",
-		text: "text-white",
-	},
 	GENERATING: {
 		bg: "bg-primary",
 		icon: "/icons/piechart.svg",
@@ -57,8 +51,13 @@ const SidebarStatusStyleMap: Record<ApplicationStatus, SidebarStatusStyle> = {
 		label: "In Progress",
 		text: "text-app-dark-blue",
 	},
+	WORKING_DRAFT: {
+		bg: "bg-app-dark-blue",
+		icon: "/icons/working-draft-white.svg",
+		label: "Working Draft",
+		text: "text-white",
+	},
 };
-
 
 interface NavMainProps {
 	"data-testid"?: string;

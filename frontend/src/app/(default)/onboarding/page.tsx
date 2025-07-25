@@ -1,12 +1,13 @@
 "use client";
 
 import { sendSignInLinkToEmail, type User } from "firebase/auth";
+import { motion } from "framer-motion";
+import { AlertCircle, ChevronLeft } from "lucide-react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { login } from "@/actions/login";
 import { AppCard, AppCardContent } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -27,9 +28,6 @@ import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { routes } from "@/utils/navigation";
-import { log } from "@/utils/logger";
-import { AlertCircle, ChevronLeft } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function SignIn() {
 	const auth = getFirebaseAuth();
@@ -207,7 +205,7 @@ export default function SignIn() {
 							<AppCardContent className="flex flex-col gap-12 p-0">
 								<div className="flex flex-col gap-6">
 									<p className="text-left font-normal text-sm leading-5 text-app-black">
-										We've sent a verification link to{" "}
+										We&apos;ve sent a verification link to{" "}
 										<span className="text-primary">{submittedEmail}</span>. Please check your inbox
 										and click the link to activate your GrantFlow account.
 									</p>
@@ -216,7 +214,7 @@ export default function SignIn() {
 											<AlertCircle className="text-gray-700 size-4" />
 										</div>
 										<p className="text-sm font-normal text-left leading-[18px] text-app-black font-body">
-											Didn't receive the email ? <br /> Check your spam folder or{" "}
+											Didn&apos;t receive the email ? <br /> Check your spam folder or{" "}
 											<span className="text-primary">Resend the verification email</span>.
 										</p>
 									</article>
