@@ -14,17 +14,18 @@ const mockIsValidUrl = vi.mocked(validation.isValidUrl);
 
 describe.sequential("UrlInput", () => {
 	const defaultParentId = "test-parent-id";
+	const mockAddUrl = vi.fn().mockResolvedValue(undefined);
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		resetAllStores();
 		mockIsValidUrl.mockReturnValue(true);
 
-		const store = useApplicationStore.getState();
-
-		vi.spyOn(store, "addUrl").mockResolvedValue();
-
-		useApplicationStore.setState({ application: null });
+		// Mock the store state directly without accessing hooks
+		useApplicationStore.setState({
+			addUrl: mockAddUrl,
+			application: null,
+		});
 	});
 
 	afterEach(() => {
@@ -101,8 +102,7 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, `  ${testUrl}  `);
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
+			expect(mockAddUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
 		});
 	});
 
@@ -120,8 +120,7 @@ describe.sequential("UrlInput", () => {
 
 			expect(screen.getByText("Please enter a valid URL")).toBeInTheDocument();
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("validates URL using isValidUrl utility", async () => {
@@ -150,8 +149,7 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, testUrl);
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
+			expect(mockAddUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
 			expect(screen.queryByText("Please enter a valid URL")).not.toBeInTheDocument();
 		});
 	});
@@ -168,8 +166,7 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, testUrl);
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
+			expect(mockAddUrl).toHaveBeenCalledWith(testUrl, defaultParentId);
 		});
 
 		it("does not add URL when Enter is pressed with empty input", async () => {
@@ -179,8 +176,7 @@ describe.sequential("UrlInput", () => {
 
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("does not add URL when Enter is pressed with only whitespace", async () => {
@@ -193,8 +189,7 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, "   ");
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("ignores other key presses", async () => {
@@ -210,8 +205,7 @@ describe.sequential("UrlInput", () => {
 			await user.keyboard("{Tab}");
 			await user.keyboard("{Escape}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 	});
 
@@ -229,8 +223,7 @@ describe.sequential("UrlInput", () => {
 
 			expect(screen.getByText("Cannot add URL: Parent ID missing")).toBeInTheDocument();
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("shows error when parentId is undefined", async () => {
@@ -246,8 +239,7 @@ describe.sequential("UrlInput", () => {
 
 			expect(screen.getByText("Cannot add URL: Parent ID missing")).toBeInTheDocument();
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("shows error when parentId is empty string", async () => {
@@ -263,8 +255,7 @@ describe.sequential("UrlInput", () => {
 
 			expect(screen.getByText("Cannot add URL: Parent ID missing")).toBeInTheDocument();
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 	});
 
@@ -272,8 +263,6 @@ describe.sequential("UrlInput", () => {
 		it("does not add URL if it already exists in application context", async () => {
 			const user = userEvent.setup();
 			const existingUrl = "https://existing.com";
-
-			const store = useApplicationStore.getState();
 
 			useApplicationStore.setState({
 				application: {
@@ -299,15 +288,13 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, existingUrl);
 			await user.keyboard("{Enter}");
 
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("does not add URL if it already exists in template context", async () => {
 			const user = userEvent.setup();
 			const existingUrl = "https://existing.com";
 			const templateId = "test-template-id";
-
-			const store = useApplicationStore.getState();
 
 			useApplicationStore.setState({
 				application: {
@@ -337,14 +324,12 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, existingUrl);
 			await user.keyboard("{Enter}");
 
-			expect(store.addUrl).not.toHaveBeenCalled();
+			expect(mockAddUrl).not.toHaveBeenCalled();
 		});
 
 		it("adds URL if it does not exist in either context", async () => {
 			const user = userEvent.setup();
 			const newUrl = "https://new.com";
-
-			const store = useApplicationStore.getState();
 
 			useApplicationStore.setState({
 				application: {
@@ -377,7 +362,7 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, newUrl);
 			await user.keyboard("{Enter}");
 
-			expect(store.addUrl).toHaveBeenCalledWith(newUrl, defaultParentId);
+			expect(mockAddUrl).toHaveBeenCalledWith(newUrl, defaultParentId);
 		});
 	});
 
@@ -526,9 +511,8 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, testUrl);
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).toHaveBeenCalledWith(testUrl, testParentId);
-			expect(store.addUrl).toHaveBeenCalledTimes(1);
+			expect(mockAddUrl).toHaveBeenCalledWith(testUrl, testParentId);
+			expect(mockAddUrl).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -549,14 +533,11 @@ describe.sequential("UrlInput", () => {
 				await user.type(input, url);
 				await user.keyboard("{Enter}");
 
-				const store = useApplicationStore.getState();
-				expect(store.addUrl).toHaveBeenCalledWith(url, defaultParentId);
+				expect(mockAddUrl).toHaveBeenCalledWith(url, defaultParentId);
 
 				unmount();
 				vi.clearAllMocks();
-
-				const newStore = useApplicationStore.getState();
-				vi.spyOn(newStore, "addUrl").mockResolvedValue();
+				mockAddUrl.mockClear();
 			}
 		});
 
@@ -571,8 +552,7 @@ describe.sequential("UrlInput", () => {
 			await user.type(input, url);
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).toHaveBeenCalledWith(url, defaultParentId);
+			expect(mockAddUrl).toHaveBeenCalledWith(url, defaultParentId);
 		});
 
 		it("prevents default behavior on Enter keypress", async () => {
@@ -586,8 +566,7 @@ describe.sequential("UrlInput", () => {
 
 			await user.keyboard("{Enter}");
 
-			const store = useApplicationStore.getState();
-			expect(store.addUrl).toHaveBeenCalled();
+			expect(mockAddUrl).toHaveBeenCalled();
 		});
 	});
 });

@@ -85,7 +85,6 @@ export function ProjectSidebar({
 			className="flex h-full w-[240px] flex-col bg-[#faf9fb] border-r border-[#e1dfeb]"
 			data-testid="project-sidebar"
 		>
-			{}
 			<div className="flex items-center justify-between px-4 py-4">
 				<div className="flex items-center gap-2" data-testid="sidebar-project-name">
 					<div className="size-8 rounded bg-[#1e13f8] flex items-center justify-center">
@@ -104,7 +103,6 @@ export function ProjectSidebar({
 				)}
 			</div>
 
-			{}
 			<div className="px-4 pb-4">
 				<button
 					className="flex items-center justify-center gap-2 w-full rounded bg-[#1e13f8] px-4 py-2 text-white font-['Source_Sans_Pro'] text-[14px] hover:bg-[#1710d4] transition-colors"
@@ -118,9 +116,7 @@ export function ProjectSidebar({
 				</button>
 			</div>
 
-			{}
 			<nav className="flex-1 overflow-y-auto">
-				{}
 				<Link
 					className={cn(
 						"flex items-center gap-3 px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors",
@@ -132,7 +128,6 @@ export function ProjectSidebar({
 					<span className="font-['Source_Sans_Pro'] text-[16px]">Dashboard</span>
 				</Link>
 
-				{}
 				<div className="mt-4" data-testid="sidebar-applications-section">
 					<button
 						className="flex w-full items-center justify-between px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors"
@@ -176,7 +171,6 @@ export function ProjectSidebar({
 					)}
 				</div>
 
-				{}
 				<div className="mt-4">
 					<button
 						className="flex w-full items-center justify-between px-4 py-2 text-[#636170] hover:bg-[#e1dfeb] transition-colors"
@@ -240,7 +234,6 @@ export function ProjectSidebar({
 				</div>
 			</nav>
 
-			{}
 			<div className="border-t border-[#e1dfeb] p-4 space-y-3">
 				<button
 					className="flex w-full items-center gap-3 text-[#636170] hover:text-[#2e2d36] transition-colors"
@@ -273,7 +266,6 @@ function CollapsedSidebar({
 }: CollapsedSidebarProps) {
 	return (
 		<div className="flex h-full w-16 flex-col bg-[#faf9fb] border-r border-[#e1dfeb]">
-			{}
 			<div className="flex items-center justify-center px-4 py-4">
 				<button
 					className="p-1 rounded hover:bg-[#e1dfeb] transition-colors"
@@ -290,7 +282,6 @@ function CollapsedSidebar({
 				</button>
 			</div>
 
-			{}
 			<div className="px-2 pb-4">
 				<button
 					className="flex items-center justify-center w-full rounded bg-[#1e13f8] p-2 text-white hover:bg-[#1710d4] transition-colors"
@@ -303,9 +294,7 @@ function CollapsedSidebar({
 				</button>
 			</div>
 
-			{}
 			<nav className="flex-1 flex flex-col items-center gap-4">
-				{}
 				<Link
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
@@ -319,7 +308,6 @@ function CollapsedSidebar({
 					<Grid2X2 className="size-6" />
 				</Link>
 
-				{}
 				<div
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
@@ -330,7 +318,6 @@ function CollapsedSidebar({
 					<FileText className="size-6" />
 				</div>
 
-				{}
 				<Link
 					className={cn(
 						"flex items-center justify-center p-2 rounded transition-colors",
@@ -345,7 +332,6 @@ function CollapsedSidebar({
 				</Link>
 			</nav>
 
-			{}
 			<div className="border-t border-[#e1dfeb] p-2 flex flex-col items-center gap-3">
 				<button
 					className="flex items-center justify-center p-2 rounded text-[#636170] hover:text-[#2e2d36] hover:bg-[#e1dfeb] transition-colors"

@@ -209,8 +209,6 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					</CollapsibleContent>
 				</SidebarMenuItem>
 			</Collapsible>
-
-			{}
 			<Collapsible className="group/collapsible">
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>

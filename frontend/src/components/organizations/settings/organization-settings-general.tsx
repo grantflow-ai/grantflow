@@ -96,7 +96,6 @@ export function OrganizationSettingsGeneral({
 
 	return (
 		<div className="flex flex-col gap-10 max-w-[655px]" data-testid="organization-settings-general">
-			{}
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-2">
 					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
@@ -105,7 +104,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 
 				<div className="flex flex-col gap-3 px-6">
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Logo</h3>
 						<div className="flex flex-col gap-3">
@@ -143,7 +141,6 @@ export function OrganizationSettingsGeneral({
 						</div>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Organisation Name
@@ -165,7 +162,6 @@ export function OrganizationSettingsGeneral({
 						/>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Institution or Affiliation
@@ -189,7 +185,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			</div>
 
-			{}
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-2">
 					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
@@ -198,7 +193,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 
 				<div className="flex flex-col gap-3 px-6">
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Contact Person Name
@@ -220,7 +214,6 @@ export function OrganizationSettingsGeneral({
 						/>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Email address
@@ -267,7 +260,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			</div>
 
-			{}
 			{userRole === UserRole.OWNER && (
 				<div className="border border-error rounded p-6">
 					<div className="flex flex-col gap-6">
@@ -298,7 +290,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			)}
 
-			{}
 			{canEdit && (
 				<div className="flex justify-end">
 					<button
@@ -313,7 +304,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			)}
 
-			{}
 			{organization && (
 				<DeleteOrganizationModal
 					isOpen={showDeleteModal}

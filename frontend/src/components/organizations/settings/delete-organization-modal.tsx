@@ -92,7 +92,6 @@ export function DeleteOrganizationModal({
 				role="dialog"
 			>
 				<div className="flex flex-col gap-8 p-8">
-					{}
 					<div className="flex flex-col gap-3">
 						<div className="flex items-center justify-between">
 							<h2
@@ -118,7 +117,6 @@ export function DeleteOrganizationModal({
 						</p>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-6">
 						<div className="flex flex-col gap-3">
 							<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
@@ -139,7 +137,6 @@ export function DeleteOrganizationModal({
 						/>
 					</div>
 
-					{}
 					<div className="flex items-end justify-between">
 						<button
 							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

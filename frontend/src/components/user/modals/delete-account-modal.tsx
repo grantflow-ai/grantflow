@@ -16,7 +16,6 @@ export function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccount
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-popup-cover">
 			<div className="relative w-[464px] bg-white rounded-lg p-8 border border-primary">
-				{}
 				<button
 					className="absolute right-4 top-4 p-0 hover:opacity-70 transition-opacity"
 					onClick={onClose}
@@ -25,9 +24,7 @@ export function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccount
 					<X className="size-4 text-app-gray-700" />
 				</button>
 
-				{}
 				<div className="flex flex-col gap-8">
-					{}
 					<div className="flex flex-col gap-3">
 						<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
 							Are You Sure You Want to Leave This Account?
@@ -40,7 +37,6 @@ export function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccount
 						</p>
 					</div>
 
-					{}
 					<div className="flex items-end justify-between">
 						<button
 							className="px-4 py-2 bg-white border border-primary rounded font-button text-[16px] leading-[22px] text-primary hover:bg-primary hover:text-white transition-colors"
