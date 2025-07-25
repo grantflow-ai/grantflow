@@ -15,9 +15,9 @@ terraform {
 }
 
 # Enable required APIs
-resource "google_project_service" "firebase_hosting" {
+resource "google_project_service" "firebase" {
   project = var.project_id
-  service = "firebasehosting.googleapis.com"
+  service = "firebase.googleapis.com"
 
   disable_on_destroy = false
 }
@@ -25,6 +25,20 @@ resource "google_project_service" "firebase_hosting" {
 resource "google_project_service" "firebase_app_hosting" {
   project = var.project_id
   service = "firebaseapphosting.googleapis.com"
+
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "service_usage" {
+  project = var.project_id
+  service = "serviceusage.googleapis.com"
+
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "cloud_resource_manager" {
+  project = var.project_id
+  service = "cloudresourcemanager.googleapis.com"
 
   disable_on_destroy = false
 }
@@ -46,8 +60,10 @@ resource "google_firebase_app_hosting_backend" "frontend" {
   serving_locality = "GLOBAL_ACCESS"
 
   depends_on = [
-    google_project_service.firebase_hosting,
-    google_project_service.firebase_app_hosting
+    google_project_service.firebase,
+    google_project_service.firebase_app_hosting,
+    google_project_service.service_usage,
+    google_project_service.cloud_resource_manager
   ]
 }
 
@@ -107,22 +123,5 @@ resource "google_firebase_app_hosting_build" "frontend" {
   }
 }
 
-# Configure traffic to point to the latest build
-resource "google_firebase_app_hosting_traffic" "frontend" {
-  provider = google-beta
-  project  = google_firebase_app_hosting_backend.frontend.project
-  location = google_firebase_app_hosting_backend.frontend.location
-  backend  = google_firebase_app_hosting_backend.frontend.backend_id
-
-  rollout_strategy {
-    type = "IMMEDIATE"
-  }
-
-  target_revision = google_firebase_app_hosting_build.frontend.build_id
-
-  depends_on = [google_firebase_app_hosting_build.frontend]
-}
-
-# Custom domain configuration (if provided)
-# Note: Custom domains for App Hosting are typically managed through Firebase Console
-# or via DNS configuration pointing to the App Hosting URL
+# Note: Traffic configuration is handled automatically by Firebase App Hosting
+# when a new build is created. Custom domains are managed through Firebase Console.
