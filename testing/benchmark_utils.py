@@ -170,6 +170,7 @@ def benchmark[F: Callable[..., Any]](
                             execution_time,
                             str(e),
                         )
+                    raise
 
             if iteration_times:
                 avg_time = sum(iteration_times) / len(iteration_times)

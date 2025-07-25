@@ -186,8 +186,13 @@ async def handle_retrieval(
     max_results: int,
     organization_id: str | None = None,
     search_queries: list[str],
+    model_name: str | None = None,
 ) -> list[TextVector]:
-    query_embeddings = await generate_embeddings(search_queries)
+    query_embeddings = (
+        await generate_embeddings(search_queries, model_name=model_name)
+        if model_name
+        else await generate_embeddings(search_queries)
+    )
     file_table_cls = GrantApplicationSource if application_id else GrantingInstitutionSource
 
     return (
@@ -214,6 +219,7 @@ async def retrieve_documents(
     search_queries: list[str] | None = None,
     task_description: str | PromptTemplate,
     with_guided_retrieval: bool = False,
+    embedding_model: str | None = None,
     **kwargs: Any,
 ) -> list[str]:
     start_time = time.time()
@@ -233,7 +239,9 @@ async def retrieve_documents(
         raise ValueError("Either application_id or organization_id must be provided.")
 
     query_start = time.time()
-    search_queries = search_queries or await handle_create_search_queries(user_prompt=task_description, **kwargs)
+    search_queries = search_queries or await handle_create_search_queries(
+        user_prompt=task_description, embedding_model=embedding_model, **kwargs
+    )
     query_duration = time.time() - query_start
 
     logger.debug(
@@ -253,6 +261,7 @@ async def retrieve_documents(
         organization_id=organization_id,
         search_queries=search_queries,
         max_results=max_results,
+        model_name=embedding_model,
     )
     retrieval_duration = time.time() - retrieval_start
 
@@ -373,6 +382,7 @@ async def retrieve_documents(
             organization_id=organization_id,
             search_queries=improved_queries,
             max_results=max_results,
+            model_name=embedding_model,
         )
 
         new_documents = [
