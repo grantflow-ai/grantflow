@@ -36,6 +36,8 @@ jobs:
         permissions:
             contents: read
             id-token: write
+        # Only build and push on pushes to main/development, not on PRs
+        if: github.event_name != 'pull_request'
         steps:
             - name: Checkout
               uses: actions/checkout@v4
