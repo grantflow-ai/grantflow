@@ -221,7 +221,6 @@ export function OrganizationSettingsMembers({
 
 	return (
 		<div className="w-full" data-testid="organization-settings-members">
-			{}
 			<div className="w-full">
 				<table className="w-full">
 					<thead>
@@ -296,7 +295,6 @@ export function OrganizationSettingsMembers({
 					</tbody>
 				</table>
 
-				{}
 				{allMembers.length === 0 && (
 					<div className="px-6 py-12 text-center" data-testid="organization-empty-state">
 						<p className="text-[16px] text-app-gray-600 mb-4 font-body">No organization members yet.</p>
@@ -304,7 +302,6 @@ export function OrganizationSettingsMembers({
 				)}
 			</div>
 
-			{}
 			<InviteCollaboratorModal
 				isOpen={isInviteModalOpen}
 				onClose={() => {

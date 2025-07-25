@@ -70,7 +70,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 				data-testid="invite-collaborator-modal"
 			>
 				<div className="p-8 flex flex-col gap-8">
-					{}
 					<div className="flex flex-col gap-3">
 						<div className="flex items-start justify-between">
 							<div className="flex flex-col gap-1">
@@ -91,9 +90,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</div>
 					</div>
 
-					{}
 					<div className="flex flex-col gap-6">
-						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-name">
 								Name
@@ -111,7 +108,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							/>
 						</div>
 
-						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-email">
 								Email address
@@ -132,7 +128,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							</div>
 						</div>
 
-						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-permission">
 								Permission
@@ -173,7 +168,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							</Select>
 						</div>
 
-						{}
 						{permission === "collaborator" && (
 							<div className="flex flex-col gap-3">
 								<div className="flex items-center gap-2">
@@ -214,7 +208,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 							</div>
 						)}
 
-						{}
 						<div className="flex items-start gap-2 p-3 bg-app-gray-50 rounded">
 							<div className="size-4 bg-warning rounded-full flex-shrink-0 mt-0.5" />
 							<p className="font-body text-[14px] text-app-gray-700">
@@ -224,7 +217,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite }: InviteCol
 						</div>
 					</div>
 
-					{}
 					<div className="flex items-center justify-between">
 						<button
 							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-app-gray-50 transition-colors"
