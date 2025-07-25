@@ -207,43 +207,25 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
 resource "google_logging_metric" "entity_cleanup_operations" {
   name   = "entity_cleanup_operations"
   filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND jsonPayload.processed>=0"
-}
-
-# Additional monitoring for organization cleanup
-resource "google_monitoring_alert_policy" "organization_cleanup_failures" {
-  display_name = "Organization Cleanup Failures"
-  combiner     = "OR"
-  enabled      = true
-
-  conditions {
-    display_name = "High error rate in organization cleanup"
-
-    condition_threshold {
-      filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND metric.type=\"logging.googleapis.com/user/entity_cleanup_operations\" AND metric.labels.error=\"true\""
-      duration        = "300s"
-      comparison      = "COMPARISON_GT"
-      threshold_value = 0
-
-      aggregations {
-        alignment_period     = "300s"
-        per_series_aligner   = "ALIGN_RATE"
-        cross_series_reducer = "REDUCE_SUM"
-      }
-
-      trigger {
-        count = 1
-      }
+  
+  # Log-based metrics automatically use DELTA metric kind
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "status"
+      value_type  = "STRING"
+      description = "Status of the cleanup operation (success/error)"
     }
   }
-
-  notification_channels = [
-    google_monitoring_notification_channel.discord.name
-  ]
-
-  alert_strategy {
-    auto_close = "1800s" # Auto-close after 30 minutes
+  
+  label_extractors = {
+    status = "EXTRACT(jsonPayload.status)"
   }
 }
+
+# Note: Monitoring for cleanup errors is handled by the entity_cleanup_failures alert policy above
+# which monitors Cloud Function execution failures
 
 # Output the function details
 output "entity_cleanup_function_name" {
