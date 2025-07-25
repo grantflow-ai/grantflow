@@ -25,7 +25,6 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 	const { getOrganization, organization, selectedOrganizationId } = useOrganizationStore();
 	const [inviteHandler, setInviteHandler] = useState<(() => void) | undefined>();
 
-	// Fetch organization members
 	const { data: organizationMembers = [] } = useSWR(
 		selectedOrganizationId ? ["organization-members", selectedOrganizationId] : null,
 		([, orgId]) => getOrganizationMembers(orgId),
@@ -34,14 +33,12 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 		},
 	);
 
-	// Redirect if no organization context
 	useEffect(() => {
 		if (!selectedOrganizationId) {
 			router.replace(routes.organization.root());
 		}
 	}, [selectedOrganizationId, router]);
 
-	// Check role for restricted pages - only OWNER and ADMIN can access billing and members
 	useEffect(() => {
 		if (
 			organization &&
@@ -52,7 +49,6 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 		}
 	}, [organization, activeTab, router]);
 
-	// Load organization data
 	useEffect(() => {
 		if (selectedOrganizationId) {
 			void getOrganization(selectedOrganizationId);
@@ -60,10 +56,9 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 	}, [selectedOrganizationId, getOrganization]);
 
 	if (!organization) {
-		return null; // Will redirect
+		return null;
 	}
 
-	// Generate team members for AppHeader from organization members
 	const projectTeamMembers = organizationMembers.map((member) => ({
 		backgroundColor: generateBackgroundColor(member.firebase_uid),
 		initials: generateInitials(member.display_name, member.email),

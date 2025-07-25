@@ -15,13 +15,10 @@ describe.sequential("AppHeader", () => {
 
 		render(<AppHeader projectTeamMembers={teamMembers} />);
 
-		// Assert the container
 		expect(screen.getByTestId("dashboard-header")).toBeInTheDocument();
 
-		// Assert notification area
 		expect(screen.getByTestId("dashboard-notification")).toBeInTheDocument();
 
-		// Assert avatar group
 		expect(screen.getByTestId("dashboard-avatar-group")).toBeInTheDocument();
 	});
 });

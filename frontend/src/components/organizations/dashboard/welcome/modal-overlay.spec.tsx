@@ -4,7 +4,6 @@ import { afterEach } from "vitest";
 
 import { WelcomeModalContent, WelcomeModalOverlay } from "./modal-overlay";
 
-// Wrapper component to provide Dialog context
 function DialogWrapper({ children }: { children: React.ReactNode }) {
 	return <DialogPrimitive.Root open>{children}</DialogPrimitive.Root>;
 }

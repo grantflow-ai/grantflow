@@ -30,7 +30,6 @@ const meta: Meta<typeof SigninForm> = {
 				};
 			};
 
-			// Check if the story has custom render (contains demo info)
 			const hasCustomRender =
 				typeof StoryComponent === "object" &&
 				StoryComponent.props &&
@@ -182,7 +181,6 @@ export const FilledForm: Story = {
 		const canvas = within(canvasElement);
 		const user = userEvent.setup();
 
-		// Fill out the form with sample data
 		const firstNameInput = canvas.getByTestId("email-signin-form-firstname-input");
 		const lastNameInput = canvas.getByTestId("email-signin-form-lastname-input");
 		const emailInput = canvas.getByTestId("email-signin-form-email-input");

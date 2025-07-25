@@ -38,10 +38,8 @@ export function Sidebar() {
 			className="flex h-full w-16 flex-col items-center bg-[#faf9fb] border-r border-[#e1dfeb]"
 			data-testid="sidebar"
 		>
-			{}
 			<div className="flex flex-col items-center gap-2 py-3 px-2">
 				<div className="flex size-[31px] items-center justify-center">
-					{}
 					<div className="bg-[#1e13f8] rounded size-8 flex items-center justify-center" data-testid="logo">
 						<div className="text-white font-bold text-sm">G</div>
 					</div>
@@ -55,10 +53,7 @@ export function Sidebar() {
 					<div className="text-xs">{">"}</div>
 				</button>
 			</div>
-
-			{}
 			<div className="flex flex-col items-center gap-10 py-6">
-				{}
 				<div
 					className="bg-[#1e13f8] rounded size-8 flex items-center justify-center"
 					data-testid="main-nav-dashboard"
@@ -66,7 +61,6 @@ export function Sidebar() {
 					<LayoutDashboard className="size-5 text-white" />
 				</div>
 
-				{}
 				<div className="flex flex-col items-center gap-8">
 					{navigationItems.slice(1).map((item) => {
 						const isActive = pathname === item.href;
@@ -90,7 +84,6 @@ export function Sidebar() {
 				</div>
 			</div>
 
-			{}
 			<div className="mt-auto mb-6 flex flex-col items-center gap-6">
 				<button
 					className="flex size-4 items-center justify-center text-[#636170] hover:text-[#2e2d36] transition-colors"

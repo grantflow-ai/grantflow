@@ -21,7 +21,7 @@ import { EditPermissionModal } from "./edit-permission-modal";
 
 interface OrganizationMember {
 	displayName?: string;
-	// User data
+
 	email?: string;
 	firebaseUid: string;
 	hasAllProjectsAccess?: boolean;
@@ -38,15 +38,7 @@ interface OrganizationSettingsMembersProps {
 	organizationId: string;
 }
 
-// Avatar colors based on email hash
-const AVATAR_COLORS = [
-	"bg-[#369e94]", // Teal (like in Figma)
-	"bg-[#9747ff]", // Purple (like in Figma)
-	"bg-[#4dc283]", // Green (like in Figma)
-	"bg-[#ff6b6b]", // Red
-	"bg-[#4ecdc4]", // Cyan
-	"bg-[#45b7d1]", // Blue
-];
+const AVATAR_COLORS = ["bg-[#369e94]", "bg-[#9747ff]", "bg-[#4dc283]", "bg-[#ff6b6b]", "bg-[#4ecdc4]", "bg-[#45b7d1]"];
 
 const ROLE_LABELS = {
 	[UserRole.ADMIN]: "Admin",
@@ -63,7 +55,6 @@ export function OrganizationSettingsMembers({
 	const [editingMember, setEditingMember] = useState<null | OrganizationMember>(null);
 	const { addNotification } = useNotificationStore();
 
-	// Fetch organization members
 	const { data: members = [], isLoading } = useSWR(
 		`/organizations/${organizationId}/members`,
 		() => getOrganizationMembers(organizationId),
@@ -72,7 +63,6 @@ export function OrganizationSettingsMembers({
 		},
 	);
 
-	// Fetch pending invitations
 	const { data: invitations = [] } = useSWR(
 		`/organizations/${organizationId}/invitations`,
 		() => getOrganizationInvitations(organizationId),
@@ -87,7 +77,7 @@ export function OrganizationSettingsMembers({
 			await mutate(`/organizations/${organizationId}/members`);
 			addNotification({
 				message: "The member has been removed from the organization",
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Member removed",
 				type: "success",
 			});
@@ -95,7 +85,7 @@ export function OrganizationSettingsMembers({
 			log.error("Error removing member", error, { firebaseUid });
 			addNotification({
 				message: "Failed to remove member from the organization",
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Error",
 				type: "warning",
 			});
@@ -104,13 +94,10 @@ export function OrganizationSettingsMembers({
 
 	const handleUpdateRole = async (firebaseUid: string, newRole: UserRole, hasAllProjectsAccess?: boolean) => {
 		try {
-			// API supports has_all_projects_access for role updates
 			const updateData: API.UpdateMemberRole.RequestBody = {
 				role: newRole,
 			};
 
-			// Only include has_all_projects_access for COLLABORATOR role
-			// OWNER and ADMIN always have all projects access (handled by backend)
 			if (newRole === UserRole.COLLABORATOR && hasAllProjectsAccess !== undefined) {
 				updateData.has_all_projects_access = hasAllProjectsAccess;
 			}
@@ -119,7 +106,7 @@ export function OrganizationSettingsMembers({
 			await mutate(`/organizations/${organizationId}/members`);
 			addNotification({
 				message: `Member role has been updated to ${ROLE_LABELS[newRole]}`,
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Role updated",
 				type: "success",
 			});
@@ -127,7 +114,7 @@ export function OrganizationSettingsMembers({
 			log.error("Error updating member role", error, { firebaseUid, newRole });
 			addNotification({
 				message: "Failed to update member role",
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Error",
 				type: "warning",
 			});
@@ -140,7 +127,7 @@ export function OrganizationSettingsMembers({
 			await mutate(`/organizations/${organizationId}/invitations`);
 			addNotification({
 				message: `Invitation to ${email} has been cancelled`,
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Invitation cancelled",
 				type: "success",
 			});
@@ -148,7 +135,7 @@ export function OrganizationSettingsMembers({
 			log.error("Error cancelling invitation", error, { email, invitationId });
 			addNotification({
 				message: "Failed to cancel invitation",
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Error",
 				type: "warning",
 			});
@@ -172,7 +159,7 @@ export function OrganizationSettingsMembers({
 			await mutate(`/organizations/${organizationId}/invitations`);
 			addNotification({
 				message: `Invitation sent to ${email}`,
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Invitation sent",
 				type: "success",
 			});
@@ -183,7 +170,7 @@ export function OrganizationSettingsMembers({
 			});
 			addNotification({
 				message: "Failed to send invitation",
-				projectName: "", // Organization-level notification
+				projectName: "",
 				title: "Error",
 				type: "warning",
 			});
@@ -192,19 +179,16 @@ export function OrganizationSettingsMembers({
 
 	const canInvite = currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN;
 
-	// Create a stable handler for opening the invite modal
 	const openInviteModal = useCallback(() => {
 		setIsInviteModalOpen(true);
 	}, []);
 
-	// Pass invite handler to parent
 	useEffect(() => {
 		if (onInviteHandlerChange) {
 			onInviteHandlerChange(canInvite ? openInviteModal : undefined);
 		}
 	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
-	// Map API response to component format
 	const mappedMembers: OrganizationMember[] = members.map((member) => ({
 		displayName: member.display_name,
 		email: member.email,
@@ -216,7 +200,6 @@ export function OrganizationSettingsMembers({
 		status: "active" as const,
 	}));
 
-	// Map invitations to pending members
 	const pendingMembers: OrganizationMember[] = invitations.map((invitation) => ({
 		email: invitation.email,
 		firebaseUid: "",
@@ -226,7 +209,6 @@ export function OrganizationSettingsMembers({
 		status: "pending" as const,
 	}));
 
-	// Combine active members and pending invitations
 	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
@@ -239,7 +221,6 @@ export function OrganizationSettingsMembers({
 
 	return (
 		<div className="w-full" data-testid="organization-settings-members">
-			{/* Table Structure */}
 			<div className="w-full">
 				<table className="w-full">
 					<thead>
@@ -314,7 +295,6 @@ export function OrganizationSettingsMembers({
 					</tbody>
 				</table>
 
-				{/* Empty State */}
 				{allMembers.length === 0 && (
 					<div className="px-6 py-12 text-center" data-testid="organization-empty-state">
 						<p className="text-[16px] text-app-gray-600 mb-4 font-body">No organization members yet.</p>
@@ -322,7 +302,6 @@ export function OrganizationSettingsMembers({
 				)}
 			</div>
 
-			{/* Modals */}
 			<InviteCollaboratorModal
 				isOpen={isInviteModalOpen}
 				onClose={() => {
@@ -344,13 +323,12 @@ export function OrganizationSettingsMembers({
 	);
 }
 
-// Simple hash function to get consistent color based on email
 const hashCode = (str: string) => {
 	let hash = 0;
 	for (let i = 0; i < str.length; i++) {
 		const char = str.codePointAt(i) ?? 0;
 		hash = (hash << 5) - hash + char;
-		hash &= hash; // Convert to 32-bit integer
+		hash &= hash;
 	}
 	return Math.abs(hash);
 };
@@ -493,19 +471,16 @@ function MemberActionMenu({
 }
 
 function ResearchProjectsAccess({ role }: { role: UserRole }) {
-	// Mock data for project access - in real implementation this would come from the API
 	const projectAccess = [
 		{ count: 2, name: "Project name" },
 		{ count: 3, name: "Project name" },
 		{ count: 1, name: "Project name" },
 	];
 
-	// Owner and Admin have access to all projects
 	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
 		return <span className="font-body text-[14px] text-app-gray-700">All</span>;
 	}
 
-	// Collaborators have specific project access
 	return (
 		<div className="flex items-center gap-2">
 			{projectAccess.map((project, index) => (

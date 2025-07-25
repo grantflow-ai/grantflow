@@ -11,22 +11,22 @@ export default defineConfig({
 		emptyOutDir: true,
 		lib: {
 			entry: resolve(__dirname, "src/index.ts"),
-			name: "GrantFlowEditor",
 			fileName: (format) => `index.${format}.js`,
 			formats: ["es"],
+			name: "GrantFlowEditor",
 		},
 		outDir: "dist",
 		rollupOptions: {
 			external: ["react", "react-dom", "react/jsx-runtime"],
 			output: {
-				preserveModules: false,
+				assetFileNames: "assets/[name][extname]",
 				exports: "named",
 				globals: {
 					react: "React",
 					"react-dom": "ReactDOM",
 					"react/jsx-runtime": "react/jsx-runtime",
 				},
-				assetFileNames: "assets/[name][extname]",
+				preserveModules: false,
 			},
 		},
 		sourcemap: true,

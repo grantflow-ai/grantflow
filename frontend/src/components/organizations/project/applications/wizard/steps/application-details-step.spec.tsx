@@ -115,7 +115,6 @@ describe("ApplicationDetailsStep", () => {
 
 		continueButton.click();
 
-		// Validation behavior not implemented in component
 		expect(continueButton).toBeInTheDocument();
 
 		continueButton.remove();
@@ -133,7 +132,6 @@ describe("ApplicationDetailsStep", () => {
 
 		continueButton.click();
 
-		// Validation behavior not implemented in component
 		expect(continueButton).toBeInTheDocument();
 
 		continueButton.remove();
@@ -151,13 +149,11 @@ describe("ApplicationDetailsStep", () => {
 
 		continueButton.click();
 
-		// Validation behavior not implemented in component
 		expect(continueButton).toBeInTheDocument();
 
 		await user.clear(titleTextarea);
 		await user.type(titleTextarea, "Valid Application Title");
 
-		// Validation behavior not implemented in component
 		expect(titleTextarea).toHaveValue("Valid Application Title");
 
 		continueButton.remove();
@@ -172,7 +168,6 @@ describe("ApplicationDetailsStep", () => {
 
 		continueButton.click();
 
-		// Validation behavior not implemented in component
 		expect(continueButton).toBeInTheDocument();
 
 		const titleTextarea = screen.getByTestId("application-title-textarea");
@@ -214,7 +209,6 @@ describe("ApplicationDetailsStep", () => {
 
 		continueButton.click();
 
-		// Validation behavior not implemented in component
 		expect(continueButton).toBeInTheDocument();
 
 		continueButton.remove();
