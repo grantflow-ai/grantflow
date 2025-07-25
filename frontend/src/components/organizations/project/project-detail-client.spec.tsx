@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectDetailClient } from "./project-detail-client";
 
-// Mock all dependencies
 vi.mock("next/navigation", () => ({
 	useRouter: vi.fn(),
 }));
@@ -69,7 +68,6 @@ const mockRouter = {
 const mockNavigateToApplication = vi.fn();
 const mockMutate = vi.fn();
 
-// Get mocked functions
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
 const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
 const mockUseNavigationStore = vi.mocked(await import("@/stores/navigation-store").then((m) => m.useNavigationStore));
@@ -80,7 +78,6 @@ const mockUseProjectStore = vi.mocked(await import("@/stores/project-store").the
 const mockCreateApplication = vi.mocked(await import("@/actions/grant-applications").then((m) => m.createApplication));
 const mockGetProjectMembers = vi.mocked(await import("@/actions/project").then((m) => m.getProjectMembers));
 
-// Get mocked components
 const MockDeleteApplicationModal = vi.mocked(
 	await import("./applications/delete-application-modal").then((m) => m.DeleteApplicationModal),
 );
@@ -99,13 +96,11 @@ describe("ProjectDetailClient", () => {
 		vi.clearAllMocks();
 		setupAuthenticatedTest();
 
-		// Setup default mock returns
 		mockUseRouter.mockReturnValue(mockRouter);
 		mockUseNavigationStore.mockReturnValue({ navigateToApplication: mockNavigateToApplication });
 		mockUseOrganizationStore.mockReturnValue({ selectedOrganizationId: "org-123" });
 		mockUseProjectStore.mockReturnValue({ project: mockProject });
 
-		// Setup SWR mock with a default implementation that can be overridden in tests
 		mockUseSWR.mockImplementation((key) => {
 			if (typeof key === "string" && key.includes("/applications")) {
 				return {
@@ -125,7 +120,7 @@ describe("ProjectDetailClient", () => {
 					mutate: vi.fn(),
 				};
 			}
-			// Fallback
+
 			return {
 				data: undefined,
 				error: undefined,
@@ -177,7 +172,6 @@ describe("ProjectDetailClient", () => {
 		const newApplication = ApplicationFactory.build({ id: "app-new" });
 		mockCreateApplication.mockResolvedValue(newApplication);
 
-		// Setup SWR mocks for this test
 		mockUseSWR
 			.mockReturnValueOnce({
 				data: { applications: mockApplications },
@@ -225,17 +219,13 @@ describe("ProjectDetailClient", () => {
 
 		const createButton = screen.getByTestId("new-application-button");
 
-		// Click and immediately check loading state
 		const clickPromise = user.click(createButton);
 
-		// Wait for the click to be processed
 		await clickPromise;
 
-		// Check loading state - button should be disabled but text stays the same
 		expect(createButton).toHaveTextContent("New Application");
 		expect(createButton).toBeDisabled();
 
-		// Clean up - resolve the promise
 		const newApplication = ApplicationFactory.build({ id: "app-new" });
 		resolvePromise!(newApplication);
 	});
@@ -260,11 +250,9 @@ describe("ProjectDetailClient", () => {
 
 		render(<ProjectDetailClient />);
 
-		// The edit button is the pencil icon next to the title
-		const editButton = screen.getByRole("button", { name: "" }); // Pencil icon has no accessible name
+		const editButton = screen.getByRole("button", { name: "" });
 		await user.click(editButton);
 
-		// Should switch to edit mode - check if an input appears
 		expect(screen.getByDisplayValue("Test Project")).toBeInTheDocument();
 	});
 

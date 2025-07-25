@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateApplicationButton } from "./create-application-button";
 
-// Mock the dependencies
 vi.mock("next/navigation");
 vi.mock("sonner");
 vi.mock("@/actions/grant-applications");

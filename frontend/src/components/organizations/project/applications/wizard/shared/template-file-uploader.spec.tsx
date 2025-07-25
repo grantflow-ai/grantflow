@@ -114,8 +114,8 @@ describe("TemplateFileUploader", () => {
 	it("rejects files that are too large", async () => {
 		render(<TemplateFileUploader parentId="parent-123" />);
 
-		const largeSize = 101 * 1024 * 1024; // 101 MB
-		// Create a small file but override its size property
+		const largeSize = 101 * 1024 * 1024;
+
 		const largeFile = new File(["test"], "large.pdf", { type: "application/pdf" });
 		Object.defineProperty(largeFile, "size", { value: largeSize });
 
@@ -155,8 +155,6 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it.skip("handles file upload errors gracefully", async () => {
-		// Skipping: Component doesn't properly await errors, causing unhandled rejections
-		// This is a known issue with the component's void handleFilesAdded pattern
 		mockAddFile.mockRejectedValueOnce(new Error("Upload failed"));
 
 		render(<TemplateFileUploader parentId="parent-123" />);
