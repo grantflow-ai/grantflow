@@ -16,11 +16,7 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
@@ -31,7 +27,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const setUser = useUserStore((state) => state.setUser);
 	const organization = useOrganizationStore((state) => state.organization);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const { state, isMobile } = useSidebar();
+	const { isMobile, state } = useSidebar();
 
 	const handleLogout = () => {
 		// Clear user data
@@ -90,14 +86,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								type="button"
 							>
 								<Plus className="size-4 shrink-0" />
-								<span className="group-data-[collapsible=icon]:hidden font-button">New Application</span>
+								<span className="group-data-[collapsible=icon]:hidden font-button">
+									New Application
+								</span>
 							</button>
 						</TooltipTrigger>
-						<TooltipContent
-							align="center"
-							hidden={state !== "collapsed" || isMobile}
-							side="right"
-						>
+						<TooltipContent align="center" hidden={state !== "collapsed" || isMobile} side="right">
 							<p>New Application</p>
 						</TooltipContent>
 					</Tooltip>

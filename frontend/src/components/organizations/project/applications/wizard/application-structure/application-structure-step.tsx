@@ -87,10 +87,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 			return;
 		}
 
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/application-structure-step.tsx
-=======
 		// Only show dialog for failed sources if it hasn't been dismissed
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/application-structure-step.tsx
 		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
 			const ragDialog = createRagSourcesDialog({
 				onBackToUploads: () => {
@@ -216,15 +213,11 @@ function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null 
 
 	return (
 		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/application-structure-step.tsx
 			<SectionEditor
 				dialogRef={dialogRef}
 				isDetailedSection={isDetailedSection}
 				onAddSection={handleAddNewSection}
 			/>
-=======
-			<SectionEditor isDetailedSection={isDetailedSection} onAddSection={handleAddNewSection} />
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/application-structure-step.tsx
 		</WizardRightPane>
 	);
 }
@@ -272,15 +265,11 @@ function SectionEditor({
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
-<<<<<<< HEAD:frontend/src/components/organizations/project/applications/wizard/application-structure/application-structure-step.tsx
 				<DragDropSectionManager
 					dialogRef={dialogRef}
 					isDetailedSection={isDetailedSection}
 					onAddSection={onAddSection}
 				/>
-=======
-				<DragDropSectionManager isDetailedSection={isDetailedSection} onAddSection={onAddSection} />
->>>>>>> 6d057200 (feat: improved the sidebar, made the necessary correction for the ui fixes):frontend/src/components/projects/wizard/application-structure/application-structure-step.tsx
 			</ScrollArea>
 		</div>
 	);
