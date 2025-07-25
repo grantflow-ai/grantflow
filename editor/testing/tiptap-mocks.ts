@@ -20,28 +20,24 @@ class FakeDOMRectList extends Array {
 	}
 }
 
-// Mock DOM APIs that ProseMirror relies on
 document.elementFromPoint = vi.fn(() => null);
 HTMLElement.prototype.getBoundingClientRect = vi.fn(getBoundingClientRect);
 HTMLElement.prototype.getClientRects = vi.fn(() => new FakeDOMRectList() as any);
 Range.prototype.getBoundingClientRect = vi.fn(getBoundingClientRect);
 Range.prototype.getClientRects = vi.fn(() => new FakeDOMRectList() as any);
 
-// Mock ResizeObserver for editor components
 globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
 	disconnect: vi.fn(),
 	observe: vi.fn(),
 	unobserve: vi.fn(),
 }));
 
-// Mock IntersectionObserver for editor components
 globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
 	disconnect: vi.fn(),
 	observe: vi.fn(),
 	unobserve: vi.fn(),
 }));
 
-// Mock FileReader for image uploads
 const mockFileReader = vi.fn().mockImplementation(() => ({
 	addEventListener: vi.fn(),
 	readAsDataURL: vi.fn(function (this: any) {
@@ -56,7 +52,6 @@ const mockFileReader = vi.fn().mockImplementation(() => ({
 	removeEventListener: vi.fn(),
 }));
 
-// Add static properties to match FileReader constructor
 Object.assign(mockFileReader, {
 	DONE: 2,
 	EMPTY: 0,
@@ -66,11 +61,9 @@ Object.assign(mockFileReader, {
 
 globalThis.FileReader = mockFileReader as any;
 
-// Mock URL.createObjectURL for image handling
 globalThis.URL.createObjectURL = vi.fn(() => "blob:fake-url");
 globalThis.URL.revokeObjectURL = vi.fn();
 
-// Mock clipboard API
 Object.assign(navigator, {
 	clipboard: {
 		readText: vi.fn(() => Promise.resolve("")),

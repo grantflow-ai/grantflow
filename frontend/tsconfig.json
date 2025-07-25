@@ -19,8 +19,6 @@
 			"::storybook/*": [".storybook/*"],
 			"::testing/*": ["testing/*"],
 			"@/*": ["src/*"]
-			// "@grantflow/editor": ["../editor/dist"],
-			// "@grantflow/editor/*": ["../editor/dist/*"]
 		},
 		"plugins": [
 			{
