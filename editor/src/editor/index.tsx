@@ -84,10 +84,7 @@ const MainToolbarContent = ({
 
 			<ToolbarGroup>
 				<HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-				<ListDropdownMenu
-					types={["bulletList", "orderedList", "taskList"]}
-					portal={isMobile}
-				/>
+				<ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
 				<BlockquoteButton />
 				<CodeBlockButton />
 			</ToolbarGroup>
@@ -100,11 +97,7 @@ const MainToolbarContent = ({
 				<MarkButton type="strike" />
 				<MarkButton type="code" />
 				<MarkButton type="underline" />
-				{!isMobile ? (
-					<ColorHighlightPopover />
-				) : (
-					<ColorHighlightPopoverButton onClick={onHighlighterClick} />
-				)}
+				{!isMobile ? <ColorHighlightPopover /> : <ColorHighlightPopoverButton onClick={onHighlighterClick} />}
 				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
 
@@ -137,13 +130,7 @@ const MainToolbarContent = ({
 	);
 };
 
-const MobileToolbarContent = ({
-	type,
-	onBack,
-}: {
-	type: "highlighter" | "link";
-	onBack: () => void;
-}) => (
+const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
 	<>
 		<ToolbarGroup>
 			<Button data-style="ghost" onClick={onBack}>
@@ -158,11 +145,7 @@ const MobileToolbarContent = ({
 
 		<ToolbarSeparator />
 
-		{type === "highlighter" ? (
-			<ColorHighlightPopoverContent />
-		) : (
-			<LinkContent />
-		)}
+		{type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
 	</>
 );
 
@@ -172,9 +155,7 @@ export const Editor = React.forwardRef(function Editor(
 ) {
 	const isMobile = useIsMobile();
 	const windowSize = useWindowSize();
-	const [mobileView, setMobileView] = React.useState<
-		"main" | "highlighter" | "link"
-	>("main");
+	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({

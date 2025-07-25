@@ -687,10 +687,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							return true;
 						}
 						case WizardStep.KNOWLEDGE_BASE: {
-							return (
-								!!application.rag_sources.length &&
-								application.rag_sources.every((source) => source.status !== "FAILED")
-							);
+							return !!application.rag_sources.length;
 						}
 						case WizardStep.RESEARCH_DEEP_DIVE: {
 							const formInputs = application.form_inputs;

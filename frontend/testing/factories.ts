@@ -149,6 +149,23 @@ export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 	team_excellence: factory.lorem.paragraph(),
 }));
 
+export const EmptyFormInputsFactory = {
+	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
+		const defaults: FormInputs = {
+			background_context: "",
+			hypothesis: "",
+			impact: "",
+			novelty_and_innovation: "",
+			preliminary_data: "",
+			rationale: "",
+			research_feasibility: "",
+			scientific_infrastructure: "",
+			team_excellence: "",
+		};
+		return { ...defaults, ...overrides };
+	},
+};
+
 type GrantSectionBase = Extract<
 	GrantSections[0],
 	{ id: string; order: number; parent_id: null | string; title: string }
