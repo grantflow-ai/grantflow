@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import * as notificationActions from "@/actions/notifications";
 
-// Mock all notification actions
 vi.mock("@/actions/notifications");
 
 describe("Notifications API Actions", () => {

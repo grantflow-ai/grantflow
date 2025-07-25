@@ -34,31 +34,24 @@ import { useWizardStore } from "@/stores/wizard-store";
  * ```
  */
 export function resetAllStores(): void {
-	// Reset stores with built-in reset functions
 	useApplicationStore.getState().reset();
 	useNavigationStore.getState().reset();
 	useProjectStore.getState().reset();
 	useWizardStore.getState().reset();
 
-	// Reset stores with specific clear functions
 	useNotificationStore.getState().clearAllNotifications();
 	useUserStore.getState().clearUser();
 
-	// Reset organization store - handle both real and mocked versions
 	try {
 		useOrganizationStore.getState().clearOrganization();
-	} catch {
-		// Fallback for mocked store that might not have clearOrganization function
-	}
+	} catch {}
 
-	// Manually reset organization store state to ensure clean state
 	useOrganizationStore.setState({
 		organization: null,
 		organizations: [],
 		selectedOrganizationId: null,
 	});
 
-	// Clear persisted data from localStorage to prevent state leakage between tests
 	clearPersistedStoreData();
 }
 
@@ -85,9 +78,7 @@ export function resetStore(
 		case "organization": {
 			try {
 				useOrganizationStore.getState().clearOrganization();
-			} catch {
-				// Fallback for mocked store that might not have clearOrganization function
-			}
+			} catch {}
 			useOrganizationStore.setState({
 				organization: null,
 				organizations: [],
@@ -125,8 +116,6 @@ function clearPersistedStoreData(): void {
 	persistedStoreKeys.forEach((key) => {
 		try {
 			localStorage.removeItem(key);
-		} catch {
-			// Ignore localStorage errors in test environments that don't support it
-		}
+		} catch {}
 	});
 }

@@ -28,7 +28,6 @@ interface ProgressBarStepProps {
 export function ProgressBar({ currentStep }: ProgressBarProps) {
 	return (
 		<figure className="flex flex-col items-center justify-center gap-4">
-			{}
 			<main className="flex items-center">
 				{PROGRESS_BAR_STEPS.map((_, index) => (
 					<ProgressBarStep
@@ -40,7 +39,6 @@ export function ProgressBar({ currentStep }: ProgressBarProps) {
 				))}
 			</main>
 
-			{}
 			<main className="flex w-[839px] items-center justify-between">
 				{PROGRESS_BAR_STEPS.map((label, index) => (
 					<ProgressBarLabel currentStep={currentStep} index={index} key={index} label={label} />
@@ -172,7 +170,6 @@ function ProgressBarStep({ currentStep, index, isLast }: ProgressBarStepProps) {
 				<AnimatePresence mode="wait">{renderStepIndicator()}</AnimatePresence>
 			</motion.div>
 
-			{}
 			{!isLast && <ProgressBarLine currentStep={currentStep} index={index} />}
 		</div>
 	);

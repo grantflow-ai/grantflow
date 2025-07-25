@@ -6,7 +6,7 @@ export interface JWTClaims {
 	jti: string;
 	organization_id?: string;
 	role?: UserRole;
-	sub: string; // Firebase UID
+	sub: string;
 }
 
 export function decodeJWT(token: string): JWTClaims | null {
@@ -16,12 +16,10 @@ export function decodeJWT(token: string): JWTClaims | null {
 			return null;
 		}
 
-		// Decode the payload (second part)
 		const [, payload] = parts;
 		const decoded = atob(payload.replaceAll("-", "+").replaceAll("_", "/"));
 		return JSON.parse(decoded) as JWTClaims;
 	} catch {
-		// Silently fail - JWT decoding errors are expected for invalid tokens
 		return null;
 	}
 }

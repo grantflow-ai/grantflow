@@ -1,7 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, vi } from "vitest";
 
-// Simplified mock for Radix UI dropdown components
 vi.mock("@/components/ui/dropdown-menu", () => {
 	const MockComponent = ({ children, ...props }: any) => <div {...props}>{children}</div>;
 

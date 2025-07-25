@@ -30,11 +30,11 @@ export function ResearchPlanStep() {
 	const handleSaveObjective = (data: ObjectiveFormData) => {
 		const objective = {
 			description: data.description,
-			number: objectives.length + 1, // This will be overridden by addObjective, but required by type
+			number: objectives.length + 1,
 			research_tasks: data.tasks.map((task, index) => ({
 				description: task.description,
 				number: index + 1,
-				title: "", // Required by the task type but not used in our form
+				title: "",
 			})),
 			title: data.name,
 		};
