@@ -4,7 +4,6 @@ import * as organizationActions from "@/actions/organization";
 import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 
-// Mock all organization actions
 vi.mock("@/actions/organization");
 
 describe("Organization API Actions", () => {

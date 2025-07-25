@@ -19,8 +19,8 @@ describe.sequential("IconButton", () => {
 
 		const button = container.querySelector('[data-testid="icon-button"]');
 		expect(button).toBeInTheDocument();
-		expect(button).toHaveClass("size-8"); // default md size
-		expect(button).toHaveClass("bg-primary"); // default solid variant
+		expect(button).toHaveClass("size-8");
+		expect(button).toHaveClass("bg-primary");
 	});
 
 	it("renders with custom className", () => {
@@ -167,7 +167,7 @@ describe.sequential("IconButton", () => {
 			const link = container.querySelector('[data-testid="icon-button-as-child"]');
 			expect(link).toBeInTheDocument();
 			expect(link).toHaveAttribute("href", "/test");
-			expect(link).toHaveClass("size-8"); // IconButton classes applied
+			expect(link).toHaveClass("size-8");
 		});
 
 		it("renders as button when asChild is false", () => {

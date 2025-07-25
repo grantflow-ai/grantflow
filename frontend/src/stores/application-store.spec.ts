@@ -78,15 +78,12 @@ vi.mock("@/stores/organization-store", () => ({
 
 describe("Application Store", () => {
 	beforeEach(() => {
-		// Reset all stores to ensure test isolation
 		resetAllStores();
 		setupAuthenticatedTest();
 
-		// Clear all mocks completely
 		vi.clearAllMocks();
 		vi.resetAllMocks();
 
-		// Reset all mocks to their default implementations
 		vi.mocked(updateApplication).mockReset();
 		vi.mocked(getApplication).mockReset();
 		vi.mocked(updateGrantTemplate).mockReset();
@@ -110,13 +107,11 @@ describe("Application Store", () => {
 				title: "Old Title",
 			} as const;
 
-			// Create updated application with new title - should match the API response type
 			const updatedApplication = {
 				...application,
 				title: "New Title",
 			};
 
-			// Mock the imported function - need to handle the organization parameter
 			vi.mocked(updateApplication).mockResolvedValue(updatedApplication);
 
 			useApplicationStore.setState({ application });
@@ -129,14 +124,12 @@ describe("Application Store", () => {
 				title: "New Title",
 			});
 
-			// Immediately check state after the async operation
 			const finalState = useApplicationStore.getState();
 			expect(finalState.application?.title).toBe("New Title");
 			expect(finalState.application?.id).toBe("app-id-1");
 		});
 
 		it("should rollback on API error", async () => {
-			// Create a specific application with a known title
 			const application = {
 				...ApplicationFactory.build(),
 				id: "app-id-2",
@@ -180,7 +173,6 @@ describe("Application Store", () => {
 		it("should update application", () => {
 			const application = ApplicationFactory.build({ title: "Test App" });
 
-			// Clear any existing application first
 			useApplicationStore.setState({ application: null });
 
 			const { setApplication } = useApplicationStore.getState();
@@ -194,7 +186,6 @@ describe("Application Store", () => {
 
 	describe.sequential("updateGrantSections", () => {
 		it("should update grant template sections", async () => {
-			// Reset store state explicitly
 			useApplicationStore.getState().reset();
 			const sections = [
 				GrantSectionDetailedFactory.build({
@@ -244,9 +235,8 @@ describe("Application Store", () => {
 		});
 
 		it("should handle missing grant template gracefully", async () => {
-			// Reset store state explicitly
 			useApplicationStore.getState().reset();
-			// Create an application without grant_template
+
 			const application: API.RetrieveApplication.Http200.ResponseBody = {
 				completed_at: undefined,
 				created_at: "2023-01-01T00:00:00Z",
@@ -264,7 +254,6 @@ describe("Application Store", () => {
 				updated_at: "2023-01-01T00:00:00Z",
 			};
 
-			// Reset the mock before the test to ensure clean state
 			vi.mocked(updateGrantTemplate).mockClear();
 
 			useApplicationStore.setState({ application });
@@ -297,7 +286,6 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
-			// Mock the required functions
 			const { createTemplateSourceUploadUrl } = await import("@/actions/sources");
 			const { extractObjectPathFromUrl, triggerDevIndexing } = await import("@/utils/dev-indexing-patch");
 
@@ -327,7 +315,6 @@ describe("Application Store", () => {
 			Object.assign(file, { id: "test.pdf" });
 			const application = ApplicationWithTemplateFactory.build();
 
-			// Set up the mock implementations using the already mocked modules
 			vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
 				source_id: "source-123",
 				url: "https://upload.url",
@@ -345,7 +332,6 @@ describe("Application Store", () => {
 				await addFile(file as any, application.grant_template.id);
 			}
 
-			// Check that createTemplateSourceUploadUrl was called
 			expect(createTemplateSourceUploadUrl).toHaveBeenCalled();
 		});
 
@@ -421,7 +407,6 @@ describe("Application Store", () => {
 	describe("RAG job restoration", () => {
 		describe.sequential("checkAndRestoreJobState", () => {
 			it("should not restore when application is null", async () => {
-				// Ensure application is null
 				useApplicationStore.setState({ application: null });
 
 				const { checkAndRestoreJobState } = useApplicationStore.getState();
@@ -434,11 +419,10 @@ describe("Application Store", () => {
 			});
 
 			it("should not restore when no rag_job_id exists", async () => {
-				// Clear the mock before this test
 				vi.mocked(retrieveRagJob).mockClear();
 
 				const application = ApplicationFactory.build();
-				// Explicitly set both rag_job_id fields to undefined
+
 				application.rag_job_id = undefined;
 				application.grant_template = undefined;
 
@@ -454,7 +438,6 @@ describe("Application Store", () => {
 			});
 
 			it("should restore PROCESSING job state", async () => {
-				// Reset store state explicitly
 				useApplicationStore.getState().reset();
 				const application = ApplicationFactory.build({
 					project_id: "project-id",

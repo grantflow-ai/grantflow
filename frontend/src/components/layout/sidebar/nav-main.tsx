@@ -84,7 +84,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 
 	const handleSettingsClick = (e: React.MouseEvent, href: string) => {
 		e.preventDefault();
-		// Settings pages don't require project context
+
 		router.push(href);
 	};
 
@@ -104,11 +104,9 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 
 	return (
 		<SidebarMenu {...props} className="flex flex-col gap-8 group-data-[collapsible=icon]:gap-6">
-			{/* Dashboard */}
 			<SidebarMenuItem className="">
 				<SidebarMenuButton asChild className="text-primary" data-testid="dashboard-button" tooltip="Dashboard">
 					<Link className="flex items-center gap-2" href={routes.organization.project.detail()}>
-						{/* <LayoutDashboard className={`size-4 shrink-0 ${isProjectsActive ? "text-primary" : ""}`} /> */}
 						<Image
 							alt="Dashboard"
 							className={` shrink-0 ${isProjectsActive ? "text-primary" : ""}`}
@@ -132,7 +130,6 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 							onClick={handleExpandSidebar}
 							tooltip="Recent Applications"
 						>
-							{/* <Clock className="size-4 shrink-0" /> */}
 							<Image
 								alt="Recent Applications"
 								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
@@ -208,29 +205,12 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 									</div>
 								</SidebarMenuSubItem>
 							)}
-
-							{/* // <SidebarMenuSubItem>
-							// 	<div className="px-3 py-2 text-sm text-app-gray-600" data-testid="recent-app-item">
-							// 		No recent applications
-							// 	</div>
-							// </SidebarMenuSubItem>
-							// <SidebarMenuSubItem>
-							// <main>
-							// 	<div className="bg-primary w-fit px-1 py-0.5 flex items-center gap-0.5">
-							// 		<div></div>
-							// 		<p className="text-[7px] text-white font-normal" >Generating</p>
-							// 	</div>
-							// 	<h3 className="text-sm font-normal leading-5 tracking-tighter">
-							// 		Application name 123456...
-							// 	</h3>
-							// </main>
-							// </SidebarMenuSubItem> */}
 						</SidebarMenuSub>
 					</CollapsibleContent>
 				</SidebarMenuItem>
 			</Collapsible>
 
-			{/* Settings */}
+			{}
 			<Collapsible className="group/collapsible">
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>

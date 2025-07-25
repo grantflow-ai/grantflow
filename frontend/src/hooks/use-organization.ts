@@ -13,13 +13,12 @@ export function useOrganization() {
 
 	const switchOrganization = (organizationId: string) => {
 		setCookie(SELECTED_ORGANIZATION_COOKIE, organizationId, {
-			maxAge: 60 * 60 * 24 * 30, // 30 days
+			maxAge: 60 * 60 * 24 * 30,
 			path: "/",
 			sameSite: "strict",
 			secure: process.env.NODE_ENV === "production",
 		});
 
-		// Refresh the page to update all API calls with new organization
 		router.refresh();
 	};
 

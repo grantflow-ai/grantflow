@@ -51,7 +51,6 @@ describe("ApplicationStructureStep", () => {
 	it("shows empty state when no application", () => {
 		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
-		// Component renders with left pane when no application
 		expect(screen.getByTestId("application-structure-left-pane-content")).toBeInTheDocument();
 		expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
 	});

@@ -37,11 +37,10 @@ export function EditPermissionModal({
 	const [projectAccess, setProjectAccess] = useState("all");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Reset state when member changes
 	useEffect(() => {
 		if (member) {
 			setSelectedRole(member.role);
-			// Set project access based on member's current access
+
 			setProjectAccess((member.hasAllProjectsAccess ?? true) ? "all" : "specific");
 		}
 	}, [member]);
@@ -51,7 +50,6 @@ export function EditPermissionModal({
 
 		setIsSubmitting(true);
 		try {
-			// Admin and Owner always have all projects access
 			const hasAllProjectsAccess = selectedRole !== UserRole.COLLABORATOR || projectAccess === "all";
 
 			onUpdateRole(member.firebaseUid, selectedRole, hasAllProjectsAccess);
@@ -62,7 +60,6 @@ export function EditPermissionModal({
 	};
 
 	const handleClose = () => {
-		// Reset to original values
 		if (member) {
 			setSelectedRole(member.role);
 			setProjectAccess((member.hasAllProjectsAccess ?? true) ? "all" : "specific");
@@ -77,14 +74,11 @@ export function EditPermissionModal({
 	};
 
 	const canChangeRole = (targetRole: UserRole) => {
-		// Owners can change anyone to any role
-		// Admins can only change to COLLABORATOR or ADMIN, not OWNER
 		return (
 			currentUserRole === UserRole.OWNER || (currentUserRole === UserRole.ADMIN && targetRole !== UserRole.OWNER)
 		);
 	};
 
-	// Show all tags for OWNER and ADMIN roles
 	const showAllTag = selectedRole === UserRole.OWNER || selectedRole === UserRole.ADMIN;
 
 	if (!member) return null;
@@ -96,7 +90,7 @@ export function EditPermissionModal({
 				data-testid="edit-permission-modal"
 			>
 				<div className="p-8 flex flex-col gap-8">
-					{/* Header */}
+					{}
 					<div className="flex flex-col gap-2">
 						<div className="flex items-start justify-between">
 							<div className="flex flex-col gap-1">
@@ -117,9 +111,9 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{/* Form Fields */}
+					{}
 					<div className="flex flex-col gap-6">
-						{/* Name Field - Read only */}
+						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-name">
 								Name
@@ -134,7 +128,7 @@ export function EditPermissionModal({
 							/>
 						</div>
 
-						{/* Email Field - Read only */}
+						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-email">
 								Email address
@@ -152,7 +146,7 @@ export function EditPermissionModal({
 							</div>
 						</div>
 
-						{/* Permission Field */}
+						{}
 						<div className="flex flex-col gap-1">
 							<label className="font-body text-[12px] text-app-gray-400" htmlFor="member-permission">
 								Permission
@@ -200,9 +194,9 @@ export function EditPermissionModal({
 							</Select>
 						</div>
 
-						{/* Research Projects Access Section */}
+						{}
 						<div className="flex flex-col gap-2">
-							{/* All Tag - Only show for OWNER and ADMIN */}
+							{}
 							{showAllTag && (
 								<div className="flex flex-row gap-1 items-start justify-start w-[180px]">
 									<div className="bg-primary flex flex-row gap-1 items-center justify-start px-2 py-0 rounded-[20px]">
@@ -212,7 +206,7 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{/* Research Projects Access Dropdown - Only for Collaborators */}
+							{}
 							{selectedRole === UserRole.COLLABORATOR && (
 								<div className="flex flex-col gap-1">
 									<label className="font-body text-[12px] text-app-gray-400" htmlFor="project-access">
@@ -245,7 +239,7 @@ export function EditPermissionModal({
 								</div>
 							)}
 
-							{/* Warning Message */}
+							{}
 							<div className="flex items-start gap-2 p-3 bg-[#faf6ec] border border-[#ffdf77] rounded">
 								<div className="size-4 bg-warning rounded-full flex-shrink-0 mt-0.5" />
 								<p className="font-body text-[14px] text-app-black">
@@ -256,7 +250,7 @@ export function EditPermissionModal({
 						</div>
 					</div>
 
-					{/* Footer Buttons */}
+					{}
 					<div className="flex items-center justify-between">
 						<button
 							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-app-gray-50 transition-colors"

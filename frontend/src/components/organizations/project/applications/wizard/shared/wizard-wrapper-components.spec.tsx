@@ -48,7 +48,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 		useWizardStore.getState().reset();
 		useApplicationStore.getState().reset();
 
-		// Simple application setup - component doesn't need detailed application state
 		const application = ApplicationFactory.build({
 			title: "Test Application Title",
 		});
@@ -90,7 +89,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			});
 			render(<WizardFooter />);
 
-			// Use getAllByTestId to handle multiple renders (possibly due to StrictMode)
 			const continueButtons = screen.getAllByTestId("continue-button");
 			expect(continueButtons[0]).toHaveTextContent("Approve and Continue");
 		});
@@ -118,7 +116,6 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 
 	describe.sequential("Button State Management", () => {
 		it("disables continue button when step validation fails", () => {
-			// Mock validateStepNext to return false
 			const mockValidateStepNext = vi.fn(() => false);
 
 			useWizardStore.setState({

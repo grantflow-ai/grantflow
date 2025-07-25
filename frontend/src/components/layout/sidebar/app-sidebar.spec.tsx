@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { SidebarProvider } from "@/components/ui/sidebar"; // adjust path if needed
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 
 describe.sequential("AppSidebar", () => {

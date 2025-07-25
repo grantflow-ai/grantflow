@@ -18,7 +18,6 @@ export function useNavigationContext(options: UseNavigationContextOptions = {}) 
 	const { redirectTo = routes.organization.root(), requireApplication = false, requireProject = false } = options;
 
 	useEffect(() => {
-		// Check if required context is missing
 		if (requireProject && !activeProjectId) {
 			router.replace(redirectTo);
 		}

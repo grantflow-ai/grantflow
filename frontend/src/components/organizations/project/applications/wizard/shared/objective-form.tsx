@@ -80,7 +80,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			tasks: prev.tasks.filter((task) => task.id !== taskId),
 		}));
 
-		// Clear task errors for removed task
 		if (errors.tasks?.[taskId]) {
 			setErrors((prev) => {
 				const newTasks = { ...prev.tasks };
