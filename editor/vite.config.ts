@@ -1,57 +1,40 @@
-/// <reference types="vitest/config" />
-
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { libInjectCss } from "vite-plugin-lib-inject-css";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-// https://vite.dev/config/
 export default defineConfig({
 	build: {
 		copyPublicDir: false,
-		emptyOutDir: false,
+		emptyOutDir: true,
 		lib: {
-			entry: {
-				index: resolve(__dirname, "src/index.ts"),
-			},
-			fileName: (_format, entryName) => `${entryName}.js`,
+			entry: resolve(__dirname, "src/index.ts"),
+			name: "GrantFlowEditor",
+			fileName: (format) => `index.${format}.js`,
 			formats: ["es"],
 		},
 		outDir: "dist",
 		rollupOptions: {
-			external: [
-				"react",
-				"react-dom",
-				"react/jsx-runtime",
-				"@tiptap/react",
-				"@tiptap/core",
-				"@tiptap/pm",
-				"@tiptap/starter-kit",
-				"@tiptap/extension-highlight",
-				"@tiptap/extension-horizontal-rule",
-				"@tiptap/extension-image",
-				"@tiptap/extension-link",
-				"@tiptap/extension-list",
-				"@tiptap/extension-subscript",
-				"@tiptap/extension-superscript",
-				"@tiptap/extension-task-item",
-				"@tiptap/extension-task-list",
-				"@tiptap/extension-text-align",
-				"@tiptap/extension-typography",
-				"@tiptap/extension-underline",
-				"@tiptap/extensions",
-			],
+			external: ["react", "react-dom", "react/jsx-runtime"],
 			output: {
 				preserveModules: false,
+				exports: "named",
+				globals: {
+					react: "React",
+					"react-dom": "ReactDOM",
+					"react/jsx-runtime": "react/jsx-runtime",
+				},
+				assetFileNames: "assets/[name][extname]",
 			},
 		},
 		sourcemap: true,
-		target: "es2020",
 	},
 	plugins: [
 		react(),
 		tsconfigPaths(),
+		libInjectCss(),
 		dts({
 			insertTypesEntry: true,
 			rollupTypes: true,
@@ -59,7 +42,6 @@ export default defineConfig({
 	],
 	server: {
 		fs: {
-			// Allow serving files from one level up to the project root
 			allow: [".."],
 		},
 	},
