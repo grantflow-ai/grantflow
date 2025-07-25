@@ -3,7 +3,7 @@ import { Editor } from "@/editor";
 function App() {
 	return (
 		<div className="prose prose-sm">
-			<Editor />
+			<Editor content="hello grantflow" />
 		</div>
 	);
 }

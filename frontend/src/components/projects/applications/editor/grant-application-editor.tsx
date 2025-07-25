@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Editor } from "@/components/editor/editor";
+import { Editor } from "@grantflow/editor";
 import type { API } from "@/types/api-types";
 
 interface GrantApplicationEditorProps {
@@ -9,16 +8,10 @@ interface GrantApplicationEditorProps {
 }
 
 export function GrantApplicationEditor({ application }: GrantApplicationEditorProps) {
-	const [content, setContent] = useState(application.text);
-
-	const handleContentUpdate = useCallback((newContent: string) => {
-		setContent(newContent);
-	}, []);
-
 	return (
-		<div className="container mx-auto max-w-6xl p-6" data-testid="grant-application-editor">
-			<div className="prose prose-sm max-w-none">
-				<Editor content={content} onContentUpdate={handleContentUpdate} />
+		<div className="container mx-auto max-w-6xl pt-3" data-testid="grant-application-editor">
+			<div className="prose prose-sm max-w-none h-full">
+				<Editor content={application.text} />
 			</div>
 		</div>
 	);
