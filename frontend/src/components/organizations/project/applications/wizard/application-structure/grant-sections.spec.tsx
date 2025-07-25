@@ -282,14 +282,11 @@ describe("SortableSection", () => {
 	it("applies dragging styles when isDragging is true", async () => {
 		const section = GrantSectionFactory.build();
 
-		// Get the mocked function from the module
 		const { useSortable } = await import("@dnd-kit/sortable");
 		const mockUseSortable = vi.mocked(useSortable);
 
-		// Clear any previous calls
 		mockUseSortable.mockClear();
 
-		// Override the mock to return isDragging: true for this test
 		mockUseSortable.mockReturnValue({
 			attributes: {},
 			isDragging: true,
@@ -304,7 +301,6 @@ describe("SortableSection", () => {
 		const container = screen.getByTestId("section-container");
 		expect(container).toHaveClass("bg-app-gray-500");
 
-		// Restore the original mock
 		mockUseSortable.mockReturnValue({
 			attributes: {},
 			isDragging: false,

@@ -37,28 +37,24 @@ export function ProjectDetailClient() {
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const titleInputRef = useRef<HTMLInputElement>(null);
 
-	// Focus title input when editing
 	useEffect(() => {
 		if (isEditingTitle && titleInputRef.current) {
 			titleInputRef.current.focus();
 		}
 	}, [isEditingTitle]);
 
-	// Redirect if no project
 	useEffect(() => {
 		if (!project) {
 			router.replace(routes.organization.root());
 		}
 	}, [project, router]);
 
-	// Update title when project changes
 	useEffect(() => {
 		if (project?.name) {
 			setProjectTitle(project.name);
 		}
 	}, [project?.name]);
 
-	// Fetch applications using SWR
 	const { data: applicationsData, isLoading } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`
@@ -72,7 +68,6 @@ export function ProjectDetailClient() {
 		},
 	);
 
-	// Fetch project members using SWR
 	const { data: projectMembers } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/members`
@@ -85,11 +80,9 @@ export function ProjectDetailClient() {
 
 	const applications = applicationsData?.applications ?? [];
 
-	// Generate team members from project members (same logic as dashboard)
 	const projectTeamMembers =
 		projectMembers?.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>(
 			(acc, member) => {
-				// Avoid duplicates by checking if user already exists (by firebase_uid)
 				const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
 				if (!existingMember) {
 					acc.push({
@@ -136,7 +129,7 @@ export function ProjectDetailClient() {
 			);
 			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
 			toast.success("Application duplicated successfully");
-			// Navigate to the duplicated application
+
 			navigateToApplication(project.id, project.name, duplicatedApp.id, duplicatedApp.title || newTitle);
 			const wizardPath = routes.organization.project.application.wizard();
 			router.push(wizardPath);
@@ -154,7 +147,7 @@ export function ProjectDetailClient() {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
 			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
-			// Set navigation context
+
 			navigateToApplication(
 				project.id,
 				project.name,
@@ -172,14 +165,14 @@ export function ProjectDetailClient() {
 
 	const handleOpenApplication = (applicationId: string, applicationTitle: string) => {
 		if (!project) return;
-		// Set navigation context
+
 		navigateToApplication(project.id, project.name, applicationId, applicationTitle);
 		const wizardPath = routes.organization.project.application.wizard();
 		router.push(wizardPath);
 	};
 
 	if (!project) {
-		return null; // Will redirect via useEffect
+		return null;
 	}
 
 	return (
@@ -191,12 +184,11 @@ export function ProjectDetailClient() {
 					className="mx-6 mb-6 px-10 relative flex flex-col gap-6 py-6 rounded-lg bg-white border border-app-gray-100 flex-1 min-h-0"
 					data-testid="project-header"
 				>
-					{/* Inline header content matching Figma design */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
 								<input
-									className="font-medium text-[36px] leading-[42px] text-app-black bg-app-gray-100 outline-none rounded-md px-2 min-w-[200px]"
+									className="font-medium text-2xl leading-[42px]  text-app-black bg-white border border-primary outline-none rounded-md px-2 min-w-[400px]"
 									onBlur={() => {
 										setIsEditingTitle(false);
 									}}

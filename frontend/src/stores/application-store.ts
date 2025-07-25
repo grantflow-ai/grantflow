@@ -216,7 +216,7 @@ const uploadFileInDevelopment = async (
 
 	log.info("[file-upload] Upload URL created", {
 		fileName: file.name,
-		url: `${url.slice(0, 100)}...`, // Log first 100 chars for debugging
+		url: `${url.slice(0, 100)}...`,
 	});
 
 	const { extractObjectPathFromUrl } = await import("@/utils/dev-indexing-patch");
@@ -292,7 +292,7 @@ const uploadFileInProduction = async (
 
 	log.info("[file-upload] Upload URL created", {
 		fileName: file.name,
-		url: `${url.slice(0, 100)}...`, // Log first 100 chars for debugging
+		url: `${url.slice(0, 100)}...`,
 	});
 
 	log.info("[file-upload] Uploading to production GCS", {

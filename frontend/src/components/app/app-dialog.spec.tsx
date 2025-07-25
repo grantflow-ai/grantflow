@@ -291,7 +291,7 @@ describe.sequential("ConfirmDialog", () => {
 		const { container } = render(<ConfirmDialog {...defaultProps} />);
 
 		expect(container.querySelector('[data-testid="dialog-description"]')).not.toBeInTheDocument();
-		// Verify that the dialog content itself is rendered
+
 		expect(container.querySelector('[data-testid="confirm-dialog"]')).toBeInTheDocument();
 	});
 });

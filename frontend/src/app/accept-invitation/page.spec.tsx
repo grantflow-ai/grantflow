@@ -6,7 +6,6 @@ import { acceptInvitation } from "@/actions/project";
 import { useUserStore } from "@/stores/user-store";
 import AcceptInvitationPage from "./page";
 
-// Mock dependencies
 vi.mock("next/navigation");
 vi.mock("@/actions/project");
 vi.mock("@/stores/user-store");
@@ -71,12 +70,10 @@ describe.sequential("AcceptInvitationPage", () => {
 	});
 
 	it("should process invitation and redirect to project on success", async () => {
-		// Mock JWT token with invitation_id
 		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-123" }));
 		const fullToken = `header.${mockToken}.signature`;
 		mockGet.mockReturnValue(fullToken);
 
-		// Mock successful invitation acceptance
 		const mockResultToken = btoa(JSON.stringify({ project_id: "proj-456" }));
 		const fullResultToken = `header.${mockResultToken}.signature`;
 		(acceptInvitation as any).mockResolvedValue({
@@ -85,7 +82,6 @@ describe.sequential("AcceptInvitationPage", () => {
 
 		render(<AcceptInvitationPage />);
 
-		// Wait for async operations
 		await vi.waitFor(() => {
 			expect(acceptInvitation).toHaveBeenCalledWith("inv-123");
 		});
@@ -110,7 +106,7 @@ describe.sequential("AcceptInvitationPage", () => {
 	});
 
 	it("should handle invalid token format", async () => {
-		const mockToken = btoa(JSON.stringify({})); // Missing invitation_id
+		const mockToken = btoa(JSON.stringify({}));
 		const fullToken = `header.${mockToken}.signature`;
 		mockGet.mockReturnValue(fullToken);
 

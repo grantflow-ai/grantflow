@@ -221,7 +221,7 @@ describe.sequential("DragDropSectionManager", () => {
 			render(<DragDropSectionManager {...defaultProps} />);
 
 			const deleteButtons = screen.getAllByTestId("delete-section-button");
-			fireEvent.click(deleteButtons[0]); // This should be a main section
+			fireEvent.click(deleteButtons[0]);
 
 			expect(mockDialogRef.current.open).toHaveBeenCalled();
 			expect(mockUpdateGrantSections).not.toHaveBeenCalled();

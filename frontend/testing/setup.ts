@@ -1,5 +1,5 @@
 import "@testing-library/react";
-import "./ky-mock"; // Set up ky mock before other imports
+import "./ky-mock";
 
 import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers";
 import * as matchers from "@testing-library/jest-dom/matchers";
@@ -11,7 +11,6 @@ declare module "vitest" {
 
 expect.extend(matchers);
 
-// Mock Radix UI Select components to work in JSDOM
 vi.mock("@/components/ui/select", async () => {
 	const mocks = await import("./radix-ui-mocks");
 	return {
@@ -23,7 +22,6 @@ vi.mock("@/components/ui/select", async () => {
 	};
 });
 
-// Mock Radix UI DropdownMenu components to work in JSDOM
 vi.mock("@/components/ui/dropdown-menu", async () => {
 	const mocks = await import("./radix-ui-mocks");
 	return {
@@ -48,12 +46,10 @@ beforeAll(() => {
 	// @ts-ignore
 	globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 
-	// Mock pointer capture methods
 	HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
 	HTMLElement.prototype.setPointerCapture = vi.fn();
 	HTMLElement.prototype.releasePointerCapture = vi.fn();
 
-	// Mock window.location.reload
 	const originalLocation = globalThis.location;
 	Object.defineProperty(globalThis, "location", {
 		configurable: true,
@@ -63,23 +59,19 @@ beforeAll(() => {
 		writable: true,
 	});
 
-	// Mock scrollIntoView
 	HTMLElement.prototype.scrollIntoView = vi.fn();
 
-	// Mock ResizeObserver for floating-ui compatibility
 	globalThis.ResizeObserver = class ResizeObserver {
 		disconnect = vi.fn();
 		observe = vi.fn();
 		unobserve = vi.fn();
 	};
 
-	// Mock crypto.randomUUID for tracing - ensure crypto exists
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!globalThis.crypto) {
 		globalThis.crypto = {} as Crypto;
 	}
 
-	// Generate unique UUIDs for tests that match the expected hexadecimal format
 	let uuidCounter = 0;
 	globalThis.crypto.randomUUID = vi.fn((): `${string}-${string}-${string}-${string}-${string}` => {
 		const counter = (++uuidCounter).toString(16).padStart(12, "0");

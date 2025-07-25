@@ -8,12 +8,10 @@ import { useApplicationStore } from "@/stores/application-store";
 
 import { useWizardStore } from "./wizard-store";
 
-// Mock the triggerAutofill action
 vi.mock("@/actions/grant-applications", () => ({
 	triggerAutofill: vi.fn(),
 }));
 
-// Mock sonner for toast notifications
 vi.mock("sonner", () => ({
 	toast: {
 		error: vi.fn(),
@@ -22,7 +20,6 @@ vi.mock("sonner", () => ({
 	},
 }));
 
-// Mock organization store
 vi.mock("@/stores/organization-store", () => ({
 	useOrganizationStore: {
 		getState: vi.fn(() => ({
@@ -107,7 +104,7 @@ describe.sequential("wizard store", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					id: "template-id",
-					rag_sources: [], // Ensure no RAG sources to trigger template generation
+					rag_sources: [],
 				}),
 			});
 

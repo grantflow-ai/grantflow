@@ -28,11 +28,9 @@ export function OrganizationSettingsGeneral({
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	// Only OWNER can edit, ADMIN and COLLABORATOR have read-only access
 	const canEdit = userRole === UserRole.OWNER;
 	const isReadOnly = !canEdit;
 
-	// Update form values when organization data changes
 	useEffect(() => {
 		if (organization) {
 			setOrganizationName(organization.name);
@@ -48,13 +46,11 @@ export function OrganizationSettingsGeneral({
 		const file = event.target.files?.[0];
 		if (!file) return;
 
-		// Validate file type
 		if (!file.type.startsWith("image/")) {
 			toast.error("Please select an image file (PNG, JPG, or JPEG)");
 			return;
 		}
 
-		// Validate file size (10MB limit)
 		if (file.size > 10 * 1024 * 1024) {
 			toast.error("Please select an image under 10MB");
 			return;
@@ -69,7 +65,7 @@ export function OrganizationSettingsGeneral({
 			toast.error("Failed to upload logo");
 		} finally {
 			setIsUploading(false);
-			// Reset file input
+
 			if (fileInputRef.current) {
 				fileInputRef.current.value = "";
 			}
@@ -100,7 +96,6 @@ export function OrganizationSettingsGeneral({
 
 	return (
 		<div className="flex flex-col gap-10 max-w-[655px]" data-testid="organization-settings-general">
-			{/* General Information Section */}
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-2">
 					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
@@ -109,7 +104,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 
 				<div className="flex flex-col gap-3 px-6">
-					{/* Logo Upload */}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Logo</h3>
 						<div className="flex flex-col gap-3">
@@ -147,7 +141,6 @@ export function OrganizationSettingsGeneral({
 						</div>
 					</div>
 
-					{/* Organization Name */}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Organisation Name
@@ -169,7 +162,6 @@ export function OrganizationSettingsGeneral({
 						/>
 					</div>
 
-					{/* Institution or Affiliation */}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Institution or Affiliation
@@ -193,7 +185,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			</div>
 
-			{/* Primary Contact Section */}
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-2">
 					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
@@ -202,7 +193,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 
 				<div className="flex flex-col gap-3 px-6">
-					{/* Contact Person Name */}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Contact Person Name
@@ -224,7 +214,6 @@ export function OrganizationSettingsGeneral({
 						/>
 					</div>
 
-					{/* Email address */}
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Email address
@@ -271,7 +260,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			</div>
 
-			{/* Danger Zone - Only visible to owners */}
 			{userRole === UserRole.OWNER && (
 				<div className="border border-error rounded p-6">
 					<div className="flex flex-col gap-6">
@@ -302,7 +290,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			)}
 
-			{/* Save Button - Only visible to owners */}
 			{canEdit && (
 				<div className="flex justify-end">
 					<button
@@ -317,7 +304,6 @@ export function OrganizationSettingsGeneral({
 				</div>
 			)}
 
-			{/* Delete Organization Modal */}
 			{organization && (
 				<DeleteOrganizationModal
 					isOpen={showDeleteModal}

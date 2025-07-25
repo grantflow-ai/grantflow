@@ -40,7 +40,6 @@ export function NavigationContextProvider({
 	const { setProject } = useProjectStore();
 	const { setApplication } = useApplicationStore();
 
-	// Helper function to load project
 	const loadProjectData = useCallback(async () => {
 		if (!(activeProjectId && selectedOrganizationId)) return false;
 		try {
@@ -53,7 +52,6 @@ export function NavigationContextProvider({
 		}
 	}, [activeProjectId, selectedOrganizationId, setProject, clearActiveProject]);
 
-	// Helper function to load application
 	const loadApplicationData = useCallback(async () => {
 		if (!(activeApplicationId && activeProjectId && selectedOrganizationId)) return false;
 		try {
@@ -67,7 +65,6 @@ export function NavigationContextProvider({
 	}, [activeApplicationId, activeProjectId, selectedOrganizationId, setApplication, clearActiveApplication]);
 
 	useEffect(() => {
-		// Skip if required context is missing
 		if (
 			!selectedOrganizationId ||
 			(requireProject && !activeProjectId) ||
@@ -81,14 +78,12 @@ export function NavigationContextProvider({
 			setIsLoading(true);
 			setError(null);
 
-			// Load project if needed
 			if (activeProjectId && !(await loadProjectData()) && requireProject) {
 				router.replace(redirectTo);
 				setIsLoading(false);
 				return;
 			}
 
-			// Load application if needed
 			if (activeApplicationId && !(await loadApplicationData()) && requireApplication) {
 				router.replace(redirectTo);
 				setIsLoading(false);
@@ -99,8 +94,6 @@ export function NavigationContextProvider({
 		};
 
 		void loadData();
-
-		// Cleanup function is not needed since we're not using isMounted anymore
 	}, [
 		activeProjectId,
 		activeApplicationId,

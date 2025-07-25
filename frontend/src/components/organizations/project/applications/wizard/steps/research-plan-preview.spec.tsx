@@ -9,13 +9,10 @@ import { useOrganizationStore } from "@/stores/organization-store";
 
 import { ResearchPlanPreview } from "./research-plan-preview";
 
-// Helper function to clean up portal elements rendered by Radix UI
 function cleanupPortals() {
-	// Remove all Radix portals from the document
 	const portals = document.querySelectorAll("[data-radix-portal]");
 	portals.forEach((portal) => portal.remove());
 
-	// Also remove any dropdown content that might be lingering
 	const dropdownContent = document.querySelectorAll('[data-slot="dropdown-menu-content"]');
 	dropdownContent.forEach((content) => content.remove());
 }
@@ -26,7 +23,6 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 		cleanupPortals();
 		setupAuthenticatedTest();
 
-		// Set up organization store with a selected organization for tests that need it
 		useOrganizationStore.setState({
 			selectedOrganizationId: "mock-organization-id",
 		});

@@ -18,7 +18,6 @@ describe.sequential("CustomSidebarTrigger", () => {
 		const trigger = container.querySelector('[data-testid="sidebar-trigger"]');
 		expect(trigger).toBeInTheDocument();
 
-		// optional: simulate a click to make sure it doesn't throw
 		fireEvent.click(trigger!);
 		expect(trigger).toBeInTheDocument();
 	});

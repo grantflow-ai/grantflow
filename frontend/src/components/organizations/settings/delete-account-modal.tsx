@@ -56,7 +56,6 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 
 			clearUser();
 
-			// Pass deletion details in the URL for the login page to display
 			const params = new URLSearchParams({
 				gracePeriod: result.grace_period_days.toString(),
 				message: "account-deleted",
@@ -67,7 +66,6 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 		} catch (error) {
 			log.error("DeleteAccountModal.handleDelete", error);
 
-			// Check if this is the ownership transfer error
 			if (
 				error &&
 				typeof error === "object" &&
@@ -77,7 +75,6 @@ export function DeleteAccountModal({ isOpen, onClose }: DeleteAccountModalProps)
 				"error" in error.extra &&
 				error.extra.error === "ownership_transfer_required"
 			) {
-				// Refresh the sole-owned projects list
 				await checkSoleOwnedProjects();
 			} else {
 				setError("Failed to delete account. Please try again.");
