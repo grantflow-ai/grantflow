@@ -38,6 +38,12 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
+            - name: Setup Task
+              uses: ./.github/actions/setup-task
+
+            - name: Generate cloud functions requirements
+              run: task cloud-functions:generate-requirements
+
             - name: OpenTofu Validate
               uses: dflook/tofu-validate@v2
               with:
