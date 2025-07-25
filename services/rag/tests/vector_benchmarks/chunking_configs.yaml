@@ -4,16 +4,6 @@
 # Add new configurations here without modifying test code.
 
 configurations:
-  # Your current 4 configurations
-  minilm_1000:
-    description: "MiniLM with small chunks"
-    chunking:
-      max_chars: 1000
-      overlap: 100
-    embedding:
-      model: "sentence-transformers/all-MiniLM-L12-v2"
-      dimension: 384
-    
   minilm_2000:
     description: "MiniLM with large chunks"
     chunking:
@@ -23,49 +13,29 @@ configurations:
       model: "sentence-transformers/all-MiniLM-L12-v2"
       dimension: 384
 
-  # scibert_2000:
-  #   description: "SciBERT with large chunks"
-  #   chunking:
-  #     max_chars: 2000
-  #     overlap: 200
-  #   embedding:
-  #     model: "allenai/scibert_scivocab_uncased"
-  #     dimension: 768
+  scibert_2000:
+    description: "SciBERT with large chunks"
+    chunking:
+      max_chars: 2000
+      overlap: 200
+    embedding:
+      model: "allenai/scibert_scivocab_uncased"
+      dimension: 768
     
-  # mpnet_2000:
-  #   description: "MPNet with large chunks"
-  #   chunking:
-  #     max_chars: 2000
-  #     overlap: 200
-  #   embedding:
-  #     model: "sentence-transformers/all-mpnet-base-v2"
-  #     dimension: 768
-
-  # Easy to add new configurations:
-  # 
-  # distilbert_1500:
-  #   description: "DistilBERT with medium chunks"
-  #   chunking:
-  #     max_chars: 1500
-  #     overlap: 150
-  #   embedding:
-  #     model: "sentence-transformers/distilbert-base-nli-mean-tokens"
-  #     dimension: 768
-  #
-  # openai_ada_3000:
-  #   description: "OpenAI Ada with extra large chunks"
-  #   chunking:
-  #     max_chars: 3000
-  #     overlap: 300
-  #   embedding:
-  #     model: "text-embedding-ada-002"
-  #     dimension: 1536
+  mpnet_2000:
+    description: "MPNet with large chunks"
+    chunking:
+      max_chars: 2000
+      overlap: 200
+    embedding:
+      model: "sentence-transformers/all-mpnet-base-v2"
+      dimension: 768
 
 # Test settings
 test_settings:
   scientific_query: "CAR-T cell therapy melanoma brain metastases CD8+ T cells immunosuppression"
   timeout: 900
-  query_count: 3
+  query_count: 5
   search_k: 10
   
 # Benchmark settings
