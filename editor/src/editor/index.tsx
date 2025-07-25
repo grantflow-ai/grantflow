@@ -13,7 +13,11 @@ import { HorizontalRule } from "@/components/node/horizontal-rule-node/horizonta
 import { ImageUploadNode } from "@/components/node/image-upload-node/image-upload-node-extension";
 import { Button } from "@/components/ui/button";
 import { Spacer } from "@/components/ui/spacer";
-import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/ui/toolbar";
+import {
+	Toolbar,
+	ToolbarGroup,
+	ToolbarSeparator,
+} from "@/components/ui/toolbar";
 import "@/components/node/blockquote-node/blockquote-node.scss";
 import "@/components/node/code-block-node/code-block-node.scss";
 import "@/components/node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -26,7 +30,6 @@ import "@/styles/_variables.scss";
 import { ArrowLeftIcon } from "@/components/icons/arrow-left-icon";
 import { HighlighterIcon } from "@/components/icons/highlighter-icon";
 import { LinkIcon } from "@/components/icons/link-icon";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { BlockquoteButton } from "@/components/ui/blockquote-button";
 import { CodeBlockButton } from "@/components/ui/code-block-button";
 import {
@@ -36,7 +39,11 @@ import {
 } from "@/components/ui/color-highlight-popover";
 import { HeadingDropdownMenu } from "@/components/ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/ui/image-upload-button";
-import { LinkButton, LinkContent, LinkPopover } from "@/components/ui/link-popover";
+import {
+	LinkButton,
+	LinkContent,
+	LinkPopover,
+} from "@/components/ui/link-popover";
 import { ListDropdownMenu } from "@/components/ui/list-dropdown-menu";
 import { MarkButton } from "@/components/ui/mark-button";
 import { TextAlignButton } from "@/components/ui/text-align-button";
@@ -46,7 +53,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 import "@/editor/index.scss";
-import content from "@/editor/data/content.json";
+import { Markdown } from "tiptap-markdown";
+
+type MarkdownStorage = { getMarkdown: () => string };
+
+export type EditorRef = {
+	getMarkdown: () => string;
+	getJSON: () => unknown;
+};
 
 const MainToolbarContent = ({
 	onHighlighterClick,
@@ -70,7 +84,10 @@ const MainToolbarContent = ({
 
 			<ToolbarGroup>
 				<HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-				<ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
+				<ListDropdownMenu
+					types={["bulletList", "orderedList", "taskList"]}
+					portal={isMobile}
+				/>
 				<BlockquoteButton />
 				<CodeBlockButton />
 			</ToolbarGroup>
@@ -83,7 +100,11 @@ const MainToolbarContent = ({
 				<MarkButton type="strike" />
 				<MarkButton type="code" />
 				<MarkButton type="underline" />
-				{!isMobile ? <ColorHighlightPopover /> : <ColorHighlightPopoverButton onClick={onHighlighterClick} />}
+				{!isMobile ? (
+					<ColorHighlightPopover />
+				) : (
+					<ColorHighlightPopoverButton onClick={onHighlighterClick} />
+				)}
 				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
 
@@ -112,15 +133,17 @@ const MainToolbarContent = ({
 			<Spacer />
 
 			{isMobile && <ToolbarSeparator />}
-
-			<ToolbarGroup>
-				<ThemeToggle />
-			</ToolbarGroup>
 		</>
 	);
 };
 
-const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
+const MobileToolbarContent = ({
+	type,
+	onBack,
+}: {
+	type: "highlighter" | "link";
+	onBack: () => void;
+}) => (
 	<>
 		<ToolbarGroup>
 			<Button data-style="ghost" onClick={onBack}>
@@ -135,14 +158,23 @@ const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; 
 
 		<ToolbarSeparator />
 
-		{type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
+		{type === "highlighter" ? (
+			<ColorHighlightPopoverContent />
+		) : (
+			<LinkContent />
+		)}
 	</>
 );
 
-export function Editor() {
+export const Editor = React.forwardRef(function Editor(
+	{ content }: { content: string },
+	ref: React.ForwardedRef<EditorRef>,
+) {
 	const isMobile = useIsMobile();
 	const windowSize = useWindowSize();
-	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
+	const [mobileView, setMobileView] = React.useState<
+		"main" | "highlighter" | "link"
+	>("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({
@@ -164,6 +196,7 @@ export function Editor() {
 					openOnClick: false,
 				},
 			}),
+			Markdown,
 			HorizontalRule,
 			TextAlign.configure({ types: ["heading", "paragraph"] }),
 			TaskList,
@@ -185,6 +218,17 @@ export function Editor() {
 		immediatelyRender: false,
 		shouldRerenderOnTransaction: false,
 	});
+
+	React.useImperativeHandle(
+		ref,
+		() => ({
+			getMarkdown: () =>
+				// @ts-expect-error: markdown is injected by tiptap-markdown extension
+				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
+			getJSON: () => editor?.getJSON(),
+		}),
+		[editor],
+	);
 
 	const bodyRect = useCursorVisibility({
 		editor,
@@ -224,8 +268,13 @@ export function Editor() {
 					)}
 				</Toolbar>
 
-				<EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+				<EditorContent
+					data-testid="simple-editor-content"
+					editor={editor}
+					role="presentation"
+					className="simple-editor-content"
+				/>
 			</EditorContext.Provider>
 		</div>
 	);
-}
+});
