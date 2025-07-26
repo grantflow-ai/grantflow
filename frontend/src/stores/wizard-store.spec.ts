@@ -319,6 +319,7 @@ describe.sequential("wizard store", () => {
 					preliminary_data: "Valid preliminary data",
 					rationale: "Valid rationale",
 					research_feasibility: "Valid feasibility",
+					scientific_infrastructure: "Valid infrastructure",
 					team_excellence: "Valid team",
 				},
 			});
@@ -335,7 +336,13 @@ describe.sequential("wizard store", () => {
 				form_inputs: {
 					background_context: "Valid background",
 					hypothesis: "",
+					impact: "",
+					novelty_and_innovation: "",
+					preliminary_data: "",
 					rationale: "Valid rationale",
+					research_feasibility: "",
+					scientific_infrastructure: "",
+					team_excellence: "",
 				},
 			});
 

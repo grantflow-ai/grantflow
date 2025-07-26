@@ -505,7 +505,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 					number: 1,
 					research_tasks: [
 						{
-							description: "",
+							description: undefined,
 							number: 1,
 							title: "Fallback title",
 						},
@@ -522,7 +522,8 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			render(<ResearchPlanPreview />);
 
-			expect(screen.getByText("Task: Fallback title")).toBeInTheDocument();
+			const taskDisplay = screen.getByTestId("task-display");
+			expect(taskDisplay).toHaveTextContent("Task: Fallback title");
 		});
 	});
 });
