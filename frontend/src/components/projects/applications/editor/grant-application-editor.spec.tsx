@@ -1,3 +1,4 @@
+import { ApplicationFactory } from "::testing/factories";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 import { GrantApplicationEditor } from "./grant-application-editor";
@@ -8,10 +9,10 @@ describe.sequential("GrantApplicationEditor", () => {
 	});
 
 	it("renders grant application editor", async () => {
+		const application = ApplicationFactory.build({ text: "hello grantflow editor" });
 		render(
 			<GrantApplicationEditor
-				// @ts-expect-error - mock data
-				application={{ text: "hello grantflow editor" }}
+				application={application as Parameters<typeof GrantApplicationEditor>[0]["application"]}
 			/>,
 		);
 

@@ -13,11 +13,7 @@ import { HorizontalRule } from "@/components/node/horizontal-rule-node/horizonta
 import { ImageUploadNode } from "@/components/node/image-upload-node/image-upload-node-extension";
 import { Button } from "@/components/ui/button";
 import { Spacer } from "@/components/ui/spacer";
-import {
-	Toolbar,
-	ToolbarGroup,
-	ToolbarSeparator,
-} from "@/components/ui/toolbar";
+import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/ui/toolbar";
 import "@/components/node/blockquote-node/blockquote-node.scss";
 import "@/components/node/code-block-node/code-block-node.scss";
 import "@/components/node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -39,11 +35,7 @@ import {
 } from "@/components/ui/color-highlight-popover";
 import { HeadingDropdownMenu } from "@/components/ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/ui/image-upload-button";
-import {
-	LinkButton,
-	LinkContent,
-	LinkPopover,
-} from "@/components/ui/link-popover";
+import { LinkButton, LinkContent, LinkPopover } from "@/components/ui/link-popover";
 import { ListDropdownMenu } from "@/components/ui/list-dropdown-menu";
 import { MarkButton } from "@/components/ui/mark-button";
 import { TextAlignButton } from "@/components/ui/text-align-button";
@@ -84,10 +76,7 @@ const MainToolbarContent = ({
 
 			<ToolbarGroup>
 				<HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-				<ListDropdownMenu
-					types={["bulletList", "orderedList", "taskList"]}
-					portal={isMobile}
-				/>
+				<ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
 				<BlockquoteButton />
 				<CodeBlockButton />
 			</ToolbarGroup>
@@ -100,11 +89,7 @@ const MainToolbarContent = ({
 				<MarkButton type="strike" />
 				<MarkButton type="code" />
 				<MarkButton type="underline" />
-				{!isMobile ? (
-					<ColorHighlightPopover />
-				) : (
-					<ColorHighlightPopoverButton onClick={onHighlighterClick} />
-				)}
+				{!isMobile ? <ColorHighlightPopover /> : <ColorHighlightPopoverButton onClick={onHighlighterClick} />}
 				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
 
@@ -137,13 +122,7 @@ const MainToolbarContent = ({
 	);
 };
 
-const MobileToolbarContent = ({
-	type,
-	onBack,
-}: {
-	type: "highlighter" | "link";
-	onBack: () => void;
-}) => (
+const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
 	<>
 		<ToolbarGroup>
 			<Button data-style="ghost" onClick={onBack}>
@@ -158,11 +137,7 @@ const MobileToolbarContent = ({
 
 		<ToolbarSeparator />
 
-		{type === "highlighter" ? (
-			<ColorHighlightPopoverContent />
-		) : (
-			<LinkContent />
-		)}
+		{type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
 	</>
 );
 
@@ -172,9 +147,7 @@ export const Editor = React.forwardRef(function Editor(
 ) {
 	const isMobile = useIsMobile();
 	const windowSize = useWindowSize();
-	const [mobileView, setMobileView] = React.useState<
-		"main" | "highlighter" | "link"
-	>("main");
+	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({
@@ -222,10 +195,10 @@ export const Editor = React.forwardRef(function Editor(
 	React.useImperativeHandle(
 		ref,
 		() => ({
+			getJSON: () => editor?.getJSON(),
 			getMarkdown: () =>
 				// @ts-expect-error: markdown is injected by tiptap-markdown extension
 				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
-			getJSON: () => editor?.getJSON(),
 		}),
 		[editor],
 	);
