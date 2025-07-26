@@ -31,10 +31,18 @@ export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 
 		const pathMatch = /\/o\/([^?]+)/.exec(uploadUrl);
 		if (pathMatch) {
-			return decodeURIComponent(pathMatch[1]);
+			const decodedPath = decodeURIComponent(pathMatch[1]);
+			return decodedPath;
 		}
-	} catch (error) {
-		log.error("[Dev Indexing Patch] Failed to parse URL", error);
+
+		const pathSegments = url.pathname.split("/").filter(Boolean);
+		if (pathSegments.length >= 2) {
+			const objectPath = pathSegments.slice(1).join("/");
+			const decodedObjectPath = decodeURIComponent(objectPath);
+			return decodedObjectPath;
+		}
+	} catch {
+		// URL parsing failed
 	}
 
 	return null;
