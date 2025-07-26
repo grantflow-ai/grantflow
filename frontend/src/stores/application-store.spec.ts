@@ -329,7 +329,7 @@ describe("Application Store", () => {
 
 			const { useOrganizationStore } = await import("@/stores/organization-store");
 			vi.mocked(useOrganizationStore.getState).mockReturnValue({
-				clearOrganization: vi.fn(),
+				...useOrganizationStore.getState(),
 				selectedOrganizationId: null,
 			});
 
@@ -498,7 +498,11 @@ describe("Application Store", () => {
 
 		it("should handle grant template validation errors (422 status)", async () => {
 			const application = ApplicationWithTemplateFactory.build();
-			const httpError = new HTTPError("Validation failed", 422);
+			const httpError = new HTTPError(
+				new Response(JSON.stringify({ detail: "Validation failed" }), { status: 422 }),
+				{} as any,
+				{} as any,
+			);
 
 			const { generateGrantTemplate } = await import("@/actions/grant-template");
 			vi.mocked(generateGrantTemplate).mockRejectedValue(httpError);
@@ -514,7 +518,11 @@ describe("Application Store", () => {
 
 		it("should handle non-422 errors in template generation", async () => {
 			const application = ApplicationWithTemplateFactory.build();
-			const httpError = new HTTPError("Server error", 500);
+			const httpError = new HTTPError(
+				new Response(JSON.stringify({ detail: "Server error" }), { status: 500 }),
+				{} as any,
+				{} as any,
+			);
 
 			const { generateGrantTemplate } = await import("@/actions/grant-template");
 			vi.mocked(generateGrantTemplate).mockRejectedValue(httpError);

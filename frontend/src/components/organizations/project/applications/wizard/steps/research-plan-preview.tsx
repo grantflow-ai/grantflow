@@ -408,15 +408,13 @@ function ObjectiveHeader({
 			<div>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<AppButton
-							className="size-8 text-gray-400 focus:outline-none hover:none"
+						<button
+							className="inline-flex items-center justify-center size-8 text-gray-400 cursor-pointer hover:text-gray-600 focus:outline-none"
 							data-testid="menu-trigger"
-							size="sm"
 							type="button"
-							variant="ghost"
 						>
 							<Image alt="Menu" height={16} src="/icons/three-dots.svg" width={16} />
-						</AppButton>
+						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuItem data-testid="edit-task-menuitem" onClick={isEditing ? onCancel : onEdit}>
@@ -517,7 +515,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 										label="Task description"
 										onChange={(e) => onTaskUpdate?.(taskIndex, e.target.value)}
 										placeholder="Describe a step to achieve this objective"
-										value={task.description || task.title}
+										value={task.description?.trim() ?? null ?? task.title}
 										variant="field"
 									/>
 								</div>
@@ -526,7 +524,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 									className="text-app-gray-600 text-sm font-normal leading-none"
 									data-testid="task-display"
 								>
-									Task: {task.description || task.title}
+									Task: {task.description?.trim() ?? null ?? task.title}
 								</div>
 							)}
 						</div>

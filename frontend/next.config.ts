@@ -4,7 +4,6 @@ import { getEnv } from "@/utils/env";
 getEnv();
 
 const nextConfig = {
-	output: "standalone",
 	experimental: {
 		serverActions: {
 			bodySizeLimit: "100mb",
@@ -19,6 +18,7 @@ const nextConfig = {
 			},
 		],
 	},
+	output: "standalone",
 	transpilePackages: ["@grantflow/editor"],
 } satisfies NextConfig;
 
