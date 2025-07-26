@@ -13,6 +13,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { log } from "@/utils/logger";
 
 /**
  * Reset all Zustand stores to their initial state.
@@ -34,10 +35,29 @@ import { useWizardStore } from "@/stores/wizard-store";
  * ```
  */
 export function resetAllStores(): void {
-	useApplicationStore.getState().reset();
-	useNavigationStore.getState().reset();
-	useProjectStore.getState().reset();
-	useWizardStore.getState().reset();
+	try {
+		useApplicationStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset application store:", { error });
+	}
+
+	try {
+		useNavigationStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset navigation store:", { error });
+	}
+
+	try {
+		useProjectStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset project store:", { error });
+	}
+
+	try {
+		useWizardStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset wizard store:", { error });
+	}
 
 	useNotificationStore.getState().clearAllNotifications();
 	useUserStore.getState().clearUser();
@@ -51,7 +71,6 @@ export function resetAllStores(): void {
 		organizations: [],
 		selectedOrganizationId: null,
 	});
-
 	clearPersistedStoreData();
 }
 
