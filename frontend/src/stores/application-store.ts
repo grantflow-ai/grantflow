@@ -392,7 +392,20 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		});
 
 		try {
-			await (process.env.NODE_ENV === "development"
+			const backendApiUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
+			const isLocalBackend = backendApiUrl.includes("localhost");
+			const isDevelopment = process.env.NODE_ENV === "development";
+
+			const useDevelopmentUpload = isDevelopment && isLocalBackend;
+
+			log.info("[file-upload] Backend selection", {
+				backendApiUrl,
+				isDevelopment,
+				isLocalBackend,
+				uploadMethod: useDevelopmentUpload ? "development" : "production",
+			});
+
+			await (useDevelopmentUpload
 				? uploadFileInDevelopment(file, application!, parentId, isApplicationParent)
 				: uploadFileInProduction(file, application!, parentId, isApplicationParent));
 
