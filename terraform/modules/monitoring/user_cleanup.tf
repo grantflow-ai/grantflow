@@ -107,13 +107,13 @@ resource "google_cloudfunctions2_function" "entity_cleanup" {
     max_instance_request_concurrency = 1
 
     environment_variables = {
-      GOOGLE_CLOUD_PROJECT                     = var.project_id
-      CLOUD_SQL_INSTANCE                       = "grantflow-db"
-      CLOUD_SQL_REGION                         = "us-central1"
-      DATABASE_NAME                            = "grantflow"
-      DATABASE_USER                            = "grantflow"
-      USER_DELETION_GRACE_PERIOD_DAYS          = "10"
-      ORGANIZATION_DELETION_GRACE_PERIOD_DAYS  = "30"
+      GOOGLE_CLOUD_PROJECT                    = var.project_id
+      CLOUD_SQL_INSTANCE                      = "grantflow-db"
+      CLOUD_SQL_REGION                        = "us-central1"
+      DATABASE_NAME                           = "grantflow"
+      DATABASE_USER                           = "grantflow"
+      USER_DELETION_GRACE_PERIOD_DAYS         = "10"
+      ORGANIZATION_DELETION_GRACE_PERIOD_DAYS = "30"
     }
 
     # Reference to database connection string from Secret Manager
@@ -207,7 +207,7 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
 resource "google_logging_metric" "entity_cleanup_operations" {
   name   = "entity_cleanup_operations"
   filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND jsonPayload.processed>=0"
-  
+
   # Log-based metrics automatically use DELTA metric kind
   metric_descriptor {
     metric_kind = "DELTA"
@@ -218,7 +218,7 @@ resource "google_logging_metric" "entity_cleanup_operations" {
       description = "Status of the cleanup operation (success/error)"
     }
   }
-  
+
   label_extractors = {
     status = "EXTRACT(jsonPayload.status)"
   }

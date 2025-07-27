@@ -666,7 +666,7 @@ resource "google_cloud_run_v2_service" "scraper" {
 
   template {
     service_account = var.scraper_service_account_email
-    
+
     containers {
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/scraper:${var.image_tag_suffix}"
 
