@@ -289,18 +289,18 @@ output "load_balancer_url" {
 
 # Firebase App Hosting module for frontend deployment
 module "app_hosting" {
-  source           = "../../modules/app_hosting"
-  project_id       = var.project_id
-  region           = var.region
-  environment      = var.environment
-  firebase_app_id  = "1:362880548799:web:10d900ea35ee78c0402b0a" # staging app ID
-  image_tag        = "staging-latest"
-  min_instances    = 0
-  max_instances    = 5
-  cpu              = "1"
-  memory           = "512Mi"
-  concurrency      = 50
-  
+  source          = "../../modules/app_hosting"
+  project_id      = var.project_id
+  region          = var.region
+  environment     = var.environment
+  firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" # staging app ID
+  image_tag       = "staging-latest"
+  min_instances   = 0
+  max_instances   = 5
+  cpu             = "1"
+  memory          = "512Mi"
+  concurrency     = 50
+
   # Secrets that App Hosting needs access to
   secret_ids = [
     "NEXT_PUBLIC_SITE_URL_STAGING",
