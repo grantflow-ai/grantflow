@@ -13,6 +13,7 @@ import { retrieveRagJob } from "@/actions/rag-jobs";
 import { crawlTemplateUrl, createTemplateSourceUploadUrl, deleteTemplateSource } from "@/actions/sources";
 import type { API } from "@/types/api-types";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
+import { getEnv } from "@/utils/env";
 
 import { useApplicationStore } from "./application-store";
 
@@ -45,6 +46,9 @@ vi.mock("@/actions/sources", () => ({
 vi.mock("@/utils/dev-indexing-patch", () => ({
 	extractObjectPathFromUrl: vi.fn(),
 	triggerDevIndexing: vi.fn(),
+}));
+vi.mock("@/utils/env", () => ({
+	getEnv: vi.fn(),
 }));
 
 import ky, { HTTPError } from "ky";
@@ -88,6 +92,10 @@ describe("Application Store", () => {
 		vi.mocked(getApplication).mockReset();
 		vi.mocked(updateGrantTemplate).mockReset();
 		vi.mocked(retrieveRagJob).mockReset();
+
+		vi.mocked(getEnv).mockReturnValue({
+			NEXT_PUBLIC_BACKEND_API_BASE_URL: "http://localhost:8000",
+		} as any);
 	});
 
 	describe("state management", () => {
@@ -277,6 +285,74 @@ describe("Application Store", () => {
 			await updateGrantSections([]);
 
 			expect(updateGrantTemplate).toHaveBeenCalled();
+		});
+	});
+
+	describe("upload method selection in development", () => {
+		beforeEach(() => {
+			vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
+				source_id: "source-123",
+				url: "https://upload.url",
+			});
+			vi.mocked(extractObjectPathFromUrl).mockReturnValue("path");
+			vi.mocked(triggerDevIndexing).mockResolvedValue(undefined);
+			vi.mocked(ky).mockReturnValue({ ok: true } as any);
+			vi.mocked(getApplication).mockResolvedValue(ApplicationWithTemplateFactory.build());
+		});
+
+		it("should use production upload with localhost backend in test environment", async () => {
+			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			Object.assign(file, { id: "test.pdf" });
+			const application = ApplicationWithTemplateFactory.build();
+
+			vi.mocked(getEnv).mockReturnValue({
+				NEXT_PUBLIC_BACKEND_API_BASE_URL: "http://localhost:8000",
+			} as any);
+
+			vi.mocked(getApplication).mockResolvedValue(application);
+			useApplicationStore.setState({ application });
+
+			const { addFile } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await addFile(file as any, application.grant_template.id);
+			}
+
+			expect(extractObjectPathFromUrl).toHaveBeenCalled();
+			expect(triggerDevIndexing).toHaveBeenCalled();
+		});
+
+		it("should use production upload with remote backend", async () => {
+			vi.clearAllMocks();
+
+			const file = new File(["content"], "test.pdf", { type: "application/pdf" });
+			Object.assign(file, { id: "test.pdf" });
+			const application = ApplicationWithTemplateFactory.build();
+
+			vi.mocked(getEnv).mockReturnValue({
+				NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://staging-api.grantflow.ai/",
+			} as any);
+
+			vi.mocked(createTemplateSourceUploadUrl).mockResolvedValue({
+				source_id: "source-123",
+				url: "https://upload.url",
+			});
+			vi.mocked(ky).mockReturnValue({ ok: true } as any);
+			vi.mocked(extractObjectPathFromUrl).mockReturnValue("path");
+			vi.mocked(triggerDevIndexing).mockResolvedValue(undefined);
+			vi.mocked(getApplication).mockResolvedValue(application);
+
+			useApplicationStore.setState({ application });
+
+			const { addFile } = useApplicationStore.getState();
+
+			if (application.grant_template?.id) {
+				await addFile(file as any, application.grant_template.id);
+			}
+
+			expect(ky).toHaveBeenCalled();
+			expect(extractObjectPathFromUrl).toHaveBeenCalled();
+			expect(triggerDevIndexing).toHaveBeenCalled();
 		});
 	});
 
