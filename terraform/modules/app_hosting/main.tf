@@ -105,11 +105,11 @@ resource "google_secret_manager_secret_iam_member" "app_hosting_secret_access" {
 
 # Deploy a build using custom container image
 resource "google_firebase_app_hosting_build" "frontend" {
-  provider   = google-beta
-  project    = google_firebase_app_hosting_backend.frontend.project
-  location   = google_firebase_app_hosting_backend.frontend.location
-  backend    = google_firebase_app_hosting_backend.frontend.backend_id
-  build_id   = "${var.environment}-${var.image_tag}"
+  provider = google-beta
+  project  = google_firebase_app_hosting_backend.frontend.project
+  location = google_firebase_app_hosting_backend.frontend.location
+  backend  = google_firebase_app_hosting_backend.frontend.backend_id
+  build_id = "${var.environment}-${var.image_tag}"
 
   source {
     container {
