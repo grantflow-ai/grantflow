@@ -55,6 +55,11 @@ jobs:
             - name: Generate cloud functions requirements
               run: task cloud-functions:generate-requirements
 
+            - name: Setup GCP
+              uses: ./.github/actions/setup-gcp
+              with:
+                  project_id: grantflow
+
             - name: Setup OpenTofu
               uses: opentofu/setup-opentofu@v1
               with:
