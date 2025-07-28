@@ -109,7 +109,7 @@ resource "google_firebase_app_hosting_build" "frontend" {
   project  = google_firebase_app_hosting_backend.frontend.project
   location = google_firebase_app_hosting_backend.frontend.location
   backend  = google_firebase_app_hosting_backend.frontend.backend_id
-  build_id = "${var.environment}-${formatdate("MMDDhhmm", timestamp())}"
+  build_id = "${var.environment}-fix-traffic-${formatdate("MMDDhhmmss", timestamp())}"
 
   source {
     container {
@@ -123,5 +123,17 @@ resource "google_firebase_app_hosting_build" "frontend" {
   }
 }
 
-# Note: Traffic configuration is handled automatically by Firebase App Hosting
-# when a new build is created. Custom domains are managed through Firebase Console.
+# Allocate traffic to the build
+resource "google_firebase_app_hosting_traffic" "frontend" {
+  provider = google-beta
+  project  = google_firebase_app_hosting_backend.frontend.project
+  location = google_firebase_app_hosting_backend.frontend.location
+  backend  = google_firebase_app_hosting_backend.frontend.backend_id
+
+  target {
+    splits {
+      build   = google_firebase_app_hosting_build.frontend.name
+      percent = 100
+    }
+  }
+}
