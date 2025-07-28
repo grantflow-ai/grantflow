@@ -369,6 +369,7 @@ async def test_create_upload_url(
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
+        content_type="application/pdf",
     )
 
 
@@ -401,6 +402,7 @@ async def test_create_granting_institution_upload_url(
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
+        content_type="application/pdf",
     )
 
 
@@ -434,6 +436,7 @@ async def test_create_template_upload_url(
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
+        content_type="application/pdf",
     )
 
 
