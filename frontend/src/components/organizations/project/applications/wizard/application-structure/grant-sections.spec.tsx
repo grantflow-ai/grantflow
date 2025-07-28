@@ -1,8 +1,8 @@
-import { GrantSectionDetailedFactory, GrantSectionFactory } from "::testing/factories";
+import { GrantSectionBaseFactory, GrantSectionDetailedFactory, GrantSectionFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SortableSection } from "./grant-sections";
+import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords, SortableSection } from "./grant-sections";
 
 vi.mock("@dnd-kit/sortable", () => ({
 	useSortable: vi.fn(
@@ -267,8 +267,8 @@ describe("SortableSection", () => {
 		expect(screen.getByTestId(`edit-form-header-${section.id}`)).toHaveTextContent("Sub-section name");
 	});
 
-	it("generates AI prompt based on section title", () => {
-		const section = GrantSectionDetailedFactory.build({ title: "Background" });
+	it("generates AI prompt based on section title when no generation_instructions", () => {
+		const section = GrantSectionBaseFactory.build({ title: "Background" });
 
 		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
 
@@ -318,5 +318,122 @@ describe("SortableSection", () => {
 
 		const maxCountInput = screen.getByTestId(`max-count-${section.id}`);
 		expect(maxCountInput).toHaveValue(3000);
+	});
+
+	it("displays research plan badge when is_detailed_research_plan is true", () => {
+		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: true });
+
+		render(<SortableSection {...defaultProps} section={section} />);
+
+		expect(screen.getByTestId("research-plan-badge")).toBeInTheDocument();
+		expect(screen.getByTestId("research-plan-badge")).toHaveTextContent("Research Plan");
+	});
+
+	it("does not display research plan badge when is_detailed_research_plan is false", () => {
+		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: false });
+
+		render(<SortableSection {...defaultProps} section={section} />);
+
+		expect(screen.queryByTestId("research-plan-badge")).not.toBeInTheDocument();
+	});
+
+	it("does not display research plan badge for basic sections", () => {
+		const section = GrantSectionBaseFactory.build();
+
+		render(<SortableSection {...defaultProps} section={section} />);
+
+		expect(screen.queryByTestId("research-plan-badge")).not.toBeInTheDocument();
+	});
+
+	it("populates AI prompt with generation_instructions when available", () => {
+		const customInstructions = "Custom generation instructions for this section";
+		const section = GrantSectionDetailedFactory.build({
+			generation_instructions: customInstructions,
+			title: "Background",
+		});
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const aiPrompt = screen.getByLabelText("AI Prompt");
+		expect((aiPrompt as HTMLTextAreaElement).value).toBe(customInstructions);
+	});
+
+	it("falls back to generated AI prompt when generation_instructions not available", () => {
+		const section = GrantSectionBaseFactory.build({ title: "Background" });
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const aiPrompt = screen.getByLabelText("AI Prompt");
+		expect((aiPrompt as HTMLTextAreaElement).value).toContain(
+			"'Background' section for a research grant application",
+		);
+	});
+});
+
+describe("Utility Functions", () => {
+	describe("hasGenerationInstructions", () => {
+		it("returns true for detailed sections with generation_instructions", () => {
+			const section = GrantSectionDetailedFactory.build();
+			expect(hasGenerationInstructions(section)).toBe(true);
+		});
+
+		it("returns false for basic sections without generation_instructions", () => {
+			const section = GrantSectionBaseFactory.build();
+			expect(hasGenerationInstructions(section)).toBe(false);
+		});
+
+		it("provides proper type narrowing for detailed sections", () => {
+			const section = GrantSectionDetailedFactory.build({ generation_instructions: "test instructions" });
+
+			if (hasGenerationInstructions(section)) {
+				expect(section.generation_instructions).toBe("test instructions");
+			} else {
+				throw new Error("Should have generation instructions");
+			}
+		});
+	});
+
+	describe("hasDetailedResearchPlan", () => {
+		it("returns true for detailed sections with is_detailed_research_plan", () => {
+			const section = GrantSectionDetailedFactory.build();
+			expect(hasDetailedResearchPlan(section)).toBe(true);
+		});
+
+		it("returns false for basic sections without is_detailed_research_plan", () => {
+			const section = GrantSectionBaseFactory.build();
+			expect(hasDetailedResearchPlan(section)).toBe(false);
+		});
+
+		it("provides proper type narrowing for detailed sections", () => {
+			const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: true });
+
+			if (hasDetailedResearchPlan(section)) {
+				expect(section.is_detailed_research_plan).toBe(true);
+			} else {
+				throw new Error("Should have detailed research plan property");
+			}
+		});
+	});
+
+	describe("hasMaxWords", () => {
+		it("returns true for detailed sections with max_words", () => {
+			const section = GrantSectionDetailedFactory.build();
+			expect(hasMaxWords(section)).toBe(true);
+		});
+
+		it("returns false for basic sections without max_words", () => {
+			const section = GrantSectionBaseFactory.build();
+			expect(hasMaxWords(section)).toBe(false);
+		});
+
+		it("provides proper type narrowing for detailed sections", () => {
+			const section = GrantSectionDetailedFactory.build({ max_words: 5000 });
+
+			if (hasMaxWords(section)) {
+				expect(section.max_words).toBe(5000);
+			} else {
+				throw new Error("Should have max words property");
+			}
+		});
 	});
 });
