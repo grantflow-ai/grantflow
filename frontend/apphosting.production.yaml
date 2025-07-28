@@ -1,0 +1,34 @@
+runConfig:
+    minInstances: 1
+    # ~keep Max instances limited by us-central1 CPU quota: 50 instances × 4 CPUs = 200 CPUs (quota limit)
+    # ~keep To increase, request quota increase at: https://cloud.google.com/run/quotas
+    maxInstances: 50
+    cpu: 4
+    memoryMiB: 2048
+    concurrency: 100
+
+env:
+    - variable: NEXT_PUBLIC_SITE_URL
+      secret: NEXT_PUBLIC_SITE_URL_PRODUCTION
+    - variable: NEXT_PUBLIC_BACKEND_API_BASE_URL
+      value: "https://api.grantflow.ai"
+    - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+      secret: NEXT_PUBLIC_FIREBASE_API_KEY_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+      secret: NEXT_PUBLIC_FIREBASE_APP_ID_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+      secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+      secret: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID
+      secret: NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID
+      secret: NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+      secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID_PRODUCTION
+    - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+      secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_PRODUCTION
+    - variable: NEXT_PUBLIC_MAILGUN_API_KEY
+      secret: NEXT_PUBLIC_MAILGUN_API_KEY_PRODUCTION
+    - variable: RESEND_API_KEY
+      secret: RESEND_API_KEY_PRODUCTION
