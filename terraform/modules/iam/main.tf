@@ -102,7 +102,7 @@ resource "google_service_account_iam_member" "github_actions_act_as_apphosting" 
   for_each = toset([
     "grantflow-staging-apphosting"
   ])
-  
+
   service_account_id = "projects/grantflow/serviceAccounts/${each.value}@grantflow.iam.gserviceaccount.com"
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.github_actions.email}"
