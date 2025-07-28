@@ -66,16 +66,15 @@ describe.sequential("ObjectiveForm", () => {
 		expect(screen.queryByTestId("remove-task-0")).not.toBeInTheDocument();
 	});
 
-	it("shows validation errors when saving with empty fields", async () => {
+	it("shows validation errors when attempting to save partially completed form", async () => {
 		const user = userEvent.setup();
 		const onSaveAction = vi.fn();
 		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
 
-		await user.click(screen.getByTestId("save-button"));
-
-		expect(screen.getByTestId("objective-name-input-error")).toBeInTheDocument();
-		expect(screen.getByTestId("objective-description-input-error")).toBeInTheDocument();
-		expect(screen.getByTestId("task-description-0-error")).toBeInTheDocument();
+		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+		const saveButton = screen.getByTestId("save-button");
+		expect(saveButton).toBeDisabled();
 		expect(onSaveAction).not.toHaveBeenCalled();
 	});
 
@@ -119,14 +118,122 @@ describe.sequential("ObjectiveForm", () => {
 		expect(screen.getByTestId("task-description-1")).toHaveValue("Initial Task 2");
 	});
 
-	it("clears validation errors when user types in fields", async () => {
+	it("enables save button when all required fields are filled", async () => {
 		const user = userEvent.setup();
 		render(<ObjectiveForm {...defaultProps} />);
 
-		await user.click(screen.getByTestId("save-button"));
-		expect(screen.getByTestId("objective-name-input-error")).toBeInTheDocument();
+		const saveButton = screen.getByTestId("save-button");
+		expect(saveButton).toBeDisabled();
 
-		await user.type(screen.getByTestId("objective-name-input"), "Test");
-		expect(screen.getByTestId("objective-name-input-error")).toBeInTheDocument();
+		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+		expect(saveButton).toBeEnabled();
+	});
+
+	it("keeps save button disabled when only whitespace is entered", async () => {
+		const user = userEvent.setup();
+		render(<ObjectiveForm {...defaultProps} />);
+
+		const saveButton = screen.getByTestId("save-button");
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("objective-name-input"), "   ");
+		await user.type(screen.getByTestId("objective-description-input"), "   ");
+		await user.type(screen.getByTestId("task-description-0"), "   ");
+		expect(saveButton).toBeDisabled();
+	});
+
+	it("save button is disabled when form is invalid", () => {
+		render(<ObjectiveForm {...defaultProps} />);
+
+		const saveButton = screen.getByTestId("save-button");
+		expect(saveButton).toBeDisabled();
+	});
+
+	it("save button is enabled when all fields are filled", async () => {
+		const user = userEvent.setup();
+		render(<ObjectiveForm {...defaultProps} />);
+
+		const saveButton = screen.getByTestId("save-button");
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+
+		expect(saveButton).toBeEnabled();
+	});
+
+	it("correctly validates form state based on field content", async () => {
+		const user = userEvent.setup();
+		render(<ObjectiveForm {...defaultProps} />);
+
+		const saveButton = screen.getByTestId("save-button");
+
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("objective-name-input"), "   ");
+		expect(saveButton).toBeDisabled();
+
+		await user.clear(screen.getByTestId("objective-name-input"));
+		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+		expect(saveButton).toBeDisabled();
+		await user.type(screen.getByTestId("task-description-0"), "Test Task");
+		expect(saveButton).toBeEnabled();
+	});
+
+	it("requires all tasks to be filled for form to be valid", async () => {
+		const user = userEvent.setup();
+		const onSaveAction = vi.fn();
+		render(<ObjectiveForm {...defaultProps} onSaveAction={onSaveAction} />);
+
+		await user.click(screen.getByTestId("add-task-button"));
+
+		await user.type(screen.getByTestId("objective-name-input"), "Test Objective");
+		await user.type(screen.getByTestId("objective-description-input"), "Test Description");
+		await user.type(screen.getByTestId("task-description-0"), "First task");
+
+		const saveButton = screen.getByTestId("save-button");
+		expect(saveButton).toBeDisabled();
+
+		await user.type(screen.getByTestId("task-description-1"), "Second task");
+		expect(saveButton).toBeEnabled();
+		expect(onSaveAction).not.toHaveBeenCalled();
+	});
+
+	it("new tasks start with empty descriptions", async () => {
+		const user = userEvent.setup();
+		render(<ObjectiveForm {...defaultProps} />);
+
+		await user.type(screen.getByTestId("task-description-0"), "First task");
+
+		await user.click(screen.getByTestId("add-task-button"));
+
+		expect(screen.getByTestId("task-description-0")).toHaveValue("First task");
+		expect(screen.getByTestId("task-description-1")).toHaveValue("");
+	});
+
+	it("updates specific tasks without affecting others", async () => {
+		const user = userEvent.setup();
+		render(<ObjectiveForm {...defaultProps} />);
+
+		await user.click(screen.getByTestId("add-task-button"));
+
+		await user.type(screen.getByTestId("task-description-0"), "First task");
+		await user.type(screen.getByTestId("task-description-1"), "Second task");
+
+		await user.clear(screen.getByTestId("task-description-0"));
+		await user.type(screen.getByTestId("task-description-0"), "Updated first task");
+
+		expect(screen.getByTestId("task-description-0")).toHaveValue("Updated first task");
+		expect(screen.getByTestId("task-description-1")).toHaveValue("Second task");
 	});
 });

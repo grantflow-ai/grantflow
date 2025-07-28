@@ -5,12 +5,14 @@ on:
         branches:
             - main
             - development
-        # paths:
-        #     - ".github/workflows/build-service-crawler.yaml"
-        #     - ".github/actions/**"
-        #     - "packages/db/src/**"
-        #     - "packages/shared_utils/src/**"
-        #     - "services/crawler/src/**"
+        paths:
+            - ".github/workflows/build-service-crawler.yaml"
+            - ".github/actions/**"
+            - "packages/db/**"
+            - "packages/shared_utils/**"
+            - "services/crawler/**"
+            - "pyproject.toml"
+            - "uv.lock"
     release:
         types: [published]
     workflow_dispatch:

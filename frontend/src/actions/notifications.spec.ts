@@ -4,7 +4,6 @@ import { getClient } from "@/utils/api";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { dismissNotification, getNotifications } from "./notifications";
 
-// Mock the dependencies
 vi.mock("@/utils/api");
 vi.mock("@/utils/server-side");
 

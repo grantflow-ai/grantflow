@@ -15,6 +15,5 @@ test("renders project card with basic information", () => {
 		/>,
 	);
 
-	// Basic render test to ensure component doesn't crash
 	expect(document.body).toHaveTextContent(project.name);
 });

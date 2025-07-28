@@ -39,7 +39,6 @@ import {
 	updateOrganizationMemberRole,
 } from "./organization";
 
-// Mock the dependencies
 vi.mock("@/utils/api");
 vi.mock("@/utils/server-side");
 

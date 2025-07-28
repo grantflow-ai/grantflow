@@ -109,7 +109,7 @@ export const NoMaxWords: Story = {
 		...defaultProps,
 		isExpanded: true,
 		section: GrantSectionDetailedFactory.build({
-			max_words: 0, // No word limit
+			max_words: 0,
 			title: "Project Timeline",
 		}),
 	},

@@ -3,7 +3,7 @@ description: "Build and push Docker image for a service using standardized Task-
 
 inputs:
     service:
-        description: "Service name (backend, crawler, indexer, rag, scraper)"
+        description: "Service name (backend, crawler, indexer, rag, scraper, frontend)"
         required: true
     image_tag:
         description: "Docker image tag"
@@ -16,6 +16,10 @@ inputs:
         description: "Service account email"
         required: false
         default: "githubactions@grantflow.iam.gserviceaccount.com"
+    build_args:
+        description: "Build arguments to pass to Docker build (multiline string)"
+        required: false
+        default: ""
 
 runs:
     using: "composite"
@@ -82,14 +86,25 @@ runs:
               docker builder prune -af
               docker system df
 
+        - name: Set Dockerfile path
+          id: dockerfile
+          shell: bash
+          run: |
+              if [[ "${{ inputs.service }}" == "frontend" ]]; then
+                echo "path=frontend/Dockerfile" >> $GITHUB_OUTPUT
+              else
+                echo "path=services/${{ inputs.service }}/Dockerfile" >> $GITHUB_OUTPUT
+              fi
+
         - name: Build and push service
           uses: docker/build-push-action@v6
           with:
               push: true
               context: ${{ github.workspace }}
-              file: services/${{ inputs.service }}/Dockerfile
+              file: ${{ steps.dockerfile.outputs.path }}
               cache-from: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache
               cache-to: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache,mode=max
               tags: |
                   us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ steps.env-tag.outputs.env_latest }}
                   us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
+              build-args: ${{ inputs.build_args }}

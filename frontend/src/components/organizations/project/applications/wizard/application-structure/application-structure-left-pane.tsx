@@ -221,7 +221,6 @@ function AnalyzingSteps() {
 			}
 			setHasError(false);
 
-			// Show only title for indexing events, show steps for extraction events
 			const isIndexingEvent =
 				templateGenerationStatus.event === "grant_template_generation_started" ||
 				templateGenerationStatus.event === "indexing_in_progress";

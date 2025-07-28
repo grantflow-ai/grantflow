@@ -10,7 +10,6 @@ const ONE_MINUTE_IN_MS = 60 * 1000;
 export function getClient(): KyInstance {
 	const backendUrl = getEnv().NEXT_PUBLIC_BACKEND_API_BASE_URL;
 
-	// Log the API base URL on initialization
 	if (!clientRef.value) {
 		log.info("Initializing API client", {
 			backend_url: backendUrl,
@@ -22,7 +21,6 @@ export function getClient(): KyInstance {
 		hooks: {
 			afterResponse: [
 				async (request, _options, response) => {
-					// Clone response to read body for debugging
 					const clonedResponse = response.clone();
 					let responseBody: unknown;
 
@@ -31,9 +29,7 @@ export function getClient(): KyInstance {
 						if (contentType?.includes("application/json")) {
 							responseBody = await clonedResponse.json();
 						}
-					} catch {
-						// Ignore parsing errors
-					}
+					} catch {}
 
 					log.info(`API ${request.method} ${request.url} - ${response.status}`, {
 						method: request.method,
@@ -54,7 +50,6 @@ export function getClient(): KyInstance {
 					let responseText: string | undefined;
 
 					try {
-						// Clone and try to read the error response body
 						const clonedResponse = error.response.clone();
 						const contentType = error.response.headers.get("content-type");
 
@@ -63,9 +58,7 @@ export function getClient(): KyInstance {
 						} else {
 							responseText = await clonedResponse.text();
 						}
-					} catch {
-						// Ignore parsing errors
-					}
+					} catch {}
 
 					log.error(`API ERROR ${error.request.method} ${error.request.url}`, error, {
 						backend_url: backendUrl,
@@ -87,10 +80,8 @@ export function getClient(): KyInstance {
 			],
 			beforeRequest: [
 				(request, options) => {
-					// Log the full request details
 					let requestBody: unknown;
 
-					// Extract request body if available
 					if (options.body) {
 						try {
 							requestBody = typeof options.body === "string" ? JSON.parse(options.body) : options.body;

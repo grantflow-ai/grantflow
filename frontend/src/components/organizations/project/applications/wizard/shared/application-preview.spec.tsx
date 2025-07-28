@@ -277,7 +277,6 @@ describe("ApplicationPreview", () => {
 
 		render(<ApplicationPreview draftTitle="Mixed Content App" />);
 
-		// Check for presence of file and URL content
 		expect(screen.getByText("document.pdf")).toBeInTheDocument();
 		expect(screen.getByText("https://example.com/info")).toBeInTheDocument();
 	});

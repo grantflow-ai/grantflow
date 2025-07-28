@@ -33,6 +33,12 @@ export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 		if (pathMatch) {
 			return decodeURIComponent(pathMatch[1]);
 		}
+
+		const pathSegments = url.pathname.split("/").filter(Boolean);
+		if (pathSegments.length >= 2) {
+			const objectPath = pathSegments.slice(1).join("/");
+			return decodeURIComponent(objectPath);
+		}
 	} catch (error) {
 		log.error("[Dev Indexing Patch] Failed to parse URL", error);
 	}

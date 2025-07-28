@@ -449,6 +449,176 @@ describe.sequential("KnowledgeBaseStep", () => {
 		});
 	});
 
+	describe("Source Filtering Logic", () => {
+		it("excludes FAILED sources from file display", () => {
+			const application = ApplicationFactory.build({
+				id: "test-app-id",
+				project_id: "test-project",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: "good-file.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						filename: "failed-file.pdf",
+						sourceId: "file-2",
+						status: "FAILED",
+					}),
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			render(<KnowledgeBaseStep />);
+
+			expect(screen.getByText("good-file.pdf")).toBeInTheDocument();
+			expect(screen.queryByText("failed-file.pdf")).not.toBeInTheDocument();
+		});
+
+		it("excludes FAILED sources from URL display", () => {
+			const application = ApplicationFactory.build({
+				id: "test-app-id",
+				project_id: "test-project",
+				rag_sources: [
+					RagSourceFactory.build({
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://good-url.com",
+					}),
+					RagSourceFactory.build({
+						sourceId: "url-2",
+						status: "FAILED",
+						url: "https://failed-url.com",
+					}),
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			render(<KnowledgeBaseStep />);
+
+			expect(screen.getByText("https://good-url.com")).toBeInTheDocument();
+			expect(screen.queryByText("https://failed-url.com")).not.toBeInTheDocument();
+		});
+
+		it("excludes sources without filename or url", () => {
+			const application = ApplicationFactory.build({
+				id: "test-app-id",
+				project_id: "test-project",
+				rag_sources: [
+					RagSourceFactory.build({
+						filename: undefined,
+						sourceId: "invalid-1",
+						status: "FINISHED",
+						url: undefined,
+					}),
+					RagSourceFactory.build({
+						filename: "valid-file.pdf",
+						sourceId: "file-1",
+						status: "FINISHED",
+						url: undefined,
+					}),
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			render(<KnowledgeBaseStep />);
+
+			expect(screen.getByText("valid-file.pdf")).toBeInTheDocument();
+			expect(screen.queryByTestId("knowledge-base-urls")).not.toBeInTheDocument();
+		});
+	});
+
+	describe("URL Grid Column Distribution", () => {
+		it("distributes URLs correctly across two columns", () => {
+			const application = ApplicationFactory.build({
+				id: "test-app-id",
+				project_id: "test-project",
+				rag_sources: [
+					RagSourceFactory.build({
+						sourceId: "url-0",
+						status: "FINISHED",
+						url: "https://first.com",
+					}),
+					RagSourceFactory.build({
+						sourceId: "url-1",
+						status: "FINISHED",
+						url: "https://second.com",
+					}),
+					RagSourceFactory.build({
+						sourceId: "url-2",
+						status: "FINISHED",
+						url: "https://third.com",
+					}),
+					RagSourceFactory.build({
+						sourceId: "url-3",
+						status: "FINISHED",
+						url: "https://fourth.com",
+					}),
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			render(<KnowledgeBaseStep />);
+
+			const urlsContainer = screen.getByTestId("knowledge-base-urls");
+			const columns = urlsContainer.querySelectorAll(".space-y-1");
+
+			expect(columns).toHaveLength(2);
+			expect(columns[0]).toHaveTextContent("https://first.com");
+			expect(columns[0]).toHaveTextContent("https://third.com");
+			expect(columns[1]).toHaveTextContent("https://second.com");
+			expect(columns[1]).toHaveTextContent("https://fourth.com");
+		});
+
+		it("handles single URL in grid layout", () => {
+			const application = ApplicationFactory.build({
+				id: "test-app-id",
+				project_id: "test-project",
+				rag_sources: [
+					RagSourceFactory.build({
+						sourceId: "url-0",
+						status: "FINISHED",
+						url: "https://single.com",
+					}),
+				],
+			});
+
+			useApplicationStore.setState({ application });
+			render(<KnowledgeBaseStep />);
+
+			const urlsContainer = screen.getByTestId("knowledge-base-urls");
+			const columns = urlsContainer.querySelectorAll(".space-y-1");
+
+			expect(columns).toHaveLength(2);
+			expect(columns[0]).toHaveTextContent("https://single.com");
+			expect(columns[1]).not.toHaveTextContent("https://single.com");
+		});
+	});
+
+	describe("Application State Handling", () => {
+		it("handles null application gracefully", () => {
+			useApplicationStore.setState({ application: null });
+
+			render(<KnowledgeBaseStep />);
+
+			expect(screen.getByTestId("knowledge-base-step")).toBeInTheDocument();
+			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
+		});
+
+		it("handles undefined rag_sources", () => {
+			const application = ApplicationFactory.build({
+				id: "test-app-id",
+				project_id: "test-project",
+				rag_sources: undefined,
+			});
+
+			useApplicationStore.setState({ application });
+			render(<KnowledgeBaseStep />);
+
+			expect(screen.queryByTestId("knowledge-base-container")).not.toBeInTheDocument();
+		});
+	});
+
 	describe("Conditional Logic Edge Cases", () => {
 		it("handles empty application title correctly", () => {
 			const application = ApplicationFactory.build({

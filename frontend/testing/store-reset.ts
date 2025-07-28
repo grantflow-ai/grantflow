@@ -13,6 +13,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { log } from "@/utils/logger";
 
 /**
  * Reset all Zustand stores to their initial state.
@@ -34,31 +35,42 @@ import { useWizardStore } from "@/stores/wizard-store";
  * ```
  */
 export function resetAllStores(): void {
-	// Reset stores with built-in reset functions
-	useApplicationStore.getState().reset();
-	useNavigationStore.getState().reset();
-	useProjectStore.getState().reset();
-	useWizardStore.getState().reset();
+	try {
+		useApplicationStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset application store:", { error });
+	}
 
-	// Reset stores with specific clear functions
+	try {
+		useNavigationStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset navigation store:", { error });
+	}
+
+	try {
+		useProjectStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset project store:", { error });
+	}
+
+	try {
+		useWizardStore.getState().reset();
+	} catch (error) {
+		log.warn("Failed to reset wizard store:", { error });
+	}
+
 	useNotificationStore.getState().clearAllNotifications();
 	useUserStore.getState().clearUser();
 
-	// Reset organization store - handle both real and mocked versions
 	try {
 		useOrganizationStore.getState().clearOrganization();
-	} catch {
-		// Fallback for mocked store that might not have clearOrganization function
-	}
+	} catch {}
 
-	// Manually reset organization store state to ensure clean state
 	useOrganizationStore.setState({
 		organization: null,
 		organizations: [],
 		selectedOrganizationId: null,
 	});
-
-	// Clear persisted data from localStorage to prevent state leakage between tests
 	clearPersistedStoreData();
 }
 
@@ -85,9 +97,7 @@ export function resetStore(
 		case "organization": {
 			try {
 				useOrganizationStore.getState().clearOrganization();
-			} catch {
-				// Fallback for mocked store that might not have clearOrganization function
-			}
+			} catch {}
 			useOrganizationStore.setState({
 				organization: null,
 				organizations: [],
@@ -125,8 +135,6 @@ function clearPersistedStoreData(): void {
 	persistedStoreKeys.forEach((key) => {
 		try {
 			localStorage.removeItem(key);
-		} catch {
-			// Ignore localStorage errors in test environments that don't support it
-		}
+		} catch {}
 	});
 }

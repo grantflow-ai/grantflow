@@ -5,7 +5,6 @@ import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardClient } from "./dashboard-client";
 
-// Mock all dependencies
 vi.mock("next/navigation", () => ({
 	useRouter: vi.fn(),
 }));
@@ -85,7 +84,6 @@ const mockDuplicateProject = vi.fn();
 const mockAddNotification = vi.fn();
 const mockMutate = vi.fn();
 
-// Get mocked functions
 const mockUseRouter = vi.mocked(await import("next/navigation").then((m) => m.useRouter));
 const mockUseSWR = vi.mocked(await import("swr").then((m) => m.default));
 const mockUseNavigation = vi.mocked(await import("@/stores/navigation-store").then((m) => m.useNavigationStore));
@@ -99,7 +97,7 @@ const mockUseNotificationStore = vi.mocked(
 );
 const mockUseUserStore = vi.mocked(await import("@/stores/user-store").then((m) => m.useUserStore));
 const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
-// Get mocked components
+
 const MockDashboardStats = vi.mocked(await import("./dashboard-stats").then((m) => m.DashboardStats));
 const MockDashboardProjectCard = vi.mocked(
 	await import("./dashboard-project-card").then((m) => m.DashboardProjectCard),
@@ -121,7 +119,6 @@ describe("DashboardClient", () => {
 		vi.clearAllMocks();
 		setupAuthenticatedTest();
 
-		// Setup default mock returns
 		mockUseRouter.mockReturnValue(mockRouter);
 		mockUseNavigation.mockReturnValue({ navigateToProject: mockNavigateToProject });
 		mockUseOrganization.mockReturnValue({
@@ -163,7 +160,6 @@ describe("DashboardClient", () => {
 	it("should render welcome modal for single project with no applications", () => {
 		const singleProject = ProjectListItemFactory.build({ applications_count: 0 });
 
-		// Mock SWR to return the single project for this test
 		mockUseSWR.mockReturnValue({
 			data: [singleProject],
 			error: undefined,
@@ -196,7 +192,6 @@ describe("DashboardClient", () => {
 	});
 
 	it("should render empty state when no projects", () => {
-		// Mock SWR to return empty projects for this test
 		mockUseSWR.mockReturnValue({
 			data: [],
 			error: undefined,
@@ -229,7 +224,7 @@ describe("DashboardClient", () => {
 
 	it("should show creating state when creating project", async () => {
 		const user = userEvent.setup();
-		mockCreateProject.mockImplementation(() => new Promise(() => {})); // Never resolves
+		mockCreateProject.mockImplementation(() => new Promise(() => {}));
 
 		render(<DashboardClient {...defaultProps} />);
 
@@ -248,7 +243,6 @@ describe("DashboardClient", () => {
 		const inviteButton = screen.getByTestId("invite-collaborators-button");
 		await user.click(inviteButton);
 
-		// Check that modal was called with isOpen: true (should be the second call after initial render)
 		expect(MockInviteCollaboratorModal).toHaveBeenCalledWith(
 			{
 				isOpen: true,
@@ -281,7 +275,6 @@ describe("DashboardClient", () => {
 		const user = userEvent.setup();
 		mockCreateProject.mockResolvedValue({ id: "new-project-123" });
 
-		// Mock SWR to return empty projects for this test
 		mockUseSWR.mockReturnValue({
 			data: [],
 			error: undefined,
@@ -322,7 +315,6 @@ describe("DashboardClient", () => {
 
 		render(<DashboardClient {...defaultProps} initialSelectedOrganizationId={null} />);
 
-		// Should still render but with limited functionality
 		expect(screen.getByTestId("dashboard-title")).toBeInTheDocument();
 	});
 });

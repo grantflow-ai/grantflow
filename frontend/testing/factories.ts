@@ -149,6 +149,23 @@ export const FormInputsFactory = new Factory<FormInputs>((factory) => ({
 	team_excellence: factory.lorem.paragraph(),
 }));
 
+export const EmptyFormInputsFactory = {
+	build: (overrides: Partial<FormInputs> = {}): FormInputs => {
+		const defaults: FormInputs = {
+			background_context: "",
+			hypothesis: "",
+			impact: "",
+			novelty_and_innovation: "",
+			preliminary_data: "",
+			rationale: "",
+			research_feasibility: "",
+			scientific_infrastructure: "",
+			team_excellence: "",
+		};
+		return { ...defaults, ...overrides };
+	},
+};
+
 type GrantSectionBase = Extract<
 	GrantSections[0],
 	{ id: string; order: number; parent_id: null | string; title: string }
@@ -612,7 +629,6 @@ export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((fact
 	updated_at: factory.date.recent().toISOString(),
 }));
 
-// Organization API Response Factories
 export const AddOrganizationMemberResponseFactory = new Factory<API.AddOrganizationMember.Http201.ResponseBody>(
 	(factory) => ({
 		firebase_uid: factory.string.alphanumeric(28),
@@ -751,7 +767,6 @@ export const UpdateMemberRoleResponseFactory = new Factory<API.UpdateMemberRole.
 	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
 }));
 
-// Grant Application API Response Factories
 export const ListApplicationsResponseFactory = new Factory<API.ListApplications.Http200.ResponseBody>((factory) => ({
 	applications: factory.helpers.multiple(
 		() => ({
@@ -819,7 +834,6 @@ export const TriggerAutofillRequestFactory = new Factory<API.TriggerAutofill.Req
 		: undefined,
 }));
 
-// Notification API Response Factories
 export const DismissNotificationResponseFactory = new Factory<API.DismissNotification.Http200.ResponseBody>(
 	(factory) => ({
 		notification_id: factory.string.uuid(),
@@ -847,7 +861,6 @@ export const ListNotificationsResponseFactory = new Factory<API.ListNotification
 	total: factory.number.int({ max: 100, min: 0 }),
 }));
 
-// Organization Request Factories (for member management)
 export const AddOrganizationMemberRequestFactory = new Factory<API.AddOrganizationMember.RequestBody>((factory) => ({
 	firebase_uid: factory.string.alphanumeric(28),
 	has_all_projects_access: factory.datatype.boolean(),

@@ -66,9 +66,7 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
     """Create a unique test database for each worker process."""
 
-    base_connection_string = (
-        os.getenv("DATABASE_URL") or f"postgresql://{os.getenv('USER', 'postgres')}@localhost:5432/postgres"
-    )
+    base_connection_string = os.getenv("DATABASE_URL") or "postgresql://grantflow:grantflow@localhost:5432/postgres"
 
     process_id = os.getpid()
     test_db_name = f"grantflow_test_{worker_id}_{process_id}"

@@ -1,6 +1,14 @@
 "use client";
 
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
 import {
 	horizontalListSortingStrategy,
 	SortableContext,
@@ -25,7 +33,6 @@ import {
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { useApplicationStore } from "@/stores/application-store";
 import { type Objective, useWizardStore } from "@/stores/wizard-store";
-import { log } from "@/utils/logger";
 import { WizardRightPane } from "../shared";
 
 interface EditableObjectiveProps {
@@ -46,6 +53,7 @@ interface ObjectiveHeaderProps {
 	isEditing: boolean;
 	listeners: any;
 	objective: Objective;
+	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
 	onRemove: () => void;
@@ -56,6 +64,7 @@ interface SortableObjectiveCardProps {
 	index: number;
 	isEditing: boolean;
 	objective: Objective;
+	objectivesCount: number;
 	onCancel: () => void;
 	onEdit: () => void;
 	onRemove: () => void;
@@ -76,16 +85,53 @@ interface TaskHeaderProps {
 	objectiveIndex: number;
 	onTaskDelete?: () => void;
 	taskIndex: number;
+	totalTasks: number;
 }
 
-const getGridClasses = (count: number) => {
-	if (count === 1 || count === 2) return "grid grid-cols-2 gap-4";
-	return `grid grid-cols-${count} gap-4`;
+const getGridCols = (count: number, editingIndex?: number): string => {
+	if (count >= 4 && editingIndex !== undefined) {
+		return "";
+	}
+
+	const gridColsMap: Record<number, string> = {
+		1: "grid-cols-2",
+		2: "grid-cols-2",
+		3: "grid-cols-3",
+		4: "grid-cols-4",
+		5: "grid-cols-5",
+	};
+
+	return gridColsMap[count] ?? "grid-cols-5";
+};
+
+const getGridStyle = (count: number, editingIndex?: number): React.CSSProperties => {
+	if (count >= 4 && editingIndex !== undefined) {
+		const columns = Array.from({ length: count }, (_, index) => {
+			return index === editingIndex ? "1.4fr" : "0.9fr";
+		});
+
+		return {
+			display: "grid",
+			gap: "1rem",
+			gridTemplateColumns: columns.join(" "),
+			transition: "grid-template-columns 0.3s ease-in-out",
+		};
+	}
+
+	if (count > 5) {
+		return {
+			display: "grid",
+			gap: "1rem",
+			gridTemplateColumns: `repeat(${Math.min(count, 6)}, minmax(0, 1fr))`,
+		};
+	}
+	return {};
 };
 
 export function ResearchPlanPreview() {
 	const objectives = useApplicationStore((state) => state.application?.research_objectives) ?? [];
-	const handleObjectiveDragEnd = useWizardStore((state) => state.handleObjectiveDragEnd);
+	const updateObjectives = useWizardStore((state) => state.updateObjectives);
+	const updateObjective = useWizardStore((state) => state.updateObjective);
 	const removeObjective = useWizardStore((state) => state.removeObjective);
 	const [editingObjectiveId, setEditingObjectiveId] = useState<null | number>(null);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -98,14 +144,30 @@ export function ResearchPlanPreview() {
 		}),
 	);
 
+	const handleObjectiveDragEnd = async (event: DragEndEvent) => {
+		const { active, over } = event;
+
+		if (!over || active.id === over.id) return;
+
+		const oldIndex = objectives.findIndex((obj) => obj.number === active.id);
+		const newIndex = objectives.findIndex((obj) => obj.number === over.id);
+
+		if (oldIndex !== -1 && newIndex !== -1) {
+			const reorderedObjectives = [...objectives];
+			const [movedObjective] = reorderedObjectives.splice(oldIndex, 1);
+			reorderedObjectives.splice(newIndex, 0, movedObjective);
+			await updateObjectives(reorderedObjectives);
+		}
+	};
+
 	const handleRemoveClick = (objective: Objective) => {
 		setObjectiveToDelete(objective);
 		setDeleteDialogOpen(true);
 	};
 
-	const handleConfirmDelete = () => {
+	const handleConfirmDelete = async () => {
 		if (objectiveToDelete) {
-			removeObjective(objectiveToDelete.number);
+			await removeObjective(objectiveToDelete.number);
 			setDeleteDialogOpen(false);
 			setObjectiveToDelete(null);
 		}
@@ -128,43 +190,47 @@ export function ResearchPlanPreview() {
 
 	return (
 		<WizardRightPane padding="p-6">
-			<div className="flex-1">
-				<DndContext collisionDetection={closestCenter} onDragEnd={handleObjectiveDragEnd} sensors={sensors}>
-					<SortableContext
-						items={objectives.map((obj) => obj.number)}
-						strategy={horizontalListSortingStrategy}
+			<DndContext collisionDetection={closestCenter} onDragEnd={handleObjectiveDragEnd} sensors={sensors}>
+				<SortableContext items={objectives.map((obj) => obj.number)} strategy={horizontalListSortingStrategy}>
+					<div
+						className={`grid gap-4 ${getGridCols(objectives.length, editingObjectiveId === null ? undefined : objectives.findIndex((obj) => obj.number === editingObjectiveId))}`}
+						style={getGridStyle(
+							objectives.length,
+							editingObjectiveId === null
+								? undefined
+								: objectives.findIndex((obj) => obj.number === editingObjectiveId),
+						)}
 					>
-						<div className={getGridClasses(objectives.length)}>
-							{objectives.map((objective, index) => (
-								<div
-									className={objectives.length === 1 ? "col-start-1" : ""}
-									key={`${objective.title}-${objective.description}-${index}`}
-								>
-									<SortableObjectiveCard
-										id={objective.number}
-										index={index + 1}
-										isEditing={editingObjectiveId === objective.number}
-										objective={objective}
-										onCancel={() => {
-											setEditingObjectiveId(null);
-										}}
-										onEdit={() => {
-											setEditingObjectiveId(objective.number);
-										}}
-										onRemove={() => {
-											handleRemoveClick(objective);
-										}}
-										onSave={(updatedObjective) => {
-											log.info("Save objective", { objective: updatedObjective });
-											setEditingObjectiveId(null);
-										}}
-									/>
-								</div>
-							))}
-						</div>
-					</SortableContext>
-				</DndContext>
-			</div>
+						{objectives.map((objective, index) => (
+							<div
+								className={objectives.length === 1 ? "col-start-1" : ""}
+								key={`${objective.title}-${objective.description}-${index}`}
+							>
+								<SortableObjectiveCard
+									id={objective.number}
+									index={index + 1}
+									isEditing={editingObjectiveId === objective.number}
+									objective={objective}
+									objectivesCount={objectives.length}
+									onCancel={() => {
+										setEditingObjectiveId(null);
+									}}
+									onEdit={() => {
+										setEditingObjectiveId(objective.number);
+									}}
+									onRemove={() => {
+										handleRemoveClick(objective);
+									}}
+									onSave={async (updatedObjective) => {
+										await updateObjective(updatedObjective.number, updatedObjective);
+										setEditingObjectiveId(null);
+									}}
+								/>
+							</div>
+						))}
+					</div>
+				</SortableContext>
+			</DndContext>
 			<Dialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
 				<DialogContent className="p-8 outline-1 outline-primary rounded" showCloseButton={false}>
 					<DialogTitle
@@ -306,10 +372,13 @@ function ObjectiveHeader({
 	isEditing,
 	listeners,
 	objective,
+	objectivesCount,
 	onCancel,
 	onEdit,
 	onRemove,
 }: ObjectiveHeaderProps) {
+	const isDragDisabled = objectivesCount <= 1;
+
 	return (
 		<div className="absolute -top-0.5 -left-0.5 right-0 flex items-start justify-between z-10">
 			<div
@@ -319,34 +388,38 @@ function ObjectiveHeader({
 			</div>
 
 			<div className="flex-1 flex justify-center">
-				<button
-					aria-label={`Drag to reorder objective ${index}: ${objective.title}`}
-					className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
-					type="button"
-					{...attributes}
-					{...listeners}
-				>
-					<GripHorizontal className="flex-shrink-0" size={20} />
-				</button>
+				{isDragDisabled ? (
+					<div className="flex items-center justify-center p-2">
+						<GripHorizontal className="flex-shrink-0 text-gray-300" size={20} />
+					</div>
+				) : (
+					<button
+						aria-label={`Drag to reorder objective ${index}: ${objective.title}`}
+						className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
+						type="button"
+						{...attributes}
+						{...listeners}
+					>
+						<GripHorizontal className="flex-shrink-0" size={20} />
+					</button>
+				)}
 			</div>
 
 			<div>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<AppButton
-							className="size-8 text-gray-400 hover:text-gray-600 hover:bg-app-gray-100 focus:outline-none"
+						<button
+							className="inline-flex items-center justify-center size-8 text-gray-400 cursor-pointer hover:text-gray-600 focus:outline-none"
 							data-testid="menu-trigger"
-							size="sm"
 							type="button"
-							variant="ghost"
 						>
 							<Image alt="Menu" height={16} src="/icons/three-dots.svg" width={16} />
-						</AppButton>
+						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuItem data-testid="edit-task-menuitem" onClick={isEditing ? onCancel : onEdit}>
 							<Edit className="mr-2 size-4" />
-							{isEditing ? "Cancel Editing" : "Edit Task"}
+							{isEditing ? "Cancel Editing" : "Edit Objective"}
 						</DropdownMenuItem>
 						<DropdownMenuItem data-testid="remove-menuitem" onClick={onRemove}>
 							<Trash2 className="mr-2 size-4" />
@@ -364,6 +437,7 @@ function SortableObjectiveCard({
 	index,
 	isEditing,
 	objective,
+	objectivesCount,
 	onCancel,
 	onEdit,
 	onRemove,
@@ -389,6 +463,7 @@ function SortableObjectiveCard({
 				isEditing={isEditing}
 				listeners={listeners}
 				objective={objective}
+				objectivesCount={objectivesCount}
 				onCancel={onCancel}
 				onEdit={onEdit}
 				onRemove={onRemove}
@@ -429,6 +504,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 							objectiveIndex={objectiveIndex}
 							onTaskDelete={() => onTaskDelete?.(taskIndex)}
 							taskIndex={taskIndex}
+							totalTasks={tasks.length}
 						/>
 						<div className="pt-9.5 px-3 pb-3">
 							{isEditing ? (
@@ -439,7 +515,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 										label="Task description"
 										onChange={(e) => onTaskUpdate?.(taskIndex, e.target.value)}
 										placeholder="Describe a step to achieve this objective"
-										value={task.description ?? task.title}
+										value={task.description?.trim() ?? null ?? task.title}
 										variant="field"
 									/>
 								</div>
@@ -448,7 +524,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 									className="text-app-gray-600 text-sm font-normal leading-none"
 									data-testid="task-display"
 								>
-									Task: {task.description ?? task.title}
+									Task: {task.description?.trim() ?? null ?? task.title}
 								</div>
 							)}
 						</div>
@@ -459,7 +535,9 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 	);
 }
 
-function TaskHeader({ isEditing, objectiveIndex, onTaskDelete, taskIndex }: TaskHeaderProps) {
+function TaskHeader({ isEditing, objectiveIndex, onTaskDelete, taskIndex, totalTasks }: TaskHeaderProps) {
+	const isDragDisabled = totalTasks <= 1;
+
 	return (
 		<div className="absolute -top-1 left-0 right-0 flex items-center justify-between z-10">
 			<div
@@ -469,13 +547,19 @@ function TaskHeader({ isEditing, objectiveIndex, onTaskDelete, taskIndex }: Task
 			</div>
 
 			<div className="flex-1 flex justify-center">
-				<button
-					aria-label={`Drag to reorder task ${taskIndex + 1}`}
-					className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
-					type="button"
-				>
-					<GripHorizontal className="flex-shrink-0" size={20} />
-				</button>
+				{isDragDisabled ? (
+					<div className="flex items-center justify-center p-2">
+						<GripHorizontal className="flex-shrink-0 text-gray-300" size={20} />
+					</div>
+				) : (
+					<button
+						aria-label={`Drag to reorder task ${taskIndex + 1}`}
+						className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
+						type="button"
+					>
+						<GripHorizontal className="flex-shrink-0" size={20} />
+					</button>
+				)}
 			</div>
 
 			{isEditing && (
