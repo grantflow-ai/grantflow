@@ -6,6 +6,7 @@ import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { AppButton, AppTextarea, InputField } from "@/components/app";
+import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -36,7 +37,6 @@ interface SectionFormData {
 
 interface SectionHeaderProps {
 	attributes: any;
-	hasMaxWords: boolean;
 	isDragDisabled?: boolean;
 	isExpanded: boolean;
 	isSubsection: boolean;
@@ -46,6 +46,7 @@ interface SectionHeaderProps {
 	onHeaderClick: (e: React.MouseEvent) => void;
 	onToggleExpand: () => void;
 	section: GrantSection;
+	sectionHasMaxWords: boolean;
 }
 
 interface SortableSectionProps {
@@ -90,24 +91,26 @@ export function SortableSection({
 	});
 
 	const generatedAiPrompt = aiPrompt(section.title);
+	const sectionInstructions = hasGenerationInstructions(section) ? section.generation_instructions : null;
+	const effectiveAiPrompt = sectionInstructions ?? generatedAiPrompt;
 
 	const [formData, setFormData] = useState<SectionFormData>({
-		aiPrompt: generatedAiPrompt,
-		isResearchPlan: "max_words" in section ? (section.is_detailed_research_plan ?? false) : false,
-		max_words: "max_words" in section ? section.max_words : 3000,
+		aiPrompt: effectiveAiPrompt,
+		isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
+		max_words: hasMaxWords(section) ? section.max_words : 3000,
 		title: section.title,
 		useWords: true,
 	});
 
 	useEffect(() => {
 		setFormData({
-			aiPrompt: generatedAiPrompt,
-			isResearchPlan: "max_words" in section ? (section.is_detailed_research_plan ?? false) : false,
-			max_words: "max_words" in section ? section.max_words : 3000,
+			aiPrompt: effectiveAiPrompt,
+			isResearchPlan: hasDetailedResearchPlan(section) ? (section.is_detailed_research_plan ?? false) : false,
+			max_words: hasMaxWords(section) ? section.max_words : 3000,
 			title: section.title,
 			useWords: true,
 		});
-	}, [section, generatedAiPrompt]);
+	}, [section, effectiveAiPrompt]);
 
 	const style = {
 		opacity: isCurrentlyDragging ? 0.5 : 1,
@@ -115,7 +118,7 @@ export function SortableSection({
 		transition: isCurrentlyDragging ? "none" : transition,
 	};
 
-	const hasMaxWords = "max_words" in section && Boolean(section.max_words);
+	const sectionHasMaxWords = hasMaxWords(section) && Boolean(section.max_words);
 
 	const handleSave = useCallback(() => {
 		onUpdate({
@@ -153,7 +156,6 @@ export function SortableSection({
 		>
 			<SectionHeader
 				attributes={attributes}
-				hasMaxWords={hasMaxWords}
 				isDragDisabled={isDragDisabled}
 				isExpanded={isExpanded}
 				isSubsection={isSubsection}
@@ -163,6 +165,7 @@ export function SortableSection({
 				onHeaderClick={handleHeaderClick}
 				onToggleExpand={onToggleExpand}
 				section={section}
+				sectionHasMaxWords={sectionHasMaxWords}
 			/>
 
 			{isExpanded && (
@@ -183,6 +186,22 @@ export function SortableSection({
 		</div>
 	);
 }
+
+export const hasDetailedResearchPlan = (
+	section: GrantSection,
+): section is { is_detailed_research_plan: boolean | null } & GrantSection => {
+	return Object.hasOwn(section, "is_detailed_research_plan");
+};
+
+export const hasGenerationInstructions = (
+	section: GrantSection,
+): section is { generation_instructions: string } & GrantSection => {
+	return Object.hasOwn(section, "generation_instructions");
+};
+
+export const hasMaxWords = (section: GrantSection): section is { max_words: number } & GrantSection => {
+	return Object.hasOwn(section, "max_words");
+};
 
 function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, setFormData }: SectionEditFormProps) {
 	return (
@@ -347,7 +366,6 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 
 function SectionHeader({
 	attributes,
-	hasMaxWords,
 	isDragDisabled = false,
 	isExpanded,
 	isSubsection,
@@ -357,6 +375,7 @@ function SectionHeader({
 	onHeaderClick,
 	onToggleExpand,
 	section,
+	sectionHasMaxWords,
 }: SectionHeaderProps) {
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: This element handles complex drag-and-drop interactions that require specific event handling and cannot be converted to a semantic button
@@ -395,7 +414,12 @@ function SectionHeader({
 						>
 							{section.title}
 						</h3>
-						{hasMaxWords && "max_words" in section && (
+						{hasDetailedResearchPlan(section) && section.is_detailed_research_plan && (
+							<ThemeBadge color="primary" data-testid="research-plan-badge">
+								Research Plan
+							</ThemeBadge>
+						)}
+						{sectionHasMaxWords && hasMaxWords(section) && (
 							<span
 								className="text-xs font-normal leading-none text-dark-gray"
 								data-testid="max-words-display"
