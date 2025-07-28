@@ -122,6 +122,16 @@ jobs:
             - name: Setup Task
               uses: ./.github/actions/setup-task
 
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+
+            - name: Install uv
+              run: |
+                  curl -LsSf https://astral.sh/uv/install.sh | sh
+                  echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
             - name: Generate cloud functions requirements
               run: |
                   task cloud-functions:generate-requirements
