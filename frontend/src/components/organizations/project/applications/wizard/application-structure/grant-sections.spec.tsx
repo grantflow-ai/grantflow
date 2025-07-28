@@ -320,13 +320,15 @@ describe("SortableSection", () => {
 		expect(maxCountInput).toHaveValue(3000);
 	});
 
-	it("displays research plan badge when is_detailed_research_plan is true", () => {
+	it("displays research plan badge with icon when is_detailed_research_plan is true", () => {
 		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: true });
 
 		render(<SortableSection {...defaultProps} section={section} />);
 
-		expect(screen.getByTestId("research-plan-badge")).toBeInTheDocument();
-		expect(screen.getByTestId("research-plan-badge")).toHaveTextContent("Research Plan");
+		const badge = screen.getByTestId("research-plan-badge");
+		expect(badge).toBeInTheDocument();
+		expect(badge).toHaveTextContent("Research Plan");
+		expect(badge.querySelector('img[alt="Research Plan"]')).toBeInTheDocument();
 	});
 
 	it("does not display research plan badge when is_detailed_research_plan is false", () => {
