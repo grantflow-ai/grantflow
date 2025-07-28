@@ -149,7 +149,7 @@ jobs:
                   if [ "${{ needs.build-and-push.outputs.environment }}" == "production" ]; then
                     echo "  URL: https://grantflow.ai"
                   else
-                    echo "  URL: https://staging--grantflow.us-central1.hosted.app"
+                    echo "  URL: https://staging.grantflow.ai"
                   fi
 
             - name: Send Discord notification
