@@ -160,6 +160,88 @@ const renumberObjectives = (objectives: Objective[]): Objective[] => {
 	}));
 };
 
+// Helper functions to reduce validateStepNext complexity
+function validateApplicationDetails(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
+	const titleValid = !!(application.title && application.title.trim().length >= MIN_TITLE_LENGTH);
+	const ragSourcesCount = application.grant_template?.rag_sources.length ?? 0;
+	const ragSourcesValid = ragSourcesCount > 0;
+	const result = titleValid && ragSourcesValid;
+
+	const titleLength = application.title ? application.title.length : 0;
+
+	let reason: string;
+	if (!titleValid) {
+		reason = `Title invalid (length: ${titleLength}, min: ${MIN_TITLE_LENGTH})`;
+	} else if (ragSourcesValid) {
+		reason = "Valid";
+	} else {
+		reason = `No RAG sources (count: ${ragSourcesCount})`;
+	}
+
+	log.info("[Wizard Store] validateStepNext APPLICATION_DETAILS", {
+		hasGrantTemplate: !!application.grant_template,
+		ragSourcesCount,
+		reason,
+		result,
+		title: application.title,
+		titleLength,
+	});
+
+	return result;
+}
+
+function validateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
+	const formInputs = application.form_inputs;
+	if (!formInputs) {
+		log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
+			reason: "No form inputs",
+			result: false,
+		});
+		return false;
+	}
+
+	const requiredFields = [
+		"background_context",
+		"hypothesis",
+		"rationale",
+		"novelty_and_innovation",
+		"impact",
+		"team_excellence",
+		"research_feasibility",
+		"preliminary_data",
+	] as const;
+
+	const fieldStatus = requiredFields.map((field) => {
+		const value = formInputs[field];
+		const valid = Boolean(value && value.trim().length > 0);
+		return { field, length: value ? value.length : 0, valid };
+	});
+
+	const result = fieldStatus.every((status) => status.valid);
+
+	log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
+		fieldStatus,
+		filledFields: fieldStatus.filter((s) => s.valid).length,
+		result,
+		totalFields: requiredFields.length,
+	});
+
+	return result;
+}
+
+function validateResearchPlan(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
+	const objectives = application.research_objectives ?? [];
+	const result = objectives.some((obj) => obj.research_tasks.length > 0);
+
+	log.info("[Wizard Store] validateStepNext RESEARCH_PLAN", {
+		objectivesCount: objectives.length,
+		objectivesWithTasks: objectives.filter((obj) => obj.research_tasks.length > 0).length,
+		result,
+	});
+
+	return result;
+}
+
 export const useWizardStore = create<WizardActions & WizardState>()(
 	persist(
 		(set, get) => {
@@ -650,35 +732,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 
 					switch (currentStep) {
 						case WizardStep.APPLICATION_DETAILS: {
-							const titleValid = !!(
-								application.title && application.title.trim().length >= MIN_TITLE_LENGTH
-							);
-							const ragSourcesCount = application.grant_template?.rag_sources.length ?? 0;
-							const ragSourcesValid = ragSourcesCount > 0;
-
-							const result: boolean = titleValid && ragSourcesValid;
-
-							const titleLength = application.title ? application.title.length : 0;
-
-							let reason: string;
-							if (!titleValid) {
-								reason = `Title invalid (length: ${titleLength}, min: ${MIN_TITLE_LENGTH})`;
-							} else if (ragSourcesValid) {
-								reason = "Valid";
-							} else {
-								reason = `No RAG sources (count: ${ragSourcesCount})`;
-							}
-
-							log.info("[Wizard Store] validateStepNext APPLICATION_DETAILS", {
-								hasGrantTemplate: !!application.grant_template,
-								ragSourcesCount,
-								reason,
-								result,
-								title: application.title,
-								titleLength,
-							});
-
-							return result;
+							return validateApplicationDetails(application);
 						}
 						case WizardStep.APPLICATION_STRUCTURE: {
 							return !!application.grant_template?.grant_sections.length;
@@ -690,54 +744,10 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							return !!application.rag_sources.length;
 						}
 						case WizardStep.RESEARCH_DEEP_DIVE: {
-							const formInputs = application.form_inputs;
-							if (!formInputs) {
-								log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
-									reason: "No form inputs",
-									result: false,
-								});
-								return false;
-							}
-
-							const requiredFields = [
-								"background_context",
-								"hypothesis",
-								"rationale",
-								"novelty_and_innovation",
-								"impact",
-								"team_excellence",
-								"research_feasibility",
-								"preliminary_data",
-							] as const;
-
-							const fieldStatus = requiredFields.map((field) => {
-								const value = formInputs[field];
-								const valid = Boolean(value && value.trim().length > 0);
-								return { field, length: value ? value.length : 0, valid };
-							});
-
-							const result = fieldStatus.every((status) => status.valid);
-
-							log.info("[Wizard Store] validateStepNext RESEARCH_DEEP_DIVE", {
-								fieldStatus,
-								filledFields: fieldStatus.filter((s) => s.valid).length,
-								result,
-								totalFields: requiredFields.length,
-							});
-
-							return result;
+							return validateResearchDeepDive(application);
 						}
 						case WizardStep.RESEARCH_PLAN: {
-							const objectives = application.research_objectives ?? [];
-							const result = objectives.some((obj) => obj.research_tasks.length > 0);
-
-							log.info("[Wizard Store] validateStepNext RESEARCH_PLAN", {
-								objectivesCount: objectives.length,
-								objectivesWithTasks: objectives.filter((obj) => obj.research_tasks.length > 0).length,
-								result,
-							});
-
-							return result;
+							return validateResearchPlan(application);
 						}
 						default: {
 							return false;

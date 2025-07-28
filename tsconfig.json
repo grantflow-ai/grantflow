@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"allowJs": true,
+		"lib": ["DOM", "DOM.Iterable", "ESNext"],
 		"allowSyntheticDefaultImports": true,
 		"baseUrl": ".",
 		"esModuleInterop": true,
@@ -22,6 +23,7 @@
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
+		"types": ["vitest/globals", "@testing-library/jest-dom"],
 		"target": "ESNext"
 	},
 	"exclude": ["node_modules"],

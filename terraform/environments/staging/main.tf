@@ -301,6 +301,9 @@ module "app_hosting" {
   memory          = "512Mi"
   concurrency     = 50
 
+  # Custom domain for staging frontend
+  custom_domain   = "staging.grantflow.ai"
+
   # Secrets that App Hosting needs access to
   secret_ids = [
     "NEXT_PUBLIC_SITE_URL_STAGING",

@@ -109,7 +109,7 @@ resource "google_firebase_app_hosting_build" "frontend" {
   project  = google_firebase_app_hosting_backend.frontend.project
   location = google_firebase_app_hosting_backend.frontend.location
   backend  = google_firebase_app_hosting_backend.frontend.backend_id
-  build_id = "${var.environment}-${var.image_tag}"
+  build_id = "${var.environment}-${formatdate("MMDDhhmm", timestamp())}"
 
   source {
     container {
