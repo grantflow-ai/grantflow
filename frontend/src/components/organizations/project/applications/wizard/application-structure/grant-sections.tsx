@@ -414,11 +414,6 @@ function SectionHeader({
 						>
 							{section.title}
 						</h3>
-						{hasDetailedResearchPlan(section) && section.is_detailed_research_plan && (
-							<ThemeBadge color="primary" data-testid="research-plan-badge">
-								Research Plan
-							</ThemeBadge>
-						)}
 						{sectionHasMaxWords && hasMaxWords(section) && (
 							<span
 								className="text-xs font-normal leading-none text-dark-gray"
@@ -426,6 +421,17 @@ function SectionHeader({
 							>
 								{section.max_words.toLocaleString()} Max words
 							</span>
+						)}
+						{hasDetailedResearchPlan(section) && section.is_detailed_research_plan && (
+							<ThemeBadge
+								color="secondary"
+								data-testid="research-plan-badge"
+								leftIcon={
+									<Image alt="Research Plan" height={12} src="/icons/research-plan.svg" width={12} />
+								}
+							>
+								Research Plan
+							</ThemeBadge>
 						)}
 					</div>
 				</div>
