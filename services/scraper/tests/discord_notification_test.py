@@ -233,6 +233,7 @@ async def test_run_scraper_with_metrics(
     assert isinstance(metrics["total_duration_ms"], float)
 
 
+@patch("services.scraper.src.main.get_existing_file_identifiers")
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
 @patch("services.scraper.src.main.get_env")
@@ -240,6 +241,7 @@ async def test_handle_scraper_request_success_with_discord(
     mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
+    mock_get_existing_files: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     """Test successful scraper request sends Discord notification."""
@@ -249,6 +251,7 @@ async def test_handle_scraper_request_success_with_discord(
         "ENVIRONMENT": "staging",
         "STORAGE_EMULATOR_HOST": "localhost:8080",
         "DEBUG": "True",
+        "SCRAPER_GCS_BUCKET_NAME": "local-storage",
     }.get(key, fallback)
 
     mock_metrics = {
@@ -260,6 +263,7 @@ async def test_handle_scraper_request_success_with_discord(
     }
     mock_run_scraper.return_value = mock_metrics
     mock_send_report.return_value = True
+    mock_get_existing_files.return_value = {f"file_{i}" for i in range(100)}
 
     response = await test_client.post("/")
 
@@ -278,6 +282,7 @@ async def test_handle_scraper_request_success_with_discord(
     assert call_kwargs["total_processing_time_ms"] == 45000.0
     assert call_kwargs["bucket_name"] == "local-storage"
     assert call_kwargs["success"] is True
+    assert call_kwargs["total_files_in_bucket"] == 100
 
 
 @patch("services.scraper.src.main.send_scraper_report")
@@ -353,6 +358,7 @@ async def test_handle_scraper_request_no_discord_url(
     mock_send_report.assert_not_called()
 
 
+@patch("services.scraper.src.main.get_existing_file_identifiers")
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
 @patch("services.scraper.src.main.get_env")
@@ -360,6 +366,7 @@ async def test_handle_scraper_request_discord_send_fails(
     mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
+    mock_get_existing_files: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     """Test scraper request when Discord notification fails."""
@@ -369,6 +376,7 @@ async def test_handle_scraper_request_discord_send_fails(
         "ENVIRONMENT": "staging",
         "STORAGE_EMULATOR_HOST": "localhost:8080",
         "DEBUG": "True",
+        "SCRAPER_GCS_BUCKET_NAME": "local-storage",
     }.get(key, fallback)
 
     mock_metrics = {
@@ -380,6 +388,7 @@ async def test_handle_scraper_request_discord_send_fails(
     }
     mock_run_scraper.return_value = mock_metrics
     mock_send_report.side_effect = Exception("Discord API error")
+    mock_get_existing_files.return_value = {f"file_{i}" for i in range(50)}
 
     response = await test_client.post("/")
 
