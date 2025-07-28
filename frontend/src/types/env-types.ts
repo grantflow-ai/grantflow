@@ -11,5 +11,5 @@ export interface Env {
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: string;
 	NEXT_PUBLIC_GCS_EMULATOR_URL?: string;
 	NEXT_PUBLIC_SITE_URL: string;
-	RESEND_API_KEY: string;
+	RESEND_API_KEY?: string;
 }
