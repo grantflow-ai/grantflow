@@ -498,6 +498,7 @@ async def handle_create_upload_url(
         source_id=source_id,
         blob_name=blob_name,
         trace_id=trace_id,
+        content_type=mime_type,
     )
 
     return UploadUrlResponse(url=url, source_id=str(source_id))

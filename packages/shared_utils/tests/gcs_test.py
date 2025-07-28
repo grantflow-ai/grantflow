@@ -333,6 +333,7 @@ async def test_create_signed_upload_url(
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
             headers=None,
+            content_type=None,
         )
         assert url == expected_signed_url
 
@@ -373,6 +374,7 @@ async def test_create_signed_upload_url_with_uuids(
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
             headers=None,
+            content_type=None,
         )
         assert url == expected_signed_url
 
@@ -411,6 +413,51 @@ async def test_create_signed_upload_url_error(
     assert "Failed to create signed upload URL" in str(exc_info.value)
     assert exc_info.value.context["blob_path"] == expected_blob_path
     assert "Test error" in exc_info.value.context["error"]
+
+
+async def test_create_signed_upload_url_with_content_type(
+    mock_env_vars: None, mock_bucket: MagicMock
+) -> None:
+    entity_type = "organization"
+    entity_id = "entity-123"
+    source_id = "source-456"
+    blob_name = "test-file.pdf"
+    content_type = "application/pdf"
+    trace_id = "trace-789"
+    expected_blob_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
+    expected_signed_url = "https://storage.googleapis.com/signed-url"
+
+    mock_blob = MagicMock()
+    mock_blob.generate_signed_url.return_value = expected_signed_url
+    mock_bucket.blob.return_value = mock_blob
+
+    with (
+        patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
+        patch(
+            "packages.shared_utils.src.gcs.run_sync",
+            side_effect=lambda f, *args: f(*args) if callable(f) else f,
+        ),
+    ):
+        mock_get_bucket.return_value = mock_bucket
+
+        url = await create_signed_upload_url(
+            entity_type="organization",
+            entity_id=entity_id,
+            source_id=source_id,
+            blob_name=blob_name,
+            trace_id=trace_id,
+            content_type=content_type,
+        )
+
+        mock_bucket.blob.assert_called_once_with(expected_blob_path)
+        mock_blob.generate_signed_url.assert_called_once_with(
+            version="v4",
+            expiration=ONE_MINUTE_SECONDS * 5,
+            method="PUT",
+            headers={"x-goog-meta-trace-id": trace_id, "Content-Type": content_type},
+            content_type=content_type,
+        )
+        assert url == expected_signed_url
 
 
 async def test_upload_blob_success(mock_env_vars: None, mock_bucket: MagicMock) -> None:
