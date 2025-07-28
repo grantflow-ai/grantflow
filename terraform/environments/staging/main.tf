@@ -302,7 +302,7 @@ module "app_hosting" {
   concurrency     = 50
 
   # Custom domain for staging frontend
-  custom_domain   = "staging.grantflow.ai"
+  custom_domain = "staging.grantflow.ai"
 
   # Secrets that App Hosting needs access to
   secret_ids = [
