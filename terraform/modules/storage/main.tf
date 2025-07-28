@@ -74,6 +74,13 @@ resource "google_storage_bucket" "uploads" {
   uniform_bucket_level_access = var.uniform_bucket_access
   public_access_prevention    = "enforced"
 
+  cors {
+    origin          = var.environment == "staging" ? ["http://localhost:*", "https://staging--grantflow-staging.us-central1.hosted.app", "https://staging.grantflow.ai"] : ["http://localhost:*", "https://grantflow.ai", "https://www.grantflow.ai"]
+    method          = ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"]
+    response_header = ["*"]
+    max_age_seconds = 3600
+  }
+
   dynamic "versioning" {
     for_each = var.enable_versioning ? [1] : []
     content {
