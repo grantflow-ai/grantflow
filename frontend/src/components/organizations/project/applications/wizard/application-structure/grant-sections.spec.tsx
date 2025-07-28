@@ -2,7 +2,13 @@ import { GrantSectionBaseFactory, GrantSectionDetailedFactory, GrantSectionFacto
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords, SortableSection } from "./grant-sections";
+import {
+	hasDetailedResearchPlan,
+	hasDetailedResearchPlanUpdate,
+	hasGenerationInstructions,
+	hasMaxWords,
+} from "@/types/grant-sections";
+import { SortableSection } from "./grant-sections";
 
 vi.mock("@dnd-kit/sortable", () => ({
 	useSortable: vi.fn(
@@ -370,6 +376,22 @@ describe("SortableSection", () => {
 			"'Background' section for a research grant application",
 		);
 	});
+
+	it("calls onUpdate with research plan designation when toggled", async () => {
+		const section = GrantSectionDetailedFactory.build({ is_detailed_research_plan: false });
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const toggle = screen.getByTestId("research-plan-checkbox");
+		await user.click(toggle);
+		await user.click(screen.getByTestId("save-button"));
+
+		expect(mockOnUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				is_detailed_research_plan: true,
+			}),
+		);
+	});
 });
 
 describe("Utility Functions", () => {
@@ -435,6 +457,28 @@ describe("Utility Functions", () => {
 				expect(section.max_words).toBe(5000);
 			} else {
 				throw new Error("Should have max words property");
+			}
+		});
+	});
+
+	describe("hasDetailedResearchPlanUpdate", () => {
+		it("returns true for partial sections with is_detailed_research_plan", () => {
+			const updates = { is_detailed_research_plan: true };
+			expect(hasDetailedResearchPlanUpdate(updates)).toBe(true);
+		});
+
+		it("returns false for partial sections without is_detailed_research_plan", () => {
+			const updates = { max_words: 5000, title: "New Title" };
+			expect(hasDetailedResearchPlanUpdate(updates)).toBe(false);
+		});
+
+		it("provides proper type narrowing for partial sections", () => {
+			const updates = { is_detailed_research_plan: false, title: "Test" };
+
+			if (hasDetailedResearchPlanUpdate(updates)) {
+				expect(updates.is_detailed_research_plan).toBe(false);
+			} else {
+				throw new Error("Should have detailed research plan property");
 			}
 		});
 	});
