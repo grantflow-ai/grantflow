@@ -120,6 +120,54 @@ All services:
 - Have liveness probes configured to check the `/health` endpoint
 - Connect to CloudSQL via the CloudSQL Auth Proxy
 
+## Firebase App Hosting Configuration
+
+**IMPORTANT**: We use **Terraform** to manage Firebase App Hosting, NOT Firebase CLI or apphosting.yaml files.
+
+### Key Components
+
+Firebase App Hosting is configured using three main Terraform resources:
+
+1. **google_firebase_app_hosting_backend**: Creates the backend service
+2. **google_firebase_app_hosting_build**: Deploys container images from Artifact Registry
+3. **google_firebase_app_hosting_traffic**: Allocates traffic to specific builds
+
+### Critical Configuration Requirements
+
+- **Environment Variables**: Configured via Secret Manager with proper IAM permissions for the service account
+- **Service Account**: Must have `secretmanager.secretAccessor` role for each secret
+- **Container Port**: Must use port 8080 (not 3000) for Cloud Run compatibility
+- **Traffic Allocation**: Requires explicit traffic resource - builds won't serve without it
+- **Build IDs**: Must be unique - use timestamps or commit hashes to prevent conflicts
+
+### Environment Variable Security
+
+- Never include secrets like `RESEND_API_KEY` in Docker build args
+- All sensitive values must be stored in Secret Manager
+- Use `NotRequired` in environment validation for build-time optional variables
+
+### Deployment Flow
+
+1. Docker image is built and pushed to Artifact Registry via GitHub Actions
+2. Terraform creates a new build with the image tag
+3. Traffic allocation resource directs 100% traffic to the new build
+4. Old builds remain available but receive no traffic
+
+### Common Issues and Solutions
+
+- **500 errors**: Usually environment variable configuration or secret access issues
+- **404 errors**: Missing traffic allocation - build exists but not serving
+- **Build failures**: Check container port (must be 8080) and environment variable validation
+- **Permission denied**: Ensure service account has proper Secret Manager access
+
+### Files to Never Use
+
+- `apphosting.yaml` - Not used in Terraform setup
+- `apphosting.staging.yaml` - Not used in Terraform setup  
+- `apphosting.production.yaml` - Not used in Terraform setup
+
+All configuration is managed through the `terraform/modules/app_hosting/` module.
+
 ## Adding New Resources
 
 1. Determine which module the resource belongs to
