@@ -164,10 +164,7 @@ class Project(BaseWithUUIDPK):
         "ProjectAccess", back_populates="project", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        UniqueConstraint("organization_id", "name", name="uq_project_org_name"),
-        Index("idx_project_org_name", "organization_id", "name"),
-    )
+    __table_args__ = (Index("idx_project_org_name", "organization_id", "name"),)
 
 
 class ProjectAccess(Base):
