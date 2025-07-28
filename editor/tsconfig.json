@@ -1,40 +1,13 @@
 {
 	"compilerOptions": {
-		"allowArbitraryExtensions": true,
-		"allowJs": true,
-		"allowSyntheticDefaultImports": true,
-		"baseUrl": "./",
-		"composite": true,
-		"declaration": true,
-		"declarationDir": "dist",
-		"declarationMap": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"inlineSources": true,
-		"isolatedModules": true,
+		"baseUrl": ".",
 		"jsx": "react-jsx",
-		"lib": ["DOM", "DOM.Iterable", "ESNext"],
-		"moduleResolution": "bundler",
-		"noEmit": false,
-		"noImplicitAny": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"outDir": "./dist",
 		"paths": {
 			"::testing/*": ["testing/*"],
 			"@/*": ["src/*"]
-		},
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"sourceMap": true,
-		"strict": true,
-		"strictBindCallApply": true,
-		"strictFunctionTypes": true,
-		"strictNullChecks": true,
-		"strictPropertyInitialization": true,
-		"target": "ESNext",
-		"types": ["vitest/globals", "@testing-library/jest-dom"]
+		}
 	},
-	"include": ["src", "src/**/*.json", "testing"],
-	"references": [{ "path": "./tsconfig.node.json" }]
+	"extends": "../tsconfig.json",
+	"include": ["src", "src/**/*.json", "testing"]
 }

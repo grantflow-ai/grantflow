@@ -9,6 +9,7 @@ locals {
   # List of Firebase App Hosting secrets that need to be created
   firebase_secrets = [
     "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_BACKEND_API_BASE_URL",
     "NEXT_PUBLIC_FIREBASE_API_KEY",
     "NEXT_PUBLIC_FIREBASE_APP_ID",
     "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
@@ -54,7 +55,9 @@ resource "google_secret_manager_secret_iam_binding" "firebase_app_hosting_access
     # Default App Engine/Firebase service account
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
     # Compute Engine default service account (used by App Hosting)
-    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
+    # Firebase App Hosting service account
+    "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
   ]
 }
 
