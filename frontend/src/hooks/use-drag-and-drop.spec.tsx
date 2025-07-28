@@ -1,5 +1,5 @@
 import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type DragDropConfig, type DragDropHandlers, type DragDropItem, useDragAndDrop } from "./use-drag-and-drop";
 
