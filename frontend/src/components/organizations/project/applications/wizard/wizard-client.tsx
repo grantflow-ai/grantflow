@@ -67,7 +67,7 @@ export function WizardClientComponent({
 		"Generate and Complete": <GenerateCompleteStep key="Generate and Complete" />,
 		"Knowledge Base": <KnowledgeBaseStep key="Knowledge Base" />,
 		"Research Deep Dive": <ResearchDeepDiveStep key="Research Deep Dive" />,
-		"Research Plan": <ResearchPlanStep key="Research Plan" />,
+		"Research Plan": <ResearchPlanStep dialogRef={dialogRef} key="Research Plan" />,
 	};
 
 	useEffect(() => {

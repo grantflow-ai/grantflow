@@ -2,8 +2,10 @@
 
 import { Plus } from "lucide-react";
 import Image from "next/image";
+import type { RefObject } from "react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { WizardLeftPane } from "../shared";
@@ -13,7 +15,11 @@ import { ResearchPlanPreview } from "./research-plan-preview";
 
 export const MAX_OBJECTIVES = 5;
 
-export function ResearchPlanStep() {
+interface ResearchPlanStepProps {
+	dialogRef: RefObject<null | WizardDialogRef>;
+}
+
+export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 	const application = useApplicationStore((state) => state.application);
 	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
@@ -101,7 +107,7 @@ export function ResearchPlanStep() {
 				</div>
 			</WizardLeftPane>
 
-			{isAutofillLoading ? <PreviewLoadingComponent /> : <ResearchPlanPreview />}
+			{isAutofillLoading ? <PreviewLoadingComponent /> : <ResearchPlanPreview dialogRef={dialogRef} />}
 		</div>
 	);
 }
