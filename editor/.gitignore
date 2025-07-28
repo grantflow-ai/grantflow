@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Generated files
+*.d.ts
+*.tsbuildinfo
+!src/vite-env.d.ts
+!testing/vitest.shims.d.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -72,6 +72,33 @@ tasks:
     cmds:
       - task: lint:all
 
+  format:
+    desc: Format code in all packages (frontend and editor)
+    cmds:
+      - pnpm --parallel --filter './frontend' --filter './editor' format
+
+  build:
+    desc: Build both frontend and editor packages
+    cmds:
+      - pnpm --filter './frontend' --filter './editor' build
+
+  knip:
+    desc: Check for unused dependencies and dead code in frontend/editor packages
+    cmds:
+      - pnpm --parallel --filter './frontend' --filter './editor' knip
+
+  knip:frontend:
+    desc: Check frontend package only for unused dependencies and dead code
+    dir: frontend
+    cmds:
+      - pnpm knip
+
+  knip:editor:
+    desc: Check editor package only for unused dependencies and dead code
+    dir: editor
+    cmds:
+      - pnpm knip
+
   update:
     desc: Update all dependencies (frontend and backend) to latest versions
     cmds:

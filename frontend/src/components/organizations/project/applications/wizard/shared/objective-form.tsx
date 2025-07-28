@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
@@ -72,26 +72,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 			...prev,
 			tasks: [...prev.tasks, { description: "", id: crypto.randomUUID() }],
 		}));
-	};
-
-	const removeTask = (taskId: string) => {
-		setFormData((prev) => ({
-			...prev,
-			tasks: prev.tasks.filter((task) => task.id !== taskId),
-		}));
-
-		// Clear task errors for removed task
-		if (errors.tasks?.[taskId]) {
-			setErrors((prev) => {
-				const newTasks = { ...prev.tasks };
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete newTasks[taskId];
-				return {
-					...prev,
-					tasks: Object.keys(newTasks).length > 0 ? newTasks : undefined,
-				};
-			});
-		}
 	};
 
 	const validateForm = (): boolean => {
@@ -191,20 +171,6 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 							testId={`task-description-${index}`}
 							value={task.description}
 						/>
-						{formData.tasks.length > 1 && (
-							<IconButton
-								className="mt-6"
-								data-testid={`remove-task-${index}`}
-								onClick={() => {
-									removeTask(task.id);
-								}}
-								size="sm"
-								type="button"
-								variant="float"
-							>
-								<Minus className="w-4 h-4" />
-							</IconButton>
-						)}
 					</div>
 				))}
 			</div>

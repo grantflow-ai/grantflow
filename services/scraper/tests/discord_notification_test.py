@@ -9,7 +9,6 @@ from packages.shared_utils.src.discord import (
     send_scraper_report,
 )
 from services.scraper.src.main import run_scraper
-from services.scraper.src.storage import SimpleFileStorage
 
 
 def test_create_scraper_report_embed_success() -> None:
@@ -203,7 +202,9 @@ async def test_send_scraper_report(mock_send_webhook: AsyncMock) -> None:
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.download_search_data")
 @patch("services.scraper.src.main.download_grant_pages")
+@patch("services.scraper.src.main.get_existing_file_identifiers")
 async def test_run_scraper_with_metrics(
+    mock_get_existing_file_identifiers: AsyncMock,
     mock_download_grant_pages: AsyncMock,
     mock_download_search_data: AsyncMock,
     mock_send_report: AsyncMock,
@@ -217,15 +218,12 @@ async def test_run_scraper_with_metrics(
     ]
     mock_download_search_data.return_value = mock_search_results
     mock_download_grant_pages.return_value = 2
+    mock_get_existing_file_identifiers.return_value = {"existing1"}
 
-    storage = SimpleFileStorage()
-
-    with patch.object(storage, "get_existing_file_identifiers", return_value={"existing1"}):
-        metrics = await run_scraper(
-            storage=storage,
-            from_date=date(2025, 7, 1),
-            to_date=date(2025, 7, 2),
-        )
+    metrics = await run_scraper(
+        from_date=date(2025, 7, 1),
+        to_date=date(2025, 7, 2),
+    )
 
     assert metrics["search_results_count"] == 3
     assert metrics["new_files_downloaded"] == 2

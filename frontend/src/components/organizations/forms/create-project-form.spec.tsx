@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateProjectForm } from "./create-project-form";
 
-// Mock dependencies
 vi.mock("@/actions/project", () => ({
 	createProject: vi.fn(),
 }));
@@ -74,7 +73,7 @@ describe("CreateProjectForm", () => {
 
 		const nameInput = screen.getByTestId("create-project-name-input");
 		await user.type(nameInput, "ab");
-		await user.tab(); // Trigger validation
+		await user.tab();
 
 		await waitFor(() => {
 			expect(screen.getByText("Project name must be at least 3 characters long")).toBeInTheDocument();
@@ -176,7 +175,7 @@ describe("CreateProjectForm", () => {
 
 	it("should show loading state during form submission", async () => {
 		const user = userEvent.setup();
-		// Mock a slow response
+
 		mockCreateProject.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
 		render(<CreateProjectForm {...defaultProps} />);
@@ -192,7 +191,6 @@ describe("CreateProjectForm", () => {
 
 		await user.click(submitButton);
 
-		// Check that the button shows loading state
 		await waitFor(() => {
 			expect(submitButton).toBeDisabled();
 		});
@@ -203,10 +201,8 @@ describe("CreateProjectForm", () => {
 
 		const submitButton = screen.getByTestId("create-project-submit-button");
 
-		// Submit button should be disabled for empty form
 		expect(submitButton).toBeDisabled();
 
-		// Try to trigger form submission (should not work since button is disabled)
 		expect(mockCreateProject).not.toHaveBeenCalled();
 	});
 
@@ -216,7 +212,6 @@ describe("CreateProjectForm", () => {
 
 		const nameInput = screen.getByTestId("create-project-name-input");
 
-		// First enter invalid input
 		await user.type(nameInput, "ab");
 		await user.tab();
 
@@ -224,7 +219,6 @@ describe("CreateProjectForm", () => {
 			expect(screen.getByText("Project name must be at least 3 characters long")).toBeInTheDocument();
 		});
 
-		// Clear and enter valid input
 		await user.clear(nameInput);
 		await user.type(nameInput, "Valid Project Name");
 

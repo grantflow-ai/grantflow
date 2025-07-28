@@ -18,6 +18,8 @@ const nextConfig = {
 			},
 		],
 	},
+	output: "standalone",
+	transpilePackages: ["@grantflow/editor"],
 } satisfies NextConfig;
 
 export default nextConfig;

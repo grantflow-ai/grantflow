@@ -10,7 +10,7 @@ describe.sequential("ProgressBar", () => {
 
 	it("renders the correct number of steps", () => {
 		render(<ProgressBar currentStep={1} />);
-		// Check for step labels
+
 		const labels = screen.getAllByRole("heading", { level: 5 });
 		expect(labels.length).toBe(PROGRESS_BAR_STEPS.length);
 	});

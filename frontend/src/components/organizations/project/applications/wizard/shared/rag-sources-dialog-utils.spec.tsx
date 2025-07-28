@@ -2,7 +2,6 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRagSourcesDialog } from "./rag-sources-dialog-utils";
 
-// Mock the content and footer components
 vi.mock("./rag-sources-content", () => ({
 	RagSourcesContent: () => <div data-testid="rag-sources-content">RAG Sources Content</div>,
 }));

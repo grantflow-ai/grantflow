@@ -107,7 +107,7 @@ describe("api", () => {
 			const afterResponseHook = createCall!.hooks?.afterResponse?.[0];
 
 			if (afterResponseHook) {
-				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				vi.clearAllMocks();
 				await afterResponseHook(mockRequest as any, {} as any, mockResponse as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
@@ -146,7 +146,7 @@ describe("api", () => {
 					},
 				};
 
-				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				vi.clearAllMocks();
 				await beforeErrorHook(mockError as any);
 
 				expect(log.error).toHaveBeenCalledWith("API ERROR GET https://api.example.com/test", mockError, {
@@ -174,7 +174,7 @@ describe("api", () => {
 			const beforeRequestHook = createCall!.hooks?.beforeRequest?.[0];
 
 			if (beforeRequestHook) {
-				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				vi.clearAllMocks();
 				await beforeRequestHook(mockRequest as any, {} as any);
 
 				expect(log.info).toHaveBeenCalledWith("API REQUEST GET https://api.example.com/test", {
@@ -208,7 +208,7 @@ describe("api", () => {
 			};
 
 			if (afterResponseHook) {
-				vi.clearAllMocks(); // Clear the "Initializing API client" log
+				vi.clearAllMocks();
 				await afterResponseHook(requestWithNoHeaders as any, {} as any, mockResponse as any);
 
 				expect(log.info).toHaveBeenCalledWith("API GET https://api.example.com/test - 200", {
@@ -233,7 +233,7 @@ describe("api", () => {
 
 			const methods = ["POST", "PUT", "DELETE", "PATCH"];
 
-			vi.clearAllMocks(); // Clear the "Initializing API client" log
+			vi.clearAllMocks();
 
 			for (const method of methods) {
 				const request = { ...mockRequest, method };
@@ -261,7 +261,7 @@ describe("api", () => {
 
 			const statuses = [201, 204, 301, 400, 401, 403, 404, 500];
 
-			vi.clearAllMocks(); // Clear the "Initializing API client" log
+			vi.clearAllMocks();
 
 			for (const status of statuses) {
 				const response = { ...mockResponse, status };

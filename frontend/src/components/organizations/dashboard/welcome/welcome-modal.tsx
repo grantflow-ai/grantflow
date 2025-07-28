@@ -23,7 +23,6 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 	const [step, setStep] = useState(1);
 
 	useEffect(() => {
-		// Don't show welcome modal in test environment
 		const isTestEnvironment = process.env.NODE_ENV === "test" || globalThis.location.port === "3001";
 		if (!(hasSeenWelcomeModal || isTestEnvironment)) {
 			setOpen(true);
@@ -90,7 +89,7 @@ export function WelcomeModal({ onStartApplication }: WelcomeModalProps) {
 									your input, the closer the result will be to what you need.
 								</p>
 							</div>
-							<article className="flex gap-1 rounded-lg border border-app-slate-blue bg-light-gray p-2">
+							<article className="flex gap-1 rounded border border-app-slate-blue bg-light-gray p-2">
 								<div className="size-5 flex-shrink-0 mt-0.5">
 									<AlertCircle className="text-gray-700 size-4" />
 								</div>

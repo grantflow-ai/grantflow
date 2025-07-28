@@ -37,6 +37,7 @@ interface SectionFormData {
 interface SectionHeaderProps {
 	attributes: any;
 	hasMaxWords: boolean;
+	isDragDisabled?: boolean;
 	isExpanded: boolean;
 	isSubsection: boolean;
 	listeners: any;
@@ -49,6 +50,7 @@ interface SectionHeaderProps {
 
 interface SortableSectionProps {
 	isDetailedSection: (section: GrantSection) => boolean;
+	isDragDisabled?: boolean;
 	isExpanded: boolean;
 	isSubsection?: boolean;
 	onAddSubsection?: (parentId: string) => void;
@@ -61,6 +63,7 @@ interface SortableSectionProps {
 
 export function SortableSection({
 	isDetailedSection: _isDetailedSection,
+	isDragDisabled = false,
 	isExpanded,
 	isSubsection = false,
 	onAddSubsection,
@@ -79,6 +82,10 @@ export function SortableSection({
 		transform,
 		transition,
 	} = useSortable({
+		data: {
+			section,
+			type: "section",
+		},
 		id: section.id,
 	});
 
@@ -139,6 +146,7 @@ export function SortableSection({
 	return (
 		<div
 			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+			data-sortable-id={section.id}
 			data-testid="section-container"
 			ref={setNodeRef}
 			style={style}
@@ -146,6 +154,7 @@ export function SortableSection({
 			<SectionHeader
 				attributes={attributes}
 				hasMaxWords={hasMaxWords}
+				isDragDisabled={isDragDisabled}
 				isExpanded={isExpanded}
 				isSubsection={isSubsection}
 				listeners={listeners}
@@ -339,6 +348,7 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 function SectionHeader({
 	attributes,
 	hasMaxWords,
+	isDragDisabled = false,
 	isExpanded,
 	isSubsection,
 	listeners,
@@ -366,12 +376,14 @@ function SectionHeader({
 			tabIndex={0}
 		>
 			<div
-				{...attributes}
-				{...listeners}
-				className="relative size-6 cursor-grab hover:cursor-grab active:cursor-grabbing"
+				{...(isDragDisabled ? {} : attributes)}
+				{...(isDragDisabled ? {} : listeners)}
+				className={`relative size-6 ${isDragDisabled ? "cursor-not-allowed opacity-50" : "cursor-grab hover:cursor-grab active:cursor-grabbing"}`}
 				data-interactive="true"
 			>
-				<GripVertical className="size-6 text-gray-400 hover:text-gray-600 transition-colors" />
+				<GripVertical
+					className={`size-6 ${isDragDisabled ? "text-gray-300" : "text-gray-400 hover:text-gray-600"} transition-colors`}
+				/>
 			</div>
 
 			<div className="flex flex-1 items-center justify-between">

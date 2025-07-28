@@ -1,0 +1,687 @@
+<!--
+meta-description: NIH Funding Opportunities and Notices in the NIH Guide for Grants and Contracts: Alcohol Treatment, Pharmacotherapy, and Recovery Research (R01 Clinical Trial Required) PA-25-163. NIAAA
+meta-keywords: PA-25-163: Alcohol Treatment, Pharmacotherapy, and Recovery Research (R01 Clinical Trial Required)
+meta-viewport: width=device-width, initial-scale=1.0
+title: PA-25-163: Alcohol Treatment, Pharmacotherapy, and Recovery Research (R01 Clinical Trial Required)
+-->
+
+**March 31, 2025**This funding opportunity was updated to align with agency priorities. Carefully reread the full funding opportunity and make any needed adjustments to your application prior to submission. Department of Health and Human Services
+
+# Part 1. Overview Information
+
+Participating Organization(s) National Institutes of Health ([NIH](http://www.nih.gov))
+
+Components of Participating Organizations National Institute on Alcohol Abuse and Alcoholism ([NIAAA](https://www.niaaa.nih.gov/))
+
+Funding Opportunity Title Alcohol Treatment, Pharmacotherapy, and Recovery Research (R01 Clinical Trial Required)Activity Code [R01](//grants.nih.gov/grants/funding/ac_search_results.htm?text_curr=r01&Search.x=0&Search.y=0&Search_Type=Activity) Research Project Grant
+
+Announcement Type Reissue of [PAR-23-250](https://grants.nih.gov/grants/guide/pa-files/PAR-23-250.html)\
+Related NoticesSee [Notices of Special Interest](https://grants.nih.gov/grants/guide/NOSIs_targetingList.cfm?GuideDocID=42014) associated with this funding opportunity
+
+- **March 31, 2025** - This funding opportunity was updated to align with agency priorities. Carefully reread the full funding opportunity and make any needed adjustments to your application prior to submission.
+- **April 4, 2024**- Overview of Grant Application and Review Changes for Due Dates on or after January 25, 2025. See Notice [NOT-OD-24-084](https://grants.nih.gov/grants/guide/notice-files/NOT-OD-24-084.html).
+- **August 31, 2022**- Implementation Changes for Genomic Data Sharing Plans Included with Applications Due on or after January 25, 2023. See Notice[NOT-OD-22-198](https://grants.nih.gov/grants/guide/notice-files/not-od-22-198.html).
+- **August 5, 2022**- Implementation Details for the NIH Data Management and Sharing Policy. See Notice[NOT-OD-22-189](https://grants.nih.gov/grants/guide/notice-files/NOT-OD-22-189.html).
+
+Funding Opportunity Number (FON) PA-25-163Companion Funding Opportunity [PA-25-245](https://grants.nih.gov/grants/guide/pa-files/PA-25-245.html), [R01](https://grants.nih.gov/grants/funding/ac_search_results.htm?text_curr=R01&&Search.x=0&&Search.y=0&&Search_Type=Activity)Research Project
+[PAR-25-192](https://grants.nih.gov/grants/guide/pa-files/PAR-25-192.html), [R34](https://grants.nih.gov/grants/funding/ac_search_results.htm?text_curr=R34&&Search.x=0&&Search.y=0&&Search_Type=Activity)Planning Grant
+[PAR-25-193](https://grants.nih.gov/grants/guide/pa-files/PAR-25-193.html), [R34](https://grants.nih.gov/grants/funding/ac_search_results.htm?text_curr=R34&&Search.x=0&&Search.y=0&&Search_Type=Activity)Planning Grant
+Number of Applications See [Section III. 3. Additional Information on Eligibility](#_3._Additional_Information).
+
+Assistance Listing Number(s) 93.273 Funding Opportunity Purpose The National Institute on Alcohol Abuse and Alcoholism solicits applications for an R01 Clinical Trial Required mechanism focusing on alcohol treatment and recovery research. This NOFO will focus broadly on topics relevant for treatment of and recovery from alcohol use disorder (AUD), including: medications development, precision medicine, behavioral therapies and mechanisms of behavioral change (MOBC), recovery, translational research, and innovative methods and technologies for AUD treatment and recovery.
+
+## Key Dates
+
+Posted Date November 27, 2024 Open Date (Earliest Submission Date) January 05, 2025 Letter of Intent Due Date(s) 30 days before the application due date.
+
+The following table includes NIH [standard due dates](https://grants.nih.gov/grants/how-to-apply-application-guide/due-dates-and-submission-policies/due-dates.htm) marked with an asterisk.
+
+| Application Due Dates | | | Review and Award Cycles | | |
+| --- | --- | --- | --- | --- | --- |
+| New | Renewal / Resubmission / Revision (as allowed) | AIDS - New/Renewal/Resubmission/Revision, as allowed | Scientific Merit Review | Advisory Council Review | Earliest Start Date |
+| February 05, 2025 * | March 05, 2025 * | Not Applicable | July 2025 | October 2025 | December 2025 |
+| June 05, 2025 * | July 05, 2025 * | Not Applicable | November 2025 | January 2026 | April 2026 |
+| October 05, 2025 * | November 05, 2025 * | Not Applicable | March 2026 | May 2026 | July 2026 |
+| February 05, 2026 * | March 05, 2026 * | Not Applicable | July 2026 | October 2026 | December 2026 |
+| June 05, 2026 * | July 05, 2026 * | Not Applicable | November 2026 | January 2027 | April 2027 |
+
+All applications are due by 5:00 PM local time of applicant organization.
+
+Applicants are encouraged to apply early to allow adequate time to make any corrections to errors found in the application during the submission process by the due date.
+
+Expiration Date September 08, 2026 Due Dates for E.O. 12372 Not Applicable
+
+Required Application Instructions It is critical that applicants follow the instructions in the Research (R) Instructions in the[How to Apply - Application Guide](https://grants.nih.gov/grants/guide/url_redirect.php?id=82400), except where instructed to do otherwise (in this NOFO or in a Notice from [NIH Guide for Grants and Contracts](//grants.nih.gov/grants/guide/url_redirect.php?id=11164)).
+
+Conformance to all requirements (both in the Application Guide and the NOFO) is required and strictly enforced. Applicants must read and follow all application instructions in the Application Guide as well as any program-specific instructions noted in Section IV. When the program-specific instructions deviate from those in the Application Guide, follow the program-specific instructions.
+
+**Applications that do not comply with these instructions may be delayed or not accepted for review.**
+
+There are several options available to submit your application through Grants.gov to NIH and
+Department of Health and Human Services partners. You **must** use one of these submission
+options to access the application forms for this opportunity.
+
+1. Use the NIH ASSIST system to prepare, submit and track your application online.
+1. Use an institutional system-to-system (S2S) solution to prepare and submit your application
+   to Grants.gov and [eRA Commons](https://public.era.nih.gov/commons/) to track your
+   application. Check with your institutional officials regarding availability.
+1. Use [Grants.gov](https://grants.gov/search-grants?oppStatuses=closed%7Carchived%7Cposted%7Cforecasted&fon=PA-25-163) Workspace to prepare and submit your application and [eRA Commons](http://public.era.nih.gov/commons/) to track your application.
+
+Table of Contents\[Part 1. Overview Information\](#\_Part 1. Overview Information)\[Key Dates\](#\_Key Dates)\[Part 2. Full Text of Announcement\](#\_Part 2. Full Text of Announcement)\[Section I. Notice of Funding Opportunity Description\](#\_Section I. Notice of Funding Opportunity Description)\[Section II. Award Information\](#\_Section II. Award Information)\[Section III. Eligibility Information\](#\_Section III. Eligibility Information)\[Section IV. Application and Submission Information\](#\_Section IV. Application and Submission Information)\[Section V. Application Review Information\](#\_Section V. Application Review Information)\[Section VI. Award Administration Information\](#\_Section VI. Award Administration Information)\[Section VII. Agency Contacts\](#\_Section VII. Agency Contacts)\[Section VIII. Other Information\](#\_Section VIII. Other Information)
+
+# Part 2. Full Text of Announcement
+
+## Section I. Notice of Funding Opportunity Description
+
+**Purpose**
+
+The purpose of this PAR is to advance research on various topics that fall within NIAAAs Division of Treatment and Recovery (DTR). DTRs research interests are wide-ranging but typically encompass broad categories such as medications development; behavioral therapies, including mechanisms of behavioral change (MOBC); recovery; translational research; and innovative methods and technologies for alcohol use disorder (AUD) treatment. Other areas of interest include topics focusing on special-emphasis and underserved populations. Specific examples include research related to health disparities, age, sex, race and ethnicity, co-occurring disorders, and military populations.
+
+**Background**
+
+AUD is a global health problem, affecting more than 76 million adults worldwide, including over 14.5 million Americans, and resulting in a myriad of medical, psychological, social, economic, and personal problems. AUD ranks among the leading causes of decreased disability-adjusted life-years and ranks third in preventable causes of death in the United States. The total economic cost to society in the United States is a staggering $249 billion each year. Research is needed to develop effective treatments for AUD and to better understand the complex nature of recovery across a broad range of topic areas and populations, as described in detail below.
+
+**Research Objectives**
+
+*Medications Development*
+
+During the past 2 decades, progress has been made in developing efficacious medications and behavioral therapies to treat AUD. Currently, there are three medications approved by the U.S. Food and Drug Administration (FDA) for the treatment of alcohol dependence: disulfiram, oral and long-term injectable naltrexone, and acamprosate. In addition, nalmefene recently was approved in Europe. However, given the heterogeneous nature of AUD, many patients show only limited or no response to these medications. Because of this, developing and evaluating new, more efficacious and safe medications remains a top priority.
+
+All studies must be conducted in humans. Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Evaluate the efficacy and safety of experimental medications (either repurposed or novel compounds) that bind to new targets to treat AUD.
+- Assess the efficacy and safety of medications to treat comorbid AUD and psychiatric (e.g., posttraumatic stress disorder [PTSD]) disorders.
+- Determine who responds favorably during the trial by exploring clinical and behavioral characteristics and biological markers.
+- Explore new human laboratory paradigms that will help predict efficacy in clinical trials of experimental medications.
+- Leverage relationships with pharmaceutical and biotechnology companies to identify new compounds for testing in clinical trials.
+
+*Behavioral Therapies*
+
+Several behavioral therapies have shown efficacy in treating AUD. These include cognitive behavioral therapy, motivation enhancement therapy, twelve-step facilitation, brief intervention, contingency management, community reinforcement approach, and mindfulness therapy. Although progress has been made in developing a broad menu of treatment options, not all individuals with AUD respond to todays behavioral therapies. Incorporating new scientific discoveries and technologies into behavioral treatment may improve clinical outcomes and help disseminate different, more effective, treatments in clinical practice.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that evaluate evidence-based behavioral therapies in real-world treatment settings, especially for culturally varied, special emphasis, and underserved populations.
+
+- Use dynamic and person-centered statistical modeling approaches to evaluate how heterogeneity impacts alcohol use behavior within specific AUD treatments.
+- Conduct micro-intervention studies to isolate and test the importance of key treatment-related mediators and moderators.
+- Develop new and adapt existing interventions for AUD based on emerging findings from research on MOBC.
+- Translate evidence-based MOBC best practices into clinical practice.
+- Engage in complex research designs (e.g., dismantling studies), which enhance support and provide evidence for the mechanisms underlying established AUD behavioral treatments
+
+*Recovery from AUD*
+
+Recovery from AUD is complex and highly individualized. NIAAA is interested in research to learn more about the risk and resiliency factors related to recovery and relapse, including the factors that allow some people to recover without receiving formal treatment. This research will inform the development of additional effective treatment interventions, as well as strategies to sustain recovery.
+
+To fully clarify the concept of recovery and to improve consistency across recovery research, NIAAA developed an operational definition of recovery from AUD ([LINK](https://www.niaaa.nih.gov/research/niaaa-recovery-from-alcohol-use-disorder/definitions)). The definition involves remission from AUD and cessation from heavy drinking. Moreover, recovery is associated with improvements in dimensions of well-being, quality of life, and biopsychosocial functioning.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Explore the neurobiological, psychological, environmental, social, and spiritual factors that influence post-treatment recovery.
+- Identify novel mechanisms of behavioral change (MOBC) that help maintain behavior change in recovery (e.g., self-regulation), and evaluate how knowledge about these mechanisms can be applied to recovery.
+- Determine the trajectories of recovery in subgroups of people with different socioeconomic backgrounds, cognitive abilities, and medical histories, including examining sex-related differences in trajectories of recovery within these groups.
+- Characterize the relationships among relapse severity, frequency, and timing in the recovery process, including how relapse impacts the potential for long-term recovery and improvement in biopsychosocial functioning.
+- Understand the role of understudied mutual support groups, as well as spirituality and religion, in treatment and recovery from AUD.
+- Identify the factors associated with so-called spontaneous or natural recoveryand how these factors can be applied to change the behavior of those in treatment.
+- Explore continuing care treatments and interventions that aim to support long-term recovery.
+- Define and measure dimensions of functioning and well-being associated with recovery (e.g., which of these dimensions of functioning and well-being are positively vs. negatively associated with recovery? Which of these dimensions of functioning and well-being are the most integral in recovery? To what degree might these functioning measures be feasible in clinical practice?).
+
+*Translational Research*
+
+Clinical research examines the neurobiological, cognitive, emotional, and genetic processes underlying addiction and offers ways for applying those findings to practice and predicting treatment outcomes.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Translate key neuroscience research findings (e.g., neurobiological, cognitive, emotion regulation, and genetic) to develop more effective treatments.
+
+*Innovative Methods and Technologies for AUD Treatment and Recovery*
+
+New technology (e.g., mobile, computer, and web-based applications) has the potential to expand both the accessibility and effectiveness of a variety of treatments and interventions. Research is needed to further advance digital technology for the diagnosis, intervention, treatment, and maintenance of recovery from AUD. Developing new analytical approaches can be critical for evaluating treatment, such as tracking results in subpopulations of people with AUD, comparing linear and dynamic models of clinical findings, conducting trajectory analysis and growth mixture modeling to capture changes in recovery over time, and developing and implementing adaptive clinical trial designs and statistical analyses.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Apply new technology (e.g., mobile devices, computer, web-based applications) to evidence-based behavioral treatments to improve the effectiveness of telemedicine and to reach remote and underserved, vulnerable populations.
+- Investigate new ways of capturing real-time data in clinical trials and treatment protocols (e.g., interactive voice response technology, smartphones, and alcohol sensors).
+- Explore new analytical methods for evaluating treatment and recovery.
+
+*Special-Emphasis Populations*
+
+*Health Disparities*
+
+Research examining disparities in access to and quality of treatment for harmful drinking and AUD typically has not kept pace with other areas of investigation. Thus, there is a need for more research to develop and implement effective treatments for marginalized and vulnerable populations. It is important to understand how the social determinants of health (i.e., environmental, social, and economic factors) influence outcomes and sustainability of effects. There is a need for greater emphasis on developing novel, accessible, cost-effective, culturally grounded treatment interventions in populations. Special areas of interest also include research examining the role of harmful drinking in creating and exacerbating disparities in the onset, progression, and treatment of other health conditions.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Develop and implement effective treatments tailored to populations affected by health disparities in a variety of clinical and nontraditional settings.
+- Determine how social/cultural factors influence treatment accessibility, effectiveness, and long-term recovery.
+- Develop measures to assess care delivery models to better understand the issues underlying disparities (e.g., health literacy, access to health care, confidence in the proximal health system, socioeconomic status, sociocultural beliefs and practices related to alcohol use, multi-morbidity with other health issues, and personal health care).
+
+*AUD Patients with Psychiatric Comorbidity*
+
+AUD patients often suffer from comorbid psychiatric disorders, such as depression, anxiety, PTSD, insomnia, bipolar disorder, and schizophrenia. This population experiences poorer treatment outcomes, and tends to have higher rates of clinical impairment, psychosocial and medical problems, utilization of health services, and suicide, as well as lower quality of life than patients who suffer from AUD alone. Developing effective personalized treatment strategies is essential in treating multiple disorders. For example, how can treatments be integrated to address both mental health disorders and AUD? How does treatment of one disorder affect the outcome of the other? How do the disorders interact to increase the severity and clinical course of each disorder?
+
+Examples of high-priority research areas appropriate for evaluation include, but are not limited to, investigations that:
+
+- Integrate treatment for co-occurring AUD and mental health conditions to address the heterogeneity that exists among patients. Explore how behavioral interventions and medications can be combined to treat AUD patients with co-occurring PTSD; anxiety; depression; insomnia; and other mental health conditions, including timing of interventions (serial vs. concurrent), separate vs. fully integrated treatment, and dose/frequency of treatment components.
+- Identify which types of services, service providers, and treatment settings work best for specific subgroups receiving treatment.
+- Determine how the treatment of one disorder can influence the risks and outcomes for other disorders.
+
+*Women*
+
+Historically, men have tended to drink at higher rates and experience more alcohol-related problems than women. However, in recent years, the gap has narrowed. Women are increasingly likely to have rates of drinking and heavy drinking similar to those observed in men, to be diagnosed with AUD, and to experience the negative consequences of drinking (such as car crashes). Moreover, many of alcohols harmful physiological effects have been found to occur more rapidly and severely in women than men. This includes blackouts, liver inflammation, brain atrophy, cognitive deficits, certain cancers, negative affect during withdrawal, and stress and anxiety-induced relapse. More research is needed to better understand sex differences in alcohol use and alcohol-related consequences.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- - Develop new strategies for alcohol screening, diagnosis, and interventions; and tailor these approaches to women in a variety of settings, including prenatal care and specialty health care.
+    - Examine the effects of stress, early childhood trauma, and co-occurring disorders on womens drinking.
+    - Determine the effectiveness of standard treatment approaches, such as group counseling and relapse prevention, in single-sex vs. mixed-sex groups.
+    - Develop innovative strategies to improve coordination of care for women and their families across primary care, maternal health services, specialty alcohol treatment services, and other integrated health system components.
+
+Adolescents and Young Adults
+
+Although recent data show that U.S. adolescents in general are drinking less alcohol, when they do drink, they consume alcohol in ways that are particularly harmful. Many young adults are also drinking heavily, and experience myriad associated negative consequences. These include an increased risk for alcohol overdose, blackouts, falls, drowning, unplanned sexual encounters, intimate partner violence, and co-occurring mental health conditions. Epidemiological data clearly show an association between early onset of drinking (particularly before age 14) and later alcohol-related problems. Finally, research also shows that alcohol may cause changes in the developing brain. Because the human brain continues to develop past adolescence and into young adulthood, young people are at particularly high risk for experiencing alcohol-related harms. Future research needs to examine whether alcohol-related brain changes occurring in adolescence and young adulthood have long-term consequences. Research also needs to examine how treatment strategies can be better tailored to this special population.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Develop and test integrated behavioral treatments in adolescents and young adults with AUD that are tailored to the developmental, biological, psychological, emotional, and social needs of these ages.
+- Test novel approaches (e.g., sequential, multiple assignment, randomized trials–[SMART] trials) to adapt interventions at the individual level and/or to account for comorbidity and cultural factors or other considerations specific to the target groups.
+
+*Older Adults*
+
+In the United States, 1 in 10 older adults engages in binge drinking. Alcohol misuse is increasing in this population, in both men and women, with potentially serious consequences. Drinking among older adults contributes to accelerated aging in some brain regions, including the frontal cortex, leading to impaired cognitive function and resulting in deficits in learning, memory, and motor function. Developing and evaluating early intervention approaches may help to stem these brain effects.
+
+Examples of high-priority research areas appropriate for evaluation in clinical trials include, but are not limited to, investigations that:
+
+- Develop screening and behavioral and pharmaceutical therapies targeted to older adults.
+- Identify vulnerabilities in high-risk subgroups of older adults, including those with physical and/or mental health comorbidities; women; and people with cultural, socioeconomic, immigrant, and sex status.
+
+**Applications that focus on the following topics will not be considered responsive to this NOFO and will not be reviewed:**
+
+- Efficacy and dissemination studies of brief interventions for high risk and understudied populations (e.g., individuals who are not 4-year college students or graduates, individuals experiencing poverty or comorbidity).
+- Approaches that focus on enhancing positive health or other behaviors that might have an indirect positive effects on drinking, sleep improvement, and fitness,
+- Role of life events and social factors as contributors to changes in the patterns of drinking. This includes understanding how the positive social effects of drinking influence the initiation and escalation of drinking, and how social forces and life events facilitate change are needed.
+- Link changes in environmental factors such as the relative availability and price of alcohol and alcohol-free rewards associated with changes in drinking, and how to leverage these factors in treatment.
+- Preclinical animal studies, only human studies are allowed in this PAR.
+- HIV-AIDS related Studies
+- Studies that include substances other than alcohol or on poly-substance use disorders
+- Clinical trials on prevention
+- Clinical trials in community settings (community centers, college campuses etc.)
+- Clinical Trials that include organ-associated diseases.
+- Basic experimental studies involving humans (BESH)
+
+See [Section VIII. Other Information](#_Section_VIII._Other) for award authorities and regulations.
+
+Investigators proposing NIH-defined clinical trials may refer to the [Research Methods Resources](https://researchmethodsresources.nih.gov/) website for information about developing statistical methods and study designs.
+
+## Section II. Award Information
+
+Funding Instrument Grant: A financial assistance mechanism providing money, property, or both to an eligible entity to carry out an approved project or activity.
+
+Application Types Allowed New
+Resubmission
+The[OER Glossary](//grants.nih.gov/grants/guide/url_redirect.php?id=11116)and the How to Apply Application Guide provide details on these application types. Only those application types listed here are allowed for this NOFO.
+
+Clinical Trial? Required: Only accepting applications that propose clinical trial(s).
+
+[Need help determining whether you are doing a clinical trial?](https://grants.nih.gov/grants/guide/url_redirect.php?id=82370)
+
+Funds Available and Anticipated Number of Awards The number of awards is contingent upon NIH appropriations and the submission of a sufficient number of meritorious applications.
+
+Award Budget Direct costs may not exceed $500,000 without prior approval (see Section IV. Application and Submission Information).
+
+Award Project Period The maximum project period is five years.
+
+NIH grants policies as described in the [NIH Grants Policy Statement](//grants.nih.gov/grants/guide/url_redirect.php?id=11120) will apply to the applications submitted and awards made from this NOFO.
+
+## Section III. Eligibility Information
+
+#### 1. Eligible Applicants
+
+Eligible Organizations Higher Education Institutions
+
+- Public/State Controlled Institutions of Higher Education
+- Private Institutions of Higher Education
+
+Nonprofits Other Than Institutions of Higher Education
+
+- Nonprofits with 501(c)(3) IRS Status (Other than Institutions of Higher Education)
+- Nonprofits without 501(c)(3) IRS Status (Other than Institutions of Higher Education)
+
+For-Profit Organizations
+
+- Small Businesses
+- For-Profit Organizations (Other than Small Businesses)
+
+Local Governments
+
+- State Governments
+- County Governments
+- City or Township Governments
+- Special District Governments
+- Indian/Native American Tribal Governments (Federally Recognized)
+- Indian/Native American Tribal Governments (Other than Federally Recognized).
+
+Federal Governments
+
+- Eligible Agencies of the Federal Government
+- U.S. Territory or Possession
+
+Other
+
+- Independent School Districts
+- Public Housing Authorities/Indian Housing Authorities
+- Native American Tribal Organizations (other than Federally recognized tribal governments)
+- Faith-based or Community-based Organizations
+- Regional Organizations
+- Non-domestic (non-U.S.) Entities (Foreign Organizations)
+
+Foreign Organizations Non-domestic (non-U.S.) Entities (Foreign Organizations) **are** eligible to apply.
+
+Non-domestic (non-U.S.) components of U.S. Organizations **are** eligible to apply.
+
+Foreign components, as[defined in the NIH Grants Policy Statement](//grants.nih.gov/grants/guide/url_redirect.php?id=11118), **are** allowed.
+
+Required Registrations **Applicant Organizations**
+
+Applicant organizations must complete and maintain the following registrations as described in the How to Apply- Application Guide to be eligible to apply for or receive an award. All registrations must be completed prior to the application being submitted. Registration can take 6 weeks or more, so applicants should begin the registration process as soon as possible. Failure to complete registrations in advance of a due date is not a valid reason for a late submission, please reference the[NIH Grants Policy Statement Section 2.3.9.2 Electronically Submitted Applications](//grants.nih.gov/grants/guide/url_redirect.php?id=82423)for additional information.
+
+- [System for Award Management (SAM) –](https://grants.nih.gov/grants/guide/url_redirect.php?id=82390) Applicants must complete and maintain an active registration, **which requires renewal at least annually**. The renewal process may require as much time as the initial registration. SAM registration includes the assignment of a Commercial and Government Entity (CAGE) Code for domestic organizations which have not already been assigned a CAGE Code.
+  - [NATO Commercial and Government Entity (NCAGE) Code](//grants.nih.gov/grants/guide/url_redirect.php?id=11176) – Foreign organizations must obtain an NCAGE code (in lieu of a CAGE code) in order to register in SAM.
+  - Unique Entity Identifier (UEI) - A UEI is issued as part of the SAM.gov registration process. The same UEI must be used for all registrations, as well as on the grant application.
+- [eRA Commons](https://grants.nih.gov/grants/guide/url_redirect.php?id=11123) - Once the unique organization identifier is established, organizations can register with eRA Commons in tandem with completing their Grants.gov registrations; all registrations must be in place by time of submission. eRA Commons requires organizations to identify at least one Signing Official (SO) and at least one Program Director/Principal Investigator (PD/PI) account in order to submit an application.
+- [Grants.gov](//grants.nih.gov/grants/guide/url_redirect.php?id=82300) – Applicants must have an active SAM registration in order to complete the Grants.gov registration.
+
+**Program Directors/Principal Investigators (PD(s)/PI(s))**
+
+All PD(s)/PI(s) must have an eRA Commons account.  PD(s)/PI(s) should work with their organizational officials to either create a new account or to affiliate their existing account with the applicant organization in eRA Commons. If the PD/PI is also the organizational Signing Official, they must have two distinct eRA Commons accounts, one for each role. Obtaining an eRA Commons account can take up to 2 weeks.
+
+Eligible Individuals (Program Director/Principal Investigator) Any individual(s) with the skills, knowledge, and resources necessary to carry out the proposed research as the Program Director(s)/Principal Investigator(s) (PD(s)/PI(s)) is invited to work with their organization to develop an application for support.
+
+For institutions/organizations proposing multiple PDs/PIs, visit the Multiple Program Director/Principal Investigator Policy and submission details in the Senior/Key Person Profile (Expanded) Component of the How to Apply-Application Guide.
+
+#### 2. Cost Sharing
+
+This NOFO does not require cost sharing as defined in the [NIH Grants Policy Statement Section 1.2 Definition of Terms](//grants.nih.gov/grants/guide/url_redirect.php?id=11126).
+
+#### 3. Additional Information on Eligibility
+
+Number of Applications
+
+Applicant organizations may submit more than one application, provided that each application is scientifically distinct.
+
+The NIH will not accept duplicate or highly overlapping applications under review at the same time, per [NIH Grants Policy Statement Section 2.3.7.4 Submission of Resubmission Application](//grants.nih.gov/grants/guide/url_redirect.php?id=82415). This means that the NIH will not accept:
+
+- A new (A0) application that is submitted before issuance of the summary statement from the review of an overlapping new (A0) or resubmission (A1) application.
+- A resubmission (A1) application that is submitted before issuance of the summary statement from the review of the previous new (A0) application.
+- An application that has substantial overlap with another application pending appeal of initial peer review (see[NIH Grants Policy Statement 2.3.9.4 Similar, Essentially Identical, or Identical Applications](//grants.nih.gov/grants/guide/url_redirect.php?id=82423)).
+
+## Section IV. Application and Submission Information
+
+#### 1. Requesting an Application Package
+
+The application forms package specific to this opportunity must be accessed through ASSIST, Grants.gov Workspace or an institutional system-to-system solution. Links to apply using ASSIST or Grants.gov Workspace are available in Part 1 of this NOFO. See your administrative office for instructions if you plan to use an institutional system-to-system solution.
+
+#### 2. Content and Form of Application Submission
+
+It is critical that applicants follow the instructions in the Research (R) Instructions in the[How to Apply - Application Guide](https://grants.nih.gov/grants/guide/url_redirect.php?id=82400)except where instructed in this notice of funding opportunity to do otherwise. Conformance to the requirements in the Application Guide is required and strictly enforced. Applications that are out of compliance with these instructions may be delayed or not accepted for review.
+
+#### Letter of Intent
+
+Although a letter of intent is not required, is not binding, and does not enter into the review of a subsequent application, the information that it contains allows IC staff to estimate the potential review workload and plan the review.
+
+By the date listed in [Part 1. Overview Information](#_Part_1._Overview), prospective applicants are asked to submit a letter of intent that includes the following information:
+
+- Descriptive title of proposed activity
+- Name(s), address(es), and telephone number(s) of the PD(s)/PI(s)
+- Names of other key personnel
+- Participating institution(s)
+- Number and title of this funding opportunity
+
+The letter of intent should be sent to:
+
+Philippe Marmillot, Ph.D.\
+Telephone: 301-443-2861\
+Email: \[[email protected]\](/cdn-cgi/l/email-protection#1b6b737277726b6b7e35767a6976727777746f5b757273357c746d)
+
+#### Page Limitations
+
+All page limitations described in the [How to Apply- Application Guide](https://grants.nih.gov/grants/how-to-apply-application-guide.html) and the [Table of Page Limits](https://grants.nih.gov/grants/guide/url_redirect.php?id=61134) must be followed.
+
+Instructions for Application Submission The following section supplements the instructions found in the [How to Apply- Application Guide](https://grants.nih.gov/grants/how-to-apply-application-guide.html) and should be used for preparing an application to this NOFO.
+
+#### SF424(R&R) Cover
+
+All instructions in the [How to Apply - Application Guide](https://grants.nih.gov/grants/guide/url_redirect.php?id=82400) must be followed.
+
+#### SF424(R&R) Project/Performance Site Locations
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+#### SF424(R&R) Other Project Information
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+#### SF424(R&R) Senior/Key Person Profile
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+#### R&R or Modular Budget
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+#### R&R Subaward Budget
+
+All instructions in the How to Apply-Application Guide must be followed.
+
+#### PHS 398 Cover Page Supplement
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+#### PHS 398 Research Plan
+
+All instructions in the How to Apply- Application Guide must be followed, with the following additional instructions:
+
+**Resource Sharing Plan**: Individuals are required to comply with the instructions for the Resource Sharing Plans as provided in the How to Apply- Application Guide.
+
+**Other Plan(s):**
+
+All instructions in the How to Apply-Application Guide must be followed, with the following additional instructions:
+
+- All applicants planning research (funded or conducted in whole or in part by NIH) that results in the generation of scientific data are required to comply with the instructions for the Data Management and Sharing Plan. All applications, regardless of the amount of direct costs requested for any one year, must address a Data Management and Sharing Plan.
+
+\*\*Appendix:\*\*Only limited Appendix materials are allowed. Follow all instructions for the Appendix as described in the How to Apply- Application Guide.
+
+- No publications or other material, with the exception of blank questionnaires or blank surveys, may be included in the Appendix.
+
+#### PHS Human Subjects and Clinical Trials Information
+
+When involving human subjects research, clinical research, and/or NIH-defined clinical trials (and when applicable, clinical trials research experience) follow all instructions for the PHS Human Subjects and Clinical Trials Information form in the How to Apply- Application Guide, with the following additional instructions:
+
+If you answered Yes to the question Are Human Subjects Involved? on the R&R Other Project Information form, you must include at least one human subjects study record using the **Study Record: PHS Human Subjects and Clinical Trials Information** form or **Delayed Onset Study** record.
+
+**Study Record: PHS Human Subjects and Clinical Trials Information**
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+**Delayed Onset Study**
+
+Note: [Delayed onset](https://grants.nih.gov/grants/glossary.htm#DelayedOnsetStudy) does NOT apply to a study that can be described but will not start immediately (i.e., delayed start).All instructions in the How to Apply- Application Guide must be followed.
+
+#### PHS Assignment Request Form
+
+All instructions in the How to Apply- Application Guide must be followed.
+
+#### Foreign Organizations
+
+Foreign (non-U.S.) organizations must follow policies described in the [NIH Grants Policy Statement](//grants.nih.gov/grants/guide/url_redirect.php?id=11137), and procedures for foreign organizations described throughout the How to Apply- Application Guide.
+
+#### 3. Unique Entity Identifier and System for Award Management (SAM)
+
+See Part 2. Section III.1 for information regarding the requirement for obtaining a unique entity identifier and for completing and maintaining active registrations in System for Award Management (SAM), NATO Commercial and Government Entity (NCAGE) Code (if applicable), eRA Commons, and Grants.gov
+
+#### 4. Submission Dates and Times
+
+Part I. contains information about Key Dates and times. Applicants are encouraged to submit applications before the due date to ensure they have time to make any application corrections that might be necessary for successful submission. When a submission date falls on a weekend or [Federal holiday](https://grants.nih.gov/grants/guide/url_redirect.php?id=82380), the application deadline is automatically extended to the next business day.
+
+Organizations must submit applications to [Grants.gov](//grants.nih.gov/grants/guide/url_redirect.php?id=11128) (the online portal to find and apply for grants across all Federal agencies). Applicants must then complete the submission process by tracking the status of the application in the [eRA Commons](//grants.nih.gov/grants/guide/url_redirect.php?id=11123), NIHs electronic system for grants administration. NIH and Grants.gov systems check the application against many of the application instructions upon submission. Errors must be corrected and a changed/corrected application must be submitted to Grants.gov on or before the application due date and time.  If a Changed/Corrected application is submitted after the deadline, the application will be considered late. Applications that miss the due date and time are subjected to the [NIH Grants Policy Statement Section 2.3.9.2 Electronically Submitted Applications](//grants.nih.gov/grants/guide/url_redirect.php?id=82423).
+
+**Applicants are responsible for viewing their application before the due date in the eRA Commons to ensure accurate and successful submission.**
+
+Information on the submission process and a definition of on-time submission are provided in the How to Apply-Application Guide.
+
+#### 5. Intergovernmental Review (E.O. 12372)
+
+This initiative is not subject to [intergovernmental review.](https://grants.nih.gov/grants/policy/nihgps/html5/section_10/10.10.1_executive_orders.htm)
+
+#### 6. Funding Restrictions
+
+All NIH awards are subject to the terms and conditions, cost principles, and other considerations described in the [NIH Grants Policy Statement](//grants.nih.gov/grants/guide/url_redirect.php?id=11120).
+
+Pre-award costs are allowable only as described in the [NIH Grants Policy Statement Section 7.9.1 Selected Items of Cost.](//grants.nih.gov/grants/guide/url_redirect.php?id=11143)
+
+7\. Other Submission Requirements and Information Applications must be submitted electronically following the instructions described in the How to Apply Application Guide. Paper applications will not be accepted.
+
+Applicants must complete all required registrations before the application due date. Section III. Eligibility Information contains information about registration.
+
+For assistance with your electronic application or for more information on the electronic submission process, visit [How to Apply – Application Guide](https://grants.nih.gov/grants/guide/url_redirect.php?id=82400). If you encounter a system issue beyond your control that threatens your ability to complete the submission process on-time, you must follow the [Dealing with System Issues](https://grants.nih.gov/grants/how-to-apply-application-guide/due-dates-and-submission-policies/dealing-with-system-issues.htm) guidance. For assistance with application submission, contact the Application Submission Contacts in Section VII.
+
+**Important reminders:**
+
+All PD(s)/PI(s) must include their eRA Commons ID in the Credential field of the Senior/Key Person Profile form\*\*.\*\* Failure to register in the Commons and to include a valid PD/PI Commons ID in the credential field will prevent the successful submission of an electronic application to NIH. See Section III of this NOFO for information on registration requirements.
+
+The applicant organization must ensure that the unique entity identifier provided on the application is the same identifier used in the organizations profile in the eRA Commons and for the System for Award Management. Additional information may be found in the How to Apply Application Guide.
+
+See [more tips](//grants.nih.gov/grants/guide/url_redirect.php?id=11146) for avoiding common errors.
+
+Upon receipt, applications will be evaluated for completeness and compliance with application instructions by the Center for Scientific Review and responsiveness by NIAAA, NIH. Applications that are incomplete, non-compliant and/or nonresponsive will not be reviewed.
+
+In order to expedite review, applicants are requested to notify the NIAAA  Referral Office by email at \[[email protected]\](/cdn-cgi/l/email-protection#c6a8afa7a7a7b4a3a0a3b4b4a7aaa9a0a0afa5a3b4b586aba7afaae8a8afaee8a1a9b0) when the application has been submitted. Please include the NOFO number and title, PD/PI name, and title of the application.
+
+Requests of $500,000 or more for direct costs in any year
+
+Applicants requesting $500,000 or more in direct costs in any year (excluding consortium F&A) must contact a Scientific/ Research Contact at least 6 weeks before submitting the application and follow the Policy on the Acceptance for Review of Unsolicited Applications that Request $500,000 or More in Direct Costs as described in the SF424 (R&R) Application Guide.
+
+Mandatory Disclosure Recipients or subrecipients must submit any information related to violations of federal criminal law involving fraud, bribery, or gratuity violations potentially affecting the federal award. See Mandatory Disclosures,[2 CFR 200.113](https://www.ecfr.gov/current/title-2/subtitle-A/chapter-II/part-200/subpart-B/section-200.113) and[NIH Grants Policy Statement Section 4.1.35](https://grants.nih.gov/grants/policy/nihgps/html5/section_4/4.1.35_mandatory_disclosures.htm).
+
+Send written disclosures to the NIH Chief Grants Management Officer listed on the Notice of Award for the IC that funded the award and to the[HHS Office of Inspector Grant Self Disclosure Program](https://oig.hhs.gov/compliance/self-disclosure-info/hhs-oig-grant-self-disclosure-program/) at\[[email protected]\](/cdn-cgi/l/email-protection#c8afbaa9a6bcaca1bbaba4a7bbbdbaadbb88a7a1afe6a0a0bbe6afa7be).
+
+#### Post Submission Materials
+
+Applicants are required to follow the instructions for post-submission materials, as described in [the policy](//grants.nih.gov/grants/guide/url_redirect.php?id=82299)
+
+Any instructions provided here are in addition to the instructions in the policy.
+
+## Section V. Application Review Information
+
+#### 1. Criteria
+
+Only the review criteria described below will be considered in the review process. Applications submitted to the NIH in support of the [NIH mission](//grants.nih.gov/grants/guide/url_redirect.php?id=11149) are evaluated for scientific and technical merit through the NIH peer review system.
+
+Overall Impact Reviewers will provide an overall impact score to reflect their assessment of the likelihood for the project to exert a sustained, powerful influence on the research field(s) involved, in consideration of the following scored review criteria and additional review criteria (as applicable for the project proposed). An application does not need to be strong in all categories to be judged likely to have a major scientific impact.
+
+Scored Review Criteria Reviewers will evaluate Factors 1, 2 and 3 in the determination of scientific merit, and in providing an overall impact score. In addition, Factors 1 and 2 will each receive a separate criterion score.
+
+<label>Factor 1. Importance of the Research (Significance and Innovation)</label>
+
+***Significance***
+
+- Evaluate the importance of the proposed research in the context of current scientific challenges and opportunities, either for advancing knowledge within the field, or more broadly. Assess whether the application addresses an important gap in knowledge in the field, would solve a critical problem, or create a valuable conceptual or technical advance.
+- Evaluate the rationale for undertaking the study, the rigor of the scientific background for the work (e.g., prior literature and/or preliminary data) and whether the scientific background justifies the proposed study.
+
+***Innovation***
+
+- Evaluate the extent to which innovation influences the importance of undertaking the proposed research. Note that while technical or conceptual innovation can influence the importance of the proposed research, a project that is not applying novel concepts or approaches may be of critical importance for the field.
+- Evaluate whether the proposed work applies novel concepts, methods or technologies or uses existing concepts, methods, technologies in novel ways, to enhance the overall impact of the project.
+  <label>Factor 2. Rigor and Feasibility (Approach)</label>
+
+***Approach***
+
+- Evaluate the scientific quality of the proposed work. Evaluate the likelihood that compelling, reproducible findings will result (rigor) and assess whether the proposed studies can be done well and within the timeframes proposed (feasibility).
+
+***Rigor:***
+
+- Evaluate the potential to produce unbiased, reproducible, robust data.
+- Evaluate the rigor of experimental design and whether appropriate controls are in place.
+- Evaluate whether the sample size is sufficient and well-justified.
+- Assess the quality of the plans for analysis, interpretation, and reporting of results.
+- Evaluate whether the investigators presented adequate plans to address relevant biological variables, such as sex or age, in the design, analysis, and reporting.
+- For applications involving human subjects or vertebrate animals, also evaluate:
+  - the rigor of the intervention or study manipulation (if applicable to the study design).
+  - whether outcome variables are justified.
+  - whether the results will be generalizable or, in the case of a rare disease/special group, relevant to the particular subgroup.
+  - whether the sample is appropriate and sufficiently diverse to address the proposed question(s).
+- For applications involving human subjects, including clinical trials, assess the adequacy of inclusion plans as appropriate for the scientific goals of the research. Considerations of appropriateness may include disease/condition/behavior incidence, prevalence, or population burden, population representation, and/or current state of the science.
+
+***Feasibility:***
+
+- Evaluate whether the proposed approach is sound and achievable, including plans to address problems or new challenges that emerge in the work. For proposed studies in which feasibility may be less certain, evaluate whether the uncertainty is balanced by the potential for major advances.
+- For applications involving human subjects, including clinical trials, evaluate the adequacy and feasibility of the plan to recruit and retain a study population that appropriately models the target population. Additionally, evaluate the likelihood of successfully achieving the proposed enrollment based on age, race, ethnicity, and sex.
+- For clinical trial applications, evaluate whether the study timeline and milestones are feasible.
+
+<label>Factor 3. Expertise and Resources (Investigator(s) and Environment)</label>
+
+***Investigator(s)***
+
+Evaluate whether the investigator(s) have demonstrated background, training, and expertise, as appropriate for their career stage, to conduct the proposed work. For Multiple Principal Investigator (MPI) applications, assess the quality of the leadership plan to facilitate coordination and collaboration.
+
+***Environment***
+
+Evaluate whether the institutional resources are appropriate to ensure the successful execution of the proposed work.
+
+Additional Review Criteria As applicable for the project proposed, reviewers will consider the following additional items while determining scientific and technical merit, but will not give criterion scores for these items, and should consider them in providing an overall impact score.
+
+<label>Protections for Human Subjects</label>
+
+For research that involves human subjects but does not involve one of the categories of research that are exempt under 45 CFR Part 46, evaluate the justification for involvement of human subjects and the proposed protections from research risk relating to their participation according to the following five review criteria: 1) risk to subjects; 2) adequacy of protection against risks; 3) potential benefits to the subjects and others; 4) importance of the knowledge to be gained; and 5) data and safety monitoring for clinical trials.
+
+For research that involves human subjects and meets the criteria for one or more of the categories of research that are exempt under 45 CFR Part 46, evaluate: 1) the justification for the exemption; 2) human subjects involvement and characteristics; and 3) sources of materials. For additional information on review of the Human Subjects section, please refer to the[Guidelines for the Review of Human Subjects](https://grants.nih.gov/grants/guide/url_redirect.php?id=11175).
+
+<label>Vertebrate Animals</label>
+
+When the proposed research includes Vertebrate Animals, evaluate the involvement of live vertebrate animals according to the following criteria: (1) description of proposed procedures involving animals, including species, strains, ages, sex, and total number to be used; (2) justifications for the use of animals versus alternative models and for the appropriateness of the species proposed; (3) interventions to minimize discomfort, distress, pain and injury; and (4) justification for euthanasia method if NOT consistent with the AVMA Guidelines for the Euthanasia of Animals. For additional information on review of the Vertebrate Animals section, please refer to the[Worksheet for Review of the Vertebrate Animals Section](//grants.nih.gov/grants/guide/url_redirect.php?id=11150).
+
+<label>Biohazards</label>
+
+When the proposed research includes Biohazards, evaluate whether specific materials or procedures that will be used are significantly hazardous to research personnel and/or the environment, and whether adequate protection is proposed.
+
+<label>Resubmissions</label>
+
+As applicable, evaluate the full application as now presented.
+
+<label>Renewals</label>
+
+As applicable, evaluate the progress made in the last funding period.
+
+<label>Revisions</label>
+
+As applicable, evaluate the appropriateness of the proposed expansion of the scope of the project.
+
+Additional Review Considerations As applicable for the project proposed, reviewers will consider each of the following items, but will not give scores for these items, and should not consider them in providing an overall impact score.
+
+<label>Authentication of Key Biological and/or Chemical Resources</label>
+
+For projects involving key biological and/or chemical resources, evaluate the brief plans proposed for identifying and ensuring the validity of those resources.
+
+<label>Budget and Period of Support</label>
+
+Evaluate whether the budget and the requested period of support are fully justified and reasonable in relation to the proposed research.
+
+#### 2. Review and Selection Process
+
+Applications will be evaluated for scientific and technical merit by (an) appropriate Scientific Review Group(s) convened by NIAAA, in accordance with [NIH peer review policy and procedures](//grants.nih.gov/grants/guide/url_redirect.php?id=11154), using the stated review criteria. Assignment to a Scientific Review Group will be shown in the eRA Commons.
+
+As part of the scientific peer review, all applications will receive a written critique.
+
+Applications may undergo a selection process in which only those applications deemed to have the highest scientific and technical merit (generally the top half of applications under review) will be discussed and assigned an overall impact score.
+
+Applications will be assigned on the basis of established PHS referral guidelines to the appropriate NIH Institute or Center. Applications will compete for available funds with all other recommended applications submitted in response to this NOFO. Following initial peer review, recommended applications will receive a second level of review by the appropriate national Advisory Council or Board. The following will be considered in making funding decisions:
+
+- Scientific and technical merit of the proposed project as determined by scientific peer review.
+- Availability of funds.
+- Relevance of the proposed project to program priorities.
+
+If the application is under consideration for funding, NIH will request "just-in-time" information from the applicant as described in the[NIH Grants Policy Statement Section 2.5.1. Just-in-Time Procedures](//grants.nih.gov/grants/guide/url_redirect.php?id=82418). This request is not a Notice of Award nor should it be construed to be an indicator of possible funding.
+
+Prior to making an award, NIH reviews an applicants federal award history in SAM.gov to ensure sound business practices. An applicant can review and comment on any information in the Responsibility/Qualification records available in SAM.gov. NIH will consider any comments by the applicant in the Responsibility/Qualification records in SAM.gov to ascertain the applicants integrity, business ethics, and performance record of managing Federal awards per 2 CFR Part 200.206 Federal awarding agency review of risk posed by applicants. This provision will apply to all NIH grants and cooperative agreements except fellowships.
+
+#### 3. Anticipated Announcement and Award Dates
+
+After the peer review of the application is completed, the PD/PI will be able to access his or her Summary Statement (written critique) via the[eRA Commons](//grants.nih.gov/grants/guide/url_redirect.php?id=11123). Refer to Part 1 for dates for peer review, advisory council review, and earliest start date.
+
+Information regarding the disposition of applications is available in the[NIH Grants Policy Statement Section 2.4.4 Disposition of Applications](//grants.nih.gov/grants/guide/url_redirect.php?id=82416).
+
+## Section VI. Award Administration Information
+
+#### 1. Award Notices
+
+A Notice of Award (NoA) is the official authorizing document notifying the applicant that an award has been made and that funds may be requested from the designated HHS payment system or office. The NoA is signed by the Grants Management Officer and emailed to the recipients business official.
+
+In accepting the award, the recipient agrees that any activities under the award are subject to all provisions currently in effect or implemented during the period of the award, other Department regulations and policies in effect at the time of the award, and applicable statutory provisions.
+
+Recipients must comply with any funding restrictions described in[Section IV.6. Funding Restrictions](#_6._Funding_Restrictions). Any pre-award costs incurred before receipt of the NoA are at the applicant's own risk.  For more information on the Notice of Award, please refer to the[NIH Grants Policy Statement Section 5. The Notice of Award](https://grants.nih.gov/grants/policy/nihgps/HTML5/section_5/5_the_notice_of_award.htm) and NIH Grants & Funding website, see[Award Process.](https://grants.nih.gov/grants/pre-award-process.htm#award)
+
+Individual awards are based on the application submitted to, and as approved by, the NIH and are subject to the IC-specific terms and conditions identified in the NoA.
+
+ClinicalTrials.gov: If an award provides for one or more clinical trials. By law (Title VIII, Section 801 of Public Law 110-85), the "responsible party" must register and submit results information for certain applicable clinical trials on the ClinicalTrials.gov Protocol Registration and Results System Information Website ([https://register.clinicaltrials.gov](https://register.clinicaltrials.gov/)). NIH expects registration and results reporting of all trials whether required under the law or not. For more information, see [https://grants.nih.gov/policy/clinical-trials/reporting/index.htm](https://grants.nih.gov/policy/clinical-trials/reporting/index.htm)
+
+Institutional Review Board or Independent Ethics Committee Approval: Recipient institutions must ensure that all protocols are reviewed by their IRB or IEC. To help ensure the safety of participants enrolled in NIH-funded studies, the recipient must provide NIH copies of documents related to all major changes in the status of ongoing protocols.
+
+Data and Safety Monitoring Requirements: The NIH policy for data and safety monitoring requires oversight and monitoring of all NIH-conducted or -supported human biomedical and behavioral intervention studies (clinical trials) to ensure the safety of participants and the validity and integrity of the data. Further information concerning these requirements is found at [http://grants.nih.gov/grants/policy/hs/data_safety.htm](//grants.nih.gov/grants/policy/hs/data_safety.htm) and in the application instructions (SF424 (R&R) and PHS 398).
+
+Investigational New Drug or Investigational Device Exemption Requirements: Consistent with federal regulations, clinical research projects involving the use of investigational therapeutics, vaccines, or other medical interventions (including licensed products and devices for a purpose other than that for which they were licensed) in humans under a research protocol must be performed under a Food and Drug Administration (FDA) investigational new drug (IND) or investigational device exemption (IDE).
+
+#### 2. Administrative and National Policy Requirements
+
+The following Federal wide and HHS-specific policy requirements apply to awards funded through NIH:
+
+- The rules listed at [2 CFR Part 200](https://www.ecfr.gov/current/title-2/subtitle-A/chapter-II/part-200), Uniform Administrative Requirements, Cost Principles, and Audit Requirements for Federal Awards.
+- All NIH grant and cooperative agreement awards include the [NIH Grants Policy Statement](//grants.nih.gov/grants/guide/url_redirect.php?id=11120) as part of the terms and conditions in the Notice of Award (NoA). The NoA includes the requirements of this NOFO. For these terms of award, see the [NIH Grants Policy Statement Part II: Terms and Conditions of NIH Grant Awards, Subpart A: General](//grants.nih.gov/grants/guide/url_redirect.php?id=11120) and [Part II: Terms and Conditions of NIH Grant Awards, Subpart B: Terms and Conditions for Specific Types of Grants, Recipients, and Activities](//grants.nih.gov/grants/guide/url_redirect.php?id=11159).
+- If a recipient receives an award, the recipient must follow all applicable nondiscrimination laws. The recipient agrees to this when registering in SAM.gov. The recipient must also submit an Assurance of Compliance ([HHS-690](https://www.hhs.gov/sites/default/files/form-hhs690.pdf)). To learn more, see the [Laws and Regulations Enforced by the HHS Office for Civil Rights website](https://www.hhs.gov/civil-rights/for-providers/laws-regulations-guidance/laws/index.html).
+  - HHS recognizes that NIH research projects are often limited in scope for many reasons that are nondiscriminatory, such as the principal investigators scientific interest, funding limitations, recruitment requirements, and other considerations. Thus, criteria in research protocols that target or exclude certain populations are warranted where nondiscriminatory justifications establish that such criteria are appropriate with respect to the health or safety of the subjects, the scientific study design, or the purpose of the research. For additional guidance regarding how the provisions apply to NIH grant programs, please contact the Scientific/Research Contact that is identified in Section VII under Agency Contacts of this NOFO.
+
+All federal statutes and regulations relevant to federal financial assistance, including those highlighted in[NIH Grants Policy Statement Section 4 Public Policy Requirements, Objectives and Other Appropriation Mandates.](https://grants.nih.gov/grants/policy/nihgps/HTML5/section_4/4_public_policy_requirements__objectives_and_other_appropriation_mandates.htm)
+
+Recipients are responsible for ensuring that their activities comply with all applicable federal regulations.  NIH may terminate awards under certain circumstances.  See[2 CFR Part 200.340 Termination](https://www.ecfr.gov/current/title-2/subtitle-A/chapter-II/part-200/subpart-D/subject-group-ECFR86b76dde0e1e9dc/section-200.340) and[NIH Grants Policy Statement Section 8.5.2 Remedies for Noncompliance or Enforcement Actions: Suspension, Termination, and Withholding of Support](https://grants.nih.gov/grants/policy/nihgps/html5/section_8/8.5.2_remedies_for_noncompliance_or_enforcement_actions-_suspension__termination__and_withholding_of_support.htm).
+
+Cooperative Agreement Terms and Conditions of Award Not Applicable
+
+3\. Data Management and Sharing Consistent with the 2023 NIH Policy for Data Management and Sharing, when data management and sharing is applicable to the award, recipients will be required to adhere to the Data Management and Sharing requirements as outlined in the [NIH Grants Policy Statement](https://grants.nih.gov/grants/policy/nihgps/HTML5/section_8/8.2.3_sharing_research_resources.htm#Data). Upon the approval of a Data Management and Sharing Plan, it is required for recipients to implement the plan as described.
+
+#### 4. Reporting
+
+When multiple years are involved, recipients will be required to submit the[Research Performance Progress Report (RPPR)](//grants.nih.gov/grants/rppr/index.htm)annually and financial statements as required in the [NIH Grants Policy Statement Section 8.4.1 Reporting.](https://grants.nih.gov/grants/policy/nihgps/HTML5/section_8/8.4.1_reporting.htm)To learn more about post-award monitoring and reporting, see the NIH Grants & Funding website, see [Post-Award Monitoring and Reporting](https://grants.nih.gov/grants/guide/url_redirect.php?id=82428).
+
+A final RPPR, invention statement, and the expenditure data portion of the Federal Financial Report are required for closeout of an award, as described in the [NIH Grants Policy Statement Section 8.6 Closeout](//grants.nih.gov/grants/guide/url_redirect.php?id=82420). NIH NOFOs outline intended research goals and objectives. Post award, NIH will review and measure performance based on the details and outcomes that are shared within the RPPR, as described at 2 CFR Part 200.301.
+
+## Section VII. Agency Contacts
+
+We encourage inquiries concerning this funding opportunity and welcome the opportunity to answer questions from potential applicants.
+
+Application Submission Contacts eRA Service Desk (Questions regarding ASSIST, eRA Commons, application errors and warnings, documenting system problems that threaten submission by the due date, and post-submission issues)
+
+Finding Help Online:[https://www.era.nih.gov/need-help](https://www.era.nih.gov/need-help)(preferred method of contact)\
+Telephone: 301-402-7469 or 866-504-9552 (Toll Free)
+
+General Grants Information (Questions regarding application instructions, application processes, and NIH grant resources)\
+Email:\[[email protected]\](/cdn-cgi/l/email-protection#561124373822251f38303916383f3e78313920)(preferred method of contact)\
+Telephone: 301-480-7075
+
+Grants.gov Customer Support (Questions regarding Grants.gov registration and Workspace)\
+Contact Center Telephone: 800-518-4726\
+Email:\[[email protected]\](/cdn-cgi/l/email-protection#f2818782829d8086b29580939c8681dc959d84)
+
+Scientific/Research Contact(s) ***Clinical, Treatment and Recovery Research***
+Brett T. Hagman, Ph.D.\
+National Institute on Alcohol Abuse and Alcoholism (NIAAA)\
+Telephone: 301-443-0638\
+Email:\[[email protected]\](/cdn-cgi/l/email-protection#f29080978686dc9a93959f939cb29c9b9adc959d84)
+
+***Medications Development***
+Dan Falk, Ph.D.\
+National Institute on Alcohol Abuse and Alcoholism (NIAAA)\
+Telephone: 301-443-0788\
+Email:\[[email protected]\](/cdn-cgi/l/email-protection#f294939e999697b29f939b9edc9c9b9adc959d84)
+
+Peer Review Contact(s) RV Srinivas, Ph.D.\
+National Institute on Alcohol Abuse and Alcoholism\
+Telephone: 301-451-2067\
+Email:\[[email protected]\](/cdn-cgi/l/email-protection#f88b8a9196918e998ab895999194d6969190d69f978e)
+
+Financial/Grants Management Contact(s) Judy Fox\
+National Institute on Alcohol Abuse and Alcoholism (NIAAA)\
+Telephone: 301-443-4707\
+Email:\[[email protected]\](/cdn-cgi/l/email-protection#58323e3720183539313476363130763f372e)
+
+## Section VIII. Other Information
+
+Recently issued trans-NIH [policy notices](//grants.nih.gov/grants/guide/url_redirect.php?id=11163) may affect your application submission. A full list of policy notices published by NIH is provided in the [NIH Guide for Grants and Contracts](//grants.nih.gov/grants/guide/url_redirect.php?id=11164). All awards are subject to the terms and conditions, cost principles, and other considerations described in the [NIH Grants Policy Statement](//grants.nih.gov/grants/guide/url_redirect.php?id=11120).
+
+Authority and Regulations Awards are made under the authorization of Sections 301 and 405 of the Public Health Service Act as amended (42 USC 241 and 284) and under Federal Regulations 42 CFR Part 52 and 2 CFR Part 200.
+
+______________________________________________________________________
+
+[Weekly TOC for this Announcement](/grants/guide/WeeklyIndex.cfm?11-29-24)\
+[NIH Funding Opportunities and Notices](/grants/guide/index.html)
+
+______________________________________________________________________
+
+[![NIH Office of Extramural Research Logo](/images7/nih-oer-logo.jpg)](/grants/oer.htm) [<img src='/images7/dhhs_sm.gif' alt='Department of Health and Human Services (HHS) - Home Page' title='' width='36' height='37' />](https://www.hhs.gov/)Department of Health\
+and Human Services (HHS) [![USA.gov - Government Made Easy](/images7/USA_Gov_logo.gif)](https://www.usa.gov/) NIH... Turning Discovery Into Health®

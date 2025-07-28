@@ -15,7 +15,6 @@ export async function addOrganizationMember(organizationId: string, data: API.Ad
 	);
 }
 
-// Organization Management
 export async function createOrganization(data: API.CreateOrganization.RequestBody) {
 	return withAuthRedirect(
 		getClient()
@@ -27,7 +26,6 @@ export async function createOrganization(data: API.CreateOrganization.RequestBod
 	);
 }
 
-// Organization Invitations
 export async function createOrganizationInvitation(
 	organizationId: string,
 	data: API.CreateOrganizationInvitation.RequestBody,
@@ -93,7 +91,6 @@ export async function getOrganizationInvitations(organizationId: string) {
 	);
 }
 
-// Organization Members
 export async function getOrganizationMembers(organizationId: string) {
 	return withAuthRedirect(
 		getClient()

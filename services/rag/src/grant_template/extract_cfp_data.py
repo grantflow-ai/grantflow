@@ -81,6 +81,9 @@ TEMPERATURE: Final[float] = 0.1
 EXTRACT_CFP_DATA_SYSTEM_PROMPT: Final[str] = """
 Extract structured requirements from funding announcements.
 Prioritize official CFP docs over supplementary materials.
+
+CRITICAL: Respond only with valid JSON. Do not include repetitive text, escaped characters, or malformed content.
+If encountering unclear content, use "[UNCLEAR]" markers instead of repeating text patterns.
 """
 
 EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
@@ -92,10 +95,17 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Extract:
     1. Organization ID from mapping (or null)
     2. CFP subject (one sentence: type, audience, focus)
-    3. Deadline (YYYY-MM-DD)
+    3. Deadline (YYYY-MM-DD format)
     4. Section structure (titles, page limits, preserve numbering)
 
     Exclude: URLs, Grants.gov steps, addresses, admin details
+
+    IMPORTANT OUTPUT RULES:
+    - Return valid JSON only
+    - Maximum 50 subtitles per section
+    - No repetitive text patterns
+    - Use "[UNCLEAR]" for ambiguous information
+    - Limit response to 5000 tokens maximum
     """,
 )
 
@@ -140,7 +150,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
 
 def sanitize_text_content(text: str) -> str:
     """
-    Sanitize text content by removing excessive newlines and whitespace.
+    Sanitize text content by removing excessive newlines, whitespace, and problematic patterns.
 
     Args:
         text: Text to sanitize
@@ -148,19 +158,43 @@ def sanitize_text_content(text: str) -> str:
     Returns:
         Sanitized text
     """
-
+    # Handle various newline formats
     text = text.replace("\r\n", "\n")
     text = text.replace("\r", "\n")
 
+    # Remove escaped newline sequences that can cause model confusion
+    text = re.sub(r"\\+r\\+n", "\n", text)  # Remove \r\n, \\r\\n, etc.
+    text = re.sub(r"\\+n", "\n", text)  # Remove \n, \\n, etc.
+    text = re.sub(r"\\+r", "\n", text)  # Remove \r, \\r, etc.
+
+    # Detect and truncate repetitive patterns (runaway generation protection)
+    # Look for patterns like repeated sequences of characters
+    repetitive_pattern = re.search(r"(.{1,10})\1{20,}", text)
+    if repetitive_pattern:
+        # If we find a pattern repeated 20+ times, truncate at the start of repetition
+        start_pos = repetitive_pattern.start()
+        logger.warning(
+            "Detected repetitive pattern in text content",
+            pattern=repetitive_pattern.group(1)[:20],
+            original_length=len(text),
+            truncated_length=start_pos,
+        )
+        text = text[:start_pos] + "\n[Content truncated due to repetitive pattern]"
+
+    # Remove excessive consecutive newlines
     text = re.sub(r"\n{3,}", "\n\n", text)
 
+    # Remove excessive spaces
     text = re.sub(r" {2,}", " ", text)
 
+    # Clean up lines
     lines = text.split("\n")
     lines = [line.rstrip() for line in lines]
     text = "\n".join(lines)
 
+    # Remove null bytes and other control characters
     text = text.replace("\x00", "")
+    text = re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
 
     return text.strip()
 

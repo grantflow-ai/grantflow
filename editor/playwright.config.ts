@@ -11,22 +11,19 @@ export default defineConfig({
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] },
 		},
-		// You can add firefox and webkit back if needed
 	],
 	reporter: "html",
 	retries: process.env.CI ? 2 : 0,
-	testDir: "./tests", // A simpler test directory
+	testDir: "./tests",
 	use: {
-		// Use the correct base URL for Vite's default port
 		baseURL: "http://127.0.0.1:5173",
 		trace: "on-first-retry",
 	},
 
-	// This is the critical part for a Vite project
 	webServer: {
-		command: "pnpm dev", // The command to start the Vite server
+		command: "pnpm dev",
 		reuseExistingServer: !process.env.CI,
-		url: "http://127.0.0.1:5173", // The URL to wait for
+		url: "http://127.0.0.1:5173",
 	},
 
 	workers: process.env.CI ? 1 : undefined,

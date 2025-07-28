@@ -28,12 +28,11 @@ export async function login(idToken: string) {
 		value: jwt_token,
 	});
 
-	// Extract organization from JWT and set as default if not already set
 	const defaultOrganizationId = getOrganizationFromJWT(jwt_token);
 	if (defaultOrganizationId && !cookieStore.get(SELECTED_ORGANIZATION_COOKIE)) {
 		cookieStore.set({
-			httpOnly: false, // Allow client-side access for organization switching
-			maxAge: 60 * 60 * 24 * 30, // 30 days
+			httpOnly: false,
+			maxAge: 60 * 60 * 24 * 30,
 			name: SELECTED_ORGANIZATION_COOKIE,
 			sameSite: "strict",
 			secure: getEnv().NEXT_PUBLIC_SITE_URL.startsWith("https"),

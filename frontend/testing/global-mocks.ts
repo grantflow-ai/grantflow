@@ -94,7 +94,6 @@ vi.mock("sonner", async (importOriginal) => {
 	};
 });
 
-// Mock the environment utility completely
 vi.mock("@/utils/env", () => ({
 	getEnv: vi.fn().mockReturnValue(mockEnv),
 }));
@@ -107,7 +106,6 @@ vi.mock("next-themes", () => ({
 	}),
 }));
 
-// Mock Segment analytics
 vi.mock("@segment/analytics-next", () => ({
 	AnalyticsBrowser: {
 		load: vi.fn().mockReturnValue({
@@ -121,9 +119,6 @@ vi.mock("@segment/analytics-next", () => ({
 	},
 }));
 
-// Mock server actions that use cookies (grant-applications module was removed)
-
-// Mock the segment utils to prevent errors
 const mockAnalyticsInstance = {
 	_loadOptions: {},
 	_writeKey: "M5CP7BfkccD2I8k11pFE5qAcFjibdUyn",
@@ -135,7 +130,7 @@ const mockAnalyticsInstance = {
 	factory: vi.fn(),
 	group: vi.fn().mockResolvedValue(undefined),
 	identify: vi.fn().mockResolvedValue(undefined),
-	// Properties that Segment might access
+
 	initialized: true,
 	invoked: true,
 	load: vi.fn(),
@@ -179,7 +174,7 @@ const mockAnalyticsInstance = {
 	trackClick: vi.fn().mockResolvedValue(undefined),
 	trackForm: vi.fn().mockResolvedValue(undefined),
 	trackLink: vi.fn().mockResolvedValue(undefined),
-	// Add all the methods that the Segment snippet creates
+
 	trackSubmit: vi.fn().mockResolvedValue(undefined),
 };
 
@@ -229,7 +224,6 @@ beforeAll(() => {
 
 	globalThis.ResizeObserver = mockResizeObserver;
 
-	// Mock IntersectionObserver
 	globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
 		disconnect: vi.fn(),
 		observe: vi.fn(),
@@ -239,11 +233,8 @@ beforeAll(() => {
 		unobserve: vi.fn(),
 	})) as any;
 
-	// Set analytics and other browser APIs directly on globalThis
-	// Make analytics behave like an array with push method (as per Segment snippet)
 	(globalThis as any).analytics = Object.assign([], mockAnalyticsInstance);
 
-	// Mock navigator.clipboard if it doesn't exist
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!globalThis.navigator) {
 		globalThis.navigator = {} as Navigator;
@@ -260,7 +251,6 @@ beforeAll(() => {
 		});
 	}
 
-	// Mock file input .item() method for user-event
 	const originalFileListDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "files");
 	Object.defineProperty(HTMLInputElement.prototype, "files", {
 		configurable: true,
@@ -302,6 +292,5 @@ beforeEach(() => {
 		Object.fromEntries(Object.entries(mockEnv).map(([key, value]) => [key, value.toString()])),
 	);
 
-	// Clear the environment cache so mocked values are used
 	vi.clearAllMocks();
 });

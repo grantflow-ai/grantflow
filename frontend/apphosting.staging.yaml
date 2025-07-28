@@ -5,6 +5,10 @@ runConfig:
     memoryMiB: 512
     concurrency: 50
 
+# Custom container configuration
+image:
+    uri: us-east1-docker.pkg.dev/grantflow/grantflow/frontend:staging-latest
+
 env:
     - variable: NEXT_PUBLIC_SITE_URL
       secret: NEXT_PUBLIC_SITE_URL_STAGING

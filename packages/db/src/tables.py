@@ -106,8 +106,6 @@ class Organization(BaseWithUUIDPK):
         "Project", back_populates="organization", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (UniqueConstraint("name", name="uq_organization_name"),)
-
 
 class OrganizationUser(Base):
     __tablename__ = "organization_users"

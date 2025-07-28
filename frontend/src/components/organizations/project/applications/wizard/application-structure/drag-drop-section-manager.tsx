@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { log } from "@/utils/logger";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -22,19 +23,65 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
+import type { RefObject } from "react";
+import { AppButton } from "@/components/app";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
+
 export function DragDropSectionManager({
+	dialogRef,
 	isDetailedSection,
 	onAddSection,
 }: {
+	dialogRef: RefObject<null | WizardDialogRef>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
-	const grantSections = useApplicationStore((state) => state.application?.grant_template?.grant_sections) ?? [];
+	const application = useApplicationStore((state) => state.application);
+	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
+	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 	const [pendingParentChange, setPendingParentChange] = useState<{
 		newParentId: null | string;
 		sectionId: string;
 	} | null>(null);
+
+	const wouldCreateInvalidNesting = useCallback(
+		(activeSection: GrantSection, overSection: GrantSection) => {
+			if (overSection.parent_id !== null && activeSection.parent_id === null) {
+				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
+				if (hasChildren) {
+					return true;
+				}
+			}
+
+			return false;
+		},
+		[grantSections],
+	);
+
+	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
+		const activeIsChild = activeSection.parent_id !== null;
+		const overIsChild = overSection.parent_id !== null;
+
+		if (overIsChild) {
+			return overSection.parent_id;
+		}
+
+		if (activeIsChild) {
+			return overSection.id;
+		}
+
+		return null;
+	}, []);
+
+	const toggleSectionExpanded = useCallback((sectionId: string) => {
+		setExpandedSectionId((prev) => {
+			if (prev === sectionId) {
+				return null;
+			}
+			return sectionId;
+		});
+	}, []);
 
 	const toUpdateGrantSection = useCallback(
 		(section: GrantSection): UpdateGrantSection => {
@@ -60,53 +107,6 @@ export function DragDropSectionManager({
 		[isDetailedSection],
 	);
 
-	const wouldCreateInvalidNesting = useCallback(
-		(activeSection: GrantSection, overSection: GrantSection) => {
-			// to prevent main section to become a sub-section
-			if (overSection.parent_id !== null && activeSection.parent_id === null) {
-				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
-				if (hasChildren) {
-					return true;
-				}
-			}
-
-			return false;
-		},
-		[grantSections],
-	);
-
-	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
-		const activeIsMain = activeSection.parent_id === null;
-		const overIsMain = overSection.parent_id === null;
-
-		if (activeIsMain && overIsMain) {
-			return null;
-		}
-
-		if (activeIsMain && !overIsMain) {
-			return activeSection.parent_id;
-		}
-
-		if (!activeIsMain && overIsMain) {
-			return activeSection.parent_id === overSection.id ? activeSection.parent_id : overSection.id;
-		}
-
-		if (!(activeIsMain || overIsMain)) {
-			return overSection.parent_id;
-		}
-
-		return activeSection.parent_id;
-	}, []);
-
-	const toggleSectionExpanded = useCallback((sectionId: string) => {
-		setExpandedSectionId((prev) => {
-			if (prev === sectionId) {
-				return null;
-			}
-			return sectionId;
-		});
-	}, []);
-
 	const handleUpdateSection = useCallback(
 		async (sectionId: string, updates: Partial<GrantSection>) => {
 			const updatedSections = grantSections.map((section) => {
@@ -120,15 +120,78 @@ export function DragDropSectionManager({
 		[grantSections, toUpdateGrantSection],
 	);
 
-	const handleDeleteSection = useCallback(
+	const performDelete = useCallback(
 		async (sectionId: string) => {
+			const sectionToDelete = grantSections.find((section) => section.id === sectionId);
+			if (!sectionToDelete) return;
+
+			const sectionsToDelete = [sectionId];
+			if (sectionToDelete.parent_id === null) {
+				const subSections = grantSections.filter((section) => section.parent_id === sectionId);
+				sectionsToDelete.push(...subSections.map((section) => section.id));
+			}
+
 			const updatedSections = grantSections
-				.filter((section) => section.id !== sectionId)
+				.filter((section) => !sectionsToDelete.includes(section.id))
 				.map(toUpdateGrantSection);
 			await useApplicationStore.getState().updateGrantSections(updatedSections);
 			setExpandedSectionId((prev) => (prev === sectionId ? null : prev));
 		},
 		[grantSections, toUpdateGrantSection],
+	);
+
+	const showDeleteConfirmation = useCallback(
+		(sectionId: string) => {
+			const section = grantSections.find((s) => s.id === sectionId);
+			if (!section) return;
+
+			const subSections = grantSections.filter((s) => s.parent_id === sectionId);
+			const hasSubSections = subSections.length > 0;
+
+			dialogRef.current?.open({
+				content: null,
+				description: hasSubSections
+					? "All content within this section and its sub-sections will be permanently removed. This action cannot be undone."
+					: "All content within this section will be permanently removed. This action cannot be undone.",
+				dismissOnOutsideClick: false,
+				footer: (
+					<div className="flex justify-between w-full">
+						<AppButton
+							data-testid="cancel-delete-button"
+							onClick={() => dialogRef.current?.close()}
+							variant="secondary"
+						>
+							Cancel
+						</AppButton>
+						<AppButton
+							data-testid="confirm-delete-button"
+							onClick={async () => {
+								await performDelete(sectionId);
+								dialogRef.current?.close();
+							}}
+							variant="primary"
+						>
+							Delete Section
+						</AppButton>
+					</div>
+				),
+				minWidth: "min-w-xl",
+				title: "Are you sure you want to delete this section?",
+			});
+		},
+		[grantSections, dialogRef, performDelete],
+	);
+
+	const handleDeleteSection = useCallback(
+		async (sectionId: string) => {
+			const section = grantSections.find((s) => s.id === sectionId);
+			if (section?.parent_id) {
+				await performDelete(sectionId);
+				return;
+			}
+			showDeleteConfirmation(sectionId);
+		},
+		[showDeleteConfirmation, performDelete, grantSections],
 	);
 
 	const handleAddNewSection = useCallback(
@@ -151,6 +214,23 @@ export function DragDropSectionManager({
 				}
 
 				if (pendingParentChange) {
+					const updatedSections = grantSections.map((section) => {
+						if (section.id === pendingParentChange.sectionId) {
+							return toUpdateGrantSection({
+								...section,
+								parent_id: pendingParentChange.newParentId,
+							});
+						}
+						return toUpdateGrantSection(section);
+					});
+
+					log.info("Drag end: Applying pending parent change", {
+						newParentId: pendingParentChange.newParentId,
+						sectionCount: updatedSections.length,
+						sectionId: pendingParentChange.sectionId,
+					});
+
+					await updateGrantSections(updatedSections);
 					setPendingParentChange(null);
 				}
 			},
@@ -187,6 +267,8 @@ export function DragDropSectionManager({
 			pendingParentChange,
 			expandedSectionId,
 			handleUpdateSection,
+			grantSections,
+			updateGrantSections,
 		],
 	);
 
@@ -306,36 +388,39 @@ function SectionList({
 }: {
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection;
 } & SectionListProps) {
-	// Flatten sections for optimal SortableContext performance
-	// Keep efficient data structures while creating flat DOM
-	const allSectionsFlattened = useMemo(() => {
-		const result: GrantSection[] = [];
-		mainSections.forEach((main) => {
-			result.push(main);
-			const subsections = subsectionsByParent[main.id] ?? [];
-			result.push(...subsections);
-		});
-		return result;
-	}, [mainSections, subsectionsByParent]);
-
 	return (
-		<div className="space-y-2">
-			{allSectionsFlattened.map((section) => (
-				<SortableSection
-					isDetailedSection={isDetailedSection}
-					isExpanded={expandedSectionId === section.id}
-					isSubsection={!!section.parent_id}
-					key={section.id}
-					onAddSubsection={section.parent_id ? undefined : () => handleAddNewSection(section.id)}
-					onDelete={() => handleDeleteSection(section.id)}
-					onToggleExpand={() => {
-						toggleSectionExpanded(section.id);
-					}}
-					onUpdate={(updates) => handleUpdateSection(section.id, updates)}
-					section={section}
-					toUpdateGrantSection={toUpdateGrantSection}
-				/>
+		<>
+			{mainSections.map((section) => (
+				<div className="space-y-2" key={section.id}>
+					<SortableSection
+						isDetailedSection={isDetailedSection}
+						isExpanded={expandedSectionId === section.id}
+						onAddSubsection={() => handleAddNewSection(section.id)}
+						onDelete={() => handleDeleteSection(section.id)}
+						onToggleExpand={() => {
+							toggleSectionExpanded(section.id);
+						}}
+						onUpdate={(updates) => handleUpdateSection(section.id, updates)}
+						section={section}
+						toUpdateGrantSection={toUpdateGrantSection}
+					/>
+					{(subsectionsByParent[section.id] ?? []).map((subsection) => (
+						<SortableSection
+							isDetailedSection={isDetailedSection}
+							isExpanded={expandedSectionId === subsection.id}
+							isSubsection
+							key={subsection.id}
+							onDelete={() => handleDeleteSection(subsection.id)}
+							onToggleExpand={() => {
+								toggleSectionExpanded(subsection.id);
+							}}
+							onUpdate={(updates) => handleUpdateSection(subsection.id, updates)}
+							section={subsection}
+							toUpdateGrantSection={toUpdateGrantSection}
+						/>
+					))}
+				</div>
 			))}
-		</div>
+		</>
 	);
 }

@@ -107,7 +107,7 @@ async def handle_create_project(
     async with session_maker() as session, session.begin():
         try:
             project_data = {**data, "organization_id": organization_id}
-            project = await session.scalar(insert(Project).values(project_data).returning(Project))
+            project = await session.scalar(insert(Project).values(**project_data).returning(Project))
             await session.commit()
         except SQLAlchemyError as e:
             await session.rollback()

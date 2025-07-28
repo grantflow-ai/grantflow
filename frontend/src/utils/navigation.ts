@@ -17,21 +17,16 @@ export const routes = {
 	},
 	finishEmailSignin: () => "/onboarding/email",
 
-	// Public routes
 	home: () => "/",
 	login: () => "/login",
 
-	// API routes
 	notifications: {
 		dismiss: (notificationId: string) => `/api/notifications/${notificationId}/dismiss`,
 	},
 	onboarding: () => "/onboarding",
 
-	// Organization nested routes
 	organization: {
-		// Project routes (nested under organization)
 		project: {
-			// Application routes (nested under project)
 			application: {
 				detail: () => "/organization/project/application",
 				editor: () => "/organization/project/application/editor",

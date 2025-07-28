@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 
 import { InviteCollaboratorModal } from "./invite-collaborator-modal";
 
-// Helper to get the last (most recent) modal when multiple exist
 const getLatestModal = async () => {
 	const modals = await screen.findAllByTestId("invite-collaborator-modal");
 	return modals.at(-1)!;
@@ -19,7 +18,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	afterEach(() => {
 		cleanup();
-		// Additional cleanup for Radix UI portals
+
 		vi.restoreAllMocks();
 	});
 
@@ -40,10 +39,8 @@ describe.sequential("InviteCollaboratorModal", () => {
 	it("does not render visible content when closed", async () => {
 		render(<InviteCollaboratorModal isOpen={false} onClose={mockOnClose} onInvite={mockOnInvite} />);
 
-		// Give portal time to render
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
-		// The modal content should not be visible when closed
 		expect(screen.queryByText("Invite New Member")).not.toBeInTheDocument();
 	});
 
@@ -77,25 +74,19 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const modalQueries = within(modal);
 		const dropdown = modalQueries.getByTestId("permission-dropdown");
 
-		// Initially dropdown menu should not be visible
 		expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 
-		// Click to open
 		await user.click(dropdown);
 
-		// Wait for dropdown to appear
 		await waitFor(() => {
 			expect(modalQueries.getByTestId("permission-dropdown-menu")).toBeInTheDocument();
 		});
 
-		// Check options are visible
 		expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
 		expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
 
-		// Click to close
 		await user.click(dropdown);
 
-		// Wait for dropdown to disappear
 		await waitFor(() => {
 			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 		});
@@ -131,14 +122,12 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const modalQueries = within(modal);
 		const dropdown = modalQueries.getByTestId("permission-dropdown");
 
-		// First select admin
 		await user.click(dropdown);
 		await waitFor(() => {
 			expect(modalQueries.getByTestId("admin-option")).toBeInTheDocument();
 		});
 		await user.click(modalQueries.getByTestId("admin-option"));
 
-		// Then switch back to collaborator
 		await user.click(dropdown);
 		await waitFor(() => {
 			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();

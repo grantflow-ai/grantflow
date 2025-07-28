@@ -4,18 +4,19 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-
+import {
+	ApplicationStructureLeftPane,
+	DragDropSectionManager,
+} from "@/components/organizations/project/applications/wizard/application-structure";
+import { WizardRightPane } from "@/components/organizations/project/applications/wizard/shared";
+import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/shared/rag-sources-dialog-utils";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { WizardRightPane } from "../shared";
-import { createRagSourcesDialog } from "../shared/rag-sources-dialog-utils";
-import type { WizardDialogRef } from "../shared/wizard-dialog";
-import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
-import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 const isDetailedSection = (
 	section: GrantSection,
@@ -86,7 +87,6 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 			return;
 		}
 
-		// Only show dialog for failed sources if it hasn't been dismissed
 		if (hasFailedSources && !dialogDismissedRef.current && !grantTemplate?.grant_sections.length) {
 			const ragDialog = createRagSourcesDialog({
 				onBackToUploads: () => {
@@ -107,7 +107,9 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 				content: ragDialog.content,
 				description:
 					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
+				dismissOnOutsideClick: false,
 				footer: ragDialog.footer,
+				minWidth: "min-w-3xl",
 				title: "Review Required: Some Uploads Failed",
 			});
 		}
@@ -123,12 +125,12 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 	return (
 		<div className="flex size-full" data-testid="application-structure-step">
 			<ApplicationStructureLeftPane />
-			<ApplicationStructurePreview />
+			<ApplicationStructurePreview dialogRef={dialogRef} />
 		</div>
 	);
 }
 
-function ApplicationStructurePreview() {
+function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null | WizardDialogRef> }) {
 	const application = useApplicationStore((state) => state.application);
 	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
@@ -210,7 +212,11 @@ function ApplicationStructurePreview() {
 
 	return (
 		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor isDetailedSection={isDetailedSection} onAddSection={handleAddNewSection} />
+			<SectionEditor
+				dialogRef={dialogRef}
+				isDetailedSection={isDetailedSection}
+				onAddSection={handleAddNewSection}
+			/>
 		</WizardRightPane>
 	);
 }
@@ -246,9 +252,11 @@ function PreviewHeader({ onAddSection }: { onAddSection: (parentId?: null | stri
 }
 
 function SectionEditor({
+	dialogRef,
 	isDetailedSection,
 	onAddSection,
 }: {
+	dialogRef: RefObject<null | WizardDialogRef>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
@@ -256,7 +264,11 @@ function SectionEditor({
 		<div className="flex flex-col size-full" data-testid="application-structure-sections">
 			<PreviewHeader onAddSection={onAddSection} />
 			<ScrollArea className="flex-1">
-				<DragDropSectionManager isDetailedSection={isDetailedSection} onAddSection={onAddSection} />
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={isDetailedSection}
+					onAddSection={onAddSection}
+				/>
 			</ScrollArea>
 		</div>
 	);

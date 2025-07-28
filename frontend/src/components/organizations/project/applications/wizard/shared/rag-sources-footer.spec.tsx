@@ -6,7 +6,6 @@ import { RagSourcesFooter } from "./rag-sources-footer";
 
 describe.sequential("RagSourcesFooter", () => {
 	beforeEach(() => {
-		// Set up default application state with valid rag sources
 		const application = ApplicationWithTemplateFactory.build();
 		useApplicationStore.setState({ application });
 	});
