@@ -25,7 +25,6 @@ ARG NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID
 ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
 ARG NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 ARG NEXT_PUBLIC_SITE_URL
-ARG RESEND_API_KEY
 
 # Optional build args with defaults
 ARG NEXT_PUBLIC_DEBUG=false
@@ -41,7 +40,6 @@ ENV NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID=$NEXT_PUBLIC_FIREBASE_MICROSOFT_TEN
 ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID
 ENV NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-ENV RESEND_API_KEY=$RESEND_API_KEY
 
 COPY frontend/next.config.ts frontend/postcss.config.mjs ./frontend/
 COPY frontend/public ./frontend/public
@@ -68,14 +66,14 @@ COPY --from=build --chown=nodejs:nodejs /app/frontend/.next/static ./frontend/.n
 COPY --from=build --chown=nodejs:nodejs /app/frontend/public ./frontend/public
 
 USER nodejs
-EXPOSE 3000
+EXPOSE 8080
 
-ENV PORT=3000
+ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
+    CMD node -e "require('http').get('http://localhost:8080/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "frontend/server.js"]
