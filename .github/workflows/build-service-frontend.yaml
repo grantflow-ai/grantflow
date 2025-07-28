@@ -1,0 +1,165 @@
+name: "Build & Deploy: Frontend"
+
+on:
+    push:
+        branches:
+            - main
+            - development
+        paths:
+            - ".github/workflows/build-service-frontend.yaml"
+            - ".github/actions/**"
+            - "editor/**"
+            - "frontend/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - "pnpm-workspace.yaml"
+    pull_request:
+        branches:
+            - main
+            - development
+        paths:
+            - ".github/workflows/build-service-frontend.yaml"
+            - ".github/actions/**"
+            - "editor/**"
+            - "frontend/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - "pnpm-workspace.yaml"
+    release:
+        types: [published]
+    workflow_dispatch:
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        permissions:
+            contents: read
+            id-token: write
+        # Only build and push on pushes to main/development, not on PRs
+        if: github.event_name != 'pull_request'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set image tag and environment
+              id: config
+              run: |
+                  if [[ "${{ github.event_name }}" == "release" ]]; then
+                      echo "image_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+                  elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                      echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+                  else
+                      echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
+                  fi
+                  
+                  if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+                      echo "project_id=grantflow" >> $GITHUB_OUTPUT
+                      echo "environment=production" >> $GITHUB_OUTPUT
+                      echo "apphosting_backend=production" >> $GITHUB_OUTPUT
+                  else
+                      echo "project_id=grantflow" >> $GITHUB_OUTPUT
+                      echo "environment=staging" >> $GITHUB_OUTPUT
+                      echo "apphosting_backend=staging" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Set backend API URL
+              id: backend_url
+              run: |
+                  if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+                      echo "url=https://api.grantflow.ai" >> $GITHUB_OUTPUT
+                  else
+                      echo "url=https://staging-api.grantflow.ai" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Build and push service
+              uses: ./.github/actions/build-service
+              with:
+                  service: frontend
+                  image_tag: ${{ steps.config.outputs.image_tag }}
+                  workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+                  service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+                  build_args: |
+                      RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+                      NEXT_PUBLIC_BACKEND_API_BASE_URL=${{ steps.backend_url.outputs.url }}
+                      NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+                      NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+                      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+                      NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+                      NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID }}
+                      NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID }}
+                      NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+                      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+                      NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+        outputs:
+            image_tag: ${{ steps.config.outputs.image_tag }}
+            project_id: ${{ steps.config.outputs.project_id }}
+            environment: ${{ steps.config.outputs.environment }}
+            apphosting_backend: ${{ steps.config.outputs.apphosting_backend }}
+
+    deploy:
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: read
+            id-token: write
+        # Only deploy on push to main or development, not on PRs
+        if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup GCP authentication
+              uses: google-github-actions/auth@v2
+              with:
+                  workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+                  service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
+
+            - name: Setup Cloud SDK
+              uses: google-github-actions/setup-gcloud@v2
+
+            - name: Deploy to Firebase App Hosting via Terraform
+              run: |
+                  # Install OpenTofu
+                  curl -fsSL https://get.opentofu.org/install-opentofu.sh | sudo bash -s -- --install-method deb
+                  
+                  # Change to appropriate Terraform environment directory
+                  if [ "${{ needs.build-and-push.outputs.environment }}" == "production" ]; then
+                    cd terraform/environments/production
+                  else
+                    cd terraform/environments/staging
+                  fi
+                  
+                  # Initialize Terraform
+                  tofu init
+                  
+                  # Create a new build deployment with the latest image
+                  tofu apply -auto-approve \
+                    -target=module.app_hosting.google_firebase_app_hosting_build.frontend \
+                    -var="image_tag=${{ needs.build-and-push.outputs.image_tag }}"
+
+            - name: Output deployment info
+              if: success()
+              run: |
+                  echo "Frontend deployed successfully!"
+                  echo "  Environment: ${{ needs.build-and-push.outputs.environment }}"
+                  echo "  Image tag: ${{ needs.build-and-push.outputs.image_tag }}"
+                  echo "  Commit: ${{ github.sha }}"
+                  if [ "${{ needs.build-and-push.outputs.environment }}" == "production" ]; then
+                    echo "  URL: https://grantflow.ai"
+                  else
+                    echo "  URL: https://staging--grantflow.us-central1.hosted.app"
+                  fi
+
+            - name: Send Discord notification
+              if: always()
+              uses: sarisia/actions-status-discord@v1
+              with:
+                  webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+                  status: ${{ job.status }}
+                  title: "Frontend Deployment"
+                  description: |
+                      Environment: ${{ needs.build-and-push.outputs.environment }}
+                      Image: ${{ needs.build-and-push.outputs.image_tag }}
+                      Commit: ${{ github.sha }}

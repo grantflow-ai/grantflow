@@ -57,11 +57,9 @@ describe("Sources Actions", () => {
 	const mockUploadUrlResponse = UrlResponseFactory.build();
 
 	beforeEach(() => {
-		// Reset all mock implementations to defaults
 		mockCreateAuthHeaders.mockResolvedValue(mockAuthHeaders);
 		mockWithAuthRedirect.mockImplementation((promise: Promise<any>) => promise);
 
-		// Set up default successful responses
 		mockGet.mockReturnValue({
 			json: vi.fn().mockResolvedValue(mockSourcesResponse),
 		});
@@ -74,7 +72,6 @@ describe("Sources Actions", () => {
 	});
 
 	afterEach(() => {
-		// Reset mock implementations to prevent test interference
 		mockCreateAuthHeaders.mockClear();
 		mockWithAuthRedirect.mockClear();
 		mockGet.mockClear();
@@ -104,9 +101,8 @@ describe("Sources Actions", () => {
 					json: vi.fn().mockRejectedValue(mockError),
 				});
 
-				// Ensure withAuthRedirect passes through the rejection
 				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
-					return await promise; // This will throw the error from json()
+					return await promise;
 				});
 
 				await expect(
@@ -158,9 +154,8 @@ describe("Sources Actions", () => {
 				const mockError = new Error("API Error");
 				mockDelete.mockRejectedValueOnce(mockError);
 
-				// Ensure withAuthRedirect passes through the rejection
 				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
-					return await promise; // This will throw the error from mockDelete
+					return await promise;
 				});
 
 				await expect(
@@ -180,7 +175,7 @@ describe("Sources Actions", () => {
 					} catch (error) {
 						if (error instanceof HTTPError && error.response.status === 401) {
 							mockRedirect("/signin");
-							return undefined; // Return undefined for void functions
+							return undefined;
 						}
 						throw error;
 					}
@@ -224,9 +219,8 @@ describe("Sources Actions", () => {
 					json: vi.fn().mockRejectedValue(mockError),
 				});
 
-				// Ensure withAuthRedirect passes through the rejection
 				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
-					return await promise; // This will throw the error from json()
+					return await promise;
 				});
 
 				await expect(
@@ -293,9 +287,8 @@ describe("Sources Actions", () => {
 					json: vi.fn().mockRejectedValue(mockError),
 				});
 
-				// Ensure withAuthRedirect passes through the rejection
 				mockWithAuthRedirect.mockImplementationOnce(async (promise: Promise<any>) => {
-					return await promise; // This will throw the error from json()
+					return await promise;
 				});
 
 				await expect(getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId)).rejects.toThrow(

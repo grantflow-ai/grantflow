@@ -11,7 +11,6 @@ const SelectContext = React.createContext<{
 	value: "",
 });
 
-// Mock Radix UI Select components to render inline instead of in portals
 export const Select = ({ children, onValueChange, value, ...props }: any) => {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [displayValue, setDisplayValue] = React.useState("");
@@ -21,7 +20,6 @@ export const Select = ({ children, onValueChange, value, ...props }: any) => {
 	const content = childrenArray.find((child: any) => child?.type?.displayName === "SelectContent");
 
 	React.useEffect(() => {
-		// Map values to display text on mount/value change
 		const displayMap: Record<string, string> = {
 			admin: "Admin (can access all research projects)",
 			collaborator: "Collaborator - Can edit specific Research Projects.",
@@ -100,7 +98,6 @@ export const SelectItem = ({ children, value, ...props }: any) => {
 };
 SelectItem.displayName = "SelectItem";
 
-// Mock Radix UI DropdownMenu components to render inline instead of in portals
 export const DropdownMenu = ({ children, onOpenChange, open, ...props }: any) => {
 	const childrenArray = React.Children.toArray(children);
 	const trigger = childrenArray.find((child: any) => child?.type?.displayName === "DropdownMenuTrigger");

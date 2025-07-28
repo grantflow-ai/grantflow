@@ -52,24 +52,19 @@ export function DashboardClient({
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
 
-	// Initialize organization store with server data
 	useEffect(() => {
 		setOrganizations(initialOrganizations);
 	}, [initialOrganizations, setOrganizations]);
 
-	// Use the organization ID from cookies (client-side) or initial (server-side)
 	const currentOrganizationId = selectedOrganizationId ?? initialSelectedOrganizationId;
 
-	// Handle initial organization selection
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally omitting selectedOrganizationId and switchOrganization to avoid infinite loop
 	useEffect(() => {
-		// If no organization is selected in cookies but we have an initial one, set it
 		if (!selectedOrganizationId && initialSelectedOrganizationId) {
 			switchOrganization(initialSelectedOrganizationId);
 		}
 	}, [initialSelectedOrganizationId]);
 
-	// Sync organization store with cookie value
 	useEffect(() => {
 		if (currentOrganizationId) {
 			selectOrganization(currentOrganizationId);
@@ -90,8 +85,6 @@ export function DashboardClient({
 	};
 
 	const handleProjectNavigation = (projectId: string, projectName: string) => {
-		// Set project context in navigation store for parameter-free routing
-		// The NavigationContextProvider will handle data loading based on this context
 		navigateToProject(projectId, projectName);
 		router.push(routes.organization.project.detail());
 	};
@@ -105,11 +98,9 @@ export function DashboardClient({
 		},
 	);
 
-	// Generate team members from all projects
 	const projectTeamMembers = projects
 		.flatMap((project) => project.members)
 		.reduce<{ backgroundColor: string; imageUrl?: string; initials: string; uid: string }[]>((acc, member) => {
-			// Avoid duplicates by checking if user already exists (by firebase_uid)
 			const existingMember = acc.find((existing) => existing.uid === member.firebase_uid);
 			if (!existingMember) {
 				acc.push({
@@ -121,7 +112,7 @@ export function DashboardClient({
 			}
 			return acc;
 		}, [])
-		.map(({ uid: _uid, ...member }) => member); // Remove uid from final result
+		.map(({ uid: _uid, ...member }) => member);
 
 	const handleDeleteProject = (projectId: string) => {
 		setProjectToDelete(projectId);
@@ -230,10 +221,8 @@ export function DashboardClient({
 			return;
 		}
 
-		// Find the default project (first project or one named "default")
 		const [defaultProject] = projects;
 
-		// Navigate to application creation
 		navigateToProject(defaultProject.id, defaultProject.name);
 		router.push(routes.organization.project.application.new());
 	};

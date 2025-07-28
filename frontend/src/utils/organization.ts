@@ -17,13 +17,11 @@ export async function clearSelectedOrganization(): Promise<void> {
 export async function getCurrentOrganizationId(): Promise<null | string> {
 	const cookieStore = await cookies();
 
-	// First check if there's a selected organization in cookie
 	const selectedOrgCookie = cookieStore.get(SELECTED_ORGANIZATION_COOKIE);
 	if (selectedOrgCookie?.value) {
 		return selectedOrgCookie.value;
 	}
 
-	// Fall back to JWT default organization
 	const sessionCookie = cookieStore.get(SESSION_COOKIE);
 	if (sessionCookie?.value) {
 		return getOrganizationFromJWT(sessionCookie.value);
@@ -39,8 +37,8 @@ export async function setSelectedOrganization(organizationId: string): Promise<v
 	const cookieStore = await cookies();
 
 	cookieStore.set(SELECTED_ORGANIZATION_COOKIE, organizationId, {
-		httpOnly: false, // Accessible by client-side JS for organization switching
-		maxAge: 60 * 60 * 24 * 30, // 30 days
+		httpOnly: false,
+		maxAge: 60 * 60 * 24 * 30,
 		path: "/",
 		sameSite: "strict",
 		secure: process.env.NODE_ENV === "production",

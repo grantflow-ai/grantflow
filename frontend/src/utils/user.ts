@@ -14,7 +14,6 @@ export function generateBackgroundColor(userId: string): string {
 		"#47ffc7",
 	];
 
-	// Create a simple hash from userId to pick a consistent color
 	let hash = 0;
 	for (let i = 0; i < userId.length; i++) {
 		hash = (userId.codePointAt(i) ?? 0) + ((hash << 5) - hash);

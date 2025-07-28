@@ -29,7 +29,7 @@ export function CreateApplicationButton({ className, organizationId, projectId }
 			const application = await createApplication(organizationId, projectId, {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
-			// Set navigation context
+
 			if (project) {
 				navigateToApplication(
 					project.id,

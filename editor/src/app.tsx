@@ -1,12 +1,10 @@
-import { Greeting } from "./components/greeting";
-import { Button } from "./components/ui/button";
+import { Editor } from "@/editor";
 
 function App() {
 	return (
-		<>
-			<Greeting name="World" />
-			<Button>Click me</Button>
-		</>
+		<div className="prose prose-sm">
+			<Editor content="hello grantflow" />
+		</div>
 	);
 }
 

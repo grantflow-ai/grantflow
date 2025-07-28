@@ -1,0 +1,105 @@
+name: Editor CI
+
+on:
+    pull_request:
+        branches:
+            - main
+            - development
+        paths:
+            - "editor/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - ".github/workflows/ci-editor.yaml"
+            - ".github/actions/setup-node-workspace/**"
+    push:
+        branches:
+            - main
+            - development
+        paths:
+            - "editor/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - ".github/workflows/ci-editor.yaml"
+            - ".github/actions/setup-node-workspace/**"
+
+env:
+    NODE_OPTIONS: "--max_old_space_size=4096"
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and Dependencies
+              uses: ./.github/actions/setup-node-workspace
+              with:
+                  package: editor
+
+            - name: Run Tests
+              run: cd editor && pnpm run test
+
+    typecheck:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and Dependencies
+              uses: ./.github/actions/setup-node-workspace
+              with:
+                  package: editor
+
+            - name: Type Check
+              run: cd editor && pnpm run typecheck
+
+    lint:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and Dependencies
+              uses: ./.github/actions/setup-node-workspace
+              with:
+                  package: editor
+
+            - name: Lint
+              run: cd editor && pnpm run lint
+
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and Dependencies
+              uses: ./.github/actions/setup-node-workspace
+              with:
+                  package: editor
+
+            - name: Build Library
+              run: cd editor && pnpm run build
+
+    e2e-setup:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js and Dependencies
+              uses: ./.github/actions/setup-node-workspace
+              with:
+                  package: editor
+
+            - name: Install Playwright Browsers
+              run: cd editor && pnpm exec playwright install --with-deps chromium
+
+            - name: Verify Playwright Setup
+              run: cd editor && pnpm exec playwright --version

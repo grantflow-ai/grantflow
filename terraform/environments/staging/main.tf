@@ -3,11 +3,11 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 6.0"
+      version = "~> 6.14"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 6.0"
+      version = "~> 6.14"
     }
   }
 
@@ -89,6 +89,7 @@ module "cloud_run" {
   image_tag_suffix              = "staging-latest"
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
+  scraper_service_account_email = module.iam.scraper_service_account_email
   min_instances                 = 0     # Scale to zero for cost savings
   max_instances                 = 1     # Limited scaling for staging
   cpu_limit                     = "1"   # Minimum CPU for Cloud Run
@@ -284,5 +285,46 @@ output "load_balancer_ip" {
 output "load_balancer_url" {
   description = "Load balancer URL for frontend configuration"
   value       = module.load_balancer.load_balancer_url
+}
+
+# Firebase App Hosting module for frontend deployment
+module "app_hosting" {
+  source          = "../../modules/app_hosting"
+  project_id      = var.project_id
+  region          = var.region
+  environment     = var.environment
+  firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" # staging app ID
+  image_tag       = "staging-latest"
+  min_instances   = 0
+  max_instances   = 5
+  cpu             = "1"
+  memory          = "512Mi"
+  concurrency     = 50
+
+  # Secrets that App Hosting needs access to
+  secret_ids = [
+    "NEXT_PUBLIC_SITE_URL_STAGING",
+    "NEXT_PUBLIC_BACKEND_API_BASE_URL_STAGING",
+    "NEXT_PUBLIC_FIREBASE_API_KEY_STAGING",
+    "NEXT_PUBLIC_FIREBASE_APP_ID_STAGING",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN_STAGING",
+    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID_STAGING",
+    "NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID_STAGING",
+    "NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID_STAGING",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID_STAGING",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET_STAGING",
+    "NEXT_PUBLIC_MAILGUN_API_KEY_STAGING",
+    "RESEND_API_KEY_STAGING"
+  ]
+}
+
+output "app_hosting_url" {
+  description = "Firebase App Hosting URL"
+  value       = module.app_hosting.url
+}
+
+output "app_hosting_backend_id" {
+  description = "Firebase App Hosting backend ID"
+  value       = module.app_hosting.backend_id
 }
 

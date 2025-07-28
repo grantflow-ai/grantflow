@@ -205,18 +205,22 @@ services:
             - all
             - frontend
         build:
-            context: ./frontend
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: frontend/Dockerfile
             target: install
         ports:
             - "3000:3000"
         volumes:
-            - ./frontend:/app:cached
+            - ./frontend:/workspace/frontend:cached
+            - ./editor:/workspace/editor:cached
+            - ./package.json:/workspace/package.json:cached
+            - ./pnpm-workspace.yaml:/workspace/pnpm-workspace.yaml:cached
         environment:
             # backend is the alias for the backend service in the docker network
             NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
         env_file:
             - ./.env
+        working_dir: /workspace/frontend
         command: "pnpm dev"
         depends_on:
             - backend
@@ -244,6 +248,29 @@ services:
         depends_on:
             - gcs-emulator
 
+    pgadmin:
+        profiles:
+            - all
+            - services
+            - pgadmin
+        image: dpage/pgadmin4:latest
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@local.dev
+            PGADMIN_DEFAULT_PASSWORD: admin
+            PGADMIN_LISTEN_PORT: 80
+            PGADMIN_CONFIG_SERVER_MODE: 'False'
+            PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+        ports:
+            - "5050:80"
+        volumes:
+            - pgadmin-data:/var/lib/pgadmin
+            - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+            - ./pgadmin/pgpassfile:/tmp/pgpassfile:ro
+        depends_on:
+            - db
+
 volumes:
     data:
     gcs-data:
+    pgadmin-data:

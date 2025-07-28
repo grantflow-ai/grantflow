@@ -16,7 +16,9 @@ export interface WizardDialogRef {
 interface DialogContent {
 	content: ReactNode;
 	description?: string;
+	dismissOnOutsideClick?: boolean;
 	footer?: ReactNode;
+	minWidth?: string;
 	title: string;
 }
 
@@ -24,8 +26,10 @@ export const WizardDialog = forwardRef<WizardDialogRef>((_, ref) => {
 	const [dialog, setDialog] = useState<{ isOpen: boolean } & DialogContent>({
 		content: null,
 		description: undefined,
+		dismissOnOutsideClick: true,
 		footer: undefined,
 		isOpen: false,
+		minWidth: "min-w-3xl",
 		title: "",
 	});
 
@@ -41,9 +45,17 @@ export const WizardDialog = forwardRef<WizardDialogRef>((_, ref) => {
 		},
 	}));
 
+	const handleOpenChange = (open: boolean) => {
+		if (!open && dialog.dismissOnOutsideClick) {
+			setDialog((prev) => ({ ...prev, isOpen: false }));
+		}
+	};
+
 	return (
-		<AppDialog open={dialog.isOpen}>
-			<AppDialogContent className="w-fit min-w-3xl rounded outline-1 outline-primary p-8 border-0 max-h-[90vh] overflow-hidden flex flex-col">
+		<AppDialog onOpenChange={handleOpenChange} open={dialog.isOpen}>
+			<AppDialogContent
+				className={`w-fit ${dialog.minWidth} rounded outline-1 outline-primary p-8 border-0 max-h-[90vh] overflow-hidden flex flex-col`}
+			>
 				<AppDialogHeader>
 					<AppDialogTitle className="text-app-black text-2xl font-medium font-heading leading-loose">
 						{dialog.title}

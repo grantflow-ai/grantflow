@@ -19,7 +19,6 @@ export function NewApplicationClient() {
 
 	useEffect(() => {
 		async function createNewApplication() {
-			// Prevent duplicate creation
 			if (creatingRef.current || !project || !selectedOrganizationId) return;
 			creatingRef.current = true;
 
@@ -28,7 +27,6 @@ export function NewApplicationClient() {
 					title: DEFAULT_APPLICATION_TITLE,
 				});
 
-				// Set navigation context
 				navigateToApplication(
 					project.id,
 					project.name,
@@ -36,7 +34,6 @@ export function NewApplicationClient() {
 					application.title || DEFAULT_APPLICATION_TITLE,
 				);
 
-				// Navigate to wizard
 				router.replace(routes.organization.project.application.wizard());
 			} catch {
 				toast.error("Failed to create application. Please try again.");
@@ -48,7 +45,7 @@ export function NewApplicationClient() {
 	}, [project, router, navigateToApplication, selectedOrganizationId]);
 
 	if (!project) {
-		return null; // Will redirect via NavigationContextProvider
+		return null;
 	}
 
 	return (

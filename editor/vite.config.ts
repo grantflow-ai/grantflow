@@ -1,15 +1,47 @@
-/// <reference types="vitest/config" />
-
+import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
+import { libInjectCss } from "vite-plugin-lib-inject-css";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-// https://vite.dev/config/
 export default defineConfig({
-	plugins: [react(), tsconfigPaths()],
+	build: {
+		copyPublicDir: false,
+		emptyOutDir: true,
+		lib: {
+			entry: resolve(__dirname, "src/index.ts"),
+			fileName: (format) => `index.${format}.js`,
+			formats: ["es"],
+			name: "GrantFlowEditor",
+		},
+		outDir: "dist",
+		rollupOptions: {
+			external: ["react", "react-dom", "react/jsx-runtime"],
+			output: {
+				assetFileNames: "assets/[name][extname]",
+				exports: "named",
+				globals: {
+					react: "React",
+					"react-dom": "ReactDOM",
+					"react/jsx-runtime": "react/jsx-runtime",
+				},
+				preserveModules: false,
+			},
+		},
+		sourcemap: true,
+	},
+	plugins: [
+		react(),
+		tsconfigPaths(),
+		libInjectCss(),
+		dts({
+			insertTypesEntry: true,
+			rollupTypes: true,
+		}),
+	],
 	server: {
 		fs: {
-			// Allow serving files from one level up to the project root
 			allow: [".."],
 		},
 	},
@@ -19,11 +51,9 @@ export default defineConfig({
 			reporter: ["text", "json", "html"],
 		},
 		environment: "jsdom",
-		// Default configuration for unit tests
 		globals: true,
 		include: ["src/**/*.spec.{ts,tsx}"],
-		setupFiles: "./vitest.setup.ts",
-		// If you want to add back the storybook tests, you can add a projects array
-		// For now, this simpler config will focus on getting unit tests running.
+		setupFiles: "./testing/vitest.setup.ts",
+		testTimeout: 10000,
 	},
 });

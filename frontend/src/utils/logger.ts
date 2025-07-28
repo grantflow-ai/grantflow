@@ -34,7 +34,6 @@ class Logger {
 		const prefix = `[${level.toUpperCase()}]`;
 		const contextData = context ? { ...context } : {};
 
-		// Use JSON.stringify for better debugging visibility
 		const contextString = Object.keys(contextData).length > 0 ? JSON.stringify(contextData, null, 2) : "";
 
 		switch (level) {

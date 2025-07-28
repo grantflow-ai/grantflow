@@ -239,7 +239,7 @@ export const Manysections: Story = {
 			useEffect(() => {
 				const sections = Array.from({ length: 8 }, (_, i) => ({
 					id: `section-${i + 1}`,
-					order: i, // Start from 0 for proper sequential ordering
+					order: i,
 					parent_id: null,
 					title: [
 						"Project Overview",

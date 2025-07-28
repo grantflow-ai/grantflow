@@ -29,11 +29,8 @@ import { resetAllStores } from "./store-reset";
  */
 export function setupIntegrationTests(): void {
 	beforeEach(async () => {
-		// Reset all stores first
 		resetAllStores();
 
-		// Clear all mocks
-		// Note: Import vi dynamically to avoid issues in non-test environments
 		const { vi } = await import("vitest");
 		vi.clearAllMocks();
 		vi.resetAllMocks();

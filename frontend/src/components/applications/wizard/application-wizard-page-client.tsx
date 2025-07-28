@@ -31,7 +31,7 @@ export function ApplicationWizardPageClient() {
 				setApplication(app);
 			} catch {
 				setError("Application not found");
-				// Redirect after a short delay to show the error
+
 				setTimeout(() => {
 					router.replace(routes.organization.project.detail());
 				}, 2000);
@@ -61,7 +61,7 @@ export function ApplicationWizardPageClient() {
 	}
 
 	if (!(application && project && selectedOrganizationId)) {
-		return null; // Will redirect
+		return null;
 	}
 
 	return (

@@ -57,7 +57,6 @@ describe("ApplicationStructureLeftPane", () => {
 		expect(screen.getByTestId("application-structure-header")).toHaveTextContent("Application Structure");
 		expect(screen.queryByTestId("application-structure-description")).not.toBeInTheDocument();
 
-		// Should show analyzing steps
 		const stepTitles = screen.getAllByTestId("analyzing-step-title");
 		expect(stepTitles).toHaveLength(4);
 		expect(stepTitles[0]).toHaveTextContent("Reading the call");
@@ -178,7 +177,6 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		// Second step should be active (index 1)
 		const activeIndicators = screen.getAllByTestId("step-active-indicator");
 		expect(activeIndicators).toHaveLength(1);
 	});
@@ -217,7 +215,6 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		// Step titles should be visible but not the detailed steps
 		expect(screen.getAllByTestId("analyzing-step-title")).toHaveLength(4);
 		expect(screen.queryByText(/Analyzing the documents/)).not.toBeInTheDocument();
 	});
@@ -236,7 +233,6 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		// Should show detailed steps
 		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 		expect(screen.getByText(/Translating the requirements/)).toBeInTheDocument();
 	});
@@ -248,7 +244,6 @@ describe("ApplicationStructureLeftPane", () => {
 
 		const { rerender } = render(<ApplicationStructureLeftPane />);
 
-		// Start with first event
 		useWizardStore.setState({
 			templateGenerationStatus: {
 				event: "grant_template_generation_started",
@@ -257,7 +252,6 @@ describe("ApplicationStructureLeftPane", () => {
 		});
 		rerender(<ApplicationStructureLeftPane />);
 
-		// Progress to extraction
 		useWizardStore.setState({
 			templateGenerationStatus: {
 				event: "sections_extracted",
@@ -266,7 +260,6 @@ describe("ApplicationStructureLeftPane", () => {
 		});
 		rerender(<ApplicationStructureLeftPane />);
 
-		// Progress to metadata
 		useWizardStore.setState({
 			templateGenerationStatus: {
 				event: "metadata_generated",
@@ -275,7 +268,6 @@ describe("ApplicationStructureLeftPane", () => {
 		});
 		rerender(<ApplicationStructureLeftPane />);
 
-		// Final step
 		useWizardStore.setState({
 			templateGenerationStatus: {
 				event: "grant_template_created",
@@ -284,7 +276,6 @@ describe("ApplicationStructureLeftPane", () => {
 		});
 		rerender(<ApplicationStructureLeftPane />);
 
-		// All steps should eventually be visible
 		await waitFor(() => {
 			const stepNumbers = screen.getAllByText(/^[1-4]$/);
 			expect(stepNumbers.length).toBeGreaterThan(0);

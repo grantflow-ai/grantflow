@@ -38,6 +38,17 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
+            - name: Setup Task
+              uses: ./.github/actions/setup-task
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v6
+              with:
+                  enable-cache: true
+
+            - name: Generate cloud functions requirements
+              run: task cloud-functions:generate-requirements
+
             - name: OpenTofu Validate
               uses: dflook/tofu-validate@v2
               with:

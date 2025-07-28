@@ -23,30 +23,24 @@ interface NavigationActions {
 		applicationTitle: string,
 	) => void;
 
-	// Combined navigation
 	navigateToProject: (projectId: string, projectName: string) => void;
-	// History management
+
 	pushToHistory: (path: string) => void;
 
-	// Clear all navigation state
 	reset: () => void;
-	// Application navigation
+
 	setActiveApplication: (applicationId: string, applicationTitle: string) => void;
 
-	// Project navigation
 	setActiveProject: (projectId: string, projectName: string) => void;
 }
 
 interface NavigationContext {
-	// Current active application
 	activeApplicationId: null | string;
 	activeApplicationTitle: null | string;
 
-	// Current active project
 	activeProjectId: null | string;
 	activeProjectName: null | string;
 
-	// Navigation history for back button support
 	navigationHistory: {
 		applicationId: null | string;
 		path: string;
@@ -87,15 +81,14 @@ export const useNavigationStore = create<NavigationActions & NavigationContext>(
 			goBack: () => {
 				const { navigationHistory } = get();
 				if (navigationHistory.length > 1) {
-					// Remove current entry and get previous
 					const updatedHistory = navigationHistory.slice(0, -1);
 					const previousEntry = updatedHistory.at(-1);
 
 					set({
 						activeApplicationId: previousEntry?.applicationId ?? null,
-						activeApplicationTitle: null, // Will need to be fetched
+						activeApplicationTitle: null,
 						activeProjectId: previousEntry?.projectId ?? null,
-						activeProjectName: null, // Will need to be fetched
+						activeProjectName: null,
 						navigationHistory: updatedHistory,
 					});
 
@@ -131,7 +124,6 @@ export const useNavigationStore = create<NavigationActions & NavigationContext>(
 					timestamp: Date.now(),
 				};
 
-				// Keep only last 20 entries
 				const updatedHistory = [...navigationHistory, newEntry].slice(-20);
 				set({ navigationHistory: updatedHistory });
 			},
@@ -154,7 +146,6 @@ export const useNavigationStore = create<NavigationActions & NavigationContext>(
 
 			setActiveProject: (projectId: string, projectName: string) => {
 				set({
-					// Clear application when changing projects
 					activeApplicationId: null,
 					activeApplicationTitle: null,
 					activeProjectId: projectId,
@@ -167,7 +158,7 @@ export const useNavigationStore = create<NavigationActions & NavigationContext>(
 			partialize: (state) => ({
 				activeApplicationId: state.activeApplicationId,
 				activeApplicationTitle: state.activeApplicationTitle,
-				// Only persist the active IDs, not the full history
+
 				activeProjectId: state.activeProjectId,
 				activeProjectName: state.activeProjectName,
 			}),

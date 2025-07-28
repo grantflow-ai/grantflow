@@ -186,7 +186,6 @@ describe("FilePreviewCard", () => {
 			const iconContainer = container.querySelector('[role="img"]');
 			fireEvent.contextMenu(iconContainer!);
 
-			// Context menu items render in portal (not testable in JSDOM)
 			expect(iconContainer).toBeInTheDocument();
 		});
 
@@ -197,26 +196,21 @@ describe("FilePreviewCard", () => {
 			const iconContainer = container.querySelector('[role="img"]');
 			fireEvent.contextMenu(iconContainer!);
 
-			// Context menu items render in portal (not testable in JSDOM)
 			expect(iconContainer).toBeInTheDocument();
 		});
 
 		it.skip("disables Open option for non-browser-openable files", async () => {
-			// Skipping: Dropdown menu rendering in portals is not testable in JSDOM
 			const file = FileWithIdFactory.build({ name: "document.docx" });
 			render(<FilePreviewCard file={file} />);
 
 			const iconContainer = screen.getByRole("img");
 			fireEvent.contextMenu(iconContainer);
 
-			// Wait for the dropdown menu to appear
 			const menuOpen = await screen.findByTestId("file-menu-open", {}, { timeout: 3000 });
 			expect(menuOpen).toHaveAttribute("aria-disabled", "true");
 		});
 
 		it.skip("enables Open option for browser-openable files", async () => {
-			// Skipping: Dropdown menu rendering in portals is not testable in JSDOM
-			// Create a proper File object with content
 			const fileContent = new ArrayBuffer(1024);
 			const file = new File([fileContent], "document.pdf", { type: "application/pdf" }) as FileWithId;
 			file.id = "test-id";
@@ -237,7 +231,6 @@ describe("FilePreviewCard", () => {
 
 	describe.sequential("Remove Functionality", () => {
 		it.skip("disables Remove option when onRemove is not provided", async () => {
-			// Skipping: Dropdown menu rendering in portals is not testable in JSDOM
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			const { container } = render(<FilePreviewCard file={file} />);
 
@@ -253,7 +246,6 @@ describe("FilePreviewCard", () => {
 		});
 
 		it.skip("enables Remove option when parentId is provided", async () => {
-			// Skipping: Dropdown menu rendering in portals is not testable in JSDOM
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			const { container } = render(<FilePreviewCard file={file} parentId="test-parent-id" />);
 
@@ -269,7 +261,6 @@ describe("FilePreviewCard", () => {
 		});
 
 		it.skip("calls removeFile when Remove is clicked", async () => {
-			// Skipping: Dropdown menu rendering in portals is not testable in JSDOM
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 
 			const mockRemoveFile = vi.fn().mockResolvedValue(undefined);
@@ -333,11 +324,9 @@ describe("FilePreviewCard", () => {
 		});
 
 		it.skip("has hidden dropdown trigger for screen readers", () => {
-			// Skipping: SR-only elements with Radix UI are complex to test
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			// The sr-only trigger should be present
 			const trigger = screen.getByText("File options");
 			expect(trigger.parentElement).toHaveClass("sr-only");
 			expect(trigger.parentElement).toBeDisabled();
