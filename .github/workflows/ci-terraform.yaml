@@ -16,6 +16,10 @@ on:
             - ".github/workflows/ci-terraform.yaml"
             - "terraform/**"
 
+permissions:
+    contents: read
+    id-token: write
+
 jobs:
     fmt:
         name: Format Check
@@ -57,8 +61,6 @@ jobs:
 
             - name: Setup GCP
               uses: ./.github/actions/setup-gcp
-              with:
-                  project_id: grantflow
 
             - name: Setup OpenTofu
               uses: opentofu/setup-opentofu@v1
