@@ -119,6 +119,13 @@ jobs:
             - name: Setup Cloud SDK
               uses: google-github-actions/setup-gcloud@v2
 
+            - name: Setup Task
+              uses: ./.github/actions/setup-task
+
+            - name: Generate cloud functions requirements
+              run: |
+                  task cloud-functions:generate-requirements
+
             - name: Deploy to Firebase App Hosting via Terraform
               run: |
                   # Install OpenTofu
