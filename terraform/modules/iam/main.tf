@@ -72,6 +72,12 @@ resource "google_project_iam_member" "github_actions_firebase_hosting_admin" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+resource "google_project_iam_member" "github_actions_firebase_apphosting_admin" {
+  project = "grantflow"
+  role    = "roles/firebaseapphosting.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 resource "google_project_iam_member" "github_actions_compute_viewer" {
   project = "grantflow"
   role    = "roles/compute.viewer"
