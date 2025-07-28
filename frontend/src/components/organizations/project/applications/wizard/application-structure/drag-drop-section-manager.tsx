@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
 import { log } from "@/utils/logger";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
@@ -109,9 +110,15 @@ export function DragDropSectionManager({
 
 	const handleUpdateSection = useCallback(
 		async (sectionId: string, updates: Partial<GrantSection>) => {
+			const isBecomingResearchPlan =
+				hasDetailedResearchPlanUpdate(updates) && updates.is_detailed_research_plan === true;
+
 			const updatedSections = grantSections.map((section) => {
 				if (section.id === sectionId) {
 					return toUpdateGrantSection({ ...section, ...updates });
+				}
+				if (isBecomingResearchPlan && hasDetailedResearchPlan(section)) {
+					return toUpdateGrantSection({ ...section, is_detailed_research_plan: false });
 				}
 				return toUpdateGrantSection(section);
 			});
