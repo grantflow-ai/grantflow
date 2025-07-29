@@ -27,7 +27,11 @@
 
 # Node.js files
 **/node_modules/
+# But keep the standalone node_modules which contains the .pnpm symlinks
+!frontend/.next/standalone/node_modules/
 **/.next/
+# But keep the standalone .next directory
+!frontend/.next/standalone/
 **/out/
 **/.turbo
 **/.cache/
@@ -44,6 +48,19 @@
 !**/test_data/fixtures/
 testing/
 !testing/fixtures/
+
+# Storybook and testing files
+**/*.stories.*
+**/*.story.*
+**/*.spec.*
+**/*.test.*
+**/.storybook/
+**/storybook-static/
+**/playwright-report/
+**/test-results/
+**/__tests__/
+**/__test__/
+**/*.d.ts
 
 # CI/CD files
 .gitlab-ci.yml

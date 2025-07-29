@@ -72,6 +72,12 @@ resource "google_project_iam_member" "github_actions_firebase_hosting_admin" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+resource "google_project_iam_member" "github_actions_firebase_apphosting_admin" {
+  project = "grantflow"
+  role    = "roles/firebaseapphosting.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 resource "google_project_iam_member" "github_actions_compute_viewer" {
   project = "grantflow"
   role    = "roles/compute.viewer"
@@ -88,6 +94,17 @@ resource "google_service_account_iam_member" "github_actions_service_account_use
 resource "google_service_account_iam_member" "github_actions_token_creator" {
   service_account_id = google_service_account.cloud_storage_admin.name
   role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+# Allow GitHub Actions to act as the App Hosting service account
+resource "google_service_account_iam_member" "github_actions_act_as_apphosting" {
+  for_each = toset([
+    "grantflow-staging-apphosting"
+  ])
+
+  service_account_id = "projects/grantflow/serviceAccounts/${each.value}@grantflow.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
 

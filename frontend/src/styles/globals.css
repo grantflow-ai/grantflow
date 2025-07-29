@@ -162,7 +162,7 @@
 	--popover-foreground: var(--text-dark);
 
 	--badge: var(--app-gray-100);
-	--badge-foreground: var(--background);
+	--badge-foreground: var(--app-dark-blue);
 
 	--error: var(--app-red);
 	--success: var(--app-green);
@@ -236,6 +236,9 @@
 
 	--popover: var(--background-light);
 	--popover-foreground: var(--text-dark);
+
+	--badge: var(--app-gray-100);
+	--badge-foreground: var(--app-dark-blue);
 
 	--error: var(--app-red);
 	--success: var(--app-green);

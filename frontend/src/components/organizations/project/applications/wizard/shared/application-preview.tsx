@@ -81,9 +81,7 @@ export function ApplicationPreview({
 							Application Title
 						</ThemeBadge>
 						{connectionStatus && (
-							<ThemeBadge className={`w-fit ${connectionStatusColor} text-white`}>
-								{connectionStatus}
-							</ThemeBadge>
+							<ThemeBadge className={`w-fit ${connectionStatusColor}`}>{connectionStatus}</ThemeBadge>
 						)}
 					</div>
 					<h3
