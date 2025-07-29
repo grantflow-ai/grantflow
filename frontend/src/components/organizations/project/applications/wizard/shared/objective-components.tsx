@@ -211,7 +211,8 @@ export function ObjectiveHeader({
 }
 
 function getTaskContent(task: { description?: string; title: string }): string {
-	return task.description?.trim() || task.title;
+	const trimmedDescription = task.description?.trim();
+	return trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : task.title;
 }
 
 function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTaskUpdate, tasks }: TaskContentProps) {
