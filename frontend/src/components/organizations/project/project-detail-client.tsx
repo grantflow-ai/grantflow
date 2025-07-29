@@ -179,15 +179,18 @@ export function ProjectDetailClient() {
 	};
 
 	const handleSaveProjectTitle = async () => {
-
-		const newTitle = titleInputRef.current?.textContent?.trim() ?? ""
-		if(newTitle && newTitle !== project?.name && project && selectedOrganizationId){
+		const newTitle = titleInputRef.current?.textContent?.trim() ?? "";
+		if (newTitle && newTitle !== project?.name && project && selectedOrganizationId) {
 			try {
-				await updateProject(selectedOrganizationId, project.id, {name: newTitle})
-				setProjectTitle(newTitle)
-				toast.success("Project title updated successfully!")
+				await updateProject(selectedOrganizationId, project.id, {
+					description: null,
+					logo_url: null,
+					name: newTitle,
+				});
+				setProjectTitle(newTitle);
+				toast.success("Project title updated successfully!");
 			} catch {
-				toast.error("Failed to update project title.")
+				toast.error("Failed to update project title.");
 			}
 		}
 		setIsEditingTitle(false);
@@ -229,10 +232,8 @@ export function ProjectDetailClient() {
 		return null;
 	}
 
-	const currentUserRole = projectMembers?.find(
-		(member) => member.firebase_uid === user?.uid,
-	)?.role
-  
+	const currentUserRole = projectMembers?.find((member) => member.firebase_uid === user?.uid)?.role;
+
 	return (
 		<section className="w-full h-full overflow-y-scroll flex flex-col">
 			<AppHeader projectTeamMembers={projectTeamMembers} />
@@ -245,6 +246,7 @@ export function ProjectDetailClient() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
+								// biome-ignore lint/a11y/useSemanticElements: Using a div with contentEditable for custom styling
 								<div
 									aria-label="Project Title"
 									className="font-medium text-[36px] leading-[42px] text-gray-300 outline-none border-b-2  border-primary focus:ring-offset-2  "
@@ -259,6 +261,7 @@ export function ProjectDetailClient() {
 									ref={titleInputRef as React.RefObject<HTMLDivElement>}
 									role="textbox"
 									suppressContentEditableWarning={true}
+									tabIndex={0}
 								>
 									{projectTitle}
 								</div>
@@ -282,32 +285,28 @@ export function ProjectDetailClient() {
 
 						<div className="flex items-center gap-3">
 							<div className="flex justify-end items-center gap-1">
-								{
-									currentUserRole === "ADMIN" || currentUserRole === "OWNER" && (
-
-								<button
-									className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
-									data-testid="invite-collaborators-button"
-									onClick={() => {
-										if (project) {
-											setShowInviteModal(true);
-										}
-									}}
-									type="button"
-								>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Plus className="size-4 text-app-gray-600" />
-										</TooltipTrigger>
-										<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
-											<p className="text-white font-body font-normal text-sm">
-												Invite collaborators
-											</p>
-										</TooltipContent>
-									</Tooltip>
-								</button>
-									)
-								}
+								{currentUserRole === "ADMIN" ||
+									(currentUserRole === "OWNER" && (
+										<button
+											className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
+											data-testid="invite-collaborators-button"
+											onClick={() => {
+												setShowInviteModal(true);
+											}}
+											type="button"
+										>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Plus className="size-4 text-app-gray-600" />
+												</TooltipTrigger>
+												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
+													<p className="text-white font-body font-normal text-sm">
+														Invite collaborators
+													</p>
+												</TooltipContent>
+											</Tooltip>
+										</button>
+									))}
 								<div>
 									<AvatarGroup
 										data-testid="project-avatar-group"
@@ -373,7 +372,7 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
-				projectName={project.name}
+				
 			/>
 		</section>
 	);

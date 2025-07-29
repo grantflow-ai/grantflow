@@ -28,15 +28,15 @@ const initialNotifications = [
 	},
 ];
 
-export function Notification({ isOpen }: { isOpen: boolean }) {
+export function Notification({ isOpen = false }: { isOpen: boolean }) {
 	const [notifications, setNotifications] = useState(initialNotifications);
 
 	const handleRemoveNotification = (id: number) => {
 		setNotifications((prev) => prev.filter((item) => item.id !== id));
 	};
-const handleClearAll = () =>{
-	setNotifications([])
-}
+	const handleClearAll = () => {
+		setNotifications([]);
+	};
 	function EmptyState() {
 		return (
 			<div
@@ -69,9 +69,10 @@ const handleClearAll = () =>{
 					>
 						<div className=" flex justify-end items-center px-3">
 							{notifications.length > 0 && (
-								<button 
-								className="text-sm font-medium text-primary cursor-pointer hover:underline"
-								onClick={handleClearAll}
+								<button
+									className="text-sm font-medium text-primary cursor-pointer hover:underline"
+									onClick={handleClearAll}
+									type="button"
 								>
 									Clear all
 								</button>
