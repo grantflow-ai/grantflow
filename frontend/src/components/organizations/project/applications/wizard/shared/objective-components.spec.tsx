@@ -54,37 +54,38 @@ describe.sequential("ObjectiveComponents", () => {
 		cleanup();
 	});
 
+	// Shared helper function to avoid duplication
+	function renderEditableObjectiveHelper(overrides = {}) {
+		const defaultProps = {
+			index: 1,
+			objective: ResearchObjectiveFactory.build({
+				description: "Test Description",
+				research_tasks: [
+					{ description: "Task 1", number: 1, title: "" },
+					{ description: "Task 2", number: 2, title: "" },
+				],
+				title: "Test Objective",
+			}),
+			onCancel: vi.fn(),
+			onSave: vi.fn(),
+			...overrides,
+		};
+
+		return {
+			...render(<EditableObjective {...defaultProps} />),
+			props: defaultProps,
+		};
+	}
+
 	describe("EditableObjective", () => {
-		function renderEditableObjective(overrides = {}) {
-			const defaultProps = {
-				index: 1,
-				objective: ResearchObjectiveFactory.build({
-					description: "Test Description",
-					research_tasks: [
-						{ description: "Task 1", number: 1, title: "" },
-						{ description: "Task 2", number: 2, title: "" },
-					],
-					title: "Test Objective",
-				}),
-				onCancel: vi.fn(),
-				onSave: vi.fn(),
-				...overrides,
-			};
-
-			return {
-				...render(<EditableObjective {...defaultProps} />),
-				props: defaultProps,
-			};
-		}
-
 		it("renders edit objective title", () => {
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			expect(screen.getByTestId("edit-objective-title")).toHaveTextContent("Edit Objective");
 		});
 
 		it("renders save changes button", () => {
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			expect(screen.getByTestId("save-changes-button")).toBeInTheDocument();
 		});
@@ -95,7 +96,7 @@ describe.sequential("ObjectiveComponents", () => {
 				title: "Custom Title",
 			});
 
-			renderEditableObjective({ objective });
+			renderEditableObjectiveHelper({ objective });
 
 			const titleField = screen.getByDisplayValue("Custom Title");
 			const descriptionField = screen.getByDisplayValue("Custom Description");
@@ -105,7 +106,7 @@ describe.sequential("ObjectiveComponents", () => {
 		});
 
 		it("renders form fields with labels", () => {
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			expect(screen.getByLabelText("Objective name")).toBeInTheDocument();
 			expect(screen.getByLabelText("Objective description")).toBeInTheDocument();
@@ -113,7 +114,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 		it("updates title when input changes", async () => {
 			const user = userEvent.setup();
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			const titleField = screen.getByDisplayValue("Test Objective");
 			await user.clear(titleField);
@@ -124,7 +125,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 		it("updates description when input changes", async () => {
 			const user = userEvent.setup();
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			const descriptionField = screen.getByDisplayValue("Test Description");
 			await user.clear(descriptionField);
@@ -135,7 +136,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 		it("calls onSave with updated objective data", async () => {
 			const user = userEvent.setup();
-			const { props } = renderEditableObjective();
+			const { props } = renderEditableObjectiveHelper();
 
 			const titleField = screen.getByDisplayValue("Test Objective");
 			const saveButton = screen.getByTestId("save-changes-button");
@@ -151,7 +152,7 @@ describe.sequential("ObjectiveComponents", () => {
 		});
 
 		it("renders tasks section with add button", () => {
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			expect(screen.getByTestId("tasks-section")).toHaveTextContent("Tasks");
 			expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
@@ -159,7 +160,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 		it("adds new task when add button is clicked", async () => {
 			const user = userEvent.setup();
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			const initialTasks = screen.getAllByText(/Task description/);
 			const addButton = screen.getByTestId("add-task-button");
@@ -172,7 +173,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 		it("updates task description when changed", async () => {
 			const user = userEvent.setup();
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			const taskFields = screen.getAllByDisplayValue(/Task \d/);
 
@@ -184,7 +185,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 		it("removes task when delete button is clicked", async () => {
 			const user = userEvent.setup();
-			renderEditableObjective();
+			renderEditableObjectiveHelper();
 
 			const deleteButtons = screen.getAllByTestId("delete-task-button");
 			const initialTasks = screen.getAllByText(/Task description/);
@@ -353,28 +354,6 @@ describe.sequential("ObjectiveComponents", () => {
 	});
 
 	describe("Task Description Fallback Logic", () => {
-		function renderEditableObjectiveTest(overrides = {}) {
-			const defaultProps = {
-				index: 1,
-				objective: ResearchObjectiveFactory.build({
-					description: "Test Description",
-					research_tasks: [
-						{ description: "Task 1", number: 1, title: "" },
-						{ description: "Task 2", number: 2, title: "" },
-					],
-					title: "Test Objective",
-				}),
-				onCancel: vi.fn(),
-				onSave: vi.fn(),
-				...overrides,
-			};
-
-			return {
-				...render(<EditableObjective {...defaultProps} />),
-				props: defaultProps,
-			};
-		}
-
 		describe("ObjectiveCardContent - Display Mode", () => {
 			it("displays task description when available and non-empty", () => {
 				const objective = ResearchObjectiveFactory.build({
@@ -443,7 +422,7 @@ describe.sequential("ObjectiveComponents", () => {
 					research_tasks: [{ description: "Edit description", number: 1, title: "Title" }],
 				});
 
-				renderEditableObjectiveTest({ objective });
+				renderEditableObjectiveHelper({ objective });
 
 				expect(screen.getByDisplayValue("Edit description")).toBeInTheDocument();
 			});
@@ -453,7 +432,7 @@ describe.sequential("ObjectiveComponents", () => {
 					research_tasks: [{ description: "", number: 1, title: "Edit Fallback" }],
 				});
 
-				renderEditableObjectiveTest({ objective });
+				renderEditableObjectiveHelper({ objective });
 
 				expect(screen.getByDisplayValue("Edit Fallback")).toBeInTheDocument();
 			});
@@ -463,7 +442,7 @@ describe.sequential("ObjectiveComponents", () => {
 					research_tasks: [{ description: "\n  \t  ", number: 1, title: "Whitespace Edit" }],
 				});
 
-				renderEditableObjectiveTest({ objective });
+				renderEditableObjectiveHelper({ objective });
 
 				expect(screen.getByDisplayValue("Whitespace Edit")).toBeInTheDocument();
 			});
@@ -473,7 +452,7 @@ describe.sequential("ObjectiveComponents", () => {
 					research_tasks: [{ description: null as any, number: 1, title: "Null Edit" }],
 				});
 
-				renderEditableObjectiveTest({ objective });
+				renderEditableObjectiveHelper({ objective });
 
 				expect(screen.getByDisplayValue("Null Edit")).toBeInTheDocument();
 			});
@@ -483,7 +462,7 @@ describe.sequential("ObjectiveComponents", () => {
 					research_tasks: [{ description: undefined as any, number: 1, title: "Undefined Edit" }],
 				});
 
-				renderEditableObjectiveTest({ objective });
+				renderEditableObjectiveHelper({ objective });
 
 				expect(screen.getByDisplayValue("Undefined Edit")).toBeInTheDocument();
 			});
