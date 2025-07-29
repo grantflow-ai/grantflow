@@ -34,7 +34,9 @@ export function Notification({ isOpen }: { isOpen: boolean }) {
 	const handleRemoveNotification = (id: number) => {
 		setNotifications((prev) => prev.filter((item) => item.id !== id));
 	};
-
+const handleClearAll = () =>{
+	setNotifications([])
+}
 	function EmptyState() {
 		return (
 			<div
@@ -59,12 +61,22 @@ export function Notification({ isOpen }: { isOpen: boolean }) {
 				{isOpen && (
 					<motion.div
 						animate={{ opacity: 1, y: 0 }}
-						className="absolute right-0 top-10 bg-white w-[428px] rounded border border-app-gray-100 z-50 shadow-sm"
+						className="absolute right-0 top-10 bg-white w-[428px] rounded border border-app-gray-100 z-50 shadow-sm pt-3 "
 						data-testid="notification-panel"
 						exit={{ opacity: 0, y: -5 }}
 						initial={{ opacity: 0, y: -10 }}
 						transition={{ duration: 0.2 }}
 					>
+						<div className=" flex justify-end items-center px-3">
+							{notifications.length > 0 && (
+								<button 
+								className="text-sm font-medium text-primary cursor-pointer hover:underline"
+								onClick={handleClearAll}
+								>
+									Clear all
+								</button>
+							)}
+						</div>
 						<AnimatePresence>
 							{notifications.length === 0 ? (
 								<EmptyState />

@@ -12,12 +12,16 @@ import {
 	listApplications,
 } from "@/actions/grant-applications";
 import { getProjectMembers } from "@/actions/project";
-import { AppButton } from "@/components/app";
+import { inviteCollaborator } from "@/actions/project-invitation";
+import { AppButton, AvatarGroup } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
+import { InviteCollaboratorModal } from "@/components/organizations";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
+import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
@@ -26,16 +30,19 @@ import { DeleteApplicationModal } from "./applications/delete-application-modal"
 
 export function ProjectDetailClient() {
 	const router = useRouter();
-	const { project } = useProjectStore();
+	const { project, updateProject } = useProjectStore();
 	const { selectedOrganizationId } = useOrganizationStore();
 	const { navigateToApplication } = useNavigationStore();
+	const { user } = useUserStore();
+
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [projectTitle, setProjectTitle] = useState(project?.name ?? "");
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
-	const titleInputRef = useRef<HTMLInputElement>(null);
+	const titleInputRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (isEditingTitle && titleInputRef.current) {
@@ -68,7 +75,7 @@ export function ProjectDetailClient() {
 		},
 	);
 
-	const { data: projectMembers } = useSWR(
+	const { data: projectMembers, mutate: mutateMembers } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/members`
 			: null,
@@ -171,10 +178,61 @@ export function ProjectDetailClient() {
 		router.push(wizardPath);
 	};
 
+	const handleSaveProjectTitle = async () => {
+
+		const newTitle = titleInputRef.current?.textContent?.trim() ?? ""
+		if(newTitle && newTitle !== project?.name && project && selectedOrganizationId){
+			try {
+				await updateProject(selectedOrganizationId, project.id, {name: newTitle})
+				setProjectTitle(newTitle)
+				toast.success("Project title updated successfully!")
+			} catch {
+				toast.error("Failed to update project title.")
+			}
+		}
+		setIsEditingTitle(false);
+	};
+
+	const handleInviteCollaborator = async (email: string, permission: "admin" | "collaborator") => {
+		if (!project) {
+			toast.error("Current project not found. Please refresh and try again.");
+			return;
+		}
+
+		if (!selectedOrganizationId) {
+			toast.error("Organization not selected. Please select an organization.");
+			return;
+		}
+
+		try {
+			const result = await inviteCollaborator({
+				email,
+				inviterName: user?.displayName ?? user?.email ?? "Team Member",
+				organizationId: selectedOrganizationId,
+				projectId: project.id,
+				projectName: project.name,
+				role: permission === "admin" ? "admin" : "member",
+			});
+
+			if (result.success) {
+				toast.success(`Invitation sent successfully to ${email}`);
+				await mutateMembers();
+			} else {
+				toast.error(result.error ?? "Failed to send invitation");
+			}
+		} catch {
+			toast.error("An error occurred while sending the invitation.");
+		}
+	};
+
 	if (!project) {
 		return null;
 	}
 
+	const currentUserRole = projectMembers?.find(
+		(member) => member.firebase_uid === user?.uid,
+	)?.role
+  
 	return (
 		<section className="w-full h-full overflow-y-scroll flex flex-col">
 			<AppHeader projectTeamMembers={projectTeamMembers} />
@@ -187,28 +245,29 @@ export function ProjectDetailClient() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
-								<input
-									className="font-medium text-2xl leading-[42px]  text-app-black bg-white border border-primary outline-none rounded-md px-2 min-w-[400px]"
-									onBlur={() => {
-										setIsEditingTitle(false);
-									}}
-									onChange={(e) => {
-										setProjectTitle(e.target.value);
-									}}
+								<div
+									aria-label="Project Title"
+									className="font-medium text-[36px] leading-[42px] text-gray-300 outline-none border-b-2  border-primary focus:ring-offset-2  "
+									contentEditable={true}
+									onBlur={handleSaveProjectTitle}
 									onKeyDown={(e) => {
 										if (e.key === "Enter") {
-											setIsEditingTitle(false);
+											e.preventDefault();
+											void handleSaveProjectTitle();
 										}
 									}}
-									ref={titleInputRef}
-									value={projectTitle}
-								/>
+									ref={titleInputRef as React.RefObject<HTMLDivElement>}
+									role="textbox"
+									suppressContentEditableWarning={true}
+								>
+									{projectTitle}
+								</div>
 							) : (
 								<h1 className="font-medium text-[36px] leading-[42px] text-app-black">
 									{projectTitle}
 								</h1>
 							)}
-							{!isEditingTitle && (
+							{
 								<button
 									className="flex size-6 items-center justify-center text-app-gray-600 hover:text-app-black cursor-pointer"
 									onClick={() => {
@@ -216,12 +275,47 @@ export function ProjectDetailClient() {
 									}}
 									type="button"
 								>
-									<PencilIcon className="size-3" />
+									<PencilIcon className={`size-5 ${isEditingTitle ? "text-app-black" : ""} `} />
 								</button>
-							)}
+							}
 						</div>
 
 						<div className="flex items-center gap-3">
+							<div className="flex justify-end items-center gap-1">
+								{
+									currentUserRole === "ADMIN" || currentUserRole === "OWNER" && (
+
+								<button
+									className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
+									data-testid="invite-collaborators-button"
+									onClick={() => {
+										if (project) {
+											setShowInviteModal(true);
+										}
+									}}
+									type="button"
+								>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Plus className="size-4 text-app-gray-600" />
+										</TooltipTrigger>
+										<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
+											<p className="text-white font-body font-normal text-sm">
+												Invite collaborators
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								</button>
+									)
+								}
+								<div>
+									<AvatarGroup
+										data-testid="project-avatar-group"
+										size="md"
+										users={projectTeamMembers}
+									/>
+								</div>
+							</div>
 							<div className="relative w-80 ">
 								<SearchIcon className="absolute right-3 top-1/2 size-3 -translate-y-1/2 text-[#636170]" />
 								<input
@@ -271,6 +365,15 @@ export function ProjectDetailClient() {
 					setApplicationToDelete(null);
 				}}
 				onConfirm={confirmDeleteApplication}
+			/>
+
+			<InviteCollaboratorModal
+				isOpen={showInviteModal}
+				onClose={() => {
+					setShowInviteModal(false);
+				}}
+				onInvite={handleInviteCollaborator}
+				projectName={project.name}
 			/>
 		</section>
 	);
