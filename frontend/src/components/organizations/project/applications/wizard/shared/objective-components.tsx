@@ -210,6 +210,10 @@ export function ObjectiveHeader({
 	);
 }
 
+function getTaskContent(task: { description?: string; title: string }): string {
+	return task.description?.trim() || task.title;
+}
+
 function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTaskUpdate, tasks }: TaskContentProps) {
 	return (
 		<div className="space-y-3">
@@ -248,7 +252,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 										label="Task description"
 										onChange={(e) => onTaskUpdate?.(taskIndex, e.target.value)}
 										placeholder="Describe a step to achieve this objective"
-										value={task.description?.trim() ?? null ?? task.title}
+										value={getTaskContent(task)}
 										variant="field"
 									/>
 								</div>
@@ -257,7 +261,7 @@ function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTas
 									className="text-app-gray-600 text-sm font-normal leading-none"
 									data-testid="task-display"
 								>
-									Task: {task.description?.trim() ?? null ?? task.title}
+									Task: {getTaskContent(task)}
 								</div>
 							)}
 						</div>

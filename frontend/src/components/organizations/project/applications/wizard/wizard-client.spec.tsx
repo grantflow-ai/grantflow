@@ -114,44 +114,64 @@ describe.sequential("WizardClientComponent", () => {
 			);
 		});
 
-		it("renders Application Structure step with dialogRef when current step matches", () => {
+		it("renders Application Structure step with dialogRef when current step matches", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
 			expect(screen.getByTestId("application-structure-step")).toHaveTextContent("Dialog ref: present");
 		});
 
-		it("renders Knowledge Base step when current step matches", () => {
+		it("renders Knowledge Base step when current step matches", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("knowledge-base-step")).toBeInTheDocument();
 		});
 
-		it("renders Research Plan step with dialogRef when current step matches", () => {
+		it("renders Research Plan step with dialogRef when current step matches", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_PLAN });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
 			expect(screen.getByTestId("research-plan-step")).toHaveTextContent("Dialog ref: present");
 		});
 
-		it("renders Research Deep Dive step when current step matches", () => {
+		it("renders Research Deep Dive step when current step matches", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_DEEP_DIVE });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
 		});
 
-		it("renders Generate Complete step when current step matches", () => {
+		it("renders Generate Complete step when current step matches", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.GENERATE_AND_COMPLETE });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("generate-complete-step")).toBeInTheDocument();
 		});
@@ -219,28 +239,36 @@ describe.sequential("WizardClientComponent", () => {
 	});
 
 	describe("Step Component Props", () => {
-		it("passes connection status and color to Application Details step", () => {
-			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
-
+		it("passes connection status and color to Application Details step", async () => {
 			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			const stepElement = screen.getByTestId("application-details-step");
 			expect(stepElement).toHaveTextContent("Status: connected");
 			expect(stepElement).toHaveTextContent("Color: green");
 		});
 
-		it("passes dialogRef to steps that require it", () => {
+		it("passes dialogRef to steps that require it", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("application-structure-step")).toHaveTextContent("Dialog ref: present");
 		});
 
-		it("passes dialogRef to Research Plan step", () => {
+		it("passes dialogRef to Research Plan step", async () => {
+			renderWizardClient();
+
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_PLAN });
 
-			renderWizardClient();
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			expect(screen.getByTestId("research-plan-step")).toHaveTextContent("Dialog ref: present");
 		});

@@ -35,8 +35,8 @@ vi.mock("@/components/app/forms/textarea-field", () => ({
 vi.mock("@/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: any) => <div data-testid="dropdown-menu">{children}</div>,
 	DropdownMenuContent: ({ children }: any) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuItem: ({ children, onClick }: any) => (
-		<button data-testid="dropdown-item" onClick={onClick} type="button">
+	DropdownMenuItem: ({ children, "data-testid": testId, onClick, ...props }: any) => (
+		<button data-testid={testId ?? "dropdown-item"} onClick={onClick} type="button" {...props}>
 			{children}
 		</button>
 	),
@@ -175,10 +175,11 @@ describe.sequential("ObjectiveComponents", () => {
 			renderEditableObjective();
 
 			const taskFields = screen.getAllByDisplayValue(/Task \d/);
-			await user.clear(taskFields[0]);
-			await user.type(taskFields[0], "Updated Task");
 
-			expect(taskFields[0]).toHaveValue("Updated Task");
+			await user.clear(taskFields[0]);
+			await user.type(taskFields[0], "UpdatedTask");
+
+			expect(taskFields[0]).toHaveValue("UpdatedTask");
 		});
 
 		it("removes task when delete button is clicked", async () => {
@@ -233,7 +234,7 @@ describe.sequential("ObjectiveComponents", () => {
 			expect(screen.getByText("Task: Content Task 2")).toBeInTheDocument();
 		});
 
-		it("handles empty task descriptions", () => {
+		it("handles empty task descriptions by falling back to title", () => {
 			const objective = ResearchObjectiveFactory.build({
 				research_tasks: [{ description: "", number: 1, title: "Fallback Title" }],
 			});
@@ -351,6 +352,144 @@ describe.sequential("ObjectiveComponents", () => {
 		});
 	});
 
+	describe("Task Description Fallback Logic", () => {
+		function renderEditableObjectiveTest(overrides = {}) {
+			const defaultProps = {
+				index: 1,
+				objective: ResearchObjectiveFactory.build({
+					description: "Test Description",
+					research_tasks: [
+						{ description: "Task 1", number: 1, title: "" },
+						{ description: "Task 2", number: 2, title: "" },
+					],
+					title: "Test Objective",
+				}),
+				onCancel: vi.fn(),
+				onSave: vi.fn(),
+				...overrides,
+			};
+
+			return {
+				...render(<EditableObjective {...defaultProps} />),
+				props: defaultProps,
+			};
+		}
+
+		describe("ObjectiveCardContent - Display Mode", () => {
+			it("displays task description when available and non-empty", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "Valid description", number: 1, title: "Title" }],
+				});
+
+				render(<ObjectiveCardContent index={1} objective={objective} />);
+
+				expect(screen.getByText("Task: Valid description")).toBeInTheDocument();
+			});
+
+			it("falls back to title when description is empty string", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "", number: 1, title: "Fallback Title" }],
+				});
+
+				render(<ObjectiveCardContent index={1} objective={objective} />);
+
+				expect(screen.getByText("Task: Fallback Title")).toBeInTheDocument();
+			});
+
+			it("falls back to title when description is only whitespace", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "   \n\t  ", number: 1, title: "Whitespace Fallback" }],
+				});
+
+				render(<ObjectiveCardContent index={1} objective={objective} />);
+
+				expect(screen.getByText("Task: Whitespace Fallback")).toBeInTheDocument();
+			});
+
+			it("falls back to title when description is null", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: null as any, number: 1, title: "Null Fallback" }],
+				});
+
+				render(<ObjectiveCardContent index={1} objective={objective} />);
+
+				expect(screen.getByText("Task: Null Fallback")).toBeInTheDocument();
+			});
+
+			it("falls back to title when description is undefined", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: undefined as any, number: 1, title: "Undefined Fallback" }],
+				});
+
+				render(<ObjectiveCardContent index={1} objective={objective} />);
+
+				expect(screen.getByText("Task: Undefined Fallback")).toBeInTheDocument();
+			});
+
+			it("trims whitespace from valid descriptions", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "  Trimmed description  ", number: 1, title: "Title" }],
+				});
+
+				render(<ObjectiveCardContent index={1} objective={objective} />);
+
+				expect(screen.getByText("Task: Trimmed description")).toBeInTheDocument();
+			});
+		});
+
+		describe("EditableObjective - Edit Mode", () => {
+			it("shows task description in textarea when available", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "Edit description", number: 1, title: "Title" }],
+				});
+
+				renderEditableObjectiveTest({ objective });
+
+				expect(screen.getByDisplayValue("Edit description")).toBeInTheDocument();
+			});
+
+			it("shows title in textarea when description is empty", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "", number: 1, title: "Edit Fallback" }],
+				});
+
+				renderEditableObjectiveTest({ objective });
+
+				expect(screen.getByDisplayValue("Edit Fallback")).toBeInTheDocument();
+			});
+
+			it("shows title in textarea when description is only whitespace", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: "\n  \t  ", number: 1, title: "Whitespace Edit" }],
+				});
+
+				renderEditableObjectiveTest({ objective });
+
+				expect(screen.getByDisplayValue("Whitespace Edit")).toBeInTheDocument();
+			});
+
+			it("shows title in textarea when description is null", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: null as any, number: 1, title: "Null Edit" }],
+				});
+
+				renderEditableObjectiveTest({ objective });
+
+				expect(screen.getByDisplayValue("Null Edit")).toBeInTheDocument();
+			});
+
+			it("shows title in textarea when description is undefined", () => {
+				const objective = ResearchObjectiveFactory.build({
+					research_tasks: [{ description: undefined as any, number: 1, title: "Undefined Edit" }],
+				});
+
+				renderEditableObjectiveTest({ objective });
+
+				expect(screen.getByDisplayValue("Undefined Edit")).toBeInTheDocument();
+			});
+		});
+	});
+
 	describe("Edge Cases", () => {
 		it("handles objectives with empty titles", () => {
 			const objective = ResearchObjectiveFactory.build({ title: "" });
@@ -364,26 +503,6 @@ describe.sequential("ObjectiveComponents", () => {
 			render(<ObjectiveCardContent index={1} objective={objective} />);
 
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
-		});
-
-		it("handles tasks with null descriptions", () => {
-			const objective = ResearchObjectiveFactory.build({
-				research_tasks: [{ description: null as any, number: 1, title: "Null Task Title" }],
-			});
-
-			render(<ObjectiveCardContent index={1} objective={objective} />);
-
-			expect(screen.getByText("Task: Null Task Title")).toBeInTheDocument();
-		});
-
-		it("handles undefined task descriptions", () => {
-			const objective = ResearchObjectiveFactory.build({
-				research_tasks: [{ description: undefined as any, number: 1, title: "Undefined Task Title" }],
-			});
-
-			render(<ObjectiveCardContent index={1} objective={objective} />);
-
-			expect(screen.getByText("Task: Undefined Task Title")).toBeInTheDocument();
 		});
 	});
 });
