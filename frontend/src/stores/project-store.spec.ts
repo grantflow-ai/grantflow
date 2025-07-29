@@ -9,7 +9,9 @@ import { useProjectStore } from "./project-store";
 vi.mock("@/actions/project");
 vi.mock("sonner", () => ({
 	toast: {
+		dismiss: vi.fn(),
 		error: vi.fn(),
+		loading: vi.fn(() => "mock-toast-id"),
 		success: vi.fn(),
 	},
 }));
