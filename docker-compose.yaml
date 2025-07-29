@@ -207,21 +207,24 @@ services:
         build:
             context: .
             dockerfile: frontend/Dockerfile
-            target: install
+            args:
+                NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
+                NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
+                NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
+                NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+                NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}
+                NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID}
+                NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID}
+                NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+                NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+                NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+                NEXT_PUBLIC_DEBUG: ${NEXT_PUBLIC_DEBUG:-false}
+                RESEND_API_KEY: ${RESEND_API_KEY}
         ports:
             - "3000:3000"
-        volumes:
-            - ./frontend:/workspace/frontend:cached
-            - ./editor:/workspace/editor:cached
-            - ./package.json:/workspace/package.json:cached
-            - ./pnpm-workspace.yaml:/workspace/pnpm-workspace.yaml:cached
-        environment:
-            # backend is the alias for the backend service in the docker network
-            NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
         env_file:
             - ./.env
-        working_dir: /workspace/frontend
-        command: "pnpm dev"
+            - ./frontend/.env
         depends_on:
             - backend
 

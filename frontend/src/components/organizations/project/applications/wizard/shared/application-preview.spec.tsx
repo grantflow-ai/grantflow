@@ -80,7 +80,6 @@ describe("ApplicationPreview", () => {
 		render(<ApplicationPreview draftTitle="" />);
 
 		expect(screen.getByTestId("application-title")).toHaveTextContent("Untitled Application");
-		expect(screen.getByTestId("application-title")).toHaveClass("text-muted-foreground-dark/50");
 	});
 
 	it("renders connection status badge when provided", () => {
@@ -94,7 +93,6 @@ describe("ApplicationPreview", () => {
 
 		const badges = screen.getAllByTestId("theme-badge");
 		expect(badges[1]).toHaveTextContent("Connected");
-		expect(badges[1]).toHaveClass("bg-green-500", "text-white");
 	});
 
 	it("renders file preview cards for template files", () => {

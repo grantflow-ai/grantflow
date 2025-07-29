@@ -57,7 +57,7 @@ export function getEnv(): Env {
 			NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 		},
 		server: {
-			RESEND_API_KEY: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.string()),
+			RESEND_API_KEY: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.string().optional()),
 		},
 		shared: {
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: z.preprocess(
