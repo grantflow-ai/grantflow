@@ -13,7 +13,11 @@ import { HorizontalRule } from "@/components/node/horizontal-rule-node/horizonta
 import { ImageUploadNode } from "@/components/node/image-upload-node/image-upload-node-extension";
 import { Button } from "@/components/ui/button";
 import { Spacer } from "@/components/ui/spacer";
-import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/ui/toolbar";
+import {
+	Toolbar,
+	ToolbarGroup,
+	ToolbarSeparator,
+} from "@/components/ui/toolbar";
 import "@/components/node/blockquote-node/blockquote-node.scss";
 import "@/components/node/code-block-node/code-block-node.scss";
 import "@/components/node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -35,7 +39,11 @@ import {
 } from "@/components/ui/color-highlight-popover";
 import { HeadingDropdownMenu } from "@/components/ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/ui/image-upload-button";
-import { LinkButton, LinkContent, LinkPopover } from "@/components/ui/link-popover";
+import {
+	LinkButton,
+	LinkContent,
+	LinkPopover,
+} from "@/components/ui/link-popover";
 import { ListDropdownMenu } from "@/components/ui/list-dropdown-menu";
 import { MarkButton } from "@/components/ui/mark-button";
 import { TextAlignButton } from "@/components/ui/text-align-button";
@@ -45,6 +53,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 import "@/editor/index.scss";
+import type { JSONContent } from "@tiptap/core";
 import { Markdown } from "tiptap-markdown";
 
 type MarkdownStorage = { getMarkdown: () => string };
@@ -52,7 +61,15 @@ type MarkdownStorage = { getMarkdown: () => string };
 export type EditorRef = {
 	getMarkdown: () => string;
 	getJSON: () => unknown;
+	getHeadings: () => { level: HeadingLevels; text: string }[];
+	scrollToHeading: (headingIndex: number) => boolean;
 };
+
+export enum HeadingLevels {
+	H1 = 1,
+	H2 = 2,
+	H3 = 3,
+}
 
 const MainToolbarContent = ({
 	onHighlighterClick,
@@ -72,35 +89,37 @@ const MainToolbarContent = ({
 				<UndoRedoButton action="redo" />
 			</ToolbarGroup>
 
-			<ToolbarSeparator />
-
 			<ToolbarGroup>
-				<HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-				<ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
-				<BlockquoteButton />
-				<CodeBlockButton />
+				<HeadingDropdownMenu
+					levels={[HeadingLevels.H1, HeadingLevels.H2, HeadingLevels.H3]}
+					portal={isMobile}
+				/>
 			</ToolbarGroup>
-
-			<ToolbarSeparator />
 
 			<ToolbarGroup>
 				<MarkButton type="bold" />
 				<MarkButton type="italic" />
+				<MarkButton type="underline" />
+				<ListDropdownMenu
+					types={["bulletList", "orderedList", "taskList"]}
+					portal={isMobile}
+				/>
+				<BlockquoteButton />
+				<CodeBlockButton />
 				<MarkButton type="strike" />
 				<MarkButton type="code" />
-				<MarkButton type="underline" />
-				{!isMobile ? <ColorHighlightPopover /> : <ColorHighlightPopoverButton onClick={onHighlighterClick} />}
+				{!isMobile ? (
+					<ColorHighlightPopover />
+				) : (
+					<ColorHighlightPopoverButton onClick={onHighlighterClick} />
+				)}
 				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
-
-			<ToolbarSeparator />
 
 			<ToolbarGroup>
 				<MarkButton type="superscript" />
 				<MarkButton type="subscript" />
 			</ToolbarGroup>
-
-			<ToolbarSeparator />
 
 			<ToolbarGroup>
 				<TextAlignButton align="left" />
@@ -108,8 +127,6 @@ const MainToolbarContent = ({
 				<TextAlignButton align="right" />
 				<TextAlignButton align="justify" />
 			</ToolbarGroup>
-
-			<ToolbarSeparator />
 
 			<ToolbarGroup>
 				<ImageUploadButton text="Add" />
@@ -122,7 +139,13 @@ const MainToolbarContent = ({
 	);
 };
 
-const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
+const MobileToolbarContent = ({
+	type,
+	onBack,
+}: {
+	type: "highlighter" | "link";
+	onBack: () => void;
+}) => (
 	<>
 		<ToolbarGroup>
 			<Button data-style="ghost" onClick={onBack}>
@@ -137,17 +160,29 @@ const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; 
 
 		<ToolbarSeparator />
 
-		{type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
+		{type === "highlighter" ? (
+			<ColorHighlightPopoverContent />
+		) : (
+			<LinkContent />
+		)}
 	</>
 );
 
 export const Editor = React.forwardRef(function Editor(
-	{ content }: { content: string },
+	{
+		content,
+		onContentChange,
+	}: {
+		content: string;
+		onContentChange?: () => void;
+	},
 	ref: React.ForwardedRef<EditorRef>,
 ) {
 	const isMobile = useIsMobile();
 	const windowSize = useWindowSize();
-	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
+	const [mobileView, setMobileView] = React.useState<
+		"main" | "highlighter" | "link"
+	>("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({
@@ -190,15 +225,89 @@ export const Editor = React.forwardRef(function Editor(
 		],
 		immediatelyRender: false,
 		shouldRerenderOnTransaction: false,
+		onUpdate: () => {
+			onContentChange?.();
+		},
 	});
 
 	React.useImperativeHandle(
 		ref,
 		() => ({
-			getJSON: () => editor?.getJSON(),
 			getMarkdown: () =>
 				// @ts-expect-error: markdown is injected by tiptap-markdown extension
 				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
+			getJSON: () => editor?.getJSON(),
+			getHeadings: () => {
+				const json = editor?.getJSON();
+				if (!json || typeof json !== "object") return [];
+
+				function extractHeadings(
+					node: JSONContent,
+				): { level: HeadingLevels; text: string }[] {
+					if (!node) return [];
+					let result: { level: HeadingLevels; text: string }[] = [];
+					if (
+						node.type === "heading" &&
+						(node.attrs?.level === HeadingLevels.H2 ||
+							node.attrs?.level === HeadingLevels.H3)
+					) {
+						const text = (node.content || [])
+							.map((c: JSONContent) => c.text || "")
+							.join("");
+						result.push({ level: node.attrs.level, text });
+					}
+					if (Array.isArray(node.content)) {
+						for (const child of node.content) {
+							result = result.concat(extractHeadings(child));
+						}
+					}
+					return result;
+				}
+
+				return extractHeadings(json);
+			},
+			scrollToHeading: (headingIndex: number) => {
+				if (!editor) return false;
+				// Find all h2/h3 headings in document order using $nodes
+				const h2Nodes =
+					editor.$nodes("heading", { level: HeadingLevels.H2 }) || [];
+				const h3Nodes =
+					editor.$nodes("heading", { level: HeadingLevels.H3 }) || [];
+				const allHeadings = [...h2Nodes, ...h3Nodes].sort(
+					(a, b) => a.pos - b.pos,
+				);
+
+				if (headingIndex < 0 || headingIndex >= allHeadings.length)
+					return false;
+				const nodePos = allHeadings[headingIndex];
+				if (!nodePos) return false;
+
+				editor
+					.chain()
+					.focus()
+					.setTextSelection(nodePos.from + 1)
+					.run();
+
+				const el = nodePos.element as HTMLElement | null;
+				if (el && typeof el.scrollIntoView === "function") {
+					el.scrollIntoView({ behavior: "smooth", block: "start" });
+				} else {
+					const root = editor.options.element as HTMLElement | null;
+					if (root) {
+						const headings = root.querySelectorAll("h2, h3");
+						const domHeading = headings[headingIndex] as
+							| HTMLElement
+							| undefined;
+						if (domHeading && typeof domHeading.scrollIntoView === "function") {
+							domHeading.scrollIntoView({
+								behavior: "smooth",
+								block: "start",
+							});
+						}
+					}
+				}
+				return true;
+			},
 		}),
 		[editor],
 	);
