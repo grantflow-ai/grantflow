@@ -145,7 +145,6 @@ export default function SignIn() {
 						animate={{
 							opacity: isLoading ? 0 : 1,
 							pointerEvents: isLoading ? "none" : "auto",
-							x: isLoading ? "-100%" : "0%",
 						}}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
@@ -190,10 +189,9 @@ export default function SignIn() {
 						animate={{
 							opacity: isLoading ? 1 : 0,
 							pointerEvents: isLoading ? "auto" : "none",
-							x: isLoading ? "0%" : "100%",
 						}}
-						className="absolute inset-0"
-						initial={{ opacity: 0, x: "100%" }}
+						className="absolute inset-0 flex items-center justify-center"
+						initial={{ opacity: 0 }}
 						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
 						<AppCard className="border-primary mx-auto w-full max-w-md border p-14 shadow-md md:w-4/5">

@@ -10,7 +10,7 @@ describe.sequential("Notification component", () => {
 
 	it("shows notification dropdown and items when triggered", async () => {
 		const user = userEvent.setup();
-		render(<Notification />);
+		render(<Notification isOpen={false} />);
 
 		await user.click(screen.getByTestId("notification-trigger"));
 

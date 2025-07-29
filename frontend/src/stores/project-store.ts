@@ -68,6 +68,7 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 
 	deleteProject: async (organizationId: string, projectId: string) => {
 		set({ areOperationsInProgress: true });
+		const toastId = toast.loading("Deleting research project ");
 		try {
 			await handleDeleteProject(organizationId, projectId);
 			set((state) => ({
@@ -76,16 +77,17 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				projects: state.projects.filter((p) => p.id !== projectId),
 			}));
 
-			toast.success("Project deleted successfully");
+			toast.success("Research project deleted successfully.", { id: toastId });
 		} catch (error: unknown) {
 			log.error("deleteProject", error);
-			toast.error("Failed to delete project");
+			toast.error("Failed to delete research project.", { id: toastId });
 			set({ areOperationsInProgress: false });
 		}
 	},
 
 	duplicateProject: async (organizationId: string, projectId: string) => {
 		set({ areOperationsInProgress: true });
+		const toastId = toast.loading("Duplicating research project");
 		try {
 			await handleDuplicateProject(organizationId, projectId);
 			const projectsResponse = await handleGetProjects(organizationId);
@@ -95,10 +97,10 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 				projects: projectsResponse,
 			});
 
-			toast.success("Project duplicated successfully");
+			toast.success("Research project duplicated successfully.", { id: toastId });
 		} catch (error: unknown) {
 			log.error("duplicateProject", error);
-			toast.error("Failed to duplicate project");
+			toast.error("Failed to duplicate research project.", { id: toastId });
 			set({ areOperationsInProgress: false });
 		}
 	},

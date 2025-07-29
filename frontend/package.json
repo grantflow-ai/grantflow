@@ -65,6 +65,7 @@
 		"build-storybook": "cross-env storybook build",
 		"check": "biome check --write . && eslint ",
 		"dev": "cross-env NODE_NO_WARNINGS=1 next dev",
+		"email": "email dev --dir src/components/email-templates ",
 		"eslint": "eslint",
 		"format": "biome format --write .",
 		"knip": "knip",
