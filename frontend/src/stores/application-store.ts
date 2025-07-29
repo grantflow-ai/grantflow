@@ -50,6 +50,10 @@ const formatRagSources = (application: ApplicationType): string => {
 	return `files: [${files}], urls: [${urls}]`;
 };
 
+const formatGrantSections = (application: ApplicationType) => {
+	return application?.grant_template?.grant_sections ?? [];
+};
+
 const formatApplicationRagSources = (application: ApplicationType): string => {
 	if (!application?.rag_sources.length) {
 		return "files: [], urls: []";
@@ -431,6 +435,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 
 		log.info("[rag_sources_check] File upload completed, triggering getApplication", {
 			beforeApplicationRagSources: formatApplicationRagSources(application),
+			beforeGrantSections: formatGrantSections(application),
 			beforeRagSources: formatRagSources(application),
 			fileName: file.name,
 			isApplicationParent,
@@ -463,6 +468,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success("URL added successfully");
 			log.info("[rag_sources_check] URL crawl completed, triggering getApplication", {
 				beforeApplicationRagSources: formatApplicationRagSources(application),
+				beforeGrantSections: formatGrantSections(application),
 				beforeRagSources: formatRagSources(application),
 				isApplicationParent,
 				parentId,
@@ -550,6 +556,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via createApplication", {
 				application_rag_sources: formatApplicationRagSources(response),
 				applicationId: response.id,
+				grant_sections: formatGrantSections(response),
 				projectId,
 				template_rag_sources: formatRagSources(response),
 				templateId: response.grant_template?.id,
@@ -656,6 +663,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via getApplication", {
 				application_rag_sources: formatApplicationRagSources(response),
 				applicationId,
+				grant_sections: formatGrantSections(response),
 				projectId,
 				template_rag_sources: formatRagSources(response),
 				templateId: response.grant_template?.id,
@@ -695,6 +703,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success(`File ${fileToRemove.name} removed`);
 			log.info("[rag_sources_check] File removal completed, triggering getApplication", {
 				beforeApplicationRagSources: formatApplicationRagSources(application),
+				beforeGrantSections: formatGrantSections(application),
 				beforeRagSources: formatRagSources(application),
 				fileId: fileToRemove.id,
 				fileName: fileToRemove.name,
@@ -772,6 +781,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			toast.success("URL removed successfully");
 			log.info("[rag_sources_check] URL removal completed, triggering getApplication", {
 				beforeApplicationRagSources: formatApplicationRagSources(application),
+				beforeGrantSections: formatGrantSections(application),
 				beforeRagSources: formatRagSources(application),
 				isApplicationParent,
 				parentId,
@@ -792,6 +802,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		const { application } = get();
 		log.info("[rag_sources_check] Application state reset", {
 			previous_application_rag_sources: formatApplicationRagSources(application),
+			previous_grant_sections: formatGrantSections(application),
 			previous_template_rag_sources: formatRagSources(application),
 			previousApplicationId: application?.id,
 			previousProjectId: application?.project_id,
@@ -804,6 +815,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("[rag_sources_check] Application state updated via setApplication", {
 			application_rag_sources: formatApplicationRagSources(application),
 			applicationId: application.id,
+			grant_sections: formatGrantSections(application),
 			projectId: application.project_id,
 			template_rag_sources: formatRagSources(application),
 			templateId: application.grant_template?.id,
@@ -825,6 +837,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("[rag_sources_check] Application state updated via updateApplication (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
 			applicationId: updatedApplication.id,
+			grant_sections: formatGrantSections(updatedApplication),
 			projectId: updatedApplication.project_id,
 			template_rag_sources: formatRagSources(updatedApplication),
 			templateId: updatedApplication.grant_template?.id,
@@ -845,6 +858,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via updateApplication (API success)", {
 				application_rag_sources: formatApplicationRagSources(response),
 				applicationId: response.id,
+				grant_sections: formatGrantSections(response),
 				projectId: response.project_id,
 				template_rag_sources: formatRagSources(response),
 				templateId: response.grant_template?.id,
@@ -854,6 +868,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state reverted via updateApplication (API failure)", {
 				application_rag_sources: formatApplicationRagSources(existingApplication),
 				applicationId: existingApplication.id,
+				grant_sections: formatGrantSections(existingApplication),
 				projectId: existingApplication.project_id,
 				template_rag_sources: formatRagSources(existingApplication),
 				templateId: existingApplication.grant_template?.id,
@@ -878,6 +893,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state updated via updateApplicationTitle", {
 				application_rag_sources: formatApplicationRagSources(response),
 				applicationId: response.id,
+				grant_sections: formatGrantSections(response),
 				projectId: response.project_id,
 				template_rag_sources: formatRagSources(response),
 				templateId: response.grant_template?.id,
@@ -894,6 +910,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				log.info("[rag_sources_check] Application state reverted via updateApplicationTitle (title restore)", {
 					application_rag_sources: formatApplicationRagSources(revertedApplication),
 					applicationId: revertedApplication.id,
+					grant_sections: formatGrantSections(revertedApplication),
 					projectId: revertedApplication.project_id,
 					template_rag_sources: formatRagSources(revertedApplication),
 					templateId: revertedApplication.grant_template?.id,
@@ -936,7 +953,15 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
 			applicationId: updatedApplication.id,
+			grant_sections: sections.map((section) => ({
+				id: section.id,
+				max_words: section.max_words,
+				order: section.order,
+				parent_id: section.parent_id,
+				title: section.title,
+			})),
 			projectId: updatedApplication.project_id,
+			sectionCount: sections.length,
 			template_rag_sources: formatRagSources(updatedApplication),
 			templateId: updatedApplication.grant_template?.id,
 		});
@@ -964,7 +989,16 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				},
 			);
 
-			log.info("updateGrantSections: Success");
+			log.info("updateGrantSections: Success", {
+				grant_sections: sections.map((section) => ({
+					id: section.id,
+					max_words: section.max_words,
+					order: section.order,
+					parent_id: section.parent_id,
+					title: section.title,
+				})),
+				sectionCount: sections.length,
+			});
 		} catch (error) {
 			const restoredApplication: NonNullable<ApplicationType> = {
 				...application,
@@ -976,6 +1010,7 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("[rag_sources_check] Application state reverted via updateGrantSections (API failure)", {
 				application_rag_sources: formatApplicationRagSources(restoredApplication),
 				applicationId: restoredApplication.id,
+				grant_sections: previousGrantSections ?? [],
 				projectId: restoredApplication.project_id,
 				template_rag_sources: formatRagSources(restoredApplication),
 				templateId: restoredApplication.grant_template?.id,

@@ -80,7 +80,6 @@ jobs:
                   workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
                   service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
                   build_args: |
-                      RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
                       NEXT_PUBLIC_BACKEND_API_BASE_URL=${{ steps.backend_url.outputs.url }}
                       NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
                       NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
@@ -119,6 +118,23 @@ jobs:
             - name: Setup Cloud SDK
               uses: google-github-actions/setup-gcloud@v2
 
+            - name: Setup Task
+              uses: ./.github/actions/setup-task
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+
+            - name: Install uv
+              run: |
+                  curl -LsSf https://astral.sh/uv/install.sh | sh
+                  echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+            - name: Generate cloud functions requirements
+              run: |
+                  task cloud-functions:generate-requirements
+
             - name: Deploy to Firebase App Hosting via Terraform
               run: |
                   # Install OpenTofu
@@ -149,7 +165,7 @@ jobs:
                   if [ "${{ needs.build-and-push.outputs.environment }}" == "production" ]; then
                     echo "  URL: https://grantflow.ai"
                   else
-                    echo "  URL: https://staging--grantflow.us-central1.hosted.app"
+                    echo "  URL: https://staging.grantflow.ai"
                   fi
 
             - name: Send Discord notification

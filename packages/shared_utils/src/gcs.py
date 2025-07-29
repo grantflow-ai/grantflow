@@ -161,6 +161,7 @@ async def create_signed_upload_url(
     source_id: UUID | str,
     blob_name: str,
     trace_id: str | None = None,
+    content_type: str | None = None,
 ) -> str:
     blob_path = construct_object_uri(
         entity_type=entity_type,
@@ -202,6 +203,8 @@ async def create_signed_upload_url(
         headers = {}
         if trace_id:
             headers["x-goog-meta-trace-id"] = trace_id
+        if content_type:
+            headers["Content-Type"] = content_type
 
         signed_url = await run_sync(
             lambda: blob.generate_signed_url(
@@ -209,6 +212,7 @@ async def create_signed_upload_url(
                 expiration=ONE_MINUTE_SECONDS * 5,
                 method="PUT",
                 headers=headers if headers else None,
+                content_type=content_type,
             )
         )
 
