@@ -6,10 +6,8 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { createProject, getProjects } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { AvatarGroup } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
 import { DeleteProjectModal, InviteCollaboratorModal } from "@/components/organizations";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useOrganization } from "@/hooks/use-organization";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNotificationStore } from "@/stores/notification-store";
@@ -254,37 +252,6 @@ export function DashboardClient({
 									</p>
 								</div>
 								<div className="flex gap-6 items-center">
-									<main className="flex justify-end items-center gap-1">
-										<button
-											className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
-											data-testid="invite-collaborators-button"
-											onClick={() => {
-												if (projects.length > 0) {
-													setSelectedProjectForInvite(projects[0]);
-													setShowInviteModal(true);
-												}
-											}}
-											type="button"
-										>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<Plus className="size-4 text-app-gray-600" />
-												</TooltipTrigger>
-												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
-													<p className="text-white font-body font-normal text-sm">
-														Invite collaborators
-													</p>
-												</TooltipContent>
-											</Tooltip>
-										</button>
-										<div>
-											<AvatarGroup
-												data-testid="dashboard-avatar-group"
-												size="md"
-												users={projectTeamMembers}
-											/>
-										</div>
-									</main>
 									<button
 										className="bg-primary text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-link-hover-dark transition-colors"
 										data-testid="new-research-project-button"
@@ -310,7 +277,7 @@ export function DashboardClient({
 								Research Projects
 							</h3>
 							<main
-								className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min mt-6 overflow-y-auto pr-2 scroll-box"
+								className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-min mt-6  overflow-y-auto pr-2 scroll-box"
 								data-testid="projects-container"
 							>
 								{projects.length > 0 ? (
