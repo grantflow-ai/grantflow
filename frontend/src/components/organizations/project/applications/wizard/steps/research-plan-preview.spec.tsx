@@ -2,7 +2,7 @@ import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -18,6 +18,8 @@ function cleanupPortals() {
 }
 
 describe.sequential("ResearchPlanPreview Display Mode", () => {
+	let mockDialogRef: { current: { close: () => void; open: (content: any) => void } | null };
+
 	beforeEach(() => {
 		resetAllStores();
 		cleanupPortals();
@@ -26,6 +28,13 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 		useOrganizationStore.setState({
 			selectedOrganizationId: "mock-organization-id",
 		});
+
+		mockDialogRef = {
+			current: {
+				close: vi.fn(),
+				open: vi.fn(),
+			},
+		};
 	});
 
 	afterEach(() => {
@@ -38,7 +47,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 			application: ApplicationWithTemplateFactory.build({ research_objectives: [] }),
 		});
 
-		const { container } = render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(container.querySelector('[data-testid="empty-state"]')).toBeInTheDocument();
 	});
@@ -65,7 +74,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getByText("Test objective title")).toBeInTheDocument();
 		expect(screen.getByText("Test objective description")).toBeInTheDocument();
@@ -93,7 +102,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(container.querySelector('[data-testid="tasks-section"]')).toBeInTheDocument();
 		expect(screen.getByText("Task: Test task description")).toBeInTheDocument();
@@ -121,7 +130,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getByText("1")).toBeInTheDocument();
 	});
@@ -148,7 +157,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getByText("1.1")).toBeInTheDocument();
 	});
@@ -187,7 +196,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getAllByRole("button", { name: /drag to reorder objective/i })).toHaveLength(2);
 	});
@@ -214,7 +223,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getByText("First objective")).toBeInTheDocument();
 		expect(screen.getByText("Second objective")).toBeInTheDocument();
@@ -241,7 +250,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getByText("Task: First task description")).toBeInTheDocument();
 		expect(screen.getByText("Task: Second task description")).toBeInTheDocument();
@@ -265,7 +274,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		const taskDisplay = container.querySelector('[data-testid="task-display"]');
 		expect(taskDisplay?.textContent).toBe("Task: Fallback task title");
@@ -298,7 +307,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		render(<ResearchPlanPreview />);
+		render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(screen.getAllByRole("button", { name: /drag to reorder task/i })).toHaveLength(2);
 	});
@@ -325,7 +334,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 		useApplicationStore.setState({ application });
 
-		const { container } = render(<ResearchPlanPreview />);
+		const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 		expect(container.querySelector('[data-testid="delete-task-button"]')).not.toBeInTheDocument();
 		expect(container.querySelector('[data-testid="add-task-button"]')).not.toBeInTheDocument();
@@ -345,7 +354,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			const { container } = render(<ResearchPlanPreview />);
+			const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const gridContainer = container.querySelector(".grid");
 			expect(gridContainer).toHaveClass("grid-cols-3");
@@ -360,7 +369,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			const { container } = render(<ResearchPlanPreview />);
+			const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const singleObjective = container.querySelector(".col-start-1");
 			expect(singleObjective).toBeInTheDocument();
@@ -377,7 +386,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			const { container } = render(<ResearchPlanPreview />);
+			const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const gridContainer = container.querySelector(".grid");
 			expect(gridContainer).toBeInTheDocument();
@@ -400,7 +409,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			const { container } = render(<ResearchPlanPreview />);
+			const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const disabledGrip = container.querySelector(".text-gray-300");
 			expect(disabledGrip).toBeInTheDocument();
@@ -419,7 +428,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanPreview />);
+			render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const dragButtons = screen.getAllByRole("button", { name: /drag to reorder objective/i });
 			expect(dragButtons).toHaveLength(2);
@@ -440,7 +449,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			const { container } = render(<ResearchPlanPreview />);
+			const { container } = render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const disabledTaskGrip = container.querySelector(".text-gray-300");
 			expect(disabledTaskGrip).toBeInTheDocument();
@@ -465,7 +474,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanPreview />);
+			render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const taskDragButtons = screen.getAllByRole("button", { name: /drag to reorder task/i });
 			expect(taskDragButtons).toHaveLength(2);
@@ -494,7 +503,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanPreview />);
+			render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			expect(screen.getByText("Task: Detailed task description")).toBeInTheDocument();
 		});
@@ -520,7 +529,7 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanPreview />);
+			render(<ResearchPlanPreview dialogRef={mockDialogRef} />);
 
 			const taskDisplay = screen.getByTestId("task-display");
 			expect(taskDisplay).toHaveTextContent("Task: Fallback title");
