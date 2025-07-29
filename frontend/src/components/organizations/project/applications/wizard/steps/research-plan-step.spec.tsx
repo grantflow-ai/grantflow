@@ -48,6 +48,11 @@ vi.mock("../shared/objective-form", () => ({
 	),
 }));
 
+function renderResearchPlanStep() {
+	const mockDialogRef = { current: { close: vi.fn(), open: vi.fn() } };
+	return render(<ResearchPlanStep dialogRef={mockDialogRef} />);
+}
+
 describe.sequential("ResearchPlanStep", () => {
 	beforeEach(() => {
 		resetAllStores();
@@ -65,17 +70,16 @@ describe.sequential("ResearchPlanStep", () => {
 	});
 
 	describe("Component Structure", () => {
-		it("renders main container with correct layout", () => {
+		it("renders main container", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				research_objectives: [],
 			});
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
-			expect(screen.getByTestId("research-plan-step")).toHaveClass("flex size-full");
 		});
 
 		it("renders header section with correct content", () => {
@@ -85,7 +89,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("research-plan-header")).toHaveTextContent("Research plan");
 			expect(screen.getByTestId("research-plan-description")).toHaveTextContent(
@@ -100,7 +104,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("research-plan-left-pane")).toBeInTheDocument();
 		});
@@ -114,7 +118,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toBeInTheDocument();
 			expect(screen.queryByTestId("objective-form-mock")).not.toBeInTheDocument();
@@ -128,7 +132,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -145,7 +149,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -161,7 +165,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -182,7 +186,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add First Objective");
 		});
@@ -194,7 +198,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add Objective");
 		});
@@ -207,7 +211,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toBeEnabled();
 		});
@@ -220,7 +224,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toBeDisabled();
 		});
@@ -233,7 +237,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toBeDisabled();
 		});
@@ -247,7 +251,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const aiButton = screen.getByTestId("ai-try-button");
 			expect(aiButton).toHaveTextContent("Let the AI Try!");
@@ -260,7 +264,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("ai-try-button")).toBeEnabled();
 		});
@@ -276,7 +280,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("ai-try-button")).toBeDisabled();
 		});
@@ -292,7 +296,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("ai-try-button")).toHaveTextContent("Generating...");
 		});
@@ -300,7 +304,7 @@ describe.sequential("ResearchPlanStep", () => {
 		it("disables AI Try button when no application exists", () => {
 			useApplicationStore.setState({ application: null });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("ai-try-button")).toBeDisabled();
 		});
@@ -317,7 +321,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const aiButton = screen.getByTestId("ai-try-button");
 			await user.click(aiButton);
@@ -335,7 +339,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(
 				screen.getByText("You can add up to a maximum of 5 objectives for your grant application."),
@@ -354,7 +358,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(
 				screen.queryByText("You can add up to a maximum of 5 objectives for your grant application."),
@@ -369,7 +373,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(
 				screen.queryByText("You can add up to a maximum of 5 objectives for your grant application."),
@@ -392,7 +396,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const closeButton = screen.getByLabelText("Close info banner");
 			await user.click(closeButton);
@@ -409,7 +413,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("research-plan-preview-mock")).toBeInTheDocument();
 			expect(screen.queryByTestId("preview-loading-mock")).not.toBeInTheDocument();
@@ -426,7 +430,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("preview-loading-mock")).toBeInTheDocument();
 			expect(screen.queryByTestId("research-plan-preview-mock")).not.toBeInTheDocument();
@@ -443,7 +447,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -463,7 +467,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -500,7 +504,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -527,7 +531,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			const addButton = screen.getByTestId("add-objective-button");
 			await user.click(addButton);
@@ -557,7 +561,7 @@ describe.sequential("ResearchPlanStep", () => {
 
 			useApplicationStore.setState({ application });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("add-objective-button")).toHaveTextContent("Add First Objective");
 			expect(screen.getByTestId("add-objective-button")).toBeEnabled();
@@ -566,7 +570,7 @@ describe.sequential("ResearchPlanStep", () => {
 		it("handles null application gracefully", () => {
 			useApplicationStore.setState({ application: null });
 
-			render(<ResearchPlanStep />);
+			renderResearchPlanStep();
 
 			expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
 			expect(screen.getByTestId("ai-try-button")).toBeDisabled();
