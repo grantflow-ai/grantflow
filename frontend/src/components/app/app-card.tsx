@@ -28,7 +28,7 @@ interface InfoCardProps {
 }
 
 export function AppCard({ ...props }: AppCardProps) {
-	return <Card data-testid="app-card" {...props} />;
+	return <Card data-testid="app-card" role="article" {...props} />;
 }
 
 export function AppCardAction({ className, ...props }: AppCardActionProps) {

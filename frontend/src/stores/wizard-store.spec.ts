@@ -20,6 +20,14 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
+}));
+
 vi.mock("@/stores/organization-store", () => ({
 	useOrganizationStore: {
 		getState: vi.fn(() => ({
