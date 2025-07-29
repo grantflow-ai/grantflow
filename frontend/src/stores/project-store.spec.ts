@@ -20,6 +20,13 @@ vi.mock("@/stores/organization-store", () => ({
 		})),
 	},
 }));
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
+}));
 
 describe("Project Store", () => {
 	beforeEach(() => {
