@@ -26,20 +26,36 @@ vi.mock("@/stores/wizard-store", () => ({
 
 // Mock the draggable task item
 vi.mock("./draggable-task-item", () => ({
-	DraggableTaskItem: ({ isEditing, onTaskDelete, onTaskUpdate, task, taskIndex }: any) => (
+	DraggableTaskItem: ({
+		isEditing,
+		onTaskDelete,
+		onValueChange,
+		task,
+		taskIndex,
+	}: {
+		isEditing?: boolean;
+		onTaskDelete?: () => void;
+		onValueChange?: (index: number, content: string) => void;
+		task: { description?: string; title: string };
+		taskIndex: number;
+	}) => (
 		<div data-testid={`task-item-${taskIndex}`}>
 			<span>
-				Task {taskIndex + 1}: {task.description || task.title}
+				Task {taskIndex + 1}: {(() => {
+					const trimmedDescription = task.description?.trim();
+					return trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : task.title;
+				})()}
 			</span>
 			{isEditing && (
 				<>
 					<button
 						data-testid={`update-task-${taskIndex}`}
-						onClick={() => onTaskUpdate?.(taskIndex, "Updated content")}
+						onClick={() => onValueChange?.(taskIndex, "Updated content")}
+						type="button"
 					>
 						Update
 					</button>
-					<button data-testid={`delete-task-${taskIndex}`} onClick={() => onTaskDelete?.(taskIndex)}>
+					<button data-testid={`delete-task-${taskIndex}`} onClick={() => onTaskDelete?.()} type="button">
 						Delete
 					</button>
 				</>
@@ -70,7 +86,7 @@ const defaultProps = {
 	onTaskAdd: vi.fn(),
 	onTaskDelete: vi.fn(),
 	onTaskReorder: vi.fn(),
-	onTaskUpdate: vi.fn(),
+	onTaskValuesChange: vi.fn(),
 	tasks: mockTasks,
 };
 
@@ -180,15 +196,15 @@ describe("DraggableTaskList", () => {
 			expect(onTaskAdd).toHaveBeenCalledTimes(1);
 		});
 
-		it("passes task update events to onTaskUpdate", async () => {
+		it("passes task value change events to onTaskValuesChange", async () => {
 			const user = userEvent.setup();
-			const onTaskUpdate = vi.fn();
+			const onTaskValuesChange = vi.fn();
 
-			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskUpdate={onTaskUpdate} />);
+			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskValuesChange={onTaskValuesChange} />);
 
 			await user.click(screen.getByTestId("update-task-0"));
 
-			expect(onTaskUpdate).toHaveBeenCalledWith(0, "Updated content");
+			expect(onTaskValuesChange).toHaveBeenCalledWith({ 0: "Updated content" });
 		});
 
 		it("passes task delete events to onTaskDelete", async () => {
@@ -211,7 +227,7 @@ describe("DraggableTaskList", () => {
 					isEditing={true}
 					onTaskAdd={undefined}
 					onTaskDelete={undefined}
-					onTaskUpdate={undefined}
+					onTaskValuesChange={undefined}
 				/>,
 			);
 
