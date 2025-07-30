@@ -43,6 +43,46 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 	DropdownMenuTrigger: ({ children }: any) => <div data-testid="dropdown-trigger">{children}</div>,
 }));
 
+vi.mock("./draggable-task-list", () => ({
+	DraggableTaskList: ({ isEditing, onTaskAdd, onTaskDelete, onTaskUpdate, tasks }: any) => {
+		const getTaskContent = (task: { description?: string; title: string }): string => {
+			const trimmedDescription = task.description?.trim();
+			return trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : task.title;
+		};
+
+		return (
+			<div data-testid="tasks-section">
+				<div>Tasks</div>
+				{isEditing && (
+					<button data-testid="add-task-button" onClick={onTaskAdd}>
+						Add Task
+					</button>
+				)}
+				{tasks.map((task: any, index: number) => (
+					<div key={index}>
+						{isEditing ? (
+							<div>
+								<label htmlFor={`task-description-1-${index}`}>Task description</label>
+								<textarea
+									id={`task-description-1-${index}`}
+									onChange={(e) => onTaskUpdate?.(index, e.target.value)}
+									placeholder="Describe a step to achieve this objective"
+									value={getTaskContent(task)}
+								/>
+								<button data-testid="delete-task-button" onClick={() => onTaskDelete?.(index)}>
+									Delete
+								</button>
+							</div>
+						) : (
+							<div data-testid="task-display">Task: {getTaskContent(task)}</div>
+						)}
+					</div>
+				))}
+			</div>
+		);
+	},
+}));
+
 describe.sequential("ObjectiveComponents", () => {
 	beforeEach(() => {
 		resetAllStores();
@@ -54,7 +94,6 @@ describe.sequential("ObjectiveComponents", () => {
 		cleanup();
 	});
 
-	// Shared helper function to avoid duplication
 	function renderEditableObjectiveHelper(overrides = {}) {
 		const defaultProps = {
 			index: 1,
@@ -175,7 +214,7 @@ describe.sequential("ObjectiveComponents", () => {
 			const user = userEvent.setup();
 			renderEditableObjectiveHelper();
 
-			const taskFields = screen.getAllByDisplayValue(/Task \d/);
+			const taskFields = screen.getAllByLabelText("Task description");
 
 			await user.clear(taskFields[0]);
 			await user.type(taskFields[0], "UpdatedTask");
