@@ -13,7 +13,7 @@ interface DraggableTaskListProps {
 	onTaskAdd?: () => void;
 	onTaskDelete?: (taskIndex: number) => void;
 	onTaskReorder?: (oldIndex: number, newIndex: number) => void;
-	onTaskUpdate?: (taskIndex: number, description: string) => void;
+	onTaskValuesChange?: (taskValues: Record<number, string>) => void;
 	tasks: Task[];
 }
 
@@ -34,7 +34,7 @@ export function DraggableTaskList({
 	onTaskAdd,
 	onTaskDelete,
 	onTaskReorder,
-	onTaskUpdate,
+	onTaskValuesChange,
 	tasks,
 }: DraggableTaskListProps) {
 	const dragDropItems: TaskDragDropItem[] = tasks.map((_, index) => ({
@@ -87,10 +87,14 @@ export function DraggableTaskList({
 					{tasks.map((task, taskIndex) => (
 						<DraggableTaskItem
 							isEditing={isEditing}
-							key={taskIndex}
+							key={`task-${task.number}-${objectiveIndex}`}
 							objectiveIndex={objectiveIndex}
-							onTaskDelete={onTaskDelete}
-							onTaskUpdate={onTaskUpdate}
+							onTaskDelete={() => onTaskDelete?.(taskIndex)}
+							onValueChange={(taskIndex, value) => {
+								const taskValues: Record<number, string> = {};
+								taskValues[taskIndex] = value;
+								onTaskValuesChange?.(taskValues);
+							}}
 							task={task}
 							taskIndex={taskIndex}
 							totalTasks={tasks.length}

@@ -59,7 +59,7 @@ const defaultProps = {
 	isEditing: false,
 	objectiveIndex: 1,
 	onTaskDelete: vi.fn(),
-	onTaskUpdate: vi.fn(),
+	onValueChange: vi.fn(),
 	task: mockTask,
 	taskIndex: 0,
 	totalTasks: 2,
@@ -267,13 +267,13 @@ describe("DraggableTaskItem", () => {
 			expect(screen.queryByTestId("delete-task-button")).not.toBeInTheDocument();
 		});
 
-		it("calls onTaskUpdate when textarea content changes", async () => {
+		it("calls onValueChange when textarea content changes", async () => {
 			const user = userEvent.setup();
-			const onTaskUpdate = vi.fn();
+			const onValueChange = vi.fn();
 
 			render(
 				<TestWrapper>
-					<DraggableTaskItem {...defaultProps} isEditing={true} onTaskUpdate={onTaskUpdate} />
+					<DraggableTaskItem {...defaultProps} isEditing={true} onValueChange={onValueChange} />
 				</TestWrapper>,
 			);
 
@@ -281,9 +281,9 @@ describe("DraggableTaskItem", () => {
 			await user.clear(textarea);
 			await user.type(textarea, "x");
 
-			// Should call onTaskUpdate with taskIndex 0 and the updated content
-			expect(onTaskUpdate).toHaveBeenCalled();
-			expect(onTaskUpdate).toHaveBeenCalledWith(0, expect.any(String));
+			// Should call onValueChange with taskIndex 0 and the updated content
+			expect(onValueChange).toHaveBeenCalled();
+			expect(onValueChange).toHaveBeenCalledWith(0, expect.any(String));
 		});
 
 		it("calls onTaskDelete when delete button is clicked", async () => {
@@ -298,7 +298,7 @@ describe("DraggableTaskItem", () => {
 
 			await user.click(screen.getByTestId("delete-task-button"));
 
-			expect(onTaskDelete).toHaveBeenCalledWith(0);
+			expect(onTaskDelete).toHaveBeenCalled();
 		});
 
 		it("shows correct placeholder text in textarea", () => {
@@ -360,12 +360,12 @@ describe("DraggableTaskItem", () => {
 	});
 
 	describe("Edge Cases", () => {
-		it("handles missing onTaskUpdate gracefully", async () => {
+		it("handles missing onValueChange gracefully", async () => {
 			const user = userEvent.setup();
 
 			render(
 				<TestWrapper>
-					<DraggableTaskItem {...defaultProps} isEditing={true} onTaskUpdate={undefined} />
+					<DraggableTaskItem {...defaultProps} isEditing={true} onValueChange={undefined} />
 				</TestWrapper>,
 			);
 

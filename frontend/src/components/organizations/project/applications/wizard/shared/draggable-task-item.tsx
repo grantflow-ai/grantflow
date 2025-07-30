@@ -4,14 +4,15 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripHorizontal } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/forms/textarea-field";
 
 interface DraggableTaskItemProps {
 	isEditing?: boolean;
 	objectiveIndex: number;
-	onTaskDelete?: (taskIndex: number) => void;
-	onTaskUpdate?: (taskIndex: number, description: string) => void;
+	onTaskDelete?: () => void;
+	onValueChange?: (taskIndex: number, value: string) => void;
 	task: Task;
 	taskIndex: number;
 	totalTasks: number;
@@ -37,7 +38,7 @@ export function DraggableTaskItem({
 	isEditing,
 	objectiveIndex,
 	onTaskDelete,
-	onTaskUpdate,
+	onValueChange,
 	task,
 	taskIndex,
 	totalTasks,
@@ -45,10 +46,24 @@ export function DraggableTaskItem({
 	const taskId = `${objectiveIndex}-task-${taskIndex}`;
 	const isDragDisabled = totalTasks <= 1;
 
+	const [localDescription, setLocalDescription] = useState(() => getTaskContent(task));
+
 	const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
 		disabled: isDragDisabled,
 		id: taskId,
 	});
+
+	useEffect(() => {
+		onValueChange?.(taskIndex, localDescription);
+	}, [localDescription, taskIndex, onValueChange]);
+
+	const handleTaskUpdate = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setLocalDescription(e.target.value);
+	};
+
+	const handleTaskDelete = () => {
+		onTaskDelete?.();
+	};
 
 	const style = {
 		opacity: isDragging ? 0.5 : 1,
@@ -64,7 +79,7 @@ export function DraggableTaskItem({
 				isEditing={isEditing}
 				listeners={listeners}
 				objectiveIndex={objectiveIndex}
-				onTaskDelete={() => onTaskDelete?.(taskIndex)}
+				onTaskDelete={handleTaskDelete}
 				taskIndex={taskIndex}
 			/>
 			<div className="pt-9.5 px-3 pb-3">
@@ -74,9 +89,9 @@ export function DraggableTaskItem({
 							className="min-h-52"
 							id={`task-description-${objectiveIndex}-${taskIndex}`}
 							label="Task description"
-							onChange={(e) => onTaskUpdate?.(taskIndex, e.target.value)}
+							onChange={handleTaskUpdate}
 							placeholder="Describe a step to achieve this objective"
-							value={getTaskContent(task)}
+							value={localDescription}
 							variant="field"
 						/>
 					</div>

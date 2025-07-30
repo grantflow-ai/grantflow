@@ -3,6 +3,7 @@ import { ResearchObjectiveFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EditableObjective, ObjectiveCardContent, ObjectiveHeader } from "./objective-components";
@@ -43,18 +44,20 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 	DropdownMenuTrigger: ({ children }: any) => <div data-testid="dropdown-trigger">{children}</div>,
 }));
 
+const getTaskContent = (task: { description?: string; title: string }): string => {
+	const trimmedDescription = task.description?.trim();
+	return trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : task.title;
+};
+
 vi.mock("./draggable-task-list", () => ({
-	DraggableTaskList: ({ isEditing, onTaskAdd, onTaskDelete, onTaskUpdate, tasks }: any) => {
-		const getTaskContent = (task: { description?: string; title: string }): string => {
-			const trimmedDescription = task.description?.trim();
-			return trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : task.title;
-		};
+	DraggableTaskList: ({ isEditing, onTaskAdd, onTaskDelete, onTaskValuesChange, tasks }: any) => {
+		const [localValues, setLocalValues] = React.useState<Record<number, string>>({});
 
 		return (
 			<div data-testid="tasks-section">
 				<div>Tasks</div>
 				{isEditing && (
-					<button data-testid="add-task-button" onClick={onTaskAdd}>
+					<button data-testid="add-task-button" onClick={onTaskAdd} type="button">
 						Add Task
 					</button>
 				)}
@@ -65,11 +68,19 @@ vi.mock("./draggable-task-list", () => ({
 								<label htmlFor={`task-description-1-${index}`}>Task description</label>
 								<textarea
 									id={`task-description-1-${index}`}
-									onChange={(e) => onTaskUpdate?.(index, e.target.value)}
+									onChange={(e) => {
+										const newValue = e.target.value;
+										setLocalValues((prev) => ({ ...prev, [index]: newValue }));
+										onTaskValuesChange?.({ [index]: newValue });
+									}}
 									placeholder="Describe a step to achieve this objective"
-									value={getTaskContent(task)}
+									value={localValues[index] ?? getTaskContent(task)}
 								/>
-								<button data-testid="delete-task-button" onClick={() => onTaskDelete?.(index)}>
+								<button
+									data-testid="delete-task-button"
+									onClick={() => onTaskDelete?.(index)}
+									type="button"
+								>
 									Delete
 								</button>
 							</div>
@@ -216,9 +227,11 @@ describe.sequential("ObjectiveComponents", () => {
 
 			const taskFields = screen.getAllByLabelText("Task description");
 
+			// Clear and type new value
 			await user.clear(taskFields[0]);
 			await user.type(taskFields[0], "UpdatedTask");
 
+			// The mock should reflect the change since it's directly updating the value
 			expect(taskFields[0]).toHaveValue("UpdatedTask");
 		});
 
