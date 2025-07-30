@@ -85,6 +85,7 @@ interface WizardActions {
 	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
 	updateObjective: (objectiveNumber: number, updates: Partial<Omit<Objective, "number">>) => Promise<void>;
 	updateObjectives: (objectives: Objective[]) => Promise<void>;
+	updateTasksForObjective: (objectiveNumber: number, tasks: Objective["research_tasks"]) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
@@ -719,6 +720,37 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						const renumberedObjectives = renumberObjectives(objectives);
 						await updateResearchObjectives(renumberedObjectives);
 					}, "Update research objectives");
+				},
+
+				updateTasksForObjective: async (
+					objectiveNumber: number,
+					tasks: Objective["research_tasks"],
+				): Promise<void> => {
+					return withErrorHandling(async () => {
+						const currentObjectives = getCurrentObjectives();
+						const targetObjective = currentObjectives.find((obj) => obj.number === objectiveNumber);
+
+						if (!targetObjective) {
+							throw new Error(`Objective with number ${objectiveNumber} not found`);
+						}
+
+						const renumberedTasks = tasks.map((task, index) => ({
+							...task,
+							number: index + 1,
+						}));
+
+						const updatedObjectives = currentObjectives.map((obj) => {
+							if (obj.number === objectiveNumber) {
+								return {
+									...obj,
+									research_tasks: renumberedTasks,
+								};
+							}
+							return obj;
+						});
+
+						await updateResearchObjectives(updatedObjectives);
+					}, "Update tasks for research objective");
 				},
 
 				validateStepNext: (): boolean => {

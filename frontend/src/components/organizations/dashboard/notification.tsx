@@ -1,8 +1,8 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { BellIcon, X } from "lucide-react";
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 const initialNotifications = [
 	{
