@@ -58,3 +58,7 @@ sentence-transformers/
 storybook-static/
 terraform.rc
 frontend/functions/
+
+# Generated test results and benchmark data
+testing/test_data/results/
+AI_EVALUATION_BENCHMARK_REPORT.md
