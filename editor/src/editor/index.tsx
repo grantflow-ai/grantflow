@@ -13,11 +13,7 @@ import { HorizontalRule } from "@/components/node/horizontal-rule-node/horizonta
 import { ImageUploadNode } from "@/components/node/image-upload-node/image-upload-node-extension";
 import { Button } from "@/components/ui/button";
 import { Spacer } from "@/components/ui/spacer";
-import {
-	Toolbar,
-	ToolbarGroup,
-	ToolbarSeparator,
-} from "@/components/ui/toolbar";
+import { Toolbar, ToolbarGroup, ToolbarSeparator } from "@/components/ui/toolbar";
 import "@/components/node/blockquote-node/blockquote-node.scss";
 import "@/components/node/code-block-node/code-block-node.scss";
 import "@/components/node/horizontal-rule-node/horizontal-rule-node.scss";
@@ -31,19 +27,12 @@ import { ArrowLeftIcon } from "@/components/icons/arrow-left-icon";
 import { HighlighterIcon } from "@/components/icons/highlighter-icon";
 import { LinkIcon } from "@/components/icons/link-icon";
 import { BlockquoteButton } from "@/components/ui/blockquote-button";
-import { CodeBlockButton } from "@/components/ui/code-block-button";
-import {
-	ColorHighlightPopover,
-	ColorHighlightPopoverButton,
-	ColorHighlightPopoverContent,
-} from "@/components/ui/color-highlight-popover";
+import { ColorHighlightPopoverContent } from "@/components/ui/color-highlight-popover";
+import { FontFamilyDropdownMenu } from "@/components/ui/font-family-dropdown-menu";
+import { FontSizeDropdownMenu } from "@/components/ui/font-size-dropdown-menu";
 import { HeadingDropdownMenu } from "@/components/ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/ui/image-upload-button";
-import {
-	LinkButton,
-	LinkContent,
-	LinkPopover,
-} from "@/components/ui/link-popover";
+import { LinkButton, LinkContent, LinkPopover } from "@/components/ui/link-popover";
 import { ListDropdownMenu } from "@/components/ui/list-dropdown-menu";
 import { MarkButton } from "@/components/ui/mark-button";
 import { TextAlignButton } from "@/components/ui/text-align-button";
@@ -54,6 +43,7 @@ import { useWindowSize } from "@/hooks/use-window-size";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 import "@/editor/index.scss";
 import type { JSONContent } from "@tiptap/core";
+import { FontFamily, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { Markdown } from "tiptap-markdown";
 
 type MarkdownStorage = { getMarkdown: () => string };
@@ -71,15 +61,7 @@ export enum HeadingLevels {
 	H3 = 3,
 }
 
-const MainToolbarContent = ({
-	onHighlighterClick,
-	onLinkClick,
-	isMobile,
-}: {
-	onHighlighterClick: () => void;
-	onLinkClick: () => void;
-	isMobile: boolean;
-}) => {
+const MainToolbarContent = ({ onLinkClick, isMobile }: { onLinkClick: () => void; isMobile: boolean }) => {
 	return (
 		<>
 			<Spacer />
@@ -97,28 +79,26 @@ const MainToolbarContent = ({
 			</ToolbarGroup>
 
 			<ToolbarGroup>
-				<MarkButton type="bold" />
-				<MarkButton type="italic" />
-				<MarkButton type="underline" />
-				<ListDropdownMenu
-					types={["bulletList", "orderedList", "taskList"]}
+				<FontFamilyDropdownMenu
+					fontFamilies={["Arial", "Times New Roman", "Courier New", "Georgia", "Verdana"]}
 					portal={isMobile}
 				/>
-				<BlockquoteButton />
-				<CodeBlockButton />
-				<MarkButton type="strike" />
-				<MarkButton type="code" />
-				{!isMobile ? (
-					<ColorHighlightPopover />
-				) : (
-					<ColorHighlightPopoverButton onClick={onHighlighterClick} />
-				)}
-				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
 
 			<ToolbarGroup>
-				<MarkButton type="superscript" />
-				<MarkButton type="subscript" />
+				<FontSizeDropdownMenu
+					fontSizes={["8px", "10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px"]}
+					portal={isMobile}
+				/>
+			</ToolbarGroup>
+
+			<ToolbarGroup>
+				<MarkButton type="bold" />
+				<MarkButton type="italic" />
+				<MarkButton type="underline" />
+				<ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} portal={isMobile} />
+				<BlockquoteButton />
+				{!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
 			</ToolbarGroup>
 
 			<ToolbarGroup>
@@ -139,13 +119,7 @@ const MainToolbarContent = ({
 	);
 };
 
-const MobileToolbarContent = ({
-	type,
-	onBack,
-}: {
-	type: "highlighter" | "link";
-	onBack: () => void;
-}) => (
+const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; onBack: () => void }) => (
 	<>
 		<ToolbarGroup>
 			<Button data-style="ghost" onClick={onBack}>
@@ -160,11 +134,7 @@ const MobileToolbarContent = ({
 
 		<ToolbarSeparator />
 
-		{type === "highlighter" ? (
-			<ColorHighlightPopoverContent />
-		) : (
-			<LinkContent />
-		)}
+		{type === "highlighter" ? <ColorHighlightPopoverContent /> : <LinkContent />}
 	</>
 );
 
@@ -180,9 +150,7 @@ export const Editor = React.forwardRef(function Editor(
 ) {
 	const isMobile = useIsMobile();
 	const windowSize = useWindowSize();
-	const [mobileView, setMobileView] = React.useState<
-		"main" | "highlighter" | "link"
-	>("main");
+	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({
@@ -222,38 +190,32 @@ export const Editor = React.forwardRef(function Editor(
 				onError: (error) => console.error("Upload failed:", error),
 				upload: handleImageUpload,
 			}),
+			TextStyle,
+			FontFamily,
+			FontSize,
 		],
 		immediatelyRender: false,
-		shouldRerenderOnTransaction: false,
 		onUpdate: () => {
 			onContentChange?.();
 		},
+		shouldRerenderOnTransaction: false,
 	});
 
 	React.useImperativeHandle(
 		ref,
 		() => ({
-			getMarkdown: () =>
-				// @ts-expect-error: markdown is injected by tiptap-markdown extension
-				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
-			getJSON: () => editor?.getJSON(),
 			getHeadings: () => {
 				const json = editor?.getJSON();
 				if (!json || typeof json !== "object") return [];
 
-				function extractHeadings(
-					node: JSONContent,
-				): { level: HeadingLevels; text: string }[] {
+				function extractHeadings(node: JSONContent): { level: HeadingLevels; text: string }[] {
 					if (!node) return [];
 					let result: { level: HeadingLevels; text: string }[] = [];
 					if (
 						node.type === "heading" &&
-						(node.attrs?.level === HeadingLevels.H2 ||
-							node.attrs?.level === HeadingLevels.H3)
+						(node.attrs?.level === HeadingLevels.H2 || node.attrs?.level === HeadingLevels.H3)
 					) {
-						const text = (node.content || [])
-							.map((c: JSONContent) => c.text || "")
-							.join("");
+						const text = (node.content || []).map((c: JSONContent) => c.text || "").join("");
 						result.push({ level: node.attrs.level, text });
 					}
 					if (Array.isArray(node.content)) {
@@ -266,19 +228,18 @@ export const Editor = React.forwardRef(function Editor(
 
 				return extractHeadings(json);
 			},
+			getJSON: () => editor?.getJSON(),
+			getMarkdown: () =>
+				// @ts-expect-error: markdown is injected by tiptap-markdown extension
+				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
 			scrollToHeading: (headingIndex: number) => {
 				if (!editor) return false;
 				// Find all h2/h3 headings in document order using $nodes
-				const h2Nodes =
-					editor.$nodes("heading", { level: HeadingLevels.H2 }) || [];
-				const h3Nodes =
-					editor.$nodes("heading", { level: HeadingLevels.H3 }) || [];
-				const allHeadings = [...h2Nodes, ...h3Nodes].sort(
-					(a, b) => a.pos - b.pos,
-				);
+				const h2Nodes = editor.$nodes("heading", { level: HeadingLevels.H2 }) || [];
+				const h3Nodes = editor.$nodes("heading", { level: HeadingLevels.H3 }) || [];
+				const allHeadings = [...h2Nodes, ...h3Nodes].sort((a, b) => a.pos - b.pos);
 
-				if (headingIndex < 0 || headingIndex >= allHeadings.length)
-					return false;
+				if (headingIndex < 0 || headingIndex >= allHeadings.length) return false;
 				const nodePos = allHeadings[headingIndex];
 				if (!nodePos) return false;
 
@@ -295,9 +256,7 @@ export const Editor = React.forwardRef(function Editor(
 					const root = editor.options.element as HTMLElement | null;
 					if (root) {
 						const headings = root.querySelectorAll("h2, h3");
-						const domHeading = headings[headingIndex] as
-							| HTMLElement
-							| undefined;
+						const domHeading = headings[headingIndex] as HTMLElement | undefined;
 						if (domHeading && typeof domHeading.scrollIntoView === "function") {
 							domHeading.scrollIntoView({
 								behavior: "smooth",
@@ -337,11 +296,7 @@ export const Editor = React.forwardRef(function Editor(
 					}
 				>
 					{mobileView === "main" ? (
-						<MainToolbarContent
-							onHighlighterClick={() => setMobileView("highlighter")}
-							onLinkClick={() => setMobileView("link")}
-							isMobile={isMobile}
-						/>
+						<MainToolbarContent onLinkClick={() => setMobileView("link")} isMobile={isMobile} />
 					) : (
 						<MobileToolbarContent
 							type={mobileView === "highlighter" ? "highlighter" : "link"}
