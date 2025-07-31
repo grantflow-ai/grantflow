@@ -12,43 +12,50 @@ export function EditorSections({
 }) {
 	const renderedSections = React.useMemo(
 		() =>
-			sections.map((section, index) => {
-				const { level, text } = section;
-				const truncatedText = text.length > MAX_TEXT_LENGTH ? `${text.slice(0, MAX_TEXT_LENGTH)}...` : text;
+			sections
+				.filter((item) => !!item.text.trim())
+				.map((section, index) => {
+					const { level, text } = section;
+					const truncatedText =
+						text.length > MAX_TEXT_LENGTH
+							? `${text.slice(0, MAX_TEXT_LENGTH)}...`
+							: text;
 
-				if (level === HeadingLevels.H2) {
-					return (
-						<button
-							className="w-full px-4 py-2 hover:bg-gray-100 cursor-pointer"
-							data-testid="editor-section-item"
-							key={`${index}-${text}`}
-							onClick={() => {
-								onSectionClick(index);
-							}}
-							type="button"
-						>
-							<p className="text-app-black">{truncatedText}</p>
-						</button>
-					);
-				}
+					if (level === HeadingLevels.H2) {
+						return (
+							<button
+								className="w-full px-4 py-2 hover:bg-gray-100 cursor-pointer text-left"
+								data-testid="editor-section-item"
+								key={`${index}-${text}`}
+								onClick={() => {
+									onSectionClick(index);
+								}}
+								type="button"
+							>
+								<p className="text-app-black">{truncatedText}</p>
+							</button>
+						);
+					}
 
-				if (level === HeadingLevels.H3) {
-					return (
-						<button
-							className="w-full pl-8  px-4 py-2 hover:bg-gray-100 cursor-pointer"
-							data-testid="editor-section-item"
-							key={`${index}-${text}`}
-							onClick={() => {
-								onSectionClick(index);
-							}}
-							type="button"
-						>
-							<p className="text-sm text-gray-500 leading-4.5">{truncatedText}</p>
-						</button>
-					);
-				}
-				return null;
-			}),
+					if (level === HeadingLevels.H3) {
+						return (
+							<button
+								className="w-full pl-8  px-4 py-2 hover:bg-gray-100 cursor-pointer text-left"
+								data-testid="editor-section-item"
+								key={`${index}-${text}`}
+								onClick={() => {
+									onSectionClick(index);
+								}}
+								type="button"
+							>
+								<p className="text-sm text-gray-500 leading-4.5">
+									{truncatedText}
+								</p>
+							</button>
+						);
+					}
+					return null;
+				}),
 		[sections, onSectionClick],
 	);
 
@@ -58,7 +65,9 @@ export function EditorSections({
 			data-testid="editor-sections"
 		>
 			<div className="px-3 py-4">
-				<p className="font-['Cabin'] text-app-black font-semibold">Grant Sections</p>
+				<p className="font-['Cabin'] text-app-black font-semibold">
+					Grant Sections
+				</p>
 			</div>
 			<div>{renderedSections}</div>
 		</div>
