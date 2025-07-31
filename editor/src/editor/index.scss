@@ -9,23 +9,6 @@ body {
   }
 }
 
-body {
-  font-family: "Inter", sans-serif;
-  color: var(--tt-theme-text);
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
-  padding: 0;
-}
-
-html,
-body,
-#root,
-#app {
-  height: 100%;
-  background-color: var(--tt-bg-color);
-}
-
 ::-webkit-scrollbar {
   width: 0.25rem;
 }
@@ -46,6 +29,11 @@ body,
 
 .tiptap.ProseMirror {
   font-family: "DM Sans", sans-serif;
+  color: var(--tt-theme-text);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  padding: 0;
 }
 
 .simple-editor-wrapper {
