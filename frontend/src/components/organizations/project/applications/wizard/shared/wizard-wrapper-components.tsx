@@ -58,7 +58,6 @@ export function WizardFooter() {
 	const title = useApplicationStore((state) => state.application?.title);
 	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
 
-	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep);
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
 
 	const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
@@ -69,6 +68,8 @@ export function WizardFooter() {
 	const disabled = !(validateStepNext() && localValidation);
 	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
 
+	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep, disabled);
+
 	return (
 		<footer
 			className="relative flex h-auto w-full items-center justify-between border-t-1 border-gray-100 bg-surface-primary p-6"
@@ -78,7 +79,10 @@ export function WizardFooter() {
 				<AppButton
 					data-testid="back-button"
 					disabled={backDisabled}
-					leftIcon={<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />}
+					leftIcon={styledIcon(
+						<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />,
+						backDisabled,
+					)}
 					onClick={toPreviousStep}
 					size="lg"
 					theme="dark"
@@ -196,17 +200,20 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 	);
 }
 
-function generateFooterRightButtonProps(currentStep: WizardStep) {
+function generateFooterRightButtonProps(currentStep: WizardStep, disabled?: boolean) {
 	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
 
 	return {
 		leftIcon: (() => {
 			if (isApproveStep) {
-				return <Image alt="Approve" height={16} src="/icons/approve.svg" width={16} />;
+				return styledIcon(<Image alt="Approve" height={16} src="/icons/approve.svg" width={16} />, disabled);
 			}
 			if (isGenerateStep) {
-				return <Image alt="Generate" height={16} src="/icons/button-logo.svg" width={16} />;
+				return styledIcon(
+					<Image alt="Generate" height={16} src="/icons/button-logo-white.svg" width={16} />,
+					disabled,
+				);
 			}
 			return undefined;
 		})(),
@@ -219,9 +226,9 @@ function generateFooterRightButtonProps(currentStep: WizardStep) {
 			}
 			return "Next";
 		})(),
-		rightIcon: isGenerateStep ? undefined : (
-			<Image alt="Go ahead" height={15} src="/icons/go-ahead.svg" width={15} />
-		),
+		rightIcon: isGenerateStep
+			? undefined
+			: styledIcon(<Image alt="Go ahead" height={15} src="/icons/go-ahead-white.svg" width={15} />, disabled),
 	};
 }
 
@@ -275,6 +282,16 @@ function ProgressTitles({ currentStep, stepTitles }: { currentStep: WizardStep; 
 					})}
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function styledIcon(icon: React.ReactElement, disabled?: boolean) {
+	if (!disabled) return icon;
+
+	return (
+		<div className="[&>img]:filter [&>img]:[filter:brightness(0)_saturate(100%)_invert(84%)_sepia(8%)_saturate(221%)_hue-rotate(180deg)_brightness(95%)_contrast(87%)]">
+			{icon}
 		</div>
 	);
 }

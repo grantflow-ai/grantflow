@@ -5,7 +5,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const appButtonVariants = cva(
-	"font-button size-auto cursor-pointer rounded-sm text-base font-light hover:bg-transparent shadow-none",
+	"font-button size-auto cursor-pointer rounded-sm text-base font-light hover:bg-transparent shadow-none gap-0",
 	{
 		compoundVariants: [
 			{
@@ -39,7 +39,7 @@ const appButtonVariants = cva(
 				link: "hover:text-link-hover-dark rounded-none bg-transparent font-normal hover:no-underline",
 				primary: "hover:bg-accent disabled:bg-muted disabled:opacity-100",
 				secondary:
-					"text-primary border-primary before:border-primary relative border bg-transparent before:pointer-events-none before:absolute before:-inset-px before:rounded-sm before:border-2 before:opacity-0 before:transition-opacity hover:before:opacity-100",
+					"text-primary border-primary before:border-primary relative border bg-transparent before:pointer-events-none before:absolute before:-inset-px before:rounded-sm before:border-2 before:opacity-0 before:transition-opacity hover:before:opacity-100 disabled:text-muted disabled:border-muted disabled:before:border-muted",
 			},
 		},
 	},
@@ -84,9 +84,9 @@ export function AppButton({
 
 	return (
 		<Button asChild={asChild} className={combinedClassNames} {...props}>
-			{leftIcon && <span className="mr-1 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
+			{leftIcon && <span className="mr-2 inline-flex items-center">{resizedIcon(leftIcon)} </span>}
 			{children}
-			{rightIcon && <span className="ml-1 inline-flex items-center">{resizedIcon(rightIcon)}</span>}
+			{rightIcon && <span className="ml-2 inline-flex items-center">{resizedIcon(rightIcon)}</span>}
 		</Button>
 	);
 }
