@@ -1,5 +1,5 @@
 import { Plus, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { API } from "@/types/api-types";
 import { AppButton } from "@/components/app";
 import {
@@ -11,24 +11,21 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getProjects } from "@/actions/project";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { toast } from "sonner";
 
 interface NewApplicationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onCreate: (title: string, description: string) => void;
+	projects: Project[];
 }
+
 type Project = API.ListProjects.Http200.ResponseBody[number];
 
-export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicationModalProps) {
+export default function NewApplicationModal({ isOpen, onClose, onCreate, projects }: NewApplicationModalProps) {
 	const [title, setTitle] = useState("");
 	const [description] = useState("");
 	const [showNewProjectInput, setShowNewProjectInput] = useState(false);
 	const [isSelectOpen, setIsSelectOpen] = useState(false);
-	const [projects, setProjects] = useState<Project[]>([]);
-	const { selectedOrganizationId } = useOrganizationStore();
 
 	const handleCreate = () => {
 		onCreate(title, description);
@@ -40,25 +37,13 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 			onClose();
 		}
 	};
-	useEffect(() => {
-		if (isOpen) {
-			const fetchProjects = async () => {
-				try {
-					if (selectedOrganizationId) {
-						const projectList = await getProjects(selectedOrganizationId);
-						setProjects(projectList);
-					}
-				} catch {
-					toast.error("Failed to load research projects. Please try again.");
-				}
-			};
-			void fetchProjects();
-		}
-	}, [isOpen, selectedOrganizationId]);
+
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
-				className={`${isSelectOpen || showNewProjectInput ? "h-[451px]" : "h-[330px]"} p-8  flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100 transition-all duration-500 `}
+				className={`${
+					isSelectOpen || showNewProjectInput ? "h-[451px]" : "h-[330px]"
+				} p-8  flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100 transition-all duration-500 `}
 				data-testid="new-application-modal"
 			>
 				<DialogHeader className="flex flex-col gap-2">
@@ -82,11 +67,12 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 						</label>
 						<Select
 							onOpenChange={setIsSelectOpen}
-							onValueChange={(Value) => {
-								if (Value === "Menu Item - create-new") {
-									setShowNewProjectInput(true);
-								} else {
-									setShowNewProjectInput(false);
+							onValueChange={(value) => {
+								setShowNewProjectInput(value === "Menu Item - create-new");
+
+								if (value !== "Menu Item - create-new") {
+									const selectedProject = projects.find((p) => p.id === value);
+									setTitle(selectedProject ? selectedProject.name : "");
 								}
 							}}
 						>
@@ -107,7 +93,7 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 								{projects.map((project) => (
 									<SelectItem
 										className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-										data-testid="select-item-first"
+										data-testid={`select-item-${project.id}`}
 										key={project.id}
 										value={project.id}
 									>

@@ -4,7 +4,7 @@ import { HelpCircle, LogOut, Plus } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import {
 	Sidebar,
@@ -21,13 +21,33 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
+import { API } from "@/types/api-types";
+import { getProjects } from "@/actions/project";
+import { toast } from "sonner";
 
+type Project = API.ListProjects.Http200.ResponseBody[number];
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
 	const organization = useOrganizationStore((state) => state.organization);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const { isMobile, state } = useSidebar();
+	const [projects, setProjects] = useState<Project[]>([]);
+	const { selectedOrganizationId } = useOrganizationStore();
+
+	useEffect(() => {
+		const fetchProjects = async () => {
+			try {
+				if (selectedOrganizationId) {
+					const projectList = await getProjects(selectedOrganizationId);
+					setProjects(projectList);
+				}
+			} catch {
+				toast.error("Failed to load research projects. Please try again.");
+			}
+		};
+		void fetchProjects();
+	}, [selectedOrganizationId]);
 
 	const handleLogout = () => {
 		setUser(null);
@@ -38,6 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const handleCreateApplication = () => {
 		setIsModalOpen(false);
 	};
+
 	return (
 		<>
 			<Sidebar
@@ -133,6 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					setIsModalOpen(false);
 				}}
 				onCreate={handleCreateApplication}
+				projects={projects}
 			/>
 		</>
 	);
