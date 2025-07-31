@@ -49,8 +49,6 @@ export const FontFamilyDropdownMenu = React.forwardRef<HTMLButtonElement, FontFa
 			[canToggle, editor, onOpenChange],
 		);
 
-		console.log("isVisible", isVisible);
-
 		if (!isVisible) {
 			return null;
 		}
