@@ -372,7 +372,6 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
-				
 			/>
 		</section>
 	);
