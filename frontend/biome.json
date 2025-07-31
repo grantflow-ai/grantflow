@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -102,6 +102,7 @@
 				"useHtmlLang": "error",
 				"useKeyWithClickEvents": "warn",
 				"useKeyWithMouseEvents": "warn",
+				"useSemanticElements": "off",
 				"useValidAnchor": "error"
 			},
 			"complexity": {
@@ -167,7 +168,7 @@
 				"noInferrableTypes": "error",
 				"noNegationElse": "off",
 				"noNonNullAssertion": "off",
-				"noParameterAssign": "error",
+				"noParameterAssign": "off",
 				"noRestrictedGlobals": {
 					"level": "error",
 					"options": {

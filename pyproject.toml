@@ -134,7 +134,7 @@ lint.pylint.max-statements = 100
 
 [tool.codespell]
 ignore-words-list = "Bu,COo,bu,TAHt,UE,Mater,CROs,devlop,vEw,afterAll,beforeAll,TE"
-skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml,*.spec.ts,*.spec.tsx,*_test.py,*/tests/*,**/tests/**,*/coverage/*,**/coverage/**,**/functions/**"
+skip = "*/e2e/*,**/e2e/**,pnpm-lock.yaml,*.spec.ts,*.spec.tsx,*_test.py,*/tests/*,**/tests/**,*/coverage/*,**/coverage/**,**/functions/**,*/dist/*,**/dist/**"
 
 [tool.pyproject-fmt]
 keep_full_version = true
@@ -194,7 +194,7 @@ strict = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = [ "." ]
-exclude = [ "^cloud_functions/.*" ]
+exclude = [ "^cloud_functions/.*", "^terraform/.*" ]
 
 [tool.uv.workspace]
 members = [
