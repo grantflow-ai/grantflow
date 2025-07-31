@@ -363,7 +363,6 @@ function SectionHeader({
 	sectionHasMaxWords,
 }: SectionHeaderProps) {
 	return (
-		// biome-ignore lint/a11y/useSemanticElements: This element handles complex drag-and-drop interactions that require specific event handling and cannot be converted to a semantic button
 		<div
 			aria-expanded={isExpanded}
 			aria-label={`${isExpanded ? "Collapse" : "Expand"} ${section.title} section`}
