@@ -36,7 +36,7 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
-				className="p-8 w-[464px] h-[431px] flex flex-col gap-8 bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100"
+				className="p-8 w-[464px] h-[431px] flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100"
 				data-testid="new-application-modal"
 			>
 				<DialogHeader className="flex flex-col gap-2">
