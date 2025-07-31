@@ -246,7 +246,6 @@ export function ProjectDetailClient() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							{isEditingTitle ? (
-								// biome-ignore lint/a11y/useSemanticElements: Using a div with contentEditable for custom styling
 								<div
 									aria-label="Project Title"
 									className="font-medium text-[36px] leading-[42px] text-gray-300 outline-none border-b-2  border-primary focus:ring-offset-2  "
@@ -372,7 +371,6 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
-				
 			/>
 		</section>
 	);
