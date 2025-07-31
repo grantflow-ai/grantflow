@@ -58,9 +58,7 @@ async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
     logger.debug("Saved markdown page to GCS", blob_path=blob_path, result_name=result_name)
 
 
-async def download_grant_pages(
-    *, search_results: list[GrantInfo], existing_file_identifiers: set[str]
-) -> int:
+async def download_grant_pages(*, search_results: list[GrantInfo], existing_file_identifiers: set[str]) -> int:
     """Download grant pages from search results and save them as markdown files.
 
     Args:
