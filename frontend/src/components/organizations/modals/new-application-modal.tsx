@@ -58,7 +58,7 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
-				className={`${ isSelectOpen || showNewProjectInput ? "h-[451px]":"h-[330px]"} p-8  flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100 transition-all duration-500 `}
+				className={`${isSelectOpen || showNewProjectInput ? "h-[451px]" : "h-[330px]"} p-8  flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100 transition-all duration-500 `}
 				data-testid="new-application-modal"
 			>
 				<DialogHeader className="flex flex-col gap-2">
@@ -108,6 +108,7 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 									<SelectItem
 										className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
 										data-testid="select-item-first"
+										key={project.id}
 										value={project.id}
 									>
 										{project.name}
