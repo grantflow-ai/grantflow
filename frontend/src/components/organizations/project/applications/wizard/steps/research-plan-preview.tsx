@@ -13,19 +13,18 @@ interface ResearchPlanPreviewProps {
 	dialogRef: RefObject<null | WizardDialogRef>;
 }
 
+const handleReorder = async (objectives: Objective[], oldIndex: number, newIndex: number) => {
+	const reorderedObjectives = [...objectives];
+	const [movedObjective] = reorderedObjectives.splice(oldIndex, 1);
+	reorderedObjectives.splice(newIndex, 0, movedObjective);
+	await useWizardStore.getState().updateObjectives(reorderedObjectives);
+};
+
 export function ResearchPlanPreview({ dialogRef }: ResearchPlanPreviewProps) {
 	const objectives = useApplicationStore((state) => state.application?.research_objectives) ?? [];
-	const updateObjectives = useWizardStore((state) => state.updateObjectives);
 
 	const { editingObjectiveId, handleEdit, handleRemoveClick, handleSaveObjective, setEditingObjectiveId } =
 		useObjectiveManagement(dialogRef);
-
-	const handleReorder = async (objectives: Objective[], oldIndex: number, newIndex: number) => {
-		const reorderedObjectives = [...objectives];
-		const [movedObjective] = reorderedObjectives.splice(oldIndex, 1);
-		reorderedObjectives.splice(newIndex, 0, movedObjective);
-		await updateObjectives(reorderedObjectives);
-	};
 
 	if (objectives.length === 0) {
 		return (
