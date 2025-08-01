@@ -1,5 +1,10 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::testing/factories";
+import {
+	ApplicationWithTemplateFactory,
+	GetOrganizationResponseFactory,
+	ListOrganizationsResponseFactory,
+	ResearchObjectiveFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +13,23 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 
 import { ResearchPlanPreview } from "./research-plan-preview";
+
+vi.mock("@/components/ui/dropdown-menu", () => ({
+	DropdownMenu: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="mocked-dropdown-menu">{children}</div>
+	),
+	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="mocked-dropdown-content">{children}</div>
+	),
+	DropdownMenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
+		<button data-testid="mocked-dropdown-item" onClick={onClick} type="button">
+			{children}
+		</button>
+	),
+	DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="mocked-dropdown-trigger">{children}</div>
+	),
+}));
 
 function cleanupPortals() {
 	const portals = document.querySelectorAll("[data-radix-portal]");
@@ -25,8 +47,12 @@ describe.sequential("ResearchPlanPreview Display Mode", () => {
 		cleanupPortals();
 		setupAuthenticatedTest();
 
+		const organization = GetOrganizationResponseFactory.build();
+		const organizations = ListOrganizationsResponseFactory.build();
 		useOrganizationStore.setState({
-			selectedOrganizationId: "mock-organization-id",
+			organization,
+			organizations,
+			selectedOrganizationId: organization.id,
 		});
 
 		mockDialogRef = {

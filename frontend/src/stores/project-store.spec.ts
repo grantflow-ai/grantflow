@@ -9,7 +9,9 @@ import { useProjectStore } from "./project-store";
 vi.mock("@/actions/project");
 vi.mock("sonner", () => ({
 	toast: {
+		dismiss: vi.fn(),
 		error: vi.fn(),
+		loading: vi.fn(() => "mock-toast-id"),
 		success: vi.fn(),
 	},
 }));
@@ -18,6 +20,13 @@ vi.mock("@/stores/organization-store", () => ({
 		getState: vi.fn(() => ({
 			selectedOrganizationId: "mock-org-id",
 		})),
+	},
+}));
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
 	},
 }));
 
