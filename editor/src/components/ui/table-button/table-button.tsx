@@ -19,14 +19,7 @@ function TableIcon({ className }: { className?: string }) {
 			className={className}
 		>
 			<title>Insert table</title>
-			<mask
-				id="mask0_5188_4581"
-				maskUnits="userSpaceOnUse"
-				x="0"
-				y="0"
-				width="17"
-				height="16"
-			>
+			<mask id="mask0_5188_4581" maskUnits="userSpaceOnUse" x="0" y="0" width="17" height="16">
 				<rect x="0.5" width="16" height="16" fill="#D9D9D9" />
 			</mask>
 			<g mask="url(#mask0_5188_4581)">
@@ -39,52 +32,47 @@ function TableIcon({ className }: { className?: string }) {
 	);
 }
 
-export const TableButton = React.forwardRef<
-	HTMLButtonElement,
-	TableButtonProps
->(({ text, onClick, children, ...buttonProps }, ref) => {
-	const { editor } = useTiptapEditor();
+export const TableButton = React.forwardRef<HTMLButtonElement, TableButtonProps>(
+	({ text, onClick, children, ...buttonProps }, ref) => {
+		const { editor } = useTiptapEditor();
 
-	const handleClick = React.useCallback(
-		(event: React.MouseEvent<HTMLButtonElement>) => {
-			onClick?.(event);
-			if (event.defaultPrevented) return;
+		const handleClick = React.useCallback(
+			(event: React.MouseEvent<HTMLButtonElement>) => {
+				onClick?.(event);
+				if (event.defaultPrevented) return;
 
-			if (editor) {
-				// Check if cursor is inside a table
-				if (editor.isActive("table")) {
-					return;
+				if (editor) {
+					// Check if cursor is inside a table
+					if (editor.isActive("table")) {
+						return;
+					}
+
+					editor.chain().focus().insertTable({ cols: 3, rows: 3, withHeaderRow: true }).run();
 				}
+			},
+			[editor, onClick],
+		);
 
-				editor
-					.chain()
-					.focus()
-					.insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-					.run();
-			}
-		},
-		[editor, onClick],
-	);
-
-	return (
-		<Button
-			type="button"
-			data-style="ghost"
-			tabIndex={-1}
-			aria-label="Insert table"
-			tooltip="Insert table"
-			onClick={handleClick}
-			{...buttonProps}
-			ref={ref}
-		>
-			{children ?? (
-				<>
-					<TableIcon className="tiptap-button-icon" />
-					{text && <span className="tiptap-button-text">{text}</span>}
-				</>
-			)}
-		</Button>
-	);
-});
+		return (
+			<Button
+				type="button"
+				data-style="ghost"
+				tabIndex={-1}
+				aria-label="Insert table"
+				tooltip="Insert table"
+				onClick={handleClick}
+				{...buttonProps}
+				ref={ref}
+			>
+				{children ?? (
+					<>
+						<TableIcon className="tiptap-button-icon" />
+						{text && <span className="tiptap-button-text">{text}</span>}
+					</>
+				)}
+			</Button>
+		);
+	},
+);
 
 TableButton.displayName = "TableButton";
