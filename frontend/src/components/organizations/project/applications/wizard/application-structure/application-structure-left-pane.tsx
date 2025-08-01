@@ -9,247 +9,6 @@ import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { log } from "@/utils/logger";
 import { FilePreviewCard, LinkPreviewItem, PreviewCard, WizardLeftPane } from "../shared";
 
-// DEV_MODE: Remove before production - Development panel for testing websocket events
-function DevEventSimulationPanel() {
-	const [selectedEvent, setSelectedEvent] = useState<TemplateGenerationEvent>("grant_template_generation_started");
-	const [customMessage, setCustomMessage] = useState("Starting generation");
-	const [eventHistory, setEventHistory] = useState<
-		{ event: TemplateGenerationEvent; message: string; timestamp: string }[]
-	>([]);
-
-	const allEvents: TemplateGenerationEvent[] = [
-		"grant_template_generation_started",
-		"indexing_in_progress",
-		"extracting_cfp_data",
-		"cfp_data_extracted",
-		"grant_template_extraction",
-		"sections_extracted",
-		"grant_template_metadata",
-		"metadata_generated",
-		"saving_grant_template",
-		"grant_template_created",
-		"generation_error",
-		"internal_error",
-		"insufficient_context_error",
-		"low_retrieval_quality",
-		"pipeline_error",
-	];
-
-	const fireEvent = (event: TemplateGenerationEvent, message: string) => {
-		useWizardStore.setState({
-			templateGenerationStatus: { event, message },
-		});
-
-		setEventHistory((prev) => [
-			...prev,
-			{
-				event,
-				message,
-				timestamp: new Date().toLocaleTimeString(),
-			},
-		]);
-	};
-
-	const clearStatus = () => {
-		useWizardStore.setState({
-			templateGenerationStatus: undefined,
-		});
-		setEventHistory([]);
-	};
-
-	const resetSteps = () => {
-		// Clear the template generation status to reset the AnalyzingSteps component
-		useWizardStore.setState({
-			templateGenerationStatus: undefined,
-		});
-		setEventHistory([]);
-
-		// Force a re-render by briefly setting a null status
-		setTimeout(() => {
-			useWizardStore.setState({
-				templateGenerationStatus: null,
-			});
-		}, 50);
-	};
-
-	const runHappyPath = () => {
-		clearStatus();
-		const sequence = [
-			{
-				delay: 100,
-				event: "grant_template_generation_started" as TemplateGenerationEvent,
-				message: "🚀 Starting template generation process",
-			},
-			{
-				delay: 1200,
-				event: "indexing_in_progress" as TemplateGenerationEvent,
-				message: "📄 Indexing uploaded documents",
-			},
-			{
-				delay: 2400,
-				event: "extracting_cfp_data" as TemplateGenerationEvent,
-				message: "🔍 Extracting call for proposals data",
-			},
-			{
-				delay: 3600,
-				event: "sections_extracted" as TemplateGenerationEvent,
-				message: "📝 Sections extracted from guidelines",
-			},
-			{
-				delay: 4800,
-				event: "metadata_generated" as TemplateGenerationEvent,
-				message: "🏷️ Generated section metadata and descriptions",
-			},
-			{
-				delay: 6000,
-				event: "grant_template_created" as TemplateGenerationEvent,
-				message: "✅ Template created successfully!",
-			},
-		];
-
-		sequence.forEach(({ delay, event, message }) => {
-			setTimeout(() => {
-				fireEvent(event, message);
-			}, delay);
-		});
-	};
-
-	const runErrorScenario = () => {
-		clearStatus();
-		const sequence = [
-			{
-				delay: 100,
-				event: "grant_template_generation_started" as TemplateGenerationEvent,
-				message: "Starting template generation",
-			},
-			{ delay: 1200, event: "indexing_in_progress" as TemplateGenerationEvent, message: "Indexing documents" },
-			{
-				delay: 2400,
-				event: "generation_error" as TemplateGenerationEvent,
-				message: "❌ Failed to generate template: Insufficient document quality",
-			},
-		];
-
-		sequence.forEach(({ delay, event, message }) => {
-			setTimeout(() => {
-				fireEvent(event, message);
-			}, delay);
-		});
-	};
-
-	return (
-		<div className="fixed bottom-4 right-4 bg-white border-2 border-blue-500 rounded-lg p-4 shadow-lg z-50 w-80 max-h-96 overflow-y-auto">
-			<div className="flex items-center justify-between mb-3">
-				<h3 className="font-semibold text-sm text-blue-700">🚧 Dev Event Simulator</h3>
-				<div className="flex gap-1">
-					<span className="text-xs text-gray-500">Ctrl+Shift+D</span>
-					<button
-						className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-						onClick={clearStatus}
-						type="button"
-					>
-						Clear
-					</button>
-				</div>
-			</div>
-
-			<div className="space-y-3">
-				<div>
-					<label className="block text-xs font-medium text-gray-700 mb-1">Event Type:</label>
-					<select
-						className="w-full text-xs border rounded px-2 py-1"
-						onChange={(e) => {
-							setSelectedEvent(e.target.value as TemplateGenerationEvent);
-						}}
-						value={selectedEvent}
-					>
-						{allEvents.map((event) => (
-							<option key={event} value={event}>
-								{event}
-							</option>
-						))}
-					</select>
-				</div>
-
-				{/* Message Input */}
-				<div>
-					<label className="block text-xs font-medium text-gray-700 mb-1">Message:</label>
-					<input
-						className="w-full text-xs border rounded px-2 py-1"
-						onChange={(e) => {
-							setCustomMessage(e.target.value);
-						}}
-						placeholder="Custom message"
-						type="text"
-						value={customMessage}
-					/>
-				</div>
-
-				{/* Action Buttons */}
-				<div className="space-y-2">
-					<div className="grid grid-cols-2 gap-2">
-						<button
-							className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-							onClick={() => {
-								fireEvent(selectedEvent, customMessage);
-							}}
-							type="button"
-						>
-							Fire Event
-						</button>
-						<button
-							className="text-xs bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-							onClick={runHappyPath}
-							type="button"
-						>
-							Happy Path
-						</button>
-						<button
-							className="text-xs bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-							onClick={runErrorScenario}
-							type="button"
-						>
-							Error Flow
-						</button>
-						<button
-							className="text-xs bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600"
-							onClick={() => {
-								fireEvent("indexing_in_progress", "📄 Indexing documents...");
-							}}
-							type="button"
-						>
-							Indexing
-						</button>
-					</div>
-					<button
-						className="w-full text-xs bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600"
-						onClick={resetSteps}
-						type="button"
-					>
-						🔄 Reset Steps
-					</button>
-				</div>
-
-				{/* Event History */}
-				{eventHistory.length > 0 && (
-					<div>
-						<h4 className="text-xs font-medium text-gray-700 mb-1">Recent Events:</h4>
-						<div className="space-y-1 max-h-24 overflow-y-auto">
-							{eventHistory.slice(-3).map((item, index) => (
-								<div className="text-xs bg-gray-50 p-1 rounded" key={index}>
-									<div className="font-mono text-gray-600">{item.timestamp}</div>
-									<div className="font-medium">{item.event}</div>
-									<div className="text-gray-600">{item.message}</div>
-								</div>
-							))}
-						</div>
-					</div>
-				)}
-			</div>
-		</div>
-	);
-}
-
 const ANALYZING_STEPS = [
 	{
 		steps: [
@@ -392,7 +151,6 @@ const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
 	return `${baseClasses} ${colorClasses}`;
 };
 
-
 const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
 	cfp_data_extracted: 0,
 	extracting_cfp_data: 0,
@@ -421,35 +179,7 @@ export function ApplicationStructureLeftPane() {
 
 	const [isInfoBannerVisible, setIsInfoBannerVisible] = useState(true);
 
-	// DEV_MODE: Remove before production - Feature flag for dev panel
-	const [showDevPanel, setShowDevPanel] = useState(() => {
-		if (typeof globalThis.window !== "undefined") {
-			return localStorage.getItem("devEventSimulator") === "true";
-		}
-		return false;
-	});
-
-	// DEV_MODE: Remove before production - Toggle dev panel with keyboard shortcut
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if (e.ctrlKey && e.shiftKey && e.key === "D") {
-				e.preventDefault();
-				setShowDevPanel((prev) => {
-					const newValue = !prev;
-					localStorage.setItem("devEventSimulator", newValue.toString());
-					return newValue;
-				});
-			}
-		};
-
-		globalThis.addEventListener("keydown", handleKeyDown);
-		return () => {
-			globalThis.removeEventListener("keydown", handleKeyDown);
-		};
-	}, []);
-
-	// const hasGrantSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
-	const hasGrantSections = false;
+	const hasGrantSections = (grantTemplate?.grant_sections.length ?? 0) > 0;
 	const parentId = grantTemplate?.id;
 
 	const templateFiles: FileWithSource[] = useMemo(
@@ -483,45 +213,37 @@ export function ApplicationStructureLeftPane() {
 
 	if (!hasGrantSections) {
 		return (
-			<div className="relative h-full w-full">
-				<WizardLeftPane
-					contentSpacing="space-y-2"
-					innerClassName="h-full flex flex-col"
-					testId="application-structure-left-pane"
-				>
-					<TitleHeader showDescription={false} />
-					<AnalyzingSteps />
-				</WizardLeftPane>
-				{/* DEV_MODE: Remove before production */}
-				{showDevPanel && <DevEventSimulationPanel />}
-			</div>
+			<WizardLeftPane
+				contentSpacing="space-y-2"
+				innerClassName="h-full flex flex-col"
+				testId="application-structure-left-pane"
+			>
+				<TitleHeader showDescription={false} />
+				<AnalyzingSteps />
+			</WizardLeftPane>
 		);
 	}
 
 	return (
-		<div className="relative h-full">
-			<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
-				<TitleHeader showDescription={true} />
+		<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
+			<TitleHeader showDescription={true} />
 
-				{isInfoBannerVisible && (
-					<InfoBanner
-						onClose={() => {
-							setIsInfoBannerVisible(false);
-						}}
-					/>
-				)}
+			{isInfoBannerVisible && (
+				<InfoBanner
+					onClose={() => {
+						setIsInfoBannerVisible(false);
+					}}
+				/>
+			)}
 
-				<div className="mt-6">
-					<ApplicationStructureSourcesPreview
-						parentId={parentId}
-						templateFiles={templateFiles}
-						templateUrls={templateUrls}
-					/>
-				</div>
-			</WizardLeftPane>
-			{/* DEV_MODE: Remove before production */}
-			{showDevPanel && <DevEventSimulationPanel />}
-		</div>
+			<div className="mt-6">
+				<ApplicationStructureSourcesPreview
+					parentId={parentId}
+					templateFiles={templateFiles}
+					templateUrls={templateUrls}
+				/>
+			</div>
+		</WizardLeftPane>
 	);
 }
 
