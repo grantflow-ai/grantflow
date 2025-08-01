@@ -39,7 +39,7 @@ export function DashboardClient({
 	const { navigateToProject } = useNavigationStore();
 	const { selectedOrganizationId, switchOrganization } = useOrganization();
 	const { selectOrganization, setOrganizations } = useOrganizationStore();
-	const { isModalOpen, closeModal } = useNewApplicationModalStore();
+	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);

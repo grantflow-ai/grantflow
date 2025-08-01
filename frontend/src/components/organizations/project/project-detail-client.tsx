@@ -37,7 +37,7 @@ export function ProjectDetailClient() {
 	const { navigateToApplication } = useNavigationStore();
 	const { user } = useUserStore();
 	const { closeModal, isModalOpen, openModal } = useNewApplicationModalStore();
-	const { getProjects: fetchProjects, projects } = useProjectStore();
+	const { getProjects, projects } = useProjectStore();
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -68,9 +68,9 @@ export function ProjectDetailClient() {
 
 	useEffect(() => {
 		if (selectedOrganizationId) {
-			void fetchProjects(selectedOrganizationId);
+			void getProjects(selectedOrganizationId);
 		}
-	}, [selectedOrganizationId, fetchProjects]);
+	}, [selectedOrganizationId, getProjects]);
 
 	const { data: applicationsData, isLoading } = useSWR(
 		project && selectedOrganizationId
@@ -341,7 +341,7 @@ export function ProjectDetailClient() {
 								className="px-4 py-2"
 								data-testid="new-application-button"
 								disabled={isCreatingApplication}
-								onClick={() => openModal()}
+								onClick={() => {openModal()}}
 								type="button"
 								variant="primary"
 							>
