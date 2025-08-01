@@ -80,7 +80,7 @@ export function ApplicationPreview({
 						>
 							Application Title
 						</ThemeBadge>
-						{connectionStatus && (
+						{connectionStatus && process.env.NODE_ENV === "development" && (
 							<ThemeBadge className={`w-fit ${connectionStatusColor}`}>{connectionStatus}</ThemeBadge>
 						)}
 					</div>
