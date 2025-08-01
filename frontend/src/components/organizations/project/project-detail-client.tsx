@@ -36,7 +36,7 @@ export function ProjectDetailClient() {
 	const { selectedOrganizationId } = useOrganizationStore();
 	const { navigateToApplication } = useNavigationStore();
 	const { user } = useUserStore();
-	const { closeModal, isModalOpen, openModal } = useNewApplicationModalStore();
+	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 	const { getProjects, projects } = useProjectStore();
 
 	const [searchQuery, setSearchQuery] = useState("");
@@ -260,6 +260,7 @@ export function ProjectDetailClient() {
 									aria-label="Project Title"
 									className="font-medium text-[36px] leading-[42px] text-gray-300 outline-none border-b-2  border-primary focus:ring-offset-2  "
 									contentEditable={true}
+									data-testid="project-title-input"
 									onBlur={handleSaveProjectTitle}
 									onKeyDown={(e) => {
 										if (e.key === "Enter") {
@@ -341,7 +342,7 @@ export function ProjectDetailClient() {
 								className="px-4 py-2"
 								data-testid="new-application-button"
 								disabled={isCreatingApplication}
-								onClick={() => {openModal()}}
+								onClick={handleCreateApplication}
 								type="button"
 								variant="primary"
 							>
