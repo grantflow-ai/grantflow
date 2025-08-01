@@ -1,6 +1,6 @@
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useState } from "react";
-
+import type { API } from "@/types/api-types";
 import { AppButton } from "@/components/app";
 import {
 	Dialog,
@@ -16,11 +16,16 @@ interface NewApplicationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onCreate: (title: string, description: string) => void;
+	projects: Project[];
 }
 
-export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewApplicationModalProps) {
+type Project = API.ListProjects.Http200.ResponseBody[number];
+
+export default function NewApplicationModal({ isOpen, onClose, onCreate, projects }: NewApplicationModalProps) {
 	const [title, setTitle] = useState("");
 	const [description] = useState("");
+	const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+	const [isSelectOpen, setIsSelectOpen] = useState(false);
 
 	const handleCreate = () => {
 		onCreate(title, description);
@@ -36,7 +41,9 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
-				className="p-8 w-[464px] h-[431px] flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100"
+				className={`${
+					isSelectOpen || showNewProjectInput ? "h-[451px]" : "h-[330px]"
+				} p-8  flex flex-col gap-8 border border-primary bg-white [&>button]:text-black [&>button>svg]:text-black [&>button]:hover:bg-gray-100 transition-all duration-500 `}
 				data-testid="new-application-modal"
 			>
 				<DialogHeader className="flex flex-col gap-2">
@@ -58,28 +65,42 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 						<label className="font-normal text-xs text-gray-400" htmlFor="research-project-select">
 							Research project
 						</label>
-						<Select>
+						<Select
+							onOpenChange={setIsSelectOpen}
+							onValueChange={(value) => {
+								setShowNewProjectInput(value === "Menu Item - create-new");
+
+								if (value !== "Menu Item - create-new") {
+									const selectedProject = projects.find((p) => p.id === value);
+									setTitle(selectedProject ? selectedProject.name : "");
+								}
+							}}
+						>
 							<SelectTrigger
-								className="border border-primary w-full text-black [&>span]:font-normal [&>span]:text-base [&>span]:text-gray-600 [&>svg]:!text-gray-600 [&>svg]:!opacity-100"
+								className="border border-primary w-full text-black  [&>svg]:!text-gray-600 [&>svg]:!opacity-100 [&>svg]:hidden"
 								data-testid="select-trigger"
 								id="research-project-select"
 							>
-								<SelectValue placeholder="Choose a research project or create new" />
+								<div className="flex items-center justify-between w-full font-normal text-base text-gray-600">
+									<SelectValue
+										className="text-gray-400"
+										placeholder="Choose a research project or create new"
+									/>
+									<Search className="text-gray-400 mr-2" size={20} />
+								</div>
 							</SelectTrigger>
 							<SelectContent className="[&>*]:p-0 border border-gray-200 w-full shadow-none ">
-								<SelectItem
-									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-									data-testid="select-item-first"
-									value="Menu Item - First"
-								>
-									Menu Item - First
-								</SelectItem>
-								<SelectItem
-									className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
-									value="	Menu Item - second"
-								>
-									Menu Item - second
-								</SelectItem>
+								{projects.map((project) => (
+									<SelectItem
+										className="bg-white cursor-pointer text-app-black text-sm font-normal p-3 hover:!bg-preview-bg hover:!text-app-black focus:!bg-preview-bg focus:!text-app-black data-[highlighted]:!bg-preview-bg data-[highlighted]:!text-app-black rounded-none"
+										data-testid={`select-item-${project.id}`}
+										key={project.id}
+										value={project.id}
+									>
+										{project.name}
+									</SelectItem>
+								))}
+
 								<SelectItem
 									className="bg-white cursor-pointer border border-gray-200 text-app-black text-sm font-normal p-0 hover:bg-preview-bg hover:text-app-black focus:bg-preview-bg data-[highlighted]:bg-preview-bg data-[highlighted]:text-app-black rounded-none"
 									data-testid="select-item-create-new"
@@ -96,7 +117,11 @@ export default function NewApplicationModal({ isOpen, onClose, onCreate }: NewAp
 						</Select>
 					</div>
 
-					<div>
+					<div
+						className={`transition-all duration-500 ease-in-out overflow-hidden ${
+							showNewProjectInput ? "max-h-50 opacity-100" : "max-h-0 opacity-0"
+						}`}
+					>
 						<label className="font-normal text-xs text-gray-400" htmlFor="project-name-input">
 							Research project name
 						</label>

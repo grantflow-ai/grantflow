@@ -47,11 +47,7 @@ vi.mock("@/components/layout/app-header", () => ({
 }));
 vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
-	AvatarGroup: vi.fn(({ users, ...props }) => (
-		<div data-testid="avatar-group" {...props}>
-			{users?.length ?? 0} users
-		</div>
-	)),
+	AvatarGroup: vi.fn(() => <div data-testid="mock-avatar-group" />),
 }));
 vi.mock("./applications/delete-application-modal", () => ({
 	DeleteApplicationModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
@@ -104,7 +100,11 @@ describe("ProjectDetailClient", () => {
 		mockUseRouter.mockReturnValue(mockRouter);
 		mockUseNavigationStore.mockReturnValue({ navigateToApplication: mockNavigateToApplication });
 		mockUseOrganizationStore.mockReturnValue({ selectedOrganizationId: "org-123" });
-		mockUseProjectStore.mockReturnValue({ project: mockProject });
+		mockUseProjectStore.mockReturnValue({
+			getProjects: vi.fn(),
+			project: mockProject,
+			projects: [],
+		});
 
 		mockUseSWR.mockImplementation((key) => {
 			if (typeof key === "string" && key.includes("/applications")) {
@@ -150,7 +150,7 @@ describe("ProjectDetailClient", () => {
 	});
 
 	it("should redirect to projects page when no project", () => {
-		mockUseProjectStore.mockReturnValue({ project: null });
+		mockUseProjectStore.mockReturnValue({ getProjects: vi.fn(), project: null });
 		mockUseSWR
 			.mockReturnValueOnce({
 				data: undefined,
@@ -258,8 +258,7 @@ describe("ProjectDetailClient", () => {
 		const editButton = screen.getByRole("button", { name: "" });
 		await user.click(editButton);
 
-		expect(screen.getByRole("textbox", { name: "Project Title" })).toBeInTheDocument();
-		expect(screen.getByRole("textbox", { name: "Project Title" })).toHaveTextContent("Test Project");
+		expect(await screen.findByTestId("project-title-input")).toHaveTextContent("Test Project");
 	});
 
 	it("should filter applications based on search query", async () => {
@@ -301,6 +300,11 @@ describe("ProjectDetailClient", () => {
 	});
 
 	it("should display loading state when applications are loading", () => {
+		mockUseProjectStore.mockReturnValue({
+			getProjects: vi.fn(),
+			project: mockProject,
+			projects: [],
+		});
 		mockUseSWR
 			.mockReturnValueOnce({
 				data: undefined,
