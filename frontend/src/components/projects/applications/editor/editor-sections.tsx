@@ -16,10 +16,7 @@ export function EditorSections({
 				.filter((item) => !!item.text.trim())
 				.map((section, index) => {
 					const { level, text } = section;
-					const truncatedText =
-						text.length > MAX_TEXT_LENGTH
-							? `${text.slice(0, MAX_TEXT_LENGTH)}...`
-							: text;
+					const truncatedText = text.length > MAX_TEXT_LENGTH ? `${text.slice(0, MAX_TEXT_LENGTH)}...` : text;
 
 					if (level === HeadingLevels.H2) {
 						return (
@@ -48,9 +45,7 @@ export function EditorSections({
 								}}
 								type="button"
 							>
-								<p className="text-sm text-gray-500 leading-4.5">
-									{truncatedText}
-								</p>
+								<p className="text-sm text-gray-500 leading-4.5">{truncatedText}</p>
 							</button>
 						);
 					}
@@ -65,9 +60,7 @@ export function EditorSections({
 			data-testid="editor-sections"
 		>
 			<div className="px-3 py-4">
-				<p className="font-['Cabin'] text-app-black font-semibold">
-					Grant Sections
-				</p>
+				<p className="font-['Cabin'] text-app-black font-semibold">Grant Sections</p>
 			</div>
 			<div>{renderedSections}</div>
 		</div>
