@@ -285,34 +285,65 @@ const getStepDelay = (stepIndex: number) => {
 	return `${stepIndex * 100}ms`;
 };
 
-const shouldShowConnector = (sectionIndex: number) => {
-	return sectionIndex < ANALYZING_STEPS.length - 1;
+const getStepContainerClassName = (sectionIndex: number, visibleSteps: number) => {
+	const baseClasses = "relative";
+	const isVisible = visibleSteps > sectionIndex;
+	const visibilityClasses = isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4";
+	const zIndex = `z-[${40 - sectionIndex}]`;
+	const transitionClasses = "transition-all duration-[2000ms] ease-[cubic-bezier(0.4,0,0.2,1)]";
+	return `${baseClasses} ${visibilityClasses} ${zIndex} ${transitionClasses}`;
 };
 
-const getStepContainerClassName = (sectionIndex: number, visibleSteps: number) => {
-	const baseClasses = "transition-all duration-700";
-	const visibilityClasses = visibleSteps > sectionIndex ? "translate-x-0 opacity-100" : "-translate-x-4 opacity-0";
+const getStepLineClassName = (sectionIndex: number, visibleSteps: number) => {
+	const baseClasses = "w-[3px] flex-1 shrink-0 relative overflow-hidden transition-opacity duration-1000";
+	const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
+	const threshold = sectionIndex + 1;
+
+	const isVisible = visibleSteps > sectionIndex;
+	const visibilityClasses = isVisible ? "opacity-100" : "opacity-0";
+
+	const zIndex = `z-[${40 - sectionIndex}]`;
+
+	log.info("[getStepLineClassName] Line calculation", {
+		finalClassName: `${baseClasses} ${visibilityClasses} ${zIndex}`,
+		isLastStep,
+		isVisible,
+		sectionIndex,
+		threshold,
+		visibilityClasses,
+		visibleSteps,
+	});
+
+	return `${baseClasses} ${visibilityClasses} ${zIndex}`;
+};
+
+const getStepCircleClassName = (sectionIndex: number, visibleSteps: number) => {
+	const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
+	const threshold = sectionIndex + 1;
+	const baseClasses =
+		"w-2 h-2 rounded-full border border-primary bg-transparent transition-all duration-1000 shrink-0";
+
+	if (isLastStep) {
+		return `${baseClasses} opacity-0 invisible`;
+	}
+
+	const shouldShowCircle = visibleSteps > threshold;
+	const visibilityClasses = shouldShowCircle ? "opacity-100" : "opacity-0";
+
+	log.info("[getStepCircleClassName] Circle calculation", {
+		finalClassName: `${baseClasses} ${visibilityClasses}`,
+		isLastStep,
+		sectionIndex,
+		shouldShowCircle,
+		threshold,
+		visibleSteps,
+	});
+
 	return `${baseClasses} ${visibilityClasses}`;
 };
 
-const getConnectorLineClassName = (sectionIndex: number, visibleSteps: number) => {
-	const baseClasses = "absolute left-3 top-8 h-full w-0.5 transition-all duration-500";
-	const colorClasses = visibleSteps > sectionIndex ? "bg-blue-200" : "bg-gray-200";
-	return `${baseClasses} ${colorClasses}`;
-};
-
-const getStepNumberClassName = (sectionIndex: number, visibleSteps: number) => {
-	const baseClasses =
-		"flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300";
-	const stateClasses =
-		visibleSteps > sectionIndex
-			? "border-blue-500 bg-blue-500 text-white"
-			: "border-gray-300 bg-white text-app-gray-500";
-	return `${baseClasses} ${stateClasses}`;
-};
-
 const getStepTitleClassName = (sectionIndex: number, visibleSteps: number) => {
-	const baseClasses = "font-medium transition-colors duration-300";
+	const baseClasses = "font-medium transition-colors duration-1000";
 	const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
 	const threshold = sectionIndex + 1;
 
@@ -334,13 +365,13 @@ const getStepTitleClassName = (sectionIndex: number, visibleSteps: number) => {
 };
 
 const getStepContentClassName = (sectionIndex: number, visibleSteps: number) => {
-	const baseClasses = "flex items-start gap-2 text-sm transition-all duration-300";
+	const baseClasses = "flex items-start gap-2 text-sm transition-all duration-1000";
 	const visibilityClasses = visibleSteps > sectionIndex ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0";
 	return `${baseClasses} ${visibilityClasses}`;
 };
 
 const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
-	const baseClasses = "transition-colors duration-300";
+	const baseClasses = "transition-colors duration-1000";
 	const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
 	const threshold = sectionIndex + 1;
 
@@ -361,9 +392,6 @@ const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
 	return `${baseClasses} ${colorClasses}`;
 };
 
-const isStepActive = (sectionIndex: number, visibleSteps: number) => {
-	return visibleSteps === sectionIndex + 1;
-};
 
 const eventToVisualStepMap: Record<TemplateGenerationEvent, number> = {
 	cfp_data_extracted: 0,
@@ -455,19 +483,23 @@ export function ApplicationStructureLeftPane() {
 
 	if (!hasGrantSections) {
 		return (
-			<>
-				<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
+			<div className="relative h-full w-full">
+				<WizardLeftPane
+					contentSpacing="space-y-2"
+					innerClassName="h-full flex flex-col"
+					testId="application-structure-left-pane"
+				>
 					<TitleHeader showDescription={false} />
 					<AnalyzingSteps />
 				</WizardLeftPane>
 				{/* DEV_MODE: Remove before production */}
 				{showDevPanel && <DevEventSimulationPanel />}
-			</>
+			</div>
 		);
 	}
 
 	return (
-		<>
+		<div className="relative h-full">
 			<WizardLeftPane contentSpacing="space-y-2" testId="application-structure-left-pane">
 				<TitleHeader showDescription={true} />
 
@@ -489,7 +521,7 @@ export function ApplicationStructureLeftPane() {
 			</WizardLeftPane>
 			{/* DEV_MODE: Remove before production */}
 			{showDevPanel && <DevEventSimulationPanel />}
-		</>
+		</div>
 	);
 }
 
@@ -565,50 +597,58 @@ function AnalyzingSteps() {
 	}
 
 	return (
-		<div className="relative space-y-6 mt-6">
+		<div className="flex flex-col flex-1">
 			{ANALYZING_STEPS.map((section, sectionIndex) => (
-				<div className={getStepContainerClassName(sectionIndex, maxVisibleSteps)} key={sectionIndex}>
-					<div className="relative">
-						{shouldShowConnector(sectionIndex) && (
-							<div className={getConnectorLineClassName(sectionIndex, maxVisibleSteps)} />
-						)}
-
-						<div className="mb-3 flex items-center gap-3">
-							<div className={getStepNumberClassName(sectionIndex, maxVisibleSteps)}>
-								<span className="text-xs font-medium">{sectionIndex + 1}</span>
+				<div
+					className={`flex-1 ${getStepContainerClassName(sectionIndex, maxVisibleSteps)}`}
+					key={sectionIndex}
+				>
+					<div className="flex gap-3 h-full">
+						<div className="flex flex-col items-center h-full relative">
+							<div className={getStepLineClassName(sectionIndex, maxVisibleSteps)}>
+								{/* Gradient background layer */}
+								<div className="absolute inset-0 bg-gradient-to-b from-[#4A4855] to-[#A39EBB] transition-opacity duration-1000" />
+								{/* Primary color overlay that fades in */}
+								<div
+									className={`absolute inset-0 bg-primary transition-opacity duration-1000 ${(() => {
+										const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
+										const threshold = sectionIndex + 1;
+										const shouldBeBlack = isLastStep
+											? maxVisibleSteps >= threshold + 1
+											: maxVisibleSteps > threshold;
+										return shouldBeBlack ? "opacity-100" : "opacity-0";
+									})()}`}
+								/>
 							</div>
+							<div className={getStepCircleClassName(sectionIndex, maxVisibleSteps)} />
+						</div>
+						<div className="flex-1">
 							<h4
 								className={getStepTitleClassName(sectionIndex, maxVisibleSteps)}
 								data-testid="analyzing-step-title"
 							>
 								{section.title}
 							</h4>
-							{isStepActive(sectionIndex, maxVisibleSteps) && (
-								<div
-									className="ml-2 size-2 animate-pulse rounded-full bg-blue-500"
-									data-testid="step-active-indicator"
-								/>
+
+							{showStepsDetails && (
+								<div className="mt-3 space-y-2">
+									{section.steps.map((step, stepIndex) => (
+										<div
+											className={getStepContentClassName(sectionIndex, maxVisibleSteps)}
+											key={stepIndex}
+											style={{
+												transitionDelay: getStepDelay(stepIndex),
+											}}
+										>
+											<span className="text-gray-400">{stepIndex + 1}.</span>
+											<span className={getStepTextClassName(sectionIndex, maxVisibleSteps)}>
+												{step}
+											</span>
+										</div>
+									))}
+								</div>
 							)}
 						</div>
-
-						{showStepsDetails && (
-							<div className="ml-9 space-y-2">
-								{section.steps.map((step, stepIndex) => (
-									<div
-										className={getStepContentClassName(sectionIndex, maxVisibleSteps)}
-										key={stepIndex}
-										style={{
-											transitionDelay: getStepDelay(stepIndex),
-										}}
-									>
-										<span className="text-gray-400">{stepIndex + 1}.</span>
-										<span className={getStepTextClassName(sectionIndex, maxVisibleSteps)}>
-											{step}
-										</span>
-									</div>
-								))}
-							</div>
-						)}
 					</div>
 				</div>
 			))}
