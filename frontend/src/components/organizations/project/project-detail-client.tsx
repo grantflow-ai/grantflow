@@ -16,9 +16,11 @@ import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppButton, AvatarGroup } from "@/components/app";
 import { AppHeader } from "@/components/layout/app-header";
 import { InviteCollaboratorModal } from "@/components/organizations";
+import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
@@ -34,6 +36,8 @@ export function ProjectDetailClient() {
 	const { selectedOrganizationId } = useOrganizationStore();
 	const { navigateToApplication } = useNavigationStore();
 	const { user } = useUserStore();
+	const { closeModal, isModalOpen, openModal } = useNewApplicationModalStore();
+	const { getProjects: fetchProjects, projects } = useProjectStore();
 
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -61,6 +65,12 @@ export function ProjectDetailClient() {
 			setProjectTitle(project.name);
 		}
 	}, [project?.name]);
+
+	useEffect(() => {
+		if (selectedOrganizationId) {
+			void fetchProjects(selectedOrganizationId);
+		}
+	}, [selectedOrganizationId, fetchProjects]);
 
 	const { data: applicationsData, isLoading } = useSWR(
 		project && selectedOrganizationId
@@ -331,7 +341,7 @@ export function ProjectDetailClient() {
 								className="px-4 py-2"
 								data-testid="new-application-button"
 								disabled={isCreatingApplication}
-								onClick={handleCreateApplication}
+								onClick={() => openModal()}
 								type="button"
 								variant="primary"
 							>
@@ -371,6 +381,13 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
+			/>
+
+			<NewApplicationModal
+				isOpen={isModalOpen}
+				onClose={closeModal}
+				onCreate={handleCreateApplication}
+				projects={projects}
 			/>
 		</section>
 	);
