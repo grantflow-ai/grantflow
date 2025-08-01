@@ -109,7 +109,7 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 					"We couldn't process one or more of your files or links. To ensure accurate analysis, please upload all required documents.",
 				dismissOnOutsideClick: false,
 				footer: ragDialog.footer,
-				minWidth: "min-w-3xl",
+				minWidth: "min-w-4xl",
 				title: "Review Required: Some Uploads Failed",
 			});
 		}
