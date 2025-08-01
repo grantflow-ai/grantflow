@@ -1,7 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
-/* @import "tw-animate-css"; */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -61,6 +60,7 @@
 	--color-app-gray-100: var(--app-gray-100);
 	--color-app-gray-300: var(--app-gray-300);
 	--color-app-gray-400: var(--app-gray-400);
+	--color-app-gray-500: var(--app-gray-500);
 	--color-app-gray-600: var(--app-gray-600);
 	--color-app-gray-700: var(--app-gray-700);
 	--color-app-lavender-gray: var(--app-lavender-gray);

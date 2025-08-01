@@ -1,10 +1,9 @@
 "use client";
 
-import { Edit, GripHorizontal, Plus, Trash2 } from "lucide-react";
+import { Edit, GripHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/forms/textarea-field";
 import {
 	DropdownMenu,
@@ -13,6 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Objective } from "@/stores/wizard-store";
+import { DraggableTaskList } from "./draggable-task-list";
 
 interface EditableObjectiveProps {
 	index: number;
@@ -38,32 +38,15 @@ interface ObjectiveHeaderProps {
 	onRemove: () => void;
 }
 
-interface TaskContentProps {
-	isEditing?: boolean;
-	objectiveIndex: number;
-	onTaskAdd?: () => void;
-	onTaskDelete?: (taskIndex: number) => void;
-	onTaskUpdate?: (taskIndex: number, description: string) => void;
-	tasks: { description?: string; number: number; title: string }[];
-}
-
-interface TaskHeaderProps {
-	isEditing?: boolean;
-	objectiveIndex: number;
-	onTaskDelete?: () => void;
-	taskIndex: number;
-	totalTasks: number;
-}
-
 export function EditableObjective({ index, objective, onCancel: _onCancel, onSave }: EditableObjectiveProps) {
 	const [title, setTitle] = useState(objective.title);
 	const [description, setDescription] = useState(objective.description);
 	const [tasks, setTasks] = useState(objective.research_tasks);
 
-	const handleTaskUpdate = (taskIndex: number, taskDescription: string) => {
-		setTasks((prevTasks) =>
-			prevTasks.map((task, idx) => (idx === taskIndex ? { ...task, description: taskDescription } : task)),
-		);
+	const taskValues: Record<number, string> = {};
+
+	const handleTaskValuesChange = (newTaskValues: Record<number, string>) => {
+		Object.assign(taskValues, newTaskValues);
 	};
 
 	const handleTaskDelete = (taskIndex: number) => {
@@ -81,11 +64,29 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 		]);
 	};
 
+	const handleTaskReorder = (oldIndex: number, newIndex: number) => {
+		setTasks((prevTasks) => {
+			const reorderedTasks = [...prevTasks];
+			const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+			reorderedTasks.splice(newIndex, 0, movedTask);
+
+			return reorderedTasks.map((task, index) => ({
+				...task,
+				number: index + 1,
+			}));
+		});
+	};
+
 	const handleSave = () => {
+		const updatedTasks = tasks.map((task, index) => ({
+			...task,
+			description: taskValues[index] ?? task.description,
+		}));
+
 		onSave({
 			...objective,
 			description,
-			research_tasks: tasks,
+			research_tasks: updatedTasks,
 			title,
 		});
 	};
@@ -122,12 +123,13 @@ export function EditableObjective({ index, objective, onCancel: _onCancel, onSav
 				value={description}
 				variant="field"
 			/>
-			<TaskContent
+			<DraggableTaskList
 				isEditing={true}
 				objectiveIndex={index}
 				onTaskAdd={handleTaskAdd}
 				onTaskDelete={handleTaskDelete}
-				onTaskUpdate={handleTaskUpdate}
+				onTaskReorder={handleTaskReorder}
+				onTaskValuesChange={handleTaskValuesChange}
 				tasks={tasks}
 			/>
 		</div>
@@ -139,7 +141,11 @@ export function ObjectiveCardContent({ index, objective }: ObjectiveCardContentP
 		<div className="space-y-2 px-3 pb-3 pt-15">
 			<h4 className="text-app-black font-semibold font-heading leading-snug">{objective.title}</h4>
 			<p className="text-Grey-600 text-sm leading-none">{objective.description}</p>
-			<TaskContent objectiveIndex={index} tasks={objective.research_tasks} />
+			<DraggableTaskList
+				objectiveIndex={index}
+				objectiveNumber={objective.number}
+				tasks={objective.research_tasks}
+			/>
 		</div>
 	);
 }
@@ -206,102 +212,6 @@ export function ObjectiveHeader({
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
-		</div>
-	);
-}
-
-function TaskContent({ isEditing, objectiveIndex, onTaskAdd, onTaskDelete, onTaskUpdate, tasks }: TaskContentProps) {
-	return (
-		<div className="space-y-3">
-			<div className={isEditing ? "flex items-center justify-between" : ""}>
-				<div className="text-app-black font-semibold font-heading leading-snug" data-testid="tasks-section">
-					Tasks
-				</div>
-				{isEditing && (
-					<IconButton
-						data-testid="add-task-button"
-						onClick={onTaskAdd}
-						size="sm"
-						type="button"
-						variant="solid"
-					>
-						<Plus className="w-4 h-4" />
-					</IconButton>
-				)}
-			</div>
-			<div className="space-y-1">
-				{tasks.map((task, taskIndex) => (
-					<div className="border border-gray-200 rounded relative" key={taskIndex}>
-						<TaskHeader
-							isEditing={isEditing}
-							objectiveIndex={objectiveIndex}
-							onTaskDelete={() => onTaskDelete?.(taskIndex)}
-							taskIndex={taskIndex}
-							totalTasks={tasks.length}
-						/>
-						<div className="pt-9.5 px-3 pb-3">
-							{isEditing ? (
-								<div className="pt-3">
-									<AppTextArea
-										className="min-h-52"
-										id={`task-description-${objectiveIndex}-${taskIndex}`}
-										label="Task description"
-										onChange={(e) => onTaskUpdate?.(taskIndex, e.target.value)}
-										placeholder="Describe a step to achieve this objective"
-										value={task.description?.trim() ?? null ?? task.title}
-										variant="field"
-									/>
-								</div>
-							) : (
-								<div
-									className="text-app-gray-600 text-sm font-normal leading-none"
-									data-testid="task-display"
-								>
-									Task: {task.description?.trim() ?? null ?? task.title}
-								</div>
-							)}
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
-function TaskHeader({ isEditing, objectiveIndex, onTaskDelete, taskIndex, totalTasks }: TaskHeaderProps) {
-	const isDragDisabled = totalTasks <= 1;
-
-	return (
-		<div className="absolute -top-1 left-0 right-0 flex items-center justify-between z-10">
-			<div
-				className={`flex size-7.5 items-center justify-center rounded-br text-base font-semibold font-heading leading-snug ${isEditing ? "bg-app-gray-300 text-white" : "bg-app-gray-50 text-primary"}`}
-			>
-				{objectiveIndex}.{taskIndex + 1}
-			</div>
-
-			<div className="flex-1 flex justify-center">
-				{isDragDisabled ? (
-					<div className="flex items-center justify-center p-2">
-						<GripHorizontal className="flex-shrink-0 text-gray-300" size={20} />
-					</div>
-				) : (
-					<button
-						aria-label={`Drag to reorder task ${taskIndex + 1}`}
-						className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing flex items-center justify-center p-2"
-						type="button"
-					>
-						<GripHorizontal className="flex-shrink-0" size={20} />
-					</button>
-				)}
-			</div>
-
-			{isEditing && (
-				<div className="flex items-center">
-					<IconButton data-testid="delete-task-button" onClick={onTaskDelete} type="button" variant="float">
-						<Image alt="Delete" height={16} src="/icons/delete.svg" width={16} />
-					</IconButton>
-				</div>
-			)}
 		</div>
 	);
 }

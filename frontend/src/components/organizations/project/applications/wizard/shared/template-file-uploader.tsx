@@ -148,9 +148,7 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 			<AppButton
 				className="text-sm font-normal leading-[22px]"
 				data-testid="upload-files-button"
-				leftIcon={
-					<Image alt="Upload" className="text-primary" height={16} src="/icons/upload.svg" width={16} />
-				}
+				leftIcon={<Image alt="Upload" height={16} src="/icons/upload-primary.svg" width={16} />}
 				variant="secondary"
 			>
 				<label className="cursor-pointer" htmlFor="file-upload-template-files">

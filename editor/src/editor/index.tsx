@@ -35,6 +35,8 @@ import { ImageUploadButton } from "@/components/ui/image-upload-button";
 import { LinkButton, LinkContent, LinkPopover } from "@/components/ui/link-popover";
 import { ListDropdownMenu } from "@/components/ui/list-dropdown-menu";
 import { MarkButton } from "@/components/ui/mark-button";
+import { TableButton } from "@/components/ui/table-button";
+import { TableContextMenu } from "@/components/ui/table-context-menu";
 import { TextAlignButton } from "@/components/ui/text-align-button";
 import { UndoRedoButton } from "@/components/ui/undo-redo-button";
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
@@ -43,6 +45,7 @@ import { useWindowSize } from "@/hooks/use-window-size";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 import "@/editor/index.scss";
 import type { JSONContent } from "@tiptap/core";
+import { TableKit } from "@tiptap/extension-table";
 import { FontFamily, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { Markdown } from "tiptap-markdown";
 
@@ -109,7 +112,8 @@ const MainToolbarContent = ({ onLinkClick, isMobile }: { onLinkClick: () => void
 			</ToolbarGroup>
 
 			<ToolbarGroup>
-				<ImageUploadButton text="Add" />
+				<TableButton />
+				<ImageUploadButton />
 			</ToolbarGroup>
 
 			<Spacer />
@@ -193,8 +197,12 @@ export const Editor = React.forwardRef(function Editor(
 			TextStyle,
 			FontFamily,
 			FontSize,
+			TableKit,
 		],
 		immediatelyRender: false,
+		onCreate: () => {
+			onContentChange?.();
+		},
 		onUpdate: () => {
 			onContentChange?.();
 		},
@@ -305,12 +313,14 @@ export const Editor = React.forwardRef(function Editor(
 					)}
 				</Toolbar>
 
-				<EditorContent
-					data-testid="simple-editor-content"
-					editor={editor}
-					role="presentation"
-					className="simple-editor-content"
-				/>
+				<TableContextMenu>
+					<EditorContent
+						data-testid="simple-editor-content"
+						editor={editor}
+						role="presentation"
+						className="simple-editor-content"
+					/>
+				</TableContextMenu>
 			</EditorContext.Provider>
 		</div>
 	);
