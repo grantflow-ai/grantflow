@@ -14,10 +14,7 @@ export interface TableContextMenuProps {
 	children: React.ReactNode;
 }
 
-export const TableContextMenu = React.forwardRef<
-	HTMLDivElement,
-	TableContextMenuProps
->(({ children }, ref) => {
+export const TableContextMenu = React.forwardRef<HTMLDivElement, TableContextMenuProps>(({ children }, ref) => {
 	const { editor } = useTiptapEditor();
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [position, setPosition] = React.useState({ x: 0, y: 0 });
@@ -103,23 +100,19 @@ export const TableContextMenu = React.forwardRef<
 	}, [editor]);
 
 	return (
-		<div
-			className="simple-editor-content"
-			ref={ref}
-			onContextMenu={handleContextMenu}
-		>
+		<div className="simple-editor-content" ref={ref} onContextMenu={handleContextMenu}>
 			{children}
 			<DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
 				<DropdownMenuTrigger asChild>
 					<span
 						style={{
-							position: "fixed",
-							left: position.x,
-							top: position.y,
-							width: 1,
 							height: 1,
+							left: position.x,
 							opacity: 0,
 							pointerEvents: "none",
+							position: "fixed",
+							top: position.y,
+							width: 1,
 						}}
 					/>
 				</DropdownMenuTrigger>
@@ -127,70 +120,43 @@ export const TableContextMenu = React.forwardRef<
 					<Card>
 						<CardBody>
 							<ButtonGroup>
-								<DropdownMenuItem
-									onClick={handleAddRowAbove}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleAddRowAbove} className="dropdown-menu-item">
 									Add row above
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={handleAddRowBelow}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleAddRowBelow} className="dropdown-menu-item">
 									Add row below
 								</DropdownMenuItem>
 
 								<div className="menu-separator" />
 
-								<DropdownMenuItem
-									onClick={handleAddColumnLeft}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleAddColumnLeft} className="dropdown-menu-item">
 									Add column left
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={handleAddColumnRight}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleAddColumnRight} className="dropdown-menu-item">
 									Add column right
 								</DropdownMenuItem>
 
 								<div className="menu-separator" />
 
-								<DropdownMenuItem
-									onClick={handleDeleteRow}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleDeleteRow} className="dropdown-menu-item">
 									Delete row
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={handleDeleteColumn}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleDeleteColumn} className="dropdown-menu-item">
 									Delete column
 								</DropdownMenuItem>
 
 								<div className="menu-separator" />
 
-								<DropdownMenuItem
-									onClick={handleToggleHeaderRow}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleToggleHeaderRow} className="dropdown-menu-item">
 									Toggle header row
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={handleToggleHeaderColumn}
-									className="dropdown-menu-item"
-								>
+								<DropdownMenuItem onClick={handleToggleHeaderColumn} className="dropdown-menu-item">
 									Toggle header column
 								</DropdownMenuItem>
 
 								<div className="menu-separator" />
 
-								<DropdownMenuItem
-									onClick={handleDeleteTable}
-									className="dropdown-menu-item danger"
-								>
+								<DropdownMenuItem onClick={handleDeleteTable} className="dropdown-menu-item danger">
 									Delete table
 								</DropdownMenuItem>
 							</ButtonGroup>
