@@ -21,6 +21,8 @@ import PaymentLink from "../payment/payment-link";
 import { DashboardProjectCard } from "./dashboard-project-card";
 import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
+import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
+import NewApplicationModal from "../modals/new-application-modal";
 
 interface DashboardClientProps {
 	initialOrganizations: API.ListOrganizations.Http200.ResponseBody;
@@ -37,7 +39,7 @@ export function DashboardClient({
 	const { navigateToProject } = useNavigationStore();
 	const { selectedOrganizationId, switchOrganization } = useOrganization();
 	const { selectOrganization, setOrganizations } = useOrganizationStore();
-
+	const { isModalOpen, closeModal } = useNewApplicationModalStore();
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
@@ -224,6 +226,9 @@ export function DashboardClient({
 		navigateToProject(defaultProject.id, defaultProject.name);
 		router.push(routes.organization.project.application.new());
 	};
+	const handleCreateApplication = () => {
+		closeModal();
+	};
 
 	return (
 		<div className="relative size-full overflow-y-scroll bg-preview-bg">
@@ -329,6 +334,13 @@ export function DashboardClient({
 					setSelectedProjectForInvite(null);
 				}}
 				onInvite={handleInviteCollaborator}
+			/>
+
+			<NewApplicationModal
+				isOpen={isModalOpen}
+				onClose={closeModal}
+				onCreate={handleCreateApplication}
+				projects={projects}
 			/>
 		</div>
 	);
