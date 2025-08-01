@@ -227,11 +227,9 @@ describe.sequential("ObjectiveComponents", () => {
 
 			const taskFields = screen.getAllByLabelText("Task description");
 
-			// Clear and type new value
 			await user.clear(taskFields[0]);
 			await user.type(taskFields[0], "UpdatedTask");
 
-			// The mock should reflect the change since it's directly updating the value
 			expect(taskFields[0]).toHaveValue("UpdatedTask");
 		});
 
@@ -294,7 +292,7 @@ describe.sequential("ObjectiveComponents", () => {
 
 			renderObjectiveCardContent({ objective });
 
-			expect(screen.getByText("Task: Fallback Title")).toBeInTheDocument();
+			expect(screen.getByTestId("task-display")).toHaveTextContent("Task: Fallback Title");
 		});
 	});
 
