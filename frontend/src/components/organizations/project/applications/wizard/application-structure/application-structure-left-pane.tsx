@@ -54,8 +54,6 @@ const getStepContainerClassName = (sectionIndex: number, visibleSteps: number) =
 
 const getStepLineClassName = (sectionIndex: number, visibleSteps: number) => {
 	const baseClasses = "w-[3px] flex-1 shrink-0 relative overflow-hidden transition-opacity duration-1000";
-	const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
-	const threshold = sectionIndex + 1;
 
 	const isVisible = visibleSteps > sectionIndex;
 	const visibilityClasses = isVisible ? "opacity-100" : "opacity-0";
@@ -67,7 +65,6 @@ const getStepLineClassName = (sectionIndex: number, visibleSteps: number) => {
 
 const getStepCircleClassName = (sectionIndex: number, visibleSteps: number) => {
 	const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
-	const threshold = sectionIndex + 1;
 	const baseClasses =
 		"w-2 h-2 rounded-full border border-primary bg-transparent transition-all duration-1000 shrink-0";
 
@@ -75,6 +72,7 @@ const getStepCircleClassName = (sectionIndex: number, visibleSteps: number) => {
 		return `${baseClasses} opacity-0 invisible`;
 	}
 
+	const threshold = sectionIndex + 1;
 	const shouldShowCircle = visibleSteps > threshold;
 	const visibilityClasses = shouldShowCircle ? "opacity-100" : "opacity-0";
 
