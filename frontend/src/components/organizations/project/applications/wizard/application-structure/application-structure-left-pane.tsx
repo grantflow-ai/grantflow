@@ -6,7 +6,6 @@ import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
-import { log } from "@/utils/logger";
 import { FilePreviewCard, LinkPreviewItem, PreviewCard, WizardLeftPane } from "../shared";
 
 const ANALYZING_STEPS = [
@@ -63,16 +62,6 @@ const getStepLineClassName = (sectionIndex: number, visibleSteps: number) => {
 
 	const zIndex = `z-[${40 - sectionIndex}]`;
 
-	log.info("[getStepLineClassName] Line calculation", {
-		finalClassName: `${baseClasses} ${visibilityClasses} ${zIndex}`,
-		isLastStep,
-		isVisible,
-		sectionIndex,
-		threshold,
-		visibilityClasses,
-		visibleSteps,
-	});
-
 	return `${baseClasses} ${visibilityClasses} ${zIndex}`;
 };
 
@@ -89,15 +78,6 @@ const getStepCircleClassName = (sectionIndex: number, visibleSteps: number) => {
 	const shouldShowCircle = visibleSteps > threshold;
 	const visibilityClasses = shouldShowCircle ? "opacity-100" : "opacity-0";
 
-	log.info("[getStepCircleClassName] Circle calculation", {
-		finalClassName: `${baseClasses} ${visibilityClasses}`,
-		isLastStep,
-		sectionIndex,
-		shouldShowCircle,
-		threshold,
-		visibleSteps,
-	});
-
 	return `${baseClasses} ${visibilityClasses}`;
 };
 
@@ -109,16 +89,6 @@ const getStepTitleClassName = (sectionIndex: number, visibleSteps: number) => {
 	const shouldBeBlack = isLastStep ? visibleSteps >= threshold + 1 : visibleSteps > threshold;
 
 	const colorClasses = shouldBeBlack ? "text-app-black" : "text-app-gray-500";
-
-	log.info("[getStepTitleClassName] Color class calculation", {
-		colorClasses,
-		finalClassName: `${baseClasses} ${colorClasses}`,
-		isLastStep,
-		sectionIndex,
-		shouldBeBlack,
-		threshold,
-		visibleSteps,
-	});
 
 	return `${baseClasses} ${colorClasses}`;
 };
@@ -137,16 +107,6 @@ const getStepTextClassName = (sectionIndex: number, visibleSteps: number) => {
 	const shouldBeBlack = isLastStep ? visibleSteps >= threshold + 1 : visibleSteps > threshold;
 
 	const colorClasses = shouldBeBlack ? "text-app-black" : "text-app-gray-500";
-
-	log.info("[getStepTextClassName] Color class calculation", {
-		colorClasses,
-		finalClassName: `${baseClasses} ${colorClasses}`,
-		isLastStep,
-		sectionIndex,
-		shouldBeBlack,
-		threshold,
-		visibleSteps,
-	});
 
 	return `${baseClasses} ${colorClasses}`;
 };
@@ -273,10 +233,6 @@ function AnalyzingSteps() {
 	useEffect(() => {
 		if (templateGenerationStatus?.event) {
 			const stepGroup = eventToVisualStepMap[templateGenerationStatus.event];
-			log.info("[useApplicationNotifications] Received mapping in AnalysingSteps", {
-				event: templateGenerationStatus.event,
-				stepGroup,
-			});
 
 			if (stepGroup === -1) {
 				setHasError(true);
@@ -328,9 +284,7 @@ function AnalyzingSteps() {
 					<div className="flex gap-3 h-full">
 						<div className="flex flex-col items-center h-full relative">
 							<div className={getStepLineClassName(sectionIndex, maxVisibleSteps)}>
-								{/* Gradient background layer */}
 								<div className="absolute inset-0 bg-gradient-to-b from-[#4A4855] to-[#A39EBB] transition-opacity duration-1000" />
-								{/* Primary color overlay that fades in */}
 								<div
 									className={`absolute inset-0 bg-primary transition-opacity duration-1000 ${(() => {
 										const isLastStep = sectionIndex === ANALYZING_STEPS.length - 1;
