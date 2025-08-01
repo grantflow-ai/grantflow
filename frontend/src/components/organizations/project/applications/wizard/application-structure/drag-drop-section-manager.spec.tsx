@@ -292,8 +292,8 @@ describe.sequential("DragDropSectionManager", () => {
 			expect(sectionTitles.length).toBeGreaterThan(0);
 			expect(sectionContainers.length).toBeGreaterThan(0);
 
-			expect(sectionTitles.some((title) => title.textContent.includes("Main Section 1"))).toBe(true);
-			expect(sectionTitles.some((title) => title.textContent.includes("Subsection 1"))).toBe(true);
+			expect(sectionTitles.some((title) => title.textContent?.includes("Main Section 1"))).toBe(true);
+			expect(sectionTitles.some((title) => title.textContent?.includes("Subsection 1"))).toBe(true);
 		});
 
 		it("handles section interactions", () => {

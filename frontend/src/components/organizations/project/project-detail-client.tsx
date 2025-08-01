@@ -179,7 +179,7 @@ export function ProjectDetailClient() {
 	};
 
 	const handleSaveProjectTitle = async () => {
-		const newTitle = titleInputRef.current?.textContent.trim() ?? "";
+		const newTitle = titleInputRef.current?.textContent?.trim() ?? "";
 		if (newTitle && newTitle !== project?.name && project && selectedOrganizationId) {
 			try {
 				await updateProject(selectedOrganizationId, project.id, {
