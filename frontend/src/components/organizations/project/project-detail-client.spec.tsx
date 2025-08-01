@@ -47,6 +47,11 @@ vi.mock("@/components/layout/app-header", () => ({
 }));
 vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
+	AvatarGroup: vi.fn(({ users, ...props }) => (
+		<div data-testid="avatar-group" {...props}>
+			{users?.length ?? 0} users
+		</div>
+	)),
 }));
 vi.mock("./applications/delete-application-modal", () => ({
 	DeleteApplicationModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
@@ -253,7 +258,8 @@ describe("ProjectDetailClient", () => {
 		const editButton = screen.getByRole("button", { name: "" });
 		await user.click(editButton);
 
-		expect(screen.getByDisplayValue("Test Project")).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: "Project Title" })).toBeInTheDocument();
+		expect(screen.getByRole("textbox", { name: "Project Title" })).toHaveTextContent("Test Project");
 	});
 
 	it("should filter applications based on search query", async () => {

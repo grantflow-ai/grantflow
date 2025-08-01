@@ -1,9 +1,9 @@
 "use client";
 
-import { AvatarGroup } from "@/components/app";
-import { useOnClickOutside } from "@/hooks/use-on-click-outside";
-import { Notification } from "@/components/organizations/dashboard/notification";
 import { useRef, useState } from "react";
+import { AvatarGroup } from "@/components/app";
+import { Notification } from "@/components/organizations/dashboard/notification";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface AppHeaderProps {
 	projectTeamMembers: {

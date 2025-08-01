@@ -1,7 +1,20 @@
-import { HeadingLevels } from "@grantflow/editor";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe } from "vitest";
+import { afterEach, describe, vi } from "vitest";
 import { EditorSections } from "./editor-sections";
+
+vi.mock("@grantflow/editor", () => ({
+	HeadingLevels: {
+		H1: 1,
+		H2: 2,
+		H3: 3,
+	},
+}));
+
+const HeadingLevels = {
+	H1: 1,
+	H2: 2,
+	H3: 3,
+} as const;
 
 describe.sequential("EditorSections", () => {
 	afterEach(() => {
