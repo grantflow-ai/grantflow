@@ -66,6 +66,7 @@
 	--color-app-lavender-gray: var(--app-lavender-gray);
 	--color-light-red: var(--app-light-red);
 	--color-red: var(--app-red);
+	--color-app-file-status-green: var(--app-file-status-green);
 
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
@@ -105,6 +106,7 @@
 	--app-red: oklch(0.67 0.2207 13.38); /* FF456D */
 	--app-light-red: #ffecec;
 	--app-green: oklch(0.86 0.1786 142.59); /* 86EF7F */
+	--app-file-status-green: oklch(0.6096 0.1659 149.38); /* #119D47 */
 	--app-dark-blue: oklch(0.29 0.1308 278.65); /* 211968 */
 	--app-primary-blue: oklch(0.46 0.2976 266.95); /* 1E13F8 */
 	--app-light-blue: oklch(0.5 0.2821 271.85); /* 3C31FF */
@@ -191,6 +193,7 @@
 
 	--app-red: oklch(0.67 0.2207 13.38); /* FF456D */
 	--app-green: oklch(0.86 0.1786 142.59); /* 86EF7F */
+	--app-file-status-green: oklch(0.6096 0.1659 149.38); /* #119D47 */
 	--app-dark-blue: oklch(0.29 0.1308 278.65); /* 211968 */
 	--app-primary-blue: oklch(0.46 0.2976 266.95); /* 1E13F8 */
 	--app-light-blue: oklch(0.5 0.2821 271.85); /* 3C31FF */
