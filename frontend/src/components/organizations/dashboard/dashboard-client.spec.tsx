@@ -50,6 +50,7 @@ vi.mock("../modals/invite-collaborator-modal", () => ({
 	InviteCollaboratorModal: vi.fn(() => <div data-testid="mock-invite-modal" />),
 }));
 vi.mock("@/components/app", () => ({
+	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
 	AvatarGroup: vi.fn(() => <div data-testid="mock-avatar-group" />),
 }));
 vi.mock("@/components/ui/tooltip", () => ({
