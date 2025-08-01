@@ -31,10 +31,8 @@ export function getActiveFontFamily(editor: Editor | null): string | null {
 	if (!editor?.isEditable) return null;
 
 	const attrs = editor.getAttributes("fontFamily");
-	console.log("FontFamily attrs:", attrs);
 
 	const isActive = editor.isActive("fontFamily");
-	console.log("FontFamily is active:", isActive);
 
 	if (isActive && attrs.fontFamily) {
 		return attrs.fontFamily;
@@ -67,13 +65,6 @@ export function useFontFamilyDropdownMenu(config: UseFontFamilyDropdownMenuConfi
 	const canToggle = canToggleFontFamily(editor);
 	const isActive = isFontFamilyActive(editor);
 	const activeFontFamily = getActiveFontFamily(editor);
-
-	console.log("Editor state:", {
-		activeFontFamily,
-		canToggle,
-		editorExists: !!editor,
-		isActive,
-	});
 
 	React.useEffect(() => {
 		if (!editor) return;

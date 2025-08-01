@@ -1,0 +1,28 @@
+.table-context-menu {
+  .dropdown-menu-item {
+    padding: 0.5rem 0.75rem;
+    transition: background-color 0.15s ease-in-out;
+    font-size: 0.875rem;
+    color: #374151;
+
+    &:hover {
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+
+    &.danger {
+      color: #dc2626;
+
+      &:hover {
+        background-color: #fef2f2;
+        color: #b91c1c;
+      }
+    }
+  }
+
+  .menu-separator {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 0.25rem 0;
+  }
+}

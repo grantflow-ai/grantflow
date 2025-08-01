@@ -40,6 +40,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  height: calc(100vh - 48px);
 }
 
 .simple-editor-content {
@@ -51,6 +52,7 @@ body {
   flex: 1;
   background-color: var(--tt-bg-color);
   margin-top: 12px;
+  overflow: scroll;
 }
 
 .simple-editor-content .tiptap.ProseMirror.simple-editor {

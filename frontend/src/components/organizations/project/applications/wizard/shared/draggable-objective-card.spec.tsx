@@ -99,7 +99,7 @@ describe.sequential("DraggableObjectiveCard", () => {
 		it("renders card container and header component", () => {
 			renderDraggableObjectiveCard();
 
-			expect(screen.getByRole("article")).toBeInTheDocument();
+			expect(screen.getByTestId("app-card")).toBeInTheDocument();
 			expect(screen.getByTestId("objective-header")).toBeInTheDocument();
 		});
 	});
