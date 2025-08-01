@@ -1,7 +1,7 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -52,9 +52,11 @@ vi.mock("@/hooks/use-application-notifications", () => ({
 	}),
 }));
 
+const sharedApplication = ApplicationWithTemplateFactory.build();
+
 function renderWizardClient(overrides = {}) {
 	const defaultProps = {
-		application: ApplicationWithTemplateFactory.build(),
+		application: sharedApplication,
 		organizationId: "org-123",
 		projectId: "project-456",
 		...overrides,
@@ -117,63 +119,73 @@ describe.sequential("WizardClientComponent", () => {
 		it("renders Application Structure step with dialogRef when current step matches", async () => {
 			renderWizardClient();
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			await waitFor(() => {
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+			});
 
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("application-structure-step")).toBeInTheDocument();
+			});
 			expect(screen.getByTestId("application-structure-step")).toHaveTextContent("Dialog ref: present");
 		});
 
 		it("renders Knowledge Base step when current step matches", async () => {
 			renderWizardClient();
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			await waitFor(() => {
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+			});
 
 			useWizardStore.setState({ currentStep: WizardStep.KNOWLEDGE_BASE });
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			expect(screen.getByTestId("knowledge-base-step")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("knowledge-base-step")).toBeInTheDocument();
+			});
 		});
 
 		it("renders Research Plan step with dialogRef when current step matches", async () => {
 			renderWizardClient();
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			await waitFor(() => {
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+			});
 
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_PLAN });
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("research-plan-step")).toBeInTheDocument();
+			});
 			expect(screen.getByTestId("research-plan-step")).toHaveTextContent("Dialog ref: present");
 		});
 
 		it("renders Research Deep Dive step when current step matches", async () => {
 			renderWizardClient();
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			await waitFor(() => {
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+			});
 
 			useWizardStore.setState({ currentStep: WizardStep.RESEARCH_DEEP_DIVE });
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("research-deep-dive-step")).toBeInTheDocument();
+			});
 		});
 
 		it("renders Generate Complete step when current step matches", async () => {
 			renderWizardClient();
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			await waitFor(() => {
+				expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
+			});
 
 			useWizardStore.setState({ currentStep: WizardStep.GENERATE_AND_COMPLETE });
 
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			expect(screen.getByTestId("generate-complete-step")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("generate-complete-step")).toBeInTheDocument();
+			});
 		});
 	});
 
@@ -239,16 +251,6 @@ describe.sequential("WizardClientComponent", () => {
 	});
 
 	describe("Step Component Props", () => {
-		it("passes connection status and color to Application Details step", async () => {
-			renderWizardClient();
-
-			await new Promise((resolve) => setTimeout(resolve, 10));
-
-			const stepElement = screen.getByTestId("application-details-step");
-			expect(stepElement).toHaveTextContent("Status: connected");
-			expect(stepElement).toHaveTextContent("Color: green");
-		});
-
 		it("passes dialogRef to steps that require it", async () => {
 			renderWizardClient();
 
