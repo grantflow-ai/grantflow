@@ -4,15 +4,26 @@ import { action } from "storybook/actions";
 import AppInput from "./input-field";
 
 const meta: Meta<typeof AppInput> = {
+	argTypes: {
+		onChange: {
+			action: false,
+		},
+	},
 	component: AppInput,
 	decorators: [
 		(Story) => (
-			<div className="max-w-md p-8">
+			<div className="max-w-2xl w-full p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg">
 				<Story />
 			</div>
 		),
 	],
 	parameters: {
+		actions: {
+			disable: true,
+		},
+		controls: {
+			include: ["label", "placeholder", "showCount", "maxCount"],
+		},
 		layout: "centered",
 	},
 	title: "Components/Forms/InputField",
@@ -159,7 +170,7 @@ export const NumberInput: Story = {
 export const AllVariants: Story = {
 	decorators: [
 		() => (
-			<div className="max-w-md space-y-6 p-8">
+			<div className="max-w-4xl w-full space-y-6 p-8 bg-gradient-to-br from-slate-50 to-zinc-100 rounded-lg">
 				<AppInput
 					label="Default"
 					onChange={action("default-changed")}
