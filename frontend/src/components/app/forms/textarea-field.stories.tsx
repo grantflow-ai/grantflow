@@ -3,15 +3,26 @@ import { action } from "storybook/actions";
 import AppTextArea from "./textarea-field";
 
 const meta: Meta<typeof AppTextArea> = {
+	argTypes: {
+		onChange: {
+			action: false,
+		},
+	},
 	component: AppTextArea,
 	decorators: [
 		(Story) => (
-			<div className="max-w-lg w-md p-8">
+			<div className="w-full min-w-[600px] max-w-5xl p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg">
 				<Story />
 			</div>
 		),
 	],
 	parameters: {
+		actions: {
+			disable: true,
+		},
+		controls: {
+			include: ["label", "placeholder", "showCount", "maxCount", "rows"],
+		},
 		layout: "centered",
 	},
 	title: "Components/Forms/TextareaField",
@@ -129,7 +140,7 @@ export const LongTextExample: Story = {
 export const AllVariants: Story = {
 	decorators: [
 		() => (
-			<div className="max-w-md space-y-6 p-8">
+			<div className="w-full min-w-[600px] max-w-5xl space-y-6 p-8 bg-gradient-to-br from-slate-50 to-zinc-100 rounded-lg">
 				<AppTextArea
 					label="Default"
 					onChange={action("default-changed")}
