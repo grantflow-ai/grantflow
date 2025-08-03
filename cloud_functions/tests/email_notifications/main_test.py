@@ -227,10 +227,19 @@ Another paragraph with **bold** text.
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test successful application email sending."""
+        # Set environment variables
+        monkeypatch.setenv("SITE_URL", "https://test.grantflow.ai")
+
         with (
             patch("cloud_functions.src.email_notifications.main.get_application_data") as mock_get_data,
             patch("cloud_functions.src.email_notifications.main.send_resend_email") as mock_send_email,
+            patch("cloud_functions.src.email_notifications.main.jinja_env") as mock_jinja_env,
         ):
+            # Mock Jinja template rendering
+            mock_template = Mock()
+            mock_template.render.return_value = "<html>Test email content</html>"
+            mock_jinja_env.get_template.return_value = mock_template
+
             mock_get_data.return_value = mock_application_data
             mock_send_email.return_value = {"id": "email-123", "status": "sent"}
 
@@ -242,6 +251,15 @@ Another paragraph with **bold** text.
             mock_get_data.assert_called_once_with("123e4567-e89b-12d3-a456-426614174000")
             mock_send_email.assert_called_once()
 
+            # Verify template was rendered with correct data
+            mock_jinja_env.get_template.assert_called_once_with("application_ready.html")
+            mock_template.render.assert_called_once_with(
+                application_title="Test Grant Application",
+                user_name="Test Organization",
+                site_url="https://test.grantflow.ai",
+                editor_url="https://test.grantflow.ai/projects/456e7890-e89b-12d3-a456-426614174000/applications/123e4567-e89b-12d3-a456-426614174000/editor",
+            )
+
             # Get positional and keyword arguments
             args, kwargs = mock_send_email.call_args
 
@@ -249,7 +267,7 @@ Another paragraph with **bold** text.
             assert len(args) == 4  # to_email, subject, html, attachments
             assert args[0] == "test@example.com"  # to_email
             assert "Test Grant Application" in args[1]  # subject
-            assert "Grant Application is Ready" in args[2]  # html
+            assert args[2] == "<html>Test email content</html>"  # html from template
             assert len(args[3]) == 2  # attachments (Markdown and DOCX)
 
     async def test_send_application_email_invalid_event(self) -> None:

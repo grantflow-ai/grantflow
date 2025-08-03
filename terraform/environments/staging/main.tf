@@ -113,6 +113,11 @@ module "pubsub" {
   message_retention_duration           = "86400s" # 1 day for staging
   ack_deadline_seconds                 = 60       # Default deadline
   enable_dead_letter                   = false    # No DLQ for staging
+
+  # Pass Cloud Run service URLs for push endpoints
+  indexer_url = module.cloud_run.indexer_url
+  crawler_url = module.cloud_run.crawler_url
+  rag_url     = module.cloud_run.rag_url
 }
 
 # Scheduler module
