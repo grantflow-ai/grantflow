@@ -65,6 +65,7 @@ async def list_notifications(
         filters = [
             Notification.firebase_uid == request.auth,
             Notification.dismissed == False,  # noqa: E712
+            Notification.deleted_at.is_(None),
         ]
 
         if not include_read:

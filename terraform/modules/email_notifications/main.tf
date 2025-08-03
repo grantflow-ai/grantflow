@@ -9,28 +9,6 @@ terraform {
   }
 }
 
-variable "project_id" {
-  description = "The project ID to deploy to"
-  type        = string
-}
-
-variable "region" {
-  description = "The region for Cloud Run services"
-  type        = string
-  default     = "us-central1"
-}
-
-variable "environment" {
-  description = "Environment (staging, prod)"
-  type        = string
-  default     = "staging"
-}
-
-variable "rag_service_account_email" {
-  description = "Email of the RAG service account that will publish to the topic"
-  type        = string
-}
-
 # Storage bucket for Cloud Function source
 # trivy:ignore:AVD-GCP-0066
 resource "google_storage_bucket" "email_notification_functions" {
@@ -62,6 +40,11 @@ data "archive_file" "email_notification_source" {
   source {
     content  = file("${path.root}/../cloud_functions/requirements.txt")
     filename = "requirements.txt"
+  }
+
+  source {
+    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/application_ready.html")
+    filename = "templates/application_ready.html"
   }
 }
 
@@ -142,6 +125,7 @@ resource "google_cloudfunctions2_function" "email_notification" {
     environment_variables = {
       GOOGLE_CLOUD_PROJECT = var.project_id
       ENVIRONMENT          = var.environment
+      SITE_URL             = var.environment == "staging" ? "https://staging.grantflow.ai" : "https://grantflow.ai"
     }
 
     # Reference to secrets from Secret Manager
@@ -197,18 +181,3 @@ resource "google_logging_metric" "email_notification_operations" {
   }
 }
 
-# Output the function details
-output "email_notification_function_name" {
-  description = "Name of the email notification Cloud Function"
-  value       = google_cloudfunctions2_function.email_notification.name
-}
-
-output "email_notification_topic_name" {
-  description = "Name of the email notification Pub/Sub topic"
-  value       = google_pubsub_topic.email_notifications.name
-}
-
-output "email_notification_topic_id" {
-  description = "Full ID of the email notification Pub/Sub topic"
-  value       = google_pubsub_topic.email_notifications.id
-}

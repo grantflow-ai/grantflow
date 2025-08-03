@@ -263,7 +263,11 @@ async def handle_retrieve_rag_sources(
                     GrantApplicationSource,
                     GrantApplicationSource.rag_source_id == rag_poly.id,
                 )
-                .where(GrantApplicationSource.grant_application_id == application_id)
+                .where(
+                    GrantApplicationSource.grant_application_id == application_id,
+                    GrantApplicationSource.deleted_at.is_(None),
+                    rag_poly.deleted_at.is_(None),
+                )
             )
         elif template_id:
             stmt = (
@@ -272,7 +276,11 @@ async def handle_retrieve_rag_sources(
                     GrantTemplateSource,
                     GrantTemplateSource.rag_source_id == rag_poly.id,
                 )
-                .where(GrantTemplateSource.grant_template_id == template_id)
+                .where(
+                    GrantTemplateSource.grant_template_id == template_id,
+                    GrantTemplateSource.deleted_at.is_(None),
+                    rag_poly.deleted_at.is_(None),
+                )
             )
         else:
             institution_id = granting_institution_id if granting_institution_id else organization_id
@@ -282,7 +290,11 @@ async def handle_retrieve_rag_sources(
                     GrantingInstitutionSource,
                     GrantingInstitutionSource.rag_source_id == rag_poly.id,
                 )
-                .where(GrantingInstitutionSource.granting_institution_id == institution_id)
+                .where(
+                    GrantingInstitutionSource.granting_institution_id == institution_id,
+                    GrantingInstitutionSource.deleted_at.is_(None),
+                    rag_poly.deleted_at.is_(None),
+                )
             )
 
         results = await session.scalars(stmt)
