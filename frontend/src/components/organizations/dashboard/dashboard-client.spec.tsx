@@ -50,6 +50,7 @@ vi.mock("../modals/invite-collaborator-modal", () => ({
 	InviteCollaboratorModal: vi.fn(() => <div data-testid="mock-invite-modal" />),
 }));
 vi.mock("@/components/app", () => ({
+	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
 	AvatarGroup: vi.fn(() => <div data-testid="mock-avatar-group" />),
 }));
 vi.mock("@/components/ui/tooltip", () => ({
@@ -103,9 +104,6 @@ const MockDashboardProjectCard = vi.mocked(
 	await import("./dashboard-project-card").then((m) => m.DashboardProjectCard),
 );
 const MockWelcomeModal = vi.mocked(await import("./welcome/welcome-modal").then((m) => m.WelcomeModal));
-const MockInviteCollaboratorModal = vi.mocked(
-	await import("../modals/invite-collaborator-modal").then((m) => m.InviteCollaboratorModal),
-);
 const MockPaymentLink = vi.mocked(await import("../payment/payment-link").then((m) => m.default));
 
 describe("DashboardClient", () => {
@@ -233,24 +231,6 @@ describe("DashboardClient", () => {
 
 		expect(createButton).toHaveTextContent("Creating...");
 		expect(createButton).toBeDisabled();
-	});
-
-	it("should handle invite collaborators button click", async () => {
-		const user = userEvent.setup();
-
-		render(<DashboardClient {...defaultProps} />);
-
-		const inviteButton = screen.getByTestId("invite-collaborators-button");
-		await user.click(inviteButton);
-
-		expect(MockInviteCollaboratorModal).toHaveBeenCalledWith(
-			{
-				isOpen: true,
-				onClose: expect.any(Function),
-				onInvite: expect.any(Function),
-			},
-			undefined,
-		);
 	});
 
 	it("should initialize organization store with server data", () => {

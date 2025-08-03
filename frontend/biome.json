@@ -168,7 +168,7 @@
 				"noInferrableTypes": "error",
 				"noNegationElse": "off",
 				"noNonNullAssertion": "off",
-				"noParameterAssign": "off",
+				"noParameterAssign": "error",
 				"noRestrictedGlobals": {
 					"level": "error",
 					"options": {
