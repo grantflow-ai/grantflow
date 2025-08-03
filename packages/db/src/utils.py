@@ -61,25 +61,45 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
     poly_rag_source = with_polymorphic(RagSource, [RagFile, RagUrl])
 
     try:
+        # First get the application with basic relationships
         result = await session.execute(
             select(GrantApplication)
             .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution))
-            .options(
-                selectinload(GrantApplication.grant_template)
-                .selectinload(GrantTemplate.rag_sources)
-                .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source))
-            )
-            .options(
-                selectinload(GrantApplication.rag_sources).selectinload(
-                    GrantApplicationSource.rag_source.of_type(poly_rag_source)
-                )
-            )
             .where(
                 GrantApplication.id == application_id,
                 GrantApplication.deleted_at.is_(None),
             )
         )
-        return result.scalar_one()
+        application = result.scalar_one()
+
+        # Load non-deleted application sources
+        app_sources_result = await session.execute(
+            select(GrantApplicationSource)
+            .options(selectinload(GrantApplicationSource.rag_source.of_type(poly_rag_source)))
+            .where(
+                GrantApplicationSource.grant_application_id == application.id,
+                GrantApplicationSource.deleted_at.is_(None),
+            )
+            .join(RagSource, RagSource.id == GrantApplicationSource.rag_source_id)
+            .where(RagSource.deleted_at.is_(None))
+        )
+        application.rag_sources = list(app_sources_result.scalars().all())
+
+        # Load non-deleted template sources if template exists
+        if application.grant_template:
+            template_sources_result = await session.execute(
+                select(GrantTemplateSource)
+                .options(selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source)))
+                .where(
+                    GrantTemplateSource.grant_template_id == application.grant_template.id,
+                    GrantTemplateSource.deleted_at.is_(None),
+                )
+                .join(RagSource, RagSource.id == GrantTemplateSource.rag_source_id)
+                .where(RagSource.deleted_at.is_(None))
+            )
+            application.grant_template.rag_sources = list(template_sources_result.scalars().all())
+
+        return application
     except NoResultFound as e:
         raise ValidationError("Application not found.", context=str(e)) from e
 

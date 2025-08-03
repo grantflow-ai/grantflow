@@ -87,6 +87,8 @@ async def handle_generate_grant_template(
             .join(RagSource)
             .where(
                 GrantTemplateSource.grant_template_id == grant_template_id,
+                GrantTemplateSource.deleted_at.is_(None),
+                RagSource.deleted_at.is_(None),
                 RagSource.indexing_status.in_(
                     (
                         SourceIndexingStatusEnum.INDEXING,

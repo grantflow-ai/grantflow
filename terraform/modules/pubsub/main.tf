@@ -43,6 +43,21 @@ variable "enable_dead_letter" {
   default     = false
 }
 
+variable "indexer_url" {
+  description = "URL of the indexer Cloud Run service"
+  type        = string
+}
+
+variable "crawler_url" {
+  description = "URL of the crawler Cloud Run service"
+  type        = string
+}
+
+variable "rag_url" {
+  description = "URL of the RAG Cloud Run service"
+  type        = string
+}
+
 resource "google_pubsub_topic" "file_indexing" {
   name = "file-indexing"
 
@@ -69,12 +84,12 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
 
   # Configure push to Cloud Run
   push_config {
-    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/indexer:call"
+    push_endpoint = var.indexer_url
 
     # Authentication for the push endpoint
     oidc_token {
       service_account_email = var.pubsub_invoker_service_account_email
-      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/indexer"
+      audience              = var.indexer_url
     }
 
     # This attribute specifies that we have a minimum number of failed attempts before acking the message
@@ -139,12 +154,12 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
 
   # Configure push to Cloud Run
   push_config {
-    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/crawler:call"
+    push_endpoint = var.crawler_url
 
     # Authentication for the push endpoint
     oidc_token {
       service_account_email = var.pubsub_invoker_service_account_email
-      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/crawler"
+      audience              = var.crawler_url
     }
 
     # This attribute specifies that we have a minimum number of failed attempts before acking the message
@@ -216,12 +231,12 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
 
   # Configure push to Cloud Run
   push_config {
-    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/rag:call"
+    push_endpoint = var.rag_url
 
     # Authentication for the push endpoint
     oidc_token {
       service_account_email = var.pubsub_invoker_service_account_email
-      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/rag"
+      audience              = var.rag_url
     }
 
     # This attribute specifies that we have a minimum number of failed attempts before acking the message

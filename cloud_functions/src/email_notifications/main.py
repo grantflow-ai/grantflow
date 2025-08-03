@@ -3,18 +3,24 @@ import base64
 import json
 import os
 from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 import functions_framework
 import httpx
 from cloudevents.http import CloudEvent
 from docx import Document
+from jinja2 import Environment, FileSystemLoader
 from markdown import markdown
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 logger = __import__("logging").getLogger(__name__)
+
+# Set up Jinja2 environment
+template_dir = Path(__file__).parent / "templates"
+jinja_env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
 
 
 async def get_application_data(application_id: str) -> dict[str, Any]:
@@ -197,30 +203,18 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
         # Generate DOCX from markdown
         docx_content = markdown_to_docx(app_data["application"]["text"])
 
-        # Create email HTML
-        html_content = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Your Grant Application is Ready!</h2>
-            <p>Hi {app_data["user"]["name"] or "there"},</p>
-            <p>Great news! Your grant application "<strong>{app_data["application"]["title"]}</strong>" has been successfully generated.</p>
-            <p>We've attached your application in two formats:</p>
-            <ul>
-                <li><strong>Markdown (.md)</strong> - For easy editing and version control</li>
-                <li><strong>Word Document (.docx)</strong> - For submission and final formatting</li>
-            </ul>
-            <p>You can also view and edit your application online in our editor.</p>
-            <p style="margin-top: 30px;">
-                <a href="https://grantflow.ai/projects/{app_data["project"]["id"]}/applications/{app_data["application"]["id"]}/editor"
-                   style="background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                    Open in Editor
-                </a>
-            </p>
-            <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                Best of luck with your grant application!<br>
-                The GrantFlow Team
-            </p>
-        </div>
-        """
+        # Render email HTML using Jinja template
+        template = jinja_env.get_template("application_ready.html")
+
+        # Get the site URL from environment or default
+        site_url = os.environ.get("SITE_URL", "https://grantflow.ai")
+
+        html_content = template.render(
+            application_title=app_data["application"]["title"],
+            user_name=app_data["user"]["name"],
+            site_url=site_url,
+            editor_url=f"{site_url}/projects/{app_data['project']['id']}/applications/{app_data['application']['id']}/editor",
+        )
 
         # Prepare attachments
         attachments = [
