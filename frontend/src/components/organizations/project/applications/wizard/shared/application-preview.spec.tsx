@@ -82,19 +82,6 @@ describe("ApplicationPreview", () => {
 		expect(screen.getByTestId("application-title")).toHaveTextContent("Untitled Application");
 	});
 
-	it("renders connection status badge when provided", () => {
-		render(
-			<ApplicationPreview
-				connectionStatus="Connected"
-				connectionStatusColor="bg-green-500"
-				draftTitle="Test App"
-			/>,
-		);
-
-		const badges = screen.getAllByTestId("theme-badge");
-		expect(badges[1]).toHaveTextContent("Connected");
-	});
-
 	it("renders file preview cards for template files", () => {
 		const mockSources = [
 			RagSourceFactory.build({

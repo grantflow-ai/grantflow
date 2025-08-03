@@ -3,13 +3,16 @@ import { ProjectFactory, ProjectListItemFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createProject, deleteProject, getProject, getProjects, updateProject } from "@/actions/project";
+import { log } from "@/utils/logger";
 
 import { useProjectStore } from "./project-store";
 
 vi.mock("@/actions/project");
 vi.mock("sonner", () => ({
 	toast: {
+		dismiss: vi.fn(),
 		error: vi.fn(),
+		loading: vi.fn(() => "mock-toast-id"),
 		success: vi.fn(),
 	},
 }));
@@ -18,6 +21,13 @@ vi.mock("@/stores/organization-store", () => ({
 		getState: vi.fn(() => ({
 			selectedOrganizationId: "mock-org-id",
 		})),
+	},
+}));
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
 	},
 }));
 
@@ -93,6 +103,7 @@ describe("Project Store", () => {
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().project).toBeNull();
+			expect(log.error).toHaveBeenCalledWith("createProject", error);
 		});
 	});
 
@@ -117,6 +128,7 @@ describe("Project Store", () => {
 			await useProjectStore.getState().getProject("mock-org-id", projectId);
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
+			expect(log.error).toHaveBeenCalledWith("getProject", error);
 		});
 	});
 
@@ -140,6 +152,7 @@ describe("Project Store", () => {
 
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().projects).toEqual([]);
+			expect(log.error).toHaveBeenCalledWith("getProjects", error);
 		});
 	});
 
@@ -184,6 +197,7 @@ describe("Project Store", () => {
 			expect(useProjectStore.getState().project).toEqual(project);
 			expect(useProjectStore.getState().projects).toEqual([projectListItem]);
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
+			expect(log.error).toHaveBeenCalledWith("updateProject", error);
 		});
 	});
 
@@ -221,6 +235,7 @@ describe("Project Store", () => {
 			expect(useProjectStore.getState().areOperationsInProgress).toBe(false);
 			expect(useProjectStore.getState().project).toEqual(project);
 			expect(useProjectStore.getState().projects).toEqual([projectListItem]);
+			expect(log.error).toHaveBeenCalledWith("deleteProject", error);
 		});
 	});
 });

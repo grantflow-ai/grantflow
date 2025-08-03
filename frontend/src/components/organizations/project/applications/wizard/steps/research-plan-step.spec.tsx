@@ -1,13 +1,35 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
-import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::testing/factories";
+import {
+	ApplicationWithTemplateFactory,
+	GetOrganizationResponseFactory,
+	ListOrganizationsResponseFactory,
+	ResearchObjectiveFactory,
+} from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
+
+vi.mock("@/actions/grant-applications", () => ({
+	updateApplication: vi.fn().mockResolvedValue({
+		id: "test-app-id",
+		project_id: "test-project-id",
+		research_objectives: [],
+	}),
+}));
+
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
+}));
 
 vi.mock("./research-plan-preview", () => ({
 	ResearchPlanPreview: () => <div data-testid="research-plan-preview-mock">ResearchPlanPreview Mock</div>,
@@ -58,6 +80,14 @@ describe.sequential("ResearchPlanStep", () => {
 		resetAllStores();
 		setupAuthenticatedTest();
 		vi.clearAllMocks();
+
+		const organization = GetOrganizationResponseFactory.build();
+		const organizations = ListOrganizationsResponseFactory.build();
+		useOrganizationStore.setState({
+			organization,
+			organizations,
+			selectedOrganizationId: organization.id,
+		});
 	});
 
 	afterEach(() => {
@@ -556,7 +586,7 @@ describe.sequential("ResearchPlanStep", () => {
 	describe("Edge Cases", () => {
 		it("handles undefined research_objectives gracefully", () => {
 			const application = ApplicationWithTemplateFactory.build({
-				research_objectives: undefined,
+				research_objectives: undefined as any,
 			});
 
 			useApplicationStore.setState({ application });
