@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 export type AppInputProps = ComponentProps<typeof Input>;
 
 export const AppInput = forwardRef<HTMLInputElement, AppInputProps>(({ className, ...props }, ref) => {
-	return <Input className={className} data-testid="app-input" ref={ref} {...props} />;
+	const inputRef = ref;
+	return <Input className={className} data-testid="app-input" ref={inputRef} {...props} />;
 });
 
 AppInput.displayName = "AppInput";

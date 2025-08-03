@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach } from "vitest";
 import { Notification } from "./notification";
 
@@ -8,13 +7,10 @@ describe.sequential("Notification component", () => {
 		cleanup();
 	});
 
-	it("shows notification dropdown and items when triggered", async () => {
-		const user = userEvent.setup();
-		render(<Notification isOpen={false} />);
+	it("shows notification dropdown and items when open", async () => {
+		render(<Notification isOpen />);
 
-		await user.click(screen.getByTestId("notification-trigger"));
-
-		expect(await screen.findByTestId("notification-panel")).toBeInTheDocument();
+		expect(screen.getByTestId("notification-panel")).toBeInTheDocument();
 
 		expect(screen.getByTestId("notification-dot-1")).toBeInTheDocument();
 

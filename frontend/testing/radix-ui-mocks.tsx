@@ -119,8 +119,9 @@ export const DropdownMenu = ({ children, onOpenChange, open, ...props }: any) =>
 DropdownMenu.displayName = "DropdownMenu";
 
 export const DropdownMenuTrigger = React.forwardRef(({ children, ...props }: any, ref: any) => {
+	const buttonRef = ref;
 	return (
-		<button ref={ref} type="button" {...props}>
+		<button ref={buttonRef} type="button" {...props}>
 			{children}
 		</button>
 	);
