@@ -433,6 +433,65 @@ async def publish_notification[T](
         ) from e
 
 
+class EmailNotificationRequest(TypedDict):
+    application_id: UUID
+    trace_id: NotRequired[str]
+
+
+async def publish_email_notification(
+    *,
+    logger: "FilteringBoundLogger",
+    application_id: str | UUID,
+    trace_id: str | None = None,
+) -> str:
+    """Publish a message to send email notification for a completed grant application."""
+    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
+
+    client = get_publisher_client()
+
+    data = EmailNotificationRequest(
+        application_id=UUID(str(application_id)),
+    )
+
+    if trace_id:
+        data["trace_id"] = trace_id
+
+    try:
+        message_data = serialize(data)
+        topic_path = client.topic_path(
+            project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
+            topic=get_env(
+                "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"
+            ),
+        )
+
+        with create_pubsub_publish_span(topic_path, "EmailNotificationRequest") as span:
+            span.set_attribute("application_id", str(application_id))
+            if trace_id:
+                span.set_attribute("trace_id", trace_id)
+
+            attributes = {"trace_id": trace_id} if trace_id else {}
+            attributes = inject_trace_context(attributes)
+
+            future = client.publish(topic_path, message_data, **attributes)
+            message_id = await run_sync(future.result)
+
+            span.set_attribute("messaging.message.id", message_id)
+
+        logger.info(
+            "Published email notification message",
+            message_id=message_id,
+            application_id=str(application_id),
+            trace_id=trace_id,
+        )
+        return str(message_id)
+    except MessageTooLargeError as e:
+        logger.error("Error publishing email notification message", error=str(e))
+        raise BackendError(
+            "Error publishing email notification message", context={"error": str(e)}
+        ) from e
+
+
 async def pull_notifications(
     *,
     logger: "FilteringBoundLogger",

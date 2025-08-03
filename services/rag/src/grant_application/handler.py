@@ -14,6 +14,7 @@ from packages.shared_utils.src.exceptions import (
     ValidationError,
 )
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub import publish_email_notification
 from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -558,5 +559,21 @@ async def grant_application_text_generation_pipeline_handler(
         current_pipeline_stage=GRANT_APPLICATION_PIPELINE_STAGES,
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
+
+    # Publish email notification
+    try:
+        await publish_email_notification(
+            logger=logger,
+            application_id=application_id,
+            trace_id=None,  # TODO: Get trace_id from context when available
+        )
+        logger.info("Email notification published", application_id=str(application_id))
+    except Exception as e:
+        # Don't fail the generation if email notification fails
+        logger.error(
+            "Failed to publish email notification",
+            application_id=str(application_id),
+            error=str(e),
+        )
 
     return application_text, section_texts
