@@ -2,7 +2,6 @@ import asyncio
 import base64
 import json
 import os
-from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any
 
@@ -168,9 +167,16 @@ async def send_resend_email(
 async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
     """Send email notification for generated application."""
     try:
-        # Extract message data
-        if isinstance(cloud_event.data, dict) and "message" in cloud_event.data:
-            pubsub_message = cloud_event.data["message"]
+        # Extract message data - handle both direct data and attributes
+        event_data = cloud_event.data
+        if event_data is None:
+            # Check if data is in attributes (happens with some CloudEvent implementations)
+            attributes = cloud_event.get_attributes()
+            if "data" in attributes:
+                event_data = attributes["data"]
+
+        if isinstance(event_data, dict) and "message" in event_data:
+            pubsub_message = event_data["message"]
             if "data" in pubsub_message:
                 message_data = base64.b64decode(pubsub_message["data"]).decode("utf-8")
             else:
@@ -232,22 +238,12 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
         subject = f"Your Grant Application is Ready - {app_data['application']['title']}"
         await send_resend_email(app_data["user"]["email"], subject, html_content, attachments)
 
-        logger.info(
-            "Email sent successfully",
-            application_id=application_id,
-            user_email=app_data["user"]["email"],
-            timestamp=datetime.now(UTC).isoformat(),
-        )
+        logger.info("Email sent successfully for application %s to %s", application_id, app_data["user"]["email"])
 
         return {"status": "success", "message": "Email sent successfully"}
 
     except Exception as e:
-        logger.exception(
-            "Failed to send application email",
-            error=str(e),
-            cloud_event_type=cloud_event.get("type"),
-            timestamp=datetime.now(UTC).isoformat(),
-        )
+        logger.exception("Failed to send application email")
         return {"status": "error", "message": f"Failed to send email: {e!s}"}
 
 
