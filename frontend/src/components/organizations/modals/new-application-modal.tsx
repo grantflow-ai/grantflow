@@ -1,6 +1,5 @@
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
-import type { API } from "@/types/api-types";
 import { AppButton } from "@/components/app";
 import {
 	Dialog,
@@ -11,6 +10,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { API } from "@/types/api-types";
 
 interface NewApplicationModalProps {
 	isOpen: boolean;
