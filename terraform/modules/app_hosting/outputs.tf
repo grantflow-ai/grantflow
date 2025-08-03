@@ -17,8 +17,3 @@ output "build_id" {
   description = "The ID of the current build"
   value       = google_firebase_app_hosting_build.frontend.build_id
 }
-
-output "custom_domain" {
-  description = "The custom domain if configured"
-  value       = var.custom_domain != null ? var.custom_domain : null
-}
