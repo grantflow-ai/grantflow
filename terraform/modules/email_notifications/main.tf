@@ -1,0 +1,214 @@
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 5.0.0"
+    }
+  }
+}
+
+variable "project_id" {
+  description = "The project ID to deploy to"
+  type        = string
+}
+
+variable "region" {
+  description = "The region for Cloud Run services"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "environment" {
+  description = "Environment (staging, prod)"
+  type        = string
+  default     = "staging"
+}
+
+variable "rag_service_account_email" {
+  description = "Email of the RAG service account that will publish to the topic"
+  type        = string
+}
+
+# Storage bucket for Cloud Function source
+# trivy:ignore:AVD-GCP-0066
+resource "google_storage_bucket" "email_notification_functions" {
+  name                        = "${var.project_id}-email-notification-functions"
+  location                    = "US"
+  force_destroy               = true
+  uniform_bucket_level_access = true
+
+  lifecycle_rule {
+    condition {
+      age = 7
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
+# Package the Cloud Function source
+data "archive_file" "email_notification_source" {
+  type        = "zip"
+  output_path = "${path.module}/email-notification-function.zip"
+
+  source {
+    content  = file("${path.root}/../cloud_functions/src/email_notifications/main.py")
+    filename = "main.py"
+  }
+
+  source {
+    content  = file("${path.root}/../cloud_functions/requirements.txt")
+    filename = "requirements.txt"
+  }
+}
+
+# Upload source to bucket
+resource "google_storage_bucket_object" "email_notification_source" {
+  name   = "email-notification-function-${data.archive_file.email_notification_source.output_md5}.zip"
+  bucket = google_storage_bucket.email_notification_functions.name
+  source = data.archive_file.email_notification_source.output_path
+}
+
+# Service account for the Cloud Function
+resource "google_service_account" "email_notification" {
+  account_id   = "email-notification-function"
+  display_name = "Email Notification Function Service Account"
+  description  = "Service account for sending email notifications when applications are generated"
+}
+
+# IAM permissions for the function
+resource "google_project_iam_member" "email_notification_permissions" {
+  for_each = toset([
+    "roles/cloudsql.client",             # Database access
+    "roles/logging.logWriter",           # Logging
+    "roles/monitoring.metricWriter",     # Metrics
+    "roles/cloudtrace.agent",            # Tracing
+    "roles/storage.objectViewer",        # Read generated files from GCS
+    "roles/secretmanager.secretAccessor" # Access secrets
+  ])
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.email_notification.email}"
+}
+
+# Pub/Sub topic for email notifications
+resource "google_pubsub_topic" "email_notifications" {
+  name = "email-notifications"
+
+  message_retention_duration = "86400s" # 1 day
+
+  labels = {
+    environment = var.environment
+    purpose     = "email_notifications"
+  }
+}
+
+# IAM binding to allow RAG service to publish to the topic
+resource "google_pubsub_topic_iam_member" "rag_publisher" {
+  topic  = google_pubsub_topic.email_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.rag_service_account_email}"
+}
+
+# Cloud Function for email notifications
+resource "google_cloudfunctions2_function" "email_notification" {
+  name        = "email-notification-function"
+  location    = var.region
+  description = "Send email notifications when grant applications are generated"
+
+  build_config {
+    runtime     = "python312"
+    entry_point = "main"
+
+    source {
+      storage_source {
+        bucket = google_storage_bucket.email_notification_functions.name
+        object = google_storage_bucket_object.email_notification_source.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count               = 10
+    min_instance_count               = 0
+    available_memory                 = "512M"
+    timeout_seconds                  = 300 # 5 minutes for DOCX conversion
+    max_instance_request_concurrency = 1
+
+    environment_variables = {
+      GOOGLE_CLOUD_PROJECT = var.project_id
+      ENVIRONMENT          = var.environment
+    }
+
+    # Reference to secrets from Secret Manager
+    secret_environment_variables {
+      key        = "RESEND_API_KEY"
+      project_id = var.project_id
+      secret     = "RESEND_API_KEY_${upper(var.environment)}"
+      version    = "latest"
+    }
+
+    secret_environment_variables {
+      key        = "DATABASE_CONNECTION_STRING"
+      project_id = var.project_id
+      secret     = "DATABASE_CONNECTION_STRING"
+      version    = "latest"
+    }
+
+    service_account_email = google_service_account.email_notification.email
+  }
+
+  event_trigger {
+    trigger_region = var.region
+    event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
+    pubsub_topic   = google_pubsub_topic.email_notifications.id
+
+    retry_policy = "RETRY_POLICY_RETRY"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      build_config[0].source[0].storage_source[0].object
+    ]
+  }
+}
+
+# Log-based metric for email notification operations
+resource "google_logging_metric" "email_notification_operations" {
+  name   = "email_notification_operations"
+  filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"email-notification-function\" AND jsonPayload.status!=\"\""
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    labels {
+      key         = "status"
+      value_type  = "STRING"
+      description = "Status of the email notification (success/error)"
+    }
+  }
+
+  label_extractors = {
+    status = "EXTRACT(jsonPayload.status)"
+  }
+}
+
+# Output the function details
+output "email_notification_function_name" {
+  description = "Name of the email notification Cloud Function"
+  value       = google_cloudfunctions2_function.email_notification.name
+}
+
+output "email_notification_topic_name" {
+  description = "Name of the email notification Pub/Sub topic"
+  value       = google_pubsub_topic.email_notifications.name
+}
+
+output "email_notification_topic_id" {
+  description = "Full ID of the email notification Pub/Sub topic"
+  value       = google_pubsub_topic.email_notifications.id
+}

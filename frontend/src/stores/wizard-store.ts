@@ -70,9 +70,10 @@ interface WizardActions {
 	polling: PollingActions;
 	removeObjective: (objectiveNumber: number) => Promise<void>;
 	reset: () => void;
+	resetApplicationGenerationComplete: () => void;
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
-	setGeneratingApplication: (isGenerating: boolean) => void;
 
+	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
@@ -90,6 +91,7 @@ interface WizardActions {
 }
 
 interface WizardState {
+	applicationGenerationComplete: boolean;
 	currentStep: WizardStep;
 	isAutofillLoading: {
 		research_deep_dive: boolean;
@@ -98,12 +100,12 @@ interface WizardState {
 	isGeneratingApplication: boolean;
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
-	shouldRedirectToEditor: boolean;
 	showResearchPlanInfoBanner: boolean;
 	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
 const initialWizardState: WizardState = {
+	applicationGenerationComplete: false,
 	currentStep: WizardStep.APPLICATION_DETAILS,
 	isAutofillLoading: {
 		research_deep_dive: false,
@@ -115,7 +117,6 @@ const initialWizardState: WizardState = {
 		intervalId: null,
 		isActive: false,
 	},
-	shouldRedirectToEditor: false,
 	showResearchPlanInfoBanner: true,
 	templateGenerationStatus: null,
 };
@@ -269,8 +270,8 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							polling.stop();
 							set((state) => ({
 								...state,
+								applicationGenerationComplete: true,
 								isGeneratingApplication: false,
-								shouldRedirectToEditor: true,
 							}));
 							return;
 						}
@@ -473,6 +474,7 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 						clearInterval(currentState.polling.intervalId);
 					}
 					set({
+						applicationGenerationComplete: initialWizardState.applicationGenerationComplete,
 						currentStep: initialWizardState.currentStep,
 						isAutofillLoading: initialWizardState.isAutofillLoading,
 						isGeneratingApplication: initialWizardState.isGeneratingApplication,
@@ -481,9 +483,15 @@ export const useWizardStore = create<WizardActions & WizardState>()(
 							...currentState.polling,
 							...initialWizardState.polling,
 						},
-						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
 						templateGenerationStatus: initialWizardState.templateGenerationStatus,
 					});
+				},
+
+				resetApplicationGenerationComplete: () => {
+					set((state) => ({
+						...state,
+						applicationGenerationComplete: false,
+					}));
 				},
 
 				setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => {

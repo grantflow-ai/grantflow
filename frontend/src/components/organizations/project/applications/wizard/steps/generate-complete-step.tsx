@@ -1,27 +1,28 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AppButton } from "@/components/app";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import { GenerationCompleteModal } from "../generation-complete-modal";
 
 export function GenerateCompleteStep() {
-	const router = useRouter();
 	const application = useApplicationStore((state) => state.application);
 	const generateApplication = useWizardStore((state) => state.generateApplication);
 	const isGeneratingApplication = useWizardStore((state) => state.isGeneratingApplication);
-	const shouldRedirectToEditor = useWizardStore((state) => state.shouldRedirectToEditor);
+	const applicationGenerationComplete = useWizardStore((state) => state.applicationGenerationComplete);
+
+	const [showCompleteModal, setShowCompleteModal] = useState(false);
 
 	const hasApplicationText = !!(application?.text && application.text.trim().length > 0);
 	const canGenerate = !!application && !isGeneratingApplication && !hasApplicationText;
 
+	// Show modal when generation is complete
 	useEffect(() => {
-		if (shouldRedirectToEditor && application) {
-			const editorUrl = `/projects/${application.project_id}/applications/${application.id}/editor`;
-			router.push(editorUrl);
+		if (applicationGenerationComplete && !showCompleteModal) {
+			setShowCompleteModal(true);
 		}
-	}, [shouldRedirectToEditor, application, router]);
+	}, [applicationGenerationComplete, showCompleteModal]);
 
 	const handleGenerate = () => {
 		if (canGenerate) {
@@ -93,6 +94,16 @@ export function GenerateCompleteStep() {
 			</div>
 
 			<div className="flex-1 flex flex-col items-center justify-center space-y-6">{renderMainContent()}</div>
+
+			{application && (
+				<GenerationCompleteModal
+					isOpen={showCompleteModal}
+					onClose={() => {
+						setShowCompleteModal(false);
+					}}
+					projectId={application.project_id}
+				/>
+			)}
 		</div>
 	);
 }
