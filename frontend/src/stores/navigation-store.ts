@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 /**
  * Navigation store for managing application context without URL parameters
@@ -57,111 +56,97 @@ const initialState: NavigationContext = {
 	navigationHistory: [],
 };
 
-export const useNavigationStore = create<NavigationActions & NavigationContext>()(
-	persist(
-		(set, get) => ({
-			...initialState,
+export const useNavigationStore = create<NavigationActions & NavigationContext>()((set, get) => ({
+	...initialState,
 
-			clearActiveApplication: () => {
-				set({
-					activeApplicationId: null,
-					activeApplicationTitle: null,
-				});
-			},
+	clearActiveApplication: () => {
+		set({
+			activeApplicationId: null,
+			activeApplicationTitle: null,
+		});
+	},
 
-			clearActiveProject: () => {
-				set({
-					activeApplicationId: null,
-					activeApplicationTitle: null,
-					activeProjectId: null,
-					activeProjectName: null,
-				});
-			},
+	clearActiveProject: () => {
+		set({
+			activeApplicationId: null,
+			activeApplicationTitle: null,
+			activeProjectId: null,
+			activeProjectName: null,
+		});
+	},
 
-			goBack: () => {
-				const { navigationHistory } = get();
-				if (navigationHistory.length > 1) {
-					const updatedHistory = navigationHistory.slice(0, -1);
-					const previousEntry = updatedHistory.at(-1);
+	goBack: () => {
+		const { navigationHistory } = get();
+		if (navigationHistory.length > 1) {
+			const updatedHistory = navigationHistory.slice(0, -1);
+			const previousEntry = updatedHistory.at(-1);
 
-					set({
-						activeApplicationId: previousEntry?.applicationId ?? null,
-						activeApplicationTitle: null,
-						activeProjectId: previousEntry?.projectId ?? null,
-						activeProjectName: null,
-						navigationHistory: updatedHistory,
-					});
+			set({
+				activeApplicationId: previousEntry?.applicationId ?? null,
+				activeApplicationTitle: null,
+				activeProjectId: previousEntry?.projectId ?? null,
+				activeProjectName: null,
+				navigationHistory: updatedHistory,
+			});
 
-					return previousEntry ?? null;
-				}
-				return null;
-			},
+			return previousEntry ?? null;
+		}
+		return null;
+	},
 
-			navigateToApplication: (
-				projectId: string,
-				projectName: string,
-				applicationId: string,
-				applicationTitle: string,
-			) => {
-				const { pushToHistory, setActiveApplication, setActiveProject } = get();
-				pushToHistory(globalThis.location.pathname);
-				setActiveProject(projectId, projectName);
-				setActiveApplication(applicationId, applicationTitle);
-			},
+	navigateToApplication: (
+		projectId: string,
+		projectName: string,
+		applicationId: string,
+		applicationTitle: string,
+	) => {
+		const { pushToHistory, setActiveApplication, setActiveProject } = get();
+		pushToHistory(globalThis.location.pathname);
+		setActiveProject(projectId, projectName);
+		setActiveApplication(applicationId, applicationTitle);
+	},
 
-			navigateToProject: (projectId: string, projectName: string) => {
-				const { pushToHistory, setActiveProject } = get();
-				pushToHistory(globalThis.location.pathname);
-				setActiveProject(projectId, projectName);
-			},
+	navigateToProject: (projectId: string, projectName: string) => {
+		const { pushToHistory, setActiveProject } = get();
+		pushToHistory(globalThis.location.pathname);
+		setActiveProject(projectId, projectName);
+	},
 
-			pushToHistory: (path: string) => {
-				const { activeApplicationId, activeProjectId, navigationHistory } = get();
-				const newEntry = {
-					applicationId: activeApplicationId,
-					path,
-					projectId: activeProjectId,
-					timestamp: Date.now(),
-				};
+	pushToHistory: (path: string) => {
+		const { activeApplicationId, activeProjectId, navigationHistory } = get();
+		const newEntry = {
+			applicationId: activeApplicationId,
+			path,
+			projectId: activeProjectId,
+			timestamp: Date.now(),
+		};
 
-				const updatedHistory = [...navigationHistory, newEntry].slice(-20);
-				set({ navigationHistory: updatedHistory });
-			},
+		const updatedHistory = [...navigationHistory, newEntry].slice(-20);
+		set({ navigationHistory: updatedHistory });
+	},
 
-			reset: () => {
-				set(initialState);
-			},
+	reset: () => {
+		set(initialState);
+	},
 
-			setActiveApplication: (applicationId: string, applicationTitle: string) => {
-				const { activeProjectId } = get();
-				if (!activeProjectId) {
-					return;
-				}
+	setActiveApplication: (applicationId: string, applicationTitle: string) => {
+		const { activeProjectId } = get();
+		if (!activeProjectId) {
+			return;
+		}
 
-				set({
-					activeApplicationId: applicationId,
-					activeApplicationTitle: applicationTitle,
-				});
-			},
+		set({
+			activeApplicationId: applicationId,
+			activeApplicationTitle: applicationTitle,
+		});
+	},
 
-			setActiveProject: (projectId: string, projectName: string) => {
-				set({
-					activeApplicationId: null,
-					activeApplicationTitle: null,
-					activeProjectId: projectId,
-					activeProjectName: projectName,
-				});
-			},
-		}),
-		{
-			name: "navigation-store",
-			partialize: (state) => ({
-				activeApplicationId: state.activeApplicationId,
-				activeApplicationTitle: state.activeApplicationTitle,
-
-				activeProjectId: state.activeProjectId,
-				activeProjectName: state.activeProjectName,
-			}),
-		},
-	),
-);
+	setActiveProject: (projectId: string, projectName: string) => {
+		set({
+			activeApplicationId: null,
+			activeApplicationTitle: null,
+			activeProjectId: projectId,
+			activeProjectName: projectName,
+		});
+	},
+}));
