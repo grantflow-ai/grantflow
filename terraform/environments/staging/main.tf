@@ -295,14 +295,6 @@ module "app_hosting" {
   environment     = var.environment
   firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" # staging app ID
   image_tag       = var.image_tag
-  min_instances   = 0
-  max_instances   = 5
-  cpu             = "1"
-  memory          = "512Mi"
-  concurrency     = 50
-
-  # Custom domain for staging frontend
-  custom_domain = "staging.grantflow.ai"
 
   # Secrets that App Hosting needs access to
   secret_ids = [
