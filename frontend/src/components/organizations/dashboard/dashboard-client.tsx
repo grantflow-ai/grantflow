@@ -10,6 +10,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { DeleteProjectModal, InviteCollaboratorModal } from "@/components/organizations";
 import { useOrganization } from "@/hooks/use-organization";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
@@ -17,12 +18,11 @@ import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
+import NewApplicationModal from "../modals/new-application-modal";
 import PaymentLink from "../payment/payment-link";
 import { DashboardProjectCard } from "./dashboard-project-card";
 import { DashboardStats } from "./dashboard-stats";
 import { WelcomeModal } from "./welcome/welcome-modal";
-import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
-import NewApplicationModal from "../modals/new-application-modal";
 
 interface DashboardClientProps {
 	initialOrganizations: API.ListOrganizations.Http200.ResponseBody;
