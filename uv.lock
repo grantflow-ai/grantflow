@@ -17,11 +17,11 @@ members = [
 
 [[package]]
 name = "ai-rulez"
-version = "1.1.4"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/79/f9/c23ee69e245cbde2171f01fcd9b496f90b89afea1580998a4b4135ad6edf/ai_rulez-1.1.4.tar.gz", hash = "sha256:e66290b055f401bef1a721185c2503d0c2b4dfd48a610565959858566560c3fb", size = 11435, upload-time = "2025-07-09T06:38:29.733Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/fb/94667de8068ed2cff5f2a6025563aa53bb85de7b82b712814b8e3d1c31f2/ai_rulez-1.2.0.tar.gz", hash = "sha256:9b32ab4d6c4eefe53ac94038fd738fc8968bd49bd6c657a7e1b1031741fd3cd6", size = 11436, upload-time = "2025-08-03T06:38:37.196Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/89/ac55166bbfd0e73348a587ce3b893a825da7e882728085b23da2d0e0cd81/ai_rulez-1.1.4-py3-none-any.whl", hash = "sha256:4efd5737cee5979d362df1bfd373ef20876a4886921f0a5f4cdedef22d5234f2", size = 8882, upload-time = "2025-07-09T06:38:28.531Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/c2/bd3fb5e05cce34e15762fb60ad92a431d9e363a08c188287b2c961c2a371/ai_rulez-1.2.0-py3-none-any.whl", hash = "sha256:2cc183b8092657d25df4c3dd7f767f9ab9b876e6d14dbfc7841a98ab5e526cd8", size = 8883, upload-time = "2025-08-03T06:38:36.047Z" },
 ]
 
 [[package]]
@@ -280,11 +280,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2025.7.14"
+version = "2025.8.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz", hash = "sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995", size = 163981, upload-time = "2025-07-14T03:29:28.449Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/67/960ebe6bf230a96cda2e0abcf73af550ec4f090005363542f0765df162e0/certifi-2025.8.3.tar.gz", hash = "sha256:e564105f78ded564e3ae7c923924435e1daa7463faeab5bb932bc53ffae63407", size = 162386, upload-time = "2025-08-03T03:07:47.08Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl", hash = "sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2", size = 162722, upload-time = "2025-07-14T03:29:26.863Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/48/1549795ba7742c948d2ad169c1c8cdbae65bc450d6cd753d124b17c8cd32/certifi-2025.8.3-py3-none-any.whl", hash = "sha256:f6c12493cfb1b06ba2ff328595af9350c65d6644968e5d3a2ffd78699af217a5", size = 161216, upload-time = "2025-08-03T03:07:45.777Z" },
 ]
 
 [[package]]
@@ -670,7 +670,7 @@ wheels = [
 
 [[package]]
 name = "firebase-admin"
-version = "7.0.0"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachecontrol" },
@@ -680,9 +680,9 @@ dependencies = [
     { name = "httpx", extra = ["http2"] },
     { name = "pyjwt", extra = ["crypto"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/aa/69/6c5a17f434643ec54fdba88f8882008f622e38bc29f5117d080a30bb4846/firebase_admin-7.0.0.tar.gz", hash = "sha256:b98b184d4250103a54b3b40ee38562596e6a01aa4054d51c4ba2df7884304897", size = 194475, upload-time = "2025-07-17T14:27:54.83Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/aa/41/859f78701761bed7abdb8a7c050819c654dad17f96c658dcdf263d5a9641/firebase_admin-7.1.0.tar.gz", hash = "sha256:a163014a4368c43f7efa409948065f8856b51bd2ae5d82c24586e546d5fd4a26", size = 194786, upload-time = "2025-07-31T20:36:39.512Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/ad/a157177e09cf005d934eae528d853da1a3efebdfa9da3fccdfc15c68eb7b/firebase_admin-7.0.0-py3-none-any.whl", hash = "sha256:1769d0a68e7cd17b2d5e36adeae1400b83cd540104c02c39411666abf7eec800", size = 136928, upload-time = "2025-07-17T14:27:53.274Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/16/eb9bf44cdc7af0317a70ae770ad4170b9fcfbb660ac32806742506be1246/firebase_admin-7.1.0-py3-none-any.whl", hash = "sha256:1913e783b7ad56f891e1aca86e6fdde6a8ec49b7a920dd451da155e8647506c8", size = 137140, upload-time = "2025-07-31T20:36:38.266Z" },
 ]
 
 [[package]]
@@ -2388,11 +2388,11 @@ wheels = [
 
 [[package]]
 name = "playa-pdf"
-version = "0.6.4"
+version = "0.6.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/21/66/8e31e00df89e7f910e649b72a69c3ceadf0f3ec1c4ef0494d6adbf800a78/playa_pdf-0.6.4.tar.gz", hash = "sha256:22850e3b0ca1c02b2edaee65a97298a0ac1c4be932b582015ec1a5199d5a7ec9", size = 8023739, upload-time = "2025-07-26T16:09:34.73Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/3f/8b7bb1f295f45ca54cfee5e690aa4924310342a50fbdba3754d19398425a/playa_pdf-0.6.6.tar.gz", hash = "sha256:db13bcd7ce5151e464a6a41ebb2605877623f8061b7e3127d89569363198b95f", size = 8107059, upload-time = "2025-08-01T23:30:05.99Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/66/5362cccdabd6b425cbf6cf2e115560255066427d52a45c36891e63f7be97/playa_pdf-0.6.4-py3-none-any.whl", hash = "sha256:d8ff856bab8be784fd39ad83bbd7bdd09db382b1cb6923d14a0cb03e0e6841f0", size = 5661468, upload-time = "2025-07-26T16:09:33.04Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/8e/d3cf7044f197e4da12ffa4a1a3750fac93ac58209e3617488c29ddfc62fa/playa_pdf-0.6.6-py3-none-any.whl", hash = "sha256:acf2217944d9c94424e2dd46a1fff60e308a0b582ea3a6ac1ad5f4a08009852d", size = 5662316, upload-time = "2025-08-01T23:30:03.453Z" },
 ]
 
 [[package]]
