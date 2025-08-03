@@ -61,10 +61,17 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
     poly_rag_source = with_polymorphic(RagSource, [RagFile, RagUrl])
 
     try:
-        # First get the application with basic relationships
         result = await session.execute(
             select(GrantApplication)
-            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution))
+            .options(
+                selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution),
+                selectinload(GrantApplication.grant_template)
+                .selectinload(GrantTemplate.rag_sources)
+                .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source)),
+                selectinload(GrantApplication.rag_sources).selectinload(
+                    GrantApplicationSource.rag_source.of_type(poly_rag_source)
+                ),
+            )
             .where(
                 GrantApplication.id == application_id,
                 GrantApplication.deleted_at.is_(None),
@@ -72,32 +79,22 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
         )
         application = result.scalar_one()
 
-        # Load non-deleted application sources
-        app_sources_result = await session.execute(
-            select(GrantApplicationSource)
-            .options(selectinload(GrantApplicationSource.rag_source.of_type(poly_rag_source)))
-            .where(
-                GrantApplicationSource.grant_application_id == application.id,
-                GrantApplicationSource.deleted_at.is_(None),
-            )
-            .join(RagSource, RagSource.id == GrantApplicationSource.rag_source_id)
-            .where(RagSource.deleted_at.is_(None))
-        )
-        application.rag_sources = list(app_sources_result.scalars().all())
+        # Filter out soft-deleted sources in Python since we can't easily do it in the selectinload
+        filtered_sources = [
+            source
+            for source in application.rag_sources
+            if source.deleted_at is None and (source.rag_source is None or source.rag_source.deleted_at is None)
+        ]
+        application.rag_sources = filtered_sources
 
-        # Load non-deleted template sources if template exists
-        if application.grant_template:
-            template_sources_result = await session.execute(
-                select(GrantTemplateSource)
-                .options(selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source)))
-                .where(
-                    GrantTemplateSource.grant_template_id == application.grant_template.id,
-                    GrantTemplateSource.deleted_at.is_(None),
-                )
-                .join(RagSource, RagSource.id == GrantTemplateSource.rag_source_id)
-                .where(RagSource.deleted_at.is_(None))
-            )
-            application.grant_template.rag_sources = list(template_sources_result.scalars().all())
+        # Filter template sources if they exist
+        if application.grant_template and hasattr(application.grant_template, "rag_sources"):
+            filtered_template_sources = [
+                source
+                for source in application.grant_template.rag_sources
+                if source.deleted_at is None and (source.rag_source is None or source.rag_source.deleted_at is None)
+            ]
+            application.grant_template.rag_sources = filtered_template_sources
 
         return application
     except NoResultFound as e:
