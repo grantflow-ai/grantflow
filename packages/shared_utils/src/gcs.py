@@ -201,8 +201,6 @@ async def create_signed_upload_url(
         blob = bucket.blob(blob_path)
 
         headers = {}
-        if trace_id:
-            headers["x-goog-meta-trace-id"] = trace_id
         if content_type:
             headers["Content-Type"] = content_type
 

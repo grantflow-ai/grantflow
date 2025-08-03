@@ -454,7 +454,7 @@ async def test_create_signed_upload_url_with_content_type(
             version="v4",
             expiration=ONE_MINUTE_SECONDS * 5,
             method="PUT",
-            headers={"x-goog-meta-trace-id": trace_id, "Content-Type": content_type},
+            headers={"Content-Type": content_type},
             content_type=content_type,
         )
         assert url == expected_signed_url
