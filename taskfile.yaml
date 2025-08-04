@@ -13,16 +13,16 @@ tasks:
     cmds:
       - task: frontend:install
       - task: backend:install
-      - uv run lefthook install
       - task: generate:ai-rules
+      - uv run lefthook install
 
   dev:
     desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag)
     deps:
       - task: _dev:check
-      - task: db:migrate
       - task: _dev:init-pubsub
       - task: _dev:init-gcs
+      - task: db:migrate
     cmds:
       - echo "📝 Service URLs:"
       - echo "  - Backend API{{":"}} http://localhost:8000"

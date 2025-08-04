@@ -5,6 +5,23 @@ import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 
+vi.mock("@/components/ui/dropdown-menu", () => ({
+	DropdownMenu: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="mocked-dropdown-menu">{children}</div>
+	),
+	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="mocked-dropdown-content">{children}</div>
+	),
+	DropdownMenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
+		<button data-testid="mocked-dropdown-item" onClick={onClick} type="button">
+			{children}
+		</button>
+	),
+	DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="mocked-dropdown-trigger">{children}</div>
+	),
+}));
+
 afterEach(() => {
 	cleanup();
 });

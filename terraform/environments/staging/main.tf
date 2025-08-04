@@ -113,6 +113,11 @@ module "pubsub" {
   message_retention_duration           = "86400s" # 1 day for staging
   ack_deadline_seconds                 = 60       # Default deadline
   enable_dead_letter                   = false    # No DLQ for staging
+
+  # Pass Cloud Run service URLs for push endpoints
+  indexer_url = module.cloud_run.indexer_url
+  crawler_url = module.cloud_run.crawler_url
+  rag_url     = module.cloud_run.rag_url
 }
 
 # Scheduler module
@@ -140,6 +145,15 @@ module "monitoring" {
     memory_threshold     = 0.95  # 95% for staging
     cpu_threshold        = 0.90  # 90% for staging
   }
+}
+
+# Email Notifications module
+module "email_notifications" {
+  source                    = "../../modules/email_notifications"
+  project_id                = var.project_id
+  region                    = var.region
+  environment               = var.environment
+  rag_service_account_email = module.cloud_run.rag_service_account_email
 }
 
 
@@ -295,14 +309,6 @@ module "app_hosting" {
   environment     = var.environment
   firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" # staging app ID
   image_tag       = var.image_tag
-  min_instances   = 0
-  max_instances   = 5
-  cpu             = "1"
-  memory          = "512Mi"
-  concurrency     = 50
-
-  # Custom domain for staging frontend
-  custom_domain = "staging.grantflow.ai"
 
   # Secrets that App Hosting needs access to
   secret_ids = [

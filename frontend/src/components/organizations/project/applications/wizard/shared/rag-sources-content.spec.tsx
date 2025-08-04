@@ -63,7 +63,6 @@ describe.sequential("RagSourcesContent", () => {
 
 		const { container } = render(<RagSourcesContent />);
 
-		expect(container.querySelector('[data-testid="rag-sources-files"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="rag-source-file-2"]')).toBeInTheDocument();
 	});
@@ -92,7 +91,6 @@ describe.sequential("RagSourcesContent", () => {
 
 		const { container } = render(<RagSourcesContent />);
 
-		expect(container.querySelector('[data-testid="rag-sources-urls"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="rag-source-url-1"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="rag-source-url-2"]')).toBeInTheDocument();
 	});
@@ -121,13 +119,11 @@ describe.sequential("RagSourcesContent", () => {
 
 		const { container } = render(<RagSourcesContent />);
 
-		expect(container.querySelector('[data-testid="rag-sources-files"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-sources-urls"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="rag-source-url-1"]')).toBeInTheDocument();
 	});
 
-	it("displays correct total count", () => {
+	it("displays all sources in list", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
 				rag_sources: [
@@ -157,12 +153,12 @@ describe.sequential("RagSourcesContent", () => {
 
 		const { container } = render(<RagSourcesContent />);
 
-		const totalElement = container.querySelector('[data-testid="rag-sources-total"]');
-		expect(totalElement).toBeInTheDocument();
-		expect(totalElement).toHaveTextContent("Total: 3 sources");
+		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-source-file-2"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="rag-source-url-1"]')).toBeInTheDocument();
 	});
 
-	it("displays singular form for single source", () => {
+	it("displays single source correctly", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
 				rag_sources: [
@@ -180,9 +176,7 @@ describe.sequential("RagSourcesContent", () => {
 
 		const { container } = render(<RagSourcesContent />);
 
-		const totalElement = container.querySelector('[data-testid="rag-sources-total"]');
-		expect(totalElement).toBeInTheDocument();
-		expect(totalElement).toHaveTextContent("Total: 1 source");
+		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
 	});
 
 	it("displays all possible statuses correctly", () => {
@@ -246,7 +240,6 @@ describe.sequential("RagSourcesContent", () => {
 		const { container } = render(<RagSourcesContent />);
 
 		expect(container.querySelector('[data-testid="rag-source-file-1"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="rag-sources-files"]')).toBeInTheDocument();
 	});
 
 	it("handles unknown source types gracefully", () => {

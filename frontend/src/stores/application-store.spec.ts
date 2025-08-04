@@ -79,6 +79,13 @@ vi.mock("@/stores/organization-store", () => ({
 		setState: vi.fn(),
 	},
 }));
+vi.mock("@/utils/logger", () => ({
+	log: {
+		error: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+	},
+}));
 
 describe("Application Store", () => {
 	beforeEach(() => {
@@ -319,6 +326,8 @@ describe("Application Store", () => {
 			}
 
 			expect(extractObjectPathFromUrl).toHaveBeenCalled();
+
+			await new Promise((resolve) => setTimeout(resolve, 600));
 			expect(triggerDevIndexing).toHaveBeenCalled();
 		});
 
@@ -352,6 +361,8 @@ describe("Application Store", () => {
 
 			expect(ky).toHaveBeenCalled();
 			expect(extractObjectPathFromUrl).toHaveBeenCalled();
+
+			await new Promise((resolve) => setTimeout(resolve, 600));
 			expect(triggerDevIndexing).toHaveBeenCalled();
 		});
 	});

@@ -21,9 +21,7 @@ configure_otel("scraper")
 logger = get_logger(__name__)
 
 
-async def run_scraper(
-    from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE
-) -> dict[str, int | float]:
+async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE) -> dict[str, int | float]:
     """Run the scraper.
 
     Args:

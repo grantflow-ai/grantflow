@@ -11,7 +11,7 @@ describe.sequential("NewApplicationModal", () => {
 	const handleCreate = vi.fn();
 
 	it("should render all static elements when open", () => {
-		render(<NewApplicationModal isOpen={true} onClose={handleClose} onCreate={handleCreate} />);
+		render(<NewApplicationModal isOpen={true} onClose={handleClose} onCreate={handleCreate} projects={[]} />);
 		expect(screen.getByTestId("new-application-modal")).toBeInTheDocument();
 		expect(screen.getByTestId("modal-title")).toHaveTextContent("Select a Research Project");
 		expect(screen.getByTestId("modal-description")).toHaveTextContent(

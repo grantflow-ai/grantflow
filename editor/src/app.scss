@@ -1,0 +1,14 @@
+.app-container {
+  max-width: 790px;
+  margin-left: auto;
+  height: 100%;
+  margin-right: auto;
+}
+
+html,
+body,
+#root,
+#app {
+  height: 100%;
+  background-color: #eee;
+}
