@@ -23,7 +23,9 @@ def stub_env() -> None:
     os.environ.setdefault("GOOGLE_CLOUD_REGION", "us-central1")
     os.environ.setdefault("ADMIN_ACCESS_CODE", "123456")
     os.environ.setdefault("ANTHROPIC_API_KEY", "sd-ant-api03-ABC123")
+
     os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-key")
+
 
 
 @pytest.fixture(scope="session")

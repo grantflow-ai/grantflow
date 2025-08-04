@@ -63,23 +63,40 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
     try:
         result = await session.execute(
             select(GrantApplication)
-            .options(selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution))
             .options(
+                selectinload(GrantApplication.grant_template).selectinload(GrantTemplate.granting_institution),
                 selectinload(GrantApplication.grant_template)
                 .selectinload(GrantTemplate.rag_sources)
-                .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source))
-            )
-            .options(
+                .selectinload(GrantTemplateSource.rag_source.of_type(poly_rag_source)),
                 selectinload(GrantApplication.rag_sources).selectinload(
                     GrantApplicationSource.rag_source.of_type(poly_rag_source)
-                )
+                ),
             )
             .where(
                 GrantApplication.id == application_id,
                 GrantApplication.deleted_at.is_(None),
             )
         )
-        return result.scalar_one()
+        application = result.scalar_one()
+
+        # Filter out soft-deleted sources in Python since we can't easily do it in the selectinload
+        filtered_sources = [
+            source
+            for source in application.rag_sources
+            if source.deleted_at is None and (source.rag_source is None or source.rag_source.deleted_at is None)
+        ]
+        application.rag_sources = filtered_sources
+
+        # Filter template sources if they exist
+        if application.grant_template and hasattr(application.grant_template, "rag_sources"):
+            filtered_template_sources = [
+                source
+                for source in application.grant_template.rag_sources
+                if source.deleted_at is None and (source.rag_source is None or source.rag_source.deleted_at is None)
+            ]
+            application.grant_template.rag_sources = filtered_template_sources
+
+        return application
     except NoResultFound as e:
         raise ValidationError("Application not found.", context=str(e)) from e
 

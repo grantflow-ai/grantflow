@@ -198,7 +198,7 @@ describe.sequential("WizardHeader", () => {
 
 			const appNames = screen.getAllByTestId("app-name");
 			expect(appNames[0].textContent).toContain("...");
-			expect(appNames[0].textContent?.length).toBeLessThan(longTitle.length);
+			expect(appNames[0].textContent.length).toBeLessThan(longTitle.length);
 		});
 
 		it("hides application info on first step", () => {

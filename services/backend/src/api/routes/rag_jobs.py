@@ -71,7 +71,9 @@ async def handle_retrieve_rag_job(
                     .join(GrantApplication)
                     .where(
                         GrantTemplate.id == template_job.grant_template_id,
+                        GrantTemplate.deleted_at.is_(None),
                         GrantApplication.project_id == project_id,
+                        GrantApplication.deleted_at.is_(None),
                     )
                 )
                 project_match = template is not None
@@ -84,6 +86,7 @@ async def handle_retrieve_rag_job(
                     select(GrantApplication).where(
                         GrantApplication.id == app_job.grant_application_id,
                         GrantApplication.project_id == project_id,
+                        GrantApplication.deleted_at.is_(None),
                     )
                 )
                 project_match = application is not None

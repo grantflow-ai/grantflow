@@ -470,6 +470,8 @@ async def handle_generate_application(
             .join(RagSource)
             .where(
                 GrantApplicationSource.grant_application_id == application.id,
+                GrantApplicationSource.deleted_at.is_(None),
+                RagSource.deleted_at.is_(None),
                 RagSource.indexing_status.in_(
                     (
                         SourceIndexingStatusEnum.INDEXING,

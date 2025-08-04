@@ -88,6 +88,7 @@ class RagSourceFactory(SQLAlchemyFactory[RagSource]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
+    deleted_at = None
 
 
 class RagFileFactory(SQLAlchemyFactory[RagFile]):
@@ -95,6 +96,7 @@ class RagFileFactory(SQLAlchemyFactory[RagFile]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = RAG_FILE
+    deleted_at = None
 
 
 class RagUrlFactory(SQLAlchemyFactory[RagUrl]):
@@ -102,6 +104,7 @@ class RagUrlFactory(SQLAlchemyFactory[RagUrl]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = RAG_URL
+    deleted_at = None
 
 
 class GrantTemplateSourceFactory(SQLAlchemyFactory[GrantTemplateSource]):
@@ -109,6 +112,7 @@ class GrantTemplateSourceFactory(SQLAlchemyFactory[GrantTemplateSource]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
+    deleted_at = None
 
 
 class TextVectorFactory(SQLAlchemyFactory[TextVector]):
@@ -135,6 +139,7 @@ class GrantingInstitutionSourceFactory(SQLAlchemyFactory[GrantingInstitutionSour
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
+    deleted_at = None
 
 
 class OrganizationFactory(SQLAlchemyFactory[Organization]):
@@ -245,6 +250,7 @@ class GrantApplicationSourceFactory(SQLAlchemyFactory[GrantApplicationSource]):
     __set_relationships__ = False
     __set_association_proxy__ = False
     source_type = choice([RAG_FILE, RAG_URL])
+    deleted_at = None
 
 
 class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):

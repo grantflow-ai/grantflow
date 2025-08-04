@@ -168,6 +168,7 @@ async def handle_get_organization(
             select(OrganizationUser)
             .where(OrganizationUser.organization_id == organization_id)
             .where(OrganizationUser.firebase_uid == request.auth)
+            .where(OrganizationUser.deleted_at.is_(None))
         )
 
         if not user_org:
@@ -217,6 +218,7 @@ async def handle_update_organization(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
                 .where(OrganizationUser.firebase_uid == request.auth)
+                .where(OrganizationUser.deleted_at.is_(None))
             )
 
             await session.commit()
@@ -330,6 +332,7 @@ async def handle_restore_organization(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
                 .where(OrganizationUser.firebase_uid == request.auth)
+                .where(OrganizationUser.deleted_at.is_(None))
             )
 
             response_data = OrganizationResponse(

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars, sonarjs/no-identical-functions */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-empty-function, sonarjs/no-identical-functions */
 import React from "react";
 
 const SelectContext = React.createContext<{
@@ -119,8 +119,9 @@ export const DropdownMenu = ({ children, onOpenChange, open, ...props }: any) =>
 DropdownMenu.displayName = "DropdownMenu";
 
 export const DropdownMenuTrigger = React.forwardRef(({ children, ...props }: any, ref: any) => {
+	const buttonRef = ref;
 	return (
-		<button ref={ref} type="button" {...props}>
+		<button ref={buttonRef} type="button" {...props}>
 			{children}
 		</button>
 	);

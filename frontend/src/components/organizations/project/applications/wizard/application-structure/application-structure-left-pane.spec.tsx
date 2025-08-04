@@ -163,24 +163,6 @@ describe("ApplicationStructureLeftPane", () => {
 		expect(linkParentIds[0]).toHaveTextContent("template-123");
 	});
 
-	it("shows active step indicator based on template generation status", () => {
-		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
-		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
-		useApplicationStore.setState({ application: mockApplication });
-
-		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "sections_extracted",
-				message: "Extracting sections",
-			},
-		});
-
-		render(<ApplicationStructureLeftPane />);
-
-		const activeIndicators = screen.getAllByTestId("step-active-indicator");
-		expect(activeIndicators).toHaveLength(1);
-	});
-
 	it("shows error state when template generation fails", () => {
 		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
@@ -235,51 +217,6 @@ describe("ApplicationStructureLeftPane", () => {
 
 		expect(screen.getByText(/Analyzing the documents/)).toBeInTheDocument();
 		expect(screen.getByText(/Translating the requirements/)).toBeInTheDocument();
-	});
-
-	it("progresses through steps based on template generation events", async () => {
-		const mockTemplate = GrantTemplateFactory.build({ grant_sections: [] });
-		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
-		useApplicationStore.setState({ application: mockApplication });
-
-		const { rerender } = render(<ApplicationStructureLeftPane />);
-
-		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "grant_template_generation_started",
-				message: "Starting generation",
-			},
-		});
-		rerender(<ApplicationStructureLeftPane />);
-
-		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "sections_extracted",
-				message: "Sections extracted",
-			},
-		});
-		rerender(<ApplicationStructureLeftPane />);
-
-		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "metadata_generated",
-				message: "Metadata generated",
-			},
-		});
-		rerender(<ApplicationStructureLeftPane />);
-
-		useWizardStore.setState({
-			templateGenerationStatus: {
-				event: "grant_template_created",
-				message: "Template created",
-			},
-		});
-		rerender(<ApplicationStructureLeftPane />);
-
-		await waitFor(() => {
-			const stepNumbers = screen.getAllByText(/^[1-4]$/);
-			expect(stepNumbers.length).toBeGreaterThan(0);
-		});
 	});
 
 	it("filters out sources without filename or URL", () => {

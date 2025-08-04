@@ -47,7 +47,7 @@ def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TOD
     return "&".join(f"{key}={','.join(value) if isinstance(value, list) else value}" for key, value in qs.items())
 
 
-async def download_search_data(
+async def download_search_data(  # noqa: PLR0915
     *, to_date: date = TODAY_DATE, from_date: date = DEFAULT_FROM_DATE
 ) -> list[GrantInfo]:
     """Download the CSV file from the NIH grant search page and
@@ -99,7 +99,7 @@ async def download_search_data(
                 "text=Advanced Search",
                 "[aria-label*='Search']",
                 "a[href*='search']",
-                "button[id*='search']"
+                "button[id*='search']",
             ]
 
             search_clicked = False
@@ -113,7 +113,8 @@ async def download_search_data(
                         search_clicked = True
                         await page.wait_for_timeout(2000)
                         break
-                except Exception:
+                except Exception as e:
+                    logger.debug("Failed to click search element", selector=selector, error=str(e))
                     continue
 
             # Take screenshot for debugging
@@ -124,7 +125,9 @@ async def download_search_data(
             if search_clicked:
                 # First, ensure "Active Opportunities" is checked (it should be by default)
                 try:
-                    active_checkbox = await page.wait_for_selector("input[type='checkbox'][value='Active Opportunities']", timeout=2000)
+                    active_checkbox = await page.wait_for_selector(
+                        "input[type='checkbox'][value='Active Opportunities']", timeout=2000
+                    )
                     if active_checkbox:
                         is_checked = await active_checkbox.is_checked()
                         if not is_checked:
@@ -166,7 +169,7 @@ async def download_search_data(
                     "button[type='submit']",
                     "[aria-label='Search']",
                     "text=Submit",
-                    "button.btn-primary"
+                    "button.btn-primary",
                 ]
 
                 for selector in submit_selectors:
@@ -182,7 +185,8 @@ async def download_search_data(
                                 await submit_btn.click()
                                 await page.wait_for_timeout(3000)
                                 break
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Failed to click submit button", selector=selector, error=str(e))
                         continue
 
                 # Take another screenshot after submitting

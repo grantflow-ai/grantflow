@@ -1,0 +1,2 @@
+# Email notification cloud function
+

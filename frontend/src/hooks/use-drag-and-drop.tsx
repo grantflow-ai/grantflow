@@ -12,13 +12,19 @@ import {
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+	horizontalListSortingStrategy,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import type React from "react";
 import { useCallback, useState } from "react";
 
 export interface DragDropConfig {
 	enableKeyboard?: boolean;
 	enablePointer?: boolean;
+	strategy?: "horizontal" | "vertical";
 }
 
 export interface DragDropHandlers<T extends DragDropItem> {
@@ -49,7 +55,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 	config: DragDropConfig = {},
 ): DragDropResult<T> {
 	const { onDragEnd, onDragOver, onDragStart, onReorder } = handlers;
-	const { enableKeyboard = true, enablePointer = true } = config;
+	const { enableKeyboard = true, enablePointer = true, strategy = "vertical" } = config;
 
 	const [activeId, setActiveId] = useState<null | string>(null);
 
@@ -155,6 +161,8 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 			const activeItem = items.find((item) => item.id === activeId);
 			const sortableIds = items.map((item) => item.id);
+			const sortingStrategy =
+				strategy === "horizontal" ? horizontalListSortingStrategy : verticalListSortingStrategy;
 
 			return (
 				<DndContext
@@ -164,14 +172,14 @@ export function useDragAndDrop<T extends DragDropItem>(
 					onDragStart={handleDragStart}
 					sensors={sensors}
 				>
-					<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+					<SortableContext items={sortableIds} strategy={sortingStrategy}>
 						{children}
 					</SortableContext>
 					<DragOverlay>{renderDragOverlay ? renderDragOverlay(activeItem) : null}</DragOverlay>
 				</DndContext>
 			);
 		},
-		[sensors, onDragStart, onDragOver, onDragEnd, onReorder, activeId],
+		[sensors, onDragStart, onDragOver, onDragEnd, onReorder, activeId, strategy],
 	);
 
 	return {
