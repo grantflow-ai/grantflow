@@ -6,15 +6,27 @@ import { useApplicationStore } from "@/stores/application-store";
 import { UrlInput } from "./url-input";
 
 const meta: Meta<typeof UrlInput> = {
+	argTypes: {
+		parentId: {
+			control: "text",
+			description: "ID of the parent template or application",
+		},
+	},
 	component: UrlInput,
 	decorators: [
 		(Story) => (
-			<div className="max-w-md p-8">
+			<div className="w-full min-w-[600px] max-w-4xl p-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg">
 				<Story />
 			</div>
 		),
 	],
 	parameters: {
+		actions: {
+			disable: true,
+		},
+		controls: {
+			include: ["parentId"],
+		},
 		layout: "centered",
 	},
 	title: "Wizard/Components/UrlInput",
@@ -227,25 +239,25 @@ const AllStatesComponent = () => {
 	}, []);
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-8 p-8 max-w-6xl mx-auto">
 			<div className="space-y-2">
 				<h3 className="text-lg font-semibold">Empty State</h3>
 				<p className="text-sm text-gray-600 mb-4">Clean input ready for URL entry</p>
-				<div className="max-w-md">
+				<div className="w-full p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg">
 					<UrlInput parentId="empty-template" />
 				</div>
 			</div>
 			<div className="space-y-2">
 				<h3 className="text-lg font-semibold">Filled State</h3>
 				<p className="text-sm text-gray-600 mb-4">Shows existing URLs from the template</p>
-				<div className="max-w-md">
+				<div className="w-full p-6 bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg">
 					<UrlInput parentId="template-123" />
 				</div>
 			</div>
 			<div className="space-y-2">
 				<h3 className="text-lg font-semibold">Error State</h3>
 				<p className="text-sm text-gray-600 mb-4">Missing parent ID triggers error</p>
-				<div className="max-w-md">
+				<div className="w-full p-6 bg-gradient-to-br from-red-50 to-pink-100 rounded-lg">
 					<UrlInput />
 				</div>
 			</div>
@@ -256,7 +268,7 @@ const AllStatesComponent = () => {
 export const AllStates: Story = {
 	name: "All States Overview",
 	parameters: {
-		layout: "padded",
+		layout: "fullscreen",
 	},
 	render: () => <AllStatesComponent />,
 };
