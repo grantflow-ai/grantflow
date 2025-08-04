@@ -78,17 +78,20 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
                 select(ProjectMember.organization_id)
                 .where(ProjectMember.firebase_uid == firebase_uid)
                 .where(ProjectMember.role == UserRoleEnum.OWNER)
+                .where(ProjectMember.deleted_at.is_(None))
                 .subquery()
             )
 
             sole_owned_query = (
                 select(Organization)
                 .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+                .where(Organization.deleted_at.is_(None))
                 .outerjoin(
                     ProjectMember,
                     (Organization.id == ProjectMember.organization_id)
                     & (ProjectMember.role == UserRoleEnum.OWNER)
-                    & (ProjectMember.firebase_uid != firebase_uid),
+                    & (ProjectMember.firebase_uid != firebase_uid)
+                    & (ProjectMember.deleted_at.is_(None)),
                 )
                 .group_by(Organization.id)
                 .having(func.count(ProjectMember.firebase_uid) == 0)
@@ -171,17 +174,20 @@ async def get_sole_owned_projects(
             select(ProjectMember.organization_id)
             .where(ProjectMember.firebase_uid == firebase_uid)
             .where(ProjectMember.role == UserRoleEnum.OWNER)
+            .where(ProjectMember.deleted_at.is_(None))
             .subquery()
         )
 
         sole_owned_query = (
             select(Organization)
             .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+            .where(Organization.deleted_at.is_(None))
             .outerjoin(
                 ProjectMember,
                 (Organization.id == ProjectMember.organization_id)
                 & (ProjectMember.role == UserRoleEnum.OWNER)
-                & (ProjectMember.firebase_uid != firebase_uid),
+                & (ProjectMember.firebase_uid != firebase_uid)
+                & (ProjectMember.deleted_at.is_(None)),
             )
             .group_by(Organization.id)
             .having(func.count(ProjectMember.firebase_uid) == 0)
@@ -213,17 +219,20 @@ async def get_sole_owned_organizations(
             select(ProjectMember.organization_id)
             .where(ProjectMember.firebase_uid == firebase_uid)
             .where(ProjectMember.role == UserRoleEnum.OWNER)
+            .where(ProjectMember.deleted_at.is_(None))
             .subquery()
         )
 
         sole_owned_query = (
             select(Organization)
             .join(owned_organizations, Organization.id == owned_organizations.c.organization_id)
+            .where(Organization.deleted_at.is_(None))
             .outerjoin(
                 ProjectMember,
                 (Organization.id == ProjectMember.organization_id)
                 & (ProjectMember.role == UserRoleEnum.OWNER)
-                & (ProjectMember.firebase_uid != firebase_uid),
+                & (ProjectMember.firebase_uid != firebase_uid)
+                & (ProjectMember.deleted_at.is_(None)),
             )
             .group_by(Organization.id)
             .having(func.count(ProjectMember.firebase_uid) == 0)

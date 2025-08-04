@@ -29,3 +29,18 @@ output "indexer_service_id" {
   description = "The ID of the indexer service"
   value       = google_cloud_run_v2_service.indexer.name
 }
+
+output "rag_url" {
+  description = "The URL of the deployed RAG service"
+  value       = google_cloud_run_v2_service.rag.uri
+}
+
+output "rag_service_id" {
+  description = "The ID of the RAG service"
+  value       = google_cloud_run_v2_service.rag.name
+}
+
+output "rag_service_account_email" {
+  description = "The email of the RAG service account (uses default compute service account)"
+  value       = "${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}

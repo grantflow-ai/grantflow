@@ -546,6 +546,10 @@ resource "google_cloud_run_v2_service" "rag" {
         value = "frontend-notifications"
       }
 
+      env {
+        name  = "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC"
+        value = "email-notifications"
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"

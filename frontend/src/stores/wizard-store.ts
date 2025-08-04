@@ -1,7 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applications";
-import { WIZARD_STORAGE_KEY, WizardStep } from "@/constants";
+import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
@@ -70,9 +69,10 @@ interface WizardActions {
 	polling: PollingActions;
 	removeObjective: (objectiveNumber: number) => Promise<void>;
 	reset: () => void;
+	resetApplicationGenerationComplete: () => void;
 	setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => void;
-	setGeneratingApplication: (isGenerating: boolean) => void;
 
+	setGeneratingApplication: (isGenerating: boolean) => void;
 	setGeneratingTemplate: (isGenerating: boolean) => void;
 	setShowResearchPlanInfoBanner: (show: boolean) => void;
 	setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => void;
@@ -85,10 +85,12 @@ interface WizardActions {
 	updateFormInputs: (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => Promise<void>;
 	updateObjective: (objectiveNumber: number, updates: Partial<Omit<Objective, "number">>) => Promise<void>;
 	updateObjectives: (objectives: Objective[]) => Promise<void>;
+	updateTasksForObjective: (objectiveNumber: number, tasks: Objective["research_tasks"]) => Promise<void>;
 	validateStepNext: () => boolean;
 }
 
 interface WizardState {
+	applicationGenerationComplete: boolean;
 	currentStep: WizardStep;
 	isAutofillLoading: {
 		research_deep_dive: boolean;
@@ -97,12 +99,12 @@ interface WizardState {
 	isGeneratingApplication: boolean;
 	isGeneratingTemplate: boolean;
 	polling: PollingState;
-	shouldRedirectToEditor: boolean;
 	showResearchPlanInfoBanner: boolean;
 	templateGenerationStatus: null | TemplateGenerationStatus;
 }
 
 const initialWizardState: WizardState = {
+	applicationGenerationComplete: false,
 	currentStep: WizardStep.APPLICATION_DETAILS,
 	isAutofillLoading: {
 		research_deep_dive: false,
@@ -114,7 +116,6 @@ const initialWizardState: WizardState = {
 		intervalId: null,
 		isActive: false,
 	},
-	shouldRedirectToEditor: false,
 	showResearchPlanInfoBanner: true,
 	templateGenerationStatus: null,
 };
@@ -242,526 +243,547 @@ function validateResearchPlan(application: API.RetrieveApplication.Http200.Respo
 	return result;
 }
 
-export const useWizardStore = create<WizardActions & WizardState>()(
-	persist(
-		(set, get) => {
-			return {
-				...initialWizardState,
+export const useWizardStore = create<WizardActions & WizardState>()((set, get) => {
+	return {
+		...initialWizardState,
 
-				checkApplicationGeneration: async () => {
-					const { application, getApplication } = useApplicationStore.getState();
-					const { polling } = get();
+		checkApplicationGeneration: async () => {
+			const { application, getApplication } = useApplicationStore.getState();
+			const { polling } = get();
 
-					if (!application) {
-						return;
-					}
+			if (!application) {
+				return;
+			}
 
-					try {
-						const { selectedOrganizationId } = useOrganizationStore.getState();
-						if (!selectedOrganizationId) return;
+			try {
+				const { selectedOrganizationId } = useOrganizationStore.getState();
+				if (!selectedOrganizationId) return;
 
-						await getApplication(selectedOrganizationId, application.project_id, application.id);
+				await getApplication(selectedOrganizationId, application.project_id, application.id);
 
-						const { application: updatedApplication } = useApplicationStore.getState();
+				const { application: updatedApplication } = useApplicationStore.getState();
 
-						if (updatedApplication?.text && updatedApplication.text.trim().length > 0) {
-							polling.stop();
-							set((state) => ({
-								...state,
-								isGeneratingApplication: false,
-								shouldRedirectToEditor: true,
-							}));
-							return;
-						}
-					} catch (error) {
-						log.error("checkApplicationGeneration", error);
-						polling.stop();
-						set((state) => ({
-							...state,
-							isGeneratingApplication: false,
-						}));
-					}
-				},
+				if (updatedApplication?.text && updatedApplication.text.trim().length > 0) {
+					polling.stop();
+					set((state) => ({
+						...state,
+						applicationGenerationComplete: true,
+						isGeneratingApplication: false,
+					}));
+					return;
+				}
+			} catch (error) {
+				log.error("checkApplicationGeneration", error);
+				polling.stop();
+				set((state) => ({
+					...state,
+					isGeneratingApplication: false,
+				}));
+			}
+		},
 
-				checkTemplateGeneration: async () => {
-					const { application, getApplication } = useApplicationStore.getState();
-					const { polling } = get();
+		checkTemplateGeneration: async () => {
+			const { application, getApplication } = useApplicationStore.getState();
+			const { polling } = get();
 
-					if (!application) {
-						return;
-					}
+			if (!application) {
+				return;
+			}
 
-					try {
-						const { selectedOrganizationId } = useOrganizationStore.getState();
-						if (!selectedOrganizationId) return;
+			try {
+				const { selectedOrganizationId } = useOrganizationStore.getState();
+				if (!selectedOrganizationId) return;
 
-						await getApplication(selectedOrganizationId, application.project_id, application.id);
+				await getApplication(selectedOrganizationId, application.project_id, application.id);
 
-						const { application: updatedApplication } = useApplicationStore.getState();
+				const { application: updatedApplication } = useApplicationStore.getState();
 
-						if (updatedApplication?.grant_template?.grant_sections.length) {
-							polling.stop();
-							set((state) => ({
-								...state,
-								isGeneratingTemplate: false,
-							}));
-							return;
-						}
-					} catch (error) {
-						log.error("checkTemplateGeneration", error);
-						polling.stop();
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: false,
-						}));
-					}
-				},
+				if (updatedApplication?.grant_template?.grant_sections.length) {
+					polling.stop();
+					set((state) => ({
+						...state,
+						isGeneratingTemplate: false,
+					}));
+					return;
+				}
+			} catch (error) {
+				log.error("checkTemplateGeneration", error);
+				polling.stop();
+				set((state) => ({
+					...state,
+					isGeneratingTemplate: false,
+				}));
+			}
+		},
 
-				createObjective: async (objective: Objective): Promise<void> => {
-					return withErrorHandling(async () => {
-						if (!objective.title.trim()) {
-							throw new Error("Title is required");
-						}
-						if (!objective.description?.trim()) {
-							throw new Error("Description is required");
-						}
-						if (!objective.research_tasks.length) {
-							throw new Error("At least one task is required");
-						}
+		createObjective: async (objective: Objective): Promise<void> => {
+			return withErrorHandling(async () => {
+				if (!objective.title.trim()) {
+					throw new Error("Title is required");
+				}
+				if (!objective.description?.trim()) {
+					throw new Error("Description is required");
+				}
+				if (!objective.research_tasks.length) {
+					throw new Error("At least one task is required");
+				}
 
-						const currentObjectives = getCurrentObjectives();
-						const updatedObjectives = [...currentObjectives, objective];
-						await updateResearchObjectives(updatedObjectives);
-					}, "Create research objective");
-				},
+				const currentObjectives = getCurrentObjectives();
+				const updatedObjectives = [...currentObjectives, objective];
+				await updateResearchObjectives(updatedObjectives);
+			}, "Create research objective");
+		},
 
-				generateApplication: async () => {
-					const { application, generateApplication } = useApplicationStore.getState();
-					const { polling } = get();
+		generateApplication: async () => {
+			const { application, generateApplication } = useApplicationStore.getState();
+			const { polling } = get();
 
-					if (!application) {
-						log.error("generateApplication: No application found");
-						return;
-					}
+			if (!application) {
+				log.error("generateApplication: No application found");
+				return;
+			}
 
-					if (application.text && application.text.trim().length > 0) {
-						log.info("generateApplication: Application already has text, skipping generation");
-						return;
-					}
+			if (application.text && application.text.trim().length > 0) {
+				log.info("generateApplication: Application already has text, skipping generation");
+				return;
+			}
 
-					try {
-						const { selectedOrganizationId } = useOrganizationStore.getState();
-						if (!selectedOrganizationId) return;
+			try {
+				const { selectedOrganizationId } = useOrganizationStore.getState();
+				if (!selectedOrganizationId) return;
 
-						await generateApplication(selectedOrganizationId, application.project_id, application.id);
+				await generateApplication(selectedOrganizationId, application.project_id, application.id);
 
-						set((state) => ({
-							...state,
-							isGeneratingApplication: true,
-						}));
+				set((state) => ({
+					...state,
+					isGeneratingApplication: true,
+				}));
 
-						polling.start(get().checkApplicationGeneration, POLLING_INTERVAL_DURATION, false);
+				polling.start(get().checkApplicationGeneration, POLLING_INTERVAL_DURATION, false);
 
-						log.info("Grant application generation initiated", {
-							application_id: application.id,
-							project_id: application.project_id,
-						});
-					} catch (error) {
-						log.error("generateApplication", error);
-						set((state) => ({
-							...state,
-							isGeneratingApplication: false,
-						}));
-					}
-				},
+				log.info("Grant application generation initiated", {
+					application_id: application.id,
+					project_id: application.project_id,
+				});
+			} catch (error) {
+				log.error("generateApplication", error);
+				set((state) => ({
+					...state,
+					isGeneratingApplication: false,
+				}));
+			}
+		},
 
-				handleApplicationInit: async (projectId: string, applicationId?: string) => {
-					const { createApplication, getApplication } = useApplicationStore.getState();
-					const { selectedOrganizationId } = useOrganizationStore.getState();
-					if (!selectedOrganizationId) return;
+		handleApplicationInit: async (projectId: string, applicationId?: string) => {
+			const { createApplication, getApplication } = useApplicationStore.getState();
+			const { selectedOrganizationId } = useOrganizationStore.getState();
+			if (!selectedOrganizationId) return;
 
-					await (applicationId
-						? getApplication(selectedOrganizationId, projectId, applicationId)
-						: createApplication(selectedOrganizationId, projectId));
-				},
+			await (applicationId
+				? getApplication(selectedOrganizationId, projectId, applicationId)
+				: createApplication(selectedOrganizationId, projectId));
+		},
 
-				handleTitleChange: (title: string) => {
-					const { application } = useApplicationStore.getState();
+		handleTitleChange: (title: string) => {
+			const { application } = useApplicationStore.getState();
 
-					if (application) {
-						debouncedUpdateTitle.call(title);
-					}
-				},
+			if (application) {
+				debouncedUpdateTitle.call(title);
+			}
+		},
 
-				hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => {
-					const { application } = useApplicationStore.getState();
+		hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => {
+			const { application } = useApplicationStore.getState();
 
-					if (!application?.grant_template?.rag_sources) {
-						return false;
-					}
+			if (!application?.grant_template?.rag_sources) {
+				return false;
+			}
 
-					const statusArray = Array.isArray(statuses) ? statuses : [statuses];
-					return application.grant_template.rag_sources.some((source) => statusArray.includes(source.status));
-				},
+			const statusArray = Array.isArray(statuses) ? statuses : [statuses];
+			return application.grant_template.rag_sources.some((source) => statusArray.includes(source.status));
+		},
 
+		polling: {
+			...initialWizardState.polling,
+
+			start: (apiFunction: () => Promise<void>, duration: number, callImmediately = true) => {
+				const { polling } = get();
+				if (polling.isActive || polling.intervalId) {
+					return;
+				}
+
+				set(({ polling, ...state }) => ({
+					...state,
+					polling: {
+						...polling,
+						isActive: true,
+					},
+				}));
+
+				if (callImmediately) {
+					void apiFunction();
+				}
+
+				const intervalId = setInterval(() => {
+					void apiFunction();
+				}, duration);
+
+				set(({ polling, ...state }) => ({
+					...state,
+					polling: {
+						...polling,
+						intervalId,
+						isActive: true,
+					},
+				}));
+			},
+
+			stop: () => {
+				const { polling } = get();
+				if (polling.intervalId) {
+					clearInterval(polling.intervalId);
+				}
+
+				set(({ polling, ...state }) => ({
+					...state,
+					polling: {
+						...polling,
+						intervalId: null,
+						isActive: false,
+					},
+				}));
+			},
+		},
+
+		removeObjective: async (objectiveNumber: number): Promise<void> => {
+			return withErrorHandling(async () => {
+				const currentObjectives = getCurrentObjectives();
+				const filteredObjectives = currentObjectives.filter((obj) => obj.number !== objectiveNumber);
+
+				const renumberedObjectives = renumberObjectives(filteredObjectives);
+				await updateResearchObjectives(renumberedObjectives);
+			}, "Remove research objective");
+		},
+
+		reset: () => {
+			const currentState = get();
+			if (currentState.polling.intervalId) {
+				clearInterval(currentState.polling.intervalId);
+			}
+			set({
+				applicationGenerationComplete: initialWizardState.applicationGenerationComplete,
+				currentStep: initialWizardState.currentStep,
+				isAutofillLoading: initialWizardState.isAutofillLoading,
+				isGeneratingApplication: initialWizardState.isGeneratingApplication,
+				isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
 				polling: {
+					...currentState.polling,
 					...initialWizardState.polling,
-
-					start: (apiFunction: () => Promise<void>, duration: number, callImmediately = true) => {
-						const { polling } = get();
-						if (polling.isActive || polling.intervalId) {
-							return;
-						}
-
-						set(({ polling, ...state }) => ({
-							...state,
-							polling: {
-								...polling,
-								isActive: true,
-							},
-						}));
-
-						if (callImmediately) {
-							void apiFunction();
-						}
-
-						const intervalId = setInterval(() => {
-							void apiFunction();
-						}, duration);
-
-						set(({ polling, ...state }) => ({
-							...state,
-							polling: {
-								...polling,
-								intervalId,
-								isActive: true,
-							},
-						}));
-					},
-
-					stop: () => {
-						const { polling } = get();
-						if (polling.intervalId) {
-							clearInterval(polling.intervalId);
-						}
-
-						set(({ polling, ...state }) => ({
-							...state,
-							polling: {
-								...polling,
-								intervalId: null,
-								isActive: false,
-							},
-						}));
-					},
 				},
-
-				removeObjective: async (objectiveNumber: number): Promise<void> => {
-					return withErrorHandling(async () => {
-						const currentObjectives = getCurrentObjectives();
-						const filteredObjectives = currentObjectives.filter((obj) => obj.number !== objectiveNumber);
-
-						const renumberedObjectives = renumberObjectives(filteredObjectives);
-						await updateResearchObjectives(renumberedObjectives);
-					}, "Remove research objective");
-				},
-
-				reset: () => {
-					const currentState = get();
-					if (currentState.polling.intervalId) {
-						clearInterval(currentState.polling.intervalId);
-					}
-					set({
-						currentStep: initialWizardState.currentStep,
-						isAutofillLoading: initialWizardState.isAutofillLoading,
-						isGeneratingApplication: initialWizardState.isGeneratingApplication,
-						isGeneratingTemplate: initialWizardState.isGeneratingTemplate,
-						polling: {
-							...currentState.polling,
-							...initialWizardState.polling,
-						},
-						shouldRedirectToEditor: initialWizardState.shouldRedirectToEditor,
-						templateGenerationStatus: initialWizardState.templateGenerationStatus,
-					});
-				},
-
-				setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => {
-					set((state) => ({
-						...state,
-						isAutofillLoading: {
-							...state.isAutofillLoading,
-							[type]: isLoading,
-						},
-					}));
-				},
-
-				setGeneratingApplication: (isGenerating: boolean) => {
-					set((state) => ({
-						...state,
-						isGeneratingApplication: isGenerating,
-					}));
-				},
-
-				setGeneratingTemplate: (isGenerating: boolean) => {
-					set((state) => ({
-						...state,
-						isGeneratingTemplate: isGenerating,
-					}));
-				},
-
-				setShowResearchPlanInfoBanner: (show: boolean) => {
-					set((state) => ({
-						...state,
-						showResearchPlanInfoBanner: show,
-					}));
-				},
-
-				setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
-					set((state) => ({
-						...state,
-						templateGenerationStatus: status,
-					}));
-				},
-
-				startTemplateGeneration: () => {
-					const { application, generateTemplate } = useApplicationStore.getState();
-					const { polling } = get();
-
-					if (application?.grant_template?.id) {
-						void generateTemplate(application.grant_template.id);
-
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: true,
-						}));
-
-						polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
-					}
-				},
-
-				toNextStep: () => {
-					const { currentStep, hasTemplateSourcesWithStatuses, polling, startTemplateGeneration } = get();
-
-					if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
-						return;
-					}
-
-					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
-						polling.stop();
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: false,
-						}));
-					}
-
-					const nextStep = WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1];
-
-					set((state) => ({
-						...state,
-						currentStep: nextStep,
-					}));
-
-					const { application } = useApplicationStore.getState();
-					if (
-						nextStep === WizardStep.APPLICATION_STRUCTURE &&
-						application?.grant_template &&
-						!application.grant_template.grant_sections.length
-					) {
-						const ragSources = application.grant_template.rag_sources;
-
-						if (
-							ragSources.length === 0 ||
-							!hasTemplateSourcesWithStatuses(["CREATED", "INDEXING", "FAILED"])
-						) {
-							startTemplateGeneration();
-						}
-					}
-				},
-
-				toPreviousStep: () => {
-					const { currentStep, isGeneratingTemplate, polling } = get();
-					const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
-
-					if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
-						return;
-					}
-
-					if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
-						polling.stop();
-						set((state) => ({
-							...state,
-							isGeneratingTemplate: false,
-						}));
-					}
-
-					set((state) => ({
-						...state,
-						currentStep: WIZARD_STEP_ORDER[Math.max(0, currentIndex - 1)],
-					}));
-				},
-
-				triggerAutofill: async (type: "research_deep_dive" | "research_plan", fieldName?: string) => {
-					const { application } = useApplicationStore.getState();
-
-					if (!application) {
-						log.error("triggerAutofill: No application found");
-						return;
-					}
-
-					const hasIndexingInProgress = application.rag_sources.some(
-						(source) => source.status === "INDEXING" || source.status === "CREATED",
-					);
-
-					if (hasIndexingInProgress) {
-						const { toast } = await import("sonner");
-						toast.error("Please wait for all documents to finish processing before using autofill");
-						return;
-					}
-
-					if (application.rag_sources.length === 0) {
-						const { toast } = await import("sonner");
-						toast.error("Please upload at least one document before using autofill");
-						return;
-					}
-
-					try {
-						set((state) => ({
-							...state,
-							isAutofillLoading: {
-								...state.isAutofillLoading,
-								[type]: true,
-							},
-						}));
-
-						const { selectedOrganizationId } = useOrganizationStore.getState();
-						if (!selectedOrganizationId) return;
-
-						const response = await triggerAutofillAction(
-							selectedOrganizationId,
-							application.project_id,
-							application.id,
-							{
-								autofill_type: type,
-								...(fieldName && { field_name: fieldName }),
-							},
-						);
-
-						log.info("Autofill triggered successfully", {
-							application_id: application.id,
-							autofill_type: type,
-							field_name: fieldName,
-							message_id: response.message_id,
-						});
-
-						const { toast } = await import("sonner");
-						toast.success("Autofill request sent. Processing your documents...");
-					} catch (error) {
-						log.error("triggerAutofill failed", { error, fieldName, type });
-
-						const { toast } = await import("sonner");
-						const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
-						toast.error(`Autofill error: ${errorMessage}`);
-
-						set((state) => ({
-							...state,
-							isAutofillLoading: {
-								...state.isAutofillLoading,
-								[type]: false,
-							},
-						}));
-					}
-				},
-
-				updateFormInputs: async (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => {
-					const { application, updateApplication } = useApplicationStore.getState();
-
-					if (!application) {
-						log.error("updateFormInputs: No application found");
-						return;
-					}
-
-					const currentFormInputs = application.form_inputs ?? {};
-					const mergedFormInputs = { ...currentFormInputs, ...formInputs };
-
-					await updateApplication({
-						form_inputs: mergedFormInputs as API.UpdateApplication.RequestBody["form_inputs"],
-					});
-				},
-
-				updateObjective: async (
-					objectiveNumber: number,
-					updates: Partial<Omit<Objective, "number">>,
-				): Promise<void> => {
-					return withErrorHandling(async () => {
-						const currentObjectives = getCurrentObjectives();
-						const targetObjective = currentObjectives.find((obj) => obj.number === objectiveNumber);
-
-						if (!targetObjective) {
-							throw new Error(`Objective with number ${objectiveNumber} not found`);
-						}
-
-						const updatedObjectives = currentObjectives.map((obj) => {
-							if (obj.number === objectiveNumber) {
-								return {
-									...obj,
-									...updates,
-								};
-							}
-							return obj;
-						});
-
-						await updateResearchObjectives(updatedObjectives);
-					}, "Update research objective");
-				},
-
-				updateObjectives: async (objectives: Objective[]): Promise<void> => {
-					return withErrorHandling(async () => {
-						const renumberedObjectives = renumberObjectives(objectives);
-						await updateResearchObjectives(renumberedObjectives);
-					}, "Update research objectives");
-				},
-
-				validateStepNext: (): boolean => {
-					const { currentStep } = get();
-					const { application } = useApplicationStore.getState();
-
-					if (!application) {
-						log.warn("[Wizard Store] validateStepNext: No application", { currentStep });
-						return false;
-					}
-
-					switch (currentStep) {
-						case WizardStep.APPLICATION_DETAILS: {
-							return validateApplicationDetails(application);
-						}
-						case WizardStep.APPLICATION_STRUCTURE: {
-							return !!application.grant_template?.grant_sections.length;
-						}
-						case WizardStep.GENERATE_AND_COMPLETE: {
-							return true;
-						}
-						case WizardStep.KNOWLEDGE_BASE: {
-							return !!application.rag_sources.length;
-						}
-						case WizardStep.RESEARCH_DEEP_DIVE: {
-							return validateResearchDeepDive(application);
-						}
-						case WizardStep.RESEARCH_PLAN: {
-							return validateResearchPlan(application);
-						}
-						default: {
-							return false;
-						}
-					}
-				},
-			};
+				templateGenerationStatus: initialWizardState.templateGenerationStatus,
+			});
 		},
-		{
-			name: WIZARD_STORAGE_KEY,
-			partialize: (state) => ({
-				currentStep: state.currentStep,
-				showResearchPlanInfoBanner: state.showResearchPlanInfoBanner,
-			}),
+
+		resetApplicationGenerationComplete: () => {
+			set((state) => ({
+				...state,
+				applicationGenerationComplete: false,
+			}));
 		},
-	),
-);
+
+		setAutofillLoading: (type: "research_deep_dive" | "research_plan", isLoading: boolean) => {
+			set((state) => ({
+				...state,
+				isAutofillLoading: {
+					...state.isAutofillLoading,
+					[type]: isLoading,
+				},
+			}));
+		},
+
+		setGeneratingApplication: (isGenerating: boolean) => {
+			set((state) => ({
+				...state,
+				isGeneratingApplication: isGenerating,
+			}));
+		},
+
+		setGeneratingTemplate: (isGenerating: boolean) => {
+			set((state) => ({
+				...state,
+				isGeneratingTemplate: isGenerating,
+			}));
+		},
+
+		setShowResearchPlanInfoBanner: (show: boolean) => {
+			set((state) => ({
+				...state,
+				showResearchPlanInfoBanner: show,
+			}));
+		},
+
+		setTemplateGenerationStatus: (status: null | TemplateGenerationStatus) => {
+			set((state) => ({
+				...state,
+				templateGenerationStatus: status,
+			}));
+		},
+
+		startTemplateGeneration: () => {
+			const { application, generateTemplate } = useApplicationStore.getState();
+			const { polling } = get();
+
+			if (application?.grant_template?.id) {
+				void generateTemplate(application.grant_template.id);
+
+				set((state) => ({
+					...state,
+					isGeneratingTemplate: true,
+				}));
+
+				polling.start(get().checkTemplateGeneration, POLLING_INTERVAL_DURATION, false);
+			}
+		},
+
+		toNextStep: () => {
+			const { currentStep, hasTemplateSourcesWithStatuses, polling, startTemplateGeneration } = get();
+
+			if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
+				return;
+			}
+
+			if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
+				polling.stop();
+				set((state) => ({
+					...state,
+					isGeneratingTemplate: false,
+				}));
+			}
+
+			const nextStep = WIZARD_STEP_ORDER[WIZARD_STEP_ORDER.indexOf(currentStep) + 1];
+
+			set((state) => ({
+				...state,
+				currentStep: nextStep,
+			}));
+
+			const { application } = useApplicationStore.getState();
+			if (
+				nextStep === WizardStep.APPLICATION_STRUCTURE &&
+				application?.grant_template &&
+				!application.grant_template.grant_sections.length
+			) {
+				const ragSources = application.grant_template.rag_sources;
+
+				if (ragSources.length === 0 || !hasTemplateSourcesWithStatuses(["CREATED", "INDEXING", "FAILED"])) {
+					startTemplateGeneration();
+				}
+			}
+		},
+
+		toPreviousStep: () => {
+			const { currentStep, isGeneratingTemplate, polling } = get();
+			const currentIndex = WIZARD_STEP_ORDER.indexOf(currentStep);
+
+			if (currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate) {
+				return;
+			}
+
+			if (currentStep === WizardStep.APPLICATION_STRUCTURE) {
+				polling.stop();
+				set((state) => ({
+					...state,
+					isGeneratingTemplate: false,
+				}));
+			}
+
+			set((state) => ({
+				...state,
+				currentStep: WIZARD_STEP_ORDER[Math.max(0, currentIndex - 1)],
+			}));
+		},
+
+		triggerAutofill: async (type: "research_deep_dive" | "research_plan", fieldName?: string) => {
+			const { application } = useApplicationStore.getState();
+
+			if (!application) {
+				log.error("triggerAutofill: No application found");
+				return;
+			}
+
+			const hasIndexingInProgress = application.rag_sources.some(
+				(source) => source.status === "INDEXING" || source.status === "CREATED",
+			);
+
+			if (hasIndexingInProgress) {
+				const { toast } = await import("sonner");
+				toast.error("Please wait for all documents to finish processing before using autofill");
+				return;
+			}
+
+			if (application.rag_sources.length === 0) {
+				const { toast } = await import("sonner");
+				toast.error("Please upload at least one document before using autofill");
+				return;
+			}
+
+			try {
+				set((state) => ({
+					...state,
+					isAutofillLoading: {
+						...state.isAutofillLoading,
+						[type]: true,
+					},
+				}));
+
+				const { selectedOrganizationId } = useOrganizationStore.getState();
+				if (!selectedOrganizationId) return;
+
+				const response = await triggerAutofillAction(
+					selectedOrganizationId,
+					application.project_id,
+					application.id,
+					{
+						autofill_type: type,
+						...(fieldName && { field_name: fieldName }),
+					},
+				);
+
+				log.info("Autofill triggered successfully", {
+					application_id: application.id,
+					autofill_type: type,
+					field_name: fieldName,
+					message_id: response.message_id,
+				});
+
+				const { toast } = await import("sonner");
+				toast.success("Autofill request sent. Processing your documents...");
+			} catch (error) {
+				log.error("triggerAutofill failed", { error, fieldName, type });
+
+				const { toast } = await import("sonner");
+				const errorMessage = error instanceof Error ? error.message : "Failed to trigger autofill";
+				toast.error(`Autofill error: ${errorMessage}`);
+
+				set((state) => ({
+					...state,
+					isAutofillLoading: {
+						...state.isAutofillLoading,
+						[type]: false,
+					},
+				}));
+			}
+		},
+
+		updateFormInputs: async (formInputs: Partial<API.UpdateApplication.RequestBody["form_inputs"]>) => {
+			const { application, updateApplication } = useApplicationStore.getState();
+
+			if (!application) {
+				log.error("updateFormInputs: No application found");
+				return;
+			}
+
+			const currentFormInputs = application.form_inputs ?? {};
+			const mergedFormInputs = { ...currentFormInputs, ...formInputs };
+
+			await updateApplication({
+				form_inputs: mergedFormInputs as API.UpdateApplication.RequestBody["form_inputs"],
+			});
+		},
+
+		updateObjective: async (
+			objectiveNumber: number,
+			updates: Partial<Omit<Objective, "number">>,
+		): Promise<void> => {
+			return withErrorHandling(async () => {
+				const currentObjectives = getCurrentObjectives();
+				const targetObjective = currentObjectives.find((obj) => obj.number === objectiveNumber);
+
+				if (!targetObjective) {
+					throw new Error(`Objective with number ${objectiveNumber} not found`);
+				}
+
+				const updatedObjectives = currentObjectives.map((obj) => {
+					if (obj.number === objectiveNumber) {
+						return {
+							...obj,
+							...updates,
+						};
+					}
+					return obj;
+				});
+
+				await updateResearchObjectives(updatedObjectives);
+			}, "Update research objective");
+		},
+
+		updateObjectives: async (objectives: Objective[]): Promise<void> => {
+			return withErrorHandling(async () => {
+				const renumberedObjectives = renumberObjectives(objectives);
+				await updateResearchObjectives(renumberedObjectives);
+			}, "Update research objectives");
+		},
+
+		updateTasksForObjective: async (objectiveNumber: number, tasks: Objective["research_tasks"]): Promise<void> => {
+			return withErrorHandling(async () => {
+				const currentObjectives = getCurrentObjectives();
+				const targetObjective = currentObjectives.find((obj) => obj.number === objectiveNumber);
+
+				if (!targetObjective) {
+					throw new Error(`Objective with number ${objectiveNumber} not found`);
+				}
+
+				const renumberedTasks = tasks.map((task, index) => ({
+					...task,
+					number: index + 1,
+				}));
+
+				const updatedObjectives = currentObjectives.map((obj) => {
+					if (obj.number === objectiveNumber) {
+						return {
+							...obj,
+							research_tasks: renumberedTasks,
+						};
+					}
+					return obj;
+				});
+
+				await updateResearchObjectives(updatedObjectives);
+			}, "Update tasks for research objective");
+		},
+
+		validateStepNext: (): boolean => {
+			const { currentStep } = get();
+			const { application } = useApplicationStore.getState();
+
+			if (!application) {
+				log.warn("[Wizard Store] validateStepNext: No application", { currentStep });
+				return false;
+			}
+
+			switch (currentStep) {
+				case WizardStep.APPLICATION_DETAILS: {
+					return validateApplicationDetails(application);
+				}
+				case WizardStep.APPLICATION_STRUCTURE: {
+					return !!application.grant_template?.grant_sections.length;
+				}
+				case WizardStep.GENERATE_AND_COMPLETE: {
+					return true;
+				}
+				case WizardStep.KNOWLEDGE_BASE: {
+					return !!application.rag_sources.length;
+				}
+				case WizardStep.RESEARCH_DEEP_DIVE: {
+					return validateResearchDeepDive(application);
+				}
+				case WizardStep.RESEARCH_PLAN: {
+					return validateResearchPlan(application);
+				}
+				default: {
+					return false;
+				}
+			}
+		},
+	};
+});

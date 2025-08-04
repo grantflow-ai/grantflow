@@ -99,27 +99,27 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 								<MoreVertical className="size-4 text-app-gray-600" />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
-								className="w-[200px] rounded-sm border border-app-gray-200 bg-white p-0 shadow-none"
+								className="w-[200px] rounded-sm border border-app-gray-200 bg-white p-0 shadow-none group"
 								data-testid="project-card-menu"
 							>
 								<DropdownMenuItem
-									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-app-gray-600 data-[highlighted]:bg-transparent data-[highlighted]:text-app-gray-600"
+									className="p-3 font-normal text-base text-gray-700 flex items-center gap-2  cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group-hover:text-gray-400 group"
 									data-testid="project-card-delete"
 									onClick={() => {
 										onDelete(application.id);
 									}}
 								>
-									<Trash2 className="size-4 text-app-gray-600" />
+									<Trash2 className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
 									Delete
 								</DropdownMenuItem>
 								<DropdownMenuItem
-									className="flex cursor-pointer items-center gap-2 p-3 font-normal text-base text-app-gray-600 data-[highlighted]:bg-transparent data-[highlighted]:text-app-gray-600"
+									className="p-3 font-normal text-base text-gray-700 flex items-center gap-2  cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group-hover:text-gray-400 group"
 									data-testid="project-card-duplicate"
 									onClick={() => {
 										onDuplicate(application.id, application.title);
 									}}
 								>
-									<Copy className="size-4 text-app-gray-600" />
+									<Copy className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
 									Duplicate
 								</DropdownMenuItem>
 							</DropdownMenuContent>

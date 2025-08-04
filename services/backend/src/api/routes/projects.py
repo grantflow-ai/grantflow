@@ -543,6 +543,7 @@ async def handle_update_invitation_role(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
                 .where(OrganizationUser.firebase_uid == request.auth)
+                .where(OrganizationUser.deleted_at.is_(None))
             )
             if invitation.accepted_at is not None:
                 raise ValidationException("Cannot update role of an accepted invitation")
@@ -810,6 +811,7 @@ async def handle_update_member_role(
                 select(OrganizationUser)
                 .where(OrganizationUser.organization_id == organization_id)
                 .where(OrganizationUser.firebase_uid == firebase_uid)
+                .where(OrganizationUser.deleted_at.is_(None))
             )
 
             if not target_member:
