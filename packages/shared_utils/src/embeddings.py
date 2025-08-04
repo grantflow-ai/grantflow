@@ -15,6 +15,7 @@ from packages.shared_utils.src.sync import run_sync
 
 logger = get_logger(__name__)
 embedding_model_ref = Ref[SentenceTransformer]()
+cached_model_name: str | None = None
 model_load_lock = Lock()
 
 EMBEDDING_MODEL_NAME: Final[str] = "sentence-transformers/all-MiniLM-L12-v2"
@@ -22,7 +23,9 @@ CHUNKS_BATCH_SIZE: Final[int] = 30
 
 
 def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTransformer:
-    if embedding_model_ref.value is None:
+    global cached_model_name
+
+    if embedding_model_ref.value is None or cached_model_name != model_name:
         start_time = time.time()
         model_dir = getenv("MODEL_DIR")
 
@@ -47,6 +50,7 @@ def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTrans
 
         load_duration = time.time() - start_time
         embedding_model_ref.value = model
+        cached_model_name = model_name
 
         logger.info(
             "Embedding model loaded successfully",
@@ -56,7 +60,7 @@ def get_embedding_model(model_name: str = EMBEDDING_MODEL_NAME) -> SentenceTrans
             device="cpu",
         )
     else:
-        logger.debug("Using cached embedding model")
+        logger.debug("Using cached embedding model", cached_model=cached_model_name)
 
     return embedding_model_ref.value
 

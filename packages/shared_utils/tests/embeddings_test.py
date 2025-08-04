@@ -27,7 +27,12 @@ async def test_generate_embeddings(mocker: MockerFixture) -> None:
         [0.2] * EMBEDDING_DIMENSIONS,
         [0.3] * EMBEDDING_DIMENSIONS,
     ]
-    embedding_model_ref.value = mock_embedding_model
+
+    # Mock get_embedding_model to return our mock model
+    mocker.patch(
+        "packages.shared_utils.src.embeddings.get_embedding_model",
+        return_value=mock_embedding_model,
+    )
 
     inputs = [
         "The quick brown fox jumps over the lazy dog.",
@@ -41,13 +46,16 @@ async def test_generate_embeddings(mocker: MockerFixture) -> None:
     assert all(len(embedding) == EMBEDDING_DIMENSIONS for embedding in embeddings)
     mock_embedding_model.encode.assert_called_once_with(inputs)
 
-    embedding_model_ref.value = None
-
 
 async def test_generate_embeddings_single_string(mocker: MockerFixture) -> None:
     mock_embedding_model = mocker.Mock()
     mock_embedding_model.encode.return_value = [[0.1] * EMBEDDING_DIMENSIONS]
-    embedding_model_ref.value = mock_embedding_model
+
+    # Mock get_embedding_model to return our mock model
+    mocker.patch(
+        "packages.shared_utils.src.embeddings.get_embedding_model",
+        return_value=mock_embedding_model,
+    )
 
     input_string = "Single input string"
     embeddings = await generate_embeddings(input_string)
@@ -56,8 +64,6 @@ async def test_generate_embeddings_single_string(mocker: MockerFixture) -> None:
     assert len(embeddings) == 1
     assert len(embeddings[0]) == EMBEDDING_DIMENSIONS
     mock_embedding_model.encode.assert_called_once_with([input_string])
-
-    embedding_model_ref.value = None
 
 
 def test_get_embedding_model(mocker: MockerFixture) -> None:
