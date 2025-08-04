@@ -296,12 +296,17 @@ async def test_handle_scraper_request_failure_with_discord(
 ) -> None:
     """Test failed scraper request sends Discord failure notification."""
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    # Mock get_env to ensure local storage path is taken
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
+            "DEBUG": "True",  # This also triggers local storage
+        }
+        return env_map.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_run_scraper.side_effect = Exception("Test error")
     mock_send_report.return_value = True
@@ -332,12 +337,17 @@ async def test_handle_scraper_request_no_discord_url(
 ) -> None:
     """Test scraper request without Discord URL configured."""
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    # Mock get_env to ensure local storage path is taken
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "",
+            "ENVIRONMENT": "staging",
+            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
+            "DEBUG": "True",  # This also triggers local storage
+        }
+        return env_map.get(key, fallback)
+
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_metrics = {
         "search_results_count": 10,
