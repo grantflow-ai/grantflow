@@ -267,7 +267,7 @@ resource "google_monitoring_alert_policy" "app_hosting_high_memory" {
 
 # Cloud Function to send detailed App Hosting alerts to Discord
 resource "google_cloudfunctions2_function" "app_hosting_alerts_to_discord" {
-  name        = "app-hosting-alerts-to-discord-${var.environment}"
+  name        = "fn-alerts-apphosting-${var.environment}"
   location    = "us-central1"
   description = "Send App Hosting alerts to Discord with detailed information"
 
@@ -312,7 +312,7 @@ resource "google_pubsub_topic" "app_hosting_alerts" {
 
 # Service account for App Hosting alerts function
 resource "google_service_account" "app_hosting_alerts_function" {
-  account_id   = "app-hosting-alerts-${var.environment}"
+  account_id   = "fn-apphosting-sa-${var.environment}"
   display_name = "App Hosting Alerts Function"
   description  = "Service account for App Hosting alerts Cloud Function"
 }
