@@ -208,36 +208,39 @@ export function DragDropSectionManager({
 		[onAddSection],
 	);
 
+	const reorderSectionsHierarchically = useCallback(
+		async (
+			activeSection: GrantSection,
+			overSection: GrantSection,
+			newParentId: null | string,
+			oldIndex: number,
+			newIndex: number,
+		) => {
+			const reorderedSections = arrayMove(grantSections, oldIndex, newIndex);
+
+			const updatedSections = reorderedSections.map((section, index) => ({
+				...section,
+				order: index,
+				parent_id: section.id === activeSection.id ? newParentId : section.parent_id,
+			}));
+
+			log.info("Cross-parent reorder complete", {
+				activeId: activeSection.id,
+				newIndex,
+				newParentId,
+				oldIndex,
+				overId: overSection.id,
+			});
+
+			await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
+		},
+		[grantSections, toUpdateGrantSection],
+	);
+
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
-			onDragEnd: async (_, activeItem, overItem) => {
-				if (activeItem && overItem && activeItem.id !== overItem.id) {
-					const newParentId = determineNewParentId(activeItem, overItem);
-					const hasParentChanged = activeItem.parent_id !== newParentId;
-
-					if (hasParentChanged) {
-						await handleUpdateSection(activeItem.id, { parent_id: newParentId });
-					}
-				}
-
+			onDragEnd: (_) => {
 				if (pendingParentChange) {
-					const updatedSections = grantSections.map((section) => {
-						if (section.id === pendingParentChange.sectionId) {
-							return toUpdateGrantSection({
-								...section,
-								parent_id: pendingParentChange.newParentId,
-							});
-						}
-						return toUpdateGrantSection(section);
-					});
-
-					log.info("Drag end: Applying pending parent change", {
-						newParentId: pendingParentChange.newParentId,
-						sectionCount: updatedSections.length,
-						sectionId: pendingParentChange.sectionId,
-					});
-
-					await updateGrantSections(updatedSections);
 					setPendingParentChange(null);
 				}
 			},
@@ -255,16 +258,40 @@ export function DragDropSectionManager({
 					setExpandedSectionId(null);
 				}
 			},
-			onReorder: async (sections, oldIndex, newIndex) => {
-				const reorderedSections = arrayMove(sections, oldIndex, newIndex);
+			onReorder: async (sections, oldIndex, newIndex, activeItem, overItem) => {
+				if (activeItem.id === overItem.id) {
+					return;
+				}
 
-				const updatedSections = reorderedSections.map((section, index) => ({
-					...section,
-					order: index,
-					parent_id: section.parent_id ?? null,
-				}));
+				const newParentId = determineNewParentId(activeItem, overItem);
+				const hasParentChanged = activeItem.parent_id !== newParentId;
 
-				await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
+				if (hasParentChanged) {
+					log.info("Cross-parent reorder detected", {
+						activeId: activeItem.id,
+						currentParentId: activeItem.parent_id,
+						newParentId,
+						overId: overItem.id,
+					});
+					await reorderSectionsHierarchically(activeItem, overItem, newParentId, oldIndex, newIndex);
+				} else {
+					log.info("Same-parent reorder detected", {
+						activeId: activeItem.id,
+						newIndex,
+						oldIndex,
+						overId: overItem.id,
+						parentId: activeItem.parent_id,
+					});
+					const reorderedSections = arrayMove(sections, oldIndex, newIndex);
+
+					const updatedSections = reorderedSections.map((section, index) => ({
+						...section,
+						order: index,
+						parent_id: section.parent_id ?? null,
+					}));
+
+					await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
+				}
 			},
 		}),
 		[
@@ -276,6 +303,7 @@ export function DragDropSectionManager({
 			handleUpdateSection,
 			grantSections,
 			updateGrantSections,
+			reorderSectionsHierarchically,
 		],
 	);
 
