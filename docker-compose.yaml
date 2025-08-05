@@ -101,7 +101,7 @@ services:
         env_file:
             - ./.env
         ports:
-            - "8000:8000"
+            - "9000:8000"
         volumes:
             - ./services/backend:/app/services/backend:cached
             - ./packages:/app/packages:cached

@@ -12,6 +12,31 @@ import { log } from "@/utils/logger";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
+const updateDragOverVisualState = (overId: null | string): void => {
+	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
+
+	if (overId) {
+		const overElement = document.querySelector<HTMLElement>(`[data-sortable-id="${overId}"]`);
+
+		if (prevOverElement && prevOverElement !== overElement) {
+			delete prevOverElement.dataset.dragOver;
+		}
+
+		if (overElement) {
+			overElement.dataset.dragOver = "true";
+		}
+	} else if (prevOverElement) {
+		delete prevOverElement.dataset.dragOver;
+	}
+};
+
+const clearDragOverVisualState = (): void => {
+	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
+	if (prevOverElement) {
+		delete prevOverElement.dataset.dragOver;
+	}
+};
+
 interface SectionListProps {
 	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
@@ -230,7 +255,10 @@ export function DragDropSectionManager({
 			let adjustedOverIndex = overIndex;
 
 			// sub-section dropping over a main section, places just after it
-			if (newParentId === overSection.id && overSection.parent_id === null) {
+			if (
+				(newParentId === overSection.id && overSection.parent_id === null) ||
+				(activeSection.parent_id === null && overSection.parent_id === null)
+			) {
 				adjustedOverIndex = overIndex + 1;
 			}
 
@@ -262,6 +290,10 @@ export function DragDropSectionManager({
 				if (pendingParentChange) {
 					setPendingParentChange(null);
 				}
+				clearDragOverVisualState();
+			},
+			onDragOver: (_event, _activeItem, overItem) => {
+				updateDragOverVisualState(overItem?.id ?? null);
 			},
 			onDragStart: (_event) => {
 				if (expandedSectionId !== null) {
