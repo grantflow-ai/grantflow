@@ -267,12 +267,36 @@ export function DragDropSectionManager({
 
 				if (wouldCreateInvalidNesting(activeItem, overItem)) {
 					log.info("Main section with children being moved - showing confirmation dialog");
-					
-					const pendingMove = { activeItem, newIndex, oldIndex, overItem, sections };
-					
+
+					const handleConfirmMove = async () => {
+						dialogRef.current?.close();
+
+						const sectionsWithoutSubs = sections.filter((section) => section.parent_id !== activeItem.id);
+
+						const newOldIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
+						const newNewIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
+
+						if (newOldIndex !== -1 && newNewIndex !== -1) {
+							const reorderedSections = arrayMove(sectionsWithoutSubs, newOldIndex, newNewIndex);
+							const updatedSections = reorderedSections.map((section, index) => ({
+								...section,
+								order: index,
+								parent_id:
+									section.id === activeItem.id && overItem.parent_id !== null
+										? overItem.parent_id
+										: section.parent_id,
+							}));
+
+							await useApplicationStore
+								.getState()
+								.updateGrantSections(updatedSections.map(toUpdateGrantSection));
+						}
+					};
+
 					dialogRef.current?.open({
 						content: null,
-						description: "This section contains sub-sections. Moving it will permanently delete all sub-sections and only keep the main section. This action cannot be undone.",
+						description:
+							"This section contains sub-sections. Moving it will permanently delete all sub-sections and only keep the main section. This action cannot be undone.",
 						dismissOnOutsideClick: false,
 						footer: (
 							<div className="flex justify-between w-full">
@@ -285,30 +309,7 @@ export function DragDropSectionManager({
 								</AppButton>
 								<AppButton
 									data-testid="confirm-move-button"
-									onClick={async () => {
-										dialogRef.current?.close();
-										
-										const { activeItem, overItem, sections } = pendingMove;
-										const sectionsWithoutSubs = sections.filter(
-											(section) => section.parent_id !== activeItem.id
-										);
-										
-										const newOldIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
-										const newNewIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
-										
-										if (newOldIndex !== -1 && newNewIndex !== -1) {
-											const reorderedSections = arrayMove(sectionsWithoutSubs, newOldIndex, newNewIndex);
-											const updatedSections = reorderedSections.map((section, index) => ({
-												...section,
-												order: index,
-												parent_id: section.id === activeItem.id && overItem.parent_id !== null
-													? overItem.parent_id 
-													: section.parent_id,
-											}));
-											
-											await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
-										}
-									}}
+									onClick={handleConfirmMove}
 									variant="primary"
 								>
 									Convert and Remove
@@ -333,14 +334,20 @@ export function DragDropSectionManager({
 					});
 					await reorderSectionsHierarchically(activeItem, overItem, newParentId, oldIndex, newIndex);
 				} else {
+					// For main-to-main reorder, adjust index if target has sub-sections
+					const adjustedNewIndex =
+						activeItem.parent_id === null && overItem.parent_id === null
+							? getAdjustedIndexForMainSectionReorder(sections, overItem.id, newIndex)
+							: newIndex;
+
 					log.info("Same-parent reorder detected", {
 						activeId: activeItem.id,
-						newIndex,
+						newIndex: adjustedNewIndex,
 						oldIndex,
 						overId: overItem.id,
 						parentId: activeItem.parent_id,
 					});
-					const reorderedSections = arrayMove(sections, oldIndex, newIndex);
+					const reorderedSections = arrayMove(sections, oldIndex, adjustedNewIndex);
 
 					const updatedSections = reorderedSections.map((section, index) => ({
 						...section,
@@ -411,6 +418,15 @@ export function DragDropSectionManager({
 			</div>
 		</DragDropWrapper>
 	);
+}
+
+function getAdjustedIndexForMainSectionReorder(
+	sections: GrantSection[],
+	overItemId: string,
+	originalIndex: number,
+): number {
+	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
+	return lastSubSectionIndex === -1 ? originalIndex : lastSubSectionIndex + 1;
 }
 
 function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) {
