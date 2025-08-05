@@ -124,7 +124,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const activeIndex = items.findIndex((item) => item.id === activeItem.id);
 				const overIndex = items.findIndex((item) => item.id === overItem.id);
 
-				if (activeIndex !== -1 && overIndex !== -1) {
+				if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
 					await onReorder(items, activeIndex, overIndex, activeItem, overItem);
 				}
 			};
