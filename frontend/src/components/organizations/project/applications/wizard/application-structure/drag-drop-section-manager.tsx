@@ -4,7 +4,6 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
@@ -48,8 +47,20 @@ export function DragDropSectionManager({
 
 	const wouldCreateInvalidNesting = useCallback(
 		(activeSection: GrantSection, overSection: GrantSection) => {
+			log.info("wouldCreateInvalidNesting check", {
+				activeId: activeSection.id,
+				activeParentId: activeSection.parent_id,
+				overId: overSection.id,
+				overParentId: overSection.parent_id,
+			});
+
 			if (overSection.parent_id !== null && activeSection.parent_id === null) {
 				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
+				log.info("Main section over sub-section check", {
+					activeId: activeSection.id,
+					hasChildren,
+					wouldBeInvalid: hasChildren,
+				});
 				if (hasChildren) {
 					return true;
 				}
@@ -239,18 +250,9 @@ export function DragDropSectionManager({
 
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
-			onDragEnd: (_) => {
+			onDragEnd: (_event) => {
 				if (pendingParentChange) {
 					setPendingParentChange(null);
-				}
-			},
-			onDragOver: (_event, activeSection, overSection) => {
-				if (!(activeSection && overSection)) {
-					return;
-				}
-
-				if (wouldCreateInvalidNesting(activeSection, overSection)) {
-					toast.error("Cannot create more than 2 levels of nesting");
 				}
 			},
 			onDragStart: (_event) => {
@@ -260,6 +262,62 @@ export function DragDropSectionManager({
 			},
 			onReorder: async (sections, oldIndex, newIndex, activeItem, overItem) => {
 				if (activeItem.id === overItem.id) {
+					return;
+				}
+
+				if (wouldCreateInvalidNesting(activeItem, overItem)) {
+					log.info("Main section with children being moved - showing confirmation dialog");
+					
+					const pendingMove = { activeItem, newIndex, oldIndex, overItem, sections };
+					
+					dialogRef.current?.open({
+						content: null,
+						description: "This section contains sub-sections. Moving it will permanently delete all sub-sections and only keep the main section. This action cannot be undone.",
+						dismissOnOutsideClick: false,
+						footer: (
+							<div className="flex justify-between w-full">
+								<AppButton
+									data-testid="cancel-move-button"
+									onClick={() => dialogRef.current?.close()}
+									variant="secondary"
+								>
+									Cancel
+								</AppButton>
+								<AppButton
+									data-testid="confirm-move-button"
+									onClick={async () => {
+										dialogRef.current?.close();
+										
+										const { activeItem, overItem, sections } = pendingMove;
+										const sectionsWithoutSubs = sections.filter(
+											(section) => section.parent_id !== activeItem.id
+										);
+										
+										const newOldIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
+										const newNewIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
+										
+										if (newOldIndex !== -1 && newNewIndex !== -1) {
+											const reorderedSections = arrayMove(sectionsWithoutSubs, newOldIndex, newNewIndex);
+											const updatedSections = reorderedSections.map((section, index) => ({
+												...section,
+												order: index,
+												parent_id: section.id === activeItem.id && overItem.parent_id !== null
+													? overItem.parent_id 
+													: section.parent_id,
+											}));
+											
+											await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
+										}
+									}}
+									variant="primary"
+								>
+									Convert and Remove
+								</AppButton>
+							</div>
+						),
+						minWidth: "min-w-xl",
+						title: "Move section and delete sub-sections?",
+					});
 					return;
 				}
 
@@ -304,6 +362,7 @@ export function DragDropSectionManager({
 			grantSections,
 			updateGrantSections,
 			reorderSectionsHierarchically,
+			dialogRef,
 		],
 	);
 
