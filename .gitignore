@@ -44,6 +44,7 @@ coverage/
 crash.*.log
 crash.log
 dist/
+drizzle/
 frontend/playwright-report/
 frontend/playwright/.cache/
 frontend/test-results/

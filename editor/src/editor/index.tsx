@@ -44,7 +44,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 import "@/editor/index.scss";
+import { HocuspocusProvider } from "@hocuspocus/provider";
 import type { JSONContent } from "@tiptap/core";
+import Collaboration from "@tiptap/extension-collaboration";
 import { TableKit } from "@tiptap/extension-table";
 import { FontFamily, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { Markdown } from "tiptap-markdown";
@@ -146,9 +148,13 @@ export const Editor = React.forwardRef(function Editor(
 	{
 		content,
 		onContentChange,
+		documentId,
+		crdtUrl,
 	}: {
 		content: string;
 		onContentChange?: () => void;
+		documentId: string;
+		crdtUrl: string;
 	},
 	ref: React.ForwardedRef<EditorRef>,
 ) {
@@ -156,6 +162,13 @@ export const Editor = React.forwardRef(function Editor(
 	const windowSize = useWindowSize();
 	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
+
+	const provider = React.useMemo(() => {
+		return new HocuspocusProvider({
+			name: documentId,
+			url: crdtUrl,
+		});
+	}, [crdtUrl, documentId]);
 
 	const editor = useEditor({
 		content,
@@ -175,6 +188,9 @@ export const Editor = React.forwardRef(function Editor(
 					enableClickSelection: true,
 					openOnClick: false,
 				},
+			}),
+			Collaboration.configure({
+				document: provider.document,
 			}),
 			Markdown,
 			HorizontalRule,

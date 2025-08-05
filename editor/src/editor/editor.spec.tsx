@@ -4,10 +4,12 @@ import { assert } from "vitest";
 import { Editor, type EditorRef } from "./index";
 
 const initialMarkdown = "# Hello World\n\nThis is a test.";
+const crdtUrl = "ws://127.0.0.1:1234";
+const documentId = "123";
 
 describe("Editor", () => {
 	it("renders with initial content", () => {
-		render(<Editor content={initialMarkdown} />);
+		render(<Editor content={initialMarkdown} crdtUrl={crdtUrl} documentId={documentId} />);
 
 		expect(screen.getByText("Hello World")).toBeInTheDocument();
 		expect(screen.getByText("This is a test.")).toBeInTheDocument();
@@ -20,7 +22,7 @@ describe("Editor", () => {
 			const ref = useRef<EditorRef>(null);
 			return (
 				<>
-					<Editor ref={ref} content={initialMarkdown} />
+					<Editor ref={ref} content={initialMarkdown} crdtUrl={crdtUrl} documentId={documentId} />
 					<button
 						type="button"
 						data-testid="save-button"
@@ -54,7 +56,7 @@ describe("Editor", () => {
 			const ref = useRef<EditorRef>(null);
 			return (
 				<>
-					<Editor ref={ref} content={initialMarkdown} />
+					<Editor ref={ref} content={initialMarkdown} crdtUrl={crdtUrl} documentId={documentId} />
 					<button
 						type="button"
 						data-testid="save-button"
