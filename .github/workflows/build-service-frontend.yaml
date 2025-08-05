@@ -150,10 +150,46 @@ jobs:
                   # Initialize Terraform
                   tofu init
                   
-                  # Create a new build deployment with the latest image
-                  tofu apply -auto-approve \
-                    -target=module.app_hosting.google_firebase_app_hosting_build.frontend \
-                    -var="image_tag=${{ needs.build-and-push.outputs.image_tag }}"
+                  # Function to clear stale locks if deployment fails
+                  clear_stale_lock() {
+                    echo "Attempting to clear any stale Terraform locks..."
+                    if [ "${{ needs.build-and-push.outputs.environment }}" == "production" ]; then
+                      gsutil -q rm -f gs://grantflow-terraform-state/production/default.tflock 2>/dev/null || true
+                    else
+                      gsutil -q rm -f gs://grantflow-terraform-state/staging/default.tflock 2>/dev/null || true
+                    fi
+                  }
+                  
+                  # Function to deploy with retry logic
+                  deploy_with_retry() {
+                    local max_attempts=3
+                    local attempt=1
+                    
+                    while [ $attempt -le $max_attempts ]; do
+                      echo "Deployment attempt $attempt of $max_attempts..."
+                      
+                      if tofu apply -auto-approve \
+                        -target=module.app_hosting.google_firebase_app_hosting_build.frontend \
+                        -var="image_tag=${{ needs.build-and-push.outputs.image_tag }}"; then
+                        echo "Deployment successful on attempt $attempt"
+                        return 0
+                      else
+                        echo "Deployment failed on attempt $attempt"
+                        if [ $attempt -lt $max_attempts ]; then
+                          echo "Clearing potential stale locks and retrying in 10 seconds..."
+                          clear_stale_lock
+                          sleep 10
+                        fi
+                        attempt=$((attempt + 1))
+                      fi
+                    done
+                    
+                    echo "All deployment attempts failed"
+                    return 1
+                  }
+                  
+                  # Execute deployment with retry logic
+                  deploy_with_retry
 
             - name: Output deployment info
               if: success()
