@@ -334,20 +334,42 @@ export function DragDropSectionManager({
 					});
 					await reorderSectionsHierarchically(activeItem, overItem, newParentId, oldIndex, newIndex);
 				} else {
-					// For main-to-main reorder, adjust index if target has sub-sections
-					const adjustedNewIndex =
-						activeItem.parent_id === null && overItem.parent_id === null
-							? getAdjustedIndexForMainSectionReorder(sections, overItem.id, newIndex)
-							: newIndex;
+					// Check if active main section has sub-sections
+					const activeHasSubSections =
+						activeItem.parent_id === null &&
+						sections.some((section) => section.parent_id === activeItem.id);
 
-					log.info("Same-parent reorder detected", {
-						activeId: activeItem.id,
-						newIndex: adjustedNewIndex,
-						oldIndex,
-						overId: overItem.id,
-						parentId: activeItem.parent_id,
-					});
-					const reorderedSections = arrayMove(sections, oldIndex, adjustedNewIndex);
+					let reorderedSections: GrantSection[];
+
+					if (activeHasSubSections) {
+						log.info("Main section with sub-sections being reordered as group", {
+							activeId: activeItem.id,
+							overId: overItem.id,
+							subSectionsCount: sections.filter((s) => s.parent_id === activeItem.id).length,
+						});
+
+						reorderedSections = moveMainSectionWithSubSections(
+							sections,
+							activeItem.id,
+							overItem.id,
+							overItem,
+						);
+					} else {
+						// For main-to-main reorder, adjust index if target has sub-sections
+						const adjustedNewIndex =
+							activeItem.parent_id === null && overItem.parent_id === null
+								? getAdjustedIndexForMainSectionReorder(sections, overItem.id, newIndex)
+								: newIndex;
+
+						log.info("Same-parent reorder detected", {
+							activeId: activeItem.id,
+							newIndex: adjustedNewIndex,
+							oldIndex,
+							overId: overItem.id,
+							parentId: activeItem.parent_id,
+						});
+						reorderedSections = arrayMove(sections, oldIndex, adjustedNewIndex);
+					}
 
 					const updatedSections = reorderedSections.map((section, index) => ({
 						...section,
@@ -427,6 +449,42 @@ function getAdjustedIndexForMainSectionReorder(
 ): number {
 	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
 	return lastSubSectionIndex === -1 ? originalIndex : lastSubSectionIndex + 1;
+}
+
+function moveMainSectionWithSubSections(
+	sections: GrantSection[],
+	activeMainSectionId: string,
+	overItemId: string,
+	overItem: GrantSection,
+): GrantSection[] {
+	const sectionsToMove = sections.filter(
+		(section) => section.id === activeMainSectionId || section.parent_id === activeMainSectionId,
+	);
+
+	const remainingSections = sections.filter(
+		(section) => section.id !== activeMainSectionId && section.parent_id !== activeMainSectionId,
+	);
+
+	if (overItem.parent_id !== null) {
+		log.error("Invalid operation: Cannot drop main section with sub-sections over a sub-section", {
+			activeMainSectionId,
+			overItemId,
+			overItemParentId: overItem.parent_id,
+		});
+		return sections;
+	}
+
+	const insertionIndex = getAdjustedIndexForMainSectionReorder(
+		remainingSections,
+		overItemId,
+		remainingSections.findIndex((s) => s.id === overItemId),
+	);
+
+	return [
+		...remainingSections.slice(0, insertionIndex),
+		...sectionsToMove,
+		...remainingSections.slice(insertionIndex),
+	];
 }
 
 function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) {
