@@ -227,11 +227,10 @@ export function DragDropSectionManager({
 			activeIndex: number,
 			overIndex: number,
 		) => {
-			// For cross-parent moves, adjust insertion index to place after target section
 			let adjustedOverIndex = overIndex;
 
-			// If dropping over a main section, place just after it (not after its sub-sections)
-			if (overSection.parent_id === null) {
+			// sub-section dropping over a main section, places just after it
+			if (newParentId === overSection.id && overSection.parent_id === null) {
 				adjustedOverIndex = overIndex + 1;
 			}
 
