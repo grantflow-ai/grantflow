@@ -1,3 +1,4 @@
+import asyncio
 from typing import TYPE_CHECKING, Any, TypedDict
 from uuid import UUID
 
@@ -495,6 +496,10 @@ async def handle_create_upload_url(
         template_id=template_id,
     )
 
+    # Add a small delay to mitigate PostgreSQL MVCC race conditions
+    # where a new session might not immediately see just-committed data
+    await asyncio.sleep(0.2)
+
     _, _, entity_type, entity_id = determine_entity_info(
         application_id=application_id,
         template_id=template_id,
@@ -559,6 +564,10 @@ async def handle_crawl_url(
         granting_institution_id=granting_institution_id,
         template_id=template_id,
     )
+
+    # Add a small delay to mitigate PostgreSQL MVCC race conditions
+    # where a new session might not immediately see just-committed data
+    await asyncio.sleep(0.2)
 
     _, _, entity_type, entity_id = determine_entity_info(
         application_id=application_id,
