@@ -50,7 +50,7 @@ resource "google_storage_bucket_object" "entity_cleanup_source" {
 
 # Service account for the Cloud Function
 resource "google_service_account" "entity_cleanup" {
-  account_id   = "entity-cleanup-function"
+  account_id   = "fn-cleanup-sa-${var.environment}"
   display_name = "Entity Cleanup Function Service Account"
   description  = "Service account for automated user and organization deletion cleanup"
 }
@@ -83,7 +83,7 @@ resource "google_pubsub_topic" "entity_cleanup_schedule" {
 
 # Cloud Function for user and organization cleanup
 resource "google_cloudfunctions2_function" "entity_cleanup" {
-  name        = "entity-cleanup-function"
+  name        = "fn-cleanup-${var.environment}"
   location    = "us-central1"
   description = "Automated cleanup of users and organizations with expired soft deletes"
 
@@ -177,7 +177,7 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
     display_name = "Cloud Function execution failures"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND metric.type=\"logging.googleapis.com/log_entry_count\""
+      filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-cleanup-${var.environment}\" AND metric.type=\"logging.googleapis.com/log_entry_count\""
       duration        = "300s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
@@ -206,7 +206,7 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
 # Log-based metric for entity cleanup operations
 resource "google_logging_metric" "entity_cleanup_operations" {
   name   = "entity_cleanup_operations"
-  filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"entity-cleanup-function\" AND jsonPayload.processed>=0"
+  filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-cleanup-${var.environment}\" AND jsonPayload.processed>=0"
 
   # Log-based metrics automatically use DELTA metric kind
   metric_descriptor {

@@ -62,7 +62,7 @@ resource "google_pubsub_topic" "budget_alerts" {
 
 # Cloud Function to forward budget alerts to Discord
 resource "google_cloudfunctions2_function" "budget_to_discord" {
-  name        = "budget-alerts-to-discord-${var.environment}"
+  name        = "fn-alerts-budget-${var.environment}"
   location    = "us-central1"
   description = "Forward budget alerts to Discord"
 
@@ -100,7 +100,7 @@ resource "google_cloudfunctions2_function" "budget_to_discord" {
 
 # Service account for the Cloud Function
 resource "google_service_account" "budget_function" {
-  account_id   = "budget-alerts-function-${var.environment}"
+  account_id   = "fn-budget-sa-${var.environment}"
   display_name = "Budget Alerts Function"
   description  = "Service account for budget alerts Cloud Function"
 }
