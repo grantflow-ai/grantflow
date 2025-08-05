@@ -9,7 +9,6 @@
 		"check": "biome check --write . && eslint ",
 		"dev": "nodemon --watch src --ext ts --exec \"pnpm run build && node dist/index.js\"",
 		"start": "node dist/index.js",
-		"start:dev": "tsx src/index.ts",
 		"eslint": "eslint",
 		"format": "biome format --write .",
 		"lint": "biome lint --write . && eslint . --fix",
@@ -29,7 +28,6 @@
 		"nodemon": "^3.1.10",
 		"pino-pretty": "^13.1.1",
 		"tsup": "^8.5.0",
-		"tsx": "^4.20.3",
 		"typescript": "^5.9.2"
 	},
 	"dependencies": {

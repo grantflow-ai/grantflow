@@ -146,15 +146,13 @@ const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; 
 
 export const Editor = React.forwardRef(function Editor(
 	{
-		content,
-		onContentChange,
-		documentId,
 		crdtUrl,
+		documentId,
+		onContentChange,
 	}: {
-		content: string;
-		onContentChange?: () => void;
-		documentId: string;
 		crdtUrl: string;
+		documentId: string;
+		onContentChange?: () => void;
 	},
 	ref: React.ForwardedRef<EditorRef>,
 ) {
@@ -171,7 +169,7 @@ export const Editor = React.forwardRef(function Editor(
 	}, [crdtUrl, documentId]);
 
 	const editor = useEditor({
-		content,
+		content: "",
 		editorProps: {
 			attributes: {
 				"aria-label": "Main content area, start typing to enter text.",
