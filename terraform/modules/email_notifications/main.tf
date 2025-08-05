@@ -57,7 +57,7 @@ resource "google_storage_bucket_object" "email_notification_source" {
 
 # Service account for the Cloud Function
 resource "google_service_account" "email_notification" {
-  account_id   = "email-notification-function"
+  account_id   = "fn-email-notify-sa-${var.environment}"
   display_name = "Email Notification Function Service Account"
   description  = "Service account for sending email notifications when applications are generated"
 }
@@ -99,7 +99,7 @@ resource "google_pubsub_topic_iam_member" "rag_publisher" {
 
 # Cloud Function for email notifications
 resource "google_cloudfunctions2_function" "email_notification" {
-  name        = "email-notification-function"
+  name        = "fn-email-notify-${var.environment}"
   location    = var.region
   description = "Send email notifications when grant applications are generated"
 
@@ -164,7 +164,7 @@ resource "google_cloudfunctions2_function" "email_notification" {
 # Log-based metric for email notification operations
 resource "google_logging_metric" "email_notification_operations" {
   name   = "email_notification_operations"
-  filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"email-notification-function\" AND jsonPayload.status!=\"\""
+  filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-email-notify-${var.environment}\" AND jsonPayload.status!=\"\""
 
   metric_descriptor {
     metric_kind = "DELTA"
