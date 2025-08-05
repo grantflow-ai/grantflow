@@ -224,10 +224,18 @@ export function DragDropSectionManager({
 			activeSection: GrantSection,
 			overSection: GrantSection,
 			newParentId: null | string,
-			oldIndex: number,
-			newIndex: number,
+			activeIndex: number,
+			overIndex: number,
 		) => {
-			const reorderedSections = arrayMove(grantSections, oldIndex, newIndex);
+			// For cross-parent moves, adjust insertion index to place after target section
+			let adjustedOverIndex = overIndex;
+
+			// If dropping over a main section, place just after it (not after its sub-sections)
+			if (overSection.parent_id === null) {
+				adjustedOverIndex = overIndex + 1;
+			}
+
+			const reorderedSections = arrayMove(grantSections, activeIndex, adjustedOverIndex);
 
 			const updatedSections = reorderedSections.map((section, index) => ({
 				...section,
@@ -237,10 +245,11 @@ export function DragDropSectionManager({
 
 			log.info("Cross-parent reorder complete", {
 				activeId: activeSection.id,
-				newIndex,
+				activeIndex,
+				adjustedOverIndex,
 				newParentId,
-				oldIndex,
 				overId: overSection.id,
+				overIndex,
 			});
 
 			await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
@@ -260,7 +269,7 @@ export function DragDropSectionManager({
 					setExpandedSectionId(null);
 				}
 			},
-			onReorder: async (sections, oldIndex, newIndex, activeItem, overItem) => {
+			onReorder: async (sections, activeIndex, overIndex, activeItem, overItem) => {
 				if (activeItem.id === overItem.id) {
 					return;
 				}
@@ -332,7 +341,7 @@ export function DragDropSectionManager({
 						newParentId,
 						overId: overItem.id,
 					});
-					await reorderSectionsHierarchically(activeItem, overItem, newParentId, oldIndex, newIndex);
+					await reorderSectionsHierarchically(activeItem, overItem, newParentId, activeIndex, overIndex);
 				} else {
 					// Check if active main section has sub-sections
 					const activeHasSubSections =
@@ -358,17 +367,17 @@ export function DragDropSectionManager({
 						// For main-to-main reorder, adjust index if target has sub-sections
 						const adjustedNewIndex =
 							activeItem.parent_id === null && overItem.parent_id === null
-								? getAdjustedIndexForMainSectionReorder(sections, overItem.id, newIndex)
-								: newIndex;
+								? getAdjustedIndexForMainSectionReorder(sections, overItem.id, overIndex)
+								: overIndex;
 
 						log.info("Same-parent reorder detected", {
 							activeId: activeItem.id,
+							activeIndex,
 							newIndex: adjustedNewIndex,
-							oldIndex,
 							overId: overItem.id,
 							parentId: activeItem.parent_id,
 						});
-						reorderedSections = arrayMove(sections, oldIndex, adjustedNewIndex);
+						reorderedSections = arrayMove(sections, activeIndex, adjustedNewIndex);
 					}
 
 					const updatedSections = reorderedSections.map((section, index) => ({
