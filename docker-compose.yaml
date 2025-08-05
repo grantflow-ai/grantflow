@@ -273,6 +273,25 @@ services:
         depends_on:
             - db
 
+    crdt-server:
+        profiles:
+            - all
+            - backend
+            - services
+        build:
+            context: .
+            dockerfile: crdt-server/Dockerfile
+        environment:
+            DATABASE_URL: postgresql+asyncpg://local:local@db:5432/local
+        ports:
+            - "1234:1234"
+        env_file:
+            - ./.env
+            - ./crdt-server/.env
+        depends_on:
+            db:
+                condition: service_healthy
+
 volumes:
     data:
     gcs-data:

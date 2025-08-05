@@ -2,12 +2,13 @@
 
 import { Editor, type EditorRef } from "@grantflow/editor";
 import { useRef, useState } from "react";
+import { getEnv } from "@/utils/env";
 import { EditorExportButton } from "./editor-export-button";
 import { EditorPromptWindow } from "./editor-prompt-window";
 import { EditorSections } from "./editor-sections";
 import { EditorWarning } from "./editor-warning";
 
-export function EditorContainer() {
+export function EditorContainer({ documentId }: { documentId: string }) {
 	const editorRef = useRef<EditorRef>(null);
 
 	const [editorSections, setEditorSections] = useState<{ level: number; text: string }[]>([]);
@@ -22,7 +23,8 @@ export function EditorContainer() {
 				<div className="container mx-auto max-w-6xl pt-3" data-testid="grant-application-editor">
 					<div className="prose prose-sm max-w-none h-full">
 						<Editor
-							content={"Hello grantflow"}
+							crdtUrl={getEnv().NEXT_PUBLIC_CRDT_SERVER_URL}
+							documentId={documentId}
 							onContentChange={() => {
 								if (editorRef.current) {
 									setEditorSections(editorRef.current.getHeadings());
