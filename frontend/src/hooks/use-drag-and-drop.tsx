@@ -28,10 +28,10 @@ export interface DragDropConfig {
 }
 
 export interface DragDropHandlers<T extends DragDropItem> {
-	onDragEnd?: (event: DragEndEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
+	onDragEnd?: (event: DragEndEvent) => Promise<void> | void;
 	onDragOver?: (event: DragOverEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
 	onDragStart?: (event: DragStartEvent, item: T | undefined) => void;
-	onReorder?: (items: T[], oldIndex: number, newIndex: number) => Promise<void> | void;
+	onReorder?: (items: T[], oldIndex: number, newIndex: number, activeItem: T, overItem: T) => Promise<void> | void;
 }
 
 export interface DragDropItem {
@@ -121,7 +121,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const newIndex = items.findIndex((item) => item.id === overItem.id);
 
 				if (oldIndex !== -1 && newIndex !== -1) {
-					await onReorder(items, oldIndex, newIndex);
+					await onReorder(items, oldIndex, newIndex, activeItem, overItem);
 				}
 			};
 
@@ -135,11 +135,8 @@ export function useDragAndDrop<T extends DragDropItem>(
 					return;
 				}
 
-				if (active.id === over.id) {
-					const activeItem = items.find((item) => item.id === active.id);
-					if (onDragEnd) {
-						await onDragEnd(event, activeItem, activeItem);
-					}
+				if (active.id === over.id && onDragEnd) {
+					await onDragEnd(event);
 					return;
 				}
 
@@ -147,7 +144,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const overItem = items.find((item) => item.id === over.id);
 
 				if (activeItem && overItem) {
-					const shouldReorder = activeItem.parent_id === overItem.parent_id;
+					const shouldReorder = activeItem.id !== overItem.id;
 
 					if (shouldReorder) {
 						await handleReorder(activeItem, overItem);
@@ -155,7 +152,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				}
 
 				if (onDragEnd) {
-					await onDragEnd(event, activeItem, overItem);
+					await onDragEnd(event);
 				}
 			};
 
