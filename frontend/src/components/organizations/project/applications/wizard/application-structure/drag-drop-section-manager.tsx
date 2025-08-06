@@ -120,6 +120,121 @@ const updateReorderWithReorderedSections = async (
 	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
 };
 
+const handleMainToSubReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+): Promise<void> => {
+	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+	const newParentId = determineNewParentId(activeItem, overItem);
+
+	// Prevent moving a main section into its own sub-section
+	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
+		toast.info("Cannot move a section into its own sub-section");
+		return;
+	}
+
+	// Main without subs → Sub (simple conversion)
+	if (!hasActiveSubSections) {
+		await executeMainToSubConversion(
+			sections,
+			activeIndex,
+			overIndex,
+			activeItem,
+			newParentId,
+			toUpdateGrantSection,
+			updateGrantSections,
+		);
+		return;
+	}
+
+	// Main with subs → Sub (requires confirmation to remove subsections)
+	const handleConfirmMove = async () => {
+		dialogRef.current?.close();
+
+		const sectionsWithoutSubs = sections.filter((section) => section.parent_id !== activeItem.id);
+		const newActiveIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
+		const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
+
+		if (newActiveIndex !== -1 && newOverIndex !== -1) {
+			await executeMainToSubConversion(
+				sectionsWithoutSubs,
+				newActiveIndex,
+				newOverIndex,
+				activeItem,
+				newParentId,
+				toUpdateGrantSection,
+				updateGrantSections,
+			);
+		}
+	};
+
+	dialogRef.current?.open({
+		content: null,
+		description:
+			"Converting a main section into a secondary section will permanently remove any associated secondary sections, if they exist. This action cannot be undone.",
+		dismissOnOutsideClick: false,
+		footer: (
+			<div className="flex justify-between w-full">
+				<AppButton
+					data-testid="cancel-move-button"
+					onClick={() => dialogRef.current?.close()}
+					variant="secondary"
+				>
+					Cancel
+				</AppButton>
+				<AppButton data-testid="confirm-move-button" onClick={handleConfirmMove} variant="primary">
+					Convert and Remove
+				</AppButton>
+			</div>
+		),
+		minWidth: "min-w-xl",
+		title: "This action will affect the section structure!",
+	});
+};
+
+const executeMainToSubConversion = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	newParentId: null | string,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<void> => {
+	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
+	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections, (section) =>
+		section.id === activeItem.id ? newParentId : section.parent_id,
+	);
+};
+
+const handleSubToMainReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<boolean> => {
+	const newParentId = determineNewParentId(activeItem, overItem);
+
+	// Skip if subsection is already in the correct position within its main section
+	if (activeItem.parent_id === overItem.id && newParentId === overItem.id && activeIndex === overIndex + 1) {
+		return false;
+	}
+
+	await updateReorder(sections, activeIndex, overIndex + 1, toUpdateGrantSection, updateGrantSections, (section) =>
+		section.id === activeItem.id ? newParentId : section.parent_id,
+	);
+	return true;
+};
+
 const handleSubToSubReorder = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -422,101 +537,29 @@ export function DragDropSectionManager({
 					return;
 				}
 
-				const hasActiveSubSections = hasSubSections(activeItem.id, sections);
-				const newParentId = determineNewParentId(activeItem, overItem);
-
 				if (!isActiveMain && isOverMain) {
-					if (
-						activeItem.parent_id === overItem.id &&
-						newParentId === overItem.id &&
-						activeIndex === overIndex + 1
-					) {
-						return; // no reorder - subsection remains at the same place inside its main section
-					}
-
-					await updateReorder(
+					await handleSubToMainReorder(
 						sections,
 						activeIndex,
-						overIndex + 1,
+						overIndex,
+						activeItem,
+						overItem,
 						toUpdateGrantSection,
 						useApplicationStore.getState().updateGrantSections,
-						(section) => (section.id === activeItem.id ? newParentId : section.parent_id),
 					);
 					return;
 				}
 
-				if (isActiveMain) {
-					if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
-						toast.info("Cannot move a section into its own sub-section");
-						return;
-					}
-
-					if (!(hasActiveSubSections || isOverMain)) {
-						const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
-						await updateReorder(
-							sections,
-							activeIndex,
-							targetIndex,
-							toUpdateGrantSection,
-							useApplicationStore.getState().updateGrantSections,
-							(section) => (section.id === activeItem.id ? newParentId : section.parent_id),
-						);
-						return;
-					}
-
-					if (hasActiveSubSections && !isOverMain) {
-						const handleConfirmMove = async () => {
-							dialogRef.current?.close();
-
-							const sectionsWithoutSubs = sections.filter(
-								(section) => section.parent_id !== activeItem.id,
-							);
-
-							const newActiveIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
-							const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
-
-							if (newActiveIndex !== -1 && newOverIndex !== -1) {
-								const targetIndex = newActiveIndex < newOverIndex ? newOverIndex : newOverIndex + 1;
-								await updateReorder(
-									sectionsWithoutSubs,
-									newActiveIndex,
-									targetIndex,
-									toUpdateGrantSection,
-									useApplicationStore.getState().updateGrantSections,
-									(section) => (section.id === activeItem.id ? newParentId : section.parent_id),
-								);
-							}
-						};
-
-						dialogRef.current?.open({
-							content: null,
-							description:
-								"Converting a main section into a secondary section will permanently remove any associated secondary sections, if they exist. This action cannot be undone.",
-							dismissOnOutsideClick: false,
-							footer: (
-								<div className="flex justify-between w-full">
-									<AppButton
-										data-testid="cancel-move-button"
-										onClick={() => dialogRef.current?.close()}
-										variant="secondary"
-									>
-										Cancel
-									</AppButton>
-									<AppButton
-										data-testid="confirm-move-button"
-										onClick={handleConfirmMove}
-										variant="primary"
-									>
-										Convert and Remove
-									</AppButton>
-								</div>
-							),
-							minWidth: "min-w-xl",
-							title: "This action will affect the section structure!",
-						});
-						return;
-					}
-				}
+				await handleMainToSubReorder(
+					sections,
+					activeIndex,
+					overIndex,
+					activeItem,
+					overItem,
+					toUpdateGrantSection,
+					useApplicationStore.getState().updateGrantSections,
+					dialogRef,
+				);
 			},
 		}),
 		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef],
