@@ -41,35 +41,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 		>
 			<SidebarHeader className="flex flex-col mb-10 group-data-[collapsible=icon]:p-0">
 				<header className="flex flex-col gap-2">
-
-				<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
-					<div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
-						<div className="flex items-center gap-2">
-							<div className="size-[31px] shrink-0">
-								<Image
-									alt="logo"
-									className="w-full h-full object-contain"
-									data-testid="sidebar-logo"
-									height={31}
-									src="/assets/logo-horizontal.svg"
-									width={31}
-								/>
+					<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+						<div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
+							<div className="flex items-center gap-2">
+								<div className="size-[31px] shrink-0">
+									<Image
+										alt="logo"
+										className="w-full h-full object-contain"
+										data-testid="sidebar-logo"
+										height={31}
+										src="/assets/logo-horizontal.svg"
+										width={31}
+									/>
+								</div>
+								<h2
+									className="text-2xl font-medium leading-[30px] group-data-[collapsible=icon]:hidden"
+									data-testid="sidebar-title"
+								>
+									GrantFlow
+								</h2>
 							</div>
-							<h2
-								className="text-2xl font-medium leading-[30px] group-data-[collapsible=icon]:hidden"
-								data-testid="sidebar-title"
-							>
-								GrantFlow
-							</h2>
-						</div>
-						<div className="group-data-[collapsible=icon]:hidden">
-							<CustomSidebarTrigger data-testid="sidebar-trigger" />
+							<div className="group-data-[collapsible=icon]:hidden">
+								<CustomSidebarTrigger data-testid="sidebar-trigger" />
+							</div>
 						</div>
 					</div>
-				</div>
-				<div className="hidden group-data-[collapsible=icon]:block w-fit h-fit mx-auto">
-					<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
-				</div>
+					<div className="hidden group-data-[collapsible=icon]:block w-fit h-fit mx-auto">
+						<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
+					</div>
 				</header>
 				<Tooltip>
 					<TooltipTrigger asChild>
@@ -83,7 +82,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							<span className="group-data-[collapsible=icon]:hidden ">New Application</span>
 						</button>
 					</TooltipTrigger>
-					<TooltipContent align="center" hidden={state !== "collapsed" || isMobile} side="right" sideOffset={11}>
+					<TooltipContent
+						align="center"
+						hidden={state !== "collapsed" || isMobile}
+						side="right"
+						sideOffset={11}
+					>
 						<p>New Application</p>
 					</TooltipContent>
 				</Tooltip>

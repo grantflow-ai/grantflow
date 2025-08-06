@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Search, } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -109,15 +109,15 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					<Link className="flex items-center gap-2" href={routes.organization.project.detail()}>
 						<Image
 							alt="Dashboard"
-						className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
-								height={16}
+							className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
+							height={16}
 							src="/icons/dashboard.svg"
 							width={16}
 						/>
 						<Image
 							alt="Dashboard"
 							className="size-6 shrink-0 hidden group-data-[collapsible=icon]:block"
-								height={24}
+							height={24}
 							src="/icons/dashboard-blue.svg"
 							width={24}
 						/>
@@ -175,7 +175,6 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 								recentApplications.map((application) => {
 									const statusStyles = SidebarStatusStyleMap[application.status];
 									return (
-										
 										<SidebarMenuSubItem className="" key={application.id}>
 											<SidebarMenuSubButton
 												asChild
@@ -196,7 +195,9 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 															src={statusStyles.icon}
 															width={7}
 														/>
-														<span className={`text-[7px] font-normal  ${statusStyles.text}`}>
+														<span
+															className={`text-[7px] font-normal  ${statusStyles.text}`}
+														>
 															{statusStyles.label}
 														</span>
 													</div>
