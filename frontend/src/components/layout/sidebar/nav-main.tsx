@@ -67,7 +67,6 @@ interface NavMainProps {
 export function NavMain({ userRole, ...props }: NavMainProps) {
 	const pathname = usePathname();
 	const router = useRouter();
-	//const isProjectsActive = pathname === "/projects";
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
 	const { activeProjectId } = useNavigationStore();
