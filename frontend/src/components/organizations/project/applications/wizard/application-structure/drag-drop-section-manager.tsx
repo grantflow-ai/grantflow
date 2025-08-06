@@ -120,6 +120,40 @@ const updateReorderWithReorderedSections = async (
 	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
 };
 
+const handleSubToSubReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<boolean> => {
+	const newParentId = determineNewParentId(activeItem, overItem);
+	const hasParentChanged = activeItem.parent_id !== newParentId;
+
+	// Skip if already in the correct position (no movement needed)
+	const isSectionLater = activeIndex > overIndex;
+	if (!hasParentChanged && isSectionLater && activeIndex === overIndex + 1) {
+		return false;
+	}
+
+	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
+	const parentAssignmentFn = hasParentChanged
+		? (section: GrantSection) => (section.id === activeItem.id ? newParentId : section.parent_id)
+		: undefined;
+
+	await updateReorder(
+		sections,
+		activeIndex,
+		targetIndex,
+		toUpdateGrantSection,
+		updateGrantSections,
+		parentAssignmentFn,
+	);
+	return true;
+};
+
 const handleMainToMainReorder = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -375,38 +409,21 @@ export function DragDropSectionManager({
 					return;
 				}
 
-				const hasActiveSubSections = hasSubSections(activeItem.id, sections);
-
-				const newParentId = determineNewParentId(activeItem, overItem);
-				const hasParentChanged = activeItem.parent_id !== newParentId;
-
 				if (!(isActiveMain || isOverMain)) {
-					if (!hasParentChanged) {
-						const isSectionLater = activeIndex > overIndex;
-						if (isSectionLater && activeIndex === overIndex + 1) return;
-
-						const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
-						await updateReorder(
-							sections,
-							activeIndex,
-							targetIndex,
-							toUpdateGrantSection,
-							useApplicationStore.getState().updateGrantSections,
-						);
-						return;
-					}
-
-					const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
-					await updateReorder(
+					await handleSubToSubReorder(
 						sections,
 						activeIndex,
-						targetIndex,
+						overIndex,
+						activeItem,
+						overItem,
 						toUpdateGrantSection,
 						useApplicationStore.getState().updateGrantSections,
-						(section) => (section.id === activeItem.id ? newParentId : section.parent_id),
 					);
 					return;
 				}
+
+				const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+				const newParentId = determineNewParentId(activeItem, overItem);
 
 				if (!isActiveMain && isOverMain) {
 					if (
