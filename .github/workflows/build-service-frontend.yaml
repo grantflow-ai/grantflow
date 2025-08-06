@@ -170,6 +170,7 @@ jobs:
                       
                       if tofu apply -auto-approve \
                         -target=module.app_hosting.google_firebase_app_hosting_build.frontend \
+                        -target=module.app_hosting.google_firebase_app_hosting_traffic.frontend \
                         -var="image_tag=${{ needs.build-and-push.outputs.image_tag }}"; then
                         echo "Deployment successful on attempt $attempt"
                         return 0
