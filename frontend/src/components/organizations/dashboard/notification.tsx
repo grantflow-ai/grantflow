@@ -4,15 +4,21 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BellIcon, X } from "lucide-react";
 import { useState } from "react";
 
-interface Notification {
+export interface Notification {
 	description: string;
 	dotColor: string;
 	id: number;
 	title: string;
 }
 
-export function Notification({ isOpen = false }: { isOpen: boolean }) {
-	const [notifications, setNotifications] = useState<Notification[]>([]);
+export function Notification({
+	initialNotifications = [],
+	isOpen = false,
+}: {
+	initialNotifications?: Notification[];
+	isOpen: boolean;
+}) {
+	const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
 
 	const handleRemoveNotification = (id: number) => {
 		setNotifications((prev) => prev.filter((item) => item.id !== id));
