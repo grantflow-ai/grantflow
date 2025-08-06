@@ -94,6 +94,7 @@ module "cloud_run" {
   max_instances                 = 1     # Limited scaling for staging
   cpu_limit                     = "1"   # Minimum CPU for Cloud Run
   memory_limit                  = "1Gi" # Increased memory to handle service requirements
+  crawler_memory_limit          = "2Gi" # ~keep Increased memory for crawler due to browser automation OOM issues
   discord_webhook_url           = var.discord_webhook_url
   enable_cpu_throttling         = true  # Allow throttling for staging
   enable_http2                  = false # HTTP/1.1 for staging
