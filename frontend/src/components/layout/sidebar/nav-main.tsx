@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Search, Settings as SettingsIcon } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -67,7 +67,6 @@ interface NavMainProps {
 export function NavMain({ userRole, ...props }: NavMainProps) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const isProjectsActive = pathname === "/projects";
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
 	const { activeProjectId } = useNavigationStore();
@@ -109,10 +108,17 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					<Link className="flex items-center gap-2" href={routes.organization.project.detail()}>
 						<Image
 							alt="Dashboard"
-							className={` shrink-0 ${isProjectsActive ? "text-primary" : ""}`}
+							className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
 							height={16}
 							src="/icons/dashboard.svg"
 							width={16}
+						/>
+						<Image
+							alt="Dashboard"
+							className="size-6 shrink-0 hidden group-data-[collapsible=icon]:block"
+							height={24}
+							src="/icons/dashboard-blue.svg"
+							width={24}
 						/>
 						<span className="group-data-[collapsible=icon]:hidden text-sm font-normal leading-5 text-app-black">
 							Dashboard
@@ -122,51 +128,53 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 			</SidebarMenuItem>
 
 			<Collapsible className="group/collapsible" defaultOpen>
-				<SidebarMenuItem>
+				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
-							className="flex items-center gap-2"
+							className="flex items-center gap-2 hover:!bg-transparent"
 							data-testid="recent-applications-trigger"
 							onClick={handleExpandSidebar}
 							tooltip="Recent Applications"
 						>
 							<Image
 								alt="Recent Applications"
-								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
+								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden group-data-[state=closed]/collapsible:hidden"
 								height={16}
 								src="/icons/note-stack-blue.svg"
 								width={16}
 							/>
 							<Image
 								alt="Recent Applications"
-								className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block"
+								className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block group-data-[state=closed]/collapsible:block"
 								height={16}
 								src="/icons/note_stack.svg"
 								width={16}
 							/>
-							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal text-primary">
+							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal text-primary group-data-[state=closed]/collapsible:text-app-black">
 								Recent Applications
 							</span>
 							<ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
 						</SidebarMenuButton>
 					</CollapsibleTrigger>
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
-						<div className="px-3 pt-4 pb-2">
-							<div className="relative">
-								<Search className="absolute right-3 top-2.5 h-4 w-4 text-app-black" />
-								<Input
-									className="pl-3 pr-3 py-2 h-10 bg-white rounded border-app-gray-100 placeholder:text-app-gray-400 placeholder:text-sm placeholder:font-normal"
-									data-testid="search-input"
-									placeholder="Search application"
-								/>
+						{recentApplications.length >= 6 && (
+							<div className="px-3 pt-4 pb-2">
+								<div className="relative">
+									<Search className="absolute right-3 top-2.5 h-4 w-4 text-app-black" />
+									<Input
+										className="pl-3 pr-3 py-2 h-10 bg-white rounded border-app-gray-100 placeholder:text-app-gray-400 placeholder:text-sm placeholder:font-normal"
+										data-testid="search-input"
+										placeholder="Search application"
+									/>
+								</div>
 							</div>
-						</div>
-						<SidebarMenuSub className="pl-0 gap-4">
+						)}
+						<SidebarMenuSub className="flex flex-col gap-4 border-l-0 p-0  ">
 							{recentApplications.length > 0 ? (
 								recentApplications.map((application) => {
 									const statusStyles = SidebarStatusStyleMap[application.status];
 									return (
-										<SidebarMenuSubItem key={application.id}>
+										<SidebarMenuSubItem className="" key={application.id}>
 											<SidebarMenuSubButton
 												asChild
 												className="h-auto "
@@ -186,11 +194,13 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 															src={statusStyles.icon}
 															width={7}
 														/>
-														<span className={`text-[7px] font-normal ${statusStyles.text}`}>
+														<span
+															className={`text-[7px] font-normal  ${statusStyles.text}`}
+														>
 															{statusStyles.label}
 														</span>
 													</div>
-													<span className="text-sm font-normal leading-5 tracking-tighter">
+													<span className="text-sm font-normal leading-5 tracking-tighter break-words">
 														{application.title}
 													</span>
 												</Link>
@@ -209,23 +219,38 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					</CollapsibleContent>
 				</SidebarMenuItem>
 			</Collapsible>
-			<Collapsible className="group/collapsible">
+			<Collapsible className="group/collapsible" defaultOpen>
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
-							className="flex items-center gap-2  text-primary group-data-[collapsible=icon]:text-app-black"
+							className="flex items-center gap-2 hover:!bg-transparent"
 							data-testid="settings-trigger"
 							isActive={isSettingsActive}
 							onClick={handleExpandSidebar}
 							tooltip="Settings"
 						>
-							<SettingsIcon className="size-4 shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal">Settings</span>
+							<Image
+								alt="Recent Applications"
+								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden group-data-[state=closed]/collapsible:hidden"
+								height={16}
+								src="/icons/settings-blue.svg"
+								width={16}
+							/>
+							<Image
+								alt="Settings"
+								className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block group-data-[state=closed]/collapsible:block"
+								height={16}
+								src="/icons/settings.svg"
+								width={16}
+							/>
+							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal text-primary group-data-[state=closed]/collapsible:text-app-black  ">
+								Settings
+							</span>
 							<ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
 						</SidebarMenuButton>
 					</CollapsibleTrigger>
 					<CollapsibleContent className="group-data-[collapsible=icon]:hidden">
-						<SidebarMenuSub className="flex flex-col gap-4">
+						<SidebarMenuSub className="flex flex-col gap-4 border-l-0 p-0 ">
 							<SidebarMenuSubItem>
 								<SidebarMenuSubButton
 									asChild
