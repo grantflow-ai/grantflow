@@ -25,12 +25,7 @@ export const applicationstatusenum = pgEnum("applicationstatusenum", [
 	"GENERATING",
 	"CANCELLED",
 ]);
-export const notificationtypeenum = pgEnum("notificationtypeenum", [
-	"DEADLINE",
-	"INFO",
-	"WARNING",
-	"SUCCESS",
-]);
+export const notificationtypeenum = pgEnum("notificationtypeenum", ["DEADLINE", "INFO", "WARNING", "SUCCESS"]);
 export const raggenerationstatusenum = pgEnum("raggenerationstatusenum", [
 	"PENDING",
 	"PROCESSING",
@@ -44,11 +39,7 @@ export const sourceindexingstatusenum = pgEnum("sourceindexingstatusenum", [
 	"FINISHED",
 	"FAILED",
 ]);
-export const userroleenum = pgEnum("userroleenum", [
-	"OWNER",
-	"ADMIN",
-	"COLLABORATOR",
-]);
+export const userroleenum = pgEnum("userroleenum", ["OWNER", "ADMIN", "COLLABORATOR"]);
 
 export const alembicVersion = pgTable("alembic_version", {
 	versionNum: varchar("version_num", { length: 32 }).primaryKey().notNull(),
@@ -62,9 +53,7 @@ export const ragGenerationJobs = pgTable(
 			mode: "string",
 			withTimezone: true,
 		}),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		currentStage: bigint("current_stage", { mode: "number" }).notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
@@ -103,10 +92,7 @@ export const ragGenerationJobs = pgTable(
 			"btree",
 			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
 		),
-		index("ix_rag_generation_jobs_status").using(
-			"btree",
-			table.status.asc().nullsLast().op("enum_ops"),
-		),
+		index("ix_rag_generation_jobs_status").using("btree", table.status.asc().nullsLast().op("enum_ops")),
 		check("check_current_stage_non_negative", sql`current_stage >= 0`),
 		check("check_retry_count_non_negative", sql`retry_count >= 0`),
 		check("check_total_stages_positive", sql`total_stages > 0`),
@@ -116,9 +102,7 @@ export const ragGenerationJobs = pgTable(
 export const generationNotifications = pgTable(
 	"generation_notifications",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		currentPipelineStage: bigint("current_pipeline_stage", { mode: "number" }),
 		data: json(),
@@ -149,14 +133,8 @@ export const generationNotifications = pgTable(
 			"btree",
 			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
 		),
-		index("ix_generation_notifications_event").using(
-			"btree",
-			table.event.asc().nullsLast().op("text_ops"),
-		),
-		index("ix_generation_notifications_rag_job_id").using(
-			"btree",
-			table.ragJobId.asc().nullsLast().op("uuid_ops"),
-		),
+		index("ix_generation_notifications_event").using("btree", table.event.asc().nullsLast().op("text_ops")),
+		index("ix_generation_notifications_rag_job_id").using("btree", table.ragJobId.asc().nullsLast().op("uuid_ops")),
 		foreignKey({
 			columns: [table.ragJobId],
 			foreignColumns: [ragGenerationJobs.id],
@@ -169,9 +147,7 @@ export const grantingInstitutions = pgTable(
 	"granting_institutions",
 	{
 		abbreviation: varchar({ length: 64 }),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		fullName: varchar("full_name", { length: 255 }).notNull(),
 		id: uuid().primaryKey().notNull(),
@@ -200,9 +176,7 @@ export const grantingInstitutions = pgTable(
 export const ragSources = pgTable(
 	"rag_sources",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		id: uuid().primaryKey().notNull(),
 		indexingStatus: sourceindexingstatusenum("indexing_status").notNull(),
@@ -214,18 +188,9 @@ export const ragSources = pgTable(
 		}).notNull(),
 	},
 	(table) => [
-		index("ix_rag_sources_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_rag_sources_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_rag_sources_indexing_status").using(
-			"btree",
-			table.indexingStatus.asc().nullsLast().op("enum_ops"),
-		),
+		index("ix_rag_sources_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_rag_sources_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_rag_sources_indexing_status").using("btree", table.indexingStatus.asc().nullsLast().op("enum_ops")),
 	],
 );
 
@@ -234,9 +199,7 @@ export const organizations = pgTable(
 	{
 		contactEmail: varchar("contact_email", { length: 255 }),
 		contactPersonName: varchar("contact_person_name", { length: 200 }),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		description: text(),
 		id: uuid().primaryKey().notNull(),
@@ -252,18 +215,9 @@ export const organizations = pgTable(
 		}).notNull(),
 	},
 	(table) => [
-		index("ix_organizations_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_organizations_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_organizations_name").using(
-			"btree",
-			table.name.asc().nullsLast().op("text_ops"),
-		),
+		index("ix_organizations_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_organizations_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_organizations_name").using("btree", table.name.asc().nullsLast().op("text_ops")),
 	],
 );
 
@@ -271,9 +225,7 @@ export const organizationAuditLogs = pgTable(
 	"organization_audit_logs",
 	{
 		action: varchar({ length: 50 }).notNull(),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		details: json(),
 		id: uuid().primaryKey().notNull(),
@@ -298,10 +250,7 @@ export const organizationAuditLogs = pgTable(
 			table.userFirebaseUid.asc().nullsLast().op("text_ops"),
 			table.action.asc().nullsLast().op("text_ops"),
 		),
-		index("ix_organization_audit_logs_action").using(
-			"btree",
-			table.action.asc().nullsLast().op("text_ops"),
-		),
+		index("ix_organization_audit_logs_action").using("btree", table.action.asc().nullsLast().op("text_ops")),
 		index("ix_organization_audit_logs_created_at").using(
 			"btree",
 			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
@@ -333,9 +282,7 @@ export const organizationInvitations = pgTable(
 			mode: "string",
 			withTimezone: true,
 		}),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		email: varchar({ length: 255 }).notNull(),
 		id: uuid().primaryKey().notNull(),
@@ -364,10 +311,7 @@ export const organizationInvitations = pgTable(
 			"btree",
 			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
 		),
-		index("ix_organization_invitations_email").using(
-			"btree",
-			table.email.asc().nullsLast().op("text_ops"),
-		),
+		index("ix_organization_invitations_email").using("btree", table.email.asc().nullsLast().op("text_ops")),
 		index("ix_organization_invitations_organization_id").using(
 			"btree",
 			table.organizationId.asc().nullsLast().op("uuid_ops"),
@@ -384,9 +328,7 @@ export const organizationInvitations = pgTable(
 export const projects = pgTable(
 	"projects",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		description: text(),
 		id: uuid().primaryKey().notNull(),
@@ -404,22 +346,10 @@ export const projects = pgTable(
 			table.organizationId.asc().nullsLast().op("uuid_ops"),
 			table.name.asc().nullsLast().op("text_ops"),
 		),
-		index("ix_projects_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_projects_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_projects_name").using(
-			"btree",
-			table.name.asc().nullsLast().op("text_ops"),
-		),
-		index("ix_projects_organization_id").using(
-			"btree",
-			table.organizationId.asc().nullsLast().op("uuid_ops"),
-		),
+		index("ix_projects_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_projects_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_projects_name").using("btree", table.name.asc().nullsLast().op("text_ops")),
+		index("ix_projects_organization_id").using("btree", table.organizationId.asc().nullsLast().op("uuid_ops")),
 		foreignKey({
 			columns: [table.organizationId],
 			foreignColumns: [organizations.id],
@@ -472,9 +402,7 @@ export const textVectors = pgTable(
 	"text_vectors",
 	{
 		chunk: json().notNull(),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		embedding: vector({ dimensions: 384 }).notNull(),
 		id: uuid().primaryKey().notNull(),
@@ -488,18 +416,9 @@ export const textVectors = pgTable(
 		index("idx_text_vectors_embedding")
 			.using("hnsw", table.embedding.asc().nullsLast().op("vector_cosine_ops"))
 			.with({ ef_construction: "256", m: "48" }),
-		index("ix_text_vectors_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_text_vectors_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_text_vectors_rag_source_id").using(
-			"btree",
-			table.ragSourceId.asc().nullsLast().op("uuid_ops"),
-		),
+		index("ix_text_vectors_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_text_vectors_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_text_vectors_rag_source_id").using("btree", table.ragSourceId.asc().nullsLast().op("uuid_ops")),
 		foreignKey({
 			columns: [table.ragSourceId],
 			foreignColumns: [ragSources.id],
@@ -515,9 +434,7 @@ export const grantApplications = pgTable(
 			mode: "string",
 			withTimezone: true,
 		}),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		description: text(),
 		formInputs: json("form_inputs"),
@@ -558,22 +475,10 @@ export const grantApplications = pgTable(
 			"btree",
 			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
 		),
-		index("ix_grant_applications_parent_id").using(
-			"btree",
-			table.parentId.asc().nullsLast().op("uuid_ops"),
-		),
-		index("ix_grant_applications_project_id").using(
-			"btree",
-			table.projectId.asc().nullsLast().op("uuid_ops"),
-		),
-		index("ix_grant_applications_rag_job_id").using(
-			"btree",
-			table.ragJobId.asc().nullsLast().op("uuid_ops"),
-		),
-		index("ix_grant_applications_status").using(
-			"btree",
-			table.status.asc().nullsLast().op("enum_ops"),
-		),
+		index("ix_grant_applications_parent_id").using("btree", table.parentId.asc().nullsLast().op("uuid_ops")),
+		index("ix_grant_applications_project_id").using("btree", table.projectId.asc().nullsLast().op("uuid_ops")),
+		index("ix_grant_applications_rag_job_id").using("btree", table.ragJobId.asc().nullsLast().op("uuid_ops")),
+		index("ix_grant_applications_status").using("btree", table.status.asc().nullsLast().op("enum_ops")),
 		foreignKey({
 			columns: [table.parentId],
 			foreignColumns: [table.id],
@@ -595,9 +500,7 @@ export const grantApplications = pgTable(
 export const notifications = pgTable(
 	"notifications",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		dismissed: boolean().notNull(),
 		expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }),
@@ -625,26 +528,11 @@ export const notifications = pgTable(
 			table.firebaseUid.asc().nullsLast().op("text_ops"),
 			table.createdAt.asc().nullsLast().op("text_ops"),
 		),
-		index("ix_notifications_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_notifications_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_notifications_firebase_uid").using(
-			"btree",
-			table.firebaseUid.asc().nullsLast().op("text_ops"),
-		),
-		index("ix_notifications_organization_id").using(
-			"btree",
-			table.organizationId.asc().nullsLast().op("uuid_ops"),
-		),
-		index("ix_notifications_project_id").using(
-			"btree",
-			table.projectId.asc().nullsLast().op("uuid_ops"),
-		),
+		index("ix_notifications_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_notifications_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_notifications_firebase_uid").using("btree", table.firebaseUid.asc().nullsLast().op("text_ops")),
+		index("ix_notifications_organization_id").using("btree", table.organizationId.asc().nullsLast().op("uuid_ops")),
+		index("ix_notifications_project_id").using("btree", table.projectId.asc().nullsLast().op("uuid_ops")),
 		foreignKey({
 			columns: [table.organizationId],
 			foreignColumns: [organizations.id],
@@ -667,9 +555,10 @@ export const grantApplicationGenerationJobs = pgTable(
 		validationResults: json("validation_results"),
 	},
 	(table) => [
-		uniqueIndex(
-			"ix_grant_application_generation_jobs_grant_application_id",
-		).using("btree", table.grantApplicationId.asc().nullsLast().op("uuid_ops")),
+		uniqueIndex("ix_grant_application_generation_jobs_grant_application_id").using(
+			"btree",
+			table.grantApplicationId.asc().nullsLast().op("uuid_ops"),
+		),
 		foreignKey({
 			columns: [table.grantApplicationId],
 			foreignColumns: [grantApplications.id],
@@ -686,9 +575,7 @@ export const grantApplicationGenerationJobs = pgTable(
 export const grantTemplates = pgTable(
 	"grant_templates",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		grantApplicationId: uuid("grant_application_id").notNull(),
 		grantingInstitutionId: uuid("granting_institution_id"),
@@ -702,22 +589,13 @@ export const grantTemplates = pgTable(
 		}).notNull(),
 	},
 	(table) => [
-		index("ix_grant_templates_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_grant_templates_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
+		index("ix_grant_templates_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_grant_templates_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
 		index("ix_grant_templates_grant_application_id").using(
 			"btree",
 			table.grantApplicationId.asc().nullsLast().op("uuid_ops"),
 		),
-		index("ix_grant_templates_rag_job_id").using(
-			"btree",
-			table.ragJobId.asc().nullsLast().op("uuid_ops"),
-		),
+		index("ix_grant_templates_rag_job_id").using("btree", table.ragJobId.asc().nullsLast().op("uuid_ops")),
 		foreignKey({
 			columns: [table.grantApplicationId],
 			foreignColumns: [grantApplications.id],
@@ -766,9 +644,7 @@ export const editorDocuments = pgTable(
 	"editor_documents",
 	{
 		crdt: text("crdt").$type<Uint8Array>(),
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		documentMetadata: json("document_metadata").default({}),
 		grantApplicationId: uuid("grant_application_id"),
@@ -779,14 +655,8 @@ export const editorDocuments = pgTable(
 		}).notNull(),
 	},
 	(table) => [
-		index("ix_editor_documents_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_editor_documents_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
+		index("ix_editor_documents_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_editor_documents_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
 		index("ix_editor_documents_grant_application_id").using(
 			"btree",
 			table.grantApplicationId.asc().nullsLast().op("uuid_ops"),
@@ -802,9 +672,7 @@ export const editorDocuments = pgTable(
 export const grantingInstitutionSources = pgTable(
 	"granting_institution_sources",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		grantingInstitutionId: uuid("granting_institution_id").notNull(),
 		ragSourceId: uuid("rag_source_id").notNull(),
@@ -842,9 +710,7 @@ export const grantingInstitutionSources = pgTable(
 export const grantApplicationSources = pgTable(
 	"grant_application_sources",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		grantApplicationId: uuid("grant_application_id").notNull(),
 		ragSourceId: uuid("rag_source_id").notNull(),
@@ -882,9 +748,7 @@ export const grantApplicationSources = pgTable(
 export const grantTemplateSources = pgTable(
 	"grant_template_sources",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		grantTemplateId: uuid("grant_template_id").notNull(),
 		ragSourceId: uuid("rag_source_id").notNull(),
@@ -922,14 +786,10 @@ export const grantTemplateSources = pgTable(
 export const projectAccess = pgTable(
 	"project_access",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		firebaseUid: varchar("firebase_uid", { length: 128 }).notNull(),
-		grantedAt: timestamp("granted_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		grantedAt: timestamp("granted_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		organizationId: uuid("organization_id").notNull(),
 		projectId: uuid("project_id").notNull(),
 		updatedAt: timestamp("updated_at", {
@@ -943,20 +803,11 @@ export const projectAccess = pgTable(
 			table.firebaseUid.asc().nullsLast().op("text_ops"),
 			table.organizationId.asc().nullsLast().op("uuid_ops"),
 		),
-		index("ix_project_access_created_at").using(
-			"btree",
-			table.createdAt.asc().nullsLast().op("timestamptz_ops"),
-		),
-		index("ix_project_access_deleted_at").using(
-			"btree",
-			table.deletedAt.asc().nullsLast().op("timestamptz_ops"),
-		),
+		index("ix_project_access_created_at").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+		index("ix_project_access_deleted_at").using("btree", table.deletedAt.asc().nullsLast().op("timestamptz_ops")),
 		foreignKey({
 			columns: [table.firebaseUid, table.organizationId],
-			foreignColumns: [
-				organizationUsers.firebaseUid,
-				organizationUsers.organizationId,
-			],
+			foreignColumns: [organizationUsers.firebaseUid, organizationUsers.organizationId],
 			name: "project_access_firebase_uid_organization_id_fkey",
 		}).onDelete("cascade"),
 		foreignKey({
@@ -974,15 +825,11 @@ export const projectAccess = pgTable(
 export const organizationUsers = pgTable(
 	"organization_users",
 	{
-		createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		firebaseUid: varchar("firebase_uid", { length: 128 }).notNull(),
 		hasAllProjectsAccess: boolean("has_all_projects_access").notNull(),
-		joinedAt: timestamp("joined_at", { mode: "string", withTimezone: true })
-			.defaultNow()
-			.notNull(),
+		joinedAt: timestamp("joined_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
 		organizationId: uuid("organization_id").notNull(),
 		role: userroleenum().notNull(),
 		updatedAt: timestamp("updated_at", {

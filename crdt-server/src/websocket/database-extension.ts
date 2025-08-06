@@ -11,11 +11,11 @@ export const databaseExtension = new Database({
 			.where(eq(editorDocuments.id, documentName))
 			.limit(1)
 			.then((rows) => rows[0] || null);
-		if (!document?.crdt) {
+		if (!document.crdt) {
 			return null;
 		}
 
-		return document.crdt as Uint8Array;
+		return document.crdt;
 	},
 	store: async ({ documentName, state }) => {
 		await db
