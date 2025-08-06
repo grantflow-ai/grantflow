@@ -8,6 +8,7 @@ const envRef: { value: null | Readonly<Env> } = { value: null };
 export function getEnv(): Env {
 	envRef.value ??= createEnv({
 		client: {
+			NEXT_PUBLIC_CRDT_SERVER_URL: z.preprocess((val) => (typeof val === "string" ? val.trim() : val), z.url()),
 			NEXT_PUBLIC_FIREBASE_API_KEY: z.preprocess(
 				(val) => (typeof val === "string" ? val.trim() : val),
 				z.string(),
@@ -44,6 +45,7 @@ export function getEnv(): Env {
 		},
 		experimental__runtimeEnv: {
 			NEXT_PUBLIC_BACKEND_API_BASE_URL: process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL,
+			NEXT_PUBLIC_CRDT_SERVER_URL: process.env.NEXT_PUBLIC_CRDT_SERVER_URL,
 			NEXT_PUBLIC_DEBUG: process.env.NEXT_PUBLIC_DEBUG === "true",
 			NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 			NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,

@@ -1,3 +1,4 @@
 packages:
-  - 'editor'
-  - 'frontend'
+  - "editor"
+  - "frontend"
+  - "crdt-server"

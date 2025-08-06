@@ -3,16 +3,10 @@ import { useRef } from "react";
 import { assert } from "vitest";
 import { Editor, type EditorRef } from "./index";
 
-const initialMarkdown = "# Hello World\n\nThis is a test.";
+const crdtUrl = "ws://127.0.0.1:1234";
+const documentId = "123";
 
 describe("Editor", () => {
-	it("renders with initial content", () => {
-		render(<Editor content={initialMarkdown} />);
-
-		expect(screen.getByText("Hello World")).toBeInTheDocument();
-		expect(screen.getByText("This is a test.")).toBeInTheDocument();
-	});
-
 	it("returns correct markdown after editing", async () => {
 		let markdownOutput: string | undefined = "";
 
@@ -20,7 +14,7 @@ describe("Editor", () => {
 			const ref = useRef<EditorRef>(null);
 			return (
 				<>
-					<Editor ref={ref} content={initialMarkdown} />
+					<Editor ref={ref} crdtUrl={crdtUrl} documentId={documentId} />
 					<button
 						type="button"
 						data-testid="save-button"
@@ -54,7 +48,7 @@ describe("Editor", () => {
 			const ref = useRef<EditorRef>(null);
 			return (
 				<>
-					<Editor ref={ref} content={initialMarkdown} />
+					<Editor ref={ref} crdtUrl={crdtUrl} documentId={documentId} />
 					<button
 						type="button"
 						data-testid="save-button"

@@ -63,5 +63,5 @@ export function ApplicationEditorPageClient() {
 		return null; // Will redirect
 	}
 
-	return <EditorContainer />;
+	return <EditorContainer documentId="" />;
 }
