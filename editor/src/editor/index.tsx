@@ -44,7 +44,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
 import "@/editor/index.scss";
+import { HocuspocusProvider } from "@hocuspocus/provider";
 import type { JSONContent } from "@tiptap/core";
+import Collaboration from "@tiptap/extension-collaboration";
 import { TableKit } from "@tiptap/extension-table";
 import { FontFamily, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { Markdown } from "tiptap-markdown";
@@ -144,10 +146,12 @@ const MobileToolbarContent = ({ type, onBack }: { type: "highlighter" | "link"; 
 
 export const Editor = React.forwardRef(function Editor(
 	{
-		content,
+		crdtUrl,
+		documentId,
 		onContentChange,
 	}: {
-		content: string;
+		crdtUrl: string;
+		documentId: string;
 		onContentChange?: () => void;
 	},
 	ref: React.ForwardedRef<EditorRef>,
@@ -157,8 +161,15 @@ export const Editor = React.forwardRef(function Editor(
 	const [mobileView, setMobileView] = React.useState<"main" | "highlighter" | "link">("main");
 	const toolbarRef = React.useRef<HTMLDivElement>(null);
 
+	const provider = React.useMemo(() => {
+		return new HocuspocusProvider({
+			name: documentId,
+			url: crdtUrl,
+		});
+	}, [crdtUrl, documentId]);
+
 	const editor = useEditor({
-		content,
+		content: "",
 		editorProps: {
 			attributes: {
 				"aria-label": "Main content area, start typing to enter text.",
@@ -175,6 +186,9 @@ export const Editor = React.forwardRef(function Editor(
 					enableClickSelection: true,
 					openOnClick: false,
 				},
+			}),
+			Collaboration.configure({
+				document: provider.document,
 			}),
 			Markdown,
 			HorizontalRule,

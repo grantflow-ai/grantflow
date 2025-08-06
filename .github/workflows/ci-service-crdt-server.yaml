@@ -1,0 +1,69 @@
+name: CRDT Server Service CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - development*
+    paths:
+      - ".github/workflows/ci-service-crdt-server.yaml"
+      - ".github/actions/setup-node-workspace/**"
+      - "crdt-server/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - ".github/workflows/ci-service-crdt-server.yaml"
+      - ".github/actions/setup-node-workspace/**"
+      - "crdt-server/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and Dependencies
+        uses: ./.github/actions/setup-node-workspace
+        with:
+          package: crdt-server
+
+      - name: Run Tests
+        run: cd crdt-server && pnpm run test
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and Dependencies
+        uses: ./.github/actions/setup-node-workspace
+        with:
+          package: crdt-server
+
+      - name: Lint
+        run: cd crdt-server && pnpm run lint
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and Dependencies
+        uses: ./.github/actions/setup-node-workspace
+        with:
+          package: crdt-server
+
+      - name: Build
+        run: cd crdt-server && pnpm run build

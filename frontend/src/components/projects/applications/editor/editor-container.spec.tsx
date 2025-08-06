@@ -7,7 +7,7 @@ describe.sequential("EditorContainer", () => {
 		cleanup();
 	});
 	it("renders all the editor page components correctly", () => {
-		render(<EditorContainer />);
+		render(<EditorContainer documentId="123" />);
 
 		expect(screen.getByTestId("editor-warning")).toBeInTheDocument();
 		expect(screen.getByTestId("editor-prompt-window")).toBeInTheDocument();

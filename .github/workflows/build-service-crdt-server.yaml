@@ -1,0 +1,54 @@
+name: "Build: CRDT Server"
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - ".github/workflows/build-service-crdt-server.yaml"
+      - ".github/actions/**"
+      - "crdt-server/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tag and environment
+        id: config
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+              echo "image_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+              echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              echo "project_id=grantflow" >> $GITHUB_OUTPUT
+              echo "environment=production" >> $GITHUB_OUTPUT
+          else
+              echo "project_id=grantflow" >> $GITHUB_OUTPUT
+              echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build service
+        uses: ./.github/actions/build-service
+        with:
+          service: crdt-server
+          image_tag: ${{ steps.config.outputs.image_tag }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
