@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -357,6 +358,9 @@ class GrantApplication(BaseWithUUIDPK):
     children: Relationship[list["GrantApplication"]] = relationship(
         "GrantApplication", back_populates="parent", cascade="all, delete-orphan"
     )
+    editor_documents: Relationship[list["EditorDocument"]] = relationship(
+        "EditorDocument", back_populates="grant_application", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("idx_grant_app_project_status", "project_id", "status"),
@@ -555,4 +559,21 @@ class Notification(BaseWithUUIDPK):
     __table_args__ = (
         Index("idx_notifications_user_active", "firebase_uid", postgresql_where=text("dismissed = FALSE")),
         Index("idx_notifications_user_created", "firebase_uid", "created_at"),
+    )
+
+
+class EditorDocument(BaseWithUUIDPK):
+    __tablename__ = "editor_documents"
+
+    grant_application_id: Mapped[UUID | None] = mapped_column(
+        SA_UUID(), ForeignKey("grant_applications.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
+    document_metadata: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON, nullable=True, server_default=text("'{}'::jsonb")
+    )
+    crdt: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+
+    grant_application: Relationship["GrantApplication | None"] = relationship(
+        "GrantApplication", back_populates="editor_documents"
     )

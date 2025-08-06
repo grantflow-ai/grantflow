@@ -17,7 +17,7 @@ tasks:
       - uv run lefthook install
 
   dev:
-    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag)
+    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt-server)
     deps:
       - task: _dev:check
       - task: _dev:init-pubsub
@@ -30,6 +30,7 @@ tasks:
       - echo "  - Indexer{{":"}} http://localhost:8001"
       - echo "  - Crawler{{":"}} http://localhost:8002"
       - echo "  - RAG{{":"}} http://localhost:8003"
+      - echo "  - CRDT Server{{":"}} ws://localhost:1234"
       - echo "  - Pub/Sub Emulator{{":"}} http://localhost:8085"
       - echo "  - GCS Emulator{{":"}} http://localhost:4443"
       - echo ""
@@ -450,6 +451,7 @@ tasks:
       - task: service:indexer:test
       - task: service:crawler:test
       - task: service:rag:test
+      - task: service:crdt-server:test
       - task: _packages:test
 
   # ==============================================================================
@@ -663,6 +665,36 @@ tasks:
       - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
   # ==============================================================================
+  # CRDT SERVER COMMANDS - Node.js service management
+  # ==============================================================================
+
+  service:crdt-server:dev:
+    desc: Start the CRDT server in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dotenv: [".env"]
+    cmds:
+      - cd crdt-server && pnpm run dev
+
+  service:crdt-server:test:
+    desc: Run CRDT server tests with detailed output
+    dotenv: [".env"]
+    cmds:
+      - cd crdt-server && pnpm run test
+
+  service:crdt-server:build:
+    desc: Build CRDT server for production
+    dotenv: [".env"]
+    cmds:
+      - cd crdt-server && pnpm run build
+
+  service:crdt-server:lint:
+    desc: Lint CRDT server code
+    dotenv: [".env"]
+    cmds:
+      - cd crdt-server && pnpm run lint
+
+  # ==============================================================================
   # EMULATOR COMMANDS - Standalone emulator management
   # ==============================================================================
 
@@ -701,10 +733,11 @@ tasks:
       - task: lint:mypy
 
   lint:biome:
-    desc: Format and lint code with Biome for both frontend folders
+    desc: Format and lint code with Biome for frontend folders and crdt-server
     deps:
       - task: lint:biome:frontend
       - task: lint:biome:editor
+      - task: lint:biome:crdt-server
 
   lint:biome:frontend:
     desc: Format and lint frontend code with Biome
@@ -720,11 +753,19 @@ tasks:
       - pnpm biome check --write .
       - pnpm biome format --write .
 
+  lint:biome:crdt-server:
+    desc: Format and lint crdt-server code with Biome
+    dir: crdt-server
+    cmds:
+      - pnpm biome check --write .
+      - pnpm biome format --write .
+
   lint:eslint:
     desc: Lint JavaScript/TypeScript with ESLint for both frontend folders
     deps:
       - task: lint:eslint:frontend
       - task: lint:eslint:editor
+      - task: lint:eslint:crdt-server
 
   lint:eslint:frontend:
     desc: Lint frontend JavaScript/TypeScript with ESLint
@@ -735,6 +776,12 @@ tasks:
   lint:eslint:editor:
     desc: Lint editor JavaScript/TypeScript with ESLint
     dir: editor
+    cmds:
+      - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
+
+  lint:eslint:crdt-server:
+    desc: Lint crdt-server JavaScript/TypeScript with ESLint
+    dir: crdt-server
     cmds:
       - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
 

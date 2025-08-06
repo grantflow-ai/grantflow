@@ -90,6 +90,7 @@ jobs:
                       NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
                       NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
                       NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+                      NEXT_PUBLIC_CRDT_SERVER_URL=${{ secrets.NEXT_PUBLIC_CRDT_SERVER_URL }}
         outputs:
             image_tag: ${{ steps.config.outputs.image_tag }}
             project_id: ${{ steps.config.outputs.project_id }}
