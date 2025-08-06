@@ -25,8 +25,8 @@ tasks:
       - task: db:migrate
     cmds:
       - echo "📝 Service URLs:"
-      - echo "  - Backend API{{":"}} http://localhost:9000"
-      - echo "  - Backend API Docs{{":"}} http://localhost:9000/schema/swagger"
+      - echo "  - Backend API{{":"}} http://localhost:8000"
+      - echo "  - Backend API Docs{{":"}} http://localhost:8000/schema/swagger"
       - echo "  - Indexer{{":"}} http://localhost:8001"
       - echo "  - Crawler{{":"}} http://localhost:8002"
       - echo "  - RAG{{":"}} http://localhost:8003"
