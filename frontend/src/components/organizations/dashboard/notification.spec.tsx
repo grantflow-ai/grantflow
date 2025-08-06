@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach } from "vitest";
-import { Notification } from "./notification";
 import type { Notification as NotificationType } from "./notification";
+import { Notification } from "./notification";
 
 const MOCK_NOTIFICATIONS: NotificationType[] = [
 	{
