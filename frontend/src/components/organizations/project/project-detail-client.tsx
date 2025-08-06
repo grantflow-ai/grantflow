@@ -255,7 +255,7 @@ export function ProjectDetailClient() {
 
 			<main className="flex-1 flex flex-col">
 				<main
-					className="mx-6 mb-6 px-10 relative flex flex-col gap-6 py-6 rounded-lg bg-white border border-app-gray-100 flex-1 min-h-0"
+					className=" mb-6 px-10 relative flex flex-col gap-6 py-6 rounded-lg bg-white border border-app-gray-100 flex-1 min-h-0"
 					data-testid="project-header"
 				>
 					<div className="flex items-center justify-between">
