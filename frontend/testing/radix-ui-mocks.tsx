@@ -208,7 +208,7 @@ export const DropdownMenuRadioGroup = ({ children, onValueChange, value, ...prop
 };
 DropdownMenuRadioGroup.displayName = "DropdownMenuRadioGroup";
 
-export const DropdownMenuRadioItem = ({ checked, children, onSelect, value, ...props }: any) => {
+export const DropdownMenuRadioItem = ({ _value, checked, children, onSelect, ...props }: any) => {
 	return (
 		<div
 			aria-checked={checked}

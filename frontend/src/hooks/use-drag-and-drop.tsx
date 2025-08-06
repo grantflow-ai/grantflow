@@ -31,7 +31,13 @@ export interface DragDropHandlers<T extends DragDropItem> {
 	onDragEnd?: (event: DragEndEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
 	onDragOver?: (event: DragOverEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
 	onDragStart?: (event: DragStartEvent, item: T | undefined) => void;
-	onReorder?: (items: T[], oldIndex: number, newIndex: number) => Promise<void> | void;
+	onReorder?: (
+		items: T[],
+		activeIndex: number,
+		overIndex: number,
+		activeItem: T,
+		overItem: T,
+	) => Promise<void> | void;
 }
 
 export interface DragDropItem {
@@ -107,9 +113,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const activeItem = items.find((item) => item.id === active.id);
 				const overItem = over ? items.find((item) => item.id === over.id) : undefined;
 
-				if (onDragOver) {
-					await onDragOver(event, activeItem, overItem);
-				}
+				await onDragOver?.(event, activeItem, overItem);
 			};
 
 			const handleReorder = async (activeItem: T, overItem: T) => {
@@ -117,11 +121,11 @@ export function useDragAndDrop<T extends DragDropItem>(
 					return;
 				}
 
-				const oldIndex = items.findIndex((item) => item.id === activeItem.id);
-				const newIndex = items.findIndex((item) => item.id === overItem.id);
+				const activeIndex = items.findIndex((item) => item.id === activeItem.id);
+				const overIndex = items.findIndex((item) => item.id === overItem.id);
 
-				if (oldIndex !== -1 && newIndex !== -1) {
-					await onReorder(items, oldIndex, newIndex);
+				if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+					await onReorder(items, activeIndex, overIndex, activeItem, overItem);
 				}
 			};
 
@@ -147,7 +151,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const overItem = items.find((item) => item.id === over.id);
 
 				if (activeItem && overItem) {
-					const shouldReorder = activeItem.parent_id === overItem.parent_id;
+					const shouldReorder = activeItem.id !== overItem.id;
 
 					if (shouldReorder) {
 						await handleReorder(activeItem, overItem);
