@@ -71,6 +71,48 @@ const hasSubSections = (sectionId: string, sections: GrantSection[]) => {
 	return sections.some((section) => section.parent_id === sectionId);
 };
 
+const getTargetIndexForMainSectionReorder = (
+	sections: GrantSection[],
+	overItemId: string,
+	originalIndex: number,
+): number => {
+	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
+	return lastSubSectionIndex === -1 ? originalIndex + 1 : lastSubSectionIndex + 1;
+};
+
+const reorderMainWhenOverMainHasSubSections = (
+	sections: GrantSection[],
+	activeMainSectionId: string,
+	overItemId: string,
+	overItem: GrantSection,
+): GrantSection[] => {
+	const sectionsToMove = sections.filter(
+		(section) => section.id === activeMainSectionId || section.parent_id === activeMainSectionId,
+	);
+
+	const remainingSections = sections.filter(
+		(section) => section.id !== activeMainSectionId && section.parent_id !== activeMainSectionId,
+	);
+
+	if (overItem.parent_id !== null) {
+		log.error("Invalid operation: Cannot drop main section with sub-sections over a sub-section", {
+			activeMainSectionId,
+			overItemId,
+			overItemParentId: overItem.parent_id,
+		});
+		return sections;
+	}
+
+	const overItemIndexInRemaining = remainingSections.findIndex((s) => s.id === overItemId);
+	const insertionIndex = getTargetIndexForMainSectionReorder(remainingSections, overItemId, overItemIndexInRemaining);
+
+	return [
+		...remainingSections.slice(0, insertionIndex),
+		...sectionsToMove,
+		...remainingSections.slice(insertionIndex),
+	];
+};
+
 export function DragDropSectionManager({
 	dialogRef,
 	isDetailedSection,
@@ -416,7 +458,7 @@ export function DragDropSectionManager({
 							const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
 
 							if (newActiveIndex !== -1 && newOverIndex !== -1) {
-								const targetIndex = activeIndex < overIndex ? newOverIndex : newOverIndex + 1;
+								const targetIndex = newActiveIndex < newOverIndex ? newOverIndex : newOverIndex + 1;
 								const reorderedSections = arrayMove(sectionsWithoutSubs, newActiveIndex, targetIndex);
 
 								const updatedSections = reorderedSections.map((section, index) => ({
@@ -461,9 +503,7 @@ export function DragDropSectionManager({
 					}
 
 					if (!hasActiveSubSections && isOverMain && hasOverSubSections) {
-						const lastSubIndex = sections.findLastIndex((section) => section.parent_id === overItem.id);
-
-						const targetIndex = lastSubIndex === -1 ? overIndex : lastSubIndex;
+						const targetIndex = getTargetIndexForMainSectionReorder(sections, overItem.id, overIndex);
 
 						const reorderedSections = arrayMove(sections, activeIndex, targetIndex);
 
@@ -479,23 +519,26 @@ export function DragDropSectionManager({
 						return;
 					}
 
-					const reorderedSections = reorderMainWithSubSectionParentOver(
-						sections,
-						activeItem.id,
-						overItem.id,
-						overItem,
-					);
+					if (hasActiveSubSections && isOverMain) {
+						const reorderedSections = reorderMainWhenOverMainHasSubSections(
+							sections,
+							activeItem.id,
+							overItem.id,
+							overItem,
+						);
 
-					const updatedSections = reorderedSections.map((section, index) => ({
-						...section,
-						order: index,
-						parent_id: section.parent_id ?? null,
-					}));
+						const updatedSections = reorderedSections.map((section, index) => ({
+							...section,
+							order: index,
+							parent_id: section.parent_id ?? null,
+						}));
 
-					await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
+						await useApplicationStore
+							.getState()
+							.updateGrantSections(updatedSections.map(toUpdateGrantSection));
+					}
+					return;
 				}
-
-				return null;
 			},
 		}),
 		[
@@ -557,51 +600,6 @@ export function DragDropSectionManager({
 			</div>
 		</DragDropWrapper>
 	);
-}
-
-function getTargetIndexForMainSectionReorder(
-	sections: GrantSection[],
-	overItemId: string,
-	originalIndex: number,
-): number {
-	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
-	return lastSubSectionIndex === -1 ? originalIndex : lastSubSectionIndex;
-}
-
-function reorderMainWithSubSectionParentOver(
-	sections: GrantSection[],
-	activeMainSectionId: string,
-	overItemId: string,
-	overItem: GrantSection,
-): GrantSection[] {
-	const sectionsToMove = sections.filter(
-		(section) => section.id === activeMainSectionId || section.parent_id === activeMainSectionId,
-	);
-
-	const remainingSections = sections.filter(
-		(section) => section.id !== activeMainSectionId && section.parent_id !== activeMainSectionId,
-	);
-
-	if (overItem.parent_id !== null) {
-		log.error("Invalid operation: Cannot drop main section with sub-sections over a sub-section", {
-			activeMainSectionId,
-			overItemId,
-			overItemParentId: overItem.parent_id,
-		});
-		return sections;
-	}
-
-	const insertionIndex = getTargetIndexForMainSectionReorder(
-		remainingSections,
-		overItemId,
-		remainingSections.findIndex((s) => s.id === overItemId),
-	);
-
-	return [
-		...remainingSections.slice(0, insertionIndex),
-		...sectionsToMove,
-		...remainingSections.slice(insertionIndex),
-	];
 }
 
 function SectionDragOverlay({ activeSection }: { activeSection: GrantSection }) {
