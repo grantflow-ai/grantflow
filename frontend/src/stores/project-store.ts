@@ -33,6 +33,7 @@ interface ProjectActions {
 	duplicateProject: (organizationId: string, projectId: string) => Promise<void>;
 	getProject: (organizationId: string, projectId: string) => Promise<void>;
 	getProjects: (organizationId: string) => Promise<void>;
+	removeApplicationFromProject: (applicationId: string) => void;
 	reset: () => void;
 	setProject: (project: NonNullable<ProjectType>) => void;
 	updateProject: (organizationId: string, projectId: string, data: API.UpdateProject.RequestBody) => Promise<void>;
@@ -40,7 +41,6 @@ interface ProjectActions {
 
 export const useProjectStore = create<ProjectActions & ProjectState>((set, get) => ({
 	...initialState,
-
 	createProject: async (organizationId: string, data: API.CreateProject.RequestBody) => {
 		set({ areOperationsInProgress: true });
 		try {
@@ -141,6 +141,22 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			toast.error("Failed to retrieve projects");
 			set({ areOperationsInProgress: false });
 		}
+	},
+
+	removeApplicationFromProject: (applicationId: string) => {
+		set((state) => {
+			if (!state.project?.grant_applications) {
+				return state;
+			}
+
+			return {
+				...state,
+				project: {
+					...state.project,
+					grant_applications: state.project.grant_applications.filter((app) => app.id !== applicationId),
+				},
+			};
+		});
 	},
 
 	reset: () => {

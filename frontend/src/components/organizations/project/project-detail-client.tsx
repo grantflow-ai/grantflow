@@ -124,6 +124,11 @@ export function ProjectDetailClient() {
 			try {
 				await deleteApplication(selectedOrganizationId, project.id, applicationToDelete);
 				await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
+
+				// Remove the deleted application from the project store
+				const { removeApplicationFromProject } = useProjectStore.getState();
+				removeApplicationFromProject(applicationToDelete);
+
 				toast.success("Application deleted successfully");
 				setApplicationToDelete(null);
 				setShowDeleteModal(false);

@@ -67,6 +67,18 @@ variable "memory_limit" {
   default     = "1Gi"
 }
 
+variable "crawler_memory_limit" {
+  description = "Memory allocation for crawler service (defaults to memory_limit if not set)"
+  type        = string
+  default     = ""
+}
+
+variable "crawler_cpu_limit" {
+  description = "CPU allocation for crawler service (defaults to cpu_limit if not set)"
+  type        = string
+  default     = ""
+}
+
 variable "enable_cpu_throttling" {
   description = "Enable CPU throttling"
   type        = bool
@@ -294,8 +306,8 @@ resource "google_cloud_run_v2_service" "crawler" {
 
       resources {
         limits = {
-          cpu    = var.cpu_limit
-          memory = var.memory_limit
+          cpu    = var.crawler_cpu_limit != "" ? var.crawler_cpu_limit : var.cpu_limit
+          memory = var.crawler_memory_limit != "" ? var.crawler_memory_limit : var.memory_limit
         }
       }
 

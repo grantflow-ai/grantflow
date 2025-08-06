@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import Organization, OrganizationInvitation, OrganizationUser, Project
+from packages.db.src.tables import GrantApplication, Organization, OrganizationInvitation, OrganizationUser, Project
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import delete as sa_delete
@@ -197,6 +197,106 @@ async def test_retrieve_projects(
         assert member["email"] == "user@example.com"
         assert member["display_name"] == "Test User"
         assert member["photo_url"] == "https://example.com/photo.jpg"
+
+
+async def test_retrieve_projects_excludes_deleted_applications(
+    test_client: TestingClientType,
+    firebase_uid: str,
+    async_session_maker: async_sessionmaker[Any],
+    mocker: MockerFixture,
+) -> None:
+    organization = OrganizationFactory.build()
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(Organization).values(
+                id=organization.id,
+                name=organization.name,
+                description=organization.description,
+            )
+        )
+        await session.commit()
+
+    project = ProjectFactory.build(organization_id=organization.id)
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(Project).values(
+                id=project.id,
+                name=project.name,
+                description=project.description,
+                logo_url=project.logo_url,
+                organization_id=organization.id,
+            )
+        )
+        await session.commit()
+
+    # Create 3 applications: 2 active and 1 deleted
+    applications = GrantApplicationFactory.batch(3, project_id=project.id)
+    async with async_session_maker() as session, session.begin():
+        # Insert all applications
+        await session.execute(
+            insert(GrantApplication).values(
+                [
+                    {
+                        "id": app.id,
+                        "title": app.title,
+                        "description": app.description,
+                        "project_id": project.id,
+                        "status": app.status,
+                    }
+                    for app in applications
+                ]
+            )
+        )
+        await session.commit()
+
+    # Mark the third application as deleted in a new transaction
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            GrantApplication.__table__.update()
+            .where(GrantApplication.id == applications[2].id)
+            .values(deleted_at=datetime.now(UTC))
+        )
+        await session.commit()
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            insert(OrganizationUser).values(
+                {
+                    "organization_id": organization.id,
+                    "firebase_uid": firebase_uid,
+                    "role": UserRoleEnum.OWNER,
+                    "has_all_projects_access": True,
+                }
+            )
+        )
+        await session.commit()
+
+    firebase_users = {
+        firebase_uid: {
+            "uid": firebase_uid,
+            "email": "user@example.com",
+            "displayName": "Test User",
+            "photoURL": "https://example.com/photo.jpg",
+        }
+    }
+    mocker.patch(
+        "services.backend.src.api.routes.projects.get_users",
+        return_value=firebase_users,
+    )
+
+    response = await test_client.get(
+        f"/organizations/{organization.id}/projects",
+        headers={"Authorization": "Bearer some_token"},
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    values = response.json()
+    assert len(values) == 1
+
+    project_response = values[0]
+    assert project_response["id"] == str(project.id)
+    # Should only count the 2 active applications, not the deleted one
+    assert project_response["applications_count"] == 2
 
 
 @pytest.mark.xfail(reason="Flaky test due to parallel execution race conditions", strict=False)

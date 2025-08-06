@@ -36,6 +36,11 @@ module "secrets" {
   environment = var.environment
 }
 
+# IAM module
+module "iam" {
+  source = "../../modules/iam"
+}
+
 # Network module
 module "network" {
   source     = "../../modules/network"
@@ -81,16 +86,19 @@ module "storage" {
 
 # Cloud Run services module with production-optimized settings
 module "cloud_run" {
-  source                   = "../../modules/cloud_run"
-  project_id               = var.project_id
-  region                   = var.region
-  environment              = var.environment
-  database_connection_name = module.database.instance_connection_name
-  min_instances            = var.min_instances # Always-warm for production
-  max_instances            = var.max_instances # Higher scaling for production
-  cpu_limit                = var.cpu_limit     # Higher CPU for production
-  memory_limit             = var.memory_limit  # Higher memory for production
-  discord_webhook_url      = var.discord_webhook_url
+  source                        = "../../modules/cloud_run"
+  project_id                    = var.project_id
+  region                        = var.region
+  environment                   = var.environment
+  database_connection_name      = module.database.instance_connection_name
+  backend_service_account_email = module.iam.backend_service_account_email
+  scraper_service_account_email = module.iam.scraper_service_account_email
+  min_instances                 = var.min_instances # Always-warm for production
+  max_instances                 = var.max_instances # Higher scaling for production
+  cpu_limit                     = var.cpu_limit     # Higher CPU for production
+  memory_limit                  = var.memory_limit  # Higher memory for production
+  crawler_memory_limit          = "4Gi"             # ~keep Same as default but explicit for crawler due to browser automation needs
+  discord_webhook_url           = var.discord_webhook_url
 
   # Production-specific settings
   enable_cpu_throttling = false # No throttling for production
@@ -110,6 +118,11 @@ module "pubsub" {
   message_retention_duration = "604800s" # 7 days retention
   ack_deadline_seconds       = 300       # 5-minute ack deadline
   enable_dead_letter         = true      # Dead letter queues for production
+
+  # Pass Cloud Run service URLs for push endpoints
+  indexer_url = module.cloud_run.indexer_url
+  crawler_url = module.cloud_run.crawler_url
+  rag_url     = module.cloud_run.rag_url
 }
 
 # Scheduler module with production settings
