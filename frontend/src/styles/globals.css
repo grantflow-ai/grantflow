@@ -273,6 +273,9 @@
 		@apply bg-background text-foreground;
 		font-family: "Sora", sans-serif;
 	}
+	[data-sidebar="sidebar"] {
+		font-family: "Sora", sans-serif;
+	}
 	.scrollbar-hide {
 		-ms-overflow-style: none; /* IE and Edge */
 		scrollbar-width: none; /* Firefox */
