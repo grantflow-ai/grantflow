@@ -140,30 +140,18 @@ function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null 
 	const handleAddNewSection = useCallback(
 		async (parentId: null | string = null) => {
 			const isSubsection = parentId !== null;
-			let sectionsToUpdate: UpdateGrantSection[];
-			let newSectionOrder: number;
+			let insertIndex: number;
 
 			if (isSubsection && parentId) {
-				const parentSection = grantSections.find((s) => s.id === parentId);
-				if (!parentSection) return;
+				const parentIndex = grantSections.findIndex((s) => s.id === parentId);
+				if (parentIndex === -1) return;
 
-				newSectionOrder = parentSection.order + 1;
-
-				sectionsToUpdate = grantSections.map((section) => {
-					const updated = toUpdateGrantSection(section);
-					if (section.order >= newSectionOrder) {
-						updated.order = section.order + 1;
-					}
-					return updated;
-				});
+				insertIndex = parentIndex + 1;
 			} else {
-				newSectionOrder = 0;
-				sectionsToUpdate = grantSections.map((section) => {
-					const updated = toUpdateGrantSection(section);
-					updated.order = section.order + 1;
-					return updated;
-				});
+				insertIndex = 0;
 			}
+
+			const sectionsToUpdate = grantSections.map(toUpdateGrantSection);
 
 			const newSection: UpdateGrantSection = {
 				depends_on: [],
@@ -173,15 +161,21 @@ function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null 
 				is_detailed_research_plan: null,
 				keywords: [],
 				max_words: 3000,
-				order: newSectionOrder,
+				order: 0, // Will be reassigned based on the array index
 				parent_id: parentId,
 				search_queries: [],
 				title: isSubsection ? "New Sub-section" : "New Section",
 				topics: [],
 			};
 
-			sectionsToUpdate.push(newSection);
-			await updateGrantSections(sectionsToUpdate);
+			sectionsToUpdate.splice(insertIndex, 0, newSection);
+
+			const finalSections = sectionsToUpdate.map((section, index) => ({
+				...section,
+				order: index,
+			}));
+
+			await updateGrantSections(finalSections);
 		},
 		[grantSections, updateGrantSections],
 	);
