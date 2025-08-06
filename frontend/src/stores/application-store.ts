@@ -949,7 +949,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			},
 		};
 
-		log.info("updateGrantSections: Optimistically updating state");
 		log.info("[rag_sources_check] Application state updated via updateGrantSections (optimistic)", {
 			application_rag_sources: formatApplicationRagSources(updatedApplication),
 			applicationId: updatedApplication.id,
@@ -992,7 +991,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			log.info("updateGrantSections: Success", {
 				grant_sections: sections.map((section) => ({
 					id: section.id,
-					max_words: section.max_words,
 					order: section.order,
 					parent_id: section.parent_id,
 					title: section.title,
