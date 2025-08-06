@@ -1,74 +1,57 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, vi } from "vitest";
 import { listApplications } from "@/actions/grant-applications";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
-import type { API } from "@/types/api-types";
+import {
+	ApplicationCardDataFactory,
+	ListApplicationsResponseFactory,
+	ProjectFactory,
+} from "::testing/factories";
 import { NavMain } from "./nav-main";
 
 vi.mock("@/actions/grant-applications");
-vi.mock("@/stores/navigation-store");
-vi.mock("@/stores/organization-store");
-vi.mock("@/stores/project-store");
 
-const MOCK_APPLICATIONS: API.ListApplications.Http200.ResponseBody["applications"] = Array.from(
-	{ length: 7 },
-	(_, i) => ({
-		created_at: new Date().toISOString(),
-		id: `app-${i + 1}`,
-		project_id: "test-project-id",
-		status: "IN_PROGRESS",
-		title: `Grant Application ${i + 1}`,
-		updated_at: new Date().toISOString(),
-	}),
-);
+const initialOrganizationState = useOrganizationStore.getState();
 
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	act(() => {
+		useNavigationStore.getState().reset();
+		useOrganizationStore.setState(initialOrganizationState);
+		useProjectStore.getState().reset();
+	});
 });
 
 describe("NavMain", () => {
 	beforeEach(() => {
-		vi.mocked(useNavigationStore).mockReturnValue({
-			activeApplicationId: null,
-			activeApplicationTitle: null,
-			activeProjectId: "test-project-id",
-			activeProjectName: "Test Project",
-			clearActiveApplication: vi.fn(),
-			clearActiveProject: vi.fn(),
-			goBack: vi.fn(),
-			navigateToApplication: vi.fn(),
-			navigateToProject: vi.fn(),
-			navigationHistory: [],
-			setActiveApplication: vi.fn(),
-			setActiveProject: vi.fn(),
+		const project = ProjectFactory.build({
+			id: "test-project-id",
+			name: "Test Project",
 		});
-
-		vi.mocked(useOrganizationStore).mockReturnValue({
-			organizations: [],
-			selectedOrganization: null,
-			selectedOrganizationId: "test-org-id",
-			setOrganizations: vi.fn(),
-			setSelectedOrganization: vi.fn(),
-			setSelectedOrganizationId: vi.fn(),
+		act(() => {
+			useNavigationStore.setState({
+				activeProjectId: "test-project-id",
+				activeProjectName: "Test Project",
+			});
+			useOrganizationStore.setState({
+				selectedOrganizationId: "test-org-id",
+			});
+			useProjectStore.setState({
+				project,
+			});
 		});
-
-		vi.mocked(useProjectStore).mockReturnValue({
-			clearProject: vi.fn(),
-			project: { id: "test-project-id", name: "Test Project", role: "OWNER" },
-			setProject: vi.fn(),
-		} as any);
 	});
 
 	describe("Recent Applications", () => {
 		it("shows search input when there are 6 or more applications", async () => {
-			vi.mocked(listApplications).mockResolvedValue({
-				applications: MOCK_APPLICATIONS,
-				has_more: false,
-			} as any);
+			const mockApplications = ListApplicationsResponseFactory.build({
+				applications: ApplicationCardDataFactory.batch(7),
+			});
+			vi.mocked(listApplications).mockResolvedValue(mockApplications);
 
 			render(
 				<SidebarProvider>
@@ -79,24 +62,27 @@ describe("NavMain", () => {
 		});
 
 		it("hides search input when there are fewer than 6 applications", async () => {
-			vi.mocked(listApplications).mockResolvedValue({
-				applications: MOCK_APPLICATIONS.slice(0, 5),
-				has_more: false,
-			} as any);
+			const mockApplications = ListApplicationsResponseFactory.build({
+				applications: ApplicationCardDataFactory.batch(5),
+			});
+			vi.mocked(listApplications).mockResolvedValue(mockApplications);
 
 			render(
 				<SidebarProvider>
 					<NavMain userRole="OWNER" />
 				</SidebarProvider>,
 			);
-			await screen.findByText("Grant Application 1");
+			await screen.findByText(mockApplications.applications[0].title);
 			expect(screen.queryByTestId("search-input")).not.toBeInTheDocument();
 		});
 	});
 
 	describe("Settings Links by Role", () => {
 		beforeEach(() => {
-			vi.mocked(listApplications).mockResolvedValue({ applications: [] } as any);
+			const mockApplications = ListApplicationsResponseFactory.build({
+				applications: [],
+			});
+			vi.mocked(listApplications).mockResolvedValue(mockApplications);
 		});
 
 		it("shows all settings links for OWNER role", () => {
@@ -134,3 +120,5 @@ describe("NavMain", () => {
 		});
 	});
 });
+
+
