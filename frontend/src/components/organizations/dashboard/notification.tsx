@@ -4,32 +4,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BellIcon, X } from "lucide-react";
 import { useState } from "react";
 
-const initialNotifications = [
-	{
-		description:
-			'Your project "Neuroadaptive Interfaces – EIC Pathfinder" is due in 7 days. Make sure everything is ready for submission.',
-		dotColor: "bg-primary",
-		id: 1,
-		title: "7 days until grant deadline",
-	},
-	{
-		description:
-			'Your project "Neuroadaptive Interfaces – EIC Pathfinder" is due in 7 days. Make sure everything is ready for submission.',
-		dotColor: "bg-primary",
-		id: 2,
-		title: "7 days until grant deadline",
-	},
-	{
-		description:
-			'Your project "Neuroadaptive Interfaces – EIC Pathfinder" is due in 7 days. Make sure everything is ready for submission.',
-		dotColor: "bg-app-gray-200",
-		id: 3,
-		title: "7 days until grant deadline",
-	},
-];
+interface Notification {
+	description: string;
+	dotColor: string;
+	id: number;
+	title: string;
+}
 
 export function Notification({ isOpen = false }: { isOpen: boolean }) {
-	const [notifications, setNotifications] = useState(initialNotifications);
+	const [notifications, setNotifications] = useState<Notification[]>([]);
 
 	const handleRemoveNotification = (id: number) => {
 		setNotifications((prev) => prev.filter((item) => item.id !== id));

@@ -9,7 +9,7 @@ export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return (
 		<SharedLayout>
 			<SWRProvider>
-				<SidebarProvider>
+				<SidebarProvider defaultOpen={false}>
 					<AppSidebar />
 					<SidebarInset className="h-screen">
 						<div className="flex h-screen justify-center bg-preview-bg">
