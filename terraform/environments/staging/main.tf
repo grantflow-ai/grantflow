@@ -55,7 +55,7 @@ module "database" {
   region                = var.region
   zone                  = var.zone
   instance_name         = "grantflow-staging"
-  tier                  = "db-f1-micro" # Cost-optimized for staging
+  tier                  = "db-custom-1-3840" # 1 vCPU, 3.75GB RAM - handles ~100 connections
   disk_size             = 10            # Minimal storage for staging
   disk_type             = "PD_HDD"      # Cheaper storage type
   backup_enabled        = true          # Enable backups (required for point-in-time recovery)
@@ -91,7 +91,7 @@ module "cloud_run" {
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
   min_instances                 = 0     # Scale to zero for cost savings
-  max_instances                 = 1     # Limited scaling for staging
+  max_instances                 = 2     # Limited scaling for staging (2 instances max per service)
   cpu_limit                     = "1"   # Minimum CPU for Cloud Run
   memory_limit                  = "1Gi" # Increased memory to handle service requirements
   crawler_memory_limit          = "2Gi" # ~keep Increased memory for crawler due to browser automation OOM issues
