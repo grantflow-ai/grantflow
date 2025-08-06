@@ -15,7 +15,11 @@ export function CustomSidebarTrigger(props: React.HTMLAttributes<HTMLButtonEleme
 			{...props}
 			className=" w-4 h-4 cursor-pointer hover:bg-transparent hover:text-black  "
 		>
-			{state === "expanded" ? <ChevronsLeft className="h-4 w-4" /> : <ChevronsRight className="h-2 w-2 text-gray-700" />}
+			{state === "expanded" ? (
+				<ChevronsLeft className="h-4 w-4" />
+			) : (
+				<ChevronsRight className="h-2 w-2 text-gray-700" />
+			)}
 			<span className="sr-only">Toggle Sidebar</span>
 		</Button>
 	);
