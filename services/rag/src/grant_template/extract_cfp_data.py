@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
+from services.rag.src.grant_template.nlp_categorizer import categorize_text_async, format_nlp_analysis_for_prompt
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
@@ -37,6 +38,7 @@ class RagSourceData(TypedDict):
     source_type: str
     text_content: str
     chunks: list[str]
+    nlp_analysis: NotRequired[dict[str, list[str]]]
 
 
 _cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
@@ -92,11 +94,29 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Extract from: <rag_sources>${rag_sources}</rag_sources>
     Organizations: <orgs>${organization_mapping}</orgs>
 
+    USE NLP ANALYSIS AS SUPPLEMENTAL GUIDANCE:
+    Each source includes semantic categorization to help identify key content:
+    - Money/Budget, Date/Time, Writing-related requirements
+    - Orders (mandatory) vs Recommendations (optional)
+    - Positive vs Negative instructions
+    - Evaluation criteria
+
+    IMPORTANT: You must still read and analyze ALL source content comprehensively.
+    The NLP analysis is supportive context - not a replacement for thorough text analysis.
+
+    EXTRACTION PRIORITIES (NLP categories help identify):
+    1. Orders & Positive Instructions → Likely contain mandatory requirements
+    2. Evaluation Criteria → Often critical for application structure
+    3. Date/Time → May contain essential deadlines (prioritize for submission_date)
+    4. Writing-related → May contain format compliance requirements
+    5. Money/Budget → May provide funding context
+    6. Negative Instructions → May contain important restrictions
+
     Extract:
     1. Organization ID from mapping (or null)
     2. CFP subject (one sentence: type, audience, focus)
-    3. Deadline (YYYY-MM-DD format)
-    4. Section structure (titles, page limits, preserve numbering)
+    3. Deadline (YYYY-MM-DD format) - prioritize Date/Time categories from NLP
+    4. Section structure (titles, page limits, preserve numbering) - use Orders/Writing-related
 
     Exclude: URLs, Grants.gov steps, addresses, admin details
 
@@ -106,6 +126,7 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - No repetitive text patterns
     - Use "[UNCLEAR]" for ambiguous information
     - Limit response to 5000 tokens maximum
+    - Leverage NLP categorization to improve extraction quality
     """,
 )
 
@@ -137,15 +158,38 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             if chunk_content:
                 chunks_by_source[source_id].append(chunk_content)
 
-    return [
-        RagSourceData(
-            source_id=str(source_id),
-            source_type=source_type,
-            text_content=text_content or "",
-            chunks=chunks_by_source.get(source_id, []),
+    # Process each source with NLP analysis
+    rag_sources_data = []
+    for source_id, source_type, source_text_content in sources:
+        text_content = source_text_content or ""
+        chunks = chunks_by_source.get(source_id, [])
+
+        # Perform async NLP analysis on text content
+        try:
+            nlp_analysis = await categorize_text_async(text_content)
+            logger.debug(
+                "NLP analysis completed for source",
+                source_id=str(source_id),
+                total_sentences=sum(len(sentences) for sentences in nlp_analysis.values()),
+                categories_found={k: len(v) for k, v in nlp_analysis.items() if v},
+            )
+        except Exception as e:
+            logger.warning(
+                "NLP analysis failed for source, using empty analysis", source_id=str(source_id), error=str(e)
+            )
+            nlp_analysis = {}
+
+        rag_sources_data.append(
+            RagSourceData(
+                source_id=str(source_id),
+                source_type=source_type,
+                text_content=text_content,
+                chunks=chunks,
+                nlp_analysis=nlp_analysis,
+            )
         )
-        for source_id, source_type, text_content in sources
-    ]
+
+    return rag_sources_data
 
 
 def sanitize_text_content(text: str) -> str:
@@ -213,6 +257,14 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
 
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
+
+        # Add NLP analysis first for better context
+        nlp_analysis = source.get("nlp_analysis", {})
+        if nlp_analysis:
+            formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
+            source_section += f"#### NLP Analysis:\n{formatted_nlp}\n\n"
+        else:
+            source_section += "#### NLP Analysis:\nNo semantic analysis available for this source.\n\n"
 
         sanitized_content = sanitize_text_content(source["text_content"])
         source_section += "#### Full Content:\n"
@@ -370,6 +422,16 @@ async def handle_extract_cfp_data_from_rag_sources(
                 weight=0.8,
             ),
             EvaluationCriterion(
+                name="NLP-Enhanced Extraction Quality",
+                evaluation_instructions="""
+                Evaluate whether the extraction effectively leveraged the NLP semantic analysis to prioritize mandatory requirements (Orders/Positive Instructions),
+                evaluation criteria, and formatting requirements over optional recommendations and administrative details.
+                Check if Date/Time categories from NLP analysis were properly identified for deadlines.
+                Assess if the extraction properly distinguished between mandatory vs optional content using NLP categorization.
+                """,
+                weight=0.9,
+            ),
+            EvaluationCriterion(
                 name="Correctness",
                 evaluation_instructions="""
                 Assess whether extracted content correctly reflects the explicit grant requirements from all sources, avoiding extraneous administrative details.
@@ -379,6 +441,7 @@ async def handle_extract_cfp_data_from_rag_sources(
                 name="Structural Completeness",
                 evaluation_instructions="""
                 Ensure extracted content includes necessary structural details such as required sections, page limits, and evaluation criteria from all relevant sources.
+                Verify that critical restrictions and prohibitions identified in NLP analysis are included.
                 """,
                 weight=0.9,
             ),
@@ -386,6 +449,7 @@ async def handle_extract_cfp_data_from_rag_sources(
                 name="Filtering Accuracy",
                 evaluation_instructions="""
                 Validate that unnecessary general instructions (e.g., Grants.gov, eRA Commons, URLs) are removed while keeping essential information from all sources.
+                Ensure that NLP-identified mandatory requirements are retained while optional recommendations are appropriately categorized.
                 """,
                 weight=0.7,
             ),

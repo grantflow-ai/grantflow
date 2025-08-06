@@ -157,6 +157,17 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "Chunk 2: Application submission requirements",
                 "Chunk 3: Budget guidelines and restrictions",
             ],
+            "nlp_analysis": {
+                "Orders": ["Funding eligibility criteria", "Application submission requirements"],
+                "Money": ["Budget guidelines and restrictions"],
+                "Date/Time": [],
+                "Writing-related": [],
+                "Other Numbers": [],
+                "Recommendations": [],
+                "Positive Instructions": ["Application submission requirements"],
+                "Negative Instructions": [],
+                "Evaluation Criteria": ["Funding eligibility criteria"],
+            },
         },
         {
             "source_id": "source-2-id",
@@ -166,6 +177,17 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "Web chunk 1: Organization mission and values",
                 "Web chunk 2: Past funded projects examples",
             ],
+            "nlp_analysis": {
+                "Orders": [],
+                "Money": [],
+                "Date/Time": [],
+                "Writing-related": [],
+                "Other Numbers": [],
+                "Recommendations": ["Organization mission and values"],
+                "Positive Instructions": [],
+                "Negative Instructions": [],
+                "Evaluation Criteria": ["Past funded projects examples"],
+            },
         },
     ]
 
@@ -631,3 +653,77 @@ async def test_extract_and_enrich_sections_backend_error(
             )
 
         assert "LLM service unavailable" in str(exc_info.value)
+
+
+async def test_get_rag_sources_data_with_nlp_analysis(
+    async_session_maker: async_sessionmaker[Any],
+    grant_template_with_sources: GrantTemplate,
+) -> None:
+    """Test that get_rag_sources_data includes NLP analysis."""
+    async with async_session_maker() as session:
+        stmt = select(GrantTemplateSource.rag_source_id).where(
+            GrantTemplateSource.grant_template_id == grant_template_with_sources.id
+        )
+        result = await session.execute(stmt)
+        source_ids = [str(row[0]) for row in result.fetchall()]
+
+    with patch("services.rag.src.grant_template.extract_cfp_data.categorize_text_async") as mock_categorize:
+        # Mock NLP analysis results
+        mock_categorize.return_value = {
+            "Orders": ["Application must include detailed budget"],
+            "Money": ["Budget should not exceed $100,000"],
+            "Date/Time": ["Deadline is March 15, 2025"],
+            "Writing-related": ["Proposal should be 10 pages maximum"],
+            "Recommendations": ["Consider including preliminary data"],
+            "Evaluation Criteria": ["Proposals will be evaluated on merit"],
+            "Other Numbers": [],
+            "Positive Instructions": [],
+            "Negative Instructions": [],
+        }
+
+        result = await get_rag_sources_data(
+            source_ids=source_ids,
+            session_maker=async_session_maker,
+        )
+
+    assert len(result) == 2
+
+    # Verify NLP analysis is included
+    for source_data in result:
+        assert "nlp_analysis" in source_data
+        nlp_analysis = source_data["nlp_analysis"]
+
+        # Verify analysis structure
+        assert isinstance(nlp_analysis, dict)
+        assert "Orders" in nlp_analysis
+        assert "Money" in nlp_analysis
+        assert "Date/Time" in nlp_analysis
+
+        # Verify actual content
+        assert "Application must include detailed budget" in nlp_analysis["Orders"]
+        assert "Budget should not exceed $100,000" in nlp_analysis["Money"]
+        assert "Deadline is March 15, 2025" in nlp_analysis["Date/Time"]
+
+    # Verify async categorization was called for each source
+    assert mock_categorize.call_count == 2
+
+
+def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSourceData]) -> None:
+    """Test that prompt formatting includes NLP analysis."""
+    formatted = format_rag_sources_for_prompt(mock_rag_sources)
+
+    # Check that NLP analysis is included in formatted output
+    assert "NLP Analysis:" in formatted
+    assert "Structured NLP Analysis" in formatted
+    assert "Orders" in formatted
+    assert "Money" in formatted
+    assert "Evaluation Criteria" in formatted
+
+    # Check specific content from mock data
+    assert "Funding eligibility criteria" in formatted
+    assert "Budget guidelines and restrictions" in formatted
+    assert "Organization mission and values" in formatted
+
+    # Verify both sources are included
+    assert "Source 0: RAG_FILE" in formatted
+    assert "Source 1: RAG_URL" in formatted
