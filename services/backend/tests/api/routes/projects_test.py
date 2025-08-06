@@ -8,7 +8,7 @@ from packages.db.src.tables import GrantApplication, Organization, OrganizationI
 from packages.shared_utils.src.exceptions import DatabaseError
 from pytest_mock import MockerFixture
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import (
@@ -252,7 +252,7 @@ async def test_retrieve_projects_excludes_deleted_applications(
     # Mark the third application as deleted in a new transaction
     async with async_session_maker() as session, session.begin():
         await session.execute(
-            GrantApplication.__table__.update()
+            update(GrantApplication)
             .where(GrantApplication.id == applications[2].id)
             .values(deleted_at=datetime.now(UTC))
         )
