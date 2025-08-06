@@ -1,24 +1,15 @@
 {
-	"name": "crdt-server",
-	"version": "1.0.0",
-	"description": "",
-	"main": "dist/index.js",
-	"scripts": {
-		"biome": "biome",
-		"build": "tsup src/index.ts --dts --format cjs --out-dir dist",
-		"check": "biome check --write . && eslint ",
-		"dev": "nodemon --watch src --ext ts --exec \"pnpm run build && node dist/index.js\"",
-		"start": "node dist/index.js",
-		"eslint": "eslint",
-		"format": "biome format --write .",
-		"lint": "biome lint --write . && eslint . --fix",
-		"test": "vitest run",
-		"db:introspect": "drizzle-kit introspect && mv drizzle/schema.ts src/db/schema.ts && mv drizzle/relations.ts src/db/relations.ts && pnpm lint"
-	},
-	"keywords": [],
 	"author": "",
-	"license": "UNLICENSED",
-	"packageManager": "pnpm@10.13.1",
+	"dependencies": {
+		"@hocuspocus/extension-database": "^3.2.2",
+		"@hocuspocus/server": "^3.2.2",
+		"dotenv": "^17.2.1",
+		"drizzle-orm": "^0.44.4",
+		"pg": "^8.16.3",
+		"pino": "^9.7.0",
+		"zod": "^4.0.14"
+	},
+	"description": "",
 	"devDependencies": {
 		"@types/pg": "^8.15.5",
 		"@typescript-eslint/eslint-plugin": "^8.39.0",
@@ -30,13 +21,22 @@
 		"tsup": "^8.5.0",
 		"typescript": "^5.9.2"
 	},
-	"dependencies": {
-		"@hocuspocus/extension-database": "^3.2.2",
-		"@hocuspocus/server": "^3.2.2",
-		"dotenv": "^17.2.1",
-		"drizzle-orm": "^0.44.4",
-		"pg": "^8.16.3",
-		"pino": "^9.7.0",
-		"zod": "^4.0.14"
-	}
+	"keywords": [],
+	"license": "UNLICENSED",
+	"main": "dist/index.js",
+	"name": "crdt-server",
+	"packageManager": "pnpm@10.13.1",
+	"scripts": {
+		"biome": "biome",
+		"build": "tsup src/index.ts --dts --format cjs --out-dir dist",
+		"check": "biome check --write . && eslint ",
+		"db:introspect": "drizzle-kit introspect && mv drizzle/schema.ts src/db/schema.ts && mv drizzle/relations.ts src/db/relations.ts && pnpm lint",
+		"dev": "nodemon --watch src --ext ts --exec \"pnpm run build && node dist/index.js\"",
+		"eslint": "eslint",
+		"format": "biome format --write .",
+		"lint": "biome lint --write . && eslint . --fix",
+		"start": "node dist/index.js",
+		"test": "vitest run"
+	},
+	"version": "1.0.0"
 }
