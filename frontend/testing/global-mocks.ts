@@ -222,8 +222,7 @@ export const mockEnv = {
 	NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "acmetech-dev.firebaseapp.com",
 	NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "G-XYZ123ABC4",
 	NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: "847362514908",
-	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID:
-		"72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
+	NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: "72a88c64-9b3d-4e5f-8c7a-1b2d3e4f5a6b",
 	NEXT_PUBLIC_FIREBASE_PROJECT_ID: "acmetech-dev",
 	NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "acmetech-dev.appspot.com",
 	NEXT_PUBLIC_GCS_EMULATOR_URL: "http://localhost:4443",
@@ -265,15 +264,11 @@ beforeAll(() => {
 		});
 	}
 
-	const originalFileListDescriptor = Object.getOwnPropertyDescriptor(
-		HTMLInputElement.prototype,
-		"files",
-	);
+	const originalFileListDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "files");
 	Object.defineProperty(HTMLInputElement.prototype, "files", {
 		configurable: true,
 		get() {
-			const files =
-				originalFileListDescriptor?.get?.call(this) ?? this._files ?? [];
+			const files = originalFileListDescriptor?.get?.call(this) ?? this._files ?? [];
 			if (files && !files.item && Array.isArray(files)) {
 				(files as any).item = (index: number) => files[index] ?? null;
 			}
@@ -307,9 +302,7 @@ beforeEach(() => {
 	globalThis.fetch = mockFetch;
 	Object.assign(
 		process.env,
-		Object.fromEntries(
-			Object.entries(mockEnv).map(([key, value]) => [key, value.toString()]),
-		),
+		Object.fromEntries(Object.entries(mockEnv).map(([key, value]) => [key, value.toString()])),
 	);
 
 	vi.clearAllMocks();

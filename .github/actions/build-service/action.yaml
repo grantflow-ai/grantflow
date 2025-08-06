@@ -2,109 +2,111 @@ name: "Build Service"
 description: "Build and push Docker image for a service using standardized Task-based approach"
 
 inputs:
-    service:
-        description: "Service name (backend, crawler, indexer, rag, scraper, frontend)"
-        required: true
-    image_tag:
-        description: "Docker image tag"
-        required: true
-    workload_identity_provider:
-        description: "Workload identity provider"
-        required: false
-        default: "projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool"
-    service_account:
-        description: "Service account email"
-        required: false
-        default: "githubactions@grantflow.iam.gserviceaccount.com"
-    build_args:
-        description: "Build arguments to pass to Docker build (multiline string)"
-        required: false
-        default: ""
+  service:
+    description: "Service name (backend, crawler, indexer, rag, scraper, frontend, crdt-server)"
+    required: true
+  image_tag:
+    description: "Docker image tag"
+    required: true
+  workload_identity_provider:
+    description: "Workload identity provider"
+    required: false
+    default: "projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool"
+  service_account:
+    description: "Service account email"
+    required: false
+    default: "githubactions@grantflow.iam.gserviceaccount.com"
+  build_args:
+    description: "Build arguments to pass to Docker build (multiline string)"
+    required: false
+    default: ""
 
 runs:
-    using: "composite"
-    steps:
-        - name: Free disk space
-          shell: bash
-          run: |
-              echo "Disk space before cleanup:"
-              df -h
-              
-              # Remove unnecessary tools and files
-              sudo rm -rf /usr/share/dotnet
-              sudo rm -rf /opt/ghc
-              sudo rm -rf "/usr/local/share/boost"
-              sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-              sudo rm -rf /usr/local/lib/android
-              
-              # Clean apt cache
-              sudo apt-get clean
-              
-              # Remove some large packages we don't need
-              # Use || true to continue even if some packages don't exist
-              sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel || true
-              sudo apt-get autoremove -y || true
-              sudo apt-get clean || true
-              
-              # Clean docker images
-              docker system prune -af --volumes
-              
-              echo "Disk space after cleanup:"
-              df -h
-        
-        - name: Setup GCP
-          id: gcp
-          uses: ./.github/actions/setup-gcp
-          with:
-              workload_identity_provider: ${{ inputs.workload_identity_provider }}
-              service_account: ${{ inputs.service_account }}
+  using: "composite"
+  steps:
+    - name: Free disk space
+      shell: bash
+      run: |
+        echo "Disk space before cleanup:"
+        df -h
 
-        - name: Set up Docker Buildx
-          uses: docker/setup-buildx-action@v3
+        # Remove unnecessary tools and files
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
 
-        - name: Login to Container Registry
-          uses: docker/login-action@v3
-          with:
-              username: oauth2accesstoken
-              password: ${{ steps.gcp.outputs.access_token }}
-              registry: us-east1-docker.pkg.dev
+        # Clean apt cache
+        sudo apt-get clean
 
-        - name: Set up environment tag
-          id: env-tag
-          shell: bash
-          run: |
-              if [[ "${{ inputs.image_tag }}" == staging-* ]]; then
-                echo "env_latest=staging-latest" >> $GITHUB_OUTPUT
-              else
-                echo "env_latest=latest" >> $GITHUB_OUTPUT
-              fi
+        # Remove some large packages we don't need
+        # Use || true to continue even if some packages don't exist
+        sudo apt-get remove -y '^dotnet-.*' '^llvm-.*' 'php.*' azure-cli google-cloud-cli google-chrome-stable firefox powershell mono-devel || true
+        sudo apt-get autoremove -y || true
+        sudo apt-get clean || true
 
-        - name: Clear Docker cache before build
-          shell: bash
-          run: |
-              echo "Clearing Docker build cache..."
-              docker builder prune -af
-              docker system df
+        # Clean docker images
+        docker system prune -af --volumes
 
-        - name: Set Dockerfile path
-          id: dockerfile
-          shell: bash
-          run: |
-              if [[ "${{ inputs.service }}" == "frontend" ]]; then
-                echo "path=frontend/Dockerfile" >> $GITHUB_OUTPUT
-              else
-                echo "path=services/${{ inputs.service }}/Dockerfile" >> $GITHUB_OUTPUT
-              fi
+        echo "Disk space after cleanup:"
+        df -h
 
-        - name: Build and push service
-          uses: docker/build-push-action@v6
-          with:
-              push: true
-              context: ${{ github.workspace }}
-              file: ${{ steps.dockerfile.outputs.path }}
-              cache-from: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache
-              cache-to: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache,mode=max
-              tags: |
-                  us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ steps.env-tag.outputs.env_latest }}
-                  us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
-              build-args: ${{ inputs.build_args }}
+    - name: Setup GCP
+      id: gcp
+      uses: ./.github/actions/setup-gcp
+      with:
+        workload_identity_provider: ${{ inputs.workload_identity_provider }}
+        service_account: ${{ inputs.service_account }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        username: oauth2accesstoken
+        password: ${{ steps.gcp.outputs.access_token }}
+        registry: us-east1-docker.pkg.dev
+
+    - name: Set up environment tag
+      id: env-tag
+      shell: bash
+      run: |
+        if [[ "${{ inputs.image_tag }}" == staging-* ]]; then
+          echo "env_latest=staging-latest" >> $GITHUB_OUTPUT
+        else
+          echo "env_latest=latest" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Clear Docker cache before build
+      shell: bash
+      run: |
+        echo "Clearing Docker build cache..."
+        docker builder prune -af
+        docker system df
+
+    - name: Set Dockerfile path
+      id: dockerfile
+      shell: bash
+      run: |
+        if [[ "${{ inputs.service }}" == "frontend" ]]; then
+          echo "path=frontend/Dockerfile" >> $GITHUB_OUTPUT
+        elif [[ "${{ inputs.service }}" == "crdt-server" ]]; then
+          echo "path=crdt-server/Dockerfile" >> $GITHUB_OUTPUT
+        else
+          echo "path=services/${{ inputs.service }}/Dockerfile" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Build and push service
+      uses: docker/build-push-action@v6
+      with:
+        push: true
+        context: ${{ github.workspace }}
+        file: ${{ steps.dockerfile.outputs.path }}
+        cache-from: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache
+        cache-to: type=registry,ref=us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:buildcache,mode=max
+        tags: |
+          us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ steps.env-tag.outputs.env_latest }}
+          us-east1-docker.pkg.dev/grantflow/grantflow/${{ inputs.service }}:${{ inputs.image_tag }}
+        build-args: ${{ inputs.build_args }}
