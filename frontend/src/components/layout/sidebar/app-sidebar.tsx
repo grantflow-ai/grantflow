@@ -40,17 +40,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			className="!border-r-0 flex h-full flex-col bg-preview-bg p-3 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:p-2 [&>div]:!border-0 [&>div]:!border-r-0 [&>div>div]:!border-0 [&>div>div]:!border-r-0 [&>div]:!border-l-0 [&>div]:!shadow-none"
 		>
 			<SidebarHeader className="flex flex-col mb-10 group-data-[collapsible=icon]:p-0">
+				<header className="flex flex-col gap-2">
+
 				<div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
 					<div className="flex items-center justify-between w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
 						<div className="flex items-center gap-2">
 							<div className="size-[31px] shrink-0">
 								<Image
 									alt="logo"
-									className="w-full h-full object-cover"
+									className="w-full h-full object-contain"
 									data-testid="sidebar-logo"
-									height={100}
+									height={31}
 									src="/assets/logo-horizontal.svg"
-									width={100}
+									width={31}
 								/>
 							</div>
 							<h2
@@ -65,9 +67,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						</div>
 					</div>
 				</div>
-				<div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+				<div className="hidden group-data-[collapsible=icon]:block w-fit h-fit mx-auto">
 					<CustomSidebarTrigger data-testid="sidebar-trigger-collapsed" />
 				</div>
+				</header>
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<button
@@ -77,10 +80,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							type="button"
 						>
 							<Plus className="size-4 shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden font-button">New Application</span>
+							<span className="group-data-[collapsible=icon]:hidden ">New Application</span>
 						</button>
 					</TooltipTrigger>
-					<TooltipContent align="center" hidden={state !== "collapsed" || isMobile} side="right">
+					<TooltipContent align="center" hidden={state !== "collapsed" || isMobile} side="right" sideOffset={11}>
 						<p>New Application</p>
 					</TooltipContent>
 				</Tooltip>
@@ -90,8 +93,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				<NavMain data-testid="nav-main" userRole={organization?.role} />
 			</SidebarContent>
 
-			<SidebarFooter>
-				<SidebarMenu>
+			<SidebarFooter className="flex flex-col mb-10 group-data-[collapsible=icon]:p-0">
+				<SidebarMenu className="flex flex-col gap-3 ">
+					<SidebarMenuItem className=" px-0">
+						<SidebarMenuButton
+							className="flex items-center gap-2 group-data-[collapsible=icon]:!px-0"
+							data-testid="support-button"
+							tooltip="Support"
+						>
+							<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
+								<Plus className="size-3 shrink-0 text-gray-600" />
+							</div>
+							<span className="group-data-[collapsible=icon]:hidden ">Organisation name</span>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							className="flex items-center gap-2"
@@ -99,7 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							tooltip="Support"
 						>
 							<HelpCircle className="size-4 shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden font-body">Support</span>
+							<span className="group-data-[collapsible=icon]:hidden ">Support</span>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
@@ -110,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							tooltip="Logout"
 						>
 							<LogOut className="size-4 shrink-0" />
-							<span className="group-data-[collapsible=icon]:hidden font-body">Logout</span>
+							<span className="group-data-[collapsible=icon]:hidden ">Logout</span>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
