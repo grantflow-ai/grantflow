@@ -175,7 +175,7 @@ async def handle_retrieve_projects(
             name=project.name,
             description=project.description,
             logo_url=project.logo_url,
-            applications_count=len(project.grant_applications),
+            applications_count=len([app for app in project.grant_applications if app.deleted_at is None]),
             members=[
                 ProjectMemberInfo(
                     firebase_uid=ou.firebase_uid,

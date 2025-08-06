@@ -238,4 +238,61 @@ describe("Project Store", () => {
 			expect(log.error).toHaveBeenCalledWith("deleteProject", error);
 		});
 	});
+
+	describe("removeApplicationFromProject", () => {
+		it("should remove application from project grant_applications", () => {
+			const app1 = { completed_at: null, id: "app-1", title: "Application 1" };
+			const app2 = { completed_at: null, id: "app-2", title: "Application 2" };
+			const app3 = { completed_at: null, id: "app-3", title: "Application 3" };
+			const project = ProjectFactory.build({
+				grant_applications: [app1, app2, app3],
+			});
+
+			useProjectStore.setState({ project });
+
+			useProjectStore.getState().removeApplicationFromProject("app-2");
+
+			const updatedProject = useProjectStore.getState().project;
+			expect(updatedProject?.grant_applications).toHaveLength(2);
+			expect(updatedProject?.grant_applications).toEqual([app1, app3]);
+			expect(updatedProject?.grant_applications).not.toContainEqual(app2);
+		});
+
+		it("should handle missing project gracefully", () => {
+			useProjectStore.setState({ project: null });
+
+			// Should not throw error
+			useProjectStore.getState().removeApplicationFromProject("app-1");
+
+			expect(useProjectStore.getState().project).toBeNull();
+		});
+
+		it("should handle project without grant_applications gracefully", () => {
+			const project = ProjectFactory.build({
+				grant_applications: undefined,
+			});
+
+			useProjectStore.setState({ project });
+
+			// Should not throw error
+			useProjectStore.getState().removeApplicationFromProject("app-1");
+
+			expect(useProjectStore.getState().project).toEqual(project);
+		});
+
+		it("should handle non-existent application ID gracefully", () => {
+			const app1 = { completed_at: null, id: "app-1", title: "Application 1" };
+			const project = ProjectFactory.build({
+				grant_applications: [app1],
+			});
+
+			useProjectStore.setState({ project });
+
+			useProjectStore.getState().removeApplicationFromProject("non-existent-id");
+
+			const updatedProject = useProjectStore.getState().project;
+			expect(updatedProject?.grant_applications).toHaveLength(1);
+			expect(updatedProject?.grant_applications).toEqual([app1]);
+		});
+	});
 });
