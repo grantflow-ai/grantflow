@@ -277,7 +277,7 @@ const handleMainToMainReorder = async (
 	overItem: GrantSection,
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
-): Promise<boolean> => {
+): Promise<unknown> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const hasOverSubSections = hasSubSections(overItem.id, sections);
 
@@ -286,7 +286,7 @@ const handleMainToMainReorder = async (
 		const reorderedSections = reorderMainWhenOverMainHasSubSections(sections, activeItem.id, overItem.id, overItem);
 
 		await updateReorderWithReorderedSections(reorderedSections, toUpdateGrantSection, updateGrantSections);
-		return true;
+		return;
 	}
 
 	// Main without subs → Main (with or without subs)
@@ -296,7 +296,6 @@ const handleMainToMainReorder = async (
 		: overIndex;
 
 	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections);
-	return true;
 };
 
 const reorderMainWhenOverMainHasSubSections = (
