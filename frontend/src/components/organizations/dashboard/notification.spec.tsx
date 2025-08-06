@@ -37,9 +37,7 @@ describe.sequential("Notification component", () => {
 		// Check for the first notification
 		expect(screen.getByTestId("notification-dot-1")).toBeInTheDocument();
 		expect(screen.getByTestId("notification-title-1")).toHaveTextContent("7 days until grant deadline");
-		expect(screen.getByTestId("notification-description-1")).toHaveTextContent(
-			/Neuroadaptive Interfaces/,
-		);
+		expect(screen.getByTestId("notification-description-1")).toHaveTextContent(/Neuroadaptive Interfaces/);
 		expect(screen.getByTestId("notification-close-1")).toBeInTheDocument();
 
 		// Check that all three notifications are rendered
