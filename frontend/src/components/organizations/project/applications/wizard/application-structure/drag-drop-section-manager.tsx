@@ -3,8 +3,11 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
+import type { RefObject } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AppButton } from "@/components/app";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
@@ -24,9 +27,314 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
-import type { RefObject } from "react";
-import { AppButton } from "@/components/app";
-import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
+const updateDragOverVisualState = (overId: null | string): void => {
+	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
+
+	if (overId) {
+		const overElement = document.querySelector<HTMLElement>(`[data-sortable-id="${overId}"]`);
+
+		if (prevOverElement && prevOverElement !== overElement) {
+			delete prevOverElement.dataset.dragOver;
+		}
+
+		if (overElement) {
+			overElement.dataset.dragOver = "true";
+		}
+	} else if (prevOverElement) {
+		delete prevOverElement.dataset.dragOver;
+	}
+};
+
+const clearDragOverVisualState = (): void => {
+	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
+	if (prevOverElement) {
+		delete prevOverElement.dataset.dragOver;
+	}
+};
+
+const determineNewParentId = (activeSection: GrantSection, overSection: GrantSection): null | string => {
+	const activeIsChild = activeSection.parent_id !== null;
+	const overIsChild = overSection.parent_id !== null;
+
+	if (overIsChild) {
+		return overSection.parent_id;
+	}
+
+	if (activeIsChild) {
+		return overSection.id;
+	}
+
+	return null;
+};
+
+const hasSubSections = (sectionId: string, sections: GrantSection[]) => {
+	return sections.some((section) => section.parent_id === sectionId);
+};
+
+const getTargetIndexForMainSectionReorder = (
+	sections: GrantSection[],
+	overItemId: string,
+	originalIndex: number,
+	activeIndex: number,
+): number => {
+	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
+
+	if (lastSubSectionIndex === -1) {
+		return originalIndex + 1; // Place after the main section if no subsections
+	}
+
+	return activeIndex > lastSubSectionIndex ? lastSubSectionIndex + 1 : lastSubSectionIndex;
+};
+
+const assignOrderAndParent = (
+	sections: GrantSection[],
+	parentAssignmentFn?: (section: GrantSection) => null | string,
+): GrantSection[] => {
+	return sections.map((section, index) => ({
+		...section,
+		order: index,
+		parent_id: parentAssignmentFn?.(section) ?? section.parent_id ?? null,
+	}));
+};
+
+const updateReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	targetIndex: number,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	parentAssignmentFn?: (section: GrantSection) => null | string,
+): Promise<void> => {
+	const reorderedSections = arrayMove(sections, activeIndex, targetIndex);
+	const updatedSectionsWithOrderAndParent = assignOrderAndParent(reorderedSections, parentAssignmentFn);
+	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
+};
+
+const updateReorderWithReorderedSections = async (
+	reorderedSections: GrantSection[],
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	parentAssignmentFn?: (section: GrantSection) => null | string,
+): Promise<void> => {
+	const updatedSectionsWithOrderAndParent = assignOrderAndParent(reorderedSections, parentAssignmentFn);
+	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
+};
+
+const handleMainToSubReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+): Promise<void> => {
+	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+	const newParentId = determineNewParentId(activeItem, overItem);
+
+	// Prevent moving a main section into its own sub-section
+	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
+		toast.info("Cannot move a section into its own sub-section");
+		return;
+	}
+
+	// Main without subs → Sub (simple conversion)
+	if (!hasActiveSubSections) {
+		await executeMainToSubConversion(
+			sections,
+			activeIndex,
+			overIndex,
+			activeItem,
+			newParentId,
+			toUpdateGrantSection,
+			updateGrantSections,
+		);
+		return;
+	}
+
+	// Main with subs → Sub (requires confirmation to remove subsections)
+	const handleConfirmMove = async () => {
+		dialogRef.current?.close();
+
+		const sectionsWithoutSubs = sections.filter((section) => section.parent_id !== activeItem.id);
+		const newActiveIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
+		const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
+
+		if (newActiveIndex !== -1 && newOverIndex !== -1) {
+			await executeMainToSubConversion(
+				sectionsWithoutSubs,
+				newActiveIndex,
+				newOverIndex,
+				activeItem,
+				newParentId,
+				toUpdateGrantSection,
+				updateGrantSections,
+			);
+		}
+	};
+
+	dialogRef.current?.open({
+		content: null,
+		description:
+			"Converting a main section into a secondary section will permanently remove any associated secondary sections, if they exist. This action cannot be undone.",
+		dismissOnOutsideClick: false,
+		footer: (
+			<div className="flex justify-between w-full">
+				<AppButton
+					data-testid="cancel-move-button"
+					onClick={() => dialogRef.current?.close()}
+					variant="secondary"
+				>
+					Cancel
+				</AppButton>
+				<AppButton data-testid="confirm-move-button" onClick={handleConfirmMove} variant="primary">
+					Convert and Remove
+				</AppButton>
+			</div>
+		),
+		minWidth: "min-w-xl",
+		title: "This action will affect the section structure!",
+	});
+};
+
+const executeMainToSubConversion = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	newParentId: null | string,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<void> => {
+	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
+	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections, (section) =>
+		section.id === activeItem.id ? newParentId : section.parent_id,
+	);
+};
+
+const handleSubToMainReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<boolean> => {
+	const newParentId = determineNewParentId(activeItem, overItem);
+
+	// Skip if subsection is already in the correct position within its main section
+	if (activeItem.parent_id === overItem.id && newParentId === overItem.id && activeIndex === overIndex + 1) {
+		return false;
+	}
+
+	await updateReorder(sections, activeIndex, overIndex + 1, toUpdateGrantSection, updateGrantSections, (section) =>
+		section.id === activeItem.id ? newParentId : section.parent_id,
+	);
+	return true;
+};
+
+const handleSubToSubReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<boolean> => {
+	const newParentId = determineNewParentId(activeItem, overItem);
+	const hasParentChanged = activeItem.parent_id !== newParentId;
+
+	// Skip if already in the correct position (no movement needed)
+	const isSectionLater = activeIndex > overIndex;
+	if (!hasParentChanged && isSectionLater && activeIndex === overIndex + 1) {
+		return false;
+	}
+
+	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
+	const parentAssignmentFn = hasParentChanged
+		? (section: GrantSection) => (section.id === activeItem.id ? newParentId : section.parent_id)
+		: undefined;
+
+	await updateReorder(
+		sections,
+		activeIndex,
+		targetIndex,
+		toUpdateGrantSection,
+		updateGrantSections,
+		parentAssignmentFn,
+	);
+	return true;
+};
+
+const handleMainToMainReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+): Promise<unknown> => {
+	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+	const hasOverSubSections = hasSubSections(overItem.id, sections);
+
+	// Main with subs → Main with subs (complex group reordering)
+	if (hasActiveSubSections) {
+		const reorderedSections = reorderMainWhenOverMainHasSubSections(sections, activeItem.id, overItem.id, overItem);
+
+		await updateReorderWithReorderedSections(reorderedSections, toUpdateGrantSection, updateGrantSections);
+		return;
+	}
+
+	// Main without subs → Main (with or without subs)
+	// Calculate target index: use overIndex for simple case, or position after target's last sub
+	const targetIndex = hasOverSubSections
+		? getTargetIndexForMainSectionReorder(sections, overItem.id, overIndex, activeIndex)
+		: overIndex;
+
+	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections);
+};
+
+const reorderMainWhenOverMainHasSubSections = (
+	sections: GrantSection[],
+	activeMainSectionId: string,
+	overItemId: string,
+	overItem: GrantSection,
+): GrantSection[] => {
+	const sectionsToMove = sections.filter(
+		(section) => section.id === activeMainSectionId || section.parent_id === activeMainSectionId,
+	);
+
+	const remainingSections = sections.filter(
+		(section) => section.id !== activeMainSectionId && section.parent_id !== activeMainSectionId,
+	);
+
+	if (overItem.parent_id !== null) {
+		log.error("Invalid operation: Cannot drop main section with sub-sections over a sub-section", {
+			activeMainSectionId,
+			overItemId,
+			overItemParentId: overItem.parent_id,
+		});
+		return sections;
+	}
+
+	const overItemLastSubIndexInRemaining = remainingSections.findLastIndex(
+		(section) => section.parent_id === overItemId,
+	);
+	const overItemIndexInRemaining = remainingSections.findIndex((section) => section.id === overItemId);
+
+	const insertionIndex =
+		overItemLastSubIndexInRemaining === -1 ? overItemIndexInRemaining + 1 : overItemLastSubIndexInRemaining + 1;
+
+	return [
+		...remainingSections.slice(0, insertionIndex),
+		...sectionsToMove,
+		...remainingSections.slice(insertionIndex),
+	];
+};
 
 export function DragDropSectionManager({
 	dialogRef,
@@ -38,42 +346,12 @@ export function DragDropSectionManager({
 	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
 	const application = useApplicationStore((state) => state.application);
-	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
 	const [pendingParentChange, setPendingParentChange] = useState<{
 		newParentId: null | string;
 		sectionId: string;
 	} | null>(null);
-
-	const wouldCreateInvalidNesting = useCallback(
-		(activeSection: GrantSection, overSection: GrantSection) => {
-			if (overSection.parent_id !== null && activeSection.parent_id === null) {
-				const hasChildren = grantSections.some((section) => section.parent_id === activeSection.id);
-				if (hasChildren) {
-					return true;
-				}
-			}
-
-			return false;
-		},
-		[grantSections],
-	);
-
-	const determineNewParentId = useCallback((activeSection: GrantSection, overSection: GrantSection) => {
-		const activeIsChild = activeSection.parent_id !== null;
-		const overIsChild = overSection.parent_id !== null;
-
-		if (overIsChild) {
-			return overSection.parent_id;
-		}
-
-		if (activeIsChild) {
-			return overSection.id;
-		}
-
-		return null;
-	}, []);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
 		setExpandedSectionId((prev) => {
@@ -210,73 +488,80 @@ export function DragDropSectionManager({
 
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
 		() => ({
-			onDragEnd: async (_, activeItem, overItem) => {
-				if (activeItem && overItem && activeItem.id !== overItem.id) {
-					const newParentId = determineNewParentId(activeItem, overItem);
-					const hasParentChanged = activeItem.parent_id !== newParentId;
-
-					if (hasParentChanged) {
-						await handleUpdateSection(activeItem.id, { parent_id: newParentId });
-					}
-				}
-
+			onDragEnd: (_event) => {
 				if (pendingParentChange) {
-					const updatedSections = grantSections.map((section) => {
-						if (section.id === pendingParentChange.sectionId) {
-							return toUpdateGrantSection({
-								...section,
-								parent_id: pendingParentChange.newParentId,
-							});
-						}
-						return toUpdateGrantSection(section);
-					});
-
-					log.info("Drag end: Applying pending parent change", {
-						newParentId: pendingParentChange.newParentId,
-						sectionCount: updatedSections.length,
-						sectionId: pendingParentChange.sectionId,
-					});
-
-					await updateGrantSections(updatedSections);
 					setPendingParentChange(null);
 				}
+				clearDragOverVisualState();
 			},
-			onDragOver: (_event, activeSection, overSection) => {
-				if (!(activeSection && overSection)) {
-					return;
-				}
-
-				if (wouldCreateInvalidNesting(activeSection, overSection)) {
-					toast.error("Cannot create more than 2 levels of nesting");
-				}
+			onDragOver: (_event, _activeItem, overItem) => {
+				updateDragOverVisualState(overItem?.id ?? null);
 			},
 			onDragStart: (_event) => {
 				if (expandedSectionId !== null) {
 					setExpandedSectionId(null);
 				}
 			},
-			onReorder: async (sections, oldIndex, newIndex) => {
-				const reorderedSections = arrayMove(sections, oldIndex, newIndex);
+			onReorder: async (sections, activeIndex, overIndex, activeItem, overItem) => {
+				if (activeItem.id === overItem.id) {
+					return;
+				}
 
-				const updatedSections = reorderedSections.map((section, index) => ({
-					...section,
-					order: index,
-					parent_id: section.parent_id ?? null,
-				}));
+				const isActiveMain = activeItem.parent_id === null;
+				const isOverMain = overItem.parent_id === null;
 
-				await useApplicationStore.getState().updateGrantSections(updatedSections.map(toUpdateGrantSection));
+				if (isActiveMain && isOverMain) {
+					await handleMainToMainReorder(
+						sections,
+						activeIndex,
+						overIndex,
+						activeItem,
+						overItem,
+						toUpdateGrantSection,
+						useApplicationStore.getState().updateGrantSections,
+					);
+					return;
+				}
+
+				if (!(isActiveMain || isOverMain)) {
+					await handleSubToSubReorder(
+						sections,
+						activeIndex,
+						overIndex,
+						activeItem,
+						overItem,
+						toUpdateGrantSection,
+						useApplicationStore.getState().updateGrantSections,
+					);
+					return;
+				}
+
+				if (!isActiveMain && isOverMain) {
+					await handleSubToMainReorder(
+						sections,
+						activeIndex,
+						overIndex,
+						activeItem,
+						overItem,
+						toUpdateGrantSection,
+						useApplicationStore.getState().updateGrantSections,
+					);
+					return;
+				}
+
+				await handleMainToSubReorder(
+					sections,
+					activeIndex,
+					overIndex,
+					activeItem,
+					overItem,
+					toUpdateGrantSection,
+					useApplicationStore.getState().updateGrantSections,
+					dialogRef,
+				);
 			},
 		}),
-		[
-			toUpdateGrantSection,
-			wouldCreateInvalidNesting,
-			determineNewParentId,
-			pendingParentChange,
-			expandedSectionId,
-			handleUpdateSection,
-			grantSections,
-			updateGrantSections,
-		],
+		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef],
 	);
 
 	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
