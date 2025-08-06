@@ -55,7 +55,7 @@ const localStorageMock = (() => {
 			store[key] = "";
 		}),
 		setItem: vi.fn((key: string, value: string) => {
-			store[key] = value.toString();
+			store[key] = value;
 		}),
 	};
 })();

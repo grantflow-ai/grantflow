@@ -27,7 +27,6 @@ def stub_env() -> None:
     os.environ.setdefault("GOOGLE_AI_API_KEY", "test-google-ai-key")
 
 
-
 @pytest.fixture(scope="session")
 def faker() -> Faker:
     return Faker()
