@@ -198,6 +198,7 @@ export function DashboardClient({
 				description: "",
 				name: newProjectName,
 			});
+			await mutate();
 		} catch {
 			addNotification({
 				message: "Failed to create project. Please try again.",

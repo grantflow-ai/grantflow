@@ -11,7 +11,7 @@ interface DeleteApplicationModalProps {
 export function DeleteApplicationModal({ isOpen, onClose, onConfirm }: DeleteApplicationModalProps) {
 	return (
 		<BaseModal isOpen={isOpen} onClose={onClose}>
-			<div className="flex flex-col gap-8 p-8 w-[464px] " data-testid="delete-application-modal">
+			<div className="flex flex-col gap-8 p-2  w-[464px] " data-testid="delete-application-modal">
 				<button
 					aria-label="Close modal"
 					className="absolute right-4 top-4 flex size-4 items-center justify-center text-app-gray-600 hover:text-app-black"
@@ -30,7 +30,7 @@ export function DeleteApplicationModal({ isOpen, onClose, onConfirm }: DeleteApp
 						This action is permanent and cannot be undone.
 					</p>
 				</div>
-				<div className="flex items-center justify-end gap-3">
+				<div className="flex items-center justify-between">
 					<AppButton
 						className="px-4 py-2 rounded"
 						data-testid="cancel-button"
