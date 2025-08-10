@@ -1,6 +1,5 @@
 "use client";
 
-import { arrayMove } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import type { RefObject } from "react";
@@ -12,7 +11,15 @@ import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
-import { log } from "@/utils/logger";
+import {
+	determineNewParentId,
+	executeMainToSubConversion,
+	getTargetIndexForMainSectionReorder,
+	hasSubSections,
+	reorderMainWhenOverMainHasSubSections,
+	updateBackendWithReorderedSections,
+	updateReorder,
+} from "@/utils/grant-sections";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -52,74 +59,6 @@ const clearDragOverVisualState = (): void => {
 	}
 };
 
-const determineNewParentId = (activeSection: GrantSection, overSection: GrantSection): null | string => {
-	const activeIsChild = activeSection.parent_id !== null;
-	const overIsChild = overSection.parent_id !== null;
-
-	if (overIsChild) {
-		return overSection.parent_id;
-	}
-
-	if (activeIsChild) {
-		return overSection.id;
-	}
-
-	return null;
-};
-
-const hasSubSections = (sectionId: string, sections: GrantSection[]) => {
-	return sections.some((section) => section.parent_id === sectionId);
-};
-
-const getTargetIndexForMainSectionReorder = (
-	sections: GrantSection[],
-	overItemId: string,
-	originalIndex: number,
-	activeIndex: number,
-): number => {
-	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
-
-	if (lastSubSectionIndex === -1) {
-		return originalIndex + 1; // Place after the main section if no subsections
-	}
-
-	return activeIndex > lastSubSectionIndex ? lastSubSectionIndex + 1 : lastSubSectionIndex;
-};
-
-const assignOrderAndParent = (
-	sections: GrantSection[],
-	parentAssignmentFn?: (section: GrantSection) => null | string,
-): GrantSection[] => {
-	return sections.map((section, index) => ({
-		...section,
-		order: index,
-		parent_id: parentAssignmentFn?.(section) ?? section.parent_id ?? null,
-	}));
-};
-
-const updateReorder = async (
-	sections: GrantSection[],
-	activeIndex: number,
-	targetIndex: number,
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
-	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
-	parentAssignmentFn?: (section: GrantSection) => null | string,
-): Promise<void> => {
-	const reorderedSections = arrayMove(sections, activeIndex, targetIndex);
-	const updatedSectionsWithOrderAndParent = assignOrderAndParent(reorderedSections, parentAssignmentFn);
-	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
-};
-
-const updateReorderWithReorderedSections = async (
-	reorderedSections: GrantSection[],
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
-	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
-	parentAssignmentFn?: (section: GrantSection) => null | string,
-): Promise<void> => {
-	const updatedSectionsWithOrderAndParent = assignOrderAndParent(reorderedSections, parentAssignmentFn);
-	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
-};
-
 const handleMainToSubReorder = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -133,13 +72,11 @@ const handleMainToSubReorder = async (
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const newParentId = determineNewParentId(activeItem, overItem);
 
-	// Prevent moving a main section into its own sub-section
 	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
 		toast.info("Cannot move a section into its own sub-section");
 		return;
 	}
 
-	// Main without subs → Sub (simple conversion)
 	if (!hasActiveSubSections) {
 		await executeMainToSubConversion(
 			sections,
@@ -153,7 +90,6 @@ const handleMainToSubReorder = async (
 		return;
 	}
 
-	// Main with subs → Sub (requires confirmation to remove subsections)
 	const handleConfirmMove = async () => {
 		dialogRef.current?.close();
 
@@ -198,21 +134,6 @@ const handleMainToSubReorder = async (
 	});
 };
 
-const executeMainToSubConversion = async (
-	sections: GrantSection[],
-	activeIndex: number,
-	overIndex: number,
-	activeItem: GrantSection,
-	newParentId: null | string,
-	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
-	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
-): Promise<void> => {
-	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
-	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections, (section) =>
-		section.id === activeItem.id ? newParentId : section.parent_id,
-	);
-};
-
 const handleSubToMainReorder = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -224,7 +145,6 @@ const handleSubToMainReorder = async (
 ): Promise<boolean> => {
 	const newParentId = determineNewParentId(activeItem, overItem);
 
-	// Skip if subsection is already in the correct position within its main section
 	if (activeItem.parent_id === overItem.id && newParentId === overItem.id && activeIndex === overIndex + 1) {
 		return false;
 	}
@@ -247,7 +167,6 @@ const handleSubToSubReorder = async (
 	const newParentId = determineNewParentId(activeItem, overItem);
 	const hasParentChanged = activeItem.parent_id !== newParentId;
 
-	// Skip if already in the correct position (no movement needed)
 	const isSectionLater = activeIndex > overIndex;
 	if (!hasParentChanged && isSectionLater && activeIndex === overIndex + 1) {
 		return false;
@@ -281,59 +200,18 @@ const handleMainToMainReorder = async (
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const hasOverSubSections = hasSubSections(overItem.id, sections);
 
-	// Main with subs → Main with subs (complex group reordering)
 	if (hasActiveSubSections) {
 		const reorderedSections = reorderMainWhenOverMainHasSubSections(sections, activeItem.id, overItem.id, overItem);
 
-		await updateReorderWithReorderedSections(reorderedSections, toUpdateGrantSection, updateGrantSections);
+		await updateBackendWithReorderedSections(reorderedSections, toUpdateGrantSection, updateGrantSections);
 		return;
 	}
 
-	// Main without subs → Main (with or without subs)
-	// Calculate target index: use overIndex for simple case, or position after target's last sub
 	const targetIndex = hasOverSubSections
 		? getTargetIndexForMainSectionReorder(sections, overItem.id, overIndex, activeIndex)
 		: overIndex;
 
 	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections);
-};
-
-const reorderMainWhenOverMainHasSubSections = (
-	sections: GrantSection[],
-	activeMainSectionId: string,
-	overItemId: string,
-	overItem: GrantSection,
-): GrantSection[] => {
-	const sectionsToMove = sections.filter(
-		(section) => section.id === activeMainSectionId || section.parent_id === activeMainSectionId,
-	);
-
-	const remainingSections = sections.filter(
-		(section) => section.id !== activeMainSectionId && section.parent_id !== activeMainSectionId,
-	);
-
-	if (overItem.parent_id !== null) {
-		log.error("Invalid operation: Cannot drop main section with sub-sections over a sub-section", {
-			activeMainSectionId,
-			overItemId,
-			overItemParentId: overItem.parent_id,
-		});
-		return sections;
-	}
-
-	const overItemLastSubIndexInRemaining = remainingSections.findLastIndex(
-		(section) => section.parent_id === overItemId,
-	);
-	const overItemIndexInRemaining = remainingSections.findIndex((section) => section.id === overItemId);
-
-	const insertionIndex =
-		overItemLastSubIndexInRemaining === -1 ? overItemIndexInRemaining + 1 : overItemLastSubIndexInRemaining + 1;
-
-	return [
-		...remainingSections.slice(0, insertionIndex),
-		...sectionsToMove,
-		...remainingSections.slice(insertionIndex),
-	];
 };
 
 export function DragDropSectionManager({

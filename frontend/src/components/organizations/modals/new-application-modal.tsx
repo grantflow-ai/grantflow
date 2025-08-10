@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { AppButton } from "@/components/app";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { API } from "@/types/api-types";
-import Image from "next/image";
 
 interface NewApplicationModalProps {
 	isOpen: boolean;
