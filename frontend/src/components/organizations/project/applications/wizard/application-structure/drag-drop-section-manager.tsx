@@ -12,6 +12,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
 import {
+	assignOrderAndParent,
 	determineNewParentId,
 	executeMainToSubConversion,
 	getTargetIndexForMainSectionReorder,
@@ -294,9 +295,9 @@ export function DragDropSectionManager({
 				sectionsToDelete.push(...subSections.map((section) => section.id));
 			}
 
-			const updatedSections = grantSections
-				.filter((section) => !sectionsToDelete.includes(section.id))
-				.map(toUpdateGrantSection);
+			const filteredSections = grantSections.filter((section) => !sectionsToDelete.includes(section.id));
+			const reorderedSections = assignOrderAndParent(filteredSections);
+			const updatedSections = reorderedSections.map(toUpdateGrantSection);
 			await useApplicationStore.getState().updateGrantSections(updatedSections);
 			setExpandedSectionId((prev) => (prev === sectionId ? null : prev));
 		},
