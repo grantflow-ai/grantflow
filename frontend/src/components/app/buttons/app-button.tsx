@@ -9,6 +9,16 @@ const appButtonVariants = cva(
 	{
 		compoundVariants: [
 			{
+				className: "text-gray-300",
+				size: "sm",
+				variant: "link",
+			},
+			{
+				className: "text-gray-300",
+				size: "lg",
+				variant: "link",
+			},
+			{
 				className: "border-white text-white before:border-white",
 				theme: "light",
 				variant: "secondary",
