@@ -185,6 +185,105 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				expect(updatedSections).toHaveLength(1);
 				expect(updatedSections[0].id).toBe("main-2");
 			});
+
+			it("recalculates order after deleting subsection", async () => {
+				const sections = [
+					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+					GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1" }),
+					GrantSectionFactory.build({ id: "sub-2", order: 2, parent_id: "main-1" }),
+					GrantSectionFactory.build({ id: "sub-3", order: 3, parent_id: "main-1" }),
+					GrantSectionFactory.build({ id: "main-2", order: 4, parent_id: null }),
+				];
+
+				useApplicationStore.setState({
+					application: ApplicationFactory.build({
+						grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+					}),
+				});
+
+				render(
+					<DragDropSectionManager
+						dialogRef={dialogRef}
+						isDetailedSection={mockIsDetailedSection}
+						onAddSection={mockOnAddSection}
+					/>,
+				);
+
+				const deleteButtons = screen.getAllByTestId("delete-section-button");
+				fireEvent.click(deleteButtons[2]); // Delete sub-2 (middle subsection)
+
+				await waitFor(() => {
+					expect(mockUpdateGrantSections).toHaveBeenCalled();
+				});
+
+				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+				expect(updatedSections).toHaveLength(4);
+
+				expect(updatedSections.find((s: UpdateGrantSection) => s.id === "sub-2")).toBeUndefined();
+
+				const sortedSections = updatedSections.sort(
+					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
+				);
+				expect(sortedSections[0].id).toBe("main-1");
+				expect(sortedSections[0].order).toBe(0);
+				expect(sortedSections[1].id).toBe("sub-1");
+				expect(sortedSections[1].order).toBe(1);
+				expect(sortedSections[2].id).toBe("sub-3");
+				expect(sortedSections[2].order).toBe(2);
+				expect(sortedSections[3].id).toBe("main-2");
+				expect(sortedSections[3].order).toBe(3);
+			});
+
+			it("recalculates order after deleting main section with subsections", async () => {
+				const sections = [
+					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+					GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1" }),
+					GrantSectionFactory.build({ id: "main-2", order: 2, parent_id: null }),
+					GrantSectionFactory.build({ id: "sub-2", order: 3, parent_id: "main-2" }),
+					GrantSectionFactory.build({ id: "main-3", order: 4, parent_id: null }),
+				];
+
+				useApplicationStore.setState({
+					application: ApplicationFactory.build({
+						grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+					}),
+				});
+
+				render(
+					<DragDropSectionManager
+						dialogRef={dialogRef}
+						isDetailedSection={mockIsDetailedSection}
+						onAddSection={mockOnAddSection}
+					/>,
+				);
+
+				const [deleteButton] = screen.getAllByTestId("delete-section-button");
+				fireEvent.click(deleteButton); // Delete main-1 and its subsection
+
+				expect(dialogRef.current.open).toHaveBeenCalledWith(
+					expect.objectContaining({
+						description: expect.stringContaining("sub-sections"),
+						title: "Are you sure you want to delete this section?",
+					}),
+				);
+
+				const [[dialogOptions]] = vi.mocked(dialogRef.current.open).mock.calls;
+				const [, confirmButton] = (dialogOptions as any).footer.props.children;
+				await confirmButton.props.onClick();
+
+				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+				expect(updatedSections).toHaveLength(3);
+
+				const sortedSections = updatedSections.sort(
+					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
+				);
+				expect(sortedSections[0].id).toBe("main-2");
+				expect(sortedSections[0].order).toBe(0);
+				expect(sortedSections[1].id).toBe("sub-2");
+				expect(sortedSections[1].order).toBe(1);
+				expect(sortedSections[2].id).toBe("main-3");
+				expect(sortedSections[2].order).toBe(2);
+			});
 		});
 
 		describe("Updating Sections", () => {
