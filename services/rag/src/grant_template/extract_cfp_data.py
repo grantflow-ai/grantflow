@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.grant_template.nlp_categorizer import (
+    categorize_text,  # noqa: F401 - Re-exported for other modules
     categorize_text_async,
     format_nlp_analysis_for_prompt,
 )
