@@ -158,13 +158,11 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
             if chunk_content:
                 chunks_by_source[source_id].append(chunk_content)
 
-    # Process each source with NLP analysis
     rag_sources_data = []
     for source_id, source_type, source_text_content in sources:
         text_content = source_text_content or ""
         chunks = chunks_by_source.get(source_id, [])
 
-        # Perform async NLP analysis on text content
         try:
             nlp_analysis = await categorize_text_async(text_content)
             logger.debug(
@@ -193,29 +191,13 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
 
 
 def sanitize_text_content(text: str) -> str:
-    """
-    Sanitize text content by removing excessive newlines, whitespace, and problematic patterns.
-
-    Args:
-        text: Text to sanitize
-
-    Returns:
-        Sanitized text
-    """
-    # Handle various newline formats
     text = text.replace("\r\n", "\n")
     text = text.replace("\r", "\n")
-
-    # Remove escaped newline sequences that can cause model confusion
-    text = re.sub(r"\\+r\\+n", "\n", text)  # Remove \r\n, \\r\\n, etc.
-    text = re.sub(r"\\+n", "\n", text)  # Remove \n, \\n, etc.
-    text = re.sub(r"\\+r", "\n", text)  # Remove \r, \\r, etc.
-
-    # Detect and truncate repetitive patterns (runaway generation protection)
-    # Look for patterns like repeated sequences of characters
+    text = re.sub(r"\\+r\\+n", "\n", text)
+    text = re.sub(r"\\+n", "\n", text)
+    text = re.sub(r"\\+r", "\n", text)
     repetitive_pattern = re.search(r"(.{1,10})\1{20,}", text)
     if repetitive_pattern:
-        # If we find a pattern repeated 20+ times, truncate at the start of repetition
         start_pos = repetitive_pattern.start()
         logger.warning(
             "Detected repetitive pattern in text content",
@@ -225,18 +207,12 @@ def sanitize_text_content(text: str) -> str:
         )
         text = text[:start_pos] + "\n[Content truncated due to repetitive pattern]"
 
-    # Remove excessive consecutive newlines
     text = re.sub(r"\n{3,}", "\n\n", text)
-
-    # Remove excessive spaces
     text = re.sub(r" {2,}", " ", text)
-
-    # Clean up lines
     lines = text.split("\n")
     lines = [line.rstrip() for line in lines]
     text = "\n".join(lines)
 
-    # Remove null bytes and other control characters
     text = text.replace("\x00", "")
     text = re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
 
@@ -244,21 +220,11 @@ def sanitize_text_content(text: str) -> str:
 
 
 def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
-    """
-    Format RAG sources data for inclusion in the prompt.
-
-    Args:
-        rag_sources: List of RAG source data
-
-    Returns:
-        Formatted string for prompt inclusion
-    """
     formatted_sources = []
 
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
-        # Add NLP analysis first for better context
         nlp_analysis = source.get("nlp_analysis", {})
         if nlp_analysis:
             formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
