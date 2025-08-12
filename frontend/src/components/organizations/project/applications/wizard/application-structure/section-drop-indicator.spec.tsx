@@ -2,6 +2,7 @@ import { GrantSectionFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DragDropContextData } from "./drag-drop-context";
+import { DragDropContext } from "./drag-drop-context";
 import { SectionDropIndicator, SectionWithDropIndicators } from "./section-drop-indicator";
 
 const mockDragContext: DragDropContextData = {
@@ -14,6 +15,11 @@ const mockDragContext: DragDropContextData = {
 };
 
 vi.mock("./drag-drop-context", () => ({
+	DragDropContext: {
+		Provider: ({ children }: { children: React.ReactNode; value: any }) => (
+			<div data-testid="real-drag-context-provider">{children}</div>
+		),
+	},
 	useDragDropContext: () => mockDragContext,
 }));
 
@@ -64,6 +70,15 @@ afterEach(() => {
 	// eslint-disable-next-line @typescript-eslint/no-deprecated
 	globalThis.document.querySelector = originalQuerySelector;
 });
+
+const createRealDragContextProvider = (contextData: DragDropContextData) => {
+	const getDragState = () => contextData;
+	const DragContextProvider = ({ children }: { children: React.ReactNode }) => (
+		<DragDropContext.Provider value={{ getDragState }}>{children}</DragDropContext.Provider>
+	);
+	DragContextProvider.displayName = "DragContextProvider";
+	return DragContextProvider;
+};
 
 describe("SectionDropIndicator", () => {
 	it("renders indicator with main section width", () => {
@@ -166,5 +181,107 @@ describe("SectionWithDropIndicators", () => {
 		unmount();
 
 		expect(mockObserver.disconnect).toHaveBeenCalled();
+	});
+
+	describe("Integration Tests with Real Drag Context", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+			mockElement.hasAttribute.mockReturnValue(false);
+		});
+
+		it("integrates SectionWithDropIndicators with real drag context provider", () => {
+			const sections = [
+				GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+				GrantSectionFactory.build({ id: "main-2", order: 1, parent_id: null }),
+			];
+
+			const dragContext: DragDropContextData = {
+				activeIndex: 0,
+				activeItem: sections[0],
+				isAnyDragging: true,
+				overIndex: 1,
+				overItem: sections[1],
+				sections,
+			};
+
+			const RealDragProvider = createRealDragContextProvider(dragContext);
+
+			render(
+				<RealDragProvider>
+					<SectionWithDropIndicators section={sections[1]}>
+						<div>Section Content</div>
+					</SectionWithDropIndicators>
+				</RealDragProvider>,
+			);
+
+			const aboveIndicator = screen.getByTestId("drop-indicator-above");
+			const belowIndicator = screen.getByTestId("drop-indicator-below");
+
+			expect(aboveIndicator).toBeInTheDocument();
+			expect(belowIndicator).toBeInTheDocument();
+			expect(screen.getByText("Section Content")).toBeInTheDocument();
+		});
+
+		it("handles real drag context with complex section hierarchies", () => {
+			const sections = [
+				GrantSectionFactory.build({ id: "main-a", order: 0, parent_id: null }),
+				GrantSectionFactory.build({ id: "sub-a1", order: 1, parent_id: "main-a" }),
+				GrantSectionFactory.build({ id: "main-b", order: 2, parent_id: null }),
+			];
+
+			const dragContext: DragDropContextData = {
+				activeIndex: 1,
+				activeItem: sections[1], // subsection
+				isAnyDragging: true,
+				overIndex: 2,
+				overItem: sections[2], // main section
+				sections,
+			};
+
+			const RealDragProvider = createRealDragContextProvider(dragContext);
+
+			render(
+				<RealDragProvider>
+					<SectionWithDropIndicators section={sections[2]}>
+						<div>Target Section</div>
+					</SectionWithDropIndicators>
+				</RealDragProvider>,
+			);
+
+			expect(screen.getByTestId("drop-indicator-above")).toBeInTheDocument();
+			expect(screen.getByTestId("drop-indicator-below")).toBeInTheDocument();
+			expect(screen.getByText("Target Section")).toBeInTheDocument();
+		});
+
+		it("properly manages MutationObserver lifecycle with real context", () => {
+			const sections = [GrantSectionFactory.build({ id: "test-section", order: 0, parent_id: null })];
+
+			const dragContext: DragDropContextData = {
+				activeIndex: -1,
+				activeItem: null,
+				isAnyDragging: true,
+				overIndex: -1,
+				overItem: null,
+				sections,
+			};
+
+			const RealDragProvider = createRealDragContextProvider(dragContext);
+
+			const { unmount } = render(
+				<RealDragProvider>
+					<SectionWithDropIndicators section={sections[0]}>
+						<div>Content</div>
+					</SectionWithDropIndicators>
+				</RealDragProvider>,
+			);
+
+			expect(screen.getByText("Content")).toBeInTheDocument();
+			expect(screen.getByTestId("drop-indicator-above")).toBeInTheDocument();
+			expect(screen.getByTestId("drop-indicator-below")).toBeInTheDocument();
+
+			unmount();
+
+			expect(screen.queryByText("Content")).not.toBeInTheDocument();
+		});
 	});
 });
