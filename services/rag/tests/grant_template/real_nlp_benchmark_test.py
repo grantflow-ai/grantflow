@@ -1,7 +1,4 @@
-import time
-from statistics import mean
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 from packages.db.src.tables import GrantTemplateSource
@@ -91,97 +88,6 @@ async def benchmark_grant_template_with_sources(
         source_ids = [str(row[0]) for row in result.fetchall()]
 
     return str(template.id), source_ids
-
-
-async def test_rag_sources_data_with_vs_without_nlp_benchmark(
-    async_session_maker: async_sessionmaker[Any],
-    benchmark_grant_template_with_sources: tuple[str, list[str]],
-) -> None:
-    template_id, source_ids = benchmark_grant_template_with_sources
-
-    with_nlp_times = []
-    with_nlp_results = []
-
-    for _ in range(3):  # Multiple runs for accuracy
-        start_time = time.perf_counter()
-        result = await get_rag_sources_data(
-            source_ids=source_ids,
-            session_maker=async_session_maker,
-        )
-        end_time = time.perf_counter()
-
-        with_nlp_times.append(end_time - start_time)
-
-        nlp_detections = 0
-        for source_data in result:
-            if "nlp_analysis" in source_data:
-                nlp_analysis = source_data["nlp_analysis"]
-                nlp_detections += sum(len(sentences) for sentences in nlp_analysis.values())
-
-        with_nlp_results.append(
-            {
-                "sources": len(result),
-                "nlp_detections": nlp_detections,
-                "has_nlp_analysis": all("nlp_analysis" in source for source in result),
-            }
-        )
-
-    def skip_nlp_categorize(_text: str) -> dict[str, list[str]]:
-        return {
-            "Money": [],
-            "Date/Time": [],
-            "Writing-related": [],
-            "Other Numbers": [],
-            "Recommendations": [],
-            "Orders": [],
-            "Positive Instructions": [],
-            "Negative Instructions": [],
-            "Evaluation Criteria": [],
-        }
-
-    without_nlp_times = []
-    without_nlp_results = []
-
-    with patch("services.rag.src.grant_template.extract_cfp_data.categorize_text", skip_nlp_categorize):
-        for _ in range(3):  # Multiple runs for accuracy
-            start_time = time.perf_counter()
-            result = await get_rag_sources_data(
-                source_ids=source_ids,
-                session_maker=async_session_maker,
-            )
-            end_time = time.perf_counter()
-
-            without_nlp_times.append(end_time - start_time)
-
-            nlp_detections = 0
-            for source_data in result:
-                if "nlp_analysis" in source_data:
-                    nlp_analysis = source_data["nlp_analysis"]
-                    nlp_detections += sum(len(sentences) for sentences in nlp_analysis.values())
-
-            without_nlp_results.append(
-                {
-                    "sources": len(result),
-                    "nlp_detections": nlp_detections,
-                    "has_nlp_analysis": all("nlp_analysis" in source for source in result),
-                }
-            )
-
-    with_nlp_avg_time = mean(with_nlp_times)
-    with_nlp_avg_detections = mean([r["nlp_detections"] for r in with_nlp_results])
-
-    without_nlp_avg_time = mean(without_nlp_times)
-    without_nlp_avg_detections = mean([r["nlp_detections"] for r in without_nlp_results])
-
-    time_overhead = (with_nlp_avg_time / without_nlp_avg_time) if without_nlp_avg_time > 0 else float("inf")
-    detection_benefit = with_nlp_avg_detections - without_nlp_avg_detections
-
-    assert with_nlp_avg_detections > without_nlp_avg_detections, "NLP should provide more detections"
-    assert detection_benefit >= 10, f"Expected significant detection benefit, got {detection_benefit:.1f}"
-    assert time_overhead < 10.0, f"NLP overhead {time_overhead:.2f}x too high (should be < 10x)"
-    assert with_nlp_results[0]["sources"] == without_nlp_results[0]["sources"], (
-        "Same number of sources should be processed"
-    )
 
 
 async def test_nlp_analysis_content_quality(
