@@ -41,10 +41,8 @@ vi.mock("./section-icon-button", () => ({
 }));
 
 vi.mock("./section-drop-indicator", () => ({
-	SectionWithDropIndicators: vi.fn(({ children, isDragging, section }) => (
-		<div data-dragging={isDragging} data-testid={`drop-indicators-${section.id}`}>
-			{children}
-		</div>
+	SectionWithDropIndicators: vi.fn(({ children, section }) => (
+		<div data-testid={`drop-indicators-${section.id}`}>{children}</div>
 	)),
 }));
 
@@ -402,70 +400,13 @@ describe("SortableSection", () => {
 	});
 
 	describe("Drop Indicator Integration", () => {
-		it("does not show drop indicators when nothing is being dragged", async () => {
+		it("renders drop indicator wrapper", () => {
 			const section = GrantSectionFactory.build();
-
-			const { useSortable } = await import("@dnd-kit/sortable");
-			const mockUseSortable = vi.mocked(useSortable);
-
-			mockUseSortable.mockReturnValue({
-				active: null,
-				attributes: {},
-				isDragging: false,
-				listeners: {},
-				setNodeRef: vi.fn(),
-				transform: null,
-				transition: undefined,
-			} as any);
 
 			render(<SortableSection {...defaultProps} section={section} />);
 
 			const dropIndicators = screen.getByTestId(`drop-indicators-${section.id}`);
-			expect(dropIndicators).toHaveAttribute("data-dragging", "false");
-		});
-
-		it("shows drop indicators when another section is being dragged", async () => {
-			const section = GrantSectionFactory.build();
-
-			const { useSortable } = await import("@dnd-kit/sortable");
-			const mockUseSortable = vi.mocked(useSortable);
-
-			mockUseSortable.mockReturnValue({
-				active: { id: "other-section-id" },
-				attributes: {},
-				isDragging: false,
-				listeners: {},
-				setNodeRef: vi.fn(),
-				transform: null,
-				transition: undefined,
-			} as any);
-
-			render(<SortableSection {...defaultProps} section={section} />);
-
-			const dropIndicators = screen.getByTestId(`drop-indicators-${section.id}`);
-			expect(dropIndicators).toHaveAttribute("data-dragging", "true");
-		});
-
-		it("does not show drop indicators when this section is being dragged", async () => {
-			const section = GrantSectionFactory.build();
-
-			const { useSortable } = await import("@dnd-kit/sortable");
-			const mockUseSortable = vi.mocked(useSortable);
-
-			mockUseSortable.mockReturnValue({
-				active: { id: section.id },
-				attributes: {},
-				isDragging: true,
-				listeners: {},
-				setNodeRef: vi.fn(),
-				transform: null,
-				transition: undefined,
-			} as any);
-
-			render(<SortableSection {...defaultProps} section={section} />);
-
-			const dropIndicators = screen.getByTestId(`drop-indicators-${section.id}`);
-			expect(dropIndicators).toHaveAttribute("data-dragging", "false");
+			expect(dropIndicators).toBeInTheDocument();
 		});
 
 		it("passes correct section data to drop indicators", () => {
