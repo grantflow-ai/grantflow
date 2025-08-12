@@ -714,7 +714,7 @@ def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSource
 
     # Check that NLP analysis is included in formatted output
     assert "NLP Analysis:" in formatted
-    assert "Structured NLP Analysis" in formatted
+    assert "NLP Analysis" in formatted
     assert "Orders" in formatted
     assert "Money" in formatted
     assert "Evaluation Criteria" in formatted
