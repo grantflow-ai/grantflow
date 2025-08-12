@@ -50,7 +50,7 @@ export const getTargetIndexForMainSectionReorder = (
 	const lastSubSectionIndex = sections.findLastIndex((section) => section.parent_id === overItemId);
 
 	if (lastSubSectionIndex === -1) {
-		return originalIndex + 1; // Place after the main section if no subsections
+		return originalIndex + 1;
 	}
 
 	return activeIndex > lastSubSectionIndex ? lastSubSectionIndex + 1 : lastSubSectionIndex;
@@ -206,7 +206,143 @@ export interface DropIndicatorState {
  * Calculates drop indicator visibility based on drag-and-drop context
  * Uses optimized logic with early returns and safe fallbacks
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex drag-and-drop logic needs to stay cohesive
+/**
+ * Calculates drop indicator for last subsection when dropping over main section with subsections
+ * @param overItem The section being dragged over
+ * @param sections Array of all sections
+ * @param currentSectionId ID of the current section being evaluated
+ * @returns Drop indicator state or null if not applicable
+ */
+const calculateLastSubsectionDropIndicator = (
+	overItem: GrantSection,
+	sections: GrantSection[],
+	currentSectionId: string,
+): DropIndicatorState | null => {
+	if (!(overItem.parent_id === null && hasSubSections(overItem.id, sections))) {
+		return null;
+	}
+
+	const subsections = sections.filter((s) => s.parent_id === overItem.id).sort((a, b) => a.order - b.order);
+	const lastSubsection = subsections.at(-1);
+
+	if (currentSectionId === lastSubsection?.id) {
+		return {
+			isSubsectionWidth: false,
+			showAbove: false,
+			showBelow: true,
+		};
+	}
+
+	return null;
+};
+
+/**
+ * Calculates drop indicator when dragging subsection to main section
+ * @returns Drop indicator state for sub-to-main drag scenario
+ */
+const calculateSubToMainDropIndicator = (): DropIndicatorState => {
+	return {
+		isSubsectionWidth: false,
+		showAbove: false,
+		showBelow: true,
+	};
+};
+
+/**
+ * Calculates drop indicator when dragging main section to subsection
+ * @param activeItem The section being dragged
+ * @param overItem The section being dragged over
+ * @param sections Array of all sections
+ * @returns Drop indicator state for main-to-sub drag scenario
+ */
+const calculateMainToSubDropIndicator = (
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	sections: GrantSection[],
+): DropIndicatorState => {
+	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
+		return { isSubsectionWidth: false, showAbove: false, showBelow: false };
+	}
+	return {
+		isSubsectionWidth: true,
+		showAbove: true,
+		showBelow: false,
+	};
+};
+
+/**
+ * Calculates drop indicator when dragging subsection to subsection
+ * @param activeItem The section being dragged
+ * @param overItem The section being dragged over
+ * @param activeIndex Current index of active section
+ * @param overIndex Index of section being dragged over
+ * @returns Drop indicator state for sub-to-sub drag scenario
+ */
+const calculateSubToSubDropIndicator = (
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	activeIndex: number,
+	overIndex: number,
+): DropIndicatorState => {
+	const newParentId = determineNewParentId(activeItem, overItem);
+	const hasParentChanged = activeItem.parent_id !== newParentId;
+
+	if (!hasParentChanged && Math.abs(activeIndex - overIndex) === 1 && activeIndex === overIndex + 1) {
+		return { isSubsectionWidth: true, showAbove: false, showBelow: false };
+	}
+
+	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
+	return {
+		isSubsectionWidth: true,
+		showAbove: activeIndex > targetIndex,
+		showBelow: activeIndex < targetIndex,
+	};
+};
+
+/**
+ * Calculates drop indicator when dragging main section to main section
+ * @param activeItem The section being dragged
+ * @param overItem The section being dragged over
+ * @param activeIndex Current index of active section
+ * @param overIndex Index of section being dragged over
+ * @param sections Array of all sections
+ * @param defaultResult Default drop indicator state to use as fallback
+ * @returns Drop indicator state for main-to-main drag scenario
+ */
+const calculateMainToMainDropIndicator = (
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	activeIndex: number,
+	overIndex: number,
+	sections: GrantSection[],
+	defaultResult: DropIndicatorState,
+): DropIndicatorState => {
+	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+	const hasOverSubSections = hasSubSections(overItem.id, sections);
+
+	if (hasActiveSubSections || hasOverSubSections) {
+		return defaultResult;
+	}
+
+	return {
+		isSubsectionWidth: false,
+		showAbove: activeIndex > overIndex,
+		showBelow: activeIndex < overIndex,
+	};
+};
+
+/**
+ * Calculates drop indicator visibility based on drag-and-drop context
+ * Uses optimized logic with early returns and safe fallbacks
+ * @param activeItem The section being dragged
+ * @param overItem The section being dragged over
+ * @param activeIndex Current index of active section
+ * @param overIndex Index of section being dragged over
+ * @param sections Array of all sections
+ * @param currentSectionId ID of the current section being evaluated
+ * @returns Drop indicator state with visibility and positioning
+ */
 export function calculateDropIndicatorVisibility(
 	activeItem: GrantSection,
 	overItem: GrantSection,
@@ -215,19 +351,16 @@ export function calculateDropIndicatorVisibility(
 	sections: GrantSection[],
 	currentSectionId: string,
 ): DropIndicatorState {
-	// Default fallback - below section with matching width
 	const defaultResult: DropIndicatorState = {
 		isSubsectionWidth: overItem.parent_id !== null,
 		showAbove: false,
 		showBelow: true,
 	};
 
-	// Early return for same item (safety check)
 	if (activeItem.id === overItem.id) {
 		return { isSubsectionWidth: false, showAbove: false, showBelow: false };
 	}
 
-	// Early return for invalid indices
 	if (activeIndex === -1 || overIndex === -1) {
 		return defaultResult;
 	}
@@ -236,81 +369,34 @@ export function calculateDropIndicatorVisibility(
 	const isOverMain = overItem.parent_id === null;
 
 	try {
-		// Special case: Last subsection of dragged-over main section gets full width
-		if (isOverMain && hasSubSections(overItem.id, sections)) {
-			const subsections = sections.filter((s) => s.parent_id === overItem.id).sort((a, b) => a.order - b.order);
-
-			const lastSubsection = subsections.at(-1);
-
-			if (currentSectionId === lastSubsection?.id) {
-				return {
-					isSubsectionWidth: false, // Full main section width!
-					showAbove: false,
-					showBelow: true,
-				};
-			}
+		const lastSubsectionResult = calculateLastSubsectionDropIndicator(overItem, sections, currentSectionId);
+		if (lastSubsectionResult) {
+			return lastSubsectionResult;
 		}
 
-		// Scenario 1: Sub → Main (always below with main width)
 		if (!isActiveMain && isOverMain) {
-			return {
-				isSubsectionWidth: false,
-				showAbove: false,
-				showBelow: true,
-			};
+			return calculateSubToMainDropIndicator();
 		}
 
-		// Scenario 2: Main → Sub (above with subsection width, validate not own child)
 		if (isActiveMain && !isOverMain) {
-			const hasActiveSubSections = hasSubSections(activeItem.id, sections);
-			if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
-				// Invalid: can't move into own subsection
-				return { isSubsectionWidth: false, showAbove: false, showBelow: false };
-			}
-			return {
-				isSubsectionWidth: true,
-				showAbove: true,
-				showBelow: false,
-			};
+			return calculateMainToSubDropIndicator(activeItem, overItem, sections);
 		}
 
-		// Scenario 3: Sub → Sub (same or different parent)
 		if (!(isActiveMain || isOverMain)) {
-			const newParentId = determineNewParentId(activeItem, overItem);
-			const hasParentChanged = activeItem.parent_id !== newParentId;
-
-			// No-op case: adjacent with same parent
-			if (!hasParentChanged && Math.abs(activeIndex - overIndex) === 1 && activeIndex === overIndex + 1) {
-				return { isSubsectionWidth: true, showAbove: false, showBelow: false };
-			}
-
-			const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
-			return {
-				isSubsectionWidth: true,
-				showAbove: activeIndex > targetIndex,
-				showBelow: activeIndex < targetIndex,
-			};
+			return calculateSubToSubDropIndicator(activeItem, overItem, activeIndex, overIndex);
 		}
 
-		// Scenario 4: Main → Main
 		if (isActiveMain && isOverMain) {
-			const hasActiveSubSections = hasSubSections(activeItem.id, sections);
-			const hasOverSubSections = hasSubSections(overItem.id, sections);
-
-			// For complex cases with subsections, use safe default
-			if (hasActiveSubSections || hasOverSubSections) {
-				return defaultResult;
-			}
-
-			// Simple main-to-main reorder
-			return {
-				isSubsectionWidth: false,
-				showAbove: activeIndex > overIndex,
-				showBelow: activeIndex < overIndex,
-			};
+			return calculateMainToMainDropIndicator(
+				activeItem,
+				overItem,
+				activeIndex,
+				overIndex,
+				sections,
+				defaultResult,
+			);
 		}
 	} catch (error) {
-		// Any calculation errors - fall back to safe default
 		log.warn("Drop indicator calculation failed, using default", { activeItem, error, overItem });
 		return defaultResult;
 	}
