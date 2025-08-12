@@ -1,35 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GrantSection } from "@/types/grant-sections";
+import { calculateDropIndicatorVisibility } from "@/utils/grant-sections";
+import { useDragDropContext } from "./drag-drop-context";
 
 interface SectionDropIndicatorProps {
-	isSubsection?: boolean;
+	isSubsectionWidth: boolean;
 	isVisible: boolean;
 	position: "above" | "below";
 }
 
 interface SectionWithDropIndicatorsProps {
 	children: React.ReactNode;
-	isDragging: boolean;
 	section: GrantSection;
 }
 
-export function SectionDropIndicator({ isSubsection = false, isVisible, position }: SectionDropIndicatorProps) {
+export function SectionDropIndicator({ isSubsectionWidth, isVisible, position }: SectionDropIndicatorProps) {
+	const marginClass = position === "above" ? " mb-1" : " mt-1";
+	const visibilityClasses = isVisible 
+		? `h-2 opacity-100 scale-y-100${marginClass}`
+		: "h-0 opacity-0 scale-y-0 mb-0 mt-0";
+	
 	return (
 		<div
-			className={`h-2 bg-primary rounded-xs transition-opacity duration-200 ${isVisible ? "opacity-100" : "opacity-0"} ${isSubsection ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"} ${position === "above" ? "mb-1" : "mt-1"}`}
+			className={`bg-primary rounded-xs transition-all duration-300 ease-in-out ${visibilityClasses} ${isSubsectionWidth ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"}`}
 			data-testid={`drop-indicator-${position}`}
 		/>
 	);
 }
 
-export function SectionWithDropIndicators({ children, isDragging, section }: SectionWithDropIndicatorsProps) {
-	const isSubsection = section.parent_id !== null;
+export function SectionWithDropIndicators({ children, section }: SectionWithDropIndicatorsProps) {
 	const [isDraggedOver, setIsDraggedOver] = useState(false);
 
+	const dragContext = useDragDropContext();
+	const { isAnyDragging } = dragContext;
+
 	useEffect(() => {
-		if (!isDragging) {
+		if (!isAnyDragging) {
 			setIsDraggedOver(false);
 			return;
 		}
@@ -57,17 +65,42 @@ export function SectionWithDropIndicators({ children, isDragging, section }: Sec
 		return () => {
 			observer.disconnect();
 		};
-	}, [section.id, isDragging]);
+	}, [section.id, isAnyDragging]);
 
-	// Only render indicators if being dragged over (not just when dragging is active)
-	if (!isDraggedOver) {
-		return <>{children}</>;
-	}
+	const dropIndicators = useMemo(() => {
+		if (!(isDraggedOver && isAnyDragging)) {
+			return { isSubsectionWidth: false, showAbove: false, showBelow: false };
+		}
+
+		const { activeIndex, activeItem, overIndex, overItem, sections } = dragContext;
+
+		if (!(activeItem && overItem)) {
+			return { isSubsectionWidth: false, showAbove: false, showBelow: false };
+		}
+
+		const isDirectlyDraggedOver = section.id === overItem.id;
+		const isParentDraggedOver = section.parent_id === overItem.id && overItem.parent_id === null;
+
+		if (!(isDirectlyDraggedOver || isParentDraggedOver)) {
+			return { isSubsectionWidth: false, showAbove: false, showBelow: false };
+		}
+
+		return calculateDropIndicatorVisibility(activeItem, overItem, activeIndex, overIndex, sections, section.id);
+	}, [isDraggedOver, isAnyDragging, dragContext, section.id, section.parent_id]);
 
 	return (
 		<div className="relative">
+			<SectionDropIndicator
+				isSubsectionWidth={dropIndicators.isSubsectionWidth}
+				isVisible={dropIndicators.showAbove}
+				position="above"
+			/>
 			{children}
-			<SectionDropIndicator isSubsection={isSubsection} isVisible={true} position="below" />
+			<SectionDropIndicator
+				isSubsectionWidth={dropIndicators.isSubsectionWidth}
+				isVisible={dropIndicators.showBelow}
+				position="below"
+			/>
 		</div>
 	);
 }

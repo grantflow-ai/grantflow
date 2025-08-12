@@ -148,13 +148,10 @@ export function SortableSection({
 		[onToggleExpand],
 	);
 
-	const isAnyDragging = Boolean(active);
-	const shouldShowDropIndicators = isAnyDragging && !isCurrentlyDragging;
-
 	return (
-		<SectionWithDropIndicators isDragging={shouldShowDropIndicators} section={section}>
+		<SectionWithDropIndicators section={section}>
 			<div
-				className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 data-[drag-over]:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+				className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 				data-sortable-id={section.id}
 				data-testid="section-container"
 				ref={setNodeRef}
