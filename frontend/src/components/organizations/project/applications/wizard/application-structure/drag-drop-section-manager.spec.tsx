@@ -133,7 +133,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				);
 
 				const deleteButtons = screen.getAllByTestId("delete-section-button");
-				fireEvent.click(deleteButtons[1]); // Delete sub-1
+				fireEvent.click(deleteButtons[1]);
 
 				await waitFor(() => {
 					expect(mockUpdateGrantSections).toHaveBeenCalled();
@@ -210,7 +210,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				);
 
 				const deleteButtons = screen.getAllByTestId("delete-section-button");
-				fireEvent.click(deleteButtons[2]); // Delete sub-2 (middle subsection)
+				fireEvent.click(deleteButtons[2]);
 
 				await waitFor(() => {
 					expect(mockUpdateGrantSections).toHaveBeenCalled();
@@ -258,7 +258,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				);
 
 				const [deleteButton] = screen.getAllByTestId("delete-section-button");
-				fireEvent.click(deleteButton); // Delete main-1 and its subsection
+				fireEvent.click(deleteButton);
 
 				expect(dialogRef.current.open).toHaveBeenCalledWith(
 					expect.objectContaining({
@@ -914,6 +914,278 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 			await dragHandlers.onReorder(sections, 0, 0, sections[0], sections[0]);
 
 			expect(mockUpdateGrantSections).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("Section Management Error Scenarios", () => {
+		it("attempts to save changes when drag and drop operations fail", async () => {
+			const sections = [
+				GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+				GrantSectionFactory.build({ id: "main-2", order: 1, parent_id: null }),
+			];
+
+			mockUpdateGrantSections.mockRejectedValueOnce(new Error("Network error"));
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+				}),
+			});
+
+			render(
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={mockIsDetailedSection}
+					onAddSection={mockOnAddSection}
+				/>,
+			);
+
+			try {
+				await dragHandlers.onReorder(sections, 0, 1, sections[0], sections[1]);
+			} catch {}
+			expect(mockUpdateGrantSections).toHaveBeenCalled();
+		});
+
+		it("allows users to delete subsections immediately without confirmation", async () => {
+			const sections = [
+				GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+				GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1" }),
+				GrantSectionFactory.build({ id: "main-2", order: 2, parent_id: null }),
+			];
+
+			mockUpdateGrantSections.mockResolvedValueOnce(undefined);
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+				}),
+			});
+
+			render(
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={mockIsDetailedSection}
+					onAddSection={mockOnAddSection}
+				/>,
+			);
+
+			const deleteButtons = screen.getAllByTestId("delete-section-button");
+			fireEvent.click(deleteButtons[1]);
+
+			await waitFor(() => {
+				expect(mockUpdateGrantSections).toHaveBeenCalled();
+			});
+
+			const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+			expect(updatedSections).toHaveLength(2);
+			expect(updatedSections.find((s: any) => s.id === "sub-1")).toBeUndefined();
+			expect(updatedSections.find((s: any) => s.id === "main-1")).toBeDefined();
+			expect(updatedSections.find((s: any) => s.id === "main-2")).toBeDefined();
+		});
+
+		it("saves section property changes when user modifies research plan settings", async () => {
+			const sections = [
+				GrantSectionFactory.build({
+					id: "section-1",
+					is_detailed_research_plan: false,
+					max_words: 3000,
+					order: 0,
+					parent_id: null,
+					title: "Test Section",
+				}),
+			];
+
+			mockUpdateGrantSections.mockResolvedValueOnce(undefined);
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+				}),
+			});
+
+			render(
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={mockIsDetailedSection}
+					onAddSection={mockOnAddSection}
+				/>,
+			);
+
+			const expandButton = screen.getByTestId("expand-section-button");
+			fireEvent.click(expandButton);
+
+			await waitFor(() => {
+				expect(screen.getByTestId("edit-form-container")).toBeInTheDocument();
+			});
+
+			const researchPlanCheckbox = screen.getByTestId("research-plan-checkbox");
+			fireEvent.click(researchPlanCheckbox);
+
+			const saveButton = screen.getByTestId("save-button");
+			fireEvent.click(saveButton);
+
+			await waitFor(() => {
+				expect(mockUpdateGrantSections).toHaveBeenCalled();
+			});
+
+			const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+			const updatedSection = updatedSections.find((s: any) => s.id === "section-1");
+			expect(updatedSection.is_detailed_research_plan).toBe(true);
+			expect(updatedSection.title).toBe("Test Section");
+			expect(updatedSection.max_words).toBe(3000);
+		});
+
+		it("processes section reordering when user drags between different sections", async () => {
+			const sections = [
+				GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+				GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1" }),
+				GrantSectionFactory.build({ id: "main-2", order: 2, parent_id: null }),
+			];
+
+			mockUpdateGrantSections.mockResolvedValueOnce(undefined);
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+				}),
+			});
+
+			render(
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={mockIsDetailedSection}
+					onAddSection={mockOnAddSection}
+				/>,
+			);
+
+			await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
+
+			expect(mockUpdateGrantSections).toHaveBeenCalled();
+
+			const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+			const reorderedSubSection = updatedSections.find((s: any) => s.id === "sub-1");
+			expect(reorderedSubSection.parent_id).toBe("main-2");
+			expect(reorderedSubSection.order).toBe(2);
+
+			const main1 = updatedSections.find((s: any) => s.id === "main-1");
+			const main2 = updatedSections.find((s: any) => s.id === "main-2");
+			expect(main1.order).toBe(0);
+			expect(main2.order).toBe(1);
+			expect(updatedSections).toHaveLength(3);
+		});
+
+		it("shows confirmation dialog and processes main-to-subsection conversion when user confirms", async () => {
+			const sections = [
+				GrantSectionFactory.build({
+					id: "main-1",
+					order: 0,
+					parent_id: null,
+					title: "Main 1",
+				}),
+				GrantSectionFactory.build({
+					id: "sub-1",
+					order: 1,
+					parent_id: "main-1",
+					title: "Sub 1",
+				}),
+				GrantSectionFactory.build({
+					id: "main-2",
+					order: 2,
+					parent_id: null,
+					title: "Main 2",
+				}),
+				GrantSectionFactory.build({
+					id: "sub-2",
+					order: 3,
+					parent_id: "main-2",
+					title: "Sub 2",
+				}),
+			];
+
+			mockUpdateGrantSections.mockResolvedValueOnce(undefined);
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+				}),
+			});
+
+			render(
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={mockIsDetailedSection}
+					onAddSection={mockOnAddSection}
+				/>,
+			);
+
+			await dragHandlers.onReorder(sections, 0, 3, sections[0], sections[3]);
+
+			expect(dialogRef.current.open).toHaveBeenCalledWith(
+				expect.objectContaining({
+					description: expect.stringContaining("permanently remove"),
+					title: "This action will affect the section structure!",
+				}),
+			);
+
+			const [[dialogOptions]] = vi.mocked(dialogRef.current.open).mock.calls;
+			const [, confirmButton] = (dialogOptions as any).footer.props.children;
+			await confirmButton.props.onClick();
+
+			expect(mockUpdateGrantSections).toHaveBeenCalled();
+
+			const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+			expect(updatedSections).toHaveLength(3);
+
+			const convertedSection = updatedSections.find((s: any) => s.id === "main-1");
+			expect(convertedSection.parent_id).toBe("main-2");
+			expect(convertedSection.order).toBe(2);
+
+			const removedSubSection = updatedSections.find((s: any) => s.id === "sub-1");
+			expect(removedSubSection).toBeUndefined();
+
+			const main2 = updatedSections.find((s: any) => s.id === "main-2");
+			const sub2 = updatedSections.find((s: any) => s.id === "sub-2");
+			expect(main2.parent_id).toBeNull();
+			expect(main2.order).toBe(0);
+			expect(sub2.parent_id).toBe("main-2");
+			expect(sub2.order).toBe(1);
+		});
+
+		it("prevents structure-breaking operations when user tries invalid drag operations", async () => {
+			const sections = [
+				GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
+				GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1" }),
+			];
+
+			useApplicationStore.setState({
+				application: ApplicationFactory.build({
+					grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+				}),
+			});
+
+			render(
+				<DragDropSectionManager
+					dialogRef={dialogRef}
+					isDetailedSection={mockIsDetailedSection}
+					onAddSection={mockOnAddSection}
+				/>,
+			);
+
+			await dragHandlers.onReorder(sections, 0, 0, sections[0], sections[0]);
+
+			expect(mockUpdateGrantSections).not.toHaveBeenCalled();
+
+			const applicationState = useApplicationStore.getState().application;
+			const currentSections = applicationState?.grant_template?.grant_sections ?? [];
+			expect(currentSections).toHaveLength(2);
+
+			const main1 = currentSections.find((s) => s.id === "main-1");
+			const sub1 = currentSections.find((s) => s.id === "sub-1");
+
+			expect(main1?.order).toBe(0);
+			expect(main1?.parent_id).toBeNull();
+			expect(sub1?.order).toBe(1);
+			expect(sub1?.parent_id).toBe("main-1");
 		});
 	});
 });

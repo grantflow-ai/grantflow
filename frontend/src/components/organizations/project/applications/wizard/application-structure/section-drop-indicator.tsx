@@ -18,10 +18,10 @@ interface SectionWithDropIndicatorsProps {
 
 export function SectionDropIndicator({ isSubsectionWidth, isVisible, position }: SectionDropIndicatorProps) {
 	const marginClass = position === "above" ? " mb-1" : " mt-1";
-	const visibilityClasses = isVisible 
+	const visibilityClasses = isVisible
 		? `h-2 opacity-100 scale-y-100${marginClass}`
 		: "h-0 opacity-0 scale-y-0 mb-0 mt-0";
-	
+
 	return (
 		<div
 			className={`bg-primary rounded-xs transition-all duration-300 ease-in-out ${visibilityClasses} ${isSubsectionWidth ? "ml-[6.875rem] w-[calc(100%-6.875rem)]" : "w-full"}`}
