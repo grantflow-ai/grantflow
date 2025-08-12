@@ -12,7 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
-from services.rag.src.grant_template.nlp_categorizer import categorize_text_async, format_nlp_analysis_for_prompt
+from services.rag.src.grant_template.nlp_categorizer import (
+    categorize_text_async,
+    format_nlp_analysis_for_prompt,
+)
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
