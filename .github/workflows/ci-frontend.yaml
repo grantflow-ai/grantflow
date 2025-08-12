@@ -48,7 +48,7 @@ jobs:
             RESEND_API_KEY: mock-resend-api-key
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js and Dependencies
               uses: ./.github/actions/setup-node-workspace
@@ -63,7 +63,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js and Dependencies
               uses: ./.github/actions/setup-node-workspace
@@ -78,7 +78,7 @@ jobs:
         timeout-minutes: 15
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js and Dependencies
               uses: ./.github/actions/setup-node-workspace
@@ -109,7 +109,7 @@ jobs:
             RESEND_API_KEY: mock-resend-api-key
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js and Dependencies
               uses: ./.github/actions/setup-node-workspace
@@ -143,7 +143,7 @@ jobs:
             RESEND_API_KEY: mock-resend-api-key
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js and Dependencies
               uses: ./.github/actions/setup-node-workspace
