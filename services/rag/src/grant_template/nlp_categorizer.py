@@ -18,15 +18,89 @@ _executor = ThreadPoolExecutor(max_workers=EXECUTOR_MAX_WORKERS)
 _NUM_REGEX: Final[re.Pattern[str]] = re.compile(r"^\d{1,3}(,\d{3})*(\.\d+)?$")
 _NOT_DONE_REGEX: Final[re.Pattern[str]] = re.compile(
     r"\b(not|never|won['']t|cannot|can['']t|isn['']t|aren['']t|"
-    r"wasn['']t|weren['']t|hasn['']t|haven['']t|hadn['']t|will not|without)\b",
+    r"wasn['']t|weren['']t|hasn['']t|haven['']t|hadn['']t|will not|without|"
+    r"no more than|exceeding|prior approval|restrictions?|prohibited|forbidden)\b",
     re.IGNORECASE,
 )
 
 MONEY_SYMBOLS: Final[set[str]] = {"$", "€", "£", "¥"}
-ORDER_KEYWORDS: Final[set[str]] = {"must", "required", "shall", "please"}
-EVALUATION_KEYWORDS: Final[set[str]] = {"evaluation", "assess", "criteria", "review", "score"}
+MONEY_KEYWORDS: Final[set[str]] = {
+    "salary",
+    "support",
+    "compensation",
+    "budget",
+    "cost",
+    "costs",
+    "funding",
+    "expenses",
+    "travel",
+}
+ORDER_KEYWORDS: Final[set[str]] = {
+    "must",
+    "required",
+    "shall",
+    "please",
+    "require",
+    "need",
+    "eligible",
+    "submit",
+    "include",
+    "provide",
+    "mandatory",
+    "necessary",
+    "needs",
+    "requires",
+    "expects",
+    "demands",
+    "stipulates",
+}
+EVALUATION_KEYWORDS: Final[set[str]] = {
+    "evaluation",
+    "assess",
+    "criteria",
+    "review",
+    "score",
+    "evaluated",
+    "merit",
+    "technical",
+    "qualifications",
+    "adequacy",
+    "excellence",
+    "priorities",
+    "based",
+    "recommendations",
+    "funding",
+}
+WRITING_KEYWORDS: Final[set[str]] = {"pages", "words", "page", "word", "limit", "maximum", "exceed"}
+RECOMMENDATION_KEYWORDS: Final[set[str]] = {
+    "recommend",
+    "encourage",
+    "suggest",
+    "should",
+    "advised",
+    "strongly",
+    "may",
+    "included",
+    "optional",
+    "encouraged",
+    "recommended",
+    "preferred",
+    "ideal",
+    "consider",
+    "desirable",
+}
 
-CATEGORY_LABELS: Final[list[str]] = ["Money", "Date/Time", "Orders", "Evaluation Criteria", "Negative Instructions"]
+CATEGORY_LABELS: Final[list[str]] = [
+    "Money",
+    "Date/Time",
+    "Writing-related",
+    "Other Numbers",
+    "Recommendations",
+    "Orders",
+    "Positive Instructions",
+    "Negative Instructions",
+    "Evaluation Criteria",
+]
 
 
 def _is_number(token: Any) -> bool:
@@ -39,18 +113,32 @@ def _categorize_sentence(sentence: Any, buckets: dict[str, list[str]]) -> None:
     if len(text) < MIN_SENTENCE_CHARS:
         return
 
-    has_money = any(symbol in text for symbol in MONEY_SYMBOLS)
+    has_money = any(symbol in text for symbol in MONEY_SYMBOLS) or any(
+        keyword in text.lower() for keyword in MONEY_KEYWORDS
+    )
     has_date = any(ent.label_ in {"DATE", "TIME"} for ent in sentence.ents)
     has_order = any(token.text.lower() in ORDER_KEYWORDS for token in sentence)
     has_negative = bool(_NOT_DONE_REGEX.search(text))
     has_evaluation = any(token.text.lower() in EVALUATION_KEYWORDS for token in sentence)
+    has_writing = any(token.text.lower() in WRITING_KEYWORDS for token in sentence)
+    has_recommendation = any(token.text.lower() in RECOMMENDATION_KEYWORDS for token in sentence)
+    has_numbers = any(_is_number(token) for token in sentence)
+    has_percentages = "%" in text
 
     if has_money:
         buckets["Money"].append(text)
     if has_date:
         buckets["Date/Time"].append(text)
+    if has_writing:
+        buckets["Writing-related"].append(text)
+    if (has_numbers and not has_money) or has_percentages:
+        buckets["Other Numbers"].append(text)
+    if has_recommendation:
+        buckets["Recommendations"].append(text)
     if has_order:
         buckets["Orders"].append(text)
+    if has_order and not has_negative:
+        buckets["Positive Instructions"].append(text)
     if has_negative:
         buckets["Negative Instructions"].append(text)
     if has_evaluation:
