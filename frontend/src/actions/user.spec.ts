@@ -1,8 +1,8 @@
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { deleteAccount, getSoleOwnedProjects, restoreAccount } from "./user";
 
-vi.mock("@/utils/api", () => ({
+vi.mock("@/utils/api/server", () => ({
 	getClient: vi.fn(() => ({
 		delete: vi.fn(),
 		get: vi.fn(),

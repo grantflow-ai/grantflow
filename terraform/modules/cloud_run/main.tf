@@ -79,6 +79,48 @@ variable "crawler_cpu_limit" {
   default     = ""
 }
 
+variable "indexer_memory_limit" {
+  description = "Memory allocation for indexer service (defaults to memory_limit if not set)"
+  type        = string
+  default     = ""
+}
+
+variable "indexer_concurrency_limit" {
+  description = "Maximum concurrent requests per indexer instance (defaults to concurrency_limit if not set)"
+  type        = number
+  default     = 0
+}
+
+variable "crawler_concurrency_limit" {
+  description = "Maximum concurrent requests per crawler instance (defaults to concurrency_limit if not set)"
+  type        = number
+  default     = 0
+}
+
+variable "indexer_min_instances" {
+  description = "Minimum number of indexer instances (defaults to min_instances if not set)"
+  type        = number
+  default     = -1
+}
+
+variable "indexer_max_instances" {
+  description = "Maximum number of indexer instances (defaults to max_instances if not set)"
+  type        = number
+  default     = -1
+}
+
+variable "crawler_min_instances" {
+  description = "Minimum number of crawler instances (defaults to min_instances if not set)"
+  type        = number
+  default     = -1
+}
+
+variable "crawler_max_instances" {
+  description = "Maximum number of crawler instances (defaults to max_instances if not set)"
+  type        = number
+  default     = -1
+}
+
 variable "enable_cpu_throttling" {
   description = "Enable CPU throttling"
   type        = bool
@@ -389,12 +431,13 @@ resource "google_cloud_run_v2_service" "crawler" {
     }
 
     scaling {
-      max_instance_count = var.max_instances
-      min_instance_count = var.min_instances
+      max_instance_count = var.crawler_max_instances >= 0 ? var.crawler_max_instances : var.max_instances
+      min_instance_count = var.crawler_min_instances >= 0 ? var.crawler_min_instances : var.min_instances
     }
 
-    timeout                          = "${var.request_timeout}s"
-    max_instance_request_concurrency = var.concurrency_limit
+    timeout = "${var.request_timeout}s"
+    # ~keep Reduced concurrency for crawler to process one URL at a time
+    max_instance_request_concurrency = var.crawler_concurrency_limit > 0 ? var.crawler_concurrency_limit : var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -413,7 +456,7 @@ resource "google_cloud_run_v2_service" "indexer" {
       resources {
         limits = {
           cpu    = var.cpu_limit
-          memory = var.memory_limit
+          memory = var.indexer_memory_limit != "" ? var.indexer_memory_limit : var.memory_limit
         }
       }
 
@@ -495,12 +538,13 @@ resource "google_cloud_run_v2_service" "indexer" {
     }
 
     scaling {
-      max_instance_count = var.max_instances
-      min_instance_count = var.min_instances
+      max_instance_count = var.indexer_max_instances >= 0 ? var.indexer_max_instances : var.max_instances
+      min_instance_count = var.indexer_min_instances >= 0 ? var.indexer_min_instances : var.min_instances
     }
 
-    timeout                          = "${var.request_timeout}s"
-    max_instance_request_concurrency = var.concurrency_limit
+    timeout = "${var.request_timeout}s"
+    # ~keep Reduced concurrency for indexer to prevent 429 errors during bursts
+    max_instance_request_concurrency = var.indexer_concurrency_limit > 0 ? var.indexer_concurrency_limit : var.concurrency_limit
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -777,6 +821,99 @@ resource "google_cloud_run_v2_service" "scraper" {
 
 }
 
+# CRDT Server
+resource "google_cloud_run_v2_service" "crdt_server" {
+  name                = "crdt-server"
+  location            = var.region
+  deletion_protection = false
+
+  template {
+    containers {
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt-server:${var.image_tag_suffix}"
+
+      resources {
+        limits = {
+          cpu    = var.cpu_limit
+          memory = var.memory_limit
+        }
+      }
+
+      ports {
+        container_port = 8080
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/health"
+          port = 8080
+        }
+        initial_delay_seconds = 10
+        timeout_seconds       = 5
+        period_seconds        = 15
+        failure_threshold     = 3
+      }
+
+      startup_probe {
+        http_get {
+          path = "/health"
+          port = 8080
+        }
+        initial_delay_seconds = 0
+        timeout_seconds       = 5
+        period_seconds        = 10
+        failure_threshold     = 10
+      }
+
+      env {
+        name  = "NODE_ENV"
+        value = "production"
+      }
+
+      # Database connection from Secret Manager
+      env {
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = "DB_CONNECTION_STRING"
+            version = "latest"
+          }
+        }
+      }
+    }
+
+    annotations = {
+      # Enable session affinity for WebSocket connections
+      "run.googleapis.com/execution-environment" = "gen2"
+      "run.googleapis.com/session-affinity"      = "true"
+    }
+
+    scaling {
+      max_instance_count = var.max_instances
+      min_instance_count = var.min_instances
+    }
+
+    timeout = "3600s" # WebSocket connections can be long-lived
+  }
+
+  ingress = "INGRESS_TRAFFIC_ALL"
+
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      template[0].annotations["run.googleapis.com/client-name"],
+      template[0].annotations["run.googleapis.com/client-version"],
+    ]
+  }
+}
+
+# IAM policy to allow public access to CRDT server (WebSocket connections from frontend)
+resource "google_cloud_run_v2_service_iam_member" "crdt_server_public" {
+  location = var.region
+  name     = google_cloud_run_v2_service.crdt_server.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 # Service account for Cloud Scheduler to invoke scraper
 resource "google_service_account" "scheduler_invoker" {
   account_id   = "scheduler-invoker"
@@ -813,4 +950,14 @@ output "scraper_url" {
 output "scraper_service_id" {
   description = "The ID of the scraper service"
   value       = google_cloud_run_v2_service.scraper.name
+}
+
+output "crdt_server_url" {
+  description = "The URL of the deployed CRDT server"
+  value       = google_cloud_run_v2_service.crdt_server.uri
+}
+
+output "crdt_server_service_id" {
+  description = "The ID of the CRDT server service"
+  value       = google_cloud_run_v2_service.crdt_server.name
 }

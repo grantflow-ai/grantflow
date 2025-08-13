@@ -1,18 +1,26 @@
 !cloud_functions/requirements.txt
 *$py.class
 **/*.log
+**/.ropeproject
+**/.venv
 **/__pycache__/
 **/http-client.private.env.json
 *.iml
 *.pem
+*.plan
 *.py[cod]
 *.suo
 *.tfstate
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+*.tfplan
+*.tfplan.*
+*.terraform.lock.hcl
+.terraform.lock.hcl
 *.tsbuildinfo
 *.user
+*.zip
 *_override.tf
 *_override.tf.json
 *storybook.log
@@ -37,6 +45,7 @@
 .venv
 .vercel/
 .windsurfrules
+AI_EVALUATION_BENCHMARK_REPORT.md
 build/
 CLAUDE.md
 coverage.*
@@ -45,6 +54,7 @@ crash.*.log
 crash.log
 dist/
 drizzle/
+frontend/functions/
 frontend/playwright-report/
 frontend/playwright/.cache/
 frontend/test-results/
@@ -58,13 +68,4 @@ requirements.txt
 sentence-transformers/
 storybook-static/
 terraform.rc
-frontend/functions/
-
-# Generated test results and benchmark data
 testing/test_data/results/
-AI_EVALUATION_BENCHMARK_REPORT.md
-# Terraform plan files
-*.plan
-
-# Cloud function zip archives
-*.zip

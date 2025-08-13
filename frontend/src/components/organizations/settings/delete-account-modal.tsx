@@ -7,7 +7,7 @@ import { deleteAccount, getSoleOwnedProjects } from "@/actions/user";
 import { AppButton } from "@/components/app";
 import { BaseModal } from "@/components/app/feedback/base-modal";
 import { useUserStore } from "@/stores/user-store";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 interface DeleteAccountModalProps {
 	isOpen: boolean;

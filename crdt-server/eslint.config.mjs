@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { fixupPluginRules } from "@eslint/compat";
 import eslintJS from "@eslint/js";
 import biomeConfig from "eslint-config-biome";
-import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import eslintPluginImportX from "eslint-plugin-import-x";
 import eslintPluginMarkdown from "eslint-plugin-markdown";
 import eslintPluginNode from "eslint-plugin-n";
@@ -114,32 +113,18 @@ export default eslintTS.config(
 			"@typescript-eslint/switch-exhaustiveness-check": "warn",
 			curly: "error",
 			eqeqeq: "error",
+			"import-x/default": "off",
+			"import-x/export": "off",
+			"import-x/namespace": "off",
 			"import-x/no-duplicates": "error",
+			"import-x/no-named-as-default": "off",
 			"import-x/no-named-as-default-member": "off",
+			"import-x/no-unresolved": "off",
 			"n/no-extraneous-import": "off",
 			"n/no-missing-import": "off",
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
 			"no-console": "error",
-			"no-restricted-imports": [
-				"error",
-				{
-					paths: [
-						{
-							message:
-								"Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
-							name: "@/utils/logging",
-						},
-					],
-					patterns: [
-						{
-							group: ["*/utils/logging", "*/logging"],
-							message:
-								"Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
-						},
-					],
-				},
-			],
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
 			"paths/alias": "error",
@@ -166,12 +151,9 @@ export default eslintTS.config(
 			"unused-imports/no-unused-imports": "error",
 		},
 		settings: {
-			"import-x/resolver-next": [
-				createTypeScriptImportResolver({
-					alwaysTryTypes: true,
-					project: ["./tsconfig.json"],
-				}),
-			],
+			"import-x/resolver": {
+				node: true,
+			},
 		},
 	},
 	{
@@ -243,6 +225,8 @@ export default eslintTS.config(
 			"dist",
 			"build",
 			"functions",
+			"vite.config.js",
+			"vite.config.ts",
 		],
 	},
 	{
@@ -257,9 +241,14 @@ export default eslintTS.config(
 		},
 	},
 	{
-		files: ["tsup.config.ts", "drizzle.config.ts"],
+		files: [
+			"vite.config.ts",
+			"drizzle.config.ts",
+		],
 		rules: {
+			"@typescript-eslint/no-require-imports": "off",
 			"n/no-unpublished-import": "off",
+			"n/no-unpublished-require": "off",
 		},
 	},
 	biomeConfig,

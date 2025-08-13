@@ -8,7 +8,7 @@ import { AppButton } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useProjectStore } from "@/stores/project-store";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
 interface CreateApplicationButtonProps {

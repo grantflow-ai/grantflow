@@ -282,12 +282,11 @@ services:
             context: .
             dockerfile: crdt-server/Dockerfile
         environment:
-            DATABASE_URL: postgresql+asyncpg://local:local@db:5432/local
+            DATABASE_URL: postgresql://local:local@db:5432/local
+            NODE_ENV: development
+            PORT: "8080"
         ports:
-            - "1234:1234"
-        env_file:
-            - ./.env
-            - ./crdt-server/.env
+            - "8090:8080"
         depends_on:
             db:
                 condition: service_healthy

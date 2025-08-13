@@ -1,6 +1,6 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 /**
  * Determines the new parent ID when moving sections in drag-and-drop operations

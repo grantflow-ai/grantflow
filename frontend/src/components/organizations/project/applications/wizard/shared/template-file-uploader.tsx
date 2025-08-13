@@ -7,7 +7,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 const FILE_ACCEPTS = {
 	"application/csv": [".csv"],

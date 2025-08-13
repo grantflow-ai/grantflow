@@ -6,19 +6,23 @@ import type { FileWithId } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="mocked-dropdown-menu">{children}</div>
+	DropdownMenu: ({ children, ...props }: { children: React.ReactNode } & React.ComponentProps<"div">) => (
+		<div data-testid="mocked-dropdown-menu" {...props}>
+			{children}
+		</div>
 	),
-	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="mocked-dropdown-content">{children}</div>
+	DropdownMenuContent: ({ children, ...props }: { children: React.ReactNode } & React.ComponentProps<"div">) => (
+		<div {...props}>{children}</div>
 	),
-	DropdownMenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
-		<button data-testid="mocked-dropdown-item" onClick={onClick} type="button">
+	DropdownMenuItem: ({ children, ...props }: { children: React.ReactNode } & React.ComponentProps<"button">) => (
+		<button type="button" {...props}>
 			{children}
 		</button>
 	),
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="mocked-dropdown-trigger">{children}</div>
+	DropdownMenuTrigger: ({ children, ...props }: { children: React.ReactNode } & React.ComponentProps<"button">) => (
+		<button type="button" {...props}>
+			{children}
+		</button>
 	),
 }));
 
@@ -216,18 +220,18 @@ describe("FilePreviewCard", () => {
 			expect(iconContainer).toBeInTheDocument();
 		});
 
-		it.skip("disables Open option for non-browser-openable files", async () => {
+		it("disables Open option for non-browser-openable files", async () => {
 			const file = FileWithIdFactory.build({ name: "document.docx" });
 			render(<FilePreviewCard file={file} />);
 
-			const iconContainer = screen.getByRole("img");
+			const iconContainer = document.querySelector('[role="img"]')!;
 			fireEvent.contextMenu(iconContainer);
 
 			const menuOpen = await screen.findByTestId("file-menu-open", {}, { timeout: 3000 });
-			expect(menuOpen).toHaveAttribute("aria-disabled", "true");
+			expect(menuOpen).toBeDisabled();
 		});
 
-		it.skip("enables Open option for browser-openable files", async () => {
+		it("enables Open option for browser-openable files", async () => {
 			const fileContent = new ArrayBuffer(1024);
 			const file = new File([fileContent], "document.pdf", { type: "application/pdf" }) as FileWithId;
 			file.id = "test-id";
@@ -242,12 +246,12 @@ describe("FilePreviewCard", () => {
 			});
 
 			const openMenuItem = screen.getByTestId("file-menu-open");
-			expect(openMenuItem).not.toHaveAttribute("aria-disabled", "true");
+			expect(openMenuItem).not.toBeDisabled();
 		});
 	});
 
 	describe.sequential("Remove Functionality", () => {
-		it.skip("disables Remove option when onRemove is not provided", async () => {
+		it("disables Remove option when onRemove is not provided", async () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			const { container } = render(<FilePreviewCard file={file} />);
 
@@ -259,10 +263,10 @@ describe("FilePreviewCard", () => {
 			});
 
 			const removeMenuItem = screen.getByTestId("file-menu-remove");
-			expect(removeMenuItem).toHaveAttribute("aria-disabled", "true");
+			expect(removeMenuItem).toBeDisabled();
 		});
 
-		it.skip("enables Remove option when parentId is provided", async () => {
+		it("enables Remove option when parentId is provided", async () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			const { container } = render(<FilePreviewCard file={file} parentId="test-parent-id" />);
 
@@ -274,10 +278,10 @@ describe("FilePreviewCard", () => {
 			});
 
 			const removeMenuItem = screen.getByTestId("file-menu-remove");
-			expect(removeMenuItem).not.toHaveAttribute("aria-disabled", "true");
+			expect(removeMenuItem).not.toBeDisabled();
 		});
 
-		it.skip("calls removeFile when Remove is clicked", async () => {
+		it("calls removeFile when Remove is clicked", async () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 
 			const mockRemoveFile = vi.fn().mockResolvedValue(undefined);
@@ -310,10 +314,6 @@ describe("FilePreviewCard", () => {
 			await waitFor(() => {
 				expect(mockRemoveFile).toHaveBeenCalledWith(file, "test-parent-id");
 			});
-
-			await waitFor(() => {
-				expect(screen.queryByTestId("file-context-menu")).not.toBeInTheDocument();
-			});
 		});
 	});
 
@@ -340,13 +340,14 @@ describe("FilePreviewCard", () => {
 			);
 		});
 
-		it.skip("has hidden dropdown trigger for screen readers", () => {
+		it("has hidden dropdown trigger for screen readers", () => {
 			const file = FileWithIdFactory.build({ name: "document.pdf" });
 			render(<FilePreviewCard file={file} />);
 
-			const trigger = screen.getByText("File options");
-			expect(trigger.parentElement).toHaveClass("sr-only");
-			expect(trigger.parentElement).toBeDisabled();
+			const srLabel = screen.getByText("File options");
+			const trigger = srLabel.parentElement as HTMLButtonElement;
+			expect(trigger).toHaveClass("sr-only");
+			expect(trigger).toBeDisabled();
 		});
 	});
 

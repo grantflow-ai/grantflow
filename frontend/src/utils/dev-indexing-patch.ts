@@ -5,7 +5,7 @@
  */
 
 import { getEnv } from "./env";
-import { log } from "./logger";
+import { log } from "./logger/client";
 
 const INDEXER_URL = "http://localhost:8001";
 const RETRY_DELAY = 1000;

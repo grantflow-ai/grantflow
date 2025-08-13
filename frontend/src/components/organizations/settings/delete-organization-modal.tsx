@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
 interface DeleteOrganizationModalProps {

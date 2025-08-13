@@ -1,10 +1,10 @@
 import { DismissNotificationResponseFactory, ListNotificationsResponseFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { dismissNotification, getNotifications } from "./notifications";
 
-vi.mock("@/utils/api");
+vi.mock("@/utils/api/server");
 vi.mock("@/utils/server-side");
 
 const mockGetClient = vi.mocked(getClient);

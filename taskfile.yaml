@@ -30,7 +30,7 @@ tasks:
       - echo "  - Indexer{{":"}} http://localhost:8001"
       - echo "  - Crawler{{":"}} http://localhost:8002"
       - echo "  - RAG{{":"}} http://localhost:8003"
-      - echo "  - CRDT Server{{":"}} ws://localhost:1234"
+      - echo "  - CRDT Server{{":"}} ws://localhost:8090"
       - echo "  - Pub/Sub Emulator{{":"}} http://localhost:8085"
       - echo "  - GCS Emulator{{":"}} http://localhost:4443"
       - echo ""
@@ -86,7 +86,9 @@ tasks:
   knip:
     desc: Check for unused dependencies and dead code in frontend/editor packages
     cmds:
-      - pnpm --parallel --filter './frontend' --filter './editor' knip
+      - task: knip:crdt-server
+      - task: knip:frontend
+      - task: knip:editor
 
   knip:frontend:
     desc: Check frontend package only for unused dependencies and dead code
@@ -97,6 +99,12 @@ tasks:
   knip:editor:
     desc: Check editor package only for unused dependencies and dead code
     dir: editor
+    cmds:
+      - pnpm knip
+
+  knip:crdt-server:
+    desc: Check crdt-server package only for unused dependencies and dead code
+    dir: crdt-server
     cmds:
       - pnpm knip
 
@@ -275,7 +283,7 @@ tasks:
       - echo "✅ Database reset complete!"
 
   # ==============================================================================
-  # FRONTEND COMMANDS - Root-level commands for both frontend folders
+  # FRONTEND COMMANDS
   # ==============================================================================
 
   frontend:install:
@@ -288,37 +296,12 @@ tasks:
     cmds:
       - pnpm up --latest -r
 
-  frontend:dev:
-    desc: Start the main frontend development server
-    dir: frontend
-    dotenv: [".env"]
-    cmds:
-      - pnpm dev
-
-  frontend:build:
-    desc: Build both frontend applications for production
-    cmds:
-      - task: frontend:main:build
-      - task: editor:build
-
-  frontend:test:
-    desc: Run tests for both frontend folders
-    cmds:
-      - task: frontend:main:test
-      - task: editor:test
-
   frontend:test:watch:
     desc: Run frontend tests (interactive mode) - main frontend only
     dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm test:watch
-
-  frontend:test:coverage:
-    desc: Run frontend tests with coverage reporting for both folders
-    cmds:
-      - task: frontend:main:test:coverage
-      - task: editor:test:coverage
 
   frontend:storybook:
     desc: Start the main frontend Storybook server
@@ -347,31 +330,27 @@ tasks:
     cmds:
       - pnpm test:e2e:ui
 
-  # ==============================================================================
-  # MAIN FRONTEND COMMANDS - Specific to frontend/ folder
-  # ==============================================================================
-
-  frontend:main:dev:
+  frontend:dev:
     desc: Start the main frontend development server
     dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm dev
 
-  frontend:main:build:
+  frontend:build:
     desc: Build the main frontend application for production
     dir: frontend
     cmds:
       - pnpm build
 
-  frontend:main:test:
+  frontend:test:
     desc: Run main frontend tests (non-interactive mode)
     dir: frontend
     dotenv: [".env"]
     cmds:
       - pnpm test
 
-  frontend:main:test:coverage:
+  frontend:test:coverage:
     desc: Run main frontend tests with coverage reporting
     dir: frontend
     dotenv: [".env"]
@@ -419,6 +398,52 @@ tasks:
       - pnpm run storybook
 
   # ==============================================================================
+  # CRDT-SERVER COMMANDS - Specific to crdt-server/ folder
+  # ==============================================================================
+
+  crdt-server:dev:
+    desc: Start the CRDT server in development mode with hot-reloading
+    deps:
+      - task: db:up
+    dir: crdt-server
+    dotenv: [".env"]
+    cmds:
+      - pnpm run dev
+
+  crdt-server:build:
+    desc: Build CRDT server for production
+    dir: crdt-server
+    cmds:
+      - pnpm run build
+
+  crdt-server:test:
+    desc: Run CRDT server tests (non-interactive mode)
+    dir: crdt-server
+    dotenv: [".env"]
+    cmds:
+      - pnpm run test
+
+  crdt-server:test:watch:
+    desc: Run CRDT server tests (interactive mode)
+    dir: crdt-server
+    dotenv: [".env"]
+    cmds:
+      - pnpm run test:watch
+
+  crdt-server:test:coverage:
+    desc: Run CRDT server tests with coverage reporting
+    dir: crdt-server
+    dotenv: [".env"]
+    cmds:
+      - pnpm run test:coverage
+
+  crdt-server:lint:
+    desc: Lint CRDT server code with Biome and ESLint
+    dir: crdt-server
+    cmds:
+      - pnpm run lint
+
+  # ==============================================================================
   # BACKEND COMMANDS
   # ==============================================================================
 
@@ -451,7 +476,7 @@ tasks:
       - task: service:indexer:test
       - task: service:crawler:test
       - task: service:rag:test
-      - task: service:crdt-server:test
+      - task: crdt-server:test
       - task: _packages:test
 
   # ==============================================================================
@@ -668,32 +693,6 @@ tasks:
   # CRDT SERVER COMMANDS - Node.js service management
   # ==============================================================================
 
-  service:crdt-server:dev:
-    desc: Start the CRDT server in development mode with hot-reloading
-    deps:
-      - task: db:up
-    dotenv: [".env"]
-    cmds:
-      - cd crdt-server && pnpm run dev
-
-  service:crdt-server:test:
-    desc: Run CRDT server tests with detailed output
-    dotenv: [".env"]
-    cmds:
-      - cd crdt-server && pnpm run test
-
-  service:crdt-server:build:
-    desc: Build CRDT server for production
-    dotenv: [".env"]
-    cmds:
-      - cd crdt-server && pnpm run build
-
-  service:crdt-server:lint:
-    desc: Lint CRDT server code
-    dotenv: [".env"]
-    cmds:
-      - cd crdt-server && pnpm run lint
-
   # ==============================================================================
   # EMULATOR COMMANDS - Standalone emulator management
   # ==============================================================================
@@ -802,10 +801,11 @@ tasks:
       - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js,playwright-report,test-results"
 
   lint:typescript:
-    desc: Type check TypeScript code for both frontend folders
+    desc: Type check TypeScript code for frontend, editor, and crdt-server
     deps:
       - task: lint:typescript:frontend
       - task: lint:typescript:editor
+      - task: lint:typescript:crdt-server
 
   lint:typescript:frontend:
     desc: Type check frontend TypeScript code
@@ -816,6 +816,12 @@ tasks:
   lint:typescript:editor:
     desc: Type check editor TypeScript code
     dir: editor
+    cmds:
+      - pnpm typecheck
+
+  lint:typescript:crdt-server:
+    desc: Type check crdt-server TypeScript code
+    dir: crdt-server
     cmds:
       - pnpm typecheck
 

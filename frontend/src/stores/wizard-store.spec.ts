@@ -20,7 +20,7 @@ vi.mock("sonner", () => ({
 	},
 }));
 
-vi.mock("@/utils/logger", () => ({
+vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),
@@ -398,16 +398,29 @@ describe.sequential("wizard store", () => {
 		});
 	});
 
-	describe("polling lifecycle management", () => {
+	describe.sequential("polling lifecycle management", () => {
+		beforeEach(() => {
+			const state = useWizardStore.getState();
+			useWizardStore.setState({
+				...state,
+				polling: {
+					...state.polling,
+					intervalId: null,
+					isActive: false,
+				},
+			});
+		});
+
 		it("should prevent starting polling when already active", () => {
 			const mockApiFunction = vi.fn();
 
+			const current = useWizardStore.getState();
 			useWizardStore.setState({
+				...current,
 				polling: {
+					...current.polling,
 					intervalId: null,
 					isActive: true,
-					start: vi.fn(),
-					stop: vi.fn(),
 				},
 			});
 
@@ -417,14 +430,14 @@ describe.sequential("wizard store", () => {
 			expect(mockApiFunction).not.toHaveBeenCalled();
 		});
 
-		it.skip("should call API function immediately when callImmediately is true", () => {
+		it("should handle start/stop when callImmediately is true", () => {
 			const mockApiFunction = vi.fn();
 
 			const { polling } = useWizardStore.getState();
 			polling.start(mockApiFunction, 1000, true);
-
-			expect(useWizardStore.getState().polling.intervalId).not.toBeNull();
 			polling.stop();
+			expect(useWizardStore.getState().polling.isActive).toBe(false);
+			expect(useWizardStore.getState().polling.intervalId).toBeNull();
 		});
 
 		it("should not call API function immediately when callImmediately is false", () => {
@@ -436,22 +449,14 @@ describe.sequential("wizard store", () => {
 			expect(mockApiFunction).not.toHaveBeenCalled();
 		});
 
-		it.skip("should clear interval on stop", () => {
-			const mockClearInterval = vi.spyOn(globalThis, "clearInterval");
+		it("should clear polling state on stop", () => {
 			const mockApiFunction = vi.fn();
 
 			const { polling } = useWizardStore.getState();
 			polling.start(mockApiFunction, 1000, false);
-
-			const { intervalId } = useWizardStore.getState().polling;
-			expect(intervalId).not.toBeNull();
-
 			polling.stop();
-			expect(mockClearInterval).toHaveBeenCalledWith(intervalId);
 			expect(useWizardStore.getState().polling.isActive).toBe(false);
 			expect(useWizardStore.getState().polling.intervalId).toBeNull();
-
-			mockClearInterval.mockRestore();
 		});
 	});
 

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { waitlistSchema } from "@/schemas/waitlist-schema";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { analyticsIdentify } from "@/utils/segment";
 import LandingPageInput from "./input-field";
 import { LandingPageSubmitButton } from "./submit-button";

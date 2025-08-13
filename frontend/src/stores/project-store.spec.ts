@@ -3,7 +3,7 @@ import { ProjectFactory, ProjectListItemFactory } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createProject, deleteProject, getProject, getProjects, updateProject } from "@/actions/project";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 import { useProjectStore } from "./project-store";
 
@@ -23,7 +23,7 @@ vi.mock("@/stores/organization-store", () => ({
 		})),
 	},
 }));
-vi.mock("@/utils/logger", () => ({
+vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),

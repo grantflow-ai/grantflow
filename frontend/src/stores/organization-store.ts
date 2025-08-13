@@ -8,7 +8,7 @@ import {
 	updateOrganization as handleUpdateOrganization,
 } from "@/actions/organization";
 import type { API } from "@/types/api-types";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 type OrganizationsListType = API.ListOrganizations.Http200.ResponseBody;
 interface OrganizationState {

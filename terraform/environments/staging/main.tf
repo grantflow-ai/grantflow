@@ -56,15 +56,15 @@ module "database" {
   zone                  = var.zone
   instance_name         = "grantflow-staging"
   tier                  = "db-custom-1-3840" # 1 vCPU, 3.75GB RAM - handles ~100 connections
-  disk_size             = 10            # Minimal storage for staging
-  disk_type             = "PD_HDD"      # Cheaper storage type
-  backup_enabled        = true          # Enable backups (required for point-in-time recovery)
-  high_availability     = false         # Single zone for staging
-  backup_retention      = 7             # Shorter retention for staging
-  backup_location       = "us"          # US location for staging
-  enable_query_insights = true          # Enable for monitoring
-  log_slow_queries      = false         # Disable for staging
-  deletion_protection   = false         # Allow deletion in staging
+  disk_size             = 10                 # Minimal storage for staging
+  disk_type             = "PD_HDD"           # Cheaper storage type
+  backup_enabled        = true               # Enable backups (required for point-in-time recovery)
+  high_availability     = false              # Single zone for staging
+  backup_retention      = 7                  # Shorter retention for staging
+  backup_location       = "us"               # US location for staging
+  enable_query_insights = true               # Enable for monitoring
+  log_slow_queries      = false              # Disable for staging
+  deletion_protection   = false              # Allow deletion in staging
   network_id            = module.network.network_id
 }
 
@@ -90,16 +90,29 @@ module "cloud_run" {
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
-  min_instances                 = 0     # Scale to zero for cost savings
-  max_instances                 = 2     # Limited scaling for staging (2 instances max per service)
-  cpu_limit                     = "1"   # Minimum CPU for Cloud Run
-  memory_limit                  = "1Gi" # Increased memory to handle service requirements
-  crawler_memory_limit          = "2Gi" # ~keep Increased memory for crawler due to browser automation OOM issues
-  discord_webhook_url           = var.discord_webhook_url
-  enable_cpu_throttling         = true  # Allow throttling for staging
-  enable_http2                  = false # HTTP/1.1 for staging
-  request_timeout               = 300   # 5-minute timeout
-  concurrency_limit             = 80    # Default concurrency
+  min_instances                 = 1     # Default for backend/rag/scraper
+  max_instances                 = 5     # Default max instances
+  cpu_limit                     = "1"   # Default CPU for most services
+  memory_limit                  = "1Gi" # Default memory for most services
+
+  # Indexer: Fanout pattern - one file per instance
+  indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
+  indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
+  indexer_min_instances     = 0     # ~keep Scale to zero when idle
+  indexer_max_instances     = 100   # ~keep High ceiling for burst handling
+
+  # Crawler: Fanout pattern - one URL per instance
+  crawler_memory_limit      = "1Gi" # ~keep Reduced memory since processing one URL at a time
+  crawler_cpu_limit         = "1"   # ~keep Single CPU for single URL processing
+  crawler_concurrency_limit = 1     # ~keep ONE URL per instance for fanout pattern
+  crawler_min_instances     = 0     # ~keep Scale to zero when idle
+  crawler_max_instances     = 50    # ~keep Lower than indexer (URLs process faster)
+
+  discord_webhook_url   = var.discord_webhook_url
+  enable_cpu_throttling = true  # Allow throttling for staging
+  enable_http2          = false # HTTP/1.1 for staging
+  request_timeout       = 300   # 5-minute timeout
+  concurrency_limit     = 80    # Default concurrency for other services
 
   # Custom domain for backend API (commented out to save costs)
   # custom_domain            = "api-staging.grantflow.ai"
@@ -112,8 +125,12 @@ module "pubsub" {
   region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
   message_retention_duration           = "86400s" # 1 day for staging
-  ack_deadline_seconds                 = 60       # Default deadline
-  enable_dead_letter                   = false    # No DLQ for staging
+  ack_deadline_seconds                 = 600      # ~keep 10 minutes for file processing
+  enable_dead_letter                   = true     # ~keep Enable DLQ for better error handling
+
+  # ~keep Optimized retry for fanout pattern
+  indexer_retry_minimum_backoff = "10s"  # ~keep Quick first retry
+  indexer_retry_maximum_backoff = "600s" # ~keep Max 10 minute backoff
 
   # Pass Cloud Run service URLs for push endpoints
   indexer_url = module.cloud_run.indexer_url
@@ -278,6 +295,11 @@ output "backend_url" {
 output "scraper_url" {
   description = "Scraper service URL"
   value       = module.cloud_run.scraper_url
+}
+
+output "crdt_server_url" {
+  description = "CRDT server URL"
+  value       = module.cloud_run.crdt_server_url
 }
 
 # Load Balancer module with staging-optimized settings
