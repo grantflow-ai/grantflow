@@ -2,7 +2,7 @@ import { createGcpLoggingPinoConfig } from "@google-cloud/pino-logging-gcp-confi
 import { PinoTransport } from "@loglayer/transport-pino";
 import { getSimplePrettyTerminal } from "@loglayer/transport-simple-pretty-terminal";
 import { type ILogLayer, LogLayer, type PluginBeforeMessageOutParams } from "loglayer";
-import pino from "pino";
+import * as Pino from "pino";
 import { serializeError } from "serialize-error";
 import { createLogFacade } from "./shared";
 
@@ -14,11 +14,11 @@ export function getLogger(): ILogLayer {
 }
 
 function initLogger(): ILogLayer {
-	const pinoLogger: ReturnType<typeof pino> = (
+	const pinoLogger: ReturnType<typeof Pino.pino> = (
 		process.env.NODE_ENV === "production"
-			? pino(createGcpLoggingPinoConfig(undefined, { level: "info" }))
-			: pino({ level: "info" })
-	) as ReturnType<typeof pino>;
+			? Pino.pino(createGcpLoggingPinoConfig(undefined, { level: "info" }))
+			: Pino.pino({ level: "info" })
+	) as ReturnType<typeof Pino.pino>;
 
 	const logger = new LogLayer({
 		errorSerializer: serializeError,
