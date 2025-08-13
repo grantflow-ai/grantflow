@@ -132,23 +132,6 @@ export default eslintTS.config(
 			"n/no-process-exit": "error",
 			"n/no-unsupported-features/node-builtins": "off",
 			"no-console": "error",
-			"no-restricted-imports": [
-				"error",
-				{
-					"paths": [
-						{
-							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error().",
-							"name": "@/utils/logging"
-						}
-					],
-					"patterns": [
-						{
-							"group": ["*/utils/logging", "*/logging"],
-							"message": "Please use the new logger from @/utils/logger instead. Use log.info(), log.warn(), or log.error()."
-						}
-					]
-				}
-			],
 			"no-unused-vars": "off",
 			"object-shorthand": "error",
 			"paths/alias": "error",
@@ -203,6 +186,12 @@ export default eslintTS.config(
 	{
 		files: ["**/*.md/*.{ts,js,mts,mjs,cjs,cts,tsx,jsx,mtsx,mjsx}"],
 		processor: "markdown/markdown",
+	},
+	{
+		files: ["instrumentation.ts"],
+		rules: {
+			"no-console": "off",
+		},
 	},
 	{
 		files: ["**/*.tsx"],

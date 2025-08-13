@@ -7,7 +7,7 @@ import {
 } from "::testing/factories";
 import { HTTPError } from "ky";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import {
 	createApplication,
@@ -20,7 +20,7 @@ import {
 	updateApplication,
 } from "./grant-applications";
 
-vi.mock("@/utils/api");
+vi.mock("@/utils/api/server");
 vi.mock("@/utils/server-side");
 
 const mockOrganizationId = "org-123";

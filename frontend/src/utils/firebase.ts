@@ -6,7 +6,7 @@ import { deleteObject, type FirebaseStorage, getDownloadURL, getStorage, ref, up
 
 import type { UserInfo } from "@/types/user";
 import { getEnv } from "@/utils/env";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 const instanceRef: { app: FirebaseApp | null; auth: Auth | null; storage: FirebaseStorage | null } = {
 	app: null,

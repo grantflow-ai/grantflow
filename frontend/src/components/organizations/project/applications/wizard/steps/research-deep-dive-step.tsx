@@ -5,7 +5,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
 type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;

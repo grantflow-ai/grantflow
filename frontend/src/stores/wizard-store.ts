@@ -5,7 +5,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 const DEBOUNCE_DELAY_MS = 2000;
 const POLLING_INTERVAL_DURATION = 2000;

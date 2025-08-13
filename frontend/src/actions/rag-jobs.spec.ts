@@ -8,8 +8,8 @@ const mockGet = vi.fn().mockReturnValue({ json: vi.fn().mockResolvedValue({}) })
 const mockCreateAuthHeaders = vi.fn();
 const mockWithAuthRedirect = vi.fn();
 
-vi.mock("@/utils/api", async () => {
-	const actual = await vi.importActual("@/utils/api");
+vi.mock("@/utils/api/server", async () => {
+	const actual = await vi.importActual("@/utils/api/server");
 	return {
 		...actual,
 		getClient: () => ({

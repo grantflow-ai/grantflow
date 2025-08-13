@@ -1,27 +1,20 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-	entry: ["vite.config.ts"],
+	entry: ["src/index.ts"],
 	ignore: [
-		"**/*.spec.{ts,tsx}",
-		"**/*.test.{ts,tsx}",
-		"**/*.stories.tsx",
-		"**/setup.ts",
+		"dist/**",
+		"storybook-static/**",
 		"tailwind.config.ts",
 		"postcss.config.mjs",
 		".storybook/**",
 		"playwright.config.ts",
-		"testing/**",
-		"dist/**",
-		"src/app.tsx",
-		"src/main.tsx",
-		"eslint.config.js",
-		"knip.config.js",
+		"eslint.config.*",
 	],
 	ignoreBinaries: ["only-allow", "biome", "cross-env", "storybook", "eslint", "playwright", "vitest", "tsc", "vite"],
-	ignoreDependencies: ["@vitejs/plugin-react", "vite", "vite-plugin-dts", "vite-tsconfig-paths", "vitest"],
 	ignoreExportsUsedInFile: true,
-	project: ["**/*.{ts,tsx,js,jsx}"],
+	project: ["**/*.{ts,tsx,js,jsx}", "vite.config.ts"],
+	tests: ["src/**/*.spec.{ts,tsx}", "testing/**/*.{ts,tsx}"],
 };
 
 export default config;

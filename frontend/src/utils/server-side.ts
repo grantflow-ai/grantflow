@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SESSION_COOKIE } from "@/constants";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/server";
 import { routes } from "@/utils/navigation";
 
 // eslint-disable-next-line @typescript-eslint/require-await

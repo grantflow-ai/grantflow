@@ -2,7 +2,7 @@
  * Distributed tracing utilities for API layer
  */
 
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 /**
  * Create trace headers for API requests

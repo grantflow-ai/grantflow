@@ -24,7 +24,7 @@ vi.mock("@/utils/firebase", () => ({
 	getFirebaseAuth: vi.fn(),
 }));
 
-vi.mock("@/utils/logger", () => ({
+vi.mock("@/utils/logger/client", () => ({
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),

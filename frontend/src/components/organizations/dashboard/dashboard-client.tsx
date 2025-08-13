@@ -3,8 +3,9 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import useSWR from "swr";
-import { createProject, getProjects } from "@/actions/project";
+import { createProject, deleteProject as deleteProjectAction, getProjects } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppHeader } from "@/components/layout/app-header";
 import { DeleteProjectModal, InviteCollaboratorModal } from "@/components/organizations";
@@ -16,6 +17,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import type { API } from "@/types/api-types";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import NewApplicationModal from "../modals/new-application-modal";
@@ -48,7 +50,7 @@ export function DashboardClient({
 	>(null);
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
 
-	const { deleteProject, duplicateProject } = useProjectStore();
+	const { duplicateProject } = useProjectStore();
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
 
@@ -121,9 +123,17 @@ export function DashboardClient({
 
 	const confirmDeleteProject = async () => {
 		if (projectToDelete && currentOrganizationId) {
-			await deleteProject(currentOrganizationId, projectToDelete);
-			await mutate();
-			setProjectToDelete(null);
+			try {
+				await deleteProjectAction(currentOrganizationId, projectToDelete);
+				await mutate();
+
+				toast.success("Project deleted successfully");
+			} catch (error) {
+				log.error("delete-project", error);
+				toast.error("Failed to delete project");
+			} finally {
+				closeDeleteModal();
+			}
 		}
 	};
 

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { UserRole } from "@/types/user";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
 
 interface OrganizationSettingsGeneralProps {

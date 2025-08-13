@@ -8,7 +8,7 @@ import { DeleteAccountModal } from "@/components/organizations/settings/delete-a
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 interface OrganizationSettingsAccountProps {
 	organizationId: string;

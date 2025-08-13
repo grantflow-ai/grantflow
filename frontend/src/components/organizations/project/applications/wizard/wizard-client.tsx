@@ -29,7 +29,7 @@ import {
 import { useApplicationStore } from "@/stores/application-store";
 import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;

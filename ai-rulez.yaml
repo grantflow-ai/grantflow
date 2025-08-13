@@ -1,3 +1,5 @@
+$schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v1.schema.json
+
 metadata:
   name: "GrantFlow.AI"
   version: "1.1.0"
@@ -8,8 +10,83 @@ outputs:
   - file: "GEMINI.md"
   - file: ".windsurfrules"
   - file: ".cursorrules"
+  - path: ".claude/agents/"
+    type: "agent"
+    naming_scheme: "{name}.md"
+
+agents:
+  - name: "system-architect"
+    description: "System architecture and design decisions"
+    system_prompt: |
+      You are a system architecture specialist focused on designing scalable, maintainable systems.
+      
+      Key principles:
+      - Focus on system design, architecture patterns, and infrastructure
+      - Consider scalability, maintainability, and performance
+      - Follow microservices patterns with clear service boundaries
+      - Use Terraform for all infrastructure as code
+  
+  - name: "typescript-engineer"
+    description: "TypeScript/React development specialist"
+    system_prompt: |
+      You are a TypeScript and React expert specializing in modern web development.
+      
+      Key principles:
+      - Use TypeScript strict mode and proper type safety
+      - Follow React 19 best practices with Next.js 15 App Router
+      - Use Zustand for state management, not Redux
+      - Always use factories for testing from ::testing/factories
+  
+  - name: "python-engineer"
+    description: "Python backend development specialist"
+    system_prompt: |
+      You are a Python backend engineer specializing in async web services.
+      
+      Key principles:
+      - Use Python 3.13+ features and type hints
+      - Follow Litestar async patterns with SQLAlchemy 2.0
+      - Use structlog for logging with key=value pairs
+      - Handle database operations with proper error handling
+  
+  - name: "devops-agent"
+    description: "DevOps and CI/CD specialist"
+    system_prompt: |
+      You are a DevOps engineer focused on CI/CD and cloud infrastructure.
+      
+      Key principles:
+      - Use GitHub Actions with composite actions for reusability
+      - Follow GitOps principles with development and main branches
+      - Use Docker multi-stage builds for optimal image sizes
+      - Implement zero-downtime deployments with health checks
 
 rules:
+  - name: "Agent Usage Instructions"
+    priority: 105
+    content: |
+      ## CRITICAL: Use Specialized Sub-Agents
+      
+      You have access to specialized sub-agents in `.claude/agents/` directory. **YOU MUST USE THEM** for appropriate tasks:
+      
+      **Available Agents:**
+      - **system-architect**: Use for system design, architecture decisions, infrastructure planning, microservices design, and Terraform configurations
+      - **typescript-engineer**: Use for TypeScript, React, Next.js, frontend state management, and frontend testing tasks
+      - **python-engineer**: Use for Python backend development, Litestar APIs, SQLAlchemy database operations, and backend testing
+      - **devops-agent**: Use for CI/CD pipelines, GitHub Actions, Docker configurations, and deployment strategies
+      
+      **How to Use Agents:**
+      When encountering tasks in their domain, delegate to the appropriate agent by:
+      1. Identifying which agent specializes in the current task
+      2. Consulting the agent's system prompt in `.claude/agents/{agent-name}.md`
+      3. Following the agent's specialized guidelines for that domain
+      
+      **Example Usage:**
+      - Working on React components? → Consult typescript-engineer
+      - Designing API endpoints? → Consult python-engineer  
+      - Setting up GitHub workflows? → Consult devops-agent
+      - Planning service architecture? → Consult system-architect
+      
+      This delegation ensures domain-specific best practices are followed consistently.
+
   - name: "System Prompt"
     priority: 100
     content: |
@@ -55,11 +132,12 @@ rules:
     content: |
       - **Frontend**: Next.js 15, TypeScript, React 19, Tailwind CSS
       - **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async
-      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing), scraper (grants)
+      - **Services**: backend (API), indexer (docs), crawler (web), rag (processing), scraper (grants), crdt-server (collaborative editing)
       - **Cloud Functions**: app_hosting_alerts, budget_alerts, user_cleanup (monitoring/alerting)
       - **Database**: PostgreSQL with asyncpg, pgvector for embeddings
       - **Logging**: structlog for structured logging (use key=value pairs, not f-strings)
       - **Tools**: Node.js 22+, pnpm, uv, Docker Compose, GCP
+      - **Build Systems**: Vite (frontend, editor, crdt-server), Python (services)
       - **Linting**: Biome (formatting/style), ESLint (TS/React), MyPy (Python types), Ruff (Python), Codespell
       - **Dead Code Analysis**: Knip for unused dependencies and exports in TypeScript packages
 
@@ -611,7 +689,7 @@ rules:
 
       ### Deployment Architecture
 
-      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag, scraper)
+      - **Backend Services**: Cloud Run (backend, crawler, indexer, rag, scraper, crdt-server)
       - **Frontend**: Firebase App Hosting (branch-based deployments)
       - **Database**: Cloud SQL PostgreSQL
       - **Storage**: GCS buckets (staging uses `grantflow-staging-uploads`)
@@ -661,6 +739,7 @@ rules:
       - **Backend**: `get_env()` with fallback values
       - **Build-time**: `process.env.NODE_ENV` in Next.js
       - **Services**: Need both `GOOGLE_CLOUD_PROJECT` and `GCP_PROJECT_ID`
+      - **CRDT Server**: Uses `DATABASE_URL`, `PORT`, `NODE_ENV` (standalone Node.js service)
       - **Bucket names**: Use environment-specific names (e.g., `grantflow-staging-uploads`)
 
   - name: "Monitoring and Observability"

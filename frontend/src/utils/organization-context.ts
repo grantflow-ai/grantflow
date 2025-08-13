@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SELECTED_ORGANIZATION_COOKIE } from "@/constants";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
 /**

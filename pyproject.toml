@@ -10,10 +10,11 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.13",
 ]
+dependencies = [  ]
 
 [dependency-groups]
 dev = [
-  "ai-rulez>=1.0.0",
+  "ai-rulez>=1.4.1",
   "asyncpg>=0.30.0",
   "codespell>=2.4.0",
   "covdefaults>=2.3.0",
@@ -112,7 +113,9 @@ lint.per-file-ignores."scripts/**/*.*" = [
   "N999",
   "S",
 ]
-lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [ "B027" ] # Allow empty method in base class
+lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [
+  "B027",
+] # Allow empty method in base class
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",
   "D",
@@ -172,10 +175,7 @@ addopts = [
   "--strict-markers", # Ensure all markers are registered
   "--tb=short",       # Shorter traceback format for better readability in CI
 ]
-testpaths = [
-  "packages/*/tests",
-  "services/*/tests",
-]
+testpaths = [ "packages/*/tests", "services/*/tests" ]
 
 [tool.coverage.run]
 plugins = [ "covdefaults" ]

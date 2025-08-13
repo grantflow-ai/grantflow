@@ -5,7 +5,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { getOtp } from "@/actions/otp";
 import type { SourceIndexingStatus } from "@/enums";
 import { getEnv } from "@/utils/env";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 export type AutofillProgressMessage = WebsocketMessage<AutofillProgressNotification>;
 
@@ -123,6 +123,29 @@ export function useApplicationNotifications({
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
 		organizationId && projectId && applicationId ? getSocketUrl : null,
 		{
+			onClose: (event) => {
+				log.warn("[useApplicationNotifications] WebSocket closed", {
+					applicationId,
+					code: event.code,
+					organizationId,
+					projectId,
+					reason: event.reason,
+					reconnectAttempt: reconnectAttemptRef.current,
+					wasClean: event.wasClean,
+				});
+			},
+			onError: (event) => {
+				log.error("[useApplicationNotifications] WebSocket error", undefined, {
+					applicationId,
+					error: {
+						message: (event as unknown as { message?: string }).message,
+						type: event.type,
+					},
+					organizationId,
+					projectId,
+					reconnectAttempt: reconnectAttemptRef.current,
+				});
+			},
 			onOpen: () => {
 				log.info("[useApplicationNotifications] WebSocket opened", {
 					applicationId,
@@ -136,7 +159,18 @@ export function useApplicationNotifications({
 				return Math.min(RECONNECT_INTERVAL_BASE * 2 ** attemptNumber, RECONNECT_INTERVAL_MAX);
 			},
 			shouldReconnect: (closeEvent) => {
-				return closeEvent.code !== 1000 && reconnectAttemptRef.current < RECONNECT_ATTEMPTS_MAX;
+				const should = closeEvent.code !== 1000 && reconnectAttemptRef.current < RECONNECT_ATTEMPTS_MAX;
+				if (!should) {
+					log.warn("[useApplicationNotifications] Will not reconnect WebSocket", {
+						applicationId,
+						code: closeEvent.code,
+						organizationId,
+						projectId,
+						reason: closeEvent.reason,
+						reconnectAttempt: reconnectAttemptRef.current,
+					});
+				}
+				return should;
 			},
 		},
 	);

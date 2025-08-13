@@ -25,7 +25,7 @@ import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { getEnv } from "@/utils/env";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { withRetry } from "@/utils/retry";
 import { extractGrantTemplateValidationError } from "@/utils/validation";
 
