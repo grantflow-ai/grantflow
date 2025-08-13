@@ -1,60 +1,68 @@
 "use client";
 
-import { X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { AppButton } from "@/components/app";
+import { BaseModal } from "@/components/app/feedback/base-modal";
 
 interface DeleteAccountModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onConfirm: () => void;
+	onConfirm: () => Promise<void> | void;
 }
 
 export function DeleteAccountModal({ isOpen, onClose, onConfirm }: DeleteAccountModalProps) {
-	if (!isOpen) {
-		return null;
-	}
+	const [isDeleting, setIsDeleting] = useState(false);
+
+	const handleConfirm = async () => {
+		setIsDeleting(true);
+		const toastId = toast.loading("Deleting account...");
+		try {
+			await onConfirm();
+			toast.success("Account deleted successfully.", { id: toastId });
+		} catch {
+			toast.error("Failed to delete account.", { id: toastId });
+		} finally {
+			setIsDeleting(false);
+		}
+	};
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-popup-cover">
-			<div className="relative w-[464px] bg-white rounded-lg p-8 border border-primary">
-				<button
-					className="absolute right-4 top-4 p-0 hover:opacity-70 transition-opacity"
-					onClick={onClose}
-					type="button"
-				>
-					<X className="size-4 text-app-gray-700" />
-				</button>
+		<BaseModal className=" w-[464px]" isOpen={isOpen} onClose={onClose}>
+			<div className="flex flex-col gap-6 " data-testid="delete-account-modal">
+				<h2 className="font-body font-medium text-[24px] leading-[30px] text-app-black">
+					Are You Sure You Want to Leave This Account?
+				</h2>
 
-				<div className="flex flex-col gap-8">
-					<div className="flex flex-col gap-3">
-						<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
-							Are You Sure You Want to Leave This Account?
-						</h2>
-						<p className="font-body text-[16px] leading-[20px] text-app-black">
-							By leaving this account, your personal data associated with this GrantFlow account and your
-							user profile will be deleted.
-							<br />
-							You will lose access to all research projects, data, and team collaboration.
-						</p>
-					</div>
+				<p className="text-base leading-5 text-app-black font-normal">
+					By leaving this account, your personal data associated with this GrantFlow account and your user{" "}
+					<span className="whitespace-nowrap">profile will be deleted.</span> You will lose access to all
+					research projects, data, and team collaboration.
+				</p>
 
-					<div className="flex items-end justify-between">
-						<button
-							className="px-4 py-2 bg-white border border-primary rounded font-button text-[16px] leading-[22px] text-primary hover:bg-primary hover:text-white transition-colors"
-							onClick={onClose}
-							type="button"
-						>
-							Cancel
-						</button>
-						<button
-							className="px-4 py-2 bg-primary rounded font-button text-[16px] leading-[22px] text-white hover:bg-opacity-90 transition-colors"
-							onClick={onConfirm}
-							type="button"
-						>
-							Leave and log out
-						</button>
-					</div>
+				<div className="flex justify-between items-center">
+					<AppButton
+						className="rounded-sm px-4 py-2"
+						data-testid="cancel-button"
+						disabled={isDeleting}
+						onClick={onClose}
+						type="button"
+						variant="secondary"
+					>
+						Cancel
+					</AppButton>
+					<AppButton
+						className="rounded-sm px-4 py-2"
+						data-testid="delete-button"
+						disabled={isDeleting}
+						onClick={handleConfirm}
+						type="button"
+						variant="primary"
+					>
+						{isDeleting ? "Deleting..." : "Leave and log out"}
+					</AppButton>
 				</div>
 			</div>
-		</div>
+		</BaseModal>
 	);
 }

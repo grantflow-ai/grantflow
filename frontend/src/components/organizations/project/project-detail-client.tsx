@@ -38,7 +38,6 @@ export function ProjectDetailClient() {
 	const { user } = useUserStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 	const { getProjects, projects } = useProjectStore();
-
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [projectTitle, setProjectTitle] = useState(project?.name ?? "");
@@ -46,11 +45,38 @@ export function ProjectDetailClient() {
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
+	const [isFirstEdit, setIsFirstEdit] = useState(false);
 	const titleInputRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (isEditingTitle && titleInputRef.current) {
-			titleInputRef.current.focus();
+			setIsFirstEdit(true);
+
+			const element = titleInputRef.current;
+			element.focus();
+
+			const range = document.createRange();
+			range.setStart(element, element.childNodes.length);
+			range.collapse(true);
+			const selection = globalThis.getSelection();
+			if (selection) {
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+
+			const handleFirstKey = (e: KeyboardEvent) => {
+				if (e.key.length === 1) {
+					element.textContent = "";
+					setIsFirstEdit(false);
+					element.removeEventListener("keydown", handleFirstKey);
+				}
+			};
+
+			element.addEventListener("keydown", handleFirstKey);
+
+			return () => {
+				element.removeEventListener("keydown", handleFirstKey);
+			};
 		}
 	}, [isEditingTitle]);
 
@@ -291,7 +317,7 @@ export function ProjectDetailClient() {
 							{isEditingTitle ? (
 								<div
 									aria-label="Project Title"
-									className="font-medium text-[36px] leading-[42px] text-gray-300 outline-none border-b-2  border-primary focus:ring-offset-2  "
+									className={`font-medium text-[36px] leading-[42px] text-app-black outline-none border-b-2  border-primary focus:outline-none ${isFirstEdit ? "text-gray-400" : "text-app-black"}`}
 									contentEditable={true}
 									data-testid="project-title-input"
 									onBlur={handleSaveProjectTitle}
