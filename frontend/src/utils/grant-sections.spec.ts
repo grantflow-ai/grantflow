@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import {
 	assignOrderAndParent,
+	calculateDropIndicatorVisibility,
 	determineNewParentId,
 	executeMainToSubConversion,
 	getTargetIndexForMainSectionReorder,
@@ -12,7 +13,6 @@ import {
 	updateReorder,
 } from "./grant-sections";
 
-// Helper functions for parent assignment (moved to outer scope to fix linting)
 const makeSection2ChildOfSection1 = (section: GrantSection): null | string => {
 	if (section.id === "section-2") {
 		return "section-1";
@@ -43,6 +43,15 @@ const reassignParentFallbackChain = (section: GrantSection): null | string => {
 	}
 	return section.parent_id;
 };
+
+const createTestSections = () => ({
+	main1: GrantSectionDetailedFactory.build({ id: "main-1", order: 0, parent_id: null }),
+	main2: GrantSectionDetailedFactory.build({ id: "main-2", order: 3, parent_id: null }),
+	main3: GrantSectionDetailedFactory.build({ id: "main-3", order: 5, parent_id: null }),
+	sub1a: GrantSectionDetailedFactory.build({ id: "sub-1a", order: 1, parent_id: "main-1" }),
+	sub1b: GrantSectionDetailedFactory.build({ id: "sub-1b", order: 2, parent_id: "main-1" }),
+	sub2a: GrantSectionDetailedFactory.build({ id: "sub-2a", order: 4, parent_id: "main-2" }),
+});
 
 describe("grant-sections utilities", () => {
 	describe("determineNewParentId", () => {
@@ -783,15 +792,11 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections);
 
-			// Original should be unchanged
 			expect(sections[0].order).toBe(originalOrder);
 			expect(sections[0].parent_id).toBe(originalParent);
 
-			// Result should have new values
 			expect(result[0].order).toBe(0);
 			expect(result[0].parent_id).toBe("parent-1");
-
-			// Should be different objects
 			expect(result[0]).not.toBe(sections[0]);
 		});
 	});
@@ -1150,6 +1155,489 @@ describe("grant-sections utilities", () => {
 			expect(calledWith[0].id).toBe("only-section");
 			expect(calledWith[0].parent_id).toBe("new-parent");
 			expect(calledWith[0].order).toBe(0);
+		});
+	});
+
+	describe("calculateDropIndicatorVisibility", () => {
+		describe("Edge Cases and Safety", () => {
+			it("returns no indicators when dragging same item over itself", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1;
+				const overItem = sections.main1;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					0,
+					Object.values(sections),
+					"main-1",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: false,
+				});
+			});
+
+			it("returns default when activeIndex is -1 (invalid)", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1;
+				const overItem = sections.main2;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					-1,
+					3,
+					Object.values(sections),
+					"main-2",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false, // overItem.parent_id is null
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("returns default when overIndex is -1 (invalid)", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1;
+				const overItem = sections.sub2a;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					-1,
+					Object.values(sections),
+					"sub-2a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true, // overItem.parent_id is not null
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+		});
+
+		describe("Special Case: Last Subsection Full Width", () => {
+			it("shows full width indicator for last subsection when dragging over main with subsections", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main3;
+				const overItem = sections.main1;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					5,
+					0,
+					Object.values(sections),
+					"sub-1b", // Last subsection of main-1
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false, // Full main section width!
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("does not apply full width for non-last subsection", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main3;
+				const overItem = sections.main1;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					5,
+					0,
+					Object.values(sections),
+					"sub-1a", // First subsection of main-1, not last
+				);
+
+				expect(result.isSubsectionWidth).toBe(false);
+				expect(result.showBelow).toBe(true);
+			});
+
+			it("does not apply full width when dragging over main without subsections", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1;
+				const overItem = sections.main3;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					5,
+					Object.values(sections),
+					"main-3",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+		});
+
+		describe("Scenario 1: Sub → Main", () => {
+			it("shows below indicator with main width when moving subsection to main", () => {
+				const sections = createTestSections();
+				const activeItem = sections.sub1a; // Subsection
+				const overItem = sections.main2; // Main section
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					1,
+					3,
+					Object.values(sections),
+					"main-2",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("shows below indicator for subsection moving to different main", () => {
+				const sections = createTestSections();
+				const activeItem = sections.sub2a; // From main-2
+				const overItem = sections.main3; // To main-3
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					4,
+					5,
+					Object.values(sections),
+					"main-3",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+		});
+
+		describe("Scenario 2: Main → Sub", () => {
+			it("shows above indicator with subsection width when moving main to subsection", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main3; // Main section without subs
+				const overItem = sections.sub1a; // Subsection
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					5,
+					1,
+					Object.values(sections),
+					"sub-1a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: true,
+					showBelow: false,
+				});
+			});
+
+			it("prevents moving main section into its own subsection", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1; // Main with subsections
+				const overItem = sections.sub1a; // Its own subsection
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					1,
+					Object.values(sections),
+					"sub-1a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: false, // No indicators - invalid move
+				});
+			});
+
+			it("allows moving main section with subsections to different parent's subsection", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1; // Main with subsections
+				const overItem = sections.sub2a; // Different parent's subsection
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					4,
+					Object.values(sections),
+					"sub-2a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: true,
+					showBelow: false,
+				});
+			});
+		});
+
+		describe("Scenario 3: Sub → Sub", () => {
+			it("shows below indicator when moving subsection down within same parent", () => {
+				const sections = createTestSections();
+				const activeItem = sections.sub1a; // First subsection
+				const overItem = sections.sub1b; // Second subsection, same parent
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					1,
+					2,
+					Object.values(sections),
+					"sub-1b",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("shows above indicator when moving subsection up within same parent", () => {
+				const sections = createTestSections();
+				const activeItem = sections.sub1b; // Second subsection
+				const overItem = sections.sub1a; // First subsection, same parent
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					2,
+					1,
+					Object.values(sections),
+					"sub-1a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: false,
+					showBelow: false,
+				});
+			});
+
+			it("shows no indicator for no-op case (adjacent with same parent)", () => {
+				const sections = createTestSections();
+				const activeItem = sections.sub1b;
+				const overItem = sections.sub1a;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					2,
+					1,
+					Object.values(sections),
+					"sub-1a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: false,
+					showBelow: false,
+				});
+			});
+
+			it("shows below indicator when moving subsection to different parent", () => {
+				const sections = createTestSections();
+				const activeItem = sections.sub1a; // From main-1
+				const overItem = sections.sub2a; // To main-2 parent
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					1,
+					4,
+					Object.values(sections),
+					"sub-2a",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+		});
+
+		describe("Scenario 4: Main → Main", () => {
+			it("shows below indicator when moving main section down", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1;
+				const overItem = sections.main3;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					5,
+					Object.values(sections),
+					"main-3",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("shows above indicator when moving main section up", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main3;
+				const overItem = sections.main1;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					5,
+					0,
+					Object.values(sections),
+					"main-1",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("uses safe default for complex main-to-main with subsections", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main1;
+				const overItem = sections.main2;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					0,
+					3,
+					Object.values(sections),
+					"main-2",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+		});
+
+		describe("Error Handling", () => {
+			it("handles errors gracefully and returns default", () => {
+				const malformedSections = [{ id: "bad-section", order: 0, parent_id: "non-existent" } as any];
+
+				const activeItem = GrantSectionDetailedFactory.build({ id: "active", parent_id: null });
+				const overItem = GrantSectionDetailedFactory.build({ id: "over", parent_id: null });
+
+				const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 1, malformedSections, "over");
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+
+				consoleSpy.mockRestore();
+			});
+		});
+
+		describe("Complex Real-World Scenarios", () => {
+			it("handles deeply nested hierarchy with multiple parents", () => {
+				const complexSections = [
+					GrantSectionDetailedFactory.build({ id: "main-a", order: 0, parent_id: null }),
+					GrantSectionDetailedFactory.build({ id: "sub-a1", order: 1, parent_id: "main-a" }),
+					GrantSectionDetailedFactory.build({ id: "sub-a2", order: 2, parent_id: "main-a" }),
+					GrantSectionDetailedFactory.build({ id: "sub-a3", order: 3, parent_id: "main-a" }),
+					GrantSectionDetailedFactory.build({ id: "main-b", order: 4, parent_id: null }),
+					GrantSectionDetailedFactory.build({ id: "sub-b1", order: 5, parent_id: "main-b" }),
+					GrantSectionDetailedFactory.build({ id: "main-c", order: 6, parent_id: null }),
+				];
+
+				const result = calculateDropIndicatorVisibility(
+					complexSections[1],
+					complexSections[5],
+					1,
+					5,
+					complexSections,
+					"sub-b1",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: true,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("handles single-subsection parent correctly for last subsection logic", () => {
+				const singleSubSections = [
+					GrantSectionDetailedFactory.build({ id: "main-1", order: 0, parent_id: null }),
+					GrantSectionDetailedFactory.build({ id: "sub-1-only", order: 1, parent_id: "main-1" }),
+					GrantSectionDetailedFactory.build({ id: "main-2", order: 2, parent_id: null }),
+				];
+
+				const result = calculateDropIndicatorVisibility(
+					singleSubSections[2],
+					singleSubSections[0],
+					2,
+					0,
+					singleSubSections,
+					"sub-1-only",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
+
+			it("prioritizes last subsection rule over regular main-to-main logic", () => {
+				const sections = createTestSections();
+				const activeItem = sections.main2;
+				const overItem = sections.main1;
+
+				const result = calculateDropIndicatorVisibility(
+					activeItem,
+					overItem,
+					3,
+					0,
+					Object.values(sections),
+					"sub-1b",
+				);
+
+				expect(result).toEqual({
+					isSubsectionWidth: false,
+					showAbove: false,
+					showBelow: true,
+				});
+			});
 		});
 	});
 });
