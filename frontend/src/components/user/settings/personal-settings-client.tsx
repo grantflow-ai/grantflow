@@ -7,7 +7,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { generateInitials } from "@/utils/user";
 import { DeleteAccountModal } from "../modals/delete-account-modal";
 

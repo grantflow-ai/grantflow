@@ -1,6 +1,6 @@
 import ky, { type KyInstance } from "ky";
 import { getEnv } from "@/utils/env";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { Ref } from "@/utils/state";
 
 const clientRef = new Ref<KyInstance>();

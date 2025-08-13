@@ -24,7 +24,7 @@ import { useNewApplicationModalStore } from "@/stores/new-application-modal-stor
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import { ApplicationList } from "./application-list";
@@ -130,11 +130,12 @@ export function ProjectDetailClient() {
 				removeApplicationFromProject(applicationToDelete);
 
 				toast.success("Application deleted successfully");
-				setApplicationToDelete(null);
-				setShowDeleteModal(false);
 			} catch (error) {
 				log.error("delete-application", error);
 				toast.error("Failed to delete application");
+			} finally {
+				setApplicationToDelete(null);
+				setShowDeleteModal(false);
 			}
 		}
 	};

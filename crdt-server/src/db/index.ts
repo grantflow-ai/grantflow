@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 
-import { config } from "@/config";
+import { config } from "@/utils/config";
 
 export const db = drizzle({
 	connection: {

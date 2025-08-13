@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { acceptInvitation } from "@/actions/project";
 import { useUserStore } from "@/stores/user-store";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 export default function AcceptInvitationPage() {
 	return (

@@ -7,7 +7,7 @@ import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdo
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 const FILE_ICON_MAP = {
 	csv: <Image alt="CSV file" className="block" height={56} src="/icons/file-csv.svg" width={48} />,

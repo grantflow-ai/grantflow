@@ -3,11 +3,11 @@ import { HTTPError, type NormalizedOptions } from "ky";
 
 import { SESSION_COOKIE } from "@/constants";
 import { getEnv } from "@/utils/env";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/server";
 import { routes } from "@/utils/navigation";
 import { createAuthHeaders, redirectWithToastParams, withAuthRedirect, withErrorToast } from "./server-side";
 
-vi.mock("@/utils/logger", () => ({
+vi.mock("@/utils/logger/server", () => ({
 	log: {
 		error: vi.fn(),
 		info: vi.fn(),

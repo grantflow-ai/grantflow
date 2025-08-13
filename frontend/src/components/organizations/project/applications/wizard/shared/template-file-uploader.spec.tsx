@@ -154,21 +154,6 @@ describe("TemplateFileUploader", () => {
 		});
 	});
 
-	it.skip("handles file upload errors gracefully", async () => {
-		mockAddFile.mockRejectedValueOnce(new Error("Upload failed"));
-
-		render(<TemplateFileUploader parentId="parent-123" />);
-
-		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
-		const fileInput = screen.getByTestId("file-input");
-
-		await user.upload(fileInput, file);
-
-		await waitFor(() => {
-			expect(mockAddFile).toHaveBeenCalled();
-		});
-	});
-
 	it("validates all files before uploading any", async () => {
 		render(<TemplateFileUploader parentId="parent-123" />);
 

@@ -43,6 +43,18 @@ variable "enable_dead_letter" {
   default     = false
 }
 
+variable "indexer_retry_minimum_backoff" {
+  description = "Minimum backoff duration for indexer retries (to prevent burst storms)"
+  type        = string
+  default     = "30s"
+}
+
+variable "indexer_retry_maximum_backoff" {
+  description = "Maximum backoff duration for indexer retries"
+  type        = string
+  default     = "600s"
+}
+
 variable "indexer_url" {
   description = "URL of the indexer Cloud Run service"
   type        = string
@@ -73,16 +85,19 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
   name  = "file-indexing-subscription"
   topic = google_pubsub_topic.file_indexing.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  # ~keep 10 minutes for file processing (max allowed by Pub/Sub)
+  ack_deadline_seconds = 600
 
+  # ~keep Increased backoff for indexer to handle burst traffic gracefully
   retry_policy {
-    minimum_backoff = "10s"
-    maximum_backoff = "600s"
+    minimum_backoff = var.indexer_retry_minimum_backoff
+    maximum_backoff = var.indexer_retry_maximum_backoff
   }
 
   enable_message_ordering = false
 
-  # Configure push to Cloud Run
+  # ~keep Flow control to prevent burst overload (429 errors)
+  # Limits concurrent message delivery to match Cloud Run capacity
   push_config {
     push_endpoint = var.indexer_url
 
@@ -98,10 +113,19 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
     }
   }
 
+  # ~keep Exponential backoff prevents retry storms during overload
   # Configure exponential backoff for failed deliveries
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.file_indexing_dlq.id
-    max_delivery_attempts = 5
+    max_delivery_attempts = 10 # ~keep Increased for fanout pattern burst handling
+  }
+
+  # ~keep Exactly-once delivery is not compatible with push subscriptions
+  # enable_exactly_once_delivery = true
+
+  # ~keep Set expiration policy to clean up inactive subscriptions
+  expiration_policy {
+    ttl = "2678400s" # 31 days
   }
 }
 
@@ -143,7 +167,8 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
   name  = "url-crawling-subscription"
   topic = google_pubsub_topic.url_crawling.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  # ~keep 5 minutes for URL crawling
+  ack_deadline_seconds = 300
 
   retry_policy {
     minimum_backoff = "10s"
@@ -171,7 +196,7 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
   # Configure exponential backoff for failed deliveries
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.url_crawling_dlq.id
-    max_delivery_attempts = 5
+    max_delivery_attempts = 10 # ~keep Increased for fanout pattern burst handling
   }
 }
 

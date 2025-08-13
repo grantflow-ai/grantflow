@@ -10,7 +10,7 @@
 		"paths": {
 			"@/*": ["src/*"]
 		},
-		"rootDir": "src",
+		"rootDir": ".",
 		"skipLibCheck": true,
 		"strict": true,
 		"target": "ESNext",
@@ -18,5 +18,5 @@
 	},
 	"exclude": ["node_modules", "dist"],
 	"extends": "../tsconfig.json",
-	"include": ["src/**/*.ts", "testing/**/*.ts", "drizzle.config.ts", "tsup.config.ts", "vitest.config.ts"]
+	"include": ["src/**/*.ts", "testing/**/*.ts", "drizzle.config.ts", "vite.config.ts"]
 }

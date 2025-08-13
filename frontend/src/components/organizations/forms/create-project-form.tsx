@@ -9,7 +9,7 @@ import { createProject } from "@/actions/project";
 import { AppCard, AppCardContent, AppInput, AppTextarea } from "@/components/app";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 const projectSchema = z.object({
 	description: z.string(),

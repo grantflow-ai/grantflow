@@ -7,7 +7,7 @@ import { routes } from "@/utils/navigation";
 import { login } from "./login";
 
 const mockPost = vi.fn();
-vi.mock("@/utils/api", () => ({
+vi.mock("@/utils/api/server", () => ({
 	getClient: () => ({
 		post: mockPost,
 	}),

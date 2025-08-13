@@ -26,7 +26,7 @@ import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
 const loginFormSchema = z.object({

@@ -13,7 +13,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useUserStore } from "@/stores/user-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 /**
  * Reset all Zustand stores to their initial state.

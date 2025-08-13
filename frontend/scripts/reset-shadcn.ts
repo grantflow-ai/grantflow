@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 import { readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/server";
 
 const execAsync = promisify(exec);
 

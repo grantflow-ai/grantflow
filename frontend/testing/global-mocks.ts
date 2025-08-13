@@ -215,7 +215,7 @@ export const mockFetch = vi.fn();
 
 export const mockEnv = {
 	NEXT_PUBLIC_BACKEND_API_BASE_URL: "https://api.dev.acmetech.io",
-	NEXT_PUBLIC_CRDT_SERVER_URL: "ws://127.0.0.1:1234",
+	NEXT_PUBLIC_CRDT_SERVER_URL: "ws://127.0.0.1:8090",
 	NEXT_PUBLIC_DEBUG: true,
 	NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyD9x8j2kLm5nR7cM3pQ4vN2zXy",
 	NEXT_PUBLIC_FIREBASE_APP_ID: "1:847362514908:web:a7b9c8d6e5f4a3b2c1d0",

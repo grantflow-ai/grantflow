@@ -19,7 +19,7 @@ import {
 	UpdateOrganizationResponseFactory,
 } from "::testing/factories";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import {
 	addOrganizationMember,
@@ -39,7 +39,7 @@ import {
 	updateOrganizationMemberRole,
 } from "./organization";
 
-vi.mock("@/utils/api");
+vi.mock("@/utils/api/server");
 vi.mock("@/utils/server-side");
 
 let mockClient: any;

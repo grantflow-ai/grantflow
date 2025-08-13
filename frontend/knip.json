@@ -1,0 +1,51 @@
+{
+	"$schema": "https://unpkg.com/knip/dist/schema.json",
+	"ignore": [
+		".next/**",
+		".turbo/**",
+		"dist/**",
+		"build/**",
+		"coverage/**",
+		"playwright-report/**",
+		"test-results/**",
+		".storybook/**",
+		"testing/**",
+		"tests/**",
+		"**/*.spec.ts",
+		"**/*.spec.tsx",
+		"src/components/**",
+		"src/hooks/**",
+		"src/stores/**",
+		"src/utils/**",
+		"src/actions/**",
+		"playwright.config.ts",
+		"vitest.setup.ts",
+		"knip.config.ts",
+		"postcss.config.mjs",
+		"next-env.d.ts",
+		"next.config.*",
+		"eslint.config.*",
+		"vitest.config.*",
+		"tsconfig*.json"
+	],
+	"ignoreBinaries": [
+		"biome",
+		"vitest",
+		"playwright",
+		"storybook",
+		"eslint",
+		"email",
+		"knip",
+		"only-allow",
+		"tsx",
+		"tsc",
+		"cross-env"
+	],
+	"ignoreDependencies": [
+		"@grantflow/editor",
+		"tw-animate-css",
+		"@testing-library/dom",
+		"@testing-library/react",
+		"@testing-library/user-event"
+	]
+}

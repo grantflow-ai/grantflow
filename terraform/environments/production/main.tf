@@ -98,6 +98,8 @@ module "cloud_run" {
   cpu_limit                     = var.cpu_limit     # Higher CPU for production
   memory_limit                  = var.memory_limit  # Higher memory for production
   crawler_memory_limit          = "4Gi"             # ~keep Same as default but explicit for crawler due to browser automation needs
+  indexer_memory_limit          = "4Gi"             # ~keep Increased memory for indexer to prevent OOM issues
+  indexer_concurrency_limit     = 50                # ~keep Optimized concurrency for indexer (10 instances × 50 = 500 concurrent)
   discord_webhook_url           = var.discord_webhook_url
 
   # Production-specific settings
@@ -118,6 +120,10 @@ module "pubsub" {
   message_retention_duration = "604800s" # 7 days retention
   ack_deadline_seconds       = 300       # 5-minute ack deadline
   enable_dead_letter         = true      # Dead letter queues for production
+
+  # ~keep Production retry configuration for better burst handling
+  indexer_retry_minimum_backoff = "60s"  # Longer minimum backoff for production stability
+  indexer_retry_maximum_backoff = "900s" # 15 minutes maximum backoff
 
   # Pass Cloud Run service URLs for push endpoints
   indexer_url = module.cloud_run.indexer_url
