@@ -36,7 +36,39 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
-const updateDragOverVisualState = (overId: null | string): void => {
+const setLastSubsectionDragOver = (
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	sections: GrantSection[],
+): boolean => {
+	const isMainToMainWithSubsections =
+		activeItem.parent_id === null && overItem.parent_id === null && hasSubSections(overItem.id, sections);
+
+	if (!isMainToMainWithSubsections) {
+		return false;
+	}
+
+	const subsections = sections.filter((s) => s.parent_id === overItem.id);
+	const lastSubsection = subsections.at(-1);
+
+	if (!lastSubsection) {
+		return false;
+	}
+
+	const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
+	if (lastSubElement) {
+		lastSubElement.dataset.dragOver = "true";
+		return true;
+	}
+	return false;
+};
+
+const updateDragOverVisualState = (
+	overId: null | string,
+	activeItem?: GrantSection | null,
+	overItem?: GrantSection | null,
+	sections?: GrantSection[],
+): void => {
 	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
 
 	if (overId) {
@@ -44,6 +76,10 @@ const updateDragOverVisualState = (overId: null | string): void => {
 
 		if (prevOverElement && prevOverElement !== overElement) {
 			delete prevOverElement.dataset.dragOver;
+		}
+
+		if (activeItem && overItem && sections && setLastSubsectionDragOver(activeItem, overItem, sections)) {
+			return;
 		}
 
 		if (overElement) {
@@ -55,10 +91,10 @@ const updateDragOverVisualState = (overId: null | string): void => {
 };
 
 const clearDragOverVisualState = (): void => {
-	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
-	if (prevOverElement) {
-		delete prevOverElement.dataset.dragOver;
-	}
+	const allDragOverElements = document.querySelectorAll<HTMLElement>('[data-drag-over="true"]');
+	allDragOverElements.forEach((element) => {
+		delete element.dataset.dragOver;
+	});
 };
 
 const handleMainToSubReorder = async (
@@ -396,8 +432,8 @@ export function DragDropSectionManager({
 					overItem: null,
 				};
 			},
-			onDragOver: (_event, _activeItem, overItem) => {
-				updateDragOverVisualState(overItem?.id ?? null);
+			onDragOver: (_event, activeItem, overItem) => {
+				updateDragOverVisualState(overItem?.id ?? null, activeItem, overItem, grantSections);
 				dragStateRef.current = {
 					...dragStateRef.current,
 					overIndex: overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1,
