@@ -8,8 +8,6 @@ metadata:
 outputs:
   - file: "CLAUDE.md"
   - file: "GEMINI.md"
-  - file: ".windsurfrules"
-  - file: ".cursorrules"
   - path: ".claude/agents/"
     type: "agent"
     naming_scheme: "{name}.md"
@@ -52,7 +50,7 @@ rules:
     content: |
       **Frontend**: Next.js 15, React 19, TypeScript, Tailwind, Vite
       **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async, structlog
-      **Services**: backend, indexer, crawler, rag, scraper, crdt-server
+      **Services**: backend, indexer, crawler, rag, scraper, crdt-server (Hocuspocus CRDT)
       **Cloud**: GCP, Cloud Run, Cloud SQL PostgreSQL, pgvector, Firebase Auth
       **Tools**: pnpm, uv, tofu (not terraform), Docker Compose
       **Linting**: Biome, ESLint, MyPy, Ruff, Codespell, Knip
@@ -177,6 +175,7 @@ rules:
       - WebSocket endpoint: `/projects/{id}/applications/{id}/notifications`
       - Environment vars: Frontend `getEnv()` throws, Backend `get_env()` with fallback
       - Topics: url-crawling, frontend-notifications, file-indexing, rag-processing
+      - CRDT Server: Hocuspocus extensions pattern, health checks at `/health` + `/ready`
 
   - name: "Monitoring"
     priority: 48
