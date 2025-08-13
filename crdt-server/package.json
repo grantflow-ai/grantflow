@@ -9,7 +9,9 @@
 		"pino": "^9.9.0",
 		"zod": "^4.0.17"
 	},
-	"devDependencies": {},
+	"devDependencies": {
+		"tsx": "^4.20.4"
+	},
 	"engines": {
 		"node": ">=22.0.0"
 	},
@@ -22,7 +24,7 @@
 		"build": "vite build",
 		"check": "biome check --write . && eslint ",
 		"db:introspect": "drizzle-kit introspect && mv drizzle/schema.ts src/db/schema.ts && mv drizzle/relations.ts src/db/relations.ts && pnpm lint",
-		"dev": "vite",
+		"dev": "tsx watch src/index.ts",
 		"eslint": "eslint",
 		"format": "biome format --write .",
 		"knip": "knip",
