@@ -36,7 +36,33 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
-const updateDragOverVisualState = (overId: null | string): void => {
+const setLastSubsectionDragOver = (
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	sections: GrantSection[],
+): void => {
+	const isMainToMainWithSubsections =
+		activeItem.parent_id === null && overItem.parent_id === null && hasSubSections(overItem.id, sections);
+
+	if (isMainToMainWithSubsections) {
+		const subsections = sections.filter((s) => s.parent_id === overItem.id);
+		const lastSubsection = subsections.at(-1);
+
+		if (lastSubsection) {
+			const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
+			if (lastSubElement) {
+				lastSubElement.dataset.dragOver = "true";
+			}
+		}
+	}
+};
+
+const updateDragOverVisualState = (
+	overId: null | string,
+	activeItem?: GrantSection | null,
+	overItem?: GrantSection | null,
+	sections?: GrantSection[],
+): void => {
 	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
 
 	if (overId) {
@@ -49,16 +75,20 @@ const updateDragOverVisualState = (overId: null | string): void => {
 		if (overElement) {
 			overElement.dataset.dragOver = "true";
 		}
+
+		if (activeItem && overItem && sections) {
+			setLastSubsectionDragOver(activeItem, overItem, sections);
+		}
 	} else if (prevOverElement) {
 		delete prevOverElement.dataset.dragOver;
 	}
 };
 
 const clearDragOverVisualState = (): void => {
-	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
-	if (prevOverElement) {
-		delete prevOverElement.dataset.dragOver;
-	}
+	const allDragOverElements = document.querySelectorAll<HTMLElement>('[data-drag-over="true"]');
+	allDragOverElements.forEach((element) => {
+		delete element.dataset.dragOver;
+	});
 };
 
 const handleMainToSubReorder = async (
@@ -396,8 +426,8 @@ export function DragDropSectionManager({
 					overItem: null,
 				};
 			},
-			onDragOver: (_event, _activeItem, overItem) => {
-				updateDragOverVisualState(overItem?.id ?? null);
+			onDragOver: (_event, activeItem, overItem) => {
+				updateDragOverVisualState(overItem?.id ?? null, activeItem, overItem, grantSections);
 				dragStateRef.current = {
 					...dragStateRef.current,
 					overIndex: overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1,
