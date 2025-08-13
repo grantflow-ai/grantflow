@@ -1,7 +1,7 @@
 import { PinoTransport } from "@loglayer/transport-pino";
 import { getSimplePrettyTerminal } from "@loglayer/transport-simple-pretty-terminal";
 import { type ILogLayer, LogLayer } from "loglayer";
-import pino from "pino";
+import * as Pino from "pino";
 import { serializeError } from "serialize-error";
 
 export function register(): void {
@@ -15,7 +15,7 @@ export function register(): void {
 			}),
 			new PinoTransport({
 				enabled: process.env.NODE_ENV === "production",
-				logger: pino(),
+				logger: Pino.pino(),
 			}),
 		],
 	});
@@ -80,6 +80,14 @@ function finalizeMessage(messages: string[], error: Error | null): string {
 	return msg;
 }
 
+function isAnsiEscapeEnd(codePoint: number): boolean {
+	return (codePoint >= 0x40 && codePoint <= 0x7e) || codePoint === 0;
+}
+
+function isAnsiEscapeStart(codePoint: number): boolean {
+	return codePoint === 0x1b || codePoint === 0x00_9b;
+}
+
 function parseConsoleArgs(args: unknown[]): {
 	data: null | Record<string, unknown>;
 	error: Error | null;
@@ -106,26 +114,37 @@ function parseConsoleArgs(args: unknown[]): {
 	return { data: hasData ? data : null, error, messages };
 }
 
+function skipAnsiEscapeSequence(str: string, startIndex: number): number {
+	let i = startIndex + 1;
+	const len = str.length;
+
+	while (i < len) {
+		const c = str.codePointAt(i) ?? 0;
+		if (isAnsiEscapeEnd(c)) {
+			break;
+		}
+		i += 1;
+	}
+
+	return i + 1;
+}
+
 function stripAnsiCodes(str: string): string {
 	let out = "";
 	const len = str.length;
 	let i = 0;
+
 	while (i < len) {
 		const cp = str.codePointAt(i) ?? 0;
-		if (cp === 0x1b || cp === 0x00_9b) {
-			i += 1;
-			while (i < len) {
-				const c = str.codePointAt(i) ?? 0;
-				if ((c >= 0x40 && c <= 0x7e) || c === 0) {
-					break;
-				}
-				i += 1;
-			}
-			i += 1;
+
+		if (isAnsiEscapeStart(cp)) {
+			i = skipAnsiEscapeSequence(str, i);
 			continue;
 		}
+
 		out += String.fromCodePoint(cp);
 		i += cp > 0xff_ff ? 2 : 1;
 	}
+
 	return out;
 }
