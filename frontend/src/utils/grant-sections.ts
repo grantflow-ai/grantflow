@@ -238,13 +238,31 @@ const calculateLastSubsectionDropIndicator = (
 
 /**
  * Calculates drop indicator when dragging subsection to main section
+ * @param activeItem The subsection being dragged
+ * @param overItem The main section being dragged over
+ * @param activeIndex Current index of active subsection
+ * @param overIndex Index of main section being dragged over
+ * @param defaultResult Default drop indicator state to use as fallback
  * @returns Drop indicator state for sub-to-main drag scenario
  */
-const calculateSubToMainDropIndicator = (): DropIndicatorState => {
+const calculateSubToMainDropIndicator = (
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	activeIndex: number,
+	overIndex: number,
+	defaultResult: DropIndicatorState,
+): DropIndicatorState => {
+	if (
+		activeItem.parent_id === overItem.id &&
+		Math.abs(activeIndex - overIndex) === 1 &&
+		activeIndex === overIndex + 1
+	) {
+		return { isSubsectionWidth: true, showAbove: false, showBelow: false };
+	}
+
 	return {
-		isSubsectionWidth: false,
-		showAbove: false,
-		showBelow: true,
+		...defaultResult,
+		isSubsectionWidth: true,
 	};
 };
 
@@ -253,22 +271,22 @@ const calculateSubToMainDropIndicator = (): DropIndicatorState => {
  * @param activeItem The section being dragged
  * @param overItem The section being dragged over
  * @param sections Array of all sections
+ * @param defaultResult Default drop indicator state to use as fallback
  * @returns Drop indicator state for main-to-sub drag scenario
  */
 const calculateMainToSubDropIndicator = (
 	activeItem: GrantSection,
 	overItem: GrantSection,
 	sections: GrantSection[],
+	defaultResult: DropIndicatorState,
 ): DropIndicatorState => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+
 	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
 		return { isSubsectionWidth: false, showAbove: false, showBelow: false };
 	}
-	return {
-		isSubsectionWidth: true,
-		showAbove: true,
-		showBelow: false,
-	};
+
+	return defaultResult;
 };
 
 /**
@@ -277,6 +295,7 @@ const calculateMainToSubDropIndicator = (
  * @param overItem The section being dragged over
  * @param activeIndex Current index of active section
  * @param overIndex Index of section being dragged over
+ * @param defaultResult Default drop indicator state to use as fallback
  * @returns Drop indicator state for sub-to-sub drag scenario
  */
 const calculateSubToSubDropIndicator = (
@@ -284,6 +303,7 @@ const calculateSubToSubDropIndicator = (
 	overItem: GrantSection,
 	activeIndex: number,
 	overIndex: number,
+	defaultResult: DropIndicatorState,
 ): DropIndicatorState => {
 	const newParentId = determineNewParentId(activeItem, overItem);
 	const hasParentChanged = activeItem.parent_id !== newParentId;
@@ -292,12 +312,7 @@ const calculateSubToSubDropIndicator = (
 		return { isSubsectionWidth: true, showAbove: false, showBelow: false };
 	}
 
-	const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
-	return {
-		isSubsectionWidth: true,
-		showAbove: activeIndex > targetIndex,
-		showBelow: activeIndex < targetIndex,
-	};
+	return defaultResult;
 };
 
 /**
@@ -321,15 +336,26 @@ const calculateMainToMainDropIndicator = (
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const hasOverSubSections = hasSubSections(overItem.id, sections);
 
-	if (hasActiveSubSections || hasOverSubSections) {
-		return defaultResult;
+	if (!(hasActiveSubSections || hasOverSubSections)) {
+		return {
+			isSubsectionWidth: false,
+			showAbove: activeIndex > overIndex,
+			showBelow: activeIndex < overIndex,
+		};
 	}
 
-	return {
-		isSubsectionWidth: false,
-		showAbove: activeIndex > overIndex,
-		showBelow: activeIndex < overIndex,
-	};
+	if ((hasActiveSubSections || hasOverSubSections) && activeIndex > overIndex) {
+		// Check if active main is immediately next to over main (no other main sections between them)
+		const mainSectionsBetween = sections
+			.slice(overIndex + 1, activeIndex)
+			.filter((section) => section.parent_id === null);
+
+		if (mainSectionsBetween.length === 0) {
+			return { isSubsectionWidth: false, showAbove: false, showBelow: false };
+		}
+	}
+
+	return defaultResult;
 };
 
 /**
@@ -375,15 +401,15 @@ export function calculateDropIndicatorVisibility(
 		}
 
 		if (!isActiveMain && isOverMain) {
-			return calculateSubToMainDropIndicator();
+			return calculateSubToMainDropIndicator(activeItem, overItem, activeIndex, overIndex, defaultResult);
 		}
 
 		if (isActiveMain && !isOverMain) {
-			return calculateMainToSubDropIndicator(activeItem, overItem, sections);
+			return calculateMainToSubDropIndicator(activeItem, overItem, sections, defaultResult);
 		}
 
 		if (!(isActiveMain || isOverMain)) {
-			return calculateSubToSubDropIndicator(activeItem, overItem, activeIndex, overIndex);
+			return calculateSubToSubDropIndicator(activeItem, overItem, activeIndex, overIndex, defaultResult);
 		}
 
 		if (isActiveMain && isOverMain) {

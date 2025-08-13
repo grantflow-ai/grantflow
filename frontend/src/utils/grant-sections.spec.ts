@@ -1287,7 +1287,7 @@ describe("grant-sections utilities", () => {
 		});
 
 		describe("Scenario 1: Sub → Main", () => {
-			it("shows below indicator with main width when moving subsection to main", () => {
+			it("shows below indicator with subsection width when moving subsection to main", () => {
 				const sections = createTestSections();
 				const activeItem = sections.sub1a; // Subsection
 				const overItem = sections.main2; // Main section
@@ -1302,7 +1302,7 @@ describe("grant-sections utilities", () => {
 				);
 
 				expect(result).toEqual({
-					isSubsectionWidth: false,
+					isSubsectionWidth: true,
 					showAbove: false,
 					showBelow: true,
 				});
@@ -1323,7 +1323,7 @@ describe("grant-sections utilities", () => {
 				);
 
 				expect(result).toEqual({
-					isSubsectionWidth: false,
+					isSubsectionWidth: true,
 					showAbove: false,
 					showBelow: true,
 				});
@@ -1331,7 +1331,7 @@ describe("grant-sections utilities", () => {
 		});
 
 		describe("Scenario 2: Main → Sub", () => {
-			it("shows above indicator with subsection width when moving main to subsection", () => {
+			it("shows below indicator with subsection width when moving main to subsection", () => {
 				const sections = createTestSections();
 				const activeItem = sections.main3; // Main section without subs
 				const overItem = sections.sub1a; // Subsection
@@ -1347,8 +1347,8 @@ describe("grant-sections utilities", () => {
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
-					showAbove: true,
-					showBelow: false,
+					showAbove: false,
+					showBelow: true,
 				});
 			});
 
@@ -1369,7 +1369,7 @@ describe("grant-sections utilities", () => {
 				expect(result).toEqual({
 					isSubsectionWidth: false,
 					showAbove: false,
-					showBelow: false, // No indicators - invalid move
+					showBelow: false,
 				});
 			});
 
@@ -1389,8 +1389,8 @@ describe("grant-sections utilities", () => {
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
-					showAbove: true,
-					showBelow: false,
+					showAbove: false,
+					showBelow: true,
 				});
 			});
 		});
