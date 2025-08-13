@@ -38,7 +38,7 @@ export function OrganizationSettingsLayout({
 			requiresRole: [UserRole.OWNER, UserRole.ADMIN],
 		},
 		{
-			href: "/organization/settings/personal", // TODO: Add to routes
+			href: routes.organization.settings.personal(),
 			key: "personal",
 			label: "Personal Settings",
 		},
@@ -55,9 +55,9 @@ export function OrganizationSettingsLayout({
 	});
 
 	return (
-		<div className="flex flex-col gap-8">
+		<div className="flex flex-col gap-8 font-cabin">
 			<div className="flex w-full flex-col gap-8">
-				<h1 className="font-heading font-medium text-[36px] leading-[42px] text-app-black">Settings</h1>
+				<h1 className="font-medium text-[36px] leading-[42px] text-app-black">Settings</h1>
 
 				<div className="flex items-center justify-between w-full">
 					<div className="flex items-center gap-6">
@@ -66,7 +66,7 @@ export function OrganizationSettingsLayout({
 								className={cn(
 									"relative px-2 py-3 text-[16px] transition-all",
 									activeTab === tab.key
-										? "font-heading font-semibold text-app-black border-b-[3px] border-primary"
+										? "font-semibold text-app-black border-b-[3px] border-primary"
 										: "font-body text-app-black hover:text-app-gray-600",
 								)}
 								data-testid={`organization-settings-tab-${tab.key}`}
