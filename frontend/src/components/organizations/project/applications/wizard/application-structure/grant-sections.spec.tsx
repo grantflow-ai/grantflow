@@ -40,6 +40,12 @@ vi.mock("./section-icon-button", () => ({
 	)),
 }));
 
+vi.mock("./section-drop-indicator", () => ({
+	SectionWithDropIndicators: vi.fn(({ children, section }) => (
+		<div data-testid={`drop-indicators-${section.id}`}>{children}</div>
+	)),
+}));
+
 vi.mock("@/components/ui/tooltip", () => ({
 	Tooltip: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipContent: vi.fn(({ children }) => <div>{children}</div>),
@@ -391,6 +397,26 @@ describe("SortableSection", () => {
 				is_detailed_research_plan: true,
 			}),
 		);
+	});
+
+	describe("Drop Indicator Integration", () => {
+		it("renders drop indicator wrapper", () => {
+			const section = GrantSectionFactory.build();
+
+			render(<SortableSection {...defaultProps} section={section} />);
+
+			const dropIndicators = screen.getByTestId(`drop-indicators-${section.id}`);
+			expect(dropIndicators).toBeInTheDocument();
+		});
+
+		it("passes correct section data to drop indicators", () => {
+			const section = GrantSectionFactory.build();
+
+			render(<SortableSection {...defaultProps} section={section} />);
+
+			const dropIndicators = screen.getByTestId(`drop-indicators-${section.id}`);
+			expect(dropIndicators).toBeInTheDocument();
+		});
 	});
 });
 
