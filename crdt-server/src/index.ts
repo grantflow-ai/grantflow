@@ -19,8 +19,9 @@ export const server = new Server({
 });
 
 try {
-	await server.listen();
-	logger.info({ env: config.NODE_ENV, port: config.PORT }, "server_started");
+	await server.listen(config.PORT, () => {
+		logger.info({ env: config.NODE_ENV, port: config.PORT }, "server_started");
+	});
 } catch (error: unknown) {
 	logger.error({ error: error instanceof Error ? error.message : JSON.stringify(error) }, "server startup failed");
 	throw new Error("Server failed to start");
