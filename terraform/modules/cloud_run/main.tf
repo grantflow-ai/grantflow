@@ -874,7 +874,7 @@ resource "google_cloud_run_v2_service" "crdt_server" {
         name = "DATABASE_URL"
         value_source {
           secret_key_ref {
-            secret  = "DB_CONNECTION_STRING"
+            secret  = "DATABASE_CONNECTION_STRING"
             version = "latest"
           }
         }
