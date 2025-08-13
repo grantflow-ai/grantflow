@@ -40,21 +40,27 @@ const setLastSubsectionDragOver = (
 	activeItem: GrantSection,
 	overItem: GrantSection,
 	sections: GrantSection[],
-): void => {
+): boolean => {
 	const isMainToMainWithSubsections =
 		activeItem.parent_id === null && overItem.parent_id === null && hasSubSections(overItem.id, sections);
 
-	if (isMainToMainWithSubsections) {
-		const subsections = sections.filter((s) => s.parent_id === overItem.id);
-		const lastSubsection = subsections.at(-1);
-
-		if (lastSubsection) {
-			const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
-			if (lastSubElement) {
-				lastSubElement.dataset.dragOver = "true";
-			}
-		}
+	if (!isMainToMainWithSubsections) {
+		return false;
 	}
+
+	const subsections = sections.filter((s) => s.parent_id === overItem.id);
+	const lastSubsection = subsections.at(-1);
+
+	if (!lastSubsection) {
+		return false;
+	}
+
+	const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
+	if (lastSubElement) {
+		lastSubElement.dataset.dragOver = "true";
+		return true;
+	}
+	return false;
 };
 
 const updateDragOverVisualState = (
@@ -72,12 +78,12 @@ const updateDragOverVisualState = (
 			delete prevOverElement.dataset.dragOver;
 		}
 
-		if (overElement) {
-			overElement.dataset.dragOver = "true";
+		if (activeItem && overItem && sections && setLastSubsectionDragOver(activeItem, overItem, sections)) {
+			return;
 		}
 
-		if (activeItem && overItem && sections) {
-			setLastSubsectionDragOver(activeItem, overItem, sections);
+		if (overElement) {
+			overElement.dataset.dragOver = "true";
 		}
 	} else if (prevOverElement) {
 		delete prevOverElement.dataset.dragOver;
