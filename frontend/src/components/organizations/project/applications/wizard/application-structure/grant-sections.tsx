@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
+import { SectionWithDropIndicators } from "./section-drop-indicator";
 import { SectionIconButton } from "./section-icon-button";
 
 const aiPrompt = (sectionTitle: string): string => {
@@ -148,43 +149,45 @@ export function SortableSection({
 	);
 
 	return (
-		<div
-			className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 data-[drag-over]:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
-			data-sortable-id={section.id}
-			data-testid="section-container"
-			ref={setNodeRef}
-			style={style}
-		>
-			<SectionHeader
-				attributes={attributes}
-				isDragDisabled={isDragDisabled}
-				isExpanded={isExpanded}
-				isSubsection={isSubsection}
-				listeners={listeners}
-				onAddSubsection={onAddSubsection}
-				onDelete={_onDelete}
-				onHeaderClick={handleHeaderClick}
-				onToggleExpand={onToggleExpand}
-				section={section}
-				sectionHasMaxWords={sectionHasMaxWords}
-			/>
+		<SectionWithDropIndicators section={section}>
+			<div
+				className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+				data-sortable-id={section.id}
+				data-testid="section-container"
+				ref={setNodeRef}
+				style={style}
+			>
+				<SectionHeader
+					attributes={attributes}
+					isDragDisabled={isDragDisabled}
+					isExpanded={isExpanded}
+					isSubsection={isSubsection}
+					listeners={listeners}
+					onAddSubsection={onAddSubsection}
+					onDelete={_onDelete}
+					onHeaderClick={handleHeaderClick}
+					onToggleExpand={onToggleExpand}
+					section={section}
+					sectionHasMaxWords={sectionHasMaxWords}
+				/>
 
-			{isExpanded && (
-				<div
-					className="overflow-hidden transition-all duration-200 ease-in-out opacity-100"
-					data-testid="edit-form-container"
-				>
-					<SectionEditForm
-						formData={formData}
-						isSubsection={isSubsection}
-						onCancel={onToggleExpand}
-						onSave={handleSave}
-						section={section}
-						setFormData={setFormData}
-					/>
-				</div>
-			)}
-		</div>
+				{isExpanded && (
+					<div
+						className="overflow-hidden transition-all duration-200 ease-in-out opacity-100"
+						data-testid="edit-form-container"
+					>
+						<SectionEditForm
+							formData={formData}
+							isSubsection={isSubsection}
+							onCancel={onToggleExpand}
+							onSave={handleSave}
+							section={section}
+							setFormData={setFormData}
+						/>
+					</div>
+				)}
+			</div>
+		</SectionWithDropIndicators>
 	);
 }
 

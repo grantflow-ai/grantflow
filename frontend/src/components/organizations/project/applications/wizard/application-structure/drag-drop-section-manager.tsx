@@ -3,7 +3,7 @@
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import type { RefObject } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
@@ -21,6 +21,7 @@ import {
 	updateBackendWithReorderedSections,
 	updateReorder,
 } from "@/utils/grant-sections";
+import { DragDropContext } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -231,6 +232,21 @@ export function DragDropSectionManager({
 		newParentId: null | string;
 		sectionId: string;
 	} | null>(null);
+	const dragStateRef = useRef({
+		activeIndex: -1,
+		activeItem: null as GrantSection | null,
+		isAnyDragging: false,
+		overIndex: -1,
+		overItem: null as GrantSection | null,
+	});
+
+	const getDragState = useCallback(
+		() => ({
+			...dragStateRef.current,
+			sections: grantSections,
+		}),
+		[grantSections],
+	);
 
 	const toggleSectionExpanded = useCallback((sectionId: string) => {
 		setExpandedSectionId((prev) => {
@@ -372,14 +388,34 @@ export function DragDropSectionManager({
 					setPendingParentChange(null);
 				}
 				clearDragOverVisualState();
+				dragStateRef.current = {
+					activeIndex: -1,
+					activeItem: null,
+					isAnyDragging: false,
+					overIndex: -1,
+					overItem: null,
+				};
 			},
 			onDragOver: (_event, _activeItem, overItem) => {
 				updateDragOverVisualState(overItem?.id ?? null);
+				dragStateRef.current = {
+					...dragStateRef.current,
+					overIndex: overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1,
+					overItem: overItem ?? null,
+				};
 			},
-			onDragStart: (_event) => {
+			onDragStart: (_event, activeItem) => {
 				if (expandedSectionId !== null) {
 					setExpandedSectionId(null);
 				}
+				const activeIndex = activeItem ? grantSections.findIndex((s) => s.id === activeItem.id) : -1;
+				dragStateRef.current = {
+					activeIndex,
+					activeItem: activeItem ?? null,
+					isAnyDragging: activeIndex !== -1,
+					overIndex: -1,
+					overItem: null,
+				};
 			},
 			onReorder: async (sections, activeIndex, overIndex, activeItem, overItem) => {
 				if (activeItem.id === overItem.id) {
@@ -440,7 +476,7 @@ export function DragDropSectionManager({
 				);
 			},
 		}),
-		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef],
+		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef, grantSections],
 	);
 
 	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
@@ -471,21 +507,23 @@ export function DragDropSectionManager({
 
 	return (
 		<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
-			<div className="mb-3 space-y-2 p-1">
-				{grantSections.length > 0 && (
-					<SectionList
-						expandedSectionId={expandedSectionId}
-						handleAddNewSection={handleAddNewSection}
-						handleDeleteSection={handleDeleteSection}
-						handleUpdateSection={handleUpdateSection}
-						isDetailedSection={isDetailedSection}
-						mainSections={mainSections}
-						subsectionsByParent={subsectionsByParent}
-						toggleSectionExpanded={toggleSectionExpanded}
-						toUpdateGrantSection={toUpdateGrantSection}
-					/>
-				)}
-			</div>
+			<DragDropContext.Provider value={{ getDragState }}>
+				<div className="mb-3 space-y-2 p-1">
+					{grantSections.length > 0 && (
+						<SectionList
+							expandedSectionId={expandedSectionId}
+							handleAddNewSection={handleAddNewSection}
+							handleDeleteSection={handleDeleteSection}
+							handleUpdateSection={handleUpdateSection}
+							isDetailedSection={isDetailedSection}
+							mainSections={mainSections}
+							subsectionsByParent={subsectionsByParent}
+							toggleSectionExpanded={toggleSectionExpanded}
+							toUpdateGrantSection={toUpdateGrantSection}
+						/>
+					)}
+				</div>
+			</DragDropContext.Provider>
 		</DragDropWrapper>
 	);
 }
