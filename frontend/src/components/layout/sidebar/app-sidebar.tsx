@@ -20,6 +20,8 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
+import Link from "next/link";
+import { routes } from "@/utils/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();
@@ -31,6 +33,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const handleLogout = () => {
 		setUser(null);
 		router.push("/login");
+	};
+	const handleSettingsClick = (e: React.MouseEvent, href: string) => {
+		e.preventDefault();
+
+		router.push(href);
 	};
 
 	return (
@@ -54,12 +61,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 										width={31}
 									/>
 								</div>
-								<h2
-									className="text-2xl font-medium leading-[30px] group-data-[collapsible=icon]:hidden"
-									data-testid="sidebar-title"
-								>
-									GrantFlow
-								</h2>
+								<Image
+									alt="logo"
+									className="w-full h-full object-contain group-data-[collapsible=icon]:hidden"
+									data-testid="sidebar-logo"
+									height={31}
+									src="/assets/grantflow.svg"
+									width={31}
+								/>
 							</div>
 							<div className="group-data-[collapsible=icon]:hidden">
 								<CustomSidebarTrigger data-testid="sidebar-trigger" />
@@ -103,12 +112,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<SidebarMenuButton
 							className="flex items-center gap-2 group-data-[collapsible=icon]:!px-0"
 							data-testid="support-button"
-							tooltip="Support"
 						>
-							<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
-								<Plus className="size-3 shrink-0 text-gray-600" />
-							</div>
-							<span className="group-data-[collapsible=icon]:hidden ">Organisation name</span>
+							<Link
+								className="flex items-center gap-2 w-full"
+								href={routes.organization.settings.account()}
+								onClick={(e) => {
+									handleSettingsClick(e, routes.organization.settings.account());
+								}}
+							>
+								<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
+									<Plus className="size-3 shrink-0 text-gray-600" />
+								</div>
+								<span className="group-data-[collapsible=icon]:hidden ">Organisation name</span>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>

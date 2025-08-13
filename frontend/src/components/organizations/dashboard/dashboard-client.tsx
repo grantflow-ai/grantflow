@@ -53,6 +53,7 @@ export function DashboardClient({
 	const { duplicateProject } = useProjectStore();
 	const { addNotification } = useNotificationStore();
 	const { user } = useUserStore();
+	const { getOrganization } = useOrganizationStore();
 
 	useEffect(() => {
 		setOrganizations(initialOrganizations);
@@ -73,6 +74,11 @@ export function DashboardClient({
 		}
 	}, [currentOrganizationId, selectOrganization]);
 
+	useEffect(() => {
+		if (currentOrganizationId) {
+			getOrganization(currentOrganizationId);
+		}
+	}, [currentOrganizationId, getOrganization]);
 	const handleDuplicateProject = async (projectId: string) => {
 		if (!currentOrganizationId) {
 			addNotification({
