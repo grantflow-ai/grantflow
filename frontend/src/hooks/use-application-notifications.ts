@@ -127,7 +127,7 @@ export function useApplicationNotifications({
 			log.info("[useApplicationNotifications] OTP retrieved successfully", {
 				applicationId,
 				organizationId,
-				otpLength: response.otp?.length,
+				otpLength: response.otp.length,
 				projectId,
 			});
 
@@ -159,7 +159,7 @@ export function useApplicationNotifications({
 		}
 	}, [organizationId, projectId, applicationId]);
 
-	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
+	const { lastJsonMessage, readyState, sendMessage } = useWebSocket(
 		organizationId && projectId && applicationId ? getSocketUrl : null,
 		{
 			onClose: (event) => {
@@ -180,7 +180,7 @@ export function useApplicationNotifications({
 					applicationId,
 					error: {
 						fullEvent: JSON.stringify(event),
-						message: (event as unknown as { message?: string }).message || "Unknown error",
+						message: (event as unknown as { message?: string }).message ?? "Unknown error",
 						type: event.type,
 					},
 					organizationId,
@@ -192,7 +192,7 @@ export function useApplicationNotifications({
 			onMessage: (event) => {
 				log.info("[useApplicationNotifications] WebSocket raw message received", {
 					applicationId,
-					dataLength: event.data?.length,
+					dataLength: (event.data as string).length,
 					dataType: typeof event.data,
 					organizationId,
 					projectId,
@@ -249,47 +249,34 @@ export function useApplicationNotifications({
 		},
 	);
 
-	useEffect(() => {
-		if (lastJsonMessage === null) {
-			return;
-		}
+	const getMessageType = useCallback((message: WebsocketMessage<unknown>): string => {
+		if (isSourceProcessingNotificationMessage(message)) return "SourceProcessingNotification";
+		if (isRagProcessingStatusMessage(message)) return "RagProcessingStatus";
+		if (isAutofillProgressMessage(message)) return "AutofillProgress";
+		return "Unknown";
+	}, []);
 
-		log.info("[useApplicationNotifications] Processing parsed WebSocket message", {
-			applicationId,
-			isValidMessage: isWebsocketMessage(lastJsonMessage),
-			message: JSON.stringify(lastJsonMessage),
-			messageKeys: lastJsonMessage ? Object.keys(lastJsonMessage) : [],
-			messageType: typeof lastJsonMessage,
-			organizationId,
-			projectId,
-		});
-
-		if (isWebsocketMessage(lastJsonMessage)) {
-			const messageType = isSourceProcessingNotificationMessage(lastJsonMessage)
-				? "SourceProcessingNotification"
-				: isRagProcessingStatusMessage(lastJsonMessage)
-					? "RagProcessingStatus"
-					: isAutofillProgressMessage(lastJsonMessage)
-						? "AutofillProgress"
-						: "Unknown";
+	const handleValidMessage = useCallback(
+		(message: WebsocketMessage<unknown>): void => {
+			const messageType = getMessageType(message);
 
 			log.info("[useApplicationNotifications] Valid WebSocket message identified", {
 				applicationId,
-				dataKeys: lastJsonMessage.data ? Object.keys(lastJsonMessage.data) : [],
-				event: lastJsonMessage.event,
+				dataKeys: message.data ? Object.keys(message.data) : [],
+				event: message.event,
 				messageType,
 				organizationId,
-				parentId: lastJsonMessage.parent_id,
+				parentId: message.parent_id,
 				projectId,
-				traceId: lastJsonMessage.trace_id,
-				type: lastJsonMessage.type,
+				traceId: message.trace_id,
+				type: message.type,
 			});
 
 			setNotifications((prev) => {
-				const newNotifications = [...prev, lastJsonMessage];
+				const newNotifications = [...prev, message];
 				log.info("[useApplicationNotifications] Message added to notifications", {
 					applicationId,
-					event: lastJsonMessage.event,
+					event: message.event,
 					messageType,
 					newCount: newNotifications.length,
 					organizationId,
@@ -298,17 +285,45 @@ export function useApplicationNotifications({
 				});
 				return newNotifications;
 			});
-		} else if (lastJsonMessage) {
+		},
+		[applicationId, getMessageType, organizationId, projectId],
+	);
+
+	const handleInvalidMessage = useCallback(
+		(message: unknown): void => {
 			log.warn("[useApplicationNotifications] Received invalid WebSocket message format", {
 				applicationId,
 				expectedKeys: ["type", "event", "parent_id", "data"],
-				message: JSON.stringify(lastJsonMessage),
+				message: JSON.stringify(message),
 				organizationId,
 				projectId,
-				receivedKeys: Object.keys(lastJsonMessage),
+				receivedKeys: Object.keys(message as object),
 			});
+		},
+		[applicationId, organizationId, projectId],
+	);
+
+	useEffect(() => {
+		if (!lastJsonMessage) {
+			return;
 		}
-	}, [lastJsonMessage, organizationId, projectId, applicationId]);
+
+		log.info("[useApplicationNotifications] Processing parsed WebSocket message", {
+			applicationId,
+			isValidMessage: isWebsocketMessage(lastJsonMessage),
+			message: JSON.stringify(lastJsonMessage),
+			messageKeys: Object.keys(lastJsonMessage),
+			messageType: typeof lastJsonMessage,
+			organizationId,
+			projectId,
+		});
+
+		if (isWebsocketMessage(lastJsonMessage)) {
+			handleValidMessage(lastJsonMessage);
+		} else {
+			handleInvalidMessage(lastJsonMessage);
+		}
+	}, [lastJsonMessage, organizationId, projectId, applicationId, handleValidMessage, handleInvalidMessage]);
 
 	const connectionStatus = CONNECTION_STATUS_MAP[readyState];
 	const connectionStatusColor = CONNECTION_STATUS_COLOR_MAP[readyState];
