@@ -1,5 +1,6 @@
 import type { ServerResponse } from "node:http";
 import type { onRequestPayload } from "@hocuspocus/server";
+import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { logger } from "@/utils/logger";
 
@@ -34,7 +35,7 @@ export class HealthCheckExtension {
 		let isReady = false;
 
 		try {
-			await db.select().from({ dummy: "information_schema.tables" }).limit(1);
+			await db.execute(sql`SELECT 1`);
 			isReady = true;
 		} catch (error) {
 			logger.error(
