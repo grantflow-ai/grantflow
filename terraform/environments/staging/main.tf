@@ -307,14 +307,15 @@ output "crdt_server_url" {
 
 # Load Balancer module with staging-optimized settings
 module "load_balancer" {
-  source      = "../../modules/load_balancer"
-  project_id  = var.project_id
-  region      = var.region
-  environment = var.environment
-  backend_url = module.cloud_run.backend_url
-  domain      = "staging-api.grantflow.ai"
-  enable_ssl  = true  # SSL certificate for custom domain
-  enable_cdn  = false # No CDN for staging to save costs
+  source             = "../../modules/load_balancer"
+  project_id         = var.project_id
+  region             = var.region
+  environment        = var.environment
+  backend_url        = module.cloud_run.backend_url
+  domain             = "staging-api.grantflow.ai"
+  crdt_server_domain = "crdt-staging.grantflow.ai"
+  enable_ssl         = true  # SSL certificate for custom domain
+  enable_cdn         = false # No CDN for staging to save costs
 }
 
 output "load_balancer_ip" {
