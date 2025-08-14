@@ -91,6 +91,7 @@ async def handle_generate_grant_template(
                 RagSource.deleted_at.is_(None),
                 RagSource.indexing_status.in_(
                     (
+                        SourceIndexingStatusEnum.CREATED,
                         SourceIndexingStatusEnum.INDEXING,
                         SourceIndexingStatusEnum.FINISHED,
                     )
