@@ -15,7 +15,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { PersonalSettingsClient } from "./personal-settings-client";
+import { PersonalSettingsClient } from "../../user/settings/personal-settings-client";
 
 interface OrganizationSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications" | "personal";
@@ -44,9 +44,9 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 		if (
 			organization &&
 			organization.role === "COLLABORATOR" &&
-			(activeTab === "billing" || activeTab === "members")
+			(activeTab === "billing" || activeTab === "members" || activeTab === "account")
 		) {
-			router.replace(routes.organization.settings.account());
+			router.replace(routes.organization.root());
 		}
 	}, [organization, activeTab, router]);
 
@@ -114,7 +114,7 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 					<AppHeader data-testid="organization-settings-header" projectTeamMembers={projectTeamMembers} />
 
 					<main
-						className=" scrollbar-hide mx-6 mb-6 px-10 relative flex flex-col gap-10 py-14 flex-1 overflow-y-auto rounded-lg border border-app-gray-100 min-h-0 bg-white"
+						className=" scrollbar-hide  mb-6 px-10 relative flex flex-col gap-10 py-14 flex-1 overflow-y-auto rounded-lg border border-app-gray-100 min-h-0 bg-white"
 						data-testid="organization-settings-main-content"
 					>
 						<OrganizationSettingsLayout
