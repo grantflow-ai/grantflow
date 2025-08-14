@@ -11,7 +11,7 @@ const rawConfig = envSchema.parse(process.env);
 
 // Normalize the database URL for node-postgres
 // Remove SQLAlchemy-specific dialect suffixes like +asyncpg
-const normalizedDatabaseUrl = rawConfig.DATABASE_URL.replace(/\+[^:\/]+/, "");
+const normalizedDatabaseUrl = rawConfig.DATABASE_URL.replace(/\+[^:/]+/, "");
 
 export const config = {
 	...rawConfig,

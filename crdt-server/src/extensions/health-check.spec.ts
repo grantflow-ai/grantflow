@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { HealthCheckExtension } from "./health-check";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import { logger } from "@/utils/logger";
+import { HealthCheckExtension } from "./health-check";
 
 vi.mock("@/db");
 vi.mock("@/utils/logger");
@@ -145,10 +145,7 @@ describe("HealthCheckExtension", () => {
 				// Expected error throw
 			}
 
-			expect(logger.debug).toHaveBeenCalledWith(
-				{ ready: true },
-				"readiness_check_completed",
-			);
+			expect(logger.debug).toHaveBeenCalledWith({ ready: true }, "readiness_check_completed");
 		});
 	});
 
