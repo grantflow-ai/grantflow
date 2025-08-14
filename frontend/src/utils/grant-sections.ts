@@ -118,10 +118,11 @@ export const assignOrderAndParent = (
 	parentAssignmentFn?: (section: GrantSection) => null | string,
 ): GrantSection[] => {
 	return sections.map((section, index) => {
+		const newParentId = parentAssignmentFn ? parentAssignmentFn(section) : (section.parent_id ?? null);
 		return {
 			...section,
 			order: index,
-			parent_id: parentAssignmentFn?.(section) ?? section.parent_id ?? null,
+			parent_id: newParentId,
 		};
 	});
 };
@@ -214,6 +215,7 @@ export interface DropIndicatorState {
  * @param activeIndex Current index of active subsection
  * @param overIndex Index of main section being dragged over
  * @param defaultResult Default drop indicator state to use as fallback
+ * @param zone The drag zone ("sibling" for main width, "child"/"null" for subsection width)
  * @returns Drop indicator state for sub-to-main drag scenario
  */
 const calculateSubToMainDropIndicator = (
@@ -222,8 +224,10 @@ const calculateSubToMainDropIndicator = (
 	activeIndex: number,
 	overIndex: number,
 	defaultResult: DropIndicatorState,
+	zone?: null | ZoneType,
 ): DropIndicatorState => {
 	if (
+		zone !== "sibling" &&
 		activeItem.parent_id === overItem.id &&
 		Math.abs(activeIndex - overIndex) === 1 &&
 		activeIndex === overIndex + 1
@@ -231,9 +235,16 @@ const calculateSubToMainDropIndicator = (
 		return { isSubsectionWidth: true, showAbove: false, showBelow: false };
 	}
 
+	const isSubsectionWidth = zone !== "sibling";
+
+	const showAbove = zone === "sibling" && activeIndex > overIndex;
+	const showBelow = zone === "sibling" ? !showAbove : defaultResult.showBelow;
+
 	return {
 		...defaultResult,
-		isSubsectionWidth: true,
+		isSubsectionWidth,
+		showAbove,
+		showBelow,
 	};
 };
 
@@ -312,8 +323,8 @@ const calculateMainToMainDropIndicator = (
 
 	if (!(hasActiveSubSections || hasOverSubSections)) {
 		return {
-			...defaultResult,
-			showAbove: activeIndex > overIndex,
+			isSubsectionWidth,
+			showAbove: zone === "child" ? false : activeIndex > overIndex,
 			showBelow: activeIndex < overIndex,
 		};
 	}
@@ -373,7 +384,7 @@ export function calculateDropIndicatorVisibility(
 
 	try {
 		if (!isActiveMain && isOverMain) {
-			return calculateSubToMainDropIndicator(activeItem, overItem, activeIndex, overIndex, defaultResult);
+			return calculateSubToMainDropIndicator(activeItem, overItem, activeIndex, overIndex, defaultResult, zone);
 		}
 
 		if (isActiveMain && !isOverMain) {

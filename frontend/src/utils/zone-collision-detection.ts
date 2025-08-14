@@ -11,11 +11,11 @@ import type { GrantSection } from "@/types/grant-sections";
 
 /**
  * Creates a custom collision detection algorithm that enhances dnd-kit's pointerWithin
- * collision detection with zone information for main grant sections.
+ * collision detection with zone information for grant sections.
  *
  * This collision detection function:
- * 1. Only activates when dragging main sections (parent_id === null)
- * 2. Only calculates zones when hovering over other main sections
+ * 1. Activates when dragging any section (main or sub-section)
+ * 2. Only calculates zones when hovering over main sections
  * 3. Divides sections into two zones based on mouse X position:
  *    - Left 16%: "sibling" zone (drop as sibling section)
  *    - Right 84%: "child" zone (drop as child subsection)
@@ -55,8 +55,7 @@ export const createZoneCollisionDetection = (): CollisionDetection => {
 			data: DataRef<{ section: GrantSection }>;
 		} & Active;
 
-		// No zone calculation if the dragging section is not a main section
-		if (!activeSection || activeSection.parent_id !== null) {
+		if (!activeSection) {
 			return defaultCollisions;
 		}
 

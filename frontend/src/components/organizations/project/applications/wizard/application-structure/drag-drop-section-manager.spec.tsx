@@ -698,6 +698,105 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				expect(orderedSections[2].parent_id).toBe("main-2");
 			});
 		});
+
+		describe("Zone-Based Sub-to-Main Moves", () => {
+			it("converts sub to main at overIndex when zone is sibling", async () => {
+				const sections = [
+					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null, title: "Main 1" }),
+					GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1", title: "Sub 1" }),
+					GrantSectionFactory.build({ id: "main-2", order: 2, parent_id: null, title: "Main 2" }),
+					GrantSectionFactory.build({ id: "main-3", order: 3, parent_id: null, title: "Main 3" }),
+				];
+
+				useApplicationStore.setState({
+					application: ApplicationFactory.build({
+						grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+					}),
+				});
+
+				render(
+					<DragDropSectionManager
+						dialogRef={dialogRef}
+						isDetailedSection={mockIsDetailedSection}
+						onAddSection={mockOnAddSection}
+					/>,
+				);
+
+				setupZoneTest("sibling", dragHandlers);
+
+				await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
+
+				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+				const sub1 = updatedSections.find((s: UpdateGrantSection) => s.id === "sub-1");
+
+				expect(sub1?.parent_id).toBeNull();
+				expect(sub1?.order).toBe(2);
+			});
+
+			it("maintains existing behavior when zone is child", async () => {
+				const sections = [
+					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null, title: "Main 1" }),
+					GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1", title: "Sub 1" }),
+					GrantSectionFactory.build({ id: "main-2", order: 2, parent_id: null, title: "Main 2" }),
+					GrantSectionFactory.build({ id: "main-3", order: 3, parent_id: null, title: "Main 3" }),
+				];
+
+				useApplicationStore.setState({
+					application: ApplicationFactory.build({
+						grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+					}),
+				});
+
+				render(
+					<DragDropSectionManager
+						dialogRef={dialogRef}
+						isDetailedSection={mockIsDetailedSection}
+						onAddSection={mockOnAddSection}
+					/>,
+				);
+
+				setupZoneTest("child", dragHandlers);
+
+				await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
+
+				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+				const sub1 = updatedSections.find((s: UpdateGrantSection) => s.id === "sub-1");
+
+				expect(sub1?.parent_id).toBe("main-2");
+			});
+
+			it("maintains existing behavior when zone is null", async () => {
+				const sections = [
+					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null, title: "Main 1" }),
+					GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1", title: "Sub 1" }),
+					GrantSectionFactory.build({ id: "main-2", order: 2, parent_id: null, title: "Main 2" }),
+					GrantSectionFactory.build({ id: "main-3", order: 3, parent_id: null, title: "Main 3" }),
+				];
+
+				useApplicationStore.setState({
+					application: ApplicationFactory.build({
+						grant_template: GrantTemplateFactory.build({ grant_sections: sections }),
+					}),
+				});
+
+				render(
+					<DragDropSectionManager
+						dialogRef={dialogRef}
+						isDetailedSection={mockIsDetailedSection}
+						onAddSection={mockOnAddSection}
+					/>,
+				);
+
+				setupZoneTest(null, dragHandlers);
+
+				await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
+
+				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
+				const sub1 = updatedSections.find((s: UpdateGrantSection) => s.id === "sub-1");
+
+				expect(sub1?.parent_id).toBe("main-2");
+			});
+		});
 	});
 
 	describe("User Experience Outcomes", () => {
