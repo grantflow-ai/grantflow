@@ -7,4 +7,13 @@ const envSchema = z.object({
 	PORT: z.coerce.number().default(8080),
 });
 
-export const config = envSchema.parse(process.env);
+const rawConfig = envSchema.parse(process.env);
+
+// Normalize the database URL for node-postgres
+// Remove SQLAlchemy-specific dialect suffixes like +asyncpg
+const normalizedDatabaseUrl = rawConfig.DATABASE_URL.replace(/\+[^:\/]+/, "");
+
+export const config = {
+	...rawConfig,
+	DATABASE_URL: normalizedDatabaseUrl,
+};

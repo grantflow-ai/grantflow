@@ -121,6 +121,12 @@ variable "crawler_max_instances" {
   default     = -1
 }
 
+variable "crdt_server_memory_limit" {
+  description = "Memory allocation for CRDT server (defaults to memory_limit if not set)"
+  type        = string
+  default     = ""
+}
+
 variable "enable_cpu_throttling" {
   description = "Enable CPU throttling"
   type        = bool
@@ -834,7 +840,7 @@ resource "google_cloud_run_v2_service" "crdt_server" {
       resources {
         limits = {
           cpu    = var.cpu_limit
-          memory = var.memory_limit
+          memory = var.crdt_server_memory_limit != "" ? var.crdt_server_memory_limit : var.memory_limit
         }
       }
 
