@@ -98,7 +98,7 @@ pre-commit:
 
         ai-rulez:
             glob: "**/ai-rulez.yaml"
-            run: uv run ai-rulez generate --recursive
+            run: uvx ai-rulez generate --recursive
             stage_fixed: true
 
         codespell:
