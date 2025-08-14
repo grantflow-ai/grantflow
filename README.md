@@ -3,28 +3,86 @@
 This monorepo contains both the frontend and backend code for the GrantFlow.AI platform. The frontend is built using
 Next.js 15, and the backend is a microservice-based Python architecture.
 
-## Repository Structure
+## Repository Map
 
-- `/` - Root directory, contains shared configuration
-- `/.github` - GitHub CI/CD workflows
-- `/.idea` - Shared intellij configurations
-- `/.vscode` - Shared vscode configurations
-- [`/diagrams`](./diagrams/README.md) - Architecture and data model diagrams
-- [`/services/backend`](./services/backend/README.md) - Main Python API service powered by Litestar
-- [`/services/indexer`](./services/indexer/README.md) - Document indexing and extraction service
-- [`/services/crawler`](./services/crawler/README.md) - Website crawling and document extraction service
-- [`/services/rag`](./services/rag/README.md) - Retrieval Augmented Generation service
-- [`/services/scraper`](./services/scraper/README.md) - NIH grant data scraping service
-- [`/packages/db`](./packages/db/README.md) - Shared database models and migrations
-- [`/packages/shared_utils`](./packages/shared_utils/README.md) - Common utilities shared across services
-- [`/frontend`](./frontend/README.md) - NextJS frontend application
-- [`/editor`](./editor/README.md) - TipTap editor library package
-- [`/crdt-server`](crdt/README.md) - Hocuspocus based CRDT server for Tiptap editor
-- [`/terraform`](./terraform/README.md) - Terraform configuration for GCP infrastructure
-- [`/cloud_functions`](./cloud_functions/README.md) - Python Cloud Functions for monitoring and alerting
-  - `app_hosting_alerts` - Firebase App Hosting deployment alerts
-  - `budget_alerts` - GCP budget monitoring and alerts
-  - `user_cleanup` - Automated user data cleanup
+### 🏗️ Core Infrastructure
+- **[`/.github`](./.github)** - GitHub Actions CI/CD workflows and reusable actions
+- **[`/terraform`](./terraform/README.md)** - Infrastructure as Code using OpenTofu
+  - `environments/` - Environment-specific configurations (staging, production)
+  - `modules/` - Reusable Terraform modules
+- **[`/cloud_functions`](./cloud_functions/README.md)** - Serverless monitoring & automation
+  - `app_hosting_alerts/` - Firebase deployment notifications
+  - `auth_blocking/` - User authentication validation
+  - `budget_alerts/` - Cost monitoring alerts
+  - `email_notifications/` - Transactional email service
+  - `entity_cleanup/` - Automated data cleanup
+  - `user_cleanup/` - User account lifecycle management
+
+### 🎨 Frontend Applications
+- **[`/frontend`](./frontend/README.md)** - Next.js 15 web application
+  - Modern React 19 with TypeScript
+  - Tailwind CSS for styling
+  - Firebase Authentication
+  - Zustand state management
+- **[`/editor`](./editor/README.md)** - TipTap collaborative editor package
+  - Rich text editing capabilities
+  - Real-time collaboration support
+- **[`/crdt`](./crdt/README.md)** - CRDT server for real-time collaboration
+  - Hocuspocus WebSocket server
+  - Y.js document synchronization
+
+### 🔧 Backend Services
+- **[`/services/backend`](./services/backend/README.md)** - Main API service
+  - Litestar async framework
+  - JWT authentication with Firebase
+  - PostgreSQL with SQLAlchemy 2.0
+  - Organization-based multi-tenancy
+- **[`/services/indexer`](./services/indexer/README.md)** - Document processing pipeline
+  - PDF/DOC/HTML extraction
+  - Chunk generation and embeddings
+  - Vector database indexing
+- **[`/services/crawler`](./services/crawler/README.md)** - Web content extraction
+  - Intelligent link following
+  - Content extraction and cleaning
+  - Rate limiting and robots.txt compliance
+- **[`/services/rag`](./services/rag/README.md)** - AI-powered content generation
+  - Retrieval Augmented Generation
+  - Multi-model support (OpenAI, Anthropic, Vertex AI)
+  - Grant template and application generation
+- **[`/services/scraper`](./services/scraper/README.md)** - Grant opportunity discovery
+  - NIH grants.gov integration
+  - Automated opportunity monitoring
+  - Discord notifications
+
+### 📦 Shared Packages
+- **[`/packages/db`](./packages/db/README.md)** - Database layer
+  - SQLAlchemy models and migrations
+  - Alembic migration management
+  - Database utilities and helpers
+- **[`/packages/shared_utils`](./packages/shared_utils/README.md)** - Common utilities
+  - AI/LLM integrations
+  - GCS storage operations
+  - Pub/Sub messaging
+  - OpenTelemetry instrumentation
+  - Embeddings and NLP utilities
+
+### 📚 Documentation & Testing
+- **[`/docs`](./docs/README.md)** - Comprehensive technical documentation
+  - Architecture diagrams
+  - API specifications
+  - Security documentation
+  - Deployment guides
+- **[`/e2e`](./e2e/README.md)** - End-to-end testing utilities
+  - Monitoring test helpers
+  - Webhook testing tools
+  - Integration test fixtures
+
+### 🛠️ Development Tools
+- **`/.vscode`** - VS Code workspace settings and recommended extensions
+- **`/.idea`** - IntelliJ IDEA project configuration
+- **`/scripts`** - Utility scripts for development and deployment
+- **`Taskfile.yaml`** - Task automation (replacement for Makefiles)
+- **`docker-compose.yaml`** - Local development environment
 
 ## Prerequisites
 
