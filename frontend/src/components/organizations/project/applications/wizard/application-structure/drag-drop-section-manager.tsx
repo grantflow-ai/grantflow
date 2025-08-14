@@ -195,14 +195,22 @@ const handleSubToMainReorder = async (
 	overItem: GrantSection,
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	zone?: null | ZoneType,
 ): Promise<boolean> => {
-	const newParentId = determineNewParentId(overItem);
+	const newParentId = zone === "sibling" ? null : determineNewParentId(overItem, zone);
+	const targetIndexInChildZone = activeIndex < overIndex ? overIndex : overIndex + 1;
+	const targetIndex = zone === "sibling" ? overIndex : targetIndexInChildZone;
 
-	if (activeItem.parent_id === overItem.id && newParentId === overItem.id && activeIndex === overIndex + 1) {
+	if (
+		zone !== "sibling" &&
+		activeItem.parent_id === overItem.id &&
+		newParentId === overItem.id &&
+		activeIndex === targetIndex
+	) {
 		return false;
 	}
 
-	await updateReorder(sections, activeIndex, overIndex + 1, toUpdateGrantSection, updateGrantSections, (section) =>
+	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections, (section) =>
 		section.id === activeItem.id ? newParentId : section.parent_id,
 	);
 	return true;
@@ -540,8 +548,8 @@ export function DragDropSectionManager({
 			onDragMove: (event) => {
 				const [collision] = event.collisions ?? [];
 
-				// Only update if collision data contains zone information
-				if (collision.data && ("zone" in collision.data || "zonePercent" in collision.data)) {
+				// Only update if collision exists and has zone information
+				if (collision?.data && ("zone" in collision.data || "zonePercent" in collision.data)) {
 					const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;
 					const zonePercent = (collision.data.zonePercent as null | number | undefined) ?? null;
 
@@ -620,6 +628,7 @@ export function DragDropSectionManager({
 						overItem,
 						toUpdateGrantSection,
 						useApplicationStore.getState().updateGrantSections,
+						dragStateRef.current.zone,
 					);
 					return;
 				}
