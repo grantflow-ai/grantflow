@@ -8,7 +8,7 @@ on:
     paths:
       - ".github/workflows/build-service-crdt-server.yaml"
       - ".github/actions/**"
-      - "crdt-server/**"
+      - "crdt/**"
       - "package.json"
       - "pnpm-lock.yaml"
   release:

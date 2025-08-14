@@ -280,7 +280,7 @@ services:
             - services
         build:
             context: .
-            dockerfile: crdt-server/Dockerfile
+            dockerfile: crdt/Dockerfile
         environment:
             DATABASE_URL: postgresql://local:local@db:5432/local
             NODE_ENV: development
