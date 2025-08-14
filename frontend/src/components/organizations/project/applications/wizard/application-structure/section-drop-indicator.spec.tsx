@@ -38,6 +38,7 @@ vi.mock("@/utils/grant-sections", async () => {
 });
 
 const mockElement = {
+	getAttribute: vi.fn(),
 	hasAttribute: vi.fn(),
 };
 
@@ -56,6 +57,7 @@ beforeEach(() => {
 	globalThis.document.querySelector = vi.fn(() => mockElement) as any;
 	vi.clearAllMocks();
 	mockElement.hasAttribute.mockReturnValue(false);
+	mockElement.getAttribute.mockReturnValue("false");
 
 	Object.assign(mockDragContext, {
 		activeIndex: -1,

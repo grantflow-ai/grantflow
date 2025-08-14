@@ -974,6 +974,10 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				templateId: application.grant_template.id,
 			});
 
+			// sections.forEach((section) => {
+			// 	console.log(section.order, " ", section.title, " ", section.id, " ", section.parent_id, " ");
+			// });
+
 			const { selectedOrganizationId } = useOrganizationStore.getState();
 			if (!selectedOrganizationId) {
 				throw new Error("No organization selected");
