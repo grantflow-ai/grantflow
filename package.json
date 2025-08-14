@@ -14,8 +14,7 @@
 		"knip:frontend": "pnpm --filter './frontend' knip",
 		"knip:editor": "pnpm --filter './editor' knip",
 		"test": "pnpm --parallel --filter './frontend' --filter './editor' --filter './crdt-server' test",
-		"typecheck": "pnpm --parallel --filter './frontend' --filter './editor' typecheck",
-		"postinstall": "npx ai-rulez generate --recursive"
+		"typecheck": "pnpm --parallel --filter './frontend' --filter './editor' typecheck"
 	},
 	"keywords": [],
 	"author": "",

@@ -72,6 +72,15 @@ jobs:
                       echo "url=https://staging-api.grantflow.ai" >> $GITHUB_OUTPUT
                   fi
 
+            - name: Set CRDT server URL
+              id: crdt_url
+              run: |
+                  if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+                      echo "url=https://crdt.grantflow.ai" >> $GITHUB_OUTPUT
+                  else
+                      echo "url=https://crdt-staging.grantflow.ai" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Build and push service
               uses: ./.github/actions/build-service
               with:
@@ -90,7 +99,7 @@ jobs:
                       NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
                       NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
                       NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
-                      NEXT_PUBLIC_CRDT_SERVER_URL=${{ secrets.NEXT_PUBLIC_CRDT_SERVER_URL }}
+                      NEXT_PUBLIC_CRDT_SERVER_URL=${{ steps.crdt_url.outputs.url }}
         outputs:
             image_tag: ${{ steps.config.outputs.image_tag }}
             project_id: ${{ steps.config.outputs.project_id }}
