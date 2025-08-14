@@ -313,7 +313,7 @@ module "load_balancer" {
   environment        = var.environment
   backend_url        = module.cloud_run.backend_url
   domain             = "staging-api.grantflow.ai"
-  crdt_server_domain = "crdt-staging.grantflow.ai"
+  crdt_server_domain = "staging-crdt.grantflow.ai"
   enable_ssl         = true  # SSL certificate for custom domain
   enable_cdn         = false # No CDN for staging to save costs
 }
