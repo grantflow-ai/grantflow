@@ -33,7 +33,7 @@ export interface DragDropConfig {
 
 export interface DragDropHandlers<T extends DragDropItem> {
 	onDragEnd?: (event: DragEndEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
-	onDragMove?: (event: DragMoveEvent) => Promise<void> | void;
+	onDragMove?: (event: DragMoveEvent) => void;
 	onDragOver?: (event: DragOverEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
 	onDragStart?: (event: DragStartEvent, item: T | undefined) => void;
 	onReorder?: (
@@ -126,8 +126,8 @@ export function useDragAndDrop<T extends DragDropItem>(
 				await onDragOver?.(event, activeItem, overItem);
 			};
 
-			const handleDragMove = async (event: DragMoveEvent) => {
-				await onDragMove?.(event);
+			const handleDragMove = (event: DragMoveEvent) => {
+				onDragMove?.(event);
 			};
 
 			const handleReorder = async (activeItem: T, overItem: T) => {
