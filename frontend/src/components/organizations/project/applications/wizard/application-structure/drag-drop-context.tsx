@@ -3,7 +3,14 @@
 import { createContext, useContext } from "react";
 import type { GrantSection } from "@/types/grant-sections";
 
-interface DragDropContextData {
+export interface ZoneCollisionData {
+	zone: null | ZoneType;
+	zonePercent: null | number;
+}
+
+export type ZoneType = "child" | "sibling";
+
+interface DragDropContextData extends ZoneCollisionData {
 	activeIndex: number;
 	activeItem: GrantSection | null;
 	isAnyDragging: boolean;

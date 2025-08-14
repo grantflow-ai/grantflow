@@ -12,6 +12,8 @@ const mockDragContext: DragDropContextData = {
 	overIndex: -1,
 	overItem: null,
 	sections: [],
+	zone: null,
+	zonePercent: null,
 };
 
 vi.mock("./drag-drop-context", () => ({
@@ -202,6 +204,8 @@ describe("SectionWithDropIndicators", () => {
 				overIndex: 1,
 				overItem: sections[1],
 				sections,
+				zone: null,
+				zonePercent: null,
 			};
 
 			const RealDragProvider = createRealDragContextProvider(dragContext);
@@ -236,6 +240,8 @@ describe("SectionWithDropIndicators", () => {
 				overIndex: 2,
 				overItem: sections[2], // main section
 				sections,
+				zone: null,
+				zonePercent: null,
 			};
 
 			const RealDragProvider = createRealDragContextProvider(dragContext);
@@ -263,6 +269,8 @@ describe("SectionWithDropIndicators", () => {
 				overIndex: -1,
 				overItem: null,
 				sections,
+				zone: null,
+				zonePercent: null,
 			};
 
 			const RealDragProvider = createRealDragContextProvider(dragContext);
