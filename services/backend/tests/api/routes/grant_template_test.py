@@ -162,6 +162,60 @@ async def test_generate_grant_template_success(
     )
 
 
+@patch(
+    "services.backend.src.api.routes.grant_template.publish_rag_task",
+    new_callable=AsyncMock,
+)
+async def test_generate_grant_template_with_created_status(
+    mock_publish_rag_task: AsyncMock,
+    test_client: TestingClientType,
+    project: Project,
+    grant_application: GrantApplication,
+    async_session_maker: async_sessionmaker[Any],
+    project_member_user: None,
+) -> None:
+    grant_template_id = None
+    async with async_session_maker() as session, session.begin():
+        rag_source = RagFile(
+            bucket_name="test-bucket",
+            object_path="test/path",
+            filename="test.pdf",
+            mime_type="application/pdf",
+            size=1000,
+            indexing_status=SourceIndexingStatusEnum.CREATED,
+        )
+        session.add(rag_source)
+        await session.flush()
+
+        grant_template = GrantTemplate(
+            grant_application_id=grant_application.id,
+            grant_sections=[],
+        )
+        session.add(grant_template)
+        await session.flush()
+
+        template_source = GrantTemplateSource(
+            grant_template_id=grant_template.id,
+            rag_source_id=rag_source.id,
+        )
+        session.add(template_source)
+        await session.commit()
+        grant_template_id = grant_template.id
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant-template/{grant_template_id}",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    mock_publish_rag_task.assert_called_once_with(
+        logger=ANY,
+        parent_type="grant_template",
+        parent_id=grant_template_id,
+        trace_id=ANY,
+    )
+
+
 async def test_generate_grant_template_no_sources(
     test_client: TestingClientType,
     project: Project,
