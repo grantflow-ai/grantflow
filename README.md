@@ -19,7 +19,7 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - [`/packages/shared_utils`](./packages/shared_utils/README.md) - Common utilities shared across services
 - [`/frontend`](./frontend/README.md) - NextJS frontend application
 - [`/editor`](./editor/README.md) - TipTap editor library package
-- [`/crdt-server`](./crdt-server/README.md) - Hocuspocus based CRDT server for Tiptap editor
+- [`/crdt-server`](crdt/README.md) - Hocuspocus based CRDT server for Tiptap editor
 - [`/terraform`](./terraform/README.md) - Terraform configuration for GCP infrastructure
 - [`/cloud_functions`](./cloud_functions/README.md) - Python Cloud Functions for monitoring and alerting
   - `app_hosting_alerts` - Firebase App Hosting deployment alerts

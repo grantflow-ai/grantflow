@@ -8,7 +8,7 @@ on:
     paths:
       - ".github/workflows/ci-service-crdt-server.yaml"
       - ".github/actions/setup-node-workspace/**"
-      - "crdt-server/**"
+      - "crdt/**"
       - "package.json"
       - "pnpm-lock.yaml"
   push:
@@ -18,7 +18,7 @@ on:
     paths:
       - ".github/workflows/ci-service-crdt-server.yaml"
       - ".github/actions/setup-node-workspace/**"
-      - "crdt-server/**"
+      - "../../crdt/**"
       - "package.json"
       - "pnpm-lock.yaml"
 
