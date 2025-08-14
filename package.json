@@ -13,7 +13,7 @@
 		"knip": "pnpm --parallel --filter './frontend' --filter './editor' knip",
 		"knip:frontend": "pnpm --filter './frontend' knip",
 		"knip:editor": "pnpm --filter './editor' knip",
-		"test": "pnpm --parallel --filter './frontend' --filter './editor' --filter './crdt-server' test",
+		"test": "pnpm --parallel --filter './frontend' --filter './editor' --filter 'crdt' test",
 		"typecheck": "pnpm --parallel --filter './frontend' --filter './editor' typecheck"
 	},
 	"keywords": [],
