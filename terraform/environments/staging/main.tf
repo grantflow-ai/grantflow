@@ -108,6 +108,9 @@ module "cloud_run" {
   crawler_min_instances     = 0     # ~keep Scale to zero when idle
   crawler_max_instances     = 50    # ~keep Lower than indexer (URLs process faster)
 
+  # CRDT Server: Increased memory to handle WebSocket connections
+  crdt_server_memory_limit = "2Gi" # Increased from 1Gi to prevent OOM
+
   discord_webhook_url   = var.discord_webhook_url
   enable_cpu_throttling = true  # Allow throttling for staging
   enable_http2          = false # HTTP/1.1 for staging

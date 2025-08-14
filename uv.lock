@@ -16,15 +16,6 @@ members = [
 ]
 
 [[package]]
-name = "ai-rulez"
-version = "1.4.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2c/e8/94bb8aaa0092cd448b2116ffc00f7541aa02fa5f74c89bff6ebdbb2bd9f2/ai_rulez-1.4.2.tar.gz", hash = "sha256:e2919564acdf3220786d67408ba1e772afe3f80820ce87b03f5a3914bf724571", size = 11458, upload-time = "2025-08-13T14:15:45.164Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/c3/2daaea9b64ed9987d1a9a65036ba83cc44230c054d09f06bd3fdfb780cc8/ai_rulez-1.4.2-py3-none-any.whl", hash = "sha256:06c3a245d9a429cd8ea191c5ee7e427a46e2984a63f400c4bb104df5de411928", size = 8909, upload-time = "2025-08-13T14:15:44.005Z" },
-]
-
-[[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -104,7 +95,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "0.63.0"
+version = "0.64.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -115,9 +106,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/6e/3bedbd1c932cce98495e007b6d8007a139cf46adc5c889d700ec75ddd7f3/anthropic-0.63.0.tar.gz", hash = "sha256:d75ecfff17a0b96d845be3cbd93e06a48ea95aaa27add586748772fa5b926994", size = 427391, upload-time = "2025-08-12T16:59:58.079Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/4f/f2b880cba1a76f3acc7d5eb2ae217632eac1b8cef5ed3027493545c59eba/anthropic-0.64.0.tar.gz", hash = "sha256:3d496c91a63dff64f451b3e8e4b238a9640bf87b0c11d0b74ddc372ba5a3fe58", size = 427893, upload-time = "2025-08-13T17:09:49.915Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/a1/83bdb1a8be76fbb3ceedae9dfe1b515cff56dcfbbc388b53070a27ce341f/anthropic-0.63.0-py3-none-any.whl", hash = "sha256:d1849fe1635ae4277f45a0e4365979ed69e6264b73350ce8a99fee701d347745", size = 296637, upload-time = "2025-08-12T16:59:56.841Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/b2/2d268bcd5d6441df9dc0ebebc67107657edb8b0150d3fda1a5b81d1bec45/anthropic-0.64.0-py3-none-any.whl", hash = "sha256:6f5f7d913a6a95eb7f8e1bda4e75f76670e8acd8d4cd965e02e2a256b0429dd1", size = 297244, upload-time = "2025-08-13T17:09:47.908Z" },
 ]
 
 [[package]]
@@ -979,7 +970,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "1.29.0"
+version = "1.30.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -991,9 +982,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9d/9b/a1e31252c4151da9403b357b47ae7ec5fc852eaf3486696eec211794001d/google_genai-1.29.0.tar.gz", hash = "sha256:a6b036ab032830f668d137b198c2a5abd8951a036d7a8480b61ce837c1c7f36b", size = 224207, upload-time = "2025-08-06T23:32:09.708Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/24/f7/2dc4c106cb0e42aec8562ee1b62df1d858f269239c10948108a5984a6429/google_genai-1.30.0.tar.gz", hash = "sha256:90dad6a9a895f30d0cbd5754462c82d3c060afcc2c3c9dccbcef4ff54019ef3f", size = 230937, upload-time = "2025-08-14T00:59:38.164Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/33/9b22b0b3734f93655d0d28cfcd64496ef46dd68efe8ae19278f3b1297998/google_genai-1.29.0-py3-none-any.whl", hash = "sha256:8b64737de008d15ca4737e593913f88f656f0568544ab6901f768f0d1fd69bbf", size = 222591, upload-time = "2025-08-06T23:32:08.133Z" },
+    { url = "https://files.pythonhosted.org/packages/44/81/b413aa382eeeae41d2fdedd19a2c43d9580059eebccef5321d7d64b1d910/google_genai-1.30.0-py3-none-any.whl", hash = "sha256:52955e79284899991bf2fef36b30f375b0736030ba3d089ca39002c18aa95c01", size = 229330, upload-time = "2025-08-14T00:59:36.356Z" },
 ]
 
 [[package]]
@@ -1032,7 +1023,6 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
-    { name = "ai-rulez" },
     { name = "asyncpg" },
     { name = "codespell" },
     { name = "covdefaults" },
@@ -1069,7 +1059,6 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "ai-rulez", specifier = ">=1.4.1" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "codespell", specifier = ">=2.4.0" },
     { name = "covdefaults", specifier = ">=2.3.0" },
@@ -3730,14 +3719,14 @@ wheels = [
 
 [[package]]
 name = "uncomment"
-version = "2.4.13"
+version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/26/07e96ad1ba0aa7222048c039bf24d775651dfeea8fa10636783c2814b4f2/uncomment-2.4.13.tar.gz", hash = "sha256:a84c277f4abc046aa321e1bbdd87f004b57bca73c79f5b6c372d162e428d5600", size = 4753, upload-time = "2025-07-01T08:09:16.745Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/05/f619e5a200e6b6ef2a1f7f57e9468ace2bbb4763cdc7fc68ea7cebbdfc02/uncomment-2.5.0.tar.gz", hash = "sha256:6bb912025d0d20894361603b583a42e913de6155f736d97a533366c5d1c98b14", size = 4769, upload-time = "2025-08-13T19:03:57.032Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/41/34/d5e8dd6cb4fe512564528c35b719ffff645517c69459a0b0edff30d1187e/uncomment-2.4.13-py3-none-any.whl", hash = "sha256:c994384364284713d8be1d304037cbe45723b162de74aa8d1c454bbc312ab213", size = 5229, upload-time = "2025-07-01T08:09:15.638Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/11/1165721773250f98eeae05334ba81eec2561f6bcb3c89319aae128edb9ae/uncomment-2.5.0-py3-none-any.whl", hash = "sha256:b46c8481cf62cc483c5e77d75b44e0988363c873a352826a86f1ce11512d5439", size = 5216, upload-time = "2025-08-13T19:03:55.757Z" },
 ]
 
 [[package]]
