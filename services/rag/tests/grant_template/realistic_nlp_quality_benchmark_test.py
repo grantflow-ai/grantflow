@@ -321,7 +321,7 @@ async def test_nlp_categorization_smoke_test() -> None:
     assert isinstance(result, dict), "Result should be a dictionary"
     assert len(result) > 0, "Should detect at least some categories"
 
-    expected_categories = ["Money", "Date/Time", "Orders", "Evaluation Criteria", "Negative Instructions"]
+    expected_categories = ["money", "date_time", "orders", "evaluation_criteria", "negative_instructions"]
     for category in expected_categories:
         assert category in result, f"Missing expected category: {category}"
 

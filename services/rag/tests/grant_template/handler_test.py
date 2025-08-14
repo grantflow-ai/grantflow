@@ -158,15 +158,14 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "Chunk 3: Budget guidelines and restrictions",
             ],
             "nlp_analysis": {
-                "Orders": ["Funding eligibility criteria", "Application submission requirements"],
-                "Money": ["Budget guidelines and restrictions"],
-                "Date/Time": [],
-                "Writing-related": [],
-                "Other Numbers": [],
-                "Recommendations": [],
-                "Positive Instructions": ["Application submission requirements"],
-                "Negative Instructions": [],
-                "Evaluation Criteria": ["Funding eligibility criteria"],
+                "orders": ["Funding eligibility criteria", "Application submission requirements"],
+                "money": ["Budget guidelines and restrictions"],
+                "date_time": [],
+                "writing_related": [],
+                "recommendations": [],
+                "positive_instructions": ["Application submission requirements"],
+                "negative_instructions": [],
+                "evaluation_criteria": ["Funding eligibility criteria"],
             },
         },
         {
@@ -178,15 +177,15 @@ def mock_rag_sources() -> list[RagSourceData]:
                 "Web chunk 2: Past funded projects examples",
             ],
             "nlp_analysis": {
-                "Orders": [],
-                "Money": [],
-                "Date/Time": [],
-                "Writing-related": [],
-                "Other Numbers": [],
-                "Recommendations": ["Organization mission and values"],
-                "Positive Instructions": [],
-                "Negative Instructions": [],
-                "Evaluation Criteria": ["Past funded projects examples"],
+                "orders": [],
+                "money": [],
+                "date_time": [],
+                "writing_related": [],
+                "other_numbers": [],
+                "recommendations": ["Organization mission and values"],
+                "positive_instructions": [],
+                "negative_instructions": [],
+                "evaluation_criteria": ["Past funded projects examples"],
             },
         },
     ]
@@ -670,15 +669,14 @@ async def test_get_rag_sources_data_with_nlp_analysis(
     with patch("services.rag.src.grant_template.extract_cfp_data.categorize_text_async") as mock_categorize:
         # Mock NLP analysis results
         mock_categorize.return_value = {
-            "Orders": ["Application must include detailed budget"],
-            "Money": ["Budget should not exceed $100,000"],
-            "Date/Time": ["Deadline is March 15, 2025"],
-            "Writing-related": ["Proposal should be 10 pages maximum"],
-            "Recommendations": ["Consider including preliminary data"],
-            "Evaluation Criteria": ["Proposals will be evaluated on merit"],
-            "Other Numbers": [],
-            "Positive Instructions": [],
-            "Negative Instructions": [],
+            "orders": ["Application must include detailed budget"],
+            "money": ["Budget should not exceed $100,000"],
+            "date_time": ["Deadline is March 15, 2025"],
+            "writing_related": ["Proposal should be 10 pages maximum"],
+            "recommendations": ["Consider including preliminary data"],
+            "evaluation_criteria": ["Proposals will be evaluated on merit"],
+            "positive_instructions": [],
+            "negative_instructions": [],
         }
 
         result = await get_rag_sources_data(
@@ -695,14 +693,14 @@ async def test_get_rag_sources_data_with_nlp_analysis(
 
         # Verify analysis structure
         assert isinstance(nlp_analysis, dict)
-        assert "Orders" in nlp_analysis
-        assert "Money" in nlp_analysis
-        assert "Date/Time" in nlp_analysis
+        assert "orders" in nlp_analysis
+        assert "money" in nlp_analysis
+        assert "date_time" in nlp_analysis
 
         # Verify actual content
-        assert "Application must include detailed budget" in nlp_analysis["Orders"]
-        assert "Budget should not exceed $100,000" in nlp_analysis["Money"]
-        assert "Deadline is March 15, 2025" in nlp_analysis["Date/Time"]
+        assert "Application must include detailed budget" in nlp_analysis["orders"]
+        assert "Budget should not exceed $100,000" in nlp_analysis["money"]
+        assert "Deadline is March 15, 2025" in nlp_analysis["date_time"]
 
     # Verify async categorization was called for each source
     assert mock_categorize.call_count == 2
@@ -715,9 +713,9 @@ def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSource
     # Check that NLP analysis is included in formatted output
     assert "NLP Analysis:" in formatted
     assert "NLP Analysis" in formatted
-    assert "Orders" in formatted
-    assert "Money" in formatted
-    assert "Evaluation Criteria" in formatted
+    assert "orders" in formatted
+    assert "money" in formatted
+    assert "evaluation_criteria" in formatted
 
     # Check specific content from mock data
     assert "Funding eligibility criteria" in formatted
