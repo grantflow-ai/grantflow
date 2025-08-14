@@ -33,6 +33,22 @@ resource "google_compute_region_network_endpoint_group" "backend_neg" {
   }
 }
 
+# Serverless NEG for Cloud Run CRDT-SERVER
+resource "google_compute_region_network_endpoint_group" "crdt_server_neg_us_central1" {
+  name                  = "crdt-server-neg-us-central1"
+  network_endpoint_type = "SERVERLESS"
+  region                = "us-central1"
+
+  cloud_run {
+    service = "crdt-server"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
 # Backend service
 resource "google_compute_backend_service" "backend" {
   name        = "backend-service-${var.environment}"
@@ -45,6 +61,33 @@ resource "google_compute_backend_service" "backend" {
 
   backend {
     group = google_compute_region_network_endpoint_group.backend_neg.id
+  }
+
+  # Note: Health checks not supported with serverless NEGs (Cloud Run)
+  # Cloud Run services have built-in health checking
+
+  # Security settings
+  security_policy = var.environment == "production" ? google_compute_security_policy.backend_security[0].id : null
+
+  log_config {
+    enable      = true
+    sample_rate = var.environment == "staging" ? 0.1 : 1.0 # Reduced logging for staging
+  }
+}
+
+
+# crdt-server backend service
+resource "google_compute_backend_service" "crdt_server_backend" {
+  name        = "crdt-server"
+  protocol    = "HTTPS"
+  port_name   = "http"
+  timeout_sec = 30
+
+  # Cheap option for staging: no CDN
+  enable_cdn = var.enable_cdn
+
+  backend {
+    group = google_compute_region_network_endpoint_group.crdt_server_neg_us_central1.id
   }
 
   # Note: Health checks not supported with serverless NEGs (Cloud Run)
@@ -73,6 +116,11 @@ resource "google_compute_url_map" "backend_url_map" {
     path_matcher = "backend-paths"
   }
 
+  host_rule {
+    hosts        = [var.crdt_server_domain]
+    path_matcher = "crdt-server-paths"
+  }
+
   path_matcher {
     name            = "backend-paths"
     default_service = google_compute_backend_service.backend.id
@@ -80,6 +128,15 @@ resource "google_compute_url_map" "backend_url_map" {
     path_rule {
       paths   = ["/*"]
       service = google_compute_backend_service.backend.id
+    }
+  }
+  path_matcher {
+    name            = "crdt-server-paths"
+    default_service = google_compute_backend_service.crdt_server_backend.id
+
+    path_rule {
+      paths   = ["/*"]
+      service = google_compute_backend_service.crdt_server_backend.id
     }
   }
 }
@@ -99,13 +156,31 @@ resource "google_compute_managed_ssl_certificate" "backend_ssl" {
   }
 }
 
+# SSL certificate (only if SSL enabled)
+resource "google_compute_managed_ssl_certificate" "crdt_server_ssl" {
+  count = var.enable_ssl ? 1 : 0
+
+  name = "crdt-server-ssl-${var.environment}"
+
+  managed {
+    domains = [var.crdt_server_domain]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 # HTTPS proxy (only if SSL enabled)
 resource "google_compute_target_https_proxy" "backend_https_proxy" {
   count = var.enable_ssl ? 1 : 0
 
-  name             = "backend-https-proxy-${var.environment}"
-  url_map          = google_compute_url_map.backend_url_map.id
-  ssl_certificates = [google_compute_managed_ssl_certificate.backend_ssl[0].id]
+  name    = "backend-https-proxy-${var.environment}"
+  url_map = google_compute_url_map.backend_url_map.id
+  ssl_certificates = [
+    google_compute_managed_ssl_certificate.backend_ssl[0].id,
+    google_compute_managed_ssl_certificate.crdt_server_ssl[0].id
+  ]
 }
 
 # HTTP proxy (for redirect or non-SSL)
