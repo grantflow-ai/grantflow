@@ -62,11 +62,7 @@ describe("HealthCheckExtension", () => {
 	describe("readiness endpoint", () => {
 		it("should return OK when database is healthy", async () => {
 			mockRequest.url = "/ready";
-			vi.mocked(db.select).mockReturnValue({
-				from: vi.fn().mockReturnValue({
-					limit: vi.fn().mockResolvedValue([]),
-				}),
-			} as any);
+			vi.mocked(db.execute).mockResolvedValue([] as any);
 
 			await expect(
 				extension.onRequest({
@@ -84,11 +80,7 @@ describe("HealthCheckExtension", () => {
 
 		it("should return NOT READY when database is unhealthy", async () => {
 			mockRequest.url = "/ready";
-			vi.mocked(db.select).mockReturnValue({
-				from: vi.fn().mockReturnValue({
-					limit: vi.fn().mockRejectedValue(new Error("Database connection failed")),
-				}),
-			} as any);
+			vi.mocked(db.execute).mockRejectedValue(new Error("Database connection failed"));
 
 			await expect(
 				extension.onRequest({
@@ -107,11 +99,7 @@ describe("HealthCheckExtension", () => {
 		it("should log database health check failure", async () => {
 			mockRequest.url = "/ready";
 			const error = new Error("Database connection failed");
-			vi.mocked(db.select).mockReturnValue({
-				from: vi.fn().mockReturnValue({
-					limit: vi.fn().mockRejectedValue(error),
-				}),
-			} as any);
+			vi.mocked(db.execute).mockRejectedValue(error);
 
 			try {
 				await extension.onRequest({
@@ -130,11 +118,7 @@ describe("HealthCheckExtension", () => {
 
 		it("should log readiness check completion", async () => {
 			mockRequest.url = "/ready";
-			vi.mocked(db.select).mockReturnValue({
-				from: vi.fn().mockReturnValue({
-					limit: vi.fn().mockResolvedValue([]),
-				}),
-			} as any);
+			vi.mocked(db.execute).mockResolvedValue([] as any);
 
 			try {
 				await extension.onRequest({
