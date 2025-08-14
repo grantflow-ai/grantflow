@@ -8,11 +8,17 @@ Serverless Python functions for event processing and monitoring.
 cloud_functions/
 ├── src/
 │   ├── app_hosting_alerts/    # Firebase App Hosting alert notifications
-│   ├── budget_alerts/         # GCP Budget alert notifications  
+│   ├── auth_blocking/         # User authentication validation
+│   ├── budget_alerts/         # GCP Budget alert notifications
+│   ├── email_notifications/   # Transactional email service
+│   ├── entity_cleanup/        # Automated entity cleanup
 │   └── user_cleanup/          # Scheduled user cleanup function
 ├── tests/
 │   ├── app_hosting_alerts/
+│   ├── auth_blocking/
 │   ├── budget_alerts/
+│   ├── email_notifications/
+│   ├── entity_cleanup/
 │   └── user_cleanup/
 ├── pyproject.toml             # Dependencies and project config
 ├── requirements.txt           # Compiled dependencies for deployment
@@ -27,11 +33,29 @@ cloud_functions/
 - **Entry Point**: `app_hosting_alert_to_discord_sync`
 - **Alerts**: Build failures, deployment issues, high error rates, memory usage
 
+### Auth Blocking (`src/auth_blocking/`)
+- **Purpose**: Validates user registration and enforces email domain restrictions
+- **Trigger**: Firebase Auth blocking functions (beforeCreate)
+- **Entry Point**: `before_create`
+- **Actions**: Blocks non-approved email domains, validates user data
+
 ### Budget Alerts (`src/budget_alerts/`)
 - **Purpose**: Forwards GCP billing budget alerts to Discord
 - **Trigger**: Pub/Sub topic `budget-alerts-{environment}`
 - **Entry Point**: `budget_alert_to_discord_sync`
 - **Alerts**: Budget thresholds (50%, 75%, 90%, 100%, 120% forecasted)
+
+### Email Notifications (`src/email_notifications/`)
+- **Purpose**: Sends transactional emails for application events
+- **Trigger**: Pub/Sub topic `email-notifications-{environment}`
+- **Entry Point**: `email_notification_function`
+- **Templates**: Application status updates, invitations, notifications
+
+### Entity Cleanup (`src/entity_cleanup/`)
+- **Purpose**: Cleans up orphaned database entities
+- **Trigger**: Cloud Scheduler (periodic)
+- **Entry Point**: `cleanup_expired_entities`
+- **Actions**: Removes expired invitations, orphaned records
 
 ### User Cleanup (`src/user_cleanup/`)
 - **Purpose**: Scheduled cleanup of expired user accounts

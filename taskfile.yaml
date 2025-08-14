@@ -16,6 +16,16 @@ tasks:
       - task: generate:ai-rules
       - uv run lefthook install
 
+  setup:claude:
+    desc: Setup Claude MCP integrations (Model Context Protocol)
+    preconditions:
+      - sh: command -v claude
+        msg: "Claude CLI is not installed or not in PATH. Please install Claude Desktop first."
+    cmds:
+      - claude mcp add --transport sse linear-server https://mcp.linear.app/sse
+      - claude mcp add playwright npx -y @playwright/mcp@latest
+      - claude mcp add ai-rulez npx -y @ai-rulez@latest mcp
+
   dev:
     desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt-server)
     deps:
@@ -127,7 +137,7 @@ tasks:
   generate:ai-rules:
     desc: Generate AI assistant configuration files (CLAUDE.md, .windsurfrules, .cursorrules) from ai-rulez.yaml
     cmds:
-      - uv run ai-rulez generate --recursive
+      - uvx ai-rulez generate --recursive
 
   # ==============================================================================
   # DATABASE COMMANDS
