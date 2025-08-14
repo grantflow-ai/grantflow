@@ -5,7 +5,6 @@ import pytest
 
 from services.rag.src.grant_template.nlp_categorizer import (
     CATEGORY_LABELS,
-    EXECUTOR_MAX_WORKERS,
     _categorize_text_sync,
     categorize_text_async,
     format_nlp_analysis_for_prompt,
@@ -39,7 +38,7 @@ async def test_categorize_text_async() -> None:
     text = "Applications must include budgets of $25,000."
 
     with patch("services.rag.src.grant_template.nlp_categorizer._categorize_text_sync") as mock_sync:
-        expected = {"Money": ["Budget of $25,000"], "Date/Time": []}
+        expected = {"money": ["Budget of $25,000"], "date_time": []}
         mock_sync.return_value = expected
 
         result = await categorize_text_async(text)
@@ -49,19 +48,19 @@ async def test_categorize_text_async() -> None:
 
 def test_format_nlp_analysis_for_prompt_with_content() -> None:
     analysis = {
-        "Money": ["Budget should not exceed $100,000"],
-        "Orders": ["You must submit detailed plans"],
-        "Date/Time": [],
-        "Evaluation Criteria": [],
-        "Negative Instructions": [],
+        "money": ["Budget should not exceed $100,000"],
+        "orders": ["You must submit detailed plans"],
+        "date_time": [],
+        "evaluation_criteria": [],
+        "negative_instructions": [],
     }
 
     result = format_nlp_analysis_for_prompt(analysis)
 
     assert "NLP Analysis" in result
     assert "Total: 2 categorized sentences" in result
-    assert "Money (1)" in result
-    assert "Orders (1)" in result
+    assert "money (1)" in result
+    assert "orders (1)" in result
 
 
 def test_format_nlp_analysis_for_prompt_empty() -> None:
@@ -77,9 +76,7 @@ def test_get_nlp_categorizer_status() -> None:
 
     assert isinstance(status, dict)
     assert "spacy_model_loaded" in status
-    assert "executor_max_workers" in status
     assert "supported_categories" in status
-    assert status["executor_max_workers"] == EXECUTOR_MAX_WORKERS
     assert status["supported_categories"] == CATEGORY_LABELS
 
 

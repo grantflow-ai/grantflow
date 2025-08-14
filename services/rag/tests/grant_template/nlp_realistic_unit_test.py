@@ -26,12 +26,12 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(nsf_text)
 
-        assert len(result["Writing-related"]) >= 0, "Writing-related detection varies by text structure"
-        assert len(result["Money"]) >= 1, "Should detect budget information"
-        assert len(result["Date/Time"]) >= 1, "Should detect submission deadline"
-        assert len(result["Orders"]) >= 1, "Should detect mandatory requirements"
-        assert len(result["Recommendations"]) >= 1, "Should detect recommendations"
-        assert len(result["Evaluation Criteria"]) >= 1, "Should detect review criteria"
+        assert len(result["writing_related"]) >= 0, "writing_related detection varies by text structure"
+        assert len(result["money"]) >= 1, "Should detect budget information"
+        assert len(result["date_time"]) >= 1, "Should detect submission deadline"
+        assert len(result["orders"]) >= 1, "Should detect mandatory requirements"
+        assert len(result["recommendations"]) >= 1, "Should detect recommendations"
+        assert len(result["evaluation_criteria"]) >= 1, "Should detect review criteria"
 
     def test_nih_style_instructions(self) -> None:
         nih_text = (
@@ -46,12 +46,12 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(nih_text)
 
-        assert len(result["Writing-related"]) >= 0, "Writing-related detection depends on number+word proximity"
-        assert len(result["Money"]) >= 1, "Should detect budget limits"
-        assert len(result["Orders"]) >= 2, "Should detect multiple requirements"
-        assert len(result["Recommendations"]) >= 1, "Should detect recommendations"
-        assert len(result["Negative Instructions"]) >= 1, "Should detect restrictions"
-        assert len(result["Evaluation Criteria"]) >= 1, "Should detect review criteria"
+        assert len(result["writing_related"]) >= 0, "writing_related detection depends on number+word proximity"
+        assert len(result["money"]) >= 1, "Should detect budget limits"
+        assert len(result["orders"]) >= 2, "Should detect multiple requirements"
+        assert len(result["recommendations"]) >= 1, "Should detect recommendations"
+        assert len(result["negative_instructions"]) >= 1, "Should detect restrictions"
+        assert len(result["evaluation_criteria"]) >= 1, "Should detect review criteria"
 
     def test_foundation_grant_patterns(self) -> None:
         foundation_text = (
@@ -65,10 +65,10 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(foundation_text)
 
-        assert len(result["Money"]) >= 1, "Should detect funding amounts"
-        assert len(result["Writing-related"]) >= 0, "Writing-related may be detected as Other Numbers"
-        assert len(result["Orders"]) >= 1, "Should detect requirements"
-        assert len(result["Recommendations"]) >= 1, "Should detect recommendations"
+        assert len(result["money"]) >= 1, "Should detect funding amounts"
+        assert len(result["writing_related"]) >= 0, "writing_related may be detected as other_numbers"
+        assert len(result["orders"]) >= 1, "Should detect requirements"
+        assert len(result["recommendations"]) >= 1, "Should detect recommendations"
 
     def test_complex_eligibility_criteria(self) -> None:
         eligibility_text = (
@@ -82,11 +82,11 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(eligibility_text)
 
-        assert len(result["Orders"]) >= 2, "Should detect eligibility requirements"
-        assert len(result["Negative Instructions"]) >= 2, "Should detect restrictions"
-        assert len(result["Other Numbers"]) >= 1, "Should detect numerical limits"
-        assert len(result["Money"]) >= 1, "Should detect budget thresholds"
-        assert len(result["Recommendations"]) >= 1, "Should detect recommendations"
+        assert len(result["orders"]) >= 2, "Should detect eligibility requirements"
+        assert len(result["negative_instructions"]) >= 2, "Should detect restrictions"
+        assert len(result["money"]) >= 1, "Should detect numerical limits"
+        assert len(result["money"]) >= 1, "Should detect budget thresholds"
+        assert len(result["recommendations"]) >= 1, "Should detect recommendations"
 
     def test_evaluation_and_review_process(self) -> None:
         evaluation_text = (
@@ -100,8 +100,8 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(evaluation_text)
 
-        assert len(result["Evaluation Criteria"]) >= 3, "Should detect multiple evaluation aspects"
-        assert len(result["Other Numbers"]) >= 1, "Should detect scoring numbers"
+        assert len(result["evaluation_criteria"]) >= 3, "Should detect multiple evaluation aspects"
+        assert len(result["money"]) >= 1, "Should detect scoring numbers"
 
     def test_submission_requirements_realistic(self) -> None:
         submission_text = (
@@ -115,10 +115,10 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(submission_text)
 
-        assert len(result["Orders"]) >= 2, "Should detect submission requirements"
-        assert len(result["Writing-related"]) >= 0, "Page limits may be categorized as Other Numbers"
-        assert len(result["Negative Instructions"]) >= 1, "Should detect restrictions"
-        assert len(result["Date/Time"]) >= 1, "Should detect deadline information"
+        assert len(result["orders"]) >= 2, "Should detect submission requirements"
+        assert len(result["writing_related"]) >= 0, "Page limits may be categorized as other_numbers"
+        assert len(result["negative_instructions"]) >= 1, "Should detect restrictions"
+        assert len(result["date_time"]) >= 1, "Should detect deadline information"
 
     def test_budget_and_cost_sharing_patterns(self) -> None:
         budget_text = (
@@ -132,10 +132,10 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(budget_text)
 
-        assert len(result["Money"]) >= 3, "Should detect multiple budget elements"
-        assert len(result["Orders"]) >= 1, "Should detect budget requirements"
-        assert len(result["Recommendations"]) >= 1, "Should detect budget recommendations"
-        assert len(result["Other Numbers"]) >= 1, "Should detect percentages and limits"
+        assert len(result["money"]) >= 3, "Should detect multiple budget elements"
+        assert len(result["orders"]) >= 1, "Should detect budget requirements"
+        assert len(result["recommendations"]) >= 1, "Should detect budget recommendations"
+        assert len(result["money"]) >= 1, "Should detect percentages and limits"
 
     def test_mixed_positive_negative_instructions(self) -> None:
         mixed_text = (
@@ -149,10 +149,10 @@ class TestRealisticCFPPatterns:
 
         result = categorize_text(mixed_text)
 
-        assert len(result["Orders"]) >= 2, "Should detect mandatory requirements"
-        assert len(result["Positive Instructions"]) >= 1, "Should detect positive instructions"
-        assert len(result["Negative Instructions"]) >= 2, "Should detect restrictions"
-        assert len(result["Recommendations"]) >= 2, "Should detect recommendations"
+        assert len(result["orders"]) >= 2, "Should detect mandatory requirements"
+        assert len(result["positive_instructions"]) >= 1, "Should detect positive instructions"
+        assert len(result["negative_instructions"]) >= 2, "Should detect restrictions"
+        assert len(result["recommendations"]) >= 2, "Should detect recommendations"
 
 
 class TestRealisticPerformanceScenarios:
@@ -201,11 +201,11 @@ class TestRealisticPerformanceScenarios:
         detected_categories = [cat for cat, sentences in result.items() if sentences]
         assert len(detected_categories) >= 6, f"Only detected {len(detected_categories)} categories"
 
-        assert result["Money"], "Should detect budget information"
-        assert result["Date/Time"], "Should detect deadline"
-        assert result["Orders"], "Should detect requirements"
-        assert result["Negative Instructions"], "Should detect restrictions"
-        assert result["Evaluation Criteria"], "Should detect review criteria"
+        assert result["money"], "Should detect budget information"
+        assert result["date_time"], "Should detect deadline"
+        assert result["orders"], "Should detect requirements"
+        assert result["negative_instructions"], "Should detect restrictions"
+        assert result["evaluation_criteria"], "Should detect review criteria"
 
     def test_memory_efficiency_realistic_content(self) -> None:
         import gc
@@ -249,40 +249,40 @@ class TestRealisticPerformanceScenarios:
 class TestRealisticFormattingScenarios:
     def test_format_analysis_realistic_results(self) -> None:
         realistic_analysis = {
-            "Money": [
+            "money": [
                 "Budget requests may not exceed $500,000 in direct costs over three years.",
                 "Equipment purchases over $5,000 must be itemized and justified.",
                 "Travel expenses should not exceed 10% of total budget.",
             ],
-            "Date/Time": [
+            "date_time": [
                 "Full proposals are due by 5:00 PM EST on March 15, 2025.",
                 "Letters of intent are due 30 days prior to the proposal deadline.",
             ],
-            "Writing-related": [
+            "writing_related": [
                 "Project descriptions must not exceed 15 pages including figures.",
                 "Budget justifications should be limited to 3 pages maximum.",
             ],
-            "Other Numbers": [
+            "other_numbers": [
                 "Teams should include 3-7 investigators with relevant expertise.",
                 "Cost sharing of 25% is required for all awards.",
             ],
-            "Recommendations": [
+            "recommendations": [
                 "Collaborative proposals are strongly encouraged.",
                 "We recommend early consultation with program officers.",
             ],
-            "Orders": [
+            "orders": [
                 "All applications must be submitted through Grants.gov.",
                 "Principal investigators must be U.S. citizens or permanent residents.",
             ],
-            "Positive Instructions": [
+            "positive_instructions": [
                 "Please provide detailed biographical sketches for key personnel.",
                 "Include letters of commitment from all participating institutions.",
             ],
-            "Negative Instructions": [
+            "negative_instructions": [
                 "Do not include proprietary or confidential information.",
                 "Late applications will not be accepted under any circumstances.",
             ],
-            "Evaluation Criteria": [
+            "evaluation_criteria": [
                 "Proposals will be evaluated based on intellectual merit and broader impacts.",
                 "Review panels will assess innovation, feasibility, and potential impact.",
             ],

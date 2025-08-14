@@ -46,11 +46,11 @@ async def test_nlp_categorization_performance_benchmark(sample_cfp_texts: list[s
 @pytest.mark.asyncio
 async def test_nlp_categorization_accuracy_benchmark() -> None:
     test_cases = [
-        ("Budget must not exceed $50,000", {"Money": 1}),
-        ("Deadline is March 15, 2025", {"Date/Time": 1}),
-        ("You must include detailed plans", {"Orders": 1}),
-        ("Applications will be evaluated on merit", {"Evaluation Criteria": 1}),
-        ("Collaborative work is not allowed", {"Negative Instructions": 1}),
+        ("Budget must not exceed $50,000", {"money": 1}),
+        ("Deadline is March 15, 2025", {"date_time": 1}),
+        ("You must include detailed plans", {"orders": 1}),
+        ("Applications will be evaluated on merit", {"evaluation_criteria": 1}),
+        ("Collaborative work is not allowed", {"negative_instructions": 1}),
     ]
 
     accuracy_count = 0
