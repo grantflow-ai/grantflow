@@ -105,19 +105,58 @@ export function useApplicationNotifications({
 	const reconnectAttemptRef = useRef(0);
 
 	const getSocketUrl = useCallback(async () => {
+		log.info("[useApplicationNotifications] Generating WebSocket URL", {
+			applicationId,
+			hasAllIds: !!(organizationId && projectId && applicationId),
+			organizationId,
+			projectId,
+		});
+
 		if (!(organizationId && projectId && applicationId)) {
-			throw new Error("Organization ID, Project ID and Application ID are required");
+			const error = new Error("Organization ID, Project ID and Application ID are required");
+			log.error("[useApplicationNotifications] Missing required IDs for WebSocket connection", error, {
+				applicationId,
+				organizationId,
+				projectId,
+			});
+			throw error;
 		}
 
-		const response = await getOtp();
-		const baseUrl = getEnv()
-			.NEXT_PUBLIC_BACKEND_API_BASE_URL.replace(/^https/, "wss")
-			.replace(/^http/, "ws");
+		try {
+			const response = await getOtp();
+			log.info("[useApplicationNotifications] OTP retrieved successfully", {
+				applicationId,
+				organizationId,
+				otpLength: response.otp?.length,
+				projectId,
+			});
 
-		return new URL(
-			`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
-			baseUrl,
-		).toString();
+			const baseUrl = getEnv()
+				.NEXT_PUBLIC_BACKEND_API_BASE_URL.replace(/^https/, "wss")
+				.replace(/^http/, "ws");
+
+			const socketUrl = new URL(
+				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/notifications?otp=${response.otp}`,
+				baseUrl,
+			).toString();
+
+			log.info("[useApplicationNotifications] WebSocket URL generated", {
+				applicationId,
+				baseUrl,
+				organizationId,
+				projectId,
+				urlPrefix: socketUrl.slice(0, Math.max(0, socketUrl.indexOf("?otp="))),
+			});
+
+			return socketUrl;
+		} catch (error) {
+			log.error("[useApplicationNotifications] Failed to generate WebSocket URL", error, {
+				applicationId,
+				organizationId,
+				projectId,
+			});
+			throw error;
+		}
 	}, [organizationId, projectId, applicationId]);
 
 	const { lastJsonMessage, readyState, sendMessage } = useWebSocket<WebsocketMessage<unknown>>(
@@ -127,81 +166,164 @@ export function useApplicationNotifications({
 				log.warn("[useApplicationNotifications] WebSocket closed", {
 					applicationId,
 					code: event.code,
+					maxReconnectAttempts: RECONNECT_ATTEMPTS_MAX,
 					organizationId,
 					projectId,
-					reason: event.reason,
+					reason: event.reason || "No reason provided",
 					reconnectAttempt: reconnectAttemptRef.current,
 					wasClean: event.wasClean,
+					willReconnect: event.code !== 1000 && reconnectAttemptRef.current < RECONNECT_ATTEMPTS_MAX,
 				});
 			},
 			onError: (event) => {
 				log.error("[useApplicationNotifications] WebSocket error", undefined, {
 					applicationId,
 					error: {
-						message: (event as unknown as { message?: string }).message,
+						fullEvent: JSON.stringify(event),
+						message: (event as unknown as { message?: string }).message || "Unknown error",
 						type: event.type,
 					},
 					organizationId,
 					projectId,
+					readyState: CONNECTION_STATUS_MAP[readyState],
 					reconnectAttempt: reconnectAttemptRef.current,
 				});
 			},
-			onOpen: () => {
-				log.info("[useApplicationNotifications] WebSocket opened", {
+			onMessage: (event) => {
+				log.info("[useApplicationNotifications] WebSocket raw message received", {
 					applicationId,
+					dataLength: event.data?.length,
+					dataType: typeof event.data,
 					organizationId,
 					projectId,
+					rawData: event.data,
+					readyState: CONNECTION_STATUS_MAP[readyState],
+				});
+			},
+			onOpen: () => {
+				log.info("[useApplicationNotifications] WebSocket connection established", {
+					applicationId,
+					organizationId,
+					previousReconnectAttempts: reconnectAttemptRef.current,
+					projectId,
+					readyState: CONNECTION_STATUS_MAP[ReadyState.OPEN],
 				});
 				reconnectAttemptRef.current = 0;
 			},
+			onReconnectStop: (numAttempts) => {
+				log.error("[useApplicationNotifications] WebSocket reconnection stopped", undefined, {
+					applicationId,
+					maxAttempts: RECONNECT_ATTEMPTS_MAX,
+					organizationId,
+					projectId,
+					totalAttempts: numAttempts,
+				});
+			},
 			reconnectInterval: (attemptNumber) => {
 				reconnectAttemptRef.current = attemptNumber + 1;
-				return Math.min(RECONNECT_INTERVAL_BASE * 2 ** attemptNumber, RECONNECT_INTERVAL_MAX);
+				const interval = Math.min(RECONNECT_INTERVAL_BASE * 2 ** attemptNumber, RECONNECT_INTERVAL_MAX);
+				log.info("[useApplicationNotifications] WebSocket reconnecting", {
+					applicationId,
+					attemptNumber: attemptNumber + 1,
+					maxAttempts: RECONNECT_ATTEMPTS_MAX,
+					nextReconnectIn: `${interval}ms`,
+					organizationId,
+					projectId,
+				});
+				return interval;
 			},
 			shouldReconnect: (closeEvent) => {
 				const should = closeEvent.code !== 1000 && reconnectAttemptRef.current < RECONNECT_ATTEMPTS_MAX;
-				if (!should) {
-					log.warn("[useApplicationNotifications] Will not reconnect WebSocket", {
-						applicationId,
-						code: closeEvent.code,
-						organizationId,
-						projectId,
-						reason: closeEvent.reason,
-						reconnectAttempt: reconnectAttemptRef.current,
-					});
-				}
+				log.info("[useApplicationNotifications] WebSocket reconnection decision", {
+					applicationId,
+					code: closeEvent.code,
+					maxAttempts: RECONNECT_ATTEMPTS_MAX,
+					organizationId,
+					projectId,
+					reason: closeEvent.reason || "No reason provided",
+					reconnectAttempt: reconnectAttemptRef.current,
+					shouldReconnect: should,
+				});
 				return should;
 			},
 		},
 	);
 
 	useEffect(() => {
-		log.info("[useApplicationNotifications] Received WebSocket message", {
+		if (lastJsonMessage === null) {
+			return;
+		}
+
+		log.info("[useApplicationNotifications] Processing parsed WebSocket message", {
 			applicationId,
 			isValidMessage: isWebsocketMessage(lastJsonMessage),
-			message: lastJsonMessage,
+			message: JSON.stringify(lastJsonMessage),
+			messageKeys: lastJsonMessage ? Object.keys(lastJsonMessage) : [],
 			messageType: typeof lastJsonMessage,
 			organizationId,
 			projectId,
 		});
 
 		if (isWebsocketMessage(lastJsonMessage)) {
+			const messageType = isSourceProcessingNotificationMessage(lastJsonMessage)
+				? "SourceProcessingNotification"
+				: isRagProcessingStatusMessage(lastJsonMessage)
+					? "RagProcessingStatus"
+					: isAutofillProgressMessage(lastJsonMessage)
+						? "AutofillProgress"
+						: "Unknown";
+
+			log.info("[useApplicationNotifications] Valid WebSocket message identified", {
+				applicationId,
+				dataKeys: lastJsonMessage.data ? Object.keys(lastJsonMessage.data) : [],
+				event: lastJsonMessage.event,
+				messageType,
+				organizationId,
+				parentId: lastJsonMessage.parent_id,
+				projectId,
+				traceId: lastJsonMessage.trace_id,
+				type: lastJsonMessage.type,
+			});
+
 			setNotifications((prev) => {
 				const newNotifications = [...prev, lastJsonMessage];
-				log.info("[useApplicationNotifications] Added message to notifications", {
+				log.info("[useApplicationNotifications] Message added to notifications", {
 					applicationId,
-					messageEvent: lastJsonMessage.event,
+					event: lastJsonMessage.event,
+					messageType,
+					newCount: newNotifications.length,
 					organizationId,
+					previousCount: prev.length,
 					projectId,
-					totalNotifications: newNotifications.length,
 				});
 				return newNotifications;
+			});
+		} else if (lastJsonMessage) {
+			log.warn("[useApplicationNotifications] Received invalid WebSocket message format", {
+				applicationId,
+				expectedKeys: ["type", "event", "parent_id", "data"],
+				message: JSON.stringify(lastJsonMessage),
+				organizationId,
+				projectId,
+				receivedKeys: Object.keys(lastJsonMessage),
 			});
 		}
 	}, [lastJsonMessage, organizationId, projectId, applicationId]);
 
 	const connectionStatus = CONNECTION_STATUS_MAP[readyState];
 	const connectionStatusColor = CONNECTION_STATUS_COLOR_MAP[readyState];
+
+	useEffect(() => {
+		log.info("[useApplicationNotifications] WebSocket state changed", {
+			applicationId,
+			connectionStatus,
+			notificationCount: notifications.length,
+			organizationId,
+			projectId,
+			readyState,
+			reconnectAttempts: reconnectAttemptRef.current,
+		});
+	}, [readyState, applicationId, organizationId, projectId, connectionStatus, notifications.length]);
 
 	return {
 		connectionStatus,
