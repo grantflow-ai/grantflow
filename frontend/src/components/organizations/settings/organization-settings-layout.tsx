@@ -24,6 +24,7 @@ export function OrganizationSettingsLayout({
 			href: routes.organization.settings.account(),
 			key: "account",
 			label: "Organisation Settings",
+			requiresRole: [UserRole.OWNER, UserRole.ADMIN]
 		},
 		{
 			href: routes.organization.settings.billing(),

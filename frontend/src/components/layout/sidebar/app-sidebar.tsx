@@ -113,18 +113,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							className="flex items-center gap-2 group-data-[collapsible=icon]:!px-0"
 							data-testid="support-button"
 						>
-							<Link
-								className="flex items-center gap-2 w-full"
-								href={routes.organization.settings.account()}
-								onClick={(e) => {
-									handleSettingsClick(e, routes.organization.settings.account());
-								}}
-							>
-								<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
-									<Plus className="size-3 shrink-0 text-gray-600" />
+							{organization?.role === "COLLABORATOR" ? (
+								<div className="flex items-center gap-2 w-full cursor-default">
+									<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
+										<Plus className="size-3 shrink-0 text-gray-600" />
+									</div>
+									<span className="group-data-[collapsible=icon]:hidden ">Organisation name</span>
 								</div>
-								<span className="group-data-[collapsible=icon]:hidden ">Organisation name</span>
-							</Link>
+							) : (
+								<Link
+									className="flex items-center gap-2 w-full"
+									href={`${routes.organization.settings.account()}?focus=name`}
+									onClick={(e) => {
+										handleSettingsClick(e, `${routes.organization.settings.account()}?focus=name`);
+									}}
+								>
+									<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
+										<Plus className="size-3 shrink-0 text-gray-600" />
+									</div>
+									<span className="group-data-[collapsible=icon]:hidden ">{organization?.name ?? "Organisation name"  }</span>
+								</Link>
+							)}
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					<SidebarMenuItem>
