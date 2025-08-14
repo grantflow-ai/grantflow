@@ -21,7 +21,8 @@ import {
 	updateBackendWithReorderedSections,
 	updateReorder,
 } from "@/utils/grant-sections";
-import { DragDropContext } from "./drag-drop-context";
+import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
+import { DragDropContext, type ZoneCollisionData, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -274,6 +275,8 @@ export function DragDropSectionManager({
 		isAnyDragging: false,
 		overIndex: -1,
 		overItem: null as GrantSection | null,
+		zone: null as null | ZoneType,
+		zonePercent: null as null | number,
 	});
 
 	const getDragState = useCallback(
@@ -430,6 +433,19 @@ export function DragDropSectionManager({
 					isAnyDragging: false,
 					overIndex: -1,
 					overItem: null,
+					zone: null,
+					zonePercent: null,
+				};
+			},
+			onDragMove: (event) => {
+				const [collision] = event.collisions ?? [];
+				const zone = (collision.data as undefined | ZoneCollisionData)?.zone ?? null;
+				const zonePercent = (collision.data as undefined | ZoneCollisionData)?.zonePercent ?? null;
+
+				dragStateRef.current = {
+					...dragStateRef.current,
+					zone,
+					zonePercent,
 				};
 			},
 			onDragOver: (_event, activeItem, overItem) => {
@@ -445,12 +461,12 @@ export function DragDropSectionManager({
 					setExpandedSectionId(null);
 				}
 				const activeIndex = activeItem ? grantSections.findIndex((s) => s.id === activeItem.id) : -1;
+
 				dragStateRef.current = {
+					...dragStateRef.current,
 					activeIndex,
 					activeItem: activeItem ?? null,
 					isAnyDragging: activeIndex !== -1,
-					overIndex: -1,
-					overItem: null,
 				};
 			},
 			onReorder: async (sections, activeIndex, overIndex, activeItem, overItem) => {
@@ -515,7 +531,11 @@ export function DragDropSectionManager({
 		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef, grantSections],
 	);
 
-	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
+	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
+
+	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers, {
+		collisionDetection: zoneCollisionDetection,
+	});
 
 	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
 
