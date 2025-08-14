@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.grant_template.nlp_categorizer import (
-    categorize_text,  # noqa: F401 - Re-exported for other modules
     categorize_text_async,
     format_nlp_analysis_for_prompt,
 )
@@ -194,13 +193,23 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
     return rag_sources_data
 
 
+# Pre-compiled regex patterns for text sanitization
+_ESCAPED_CRLF_PATTERN = re.compile(r"\\+r\\+n")
+_ESCAPED_LF_PATTERN = re.compile(r"\\+n")
+_ESCAPED_CR_PATTERN = re.compile(r"\\+r")
+_REPETITIVE_PATTERN = re.compile(r"(.{1,10})\1{20,}")
+_MULTIPLE_NEWLINES_PATTERN = re.compile(r"\n{3,}")
+_MULTIPLE_SPACES_PATTERN = re.compile(r" {2,}")
+_CONTROL_CHARS_PATTERN = re.compile(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
 def sanitize_text_content(text: str) -> str:
     text = text.replace("\r\n", "\n")
     text = text.replace("\r", "\n")
-    text = re.sub(r"\\+r\\+n", "\n", text)
-    text = re.sub(r"\\+n", "\n", text)
-    text = re.sub(r"\\+r", "\n", text)
-    repetitive_pattern = re.search(r"(.{1,10})\1{20,}", text)
+    text = _ESCAPED_CRLF_PATTERN.sub("\n", text)
+    text = _ESCAPED_LF_PATTERN.sub("\n", text)
+    text = _ESCAPED_CR_PATTERN.sub("\n", text)
+    repetitive_pattern = _REPETITIVE_PATTERN.search(text)
     if repetitive_pattern:
         start_pos = repetitive_pattern.start()
         logger.warning(
@@ -211,14 +220,14 @@ def sanitize_text_content(text: str) -> str:
         )
         text = text[:start_pos] + "\n[Content truncated due to repetitive pattern]"
 
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    text = re.sub(r" {2,}", " ", text)
+    text = _MULTIPLE_NEWLINES_PATTERN.sub("\n\n", text)
+    text = _MULTIPLE_SPACES_PATTERN.sub(" ", text)
     lines = text.split("\n")
     lines = [line.rstrip() for line in lines]
     text = "\n".join(lines)
 
     text = text.replace("\x00", "")
-    text = re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+    text = _CONTROL_CHARS_PATTERN.sub("", text)
 
     return text.strip()
 
