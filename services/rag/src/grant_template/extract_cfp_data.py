@@ -169,17 +169,7 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
 
         try:
             nlp_analysis = await categorize_text_async(text_content)
-            total_sentences = (
-                len(nlp_analysis["money"])
-                + len(nlp_analysis["date_time"])
-                + len(nlp_analysis["writing_related"])
-                + len(nlp_analysis["other_numbers"])
-                + len(nlp_analysis["recommendations"])
-                + len(nlp_analysis["orders"])
-                + len(nlp_analysis["positive_instructions"])
-                + len(nlp_analysis["negative_instructions"])
-                + len(nlp_analysis["evaluation_criteria"])
-            )
+            total_sentences = sum(len(sentences) for sentences in nlp_analysis.values())  # type: ignore[misc, arg-type]
             categories_found = {
                 k: len(v)
                 for k, v in [
