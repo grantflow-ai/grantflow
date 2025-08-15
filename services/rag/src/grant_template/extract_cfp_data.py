@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.rag.src.constants import MAX_CHUNK_SIZE, MAX_SOURCE_SIZE, NUM_CHUNKS
 from services.rag.src.grant_template.nlp_categorizer import (
+    NLPCategorizationResult,
     categorize_text_async,
     format_nlp_analysis_for_prompt,
 )
@@ -41,7 +42,7 @@ class RagSourceData(TypedDict):
     source_type: str
     text_content: str
     chunks: list[str]
-    nlp_analysis: NotRequired[dict[str, list[str]]]
+    nlp_analysis: NotRequired[NLPCategorizationResult]
 
 
 _cfp_extraction_cache: dict[str, tuple[ExtractedCFPData, float]] = {}
@@ -168,17 +169,53 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
 
         try:
             nlp_analysis = await categorize_text_async(text_content)
+            total_sentences = (
+                len(nlp_analysis["money"])
+                + len(nlp_analysis["date_time"])
+                + len(nlp_analysis["writing_related"])
+                + len(nlp_analysis["other_numbers"])
+                + len(nlp_analysis["recommendations"])
+                + len(nlp_analysis["orders"])
+                + len(nlp_analysis["positive_instructions"])
+                + len(nlp_analysis["negative_instructions"])
+                + len(nlp_analysis["evaluation_criteria"])
+            )
+            categories_found = {
+                k: len(v)
+                for k, v in [
+                    ("money", nlp_analysis["money"]),
+                    ("date_time", nlp_analysis["date_time"]),
+                    ("writing_related", nlp_analysis["writing_related"]),
+                    ("other_numbers", nlp_analysis["other_numbers"]),
+                    ("recommendations", nlp_analysis["recommendations"]),
+                    ("orders", nlp_analysis["orders"]),
+                    ("positive_instructions", nlp_analysis["positive_instructions"]),
+                    ("negative_instructions", nlp_analysis["negative_instructions"]),
+                    ("evaluation_criteria", nlp_analysis["evaluation_criteria"]),
+                ]
+                if v
+            }
             logger.debug(
                 "NLP analysis completed for source",
                 source_id=str(source_id),
-                total_sentences=sum(len(sentences) for sentences in nlp_analysis.values()),
-                categories_found={k: len(v) for k, v in nlp_analysis.items() if v},
+                total_sentences=total_sentences,
+                categories_found=categories_found,
             )
         except Exception as e:
             logger.warning(
                 "NLP analysis failed for source, using empty analysis", source_id=str(source_id), error=str(e)
             )
-            nlp_analysis = {}
+            nlp_analysis = NLPCategorizationResult(
+                money=[],
+                date_time=[],
+                writing_related=[],
+                other_numbers=[],
+                recommendations=[],
+                orders=[],
+                positive_instructions=[],
+                negative_instructions=[],
+                evaluation_criteria=[],
+            )
 
         rag_sources_data.append(
             RagSourceData(
@@ -238,7 +275,20 @@ def format_rag_sources_for_prompt(rag_sources: list[RagSourceData]) -> str:
     for i, source in enumerate(rag_sources):
         source_section = f"### Source {i}: {source['source_type'].upper()} (ID: {source['source_id']})\n\n"
 
-        nlp_analysis = source.get("nlp_analysis", {})
+        nlp_analysis = source.get(
+            "nlp_analysis",
+            NLPCategorizationResult(
+                money=[],
+                date_time=[],
+                writing_related=[],
+                other_numbers=[],
+                recommendations=[],
+                orders=[],
+                positive_instructions=[],
+                negative_instructions=[],
+                evaluation_criteria=[],
+            ),
+        )
         if nlp_analysis:
             formatted_nlp = format_nlp_analysis_for_prompt(nlp_analysis)
             source_section += f"#### NLP Analysis:\n{formatted_nlp}\n\n"
