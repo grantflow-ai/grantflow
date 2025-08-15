@@ -16,9 +16,10 @@
 		"node": ">=22.0.0"
 	},
 	"main": "dist/index.js",
-	"name": "crdt-server",
+	"name": "crdt",
 	"packageManager": "pnpm@10.13.1",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"biome": "biome",
 		"build": "vite build",

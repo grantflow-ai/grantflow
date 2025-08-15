@@ -92,7 +92,7 @@ jobs:
                 - '**/*.js'
                 - '**/*.jsx'
                 - 'frontend/**'
-                - 'crdt-server/**'
+                - 'crdt/**'
             terraform:
                 - 'terraform/**/*.tf'
                 - 'terraform/**/*.tfvars'

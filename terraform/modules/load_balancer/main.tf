@@ -33,14 +33,14 @@ resource "google_compute_region_network_endpoint_group" "backend_neg" {
   }
 }
 
-# Serverless NEG for Cloud Run CRDT-SERVER
+# Serverless NEG for Cloud Run CRDT
 resource "google_compute_region_network_endpoint_group" "crdt_server_neg_us_central1" {
-  name                  = "crdt-server-neg-us-central1"
+  name                  = "crdt-neg-us-central1"
   network_endpoint_type = "SERVERLESS"
   region                = "us-central1"
 
   cloud_run {
-    service = "crdt-server"
+    service = "crdt"
   }
 
   lifecycle {
@@ -76,9 +76,9 @@ resource "google_compute_backend_service" "backend" {
 }
 
 
-# crdt-server backend service
+# crdt backend service
 resource "google_compute_backend_service" "crdt_server_backend" {
-  name        = "crdt-server"
+  name        = "crdt"
   protocol    = "HTTPS"
   port_name   = "http"
   timeout_sec = 30
@@ -118,7 +118,7 @@ resource "google_compute_url_map" "backend_url_map" {
 
   host_rule {
     hosts        = [var.crdt_server_domain]
-    path_matcher = "crdt-server-paths"
+    path_matcher = "crdt-paths"
   }
 
   path_matcher {
@@ -131,7 +131,7 @@ resource "google_compute_url_map" "backend_url_map" {
     }
   }
   path_matcher {
-    name            = "crdt-server-paths"
+    name            = "crdt-paths"
     default_service = google_compute_backend_service.crdt_server_backend.id
 
     path_rule {
@@ -160,7 +160,7 @@ resource "google_compute_managed_ssl_certificate" "backend_ssl" {
 resource "google_compute_managed_ssl_certificate" "crdt_server_ssl" {
   count = var.enable_ssl ? 1 : 0
 
-  name = "crdt-server-ssl-${var.environment}"
+  name = "crdt-ssl-${var.environment}"
 
   managed {
     domains = [var.crdt_server_domain]

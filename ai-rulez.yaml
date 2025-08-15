@@ -50,7 +50,7 @@ rules:
     content: |
       **Frontend**: Next.js 15, React 19, TypeScript, Tailwind, Vite
       **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async, structlog
-      **Services**: backend, indexer, crawler, rag, scraper, crdt-server (Hocuspocus CRDT)
+      **Services**: backend, indexer, crawler, rag, scraper, crdt (Hocuspocus CRDT)
       **Cloud**: GCP, Cloud Run, Cloud SQL PostgreSQL, pgvector, Firebase Auth
       **Tools**: pnpm, uv, tofu (not terraform), Docker Compose
       **Linting**: Biome, ESLint, MyPy, Ruff, Codespell, Knip

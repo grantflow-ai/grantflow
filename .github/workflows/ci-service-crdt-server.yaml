@@ -6,7 +6,7 @@ on:
       - main
       - development*
     paths:
-      - ".github/workflows/ci-service-crdt-server.yaml"
+      - ".github/workflows/ci-service-crdt.yaml"
       - ".github/actions/setup-node-workspace/**"
       - "crdt/**"
       - "package.json"
@@ -16,7 +16,7 @@ on:
       - main
       - development
     paths:
-      - ".github/workflows/ci-service-crdt-server.yaml"
+      - ".github/workflows/ci-service-crdt.yaml"
       - ".github/actions/setup-node-workspace/**"
       - "../../crdt/**"
       - "package.json"
@@ -33,10 +33,10 @@ jobs:
       - name: Setup Node.js and Dependencies
         uses: ./.github/actions/setup-node-workspace
         with:
-          package: crdt-server
+          package: crdt
 
       - name: Run Tests
-        run: cd crdt-server && pnpm run test
+        run: cd crdt && pnpm run test
 
   lint:
     runs-on: ubuntu-latest
@@ -48,10 +48,10 @@ jobs:
       - name: Setup Node.js and Dependencies
         uses: ./.github/actions/setup-node-workspace
         with:
-          package: crdt-server
+          package: crdt
 
       - name: Lint
-        run: cd crdt-server && pnpm run lint
+        run: cd crdt && pnpm run lint
 
   build:
     runs-on: ubuntu-latest
@@ -63,7 +63,7 @@ jobs:
       - name: Setup Node.js and Dependencies
         uses: ./.github/actions/setup-node-workspace
         with:
-          package: crdt-server
+          package: crdt
 
       - name: Build
-        run: cd crdt-server && pnpm run build
+        run: cd crdt && pnpm run build

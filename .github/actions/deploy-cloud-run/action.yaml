@@ -3,7 +3,7 @@ description: "Deploy a service to Cloud Run with health checks and zero-downtime
 
 inputs:
   service:
-    description: "Service name (backend, crawler, indexer, rag, scraper, crdt-server)"
+    description: "Service name (backend, crawler, indexer, rag, scraper, crdt)"
     required: true
   image_tag:
     description: "Docker image tag to deploy"

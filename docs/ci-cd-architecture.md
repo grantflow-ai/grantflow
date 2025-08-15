@@ -29,7 +29,7 @@ These workflows handle the complete build and deployment pipeline for each servi
 
 ```yaml
 Pattern: build-service-{service}.yaml
-Services: backend, crawler, indexer, rag, scraper, frontend, crdt-server
+Services: backend, crawler, indexer, rag, scraper, frontend, crdt
 ```
 
 **Key Features:**

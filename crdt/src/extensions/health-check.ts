@@ -12,12 +12,16 @@ export class HealthCheckExtension {
 
 		if (url.pathname === "/health") {
 			this.handleHealthCheck(response);
-			throw new Error("Health check handled");
+			logger.debug("[onRequest] Health check handled");
+			// ~keep: Hocuspocus pattern - throw undefined to prevent default handler from running
+			throw undefined;
 		}
 
 		if (url.pathname === "/ready") {
 			await this.handleReadinessCheck(response);
-			throw new Error("Readiness check handled");
+			logger.debug("[onRequest] Readiness check handled");
+			// Throw an empty error to prevent the default handler from running
+			throw undefined;
 		}
 	}
 

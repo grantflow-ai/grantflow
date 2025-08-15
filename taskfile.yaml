@@ -27,7 +27,7 @@ tasks:
       - claude mcp add ai-rulez npx -y @ai-rulez@latest mcp
 
   dev:
-    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt-server)
+    desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt)
     deps:
       - task: _dev:check
       - task: _dev:init-pubsub
@@ -96,7 +96,7 @@ tasks:
   knip:
     desc: Check for unused dependencies and dead code in frontend/editor packages
     cmds:
-      - task: knip:crdt-server
+      - task: knip:crdt
       - task: knip:frontend
       - task: knip:editor
 
@@ -112,9 +112,9 @@ tasks:
     cmds:
       - pnpm knip
 
-  knip:crdt-server:
-    desc: Check crdt-server package only for unused dependencies and dead code
-    dir: crdt-server
+  knip:crdt:
+    desc: Check crdt package only for unused dependencies and dead code
+    dir: crdt
     cmds:
       - pnpm knip
 
@@ -408,48 +408,48 @@ tasks:
       - pnpm run storybook
 
   # ==============================================================================
-  # CRDT-SERVER COMMANDS - Specific to crdt-server/ folder
+  # CRDT COMMANDS - Specific to crdt/ folder
   # ==============================================================================
 
-  crdt-server:dev:
+  crdt:dev:
     desc: Start the CRDT server in development mode with hot-reloading
     deps:
       - task: db:up
-    dir: crdt-server
+    dir: crdt
     dotenv: [".env"]
     cmds:
       - pnpm run dev
 
-  crdt-server:build:
+  crdt:build:
     desc: Build CRDT server for production
-    dir: crdt-server
+    dir: crdt
     cmds:
       - pnpm run build
 
-  crdt-server:test:
+  crdt:test:
     desc: Run CRDT server tests (non-interactive mode)
-    dir: crdt-server
+    dir: crdt
     dotenv: [".env"]
     cmds:
       - pnpm run test
 
-  crdt-server:test:watch:
+  crdt:test:watch:
     desc: Run CRDT server tests (interactive mode)
-    dir: crdt-server
+    dir: crdt
     dotenv: [".env"]
     cmds:
       - pnpm run test:watch
 
-  crdt-server:test:coverage:
+  crdt:test:coverage:
     desc: Run CRDT server tests with coverage reporting
-    dir: crdt-server
+    dir: crdt
     dotenv: [".env"]
     cmds:
       - pnpm run test:coverage
 
-  crdt-server:lint:
+  crdt:lint:
     desc: Lint CRDT server code with Biome and ESLint
-    dir: crdt-server
+    dir: crdt
     cmds:
       - pnpm run lint
 
@@ -486,7 +486,7 @@ tasks:
       - task: service:indexer:test
       - task: service:crawler:test
       - task: service:rag:test
-      - task: crdt-server:test
+      - task: crdt:test
       - task: _packages:test
 
   # ==============================================================================
@@ -742,11 +742,11 @@ tasks:
       - task: lint:mypy
 
   lint:biome:
-    desc: Format and lint code with Biome for frontend folders and crdt-server
+    desc: Format and lint code with Biome for frontend folders and crdt
     deps:
       - task: lint:biome:frontend
       - task: lint:biome:editor
-      - task: lint:biome:crdt-server
+      - task: lint:biome:crdt
 
   lint:biome:frontend:
     desc: Format and lint frontend code with Biome
@@ -762,9 +762,9 @@ tasks:
       - pnpm biome check --write .
       - pnpm biome format --write .
 
-  lint:biome:crdt-server:
-    desc: Format and lint crdt-server code with Biome
-    dir: crdt-server
+  lint:biome:crdt:
+    desc: Format and lint crdt code with Biome
+    dir: crdt
     cmds:
       - pnpm biome check --write .
       - pnpm biome format --write .
@@ -774,7 +774,7 @@ tasks:
     deps:
       - task: lint:eslint:frontend
       - task: lint:eslint:editor
-      - task: lint:eslint:crdt-server
+      - task: lint:eslint:crdt
 
   lint:eslint:frontend:
     desc: Lint frontend JavaScript/TypeScript with ESLint
@@ -788,9 +788,9 @@ tasks:
     cmds:
       - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
 
-  lint:eslint:crdt-server:
-    desc: Lint crdt-server JavaScript/TypeScript with ESLint
-    dir: crdt-server
+  lint:eslint:crdt:
+    desc: Lint crdt JavaScript/TypeScript with ESLint
+    dir: crdt
     cmds:
       - pnpm eslint . --fix --max-warnings=0 --no-warn-ignored --cache
 
@@ -811,11 +811,11 @@ tasks:
       - uv run codespell . --skip="packages/*/tests/**/*,services/*/tests/**/*,test_data,pnpm-lock.yaml,.git,node_modules,.venv,*.pyc,*.pyo,__pycache__,storybook-static,.next,*.min.js,playwright-report,test-results"
 
   lint:typescript:
-    desc: Type check TypeScript code for frontend, editor, and crdt-server
+    desc: Type check TypeScript code for frontend, editor, and crdt
     deps:
       - task: lint:typescript:frontend
       - task: lint:typescript:editor
-      - task: lint:typescript:crdt-server
+      - task: lint:typescript:crdt
 
   lint:typescript:frontend:
     desc: Type check frontend TypeScript code
@@ -829,9 +829,9 @@ tasks:
     cmds:
       - pnpm typecheck
 
-  lint:typescript:crdt-server:
-    desc: Type check crdt-server TypeScript code
-    dir: crdt-server
+  lint:typescript:crdt:
+    desc: Type check crdt TypeScript code
+    dir: crdt
     cmds:
       - pnpm typecheck
 
