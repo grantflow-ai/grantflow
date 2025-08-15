@@ -5,7 +5,8 @@ import pytest
 
 from services.rag.src.grant_template.nlp_categorizer import (
     CATEGORY_LABELS,
-    _categorize_text_sync,
+    NLPCategorizationResult,
+    categorize_text,
     categorize_text_async,
     format_nlp_analysis_for_prompt,
     get_nlp_categorizer_status,
@@ -19,27 +20,40 @@ def test_categorize_text_sync_basic() -> None:
         mock_doc = _create_mock_doc()
         mock_spacy.return_value.return_value = mock_doc
 
-        result = _categorize_text_sync(text)
+        result = categorize_text(text)
 
         assert isinstance(result, dict)
         assert all(category in result for category in CATEGORY_LABELS)
 
 
 def test_categorize_text_sync_empty() -> None:
-    result = _categorize_text_sync("")
+    result = categorize_text("")
 
     assert isinstance(result, dict)
     assert all(category in result for category in CATEGORY_LABELS)
-    assert all(len(sentences) == 0 for sentences in result.values())
+    assert all(
+        len(sentences) == 0
+        for sentences in [
+            result["money"],
+            result["date_time"],
+            result["writing_related"],
+            result["other_numbers"],
+            result["recommendations"],
+            result["orders"],
+            result["positive_instructions"],
+            result["negative_instructions"],
+            result["evaluation_criteria"],
+        ]
+    )
 
 
 @pytest.mark.asyncio
 async def test_categorize_text_async() -> None:
     text = "Applications must include budgets of $25,000."
 
-    with patch("services.rag.src.grant_template.nlp_categorizer._categorize_text_sync") as mock_sync:
+    with patch("asyncio.to_thread") as mock_to_thread:
         expected = {"money": ["Budget of $25,000"], "date_time": []}
-        mock_sync.return_value = expected
+        mock_to_thread.return_value = expected
 
         result = await categorize_text_async(text)
 
@@ -47,13 +61,17 @@ async def test_categorize_text_async() -> None:
 
 
 def test_format_nlp_analysis_for_prompt_with_content() -> None:
-    analysis = {
-        "money": ["Budget should not exceed $100,000"],
-        "orders": ["You must submit detailed plans"],
-        "date_time": [],
-        "evaluation_criteria": [],
-        "negative_instructions": [],
-    }
+    analysis = NLPCategorizationResult(
+        money=["Budget should not exceed $100,000"],
+        orders=["You must submit detailed plans"],
+        date_time=[],
+        writing_related=[],
+        other_numbers=[],
+        recommendations=[],
+        positive_instructions=[],
+        negative_instructions=[],
+        evaluation_criteria=[],
+    )
 
     result = format_nlp_analysis_for_prompt(analysis)
 
@@ -64,11 +82,21 @@ def test_format_nlp_analysis_for_prompt_with_content() -> None:
 
 
 def test_format_nlp_analysis_for_prompt_empty() -> None:
-    analysis: dict[str, list[str]] = {category: [] for category in CATEGORY_LABELS}
+    analysis = NLPCategorizationResult(
+        money=[],
+        date_time=[],
+        writing_related=[],
+        other_numbers=[],
+        recommendations=[],
+        orders=[],
+        positive_instructions=[],
+        negative_instructions=[],
+        evaluation_criteria=[],
+    )
 
     result = format_nlp_analysis_for_prompt(analysis)
 
-    assert result == "No NLP analysis available for this content."
+    assert result == "No NLP analysis available - no categorized content found."
 
 
 def test_get_nlp_categorizer_status() -> None:
