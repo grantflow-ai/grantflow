@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
+import { AppButton } from "@/components/app";
 
 interface OrganizationSettingsLayoutProps {
 	activeTab: string;
@@ -24,7 +25,7 @@ export function OrganizationSettingsLayout({
 			href: routes.organization.settings.account(),
 			key: "account",
 			label: "Organisation Settings",
-			requiresRole: [UserRole.OWNER, UserRole.ADMIN]
+			requiresRole: [UserRole.OWNER, UserRole.ADMIN],
 		},
 		{
 			href: routes.organization.settings.billing(),
@@ -82,14 +83,10 @@ export function OrganizationSettingsLayout({
 					{activeTab === "members" &&
 						onInviteClick &&
 						(userRole === UserRole.OWNER || userRole === UserRole.ADMIN) && (
-							<button
-								className="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded font-button text-[16px] hover:bg-primary/90 transition-colors"
-								onClick={onInviteClick}
-								type="button"
-							>
+							<AppButton className=" gap-1 px-4 py-2 " onClick={onInviteClick} type="button">
 								<Plus className="size-4" />
 								Invite
-							</button>
+							</AppButton>
 						)}
 				</div>
 			</div>
