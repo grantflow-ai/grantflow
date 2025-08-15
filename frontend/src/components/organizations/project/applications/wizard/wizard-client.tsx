@@ -71,6 +71,24 @@ export function WizardClientComponent({
 	};
 
 	useEffect(() => {
+		// TODO: remove, these are debug logs
+		log.info("[useApplicationNotifications] connectionStatus changed", {
+			connectionStatus,
+			organizationId,
+			projectId,
+		});
+	}, [connectionStatus, organizationId, projectId]);
+
+	useEffect(() => {
+		// TODO: remove, these are debug logs
+		log.info("[useApplicationNotifications] notifications changed", {
+			notifications,
+			organizationId,
+			projectId,
+		});
+	}, [notifications, organizationId, projectId]);
+
+	useEffect(() => {
 		useApplicationStore.getState().reset();
 		useWizardStore.getState().reset();
 
