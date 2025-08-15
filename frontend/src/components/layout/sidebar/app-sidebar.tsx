@@ -131,7 +131,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 									<div className="size-4 flex justify-center items-center rounded border-dashed border border-gray-300  group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:h-[27px]">
 										<Plus className="size-3 shrink-0 text-gray-600" />
 									</div>
-									<span className="group-data-[collapsible=icon]:hidden ">{organization?.name ?? "Organisation name"  }</span>
+									<span className="group-data-[collapsible=icon]:hidden ">
+										{organization?.name ?? "Organisation name"}
+									</span>
 								</Link>
 							)}
 						</SidebarMenuButton>

@@ -28,12 +28,10 @@ export function OrganizationSettingsGeneral({
 	const [isUploading, setIsUploading] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
-	const nameInputRef = useRef<HTMLInputElement>(null)
+	const nameInputRef = useRef<HTMLInputElement>(null);
 	const canEdit = userRole === UserRole.OWNER;
 	const isReadOnly = !canEdit;
-	const searchParams = useSearchParams()
-
-
+	const searchParams = useSearchParams();
 
 	useEffect(() => {
 		if (organization) {
@@ -44,12 +42,11 @@ export function OrganizationSettingsGeneral({
 		}
 	}, [organization]);
 
-	useEffect(()=>{
-
-		if(searchParams.get("focus") === "name"){
-			nameInputRef.current?.focus()
+	useEffect(() => {
+		if (searchParams.get("focus") === "name") {
+			nameInputRef.current?.focus();
 		}
-	},[searchParams])
+	}, [searchParams]);
 
 	const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (!canEdit) return;
@@ -105,7 +102,6 @@ export function OrganizationSettingsGeneral({
 		}
 	};
 
-	
 	return (
 		<div className="flex flex-col gap-10 max-w-[655px]" data-testid="organization-settings-general">
 			<div className="flex flex-col gap-6">
@@ -154,12 +150,11 @@ export function OrganizationSettingsGeneral({
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Organisation Name</h3>
 						<input
-						className={`w-full h-10 px-3 border  rounded  text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+							className={`w-full h-10 px-3 border  rounded  text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
 								canEdit
 									? "focus:border-primary border-app-gray-300 bg-white "
 									: "cursor-not-allowed border-app-black opacity-60 bg-preview-bg"
 							}`}
-						
 							data-testid="organization-name-input"
 							onChange={(e) => {
 								if (canEdit) {

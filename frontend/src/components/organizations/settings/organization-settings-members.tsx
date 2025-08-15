@@ -18,6 +18,7 @@ import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { generateInitials } from "@/utils/user";
 import { EditPermissionModal } from "./edit-permission-modal";
+import { getProjects } from "@/actions/project";
 
 interface OrganizationMember {
 	displayName?: string;
@@ -46,6 +47,7 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
+const EMPTY_PROJECTS: API.ListProjects.Http200.ResponseBody = [];
 export function OrganizationSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
@@ -185,7 +187,7 @@ export function OrganizationSettingsMembers({
 
 	useEffect(() => {
 		if (onInviteHandlerChange) {
-			onInviteHandlerChange(canInvite ? openInviteModal : undefined);
+			onInviteHandlerChange(canInvite ? () => openInviteModal : undefined);
 		}
 	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
@@ -209,6 +211,13 @@ export function OrganizationSettingsMembers({
 		status: "pending" as const,
 	}));
 
+	const { data: projects = EMPTY_PROJECTS } = useSWR(
+		`/organizations/${organizationId}/projects`,
+		() => getProjects(organizationId),
+		{
+			revalidateOnFocus: false,
+		},
+	);
 	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
@@ -308,6 +317,7 @@ export function OrganizationSettingsMembers({
 					setIsInviteModalOpen(false);
 				}}
 				onInvite={handleInvite}
+				projects={projects}
 			/>
 
 			<EditPermissionModal
