@@ -1,9 +1,9 @@
-from .base_handler import BaseAutofillHandler
-from .research_deep_dive_handler import generate_research_answers
-from .research_plan_handler import generate_research_objectives
+from .handler import handle_autofill_request
+from .research_deep_dive_handler import handle_research_deep_dive
+from .research_plan_handler import handle_research_plan
 
 __all__ = [
-    "BaseAutofillHandler",
-    "generate_research_answers",
-    "generate_research_objectives",
+    "handle_autofill_request",
+    "handle_research_deep_dive",
+    "handle_research_plan",
 ]
