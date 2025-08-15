@@ -6,7 +6,7 @@ on:
       - main
       - development
     paths:
-      - ".github/workflows/build-service-crdt.yaml"
+      - ".github/workflows/build-service-crdt-server.yaml"
       - ".github/actions/**"
       - "crdt/**"
       - "package.json"

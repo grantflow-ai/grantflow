@@ -16,8 +16,7 @@ from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.autofill.research_deep_dive_handler import generate_research_answers
-from services.rag.src.autofill.research_plan_handler import generate_research_objectives
+from services.rag.src.autofill.handler import handle_autofill_request as handle_autofill_request_impl
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
 
@@ -82,7 +81,7 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest | AutofillRequest:
         raise ValidationError("Invalid pubsub message format") from e
 
 
-async def handle_autofill_request(request: AutofillRequest) -> dict[str, Any]:
+async def handle_autofill_request(request: AutofillRequest, session_maker: async_sessionmaker[Any]) -> dict[str, Any]:
     """Handle autofill requests"""
     trace_id = request.get("trace_id")
 
@@ -108,21 +107,17 @@ async def handle_autofill_request(request: AutofillRequest) -> dict[str, Any]:
         if trace_id:
             handler_request["trace_id"] = trace_id
 
-        if request["autofill_type"] == "research_plan":
-            result = await generate_research_objectives(handler_request, logger)
-        elif request["autofill_type"] == "research_deep_dive":
-            result = await generate_research_answers(handler_request, logger)
-        else:
-            raise ValueError(f"Unknown autofill type: {request['autofill_type']}")
+        result = await handle_autofill_request_impl(handler_request, session_maker, logger)
 
         logger.info(
             "Autofill generation completed",
             application_id=str(request["parent_id"]),
             autofill_type=request["autofill_type"],
+            success=result["success"],
             trace_id=trace_id,
         )
 
-        return {"success": True, "data": result}
+        return dict(result)
 
     except Exception as e:
         logger.exception(
@@ -153,7 +148,7 @@ async def handle_request(
         trace_id = autofill_request.get("trace_id")
 
         try:
-            result = await handle_autofill_request(autofill_request)
+            result = await handle_autofill_request(autofill_request, session_maker)
 
             total_duration = time.time() - start_time
             logger.info(
@@ -165,7 +160,6 @@ async def handle_request(
                 total_duration_ms=round(total_duration * 1000, 2),
             )
             return
-
         except Exception as e:
             error_duration = time.time() - start_time
             logger.exception(
@@ -177,7 +171,6 @@ async def handle_request(
                 error_duration_ms=round(error_duration * 1000, 2),
             )
             raise
-
     else:
         rag_request: RagRequest = request
         trace_id = rag_request.get("trace_id")
