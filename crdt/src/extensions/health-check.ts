@@ -14,6 +14,7 @@ export class HealthCheckExtension {
 			this.handleHealthCheck(response);
 			logger.debug("[onRequest] Health check handled");
 			// ~keep: Hocuspocus pattern - throw undefined to prevent default handler from running
+			// eslint-disable-next-line @typescript-eslint/only-throw-error
 			throw undefined;
 		}
 
