@@ -19,7 +19,6 @@
 	"name": "crdt",
 	"packageManager": "pnpm@10.13.1",
 	"private": true,
-	"type": "module",
 	"scripts": {
 		"biome": "biome",
 		"build": "vite build",
@@ -39,5 +38,6 @@
 		"test:watch": "vitest watch --coverage",
 		"typecheck": "tsc --noEmit"
 	},
+	"type": "module",
 	"version": "1.0.0"
 }

@@ -21,7 +21,8 @@ export class HealthCheckExtension {
 		if (url.pathname === "/ready") {
 			await this.handleReadinessCheck(response);
 			logger.debug("[onRequest] Readiness check handled");
-			// Throw an empty error to prevent the default handler from running
+			// ~keep: Hocuspocus pattern - throw undefined to prevent default handler from running
+			// eslint-disable-next-line @typescript-eslint/only-throw-error
 			throw undefined;
 		}
 	}
