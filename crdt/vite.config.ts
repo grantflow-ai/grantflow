@@ -22,6 +22,7 @@ export default defineConfig({
 				"@hocuspocus/extension-database",
 				"@hocuspocus/server",
 				"dotenv",
+				"dotenv/config",
 				"drizzle-orm",
 				"pg",
 				"pino",

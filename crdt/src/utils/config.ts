@@ -9,8 +9,7 @@ const envSchema = z.object({
 
 const rawConfig = envSchema.parse(process.env);
 
-// Normalize the database URL for node-postgres
-// Remove SQLAlchemy-specific dialect suffixes like +asyncpg
+// ~keep: Remove SQLAlchemy-specific dialect suffixes like +asyncpg for node-postgres compatibility
 const normalizedDatabaseUrl = rawConfig.DATABASE_URL.replace(/\+[^:/]+/, "");
 
 export const config = {
