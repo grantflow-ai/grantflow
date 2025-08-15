@@ -79,6 +79,18 @@ variable "crawler_cpu_limit" {
   default     = ""
 }
 
+variable "rag_memory_limit" {
+  description = "Memory allocation for rag service (defaults to memory_limit if not set)"
+  type        = string
+  default     = ""
+}
+
+variable "rag_cpu_limit" {
+  description = "CPU allocation for rag service (defaults to cpu_limit if not set)"
+  type        = string
+  default     = ""
+}
+
 variable "indexer_memory_limit" {
   description = "Memory allocation for indexer service (defaults to memory_limit if not set)"
   type        = string
@@ -568,8 +580,8 @@ resource "google_cloud_run_v2_service" "rag" {
 
       resources {
         limits = {
-          cpu    = var.cpu_limit
-          memory = var.memory_limit
+          cpu    = var.rag_cpu_limit != "" ? var.rag_cpu_limit : var.cpu_limit
+          memory = var.rag_memory_limit != "" ? var.rag_memory_limit : var.memory_limit
         }
       }
 

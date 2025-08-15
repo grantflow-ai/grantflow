@@ -102,11 +102,15 @@ module "cloud_run" {
   indexer_max_instances     = 100   # ~keep High ceiling for burst handling
 
   # Crawler: Fanout pattern - one URL per instance
-  crawler_memory_limit      = "1Gi" # ~keep Reduced memory since processing one URL at a time
+  crawler_memory_limit      = "2Gi" # ~keep Reduced memory since processing one URL at a time
   crawler_cpu_limit         = "1"   # ~keep Single CPU for single URL processing
   crawler_concurrency_limit = 1     # ~keep ONE URL per instance for fanout pattern
   crawler_min_instances     = 0     # ~keep Scale to zero when idle
   crawler_max_instances     = 50    # ~keep Lower than indexer (URLs process faster)
+
+  # Rag
+  rag_memory_limit = "2Gi" # ~keep Reduced memory since processing one URL at a time
+  rag_cpu_limit    = "1"   # ~keep Single CPU for single URL processing
 
   # CRDT Server: Increased memory to handle WebSocket connections
   crdt_server_memory_limit = "2Gi" # Increased from 1Gi to prevent OOM
