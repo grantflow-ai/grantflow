@@ -40,17 +40,17 @@ CategoryKey = Literal[
 
 
 class NLPCategorizer:
-    MONEY_CATEGORY: Final[str] = "money"
-    DATE_TIME_CATEGORY: Final[str] = "date_time"
-    WRITING_CATEGORY: Final[str] = "writing_related"
-    OTHER_NUMBERS_CATEGORY: Final[str] = "other_numbers"
-    RECOMMENDATIONS_CATEGORY: Final[str] = "recommendations"
-    ORDERS_CATEGORY: Final[str] = "orders"
-    POSITIVE_INSTRUCTIONS_CATEGORY: Final[str] = "positive_instructions"
-    NEGATIVE_INSTRUCTIONS_CATEGORY: Final[str] = "negative_instructions"
-    EVALUATION_CRITERIA_CATEGORY: Final[str] = "evaluation_criteria"
+    money_category: Final[str] = "money"
+    date_time_category: Final[str] = "date_time"
+    writing_category: Final[str] = "writing_related"
+    other_numbers_category: Final[str] = "other_numbers"
+    recommendations_category: Final[str] = "recommendations"
+    orders_category: Final[str] = "orders"
+    positive_instructions_category: Final[str] = "positive_instructions"
+    negative_instructions_category: Final[str] = "negative_instructions"
+    evaluation_criteria_category: Final[str] = "evaluation_criteria"
 
-    MONEY_KEYWORDS: Final[set[str]] = {
+    money_keywords: Final[set[str]] = {
         "budget",
         "cost",
         "funding",
@@ -80,9 +80,9 @@ class NLPCategorizer:
         "expense",
     }
 
-    MONEY_SYMBOLS: Final[set[str]] = {"$", "USD", "€", "£", "¥"}
+    money_symbols: Final[set[str]] = {"$", "USD", "€", "£", "¥"}
 
-    ORDER_KEYWORDS: Final[set[str]] = {
+    order_keywords: Final[set[str]] = {
         "must",
         "required",
         "mandatory",
@@ -118,7 +118,7 @@ class NLPCategorizer:
         "comply",
     }
 
-    WRITING_KEYWORDS: Final[set[str]] = {
+    writing_keywords: Final[set[str]] = {
         "page",
         "pages",
         "word",
@@ -163,7 +163,7 @@ class NLPCategorizer:
         "lines",
     }
 
-    RECOMMENDATION_KEYWORDS: Final[set[str]] = {
+    recommendation_keywords: Final[set[str]] = {
         "recommend",
         "suggested",
         "encouraged",
@@ -197,7 +197,7 @@ class NLPCategorizer:
         "it is suggested",
     }
 
-    EVALUATION_KEYWORDS: Final[set[str]] = {
+    evaluation_keywords: Final[set[str]] = {
         "evaluate",
         "evaluation",
         "assess",
@@ -238,32 +238,32 @@ class NLPCategorizer:
         "success",
     }
 
-    DATE_TIME_ENTITIES: Final[set[str]] = {"DATE", "TIME"}
-    PERCENTAGE_SYMBOL: Final[str] = "%"
-    MIN_SENTENCE_CHARS: Final[int] = 10
+    date_time_entities: Final[set[str]] = {"DATE", "TIME"}
+    percentage_symbol: Final[str] = "%"
+    min_sentence_chars: Final[int] = 10
 
-    MAX_DISPLAY_ITEMS: Final[int] = 10
-    MORE_ITEMS_FORMAT: Final[str] = "   ... and {remaining} more"
-    NLP_ANALYSIS_HEADER: Final[str] = "## NLP Analysis"
-    TOTAL_SENTENCES_FORMAT: Final[str] = "Total: {total_sentences} categorized sentences"
-    NO_ANALYSIS_MESSAGE: Final[str] = "No NLP analysis available - no categorized content found."
+    max_display_items: Final[int] = 10
+    more_items_format: Final[str] = "   ... and {remaining} more"
+    nlp_analysis_header: Final[str] = "## NLP Analysis"
+    total_sentences_format: Final[str] = "Total: {total_sentences} categorized sentences"
+    no_analysis_message: Final[str] = "No NLP analysis available - no categorized content found."
 
-    NOT_DONE_REGEX: Final[re.Pattern[str]] = re.compile(
+    not_done_regex: Final[re.Pattern[str]] = re.compile(
         r"\b(?:not|don't|do not|cannot|can't|must not|should not|shouldn't|will not|won't|never|no)\b", re.IGNORECASE
     )
 
     @classmethod
     def get_category_labels(cls) -> list[str]:
         return [
-            cls.MONEY_CATEGORY,
-            cls.DATE_TIME_CATEGORY,
-            cls.WRITING_CATEGORY,
-            cls.OTHER_NUMBERS_CATEGORY,
-            cls.RECOMMENDATIONS_CATEGORY,
-            cls.ORDERS_CATEGORY,
-            cls.POSITIVE_INSTRUCTIONS_CATEGORY,
-            cls.NEGATIVE_INSTRUCTIONS_CATEGORY,
-            cls.EVALUATION_CRITERIA_CATEGORY,
+            cls.money_category,
+            cls.date_time_category,
+            cls.writing_category,
+            cls.other_numbers_category,
+            cls.recommendations_category,
+            cls.orders_category,
+            cls.positive_instructions_category,
+            cls.negative_instructions_category,
+            cls.evaluation_criteria_category,
         ]
 
 
@@ -275,23 +275,23 @@ def _is_number(token: Any) -> bool:
 
 
 def _categorize_sentence(sentence: Any, text: str) -> dict[str, bool]:
-    if len(text) < NLPCategorizer.MIN_SENTENCE_CHARS:
+    if len(text) < NLPCategorizer.min_sentence_chars:
         return {}
 
     text_lower = text.lower()
     token_texts = [token.text.lower() for token in sentence]
 
-    has_money = any(symbol in text for symbol in NLPCategorizer.MONEY_SYMBOLS) or any(
-        keyword in text_lower for keyword in NLPCategorizer.MONEY_KEYWORDS
+    has_money = any(symbol in text for symbol in NLPCategorizer.money_symbols) or any(
+        keyword in text_lower for keyword in NLPCategorizer.money_keywords
     )
-    has_date = any(ent.label_ in NLPCategorizer.DATE_TIME_ENTITIES for ent in sentence.ents)
-    has_order = any(token in NLPCategorizer.ORDER_KEYWORDS for token in token_texts)
-    has_negative = bool(NLPCategorizer.NOT_DONE_REGEX.search(text))
-    has_evaluation = any(token in NLPCategorizer.EVALUATION_KEYWORDS for token in token_texts)
-    has_writing = any(token in NLPCategorizer.WRITING_KEYWORDS for token in token_texts)
-    has_recommendation = any(token in NLPCategorizer.RECOMMENDATION_KEYWORDS for token in token_texts)
+    has_date = any(ent.label_ in NLPCategorizer.date_time_entities for ent in sentence.ents)
+    has_order = any(token in NLPCategorizer.order_keywords for token in token_texts)
+    has_negative = bool(NLPCategorizer.not_done_regex.search(text))
+    has_evaluation = any(token in NLPCategorizer.evaluation_keywords for token in token_texts)
+    has_writing = any(token in NLPCategorizer.writing_keywords for token in token_texts)
+    has_recommendation = any(token in NLPCategorizer.recommendation_keywords for token in token_texts)
     has_numbers = any(_is_number(token) for token in sentence)
-    has_percentages = NLPCategorizer.PERCENTAGE_SYMBOL in text
+    has_percentages = NLPCategorizer.percentage_symbol in text
 
     categories = {}
     if has_money:
@@ -363,15 +363,15 @@ async def categorize_text_async(text: str) -> NLPCategorizationResult:
 
 
 def _format_category_section(category: str, sentences: list[str]) -> list[str]:
-    display_sentences = sentences[: NLPCategorizer.MAX_DISPLAY_ITEMS]
+    display_sentences = sentences[: NLPCategorizer.max_display_items]
     section_lines = [f"\n{category} ({len(sentences)}):"]
 
     for i, sentence in enumerate(display_sentences, 1):
         section_lines.append(f"{i}. {sentence}")
 
-    if len(sentences) > NLPCategorizer.MAX_DISPLAY_ITEMS:
-        remaining = len(sentences) - NLPCategorizer.MAX_DISPLAY_ITEMS
-        section_lines.append(NLPCategorizer.MORE_ITEMS_FORMAT.format(remaining=remaining))
+    if len(sentences) > NLPCategorizer.max_display_items:
+        remaining = len(sentences) - NLPCategorizer.max_display_items
+        section_lines.append(NLPCategorizer.more_items_format.format(remaining=remaining))
 
     return section_lines
 
@@ -388,7 +388,7 @@ def format_nlp_analysis_for_prompt(analysis: NLPCategorizationResult) -> str:
         and not analysis["negative_instructions"]
         and not analysis["evaluation_criteria"]
     ):
-        return NLPCategorizer.NO_ANALYSIS_MESSAGE
+        return NLPCategorizer.no_analysis_message
 
     total_sentences = (
         len(analysis["money"])
@@ -403,8 +403,8 @@ def format_nlp_analysis_for_prompt(analysis: NLPCategorizationResult) -> str:
     )
 
     sections = [
-        NLPCategorizer.NLP_ANALYSIS_HEADER,
-        NLPCategorizer.TOTAL_SENTENCES_FORMAT.format(total_sentences=total_sentences),
+        NLPCategorizer.nlp_analysis_header,
+        NLPCategorizer.total_sentences_format.format(total_sentences=total_sentences),
     ]
 
     categories_to_check = [
