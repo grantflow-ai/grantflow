@@ -3,7 +3,7 @@ description: "Build and push Docker image for a service using standardized Task-
 
 inputs:
   service:
-    description: "Service name (backend, crawler, indexer, rag, scraper, frontend, crdt-server)"
+    description: "Service name (backend, crawler, indexer, rag, scraper, frontend, crdt)"
     required: true
   image_tag:
     description: "Docker image tag"
@@ -92,8 +92,8 @@ runs:
       run: |
         if [[ "${{ inputs.service }}" == "frontend" ]]; then
           echo "path=frontend/Dockerfile" >> $GITHUB_OUTPUT
-        elif [[ "${{ inputs.service }}" == "crdt-server" ]]; then
-          echo "path=crdt-server/Dockerfile" >> $GITHUB_OUTPUT
+        elif [[ "${{ inputs.service }}" == "crdt" ]]; then
+          echo "path=crdt/Dockerfile" >> $GITHUB_OUTPUT
         else
           echo "path=services/${{ inputs.service }}/Dockerfile" >> $GITHUB_OUTPUT
         fi

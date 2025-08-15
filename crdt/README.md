@@ -26,7 +26,7 @@ The CRDT server provides:
 ### Production Infrastructure
 
 The server is deployed to Google Cloud Run with:
-- **Service Name**: `crdt-server`
+- **Service Name**: `crdt`
 - **Port**: 8080 (standard Cloud Run port)
 - **Protocol**: WebSocket with HTTP health checks
 - **Session Affinity**: Enabled for stable WebSocket connections
@@ -54,7 +54,7 @@ The server exposes `/health` for monitoring:
 ```json
 {
   "status": "healthy",
-  "service": "crdt-server",
+  "service": "crdt",
   "port": 8080,
   "timestamp": "2024-07-24T10:00:00.000Z"
 }
@@ -83,7 +83,7 @@ export PORT="8080"
 pnpm dev              # Build and run with auto-reload
 
 # Or use the Taskfile from root
-task crdt-server:dev
+task crdt:dev
 ```
 
 ### Available Scripts
@@ -113,17 +113,17 @@ From the repository root, you can use Taskfile commands:
 
 ```bash
 # Development
-task crdt-server:dev       # Start CRDT server in dev mode
-task crdt-server:build     # Build CRDT server
+task crdt:dev       # Start CRDT server in dev mode
+task crdt:build     # Build CRDT server
 
 # Testing
-task crdt-server:test      # Run CRDT server tests
+task crdt:test      # Run CRDT server tests
 
 # Linting
 task lint:frontend         # Run all frontend and server linters
-task lint:typescript:crdt-server  # TypeScript check for CRDT server only
-task lint:biome:crdt-server       # Biome linting for CRDT server only
-task lint:eslint:crdt-server      # ESLint for CRDT server only
+task lint:typescript:crdt  # TypeScript check for CRDT server only
+task lint:biome:crdt       # Biome linting for CRDT server only
+task lint:eslint:crdt      # ESLint for CRDT server only
 ```
 
 ## Client Integration
@@ -209,7 +209,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile --prod
 ENV NODE_ENV=production PORT=8080
 EXPOSE 8080
-CMD ["node", "crdt-server/dist/index.js"]
+CMD ["node", "crdt/dist/index.js"]
 ```
 
 Images are tagged:
@@ -300,10 +300,10 @@ ws.on('open', () => {
 
 ```bash
 # View Cloud Run logs
-gcloud run logs read crdt-server --project=grantflow
+gcloud run logs read crdt --project=grantflow
 
 # Check service status
-gcloud run services describe crdt-server --region=us-central1
+gcloud run services describe crdt --region=us-central1
 
 # Test health endpoint
 curl https://staging-crdt.grantflow.ai/health

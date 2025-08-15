@@ -829,13 +829,13 @@ resource "google_cloud_run_v2_service" "scraper" {
 
 # CRDT Server
 resource "google_cloud_run_v2_service" "crdt_server" {
-  name                = "crdt-server"
+  name                = "crdt"
   location            = var.region
   deletion_protection = false
 
   template {
     containers {
-      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt-server:${var.image_tag_suffix}"
+      image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/crdt:${var.image_tag_suffix}"
 
       resources {
         limits = {

@@ -6,7 +6,7 @@ on:
       - main
       - development
     paths:
-      - ".github/workflows/build-service-crdt-server.yaml"
+      - ".github/workflows/build-service-crdt.yaml"
       - ".github/actions/**"
       - "crdt/**"
       - "package.json"
@@ -48,7 +48,7 @@ jobs:
       - name: Build service
         uses: ./.github/actions/build-service
         with:
-          service: crdt-server
+          service: crdt
           image_tag: ${{ steps.config.outputs.image_tag }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
@@ -56,7 +56,7 @@ jobs:
       - name: Deploy to Cloud Run
         uses: ./.github/actions/deploy-cloud-run
         with:
-          service: crdt-server
+          service: crdt
           image_tag: ${{ steps.config.outputs.image_tag }}
           environment: ${{ steps.config.outputs.environment }}
           project_id: ${{ steps.config.outputs.project_id }}

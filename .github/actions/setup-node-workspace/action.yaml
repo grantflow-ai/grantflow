@@ -3,7 +3,7 @@ description: "Set up Node.js with pnpm for a specific package in monorepo"
 
 inputs:
   package:
-    description: "Package to work with (frontend, editor, crdt-server)"
+    description: "Package to work with (frontend, editor, crdt)"
     required: true
   node-version:
     description: "Node.js version to use"

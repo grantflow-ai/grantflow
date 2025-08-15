@@ -72,8 +72,8 @@ export default function Login() {
 			);
 			setSocialSignInError(errorWithLink);
 		} catch (error) {
-			log.error(`${provider} sign-in failed`, error, { page: "login", provider });
 			if (!isRedirectError(error)) {
+				log.error(`${provider} sign-in failed`, error, { page: "login", provider });
 				toast.error(
 					error instanceof Error ? error.message : `${provider.toUpperCase()} sign-in failed due to an error`,
 				);

@@ -1,297 +1,289 @@
 services:
-    db:
-        profiles:
-            - all
-            - services
-            - indexer
-            - crawler
-            - backend
-            - scraper
-        image: pgvector/pgvector:pg17
-        restart: always
-        environment:
-            POSTGRES_USER: local
-            POSTGRES_PASSWORD: local
-            POSTGRES_DB: local
-        ports:
-            - "5432:5432"
-        volumes:
-            - data:/var/lib/postgresql/data
-            - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
-        healthcheck:
-            test: ["CMD", "pg_isready", "-U", "local", "-d", "local"]
-            interval: 1s
-            timeout: 5s
-            retries: 10
+  db:
+    profiles:
+      - all
+      - services
+      - indexer
+      - crawler
+      - backend
+      - scraper
+      - crdt
+    image: pgvector/pgvector:pg17
+    restart: always
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: local
+    ports:
+      - "5432:5432"
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./packages/db/pg-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "local", "-d", "local"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
 
-    gcs-emulator:
-        profiles:
-            - all
-            - gcs
-            - e2e
-            - services
-            - scraper
-        image: fsouza/fake-gcs-server:latest
-        restart: always
-        ports:
-            - "4443:4443"
-        volumes:
-            - gcs-data:/storage
-        environment:
-            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-        command:
-            [
-                "-scheme",
-                "http",
-                "-port",
-                "4443",
-                "-public-host",
-                "gcs-emulator",
-                "-backend",
-                "memory",
-                "-event.pubsub-project-id",
-                "grantflow",
-                "-event.pubsub-topic",
-                "file-indexing",
-                "-event.object-prefix",
-                "OBJECT_",
-            ]
-        depends_on:
-            pubsub-emulator:
-                condition: service_healthy
+  gcs-emulator:
+    profiles:
+      - all
+      - gcs
+      - e2e
+      - services
+      - scraper
+    image: fsouza/fake-gcs-server:latest
+    restart: always
+    ports:
+      - "4443:4443"
+    volumes:
+      - gcs-data:/storage
+    environment:
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+    command:
+      [
+        "-scheme",
+        "http",
+        "-port",
+        "4443",
+        "-public-host",
+        "gcs-emulator",
+        "-backend",
+        "memory",
+        "-event.pubsub-project-id",
+        "grantflow",
+        "-event.pubsub-topic",
+        "file-indexing",
+        "-event.object-prefix",
+        "OBJECT_",
+      ]
+    depends_on:
+      pubsub-emulator:
+        condition: service_healthy
 
-    pubsub-emulator:
-        profiles:
-            - all
-            - gcs
-            - services
-            - indexer
-            - crawler
-            - backend
-            - scraper
-        image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
-        restart: always
-        ports:
-            - "8085:8085"
-        environment:
-            PUBSUB_PROJECT_ID: grantflow
-            JAVA_TOOL_OPTIONS: -Djava.util.logging.config.file=/config/logging.properties
-        volumes:
-            - ./scripts/pubsub-logging.properties:/config/logging.properties:ro
-        command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=grantflow --verbosity=warning
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:8085"]
-            interval: 5s
-            timeout: 5s
-            retries: 10
+  pubsub-emulator:
+    profiles:
+      - all
+      - gcs
+      - services
+      - indexer
+      - crawler
+      - backend
+      - scraper
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    restart: always
+    ports:
+      - "8085:8085"
+    environment:
+      PUBSUB_PROJECT_ID: grantflow
+      JAVA_TOOL_OPTIONS: -Djava.util.logging.config.file=/config/logging.properties
+    volumes:
+      - ./scripts/pubsub-logging.properties:/config/logging.properties:ro
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=grantflow --verbosity=warning
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-    backend:
-        profiles:
-            - all
-            - services
-            - backend
-        build:
-            dockerfile: services/backend/Dockerfile
-        environment:
-            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
-            PYTHONPATH: .
-            DEBUG: "True"
-        env_file:
-            - ./.env
-        ports:
-            - "8000:8000"
-        volumes:
-            - ./services/backend:/app/services/backend:cached
-            - ./packages:/app/packages:cached
-        command: "uvicorn services.backend.src.main:app --host 0.0.0.0 --log-level info --reload"
-        depends_on:
-            db:
-                condition: service_healthy
-            pubsub-emulator:
-                condition: service_healthy
+  backend:
+    profiles:
+      - all
+      - services
+      - backend
+    build:
+      dockerfile: services/backend/Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+      PYTHONPATH: .
+      DEBUG: "True"
+    env_file:
+      - ./.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/backend:/app/services/backend:cached
+      - ./packages:/app/packages:cached
+    command: "uvicorn services.backend.src.main:app --host 0.0.0.0 --log-level info --reload"
+    depends_on:
+      db:
+        condition: service_healthy
+      pubsub-emulator:
+        condition: service_healthy
 
-    indexer:
-        profiles:
-            - all
-            - services
-            - indexer
-        build:
-            dockerfile: ./services/indexer/Dockerfile
-        environment:
-            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            GOOGLE_CLOUD_PROJECT: grantflow
-            GOOGLE_CLOUD_REGION: us-central1
-            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
-            GCS_BUCKET_NAME: grantflow-uploads
-            DEBUG: "True"
-            MODEL_DIR: /app/hf
-        env_file:
-            - ./.env
-        ports:
-            - "8001:8000"
-        volumes:
-            - ./services/indexer:/app/services/indexer:cached
-            - ./packages:/app/packages:cached
-        command: "uvicorn services.indexer.src.main:app --host 0.0.0.0 --log-level info --reload"
-        depends_on:
-            db:
-                condition: service_healthy
-            pubsub-emulator:
-                condition: service_healthy
+  indexer:
+    profiles:
+      - all
+      - services
+      - indexer
+    build:
+      dockerfile: ./services/indexer/Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+      GOOGLE_CLOUD_PROJECT: grantflow
+      GOOGLE_CLOUD_REGION: us-central1
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+      GCS_BUCKET_NAME: grantflow-uploads
+      DEBUG: "True"
+      MODEL_DIR: /app/hf
+    env_file:
+      - ./.env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./services/indexer:/app/services/indexer:cached
+      - ./packages:/app/packages:cached
+    command: "uvicorn services.indexer.src.main:app --host 0.0.0.0 --log-level info --reload"
+    depends_on:
+      db:
+        condition: service_healthy
+      pubsub-emulator:
+        condition: service_healthy
 
-    crawler:
-        profiles:
-            - all
-            - services
-            - crawler
-        build:
-            dockerfile: ./services/crawler/Dockerfile
-        environment:
-            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            GOOGLE_CLOUD_PROJECT: grantflow
-            GOOGLE_CLOUD_REGION: us-central1
-            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
-            DEBUG: "True"
-            MODEL_DIR: /app/hf
-        env_file:
-            - ./.env
-        ports:
-            - "8002:8000"
-        volumes:
-            - ./services/crawler:/app/services/crawler:cached
-            - ./packages:/app/packages:cached
-        command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload"
-        depends_on:
-            db:
-                condition: service_healthy
-            pubsub-emulator:
-                condition: service_healthy
+  crawler:
+    profiles:
+      - all
+      - services
+      - crawler
+    build:
+      dockerfile: ./services/crawler/Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+      GOOGLE_CLOUD_PROJECT: grantflow
+      GOOGLE_CLOUD_REGION: us-central1
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+      DEBUG: "True"
+      MODEL_DIR: /app/hf
+    env_file:
+      - ./.env
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./services/crawler:/app/services/crawler:cached
+      - ./packages:/app/packages:cached
+    command: "uvicorn services.crawler.src.main:app --host 0.0.0.0 --log-level info --reload"
+    depends_on:
+      db:
+        condition: service_healthy
+      pubsub-emulator:
+        condition: service_healthy
 
-    rag:
-        profiles:
-            - all
-            - services
-            - rag
-        build:
-            dockerfile: ./services/rag/Dockerfile
-        environment:
-            DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
-            GOOGLE_CLOUD_PROJECT: grantflow
-            GOOGLE_CLOUD_REGION: us-central1
-            PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
-            DEBUG: "True"
-            MODEL_DIR: /app/hf
-        env_file:
-            - ./.env
-        ports:
-            - "8003:8000"
-        volumes:
-            - ./services/rag:/app/services/rag:cached
-            - ./packages:/app/packages:cached
-        command: "uvicorn services.rag.src.main:app --host 0.0.0.0 --log-level info --reload"
-        depends_on:
-            db:
-                condition: service_healthy
-            pubsub-emulator:
-                condition: service_healthy
+  rag:
+    profiles:
+      - all
+      - services
+      - rag
+    build:
+      dockerfile: ./services/rag/Dockerfile
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql+asyncpg://local:local@db:5432/local
+      GOOGLE_CLOUD_PROJECT: grantflow
+      GOOGLE_CLOUD_REGION: us-central1
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+      DEBUG: "True"
+      MODEL_DIR: /app/hf
+    env_file:
+      - ./.env
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./services/rag:/app/services/rag:cached
+      - ./packages:/app/packages:cached
+    command: "uvicorn services.rag.src.main:app --host 0.0.0.0 --log-level info --reload"
+    depends_on:
+      db:
+        condition: service_healthy
+      pubsub-emulator:
+        condition: service_healthy
 
-    frontend:
-        profiles:
-            - all
-            - frontend
-        build:
-            context: .
-            dockerfile: frontend/Dockerfile
-            args:
-                NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
-                NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
-                NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
-                NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
-                NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}
-                NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID}
-                NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID}
-                NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
-                NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
-                NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-                NEXT_PUBLIC_DEBUG: ${NEXT_PUBLIC_DEBUG:-false}
-                RESEND_API_KEY: ${RESEND_API_KEY}
-        ports:
-            - "3000:3000"
-        env_file:
-            - ./.env
-            - ./frontend/.env
-        depends_on:
-            - backend
+  frontend:
+    profiles:
+      - all
+      - frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      - backend
 
-    scraper:
-        profiles:
-            - all
-            - scraper
-        build:
-            dockerfile: ./services/scraper/Dockerfile
-        environment:
-            GOOGLE_CLOUD_PROJECT: grantflow
-            GOOGLE_CLOUD_REGION: us-central1
-            STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
-            SCRAPER_GCS_BUCKET_NAME: grantflow-scraper
-            DEBUG: "True"
-        env_file:
-            - ./.env
-        ports:
-            - "8004:8000"
-        volumes:
-            - ./services/scraper:/app/services/scraper:cached
-            - ./packages:/app/packages:cached
-        command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload"
-        depends_on:
-            - gcs-emulator
+  scraper:
+    profiles:
+      - all
+      - scraper
+    build:
+      dockerfile: ./services/scraper/Dockerfile
+    environment:
+      GOOGLE_CLOUD_PROJECT: grantflow
+      GOOGLE_CLOUD_REGION: us-central1
+      STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+      SCRAPER_GCS_BUCKET_NAME: grantflow-scraper
+      DEBUG: "True"
+    env_file:
+      - ./.env
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./services/scraper:/app/services/scraper:cached
+      - ./packages:/app/packages:cached
+    command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload"
+    depends_on:
+      - gcs-emulator
 
-    pgadmin:
-        profiles:
-            - all
-            - services
-            - pgadmin
-        image: dpage/pgadmin4:latest
-        restart: always
-        environment:
-            PGADMIN_DEFAULT_EMAIL: admin@local.dev
-            PGADMIN_DEFAULT_PASSWORD: admin
-            PGADMIN_LISTEN_PORT: 80
-            PGADMIN_CONFIG_SERVER_MODE: 'False'
-            PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-        ports:
-            - "5050:80"
-        volumes:
-            - pgadmin-data:/var/lib/pgadmin
-            - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
-            - ./pgadmin/pgpassfile:/tmp/pgpassfile:ro
-        depends_on:
-            - db
+  pgadmin:
+    profiles:
+      - all
+      - services
+      - pgadmin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/pgpassfile:/tmp/pgpassfile:ro
+    depends_on:
+      - db
 
-    crdt-server:
-        profiles:
-            - all
-            - backend
-            - services
-        build:
-            context: .
-            dockerfile: crdt/Dockerfile
-        environment:
-            DATABASE_URL: postgresql://local:local@db:5432/local
-            NODE_ENV: development
-            PORT: "8080"
-        ports:
-            - "8090:8080"
-        depends_on:
-            db:
-                condition: service_healthy
+  crdt:
+    profiles:
+      - all
+      - crdt
+      - services
+    build:
+      context: .
+      dockerfile: crdt/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://local:local@db:5432/local
+      PORT: "8080"
+    ports:
+      - "8090:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
 
 volumes:
-    data:
-    gcs-data:
-    pgadmin-data:
+  data:
+  gcs-data:
+  pgadmin-data:
