@@ -6,7 +6,7 @@ on:
       - main
       - development*
     paths:
-      - ".github/workflows/ci-service-crdt.yaml"
+      - ".github/workflows/ci-service-crdt-server.yaml"
       - ".github/actions/setup-node-workspace/**"
       - "crdt/**"
       - "package.json"
@@ -16,9 +16,9 @@ on:
       - main
       - development
     paths:
-      - ".github/workflows/ci-service-crdt.yaml"
+      - ".github/workflows/ci-service-crdt-server.yaml"
       - ".github/actions/setup-node-workspace/**"
-      - "../../crdt/**"
+      - "crdt/**"
       - "package.json"
       - "pnpm-lock.yaml"
 
