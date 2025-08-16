@@ -130,7 +130,7 @@ resource "google_secret_manager_secret_iam_binding" "database_connection_string_
   members = [
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
     "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com",
-    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com" 
+    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
   ]
 }
 

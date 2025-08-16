@@ -55,7 +55,7 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
 
   name      = "scraper-daily"
   region    = var.region
-  schedule  = "0 2 * * *" 
+  schedule  = "0 2 * * *"
   time_zone = "UTC"
 
   description = "Daily NIH grant scraping job"
@@ -81,9 +81,9 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
 
   retry_config {
     retry_count          = 3
-    max_retry_duration   = "900s" 
-    min_backoff_duration = "60s"  
-    max_backoff_duration = "300s" 
+    max_retry_duration   = "900s"
+    min_backoff_duration = "60s"
+    max_backoff_duration = "300s"
     max_doublings        = 3
   }
 

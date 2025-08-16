@@ -53,11 +53,11 @@ module "database" {
   instance_name     = "grantflow-production"
   tier              = var.database_tier
   disk_size         = var.database_disk_size
-  disk_type         = "PD_SSD" 
-  backup_enabled    = true     
-  high_availability = true     
+  disk_type         = "PD_SSD"
+  backup_enabled    = true
+  high_availability = true
   backup_retention  = var.database_backup_retention
-  backup_location   = var.backup_location 
+  backup_location   = var.backup_location
   network_id        = module.network.network_id
 
   enable_query_insights = true
@@ -69,12 +69,12 @@ module "storage" {
   source         = "../../modules/storage"
   bucket_name    = "grantflow-production-uploads"
   environment    = var.environment
-  location       = var.region                 
-  retention_days = var.storage_retention_days 
+  location       = var.region
+  retention_days = var.storage_retention_days
 
-  enable_versioning     = true 
-  enable_lifecycle      = true 
-  uniform_bucket_access = true 
+  enable_versioning     = true
+  enable_lifecycle      = true
+  uniform_bucket_access = true
 }
 
 module "cloud_run" {
@@ -85,19 +85,19 @@ module "cloud_run" {
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
-  min_instances                 = var.min_instances 
-  max_instances                 = var.max_instances 
-  cpu_limit                     = var.cpu_limit     
-  memory_limit                  = var.memory_limit  
-  crawler_memory_limit          = "4Gi"             # ~keep Same as default but explicit for crawler due to browser automation needs
-  indexer_memory_limit          = "4Gi"             # ~keep Increased memory for indexer to prevent OOM issues
-  indexer_concurrency_limit     = 50                # ~keep Optimized concurrency for indexer (10 instances × 50 = 500 concurrent)
+  min_instances                 = var.min_instances
+  max_instances                 = var.max_instances
+  cpu_limit                     = var.cpu_limit
+  memory_limit                  = var.memory_limit
+  crawler_memory_limit          = "4Gi" # ~keep Same as default but explicit for crawler due to browser automation needs
+  indexer_memory_limit          = "4Gi" # ~keep Increased memory for indexer to prevent OOM issues
+  indexer_concurrency_limit     = 50    # ~keep Optimized concurrency for indexer (10 instances × 50 = 500 concurrent)
   discord_webhook_url           = var.discord_webhook_url
 
-  enable_cpu_throttling = false 
-  enable_http2          = true  
-  request_timeout       = 300   
-  concurrency_limit     = 100   
+  enable_cpu_throttling = false
+  enable_http2          = true
+  request_timeout       = 300
+  concurrency_limit     = 100
 }
 
 module "pubsub" {
@@ -106,13 +106,13 @@ module "pubsub" {
   region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
 
-  message_retention_duration = "604800s" 
-  ack_deadline_seconds       = 300       
-  enable_dead_letter         = true      
+  message_retention_duration = "604800s"
+  ack_deadline_seconds       = 300
+  enable_dead_letter         = true
 
   # ~keep Production retry configuration for better burst handling
-  indexer_retry_minimum_backoff = "60s"  
-  indexer_retry_maximum_backoff = "900s" 
+  indexer_retry_minimum_backoff = "60s"
+  indexer_retry_maximum_backoff = "900s"
 
   indexer_url = module.cloud_run.indexer_url
   crawler_url = module.cloud_run.crawler_url
@@ -127,7 +127,7 @@ module "scheduler" {
   scraper_url                             = module.cloud_run.scraper_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
 
-  timezone = "Europe/Berlin" 
+  timezone = "Europe/Berlin"
 }
 
 module "monitoring" {
@@ -136,23 +136,23 @@ module "monitoring" {
   environment         = var.environment
   discord_webhook_url = var.discord_webhook_url
 
-  enable_uptime_checks   = true 
-  enable_error_reporting = true 
+  enable_uptime_checks   = true
+  enable_error_reporting = true
   alert_thresholds = {
-    error_rate_threshold = 0.01 
-    latency_threshold    = 2000 
-    memory_threshold     = 0.85 
-    cpu_threshold        = 0.80 
+    error_rate_threshold = 0.01
+    latency_threshold    = 2000
+    memory_threshold     = 0.85
+    cpu_threshold        = 0.80
   }
 }
 
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend_production"
   description = "Production frontend analytics and user data"
-  location    = var.bigquery_location 
+  location    = var.bigquery_location
 
-  default_partition_expiration_ms = 15552000000 
-  default_table_expiration_ms     = 31536000000 
+  default_partition_expiration_ms = 15552000000
+  default_table_expiration_ms     = 31536000000
 
   labels = {
     environment = var.environment
