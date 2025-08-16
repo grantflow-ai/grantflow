@@ -13,6 +13,7 @@ import { AppCard, AppCardContent } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
 import { LogoDark } from "@/components/branding/logo";
+import { CookieConsentProvider, CookieConsentTrigger } from "@/components/cookie-consent";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
 	OnboardingGradientBackgroundBottom,
@@ -102,133 +103,141 @@ export default function SignIn() {
 	};
 
 	return (
-		<div
-			className="text-card-foreground relative flex size-full min-h-screen place-items-center overflow-hidden bg-white p-2 text-center"
-			data-testid="login-container"
-		>
-			<div className="absolute inset-0 flex items-center justify-center">
-				<Image
-					alt="background"
+		<CookieConsentTrigger triggerElementTestId="login-link-button">
+			<div
+				className="text-card-foreground relative flex size-full min-h-screen place-items-center overflow-hidden bg-white p-2 text-center"
+				data-testid="login-container"
+			>
+				<div className="absolute inset-0 flex items-center justify-center">
+					<Image
+						alt="background"
+						aria-hidden="true"
+						className="size-full object-none xl:object-cover"
+						height={0}
+						priority
+						src="/assets/landing-bg-pattern.svg"
+						style={{ height: "auto", width: "100%" }}
+						width={0}
+					/>
+				</div>
+
+				<OnboardingGradientBackgroundTop
 					aria-hidden="true"
-					className="size-full object-none xl:object-cover"
-					height={0}
-					priority
-					src="/assets/landing-bg-pattern.svg"
-					style={{ height: "auto", width: "100%" }}
-					width={0}
+					className="pointer-events-none absolute right-0 top-0 opacity-0 lg:opacity-100"
 				/>
-			</div>
 
-			<OnboardingGradientBackgroundTop
-				aria-hidden="true"
-				className="pointer-events-none absolute right-0 top-0 opacity-0 lg:opacity-100"
-			/>
+				<OnboardingGradientBackgroundBottom
+					aria-hidden="true"
+					className="pointer-events-none absolute bottom-0 left-0 opacity-100 lg:opacity-0"
+				/>
 
-			<OnboardingGradientBackgroundBottom
-				aria-hidden="true"
-				className="pointer-events-none absolute bottom-0 left-0 opacity-100 lg:opacity-0"
-			/>
+				<div className="z-10 flex w-full flex-col lg:flex-row">
+					<div className="relative my-8 flex flex-1 items-center justify-center lg:my-0 lg:justify-end">
+						<div className="relative z-20 w-4/5 text-start xl:w-3/5">
+							<StackedHighlight className="pointer-events-none absolute -bottom-1/2 -z-10 lg:-right-1/3" />
+							<LogoDark
+								className={"sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16"}
+							/>
+							<BenefitsList />
+						</div>
+					</div>
 
-			<div className="z-10 flex w-full flex-col lg:flex-row">
-				<div className="relative my-8 flex flex-1 items-center justify-center lg:my-0 lg:justify-end">
-					<div className="relative z-20 w-4/5 text-start xl:w-3/5">
-						<StackedHighlight className="pointer-events-none absolute -bottom-1/2 -z-10 lg:-right-1/3" />
-						<LogoDark
-							className={"sm:h-13 lg:h-15 my-1 h-12 w-auto md:my-2 md:h-14 lg:my-4 xl:my-6 xl:h-16"}
-						/>
-						<BenefitsList />
+					<div className="relative z-20 flex-1 justify-start overflow-hidden">
+						<motion.div
+							animate={{
+								opacity: isLoading ? 0 : 1,
+								pointerEvents: isLoading ? "none" : "auto",
+							}}
+							transition={{ duration: 0.3, ease: "easeInOut" }}
+						>
+							<AppCard className="border-primary mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9 md:w-4/5">
+								<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
+								<AppCardContent>
+									<SigninForm
+										isLoading={isLoading}
+										onSubmit={async ({ email }) => {
+											setSubmittedEmail(email);
+											await handleEmailSignin(email);
+										}}
+										socialSignInError={socialSignInError}
+									/>
+									<SeparatorWithText className="mb-5" text={"Or connect with "} />
+									<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+										<SocialSigninButton
+											isLoading={isLoading}
+											onClick={async () => {
+												await handleGoogleSignin();
+											}}
+											platform="google"
+										/>
+										<SocialSigninButton
+											isLoading={isLoading}
+											onClick={async () => {
+												await handleOrcidSignin();
+											}}
+											platform="orcid"
+										/>
+									</div>
+									<div className="text-center">
+										<span className="text-dark">Already have an account?</span>
+										<AppButton
+											className="text-primary"
+											data-testid="login-link-button"
+											size="sm"
+											variant="link"
+										>
+											<Link href={routes.login()}>Login</Link>
+										</AppButton>
+									</div>
+								</AppCardContent>
+							</AppCard>
+						</motion.div>
+						<motion.div
+							animate={{
+								opacity: isLoading ? 1 : 0,
+								pointerEvents: isLoading ? "auto" : "none",
+							}}
+							className="absolute inset-0 flex items-center justify-center"
+							initial={{ opacity: 0 }}
+							transition={{ duration: 0.3, ease: "easeInOut" }}
+						>
+							<AppCard className="border-primary mx-auto w-full max-w-md border p-14 shadow-md md:w-4/5">
+								<AuthCardHeader description="" title="Verify Your Email " />
+								<AppCardContent className="flex flex-col gap-12 p-0">
+									<div className="flex flex-col gap-6">
+										<p className="text-left font-normal text-sm leading-5 text-app-black">
+											We&apos;ve sent a verification link to{" "}
+											<span className="text-primary">{submittedEmail}</span>. Please check your
+											inbox and click the link to activate your GrantFlow account.
+										</p>
+										<article className="flex gap-1 rounded border border-app-slate-blue bg-light-gray p-2">
+											<div className="size-5 flex-shrink-0 mt-0.5">
+												<AlertCircle className="text-gray-700 size-4" />
+											</div>
+											<p className="text-sm font-normal text-left leading-[18px] text-app-black font-body">
+												Didn&apos;t receive the email ? <br /> Check your spam folder or{" "}
+												<span className="text-primary">Resend the verification email</span>.
+											</p>
+										</article>
+									</div>
+
+									<div className="flex items-start">
+										<AppButton
+											className="px-3 py-1 text-base font-normal"
+											onClick={handleBack}
+											variant="secondary"
+										>
+											<ChevronLeft />
+											Edit email address
+										</AppButton>
+									</div>
+								</AppCardContent>
+							</AppCard>
+						</motion.div>
 					</div>
 				</div>
-
-				<div className="relative z-20 flex-1 justify-start overflow-hidden">
-					<motion.div
-						animate={{
-							opacity: isLoading ? 0 : 1,
-							pointerEvents: isLoading ? "none" : "auto",
-						}}
-						transition={{ duration: 0.3, ease: "easeInOut" }}
-					>
-						<AppCard className="border-primary mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9 md:w-4/5">
-							<AuthCardHeader description="Get more funding - faster!" title="Create your account" />
-							<AppCardContent>
-								<SigninForm
-									isLoading={isLoading}
-									onSubmit={async ({ email }) => {
-										setSubmittedEmail(email);
-										await handleEmailSignin(email);
-									}}
-									socialSignInError={socialSignInError}
-								/>
-								<SeparatorWithText className="mb-5" text={"Or connect with "} />
-								<div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-									<SocialSigninButton
-										isLoading={isLoading}
-										onClick={async () => {
-											await handleGoogleSignin();
-										}}
-										platform="google"
-									/>
-									<SocialSigninButton
-										isLoading={isLoading}
-										onClick={async () => {
-											await handleOrcidSignin();
-										}}
-										platform="orcid"
-									/>
-								</div>
-								<div className="text-center">
-									<span className="text-dark">Already have an account?</span>
-									<AppButton className="text-primary" size="sm" variant="link">
-										<Link href={routes.login()}>Login</Link>
-									</AppButton>
-								</div>
-							</AppCardContent>
-						</AppCard>
-					</motion.div>
-					<motion.div
-						animate={{
-							opacity: isLoading ? 1 : 0,
-							pointerEvents: isLoading ? "auto" : "none",
-						}}
-						className="absolute inset-0 flex items-center justify-center"
-						initial={{ opacity: 0 }}
-						transition={{ duration: 0.3, ease: "easeInOut" }}
-					>
-						<AppCard className="border-primary mx-auto w-full max-w-md border p-14 shadow-md md:w-4/5">
-							<AuthCardHeader description="" title="Verify Your Email " />
-							<AppCardContent className="flex flex-col gap-12 p-0">
-								<div className="flex flex-col gap-6">
-									<p className="text-left font-normal text-sm leading-5 text-app-black">
-										We&apos;ve sent a verification link to{" "}
-										<span className="text-primary">{submittedEmail}</span>. Please check your inbox
-										and click the link to activate your GrantFlow account.
-									</p>
-									<article className="flex gap-1 rounded border border-app-slate-blue bg-light-gray p-2">
-										<div className="size-5 flex-shrink-0 mt-0.5">
-											<AlertCircle className="text-gray-700 size-4" />
-										</div>
-										<p className="text-sm font-normal text-left leading-[18px] text-app-black font-body">
-											Didn&apos;t receive the email ? <br /> Check your spam folder or{" "}
-											<span className="text-primary">Resend the verification email</span>.
-										</p>
-									</article>
-								</div>
-
-								<div className="flex items-start">
-									<AppButton
-										className="px-3 py-1 text-base font-normal"
-										onClick={handleBack}
-										variant="secondary"
-									>
-										<ChevronLeft />
-										Edit email address
-									</AppButton>
-								</div>
-							</AppCardContent>
-						</AppCard>
-					</motion.div>
-				</div>
+				<CookieConsentProvider />
 			</div>
-		</div>
+		</CookieConsentTrigger>
 	);
 }
