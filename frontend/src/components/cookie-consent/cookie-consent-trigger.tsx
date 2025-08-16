@@ -24,7 +24,7 @@ export function CookieConsentTrigger({
 		}
 
 		const handleMouseMove = (event: MouseEvent) => {
-			if (hasTriggeredRef.current || hasInteracted) {
+			if (hasTriggeredRef.current) {
 				return;
 			}
 
