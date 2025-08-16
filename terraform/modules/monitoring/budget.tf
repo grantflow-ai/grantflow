@@ -54,7 +54,16 @@ variable "enable_billing_budget" {
 
 resource "google_pubsub_topic" "budget_alerts" {
   name = "budget-alerts-${var.environment}"
+  
+  message_retention_duration = "86400s"  # 1 day
+  
+  labels = {
+    environment = var.environment
+    purpose     = "budget_monitoring"
+  }
 }
+
+# Using centralized monitoring DLQ from main.tf
 
 resource "google_cloudfunctions2_function" "budget_to_discord" {
   name        = "fn-alerts-budget-${var.environment}"
@@ -90,6 +99,7 @@ resource "google_cloudfunctions2_function" "budget_to_discord" {
     event_type            = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic          = google_pubsub_topic.budget_alerts.id
     service_account_email = google_service_account.budget_function.email
+    retry_policy          = "RETRY_POLICY_RETRY"
   }
 }
 
@@ -97,6 +107,36 @@ resource "google_service_account" "budget_function" {
   account_id   = "fn-budget-sa-${var.environment}"
   display_name = "Budget Alerts Function"
   description  = "Service account for budget alerts Cloud Function"
+}
+
+resource "google_pubsub_subscription" "budget_alerts_subscription" {
+  name  = "budget-alerts-subscription-${var.environment}"
+  topic = google_pubsub_topic.budget_alerts.name
+  
+  push_config {
+    push_endpoint = google_cloudfunctions2_function.budget_to_discord.service_config[0].uri
+    
+    oidc_token {
+      service_account_email = google_service_account.budget_function.email
+    }
+  }
+  
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
+    max_delivery_attempts = 5
+  }
+  
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+  
+  ack_deadline_seconds = 60
+  
+  labels = {
+    environment = var.environment
+    purpose     = "budget_monitoring"
+  }
 }
 
 resource "google_pubsub_topic_iam_member" "budget_function_subscriber" {
@@ -157,9 +197,7 @@ data "archive_file" "function" {
   }
 }
 
-data "google_project" "project" {
-  project_id = var.project_id
-}
+# IAM permission for centralized DLQ is handled in main.tf
 
 variable "monthly_budget_amount" {
   description = "Monthly budget amount in USD"
