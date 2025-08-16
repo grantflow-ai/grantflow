@@ -1,26 +1,31 @@
 import { arrayMove } from "@dnd-kit/sortable";
+import type { ZoneType } from "@/components/organizations/project/applications/wizard/application-structure/drag-drop-context";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { log } from "@/utils/logger/client";
 
 /**
  * Determines the new parent ID when moving sections in drag-and-drop operations
- * @param activeSection The section being dragged
  * @param overSection The section being dragged over
+ * @param zone The zone type (for main-to-main operations)
  * @returns The new parent ID for the active section
  */
-export const determineNewParentId = (activeSection: GrantSection, overSection: GrantSection): null | string => {
-	const activeIsChild = activeSection.parent_id !== null;
+export const determineNewParentId = (overSection: GrantSection, zone?: null | ZoneType): null | string => {
 	const overIsChild = overSection.parent_id !== null;
 
 	if (overIsChild) {
 		return overSection.parent_id;
 	}
 
-	if (activeIsChild) {
-		return overSection.id;
+	if (zone !== undefined) {
+		if (zone === null) {
+			throw new Error(
+				"Zone cannot be null when determining parent for any section to main section drag operation",
+			);
+		}
+		return zone === "sibling" ? null : overSection.id;
 	}
 
-	return null;
+	return overSection.id;
 };
 
 /**
@@ -113,10 +118,11 @@ export const assignOrderAndParent = (
 	parentAssignmentFn?: (section: GrantSection) => null | string,
 ): GrantSection[] => {
 	return sections.map((section, index) => {
+		const newParentId = parentAssignmentFn ? parentAssignmentFn(section) : (section.parent_id ?? null);
 		return {
 			...section,
 			order: index,
-			parent_id: parentAssignmentFn?.(section) ?? section.parent_id ?? null,
+			parent_id: newParentId,
 		};
 	});
 };
@@ -203,46 +209,13 @@ export interface DropIndicatorState {
 }
 
 /**
- * Calculates drop indicator visibility based on drag-and-drop context
- * Uses optimized logic with early returns and safe fallbacks
- */
-/**
- * Calculates drop indicator for last subsection when dropping over main section with subsections
- * @param overItem The section being dragged over
- * @param sections Array of all sections
- * @param currentSectionId ID of the current section being evaluated
- * @returns Drop indicator state or null if not applicable
- */
-const calculateLastSubsectionDropIndicator = (
-	overItem: GrantSection,
-	sections: GrantSection[],
-	currentSectionId: string,
-): DropIndicatorState | null => {
-	if (!(overItem.parent_id === null && hasSubSections(overItem.id, sections))) {
-		return null;
-	}
-
-	const subsections = sections.filter((s) => s.parent_id === overItem.id).sort((a, b) => a.order - b.order);
-	const lastSubsection = subsections.at(-1);
-
-	if (currentSectionId === lastSubsection?.id) {
-		return {
-			isSubsectionWidth: false,
-			showAbove: false,
-			showBelow: true,
-		};
-	}
-
-	return null;
-};
-
-/**
  * Calculates drop indicator when dragging subsection to main section
  * @param activeItem The subsection being dragged
  * @param overItem The main section being dragged over
  * @param activeIndex Current index of active subsection
  * @param overIndex Index of main section being dragged over
  * @param defaultResult Default drop indicator state to use as fallback
+ * @param zone The drag zone ("sibling" for main width, "child"/"null" for subsection width)
  * @returns Drop indicator state for sub-to-main drag scenario
  */
 const calculateSubToMainDropIndicator = (
@@ -251,8 +224,10 @@ const calculateSubToMainDropIndicator = (
 	activeIndex: number,
 	overIndex: number,
 	defaultResult: DropIndicatorState,
+	zone?: null | ZoneType,
 ): DropIndicatorState => {
 	if (
+		zone !== "sibling" &&
 		activeItem.parent_id === overItem.id &&
 		Math.abs(activeIndex - overIndex) === 1 &&
 		activeIndex === overIndex + 1
@@ -260,9 +235,16 @@ const calculateSubToMainDropIndicator = (
 		return { isSubsectionWidth: true, showAbove: false, showBelow: false };
 	}
 
+	const isSubsectionWidth = zone !== "sibling";
+
+	const showAbove = zone === "sibling" && activeIndex > overIndex;
+	const showBelow = zone === "sibling" ? !showAbove : defaultResult.showBelow;
+
 	return {
 		...defaultResult,
-		isSubsectionWidth: true,
+		isSubsectionWidth,
+		showAbove,
+		showBelow,
 	};
 };
 
@@ -305,7 +287,7 @@ const calculateSubToSubDropIndicator = (
 	overIndex: number,
 	defaultResult: DropIndicatorState,
 ): DropIndicatorState => {
-	const newParentId = determineNewParentId(activeItem, overItem);
+	const newParentId = determineNewParentId(overItem);
 	const hasParentChanged = activeItem.parent_id !== newParentId;
 
 	if (!hasParentChanged && Math.abs(activeIndex - overIndex) === 1 && activeIndex === overIndex + 1) {
@@ -332,15 +314,18 @@ const calculateMainToMainDropIndicator = (
 	overIndex: number,
 	sections: GrantSection[],
 	defaultResult: DropIndicatorState,
+	zone?: null | ZoneType,
 ): DropIndicatorState => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const hasOverSubSections = hasSubSections(overItem.id, sections);
 
+	const isSubsectionWidth = zone === "child";
+
 	if (!(hasActiveSubSections || hasOverSubSections)) {
 		return {
-			isSubsectionWidth: false,
-			showAbove: activeIndex > overIndex,
-			showBelow: activeIndex < overIndex,
+			isSubsectionWidth,
+			showAbove: zone === "child" ? false : activeIndex > overIndex,
+			showBelow: zone === "child" ? true : activeIndex < overIndex,
 		};
 	}
 
@@ -355,7 +340,10 @@ const calculateMainToMainDropIndicator = (
 		}
 	}
 
-	return defaultResult;
+	return {
+		...defaultResult,
+		isSubsectionWidth,
+	};
 };
 
 /**
@@ -375,7 +363,7 @@ export function calculateDropIndicatorVisibility(
 	activeIndex: number,
 	overIndex: number,
 	sections: GrantSection[],
-	currentSectionId: string,
+	zone?: null | ZoneType,
 ): DropIndicatorState {
 	const defaultResult: DropIndicatorState = {
 		isSubsectionWidth: overItem.parent_id !== null,
@@ -395,13 +383,8 @@ export function calculateDropIndicatorVisibility(
 	const isOverMain = overItem.parent_id === null;
 
 	try {
-		const lastSubsectionResult = calculateLastSubsectionDropIndicator(overItem, sections, currentSectionId);
-		if (lastSubsectionResult) {
-			return lastSubsectionResult;
-		}
-
 		if (!isActiveMain && isOverMain) {
-			return calculateSubToMainDropIndicator(activeItem, overItem, activeIndex, overIndex, defaultResult);
+			return calculateSubToMainDropIndicator(activeItem, overItem, activeIndex, overIndex, defaultResult, zone);
 		}
 
 		if (isActiveMain && !isOverMain) {
@@ -420,6 +403,7 @@ export function calculateDropIndicatorVisibility(
 				overIndex,
 				sections,
 				defaultResult,
+				zone,
 			);
 		}
 	} catch (error) {

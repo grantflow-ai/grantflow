@@ -56,79 +56,175 @@ const createTestSections = () => ({
 describe("grant-sections utilities", () => {
 	describe("determineNewParentId", () => {
 		it("returns over section's parent when over section is a child", () => {
-			const activeSection = GrantSectionDetailedFactory.build({
-				id: "active-main",
-				parent_id: null,
-			});
 			const overSection = GrantSectionDetailedFactory.build({
 				id: "over-child",
 				parent_id: "parent-123",
 			});
 
-			const result = determineNewParentId(activeSection, overSection);
+			const result = determineNewParentId(overSection);
 
 			expect(result).toBe("parent-123");
 		});
 
-		it("returns over section's id when active is child and over is main", () => {
-			const activeSection = GrantSectionDetailedFactory.build({
-				id: "active-child",
-				parent_id: "some-parent",
-			});
+		it("returns over section's id when zone is child and over is main", () => {
 			const overSection = GrantSectionDetailedFactory.build({
 				id: "over-main",
 				parent_id: null,
 			});
 
-			const result = determineNewParentId(activeSection, overSection);
+			const result = determineNewParentId(overSection, "child");
 
 			expect(result).toBe("over-main");
 		});
 
-		it("returns null when both sections are main sections", () => {
-			const activeSection = GrantSectionDetailedFactory.build({
-				id: "active-main",
-				parent_id: null,
-			});
+		it("returns null when zone is sibling and over is main", () => {
 			const overSection = GrantSectionDetailedFactory.build({
 				id: "over-main",
 				parent_id: null,
 			});
 
-			const result = determineNewParentId(activeSection, overSection);
+			const result = determineNewParentId(overSection, "sibling");
 
 			expect(result).toBeNull();
 		});
 
-		it("returns parent when both sections are children of same parent", () => {
-			const sharedParentId = "shared-parent";
-			const activeSection = GrantSectionDetailedFactory.build({
-				id: "active-child",
-				parent_id: sharedParentId,
+		it("throws error when zone is null and over is main", () => {
+			const overSection = GrantSectionDetailedFactory.build({
+				id: "over-main",
+				parent_id: null,
 			});
+
+			expect(() => determineNewParentId(overSection, null)).toThrow(
+				"Zone cannot be null when determining parent for any section to main section drag operation",
+			);
+		});
+
+		it("returns over section id when zone is undefined and over is main (backwards compatibility)", () => {
+			const overSection = GrantSectionDetailedFactory.build({
+				id: "over-main",
+				parent_id: null,
+			});
+
+			const result = determineNewParentId(overSection);
+
+			expect(result).toBe("over-main");
+		});
+
+		it("returns parent when over section is a child", () => {
+			const sharedParentId = "shared-parent";
 			const overSection = GrantSectionDetailedFactory.build({
 				id: "over-child",
 				parent_id: sharedParentId,
 			});
 
-			const result = determineNewParentId(activeSection, overSection);
+			const result = determineNewParentId(overSection);
 
 			expect(result).toBe(sharedParentId);
 		});
 
-		it("returns parent when both sections are children of different parents", () => {
-			const activeSection = GrantSectionDetailedFactory.build({
-				id: "active-child",
-				parent_id: "parent-a",
-			});
+		it("returns parent when over section is child with different parent", () => {
 			const overSection = GrantSectionDetailedFactory.build({
 				id: "over-child",
 				parent_id: "parent-b",
 			});
 
-			const result = determineNewParentId(activeSection, overSection);
+			const result = determineNewParentId(overSection);
 
 			expect(result).toBe("parent-b");
+		});
+
+		describe("comprehensive zone combinations", () => {
+			describe("when over section is main (parent_id: null)", () => {
+				it("zone='sibling' returns null", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-main",
+						parent_id: null,
+					});
+
+					const result = determineNewParentId(overSection, "sibling");
+
+					expect(result).toBeNull();
+				});
+
+				it("zone='child' returns over section id", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-main",
+						parent_id: null,
+					});
+
+					const result = determineNewParentId(overSection, "child");
+
+					expect(result).toBe("over-main");
+				});
+
+				it("zone=null throws error", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-main",
+						parent_id: null,
+					});
+
+					expect(() => determineNewParentId(overSection, null)).toThrow(
+						"Zone cannot be null when determining parent for any section to main section drag operation",
+					);
+				});
+
+				it("zone=undefined returns over section id (backwards compatibility)", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-main",
+						parent_id: null,
+					});
+
+					const result = determineNewParentId(overSection);
+
+					expect(result).toBe("over-main");
+				});
+			});
+
+			describe("when over section is child (parent_id: not null)", () => {
+				it("zone='sibling' returns over section's parent", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-child",
+						parent_id: "parent-123",
+					});
+
+					const result = determineNewParentId(overSection, "sibling");
+
+					expect(result).toBe("parent-123");
+				});
+
+				it("zone='child' returns over section's parent", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-child",
+						parent_id: "parent-123",
+					});
+
+					const result = determineNewParentId(overSection, "child");
+
+					expect(result).toBe("parent-123");
+				});
+
+				it("zone=null returns over section's parent", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-child",
+						parent_id: "parent-123",
+					});
+
+					const result = determineNewParentId(overSection, null);
+
+					expect(result).toBe("parent-123");
+				});
+
+				it("zone=undefined returns over section's parent", () => {
+					const overSection = GrantSectionDetailedFactory.build({
+						id: "over-child",
+						parent_id: "parent-123",
+					});
+
+					const result = determineNewParentId(overSection);
+
+					expect(result).toBe("parent-123");
+				});
+			});
 		});
 	});
 
@@ -1165,14 +1261,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1;
 				const overItem = sections.main1;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					0,
-					Object.values(sections),
-					"main-1",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 0, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1186,14 +1275,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1;
 				const overItem = sections.main2;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					-1,
-					3,
-					Object.values(sections),
-					"main-2",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, -1, 3, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false, // overItem.parent_id is null
@@ -1207,14 +1289,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1;
 				const overItem = sections.sub2a;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					-1,
-					Object.values(sections),
-					"sub-2a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, -1, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true, // overItem.parent_id is not null
@@ -1230,14 +1305,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main3;
 				const overItem = sections.main1;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					5,
-					0,
-					Object.values(sections),
-					"sub-1b", // Last subsection of main-1
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 5, 0, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false, // Full main section width!
@@ -1251,14 +1319,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main3;
 				const overItem = sections.main1;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					5,
-					0,
-					Object.values(sections),
-					"sub-1a", // First subsection of main-1, not last
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 5, 0, Object.values(sections));
 
 				expect(result.isSubsectionWidth).toBe(false);
 				expect(result.showBelow).toBe(true);
@@ -1269,14 +1330,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1;
 				const overItem = sections.main3;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					5,
-					Object.values(sections),
-					"main-3",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 5, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1292,14 +1346,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.sub1a; // Subsection
 				const overItem = sections.main2; // Main section
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					1,
-					3,
-					Object.values(sections),
-					"main-2",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 1, 3, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1313,14 +1360,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.sub2a; // From main-2
 				const overItem = sections.main3; // To main-3
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					4,
-					5,
-					Object.values(sections),
-					"main-3",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 4, 5, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1336,14 +1376,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main3; // Main section without subs
 				const overItem = sections.sub1a; // Subsection
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					5,
-					1,
-					Object.values(sections),
-					"sub-1a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 5, 1, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1357,14 +1390,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1; // Main with subsections
 				const overItem = sections.sub1a; // Its own subsection
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					1,
-					Object.values(sections),
-					"sub-1a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 1, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1378,14 +1404,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1; // Main with subsections
 				const overItem = sections.sub2a; // Different parent's subsection
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					4,
-					Object.values(sections),
-					"sub-2a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 4, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1401,14 +1420,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.sub1a; // First subsection
 				const overItem = sections.sub1b; // Second subsection, same parent
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					1,
-					2,
-					Object.values(sections),
-					"sub-1b",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 1, 2, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1422,14 +1434,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.sub1b; // Second subsection
 				const overItem = sections.sub1a; // First subsection, same parent
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					2,
-					1,
-					Object.values(sections),
-					"sub-1a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 2, 1, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1443,14 +1448,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.sub1b;
 				const overItem = sections.sub1a;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					2,
-					1,
-					Object.values(sections),
-					"sub-1a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 2, 1, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1464,14 +1462,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.sub1a; // From main-1
 				const overItem = sections.sub2a; // To main-2 parent
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					1,
-					4,
-					Object.values(sections),
-					"sub-2a",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 1, 4, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: true,
@@ -1487,14 +1478,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1;
 				const overItem = sections.main3;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					5,
-					Object.values(sections),
-					"main-3",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 5, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1508,14 +1492,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main3;
 				const overItem = sections.main1;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					5,
-					0,
-					Object.values(sections),
-					"main-1",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 5, 0, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1529,14 +1506,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main1;
 				const overItem = sections.main2;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					0,
-					3,
-					Object.values(sections),
-					"main-2",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 3, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1555,7 +1525,7 @@ describe("grant-sections utilities", () => {
 
 				const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 1, malformedSections, "over");
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 1, malformedSections);
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,
@@ -1585,7 +1555,6 @@ describe("grant-sections utilities", () => {
 					1,
 					5,
 					complexSections,
-					"sub-b1",
 				);
 
 				expect(result).toEqual({
@@ -1608,7 +1577,6 @@ describe("grant-sections utilities", () => {
 					2,
 					0,
 					singleSubSections,
-					"sub-1-only",
 				);
 
 				expect(result).toEqual({
@@ -1623,14 +1591,7 @@ describe("grant-sections utilities", () => {
 				const activeItem = sections.main2;
 				const overItem = sections.main1;
 
-				const result = calculateDropIndicatorVisibility(
-					activeItem,
-					overItem,
-					3,
-					0,
-					Object.values(sections),
-					"sub-1b",
-				);
+				const result = calculateDropIndicatorVisibility(activeItem, overItem, 3, 0, Object.values(sections));
 
 				expect(result).toEqual({
 					isSubsectionWidth: false,

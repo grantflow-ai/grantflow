@@ -1,9 +1,12 @@
 "use client";
 
+// biome-ignore assist/source/organizeImports: sorting conflicts with eslint due to type presence
 import {
 	closestCenter,
+	type CollisionDetection,
 	DndContext,
 	type DragEndEvent,
+	type DragMoveEvent,
 	type DragOverEvent,
 	DragOverlay,
 	type DragStartEvent,
@@ -22,6 +25,7 @@ import type React from "react";
 import { useCallback, useState } from "react";
 
 export interface DragDropConfig {
+	collisionDetection?: CollisionDetection;
 	enableKeyboard?: boolean;
 	enablePointer?: boolean;
 	strategy?: "horizontal" | "vertical";
@@ -29,6 +33,7 @@ export interface DragDropConfig {
 
 export interface DragDropHandlers<T extends DragDropItem> {
 	onDragEnd?: (event: DragEndEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
+	onDragMove?: (event: DragMoveEvent) => void;
 	onDragOver?: (event: DragOverEvent, activeItem: T | undefined, overItem: T | undefined) => Promise<void> | void;
 	onDragStart?: (event: DragStartEvent, item: T | undefined) => void;
 	onReorder?: (
@@ -60,8 +65,13 @@ export function useDragAndDrop<T extends DragDropItem>(
 	handlers: DragDropHandlers<T> = {},
 	config: DragDropConfig = {},
 ): DragDropResult<T> {
-	const { onDragEnd, onDragOver, onDragStart, onReorder } = handlers;
-	const { enableKeyboard = true, enablePointer = true, strategy = "vertical" } = config;
+	const { onDragEnd, onDragMove, onDragOver, onDragStart, onReorder } = handlers;
+	const {
+		collisionDetection = closestCenter,
+		enableKeyboard = true,
+		enablePointer = true,
+		strategy = "vertical",
+	} = config;
 
 	const [activeId, setActiveId] = useState<null | string>(null);
 
@@ -114,6 +124,10 @@ export function useDragAndDrop<T extends DragDropItem>(
 				const overItem = over ? items.find((item) => item.id === over.id) : undefined;
 
 				await onDragOver?.(event, activeItem, overItem);
+			};
+
+			const handleDragMove = (event: DragMoveEvent) => {
+				onDragMove?.(event);
 			};
 
 			const handleReorder = async (activeItem: T, overItem: T) => {
@@ -170,8 +184,9 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 			return (
 				<DndContext
-					collisionDetection={closestCenter}
+					collisionDetection={collisionDetection}
 					onDragEnd={handleDragEnd}
+					onDragMove={handleDragMove}
 					onDragOver={handleDragOver}
 					onDragStart={handleDragStart}
 					sensors={sensors}
@@ -183,7 +198,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 				</DndContext>
 			);
 		},
-		[sensors, onDragStart, onDragOver, onDragEnd, onReorder, activeId, strategy],
+		[sensors, onDragStart, onDragOver, onDragMove, onDragEnd, onReorder, activeId, strategy, collisionDetection],
 	);
 
 	return {
