@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { GrantSection } from "@/types/grant-sections";
 import { calculateDropIndicatorVisibility } from "@/utils/grant-sections";
-import { useDragDropContext } from "./drag-drop-context";
+import { useDragDropContext, type ZoneType } from "./drag-drop-context";
 
 interface SectionDropIndicatorProps {
 	isSubsectionWidth: boolean;
@@ -32,6 +32,7 @@ export function SectionDropIndicator({ isSubsectionWidth, isVisible, position }:
 
 export function SectionWithDropIndicators({ children, section }: SectionWithDropIndicatorsProps) {
 	const [isDraggedOver, setIsDraggedOver] = useState(false);
+	const [isDraggedWide, setIsDraggedWide] = useState(false);
 
 	const dragContext = useDragDropContext();
 	const { isAnyDragging } = dragContext;
@@ -39,28 +40,31 @@ export function SectionWithDropIndicators({ children, section }: SectionWithDrop
 	useEffect(() => {
 		if (!isAnyDragging) {
 			setIsDraggedOver(false);
+			setIsDraggedWide(false);
 			return;
 		}
 
-		const checkDragOverState = () => {
-			const element = document.querySelector(`[data-sortable-id="${section.id}"]`);
-			const isOver = element?.hasAttribute("data-drag-over") ?? false;
+		const checkDragState = () => {
+			const element: HTMLElement | null = document.querySelector(`[data-sortable-id="${section.id}"]`);
+			const isOver = element ? Object.hasOwn(element.dataset, "dragOver") : false;
+			const isWide = element ? element.dataset.dragWide === "true" : false;
 			setIsDraggedOver(isOver);
+			setIsDraggedWide(isWide);
 		};
 
 		const observer = new MutationObserver(() => {
-			checkDragOverState();
+			checkDragState();
 		});
 
 		const element = document.querySelector(`[data-sortable-id="${section.id}"]`);
 		if (element) {
 			observer.observe(element, {
-				attributeFilter: ["data-drag-over"],
+				attributeFilter: ["data-drag-over", "data-drag-wide"],
 				attributes: true,
 			});
 		}
 
-		checkDragOverState();
+		checkDragState();
 
 		return () => {
 			observer.disconnect();
@@ -85,8 +89,9 @@ export function SectionWithDropIndicators({ children, section }: SectionWithDrop
 			return { isSubsectionWidth: false, showAbove: false, showBelow: false };
 		}
 
-		return calculateDropIndicatorVisibility(activeItem, overItem, activeIndex, overIndex, sections, section.id);
-	}, [isDraggedOver, isAnyDragging, dragContext, section.id, section.parent_id]);
+		const zone: ZoneType = isDraggedWide ? "child" : "sibling";
+		return calculateDropIndicatorVisibility(activeItem, overItem, activeIndex, overIndex, sections, zone);
+	}, [isDraggedOver, isDraggedWide, isAnyDragging, dragContext, section.id, section.parent_id]);
 
 	return (
 		<div className="relative">

@@ -21,7 +21,8 @@ import {
 	updateBackendWithReorderedSections,
 	updateReorder,
 } from "@/utils/grant-sections";
-import { DragDropContext } from "./drag-drop-context";
+import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
+import { DragDropContext, type DragDropContextData, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -36,15 +37,56 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
-const setLastSubsectionDragOver = (
-	activeItem: GrantSection,
-	overItem: GrantSection,
-	sections: GrantSection[],
-): boolean => {
-	const isMainToMainWithSubsections =
-		activeItem.parent_id === null && overItem.parent_id === null && hasSubSections(overItem.id, sections);
+const updateDragOverVisualState = (overId: string | undefined, dragState: DragDropContextData): void => {
+	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
 
-	if (!isMainToMainWithSubsections) {
+	if (overId) {
+		const overElement = document.querySelector<HTMLElement>(`[data-sortable-id="${overId}"]`);
+
+		if (prevOverElement && prevOverElement !== overElement) {
+			delete prevOverElement.dataset.dragOver;
+		}
+
+		if (setLastSubsectionDragOver(dragState)) {
+			return;
+		}
+
+		if (overElement) {
+			overElement.dataset.dragOver = "true";
+		}
+	} else if (prevOverElement) {
+		delete prevOverElement.dataset.dragOver;
+	}
+};
+
+const updateDragWideVisualState = (zone: null | ZoneType): void => {
+	const dragOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
+
+	if (dragOverElement) {
+		dragOverElement.dataset.dragWide = zone === "child" ? "true" : "false";
+	}
+};
+
+const setLastSubsectionDragOver = (dragState: DragDropContextData): boolean => {
+	const { activeIndex, activeItem, overIndex, overItem, sections, zone } = dragState;
+
+	if (
+		!(
+			activeItem &&
+			overItem &&
+			sections.length > 0 &&
+			overItem.parent_id === null &&
+			hasSubSections(overItem.id, sections)
+		)
+	) {
+		return false;
+	}
+
+	if (zone === "child") {
+		return false;
+	}
+
+	if (activeItem.parent_id !== null && activeIndex > overIndex) {
 		return false;
 	}
 
@@ -63,37 +105,11 @@ const setLastSubsectionDragOver = (
 	return false;
 };
 
-const updateDragOverVisualState = (
-	overId: null | string,
-	activeItem?: GrantSection | null,
-	overItem?: GrantSection | null,
-	sections?: GrantSection[],
-): void => {
-	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
-
-	if (overId) {
-		const overElement = document.querySelector<HTMLElement>(`[data-sortable-id="${overId}"]`);
-
-		if (prevOverElement && prevOverElement !== overElement) {
-			delete prevOverElement.dataset.dragOver;
-		}
-
-		if (activeItem && overItem && sections && setLastSubsectionDragOver(activeItem, overItem, sections)) {
-			return;
-		}
-
-		if (overElement) {
-			overElement.dataset.dragOver = "true";
-		}
-	} else if (prevOverElement) {
-		delete prevOverElement.dataset.dragOver;
-	}
-};
-
 const clearDragOverVisualState = (): void => {
 	const allDragOverElements = document.querySelectorAll<HTMLElement>('[data-drag-over="true"]');
 	allDragOverElements.forEach((element) => {
 		delete element.dataset.dragOver;
+		delete element.dataset.dragWide;
 	});
 };
 
@@ -106,9 +122,10 @@ const handleMainToSubReorder = async (
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
 	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+	zone?: null | ZoneType,
 ): Promise<void> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
-	const newParentId = determineNewParentId(activeItem, overItem);
+	const newParentId = determineNewParentId(overItem, zone);
 
 	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
 		toast.info("Cannot move a section into its own sub-section");
@@ -180,14 +197,22 @@ const handleSubToMainReorder = async (
 	overItem: GrantSection,
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	zone?: null | ZoneType,
 ): Promise<boolean> => {
-	const newParentId = determineNewParentId(activeItem, overItem);
+	const newParentId = zone === "sibling" ? null : determineNewParentId(overItem, zone);
+	const targetIndexInChildZone = activeIndex < overIndex ? overIndex : overIndex + 1;
+	const targetIndex = zone === "sibling" ? overIndex : targetIndexInChildZone;
 
-	if (activeItem.parent_id === overItem.id && newParentId === overItem.id && activeIndex === overIndex + 1) {
+	if (
+		zone !== "sibling" &&
+		activeItem.parent_id === overItem.id &&
+		newParentId === overItem.id &&
+		activeIndex === targetIndex
+	) {
 		return false;
 	}
 
-	await updateReorder(sections, activeIndex, overIndex + 1, toUpdateGrantSection, updateGrantSections, (section) =>
+	await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections, (section) =>
 		section.id === activeItem.id ? newParentId : section.parent_id,
 	);
 	return true;
@@ -202,7 +227,7 @@ const handleSubToSubReorder = async (
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
 ): Promise<boolean> => {
-	const newParentId = determineNewParentId(activeItem, overItem);
+	const newParentId = determineNewParentId(overItem);
 	const hasParentChanged = activeItem.parent_id !== newParentId;
 
 	const isSectionLater = activeIndex > overIndex;
@@ -226,6 +251,76 @@ const handleSubToSubReorder = async (
 	return true;
 };
 
+const handleMainToMainChildZoneReorder = async (
+	sections: GrantSection[],
+	activeIndex: number,
+	overIndex: number,
+	activeItem: GrantSection,
+	overItem: GrantSection,
+	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
+	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+): Promise<void> => {
+	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
+	const newParentId = overItem.id;
+
+	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
+		toast.info("Cannot move a section into its own sub-section");
+		return;
+	}
+
+	if (!hasActiveSubSections) {
+		const targetIndex = activeIndex < overIndex ? overIndex : overIndex + 1;
+		await updateReorder(sections, activeIndex, targetIndex, toUpdateGrantSection, updateGrantSections, (section) =>
+			section.id === activeItem.id ? newParentId : section.parent_id,
+		);
+		return;
+	}
+
+	const handleConfirmMove = async () => {
+		dialogRef.current?.close();
+
+		const sectionsWithoutSubs = sections.filter((section) => section.parent_id !== activeItem.id);
+		const newActiveIndex = sectionsWithoutSubs.findIndex((s) => s.id === activeItem.id);
+		const newOverIndex = sectionsWithoutSubs.findIndex((s) => s.id === overItem.id);
+
+		if (newActiveIndex !== -1 && newOverIndex !== -1) {
+			const targetIndex = newActiveIndex < newOverIndex ? newOverIndex : newOverIndex + 1;
+			await updateReorder(
+				sectionsWithoutSubs,
+				newActiveIndex,
+				targetIndex,
+				toUpdateGrantSection,
+				updateGrantSections,
+				(section) => (section.id === activeItem.id ? newParentId : section.parent_id),
+			);
+		}
+	};
+
+	dialogRef.current?.open({
+		content: null,
+		description:
+			"Converting a main section into a secondary section will permanently remove any associated secondary sections, if they exist. This action cannot be undone.",
+		dismissOnOutsideClick: false,
+		footer: (
+			<div className="flex justify-between w-full">
+				<AppButton
+					data-testid="cancel-move-button"
+					onClick={() => dialogRef.current?.close()}
+					variant="secondary"
+				>
+					Cancel
+				</AppButton>
+				<AppButton data-testid="confirm-move-button" onClick={handleConfirmMove} variant="primary">
+					Convert and Remove
+				</AppButton>
+			</div>
+		),
+		minWidth: "min-w-xl",
+		title: "This action will affect the section structure!",
+	});
+};
+
 const handleMainToMainReorder = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -234,9 +329,25 @@ const handleMainToMainReorder = async (
 	overItem: GrantSection,
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
+	zone: null | ZoneType,
+	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
 ): Promise<unknown> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const hasOverSubSections = hasSubSections(overItem.id, sections);
+
+	if (zone === "child") {
+		await handleMainToMainChildZoneReorder(
+			sections,
+			activeIndex,
+			overIndex,
+			activeItem,
+			overItem,
+			toUpdateGrantSection,
+			updateGrantSections,
+			dialogRef,
+		);
+		return;
+	}
 
 	if (hasActiveSubSections) {
 		const reorderedSections = reorderMainWhenOverMainHasSubSections(sections, activeItem.id, overItem.id, overItem);
@@ -274,6 +385,8 @@ export function DragDropSectionManager({
 		isAnyDragging: false,
 		overIndex: -1,
 		overItem: null as GrantSection | null,
+		zone: null as null | ZoneType,
+		zonePercent: null as null | number,
 	});
 
 	const getDragState = useCallback(
@@ -430,27 +543,62 @@ export function DragDropSectionManager({
 					isAnyDragging: false,
 					overIndex: -1,
 					overItem: null,
+					zone: null,
+					zonePercent: null,
 				};
 			},
+			onDragMove: (event) => {
+				if (!event.collisions || event.collisions.length === 0) {
+					return;
+				}
+
+				const [collision] = event.collisions;
+
+				// Check if collision has zone information
+				if (
+					collision.data &&
+					(Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))
+				) {
+					const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;
+					const zonePercent = (collision.data.zonePercent as null | number | undefined) ?? null;
+
+					dragStateRef.current = {
+						...dragStateRef.current,
+						zone,
+						zonePercent,
+					};
+
+					updateDragWideVisualState(zone);
+				}
+			},
 			onDragOver: (_event, activeItem, overItem) => {
-				updateDragOverVisualState(overItem?.id ?? null, activeItem, overItem, grantSections);
+				const overIndex = overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1;
+
 				dragStateRef.current = {
 					...dragStateRef.current,
-					overIndex: overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1,
+					overIndex,
 					overItem: overItem ?? null,
 				};
+
+				updateDragOverVisualState(overItem?.id, {
+					...dragStateRef.current,
+					activeItem: activeItem ?? null,
+					overIndex,
+					overItem: overItem ?? null,
+					sections: grantSections,
+				});
 			},
 			onDragStart: (_event, activeItem) => {
 				if (expandedSectionId !== null) {
 					setExpandedSectionId(null);
 				}
 				const activeIndex = activeItem ? grantSections.findIndex((s) => s.id === activeItem.id) : -1;
+
 				dragStateRef.current = {
+					...dragStateRef.current,
 					activeIndex,
 					activeItem: activeItem ?? null,
 					isAnyDragging: activeIndex !== -1,
-					overIndex: -1,
-					overItem: null,
 				};
 			},
 			onReorder: async (sections, activeIndex, overIndex, activeItem, overItem) => {
@@ -470,6 +618,8 @@ export function DragDropSectionManager({
 						overItem,
 						toUpdateGrantSection,
 						useApplicationStore.getState().updateGrantSections,
+						dragStateRef.current.zone,
+						dialogRef,
 					);
 					return;
 				}
@@ -496,6 +646,7 @@ export function DragDropSectionManager({
 						overItem,
 						toUpdateGrantSection,
 						useApplicationStore.getState().updateGrantSections,
+						dragStateRef.current.zone,
 					);
 					return;
 				}
@@ -515,7 +666,11 @@ export function DragDropSectionManager({
 		[pendingParentChange, expandedSectionId, toUpdateGrantSection, dialogRef, grantSections],
 	);
 
-	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers);
+	const zoneCollisionDetection = useMemo(() => createZoneCollisionDetection(), []);
+
+	const { DragDropWrapper } = useDragAndDrop<GrantSection>(dragHandlers, {
+		collisionDetection: zoneCollisionDetection,
+	});
 
 	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
 
