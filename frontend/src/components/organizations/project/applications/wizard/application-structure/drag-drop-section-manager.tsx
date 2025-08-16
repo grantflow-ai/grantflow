@@ -22,7 +22,7 @@ import {
 	updateReorder,
 } from "@/utils/grant-sections";
 import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
-import { DragDropContext, type ZoneType } from "./drag-drop-context";
+import { DragDropContext, type DragDropContextData, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";
 
@@ -37,43 +37,7 @@ interface SectionListProps {
 	toggleSectionExpanded: (sectionId: string) => void;
 }
 
-const setLastSubsectionDragOver = (
-	activeItem?: GrantSection,
-	overItem?: GrantSection,
-	sections?: GrantSection[],
-): boolean => {
-	if (!(activeItem && overItem && sections)) {
-		return false;
-	}
-
-	const isMainToMainWithSubsections =
-		activeItem.parent_id === null && overItem.parent_id === null && hasSubSections(overItem.id, sections);
-
-	if (!isMainToMainWithSubsections) {
-		return false;
-	}
-
-	const subsections = sections.filter((s) => s.parent_id === overItem.id);
-	const lastSubsection = subsections.at(-1);
-
-	if (!lastSubsection) {
-		return false;
-	}
-
-	const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
-	if (lastSubElement) {
-		lastSubElement.dataset.dragOver = "true";
-		return true;
-	}
-	return false;
-};
-
-const updateDragOverVisualState = (
-	overId?: string,
-	activeItem?: GrantSection,
-	overItem?: GrantSection,
-	sections?: GrantSection[],
-): void => {
+const updateDragOverVisualState = (overId: string | undefined, dragState: DragDropContextData): void => {
 	const prevOverElement = document.querySelector<HTMLElement>('[data-drag-over="true"]');
 
 	if (overId) {
@@ -83,7 +47,7 @@ const updateDragOverVisualState = (
 			delete prevOverElement.dataset.dragOver;
 		}
 
-		if (setLastSubsectionDragOver(activeItem, overItem, sections)) {
+		if (setLastSubsectionDragOver(dragState)) {
 			return;
 		}
 
@@ -101,6 +65,44 @@ const updateDragWideVisualState = (zone: null | ZoneType): void => {
 	if (dragOverElement) {
 		dragOverElement.dataset.dragWide = zone === "child" ? "true" : "false";
 	}
+};
+
+const setLastSubsectionDragOver = (dragState: DragDropContextData): boolean => {
+	const { activeIndex, activeItem, overIndex, overItem, sections, zone } = dragState;
+
+	if (
+		!(
+			activeItem &&
+			overItem &&
+			sections.length > 0 &&
+			overItem.parent_id === null &&
+			hasSubSections(overItem.id, sections)
+		)
+	) {
+		return false;
+	}
+
+	if (zone === "child") {
+		return false;
+	}
+
+	if (activeItem.parent_id !== null && activeIndex > overIndex) {
+		return false;
+	}
+
+	const subsections = sections.filter((s) => s.parent_id === overItem.id);
+	const lastSubsection = subsections.at(-1);
+
+	if (!lastSubsection) {
+		return false;
+	}
+
+	const lastSubElement = document.querySelector<HTMLElement>(`[data-sortable-id="${lastSubsection.id}"]`);
+	if (lastSubElement) {
+		lastSubElement.dataset.dragOver = "true";
+		return true;
+	}
+	return false;
 };
 
 const clearDragOverVisualState = (): void => {
@@ -570,12 +572,21 @@ export function DragDropSectionManager({
 				}
 			},
 			onDragOver: (_event, activeItem, overItem) => {
-				updateDragOverVisualState(overItem?.id, activeItem, overItem, grantSections);
+				const overIndex = overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1;
+
 				dragStateRef.current = {
 					...dragStateRef.current,
-					overIndex: overItem ? grantSections.findIndex((s) => s.id === overItem.id) : -1,
+					overIndex,
 					overItem: overItem ?? null,
 				};
+
+				updateDragOverVisualState(overItem?.id, {
+					...dragStateRef.current,
+					activeItem: activeItem ?? null,
+					overIndex,
+					overItem: overItem ?? null,
+					sections: grantSections,
+				});
 			},
 			onDragStart: (_event, activeItem) => {
 				if (expandedSectionId !== null) {
