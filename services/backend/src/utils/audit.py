@@ -10,7 +10,6 @@ from services.backend.src.common_types import APIRequest
 
 logger = get_logger(__name__)
 
-# Audit action constants
 DELETE_PROJECT = "DELETE_PROJECT"
 DELETE_APPLICATION = "DELETE_APPLICATION"
 DELETE_SOURCE = "DELETE_SOURCE"
@@ -27,11 +26,9 @@ REVOKE_PROJECT_ACCESS = "REVOKE_PROJECT_ACCESS"
 
 def get_client_ip(request: APIRequest) -> str | None:
     """Extract client IP address from request headers."""
-    # Check for common proxy headers
     headers = request.headers
     for header in ["X-Forwarded-For", "X-Real-IP", "X-Client-IP"]:
         if ip := headers.get(header):
-            # X-Forwarded-For can contain multiple IPs, take the first one
             return ip.split(",")[0].strip()
     return None
 
@@ -75,7 +72,6 @@ async def log_organization_audit(
             action=action,
         )
     except Exception as e:
-        # Don't fail the main operation if audit logging fails
         logger.warning(
             "Failed to create audit log",
             organization_id=str(organization_id),

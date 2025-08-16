@@ -229,10 +229,8 @@ async def test_retrieve_projects_excludes_deleted_applications(
         )
         await session.commit()
 
-    # Create 3 applications: 2 active and 1 deleted
     applications = GrantApplicationFactory.batch(3, project_id=project.id)
     async with async_session_maker() as session, session.begin():
-        # Insert all applications
         await session.execute(
             insert(GrantApplication).values(
                 [
@@ -249,7 +247,6 @@ async def test_retrieve_projects_excludes_deleted_applications(
         )
         await session.commit()
 
-    # Mark the third application as deleted in a new transaction
     async with async_session_maker() as session, session.begin():
         await session.execute(
             update(GrantApplication)
@@ -295,7 +292,6 @@ async def test_retrieve_projects_excludes_deleted_applications(
 
     project_response = values[0]
     assert project_response["id"] == str(project.id)
-    # Should only count the 2 active applications, not the deleted one
     assert project_response["applications_count"] == 2
 
 

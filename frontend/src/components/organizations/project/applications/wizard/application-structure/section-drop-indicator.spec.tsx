@@ -237,10 +237,10 @@ describe("SectionWithDropIndicators", () => {
 
 			const dragContext: DragDropContextData = {
 				activeIndex: 1,
-				activeItem: sections[1], // subsection
+				activeItem: sections[1],
 				isAnyDragging: true,
 				overIndex: 2,
-				overItem: sections[2], // main section
+				overItem: sections[2],
 				sections,
 				zone: null,
 				zonePercent: null,

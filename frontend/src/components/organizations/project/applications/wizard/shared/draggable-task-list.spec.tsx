@@ -3,7 +3,6 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DraggableTaskList } from "./draggable-task-list";
 
-// Mock the drag and drop hook
 vi.mock("@/hooks/use-drag-and-drop", () => ({
 	useDragAndDrop: vi.fn((_handlers, config) => {
 		return {
@@ -18,13 +17,11 @@ vi.mock("@/hooks/use-drag-and-drop", () => ({
 	}),
 }));
 
-// Mock the wizard store
 const mockUpdateTasksForObjective = vi.fn();
 vi.mock("@/stores/wizard-store", () => ({
 	useWizardStore: vi.fn(() => mockUpdateTasksForObjective),
 }));
 
-// Mock the draggable task item
 vi.mock("./draggable-task-item", () => ({
 	DraggableTaskItem: ({
 		isEditing,
@@ -64,7 +61,6 @@ vi.mock("./draggable-task-item", () => ({
 	),
 }));
 
-// Mock icon button
 vi.mock("@/components/app/buttons/icon-button", () => ({
 	IconButton: ({ children, onClick, ...props }: any) => (
 		<button onClick={onClick} {...props}>
@@ -152,7 +148,6 @@ describe("DraggableTaskList", () => {
 
 			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskReorder={onTaskReorder} />);
 
-			// Should render drag wrapper and add button
 			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
 			expect(screen.getByTestId("add-task-button")).toBeInTheDocument();
 		});
@@ -162,7 +157,6 @@ describe("DraggableTaskList", () => {
 
 			render(<DraggableTaskList {...defaultProps} isEditing={true} onTaskReorder={onTaskReorder} />);
 
-			// Component should render without errors when callback is provided
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		});
 	});
@@ -171,7 +165,6 @@ describe("DraggableTaskList", () => {
 		it("renders properly in read-only mode", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={3} />);
 
-			// Should render drag wrapper but not add button
 			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
 			expect(screen.queryByTestId("add-task-button")).not.toBeInTheDocument();
 		});
@@ -179,7 +172,6 @@ describe("DraggableTaskList", () => {
 		it("handles read-only mode with objective number", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			// Component should render without errors
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		});
 	});
@@ -231,7 +223,6 @@ describe("DraggableTaskList", () => {
 				/>,
 			);
 
-			// Should not throw errors
 			await expect(user.click(screen.getByTestId("add-task-button"))).resolves.not.toThrow();
 			await expect(user.click(screen.getByTestId("update-task-0"))).resolves.not.toThrow();
 			await expect(user.click(screen.getByTestId("delete-task-0"))).resolves.not.toThrow();
@@ -255,7 +246,6 @@ describe("DraggableTaskList", () => {
 		it("passes correct props to DraggableTaskItem", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={true} objectiveIndex={2} />);
 
-			// Check that task items are rendered with correct props
 			expect(screen.getByTestId("task-item-0")).toBeInTheDocument();
 			expect(screen.getByTestId("task-item-1")).toBeInTheDocument();
 			expect(screen.getByTestId("task-item-2")).toBeInTheDocument();
@@ -317,7 +307,6 @@ describe("DraggableTaskList", () => {
 		it("handles reordering operations gracefully", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			// Component should render and be ready for drag operations
 			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
 			expect(screen.getByTestId("task-item-0")).toBeInTheDocument();
 		});
@@ -325,7 +314,6 @@ describe("DraggableTaskList", () => {
 		it("handles edge cases without crashing", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			// Should render successfully even with edge case scenarios
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		});
 	});
@@ -334,14 +322,12 @@ describe("DraggableTaskList", () => {
 		it("integrates with wizard store for persistence", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={5} />);
 
-			// Component should render successfully when configured for store integration
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		});
 
 		it("handles store integration gracefully", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			// Should work with store integration
 			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
 		});
 	});
@@ -365,7 +351,6 @@ describe("DraggableTaskList", () => {
 		it("maintains focus management through drag operations", () => {
 			render(<DraggableTaskList {...defaultProps} />);
 
-			// The drag drop wrapper should be present to handle focus
 			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
 		});
 	});
@@ -382,10 +367,8 @@ describe("DraggableTaskList", () => {
 			render(<DraggableTaskList {...defaultProps} tasks={manyTasks} />);
 			const endTime = performance.now();
 
-			// Should render in reasonable time (less than 100ms)
 			expect(endTime - startTime).toBeLessThan(100);
 
-			// Check that all tasks are rendered
 			expect(screen.getByTestId("task-item-0")).toBeInTheDocument();
 			expect(screen.getByTestId("task-item-49")).toBeInTheDocument();
 		});
@@ -393,7 +376,6 @@ describe("DraggableTaskList", () => {
 		it("handles rapid operations efficiently", () => {
 			render(<DraggableTaskList {...defaultProps} isEditing={false} objectiveNumber={1} />);
 
-			// Should render efficiently even with potential rapid operations
 			expect(screen.getByTestId("drag-drop-wrapper")).toBeInTheDocument();
 			expect(screen.getByTestId("tasks-section")).toBeInTheDocument();
 		});

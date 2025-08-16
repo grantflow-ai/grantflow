@@ -161,7 +161,6 @@ const renumberObjectives = (objectives: Objective[]): Objective[] => {
 	}));
 };
 
-// Helper functions to reduce validateStepNext complexity
 function validateApplicationDetails(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
 	const titleValid = !!(application.title && application.title.trim().length >= MIN_TITLE_LENGTH);
 	const ragSourcesCount = application.grant_template?.rag_sources.length ?? 0;

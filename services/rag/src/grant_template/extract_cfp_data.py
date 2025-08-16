@@ -220,7 +220,6 @@ async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessi
     return rag_sources_data
 
 
-# Pre-compiled regex patterns for text sanitization
 _ESCAPED_CRLF_PATTERN = re.compile(r"\\+r\\+n")
 _ESCAPED_LF_PATTERN = re.compile(r"\\+n")
 _ESCAPED_CR_PATTERN = re.compile(r"\\+r")

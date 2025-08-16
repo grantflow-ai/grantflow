@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.1.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
 	"assist": {
 		"actions": {
 			"source": {
@@ -28,17 +28,16 @@
 			"**/*.tsx",
 			"**/*.json",
 			"**/*.jsonc",
-			"**/*.css",
 			"**/*.md",
-			"!**/functions/**",
-			"!**/node_modules/**",
-			"!**/.next/**",
-			"!**/dist/**",
-			"!**/build/**",
+			"!**/functions",
+			"!**/node_modules",
+			"!**/.next",
+			"!**/dist",
+			"!**/build",
 			"!**/pnpm-lock.yaml",
-			"!**/storybook-static/**",
-			"!**/.git/**",
-			"!**/coverage/**",
+			"!**/storybook-static",
+			"!**/.git",
+			"!**/coverage",
 			"!**/*.min.js",
 			"!**/*.min.css",
 			"!**/api-types.ts"

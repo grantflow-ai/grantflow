@@ -97,7 +97,6 @@ resource "google_service_account_iam_member" "github_actions_token_creator" {
   member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
-# Allow GitHub Actions to act as the App Hosting service account
 resource "google_service_account_iam_member" "github_actions_act_as_apphosting" {
   for_each = toset([
     "grantflow-staging-apphosting"

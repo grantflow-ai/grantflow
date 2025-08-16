@@ -20,7 +20,6 @@ vi.mock("@dnd-kit/sortable", async () => {
 	};
 });
 
-// Mock components
 vi.mock("@/components/app/buttons/icon-button", () => ({
 	IconButton: ({ children, onClick, ...props }: any) => (
 		<button onClick={onClick} {...props}>
@@ -38,7 +37,6 @@ vi.mock("@/components/app/forms/textarea-field", () => ({
 	),
 }));
 
-// Test wrapper component
 function TestWrapper({ children }: { children: React.ReactNode }) {
 	return (
 		<DndContext>
@@ -197,7 +195,6 @@ describe("DraggableTaskItem", () => {
 			);
 
 			expect(screen.queryByRole("button", { name: "Drag to reorder task 1" })).not.toBeInTheDocument();
-			// Should show a disabled state (no interactive drag button)
 			expect(screen.getByTestId("task-display")).toBeInTheDocument();
 		});
 
@@ -208,7 +205,6 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			// Should render the task item properly (internal drag config is implementation detail)
 			expect(screen.getByText("2.4")).toBeInTheDocument();
 		});
 
@@ -219,7 +215,6 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			// Should not show interactive drag button when only one task
 			expect(screen.queryByRole("button", { name: "Drag to reorder task 1" })).not.toBeInTheDocument();
 		});
 	});
@@ -281,7 +276,6 @@ describe("DraggableTaskItem", () => {
 			await user.clear(textarea);
 			await user.type(textarea, "x");
 
-			// Should call onValueChange with taskIndex 0 and the updated content
 			expect(onValueChange).toHaveBeenCalled();
 			expect(onValueChange).toHaveBeenCalledWith(0, expect.any(String));
 		});
@@ -352,9 +346,7 @@ describe("DraggableTaskItem", () => {
 				</TestWrapper>,
 			);
 
-			// Should not have interactive drag button
 			expect(screen.queryByRole("button", { name: "Drag to reorder task 1" })).not.toBeInTheDocument();
-			// But should still show the task content
 			expect(screen.getByTestId("task-display")).toBeInTheDocument();
 		});
 	});
@@ -371,7 +363,6 @@ describe("DraggableTaskItem", () => {
 
 			const textarea = screen.getByLabelText("Task description");
 
-			// Should not throw error
 			await expect(user.type(textarea, " test")).resolves.not.toThrow();
 		});
 
@@ -386,7 +377,6 @@ describe("DraggableTaskItem", () => {
 
 			const deleteButton = screen.getByTestId("delete-task-button");
 
-			// Should not throw error
 			await expect(user.click(deleteButton)).resolves.not.toThrow();
 		});
 
@@ -460,7 +450,6 @@ describe("DraggableTaskItem", () => {
 
 			expect(screen.getByTestId("task-display")).toBeInTheDocument();
 
-			// In editing mode, delete button should be present
 			render(
 				<TestWrapper>
 					<DraggableTaskItem {...defaultProps} isEditing={true} />

@@ -2,7 +2,6 @@ name: Scheduled Smoke Tests
 
 on:
   schedule:
-    # Run daily at 6 AM UTC (12 AM CST)
     - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
@@ -119,12 +118,6 @@ jobs:
           E2E_TESTS: "1"
         continue-on-error: true
 
-      # - name: Run Frontend E2E Tests
-      #   id: frontend_tests
-      #   uses: ./.github/actions/run-frontend-e2e-tests
-      #   with:
-      #     timeout: 300
-      #   continue-on-error: true
 
       - name: Send Discord notification - Results
         if: always()
@@ -179,7 +172,6 @@ jobs:
                }' \
                "$DISCORD_WEBHOOK_URL"
 
-      # Fail the workflow if any tests failed
       - name: Check test results
         if: steps.scraper_tests.outcome == 'failure' || steps.indexer_tests.outcome == 'failure' || steps.rag_tests.outcome == 'failure' || steps.crawler_tests.outcome == 'failure'
         run: |

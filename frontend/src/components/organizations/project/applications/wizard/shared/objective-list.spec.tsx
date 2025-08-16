@@ -142,7 +142,7 @@ describe.sequential("ObjectiveList", () => {
 			const { props } = renderObjectiveList();
 
 			const editButtons = screen.getAllByTestId("card-edit");
-			await user.click(editButtons[1]); // Second objective
+			await user.click(editButtons[1]);
 
 			expect(props.onEdit).toHaveBeenCalledWith(2);
 		});
@@ -152,7 +152,7 @@ describe.sequential("ObjectiveList", () => {
 			const { props } = renderObjectiveList();
 
 			const removeButtons = screen.getAllByTestId("card-remove");
-			await user.click(removeButtons[0]); // First objective
+			await user.click(removeButtons[0]);
 
 			expect(props.onRemove).toHaveBeenCalledWith(props.objectives[0]);
 		});
@@ -162,7 +162,7 @@ describe.sequential("ObjectiveList", () => {
 			const { props } = renderObjectiveList();
 
 			const cancelButtons = screen.getAllByTestId("card-cancel");
-			await user.click(cancelButtons[2]); // Third objective
+			await user.click(cancelButtons[2]);
 
 			expect(props.setEditingObjectiveId).toHaveBeenCalledWith(null);
 		});
@@ -172,7 +172,7 @@ describe.sequential("ObjectiveList", () => {
 			const { props } = renderObjectiveList();
 
 			const saveButtons = screen.getAllByTestId("card-save");
-			await user.click(saveButtons[1]); // Second objective
+			await user.click(saveButtons[1]);
 
 			expect(props.onSave).toHaveBeenCalledWith({
 				...props.objectives[1],

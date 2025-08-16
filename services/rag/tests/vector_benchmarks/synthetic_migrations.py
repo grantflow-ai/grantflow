@@ -91,34 +91,21 @@ class VectorTableModifier:
 
         await self.session.commit()
 
-        # CRITICAL: Invalidate prepared statement cache after schema change
-        # This prevents "cached statement plan is invalid" errors when switching dimensions
         if hasattr(self.session.bind, "invalidate"):
             await self.session.bind.invalidate()
 
-        # CRITICAL: Override SQLAlchemy Vector dimension constraint
-        # The database schema is now changed, but SQLAlchemy still validates
-        # against the hardcoded EMBEDDING_DIMENSIONS constant (384).
-        # We need to temporarily override this for the benchmark.
         import packages.db.src.constants as db_constants
 
         if "EMBEDDING_DIMENSIONS" not in self._original_constants:
             self._original_constants["EMBEDDING_DIMENSIONS"] = db_constants.EMBEDDING_DIMENSIONS
-        # Use type ignore to bypass Final assignment restriction
         db_constants.EMBEDDING_DIMENSIONS = new_dimension  # type: ignore[misc]
 
-        # Override the pgvector dimension validation entirely during the test
         import pgvector
 
-        # Store the original Vector._to_db method for restoration
         if "original_to_db" not in self._original_constants:
             self._original_constants["original_to_db"] = pgvector.Vector._to_db
 
-        # Monkey-patch Vector._to_db to accept any dimension during benchmarks
         def bypass_dimension_check(value: Any, dim: int | None = None) -> str:
-            # Properly format the vector for database storage, ignoring dimension constraint
-
-            # Convert value to list format if needed
             if hasattr(value, "numpy"):
                 result = value.numpy().tolist()
             elif isinstance(value, (list, tuple)):
@@ -128,7 +115,6 @@ class VectorTableModifier:
             else:
                 result = value
 
-            # Convert to string format expected by PostgreSQL pgvector
             if isinstance(result, list):
                 return "[" + ",".join(str(x) for x in result) + "]"
             return str(result)
@@ -212,15 +198,12 @@ class VectorTableModifier:
 
         await self.session.commit()
 
-        # Restore original SQLAlchemy constants
         if self._original_constants:
             import packages.db.src.constants as db_constants
 
             if "EMBEDDING_DIMENSIONS" in self._original_constants:
-                # Use type ignore to bypass Final assignment restriction
                 db_constants.EMBEDDING_DIMENSIONS = self._original_constants["EMBEDDING_DIMENSIONS"]  # type: ignore[misc]
 
-            # Restore the original pgvector _to_db method
             if "original_to_db" in self._original_constants:
                 import pgvector
 

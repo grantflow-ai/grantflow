@@ -17,7 +17,6 @@ export function GenerateCompleteStep() {
 	const hasApplicationText = !!(application?.text && application.text.trim().length > 0);
 	const canGenerate = !!application && !isGeneratingApplication && !hasApplicationText;
 
-	// Show modal when generation is complete
 	useEffect(() => {
 		if (applicationGenerationComplete && !showCompleteModal) {
 			setShowCompleteModal(true);

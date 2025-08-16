@@ -1,6 +1,3 @@
-# Firebase App Hosting Error Monitoring
-
-# Log-based alert policy for critical App Hosting errors
 resource "google_logging_metric" "app_hosting_errors" {
   name   = "app_hosting_error_rate_${var.environment}"
   filter = <<EOF
@@ -19,7 +16,6 @@ EOF
   }
 }
 
-# Alert policy for high error rate
 resource "google_monitoring_alert_policy" "app_hosting_high_error_rate" {
   display_name = "App Hosting High Error Rate - ${title(var.environment)}"
   combiner     = "OR"
@@ -30,7 +26,7 @@ resource "google_monitoring_alert_policy" "app_hosting_high_error_rate" {
 
     condition_threshold {
       filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/app_hosting_error_rate_${var.environment}\""
-      duration        = "300s" # 5 minutes
+      duration        = "300s" 
       comparison      = "COMPARISON_GT"
       threshold_value = 5
 
@@ -50,7 +46,7 @@ resource "google_monitoring_alert_policy" "app_hosting_high_error_rate" {
   notification_channels = [google_monitoring_notification_channel.discord_webhook.name]
 
   alert_strategy {
-    auto_close = "86400s" # 24 hours
+    auto_close = "86400s" 
   }
 
   documentation {
@@ -74,9 +70,7 @@ EOF
   }
 }
 
-# Firebase App Hosting Deployment Failure Alerts
 
-# Log-based metric for Cloud Build failures (App Hosting builds)
 resource "google_logging_metric" "app_hosting_build_failures" {
   name   = "app_hosting_build_failures_${var.environment}"
   filter = <<EOF
@@ -100,7 +94,6 @@ EOF
   }
 }
 
-# Alert policy for build failures
 resource "google_monitoring_alert_policy" "app_hosting_build_failures" {
   display_name = "Firebase App Hosting Build Failures - ${title(var.environment)}"
   combiner     = "OR"
@@ -130,7 +123,7 @@ resource "google_monitoring_alert_policy" "app_hosting_build_failures" {
   notification_channels = [google_monitoring_notification_channel.discord_webhook.name]
 
   alert_strategy {
-    auto_close = "3600s" # Auto-close after 1 hour
+    auto_close = "3600s" 
   }
 
   documentation {
@@ -154,7 +147,6 @@ EOF
   }
 }
 
-# Log-based metric for deployment failures  
 resource "google_logging_metric" "app_hosting_deployment_failures" {
   name   = "app_hosting_deployment_failures_${var.environment}"
   filter = <<EOF
@@ -176,7 +168,6 @@ EOF
   }
 }
 
-# Alert policy for deployment failures
 resource "google_monitoring_alert_policy" "app_hosting_deployment_failures" {
   display_name = "Firebase App Hosting Deployment Failures - ${title(var.environment)}"
   combiner     = "OR"
@@ -206,7 +197,7 @@ resource "google_monitoring_alert_policy" "app_hosting_deployment_failures" {
   notification_channels = [google_monitoring_notification_channel.discord_webhook.name]
 
   alert_strategy {
-    auto_close = "3600s" # Auto-close after 1 hour
+    auto_close = "3600s" 
   }
 
   documentation {
@@ -230,7 +221,6 @@ EOF
   }
 }
 
-# Alert for high memory usage (potential OOM)
 resource "google_monitoring_alert_policy" "app_hosting_high_memory" {
   display_name = "App Hosting High Memory Usage - ${title(var.environment)}"
   combiner     = "OR"
@@ -265,7 +255,6 @@ resource "google_monitoring_alert_policy" "app_hosting_high_memory" {
   }
 }
 
-# Cloud Function to send detailed App Hosting alerts to Discord
 resource "google_cloudfunctions2_function" "app_hosting_alerts_to_discord" {
   name        = "fn-alerts-apphosting-${var.environment}"
   location    = "us-central1"
@@ -305,26 +294,22 @@ resource "google_cloudfunctions2_function" "app_hosting_alerts_to_discord" {
   }
 }
 
-# Pub/Sub topic for App Hosting alerts
 resource "google_pubsub_topic" "app_hosting_alerts" {
   name = "app-hosting-alerts-${var.environment}"
 }
 
-# Service account for App Hosting alerts function
 resource "google_service_account" "app_hosting_alerts_function" {
   account_id   = "fn-apphosting-sa-${var.environment}"
   display_name = "App Hosting Alerts Function"
   description  = "Service account for App Hosting alerts Cloud Function"
 }
 
-# Allow Pub/Sub to invoke the App Hosting alerts function
 resource "google_pubsub_topic_iam_member" "app_hosting_function_subscriber" {
   topic  = google_pubsub_topic.app_hosting_alerts.name
   role   = "roles/pubsub.subscriber"
   member = "serviceAccount:${google_service_account.app_hosting_alerts_function.email}"
 }
 
-# Allow the service account to invoke the Cloud Function
 resource "google_cloudfunctions2_function_iam_member" "app_hosting_alerts_invoker" {
   project        = google_cloudfunctions2_function.app_hosting_alerts_to_discord.project
   location       = google_cloudfunctions2_function.app_hosting_alerts_to_discord.location
@@ -333,14 +318,12 @@ resource "google_cloudfunctions2_function_iam_member" "app_hosting_alerts_invoke
   member         = "serviceAccount:${google_service_account.app_hosting_alerts_function.email}"
 }
 
-# Upload the App Hosting alerts function code
 resource "google_storage_bucket_object" "app_hosting_function_zip" {
   name   = "app-hosting-alert-function-${data.archive_file.app_hosting_function.output_md5}.zip"
   bucket = google_storage_bucket.function_source.name
   source = data.archive_file.app_hosting_function.output_path
 }
 
-# Create the App Hosting alerts function code archive
 data "archive_file" "app_hosting_function" {
   type        = "zip"
   output_path = "${path.module}/app-hosting-alert-function.zip"
@@ -356,7 +339,6 @@ data "archive_file" "app_hosting_function" {
   }
 }
 
-# Discord notification channel
 resource "google_monitoring_notification_channel" "discord_webhook" {
   display_name = "Discord Webhook - ${title(var.environment)}"
   type         = "pubsub"

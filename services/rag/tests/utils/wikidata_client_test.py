@@ -147,13 +147,12 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
     }
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
-    terms = ["term1", "term2", "term3", "term4", "term5", "term6"]  # More than batch size
+    terms = ["term1", "term2", "term3", "term4", "term5", "term6"]
 
     with pytest.MonkeyPatch().context() as m:
         m.setattr("httpx.AsyncClient", lambda **kwargs: mock_httpx_client)
         await get_scientific_context(terms, "test-trace")
 
-    # Should make multiple calls due to batching
     assert mock_httpx_client.get.call_count > 1
 
 

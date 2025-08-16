@@ -125,7 +125,6 @@ export function ProjectDetailClient() {
 			const baseKey = `/organizations/${selectedOrganizationId}/projects/${project.id}/applications`;
 
 			try {
-				// Optimistic update: immediately remove from UI
 				await mutate(
 					swrKey,
 					(currentData: typeof applicationsData) => {
@@ -135,17 +134,14 @@ export function ProjectDetailClient() {
 							applications: currentData.applications.filter((app) => app.id !== applicationToDelete),
 						};
 					},
-					false, // Don't revalidate immediately
+					false,
 				);
 
-				// Remove from project store immediately
 				const { removeApplicationFromProject } = useProjectStore.getState();
 				removeApplicationFromProject(applicationToDelete);
 
-				// Make the API call
 				await deleteApplication(selectedOrganizationId, project.id, applicationToDelete);
 
-				// Revalidate to ensure consistency with server
 				await mutate(swrKey);
 				await mutate(baseKey);
 
@@ -154,7 +150,6 @@ export function ProjectDetailClient() {
 				log.error("delete-application", error);
 				toast.error("Failed to delete application");
 
-				// Revert optimistic update on error
 				await mutate(swrKey);
 			} finally {
 				setApplicationToDelete(null);
@@ -174,7 +169,6 @@ export function ProjectDetailClient() {
 				newTitle,
 			);
 
-			// Revalidate both the current SWR cache key and base key
 			await mutate(
 				`/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`,
 			);
@@ -199,7 +193,6 @@ export function ProjectDetailClient() {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
 
-			// Revalidate both the current SWR cache key and base key
 			await mutate(
 				`/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`,
 			);

@@ -7,7 +7,6 @@ export default defineConfig({
 		url: config.DATABASE_URL,
 	},
 	dialect: "postgresql",
-	// Generate both schema and relations files
 	introspect: {
 		casing: "camel",
 	},

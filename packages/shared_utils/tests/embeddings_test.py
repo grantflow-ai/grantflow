@@ -28,7 +28,6 @@ async def test_generate_embeddings(mocker: MockerFixture) -> None:
         [0.3] * EMBEDDING_DIMENSIONS,
     ]
 
-    # Mock get_embedding_model to return our mock model
     mocker.patch(
         "packages.shared_utils.src.embeddings.get_embedding_model",
         return_value=mock_embedding_model,
@@ -51,7 +50,6 @@ async def test_generate_embeddings_single_string(mocker: MockerFixture) -> None:
     mock_embedding_model = mocker.Mock()
     mock_embedding_model.encode.return_value = [[0.1] * EMBEDDING_DIMENSIONS]
 
-    # Mock get_embedding_model to return our mock model
     mocker.patch(
         "packages.shared_utils.src.embeddings.get_embedding_model",
         return_value=mock_embedding_model,

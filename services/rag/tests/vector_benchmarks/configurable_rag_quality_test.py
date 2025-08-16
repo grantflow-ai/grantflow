@@ -58,7 +58,6 @@ async def create_and_index_rag_source(
     from packages.shared_utils.src.embeddings import generate_embeddings
     from testing.factories import RagFileFactory
 
-    # Create RagFile source
     source = RagFileFactory.build(
         filename=filename,
         text_content=content,
@@ -66,14 +65,13 @@ async def create_and_index_rag_source(
         mime_type="text/markdown",
     )
 
-    # Simple chunking based on max_chars and overlap_chars
     chunks: list[dict[str, Any]] = []
     start = 0
     while start < len(content):
         end = min(start + max_chars, len(content))
         chunk_content = content[start:end]
 
-        if chunk_content.strip():  # Only add non-empty chunks
+        if chunk_content.strip():
             chunks.append(
                 {
                     "content": chunk_content,
@@ -82,20 +80,16 @@ async def create_and_index_rag_source(
                 }
             )
 
-        # Move start position with overlap
         start = end - overlap_chars if end < len(content) else end
         if start >= len(content):
             break
 
     logger.info("Created chunks for indexing", chunk_count=len(chunks), filename=filename)
 
-    # Generate embeddings for each chunk
     chunk_texts: list[str] = [str(chunk["content"]) for chunk in chunks]
     embeddings = await generate_embeddings(chunk_texts, model_name=model_name)
 
-    # Validate embedding dimensions match expected model dimensions
     if embeddings:
-        # Map model names to their expected dimensions
         model_dimensions = {
             "sentence-transformers/all-MiniLM-L12-v2": 384,
             "allenai/scibert_scivocab_uncased": 768,
@@ -110,19 +104,16 @@ async def create_and_index_rag_source(
             )
             logger.info("✅ Embedding dimension validation passed", model=model_name, dimension=actual_dim)
 
-    # Save source to database and create vectors
     async with session_maker() as session:
         from uuid import uuid4
 
         from packages.db.src.tables import GrantApplicationSource, TextVector
 
-        # Save the RagFile source
         session.add(source)
         await session.commit()
         await session.refresh(source)
         source_id = str(source.id)
 
-        # Create and save TextVector records
         text_vectors = []
         for chunk, embedding in zip(chunks, embeddings, strict=False):
             text_vector = TextVector(
@@ -134,7 +125,6 @@ async def create_and_index_rag_source(
             text_vectors.append(text_vector)
             session.add(text_vector)
 
-        # Create GrantApplicationSource link
         grant_app_source = GrantApplicationSource(
             grant_application_id=application_id,
             rag_source_id=source.id,
@@ -143,11 +133,9 @@ async def create_and_index_rag_source(
 
         await session.commit()
 
-        # Refresh all objects to get their database IDs
         for text_vector in text_vectors:
             await session.refresh(text_vector)
 
-    # Create vector DTOs for benchmarking compatibility
     vectors = []
     for text_vector in text_vectors:
         vector_dto = {
@@ -195,20 +183,16 @@ async def cleanup_rag_test_data(async_session_maker: async_sessionmaker[Any]) ->
 
     async def _cleanup(application_id: str, test_filename: str) -> None:
         async with async_session_maker() as session:
-            # Clean up grant application RAG sources
             await session.execute(
                 delete(GrantApplicationSource).where(GrantApplicationSource.grant_application_id == application_id)
             )
 
-            # Find and delete associated RAG sources
             existing_source_ids = list(
                 await session.scalars(select(RagFile.id).where(RagFile.filename == test_filename))
             )
 
             if existing_source_ids:
-                # Delete vectors first (foreign key dependency)
                 await session.execute(delete(TextVector).where(TextVector.rag_source_id.in_(existing_source_ids)))
-                # Then delete RAG sources
                 await session.execute(delete(RagSource).where(RagSource.id.in_(existing_source_ids)))
 
             await session.commit()
@@ -216,7 +200,7 @@ async def cleanup_rag_test_data(async_session_maker: async_sessionmaker[Any]) ->
     return _cleanup
 
 
-@benchmark_vector(timeout=1800)  # 30 minutes for RAG pipeline testing
+@benchmark_vector(timeout=1800)
 async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
     async_session_maker: async_sessionmaker[Any],
     cfp_content: str,
@@ -236,27 +220,22 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
     4. Generates production-grade comparison reports
     5. Provides authentic RAG pipeline evaluation (not simplified metrics)
     """
-    # CRITICAL: Set DATABASE_CONNECTION_STRING so retrieve_documents() uses test database
     os.environ["DATABASE_CONNECTION_STRING"] = db_connection_string
 
-    # Clear any existing session maker reference to force using the test database
     from packages.db.src.connection import engine_ref, session_maker_ref
 
     session_maker_ref.value = None
     engine_ref.value = None
 
-    # EXPLICIT CLEANUP: Clear vectors from previous test runs (debugging issue)
     from packages.db.src.tables import GrantApplicationSource, TextVector
     from sqlalchemy import delete
 
     async with async_session_maker() as cleanup_session:
-        # Delete all existing vectors and application-source links
         await cleanup_session.execute(delete(TextVector))
         await cleanup_session.execute(delete(GrantApplicationSource))
         await cleanup_session.commit()
         logger.info("🧹 Cleared existing vectors for clean test start")
 
-        # CRITICAL: Invalidate prepared statement cache after cleanup
         if hasattr(cleanup_session.bind, "invalidate"):
             await cleanup_session.bind.invalidate()
 
@@ -271,7 +250,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
 
     all_results = []
 
-    # Clear HF authentication to avoid auth issues
     if "HF_TOKEN" in os.environ:
         del os.environ["HF_TOKEN"]
         logger.info("Cleared HF_TOKEN for public model access")
@@ -279,7 +257,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
         del os.environ["HUGGINGFACE_HUB_TOKEN"]
         logger.info("Cleared HUGGINGFACE_HUB_TOKEN for public model access")
 
-    # Scientific queries for RAG evaluation
     scientific_queries = [
         "CAR-T cell therapy melanoma brain metastases CD8+ T cells immunosuppression",
         "TREM2 macrophages tumor microenvironment immune checkpoint inhibitors",
@@ -288,16 +265,13 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
         "brain metastases blood-brain barrier immunotherapy resistance mechanisms",
     ]
 
-    # Test each configuration with the RAG pipeline
     for config_name, config in configurations.items():
         logger.info("🧪 Testing configuration with RAG pipeline", config=config_name)
 
-        # Validate configuration has required fields
         required_fields = ["description", "chunking", "embedding"]
         for field in required_fields:
             assert field in config, f"Missing required field '{field}' in configuration {config_name}"
 
-        # 1. Set up vector dimension using synthetic migrations
         embedding_dim = config["embedding"]["dimension"]
         embedding_model = config["embedding"]["model"]
 
@@ -306,24 +280,19 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             await modifier.modify_vector_dimension(embedding_dim)
             logger.info("Modified vector dimension for RAG testing", dimension=embedding_dim, config=config_name)
 
-            # CRITICAL: Force complete engine disposal to prevent prepared statement errors
             await session.close()
 
-        # Force engine disposal and recreation to clear all cached statements
         from packages.db.src.connection import engine_ref
 
         if engine_ref.value:
             await engine_ref.value.dispose()
             engine_ref.value = None
 
-        # 2. Create and index content using production RAG pipeline
         test_filename = f"rag_quality_{config_name}_{test_id}.md"
         await cleanup_rag_test_data(str(grant_application.id), test_filename)
 
         logger.info("📄 Creating RAG source with indexing pipeline")
 
-        # CRITICAL: Reset vector table dimension for this model before indexing
-        # This ensures the production pipeline can insert vectors of the correct dimension
         logger.info(
             "🔧 Ensuring vector table matches embedding dimension before indexing",
             embedding_dim=embedding_dim,
@@ -335,17 +304,14 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             await modifier.modify_vector_dimension(embedding_dim)
             logger.info("✅ Vector table dimension updated for production indexing", dimension=embedding_dim)
 
-            # CRITICAL: Force complete engine disposal to prevent prepared statement errors
             await session.close()
 
-        # Force engine disposal and recreation to clear all cached statements
         from packages.db.src.connection import engine_ref
 
         if engine_ref.value:
             await engine_ref.value.dispose()
             engine_ref.value = None
 
-        # Use the production indexing pipeline
         chunking_params = config["chunking"]
         source_id, vectors, extracted_text = await create_and_index_rag_source(
             content=cfp_content,
@@ -365,12 +331,10 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             config=config_name,
         )
 
-        # 3. Run performance benchmarks on the vectors
         framework = VectorBenchmarkFramework(async_session_maker)
 
-        # Convert VectorDTO to format expected by framework
         framework_vectors: list[VectorDTO] = []
-        for vector_dto in vectors[:100]:  # Use subset for performance testing
+        for vector_dto in vectors[:100]:
             framework_vector = VectorDTO(
                 chunk=vector_dto["chunk"],
                 embedding=vector_dto["embedding"],
@@ -378,15 +342,12 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             )
             framework_vectors.append(framework_vector)
 
-        # Benchmark vector operations
         insertion_result = await framework.benchmark_vector_insertion(
             framework_vectors, test_name=f"{config_name}_rag_quality_insertion"
         )
 
-        # Generate query vectors for search benchmark
         query_vectors = []
         for _i, query in enumerate(scientific_queries[:5]):
-            # Use embedding model to generate query vectors
             from packages.shared_utils.src.embeddings import generate_embeddings
 
             query_embeddings = await generate_embeddings([query], model_name=embedding_model)
@@ -403,10 +364,8 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             config=config_name,
         )
 
-        # 4. **RAG PIPELINE QUALITY EVALUATION**
         logger.info("🤖 Starting RAG pipeline quality evaluation with AI assessment")
 
-        # Verify vectors are properly linked to the application
         from packages.db.src.connection import get_session_maker
 
         debug_session_maker = get_session_maker()
@@ -433,19 +392,17 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
         for query_idx, scientific_query in enumerate(scientific_queries):
             logger.info("🔍 Testing RAG retrieval", query=scientific_query[:50] + "...", config=config_name)
 
-            # Generate search queries using production pipeline
             retrieval_start = time.time()
             search_queries = await handle_create_search_queries(
                 user_prompt=scientific_query, embedding_model=embedding_model
             )
 
-            # **RETRIEVAL** using production retrieve_documents()
             retrieved_docs = await retrieve_documents(
                 rerank=True,
                 application_id=str(grant_application.id),
                 task_description=scientific_query,
-                search_queries=search_queries[:3],  # Use top 3 queries for efficiency
-                embedding_model=embedding_model,  # Use same model as indexing
+                search_queries=search_queries[:3],
+                embedding_model=embedding_model,
             )
             retrieval_time = time.time() - retrieval_start
             total_retrieval_time += retrieval_time
@@ -458,7 +415,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
                 config=config_name,
             )
 
-            # **AI EVALUATION** using production evaluate_retrieval_relevance()
             if retrieved_docs:
                 logger.info("🧠 Running AI-powered retrieval relevance evaluation")
                 ai_evaluation = await evaluate_retrieval_relevance(scientific_query, retrieved_docs)
@@ -473,17 +429,12 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
                 logger.warning("⚠️ No documents retrieved for query", query_index=query_idx + 1)
                 ai_evaluation = {"avg_relevance": 0.0, "error": "No documents retrieved"}
 
-            # **QUALITY METRICS** - Add missing metrics from e2e tests
-            # 1. Document diversity assessment
             diversity_score = calculate_retrieval_diversity(retrieved_docs) if retrieved_docs else 0.0
 
-            # 2. Query quality assessment
             query_quality_metrics = assess_query_quality(search_queries)
 
-            # 3. AI query generation evaluation
             query_ai_evaluation = await evaluate_query_generation_quality(scientific_query, search_queries)
 
-            # 4. Performance metrics with thresholds
             performance_metrics = calculate_performance_metrics(retrieval_start, time.time(), "retrieval")
 
             logger.info(
@@ -495,7 +446,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
                 config=config_name,
             )
 
-            # Store individual query results
             query_result = {
                 "query": scientific_query,
                 "query_index": query_idx,
@@ -504,7 +454,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
                 "ai_evaluation": ai_evaluation,
                 "relevance_score": ai_evaluation.get("avg_relevance", 0.0),
                 "search_queries_generated": len(search_queries),
-                # New quality metrics from e2e tests
                 "diversity_score": round(diversity_score, 3),
                 "query_quality_metrics": query_quality_metrics,
                 "query_ai_evaluation": query_ai_evaluation,
@@ -512,7 +461,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             }
             rag_quality_results.append(query_result)
 
-        # Calculate aggregate RAG quality metrics
         avg_relevance = (
             sum(r["relevance_score"] for r in rag_quality_results) / len(rag_quality_results)
             if rag_quality_results
@@ -522,7 +470,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
         total_docs_retrieved = sum(r["retrieved_count"] for r in rag_quality_results)
         successful_retrievals = sum(1 for r in rag_quality_results if r["retrieved_count"] > 0)
 
-        # Calculate aggregate metrics for new quality assessments
         avg_diversity_score = (
             sum(r["diversity_score"] for r in rag_quality_results) / len(rag_quality_results)
             if rag_quality_results
@@ -546,7 +493,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             else 0.0
         )
 
-        # Analyze chunk characteristics from indexed content
         chunk_sizes = [len(vector_dto["chunk"]["content"]) for vector_dto in vectors]
         chunk_metrics = {
             "chunk_count": len(vectors),
@@ -558,7 +504,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             "chunk_size_std": calculate_std_dev(chunk_sizes),
         }
 
-        # 5. Compile results with RAG metrics
         result = {
             "test_id": f"{test_id}_{config_name}",
             "timestamp": datetime.now(UTC).isoformat(),
@@ -599,7 +544,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
                 if scientific_queries
                 else 0.0,
                 "avg_relevance_score": round(avg_relevance, 3),
-                # New quality metrics from e2e tests
                 "avg_diversity_score": round(avg_diversity_score, 3),
                 "avg_query_quality_diversity": round(avg_query_quality, 3),
                 "avg_query_ai_score": round(avg_query_ai_score, 3),
@@ -610,7 +554,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
 
         all_results.append(result)
 
-        # Save individual configuration result
         individual_path = rag_quality_results_dir / f"individual_{config_name}_{test_id}.json"
         save_evaluation_results(result, individual_path)
 
@@ -626,24 +569,19 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             total_memory=f"{float(cast('dict[str, Any]', result['performance_metrics'])['total_memory_mb']):.1f}MB",
         )
 
-    # 6. Generate configurable analysis with RAG metrics
     configurable_analysis = generate_rag_quality_analysis(all_results, configurations)
 
-    # Save configurable report (JSON)
     report_path = rag_quality_results_dir / f"configurable_rag_quality_report_{test_id}.json"
     save_evaluation_results(configurable_analysis, report_path)
 
-    # Save markdown summary report
     markdown_path = rag_quality_results_dir / f"configurable_rag_quality_summary_{test_id}.md"
     generate_markdown_summary(configurable_analysis, markdown_path)
 
-    # Save CSV comparison table if available
     if "comprehensive_comparison" in configurable_analysis:
         csv_path = rag_quality_results_dir / f"configurable_rag_quality_comparison_{test_id}.csv"
         with csv_path.open("w") as f:
             f.write(configurable_analysis["comprehensive_comparison"]["csv_table"])
 
-    # Print configurable summary
     print_rag_quality_summary(configurable_analysis)
 
     logger.info(
@@ -654,7 +592,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
         analysis_type="RAG pipeline with AI evaluation",
     )
 
-    # Assertions for production-grade results
     for result in all_results:
         result_config_name: str = str(cast("dict[str, Any]", result["configuration"])["name"])
         result_insertion_throughput: float = float(
@@ -674,7 +611,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             cast("dict[str, Any]", result["rag_quality_evaluation"])["retrieval_success_rate"]
         )
 
-        # Performance assertions
         assert result_insertion_throughput > 1, (
             f"Low insertion throughput for {result_config_name}: {result_insertion_throughput}"
         )
@@ -685,7 +621,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
             f"No chunks generated for {result_config_name}"
         )
 
-        # RAG quality assertions
         assert result_success_rate >= 0.5, f"Low retrieval success rate for {result_config_name}: {result_success_rate}"
         assert result_avg_relevance >= 0, f"Invalid relevance score for {result_config_name}: {result_avg_relevance}"
 
@@ -712,7 +647,6 @@ def extract_model_data_from_results(results: list[dict[str, Any]]) -> dict[str, 
         model_name = result["configuration"]["embedding"]["model"]
         dimension = result["configuration"]["embedding"]["dimension"]
 
-        # Extract all metrics
         perf = result["performance_metrics"]
         chunk = result["chunking_analysis"]
         rag = result["rag_quality_evaluation"]
@@ -721,20 +655,16 @@ def extract_model_data_from_results(results: list[dict[str, Any]]) -> dict[str, 
             "model_name": model_name,
             "dimension": f"{dimension}d",
             "description": result["configuration"]["description"],
-            # Performance Metrics
             "insertion_throughput": round(perf["insertion_benchmark"]["throughput_vectors_per_sec"], 1),
             "search_throughput": round(perf["search_benchmark"]["throughput_queries_per_sec"], 1),
             "memory_usage": round(perf["total_memory_mb"], 2),
-            # Chunking Metrics
             "chunk_count": chunk["chunk_count"],
             "avg_chunk_size": chunk["avg_chunk_size"],
             "chunk_coverage": round(chunk["coverage_ratio"], 3),
-            # RAG Quality Metrics
             "avg_relevance": round(rag["avg_relevance_score"], 3),
             "success_rate": round(rag["retrieval_success_rate"] * 100, 1),
             "avg_retrieval_time": round(rag["avg_retrieval_time_seconds"], 2),
             "total_docs_retrieved": rag["total_documents_retrieved"],
-            # Advanced Quality Metrics (with defaults for missing values)
             "diversity_score": round(rag.get("avg_diversity_score", 0), 3),
             "query_quality": round(rag.get("avg_query_quality_diversity", 0), 3),
             "query_ai_score": round(rag.get("avg_query_ai_score", 0), 3),
@@ -750,7 +680,6 @@ def generate_markdown_comparison_table(model_data: dict[str, dict[str, Any]]) ->
     if not model_data:
         return "❌ No model data available"
 
-    # Get model names for column headers
     models = list(model_data.keys())
 
     return f"""# RAG Model Comparison - Complete Results Table
@@ -826,16 +755,13 @@ def generate_csv_comparison_table(model_data: dict[str, dict[str, Any]]) -> str:
 
     models = list(model_data.keys())
 
-    # CSV Header
     csv = "Metric," + ",".join(models) + "\\n"
 
-    # Model info
     csv += "Model Name," + ",".join(model_data[m]["model_name"].split("/")[-1] for m in models) + "\\n"
     csv += "Dimension," + ",".join(model_data[m]["dimension"] for m in models) + "\\n"
     csv += "Description," + ",".join(f'"{model_data[m]["description"]}"' for m in models) + "\\n"
     csv += "\\n"
 
-    # Performance metrics
     csv += (
         "Insertion Throughput (ops/sec)," + ",".join(str(model_data[m]["insertion_throughput"]) for m in models) + "\\n"
     )
@@ -843,20 +769,17 @@ def generate_csv_comparison_table(model_data: dict[str, dict[str, Any]]) -> str:
     csv += "Memory Usage (MB)," + ",".join(str(model_data[m]["memory_usage"]) for m in models) + "\\n"
     csv += "\\n"
 
-    # Chunking metrics
     csv += "Chunk Count," + ",".join(str(model_data[m]["chunk_count"]) for m in models) + "\\n"
     csv += "Avg Chunk Size," + ",".join(str(model_data[m]["avg_chunk_size"]) for m in models) + "\\n"
     csv += "Coverage Ratio," + ",".join(str(model_data[m]["chunk_coverage"]) for m in models) + "\\n"
     csv += "\\n"
 
-    # Quality metrics
     csv += "Avg Relevance Score," + ",".join(str(model_data[m]["avg_relevance"]) for m in models) + "\\n"
     csv += "Success Rate (%)," + ",".join(str(model_data[m]["success_rate"]) for m in models) + "\\n"
     csv += "Avg Retrieval Time (sec)," + ",".join(str(model_data[m]["avg_retrieval_time"]) for m in models) + "\\n"
     csv += "Total Docs Retrieved," + ",".join(str(model_data[m]["total_docs_retrieved"]) for m in models) + "\\n"
     csv += "\\n"
 
-    # Advanced metrics
     csv += "Diversity Score," + ",".join(str(model_data[m]["diversity_score"]) for m in models) + "\\n"
     csv += "Query Quality Score," + ",".join(str(model_data[m]["query_quality"]) for m in models) + "\\n"
     csv += "Query AI Score," + ",".join(str(model_data[m]["query_ai_score"]) for m in models) + "\\n"
@@ -870,10 +793,8 @@ def generate_rag_quality_analysis(
 ) -> dict[str, Any]:
     """Generate comprehensive analysis comparing all configurations with complete metrics tables."""
 
-    # Generate comprehensive comparison tables (replacing "best performer" approach)
     model_comparison_data = extract_model_data_from_results(results)
 
-    # Dynamic chunking strategy comparison (keep existing logic)
     chunking_comparison = generate_dynamic_chunking_comparison(results)
 
     return {
@@ -906,7 +827,6 @@ def extract_rag_config_summary(result: dict[str, Any]) -> dict[str, Any]:
         "avg_relevance_score": result["rag_quality_evaluation"]["avg_relevance_score"],
         "retrieval_success_rate": result["rag_quality_evaluation"]["retrieval_success_rate"],
         "avg_retrieval_time": result["rag_quality_evaluation"]["avg_retrieval_time_seconds"],
-        # New quality metrics
         "avg_diversity_score": result["rag_quality_evaluation"]["avg_diversity_score"],
         "avg_query_quality_diversity": result["rag_quality_evaluation"]["avg_query_quality_diversity"],
         "avg_query_ai_score": result["rag_quality_evaluation"]["avg_query_ai_score"],
@@ -938,7 +858,7 @@ def calculate_rag_comparison_ratios(config1: dict[str, Any], config2: dict[str, 
         else 0,
         "retrieval_speed_ratio": c1_rag["avg_retrieval_time_seconds"] / c2_rag["avg_retrieval_time_seconds"]
         if c2_rag["avg_retrieval_time_seconds"] > 0
-        else 0,  # Inverted (lower is better)
+        else 0,
     }
 
 
@@ -972,7 +892,6 @@ def create_rag_best_summary(result: dict[str, Any] | None, metric_type: str) -> 
         base["avg_retrieval_time_seconds"] = round(result["rag_quality_evaluation"]["avg_retrieval_time_seconds"], 3)
     elif metric_type == "doc_count":
         base["total_documents_retrieved"] = result["rag_quality_evaluation"]["total_documents_retrieved"]
-    # New quality metrics
     elif metric_type == "diversity":
         base["avg_diversity_score"] = round(result["rag_quality_evaluation"]["avg_diversity_score"], 3)
     elif metric_type == "query_quality":
@@ -990,7 +909,6 @@ def generate_dynamic_chunking_comparison(results: list[dict[str, Any]]) -> dict[
     if len(results) < 2:
         return None
 
-    # Group results by embedding model for fair comparison
     model_groups: dict[str, list[dict[str, Any]]] = {}
     for result in results:
         model_name = result["configuration"]["embedding"]["model"]
@@ -998,16 +916,13 @@ def generate_dynamic_chunking_comparison(results: list[dict[str, Any]]) -> dict[
             model_groups[model_name] = []
         model_groups[model_name].append(result)
 
-    # Find the best model group with multiple chunk sizes for comparison
     best_comparison = None
     for model_name, group_results in model_groups.items():
         if len(group_results) >= 2:
-            # Sort by chunk size to get smallest and largest
             sorted_by_chunk = sorted(group_results, key=lambda r: r["configuration"]["chunking"]["max_chars"])
             smallest_chunks = sorted_by_chunk[0]
             largest_chunks = sorted_by_chunk[-1]
 
-            # Only compare if there's actually a difference in chunk size
             if (
                 smallest_chunks["configuration"]["chunking"]["max_chars"]
                 != largest_chunks["configuration"]["chunking"]["max_chars"]
@@ -1029,7 +944,7 @@ def generate_dynamic_chunking_comparison(results: list[dict[str, Any]]) -> dict[
                     },
                     "comparison_ratios": calculate_rag_comparison_ratios(smallest_chunks, largest_chunks),
                 }
-                break  # Use first valid comparison found
+                break
 
     return best_comparison
 
@@ -1046,7 +961,6 @@ def get_model_display_name(model_name: str, dimension: int) -> str:
         return f"OpenAI Ada ({dimension}d)"
     if "distilbert" in model_name.lower():
         return f"DistilBERT ({dimension}d)"
-    # Extract a readable name from the model path
     model_short = model_name.split("/")[-1] if "/" in model_name else model_name
     return f"{model_short} ({dimension}d)"
 
@@ -1058,7 +972,6 @@ def generate_rag_configurable_insights(
 
     insights = {}
 
-    # Dynamic chunking strategy insights with RAG metrics
     if chunking_comparison and "comparison_ratios" in chunking_comparison:
         ratios = chunking_comparison["comparison_ratios"]
         config_a_size = chunking_comparison["config_a"]["chunk_size"]
@@ -1083,18 +996,15 @@ def generate_rag_configurable_insights(
             f"{config_b_name} ({config_b_size} chars) is {ratios['retrieval_speed_ratio']:.2f}x {'faster' if ratios['retrieval_speed_ratio'] > 1 else 'slower'} at retrieval than {config_a_name} ({config_a_size} chars)"
         )
 
-    # Model dimension insights with RAG metrics
     model_384d = [r for r in results if r["configuration"]["embedding"]["dimension"] == 384]
     model_768d = [r for r in results if r["configuration"]["embedding"]["dimension"] == 768]
 
     if model_384d and model_768d:
-        # Performance comparison
         avg_384_memory = sum(r["performance_metrics"]["total_memory_mb"] for r in model_384d) / len(model_384d)
         avg_768_memory = sum(r["performance_metrics"]["total_memory_mb"] for r in model_768d) / len(model_768d)
         memory_ratio = avg_768_memory / avg_384_memory if avg_384_memory != 0 else 0
         insights["dimension_memory"] = f"768d models use {memory_ratio:.1f}x more memory than 384d models"
 
-        # RAG quality comparison
         avg_384_relevance = sum(r["rag_quality_evaluation"]["avg_relevance_score"] for r in model_384d) / len(
             model_384d
         )
@@ -1106,7 +1016,6 @@ def generate_rag_configurable_insights(
             f"768d models have {relevance_ratio:.2f}x {'better' if relevance_ratio > 1 else 'worse'} RAG relevance than 384d models"
         )
 
-        # Success rate comparison
         avg_384_success = sum(r["rag_quality_evaluation"]["retrieval_success_rate"] for r in model_384d) / len(
             model_384d
         )
@@ -1125,11 +1034,9 @@ def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> No
     """Generate a markdown summary report of the RAG quality benchmark results."""
     markdown_lines = []
 
-    # Build each section
     markdown_lines.extend(_build_header_section(analysis["summary"]))
     markdown_lines.extend(_build_configs_section(analysis))
 
-    # Use comprehensive comparison table instead of "best performer" sections
     if "comprehensive_comparison" in analysis:
         markdown_lines.append("## Comprehensive Model Comparison")
         markdown_lines.append("")
@@ -1140,7 +1047,6 @@ def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> No
     markdown_lines.extend(_build_insights_section(analysis.get("configurable_insights", {})))
     markdown_lines.extend(_build_footer_section(analysis["summary"]))
 
-    # Write to file
     with output_path.open("w") as f:
         f.write("\n".join(markdown_lines))
 
@@ -1213,7 +1119,6 @@ def _build_rag_quality_section(rag_best: dict[str, Any]) -> list[str]:
         "best_retrieval_success_rate": "Best Retrieval Success Rate",
         "fastest_retrieval_time": "Best Retrieval Time",
         "most_documents_retrieved": "Best Document Retrieval",
-        # New quality metrics
         "best_diversity_score": "Best Document Diversity",
         "best_query_quality": "Best Query Quality",
         "best_query_ai_score": "Best Query AI Score",
@@ -1232,7 +1137,6 @@ def _format_best_section(title: str, best: dict[str, Any]) -> list[str]:
     """Format a best result section with metrics."""
     lines = [f"### {title}", f"**Best**: {best['config']} - {best['description']}"]
 
-    # Add metrics based on what's available
     if "throughput" in best:
         lines.append(f"- **Throughput**: {best['throughput']:.2f} ops/sec")
     if "total_memory_mb" in best:
@@ -1249,7 +1153,6 @@ def _format_best_section(title: str, best: dict[str, Any]) -> list[str]:
         lines.append(f"- **Retrieval Time**: {best['avg_retrieval_time_seconds']:.3f}s")
     if "total_documents_retrieved" in best:
         lines.append(f"- **Documents Retrieved**: {best['total_documents_retrieved']:,}")
-    # New quality metrics
     if "avg_diversity_score" in best:
         lines.append(f"- **Diversity Score**: {best['avg_diversity_score']:.3f}")
     if "avg_query_quality_diversity" in best:
@@ -1280,7 +1183,6 @@ def _build_comparison_section(chunking_analysis: dict[str, Any] | None) -> list[
     config_a = chunking_analysis["config_a"]
     config_b = chunking_analysis["config_b"]
 
-    # Build comparison table
     header_a = f"{config_a['config_name']} ({config_a['chunk_size']} chars)"
     header_b = f"{config_b['config_name']} ({config_b['chunk_size']} chars)"
     lines.extend(
@@ -1290,7 +1192,6 @@ def _build_comparison_section(chunking_analysis: dict[str, Any] | None) -> list[
         ]
     )
 
-    # Add comparison rows
     lines.extend(
         _build_comparison_rows(config_a["metrics"], config_b["metrics"], chunking_analysis["comparison_ratios"])
     )

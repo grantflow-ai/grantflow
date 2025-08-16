@@ -7,7 +7,6 @@ from packages.shared_utils.src.tracing import start_span_with_trace_id
 
 logger = logging.getLogger(__name__)
 
-# Constants instead of environment variables
 WIKIDATA_BASE_URL = "https://query.wikidata.org/sparql"
 WIKIDATA_BATCH_SIZE = 5
 WIKIDATA_TIMEOUT = 30

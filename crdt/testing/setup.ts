@@ -12,13 +12,13 @@ const originalConsole = {
 beforeAll(() => {
 	// Suppress console output during tests for cleaner test output
 	vi.spyOn(console, "warn").mockImplementation(() => {
-		// Intentionally empty
+		// ~keep Intentionally empty
 	});
 	vi.spyOn(console, "error").mockImplementation(() => {
-		// Intentionally empty
+		// ~keep Intentionally empty
 	});
 	vi.spyOn(console, "log").mockImplementation(() => {
-		// Intentionally empty
+		// ~keep Intentionally empty
 	});
 });
 
@@ -28,7 +28,6 @@ afterEach(() => {
 });
 
 afterAll(() => {
-	// Restore original console methods
 	console.warn = originalConsole.warn;
 	console.error = originalConsole.error;
 	console.log = originalConsole.log;

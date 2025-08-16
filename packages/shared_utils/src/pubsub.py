@@ -370,6 +370,14 @@ async def publish_notification[T](
             "FRONTEND_NOTIFICATIONS_PUBSUB_TOPIC", fallback="frontend-notifications"
         ),
     )
+
+    logger.debug(
+        "Publishing notification",
+        topic_path=topic_path,
+        notification_event=event,
+        parent_id=str(parent_id),
+        trace_id=trace_id,
+    )
     try:
         websocket_message = WebsocketMessage(
             event=event,

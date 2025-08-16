@@ -48,19 +48,16 @@ export default defineConfig({
 		globals: true,
 		hookTimeout: 30_000,
 		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
-		// Enable isolation for maximum test stability
 		isolate: true,
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
-		// Use single-threaded execution for maximum stability
 		pool: "forks",
 		poolOptions: {
 			forks: {
 				singleFork: true,
 			},
 		},
-		// Sequential execution for maximum test stability
 		sequence: {
 			concurrent: false,
 			shuffle: false,

@@ -51,9 +51,7 @@ describe("HealthCheckExtension", () => {
 					request: mockRequest as IncomingMessage,
 					response: mockResponse as ServerResponse,
 				} as any);
-			} catch {
-				// Expected error throw
-			}
+			} catch {}
 
 			expect(logger.debug).toHaveBeenCalledWith("health_check_success");
 		});
@@ -106,9 +104,7 @@ describe("HealthCheckExtension", () => {
 					request: mockRequest as IncomingMessage,
 					response: mockResponse as ServerResponse,
 				} as any);
-			} catch {
-				// Expected error throw
-			}
+			} catch {}
 
 			expect(logger.error).toHaveBeenCalledWith(
 				{ error: "Database connection failed" },
@@ -125,9 +121,7 @@ describe("HealthCheckExtension", () => {
 					request: mockRequest as IncomingMessage,
 					response: mockResponse as ServerResponse,
 				} as any);
-			} catch {
-				// Expected error throw
-			}
+			} catch {}
 
 			expect(logger.debug).toHaveBeenCalledWith({ ready: true }, "readiness_check_completed");
 		});

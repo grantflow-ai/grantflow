@@ -5,7 +5,6 @@ vars:
 
 tasks:
   # ==============================================================================
-  # MAIN COMMANDS - Primary developer workflows
   # ==============================================================================
 
   setup:
@@ -139,9 +138,6 @@ tasks:
     cmds:
       - uvx ai-rulez generate --recursive
 
-  # ==============================================================================
-  # DATABASE COMMANDS
-  # ==============================================================================
 
   db:up:
     desc: Start the local PostgreSQL database container if not already running
@@ -267,7 +263,6 @@ tasks:
         vars:
           SECONDS: "2"
       - echo "Dropping the development database..."
-      # Terminate existing connections
       - cmd: |
           docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "
             SELECT pg_terminate_backend(pid)
@@ -275,11 +270,8 @@ tasks:
             WHERE datname = '{{.DB_NAME}}' AND pid <> pg_backend_pid();
           " || true
         ignore_error: true
-      # Drop the database
       - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "DROP DATABASE IF EXISTS {{.DB_NAME}};"
-      # Recreate the database
       - docker compose exec -T db psql -U {{.DB_USER}} -d postgres -c "CREATE DATABASE {{.DB_NAME}} OWNER {{.DB_USER}};"
-      # Create required extensions
       - echo "Creating database extensions..."
       - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
       - docker compose exec -T db psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "CREATE EXTENSION IF NOT EXISTS \"vector\";"
@@ -292,9 +284,6 @@ tasks:
       - task: db:migrate
       - echo "✅ Database reset complete!"
 
-  # ==============================================================================
-  # FRONTEND COMMANDS
-  # ==============================================================================
 
   frontend:install:
     desc: Install dependencies for both frontend folders using pnpm workspace
@@ -367,9 +356,6 @@ tasks:
     cmds:
       - pnpm test:coverage
 
-  # ==============================================================================
-  # EDITOR COMMANDS - Specific to editor/ folder
-  # ==============================================================================
 
   editor:dev:
     desc: Start the editor development server
@@ -407,9 +393,6 @@ tasks:
     cmds:
       - pnpm run storybook
 
-  # ==============================================================================
-  # CRDT COMMANDS - Specific to crdt/ folder
-  # ==============================================================================
 
   crdt:dev:
     desc: Start the CRDT server in development mode with hot-reloading
@@ -453,9 +436,6 @@ tasks:
     cmds:
       - pnpm run lint
 
-  # ==============================================================================
-  # BACKEND COMMANDS
-  # ==============================================================================
 
   backend:install:
     desc: Install services dependencies using uv
@@ -489,9 +469,6 @@ tasks:
       - task: crdt:test
       - task: _packages:test
 
-  # ==============================================================================
-  # SERVICE COMMANDS - Individual service management
-  # ==============================================================================
 
   service:backend:dev:
     desc: Start the backend API service in development mode with hot-reloading
@@ -699,13 +676,7 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
-  # ==============================================================================
-  # CRDT SERVER COMMANDS - Node.js service management
-  # ==============================================================================
 
-  # ==============================================================================
-  # EMULATOR COMMANDS - Standalone emulator management
-  # ==============================================================================
 
   emulator:pubsub:up:
     desc: Start the Google Cloud Pub/Sub emulator for local development
@@ -717,9 +688,6 @@ tasks:
     cmds:
       - docker compose --profile gcs up
 
-  # ==============================================================================
-  # LINTING COMMANDS - Code quality and formatting
-  # ==============================================================================
 
   lint:all:
     desc: Run all linters and formatters on all files
@@ -835,7 +803,6 @@ tasks:
     cmds:
       - pnpm typecheck
 
-  # Terraform linting tasks (specialized - not included in lint:all)
   lint:terraform:
     desc: Run all Terraform linters (tofu validate, tflint, trivy)
     deps:
@@ -880,9 +847,6 @@ tasks:
       - echo "Running trivy on terraform directory..."
       - trivy config ./terraform
 
-  # ==============================================================================
-  # GITHUB ACTIONS - GitHub workflow commands
-  # ==============================================================================
 
   gh:deploy:backend:
     desc: Deploy backend service to Cloud Run via GitHub Actions
@@ -909,9 +873,6 @@ tasks:
     cmds:
       - gh workflow run "Deploy to Cloud Run" --ref development -f service=scraper -f use_latest=true
 
-  # ==============================================================================
-  # CLOUD FUNCTIONS - Cloud Functions development and deployment
-  # ==============================================================================
 
   cloud-functions:generate-requirements:
     desc: Generate requirements.txt files from pyproject.toml for cloud functions
@@ -937,9 +898,6 @@ tasks:
       - uv run pytest cloud_functions/tests -v
       - echo "✅ Cloud functions tests completed!"
 
-  # ==============================================================================
-  # INTERNAL TASKS - Not intended for direct use
-  # ==============================================================================
 
   _dev:check:
     internal: true

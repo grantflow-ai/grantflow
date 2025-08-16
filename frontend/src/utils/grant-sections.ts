@@ -330,7 +330,6 @@ const calculateMainToMainDropIndicator = (
 	}
 
 	if ((hasActiveSubSections || hasOverSubSections) && activeIndex > overIndex) {
-		// Check if active main is immediately next to over main (no other main sections between them)
 		const mainSectionsBetween = sections
 			.slice(overIndex + 1, activeIndex)
 			.filter((section) => section.parent_id === null);

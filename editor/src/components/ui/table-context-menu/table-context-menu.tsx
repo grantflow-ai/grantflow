@@ -21,7 +21,6 @@ export const TableContextMenu = React.forwardRef<HTMLDivElement, TableContextMen
 
 	const handleContextMenu = React.useCallback(
 		(event: React.MouseEvent) => {
-			// Check if the target is a table element
 			const target = event.target as HTMLElement;
 			const tableElement = target.closest("table");
 

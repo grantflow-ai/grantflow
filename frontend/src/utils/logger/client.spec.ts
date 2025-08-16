@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// We don't want real pretty terminal in tests; stub transports by mocking module
 vi.mock("@loglayer/transport-simple-pretty-terminal", () => ({
 	getSimplePrettyTerminal: () => ({}) as any,
 }));
-
-// Ensure singleton is reset between tests by re-importing module through vi.hoisted mocks
 
 describe("logger/client", () => {
 	beforeEach(() => {

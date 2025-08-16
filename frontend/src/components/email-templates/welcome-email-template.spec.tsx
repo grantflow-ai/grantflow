@@ -27,7 +27,6 @@ describe("WelcomeEmailTemplate", () => {
 	it("includes project name with proper formatting", async () => {
 		const html = await render(<WelcomeEmailTemplate {...mockProps} />);
 
-		// Check that the project name appears with quotes (even if there are comments in between)
 		expect(html).toContain(mockProps.projectName);
 		expect(html).toContain("&quot;");
 	});
