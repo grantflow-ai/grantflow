@@ -176,7 +176,9 @@ describe("CreateProjectForm", () => {
 	it("should show loading state during form submission", async () => {
 		const user = userEvent.setup();
 
-		mockCreateProject.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+		mockCreateProject.mockImplementation(
+			() => new Promise((resolve) => setTimeout(() => resolve(ProjectFactory.build()), 100)),
+		);
 
 		render(<CreateProjectForm {...defaultProps} />);
 
