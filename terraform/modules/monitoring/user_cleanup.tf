@@ -66,7 +66,41 @@ resource "google_project_iam_member" "entity_cleanup_permissions" {
 
 resource "google_pubsub_topic" "entity_cleanup_schedule" {
   name = "entity-cleanup-schedule"
+  
+  message_retention_duration = "86400s"  # 1 day
 
+  labels = {
+    environment = var.environment
+    purpose     = "entity_cleanup"
+  }
+}
+
+# Using centralized monitoring DLQ from main.tf
+
+resource "google_pubsub_subscription" "entity_cleanup_subscription" {
+  name  = "entity-cleanup-subscription"
+  topic = google_pubsub_topic.entity_cleanup_schedule.name
+  
+  push_config {
+    push_endpoint = google_cloudfunctions2_function.entity_cleanup.service_config[0].uri
+    
+    oidc_token {
+      service_account_email = google_service_account.entity_cleanup.email
+    }
+  }
+  
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
+    max_delivery_attempts = 5
+  }
+  
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+  
+  ack_deadline_seconds = 600  # 10 minutes for cleanup operations
+  
   labels = {
     environment = var.environment
     purpose     = "entity_cleanup"
@@ -148,6 +182,8 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
     }))
   }
 
+  # ~keep The scheduler job continues below
+
   retry_config {
     retry_count          = 3
     max_retry_duration   = "60s"
@@ -210,6 +246,8 @@ resource "google_logging_metric" "entity_cleanup_operations" {
   }
 }
 
+
+# IAM permission for centralized DLQ is handled in main.tf
 
 output "entity_cleanup_function_name" {
   description = "Name of the entity cleanup Cloud Function"

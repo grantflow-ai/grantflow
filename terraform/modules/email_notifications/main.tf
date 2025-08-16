@@ -83,6 +83,33 @@ resource "google_pubsub_topic" "email_notifications" {
   }
 }
 
+resource "google_pubsub_topic" "email_notifications_dlq" {
+  name = "email-notifications-dlq"
+
+  message_retention_duration = "604800s"  # 7 days
+
+  labels = {
+    environment = var.environment
+    purpose     = "dead-letter-queue"
+  }
+}
+
+resource "google_pubsub_subscription" "email_notifications_dlq_subscription" {
+  name  = "email-notifications-dlq-subscription"
+  topic = google_pubsub_topic.email_notifications_dlq.name
+
+  ack_deadline_seconds = 60
+
+  message_retention_duration = "604800s"  # 7 days
+
+  retain_acked_messages = true
+
+  labels = {
+    environment = var.environment
+    purpose     = "dead-letter-monitoring"
+  }
+}
+
 resource "google_pubsub_topic_iam_member" "rag_publisher" {
   topic  = google_pubsub_topic.email_notifications.name
   role   = "roles/pubsub.publisher"
