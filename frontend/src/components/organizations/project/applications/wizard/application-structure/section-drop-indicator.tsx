@@ -46,8 +46,8 @@ export function SectionWithDropIndicators({ children, section }: SectionWithDrop
 
 		const checkDragState = () => {
 			const element: HTMLElement | null = document.querySelector(`[data-sortable-id="${section.id}"]`);
-			const isOver = element ? Object.hasOwn(element.dataset, "dragOver") : false;
-			const isWide = element ? element.dataset.dragWide === "true" : false;
+			const isOver = element?.dataset ? Object.hasOwn(element.dataset, "dragOver") : false;
+			const isWide = element?.dataset ? element.dataset.dragWide === "true" : false;
 			setIsDraggedOver(isOver);
 			setIsDraggedWide(isWide);
 		};

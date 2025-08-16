@@ -157,6 +157,13 @@ describe("CreateProjectForm", () => {
 		await user.click(submitButton);
 
 		await waitFor(() => {
+			expect(mockCreateProject).toHaveBeenCalledWith("org-123", {
+				description: "",
+				name: "Test Project",
+			});
+		});
+
+		await waitFor(() => {
 			expect(toast.error).toHaveBeenCalledWith("An error occurred while creating the project.");
 		});
 

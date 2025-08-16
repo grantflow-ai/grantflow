@@ -104,7 +104,9 @@ describe.sequential("WaitlistForm", () => {
 			);
 		});
 
-		expect(mockError).toHaveBeenCalledWith("Please check your information and try again.");
+		await waitFor(() => {
+			expect(mockError).toHaveBeenCalledWith("Please check your information and try again.");
+		});
 	});
 
 	it("should show loading state during form submission", async () => {

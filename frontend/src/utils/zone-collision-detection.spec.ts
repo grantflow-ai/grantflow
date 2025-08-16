@@ -110,7 +110,7 @@ describe("createZoneCollisionDetection", () => {
 			expect(result).toEqual([]);
 		});
 
-		it("returns default collisions when active section is a subsection", () => {
+		it("adds zone data when active section is a subsection", () => {
 			const subsection = GrantSectionFactory.build({ parent_id: "main-section" });
 			const args = createMockArgs({
 				active: {
@@ -119,6 +119,7 @@ describe("createZoneCollisionDetection", () => {
 				} as {
 					data: DataRef<{ section: GrantSection }>;
 				} & Active,
+				pointerCoordinates: { x: 600, y: 230 }, // 50% - child zone
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -126,8 +127,10 @@ describe("createZoneCollisionDetection", () => {
 			const collisionDetection = createZoneCollisionDetection();
 			const result = collisionDetection(args);
 
-			expect(result).toBe(defaultCollisions);
-			expect(result[0].data).not.toHaveProperty("zone");
+			expect(result[0].data).toMatchObject({
+				zone: "child",
+				zonePercent: 50,
+			});
 		});
 
 		it("returns default collisions when no rect found for primary collision", () => {
