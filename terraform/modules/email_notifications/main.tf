@@ -59,12 +59,12 @@ resource "google_service_account" "email_notification" {
 
 resource "google_project_iam_member" "email_notification_permissions" {
   for_each = toset([
-    "roles/cloudsql.client",             
-    "roles/logging.logWriter",           
-    "roles/monitoring.metricWriter",     
-    "roles/cloudtrace.agent",            
-    "roles/storage.objectViewer",        
-    "roles/secretmanager.secretAccessor" 
+    "roles/cloudsql.client",
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/cloudtrace.agent",
+    "roles/storage.objectViewer",
+    "roles/secretmanager.secretAccessor"
   ])
 
   project = var.project_id
@@ -75,7 +75,7 @@ resource "google_project_iam_member" "email_notification_permissions" {
 resource "google_pubsub_topic" "email_notifications" {
   name = "email-notifications"
 
-  message_retention_duration = "86400s" 
+  message_retention_duration = "86400s"
 
   labels = {
     environment = var.environment
@@ -110,7 +110,7 @@ resource "google_cloudfunctions2_function" "email_notification" {
     max_instance_count               = 10
     min_instance_count               = 0
     available_memory                 = "512M"
-    timeout_seconds                  = 300 
+    timeout_seconds                  = 300
     max_instance_request_concurrency = 1
 
     environment_variables = {

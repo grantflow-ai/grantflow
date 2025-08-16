@@ -206,6 +206,7 @@ class JobManager:
         current_pipeline_stage: int | None = None,
         total_pipeline_stages: int | None = None,
     ) -> None:
+        logger.debug("Adding notification to job", job_id=str(self.job_id), message=message, notification_event=event)
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 

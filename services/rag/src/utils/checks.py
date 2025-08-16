@@ -28,6 +28,7 @@ async def verify_rag_sources_indexed(
     entity_type: type[GrantApplication | GrantTemplate],
     total_sleep_duration: int = 0,
 ) -> None:
+    logger.debug("Verifying rag sources indexed", parent_id=str(parent_id))
     async with session_maker() as session:
         try:
             if entity_type == GrantApplication:
@@ -48,11 +49,16 @@ async def verify_rag_sources_indexed(
                         .where(GrantTemplateSource.grant_template_id == parent_id)
                     )
                 )
-
+        except SQLAlchemyError as e:
+            raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
+        else:
             if any(
                 source.indexing_status in (SourceIndexingStatusEnum.INDEXING, SourceIndexingStatusEnum.CREATED)
                 for source in rag_sources
             ):
+                logger.debug(
+                    "Rag sources indexing", parent_id=str(parent_id), total_sleep_duration=total_sleep_duration
+                )
                 await publish_notification(
                     parent_id=parent_id,
                     event=NotificationEvents.INDEXING_IN_PROGRESS,
@@ -72,6 +78,13 @@ async def verify_rag_sources_indexed(
                     source for source in rag_sources if source.indexing_status == SourceIndexingStatusEnum.FAILED
                 ]
                 total_sources = len(list(rag_sources))
+
+                logger.debug(
+                    "Rag sources indexing failed",
+                    parent_id=str(parent_id),
+                    failed_sources=len(failed_sources),
+                    total_sources=total_sources,
+                )
 
                 await publish_notification(
                     parent_id=parent_id,
@@ -97,6 +110,3 @@ async def verify_rag_sources_indexed(
                         "error_type": "indexing_failure",
                     },
                 )
-
-        except SQLAlchemyError as e:
-            raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e

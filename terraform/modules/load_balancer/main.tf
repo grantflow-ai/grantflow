@@ -11,7 +11,7 @@ terraform {
 
 locals {
   backend_service_name = split("-", split("//", var.backend_url)[1])[0]
-  backend_region       = "us-central1" 
+  backend_region       = "us-central1"
 }
 
 resource "google_compute_region_network_endpoint_group" "backend_neg" {
@@ -60,7 +60,7 @@ resource "google_compute_backend_service" "backend" {
 
   log_config {
     enable      = true
-    sample_rate = var.environment == "staging" ? 0.1 : 1.0 
+    sample_rate = var.environment == "staging" ? 0.1 : 1.0
   }
 }
 
@@ -82,7 +82,7 @@ resource "google_compute_backend_service" "crdt_server_backend" {
 
   log_config {
     enable      = true
-    sample_rate = var.environment == "staging" ? 0.1 : 1.0 
+    sample_rate = var.environment == "staging" ? 0.1 : 1.0
   }
 }
 

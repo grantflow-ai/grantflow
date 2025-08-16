@@ -51,16 +51,16 @@ module "database" {
   region                = var.region
   zone                  = var.zone
   instance_name         = "grantflow-staging"
-  tier                  = "db-custom-1-3840" 
-  disk_size             = 10                 
-  disk_type             = "PD_HDD"           
-  backup_enabled        = true               
-  high_availability     = false              
-  backup_retention      = 7                  
-  backup_location       = "us"               
-  enable_query_insights = true               
-  log_slow_queries      = false              
-  deletion_protection   = false              
+  tier                  = "db-custom-1-3840"
+  disk_size             = 10
+  disk_type             = "PD_HDD"
+  backup_enabled        = true
+  high_availability     = false
+  backup_retention      = 7
+  backup_location       = "us"
+  enable_query_insights = true
+  log_slow_queries      = false
+  deletion_protection   = false
   network_id            = module.network.network_id
 }
 
@@ -68,11 +68,11 @@ module "storage" {
   source                = "../../modules/storage"
   bucket_name           = "grantflow-staging-uploads"
   environment           = var.environment
-  location              = "US"  
-  retention_days        = 7     
-  enable_versioning     = false 
-  enable_lifecycle      = true  
-  uniform_bucket_access = true  
+  location              = "US"
+  retention_days        = 7
+  enable_versioning     = false
+  enable_lifecycle      = true
+  uniform_bucket_access = true
 }
 
 module "cloud_run" {
@@ -84,10 +84,10 @@ module "cloud_run" {
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
-  min_instances                 = 1     
-  max_instances                 = 5     
-  cpu_limit                     = "1"   
-  memory_limit                  = "1Gi" 
+  min_instances                 = 1
+  max_instances                 = 5
+  cpu_limit                     = "1"
+  memory_limit                  = "1Gi"
 
   indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
@@ -103,13 +103,13 @@ module "cloud_run" {
   rag_memory_limit = "2Gi" # ~keep Reduced memory since processing one URL at a time
   rag_cpu_limit    = "1"   # ~keep Single CPU for single URL processing
 
-  crdt_server_memory_limit = "2Gi" 
+  crdt_server_memory_limit = "2Gi"
 
   discord_webhook_url   = var.discord_webhook_url
-  enable_cpu_throttling = true  
-  enable_http2          = false 
-  request_timeout       = 300   
-  concurrency_limit     = 80    
+  enable_cpu_throttling = true
+  enable_http2          = false
+  request_timeout       = 300
+  concurrency_limit     = 80
 
 }
 
@@ -118,9 +118,9 @@ module "pubsub" {
   project_id                           = var.project_id
   region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
-  message_retention_duration           = "86400s" 
-  ack_deadline_seconds                 = 600      # ~keep 10 minutes for file processing
-  enable_dead_letter                   = true     # ~keep Enable DLQ for better error handling
+  message_retention_duration           = "86400s"
+  ack_deadline_seconds                 = 600  # ~keep 10 minutes for file processing
+  enable_dead_letter                   = true # ~keep Enable DLQ for better error handling
 
   # ~keep Optimized retry for fanout pattern
   indexer_retry_minimum_backoff = "10s"  # ~keep Quick first retry
@@ -138,7 +138,7 @@ module "scheduler" {
   environment                             = var.environment
   scraper_url                             = module.cloud_run.scraper_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
-  timezone                                = "Europe/Berlin" 
+  timezone                                = "Europe/Berlin"
 }
 
 module "monitoring" {
@@ -146,13 +146,13 @@ module "monitoring" {
   project_id             = var.project_id
   environment            = var.environment
   discord_webhook_url    = var.discord_webhook_url
-  enable_uptime_checks   = false 
-  enable_error_reporting = true  
+  enable_uptime_checks   = false
+  enable_error_reporting = true
   alert_thresholds = {
-    error_rate_threshold = 0.10  
-    latency_threshold    = 10000 
-    memory_threshold     = 0.95  
-    cpu_threshold        = 0.90  
+    error_rate_threshold = 0.10
+    latency_threshold    = 10000
+    memory_threshold     = 0.95
+    cpu_threshold        = 0.90
   }
 }
 
@@ -168,9 +168,9 @@ module "email_notifications" {
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend"
   description = "Frontend analytics and user data"
-  location    = "US" 
+  location    = "US"
 
-  default_partition_expiration_ms = 5184000000 
+  default_partition_expiration_ms = 5184000000
 
   labels = {
     environment = var.environment
@@ -288,8 +288,8 @@ module "load_balancer" {
   backend_url        = module.cloud_run.backend_url
   domain             = "staging-api.grantflow.ai"
   crdt_server_domain = "staging-crdt.grantflow.ai"
-  enable_ssl         = true  
-  enable_cdn         = false 
+  enable_ssl         = true
+  enable_cdn         = false
 }
 
 output "load_balancer_ip" {
@@ -307,7 +307,7 @@ module "app_hosting" {
   project_id      = var.project_id
   region          = var.region
   environment     = var.environment
-  firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" 
+  firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a"
   image_tag       = var.image_tag
 
   secret_ids = [

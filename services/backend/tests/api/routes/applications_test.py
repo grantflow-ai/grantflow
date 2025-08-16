@@ -239,7 +239,6 @@ async def test_generate_application_success(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     mock_publish_rag_task.assert_called_once_with(
-        logger=ANY,
         parent_type="grant_application",
         parent_id=grant_application.id,
         trace_id=ANY,
@@ -1003,7 +1002,6 @@ async def test_generate_application_status_transition_to_generating(
     assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
 
     mock_publish_rag_task.assert_called_once_with(
-        logger=ANY,
         parent_type="grant_application",
         parent_id=grant_application.id,
         trace_id=ANY,
