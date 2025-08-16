@@ -23,8 +23,8 @@ tasks:
         msg: "Claude CLI is not installed or not in PATH. Please install Claude Desktop first."
     cmds:
       - claude mcp add --transport sse linear-server https://mcp.linear.app/sse
-      - claude mcp add playwright npx -y @playwright/mcp@latest
-      - claude mcp add ai-rulez npx -y @ai-rulez@latest mcp
+      - claude mcp add playwright "npx -y @playwright/mcp@latest"
+      - claude mcp add ai-rulez "npx -y @ai-rulez/mcp@latest mcp"
 
   dev:
     desc: Start all backend services in development mode (database, Pub/Sub, backend, indexer, crawler, rag, crdt)

@@ -967,13 +967,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		set({ application: updatedApplication });
 
 		try {
-			log.info("updateGrantSections: Calling API", {
-				applicationId: application.id,
-				projectId: application.project_id,
-				sectionCount: sections.length,
-				templateId: application.grant_template.id,
-			});
-
 			const { selectedOrganizationId } = useOrganizationStore.getState();
 			if (!selectedOrganizationId) {
 				throw new Error("No organization selected");

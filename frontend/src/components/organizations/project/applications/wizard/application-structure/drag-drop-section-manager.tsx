@@ -546,10 +546,17 @@ export function DragDropSectionManager({
 				};
 			},
 			onDragMove: (event) => {
-				const [collision] = event.collisions ?? [];
+				if (!event.collisions || event.collisions.length === 0) {
+					return;
+				}
 
-				// Only update if collision exists and has zone information
-				if (collision?.data && ("zone" in collision.data || "zonePercent" in collision.data)) {
+				const [collision] = event.collisions;
+
+				// Check if collision has zone information
+				if (
+					collision.data &&
+					(Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))
+				) {
 					const zone = (collision.data.zone as null | undefined | ZoneType) ?? null;
 					const zonePercent = (collision.data.zonePercent as null | number | undefined) ?? null;
 
