@@ -6,26 +6,17 @@ import { log } from "@/utils/logger/client";
 /**
  * Determines the new parent ID when moving sections in drag-and-drop operations
  * @param overSection The section being dragged over
- * @param zone The zone type (for main-to-main operations)
+ * @param zone The zone type (required for main-to-main operations)
  * @returns The new parent ID for the active section
  */
-export const determineNewParentId = (overSection: GrantSection, zone?: null | ZoneType): null | string => {
+export const determineNewParentId = (overSection: GrantSection, zone: ZoneType): null | string => {
 	const overIsChild = overSection.parent_id !== null;
 
 	if (overIsChild) {
 		return overSection.parent_id;
 	}
 
-	if (zone !== undefined) {
-		if (zone === null) {
-			throw new Error(
-				"Zone cannot be null when determining parent for any section to main section drag operation",
-			);
-		}
-		return zone === "sibling" ? null : overSection.id;
-	}
-
-	return overSection.id;
+	return zone === "sibling" ? null : overSection.id;
 };
 
 /**
@@ -118,7 +109,7 @@ export const assignOrderAndParent = (
 	parentAssignmentFn?: (section: GrantSection) => null | string,
 ): GrantSection[] => {
 	return sections.map((section, index) => {
-		const newParentId = parentAssignmentFn ? parentAssignmentFn(section) : (section.parent_id ?? null);
+		const newParentId = parentAssignmentFn ? (parentAssignmentFn(section) ?? null) : (section.parent_id ?? null);
 		return {
 			...section,
 			order: index,
@@ -287,7 +278,7 @@ const calculateSubToSubDropIndicator = (
 	overIndex: number,
 	defaultResult: DropIndicatorState,
 ): DropIndicatorState => {
-	const newParentId = determineNewParentId(overItem);
+	const newParentId = determineNewParentId(overItem, "child");
 	const hasParentChanged = activeItem.parent_id !== newParentId;
 
 	if (!hasParentChanged && Math.abs(activeIndex - overIndex) === 1 && activeIndex === overIndex + 1) {
