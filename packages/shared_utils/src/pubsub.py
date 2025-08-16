@@ -1,10 +1,8 @@
-from contextlib import suppress
-from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
 import google.cloud.pubsub_v1 as pubsub
 import msgspec
-from google.api_core.exceptions import AlreadyExists
 from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
 from packages.db.src.enums import SourceIndexingStatusEnum
@@ -13,12 +11,15 @@ from packages.shared_utils.src.exceptions import BackendError, DeserializationEr
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize, serialize
 from packages.shared_utils.src.sync import run_sync
+from .logger import get_logger
+from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
+import time
 
-if TYPE_CHECKING:
-    from structlog.typing import FilteringBoundLogger
+logger = get_logger(__name__)
 
 client_ref = Ref[pubsub.PublisherClient]()
 subscriber_client_ref = Ref[pubsub.SubscriberClient]()
+subscriber_paths: set[str] = set()
 
 
 class PubSubMessage(msgspec.Struct, rename="camel"):
@@ -81,10 +82,14 @@ class WebsocketMessage[T](TypedDict):
     trace_id: NotRequired[str]
 
 
+class EmailNotificationRequest(TypedDict):
+    application_id: UUID
+    trace_id: NotRequired[str]
+
+
 def get_publisher_client() -> pubsub.PublisherClient:
     if not client_ref.value:
-        client = pubsub.PublisherClient()
-        client_ref.value = client
+        client_ref.value = pubsub.PublisherClient()
 
     return client_ref.value
 
@@ -99,15 +104,12 @@ def get_subscriber_client() -> pubsub.SubscriberClient:
 
 async def publish_url_crawling_task(
     *,
-    logger: "FilteringBoundLogger",
     url: str,
     source_id: str | UUID,
     entity_type: Literal["organization", "granting_institution"],
     entity_id: str | UUID,
     trace_id: str | None = None,
 ) -> str:
-    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
-
     client = get_publisher_client()
 
     data = CrawlingRequest(
@@ -158,14 +160,10 @@ async def publish_url_crawling_task(
 
 async def publish_rag_task(
     *,
-    logger: "FilteringBoundLogger",
     parent_type: Literal["grant_application", "grant_template"],
     parent_id: str | UUID,
     trace_id: str | None = None,
 ) -> str:
-    import time
-    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
-
     start_time = time.time()
     logger.debug(
         "Starting PubSub message publishing",
@@ -238,17 +236,12 @@ async def publish_rag_task(
 
 async def publish_autofill_task(
     *,
-    logger: "FilteringBoundLogger",
     parent_id: str | UUID,
     autofill_type: Literal["research_plan", "research_deep_dive"],
     field_name: str | None = None,
     context: dict[str, Any] | None = None,
     trace_id: str | None = None,
 ) -> str:
-    """Publish autofill task to rag-processing topic"""
-    import time
-    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
-
     start_time = time.time()
 
     client = get_publisher_client()
@@ -326,11 +319,23 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
     topic_path = subscriber.topic_path(project=project_id, topic=topic_id)
 
     subscription_id = f"frontend-notifications-sub-{parent_id}"
-    subscription_path = subscriber.subscription_path(
-        project=project_id, subscription=subscription_id
+    subscription_path = str(
+        subscriber.subscription_path(project=project_id, subscription=subscription_id)
     )
 
-    with suppress(AlreadyExists):
+    if subscription_path in subscriber_paths:
+        logger.debug(
+            "Subscription path already exists", subscription_path=subscription_path
+        )
+        return subscription_path
+
+    logger.debug(
+        "Ensuring subscription for parent ID",
+        parent_id=str(parent_id),
+        subscription_path=subscription_path,
+    )
+
+    try:
         await run_sync(
             subscriber.create_subscription,
             request={
@@ -340,19 +345,23 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
                 "ack_deadline_seconds": 20,
             },
         )
-    return str(subscription_path)
+        logger.info("subscription created", subscription_path=subscription_path)
+    except Exception as e:
+        logger.debug(
+            "subscription already exists", subscription_path=subscription_path, exc=e
+        )
+
+    subscriber_paths.add(subscription_path)
+    return subscription_path
 
 
 async def publish_notification[T](
     *,
-    logger: "FilteringBoundLogger",
     parent_id: UUID,
     event: str,
     data: T,
     trace_id: str | None = None,
 ) -> str:
-    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
-
     client = get_publisher_client()
 
     topic_path = client.topic_path(
@@ -405,20 +414,11 @@ async def publish_notification[T](
         ) from e
 
 
-class EmailNotificationRequest(TypedDict):
-    application_id: UUID
-    trace_id: NotRequired[str]
-
-
 async def publish_email_notification(
     *,
-    logger: "FilteringBoundLogger",
     application_id: str | UUID,
     trace_id: str | None = None,
 ) -> str:
-    """Publish a message to send email notification for a completed grant application."""
-    from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
-
     client = get_publisher_client()
 
     data = EmailNotificationRequest(
@@ -466,12 +466,12 @@ async def publish_email_notification(
 
 async def pull_notifications(
     *,
-    logger: "FilteringBoundLogger",
     parent_id: UUID,
 ) -> list[WebsocketMessage[dict[str, Any]]]:
     client = get_subscriber_client()
 
     subscription_path = await ensure_subscription_for_parent_id(parent_id)
+    logger.info("pulling notifications", subscription_path=subscription_path)
 
     response = await run_sync(
         client.pull,
@@ -484,10 +484,19 @@ async def pull_notifications(
     ret: list[WebsocketMessage[dict[str, Any]]] = []
     ack_ids: list[str] = []
 
+    logger.debug(
+        "received pubsub response",
+        subscription_path=subscription_path,
+        num_messages=len(response.received_messages),
+    )
+
     for received_message in response.received_messages:
         try:
             message = deserialize(
                 received_message.message.data, WebsocketMessage[dict[str, Any]]
+            )
+            logger.debug(
+                "received message from pubsub", message=received_message.message.data
             )
             ret.append(message)
             ack_ids.append(received_message.ack_id)
@@ -496,6 +505,7 @@ async def pull_notifications(
             ack_ids.append(received_message.ack_id)
 
     if ack_ids:
+        logger.debug("acking messages", ack_ids=ack_ids)
         await run_sync(
             client.acknowledge,
             request={
