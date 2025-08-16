@@ -121,18 +121,41 @@ export function ProjectDetailClient() {
 
 	const confirmDeleteApplication = async () => {
 		if (applicationToDelete && project && selectedOrganizationId) {
-			try {
-				await deleteApplication(selectedOrganizationId, project.id, applicationToDelete);
-				await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
+			const swrKey = `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`;
+			const baseKey = `/organizations/${selectedOrganizationId}/projects/${project.id}/applications`;
 
-				// Remove the deleted application from the project store
+			try {
+				// Optimistic update: immediately remove from UI
+				await mutate(
+					swrKey,
+					(currentData: typeof applicationsData) => {
+						if (!currentData) return currentData;
+						return {
+							...currentData,
+							applications: currentData.applications.filter((app) => app.id !== applicationToDelete),
+						};
+					},
+					false, // Don't revalidate immediately
+				);
+
+				// Remove from project store immediately
 				const { removeApplicationFromProject } = useProjectStore.getState();
 				removeApplicationFromProject(applicationToDelete);
+
+				// Make the API call
+				await deleteApplication(selectedOrganizationId, project.id, applicationToDelete);
+
+				// Revalidate to ensure consistency with server
+				await mutate(swrKey);
+				await mutate(baseKey);
 
 				toast.success("Application deleted successfully");
 			} catch (error) {
 				log.error("delete-application", error);
 				toast.error("Failed to delete application");
+
+				// Revert optimistic update on error
+				await mutate(swrKey);
 			} finally {
 				setApplicationToDelete(null);
 				setShowDeleteModal(false);
@@ -150,7 +173,13 @@ export function ProjectDetailClient() {
 				applicationId,
 				newTitle,
 			);
+
+			// Revalidate both the current SWR cache key and base key
+			await mutate(
+				`/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`,
+			);
 			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
+
 			toast.success("Application duplicated successfully");
 
 			navigateToApplication(project.id, project.name, duplicatedApp.id, duplicatedApp.title || newTitle);
@@ -169,6 +198,11 @@ export function ProjectDetailClient() {
 			const application = await createApplication(selectedOrganizationId, project.id, {
 				title: DEFAULT_APPLICATION_TITLE,
 			});
+
+			// Revalidate both the current SWR cache key and base key
+			await mutate(
+				`/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`,
+			);
 			await mutate(`/organizations/${selectedOrganizationId}/projects/${project.id}/applications`);
 
 			navigateToApplication(
