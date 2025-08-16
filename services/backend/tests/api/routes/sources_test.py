@@ -490,7 +490,6 @@ async def test_handle_crawl_url_grant_application(
     assert "source_id" in result
 
     mock_publish_url_crawling_task.assert_called_once_with(
-        logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
         entity_type="organization",
@@ -518,7 +517,6 @@ async def test_handle_crawl_url_granting_institution(
     assert "source_id" in result
 
     mock_publish_url_crawling_task.assert_called_once_with(
-        logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
         entity_type="granting_institution",
@@ -547,7 +545,6 @@ async def test_handle_crawl_url_grant_template(
     assert "source_id" in result
 
     mock_publish_url_crawling_task.assert_called_once_with(
-        logger=ANY,
         url="https://example.org/docs",
         source_id=ANY,
         entity_type="organization",

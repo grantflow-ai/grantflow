@@ -164,5 +164,5 @@ data "google_project" "project" {
 variable "monthly_budget_amount" {
   description = "Monthly budget amount in USD"
   type        = string
-  default     = "500" 
+  default     = "500"
 }

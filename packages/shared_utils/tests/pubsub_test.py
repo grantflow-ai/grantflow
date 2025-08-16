@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 from uuid import UUID
 
 import pytest
@@ -84,18 +84,18 @@ def test_get_subscriber_client_creates_client_once() -> None:
 
 
 async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         entity_id = UUID("223e4567-e89b-12d3-a456-426614174000")
@@ -122,18 +122,18 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
 async def test_publish_url_crawling_task_with_all_params(
     mock_publisher_client: Mock,
 ) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         entity_id = UUID("223e4567-e89b-12d3-a456-426614174000")
@@ -161,18 +161,18 @@ async def test_publish_url_crawling_task_message_too_large(
         "Message too large"
     )
 
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         with pytest.raises(BackendError) as exc_info:
@@ -189,18 +189,18 @@ async def test_publish_url_crawling_task_message_too_large(
 async def test_publish_url_crawling_task_with_string_ids(
     mock_publisher_client: Mock,
 ) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         result = await publish_url_crawling_task(
@@ -217,18 +217,18 @@ async def test_publish_url_crawling_task_with_string_ids(
 async def test_publish_url_crawling_task_with_none_project(
     mock_publisher_client: Mock,
 ) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         result = await publish_url_crawling_task(
@@ -248,18 +248,18 @@ async def test_publish_url_crawling_task_with_none_project(
 
 
 async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
@@ -287,18 +287,18 @@ async def test_publish_notification_success(mock_publisher_client: Mock) -> None
 async def test_publish_notification_with_url_identifier(
     mock_publisher_client: Mock,
 ) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
@@ -323,18 +323,18 @@ async def test_publish_notification_with_url_identifier(
 
 
 async def test_publish_notification_failed_status(mock_publisher_client: Mock) -> None:
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
@@ -363,18 +363,18 @@ async def test_publish_notification_too_large(mock_publisher_client: Mock) -> No
         "Message too large"
     )
 
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         with pytest.raises(BackendError) as exc_info:
@@ -647,18 +647,18 @@ def test_rag_request_typed_dict() -> None:
 async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         result = await publish_rag_task(
@@ -681,18 +681,18 @@ async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
 async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> None:
     parent_id = UUID("123e4567-e89b-12d3-a456-426614174000")
 
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         result = await publish_rag_task(
@@ -715,18 +715,18 @@ async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> N
 async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> None:
     parent_id_str = "123e4567-e89b-12d3-a456-426614174000"
 
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
     ):
         result = await publish_rag_task(
@@ -748,18 +748,18 @@ async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -
     future.result.side_effect = MessageTooLargeError("Message too large")
     mock_publisher_client.publish.return_value = future
 
-    mock_span = Mock()
-    mock_span.__enter__ = Mock(return_value=mock_span)
-    mock_span.__exit__ = Mock(return_value=None)
-
     with (
         patch(
             "packages.shared_utils.src.pubsub.get_publisher_client",
             return_value=mock_publisher_client,
         ),
         patch(
-            "packages.shared_utils.src.pubsub_otel.create_pubsub_publish_span",
-            return_value=mock_span,
+            "packages.shared_utils.src.pubsub.create_pubsub_publish_span",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "packages.shared_utils.src.pubsub.inject_trace_context",
+            side_effect=lambda x: x,
         ),
         pytest.raises(BackendError) as exc_info,
     ):

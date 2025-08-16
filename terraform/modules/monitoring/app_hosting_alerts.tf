@@ -26,7 +26,7 @@ resource "google_monitoring_alert_policy" "app_hosting_high_error_rate" {
 
     condition_threshold {
       filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/app_hosting_error_rate_${var.environment}\""
-      duration        = "300s" 
+      duration        = "300s"
       comparison      = "COMPARISON_GT"
       threshold_value = 5
 
@@ -46,7 +46,7 @@ resource "google_monitoring_alert_policy" "app_hosting_high_error_rate" {
   notification_channels = [google_monitoring_notification_channel.discord_webhook.name]
 
   alert_strategy {
-    auto_close = "86400s" 
+    auto_close = "86400s"
   }
 
   documentation {
@@ -123,7 +123,7 @@ resource "google_monitoring_alert_policy" "app_hosting_build_failures" {
   notification_channels = [google_monitoring_notification_channel.discord_webhook.name]
 
   alert_strategy {
-    auto_close = "3600s" 
+    auto_close = "3600s"
   }
 
   documentation {
@@ -197,7 +197,7 @@ resource "google_monitoring_alert_policy" "app_hosting_deployment_failures" {
   notification_channels = [google_monitoring_notification_channel.discord_webhook.name]
 
   alert_strategy {
-    auto_close = "3600s" 
+    auto_close = "3600s"
   }
 
   documentation {

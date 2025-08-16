@@ -155,7 +155,6 @@ async def test_generate_grant_template_success(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     mock_publish_rag_task.assert_called_once_with(
-        logger=ANY,
         parent_type="grant_template",
         parent_id=grant_template_id,
         trace_id=ANY,
@@ -209,7 +208,6 @@ async def test_generate_grant_template_with_created_status(
 
     assert response.status_code == HTTPStatus.CREATED, response.text
     mock_publish_rag_task.assert_called_once_with(
-        logger=ANY,
         parent_type="grant_template",
         parent_id=grant_template_id,
         trace_id=ANY,

@@ -58,10 +58,10 @@ variable "alert_thresholds" {
     cpu_threshold        = number
   })
   default = {
-    error_rate_threshold = 0.05 
-    latency_threshold    = 5000 
-    memory_threshold     = 0.90 
-    cpu_threshold        = 0.85 
+    error_rate_threshold = 0.05
+    latency_threshold    = 5000
+    memory_threshold     = 0.90
+    cpu_threshold        = 0.85
   }
 }
 
@@ -118,9 +118,9 @@ resource "google_monitoring_alert_policy" "service_down" {
         "metric.label.response_code_class=\"2xx\""
       ])
 
-      duration        = "300s" 
+      duration        = "300s"
       comparison      = "COMPARISON_LT"
-      threshold_value = 1 
+      threshold_value = 1
 
       aggregations {
         alignment_period     = "300s"
@@ -134,7 +134,7 @@ resource "google_monitoring_alert_policy" "service_down" {
   notification_channels = [google_monitoring_notification_channel.discord.name]
 
   alert_strategy {
-    auto_close = "1800s" 
+    auto_close = "1800s"
   }
 }
 
@@ -157,7 +157,7 @@ resource "google_monitoring_alert_policy" "database_disconnected" {
         "metric.type=\"cloudsql.googleapis.com/database/network/connections\""
       ])
 
-      duration        = "180s" 
+      duration        = "180s"
       comparison      = "COMPARISON_LT"
       threshold_value = 1
 
@@ -196,12 +196,12 @@ resource "google_monitoring_alert_policy" "scraper_not_running" {
         "metric.label.response_code_class=\"2xx\""
       ])
 
-      duration        = "86400s" 
+      duration        = "86400s"
       comparison      = "COMPARISON_LT"
       threshold_value = 1
 
       aggregations {
-        alignment_period     = "3600s" 
+        alignment_period     = "3600s"
         per_series_aligner   = "ALIGN_RATE"
         cross_series_reducer = "REDUCE_SUM"
       }
@@ -211,7 +211,7 @@ resource "google_monitoring_alert_policy" "scraper_not_running" {
   notification_channels = [google_monitoring_notification_channel.discord.name]
 
   alert_strategy {
-    auto_close = "3600s" 
+    auto_close = "3600s"
   }
 }
 
@@ -233,12 +233,12 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
         "metric.type=\"pubsub.googleapis.com/subscription/num_undelivered_messages\""
       ])
 
-      duration        = "1200s" 
+      duration        = "1200s"
       comparison      = "COMPARISON_GT"
-      threshold_value = 100 
+      threshold_value = 100
 
       aggregations {
-        alignment_period     = "300s" 
+        alignment_period     = "300s"
         per_series_aligner   = "ALIGN_MEAN"
         cross_series_reducer = "REDUCE_SUM"
         group_by_fields      = ["resource.label.subscription_id"]
@@ -275,12 +275,12 @@ resource "google_monitoring_alert_policy" "high_error_rate" {
         "metric.label.response_code_class!=\"2xx\""
       ])
 
-      duration        = "600s" 
+      duration        = "600s"
       comparison      = "COMPARISON_GT"
-      threshold_value = 0.5 
+      threshold_value = 0.5
 
       aggregations {
-        alignment_period     = "300s" 
+        alignment_period     = "300s"
         per_series_aligner   = "ALIGN_RATE"
         cross_series_reducer = "REDUCE_SUM"
         group_by_fields      = ["resource.label.service_name"]

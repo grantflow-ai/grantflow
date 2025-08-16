@@ -202,7 +202,7 @@ resource "google_storage_bucket" "scraper" {
   public_access_prevention    = "enforced"
 
   soft_delete_policy {
-    retention_duration_seconds = 604800 
+    retention_duration_seconds = 604800
   }
 
   encryption {

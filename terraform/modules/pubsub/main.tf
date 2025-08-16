@@ -28,7 +28,7 @@ variable "pubsub_invoker_service_account_email" {
 variable "message_retention_duration" {
   description = "Message retention duration"
   type        = string
-  default     = "86400s" 
+  default     = "86400s"
 }
 
 variable "ack_deadline_seconds" {
@@ -119,7 +119,7 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
 
   # ~keep Set expiration policy to clean up inactive subscriptions
   expiration_policy {
-    ttl = "2678400s" 
+    ttl = "2678400s"
   }
 }
 
@@ -220,7 +220,7 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
   name  = "rag-processing-subscription"
   topic = google_pubsub_topic.rag_processing.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds 
+  ack_deadline_seconds = var.ack_deadline_seconds
 
   retry_policy {
     minimum_backoff = "30s"
@@ -244,7 +244,7 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
 
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.rag_processing_dlq.id
-    max_delivery_attempts = 5 
+    max_delivery_attempts = 5
   }
 }
 

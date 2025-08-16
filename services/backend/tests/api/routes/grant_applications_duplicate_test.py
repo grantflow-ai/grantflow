@@ -1,7 +1,6 @@
 from typing import Any
 from uuid import uuid4
 
-import pytest
 from packages.db.src.enums import ApplicationStatusEnum
 from packages.db.src.tables import GrantApplication, GrantApplicationSource, GrantTemplate, OrganizationUser, Project
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -161,7 +160,6 @@ async def test_duplicate_with_grant_template(
     assert data["grant_template"]["grant_sections"] == test_grant_sections
 
 
-@pytest.mark.xfail(reason="Race condition in CI environment - PostgreSQL MVCC visibility issue")
 async def test_duplicate_preserves_rag_sources(
     test_client: TestingClientType,
     async_session_maker: async_sessionmaker[Any],

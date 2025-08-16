@@ -135,7 +135,7 @@ resource "google_cloudfunctions2_function" "entity_cleanup" {
 resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
   name             = "entity-cleanup-daily"
   description      = "Daily cleanup of users and organizations with expired soft deletes"
-  schedule         = "0 2 * * *" 
+  schedule         = "0 2 * * *"
   time_zone        = "UTC"
   attempt_deadline = "600s"
   region           = "us-central1"
@@ -187,7 +187,7 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
   ]
 
   alert_strategy {
-    auto_close = "1800s" 
+    auto_close = "1800s"
   }
 }
 

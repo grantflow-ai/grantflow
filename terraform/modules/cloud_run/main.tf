@@ -821,11 +821,11 @@ resource "google_cloud_run_v2_service" "scraper" {
     }
 
     scaling {
-      max_instance_count = 1 
-      min_instance_count = 0 
+      max_instance_count = 1
+      min_instance_count = 0
     }
 
-    timeout = "3600s" 
+    timeout = "3600s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -900,7 +900,7 @@ resource "google_cloud_run_v2_service" "crdt_server" {
       min_instance_count = var.min_instances
     }
 
-    timeout = "3600s" 
+    timeout = "3600s"
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
