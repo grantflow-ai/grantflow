@@ -114,7 +114,9 @@ export function CookiePreferencesModal() {
 											checked={true}
 											data-testid="essential-cookies-switch"
 											disabled
-											onChange={() => {}}
+											onChange={function noop() {
+												// Essential cookies cannot be toggled
+											}}
 										/>
 									</div>
 									<p className="text-sm text-gray-600">
@@ -195,7 +197,11 @@ function ToggleSwitch({ checked, "data-testid": dataTestId, disabled = false, on
 			)}
 			data-testid={dataTestId}
 			disabled={disabled}
-			onClick={() => !disabled && onChange(!checked)}
+			onClick={() => {
+				if (!disabled) {
+					onChange(!checked);
+				}
+			}}
 			role="switch"
 			type="button"
 		>
