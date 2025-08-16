@@ -338,7 +338,7 @@ export function isAllowedUri(uri: string | undefined, protocols?: ProtocolConfig
 		!uri ||
 		uri
 			.replace(ATTR_WHITESPACE, "")
-			.match(new RegExp(`^(?:(?:${allowedProtocols.join("|")}):|[^a-z]|[a-z0-9+.\-]+(?:[^a-z+.\-:]|$))`, "i"))
+			.match(new RegExp(`^(?:(?:${allowedProtocols.join("|")}):|[^a-z]|[a-z0-9+.-]+(?:[^a-z+.-:]|$))`, "i"))
 	);
 }
 

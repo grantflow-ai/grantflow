@@ -233,7 +233,7 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 							onChange={(e) => {
 								setFormData({
 									...formData,
-									max_words: Number.parseInt(e.target.value) || 0,
+									max_words: Number.parseInt(e.target.value, 10) || 0,
 								});
 							}}
 							placeholder="3,000"

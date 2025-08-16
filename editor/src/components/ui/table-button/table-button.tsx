@@ -42,7 +42,6 @@ export const TableButton = React.forwardRef<HTMLButtonElement, TableButtonProps>
 				if (event.defaultPrevented) return;
 
 				if (editor) {
-					// Check if cursor is inside a table
 					if (editor.isActive("table")) {
 						return;
 					}

@@ -11,15 +11,12 @@ async def test_run_scraper(logger: logging.Logger) -> None:
     """Test the scraper by scraping the NIH grant search page."""
     logger.info("Initializing e2e test for NIH grant scraper")
 
-    # Set test environment variables
     os.environ["SCRAPER_GCS_BUCKET_NAME"] = "test-scraper-bucket"
 
-    # Mock GCS operations
     with (
         patch("services.scraper.src.gcs_utils.get_storage_client") as mock_get_client,
         patch("services.scraper.src.gcs_utils.run_sync") as mock_run_sync,
     ):
-        # Mock storage client and bucket
         mock_bucket = MagicMock()
         mock_bucket.exists = MagicMock(return_value=True)
         mock_bucket.blob = MagicMock()
@@ -29,7 +26,6 @@ async def test_run_scraper(logger: logging.Logger) -> None:
         mock_client.bucket = MagicMock(return_value=mock_bucket)
         mock_get_client.return_value = mock_client
 
-        # Make run_sync execute the function immediately
         mock_run_sync.side_effect = lambda func: func() if callable(func) else func
 
         metrics = await run_scraper()
@@ -38,7 +34,6 @@ async def test_run_scraper(logger: logging.Logger) -> None:
         search_results_count = metrics.get("search_results_count", 0)
 
         if search_results_count > 0:
-            # Verify that upload_blob was called for search results
             mock_bucket.blob.assert_called()
             logger.info("Search results uploaded to GCS successfully")
         else:

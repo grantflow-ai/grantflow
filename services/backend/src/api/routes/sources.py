@@ -496,8 +496,6 @@ async def handle_create_upload_url(
         template_id=template_id,
     )
 
-    # Add a small delay to mitigate PostgreSQL MVCC race conditions
-    # where a new session might not immediately see just-committed data
     await asyncio.sleep(0.2)
 
     _, _, entity_type, entity_id = determine_entity_info(
@@ -565,8 +563,6 @@ async def handle_crawl_url(
         template_id=template_id,
     )
 
-    # Add a small delay to mitigate PostgreSQL MVCC race conditions
-    # where a new session might not immediately see just-committed data
     await asyncio.sleep(0.2)
 
     _, _, entity_type, entity_id = determine_entity_info(
@@ -577,7 +573,6 @@ async def handle_crawl_url(
     )
 
     message_id = await publish_url_crawling_task(
-        logger=logger,
         url=url,
         source_id=source_id,
         entity_type=entity_type,

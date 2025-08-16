@@ -30,21 +30,16 @@ def parse_json_from_ai_response(text: str) -> dict[str, Any]:
     Handles cases where AI returns valid JSON followed by additional text.
     """
     try:
-        # First try direct parsing
         result: dict[str, Any] = json.loads(text)
         return result
     except json.JSONDecodeError:
-        # If that fails, try to extract just the JSON part
         try:
-            # Look for JSON object boundaries
             text = text.strip()
 
-            # Find the first { and last } to extract JSON object
             start_idx = text.find("{")
             if start_idx == -1:
                 raise ValueError("No JSON object found in response")
 
-            # Count braces to find the complete JSON object
             brace_count = 0
             end_idx = start_idx
             for i, char in enumerate(text[start_idx:], start_idx):
@@ -62,7 +57,6 @@ def parse_json_from_ai_response(text: str) -> dict[str, Any]:
 
         except (ValueError, json.JSONDecodeError) as e:
             logger.warning("Failed to parse JSON from AI response: %s. Response text: %s", e, text[:200])
-            # Return empty dict as fallback
             return {}
 
 

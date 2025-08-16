@@ -18,7 +18,6 @@ def mock_session_maker() -> MagicMock:
     session_maker = MagicMock()
     session = AsyncMock()
 
-    # Create a proper async context manager mock
     class AsyncContextManager:
         async def __aenter__(self) -> Any:
             return session
@@ -56,12 +55,10 @@ def sample_documents() -> list[str]:
 
 async def test_function_import() -> None:
     """Test that the main function can be imported and has correct signature"""
-    # This test ensures the refactor was successful - the function is importable
     import inspect
 
     from services.rag.src.autofill.research_plan_handler import handle_research_plan
 
-    # Check function signature
     sig = inspect.signature(handle_research_plan)
     params = list(sig.parameters.keys())
 

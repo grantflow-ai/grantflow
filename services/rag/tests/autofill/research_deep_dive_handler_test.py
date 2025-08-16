@@ -18,7 +18,6 @@ def mock_session_maker() -> MagicMock:
     session_maker = MagicMock()
     session = AsyncMock()
 
-    # Create a proper async context manager mock
     class AsyncContextManager:
         async def __aenter__(self) -> Any:
             return session
@@ -78,12 +77,10 @@ async def test_generate_field_answer(mock_logger: MagicMock) -> None:
 
 def test_function_import_deep_dive() -> None:
     """Test that the main function can be imported and has correct signature"""
-    # This test ensures the refactor was successful - the function is importable
     import inspect
 
     from services.rag.src.autofill.research_deep_dive_handler import handle_research_deep_dive
 
-    # Check function signature
     sig = inspect.signature(handle_research_deep_dive)
     params = list(sig.parameters.keys())
 
@@ -97,8 +94,6 @@ def test_field_mapping_keys() -> None:
     """Test that field mapping contains expected keys for filtering logic"""
     from services.rag.src.autofill.constants import RESEARCH_DEEP_DIVE_FIELD_MAPPING
 
-    # Test that the field mapping contains all expected fields
-    # This validates the core logic that would be used for filtering
     expected_fields = {
         "background_context",
         "hypothesis",
@@ -113,10 +108,9 @@ def test_field_mapping_keys() -> None:
     actual_fields = set(RESEARCH_DEEP_DIVE_FIELD_MAPPING.keys())
     assert actual_fields == expected_fields
 
-    # Test that all field descriptions are non-empty
     for description in RESEARCH_DEEP_DIVE_FIELD_MAPPING.values():
         assert len(description.strip()) > 0
-        assert "?" in description  # All should be questions
+        assert "?" in description
 
 
 def test_format_documents_for_context(mock_logger: MagicMock) -> None:

@@ -15,7 +15,6 @@ export const useOnClickOutside = (ref: RefObject<HTMLElement | null>, handler: (
 		document.addEventListener("mousedown", listener);
 		document.addEventListener("touchstart", listener);
 
-		// The cleanup function for useEffect must be returned correctly
 		return () => {
 			document.removeEventListener("mousedown", listener);
 			document.removeEventListener("touchstart", listener);

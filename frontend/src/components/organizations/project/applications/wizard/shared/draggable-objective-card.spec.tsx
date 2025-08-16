@@ -217,7 +217,7 @@ describe.sequential("DraggableObjectiveCard", () => {
 			const user = userEvent.setup();
 			const { props } = renderDraggableObjectiveCard({ isEditing: true });
 
-			const cancelButton = screen.getByTestId("mock-edit"); // In editing mode, this becomes cancel
+			const cancelButton = screen.getByTestId("mock-edit");
 			await user.click(cancelButton);
 
 			expect(props.onCancel).toHaveBeenCalledOnce();

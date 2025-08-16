@@ -36,7 +36,6 @@ jobs:
         permissions:
             contents: read
             id-token: write
-        # Only build and push on pushes to main/development, not on PRs
         if: github.event_name != 'pull_request'
         steps:
             - name: Checkout
@@ -113,7 +112,6 @@ jobs:
         permissions:
             contents: read
             id-token: write
-        # Only deploy on push to main or development, not on PRs
         if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         steps:
             - name: Checkout code

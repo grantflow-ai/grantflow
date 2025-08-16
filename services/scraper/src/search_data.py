@@ -35,7 +35,6 @@ def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TOD
         The query string.
     """
 
-    # Log the date range being used
     logger.info("Creating query string for date range", from_date=from_date.isoformat(), to_date=to_date.isoformat())
 
     qs = {
@@ -78,7 +77,6 @@ async def download_search_data(  # noqa: PLR0915
         page = await context.new_page()
 
         try:
-            # First navigate to the main page
             url = NIH_GRANT_BASE_URL
             logger.info("Navigating to NIH grants page", url=url)
 
@@ -87,12 +85,10 @@ async def download_search_data(  # noqa: PLR0915
 
             await page.wait_for_timeout(3000)
 
-            # Look for search interface elements
             title = await page.title()
             current_url = page.url
             logger.info("Page loaded", title=title, current_url=current_url)
 
-            # Try to find and click on "Search" or "Advanced Search" button
             search_selectors = [
                 "text=Search the Guide",
                 "button:has-text('Search')",
@@ -117,13 +113,10 @@ async def download_search_data(  # noqa: PLR0915
                     logger.debug("Failed to click search element", selector=selector, error=str(e))
                     continue
 
-            # Take screenshot for debugging
             await page.screenshot(path="scraper_debug_after_search.png")
             logger.info("Screenshot saved to scraper_debug_after_search.png")
 
-            # If we're on the advanced search page, we need to fill in date fields and submit the search
             if search_clicked:
-                # First, ensure "Active Opportunities" is checked (it should be by default)
                 try:
                     active_checkbox = await page.wait_for_selector(
                         "input[type='checkbox'][value='Active Opportunities']", timeout=2000
@@ -136,24 +129,20 @@ async def download_search_data(  # noqa: PLR0915
                 except Exception:
                     logger.debug("Could not find or check Active Opportunities checkbox")
 
-                # Clear and fill the date fields if they exist
                 try:
-                    # Look for date input fields - they have default values but we need to ensure our dates are set
                     date_inputs = await page.query_selector_all("input[type='text'][value*='/']")
 
                     if len(date_inputs) >= 2:
                         from_date_input = date_inputs[0]
                         to_date_input = date_inputs[1]
 
-                        # Clear and fill from date
                         await from_date_input.click()
-                        await from_date_input.click(click_count=3)  # Triple-click to select all
+                        await from_date_input.click(click_count=3)
                         await from_date_input.type(from_date.strftime("%m/%d/%Y"))
                         logger.info("Filled from_date", date=from_date.strftime("%m/%d/%Y"))
 
-                        # Clear and fill to date
                         await to_date_input.click()
-                        await to_date_input.click(click_count=3)  # Triple-click to select all
+                        await to_date_input.click(click_count=3)
                         await to_date_input.type(to_date.strftime("%m/%d/%Y"))
                         logger.info("Filled to_date", date=to_date.strftime("%m/%d/%Y"))
 
@@ -163,7 +152,6 @@ async def download_search_data(  # noqa: PLR0915
                 except Exception as e:
                     logger.warning("Could not fill date fields", error=str(e))
 
-                # Look for the search/submit button in the modal
                 submit_selectors = [
                     "button:has-text('Search')",
                     "button[type='submit']",
@@ -177,7 +165,6 @@ async def download_search_data(  # noqa: PLR0915
                         logger.info("Looking for submit button", selector=selector)
                         submit_btn = await page.wait_for_selector(selector, timeout=2000)
                         if submit_btn:
-                            # Make sure it's visible and not the one we already clicked
                             is_visible = await submit_btn.is_visible()
                             btn_text = await submit_btn.text_content()
                             if is_visible and btn_text and "Advanced" not in btn_text:
@@ -189,7 +176,6 @@ async def download_search_data(  # noqa: PLR0915
                         logger.debug("Failed to click submit button", selector=selector, error=str(e))
                         continue
 
-                # Take another screenshot after submitting
                 await page.screenshot(path="scraper_debug_after_submit.png")
                 logger.info("Screenshot saved to scraper_debug_after_submit.png")
 
@@ -228,7 +214,6 @@ async def download_search_data(  # noqa: PLR0915
                 if "No results found" in page_content or "0 results" in page_content:
                     logger.info("No results found on page")
                     return []
-                # Log a snippet of the page content for debugging
                 logger.warning("Unable to download, page content snippet", content_snippet=page_content[:500])
                 raise ScraperError("Unable to download grant data from NIH site")
 
@@ -245,7 +230,6 @@ async def download_search_data(  # noqa: PLR0915
                 await tmp_path.unlink(missing_ok=True)
                 raise ScraperError(f"Failed to process downloaded CSV: {e!s}") from e
 
-            # Save to scraper bucket
             blob_path = f"scraper-results/grants_search_csv_{to_date.strftime('%d_%m_%Y')}.json"
             await upload_blob(blob_path, dumps(search_data).encode("utf-8"))
             logger.info("Saved search results to GCS", blob_path=blob_path)

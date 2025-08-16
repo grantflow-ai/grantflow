@@ -1,5 +1,3 @@
-# Firebase App Hosting Module
-# This module manages Firebase App Hosting backends with custom container support
 
 terraform {
   required_providers {
@@ -14,7 +12,6 @@ terraform {
   }
 }
 
-# Enable required APIs
 resource "google_project_service" "firebase" {
   project = var.project_id
   service = "firebase.googleapis.com"
@@ -43,20 +40,16 @@ resource "google_project_service" "cloud_resource_manager" {
   disable_on_destroy = false
 }
 
-# Firebase App Hosting Backend for the frontend application
 resource "google_firebase_app_hosting_backend" "frontend" {
   provider   = google-beta
   project    = var.project_id
   location   = var.region
   backend_id = var.environment
 
-  # The Firebase Web App ID
   app_id = var.firebase_app_id
 
-  # Service account for the backend
   service_account = google_service_account.app_hosting.email
 
-  # Global serving configuration
   serving_locality = "GLOBAL_ACCESS"
 
   depends_on = [
@@ -67,14 +60,12 @@ resource "google_firebase_app_hosting_backend" "frontend" {
   ]
 }
 
-# Service account for App Hosting
 resource "google_service_account" "app_hosting" {
   project      = var.project_id
   account_id   = "${var.project_id}-${var.environment}-apphosting"
   display_name = "Firebase App Hosting Service Account (${var.environment})"
 }
 
-# Grant necessary permissions to the service account
 resource "google_project_iam_member" "app_hosting_compute_viewer" {
   project = var.project_id
   role    = "roles/compute.viewer"
@@ -93,7 +84,6 @@ resource "google_project_iam_member" "app_hosting_artifact_reader" {
   member  = "serviceAccount:${google_service_account.app_hosting.email}"
 }
 
-# Allow App Hosting to access secrets
 resource "google_secret_manager_secret_iam_member" "app_hosting_secret_access" {
   for_each = toset(var.secret_ids)
 
@@ -103,7 +93,6 @@ resource "google_secret_manager_secret_iam_member" "app_hosting_secret_access" {
   member    = "serviceAccount:${google_service_account.app_hosting.email}"
 }
 
-# Deploy a build using custom container image
 resource "google_firebase_app_hosting_build" "frontend" {
   provider = google-beta
   project  = google_firebase_app_hosting_backend.frontend.project
@@ -113,7 +102,6 @@ resource "google_firebase_app_hosting_build" "frontend" {
 
   source {
     container {
-      # Use the Docker image from Artifact Registry
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/frontend:${var.image_tag}"
     }
   }
@@ -123,7 +111,6 @@ resource "google_firebase_app_hosting_build" "frontend" {
   }
 }
 
-# Allocate traffic to the build
 resource "google_firebase_app_hosting_traffic" "frontend" {
   provider = google-beta
   project  = google_firebase_app_hosting_backend.frontend.project

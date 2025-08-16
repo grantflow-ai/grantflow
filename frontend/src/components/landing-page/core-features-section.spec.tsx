@@ -75,10 +75,10 @@ describe.sequential("CoreFeaturesSection", () => {
 		expect(projectTitles).toHaveLength(2);
 		expect(proposalTitles).toHaveLength(2);
 
-		platformTitles.forEach((title) => expect(title).toBeInTheDocument());
-		studioTitles.forEach((title) => expect(title).toBeInTheDocument());
-		projectTitles.forEach((title) => expect(title).toBeInTheDocument());
-		proposalTitles.forEach((title) => expect(title).toBeInTheDocument());
+		for (const title of platformTitles) expect(title).toBeInTheDocument();
+		for (const title of studioTitles) expect(title).toBeInTheDocument();
+		for (const title of projectTitles) expect(title).toBeInTheDocument();
+		for (const title of proposalTitles) expect(title).toBeInTheDocument();
 	});
 
 	it("renders all feature descriptions", () => {
@@ -94,10 +94,10 @@ describe.sequential("CoreFeaturesSection", () => {
 		expect(projectDescriptions).toHaveLength(2);
 		expect(proposalDescriptions).toHaveLength(2);
 
-		platformDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		studioDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		projectDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
-		proposalDescriptions.forEach((desc) => expect(desc).toBeInTheDocument());
+		for (const desc of platformDescriptions) expect(desc).toBeInTheDocument();
+		for (const desc of studioDescriptions) expect(desc).toBeInTheDocument();
+		for (const desc of projectDescriptions) expect(desc).toBeInTheDocument();
+		for (const desc of proposalDescriptions) expect(desc).toBeInTheDocument();
 	});
 
 	it("renders both mobile and desktop feature containers", () => {

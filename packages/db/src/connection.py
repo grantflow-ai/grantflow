@@ -14,11 +14,11 @@ def get_async_engine() -> AsyncEngine:
         engine_ref.value = create_async_engine(
             get_env("DATABASE_CONNECTION_STRING"),
             echo=True,
-            pool_size=10,  # Reduced from 25 to prevent exhaustion
-            max_overflow=5,  # Allow 5 additional connections when needed
-            pool_timeout=30,  # Wait max 30s for connection
-            pool_recycle=1800,  # Recycle connections after 30 minutes
-            pool_pre_ping=True,  # Test connections before using them
+            pool_size=10,
+            max_overflow=5,
+            pool_timeout=30,
+            pool_recycle=1800,
+            pool_pre_ping=True,
         )
     return engine_ref.value
 

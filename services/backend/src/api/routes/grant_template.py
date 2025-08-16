@@ -115,7 +115,6 @@ async def handle_generate_grant_template(
 
         try:
             await publish_rag_task(
-                logger=logger,
                 parent_type="grant_template",
                 parent_id=grant_template.id,
                 trace_id=trace_id,

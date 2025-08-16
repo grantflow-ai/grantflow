@@ -60,7 +60,7 @@ export function ApplicationEditorPageClient() {
 	}
 
 	if (!(application && project)) {
-		return null; // Will redirect
+		return null;
 	}
 
 	return <EditorContainer documentId="" />;

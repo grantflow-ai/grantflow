@@ -9,8 +9,6 @@ terraform {
   }
 }
 
-# Storage bucket for Cloud Function source
-# trivy:ignore:AVD-GCP-0066
 resource "google_storage_bucket" "email_notification_functions" {
   name                        = "${var.project_id}-email-notification-functions"
   location                    = "US"
@@ -27,7 +25,6 @@ resource "google_storage_bucket" "email_notification_functions" {
   }
 }
 
-# Package the Cloud Function source
 data "archive_file" "email_notification_source" {
   type        = "zip"
   output_path = "${path.module}/email-notification-function.zip"
@@ -48,29 +45,26 @@ data "archive_file" "email_notification_source" {
   }
 }
 
-# Upload source to bucket
 resource "google_storage_bucket_object" "email_notification_source" {
   name   = "email-notification-function-${data.archive_file.email_notification_source.output_md5}.zip"
   bucket = google_storage_bucket.email_notification_functions.name
   source = data.archive_file.email_notification_source.output_path
 }
 
-# Service account for the Cloud Function
 resource "google_service_account" "email_notification" {
   account_id   = "fn-email-notify-sa-${var.environment}"
   display_name = "Email Notification Function Service Account"
   description  = "Service account for sending email notifications when applications are generated"
 }
 
-# IAM permissions for the function
 resource "google_project_iam_member" "email_notification_permissions" {
   for_each = toset([
-    "roles/cloudsql.client",             # Database access
-    "roles/logging.logWriter",           # Logging
-    "roles/monitoring.metricWriter",     # Metrics
-    "roles/cloudtrace.agent",            # Tracing
-    "roles/storage.objectViewer",        # Read generated files from GCS
-    "roles/secretmanager.secretAccessor" # Access secrets
+    "roles/cloudsql.client",             
+    "roles/logging.logWriter",           
+    "roles/monitoring.metricWriter",     
+    "roles/cloudtrace.agent",            
+    "roles/storage.objectViewer",        
+    "roles/secretmanager.secretAccessor" 
   ])
 
   project = var.project_id
@@ -78,11 +72,10 @@ resource "google_project_iam_member" "email_notification_permissions" {
   member  = "serviceAccount:${google_service_account.email_notification.email}"
 }
 
-# Pub/Sub topic for email notifications
 resource "google_pubsub_topic" "email_notifications" {
   name = "email-notifications"
 
-  message_retention_duration = "86400s" # 1 day
+  message_retention_duration = "86400s" 
 
   labels = {
     environment = var.environment
@@ -90,14 +83,12 @@ resource "google_pubsub_topic" "email_notifications" {
   }
 }
 
-# IAM binding to allow RAG service to publish to the topic
 resource "google_pubsub_topic_iam_member" "rag_publisher" {
   topic  = google_pubsub_topic.email_notifications.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${var.rag_service_account_email}"
 }
 
-# Cloud Function for email notifications
 resource "google_cloudfunctions2_function" "email_notification" {
   name        = "fn-email-notify-${var.environment}"
   location    = var.region
@@ -119,7 +110,7 @@ resource "google_cloudfunctions2_function" "email_notification" {
     max_instance_count               = 10
     min_instance_count               = 0
     available_memory                 = "512M"
-    timeout_seconds                  = 300 # 5 minutes for DOCX conversion
+    timeout_seconds                  = 300 
     max_instance_request_concurrency = 1
 
     environment_variables = {
@@ -128,7 +119,6 @@ resource "google_cloudfunctions2_function" "email_notification" {
       SITE_URL             = var.environment == "staging" ? "https://staging.grantflow.ai" : "https://grantflow.ai"
     }
 
-    # Reference to secrets from Secret Manager
     secret_environment_variables {
       key        = "RESEND_API_KEY"
       project_id = var.project_id
@@ -161,7 +151,6 @@ resource "google_cloudfunctions2_function" "email_notification" {
   }
 }
 
-# Log-based metric for email notification operations
 resource "google_logging_metric" "email_notification_operations" {
   name   = "email_notification_operations"
   filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-email-notify-${var.environment}\" AND jsonPayload.status!=\"\""

@@ -1,12 +1,7 @@
-# Firebase App Hosting Secrets
-# These secrets are used by Firebase App Hosting for the frontend application
-# Each environment (staging/production) has its own set of secrets with appropriate suffixes
 
 locals {
-  # Define the environment suffix for secrets
   env_suffix = upper(var.environment)
 
-  # List of Firebase App Hosting secrets that need to be created
   firebase_secrets = [
     "NEXT_PUBLIC_SITE_URL",
     "NEXT_PUBLIC_BACKEND_API_BASE_URL",
@@ -25,7 +20,6 @@ locals {
   ]
 }
 
-# Create secrets for Firebase App Hosting with environment suffixes
 resource "google_secret_manager_secret" "firebase_app_hosting" {
   for_each = toset(local.firebase_secrets)
 
@@ -43,7 +37,6 @@ resource "google_secret_manager_secret" "firebase_app_hosting" {
   }
 }
 
-# Grant Firebase App Hosting service account access to the secrets
 resource "google_secret_manager_secret_iam_binding" "firebase_app_hosting_access" {
   for_each = google_secret_manager_secret.firebase_app_hosting
 
@@ -52,16 +45,12 @@ resource "google_secret_manager_secret_iam_binding" "firebase_app_hosting_access
   role      = "roles/secretmanager.secretAccessor"
 
   members = [
-    # Default App Engine/Firebase service account
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    # Compute Engine default service account (used by App Hosting)
     "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
-    # Firebase App Hosting service account
     "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
   ]
 }
 
-# Output the secret IDs for reference
 output "firebase_app_hosting_secrets" {
   description = "Map of Firebase App Hosting secret IDs"
   value = {

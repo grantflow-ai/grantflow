@@ -23,11 +23,11 @@ pre-commit:
                 done
                 
                 if [ -n "$frontend_files" ]; then
-                    cd frontend && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $frontend_files
+                    (cd frontend && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $frontend_files)
                 fi
                 
                 if [ -n "$editor_files" ]; then
-                    cd editor && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $editor_files
+                    (cd editor && pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true $editor_files)
                 fi
             stage_fixed: true
 
@@ -49,11 +49,11 @@ pre-commit:
                 done
                 
                 if [ -n "$frontend_files" ]; then
-                    cd frontend && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $frontend_files
+                    (cd frontend && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $frontend_files)
                 fi
                 
                 if [ -n "$editor_files" ]; then
-                    cd editor && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $editor_files
+                    (cd editor && pnpm eslint --fix --max-warnings=0 --no-warn-ignored --cache $editor_files)
                 fi
             stage_fixed: true
 
@@ -76,9 +76,9 @@ pre-commit:
                     (cd editor && pnpm tsc --noEmit --skipLibCheck) &
                     wait
                 elif [ "$has_frontend" = true ]; then
-                    cd frontend && pnpm tsc --noEmit --skipLibCheck
+                    (cd frontend && pnpm tsc --noEmit --skipLibCheck)
                 elif [ "$has_editor" = true ]; then
-                    cd editor && pnpm tsc --noEmit --skipLibCheck
+                    (cd editor && pnpm tsc --noEmit --skipLibCheck)
                 fi
             exclude: "frontend/src/types/api-types.ts"
 
@@ -91,10 +91,6 @@ pre-commit:
             glob: "*.py"
             run: uv run mypy {staged_files}
 
-        # uncomment:
-        #     glob: "*.py"
-        #     run: uv run uncomment --remove-doc {staged_files}
-        #     stage_fixed: true
 
         ai-rulez:
             glob: "**/ai-rulez.yaml"

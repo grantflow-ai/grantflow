@@ -93,7 +93,6 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    # Wikidata enhancement step
     await job_manager.add_notification(
         parent_id=UUID(application_id),
         event=NotificationEvents.ENHANCING_WITH_WIKIDATA,
@@ -103,7 +102,6 @@ async def generate_work_plan_text(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    # Combine all enrichment responses for Wikidata processing
     combined_enrichment_data: ObjectiveEnrichmentDTO = {
         "research_objective": enrichment_responses[0]["research_objective"],
         "research_tasks": [],
@@ -112,7 +110,6 @@ async def generate_work_plan_text(
     for response in enrichment_responses:
         combined_enrichment_data["research_tasks"].extend(response["research_tasks"])
 
-    # Get Wikidata scientific context
     wikidata_enrichment = await enrich_objective_with_wikidata(
         combined_enrichment_data,
         trace_id=application_id,
@@ -560,16 +557,13 @@ async def grant_application_text_generation_pipeline_handler(
         total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
     )
 
-    # Publish email notification
     try:
         await publish_email_notification(
-            logger=logger,
             application_id=application_id,
             trace_id=None,  # TODO: Get trace_id from context when available
         )
         logger.info("Email notification published", application_id=str(application_id))
     except Exception as e:
-        # Don't fail the generation if email notification fails
         logger.error(
             "Failed to publish email notification",
             application_id=str(application_id),

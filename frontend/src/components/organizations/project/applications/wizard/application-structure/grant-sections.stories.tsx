@@ -303,7 +303,10 @@ function FormValidationStatesComponent() {
 					<input
 						className="w-full p-2 border rounded"
 						onChange={(e) => {
-							setFormStates({ ...formStates, invalidWordCount: Number.parseInt(e.target.value) || 0 });
+							setFormStates({
+								...formStates,
+								invalidWordCount: Number.parseInt(e.target.value, 10) || 0,
+							});
 						}}
 						placeholder="Test word count validation"
 						type="number"

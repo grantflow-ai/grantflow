@@ -33,7 +33,6 @@ async def handle_grant_application_notifications(
         )
         try:
             messages = await pull_notifications(
-                logger=logger,
                 parent_id=application_id,
             )
             logger.debug("Received messages", messages=messages)

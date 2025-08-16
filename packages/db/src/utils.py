@@ -79,7 +79,6 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
         )
         application = result.scalar_one()
 
-        # Filter out soft-deleted sources in Python since we can't easily do it in the selectinload
         filtered_sources = [
             source
             for source in application.rag_sources
@@ -87,7 +86,6 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
         ]
         application.rag_sources = filtered_sources
 
-        # Filter template sources if they exist
         if application.grant_template and hasattr(application.grant_template, "rag_sources"):
             filtered_template_sources = [
                 source
@@ -127,7 +125,6 @@ async def update_source_indexing_status(
             await session.commit()
 
             await publish_notification(
-                logger=logger,
                 parent_id=parent_id,
                 event="source_processing",
                 data=SourceProcessingResult(
@@ -145,7 +142,6 @@ async def update_source_indexing_status(
             )
             await session.rollback()
             await publish_notification(
-                logger=logger,
                 parent_id=parent_id,
                 event="source_processing",
                 data=SourceProcessingResult(

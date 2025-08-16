@@ -52,7 +52,6 @@ async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
     markdown = convert_to_markdown(soup)
     formatted_markdown = text(markdown)
 
-    # Save to scraper bucket
     blob_path = f"scraper-results/grant_search_result_{result_name}.md"
     await upload_blob(blob_path, formatted_markdown.encode("utf-8"))
     logger.debug("Saved markdown page to GCS", blob_path=blob_path, result_name=result_name)

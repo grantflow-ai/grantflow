@@ -54,7 +54,6 @@ async def verify_rag_sources_indexed(
                 for source in rag_sources
             ):
                 await publish_notification(
-                    logger=logger,
                     parent_id=parent_id,
                     event=NotificationEvents.INDEXING_IN_PROGRESS,
                     data=RagProcessingStatus(
@@ -75,7 +74,6 @@ async def verify_rag_sources_indexed(
                 total_sources = len(list(rag_sources))
 
                 await publish_notification(
-                    logger=logger,
                     parent_id=parent_id,
                     event=NotificationEvents.INDEXING_FAILED,
                     data=RagProcessingStatus(
