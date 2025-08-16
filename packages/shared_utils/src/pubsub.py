@@ -476,25 +476,43 @@ async def pull_notifications(
     *,
     parent_id: UUID,
 ) -> list[WebsocketMessage[dict[str, Any]]]:
+    start_time = time.time()
     client = get_subscriber_client()
 
     subscription_path = await ensure_subscription_for_parent_id(parent_id)
-    logger.info("pulling notifications", subscription_path=subscription_path)
-
-    response = await run_sync(
-        client.pull,
-        request={
-            "subscription": subscription_path,
-            "max_messages": 100,
-        },
-        timeout=3.0,
+    logger.info(
+        "pulling notifications",
+        subscription_path=subscription_path,
+        parent_id=str(parent_id),
     )
+
+    try:
+        response = await run_sync(
+            client.pull,
+            request={
+                "subscription": subscription_path,
+                "max_messages": 100,
+            },
+            timeout=3.0,
+        )
+    except Exception as e:
+        pull_duration = time.time() - start_time
+        logger.warning(
+            "Failed to pull messages from subscription",
+            subscription_path=subscription_path,
+            parent_id=str(parent_id),
+            error=str(e),
+            pull_duration_ms=round(pull_duration * 1000, 2),
+        )
+        raise
+
     ret: list[WebsocketMessage[dict[str, Any]]] = []
     ack_ids: list[str] = []
 
-    logger.debug(
+    logger.info(
         "received pubsub response",
         subscription_path=subscription_path,
+        parent_id=str(parent_id),
         num_messages=len(response.received_messages),
     )
 
@@ -504,22 +522,57 @@ async def pull_notifications(
                 received_message.message.data, WebsocketMessage[dict[str, Any]]
             )
             logger.debug(
-                "received message from pubsub", message=received_message.message.data
+                "received message from pubsub",
+                message_id=received_message.message.message_id,
+                publish_time=received_message.message.publish_time.isoformat()
+                if received_message.message.publish_time
+                else None,
+                attributes=dict(received_message.message.attributes),
+                parent_id=str(parent_id),
             )
             ret.append(message)
             ack_ids.append(received_message.ack_id)
         except (DeserializationError, ValueError, KeyError, TypeError) as e:
-            logger.error("Error processing notification", error=str(e))
+            logger.error(
+                "Error processing notification",
+                error=str(e),
+                message_id=received_message.message.message_id,
+                parent_id=str(parent_id),
+                raw_data=received_message.message.data[:200]
+                if received_message.message.data
+                else None,
+            )
             ack_ids.append(received_message.ack_id)
 
     if ack_ids:
-        logger.debug("acking messages", ack_ids=ack_ids)
-        await run_sync(
-            client.acknowledge,
-            request={
-                "subscription": subscription_path,
-                "ack_ids": ack_ids,
-            },
+        logger.info(
+            "acking messages",
+            num_acks=len(ack_ids),
+            parent_id=str(parent_id),
+            subscription_path=subscription_path,
         )
+        try:
+            await run_sync(
+                client.acknowledge,
+                request={
+                    "subscription": subscription_path,
+                    "ack_ids": ack_ids,
+                },
+            )
+            pull_duration = time.time() - start_time
+            logger.info(
+                "Successfully acknowledged messages",
+                num_acks=len(ack_ids),
+                parent_id=str(parent_id),
+                pull_duration_ms=round(pull_duration * 1000, 2),
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to acknowledge messages",
+                error=str(e),
+                num_acks=len(ack_ids),
+                parent_id=str(parent_id),
+            )
+            raise
 
     return ret
