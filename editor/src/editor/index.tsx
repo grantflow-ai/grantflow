@@ -256,7 +256,6 @@ export const Editor = React.forwardRef(function Editor(
 				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
 			scrollToHeading: (headingIndex: number) => {
 				if (!editor) return false;
-				// Find all h2/h3 headings in document order using $nodes
 				const h2Nodes = editor.$nodes("heading", { level: HeadingLevels.H2 }) || [];
 				const h3Nodes = editor.$nodes("heading", { level: HeadingLevels.H3 }) || [];
 				const allHeadings = [...h2Nodes, ...h3Nodes].sort((a, b) => a.pos - b.pos);

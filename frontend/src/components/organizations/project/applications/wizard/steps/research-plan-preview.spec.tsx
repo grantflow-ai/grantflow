@@ -33,10 +33,10 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 
 function cleanupPortals() {
 	const portals = document.querySelectorAll("[data-radix-portal]");
-	portals.forEach((portal) => portal.remove());
+	for (const portal of portals) portal.remove();
 
 	const dropdownContent = document.querySelectorAll('[data-slot="dropdown-menu-content"]');
-	dropdownContent.forEach((content) => content.remove());
+	for (const content of dropdownContent) content.remove();
 }
 
 describe.sequential("ResearchPlanPreview Display Mode", () => {

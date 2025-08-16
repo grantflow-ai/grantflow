@@ -111,8 +111,6 @@ async def handle_delete_organization(organization_id: UUID, session_maker: async
             if not institution:
                 raise ValidationException("Granting institution not found")
 
-            # Note: This is a granting institution deletion, not an organization deletion
-            # No audit logging needed here as it's not part of organization-based multi-tenancy
             institution.soft_delete()
             await session.commit()
 

@@ -493,7 +493,6 @@ async def handle_generate_application(
 
         try:
             await publish_rag_task(
-                logger=logger,
                 parent_type="grant_application",
                 parent_id=application.id,
                 trace_id=trace_id,
@@ -670,7 +669,6 @@ async def handle_trigger_autofill(
             raise NotFoundException("Application not found")
 
     message_id = await publish_autofill_task(
-        logger=logger,
         parent_id=application_id,
         autofill_type=data["autofill_type"],
         field_name=data.get("field_name"),
@@ -780,7 +778,6 @@ async def handle_duplicate_application(
                     new_app_id=str(new_app.id),
                 )
 
-            # Copy rag sources
             rag_sources = await session.execute(
                 select(GrantApplicationSource).where(
                     GrantApplicationSource.grant_application_id == application_id,
@@ -811,8 +808,6 @@ async def handle_duplicate_application(
             logger.error("Error duplicating application", exc_info=e)
             raise DatabaseError("Error duplicating application", context=str(e)) from e
 
-    # Add a small delay to mitigate PostgreSQL MVCC race conditions
-    # where a new session might not immediately see just-committed data
     await asyncio.sleep(0.2)
 
     return await _handle_retrieve_application(

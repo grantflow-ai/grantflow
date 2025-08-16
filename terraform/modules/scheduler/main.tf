@@ -42,7 +42,6 @@ variable "timezone" {
   default     = "Europe/Berlin"
 }
 
-# Enable Cloud Scheduler API
 resource "google_project_service" "scheduler" {
   project = var.project_id
   service = "cloudscheduler.googleapis.com"
@@ -51,13 +50,12 @@ resource "google_project_service" "scheduler" {
   disable_on_destroy         = false
 }
 
-# Daily NIH grant scraper job
 resource "google_cloud_scheduler_job" "scraper_daily" {
   count = var.scraper_url != "" ? 1 : 0
 
   name      = "scraper-daily"
   region    = var.region
-  schedule  = "0 2 * * *" # Daily at 2 AM UTC
+  schedule  = "0 2 * * *" 
   time_zone = "UTC"
 
   description = "Daily NIH grant scraping job"
@@ -83,9 +81,9 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
 
   retry_config {
     retry_count          = 3
-    max_retry_duration   = "900s" # 15 minutes max retry
-    min_backoff_duration = "60s"  # 1 minute min backoff
-    max_backoff_duration = "300s" # 5 minutes max backoff
+    max_retry_duration   = "900s" 
+    min_backoff_duration = "60s"  
+    max_backoff_duration = "300s" 
     max_doublings        = 3
   }
 

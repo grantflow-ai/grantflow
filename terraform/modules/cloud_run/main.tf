@@ -736,7 +736,6 @@ resource "google_cloud_run_v2_service_iam_member" "pubsub_invoker_rag" {
 }
 
 
-# Scraper Service - NIH grant scraping with Cloud Scheduler
 resource "google_cloud_run_v2_service" "scraper" {
   name                = "scraper"
   location            = var.region
@@ -770,7 +769,6 @@ resource "google_cloud_run_v2_service" "scraper" {
         failure_threshold     = 5
       }
 
-      # Standard environment variables
       env {
         name  = "GOOGLE_CLOUD_PROJECT"
         value = var.project_id
@@ -786,25 +784,21 @@ resource "google_cloud_run_v2_service" "scraper" {
         value = "us-central1"
       }
 
-      # Scraper-specific bucket name
       env {
         name  = "SCRAPER_GCS_BUCKET_NAME"
         value = "grantflow-scraper-${var.environment}"
       }
 
-      # Environment name
       env {
         name  = "ENVIRONMENT"
         value = var.environment
       }
 
-      # Discord webhook URL for notifications
       env {
         name  = "DISCORD_WEBHOOK_URL"
         value = var.discord_webhook_url
       }
 
-      # Playwright configuration for browser automation
       env {
         name  = "PLAYWRIGHT_BROWSERS_PATH"
         value = "/app/.cache/ms-playwright"
@@ -815,7 +809,6 @@ resource "google_cloud_run_v2_service" "scraper" {
         value = "0"
       }
 
-      # GCS credentials from Secret Manager
       env {
         name = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
         value_source {
@@ -828,18 +821,17 @@ resource "google_cloud_run_v2_service" "scraper" {
     }
 
     scaling {
-      max_instance_count = 1 # Only one instance needed - scheduled job, not concurrent
-      min_instance_count = 0 # Scale to zero when not in use
+      max_instance_count = 1 
+      min_instance_count = 0 
     }
 
-    timeout = "3600s" # 60 minutes - browser automation can take significant time
+    timeout = "3600s" 
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
 
 }
 
-# CRDT Server
 resource "google_cloud_run_v2_service" "crdt_server" {
   name                = "crdt"
   location            = var.region
@@ -887,7 +879,6 @@ resource "google_cloud_run_v2_service" "crdt_server" {
         value = "production"
       }
 
-      # Database connection from Secret Manager
       env {
         name = "DATABASE_URL"
         value_source {
@@ -900,7 +891,6 @@ resource "google_cloud_run_v2_service" "crdt_server" {
     }
 
     annotations = {
-      # Enable session affinity for WebSocket connections
       "run.googleapis.com/execution-environment" = "gen2"
       "run.googleapis.com/session-affinity"      = "true"
     }
@@ -910,7 +900,7 @@ resource "google_cloud_run_v2_service" "crdt_server" {
       min_instance_count = var.min_instances
     }
 
-    timeout = "3600s" # WebSocket connections can be long-lived
+    timeout = "3600s" 
   }
 
   ingress = "INGRESS_TRAFFIC_ALL"
@@ -924,7 +914,6 @@ resource "google_cloud_run_v2_service" "crdt_server" {
   }
 }
 
-# IAM policy to allow public access to CRDT server (WebSocket connections from frontend)
 resource "google_cloud_run_v2_service_iam_member" "crdt_server_public" {
   location = var.region
   name     = google_cloud_run_v2_service.crdt_server.name
@@ -932,14 +921,12 @@ resource "google_cloud_run_v2_service_iam_member" "crdt_server_public" {
   member   = "allUsers"
 }
 
-# Service account for Cloud Scheduler to invoke scraper
 resource "google_service_account" "scheduler_invoker" {
   account_id   = "scheduler-invoker"
   display_name = "Cloud Scheduler Service Account"
   description  = "Service account used by Cloud Scheduler to invoke Cloud Run services"
 }
 
-# IAM binding for scheduler to invoke scraper service
 resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker_scraper" {
   location = var.region
   name     = google_cloud_run_v2_service.scraper.name

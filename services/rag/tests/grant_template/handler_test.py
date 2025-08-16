@@ -668,7 +668,6 @@ async def test_get_rag_sources_data_with_nlp_analysis(
         source_ids = [str(row[0]) for row in result.fetchall()]
 
     with patch("services.rag.src.grant_template.extract_cfp_data.categorize_text_async") as mock_categorize:
-        # Mock NLP analysis results
         mock_categorize.return_value = {
             "orders": ["Application must include detailed budget"],
             "money": ["Budget should not exceed $100,000"],
@@ -688,23 +687,19 @@ async def test_get_rag_sources_data_with_nlp_analysis(
 
     assert len(result) == 2
 
-    # Verify NLP analysis is included
     for source_data in result:
         assert "nlp_analysis" in source_data
         nlp_analysis = source_data["nlp_analysis"]
 
-        # Verify analysis structure
         assert isinstance(nlp_analysis, dict)
         assert "orders" in nlp_analysis
         assert "money" in nlp_analysis
         assert "date_time" in nlp_analysis
 
-        # Verify actual content
         assert "Application must include detailed budget" in nlp_analysis["orders"]
         assert "Budget should not exceed $100,000" in nlp_analysis["money"]
         assert "Deadline is March 15, 2025" in nlp_analysis["date_time"]
 
-    # Verify async categorization was called for each source
     assert mock_categorize.call_count == 2
 
 
@@ -712,18 +707,15 @@ def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSource
     """Test that prompt formatting includes NLP analysis."""
     formatted = format_rag_sources_for_prompt(mock_rag_sources)
 
-    # Check that NLP analysis is included in formatted output
     assert "NLP Analysis:" in formatted
     assert "NLP Analysis" in formatted
     assert "orders" in formatted
     assert "money" in formatted
     assert "evaluation_criteria" in formatted
 
-    # Check specific content from mock data
     assert "Funding eligibility criteria" in formatted
     assert "Budget guidelines and restrictions" in formatted
     assert "Organization mission and values" in formatted
 
-    # Verify both sources are included
     assert "Source 0: RAG_FILE" in formatted
     assert "Source 1: RAG_URL" in formatted

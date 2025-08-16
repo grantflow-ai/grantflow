@@ -206,7 +206,6 @@ class JobManager:
         current_pipeline_stage: int | None = None,
         total_pipeline_stages: int | None = None,
     ) -> None:
-        """Add a notification to the job history and publish it."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -242,7 +241,6 @@ class JobManager:
             status_data["total_pipeline_stages"] = total_pipeline_stages
 
         await publish_notification(
-            logger=logger,
             parent_id=parent_id,
             event=event,
             data=status_data,

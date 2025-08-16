@@ -54,7 +54,6 @@ export const ragGenerationJobs = pgTable(
 			withTimezone: true,
 		}),
 		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		currentStage: bigint("current_stage", { mode: "number" }).notNull(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
 		errorDetails: json("error_details"),
@@ -62,11 +61,9 @@ export const ragGenerationJobs = pgTable(
 		failedAt: timestamp("failed_at", { mode: "string", withTimezone: true }),
 		id: uuid().primaryKey().notNull(),
 		jobType: varchar("job_type", { length: 50 }).notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		retryCount: bigint("retry_count", { mode: "number" }).notNull(),
 		startedAt: timestamp("started_at", { mode: "string", withTimezone: true }),
 		status: raggenerationstatusenum().notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		totalStages: bigint("total_stages", { mode: "number" }).notNull(),
 		updatedAt: timestamp("updated_at", {
 			mode: "string",
@@ -103,7 +100,6 @@ export const generationNotifications = pgTable(
 	"generation_notifications",
 	{
 		createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		currentPipelineStage: bigint("current_pipeline_stage", { mode: "number" }),
 		data: json(),
 		deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
@@ -112,7 +108,6 @@ export const generationNotifications = pgTable(
 		message: text().notNull(),
 		notificationType: varchar("notification_type", { length: 20 }).notNull(),
 		ragJobId: uuid("rag_job_id").notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		totalPipelineStages: bigint("total_pipeline_stages", { mode: "number" }),
 		updatedAt: timestamp("updated_at", {
 			mode: "string",
@@ -366,7 +361,6 @@ export const ragFiles = pgTable(
 		id: uuid().primaryKey().notNull(),
 		mimeType: varchar("mime_type", { length: 255 }).notNull(),
 		objectPath: varchar("object_path", { length: 255 }).notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 		size: bigint({ mode: "number" }).notNull(),
 	},
 	(table) => [

@@ -34,7 +34,7 @@ output "monitoring_summary" {
     total_alert_policies = (
       length(google_monitoring_alert_policy.service_down) +
       length(google_monitoring_alert_policy.high_error_rate) +
-      3 # database, scraper, pubsub
+      3 
     )
     services_monitored = ["backend", "crawler", "indexer", "rag", "scraper"]
     environment        = var.environment

@@ -6,7 +6,6 @@ export const mockEnv = {
 	PORT: "8080",
 } satisfies Record<string, string>;
 
-// Set environment variables immediately
 Object.assign(process.env, mockEnv);
 
 beforeEach(() => {

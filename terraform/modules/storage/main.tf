@@ -193,7 +193,6 @@ resource "google_storage_notification" "file_indexing_notification" {
   depends_on = [google_pubsub_topic_iam_binding.gcs_pubsub_publish]
 }
 
-# Scraper-specific bucket for NIH grant data
 resource "google_storage_bucket" "scraper" {
   name                        = "grantflow-scraper-${var.environment}"
   location                    = var.location
@@ -203,7 +202,7 @@ resource "google_storage_bucket" "scraper" {
   public_access_prevention    = "enforced"
 
   soft_delete_policy {
-    retention_duration_seconds = 604800 # 7 days
+    retention_duration_seconds = 604800 
   }
 
   encryption {
@@ -217,7 +216,6 @@ resource "google_storage_bucket" "scraper" {
   }
 }
 
-# Grant scraper service account access to the bucket
 resource "google_storage_bucket_iam_member" "scraper_bucket_object_viewer" {
   bucket = google_storage_bucket.scraper.name
   role   = "roles/storage.objectViewer"

@@ -21,7 +21,6 @@ describe.sequential("UrlInput", () => {
 		resetAllStores();
 		mockIsValidUrl.mockReturnValue(true);
 
-		// Mock the store state directly without accessing hooks
 		useApplicationStore.setState({
 			addUrl: mockAddUrl,
 			application: null,

@@ -102,7 +102,6 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
 
         source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
         result = await publish_url_crawling_task(
-            logger=logger,
             url="https://example.com",
             source_id=source_id,
             entity_id=entity_id,
@@ -141,7 +140,6 @@ async def test_publish_url_crawling_task_with_all_params(
         source_id = UUID("323e4567-e89b-12d3-a456-426614174000")
 
         result = await publish_url_crawling_task(
-            logger=logger,
             url="https://example.com",
             source_id=source_id,
             entity_id=entity_id,
@@ -179,7 +177,6 @@ async def test_publish_url_crawling_task_message_too_large(
     ):
         with pytest.raises(BackendError) as exc_info:
             await publish_url_crawling_task(
-                logger=logger,
                 url="https://example.com" + "x" * 10000000,
                 source_id="323e4567-e89b-12d3-a456-426614174000",
                 entity_type="organization",
@@ -207,7 +204,6 @@ async def test_publish_url_crawling_task_with_string_ids(
         ),
     ):
         result = await publish_url_crawling_task(
-            logger=logger,
             url="https://example.com",
             source_id="323e4567-e89b-12d3-a456-426614174000",
             entity_type="organization",
@@ -236,7 +232,6 @@ async def test_publish_url_crawling_task_with_none_project(
         ),
     ):
         result = await publish_url_crawling_task(
-            logger=logger,
             url="https://example.com",
             source_id="323e4567-e89b-12d3-a456-426614174000",
             entity_type="organization",
@@ -277,7 +272,6 @@ async def test_publish_notification_success(mock_publisher_client: Mock) -> None
         )
 
         result = await publish_notification(
-            logger=logger,
             parent_id=parent_id,
             event="source_processing",
             data=test_data,
@@ -317,7 +311,6 @@ async def test_publish_notification_with_url_identifier(
         )
 
         result = await publish_notification(
-            logger=logger,
             parent_id=parent_id,
             event="source_processing",
             data=test_data,
@@ -354,7 +347,6 @@ async def test_publish_notification_failed_status(mock_publisher_client: Mock) -
         )
 
         result = await publish_notification(
-            logger=logger,
             parent_id=parent_id,
             event="source_processing",
             data=test_data,
@@ -393,7 +385,6 @@ async def test_publish_notification_too_large(mock_publisher_client: Mock) -> No
             )
 
             await publish_notification(
-                logger=logger,
                 parent_id=UUID("123e4567-e89b-12d3-a456-426614174000"),
                 event="source_processing",
                 data=test_data,
@@ -446,7 +437,6 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         return_value=mock_subscriber_client,
     ):
         results = await pull_notifications(
-            logger=logger,
             parent_id=parent_id,
         )
 
@@ -497,7 +487,6 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
         return_value=mock_subscriber_client,
     ):
         results = await pull_notifications(
-            logger=logger,
             parent_id=parent_id,
         )
 
@@ -528,7 +517,6 @@ async def test_pull_notifications_invalid_message(mock_subscriber_client: Mock) 
         return_value=mock_subscriber_client,
     ):
         results = await pull_notifications(
-            logger=logger,
             parent_id=parent_id,
         )
 
@@ -552,7 +540,6 @@ async def test_pull_notifications_empty_response(mock_subscriber_client: Mock) -
         return_value=mock_subscriber_client,
     ):
         results = await pull_notifications(
-            logger=logger,
             parent_id=parent_id,
         )
 
@@ -572,7 +559,6 @@ async def test_pull_notifications_timeout(mock_subscriber_client: Mock) -> None:
         pytest.raises(TimeoutError),
     ):
         await pull_notifications(
-            logger=logger,
             parent_id=parent_id,
         )
 
@@ -676,7 +662,6 @@ async def test_publish_rag_task_success(mock_publisher_client: Mock) -> None:
         ),
     ):
         result = await publish_rag_task(
-            logger=logger,
             parent_type="grant_application",
             parent_id=parent_id,
         )
@@ -711,7 +696,6 @@ async def test_publish_rag_task_grant_template(mock_publisher_client: Mock) -> N
         ),
     ):
         result = await publish_rag_task(
-            logger=logger,
             parent_type="grant_template",
             parent_id=parent_id,
         )
@@ -746,7 +730,6 @@ async def test_publish_rag_task_with_string_id(mock_publisher_client: Mock) -> N
         ),
     ):
         result = await publish_rag_task(
-            logger=logger,
             parent_type="grant_application",
             parent_id=parent_id_str,
         )
@@ -781,7 +764,6 @@ async def test_publish_rag_task_message_too_large(mock_publisher_client: Mock) -
         pytest.raises(BackendError) as exc_info,
     ):
         await publish_rag_task(
-            logger=logger,
             parent_type="grant_application",
             parent_id=parent_id,
         )

@@ -45,7 +45,6 @@ async def test_wikidata_context_generation_performance(
         "statistical learning",
     ]
 
-    # Mock the httpx response
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -76,7 +75,6 @@ async def test_wikidata_context_generation_performance(
         processing_time_ms = (end_time - start_time) * 1000
         terms_per_second = len(test_terms) / (processing_time_ms / 1000) if processing_time_ms > 0 else 0
 
-        # Performance assertions
         assert processing_time_ms < 1000, f"Processing time too slow: {processing_time_ms:.2f}ms"
         assert terms_per_second > 1.0, f"Terms per second too low: {terms_per_second:.2f}"
         assert len(context) > 0, "No context generated"
@@ -116,7 +114,6 @@ async def test_objective_enrichment_performance(mock_httpx_client: AsyncMock, mo
         ],
     }
 
-    # Mock the httpx response
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -142,7 +139,6 @@ async def test_objective_enrichment_performance(mock_httpx_client: AsyncMock, mo
         terms_count = len(result.get("core_scientific_terms", []))
         terms_per_second = terms_count / (processing_time_ms / 1000) if processing_time_ms > 0 else 0
 
-        # Performance assertions
         assert processing_time_ms < 2000, f"Processing time too slow: {processing_time_ms:.2f}ms"
         assert terms_per_second > 0.5, f"Terms per second too low: {terms_per_second:.2f}"
         assert len(result.get("scientific_context", "")) > 0, "No scientific context generated"
@@ -153,7 +149,6 @@ async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_h
     term_counts = [5, 10, 20]
     scalability_results = []
 
-    # Mock the httpx response
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -193,7 +188,6 @@ async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_h
     for _result in scalability_results:
         pass
 
-    # Assert scalability requirements
     for result in scalability_results:
         assert result["processing_time_ms"] < result["term_count"] * 100, (
             f"Processing time scales poorly with {result['term_count']} terms"
@@ -202,10 +196,8 @@ async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_h
 
 async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
     """Test that batch processing is working efficiently."""
-    # Test with more terms than the batch size (5)
-    test_terms = [f"term_{i}" for i in range(15)]  # 15 terms, should use 3 batches
+    test_terms = [f"term_{i}" for i in range(15)]
 
-    # Mock the httpx response
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -229,7 +221,6 @@ async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_ht
 
         processing_time_ms = (end_time - start_time) * 1000
 
-        # Assert batch processing is working
         assert mock_httpx_client.get.call_count == 3, (
             f"Expected 3 batches, got {mock_httpx_client.get.call_count} calls"
         )

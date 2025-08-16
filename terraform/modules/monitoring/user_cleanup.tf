@@ -1,7 +1,4 @@
-# User and organization cleanup Cloud Function and scheduling
 
-# Storage bucket for Cloud Function source
-# trivy:ignore:AVD-GCP-0066
 resource "google_storage_bucket" "entity_cleanup_functions" {
   name                        = "${var.project_id}-entity-cleanup-functions"
   location                    = "US"
@@ -25,7 +22,6 @@ resource "google_storage_bucket" "entity_cleanup_functions" {
   }
 }
 
-# Package the Cloud Function source
 data "archive_file" "entity_cleanup_source" {
   type        = "zip"
   output_path = "${path.module}/entity-cleanup-function.zip"
@@ -41,21 +37,18 @@ data "archive_file" "entity_cleanup_source" {
   }
 }
 
-# Upload source to bucket
 resource "google_storage_bucket_object" "entity_cleanup_source" {
   name   = "entity-cleanup-function-${data.archive_file.entity_cleanup_source.output_md5}.zip"
   bucket = google_storage_bucket.entity_cleanup_functions.name
   source = data.archive_file.entity_cleanup_source.output_path
 }
 
-# Service account for the Cloud Function
 resource "google_service_account" "entity_cleanup" {
   account_id   = "fn-cleanup-sa-${var.environment}"
   display_name = "Entity Cleanup Function Service Account"
   description  = "Service account for automated user and organization deletion cleanup"
 }
 
-# IAM permissions for the function
 resource "google_project_iam_member" "entity_cleanup_permissions" {
   for_each = toset([
     "roles/cloudsql.client",
@@ -71,7 +64,6 @@ resource "google_project_iam_member" "entity_cleanup_permissions" {
   member  = "serviceAccount:${google_service_account.entity_cleanup.email}"
 }
 
-# Pub/Sub topic for scheduling
 resource "google_pubsub_topic" "entity_cleanup_schedule" {
   name = "entity-cleanup-schedule"
 
@@ -81,7 +73,6 @@ resource "google_pubsub_topic" "entity_cleanup_schedule" {
   }
 }
 
-# Cloud Function for user and organization cleanup
 resource "google_cloudfunctions2_function" "entity_cleanup" {
   name        = "fn-cleanup-${var.environment}"
   location    = "us-central1"
@@ -116,7 +107,6 @@ resource "google_cloudfunctions2_function" "entity_cleanup" {
       ORGANIZATION_DELETION_GRACE_PERIOD_DAYS = "30"
     }
 
-    # Reference to database connection string from Secret Manager
     secret_environment_variables {
       key        = "DATABASE_CONNECTION_STRING"
       project_id = var.project_id
@@ -142,11 +132,10 @@ resource "google_cloudfunctions2_function" "entity_cleanup" {
   }
 }
 
-# Cloud Scheduler job to trigger cleanup daily at 2 AM UTC
 resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
   name             = "entity-cleanup-daily"
   description      = "Daily cleanup of users and organizations with expired soft deletes"
-  schedule         = "0 2 * * *" # 2 AM UTC daily
+  schedule         = "0 2 * * *" 
   time_zone        = "UTC"
   attempt_deadline = "600s"
   region           = "us-central1"
@@ -167,7 +156,6 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
   }
 }
 
-# Monitoring alert for failed entity cleanup
 resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
   display_name = "Entity Cleanup Function Failures"
   combiner     = "OR"
@@ -199,16 +187,14 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
   ]
 
   alert_strategy {
-    auto_close = "1800s" # Auto-close after 30 minutes
+    auto_close = "1800s" 
   }
 }
 
-# Log-based metric for entity cleanup operations
 resource "google_logging_metric" "entity_cleanup_operations" {
   name   = "entity_cleanup_operations"
   filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-cleanup-${var.environment}\" AND jsonPayload.processed>=0"
 
-  # Log-based metrics automatically use DELTA metric kind
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
@@ -224,10 +210,7 @@ resource "google_logging_metric" "entity_cleanup_operations" {
   }
 }
 
-# Note: Monitoring for cleanup errors is handled by the entity_cleanup_failures alert policy above
-# which monitors Cloud Function execution failures
 
-# Output the function details
 output "entity_cleanup_function_name" {
   description = "Name of the entity cleanup Cloud Function"
   value       = google_cloudfunctions2_function.entity_cleanup.name

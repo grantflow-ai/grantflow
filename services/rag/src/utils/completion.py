@@ -131,7 +131,7 @@ async def make_google_completions_request[T](
         top_p=top_p,
         top_k=top_k,
         candidate_count=candidate_count,
-        max_output_tokens=32768,  # Allow for legitimate long responses while preventing runaway generations
+        max_output_tokens=32768,
         system_instruction=system_prompt,
         safety_settings=[
             genai.types.SafetySetting(

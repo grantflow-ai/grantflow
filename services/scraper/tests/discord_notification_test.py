@@ -296,13 +296,12 @@ async def test_handle_scraper_request_failure_with_discord(
 ) -> None:
     """Test failed scraper request sends Discord failure notification."""
 
-    # Mock get_env to ensure local storage path is taken
     def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
         env_map = {
             "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
             "ENVIRONMENT": "staging",
-            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
-            "DEBUG": "True",  # This also triggers local storage
+            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DEBUG": "True",
         }
         return env_map.get(key, fallback)
 
@@ -337,13 +336,12 @@ async def test_handle_scraper_request_no_discord_url(
 ) -> None:
     """Test scraper request without Discord URL configured."""
 
-    # Mock get_env to ensure local storage path is taken
     def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
         env_map = {
             "DISCORD_WEBHOOK_URL": "",
             "ENVIRONMENT": "staging",
-            "STORAGE_EMULATOR_HOST": "localhost:8080",  # This triggers local storage
-            "DEBUG": "True",  # This also triggers local storage
+            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DEBUG": "True",
         }
         return env_map.get(key, fallback)
 

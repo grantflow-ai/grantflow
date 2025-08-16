@@ -400,7 +400,6 @@ async def test_generate_grant_section_texts_with_mocked_llm(
 async def test_grant_application_text_generation_pipeline_handler_with_mocked_llm(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create application within the test to avoid database snapshot restoration issues
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -580,7 +579,6 @@ async def test_pipeline_missing_grant_template(
 async def test_pipeline_missing_research_objectives(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create application within the test to avoid database snapshot restoration issues
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)
@@ -710,7 +708,6 @@ async def test_pipeline_database_error_during_save(
 async def test_pipeline_backend_error_during_generation(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    # Create application within the test to avoid database snapshot restoration issues
     async with async_session_maker() as session:
         organization = OrganizationFactory.build()
         session.add(organization)

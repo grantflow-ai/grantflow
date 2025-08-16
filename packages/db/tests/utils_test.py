@@ -306,7 +306,6 @@ async def test_update_source_indexing_status_success(
         assert mock_publish.call_count == 1
 
         call = mock_publish.call_args
-        assert call.kwargs["logger"] == mock_logger
         assert call.kwargs["parent_id"] == parent_id
         assert call.kwargs["event"] == "source_processing"
         assert call.kwargs["data"]["source_id"] == file_id

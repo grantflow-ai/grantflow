@@ -261,7 +261,6 @@ describe("Project Store", () => {
 		it("should handle missing project gracefully", () => {
 			useProjectStore.setState({ project: null });
 
-			// Should not throw error
 			useProjectStore.getState().removeApplicationFromProject("app-1");
 
 			expect(useProjectStore.getState().project).toBeNull();
@@ -274,7 +273,6 @@ describe("Project Store", () => {
 
 			useProjectStore.setState({ project });
 
-			// Should not throw error
 			useProjectStore.getState().removeApplicationFromProject("app-1");
 
 			expect(useProjectStore.getState().project).toEqual(project);

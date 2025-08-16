@@ -5,7 +5,7 @@ import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers"
 import * as matchers from "@testing-library/jest-dom/matchers";
 
 declare module "vitest" {
-	// @ts-ignore
+	// @ts-expect-error
 	type Assertion<T> = TestingLibraryMatchers<T, void>;
 }
 
@@ -43,7 +43,7 @@ vi.mock("@/components/ui/dropdown-menu", async () => {
 });
 
 beforeAll(() => {
-	// @ts-ignore
+	// @ts-expect-error
 	globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 
 	HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);

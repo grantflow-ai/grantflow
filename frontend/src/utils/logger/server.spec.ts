@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock transports so tests don't require real env/IO
 vi.mock("@loglayer/transport-simple-pretty-terminal", () => ({
 	getSimplePrettyTerminal: () => ({}) as any,
 }));

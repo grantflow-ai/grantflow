@@ -29,58 +29,52 @@ provider "google-beta" {
   zone    = var.zone
 }
 
-# Secrets module - must be first
 module "secrets" {
   source      = "../../modules/secrets"
   project_id  = var.project_id
   environment = var.environment
 }
 
-# IAM module
 module "iam" {
   source = "../../modules/iam"
 }
 
-# Network module
 module "network" {
   source     = "../../modules/network"
   project_id = var.project_id
   region     = var.region
 }
 
-# Database module with staging-optimized settings
 module "database" {
   source                = "../../modules/database"
   project_id            = var.project_id
   region                = var.region
   zone                  = var.zone
   instance_name         = "grantflow-staging"
-  tier                  = "db-custom-1-3840" # 1 vCPU, 3.75GB RAM - handles ~100 connections
-  disk_size             = 10                 # Minimal storage for staging
-  disk_type             = "PD_HDD"           # Cheaper storage type
-  backup_enabled        = true               # Enable backups (required for point-in-time recovery)
-  high_availability     = false              # Single zone for staging
-  backup_retention      = 7                  # Shorter retention for staging
-  backup_location       = "us"               # US location for staging
-  enable_query_insights = true               # Enable for monitoring
-  log_slow_queries      = false              # Disable for staging
-  deletion_protection   = false              # Allow deletion in staging
+  tier                  = "db-custom-1-3840" 
+  disk_size             = 10                 
+  disk_type             = "PD_HDD"           
+  backup_enabled        = true               
+  high_availability     = false              
+  backup_retention      = 7                  
+  backup_location       = "us"               
+  enable_query_insights = true               
+  log_slow_queries      = false              
+  deletion_protection   = false              
   network_id            = module.network.network_id
 }
 
-# Storage module
 module "storage" {
   source                = "../../modules/storage"
   bucket_name           = "grantflow-staging-uploads"
   environment           = var.environment
-  location              = "US"  # US location for staging
-  retention_days        = 7     # Shorter retention for staging
-  enable_versioning     = false # No versioning for staging
-  enable_lifecycle      = true  # Enable lifecycle for staging
-  uniform_bucket_access = true  # Enable uniform access
+  location              = "US"  
+  retention_days        = 7     
+  enable_versioning     = false 
+  enable_lifecycle      = true  
+  uniform_bucket_access = true  
 }
 
-# Cloud Run services module with staging-optimized settings
 module "cloud_run" {
   source                        = "../../modules/cloud_run"
   project_id                    = var.project_id
@@ -90,48 +84,41 @@ module "cloud_run" {
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
-  min_instances                 = 1     # Default for backend/rag/scraper
-  max_instances                 = 5     # Default max instances
-  cpu_limit                     = "1"   # Default CPU for most services
-  memory_limit                  = "1Gi" # Default memory for most services
+  min_instances                 = 1     
+  max_instances                 = 5     
+  cpu_limit                     = "1"   
+  memory_limit                  = "1Gi" 
 
-  # Indexer: Fanout pattern - one file per instance
   indexer_memory_limit      = "2Gi" # ~keep Indexer needs memory for document processing
   indexer_concurrency_limit = 1     # ~keep ONE message per instance for fanout pattern
   indexer_min_instances     = 0     # ~keep Scale to zero when idle
   indexer_max_instances     = 100   # ~keep High ceiling for burst handling
 
-  # Crawler: Fanout pattern - one URL per instance
   crawler_memory_limit      = "2Gi" # ~keep Reduced memory since processing one URL at a time
   crawler_cpu_limit         = "1"   # ~keep Single CPU for single URL processing
   crawler_concurrency_limit = 1     # ~keep ONE URL per instance for fanout pattern
   crawler_min_instances     = 0     # ~keep Scale to zero when idle
   crawler_max_instances     = 50    # ~keep Lower than indexer (URLs process faster)
 
-  # Rag
   rag_memory_limit = "2Gi" # ~keep Reduced memory since processing one URL at a time
   rag_cpu_limit    = "1"   # ~keep Single CPU for single URL processing
 
-  # CRDT Server: Increased memory to handle WebSocket connections
-  crdt_server_memory_limit = "2Gi" # Increased from 1Gi to prevent OOM
+  crdt_server_memory_limit = "2Gi" 
 
   discord_webhook_url   = var.discord_webhook_url
-  enable_cpu_throttling = true  # Allow throttling for staging
-  enable_http2          = false # HTTP/1.1 for staging
-  request_timeout       = 300   # 5-minute timeout
-  concurrency_limit     = 80    # Default concurrency for other services
+  enable_cpu_throttling = true  
+  enable_http2          = false 
+  request_timeout       = 300   
+  concurrency_limit     = 80    
 
-  # Custom domain for backend API (commented out to save costs)
-  # custom_domain            = "api-staging.grantflow.ai"
 }
 
-# Pub/Sub module - needs to come after cloud_run to get service account
 module "pubsub" {
   source                               = "../../modules/pubsub"
   project_id                           = var.project_id
   region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
-  message_retention_duration           = "86400s" # 1 day for staging
+  message_retention_duration           = "86400s" 
   ack_deadline_seconds                 = 600      # ~keep 10 minutes for file processing
   enable_dead_letter                   = true     # ~keep Enable DLQ for better error handling
 
@@ -139,13 +126,11 @@ module "pubsub" {
   indexer_retry_minimum_backoff = "10s"  # ~keep Quick first retry
   indexer_retry_maximum_backoff = "600s" # ~keep Max 10 minute backoff
 
-  # Pass Cloud Run service URLs for push endpoints
   indexer_url = module.cloud_run.indexer_url
   crawler_url = module.cloud_run.crawler_url
   rag_url     = module.cloud_run.rag_url
 }
 
-# Scheduler module
 module "scheduler" {
   source                                  = "../../modules/scheduler"
   project_id                              = var.project_id
@@ -153,26 +138,24 @@ module "scheduler" {
   environment                             = var.environment
   scraper_url                             = module.cloud_run.scraper_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
-  timezone                                = "Europe/Berlin" # Berlin timezone
+  timezone                                = "Europe/Berlin" 
 }
 
-# Monitoring module
 module "monitoring" {
   source                 = "../../modules/monitoring"
   project_id             = var.project_id
   environment            = var.environment
   discord_webhook_url    = var.discord_webhook_url
-  enable_uptime_checks   = false # No uptime checks for staging
-  enable_error_reporting = true  # Enable error reporting
+  enable_uptime_checks   = false 
+  enable_error_reporting = true  
   alert_thresholds = {
-    error_rate_threshold = 0.10  # 10% for staging (more lenient)
-    latency_threshold    = 10000 # 10s for staging
-    memory_threshold     = 0.95  # 95% for staging
-    cpu_threshold        = 0.90  # 90% for staging
+    error_rate_threshold = 0.10  
+    latency_threshold    = 10000 
+    memory_threshold     = 0.95  
+    cpu_threshold        = 0.90  
   }
 }
 
-# Email Notifications module
 module "email_notifications" {
   source                    = "../../modules/email_notifications"
   project_id                = var.project_id
@@ -182,23 +165,19 @@ module "email_notifications" {
 }
 
 
-# Import existing BigQuery dataset
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend"
   description = "Frontend analytics and user data"
-  location    = "US" # US location for staging
+  location    = "US" 
 
-  # Time-based partitioning for cost optimization
-  default_partition_expiration_ms = 5184000000 # 60 days
+  default_partition_expiration_ms = 5184000000 
 
-  # Labels for organization
   labels = {
     environment = var.environment
     service     = "frontend"
     managed_by  = "terraform"
   }
 
-  # Access controls
   access {
     role          = "OWNER"
     special_group = "projectOwners"
@@ -214,48 +193,41 @@ resource "google_bigquery_dataset" "frontend" {
     special_group = "projectReaders"
   }
 
-  # Grant BigQuery access to LLM service account for analytics
   access {
     role          = "READER"
     user_by_email = google_service_account.llm_api.email
   }
 
-  # Grant BigQuery access to dedicated BigQuery service account (same as deleted one)
   access {
     role          = "OWNER"
     user_by_email = google_service_account.bigquery_service.email
   }
 }
 
-# Import existing LLM service account
 resource "google_service_account" "llm_api" {
   account_id   = "llm-api-service-account"
   display_name = "LLM API Service Account"
   description  = "Service account for accessing LLM APIs and related services"
 }
 
-# BigQuery service account for Segment integration
 resource "google_service_account" "bigquery_service" {
   account_id   = "bigquery-service"
   display_name = "BigQuery Service Account"
   description  = "Service account for BigQuery operations and Segment integration"
 }
 
-# Ensure LLM service account has AI Platform access
 resource "google_project_iam_member" "llm_ai_platform" {
   project = var.project_id
   role    = "roles/aiplatform.user"
   member  = "serviceAccount:${google_service_account.llm_api.email}"
 }
 
-# Optional: Grant LLM service account logging permissions
 resource "google_project_iam_member" "llm_logging" {
   project = var.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.llm_api.email}"
 }
 
-# BigQuery service account permissions for Segment integration
 resource "google_project_iam_member" "bigquery_data_editor" {
   project = var.project_id
   role    = "roles/bigquery.dataEditor"
@@ -268,7 +240,6 @@ resource "google_project_iam_member" "bigquery_job_user" {
   member  = "serviceAccount:${google_service_account.bigquery_service.email}"
 }
 
-# Output important information
 output "bigquery_dataset_id" {
   description = "BigQuery dataset ID"
   value       = google_bigquery_dataset.frontend.dataset_id
@@ -309,7 +280,6 @@ output "crdt_server_url" {
   value       = module.cloud_run.crdt_server_url
 }
 
-# Load Balancer module with staging-optimized settings
 module "load_balancer" {
   source             = "../../modules/load_balancer"
   project_id         = var.project_id
@@ -318,8 +288,8 @@ module "load_balancer" {
   backend_url        = module.cloud_run.backend_url
   domain             = "staging-api.grantflow.ai"
   crdt_server_domain = "staging-crdt.grantflow.ai"
-  enable_ssl         = true  # SSL certificate for custom domain
-  enable_cdn         = false # No CDN for staging to save costs
+  enable_ssl         = true  
+  enable_cdn         = false 
 }
 
 output "load_balancer_ip" {
@@ -332,16 +302,14 @@ output "load_balancer_url" {
   value       = module.load_balancer.load_balancer_url
 }
 
-# Firebase App Hosting module for frontend deployment
 module "app_hosting" {
   source          = "../../modules/app_hosting"
   project_id      = var.project_id
   region          = var.region
   environment     = var.environment
-  firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" # staging app ID
+  firebase_app_id = "1:362880548799:web:10d900ea35ee78c0402b0a" 
   image_tag       = var.image_tag
 
-  # Secrets that App Hosting needs access to
   secret_ids = [
     "NEXT_PUBLIC_SITE_URL_STAGING",
     "NEXT_PUBLIC_BACKEND_API_BASE_URL_STAGING",

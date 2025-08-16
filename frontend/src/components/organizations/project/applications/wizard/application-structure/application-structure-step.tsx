@@ -161,7 +161,7 @@ function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null 
 				is_detailed_research_plan: null,
 				keywords: [],
 				max_words: 3000,
-				order: 0, // Will be reassigned based on the array index
+				order: 0,
 				parent_id: parentId,
 				search_queries: [],
 				title: isSubsection ? "New Sub-section" : "New Section",
