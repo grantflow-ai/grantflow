@@ -66,10 +66,10 @@ export function OrganizationSettingsLayout({
 						{tabs.map((tab) => (
 							<Link
 								className={cn(
-									"relative px-2 py-3 text-[16px] transition-all",
+									"relative px-2 py-3 text-base font-cabin text-app-black",
 									activeTab === tab.key
-										? "font-semibold text-app-black border-b-[3px] border-primary"
-										: "font-body text-app-black hover:text-app-gray-600",
+										? "font-semibold border-b-[3px] border-primary"
+										: "  font-light hover:text-app-gray-600",
 								)}
 								data-testid={`organization-settings-tab-${tab.key}`}
 								href={tab.href}
@@ -83,7 +83,7 @@ export function OrganizationSettingsLayout({
 					{activeTab === "members" &&
 						onInviteClick &&
 						(userRole === UserRole.OWNER || userRole === UserRole.ADMIN) && (
-							<AppButton className=" gap-1 px-4 py-2 " onClick={onInviteClick} type="button">
+							<AppButton className=" gap-1 px-4 py-2 w-[128px] " onClick={onInviteClick} type="button">
 								<Plus className="size-4" />
 								Invite
 							</AppButton>
