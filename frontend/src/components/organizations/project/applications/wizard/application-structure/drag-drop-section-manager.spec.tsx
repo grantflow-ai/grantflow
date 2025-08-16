@@ -681,6 +681,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					/>,
 				);
 
+				setupZoneTest("child", dragHandlers);
 				await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
 
 				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
@@ -765,7 +766,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				expect(sub1?.parent_id).toBe("main-2");
 			});
 
-			it("maintains existing behavior when zone is null", async () => {
+			it("maintains existing behavior with default child zone", async () => {
 				const sections = [
 					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null, title: "Main 1" }),
 					GrantSectionFactory.build({ id: "sub-1", order: 1, parent_id: "main-1", title: "Sub 1" }),
@@ -787,7 +788,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					/>,
 				);
 
-				setupZoneTest(null, dragHandlers);
+				setupZoneTest("child", dragHandlers);
 
 				await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
 
@@ -1341,7 +1342,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				const main1 = updatedSections.find((s: UpdateGrantSection) => s.id === "main-1");
 
 				expect(main1?.parent_id).toBe("main-2"); // Should become subsection of main-2
-				expect(main1?.order).toBe(2); // Should be placed after main-2
+				expect(main1?.order).toBe(1); // Should be placed at main-2's position
 			});
 
 			it("shows confirmation dialog when converting main section with subsections", async () => {
@@ -1463,7 +1464,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				const main1 = updatedSections2.find((s: UpdateGrantSection) => s.id === "main-1");
 
 				expect(main1?.parent_id).toBe("main-3");
-				expect(main1?.order).toBe(3); // Should be placed after main-3
+				expect(main1?.order).toBe(2); // Should be placed at main-3's position
 			});
 
 			it("works correctly when over-section has existing subsections", async () => {
@@ -1498,7 +1499,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				const main1 = updatedSections.find((s: UpdateGrantSection) => s.id === "main-1");
 
 				expect(main1?.parent_id).toBe("main-2");
-				expect(main1?.order).toBe(2); // Should be placed after main-2, regardless of existing subsections
+				expect(main1?.order).toBe(1); // Should be placed at main-2's position, regardless of existing subsections
 			});
 		});
 
@@ -1537,7 +1538,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 			});
 		});
 
-		describe("Null Zone Reordering (zone = null)", () => {
+		describe("Default Zone Reordering (zone = 'sibling')", () => {
 			it("follows default main-to-main reordering behavior", async () => {
 				const sections = [
 					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null, title: "Section 1" }),
@@ -1558,9 +1559,9 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					/>,
 				);
 
-				setupZoneTest(null, dragHandlers);
+				setupZoneTest("sibling", dragHandlers);
 
-				// Drag main-1 over main-2 with null zone
+				// Drag main-1 over main-2 with sibling zone
 				await dragHandlers.onReorder(sections, 0, 1, sections[0], sections[1]);
 
 				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
