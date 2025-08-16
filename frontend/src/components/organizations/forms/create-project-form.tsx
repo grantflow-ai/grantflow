@@ -37,7 +37,8 @@ export function CreateProjectForm({ closeModal, organizationId }: CreateProjectF
 				name: values.name,
 				organizationId,
 			});
-			const { id: projectId } = await createProject(organizationId, values);
+			const result = await createProject(organizationId, values);
+			const projectId = result.id;
 			log.info("[CreateProjectForm] Project created successfully", { projectId });
 			closeModal(projectId);
 		} catch (error) {

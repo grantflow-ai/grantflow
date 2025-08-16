@@ -12,15 +12,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useWizardStore } from "@/stores/wizard-store";
+import type { API } from "@/types/api-types";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 
 vi.mock("@/actions/grant-applications", () => ({
-	updateApplication: vi.fn().mockResolvedValue({
-		id: "test-app-id",
-		project_id: "test-project-id",
-		research_objectives: [],
-	}),
+	updateApplication: vi.fn(),
 }));
 
 vi.mock("@/utils/logger", () => ({
@@ -76,7 +73,7 @@ function renderResearchPlanStep() {
 }
 
 describe.sequential("ResearchPlanStep", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		resetAllStores();
 		setupAuthenticatedTest();
 		vi.clearAllMocks();
@@ -87,6 +84,22 @@ describe.sequential("ResearchPlanStep", () => {
 			organization,
 			organizations,
 			selectedOrganizationId: organization.id,
+		});
+
+		// Set up mock to return a valid application with research objectives
+		const { updateApplication } = await import("@/actions/grant-applications");
+		const mockUpdateApplication = vi.mocked(updateApplication);
+		mockUpdateApplication.mockImplementation(async (_orgId, _projId, _appId, data) => {
+			const currentApp = useApplicationStore.getState().application;
+			if (!currentApp) {
+				throw new Error("No application found");
+			}
+			const updatedApp = {
+				...currentApp,
+				...data,
+			};
+			useApplicationStore.setState({ application: updatedApp });
+			return updatedApp as API.UpdateApplication.Http200.ResponseBody;
 		});
 	});
 
