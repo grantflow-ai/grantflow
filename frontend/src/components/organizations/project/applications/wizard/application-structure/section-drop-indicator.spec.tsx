@@ -12,6 +12,8 @@ const mockDragContext: DragDropContextData = {
 	overIndex: -1,
 	overItem: null,
 	sections: [],
+	zone: null,
+	zonePercent: null,
 };
 
 vi.mock("./drag-drop-context", () => ({
@@ -36,6 +38,7 @@ vi.mock("@/utils/grant-sections", async () => {
 });
 
 const mockElement = {
+	getAttribute: vi.fn(),
 	hasAttribute: vi.fn(),
 };
 
@@ -54,6 +57,7 @@ beforeEach(() => {
 	globalThis.document.querySelector = vi.fn(() => mockElement) as any;
 	vi.clearAllMocks();
 	mockElement.hasAttribute.mockReturnValue(false);
+	mockElement.getAttribute.mockReturnValue("false");
 
 	Object.assign(mockDragContext, {
 		activeIndex: -1,
@@ -202,6 +206,8 @@ describe("SectionWithDropIndicators", () => {
 				overIndex: 1,
 				overItem: sections[1],
 				sections,
+				zone: null,
+				zonePercent: null,
 			};
 
 			const RealDragProvider = createRealDragContextProvider(dragContext);
@@ -236,6 +242,8 @@ describe("SectionWithDropIndicators", () => {
 				overIndex: 2,
 				overItem: sections[2], // main section
 				sections,
+				zone: null,
+				zonePercent: null,
 			};
 
 			const RealDragProvider = createRealDragContextProvider(dragContext);
@@ -263,6 +271,8 @@ describe("SectionWithDropIndicators", () => {
 				overIndex: -1,
 				overItem: null,
 				sections,
+				zone: null,
+				zonePercent: null,
 			};
 
 			const RealDragProvider = createRealDragContextProvider(dragContext);

@@ -202,18 +202,32 @@ services:
         condition: service_healthy
 
   frontend:
-    profiles:
-      - all
-      - frontend
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    ports:
-      - "3000:3000"
-    env_file:
-      - ./frontend/.env
-    depends_on:
-      - backend
+      profiles:
+          - all
+          - frontend
+      build:
+          context: .
+          dockerfile: frontend/Dockerfile
+          args:
+              NEXT_PUBLIC_BACKEND_API_BASE_URL: http://backend:8000
+              NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
+              NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
+              NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+              NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}
+              NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGE_SENDER_ID}
+              NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID: ${NEXT_PUBLIC_FIREBASE_MICROSOFT_TENANT_ID}
+              NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+              NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+              NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+              NEXT_PUBLIC_DEBUG: ${NEXT_PUBLIC_DEBUG:-false}
+              RESEND_API_KEY: ${RESEND_API_KEY}
+      ports:
+          - "3000:3000"
+      env_file:
+          - ./.env
+          - ./frontend/.env
+      depends_on:
+          - backend
 
   scraper:
     profiles:
@@ -249,8 +263,8 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@local.dev
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_LISTEN_PORT: 80
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
     ports:
       - "5050:80"
     volumes:
@@ -260,28 +274,23 @@ services:
     depends_on:
       - db
 
-  crdt:
+  crdt-server:
     profiles:
       - all
-      - crdt
+      - backend
       - services
     build:
       context: .
-      dockerfile: crdt/Dockerfile
+      dockerfile: crdt-server/Dockerfile
     environment:
       DATABASE_URL: postgresql://local:local@db:5432/local
+      NODE_ENV: development
       PORT: "8080"
     ports:
       - "8090:8080"
     depends_on:
       db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 3s
-      start_period: 40s
-      retries: 3
 
 volumes:
   data:

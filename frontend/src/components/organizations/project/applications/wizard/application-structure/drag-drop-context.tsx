@@ -3,7 +3,19 @@
 import { createContext, useContext } from "react";
 import type { GrantSection } from "@/types/grant-sections";
 
-interface DragDropContextData {
+export interface ZoneCollisionData {
+	zone: null | ZoneType;
+	zonePercent: null | number;
+}
+
+export type ZoneType = "child" | "sibling";
+
+// To support data ref instead of state subscription to avoid re-renders during drag
+interface DragDropContext {
+	getDragState: () => DragDropContextData;
+}
+
+interface DragDropContextData extends ZoneCollisionData {
 	activeIndex: number;
 	activeItem: GrantSection | null;
 	isAnyDragging: boolean;
@@ -12,12 +24,7 @@ interface DragDropContextData {
 	sections: GrantSection[];
 }
 
-// To support data ref instead of state subscription to avoid re-renders during drag
-interface DragDropContextValue {
-	getDragState: () => DragDropContextData;
-}
-
-const DragDropContext = createContext<DragDropContextValue | null>(null);
+const DragDropContext = createContext<DragDropContext | null>(null);
 
 export function useDragDropContext(): DragDropContextData {
 	const context = useContext(DragDropContext);
@@ -28,4 +35,4 @@ export function useDragDropContext(): DragDropContextData {
 }
 
 export { DragDropContext };
-export type { DragDropContextData, DragDropContextValue };
+export type { DragDropContextData };
