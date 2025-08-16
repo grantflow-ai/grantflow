@@ -2,20 +2,27 @@
 
 import { Mail, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppButton } from "@/components/app";
 import { Checkbox } from "@/components/ui/checkbox";
+import { API } from "@/types/api-types";
 
-type CollaboratorPermission = "admin" | "collaborator";
+export interface InviteOptions{
+	email: string
+	hasAllProjectsAccess?: boolean
+	projectIds?: string[]
+	role: CollaboratorPermission
+
+}
+type CollaboratorPermission = API.CreateOrganizationInvitation.RequestBody["role"];
+
 interface InviteCollaboratorModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onInvite: (
-		email: string,
-		permission: CollaboratorPermission,
-		hasAllProjectsAccess?: boolean,
-		projectIds?: string[],
+		options: InviteOptions
 	) => Promise<void>;
 	projects: ResearchProject[];
 }
@@ -34,35 +41,50 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
-		if (!email || !permission) return;
+	if (!email || !permission) return;
 
-		setIsSubmitting(true);
-		try {
-			const hasAllProjectsAccess = permission === "admin" || projectAccess === "all";
+	setIsSubmitting(true);
+	try {
+		let hasAllProjectsAccess = false;
+		let projectIds: string[] = [];
 
-			// TODO: Implement project selection for specific projects
-			const projectIds: string[] = [];
-
-			// TODO: Add name field to API when backend supports it
-
-			await onInvite(email, permission, hasAllProjectsAccess, projectIds);
-			setName("");
-			setEmail("");
-			setPermission(undefined);
-			setProjectAccess("all");
-			setSelectedProjects([])
-			onClose();
-		} catch {
-		} finally {
-			setIsSubmitting(false);
+		if (permission === "ADMIN") {
+			// Admin always gets all projects access
+			hasAllProjectsAccess = true;
+			projectIds = projects.map(project => project.id);
+		
+		} else {
+			projectIds = selectedProjects;
 		}
-	};
+
+		await onInvite({
+			email, 
+			hasAllProjectsAccess, 
+			projectIds, 
+			role: permission
+		});
+		
+		// Reset form
+		setName("");
+		setEmail("");
+		setPermission(undefined);
+		setProjectAccess("");
+		setSelectedProjects([]);
+		onClose();
+	} catch {
+		toast.error("Failed to invite collaborator. Please try again.");
+	} finally {
+		setIsSubmitting(false);
+	}
+};
+
+
+
 
 	const handleClose = () => {
 		setName("");
 		setEmail("");
 		setPermission(undefined);
-		setProjectAccess("all");
 		setSelectedProjects([])
 		onClose();
 	};
@@ -76,6 +98,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 	const handleRemoveProject = (projectId: string) => {
 		setSelectedProjects(selectedProjects.filter((id) => id !== projectId));
 	};
+
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
@@ -149,8 +172,8 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 								Permission
 							</label>
 							<Select
-								onValueChange={(value: "admin" | "collaborator") => {
-									setPermission(value);
+								onValueChange={(value) => {
+									setPermission(value as CollaboratorPermission);
 								}}
 								value={permission}
 							>
@@ -170,14 +193,14 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 									<SelectItem
 										className="px-3 py-2 cursor-pointer  text-app-black text-[14px]"
 										data-testid="collaborator-option"
-										value="collaborator"
+										value="COLLABORATOR"
 									>
 										Collaborator
 									</SelectItem>
 									<SelectItem
 										className="px-3 py-2 cursor-pointer text-app-black text-[14px]"
 										data-testid="admin-option"
-										value="admin"
+										value="ADMIN"
 									>
 										Admin
 									</SelectItem>
@@ -278,7 +301,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 							Cancel
 						</AppButton>
 						<AppButton
-							className=" px-4 py-2"
+							className=" px-4 py-2 "
 							data-testid="send-invitation-button"
 							disabled={!email || !permission || isSubmitting}
 							onClick={handleSubmit}
