@@ -10,6 +10,11 @@ export interface ZoneCollisionData {
 
 export type ZoneType = "child" | "sibling";
 
+// To support data ref instead of state subscription to avoid re-renders during drag
+interface DragDropContext {
+	getDragState: () => DragDropContextData;
+}
+
 interface DragDropContextData extends ZoneCollisionData {
 	activeIndex: number;
 	activeItem: GrantSection | null;
@@ -19,12 +24,7 @@ interface DragDropContextData extends ZoneCollisionData {
 	sections: GrantSection[];
 }
 
-// To support data ref instead of state subscription to avoid re-renders during drag
-interface DragDropContextValue {
-	getDragState: () => DragDropContextData;
-}
-
-const DragDropContext = createContext<DragDropContextValue | null>(null);
+const DragDropContext = createContext<DragDropContext | null>(null);
 
 export function useDragDropContext(): DragDropContextData {
 	const context = useContext(DragDropContext);
@@ -35,4 +35,4 @@ export function useDragDropContext(): DragDropContextData {
 }
 
 export { DragDropContext };
-export type { DragDropContextData, DragDropContextValue };
+export type { DragDropContextData };
