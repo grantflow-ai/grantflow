@@ -125,7 +125,7 @@ const handleMainToSubReorder = async (
 	zone?: null | ZoneType,
 ): Promise<void> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
-	const newParentId = determineNewParentId(overItem, zone);
+	const newParentId = determineNewParentId(overItem, zone ?? "child");
 
 	if (hasActiveSubSections && overItem.parent_id === activeItem.id) {
 		toast.info("Cannot move a section into its own sub-section");
@@ -199,7 +199,7 @@ const handleSubToMainReorder = async (
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
 	zone?: null | ZoneType,
 ): Promise<boolean> => {
-	const newParentId = zone === "sibling" ? null : determineNewParentId(overItem, zone);
+	const newParentId = zone === "sibling" ? null : determineNewParentId(overItem, zone ?? "child");
 	const targetIndexInChildZone = activeIndex < overIndex ? overIndex : overIndex + 1;
 	const targetIndex = zone === "sibling" ? overIndex : targetIndexInChildZone;
 
@@ -227,7 +227,7 @@ const handleSubToSubReorder = async (
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
 ): Promise<boolean> => {
-	const newParentId = determineNewParentId(overItem);
+	const newParentId = determineNewParentId(overItem, "child");
 	const hasParentChanged = activeItem.parent_id !== newParentId;
 
 	const isSectionLater = activeIndex > overIndex;

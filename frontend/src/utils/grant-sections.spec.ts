@@ -22,8 +22,6 @@ const makeSection2ChildOfSection1 = (section: GrantSection): null | string => {
 
 const makeAllParentsNull = (): null => null;
 
-const makeAllParentsUndefined = (): null => null;
-
 const reassignSectionToMoveToMain1 = (section: GrantSection): null | string => {
 	if (section.id === "section-to-move") {
 		return "main-1";
@@ -61,7 +59,7 @@ describe("grant-sections utilities", () => {
 				parent_id: "parent-123",
 			});
 
-			const result = determineNewParentId(overSection);
+			const result = determineNewParentId(overSection, "child");
 
 			expect(result).toBe("parent-123");
 		});
@@ -88,24 +86,13 @@ describe("grant-sections utilities", () => {
 			expect(result).toBeNull();
 		});
 
-		it("throws error when zone is null and over is main", () => {
+		it("returns over section id when zone is child and over is main (backwards compatibility)", () => {
 			const overSection = GrantSectionDetailedFactory.build({
 				id: "over-main",
 				parent_id: null,
 			});
 
-			expect(() => determineNewParentId(overSection, null)).toThrow(
-				"Zone cannot be null when determining parent for any section to main section drag operation",
-			);
-		});
-
-		it("returns over section id when zone is undefined and over is main (backwards compatibility)", () => {
-			const overSection = GrantSectionDetailedFactory.build({
-				id: "over-main",
-				parent_id: null,
-			});
-
-			const result = determineNewParentId(overSection);
+			const result = determineNewParentId(overSection, "child");
 
 			expect(result).toBe("over-main");
 		});
@@ -117,7 +104,7 @@ describe("grant-sections utilities", () => {
 				parent_id: sharedParentId,
 			});
 
-			const result = determineNewParentId(overSection);
+			const result = determineNewParentId(overSection, "child");
 
 			expect(result).toBe(sharedParentId);
 		});
@@ -128,7 +115,7 @@ describe("grant-sections utilities", () => {
 				parent_id: "parent-b",
 			});
 
-			const result = determineNewParentId(overSection);
+			const result = determineNewParentId(overSection, "child");
 
 			expect(result).toBe("parent-b");
 		});
@@ -157,24 +144,13 @@ describe("grant-sections utilities", () => {
 					expect(result).toBe("over-main");
 				});
 
-				it("zone=null throws error", () => {
+				it("zone=child returns over section id (backwards compatibility)", () => {
 					const overSection = GrantSectionDetailedFactory.build({
 						id: "over-main",
 						parent_id: null,
 					});
 
-					expect(() => determineNewParentId(overSection, null)).toThrow(
-						"Zone cannot be null when determining parent for any section to main section drag operation",
-					);
-				});
-
-				it("zone=undefined returns over section id (backwards compatibility)", () => {
-					const overSection = GrantSectionDetailedFactory.build({
-						id: "over-main",
-						parent_id: null,
-					});
-
-					const result = determineNewParentId(overSection);
+					const result = determineNewParentId(overSection, "child");
 
 					expect(result).toBe("over-main");
 				});
@@ -209,18 +185,18 @@ describe("grant-sections utilities", () => {
 						parent_id: "parent-123",
 					});
 
-					const result = determineNewParentId(overSection, null);
+					const result = determineNewParentId(overSection, "child");
 
 					expect(result).toBe("parent-123");
 				});
 
-				it("zone=undefined returns over section's parent", () => {
+				it("zone=child returns over section's parent", () => {
 					const overSection = GrantSectionDetailedFactory.build({
 						id: "over-child",
 						parent_id: "parent-123",
 					});
 
-					const result = determineNewParentId(overSection);
+					const result = determineNewParentId(overSection, "child");
 
 					expect(result).toBe("parent-123");
 				});
@@ -706,11 +682,11 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections, makeAllParentsNull);
 
-			expect(result[0].parent_id).toBe("some-parent");
-			expect(result[1].parent_id).toBe("another-parent");
+			expect(result[0].parent_id).toBeNull();
+			expect(result[1].parent_id).toBeNull();
 		});
 
-		it("handles parentAssignmentFn returning undefined (falls back to original parent)", () => {
+		it("handles no parentAssignmentFn (falls back to original parent)", () => {
 			const sections = [
 				GrantSectionDetailedFactory.build({
 					id: "section-1",
@@ -724,7 +700,7 @@ describe("grant-sections utilities", () => {
 				}),
 			];
 
-			const result = assignOrderAndParent(sections, makeAllParentsUndefined);
+			const result = assignOrderAndParent(sections);
 
 			expect(result[0].parent_id).toBe("original-parent");
 			expect(result[1].parent_id).toBeNull();
@@ -869,7 +845,7 @@ describe("grant-sections utilities", () => {
 
 			const result = assignOrderAndParent(sections, reassignParentFallbackChain);
 
-			expect(result[0].parent_id).toBe("original-parent");
+			expect(result[0].parent_id).toBeNull();
 			expect(result[1].parent_id).toBeNull();
 			expect(result[2].parent_id).toBeNull();
 		});
@@ -1202,7 +1178,7 @@ describe("grant-sections utilities", () => {
 			const [[calledWith]] = mockUpdateGrantSections.mock.calls;
 			const activeAfterUpdate = calledWith.find((s: any) => s.id === "active");
 
-			expect(activeAfterUpdate?.parent_id).toBe("old-parent");
+			expect(activeAfterUpdate?.parent_id).toBeNull();
 		});
 
 		it("handles same active and over index", async () => {
@@ -1582,7 +1558,7 @@ describe("grant-sections utilities", () => {
 				expect(result).toEqual({
 					isSubsectionWidth: false,
 					showAbove: false,
-					showBelow: true,
+					showBelow: false,
 				});
 			});
 
