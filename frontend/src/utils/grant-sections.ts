@@ -325,7 +325,7 @@ const calculateMainToMainDropIndicator = (
 		return {
 			isSubsectionWidth,
 			showAbove: zone === "child" ? false : activeIndex > overIndex,
-			showBelow: activeIndex < overIndex,
+			showBelow: zone === "child" ? true : activeIndex < overIndex,
 		};
 	}
 
