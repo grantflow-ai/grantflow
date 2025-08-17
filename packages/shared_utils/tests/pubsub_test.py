@@ -408,6 +408,9 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         b'"indexing_status":"FINISHED",'
         b'"identifier":"test_file.pdf"}}'
     )
+    message1.message.attributes = {}
+    message1.message.message_id = "msg-1"
+    message1.message.publish_time = None
     message1.ack_id = "ack-1"
     message1.ack = Mock()
     message1.nack = Mock()
@@ -423,6 +426,9 @@ async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:
         b'"indexing_status":"FINISHED",'
         b'"identifier":"other_file.pdf"}}'
     )
+    message2.message.attributes = {}
+    message2.message.message_id = "msg-2"
+    message2.message.publish_time = None
     message2.ack_id = "ack-2"
     message2.ack = Mock()
     message2.nack = Mock()
@@ -473,6 +479,9 @@ async def test_pull_notifications_with_identifier(mock_subscriber_client: Mock) 
         b'"indexing_status":"FINISHED",'
         b'"identifier":"https://example.com/document"}}'
     )
+    message.message.attributes = {}
+    message.message.message_id = "msg-1"
+    message.message.publish_time = None
     message.ack_id = "ack-1"
     message.ack = Mock()
     message.nack = Mock()
@@ -503,6 +512,9 @@ async def test_pull_notifications_invalid_message(mock_subscriber_client: Mock) 
 
     message = Mock()
     message.message.data = b"invalid json"
+    message.message.attributes = {}
+    message.message.message_id = "msg-invalid"
+    message.message.publish_time = None
     message.ack_id = "ack-invalid"
     message.ack = Mock()
     message.nack = Mock()
