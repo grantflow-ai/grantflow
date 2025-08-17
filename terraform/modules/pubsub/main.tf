@@ -326,7 +326,6 @@ data "google_project" "project" {
   project_id = var.project_id
 }
 
-# Grant Pub/Sub service account permission to publish to DLQ topics
 resource "google_pubsub_topic_iam_member" "file_indexing_dlq_publisher" {
   topic  = google_pubsub_topic.file_indexing_dlq.name
   role   = "roles/pubsub.publisher"

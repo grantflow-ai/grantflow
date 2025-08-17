@@ -253,11 +253,10 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
   }
 }
 
-# Centralized DLQ for all monitoring-related topics
 resource "google_pubsub_topic" "monitoring_dlq" {
   name = "monitoring-dlq-${var.environment}"
   
-  message_retention_duration = "604800s"  # 7 days
+  message_retention_duration = "604800s"  
   
   labels = {
     environment = var.environment
@@ -271,7 +270,7 @@ resource "google_pubsub_subscription" "monitoring_dlq_subscription" {
   
   ack_deadline_seconds = 60
   
-  message_retention_duration = "604800s"  # 7 days
+  message_retention_duration = "604800s"  
   
   retain_acked_messages = true
   
@@ -281,7 +280,6 @@ resource "google_pubsub_subscription" "monitoring_dlq_subscription" {
   }
 }
 
-# Grant Pub/Sub service account permission to publish to the centralized DLQ
 data "google_project" "monitoring_project" {
   project_id = var.project_id
 }
