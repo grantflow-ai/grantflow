@@ -1,0 +1,3 @@
+# ~keep Ignore customer-managed encryption key warnings for function source buckets
+# Default Google encryption is acceptable for these non-sensitive resources
+AVD-GCP-0066
