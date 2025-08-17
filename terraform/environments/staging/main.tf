@@ -84,6 +84,7 @@ module "cloud_run" {
   database_connection_name      = module.database.instance_connection_name
   backend_service_account_email = module.iam.backend_service_account_email
   scraper_service_account_email = module.iam.scraper_service_account_email
+  rag_service_account_email     = module.iam.rag_service_account_email
   min_instances                 = 1
   max_instances                 = 5
   cpu_limit                     = "1"
@@ -118,6 +119,7 @@ module "pubsub" {
   project_id                           = var.project_id
   region                               = var.region
   pubsub_invoker_service_account_email = module.cloud_run.pubsub_invoker_service_account_email
+  rag_service_account_email            = module.iam.rag_service_account_email
   message_retention_duration           = "86400s"
   ack_deadline_seconds                 = 600  # ~keep 10 minutes for file processing
   enable_dead_letter                   = true # ~keep Enable DLQ for better error handling

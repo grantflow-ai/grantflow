@@ -205,6 +205,12 @@ variable "scraper_service_account_email" {
   default     = ""
 }
 
+variable "rag_service_account_email" {
+  description = "Service account email for the RAG service"
+  type        = string
+  default     = ""
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -575,6 +581,8 @@ resource "google_cloud_run_v2_service" "rag" {
   deletion_protection = false
 
   template {
+    service_account = var.rag_service_account_email != "" ? var.rag_service_account_email : null
+
     containers {
       image = "us-east1-docker.pkg.dev/${var.project_id}/grantflow/rag:${var.image_tag_suffix}"
 
