@@ -41,6 +41,6 @@ output "rag_service_id" {
 }
 
 output "rag_service_account_email" {
-  description = "The email of the RAG service account (uses default compute service account)"
-  value       = "${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+  description = "The email of the RAG service account"
+  value       = var.rag_service_account_email != "" ? var.rag_service_account_email : "${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }

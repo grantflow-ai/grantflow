@@ -128,6 +128,22 @@ async def grant_template_generation_pipeline_handler(
 ) -> GrantTemplate:
     logger.info("Starting grant template generation pipeline", template_id=grant_template_id)
 
+    async with session_maker() as session:
+        grant_template_result = await session.execute(
+            select(GrantTemplate).where(GrantTemplate.id == grant_template_id)
+        )
+        grant_template = grant_template_result.scalar_one_or_none()
+        if not grant_template:
+            msg = f"Grant template {grant_template_id} not found"
+            raise ValueError(msg)
+        grant_application_id = grant_template.grant_application_id
+
+    logger.info(
+        "Found grant application for template",
+        template_id=str(grant_template_id),
+        application_id=str(grant_application_id),
+    )
+
     if job_manager is None:
         job_manager = JobManager(session_maker)
         try:
@@ -148,7 +164,7 @@ async def grant_template_generation_pipeline_handler(
         await job_manager.update_job_status(RagGenerationStatusEnum.PROCESSING)
 
     await job_manager.add_notification(
-        parent_id=grant_template_id,
+        parent_id=grant_application_id,
         event=NotificationEvents.GRANT_TEMPLATE_GENERATION_STARTED,
         message="Starting grant template generation pipeline...",
         notification_type="info",
@@ -178,7 +194,7 @@ async def grant_template_generation_pipeline_handler(
         }
 
         await job_manager.add_notification(
-            parent_id=grant_template_id,
+            parent_id=grant_application_id,
             event=NotificationEvents.EXTRACTING_CFP_DATA,
             message="Extracting data from CFP content...",
             notification_type="info",
@@ -206,7 +222,7 @@ async def grant_template_generation_pipeline_handler(
         )
 
         await job_manager.add_notification(
-            parent_id=grant_template_id,
+            parent_id=grant_application_id,
             event=NotificationEvents.CFP_DATA_EXTRACTED,
             message="CFP data extracted successfully",
             notification_type="info",
@@ -226,14 +242,14 @@ async def grant_template_generation_pipeline_handler(
             cfp_content=extraction_result["content"],
             cfp_subject=extraction_result["cfp_subject"],
             organization=organization,
-            parent_id=grant_template_id,
+            parent_id=grant_application_id,
             job_manager=job_manager,
         )
 
         logger.info("Extracted grant template sections")
 
         await job_manager.add_notification(
-            parent_id=grant_template_id,
+            parent_id=grant_application_id,
             event=NotificationEvents.SAVING_GRANT_TEMPLATE,
             message="Saving grant template to database...",
             notification_type="info",
@@ -264,7 +280,7 @@ async def grant_template_generation_pipeline_handler(
             error_details={"error_type": e.__class__.__name__, "recoverable": event_type != "pipeline_error"},
         )
         await job_manager.add_notification(
-            parent_id=grant_template_id,
+            parent_id=grant_application_id,
             event=event_type,
             message=error_message,
             notification_type="error",
@@ -292,7 +308,7 @@ async def grant_template_generation_pipeline_handler(
 
             await job_manager.update_job_status(RagGenerationStatusEnum.COMPLETED)
             await job_manager.add_notification(
-                parent_id=grant_template_id,
+                parent_id=grant_application_id,
                 event=NotificationEvents.GRANT_TEMPLATE_CREATED,
                 message="Grant template created successfully",
                 notification_type="success",
@@ -316,7 +332,7 @@ async def grant_template_generation_pipeline_handler(
                 error_details={"error_type": "database_error"},
             )
             await job_manager.add_notification(
-                parent_id=grant_template_id,
+                parent_id=grant_application_id,
                 event=NotificationEvents.INTERNAL_ERROR,
                 message="An internal error occurred. Please try again or contact support.",
                 notification_type="error",
