@@ -98,29 +98,19 @@ resource "google_logging_metric" "pubsub_ack_latency" {
   EOT
 
   metric_descriptor {
-    metric_kind = "GAUGE"
-    value_type  = "DISTRIBUTION"
-    unit        = "ms"
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+    unit        = "1"
     labels {
       key         = "subscription"
       value_type  = "STRING"
       description = "The subscription name"
     }
-    display_name = "Pub/Sub Message Acknowledgment Latency"
+    display_name = "Pub/Sub Message Acknowledgment Count"
   }
-
-  value_extractor = "EXTRACT(protoPayload.request.ackDeadlineSeconds)"
 
   label_extractors = {
     "subscription" = "EXTRACT(resource.labels.subscription_id)"
-  }
-
-  bucket_options {
-    exponential_buckets {
-      num_finite_buckets = 64
-      growth_factor      = 2
-      scale              = 0.01
-    }
   }
 }
 
@@ -231,7 +221,7 @@ resource "google_monitoring_alert_policy" "pubsub_dlq_alert" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = []
 
   documentation {
     content   = "Messages are being sent to the dead letter queue. Check logs for failed message processing."
@@ -239,9 +229,7 @@ resource "google_monitoring_alert_policy" "pubsub_dlq_alert" {
   }
 
   alert_strategy {
-    notification_rate_limit {
-      period = "300s"
-    }
+    auto_close = "1800s"
   }
 }
 
@@ -269,11 +257,15 @@ resource "google_monitoring_alert_policy" "pubsub_high_error_rate" {
     }
   }
 
-  notification_channels = var.notification_channels
+  notification_channels = []
 
   documentation {
     content   = "High error rate when publishing to Pub/Sub. Check service logs and quotas."
     mime_type = "text/markdown"
+  }
+
+  alert_strategy {
+    auto_close = "1800s"
   }
 }
 
