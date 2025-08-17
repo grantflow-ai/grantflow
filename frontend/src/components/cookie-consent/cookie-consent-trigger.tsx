@@ -61,7 +61,7 @@ export function CookieConsentTrigger({
 	}, [hasInteracted, checkAndShowConsent, triggerElementTestId, proximityThreshold]);
 
 	return (
-		<div data-testid="cookie-consent-trigger" ref={containerRef}>
+		<div className="contents" data-testid="cookie-consent-trigger" ref={containerRef}>
 			{children}
 		</div>
 	);
