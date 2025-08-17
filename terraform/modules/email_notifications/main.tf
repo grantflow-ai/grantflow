@@ -88,7 +88,7 @@ resource "google_pubsub_topic" "email_notifications" {
 resource "google_pubsub_topic" "email_notifications_dlq" {
   name = "email-notifications-dlq"
 
-  message_retention_duration = "604800s"  # 7 days
+  message_retention_duration = "604800s"  
 
   labels = {
     environment = var.environment
@@ -102,7 +102,7 @@ resource "google_pubsub_subscription" "email_notifications_dlq_subscription" {
 
   ack_deadline_seconds = 60
 
-  message_retention_duration = "604800s"  # 7 days
+  message_retention_duration = "604800s"  
 
   retain_acked_messages = true
 

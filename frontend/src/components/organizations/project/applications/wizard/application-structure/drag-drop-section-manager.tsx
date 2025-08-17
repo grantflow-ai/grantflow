@@ -554,7 +554,6 @@ export function DragDropSectionManager({
 
 				const [collision] = event.collisions;
 
-				// Check if collision has zone information
 				if (
 					collision.data &&
 					(Object.hasOwn(collision.data, "zone") || Object.hasOwn(collision.data, "zonePercent"))
