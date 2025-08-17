@@ -153,6 +153,8 @@ resource "google_cloudfunctions2_function_iam_member" "budget_alerts_invoker" {
   member         = "serviceAccount:${google_service_account.budget_function.email}"
 }
 
+# trivy:ignore:AVD-GCP-0066
+# ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "function_source" {
   name     = "${var.project_id}-budget-functions-${var.environment}"
   location = "US"

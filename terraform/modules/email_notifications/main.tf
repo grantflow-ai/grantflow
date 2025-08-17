@@ -9,6 +9,8 @@ terraform {
   }
 }
 
+# trivy:ignore:AVD-GCP-0066
+# ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "email_notification_functions" {
   name                        = "${var.project_id}-email-notification-functions"
   location                    = "US"

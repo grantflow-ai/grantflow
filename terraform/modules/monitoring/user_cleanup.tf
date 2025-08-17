@@ -1,4 +1,6 @@
 
+# trivy:ignore:AVD-GCP-0066
+# ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "entity_cleanup_functions" {
   name                        = "${var.project_id}-entity-cleanup-functions"
   location                    = "US"
