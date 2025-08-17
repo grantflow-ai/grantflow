@@ -15,7 +15,7 @@ vi.mock("@dnd-kit/core", async () => {
 
 const mockedPointerWithin = vi.mocked(pointerWithin);
 
-// Helper to create mock collision detection args
+// ~keep Helper to create mock collision detection args
 const createMockArgs = (overrides: any = {}) => ({
 	active: {
 		data: {
@@ -53,7 +53,6 @@ const createMockArgs = (overrides: any = {}) => ({
 	...overrides,
 });
 
-// Helper to create mock collision
 const createMockCollision = (sectionData: Partial<GrantSection> = {}) =>
 	({
 		data: {
@@ -119,7 +118,7 @@ describe("createZoneCollisionDetection", () => {
 				} as {
 					data: DataRef<{ section: GrantSection }>;
 				} & Active,
-				pointerCoordinates: { x: 600, y: 230 }, // 50% - child zone
+				pointerCoordinates: { x: 600, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -135,7 +134,7 @@ describe("createZoneCollisionDetection", () => {
 
 		it("returns default collisions when no rect found for primary collision", () => {
 			const args = createMockArgs({
-				droppableRects: new Map(), // Empty map
+				droppableRects: new Map(),
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -161,9 +160,8 @@ describe("createZoneCollisionDetection", () => {
 
 	describe("Zone Calculation", () => {
 		it("calculates sibling zone when mouse is in left 16%", () => {
-			// Mouse at x: 440 (10% from left of 400px wide section starting at x: 400)
 			const args = createMockArgs({
-				pointerCoordinates: { x: 440, y: 230 }, // 40px from left / 400px width = 10%
+				pointerCoordinates: { x: 440, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -178,9 +176,8 @@ describe("createZoneCollisionDetection", () => {
 		});
 
 		it("calculates child zone when mouse is in right 84%", () => {
-			// Mouse at x: 600 (50% from left of 400px wide section starting at x: 400)
 			const args = createMockArgs({
-				pointerCoordinates: { x: 600, y: 230 }, // 200px from left / 400px width = 50%
+				pointerCoordinates: { x: 600, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -195,9 +192,8 @@ describe("createZoneCollisionDetection", () => {
 		});
 
 		it("handles exact 16% boundary (should be child zone)", () => {
-			// Mouse at x: 464 (exactly 16% from left)
 			const args = createMockArgs({
-				pointerCoordinates: { x: 464, y: 230 }, // 64px from left / 400px width = 16%
+				pointerCoordinates: { x: 464, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -212,9 +208,8 @@ describe("createZoneCollisionDetection", () => {
 		});
 
 		it("handles mouse at far left edge", () => {
-			// Mouse at x: 400 (exactly at left edge)
 			const args = createMockArgs({
-				pointerCoordinates: { x: 400, y: 230 }, // 0px from left / 400px width = 0%
+				pointerCoordinates: { x: 400, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -229,9 +224,8 @@ describe("createZoneCollisionDetection", () => {
 		});
 
 		it("handles mouse at far right edge", () => {
-			// Mouse at x: 800 (exactly at right edge)
 			const args = createMockArgs({
-				pointerCoordinates: { x: 800, y: 230 }, // 400px from left / 400px width = 100%
+				pointerCoordinates: { x: 800, y: 230 },
 			});
 			const defaultCollisions = [createMockCollision()];
 			mockedPointerWithin.mockReturnValue(defaultCollisions);
@@ -249,7 +243,7 @@ describe("createZoneCollisionDetection", () => {
 	describe("Multiple Collisions", () => {
 		it("applies zone data to all collisions", () => {
 			const args = createMockArgs({
-				pointerCoordinates: { x: 440, y: 230 }, // 10% - sibling zone
+				pointerCoordinates: { x: 440, y: 230 },
 			});
 			const collision1 = createMockCollision();
 			const collision2 = { ...createMockCollision(), id: "other-section" };
@@ -275,7 +269,7 @@ describe("createZoneCollisionDetection", () => {
 		it("handles missing section data in active", () => {
 			const args = createMockArgs({
 				active: {
-					data: { current: {} }, // No section data
+					data: { current: {} },
 					id: "active-section",
 				} as {
 					data: DataRef<{ section: GrantSection }>;
@@ -296,7 +290,7 @@ describe("createZoneCollisionDetection", () => {
 			const collisionWithoutSection = {
 				data: {
 					droppableContainer: {
-						data: { current: {} }, // No section data
+						data: { current: {} },
 					},
 				},
 				id: "target-section",
@@ -312,7 +306,7 @@ describe("createZoneCollisionDetection", () => {
 
 		it("preserves existing collision data", () => {
 			const args = createMockArgs({
-				pointerCoordinates: { x: 600, y: 230 }, // 50% - child zone
+				pointerCoordinates: { x: 600, y: 230 },
 			});
 			const collisionWithExistingData = {
 				...createMockCollision(),
@@ -354,7 +348,7 @@ describe("createZoneCollisionDetection", () => {
 				} as {
 					data: DataRef<{ section: GrantSection }>;
 				} & Active,
-				pointerCoordinates: { x: 450, y: 230 }, // 12.5% - sibling zone
+				pointerCoordinates: { x: 450, y: 230 },
 			});
 
 			const collision = createMockCollision({

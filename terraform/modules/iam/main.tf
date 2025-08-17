@@ -220,6 +220,12 @@ resource "google_project_iam_member" "backend_serviceusage_consumer" {
   member  = "serviceAccount:${google_service_account.backend.email}"
 }
 
+resource "google_service_account_iam_member" "github_actions_act_as_backend" {
+  service_account_id = google_service_account.backend.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
 
 resource "google_service_account" "scraper" {
   account_id   = "scraper-service"
@@ -256,6 +262,12 @@ resource "google_project_iam_member" "scraper_trace_agent" {
   project = "grantflow"
   role    = "roles/cloudtrace.agent"
   member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
+resource "google_service_account_iam_member" "github_actions_act_as_scraper" {
+  service_account_id = google_service_account.scraper.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
 
