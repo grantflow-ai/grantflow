@@ -255,9 +255,9 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
 
 resource "google_pubsub_topic" "monitoring_dlq" {
   name = "monitoring-dlq-${var.environment}"
-  
-  message_retention_duration = "604800s"  
-  
+
+  message_retention_duration = "604800s"
+
   labels = {
     environment = var.environment
     purpose     = "centralized-monitoring-dlq"
@@ -267,13 +267,13 @@ resource "google_pubsub_topic" "monitoring_dlq" {
 resource "google_pubsub_subscription" "monitoring_dlq_subscription" {
   name  = "monitoring-dlq-subscription-${var.environment}"
   topic = google_pubsub_topic.monitoring_dlq.name
-  
+
   ack_deadline_seconds = 60
-  
-  message_retention_duration = "604800s"  
-  
+
+  message_retention_duration = "604800s"
+
   retain_acked_messages = true
-  
+
   labels = {
     environment = var.environment
     purpose     = "centralized-monitoring-dlq"

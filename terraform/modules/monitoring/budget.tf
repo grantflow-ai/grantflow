@@ -54,9 +54,9 @@ variable "enable_billing_budget" {
 
 resource "google_pubsub_topic" "budget_alerts" {
   name = "budget-alerts-${var.environment}"
-  
-  message_retention_duration = "86400s"  # ~keep 1 day
-  
+
+  message_retention_duration = "86400s" # ~keep 1 day
+
   labels = {
     environment = var.environment
     purpose     = "budget_monitoring"
@@ -111,27 +111,27 @@ resource "google_service_account" "budget_function" {
 resource "google_pubsub_subscription" "budget_alerts_subscription" {
   name  = "budget-alerts-subscription-${var.environment}"
   topic = google_pubsub_topic.budget_alerts.name
-  
+
   push_config {
     push_endpoint = google_cloudfunctions2_function.budget_to_discord.service_config[0].uri
-    
+
     oidc_token {
       service_account_email = google_service_account.budget_function.email
     }
   }
-  
+
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
     max_delivery_attempts = 5
   }
-  
+
   retry_policy {
     minimum_backoff = "10s"
     maximum_backoff = "600s"
   }
-  
+
   ack_deadline_seconds = 60
-  
+
   labels = {
     environment = var.environment
     purpose     = "budget_monitoring"

@@ -68,8 +68,8 @@ resource "google_project_iam_member" "entity_cleanup_permissions" {
 
 resource "google_pubsub_topic" "entity_cleanup_schedule" {
   name = "entity-cleanup-schedule"
-  
-  message_retention_duration = "86400s"  # ~keep 1 day
+
+  message_retention_duration = "86400s" # ~keep 1 day
 
   labels = {
     environment = var.environment
@@ -81,27 +81,27 @@ resource "google_pubsub_topic" "entity_cleanup_schedule" {
 resource "google_pubsub_subscription" "entity_cleanup_subscription" {
   name  = "entity-cleanup-subscription"
   topic = google_pubsub_topic.entity_cleanup_schedule.name
-  
+
   push_config {
     push_endpoint = google_cloudfunctions2_function.entity_cleanup.service_config[0].uri
-    
+
     oidc_token {
       service_account_email = google_service_account.entity_cleanup.email
     }
   }
-  
+
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
     max_delivery_attempts = 5
   }
-  
+
   retry_policy {
     minimum_backoff = "10s"
     maximum_backoff = "600s"
   }
-  
-  ack_deadline_seconds = 600  
-  
+
+  ack_deadline_seconds = 600
+
   labels = {
     environment = var.environment
     purpose     = "entity_cleanup"
