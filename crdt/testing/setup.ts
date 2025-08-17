@@ -10,7 +10,6 @@ const originalConsole = {
 };
 
 beforeAll(() => {
-	// Suppress console output during tests for cleaner test output
 	vi.spyOn(console, "warn").mockImplementation(() => {
 		// ~keep Intentionally empty
 	});

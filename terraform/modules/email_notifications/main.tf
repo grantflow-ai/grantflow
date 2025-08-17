@@ -9,6 +9,8 @@ terraform {
   }
 }
 
+# trivy:ignore:AVD-GCP-0066
+# ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "email_notification_functions" {
   name                        = "${var.project_id}-email-notification-functions"
   location                    = "US"
@@ -80,6 +82,33 @@ resource "google_pubsub_topic" "email_notifications" {
   labels = {
     environment = var.environment
     purpose     = "email_notifications"
+  }
+}
+
+resource "google_pubsub_topic" "email_notifications_dlq" {
+  name = "email-notifications-dlq"
+
+  message_retention_duration = "604800s"  
+
+  labels = {
+    environment = var.environment
+    purpose     = "dead-letter-queue"
+  }
+}
+
+resource "google_pubsub_subscription" "email_notifications_dlq_subscription" {
+  name  = "email-notifications-dlq-subscription"
+  topic = google_pubsub_topic.email_notifications_dlq.name
+
+  ack_deadline_seconds = 60
+
+  message_retention_duration = "604800s"  
+
+  retain_acked_messages = true
+
+  labels = {
+    environment = var.environment
+    purpose     = "dead-letter-monitoring"
   }
 }
 

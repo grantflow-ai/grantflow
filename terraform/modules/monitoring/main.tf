@@ -253,6 +253,43 @@ resource "google_monitoring_alert_policy" "pubsub_dead" {
   }
 }
 
+resource "google_pubsub_topic" "monitoring_dlq" {
+  name = "monitoring-dlq-${var.environment}"
+  
+  message_retention_duration = "604800s"  
+  
+  labels = {
+    environment = var.environment
+    purpose     = "centralized-monitoring-dlq"
+  }
+}
+
+resource "google_pubsub_subscription" "monitoring_dlq_subscription" {
+  name  = "monitoring-dlq-subscription-${var.environment}"
+  topic = google_pubsub_topic.monitoring_dlq.name
+  
+  ack_deadline_seconds = 60
+  
+  message_retention_duration = "604800s"  
+  
+  retain_acked_messages = true
+  
+  labels = {
+    environment = var.environment
+    purpose     = "centralized-monitoring-dlq"
+  }
+}
+
+data "google_project" "monitoring_project" {
+  project_id = var.project_id
+}
+
+resource "google_pubsub_topic_iam_member" "monitoring_dlq_publisher" {
+  topic  = google_pubsub_topic.monitoring_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.monitoring_project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
 resource "google_monitoring_alert_policy" "high_error_rate" {
   for_each = toset(["backend", "crawler", "indexer", "rag"])
 

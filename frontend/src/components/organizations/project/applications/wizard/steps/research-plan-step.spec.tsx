@@ -86,7 +86,6 @@ describe.sequential("ResearchPlanStep", () => {
 			selectedOrganizationId: organization.id,
 		});
 
-		// Set up mock to return a valid application with research objectives
 		const { updateApplication } = await import("@/actions/grant-applications");
 		const mockUpdateApplication = vi.mocked(updateApplication);
 		mockUpdateApplication.mockImplementation(async (_orgId, _projId, _appId, data) => {
