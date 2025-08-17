@@ -70,6 +70,12 @@ variable "rag_url" {
   type        = string
 }
 
+variable "rag_service_account_email" {
+  description = "Email of the RAG service account"
+  type        = string
+  default     = ""
+}
+
 resource "google_pubsub_topic" "file_indexing" {
   name = "file-indexing"
 
@@ -308,6 +314,13 @@ resource "google_pubsub_topic_iam_member" "frontend_notifications_publisher" {
   topic  = google_pubsub_topic.frontend_notifications.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic_iam_member" "rag_frontend_notifications_publisher" {
+  count  = var.rag_service_account_email != "" ? 1 : 0
+  topic  = google_pubsub_topic.frontend_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.rag_service_account_email}"
 }
 
 resource "google_pubsub_topic_iam_member" "backend_subscriber" {

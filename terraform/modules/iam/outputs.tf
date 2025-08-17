@@ -47,3 +47,13 @@ output "scraper_service_account_name" {
   description = "The fully-qualified name of the scraper service account"
   value       = google_service_account.scraper.name
 }
+
+output "rag_service_account_email" {
+  description = "The email of the rag service account"
+  value       = google_service_account.rag.email
+}
+
+output "rag_service_account_name" {
+  description = "The fully-qualified name of the rag service account"
+  value       = google_service_account.rag.name
+}
