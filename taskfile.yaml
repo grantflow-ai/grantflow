@@ -845,7 +845,7 @@ tasks:
         msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
     cmds:
       - echo "Running trivy on terraform directory..."
-      - trivy config ./terraform --ignorefile ./terraform/.trivyignore
+      - trivy config ./terraform
 
 
   gh:deploy:backend:

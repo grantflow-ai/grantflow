@@ -1,5 +1,7 @@
-# we allow remote connections for now without SSL, we use IP whitelisting
+# ~keep We allow remote connections for now without SSL, we use IP whitelisting
 AVD-GCP-0017
 AVD-GCP-0015
-# for now we allow logging
+# ~keep For now we allow logging
 AVD-GCP-0021
+# ~keep Default Google encryption is acceptable for function source code buckets
+AVD-GCP-0066
