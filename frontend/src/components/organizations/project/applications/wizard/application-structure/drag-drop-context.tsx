@@ -10,7 +10,6 @@ export interface ZoneCollisionData {
 
 export type ZoneType = "child" | "sibling";
 
-// To support data ref instead of state subscription to avoid re-renders during drag
 interface DragDropContext {
 	getDragState: () => DragDropContextData;
 }

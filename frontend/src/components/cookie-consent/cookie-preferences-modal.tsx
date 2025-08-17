@@ -115,7 +115,7 @@ export function CookiePreferencesModal() {
 											data-testid="essential-cookies-switch"
 											disabled
 											onChange={function noop() {
-												// Essential cookies cannot be toggled
+												// ~keep Essential cookies cannot be toggled
 											}}
 										/>
 									</div>

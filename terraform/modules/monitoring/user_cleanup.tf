@@ -1,4 +1,6 @@
 
+# trivy:ignore:AVD-GCP-0066
+# ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "entity_cleanup_functions" {
   name                        = "${var.project_id}-entity-cleanup-functions"
   location                    = "US"
@@ -66,7 +68,40 @@ resource "google_project_iam_member" "entity_cleanup_permissions" {
 
 resource "google_pubsub_topic" "entity_cleanup_schedule" {
   name = "entity-cleanup-schedule"
+  
+  message_retention_duration = "86400s"  # ~keep 1 day
 
+  labels = {
+    environment = var.environment
+    purpose     = "entity_cleanup"
+  }
+}
+
+
+resource "google_pubsub_subscription" "entity_cleanup_subscription" {
+  name  = "entity-cleanup-subscription"
+  topic = google_pubsub_topic.entity_cleanup_schedule.name
+  
+  push_config {
+    push_endpoint = google_cloudfunctions2_function.entity_cleanup.service_config[0].uri
+    
+    oidc_token {
+      service_account_email = google_service_account.entity_cleanup.email
+    }
+  }
+  
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
+    max_delivery_attempts = 5
+  }
+  
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"
+  }
+  
+  ack_deadline_seconds = 600  
+  
   labels = {
     environment = var.environment
     purpose     = "entity_cleanup"
@@ -148,6 +183,8 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
     }))
   }
 
+  # ~keep The scheduler job continues below
+
   retry_config {
     retry_count          = 3
     max_retry_duration   = "60s"
@@ -209,6 +246,7 @@ resource "google_logging_metric" "entity_cleanup_operations" {
     status = "EXTRACT(jsonPayload.status)"
   }
 }
+
 
 
 output "entity_cleanup_function_name" {

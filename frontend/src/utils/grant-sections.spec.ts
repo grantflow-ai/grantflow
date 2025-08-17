@@ -1254,7 +1254,7 @@ describe("grant-sections utilities", () => {
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, -1, 3, Object.values(sections));
 
 				expect(result).toEqual({
-					isSubsectionWidth: false, // overItem.parent_id is null
+					isSubsectionWidth: false,
 					showAbove: false,
 					showBelow: true,
 				});
@@ -1268,7 +1268,7 @@ describe("grant-sections utilities", () => {
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, -1, Object.values(sections));
 
 				expect(result).toEqual({
-					isSubsectionWidth: true, // overItem.parent_id is not null
+					isSubsectionWidth: true,
 					showAbove: false,
 					showBelow: true,
 				});
@@ -1284,7 +1284,7 @@ describe("grant-sections utilities", () => {
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 5, 0, Object.values(sections));
 
 				expect(result).toEqual({
-					isSubsectionWidth: false, // Full main section width!
+					isSubsectionWidth: false,
 					showAbove: false,
 					showBelow: true,
 				});
@@ -1319,8 +1319,8 @@ describe("grant-sections utilities", () => {
 		describe("Scenario 1: Sub → Main", () => {
 			it("shows below indicator with subsection width when moving subsection to main", () => {
 				const sections = createTestSections();
-				const activeItem = sections.sub1a; // Subsection
-				const overItem = sections.main2; // Main section
+				const activeItem = sections.sub1a;
+				const overItem = sections.main2;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 1, 3, Object.values(sections));
 
@@ -1333,8 +1333,8 @@ describe("grant-sections utilities", () => {
 
 			it("shows below indicator for subsection moving to different main", () => {
 				const sections = createTestSections();
-				const activeItem = sections.sub2a; // From main-2
-				const overItem = sections.main3; // To main-3
+				const activeItem = sections.sub2a;
+				const overItem = sections.main3;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 4, 5, Object.values(sections));
 
@@ -1349,8 +1349,8 @@ describe("grant-sections utilities", () => {
 		describe("Scenario 2: Main → Sub", () => {
 			it("shows below indicator with subsection width when moving main to subsection", () => {
 				const sections = createTestSections();
-				const activeItem = sections.main3; // Main section without subs
-				const overItem = sections.sub1a; // Subsection
+				const activeItem = sections.main3;
+				const overItem = sections.sub1a;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 5, 1, Object.values(sections));
 
@@ -1363,8 +1363,8 @@ describe("grant-sections utilities", () => {
 
 			it("prevents moving main section into its own subsection", () => {
 				const sections = createTestSections();
-				const activeItem = sections.main1; // Main with subsections
-				const overItem = sections.sub1a; // Its own subsection
+				const activeItem = sections.main1;
+				const overItem = sections.sub1a;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 1, Object.values(sections));
 
@@ -1377,8 +1377,8 @@ describe("grant-sections utilities", () => {
 
 			it("allows moving main section with subsections to different parent's subsection", () => {
 				const sections = createTestSections();
-				const activeItem = sections.main1; // Main with subsections
-				const overItem = sections.sub2a; // Different parent's subsection
+				const activeItem = sections.main1;
+				const overItem = sections.sub2a;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 0, 4, Object.values(sections));
 
@@ -1393,8 +1393,8 @@ describe("grant-sections utilities", () => {
 		describe("Scenario 3: Sub → Sub", () => {
 			it("shows below indicator when moving subsection down within same parent", () => {
 				const sections = createTestSections();
-				const activeItem = sections.sub1a; // First subsection
-				const overItem = sections.sub1b; // Second subsection, same parent
+				const activeItem = sections.sub1a;
+				const overItem = sections.sub1b;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 1, 2, Object.values(sections));
 
@@ -1407,8 +1407,8 @@ describe("grant-sections utilities", () => {
 
 			it("shows above indicator when moving subsection up within same parent", () => {
 				const sections = createTestSections();
-				const activeItem = sections.sub1b; // Second subsection
-				const overItem = sections.sub1a; // First subsection, same parent
+				const activeItem = sections.sub1b;
+				const overItem = sections.sub1a;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 2, 1, Object.values(sections));
 
@@ -1435,8 +1435,8 @@ describe("grant-sections utilities", () => {
 
 			it("shows below indicator when moving subsection to different parent", () => {
 				const sections = createTestSections();
-				const activeItem = sections.sub1a; // From main-1
-				const overItem = sections.sub2a; // To main-2 parent
+				const activeItem = sections.sub1a;
+				const overItem = sections.sub2a;
 
 				const result = calculateDropIndicatorVisibility(activeItem, overItem, 1, 4, Object.values(sections));
 
