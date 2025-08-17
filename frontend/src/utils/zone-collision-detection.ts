@@ -80,7 +80,6 @@ export const createZoneCollisionDetection = (): CollisionDetection => {
 			}>;
 		} & Collision;
 
-		// No zone calculation if the colliding section is not a main section
 		if (!collidingSection || collidingSection.parent_id !== null) {
 			return defaultCollisions;
 		}

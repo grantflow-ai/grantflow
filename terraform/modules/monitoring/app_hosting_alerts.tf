@@ -298,15 +298,13 @@ resource "google_cloudfunctions2_function" "app_hosting_alerts_to_discord" {
 resource "google_pubsub_topic" "app_hosting_alerts" {
   name = "app-hosting-alerts-${var.environment}"
   
-  message_retention_duration = "86400s"  # 1 day
+  message_retention_duration = "86400s"  # ~keep 1 day
   
   labels = {
     environment = var.environment
     purpose     = "app_hosting_monitoring"
   }
 }
-
-# Using centralized monitoring DLQ from main.tf
 
 resource "google_service_account" "app_hosting_alerts_function" {
   account_id   = "fn-apphosting-sa-${var.environment}"
@@ -379,7 +377,6 @@ data "archive_file" "app_hosting_function" {
   }
 }
 
-# IAM permission for centralized DLQ is handled in main.tf
 
 data "google_project" "project" {
   project_id = var.project_id

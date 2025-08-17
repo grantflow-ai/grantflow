@@ -55,7 +55,7 @@ variable "enable_billing_budget" {
 resource "google_pubsub_topic" "budget_alerts" {
   name = "budget-alerts-${var.environment}"
   
-  message_retention_duration = "86400s"  # 1 day
+  message_retention_duration = "86400s"  # ~keep 1 day
   
   labels = {
     environment = var.environment
@@ -63,7 +63,6 @@ resource "google_pubsub_topic" "budget_alerts" {
   }
 }
 
-# Using centralized monitoring DLQ from main.tf
 
 resource "google_cloudfunctions2_function" "budget_to_discord" {
   name        = "fn-alerts-budget-${var.environment}"
@@ -153,7 +152,6 @@ resource "google_cloudfunctions2_function_iam_member" "budget_alerts_invoker" {
   member         = "serviceAccount:${google_service_account.budget_function.email}"
 }
 
-# trivy:ignore:AVD-GCP-0066
 # ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "function_source" {
   name     = "${var.project_id}-budget-functions-${var.environment}"
@@ -199,7 +197,6 @@ data "archive_file" "function" {
   }
 }
 
-# IAM permission for centralized DLQ is handled in main.tf
 
 variable "monthly_budget_amount" {
   description = "Monthly budget amount in USD"
