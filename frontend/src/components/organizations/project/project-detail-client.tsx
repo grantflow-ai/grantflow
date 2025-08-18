@@ -29,6 +29,7 @@ import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
 import { ApplicationList } from "./application-list";
 import { DeleteApplicationModal } from "./applications/delete-application-modal";
+import { type InviteOptions } from "../modals/invite-collaborator-modal";
 
 export function ProjectDetailClient() {
 	const router = useRouter();
@@ -265,7 +266,7 @@ export function ProjectDetailClient() {
 		setIsEditingTitle(false);
 	};
 
-	const handleInviteCollaborator = async (email: string, permission: "admin" | "collaborator") => {
+	const handleInviteCollaborator = async (options: InviteOptions) => {
 		if (!project) {
 			toast.error("Current project not found. Please refresh and try again.");
 			return;
@@ -278,16 +279,16 @@ export function ProjectDetailClient() {
 
 		try {
 			const result = await inviteCollaborator({
-				email,
+				email: options.email,
 				inviterName: user?.displayName ?? user?.email ?? "Team Member",
 				organizationId: selectedOrganizationId,
 				projectId: project.id,
 				projectName: project.name,
-				role: permission === "admin" ? "admin" : "member",
+				role: options.role === "ADMIN" ? "admin" : "member",
 			});
 
 			if (result.success) {
-				toast.success(`Invitation sent successfully to ${email}`);
+				toast.success(`Invitation sent successfully to ${options.email}`);
 				await mutateMembers();
 			} else {
 				toast.error(result.error ?? "Failed to send invitation");
@@ -353,29 +354,29 @@ export function ProjectDetailClient() {
 						</div>
 
 						<div className="flex items-center gap-3">
-							<div className="flex justify-end items-center gap-1">
-								{currentUserRole === "ADMIN" ||
-									(currentUserRole === "OWNER" && (
-										<button
-											className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
-											data-testid="invite-collaborators-button"
-											onClick={() => {
-												setShowInviteModal(true);
-											}}
-											type="button"
-										>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<Plus className="size-4 text-app-gray-600" />
-												</TooltipTrigger>
-												<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
-													<p className="text-white font-body font-normal text-sm">
-														Invite collaborators
-													</p>
-												</TooltipContent>
-											</Tooltip>
-										</button>
-									))}
+							<div className="flex justify-end items-center gap-1 ">
+								{(currentUserRole === "ADMIN" || currentUserRole === "OWNER") && (
+									<button
+										className="size-8 flex items-center justify-center cursor-pointer bg-app-gray-100/50 rounded-sm hover:bg-app-gray-100 transition-colors p-1"
+										data-testid="invite-collaborators-button"
+										onClick={() => {
+											setShowInviteModal(true);
+										}}
+										type="button"
+									>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Plus className="size-4 text-app-gray-600" />
+											</TooltipTrigger>
+											<TooltipContent className="bg-app-dark-blue px-3 py-1 rounded-sm">
+												<p className="text-white font-body font-normal text-sm">
+													Invite collaborators
+												</p>
+											</TooltipContent>
+										</Tooltip>
+									</button>
+								)}
+
 								<div>
 									<AvatarGroup
 										data-testid="project-avatar-group"
@@ -441,6 +442,7 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
+				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
 			/>
 
 			<NewApplicationModal
