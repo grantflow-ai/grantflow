@@ -9,21 +9,18 @@ import { AppButton } from "@/components/app";
 import { Checkbox } from "@/components/ui/checkbox";
 import { API } from "@/types/api-types";
 
-export interface InviteOptions{
-	email: string
-	hasAllProjectsAccess?: boolean
-	projectIds?: string[]
-	role: CollaboratorPermission
-
+export interface InviteOptions {
+	email: string;
+	hasAllProjectsAccess?: boolean;
+	projectIds?: string[];
+	role: CollaboratorPermission;
 }
-type CollaboratorPermission = API.CreateOrganizationInvitation.RequestBody["role"];
+type CollaboratorPermission = Exclude<API.CreateOrganizationInvitation.RequestBody["role"], "OWNER">;
 
 interface InviteCollaboratorModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onInvite: (
-		options: InviteOptions
-	) => Promise<void>;
+	onInvite: (options: InviteOptions) => Promise<void>;
 	projects: ResearchProject[];
 }
 
@@ -41,51 +38,47 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
-	if (!email || !permission) return;
+		if (!email || !permission) return;
 
-	setIsSubmitting(true);
-	try {
-		let hasAllProjectsAccess = false;
-		let projectIds: string[] = [];
+		setIsSubmitting(true);
+		try {
+			let hasAllProjectsAccess = false;
+			let projectIds: string[] = [];
 
-		if (permission === "ADMIN") {
-			// Admin always gets all projects access
-			hasAllProjectsAccess = true;
-			projectIds = projects.map(project => project.id);
-		
-		} else {
-			projectIds = selectedProjects;
+			if (permission === "ADMIN") {
+				// Admin always gets all projects access
+				hasAllProjectsAccess = true;
+				projectIds = projects.map((project) => project.id);
+			} else {
+				projectIds = selectedProjects;
+			}
+
+			await onInvite({
+				email,
+				hasAllProjectsAccess,
+				projectIds,
+				role: permission,
+			});
+
+			// Reset form
+			setName("");
+			setEmail("");
+			setPermission(undefined);
+			setProjectAccess("");
+			setSelectedProjects([]);
+			onClose();
+		} catch {
+			toast.error("Failed to invite collaborator. Please try again.");
+		} finally {
+			setIsSubmitting(false);
 		}
-
-		await onInvite({
-			email, 
-			hasAllProjectsAccess, 
-			projectIds, 
-			role: permission
-		});
-		
-		// Reset form
-		setName("");
-		setEmail("");
-		setPermission(undefined);
-		setProjectAccess("");
-		setSelectedProjects([]);
-		onClose();
-	} catch {
-		toast.error("Failed to invite collaborator. Please try again.");
-	} finally {
-		setIsSubmitting(false);
-	}
-};
-
-
-
+	};
 
 	const handleClose = () => {
 		setName("");
 		setEmail("");
 		setPermission(undefined);
-		setSelectedProjects([])
+		setSelectedProjects([]);
 		onClose();
 	};
 
@@ -256,12 +249,12 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 										id="project-access"
 									>
 										<div className="flex-1 text-left">
-											 <span className={selectedProjects.length === 0 ?  "text-app-gray-400" : ""}>
-                 {selectedProjects.length > 0
-                     ? `${selectedProjects.length} project(s)
+											<span className={selectedProjects.length === 0 ? "text-app-gray-400" : ""}>
+												{selectedProjects.length > 0
+													? `${selectedProjects.length} project(s)
       selected`
-                     : "Choose specific projects or grant access to all"}
-            </span>
+													: "Choose specific projects or grant access to all"}
+											</span>
 										</div>
 									</SelectTrigger>
 									<SelectContent className="border border-app-gray-200 bg-white">
