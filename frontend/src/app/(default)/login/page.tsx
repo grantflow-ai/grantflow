@@ -17,12 +17,13 @@ import { SeparatorWithText } from "@/components/app/display/separator-with-text"
 import AppInput from "@/components/app/forms/input-field";
 import { IconGoAhead } from "@/components/branding/icons";
 import { LogoDark } from "@/components/branding/logo";
-import { CookieConsentProvider, CookieConsentTrigger } from "@/components/cookie-consent";
+import { CookieConsentProvider } from "@/components/cookie-consent";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
 import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
+import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
@@ -41,11 +42,17 @@ export default function Login() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
+	const { hasConsent } = useCookieConsent();
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",
 		signInMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
 	) => {
+		if (!hasConsent) {
+			toast.error("Please accept cookies to continue with login");
+			return;
+		}
+
 		log.info(`Starting ${provider} sign-in`, { page: "login", provider });
 		setIsLoading(true);
 		setSocialSignInError(null);
@@ -94,6 +101,11 @@ export default function Login() {
 	};
 
 	const handleEmailSignin = async (email: string) => {
+		if (!hasConsent) {
+			toast.error("Please accept cookies to continue with login");
+			return;
+		}
+
 		setIsLoading(true);
 
 		const url = new URL(routes.finishEmailSignin(), getEnv().NEXT_PUBLIC_SITE_URL).toString();
@@ -113,121 +125,110 @@ export default function Login() {
 	};
 
 	return (
-		<CookieConsentTrigger triggerElementTestId="login-form-submit-button">
-			<div
-				className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white"
-				data-testid="login-page"
-			>
-				<div className="absolute inset-0 z-0" data-testid="login-background-container">
-					<Image
-						alt="background"
-						aria-hidden="true"
-						className="size-full object-none xl:object-cover"
-						height={0}
-						priority
-						src="/assets/landing-bg-pattern.svg"
-						style={{ height: "auto", width: "100%" }}
-						width={0}
-					/>
-					<OnboardingGradientBackgroundBottom
-						aria-hidden="true"
-						className="pointer-events-none absolute bottom-0 left-0"
-						data-testid="login-background-gradient"
-					/>
-				</div>
-
-				<header className="z-50 w-full bg-white p-2 shadow-sm md:p-4" data-testid="login-header">
-					<div data-testid="login-header-content">
-						<LogoDark className="h-12 md:h-14" data-testid="login-logo" height="250" width="250" />
-					</div>
-				</header>
-
-				<div
-					className="text-card-foreground flex size-full grow place-items-center text-center"
-					data-testid="login-content-container"
-				>
-					<div
-						className="z-10 flex w-full flex-col items-center justify-center"
-						data-testid="login-card-wrapper"
-					>
-						<div className="relative" data-testid="login-card-container">
-							<AppCard
-								className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9"
-								data-testid="login-card"
-							>
-								<AuthCardHeader
-									description="Log in to manage your grant workflow"
-									title="Welcome back!"
-								/>
-								<AppCardContent data-testid="login-card-content">
-									<LoginForm
-										isLoading={isLoading}
-										onSubmit={({ email }) => handleEmailSignin(email)}
-										socialSignInError={socialSignInError}
-									/>
-
-									<SeparatorWithText
-										className="mb-5"
-										data-testid="login-social-separator"
-										text={"Or connect with "}
-									/>
-
-									<div
-										className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2"
-										data-testid="login-social-buttons-container"
-									>
-										<SocialSigninButton
-											data-testid="login-google-button"
-											isLoading={isLoading}
-											onClick={handleGoogleSignin}
-											platform="google"
-										/>
-
-										<SocialSigninButton
-											data-testid="login-orcid-button"
-											isLoading={isLoading}
-											onClick={handleOrcidSignin}
-											platform="orcid"
-										/>
-									</div>
-
-									<div
-										className="flex min-w-max items-center justify-center text-center"
-										data-testid="login-create-account-container"
-									>
-										<span className="text-dark whitespace-nowrap">
-											Don&apos;t have an account yet?
-										</span>{" "}
-										<AppButton
-											className="text-primary"
-											data-testid="login-create-account-link"
-											size="sm"
-											variant="link"
-										>
-											<Link
-												data-testid="login-create-account-button-link"
-												href={routes.onboarding()}
-											>
-												Create an Account
-											</Link>
-										</AppButton>
-									</div>
-								</AppCardContent>
-							</AppCard>
-						</div>
-					</div>
-				</div>
-				<CookieConsentProvider />
+		<div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white" data-testid="login-page">
+			<div className="absolute inset-0 z-0" data-testid="login-background-container">
+				<Image
+					alt="background"
+					aria-hidden="true"
+					className="size-full object-none xl:object-cover"
+					height={0}
+					priority
+					src="/assets/landing-bg-pattern.svg"
+					style={{ height: "auto", width: "100%" }}
+					width={0}
+				/>
+				<OnboardingGradientBackgroundBottom
+					aria-hidden="true"
+					className="pointer-events-none absolute bottom-0 left-0"
+					data-testid="login-background-gradient"
+				/>
 			</div>
-		</CookieConsentTrigger>
+
+			<header className="z-50 w-full bg-white p-2 shadow-sm md:p-4" data-testid="login-header">
+				<div data-testid="login-header-content">
+					<LogoDark className="h-12 md:h-14" data-testid="login-logo" height="250" width="250" />
+				</div>
+			</header>
+
+			<div
+				className="text-card-foreground flex size-full grow place-items-center text-center"
+				data-testid="login-content-container"
+			>
+				<div className="z-10 flex w-full flex-col items-center justify-center" data-testid="login-card-wrapper">
+					<div className="relative" data-testid="login-card-container">
+						<AppCard
+							className="border-primary z-20 mx-auto w-full max-w-md border bg-white px-7 pb-2 pt-7 shadow-md sm:px-9 sm:pb-3 sm:pt-9"
+							data-testid="login-card"
+						>
+							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
+							<AppCardContent data-testid="login-card-content">
+								<LoginForm
+									hasConsent={hasConsent}
+									isLoading={isLoading}
+									onSubmit={({ email }) => handleEmailSignin(email)}
+									socialSignInError={socialSignInError}
+								/>
+
+								<SeparatorWithText
+									className="mb-5"
+									data-testid="login-social-separator"
+									text={"Or connect with "}
+								/>
+
+								<div
+									className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2"
+									data-testid="login-social-buttons-container"
+								>
+									<SocialSigninButton
+										data-testid="login-google-button"
+										isDisabled={!hasConsent}
+										isLoading={isLoading}
+										onClick={handleGoogleSignin}
+										platform="google"
+									/>
+
+									<SocialSigninButton
+										data-testid="login-orcid-button"
+										isDisabled={!hasConsent}
+										isLoading={isLoading}
+										onClick={handleOrcidSignin}
+										platform="orcid"
+									/>
+								</div>
+
+								<div
+									className="flex min-w-max items-center justify-center text-center"
+									data-testid="login-create-account-container"
+								>
+									<span className="text-dark whitespace-nowrap">Don&apos;t have an account yet?</span>{" "}
+									<AppButton
+										className="text-primary"
+										data-testid="login-create-account-link"
+										size="sm"
+										variant="link"
+									>
+										<Link data-testid="login-create-account-button-link" href={routes.onboarding()}>
+											Create an Account
+										</Link>
+									</AppButton>
+								</div>
+							</AppCardContent>
+						</AppCard>
+					</div>
+				</div>
+			</div>
+			<CookieConsentProvider />
+		</div>
 	);
 }
 
 function LoginForm({
+	hasConsent,
 	isLoading,
 	onSubmit,
 	socialSignInError,
 }: {
+	hasConsent: boolean;
 	isLoading: boolean;
 	onSubmit: (values: LoginFormValues) => void;
 	socialSignInError?: null | React.ReactNode | string;
@@ -269,7 +270,7 @@ function LoginForm({
 					<SubmitButton
 						className="mb-8 mt-3 w-full"
 						data-testid="login-form-submit-button"
-						disabled={!form.formState.isValid || isLoading}
+						disabled={!form.formState.isValid || isLoading || !hasConsent}
 						isLoading={isLoading}
 						rightIcon={<IconGoAhead />}
 					>
