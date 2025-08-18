@@ -1,7 +1,7 @@
 "use client";
 
 import { Edit, MoreVertical, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useSWR, { mutate } from "swr";
 import {
 	createOrganizationInvitation,
@@ -18,16 +18,24 @@ import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { generateInitials } from "@/utils/user";
 import { EditPermissionModal } from "./edit-permission-modal";
+import { getProjects } from "@/actions/project";
+import { InviteOptions } from "../modals/invite-collaborator-modal";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface OrganizationMember {
 	displayName?: string;
-
 	email?: string;
 	firebaseUid: string;
 	hasAllProjectsAccess?: boolean;
 	invitationId?: string;
 	joinedAt: string;
 	photoUrl?: string;
+	projectAccess?: ProjectAccess[];
 	role: UserRole;
 	status: "active" | "pending";
 }
@@ -38,6 +46,12 @@ interface OrganizationSettingsMembersProps {
 	organizationId: string;
 }
 
+interface ProjectAccess {
+	granted_at: string;
+	project_id: string;
+	project_name: string;
+}
+
 const AVATAR_COLORS = ["bg-[#369e94]", "bg-[#9747ff]", "bg-[#4dc283]", "bg-[#ff6b6b]", "bg-[#4ecdc4]", "bg-[#45b7d1]"];
 
 const ROLE_LABELS = {
@@ -46,6 +60,7 @@ const ROLE_LABELS = {
 	[UserRole.OWNER]: "Owner",
 };
 
+const EMPTY_PROJECTS: API.ListProjects.Http200.ResponseBody = [];
 export function OrganizationSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
@@ -142,18 +157,13 @@ export function OrganizationSettingsMembers({
 		}
 	};
 
-	const handleInvite = async (
-		email: string,
-		permission: "admin" | "collaborator",
-		hasAllProjectsAccess?: boolean,
-		projectIds?: string[],
-	) => {
+	const handleInvite = async ({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions) => {
 		try {
 			await createOrganizationInvitation(organizationId, {
 				email,
 				has_all_projects_access: hasAllProjectsAccess,
 				project_ids: projectIds,
-				role: permission === "admin" ? "ADMIN" : "COLLABORATOR",
+				role,
 			});
 
 			await mutate(`/organizations/${organizationId}/invitations`);
@@ -185,7 +195,7 @@ export function OrganizationSettingsMembers({
 
 	useEffect(() => {
 		if (onInviteHandlerChange) {
-			onInviteHandlerChange(canInvite ? openInviteModal : undefined);
+			onInviteHandlerChange(canInvite ? () => openInviteModal : undefined);
 		}
 	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
@@ -196,6 +206,7 @@ export function OrganizationSettingsMembers({
 		hasAllProjectsAccess: member.has_all_projects_access,
 		joinedAt: member.created_at,
 		photoUrl: member.photo_url,
+		projectAccess: member.project_access,
 		role: member.role as UserRole,
 		status: "active" as const,
 	}));
@@ -205,10 +216,18 @@ export function OrganizationSettingsMembers({
 		firebaseUid: "",
 		invitationId: invitation.id,
 		joinedAt: invitation.invitation_sent_at,
+		projectAccess: [],
 		role: invitation.role as UserRole,
 		status: "pending" as const,
 	}));
 
+	const { data: projects = EMPTY_PROJECTS } = useSWR(
+		`/organizations/${organizationId}/projects`,
+		() => getProjects(organizationId),
+		{
+			revalidateOnFocus: false,
+		},
+	);
 	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
@@ -224,34 +243,33 @@ export function OrganizationSettingsMembers({
 			<div className="w-full">
 				<table className="w-full">
 					<thead>
-						<tr className="border-b border-app-gray-300">
-							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+						<tr className="border-b border-app-gray-600">
+							<th className="h-[38px] text-left px-6 py-2 " />
+							<th className="h-[38px] text-left px-6 py-2 font-cabin font-semibold text-base text-app-black">
 								Name
 							</th>
-							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+							<th className="h-[38px] text-left px-6 py-2 font-cabin font-semibold text-base text-app-black">
 								Email
 							</th>
-							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+							<th className="h-[38px] text-left px-6 py-2 font-cabin font-semibold text-base text-app-black">
 								Role
 							</th>
-							<th className="h-[56px] text-left px-6 font-heading font-medium text-[16px] text-app-black">
+							<th className="h-[38px] text-left px-6 py-2 font-cabin font-semibold text-base text-app-black">
 								Research Projects Access
 							</th>
-							<th className="h-[56px] text-center px-6 font-heading font-medium text-[16px] text-app-black">
-								&nbsp;
-							</th>
+							<th className="h-[38px] text-center px-6 ">&nbsp;</th>
 						</tr>
 					</thead>
 					<tbody>
 						{allMembers.map((member) => (
 							<tr
-								className={`border-b border-app-gray-100 ${
+								className={`border-b border-app-gray-100 bg-white hover:bg-app-gray-50 cursor-pointer ${
 									member.status === "pending" ? "bg-app-gray-50" : ""
 								}`}
 								key={member.firebaseUid || member.invitationId}
 							>
-								<td className="h-[64px] px-6">
-									<div className="flex items-center gap-3">
+								<td className="h-[41px] px-6 py-2">
+									<div className="flex items-center justify-center gap-3">
 										<ColoredAvatar
 											email={member.email ?? member.firebaseUid}
 											initials={generateInitials(
@@ -259,23 +277,25 @@ export function OrganizationSettingsMembers({
 												member.email ?? member.firebaseUid,
 											)}
 										/>
-										<span className="font-body text-[14px] text-app-gray-700">
-											{member.displayName ?? "Name name"}
-										</span>
 									</div>
 								</td>
-								<td className="h-[64px] px-6">
-									<span className="font-body text-[14px] text-app-gray-600">
+								<td className="h-[41px] px-6 py-2">
+									<span className="font-body text-base font-normal text-app-gray-700">
+										{member.displayName ?? "Name name"}
+									</span>
+								</td>
+								<td className="h-[41px] px-6 py-2">
+									<span className="font-body text-base font-normal text-app-gray-600">
 										{member.email ?? "Text@gmail.com"}
 									</span>
 								</td>
-								<td className="h-[64px] px-6">
+								<td className="h-[41px] px-6 py-2">
 									<FigmaRoleBadge role={member.role} />
 								</td>
-								<td className="h-[64px] px-6">
-									<ResearchProjectsAccess role={member.role} />
+								<td className="h-[41px] px-6 py-2">
+									<ResearchProjectsAccess member={member} />
 								</td>
-								<td className="h-[64px] px-6 text-center">
+								<td className="h-[41px] px-6 py-2 text-center">
 									<MemberActionMenu
 										currentUserRole={currentUserRole}
 										member={member}
@@ -308,6 +328,7 @@ export function OrganizationSettingsMembers({
 					setIsInviteModalOpen(false);
 				}}
 				onInvite={handleInvite}
+				projects={projects}
 			/>
 
 			<EditPermissionModal
@@ -345,25 +366,10 @@ function ColoredAvatar({ email, initials }: { email: string; initials: string })
 }
 
 function FigmaRoleBadge({ role }: { role: UserRole }) {
-	const getRoleColor = () => {
-		switch (role) {
-			case UserRole.ADMIN: {
-				return "bg-link-hover text-white";
-			}
-			case UserRole.COLLABORATOR: {
-				return "bg-app-gray-100 text-app-gray-700";
-			}
-			case UserRole.OWNER: {
-				return "bg-primary text-white";
-			}
-			default: {
-				return "bg-app-gray-100 text-app-gray-700";
-			}
-		}
-	};
-
 	return (
-		<span className={`px-3 py-1 rounded-full text-[12px] font-body ${getRoleColor()}`}>{ROLE_LABELS[role]}</span>
+		<span className="px-2 py-1 rounded-[20px] text-xs font-body text-secondary font-normal bg-app-gray-100 ">
+			{ROLE_LABELS[role]}
+		</span>
 	);
 }
 
@@ -380,28 +386,8 @@ function MemberActionMenu({
 	onEditPermissions: (member: OrganizationMember) => void;
 	onRemoveMember: () => void;
 }) {
-	const [isOpen, setIsOpen] = useState(false);
-	const menuRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (menuRef.current && event.target && !menuRef.current.contains(event.target as Node)) {
-				setIsOpen(false);
-			}
-		};
-
-		if (isOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [isOpen]);
-
 	const canModify =
 		member.role !== UserRole.OWNER && (currentUserRole === UserRole.OWNER || currentUserRole === UserRole.ADMIN);
-
 	const isPending = member.status === "pending";
 
 	if (!(canModify || isPending)) {
@@ -409,89 +395,87 @@ function MemberActionMenu({
 	}
 
 	return (
-		<div className="relative" ref={menuRef}>
-			<button
+		<DropdownMenu modal={false}>
+			<DropdownMenuTrigger
 				className="p-2 hover:bg-app-gray-50 rounded transition-colors"
-				onClick={() => {
-					setIsOpen(!isOpen);
+				onClick={(e) => {
+					e.stopPropagation();
 				}}
-				type="button"
 			>
 				<MoreVertical className="size-4 text-app-gray-700" />
-			</button>
-
-			{isOpen && (
-				<div className="absolute right-0 top-full mt-1 w-[200px] bg-white border border-app-gray-100 rounded shadow-lg z-10">
-					<div className="py-1">
-						{isPending && onCancelInvitation ? (
-							<button
-								className="w-full px-3 py-3 text-left text-[16px] text-app-black hover:bg-app-gray-20 transition-colors flex items-center gap-2"
-								onClick={() => {
-									onCancelInvitation();
-									setIsOpen(false);
+			</DropdownMenuTrigger>
+			<DropdownMenuContent
+				className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-1"
+				onClick={(e) => {
+					e.stopPropagation();
+				}}
+			>
+				{isPending && onCancelInvitation ? (
+					<DropdownMenuItem
+						className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group"
+						onClick={(e) => {
+							e.stopPropagation();
+							onCancelInvitation();
+						}}
+					>
+						<X className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
+						Remove Access
+					</DropdownMenuItem>
+				) : (
+					<>
+						{currentUserRole === UserRole.OWNER && (
+							<DropdownMenuItem
+								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group"
+								onClick={(e) => {
+									e.stopPropagation();
+									onEditPermissions(member);
 								}}
-								type="button"
 							>
-								<X className="size-4" />
-								Remove
-							</button>
-						) : (
-							<>
-								{currentUserRole === UserRole.OWNER && (
-									<button
-										className="w-full px-3 py-3 text-left text-[16px] text-app-black hover:bg-app-gray-20 transition-colors flex items-center gap-2"
-										onClick={() => {
-											onEditPermissions(member);
-											setIsOpen(false);
-										}}
-										type="button"
-									>
-										<Edit className="size-4" />
-										Edit Permission
-									</button>
-								)}
-								<button
-									className="w-full px-3 py-3 text-left text-[16px] text-app-black hover:bg-app-gray-20 transition-colors flex items-center gap-2"
-									onClick={() => {
-										onRemoveMember();
-										setIsOpen(false);
-									}}
-									type="button"
-								>
-									<X className="size-4" />
-									Remove
-								</button>
-							</>
+								<Edit className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
+								Edit
+							</DropdownMenuItem>
 						)}
-					</div>
-				</div>
-			)}
-		</div>
+						<DropdownMenuItem
+							className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group"
+							onClick={(e) => {
+								e.stopPropagation();
+								onRemoveMember();
+							}}
+						>
+							<X className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
+							Remove Access
+						</DropdownMenuItem>
+					</>
+				)}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
 
-function ResearchProjectsAccess({ role }: { role: UserRole }) {
-	const projectAccess = [
-		{ count: 2, name: "Project name" },
-		{ count: 3, name: "Project name" },
-		{ count: 1, name: "Project name" },
-	];
-
-	if (role === UserRole.OWNER || role === UserRole.ADMIN) {
-		return <span className="font-body text-[14px] text-app-gray-700">All</span>;
+function ResearchProjectsAccess({ member }: { member: OrganizationMember }) {
+	if (member.role === UserRole.OWNER || member.role === UserRole.ADMIN || member.hasAllProjectsAccess) {
+		return <span className="font-body text-sm text-white bg-secondary px-2  rounded-[20px] h-[18px]">All</span>;
 	}
 
+	const projectAccess = member.projectAccess ?? [];
+	const displayProjects = projectAccess.slice(0, 2);
+	const remainingCount = projectAccess.length - displayProjects.length;
+
 	return (
-		<div className="flex items-center gap-2">
-			{projectAccess.map((project, index) => (
+		<div className="flex items-center gap-1">
+			{displayProjects.map((project) => (
 				<span
-					className="px-3 py-1 bg-app-gray-100 rounded-full text-[12px] font-body text-app-gray-700 inline-flex items-center gap-1"
-					key={index}
+					className="font-body text-sm text-white bg-secondary px-2 py-0.5  rounded-[20px] "
+					key={project.project_id}
 				>
-					{project.name}
-					<span className="text-app-gray-500">+{project.count}</span>
+					{project.project_name}
 				</span>
 			))}
+			{remainingCount > 0 && (
+				<span className="font-body text-sm text-white bg-secondary px-2 py-0.5  rounded-[20px] gap-1  ">
+					+ {remainingCount}
+				</span>
+			)}
 		</div>
 	);
 }

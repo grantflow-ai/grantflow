@@ -90,11 +90,11 @@ export function DashboardProjectCard({
 							<MoreVertical className="size-4 text-gray-700 " />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
-							className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-1 group"
+							className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-1"
 							data-testid="project-card-menu"
 						>
 							<DropdownMenuItem
-								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2  cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group-hover:text-gray-400 group"
+								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2  cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group"
 								data-testid="project-card-delete"
 								onClick={(e) => {
 									e.stopPropagation();
@@ -105,7 +105,7 @@ export function DashboardProjectCard({
 								Delete
 							</DropdownMenuItem>
 							<DropdownMenuItem
-								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group-hover:text-gray-400 group"
+								className="p-3 font-normal text-base text-gray-700 flex items-center gap-2 cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group"
 								data-testid="project-card-duplicate"
 								onClick={(e) => {
 									e.stopPropagation();
