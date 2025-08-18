@@ -20,7 +20,12 @@ import { generateInitials } from "@/utils/user";
 import { EditPermissionModal } from "./edit-permission-modal";
 import { getProjects } from "@/actions/project";
 import { InviteOptions } from "../modals/invite-collaborator-modal";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface OrganizationMember {
 	displayName?: string;
@@ -252,9 +257,7 @@ export function OrganizationSettingsMembers({
 							<th className="h-[38px] text-left px-6 py-2 font-cabin font-semibold text-base text-app-black">
 								Research Projects Access
 							</th>
-							<th className="h-[38px] text-center px-6 ">
-								&nbsp;
-							</th>
+							<th className="h-[38px] text-center px-6 ">&nbsp;</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -395,13 +398,17 @@ function MemberActionMenu({
 		<DropdownMenu modal={false}>
 			<DropdownMenuTrigger
 				className="p-2 hover:bg-app-gray-50 rounded transition-colors"
-				onClick={(e) => { e.stopPropagation(); }}
+				onClick={(e) => {
+					e.stopPropagation();
+				}}
 			>
 				<MoreVertical className="size-4 text-app-gray-700" />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
 				className="w-[200px] rounded-sm bg-white border border-gray-200 shadow-none p-1"
-				onClick={(e) => { e.stopPropagation(); }}
+				onClick={(e) => {
+					e.stopPropagation();
+				}}
 			>
 				{isPending && onCancelInvitation ? (
 					<DropdownMenuItem
@@ -425,7 +432,7 @@ function MemberActionMenu({
 								}}
 							>
 								<Edit className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
-								Edit 
+								Edit
 							</DropdownMenuItem>
 						)}
 						<DropdownMenuItem
