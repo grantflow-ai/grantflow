@@ -10,6 +10,7 @@ const themeBadgeVariants = cva("px-2 py-0.5 text-xs font-normal leading-none rou
 	},
 	variants: {
 		color: {
+			betaBadge: "bg-primary text-[color:var(--text-light)]",
 			light: "bg-badge text-badge-foreground",
 			primary: "bg-primary text-primary-foreground",
 			secondary: "bg-secondary text-secondary-foreground",
@@ -22,6 +23,7 @@ const themeBadgeVariants = cva("px-2 py-0.5 text-xs font-normal leading-none rou
 });
 
 const colorClasses = {
+	betaBadge: "bg-primary text-white",
 	light: "hover:bg-badge hover:text-badge-foreground",
 	primary: "hover:bg-primary hover:text-primary-foreground",
 	secondary: "hover:bg-secondary hover:text-secondary-foreground",
