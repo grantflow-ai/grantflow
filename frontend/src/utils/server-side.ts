@@ -4,9 +4,30 @@ import { HTTPError } from "ky";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { SESSION_COOKIE } from "@/constants";
+import { COOKIE_CONSENT, SESSION_COOKIE } from "@/constants";
+import type { CookieConsentData } from "@/hooks/use-cookie-consent";
 import { log } from "@/utils/logger/server";
 import { routes } from "@/utils/navigation";
+
+export async function checkCookieConsent(): Promise<boolean> {
+	const cookieStore = await cookies();
+	const consentCookie = cookieStore.get(COOKIE_CONSENT);
+
+	if (!consentCookie?.value) {
+		return false;
+	}
+
+	try {
+		const consentData = JSON.parse(consentCookie.value) as CookieConsentData;
+		return consentData.consentGiven && consentData.hasInteracted;
+	} catch (error) {
+		log.warn("Invalid consent cookie format, clearing cookie", {
+			cookie_name: COOKIE_CONSENT,
+			error: error instanceof Error ? error.message : String(error),
+		});
+		return false;
+	}
+}
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function redirectWithToastParams({
@@ -62,6 +83,16 @@ export const createAuthHeaders = async () => {
 };
 
 export const withAuthRedirect = async <T>(promise: Promise<T>): Promise<T> => {
+	const hasConsent = await checkCookieConsent();
+
+	if (!hasConsent) {
+		log.warn("No cookie consent found, redirecting to onboarding", {
+			cookie_name: COOKIE_CONSENT,
+			redirect_path: routes.onboarding(),
+		});
+		redirect(routes.onboarding());
+	}
+
 	try {
 		return await promise;
 	} catch (error) {
