@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -6,6 +7,7 @@
 
 @theme inline {
 	--font-heading: var(--font-heading);
+	--font-cabin: var(--font-cabin);
 	--font-body: var(--font-body);
 	--font-button: var(--font-button);
 
@@ -102,7 +104,8 @@
 
 :root {
 	--radius: 0.625rem;
-
+	--font-cabin: "Cabin", sans-serif;
+	--font-source-sans: "Source Sans Pro", sans-serif;
 	--app-red: oklch(0.67 0.2207 13.38); /* FF456D */
 	--app-light-red: #ffecec;
 	--app-green: oklch(0.86 0.1786 142.59); /* 86EF7F */
@@ -298,6 +301,9 @@
 
 	.scroll-box::-webkit-scrollbar-button {
 		display: none;
+	}
+	.font-source-sans {
+		font-family: var(--font-source-sans);
 	}
 }
 

@@ -8,6 +8,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
+import { useSearchParams } from "next/navigation";
 
 interface OrganizationSettingsGeneralProps {
 	organizationId: string;
@@ -27,9 +28,10 @@ export function OrganizationSettingsGeneral({
 	const [isUploading, setIsUploading] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
-
+	const nameInputRef = useRef<HTMLInputElement>(null);
 	const canEdit = userRole === UserRole.OWNER;
 	const isReadOnly = !canEdit;
+	const searchParams = useSearchParams();
 
 	useEffect(() => {
 		if (organization) {
@@ -39,6 +41,12 @@ export function OrganizationSettingsGeneral({
 			setContactEmail(organization.contact_email ?? "");
 		}
 	}, [organization]);
+
+	useEffect(() => {
+		if (searchParams.get("focus") === "name") {
+			nameInputRef.current?.focus();
+		}
+	}, [searchParams]);
 
 	const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (!canEdit) return;
@@ -105,7 +113,7 @@ export function OrganizationSettingsGeneral({
 
 				<div className="flex flex-col gap-3 px-6">
 					<div className="flex flex-col gap-3 w-[340px]">
-						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">Logo</h3>
+						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Logo</h3>
 						<div className="flex flex-col gap-3">
 							<button
 								className={`size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors ${
@@ -135,19 +143,17 @@ export function OrganizationSettingsGeneral({
 								ref={fileInputRef}
 								type="file"
 							/>
-							<p className="text-[14px] text-app-gray-700 font-body">
-								We support PNG, JPG, JPEG under 10MB
-							</p>
+							<p className="text-[14px] text-app-gray-700">We support PNG, JPG, JPEG under 10MB</p>
 						</div>
 					</div>
 
 					<div className="flex flex-col gap-3 w-[340px]">
-						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
-							Organisation Name
-						</h3>
+						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Organisation Name</h3>
 						<input
-							className={`w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
-								canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
+							className={`w-full h-10 px-3 border  rounded  text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+								canEdit
+									? "focus:border-primary border-app-gray-300 bg-white "
+									: "cursor-not-allowed border-app-black opacity-60 bg-preview-bg"
 							}`}
 							data-testid="organization-name-input"
 							onChange={(e) => {
@@ -157,18 +163,21 @@ export function OrganizationSettingsGeneral({
 							}}
 							placeholder="Name Name"
 							readOnly={isReadOnly}
+							ref={nameInputRef}
 							type="text"
 							value={organizationName}
 						/>
 					</div>
 
 					<div className="flex flex-col gap-3 w-[340px]">
-						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
+						<h3 className=" font-semibold text-[16px] leading-[22px] text-app-black">
 							Institution or Affiliation
 						</h3>
 						<input
-							className={`w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
-								canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
+							className={`w-full h-10 px-3 border rounded text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none ${
+								canEdit
+									? "focus:border-primary border-app-gray-300 bg-white "
+									: "cursor-not-allowed border-app-black opacity-60 bg-preview-bg"
 							}`}
 							data-testid="organization-institution-input"
 							onChange={(e) => {
@@ -187,9 +196,7 @@ export function OrganizationSettingsGeneral({
 
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-2">
-					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
-						Primary Contact
-					</h2>
+					<h2 className="font-medium text-[24px] leading-[30px] text-app-black">Primary Contact</h2>
 				</div>
 
 				<div className="flex flex-col gap-3 px-6">
@@ -215,12 +222,10 @@ export function OrganizationSettingsGeneral({
 					</div>
 
 					<div className="flex flex-col gap-3 w-[340px]">
-						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
-							Email address
-						</h3>
+						<h3 className=" font-semibold text-[16px] leading-[22px] text-app-black">Email address</h3>
 						<div className="relative">
 							<input
-								className={`w-full h-10 px-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none ${
+								className={`w-full h-10 pl-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none ${
 									canEdit ? "focus:border-primary" : "cursor-not-allowed opacity-60"
 								}`}
 								data-testid="organization-contact-email-input"
@@ -234,27 +239,15 @@ export function OrganizationSettingsGeneral({
 								type="email"
 								value={contactEmail}
 							/>
-							<svg
-								className="absolute right-3 top-1/2 -translate-y-1/2 size-4"
-								fill="none"
-								viewBox="0 0 16 16"
-								xmlns="http://www.w3.org/2000/svg"
-							>
-								<path
-									d="M2.66667 2.66667H13.3333C14.0667 2.66667 14.6667 3.26667 14.6667 4V12C14.6667 12.7333 14.0667 13.3333 13.3333 13.3333H2.66667C1.93333 13.3333 1.33333 12.7333 1.33333 12V4C1.33333 3.26667 1.93333 2.66667 2.66667 2.66667Z"
-									stroke="#636170"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="1.5"
+							<div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-auto">
+								<Image
+									alt="email"
+									className="object-cover"
+									height={16}
+									src="/icons/email.svg"
+									width={16}
 								/>
-								<path
-									d="M14.6667 4L8 8.66667L1.33333 4"
-									stroke="#636170"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="1.5"
-								/>
-							</svg>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -275,7 +268,7 @@ export function OrganizationSettingsGeneral({
 
 						<div>
 							<button
-								className="flex items-center gap-1 px-1 py-0.5 border border-error rounded bg-white text-error font-button text-[14px] hover:bg-error hover:text-white transition-colors"
+								className=" cursor-pointer font-normal flex items-center gap-1 px-1 py-0.5 border border-error rounded bg-white text-error text-sm "
 								data-testid="organization-delete-button"
 								onClick={() => {
 									setShowDeleteModal(true);
