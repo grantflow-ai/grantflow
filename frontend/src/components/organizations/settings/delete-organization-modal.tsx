@@ -95,7 +95,7 @@ export function DeleteOrganizationModal({
 					<div className="flex flex-col gap-3">
 						<div className="flex items-center justify-between">
 							<h2
-								className="font-heading font-medium text-[24px] leading-[30px] text-app-black"
+								className="font-cabin font-medium text-[24px] leading-[30px] text-app-black"
 								id="delete-organization-modal-title"
 							>
 								Confirm Deletion of Organization
@@ -110,22 +110,20 @@ export function DeleteOrganizationModal({
 								<X className="size-4" />
 							</button>
 						</div>
-						<p className="text-[16px] text-app-black font-body">
-							You are about to delete the organization{" "}
-							<span className="font-semibold">{organizationName}</span>. This action will remove all
+						<p className="text-base leading-5 text-app-black font-body text-left">
+							You are about to delete the organization
+							<span className="font-semibold px-1">{organizationName}</span>. This action will remove all
 							associated data.
 						</p>
 					</div>
 
 					<div className="flex flex-col gap-6">
-						<div className="flex flex-col gap-3">
-							<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
-								To confirm, please type the name of the organization below:
-							</h3>
-						</div>
+						<h3 className="font-cabin font-semibold text-base leading-[22px] text-left text-app-black">
+							To confirm, please type the name of the <br /> organization below:
+						</h3>
 
 						<input
-							className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-400 focus:outline-none focus:border-primary"
+							className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white text-sm font-cabin text-app-gray-600 placeholder:text-app-gray-400 placeholder:text-base placeholder:font-normal focus:outline-none focus:border-primary"
 							data-testid="delete-organization-confirmation-input"
 							disabled={isDeleting}
 							onChange={(e) => {
@@ -139,7 +137,7 @@ export function DeleteOrganizationModal({
 
 					<div className="flex items-end justify-between">
 						<button
-							className="px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[16px] hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							className="cursor-pointer px-4 py-2 border border-primary rounded bg-white text-primary font-button text-[18px] font-normal hover:bg-primary hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							data-testid="delete-organization-cancel-button"
 							disabled={isDeleting}
 							onClick={handleClose}
@@ -149,7 +147,7 @@ export function DeleteOrganizationModal({
 						</button>
 
 						<button
-							className="px-4 py-2 bg-primary text-white rounded font-button text-[16px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+							className="cursor-pointer px-4 py-2 bg-primary font-normal text-white rounded  text-[18px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							data-testid="delete-organization-confirm-button"
 							disabled={isDeleting || confirmationText !== organizationName}
 							onClick={handleDelete}

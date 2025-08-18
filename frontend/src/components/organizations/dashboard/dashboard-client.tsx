@@ -6,16 +6,15 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { createProject, deleteProject as deleteProjectAction, getProjects } from "@/actions/project";
-import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppHeader } from "@/components/layout/app-header";
-import { DeleteProjectModal, InviteCollaboratorModal } from "@/components/organizations";
+import { DeleteProjectModal } from "@/components/organizations";
 import { useOrganization } from "@/hooks/use-organization";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
-import { useUserStore } from "@/stores/user-store";
+
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -43,16 +42,15 @@ export function DashboardClient({
 	const { selectOrganization, setOrganizations } = useOrganizationStore();
 	const { closeModal, isModalOpen } = useNewApplicationModalStore();
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
-	const [showInviteModal, setShowInviteModal] = useState(false);
+
 	const [projectToDelete, setProjectToDelete] = useState<null | string>(null);
-	const [selectedProjectForInvite, setSelectedProjectForInvite] = useState<
-		API.ListProjects.Http200.ResponseBody[0] | null
-	>(null);
+
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
 
 	const { duplicateProject } = useProjectStore();
 	const { addNotification } = useNotificationStore();
-	const { user } = useUserStore();
+
+	const { getOrganization } = useOrganizationStore();
 
 	useEffect(() => {
 		setOrganizations(initialOrganizations);
@@ -73,6 +71,11 @@ export function DashboardClient({
 		}
 	}, [currentOrganizationId, selectOrganization]);
 
+	useEffect(() => {
+		if (currentOrganizationId) {
+			getOrganization(currentOrganizationId);
+		}
+	}, [currentOrganizationId, getOrganization]);
 	const handleDuplicateProject = async (projectId: string) => {
 		if (!currentOrganizationId) {
 			addNotification({
@@ -140,62 +143,6 @@ export function DashboardClient({
 	const closeDeleteModal = () => {
 		setShowDeleteModal(false);
 		setProjectToDelete(null);
-	};
-
-	const handleInviteCollaborator = async (email: string, permission: "admin" | "collaborator") => {
-		if (!selectedProjectForInvite) {
-			addNotification({
-				message: "Please select a project first",
-				projectName: "",
-				title: "No project selected",
-				type: "warning",
-			});
-			return;
-		}
-
-		if (!currentOrganizationId) {
-			addNotification({
-				message: "Please select an organization first",
-				projectName: selectedProjectForInvite.name,
-				title: "Organization Required",
-				type: "error",
-			});
-			return;
-		}
-
-		try {
-			const result = await inviteCollaborator({
-				email,
-				inviterName: user?.displayName ?? user?.email ?? "Team Member",
-				organizationId: currentOrganizationId,
-				projectId: selectedProjectForInvite.id,
-				projectName: selectedProjectForInvite.name,
-				role: permission === "admin" ? "admin" : "member",
-			});
-
-			if (result.success) {
-				addNotification({
-					message: `Invitation sent successfully to ${email}`,
-					projectName: selectedProjectForInvite.name,
-					title: "Collaborator invited",
-					type: "success",
-				});
-			} else {
-				addNotification({
-					message: result.error ?? "Failed to send invitation",
-					projectName: selectedProjectForInvite.name,
-					title: "Invitation failed",
-					type: "warning",
-				});
-			}
-		} catch {
-			addNotification({
-				message: "An error occurred while sending the invitation",
-				projectName: selectedProjectForInvite.name,
-				title: "Error",
-				type: "warning",
-			});
-		}
 	};
 
 	const handleCreateProject = async () => {
@@ -337,15 +284,6 @@ export function DashboardClient({
 			</section>
 
 			<DeleteProjectModal isOpen={showDeleteModal} onClose={closeDeleteModal} onConfirm={confirmDeleteProject} />
-
-			<InviteCollaboratorModal
-				isOpen={showInviteModal}
-				onClose={() => {
-					setShowInviteModal(false);
-					setSelectedProjectForInvite(null);
-				}}
-				onInvite={handleInviteCollaborator}
-			/>
 
 			<NewApplicationModal
 				isOpen={isModalOpen}
