@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
@@ -147,20 +148,22 @@ describe.sequential("Login Page", () => {
 		});
 
 		it("disables submit button when email is empty or invalid", async () => {
+			const user = userEvent.setup();
 			expect(submitButton).toBeDisabled();
 
-			fireEvent.change(emailInput, { target: { value: "invalid-email" } });
+			await user.type(emailInput, "invalid-email");
 
 			expect(submitButton).toBeDisabled();
 
-			fireEvent.change(emailInput, { target: { value: "" } });
+			await user.clear(emailInput);
 
 			expect(submitButton).toBeDisabled();
 		});
 
 		it("enables submit button when email is valid", async () => {
-			fireEvent.change(emailInput, { target: { value: testEmail } });
-			fireEvent.blur(emailInput);
+			const user = userEvent.setup();
+			await user.type(emailInput, testEmail);
+			await user.tab();
 
 			await waitFor(() => {
 				expect(submitButton).toBeEnabled();
@@ -168,20 +171,21 @@ describe.sequential("Login Page", () => {
 		});
 
 		it("handles successful email sign-in flow", async () => {
+			const user = userEvent.setup();
 			let resolvePromise: (() => void) | undefined;
 			const deferred = new Promise<void>((resolve) => {
 				resolvePromise = resolve;
 			});
 			mockSendSignInLinkToEmail.mockReturnValueOnce(deferred);
 
-			fireEvent.change(emailInput, { target: { value: testEmail } });
-			fireEvent.blur(emailInput);
+			await user.type(emailInput, testEmail);
+			await user.tab();
 
 			await waitFor(() => {
 				expect(submitButton).toBeEnabled();
 			});
 
-			fireEvent.click(submitButton);
+			await user.click(submitButton);
 
 			await waitFor(() => {
 				expect(submitButton).toBeDisabled();
@@ -204,6 +208,7 @@ describe.sequential("Login Page", () => {
 		});
 
 		it("handles email sign-in error", async () => {
+			const user = userEvent.setup();
 			let rejectPromise: ((err: unknown) => void) | undefined;
 			const deferred = new Promise<void>((_resolve, reject) => {
 				rejectPromise = reject;
@@ -211,14 +216,14 @@ describe.sequential("Login Page", () => {
 			const errorMessage = "Failed to send sign-in email";
 			mockSendSignInLinkToEmail.mockReturnValueOnce(deferred);
 
-			fireEvent.change(emailInput, { target: { value: testEmail } });
-			fireEvent.blur(emailInput);
+			await user.type(emailInput, testEmail);
+			await user.tab();
 
 			await waitFor(() => {
 				expect(submitButton).toBeEnabled();
 			});
 
-			fireEvent.click(submitButton);
+			await user.click(submitButton);
 
 			await waitFor(() => {
 				expect(submitButton).toBeDisabled();
