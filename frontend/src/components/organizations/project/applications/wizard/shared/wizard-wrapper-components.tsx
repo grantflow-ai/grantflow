@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { Deadline } from "@/components/organizations/project/applications/wizard/shared/index";
+import { ThemeBadge } from "@/components/shared/theme-badge";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
@@ -127,6 +128,12 @@ export function WizardHeader() {
 		<header className="w-full border-b-1 border-gray-100 p-4 sm:p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
+					<ThemeBadge
+						color="betaBadge"
+						leftIcon={<Image alt="Beta logo" height={16} src="/icons/button-logo-white.svg" width={16} />}
+					>
+						BETA
+					</ThemeBadge>
 					{showHeaderInfo ? (
 						<>
 							<h1
@@ -154,6 +161,7 @@ export function WizardHeader() {
 					{isFirstStep ? "Exit" : "Save and Exit"}
 				</AppButton>
 			</div>
+
 			<div className="space-y-2">
 				<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
 				<ProgressTitles currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />

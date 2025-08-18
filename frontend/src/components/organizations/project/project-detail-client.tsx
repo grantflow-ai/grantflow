@@ -27,9 +27,9 @@ import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
+import type { InviteOptions } from "../modals/invite-collaborator-modal";
 import { ApplicationList } from "./application-list";
 import { DeleteApplicationModal } from "./applications/delete-application-modal";
-import { type InviteOptions } from "../modals/invite-collaborator-modal";
 
 export function ProjectDetailClient() {
 	const router = useRouter();
