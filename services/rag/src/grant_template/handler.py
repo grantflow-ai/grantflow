@@ -5,7 +5,7 @@ from uuid import UUID
 from packages.db.src.enums import RagGenerationStatusEnum, SourceIndexingStatusEnum
 from packages.db.src.json_objects import GrantElement, GrantLongFormSection
 from packages.db.src.tables import GrantingInstitution, GrantTemplate, GrantTemplateSource, RagSource
-from packages.shared_utils.src.exceptions import BackendError, DatabaseError, InsufficientContextError, ValidationError
+from packages.shared_utils.src.exceptions import BackendError, InsufficientContextError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -125,7 +125,7 @@ async def grant_template_generation_pipeline_handler(
     grant_template_id: UUID,
     session_maker: async_sessionmaker[Any],
     job_manager: JobManager | None = None,
-) -> GrantTemplate:
+) -> GrantTemplate | None:
     logger.info("Starting grant template generation pipeline", template_id=grant_template_id)
 
     async with session_maker() as session:
@@ -286,7 +286,15 @@ async def grant_template_generation_pipeline_handler(
             notification_type="error",
             data={"error_type": e.__class__.__name__, "recoverable": event_type != "pipeline_error"},
         )
-        raise
+        logger.info(
+            "Grant template generation failed with error notification sent",
+            template_id=str(grant_template_id),
+            application_id=str(grant_application_id),
+            error_type=e.__class__.__name__,
+            event_type=event_type,
+            error_message=error_message[:200],
+        )
+        return None
 
     async with session_maker() as session, session.begin():
         try:
@@ -338,4 +346,10 @@ async def grant_template_generation_pipeline_handler(
                 notification_type="error",
                 data={"error_type": "database_error"},
             )
-            raise DatabaseError("Error generating grant template", context=str(e)) from e
+            logger.info(
+                "Database error during grant template save - notification sent",
+                template_id=str(grant_template_id),
+                application_id=str(grant_application_id),
+                error=str(e),
+            )
+            return None
