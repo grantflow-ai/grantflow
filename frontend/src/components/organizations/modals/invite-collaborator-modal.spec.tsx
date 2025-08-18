@@ -188,9 +188,9 @@ describe.sequential("InviteCollaboratorModal", () => {
 		await waitFor(() => {
 			expect(mockOnInvite).toHaveBeenCalledWith({
 				email: "test@example.com",
-				role: "ADMIN",
 				hasAllProjectsAccess: true,
 				projectIds: [],
+				role: "ADMIN",
 			});
 		});
 	});
@@ -240,9 +240,9 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		expect(mockOnInvite).toHaveBeenCalledWith({
 			email: "test@example.com",
-			role: "ADMIN",
 			hasAllProjectsAccess: true,
 			projectIds: [],
+			role: "ADMIN",
 		});
 	});
 

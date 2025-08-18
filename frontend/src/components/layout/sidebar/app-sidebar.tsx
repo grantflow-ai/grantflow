@@ -2,6 +2,7 @@
 
 import { HelpCircle, LogOut, Plus } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type * as React from "react";
 import {
@@ -18,10 +19,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useUserStore } from "@/stores/user-store";
+import { routes } from "@/utils/navigation";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
-import Link from "next/link";
-import { routes } from "@/utils/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const router = useRouter();

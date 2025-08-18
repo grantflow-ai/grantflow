@@ -2,13 +2,13 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
-import { useSearchParams } from "next/navigation";
 
 interface OrganizationSettingsGeneralProps {
 	organizationId: string;
