@@ -3,11 +3,11 @@
 import { Mail, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AppButton } from "@/components/app";
 import { Checkbox } from "@/components/ui/checkbox";
-import { API } from "@/types/api-types";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { API } from "@/types/api-types";
 
 export interface InviteOptions {
 	email: string;
@@ -38,7 +38,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
-		if (!email || !permission) return;
+		if (!(email && permission)) return;
 
 		setIsSubmitting(true);
 		try {
@@ -296,7 +296,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 						<AppButton
 							className=" px-4 py-2 "
 							data-testid="send-invitation-button"
-							disabled={!email || !permission || isSubmitting}
+							disabled={!(email && permission) || isSubmitting}
 							onClick={handleSubmit}
 							type="button"
 							variant="primary"

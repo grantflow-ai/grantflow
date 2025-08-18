@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
-export default function WizardLayout({children}:{children:ReactNode}){
-    return <> {children}</>
+export default function WizardLayout({ children }: { children: ReactNode }) {
+	return <> {children}</>;
 }
