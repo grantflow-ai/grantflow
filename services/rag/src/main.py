@@ -191,20 +191,34 @@ async def handle_request(
                     grant_template_id=str(rag_request["parent_id"]),
                     trace_id=trace_id,
                 )
-                await grant_template_generation_pipeline_handler(
+                template_result = await grant_template_generation_pipeline_handler(
                     grant_template_id=rag_request["parent_id"],
                     session_maker=session_maker,
                 )
+                if template_result is None:
+                    logger.info(
+                        "Grant template generation failed but notification was sent",
+                        grant_template_id=str(rag_request["parent_id"]),
+                        trace_id=trace_id,
+                    )
+                    return
             else:
                 logger.debug(
                     "Processing grant application",
                     grant_application_id=str(rag_request["parent_id"]),
                     trace_id=trace_id,
                 )
-                await grant_application_text_generation_pipeline_handler(
+                application_result = await grant_application_text_generation_pipeline_handler(
                     grant_application_id=rag_request["parent_id"],
                     session_maker=session_maker,
                 )
+                if application_result is None:
+                    logger.info(
+                        "Grant application generation failed but notification was sent",
+                        grant_application_id=str(rag_request["parent_id"]),
+                        trace_id=trace_id,
+                    )
+                    return
 
             pipeline_duration = time.time() - pipeline_start
             total_duration = time.time() - start_time

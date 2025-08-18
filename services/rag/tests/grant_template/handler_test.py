@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING, Any, cast
-from unittest.mock import AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, patch
 from uuid import UUID
 
 import pytest
+from packages.db.src.enums import RagGenerationStatusEnum
 from packages.db.src.tables import (
     GrantApplication,
     GrantingInstitution,
@@ -387,6 +388,7 @@ async def test_grant_template_generation_pipeline_handler_with_mocked_llm(
 
     assert mock_job_manager.add_notification.call_count > 0
 
+    assert result is not None
     assert result.id == grant_template_with_sources.id
     assert result.grant_sections is not None
     assert len(result.grant_sections) == 3
@@ -503,17 +505,31 @@ async def test_grant_template_generation_pipeline_missing_sources(
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
 
-    with (
-        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock),
-        pytest.raises(ValidationError) as exc_info,
-    ):
-        await grant_template_generation_pipeline_handler(
+    with patch(
+        "services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock
+    ) as mock_verify:
+        # Use "indexing timeout" in error message to trigger the right notification event
+        mock_verify.side_effect = ValidationError("indexing timeout - No RAG sources found")
+
+        result = await grant_template_generation_pipeline_handler(
             grant_template_id=test_grant_template.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
 
-    assert "no rag sources found" in str(exc_info.value).lower()
+    assert result is None
+    mock_job_manager.update_job_status.assert_called_with(
+        status=RagGenerationStatusEnum.FAILED,
+        error_message=ANY,
+        error_details=ANY,
+    )
+    mock_job_manager.add_notification.assert_any_call(
+        parent_id=test_grant_template.grant_application_id,
+        event=NotificationEvents.INDEXING_TIMEOUT,
+        message=ANY,
+        notification_type="error",
+        data=ANY,
+    )
 
 
 async def test_grant_template_generation_pipeline_unindexed_sources(
@@ -546,19 +562,29 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
 
-    mock_verify = AsyncMock(side_effect=ValidationError("No rag sources found"))
+    # Use "indexing failed" in the error message to trigger the right notification event
+    mock_verify = AsyncMock(side_effect=ValidationError("indexing failed - no rag sources found"))
 
-    with (
-        patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify),
-        pytest.raises(ValidationError) as exc_info,
-    ):
-        await grant_template_generation_pipeline_handler(
+    with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify):
+        result = await grant_template_generation_pipeline_handler(
             grant_template_id=test_grant_template.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,
         )
 
-    assert "no rag sources found" in str(exc_info.value).lower()
+    assert result is None
+    mock_job_manager.update_job_status.assert_called_with(
+        status=RagGenerationStatusEnum.FAILED,
+        error_message=ANY,
+        error_details=ANY,
+    )
+    mock_job_manager.add_notification.assert_any_call(
+        parent_id=test_grant_template.grant_application_id,
+        event=NotificationEvents.INDEXING_FAILED,
+        message=ANY,
+        notification_type="error",
+        data=ANY,
+    )
 
 
 async def test_extract_and_enrich_sections_empty_cfp_content(

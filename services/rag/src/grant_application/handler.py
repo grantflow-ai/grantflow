@@ -276,7 +276,7 @@ async def grant_application_text_generation_pipeline_handler(
     grant_application_id: UUID,
     session_maker: async_sessionmaker[Any],
     job_manager: JobManager | None = None,
-) -> tuple[str, dict[str, str]]:
+) -> tuple[str, dict[str, str]] | None:
     application_id = grant_application_id
     logger.info("Starting grant application text generation pipeline", application_id=application_id)
 
@@ -509,7 +509,15 @@ async def grant_application_text_generation_pipeline_handler(
                 "recoverable": recoverable,
             },
         )
-        raise
+        logger.info(
+            "Grant application generation failed with error notification sent",
+            application_id=str(application_id),
+            error_type=e.__class__.__name__,
+            event_type=event_type,
+            error_message=error_message[:200],
+            recoverable=recoverable,
+        )
+        return None
 
     async with session_maker() as session, session.begin():
         try:
