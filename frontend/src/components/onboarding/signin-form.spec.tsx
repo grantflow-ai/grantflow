@@ -91,4 +91,95 @@ describe.sequential("EmailSigninForm", () => {
 
 		expect(screen.queryByText("Please agree to the Terms and Privacy Policy to continue.")).not.toBeInTheDocument();
 	});
+
+	it("disables all form fields when isDisabled is true", () => {
+		render(<SigninForm isDisabled={true} isLoading={false} onSubmit={mockOnSubmit} />);
+
+		const firstNameInput = screen.getByTestId("email-signin-form-firstname-input");
+		const lastNameInput = screen.getByTestId("email-signin-form-lastname-input");
+		const emailInput = screen.getByTestId("email-signin-form-email-input");
+		const gdprCheckbox = screen.getByTestId("email-signin-form-gdpr-checkbox");
+		const submitButton = screen.getByTestId("email-signin-form-submit-button");
+
+		expect(firstNameInput).toBeDisabled();
+		expect(lastNameInput).toBeDisabled();
+		expect(emailInput).toBeDisabled();
+		expect(gdprCheckbox).toBeDisabled();
+		expect(submitButton).toBeDisabled();
+	});
+
+	it("enables all form fields when both isLoading and isDisabled are false", () => {
+		render(<SigninForm isDisabled={false} isLoading={false} onSubmit={mockOnSubmit} />);
+
+		const firstNameInput = screen.getByTestId("email-signin-form-firstname-input");
+		const lastNameInput = screen.getByTestId("email-signin-form-lastname-input");
+		const emailInput = screen.getByTestId("email-signin-form-email-input");
+		const gdprCheckbox = screen.getByTestId("email-signin-form-gdpr-checkbox");
+
+		expect(firstNameInput).not.toBeDisabled();
+		expect(lastNameInput).not.toBeDisabled();
+		expect(emailInput).not.toBeDisabled();
+		expect(gdprCheckbox).not.toBeDisabled();
+	});
+
+	it("disables all form fields when both isLoading and isDisabled are true", () => {
+		render(<SigninForm isDisabled={true} isLoading={true} onSubmit={mockOnSubmit} />);
+
+		const firstNameInput = screen.getByTestId("email-signin-form-firstname-input");
+		const lastNameInput = screen.getByTestId("email-signin-form-lastname-input");
+		const emailInput = screen.getByTestId("email-signin-form-email-input");
+		const gdprCheckbox = screen.getByTestId("email-signin-form-gdpr-checkbox");
+		const submitButton = screen.getByTestId("email-signin-form-submit-button");
+
+		expect(firstNameInput).toBeDisabled();
+		expect(lastNameInput).toBeDisabled();
+		expect(emailInput).toBeDisabled();
+		expect(gdprCheckbox).toBeDisabled();
+		expect(submitButton).toBeDisabled();
+	});
+
+	it("disables all form fields when isDisabled is true even if isLoading is false", () => {
+		render(<SigninForm isDisabled={true} isLoading={false} onSubmit={mockOnSubmit} />);
+
+		const firstNameInput = screen.getByTestId("email-signin-form-firstname-input");
+		const lastNameInput = screen.getByTestId("email-signin-form-lastname-input");
+		const emailInput = screen.getByTestId("email-signin-form-email-input");
+		const gdprCheckbox = screen.getByTestId("email-signin-form-gdpr-checkbox");
+		const submitButton = screen.getByTestId("email-signin-form-submit-button");
+
+		expect(firstNameInput).toBeDisabled();
+		expect(lastNameInput).toBeDisabled();
+		expect(emailInput).toBeDisabled();
+		expect(gdprCheckbox).toBeDisabled();
+		expect(submitButton).toBeDisabled();
+	});
+
+	it("enables form fields by default when isDisabled is not provided", () => {
+		render(<SigninForm isLoading={false} onSubmit={mockOnSubmit} />);
+
+		const firstNameInput = screen.getByTestId("email-signin-form-firstname-input");
+		const lastNameInput = screen.getByTestId("email-signin-form-lastname-input");
+		const emailInput = screen.getByTestId("email-signin-form-email-input");
+		const gdprCheckbox = screen.getByTestId("email-signin-form-gdpr-checkbox");
+
+		expect(firstNameInput).not.toBeDisabled();
+		expect(lastNameInput).not.toBeDisabled();
+		expect(emailInput).not.toBeDisabled();
+		expect(gdprCheckbox).not.toBeDisabled();
+	});
+
+	it("does not submit form when disabled via isDisabled prop", async () => {
+		const user = userEvent.setup();
+		render(<SigninForm isDisabled={true} isLoading={false} onSubmit={mockOnSubmit} />);
+
+		const form = screen.getByTestId("email-signin-form");
+		const submitButton = screen.getByTestId("email-signin-form-submit-button");
+
+		await user.click(submitButton);
+
+		expect(mockOnSubmit).not.toHaveBeenCalled();
+
+		await user.type(form, "{enter}");
+		expect(mockOnSubmit).not.toHaveBeenCalled();
+	});
 });

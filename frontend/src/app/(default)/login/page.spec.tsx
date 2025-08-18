@@ -1,5 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
@@ -70,9 +69,23 @@ vi.mock("@/components/ui/toast", () => ({
 	}),
 }));
 
+const mockUseCookieConsent = vi.hoisted(() => vi.fn());
+
+vi.mock("@/hooks/use-cookie-consent", () => ({
+	useCookieConsent: mockUseCookieConsent,
+}));
+
 describe.sequential("Login Page", () => {
+	beforeEach(() => {
+		mockUseCookieConsent.mockReturnValue({
+			hasConsent: true,
+			isHydrated: true,
+		});
+	});
+
 	afterEach(() => {
 		cleanup();
+		vi.clearAllMocks();
 	});
 
 	it("renders all login page elements correctly with initial state", () => {
@@ -117,13 +130,16 @@ describe.sequential("Login Page", () => {
 	});
 
 	describe.sequential("Email Sign-in Flow", () => {
-		const user = userEvent.setup();
 		const testEmail = "test@example.com";
 		let emailInput: HTMLElement;
 		let submitButton: HTMLElement;
 
 		beforeEach(() => {
 			vi.clearAllMocks();
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: true,
+				isHydrated: true,
+			});
 			render(<LoginPage />);
 
 			emailInput = screen.getByTestId("login-form-email-input");
@@ -133,19 +149,22 @@ describe.sequential("Login Page", () => {
 		it("disables submit button when email is empty or invalid", async () => {
 			expect(submitButton).toBeDisabled();
 
-			await user.type(emailInput, "invalid-email");
+			fireEvent.change(emailInput, { target: { value: "invalid-email" } });
 
 			expect(submitButton).toBeDisabled();
 
-			await user.clear(emailInput);
+			fireEvent.change(emailInput, { target: { value: "" } });
 
 			expect(submitButton).toBeDisabled();
 		});
 
 		it("enables submit button when email is valid", async () => {
-			await user.type(emailInput, testEmail);
+			fireEvent.change(emailInput, { target: { value: testEmail } });
+			fireEvent.blur(emailInput);
 
-			expect(submitButton).toBeEnabled();
+			await waitFor(() => {
+				expect(submitButton).toBeEnabled();
+			});
 		});
 
 		it("handles successful email sign-in flow", async () => {
@@ -155,10 +174,18 @@ describe.sequential("Login Page", () => {
 			});
 			mockSendSignInLinkToEmail.mockReturnValueOnce(deferred);
 
-			await user.type(emailInput, testEmail);
-			await user.click(submitButton);
+			fireEvent.change(emailInput, { target: { value: testEmail } });
+			fireEvent.blur(emailInput);
 
-			expect(submitButton).toBeDisabled();
+			await waitFor(() => {
+				expect(submitButton).toBeEnabled();
+			});
+
+			fireEvent.click(submitButton);
+
+			await waitFor(() => {
+				expect(submitButton).toBeDisabled();
+			});
 
 			resolvePromise?.();
 			await deferred;
@@ -184,10 +211,18 @@ describe.sequential("Login Page", () => {
 			const errorMessage = "Failed to send sign-in email";
 			mockSendSignInLinkToEmail.mockReturnValueOnce(deferred);
 
-			await user.type(emailInput, testEmail);
-			await user.click(submitButton);
+			fireEvent.change(emailInput, { target: { value: testEmail } });
+			fireEvent.blur(emailInput);
 
-			expect(submitButton).toBeDisabled();
+			await waitFor(() => {
+				expect(submitButton).toBeEnabled();
+			});
+
+			fireEvent.click(submitButton);
+
+			await waitFor(() => {
+				expect(submitButton).toBeDisabled();
+			});
 
 			rejectPromise?.(new Error(errorMessage));
 
@@ -198,6 +233,128 @@ describe.sequential("Login Page", () => {
 
 			const { toast } = await import("sonner");
 			expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
+		});
+	});
+
+	describe.sequential("Cookie Consent Integration", () => {
+		it("enables social signin buttons and login form when consent is given", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: true,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const googleButton = screen.getByTestId("login-google-button");
+			const orcidButton = screen.getByTestId("login-orcid-button");
+
+			expect(googleButton).not.toBeDisabled();
+			expect(orcidButton).not.toBeDisabled();
+		});
+
+		it("disables social signin buttons when consent is not given", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: false,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const googleButton = screen.getByTestId("login-google-button");
+			const orcidButton = screen.getByTestId("login-orcid-button");
+
+			expect(googleButton).toBeDisabled();
+			expect(orcidButton).toBeDisabled();
+		});
+
+		it("disables login form submit button when consent is not given", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: false,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const submitButton = screen.getByTestId("login-form-submit-button");
+
+			expect(submitButton).toBeDisabled();
+		});
+
+		it("keeps login form submit button disabled when consent is given but email is empty", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: true,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const submitButton = screen.getByTestId("login-form-submit-button");
+
+			expect(submitButton).toBeDisabled();
+		});
+
+		it("passes correct hasConsent prop to LoginForm component", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: false,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const loginForm = screen.getByTestId("login-form");
+			expect(loginForm).toBeInTheDocument();
+
+			const submitButton = screen.getByTestId("login-form-submit-button");
+			expect(submitButton).toBeDisabled();
+		});
+
+		it("shows correct disabled state when consent changes", () => {
+			const { rerender } = render(<LoginPage />);
+
+			let googleButton = screen.getByTestId("login-google-button");
+			let orcidButton = screen.getByTestId("login-orcid-button");
+			expect(googleButton).not.toBeDisabled();
+			expect(orcidButton).not.toBeDisabled();
+
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: false,
+				isHydrated: true,
+			});
+
+			rerender(<LoginPage />);
+
+			googleButton = screen.getByTestId("login-google-button");
+			orcidButton = screen.getByTestId("login-orcid-button");
+			expect(googleButton).toBeDisabled();
+			expect(orcidButton).toBeDisabled();
+		});
+
+		it("verifies SocialSigninButton receives correct isDisabled prop value", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: false,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const googleButton = screen.getByTestId("login-google-button");
+			const orcidButton = screen.getByTestId("login-orcid-button");
+
+			expect(googleButton).toBeDisabled();
+			expect(orcidButton).toBeDisabled();
+		});
+
+		it("verifies LoginForm submit button considers consent in disabled state", () => {
+			mockUseCookieConsent.mockReturnValue({
+				hasConsent: false,
+				isHydrated: true,
+			});
+
+			render(<LoginPage />);
+
+			const submitButton = screen.getByTestId("login-form-submit-button");
+
+			expect(submitButton).toBeDisabled();
 		});
 	});
 });
