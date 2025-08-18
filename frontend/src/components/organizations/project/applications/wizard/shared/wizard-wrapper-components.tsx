@@ -128,6 +128,9 @@ export function WizardHeader() {
 		<header className="w-full border-b-1 border-gray-100 p-4 sm:p-6" data-testid="wizard-header">
 			<div className="flex items-center justify-between mb-6 sm:mb-8">
 				<div className="flex min-h-7 items-center space-x-2">
+					<ThemeBadge color="betaBadge" leftIcon={<img alt="Beta logo" src="/icons/button-logo-white.svg" />}>
+						BETA
+					</ThemeBadge>
 					{showHeaderInfo ? (
 						<>
 							<h1
@@ -156,9 +159,6 @@ export function WizardHeader() {
 				</AppButton>
 			</div>
 
-			<ThemeBadge color="betaBadge" leftIcon={<img alt="Beta logo" src="/icons/button-logo-white.svg" />}>
-				BETA
-			</ThemeBadge>
 			<div className="space-y-2">
 				<ApplicationProgressBar currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
 				<ProgressTitles currentStep={currentStep} stepTitles={WIZARD_STEP_ORDER} />
