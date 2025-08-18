@@ -11,21 +11,21 @@ import {
 	removeOrganizationMember,
 	updateOrganizationMemberRole,
 } from "@/actions/organization";
-import { InviteCollaboratorModal } from "@/components/organizations";
-import { useNotificationStore } from "@/stores/notification-store";
-import type { API } from "@/types/api-types";
-import { UserRole } from "@/types/user";
-import { log } from "@/utils/logger/client";
-import { generateInitials } from "@/utils/user";
-import { EditPermissionModal } from "./edit-permission-modal";
 import { getProjects } from "@/actions/project";
-import { InviteOptions } from "../modals/invite-collaborator-modal";
+import { InviteCollaboratorModal } from "@/components/organizations";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNotificationStore } from "@/stores/notification-store";
+import type { API } from "@/types/api-types";
+import { UserRole } from "@/types/user";
+import { log } from "@/utils/logger/client";
+import { generateInitials } from "@/utils/user";
+import type { InviteOptions } from "../modals/invite-collaborator-modal";
+import { EditPermissionModal } from "./edit-permission-modal";
 
 interface OrganizationMember {
 	displayName?: string;
