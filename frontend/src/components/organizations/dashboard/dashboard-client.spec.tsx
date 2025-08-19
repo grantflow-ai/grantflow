@@ -80,6 +80,7 @@ const mockRouter = {
 const mockNavigateToProject = vi.fn();
 const mockSwitchOrganization = vi.fn();
 const mockSetOrganizations = vi.fn();
+const mockGetOrganization = vi.fn();
 const mockDeleteProject = vi.fn();
 const mockDuplicateProject = vi.fn();
 const mockAddNotification = vi.fn();
@@ -125,6 +126,7 @@ describe("DashboardClient", () => {
 			switchOrganization: mockSwitchOrganization,
 		});
 		mockUseOrganizationStore.mockReturnValue({
+			getOrganization: mockGetOrganization,
 			selectOrganization: vi.fn(),
 			setOrganizations: mockSetOrganizations,
 		});

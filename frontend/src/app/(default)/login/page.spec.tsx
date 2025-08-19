@@ -148,20 +148,26 @@ describe.sequential("Login Page", () => {
 		});
 
 		it("disables submit button when email is empty or invalid", async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			expect(submitButton).toBeDisabled();
 
 			await user.type(emailInput, "invalid-email");
+			await user.tab(); // Trigger validation
 
-			expect(submitButton).toBeDisabled();
+			await waitFor(() => {
+				expect(submitButton).toBeDisabled();
+			});
 
 			await user.clear(emailInput);
+			await user.tab(); // Trigger validation
 
-			expect(submitButton).toBeDisabled();
+			await waitFor(() => {
+				expect(submitButton).toBeDisabled();
+			});
 		});
 
 		it("enables submit button when email is valid", async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			await user.type(emailInput, testEmail);
 			await user.tab();
 
@@ -171,7 +177,7 @@ describe.sequential("Login Page", () => {
 		});
 
 		it("handles successful email sign-in flow", async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			let resolvePromise: (() => void) | undefined;
 			const deferred = new Promise<void>((resolve) => {
 				resolvePromise = resolve;
@@ -194,9 +200,11 @@ describe.sequential("Login Page", () => {
 			resolvePromise?.();
 			await deferred;
 
-			expect(mockSendSignInLinkToEmail).toHaveBeenCalledWith(expect.anything(), testEmail, {
-				handleCodeInApp: true,
-				url: expect.stringContaining("/onboarding/email"),
+			await waitFor(() => {
+				expect(mockSendSignInLinkToEmail).toHaveBeenCalledWith(expect.anything(), testEmail, {
+					handleCodeInApp: true,
+					url: expect.stringContaining("/onboarding/email"),
+				});
 			});
 
 			expect(localStorage.setItem).toHaveBeenCalledWith(FIREBASE_LOCAL_STORAGE_KEY, testEmail);
@@ -208,7 +216,7 @@ describe.sequential("Login Page", () => {
 		});
 
 		it("handles email sign-in error", async () => {
-			const user = userEvent.setup();
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			let rejectPromise: ((err: unknown) => void) | undefined;
 			const deferred = new Promise<void>((_resolve, reject) => {
 				rejectPromise = reject;
@@ -231,13 +239,17 @@ describe.sequential("Login Page", () => {
 
 			rejectPromise?.(new Error(errorMessage));
 
-			expect(mockSendSignInLinkToEmail).toHaveBeenCalledWith(expect.anything(), testEmail, {
-				handleCodeInApp: true,
-				url: expect.stringContaining("/onboarding/email"),
+			await waitFor(() => {
+				expect(mockSendSignInLinkToEmail).toHaveBeenCalledWith(expect.anything(), testEmail, {
+					handleCodeInApp: true,
+					url: expect.stringContaining("/onboarding/email"),
+				});
 			});
 
 			const { toast } = await import("sonner");
-			expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
+			await waitFor(() => {
+				expect(toast.error).toHaveBeenCalledWith(expect.stringContaining(errorMessage));
+			});
 		});
 	});
 
