@@ -7,7 +7,7 @@ interface InvitationEmailTemplateProps {
 	role: string;
 }
 
-export function InvitationEmailTemplate({
+export default function InvitationEmailTemplate({
 	acceptInvitationUrl,
 	inviterName,
 	projectName,

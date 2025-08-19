@@ -1,6 +1,7 @@
 import { render } from "@react-email/render";
 import { describe, expect, it } from "vitest";
-import { InvitationEmailTemplate } from "./invitation-email-template";
+import InvitationEmailTemplate from "./invitation-email-template";
+
 
 describe("InvitationEmailTemplate", () => {
 	const mockInviterName = "John Doe";
