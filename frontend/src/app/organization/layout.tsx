@@ -1,23 +1,13 @@
 import type { ReactNode } from "react";
-import { NotificationContainer } from "@/components/app/feedback/notification-container";
 import SharedLayout from "@/components/layout/shared-layout";
-import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SWRProvider } from "@/components/providers/swr-provider";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { ProjectLayoutClient } from "./project-layout-client";
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return (
 		<SharedLayout>
 			<SWRProvider>
-				<SidebarProvider defaultOpen={false}>
-					<AppSidebar />
-					<SidebarInset className="h-screen">
-						<div className="flex h-screen justify-center bg-preview-bg">
-							<div className="flex-1 w-full h-full overflow-hidden bg-preview-bg">{children}</div>
-							<NotificationContainer />
-						</div>
-					</SidebarInset>
-				</SidebarProvider>
+				<ProjectLayoutClient>{children}</ProjectLayoutClient>
 			</SWRProvider>
 		</SharedLayout>
 	);

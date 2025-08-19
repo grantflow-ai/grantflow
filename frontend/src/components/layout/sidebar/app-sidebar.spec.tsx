@@ -8,10 +8,10 @@ describe.sequential("AppSidebar", () => {
 		cleanup();
 	});
 
-	function renderWithProvider() {
+	function renderWithProvider(props = {}) {
 		const { container } = render(
 			<SidebarProvider>
-				<AppSidebar />
+				<AppSidebar {...props} />
 			</SidebarProvider>,
 		);
 		return { container };
@@ -35,6 +35,26 @@ describe.sequential("AppSidebar", () => {
 
 	it("renders CustomSidebarTrigger and NavMain", () => {
 		const { container } = renderWithProvider();
+		expect(container.querySelector('[data-testid="sidebar-trigger"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="nav-main"]')).toBeInTheDocument();
+	});
+
+	it("renders nothing when hidden prop is true", () => {
+		const { container } = renderWithProvider({ hidden: true });
+		expect(container.querySelector('[data-testid="sidebar-logo"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="new-application-button"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="support-button"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="logout-button"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="sidebar-trigger"]')).not.toBeInTheDocument();
+		expect(container.querySelector('[data-testid="nav-main"]')).not.toBeInTheDocument();
+	});
+
+	it("renders normally when hidden prop is false", () => {
+		const { container } = renderWithProvider({ hidden: false });
+		expect(container.querySelector('[data-testid="sidebar-logo"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="new-application-button"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="support-button"]')).toBeInTheDocument();
+		expect(container.querySelector('[data-testid="logout-button"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="sidebar-trigger"]')).toBeInTheDocument();
 		expect(container.querySelector('[data-testid="nav-main"]')).toBeInTheDocument();
 	});
