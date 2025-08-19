@@ -12,17 +12,15 @@ import {
 	Text,
 } from "@react-email/components";
 
-interface WelcomeEmailTemplateProps {
-	acceptInvitationUrl: string;
-	inviterName: string;
-	projectName: string;
+interface OrganizationDeletedTemplateProps {
+	organizationName: string;
+	contactUsUrl: string;
 }
 
-export default function WelcomeEmailTemplate({
-	acceptInvitationUrl,
-	inviterName,
-	projectName,
-}: WelcomeEmailTemplateProps) {
+export default function OrganizationDeletedTemplate({
+	organizationName,
+	contactUsUrl,
+}: OrganizationDeletedTemplateProps) {
 	return (
 		<Html>
 			<Head>
@@ -33,7 +31,7 @@ export default function WelcomeEmailTemplate({
 					rel="stylesheet"
 				/>
 			</Head>
-			<Preview>You&apos;ve been invited to collaborate on {projectName}</Preview>
+			<Preview>Organization {organizationName} Has Been Deleted</Preview>
 			<Body style={main}>
 				<Container style={container}>
 					<Section style={header}>
@@ -61,49 +59,49 @@ export default function WelcomeEmailTemplate({
 						<Heading style={heading}>Dear Researcher</Heading>
 
 						<Text style={paragraph}>
-							You have been invited by <strong>{inviterName}</strong> to collaborate on the research
-							project <strong style={projectNameStyle}>&quot;{projectName}&quot;</strong> within the
-							GrantFlow platform.
+							We confirm that the organization {organizationName || "[Organization Name]"}  has been
+							removed from GrantFlow.
 							<br />
-							GrantFlow is designed to help research teams streamline and manage the grant application
-							process.
-							<br />
-							As a collaborator, you will gain access to the project workspace and will be able to
-							contribute to grant applications and related documentation.
+							All associated documents, data, projects, and member access has been deleted.
 						</Text>
 
-						<Text style={paragraph}>To accept the invitation, please click the link below:</Text>
+						<Text style={paragraph}>
+							If this action was taken in error or you have any questions, please contact our support
+							team.
+						</Text>
 
 						<Section style={buttonContainer}>
-							<Button href={acceptInvitationUrl} style={button}>
-								<span style={{ verticalAlign: "middle" }}>Accept Invitation</span>
-								<span style={{ verticalAlign: "middle", display: "inline-block" }}>
-									
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										className="lucide lucide-chevron-right-icon lucide-chevron-right"
-									>
-										<title>Right Arrow Icon</title>
-										<path d="m9 18 6-6-6-6" />
-									</svg>
-								</span>
+							<Button href={contactUsUrl} style={button}>
+								<span style={{ marginRight: "6px" }}>Contact Us</span>
+
+								
+<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="13"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<title>Right Arrow Icon</title>
+									<path d="m9 18 6-6-6-6" />
+								</svg>
 							</Button>
 						</Section>
 
 						<Text style={paragraph}>
-							If you do not yet have a GrantFlow account, you will be guided through a brief sign-up
-							process before accessing the project.
+							We're sorry to see you go. If you have any feedback or suggestions on how we can improve,
+							we’d love to hear from you. Your insights help us make things better. Feel free to reach out
+							to us at{" "}
+							<Link href="mailto:contact@grantflow.ai" style={link}>
+								contact@grantflow.ai
+							</Link>
 						</Text>
 
-						<Text style={paragraph}>We look forward to your participation.</Text>
+						<Text style={paragraph}>Thank you for being part of GrantFlow.</Text>
 
 						<Text style={paragraph}>
 							Warm regards,
@@ -196,11 +194,6 @@ const paragraph = {
 	marginBottom: "16px",
 };
 
-const projectNameStyle = {
-	color: "#2e2d36",
-	fontWeight: "600",
-};
-
 const buttonContainer = {
 	margin: "32px 0",
 	textAlign: "left" as const,
@@ -217,9 +210,14 @@ const button = {
 	fontFamily: "'Sora', sans-serif",
 	fontSize: "14px",
 	fontWeight: "400",
-	padding: "8px 12px",
+	padding: "4px 12px",
 	textDecoration: "none",
-	width: "167px",
+	width: "124px",
+};
+
+const link = {
+	color: "#1e13f8",
+	textDecoration: "none",
 };
 
 const footer = {

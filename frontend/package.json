@@ -65,7 +65,7 @@
 		"build-storybook": "cross-env storybook build",
 		"check": "biome check --write . && eslint ",
 		"dev": "cross-env NODE_NO_WARNINGS=1 next dev",
-		"email": "email dev --dir src/components/email-templates ",
+		"email": "email dev --dir src/components/email-templates",
 		"eslint": "eslint",
 		"format": "biome format --write .",
 		"knip": "knip",
@@ -86,5 +86,9 @@
 		"typecheck": "tsc --noEmit",
 		"ui": "pnpm dlx shadcn@latest"
 	},
-	"version": "0.1.0"
+	"version": "0.1.0",
+	"devDependencies": {
+		"@react-email/preview-server": "4.2.8",
+		"react-email": "^4.2.8"
+	}
 }

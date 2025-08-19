@@ -1,5 +1,6 @@
 import { render } from "@react-email/render";
-import { WelcomeEmailTemplate } from "./welcome-email-template";
+import WelcomeEmailTemplate from "./welcome-email-template";
+
 
 describe("WelcomeEmailTemplate", () => {
 	const mockProps = {
