@@ -16,23 +16,36 @@ interface EmailVerificationTemplateProps {
 	verificationUrl: string;
 }
 
-export function EmailVerificationTemplate({ verificationUrl }: EmailVerificationTemplateProps) {
+export default function EmailVerificationTemplate({ verificationUrl }: EmailVerificationTemplateProps) {
 	return (
 		<Html>
-			<Head />
+			<Head>
+				<link rel="preconnect" href="https://fonts.googleapis.com" />
+				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<link
+					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
+					rel="stylesheet"
+				/>
+			</Head>
 			<Preview>Verify your email to complete your GrantFlow registration</Preview>
 			<Body style={main}>
 				<Container style={container}>
 					<Section style={header}>
-						<Img
-							alt="GrantFlow Logo"
-							height={31}
-							src={`${process.env.NEXT_PUBLIC_SITE_URL}/assets/logo-horizontal.svg`}
-							style={logo}
-							width={100}
-						/>
-						<div>
-							<Text style={logoText}>GrantFlow</Text>
+						<div style={headerContent}>
+							<Img
+								alt="GrantFlow Logo"
+								height={59}
+								src="https://staging.grantflow.ai/assets/logo-horizontal.svg"
+								style={logo}
+								width={58}
+							/>
+							<Img
+								alt="GrantFlow Logo"
+								height={31}
+								src="https://staging.grantflow.ai/assets/grantflow.svg"
+								style={logo}
+								width={79}
+							/>
 							<Text style={logoSubtext}>By Vsphera</Text>
 						</div>
 					</Section>
@@ -47,8 +60,25 @@ export function EmailVerificationTemplate({ verificationUrl }: EmailVerification
 
 						<Section style={buttonContainer}>
 							<Button href={verificationUrl} style={button}>
-								<span style={buttonIcon}>✓</span>
-								Verify My Email
+								<span style={{ verticalAlign: "middle", display: "inline-block" }}>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="20"
+										height="20"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										style={{ verticalAlign: "middle" }}
+									>
+										<title>check circle Icon</title>
+										<circle cx="12" cy="12" r="10" />
+										<path d="m9 12 2 2 4-4" />
+									</svg>
+								</span>
+								<span style={{ verticalAlign: "middle", marginLeft: "8px" }}>Verify My Email</span>
 							</Button>
 						</Section>
 
@@ -68,9 +98,11 @@ export function EmailVerificationTemplate({ verificationUrl }: EmailVerification
 
 						<Text style={paragraph}>Looking forward to helping you simplify your grant applications,</Text>
 
-						<Text style={paragraph}>Warm regards,</Text>
-
-						<Text style={paragraph}>Vsphera Team</Text>
+						<Text style={paragraph}>
+							Warm regards,
+							<br />
+							Vsphera Team
+						</Text>
 					</Section>
 
 					<Section style={footer}>
@@ -98,7 +130,7 @@ export function EmailVerificationTemplate({ verificationUrl }: EmailVerification
 
 const main = {
 	backgroundColor: "#f6f6f6",
-	fontFamily: "'Cabin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+	fontFamily: "'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 	margin: "12px 0 0",
 	padding: 0,
 };
@@ -115,22 +147,21 @@ const header = {
 	textAlign: "left" as const,
 };
 
-const logo = {
-	maxWidth: "150px",
+const headerContent = {
+	textAlign: "center" as const,
+	width: "79px",
 };
 
-const logoText = {
-	color: "#211962",
-	fontSize: "14px",
-	fontWeight: "500",
-	margin: 0,
+const logo = {
+	maxWidth: "150px",
+	margin: "0 auto",
 };
 
 const logoSubtext = {
 	color: "#211962",
 	fontSize: "10px",
 	fontWeight: "500",
-	margin: 0,
+	margin: "-8px 0 0 0",
 	textAlign: "center" as const,
 };
 
@@ -160,7 +191,7 @@ const paragraph = {
 
 const buttonContainer = {
 	margin: "32px 0",
-	textAlign: "center" as const,
+	textAlign: "left" as const,
 };
 
 const button = {
@@ -172,13 +203,8 @@ const button = {
 	fontFamily: "'Sora', sans-serif",
 	fontSize: "14px",
 	fontWeight: "400",
-	gap: "8px",
 	padding: "8px 12px",
 	textDecoration: "none",
-};
-
-const buttonIcon = {
-	fontSize: "16px",
 };
 
 const link = {
@@ -199,7 +225,7 @@ const socialIcon = {
 
 const footerText = {
 	color: "#2E2D36",
-	fontFamily: "'Cabin', sans-serif",
+	fontFamily: "'Source Sans 3', sans-serif",
 	fontSize: "14px",
 	fontWeight: "400",
 	lineHeight: "18px",
