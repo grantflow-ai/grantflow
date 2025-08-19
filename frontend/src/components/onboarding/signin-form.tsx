@@ -30,10 +30,12 @@ const signInFormSchema = z.object({
 export type SignInFormValues = z.infer<typeof signInFormSchema>;
 
 export function SigninForm({
+	isDisabled,
 	isLoading,
 	onSubmit,
 	socialSignInError,
 }: {
+	isDisabled?: boolean;
 	isLoading: boolean;
 	onSubmit: SubmitHandler<SignInFormValues>;
 	socialSignInError?: null | React.ReactNode | string;
@@ -65,7 +67,7 @@ export function SigninForm({
 										autoComplete="given-name"
 										autoCorrect="off"
 										className="form-input"
-										disabled={isLoading}
+										disabled={isLoading || isDisabled}
 										errorMessage={form.formState.errors.firstName?.message}
 										id="firstName"
 										label="First name"
@@ -89,7 +91,7 @@ export function SigninForm({
 										autoComplete="family-name"
 										autoCorrect="off"
 										className="form-input"
-										disabled={isLoading}
+										disabled={isLoading || isDisabled}
 										errorMessage={form.formState.errors.lastName?.message}
 										id="lastName"
 										label="Last name"
@@ -113,7 +115,7 @@ export function SigninForm({
 										autoComplete="email"
 										autoCorrect="off"
 										className="form-input"
-										disabled={isLoading}
+										disabled={isLoading || isDisabled}
 										errorMessage={socialSignInError ?? form.formState.errors.email?.message}
 										id="email"
 										label="Email"
@@ -135,7 +137,7 @@ export function SigninForm({
 									<Checkbox
 										checked={field.value}
 										data-testid="email-signin-form-gdpr-checkbox"
-										disabled={isLoading}
+										disabled={isLoading || isDisabled}
 										onCheckedChange={field.onChange}
 									/>
 								</FormControl>
@@ -178,7 +180,7 @@ export function SigninForm({
 					<SubmitButton
 						className="mb-8 mt-6 w-full"
 						data-testid="email-signin-form-submit-button"
-						disabled={!form.formState.isValid || isLoading}
+						disabled={!form.formState.isValid || isLoading || isDisabled}
 						isLoading={isLoading}
 						rightIcon={<IconGoAhead />}
 						size="lg"

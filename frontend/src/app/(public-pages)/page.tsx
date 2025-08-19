@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IconGoAhead } from "@/components/branding/icons";
+import { CookieConsentProvider } from "@/components/cookie-consent";
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { LandingPageButton } from "@/components/landing-page/button";
@@ -27,6 +28,7 @@ export default async function LandingPage() {
 			<CoreFeaturesSection />
 			<TestimonialsSection />
 			<CTASection />
+			<CookieConsentProvider />
 		</div>
 	);
 }

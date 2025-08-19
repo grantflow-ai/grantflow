@@ -16,9 +16,10 @@ function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root
 function TooltipContent({
 	children,
 	className,
+	showArrow = false,
 	sideOffset = 0,
 	...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: { showArrow?: boolean } & React.ComponentProps<typeof TooltipPrimitive.Content>) {
 	return (
 		<TooltipPrimitive.Portal>
 			<TooltipPrimitive.Content
@@ -31,6 +32,7 @@ function TooltipContent({
 				{...props}
 			>
 				{children}
+				{showArrow && <TooltipPrimitive.Arrow className="fill-secondary" height={8} width={10} />}
 			</TooltipPrimitive.Content>
 		</TooltipPrimitive.Portal>
 	);
