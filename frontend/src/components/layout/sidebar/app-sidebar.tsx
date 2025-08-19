@@ -23,7 +23,11 @@ import { routes } from "@/utils/navigation";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+	hidden?: boolean;
+}
+
+export function AppSidebar({ hidden = false, ...props }: AppSidebarProps) {
 	const router = useRouter();
 	const setUser = useUserStore((state) => state.setUser);
 	const organization = useOrganizationStore((state) => state.organization);
@@ -39,6 +43,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
 		router.push(href);
 	};
+
+	if (hidden) {
+		return null;
+	}
 
 	return (
 		<Sidebar
