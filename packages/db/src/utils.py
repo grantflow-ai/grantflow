@@ -71,6 +71,7 @@ async def retrieve_application(*, application_id: UUID | str, session: AsyncSess
                 selectinload(GrantApplication.rag_sources).selectinload(
                     GrantApplicationSource.rag_source.of_type(poly_rag_source)
                 ),
+                selectinload(GrantApplication.editor_documents),
             )
             .where(
                 GrantApplication.id == application_id,
