@@ -87,7 +87,7 @@ jobs:
               uses: actions/checkout@v5
 
             - name: Setup TFLint
-              uses: terraform-linters/setup-tflint@v4
+              uses: terraform-linters/setup-tflint@v5
               with:
                   tflint_version: v0.57.0
 
