@@ -19,11 +19,18 @@ vi.mock("@/components/landing-page/benefits-section", () => ({
 vi.mock("@/components/landing-page/early-access-section", () => ({
 	EarlyAccessSection: () => <div data-testid="mock-early-access-section" />,
 }));
+vi.mock("@/components/landing-page/payment-plans/payment-plans", () => ({
+	PaymentPlans: () => <div data-testid="mock-payment-plans" />,
+}));
 vi.mock("@/components/landing-page/core-features-section", () => ({
 	CoreFeaturesSection: () => <div data-testid="mock-core-features-section" />,
 }));
 vi.mock("@/components/landing-page/testimonials-section", () => ({
 	TestimonialsSection: () => <div data-testid="mock-testimonials-section" />,
+}));
+
+vi.mock("@/components/cookie-consent", () => ({
+	CookieConsentProvider: () => <div data-testid="mock-cookie-consent-provider" />,
 }));
 
 vi.mock("@/components/branding/logo", () => ({
@@ -92,10 +99,12 @@ describe.sequential("LandingPage", () => {
 		expect(screen.getByTestId("mock-hero-banner")).toBeDefined();
 		expect(screen.getByTestId("mock-benefits-section")).toBeDefined();
 		expect(screen.getByTestId("mock-early-access-section")).toBeDefined();
+		expect(screen.getByTestId("mock-payment-plans")).toBeDefined();
 		expect(screen.getByTestId("mock-core-features-section")).toBeDefined();
 		expect(screen.getByTestId("mock-testimonials-section")).toBeDefined();
 
 		expect(screen.getByTestId("cta-section")).toBeDefined();
+		expect(screen.getByTestId("mock-cookie-consent-provider")).toBeDefined();
 
 		expect(container).toBeDefined();
 	});
@@ -136,6 +145,30 @@ describe.sequential("LandingPage", () => {
 
 		fireEvent.click(contactButton);
 		fireEvent.click(tryButton);
+	});
+
+	it("renders CookieConsentProvider component", async () => {
+		render(await LandingPage());
+
+		const cookieConsentProvider = screen.getByTestId("mock-cookie-consent-provider");
+		expect(cookieConsentProvider).toBeDefined();
+		expect(cookieConsentProvider).toBeInTheDocument();
+	});
+
+	it("renders sections in correct order", async () => {
+		const { container } = render(await LandingPage());
+
+		const mainContainer = container.firstChild as HTMLElement;
+		const sections = [...mainContainer.children];
+
+		expect(sections[0]).toHaveAttribute("data-testid", "mock-hero-banner");
+		expect(sections[1]).toHaveAttribute("data-testid", "mock-benefits-section");
+		expect(sections[2]).toHaveAttribute("data-testid", "mock-early-access-section");
+		expect(sections[3]).toHaveAttribute("data-testid", "mock-payment-plans");
+		expect(sections[4]).toHaveAttribute("data-testid", "mock-core-features-section");
+		expect(sections[5]).toHaveAttribute("data-testid", "mock-testimonials-section");
+		expect(sections[6]).toHaveAttribute("data-testid", "cta-section");
+		expect(sections[7]).toHaveAttribute("data-testid", "mock-cookie-consent-provider");
 	});
 });
 
