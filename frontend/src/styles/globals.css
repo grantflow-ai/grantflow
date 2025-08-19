@@ -66,6 +66,7 @@
 	--color-app-gray-600: var(--app-gray-600);
 	--color-app-gray-700: var(--app-gray-700);
 	--color-app-lavender-gray: var(--app-lavender-gray);
+	--color-app-lavender: var(--app-lavender);
 	--color-light-red: var(--app-light-red);
 	--color-red: var(--app-red);
 	--color-app-file-status-green: var(--app-file-status-green);
@@ -125,6 +126,7 @@
 	--app-gray-600: oklch(0.5 0.0237 291.64); /* 636170 */
 	--app-gray-700: oklch(0.4085 0.0217 292.47); /* 4A4855 */
 	--app-lavender-gray: oklch(0.9462 0.0254 268.85); /* #E6EDFF */
+	--app-lavender: oklch(0.76 0.12 283); /* #A5A1FC */
 	--app-popup-cover: oklch(41.33% 0.07 278.62deg); /* #3F3B67 */
 	--app-light-gray: oklch(0.9609 0.012 247.95); /* #ecf3fa */
 	--app-dark-gray: oklch(0.4915 0.0398 292.2); /* #615d76 */
@@ -206,6 +208,7 @@
 	--app-gray-400: oklch(0.74 0.0243 291.2); /* #AAA8B9 */
 	--app-gray-500: oklch(0.64 0.0297 290.11); /* 8A889C */
 	--app-gray-600: oklch(0.5 0.0237 291.64); /* 636170 */
+	--app-lavender: oklch(0.76 0.12 283); /* #A5A1FC */
 
 	--background-dark: var(--app-dark-blue);
 	--background-light: oklch(1 0 0);

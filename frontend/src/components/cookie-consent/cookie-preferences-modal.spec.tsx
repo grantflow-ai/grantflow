@@ -1,136 +1,182 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
-import { useCookieConsentStore } from "@/stores/cookie-consent-store";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { CookiePreferencesModal } from "./cookie-preferences-modal";
 
 describe("CookiePreferencesModal", () => {
-	beforeEach(() => {
-		useCookieConsentStore.setState({
-			consentGiven: false,
-			hasInteracted: false,
-			preferences: {
-				analytics: false,
-				essential: true,
-			},
-			showConsentModal: false,
-			showPreferencesModal: false,
-		});
+	it("calls onCancel handler when Cancel button is clicked", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		fireEvent.click(screen.getByTestId("cookie-preferences-cancel"));
+
+		expect(mockOnCancel).toHaveBeenCalledOnce();
+		expect(mockOnSavePreferences).not.toHaveBeenCalled();
 	});
 
-	it("should not render when showPreferencesModal is false", () => {
-		render(<CookiePreferencesModal />);
+	it("calls onSavePreferences handler with correct preferences when Save button is clicked", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		// Click Save without toggling analytics (should be false by default)
+		fireEvent.click(screen.getByTestId("cookie-preferences-save"));
+
+		expect(mockOnSavePreferences).toHaveBeenCalledOnce();
+		expect(mockOnSavePreferences).toHaveBeenCalledWith({ analytics: false });
+		expect(mockOnCancel).not.toHaveBeenCalled();
+	});
+
+	it("calls onSavePreferences with analytics=true when analytics toggle is enabled", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		// Toggle analytics to true
+		fireEvent.click(screen.getByTestId("analytics-cookies-switch"));
+
+		// Then save preferences
+		fireEvent.click(screen.getByTestId("cookie-preferences-save"));
+
+		expect(mockOnSavePreferences).toHaveBeenCalledOnce();
+		expect(mockOnSavePreferences).toHaveBeenCalledWith({ analytics: true });
+	});
+
+	it("toggles analytics state correctly when analytics switch is clicked", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		const analyticsSwitch = screen.getByTestId("analytics-cookies-switch");
+
+		// Initial state should be false
+		expect(analyticsSwitch).toHaveAttribute("aria-checked", "false");
+
+		// Click to toggle to true
+		fireEvent.click(analyticsSwitch);
+		expect(analyticsSwitch).toHaveAttribute("aria-checked", "true");
+
+		// Click to toggle back to false
+		fireEvent.click(analyticsSwitch);
+		expect(analyticsSwitch).toHaveAttribute("aria-checked", "false");
+	});
+
+	it("essential cookies switch is always checked and disabled", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		const essentialSwitch = screen.getByTestId("essential-cookies-switch");
+
+		expect(essentialSwitch).toBeDisabled();
+		expect(essentialSwitch).toHaveAttribute("aria-checked", "true");
+
+		// Clicking disabled switch should not call any handlers
+		fireEvent.click(essentialSwitch);
+		expect(mockOnCancel).not.toHaveBeenCalled();
+		expect(mockOnSavePreferences).not.toHaveBeenCalled();
+	});
+
+	it("essential cookies switch remains checked after clicks", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		const essentialSwitch = screen.getByTestId("essential-cookies-switch");
+
+		// Multiple clicks should not change the state
+		fireEvent.click(essentialSwitch);
+		fireEvent.click(essentialSwitch);
+		fireEvent.click(essentialSwitch);
+
+		expect(essentialSwitch).toHaveAttribute("aria-checked", "true");
+		expect(essentialSwitch).toBeDisabled();
+	});
+
+	it("renders modal when show is true", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
+
+		expect(screen.getByTestId("cookie-preferences-modal")).toBeInTheDocument();
+		expect(screen.getByTestId("cookie-preferences-cancel")).toBeInTheDocument();
+		expect(screen.getByTestId("cookie-preferences-save")).toBeInTheDocument();
+		expect(screen.getByTestId("essential-cookies-switch")).toBeInTheDocument();
+		expect(screen.getByTestId("analytics-cookies-switch")).toBeInTheDocument();
+	});
+
+	it("does not render modal when show is false", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
+
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={false} />,
+		);
 
 		expect(screen.queryByTestId("cookie-preferences-modal")).not.toBeInTheDocument();
 	});
 
-	it("should render when showPreferencesModal is true", () => {
-		useCookieConsentStore.setState({ showPreferencesModal: true });
+	it("preserves analytics state changes across multiple interactions", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
 
-		render(<CookiePreferencesModal />);
-
-		expect(screen.getByTestId("cookie-preferences-modal")).toBeInTheDocument();
-		expect(screen.getByText("Cookie Preferences")).toBeInTheDocument();
-		expect(screen.getByTestId("cookie-preferences-save")).toBeInTheDocument();
-		expect(screen.getByTestId("cookie-preferences-accept-all")).toBeInTheDocument();
-	});
-
-	it("should show essential cookies as always enabled and disabled", () => {
-		useCookieConsentStore.setState({ showPreferencesModal: true });
-
-		render(<CookiePreferencesModal />);
-
-		const essentialSwitch = screen.getByTestId("essential-cookies-switch");
-		expect(essentialSwitch).toBeDisabled();
-		expect(essentialSwitch).toHaveAttribute("aria-checked", "true");
-	});
-
-	it("should allow toggling analytics cookies", async () => {
-		const user = userEvent.setup();
-		useCookieConsentStore.setState({ showPreferencesModal: true });
-
-		render(<CookiePreferencesModal />);
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
 
 		const analyticsSwitch = screen.getByTestId("analytics-cookies-switch");
-		expect(analyticsSwitch).toHaveAttribute("aria-checked", "false");
 
-		await user.click(analyticsSwitch);
+		// Toggle analytics on
+		fireEvent.click(analyticsSwitch);
 		expect(analyticsSwitch).toHaveAttribute("aria-checked", "true");
 
-		await user.click(analyticsSwitch);
-		expect(analyticsSwitch).toHaveAttribute("aria-checked", "false");
+		// Click cancel (should not call save)
+		fireEvent.click(screen.getByTestId("cookie-preferences-cancel"));
+		expect(mockOnSavePreferences).not.toHaveBeenCalled();
+
+		// Analytics should still be in the toggled state if modal reopens
+		expect(analyticsSwitch).toHaveAttribute("aria-checked", "true");
 	});
 
-	it("should save preferences when Save button is clicked", async () => {
-		const user = userEvent.setup();
-		useCookieConsentStore.setState({
-			preferences: { analytics: false, essential: true },
-			showPreferencesModal: true,
-		});
+	it("analytics state reflects in save preferences call after multiple toggles", () => {
+		const mockOnCancel = vi.fn();
+		const mockOnSavePreferences = vi.fn();
 
-		render(<CookiePreferencesModal />);
+		render(
+			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
+		);
 
 		const analyticsSwitch = screen.getByTestId("analytics-cookies-switch");
-		await user.click(analyticsSwitch);
-		await user.click(screen.getByTestId("cookie-preferences-save"));
 
-		await waitFor(() => {
-			const state = useCookieConsentStore.getState();
-			expect(state.preferences.analytics).toBe(true);
-			expect(state.consentGiven).toBe(true);
-			expect(state.showPreferencesModal).toBe(false);
-			expect(state.hasInteracted).toBe(true);
-		});
-	});
+		// Toggle multiple times: false -> true -> false -> true
+		fireEvent.click(analyticsSwitch);
+		fireEvent.click(analyticsSwitch);
+		fireEvent.click(analyticsSwitch);
 
-	it("should accept all cookies when Accept All button is clicked", async () => {
-		const user = userEvent.setup();
-		useCookieConsentStore.setState({ showPreferencesModal: true });
+		// Save with final state (true)
+		fireEvent.click(screen.getByTestId("cookie-preferences-save"));
 
-		render(<CookiePreferencesModal />);
-
-		await user.click(screen.getByTestId("cookie-preferences-accept-all"));
-
-		await waitFor(() => {
-			const state = useCookieConsentStore.getState();
-			expect(state.preferences.analytics).toBe(true);
-			expect(state.consentGiven).toBe(true);
-			expect(state.showPreferencesModal).toBe(false);
-			expect(state.hasInteracted).toBe(true);
-		});
-	});
-
-	it("should go back to consent modal when Back button is clicked", async () => {
-		const user = userEvent.setup();
-		useCookieConsentStore.setState({ showPreferencesModal: true });
-
-		render(<CookiePreferencesModal />);
-
-		await user.click(screen.getByTestId("cookie-preferences-back"));
-
-		await waitFor(() => {
-			const state = useCookieConsentStore.getState();
-			expect(state.showPreferencesModal).toBe(false);
-			expect(state.showConsentModal).toBe(true);
-		});
-	});
-
-	it("should display cookie type descriptions", () => {
-		useCookieConsentStore.setState({ showPreferencesModal: true });
-
-		render(<CookiePreferencesModal />);
-
-		expect(screen.getByText(/required for basic site functionality/i)).toBeInTheDocument();
-		expect(screen.getByText(/help us understand how visitors interact/i)).toBeInTheDocument();
-	});
-
-	it("should render privacy policy link", () => {
-		useCookieConsentStore.setState({ showPreferencesModal: true });
-
-		render(<CookiePreferencesModal />);
-
-		const privacyLink = screen.getByRole("link", { name: /privacy policy/i });
-		expect(privacyLink).toHaveAttribute("href", "/privacy");
-		expect(privacyLink).toHaveAttribute("target", "_blank");
+		expect(mockOnSavePreferences).toHaveBeenCalledWith({ analytics: true });
 	});
 });

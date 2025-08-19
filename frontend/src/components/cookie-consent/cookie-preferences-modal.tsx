@@ -1,59 +1,47 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { ChevronLeft, Cookie, Info, Lock, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { DialogOverlay } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { type CookiePreferences, useCookieConsentStore } from "@/stores/cookie-consent-store";
+
+interface CookiePreferencesModalProps {
+	onCancel: () => void;
+	onSavePreferences: (preferences: { analytics: boolean }) => void;
+	show: boolean;
+}
 
 interface ToggleSwitchProps {
 	checked: boolean;
 	"data-testid"?: string;
 	disabled?: boolean;
 	onChange: (checked: boolean) => void;
+	tooltipContent?: string;
+	useCustomDisabledColor?: boolean;
 }
 
-export function CookiePreferencesModal() {
-	const { acceptAllCookies, closePreferencesModal, preferences, showPreferencesModal, updatePreferences } =
-		useCookieConsentStore();
-	const [localPreferences, setLocalPreferences] = useState<CookiePreferences>(preferences);
+export function CookiePreferencesModal({ onCancel, onSavePreferences, show }: CookiePreferencesModalProps) {
+	const [analytics, setAnalytics] = useState(false);
 
 	const handleSavePreferences = () => {
-		updatePreferences(localPreferences);
-	};
-
-	const handleBack = () => {
-		closePreferencesModal();
-		useCookieConsentStore.getState().openConsentModal();
-	};
-
-	const handleToggleAnalytics = (checked: boolean) => {
-		setLocalPreferences((prev) => ({ ...prev, analytics: checked }));
+		onSavePreferences({ analytics });
 	};
 
 	return (
-		<DialogPrimitive.Root open={showPreferencesModal}>
+		<DialogPrimitive.Root open={show}>
 			<DialogPrimitive.Portal>
-				<DialogPrimitive.Overlay
-					className={cn(
-						"fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm",
-						"data-[state=open]:animate-in data-[state=closed]:animate-out",
-						"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-					)}
-					data-testid="cookie-preferences-overlay"
-				/>
+				<DialogOverlay />
 				<DialogPrimitive.Content
 					className={cn(
-						"fixed left-[50%] top-[50%] z-[101] w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
+						"fixed bottom-6 right-6 z-[101] w-full max-w-md",
+						"bg-white rounded-md p-6 shadow-lg outline-1 outline-offset-[-1px] outline-primary",
 						"data-[state=open]:animate-in data-[state=closed]:animate-out",
 						"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 						"data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-						"data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
-						"data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+						"data-[state=closed]:slide-out-to-bottom-6 data-[state=closed]:slide-out-to-right-6",
+						"data-[state=open]:slide-in-from-bottom-6 data-[state=open]:slide-in-from-right-6",
 					)}
 					data-testid="cookie-preferences-modal"
 					onEscapeKeyDown={(e) => {
@@ -62,138 +50,107 @@ export function CookiePreferencesModal() {
 					onInteractOutside={(e) => {
 						e.preventDefault();
 					}}
+					onOpenAutoFocus={(e) => {
+						e.preventDefault();
+					}}
 					onPointerDownOutside={(e) => {
 						e.preventDefault();
 					}}
 				>
-					<Card className="border-2 bg-white p-8 shadow-xl">
-						<div className="mb-6">
-							<button
-								className="mb-4 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-								data-testid="cookie-preferences-back"
-								onClick={handleBack}
-								type="button"
-							>
-								<ChevronLeft className="size-4" />
-								Back
-							</button>
+					<div className="flex flex-col text-center sm:text-left">
+						<DialogPrimitive.Title className="text-2xl font-medium font-heading text-app-black leading-tight">
+							Customize your cookie preferences
+						</DialogPrimitive.Title>
 
-							<div className="flex items-center gap-3">
-								<div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-									<Cookie className="size-6 text-primary" />
+						<DialogPrimitive.Description className="text-app-black leading-tight mt-3">
+							We use cookies to enhance functionality and security. Choose which types to allow.
+						</DialogPrimitive.Description>
+
+						<div className="space-y-5 my-8">
+							<div className="flex items-start justify-between">
+								<div className="flex flex-col gap-2">
+									<span className="font-semibold text-app-black leading-tight">
+										Essential Cookies
+									</span>
+									<span className="text-app-black leading-tight">
+										Required for core site functionality.
+									</span>
 								</div>
-								<h2 className="text-2xl font-semibold text-gray-900">Cookie Preferences</h2>
+								<ToggleSwitch
+									checked={true}
+									data-testid="essential-cookies-switch"
+									disabled
+									onChange={function noop() {
+										// Essential cookies cannot be toggled
+									}}
+									tooltipContent="Essential cookies are required for GrantFlow to function properly and cannot be disabled."
+									useCustomDisabledColor
+								/>
+							</div>
+
+							<div className="flex items-start justify-between">
+								<div className="flex flex-col gap-2">
+									<span className="font-semibold text-app-black leading-tight">
+										Analytics Cookies
+									</span>
+									<span className="text-app-black leading-tight">
+										Help us understand how users interact with GrantFlow.
+									</span>
+								</div>
+								<ToggleSwitch
+									checked={analytics}
+									data-testid="analytics-cookies-switch"
+									onChange={setAnalytics}
+								/>
 							</div>
 						</div>
 
-						<div className="space-y-6">
-							<div className="space-y-4">
-								<div className="rounded-lg border border-gray-200 p-4">
-									<div className="mb-3 flex items-start justify-between">
-										<div className="flex items-center gap-2">
-											<Lock className="size-5 text-gray-600" />
-											<Label className="text-base font-medium" htmlFor="essential-cookies">
-												Essential Cookies
-											</Label>
-											<TooltipProvider>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<Info className="size-4 text-gray-400" />
-													</TooltipTrigger>
-													<TooltipContent className="max-w-xs">
-														<p>
-															These cookies are necessary for the website to function and
-															cannot be switched off. They are usually set in response to
-															your actions like logging in or filling forms.
-														</p>
-													</TooltipContent>
-												</Tooltip>
-											</TooltipProvider>
-										</div>
-										<ToggleSwitch
-											checked={true}
-											data-testid="essential-cookies-switch"
-											disabled
-											onChange={function noop() {
-												// ~keep Essential cookies cannot be toggled
-											}}
-										/>
-									</div>
-									<p className="text-sm text-gray-600">
-										Required for basic site functionality, authentication, and security. These
-										cannot be disabled.
-									</p>
-								</div>
-
-								<div className="rounded-lg border border-gray-200 p-4">
-									<div className="mb-3 flex items-start justify-between">
-										<div className="flex items-center gap-2">
-											<TrendingUp className="size-5 text-gray-600" />
-											<Label className="text-base font-medium" htmlFor="analytics-cookies">
-												Analytics Cookies
-											</Label>
-										</div>
-										<ToggleSwitch
-											checked={localPreferences.analytics}
-											data-testid="analytics-cookies-switch"
-											onChange={handleToggleAnalytics}
-										/>
-									</div>
-									<p className="text-sm text-gray-600">
-										Help us understand how visitors interact with our website by collecting and
-										reporting information anonymously. This helps us improve your experience.
-									</p>
-								</div>
-							</div>
-
-							<div className="flex flex-col gap-3 sm:flex-row">
-								<AppButton
-									className="flex-1"
-									data-testid="cookie-preferences-accept-all"
-									onClick={acceptAllCookies}
-									size="lg"
-									variant="secondary"
-								>
-									Accept All
-								</AppButton>
-								<AppButton
-									className="flex-1"
-									data-testid="cookie-preferences-save"
-									onClick={handleSavePreferences}
-									size="lg"
-									variant="primary"
-								>
-									Save Preferences
-								</AppButton>
-							</div>
-						</div>
-
-						<p className="mt-4 text-center text-xs text-gray-500">
-							Learn more in our{" "}
-							<a
-								className="underline hover:text-gray-700"
-								href="/privacy"
-								rel="noopener noreferrer"
-								target="_blank"
+						<div className="flex flex-col gap-2 sm:flex-row justify-end sm:justify-between">
+							<AppButton
+								data-testid="cookie-preferences-cancel"
+								onClick={onCancel}
+								size="lg"
+								variant="secondary"
 							>
-								Privacy Policy
-							</a>
-						</p>
-					</Card>
+								Cancel
+							</AppButton>
+							<AppButton
+								data-testid="cookie-preferences-save"
+								onClick={handleSavePreferences}
+								size="lg"
+								variant="primary"
+							>
+								Save Preferences
+							</AppButton>
+						</div>
+					</div>
 				</DialogPrimitive.Content>
 			</DialogPrimitive.Portal>
 		</DialogPrimitive.Root>
 	);
 }
 
-function ToggleSwitch({ checked, "data-testid": dataTestId, disabled = false, onChange }: ToggleSwitchProps) {
-	return (
+function ToggleSwitch({
+	checked,
+	"data-testid": dataTestId,
+	disabled = false,
+	onChange,
+	tooltipContent,
+	useCustomDisabledColor = false,
+}: ToggleSwitchProps) {
+	const getBackgroundColor = () => {
+		if (disabled && checked && useCustomDisabledColor) {
+			return "bg-app-lavender";
+		}
+		return checked ? "bg-primary" : "bg-gray-300";
+	};
+
+	const switchButton = (
 		<button
 			aria-checked={checked}
 			className={cn(
-				"relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-				checked ? "bg-primary" : "bg-gray-300",
-				disabled && "cursor-not-allowed opacity-50",
+				"relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none",
+				getBackgroundColor(),
 			)}
 			data-testid={dataTestId}
 			disabled={disabled}
@@ -207,10 +164,30 @@ function ToggleSwitch({ checked, "data-testid": dataTestId, disabled = false, on
 		>
 			<span
 				className={cn(
-					"inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-					checked ? "translate-x-6" : "translate-x-1",
+					"inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
+					checked ? "translate-x-5.5" : "translate-x-0.5",
 				)}
 			/>
 		</button>
 	);
+
+	if (tooltipContent && disabled) {
+		return (
+			<TooltipProvider>
+				<Tooltip>
+					<TooltipTrigger asChild>{switchButton}</TooltipTrigger>
+					<TooltipContent
+						className="text-sm max-w-2xs z-[102] text-center"
+						showArrow
+						side="left"
+						sideOffset={4}
+					>
+						<p>{tooltipContent}</p>
+					</TooltipContent>
+				</Tooltip>
+			</TooltipProvider>
+		);
+	}
+
+	return switchButton;
 }

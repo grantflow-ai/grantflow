@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-// eslint-disable-next-line import-x/no-unresolved -- react-cookie has built-in types
+
 import { useCookies } from "react-cookie";
 import { SELECTED_ORGANIZATION_COOKIE } from "@/constants";
 

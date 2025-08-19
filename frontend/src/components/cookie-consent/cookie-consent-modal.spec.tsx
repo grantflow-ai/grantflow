@@ -1,110 +1,78 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
-import { useCookieConsentStore } from "@/stores/cookie-consent-store";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { CookieConsentModal } from "./cookie-consent-modal";
 
 describe("CookieConsentModal", () => {
-	beforeEach(() => {
-		useCookieConsentStore.setState({
-			consentGiven: false,
-			hasInteracted: false,
-			preferences: {
-				analytics: false,
-				essential: true,
-			},
-			showConsentModal: false,
-			showPreferencesModal: false,
-		});
+	it("calls onAcceptAll handler when Accept All button is clicked", () => {
+		const mockOnAcceptAll = vi.fn();
+		const mockOnCustomize = vi.fn();
+
+		render(<CookieConsentModal onAcceptAll={mockOnAcceptAll} onCustomize={mockOnCustomize} show={true} />);
+
+		fireEvent.click(screen.getByTestId("cookie-consent-accept-all"));
+
+		expect(mockOnAcceptAll).toHaveBeenCalledOnce();
+		expect(mockOnCustomize).not.toHaveBeenCalled();
 	});
 
-	it("should not render when showConsentModal is false", () => {
-		render(<CookieConsentModal />);
+	it("calls onCustomize handler when Customize button is clicked", () => {
+		const mockOnAcceptAll = vi.fn();
+		const mockOnCustomize = vi.fn();
 
-		expect(screen.queryByTestId("cookie-consent-modal")).not.toBeInTheDocument();
+		render(<CookieConsentModal onAcceptAll={mockOnAcceptAll} onCustomize={mockOnCustomize} show={true} />);
+
+		fireEvent.click(screen.getByTestId("cookie-consent-customize"));
+
+		expect(mockOnCustomize).toHaveBeenCalledOnce();
+		expect(mockOnAcceptAll).not.toHaveBeenCalled();
 	});
 
-	it("should render when showConsentModal is true", () => {
-		useCookieConsentStore.setState({ showConsentModal: true });
+	it("renders modal when show is true", () => {
+		const mockOnAcceptAll = vi.fn();
+		const mockOnCustomize = vi.fn();
 
-		render(<CookieConsentModal />);
+		render(<CookieConsentModal onAcceptAll={mockOnAcceptAll} onCustomize={mockOnCustomize} show={true} />);
 
 		expect(screen.getByTestId("cookie-consent-modal")).toBeInTheDocument();
-		expect(screen.getByText("Cookie Preferences")).toBeInTheDocument();
 		expect(screen.getByTestId("cookie-consent-accept-all")).toBeInTheDocument();
 		expect(screen.getByTestId("cookie-consent-customize")).toBeInTheDocument();
 	});
 
-	it("should accept all cookies when Accept All button is clicked", async () => {
-		const user = userEvent.setup();
-		useCookieConsentStore.setState({ showConsentModal: true });
+	it("does not render modal when show is false", () => {
+		const mockOnAcceptAll = vi.fn();
+		const mockOnCustomize = vi.fn();
 
-		render(<CookieConsentModal />);
+		render(<CookieConsentModal onAcceptAll={mockOnAcceptAll} onCustomize={mockOnCustomize} show={false} />);
 
-		await user.click(screen.getByTestId("cookie-consent-accept-all"));
-
-		await waitFor(() => {
-			const state = useCookieConsentStore.getState();
-			expect(state.consentGiven).toBe(true);
-			expect(state.preferences.analytics).toBe(true);
-			expect(state.showConsentModal).toBe(false);
-			expect(state.hasInteracted).toBe(true);
-		});
+		expect(screen.queryByTestId("cookie-consent-modal")).not.toBeInTheDocument();
 	});
 
-	it("should open preferences modal when Customize button is clicked", async () => {
-		const user = userEvent.setup();
-		useCookieConsentStore.setState({ showConsentModal: true });
+	it("prevents modal dismissal on escape key", () => {
+		const mockOnAcceptAll = vi.fn();
+		const mockOnCustomize = vi.fn();
 
-		render(<CookieConsentModal />);
+		render(<CookieConsentModal onAcceptAll={mockOnAcceptAll} onCustomize={mockOnCustomize} show={true} />);
 
-		await user.click(screen.getByTestId("cookie-consent-customize"));
+		const modal = screen.getByTestId("cookie-consent-modal");
+		const escapeEvent = new KeyboardEvent("keydown", { key: "Escape" });
 
-		await waitFor(() => {
-			const state = useCookieConsentStore.getState();
-			expect(state.showPreferencesModal).toBe(true);
-			expect(state.showConsentModal).toBe(false);
-		});
+		fireEvent.keyDown(modal, escapeEvent);
+
+		expect(screen.getByTestId("cookie-consent-modal")).toBeInTheDocument();
+		expect(mockOnAcceptAll).not.toHaveBeenCalled();
+		expect(mockOnCustomize).not.toHaveBeenCalled();
 	});
 
-	it("should block body scroll when modal is open", () => {
-		useCookieConsentStore.setState({ showConsentModal: true });
+	it("prevents modal dismissal on outside interaction", () => {
+		const mockOnAcceptAll = vi.fn();
+		const mockOnCustomize = vi.fn();
 
-		render(<CookieConsentModal />);
+		render(<CookieConsentModal onAcceptAll={mockOnAcceptAll} onCustomize={mockOnCustomize} show={true} />);
 
-		expect(document.body.style.overflow).toBe("hidden");
-	});
+		fireEvent.click(document.body);
 
-	it("should restore body scroll when modal is closed", () => {
-		useCookieConsentStore.setState({ showConsentModal: true });
-
-		const { unmount } = render(<CookieConsentModal />);
-		expect(document.body.style.overflow).toBe("hidden");
-
-		unmount();
-		expect(document.body.style.overflow).toBe("unset");
-	});
-
-	it("should render privacy policy and terms links", () => {
-		useCookieConsentStore.setState({ showConsentModal: true });
-
-		render(<CookieConsentModal />);
-
-		const privacyLink = screen.getByRole("link", { name: /privacy policy/i });
-		const termsLink = screen.getByRole("link", { name: /terms of service/i });
-
-		expect(privacyLink).toHaveAttribute("href", "/privacy");
-		expect(privacyLink).toHaveAttribute("target", "_blank");
-		expect(termsLink).toHaveAttribute("href", "/terms");
-		expect(termsLink).toHaveAttribute("target", "_blank");
-	});
-
-	it("should display essential cookies information", () => {
-		useCookieConsentStore.setState({ showConsentModal: true });
-
-		render(<CookieConsentModal />);
-
-		expect(screen.getByText(/essential cookies are always enabled/i)).toBeInTheDocument();
-		expect(screen.getByText(/your privacy matters/i)).toBeInTheDocument();
+		expect(screen.getByTestId("cookie-consent-modal")).toBeInTheDocument();
+		expect(mockOnAcceptAll).not.toHaveBeenCalled();
+		expect(mockOnCustomize).not.toHaveBeenCalled();
 	});
 });
