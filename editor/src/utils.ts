@@ -114,9 +114,9 @@ export function isExtensionAvailable(editor: Editor | null, extensionNames: stri
 	const found = names.some((name) => editor.extensionManager.extensions.some((ext) => ext.name === name));
 
 	if (!found) {
-		console.warn(
-			`None of the extensions [${names.join(", ")}] were found in the editor schema. Ensure they are included in the editor configuration.`,
-		);
+		// console.warn(
+		// `None of the extensions [${names.join(", ")}] were found in the editor schema. Ensure they are included in the editor configuration.`,
+		// );
 	}
 
 	return found;
