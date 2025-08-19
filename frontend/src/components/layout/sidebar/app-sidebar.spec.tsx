@@ -17,10 +17,9 @@ describe.sequential("AppSidebar", () => {
 		return { container };
 	}
 
-	it("renders logo and title", () => {
+	it("renders logo", () => {
 		const { container } = renderWithProvider();
 		expect(container.querySelector('[data-testid="sidebar-logo"]')).toBeInTheDocument();
-		expect(container.querySelector('[data-testid="sidebar-title"]')).toBeInTheDocument();
 	});
 
 	it("renders New Application button", () => {

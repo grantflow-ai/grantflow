@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { InviteCollaboratorModal } from "./invite-collaborator-modal";
+import { InviteCollaboratorModal } from "@/components/organizations";
 
 const getLatestModal = async () => {
 	const modals = await screen.findAllByTestId("invite-collaborator-modal");
@@ -63,7 +63,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		const modal = await getLatestModal();
 		const dropdown = within(modal).getByTestId("permission-dropdown");
-		expect(dropdown).toHaveTextContent("Collaborator - Can edit specific Research Projects.");
+		expect(dropdown).toHaveTextContent("Select a role (e.g., Admin, Editor, Collaborator)");
 	});
 
 	it("toggles permission dropdown when clicked", async () => {
@@ -109,7 +109,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 		await user.click(modalQueries.getByTestId("admin-option"));
 
 		await waitFor(() => {
-			expect(dropdown).toHaveTextContent("Admin (can access all research projects)");
+			expect(dropdown).toHaveTextContent("ADMIN");
 			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 		});
 	});
@@ -135,7 +135,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 		await user.click(modalQueries.getByTestId("collaborator-option"));
 
 		await waitFor(() => {
-			expect(dropdown).toHaveTextContent("Collaborator - Can edit specific Research Projects.");
+			expect(dropdown).toHaveTextContent("COLLABORATOR");
 			expect(modalQueries.queryByTestId("permission-dropdown-menu")).not.toBeInTheDocument();
 		});
 	});
@@ -156,8 +156,15 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const modalQueries = within(modal);
 		const emailInput = modalQueries.getByTestId("email-input");
 		const sendButton = modalQueries.getByTestId("send-invitation-button");
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
 
 		await user.type(emailInput, "test@example.com");
+
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("collaborator-option"));
 
 		await waitFor(() => {
 			expect(sendButton).not.toBeDisabled();
@@ -206,6 +213,14 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 		const emailInput = modalQueries.getByTestId("email-input");
 		await user.type(emailInput, "test@example.com");
+
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("collaborator-option"));
+
 		await user.click(modalQueries.getByTestId("send-invitation-button"));
 
 		await waitFor(() => {
@@ -262,10 +277,19 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const emailInput = modalQueries.getByTestId("email-input");
 		await user.type(emailInput, "test@example.com");
 
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("collaborator-option"));
+
 		const sendButton = modalQueries.getByTestId("send-invitation-button");
 		await user.click(sendButton);
 
-		expect(sendButton).toBeDisabled();
+		await waitFor(() => {
+			expect(sendButton).toBeDisabled();
+		});
 
 		resolvePromise!();
 
@@ -276,6 +300,7 @@ describe.sequential("InviteCollaboratorModal", () => {
 
 	it("handles invitation error gracefully", async () => {
 		const user = userEvent.setup();
+		const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 		mockOnInvite.mockRejectedValue(new Error("Invitation failed"));
 
 		render(<InviteCollaboratorModal isOpen={true} onClose={mockOnClose} onInvite={mockOnInvite} projects={[]} />);
@@ -286,13 +311,29 @@ describe.sequential("InviteCollaboratorModal", () => {
 		const emailInput = modalQueries.getByTestId("email-input");
 		await user.type(emailInput, "test@example.com");
 
+		const dropdown = modalQueries.getByTestId("permission-dropdown");
+		await user.click(dropdown);
+		await waitFor(() => {
+			expect(modalQueries.getByTestId("collaborator-option")).toBeInTheDocument();
+		});
+		await user.click(modalQueries.getByTestId("collaborator-option"));
+
 		const sendButton = modalQueries.getByTestId("send-invitation-button");
+
+		expect(sendButton).not.toBeDisabled();
+
 		await user.click(sendButton);
 
 		await waitFor(() => {
 			expect(sendButton).not.toBeDisabled();
 		});
+
 		expect(mockOnClose).not.toHaveBeenCalled();
+
+		expect(emailInput).toHaveValue("test@example.com");
+		expect(dropdown).toHaveTextContent("COLLABORATOR");
+
+		consoleErrorSpy.mockRestore();
 	});
 
 	it("calls onClose when cancel button is clicked", async () => {
