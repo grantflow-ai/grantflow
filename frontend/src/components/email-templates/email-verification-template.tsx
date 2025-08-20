@@ -20,10 +20,11 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 	return (
 		<Html>
 			<Head>
-				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<meta content="text/html; charset=UTF-8" httpEquiv="Content-Type" />
+				<meta content="width=device-width, initial-scale=1" name="viewport" />
+				<link href="https://fonts.googleapis.com" rel="preconnect" />
+				<link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
+				{/* eslint-disable-next-line @next/next/no-page-custom-font */}
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
@@ -51,7 +52,7 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 			</Head>
 			<Preview>Verify your email to complete your GrantFlow registration</Preview>
 			<Body style={main}>
-				<Container style={container} className="container">
+				<Container className="container" style={container}>
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -72,41 +73,41 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 						</div>
 					</Section>
 
-					<Section style={content} className="content">
-						<Heading style={heading} className="heading">
+					<Section className="content" style={content}>
+						<Heading className="heading" style={heading}>
 							Dear Researcher
 						</Heading>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Thanks for signing up! To complete your registration, please verify your email address by
 							clicking the button below:
 						</Text>
 
 						<Section style={buttonContainer}>
 							<Button href={verificationUrl} style={button}>
-								<span style={{ verticalAlign: "middle", display: "inline-block" }}>
+								<span style={{ display: "inline-block", verticalAlign: "middle" }}>
 									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="20"
-										height="20"
-										viewBox="0 0 24 24"
 										fill="none"
+										height="20"
 										stroke="currentColor"
-										strokeWidth="2"
 										strokeLinecap="round"
 										strokeLinejoin="round"
+										strokeWidth="2"
 										style={{ verticalAlign: "middle" }}
+										viewBox="0 0 24 24"
+										width="20"
+										xmlns="http://www.w3.org/2000/svg"
 									>
 										<title>check circle Icon</title>
 										<circle cx="12" cy="12" r="10" />
 										<path d="m9 12 2 2 4-4" />
 									</svg>
 								</span>
-								<span style={{ verticalAlign: "middle", marginLeft: "8px" }}>Verify My Email</span>
+								<span style={{ marginLeft: "8px", verticalAlign: "middle" }}>Verify My Email</span>
 							</Button>
 						</Section>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							If the button doesn&apos;t work, you can copy and paste the following link into your
 							browser:{" "}
 							<Link href={verificationUrl} style={link}>
@@ -114,17 +115,17 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 							</Link>
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							This link will expire in 24 hours for security reasons.
 							<br />
 							If you didn&apos;t create an account, you can safely ignore this email.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Looking forward to helping you simplify your grant applications,
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Warm regards,
 							<br />
 							Vsphera Team
@@ -179,8 +180,8 @@ const headerContent = {
 };
 
 const logo = {
-	maxWidth: "150px",
 	margin: "0 auto",
+	maxWidth: "150px",
 };
 
 const logoSubtext = {

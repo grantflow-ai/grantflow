@@ -2,7 +2,7 @@
 
 import { Resend } from "resend";
 import { createInvitation } from "@/actions/project";
-import { InvitationEmailTemplate } from "@/components/email-templates/invitation-email-template";
+import InvitationEmailTemplate from "@/components/email-templates/invitation-email-template";
 import { getEnv } from "@/utils/env";
 
 interface InviteCollaboratorParams {
@@ -44,7 +44,6 @@ export async function inviteCollaborator({
 				acceptInvitationUrl,
 				inviterName,
 				projectName,
-				role,
 			}),
 			subject: `Invitation to collaborate on ${projectName}`,
 			to: [email],

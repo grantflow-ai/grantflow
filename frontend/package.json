@@ -53,6 +53,10 @@
 		"zod": "^4.0.17",
 		"zustand": "5.0.8"
 	},
+	"devDependencies": {
+		"@react-email/preview-server": "4.2.8",
+		"react-email": "^4.2.8"
+	},
 	"engines": {
 		"node": ">=22.0.0"
 	},
@@ -86,9 +90,5 @@
 		"typecheck": "tsc --noEmit",
 		"ui": "pnpm dlx shadcn@latest"
 	},
-	"version": "0.1.0",
-	"devDependencies": {
-		"@react-email/preview-server": "4.2.8",
-		"react-email": "^4.2.8"
-	}
+	"version": "0.1.0"
 }

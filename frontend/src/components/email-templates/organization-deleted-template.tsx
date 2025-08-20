@@ -13,21 +13,22 @@ import {
 } from "@react-email/components";
 
 interface OrganizationDeletedTemplateProps {
-	organizationName: string;
 	contactUsUrl: string;
+	organizationName: string;
 }
 
 export default function OrganizationDeletedTemplate({
-	organizationName,
 	contactUsUrl,
+	organizationName,
 }: OrganizationDeletedTemplateProps) {
 	return (
 		<Html>
 			<Head>
-				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<meta content="text/html; charset=UTF-8" httpEquiv="Content-Type" />
+				<meta content="width=device-width, initial-scale=1" name="viewport" />
+				<link href="https://fonts.googleapis.com" rel="preconnect" />
+				<link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
+				{/* eslint-disable-next-line @next/next/no-page-custom-font */}
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
@@ -55,7 +56,7 @@ export default function OrganizationDeletedTemplate({
 			</Head>
 			<Preview>Organization {organizationName} Has Been Deleted</Preview>
 			<Body style={main}>
-				<Container style={container} className="container">
+				<Container className="container" style={container}>
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -77,19 +78,19 @@ export default function OrganizationDeletedTemplate({
 						</div>
 					</Section>
 
-					<Section style={content} className="content">
-						<Heading style={heading} className="heading">
+					<Section className="content" style={content}>
+						<Heading className="heading" style={heading}>
 							Dear Researcher
 						</Heading>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							We confirm that the organization {organizationName || "[Organization Name]"} has been
 							removed from GrantFlow.
 							<br />
 							All associated documents, data, projects, and member access has been deleted.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							If this action was taken in error or you have any questions, please contact our support
 							team.
 						</Text>
@@ -99,15 +100,15 @@ export default function OrganizationDeletedTemplate({
 								<span style={{ marginRight: "6px" }}>Contact Us</span>
 
 								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="13"
-									height="16"
-									viewBox="0 0 24 24"
 									fill="none"
+									height="16"
 									stroke="currentColor"
-									strokeWidth="2"
 									strokeLinecap="round"
 									strokeLinejoin="round"
+									strokeWidth="2"
+									viewBox="0 0 24 24"
+									width="13"
+									xmlns="http://www.w3.org/2000/svg"
 								>
 									<title>Right Arrow Icon</title>
 									<path d="m9 18 6-6-6-6" />
@@ -115,20 +116,20 @@ export default function OrganizationDeletedTemplate({
 							</Button>
 						</Section>
 
-						<Text style={paragraph} className="paragraph">
-							We're sorry to see you go. If you have any feedback or suggestions on how we can improve,
-							we’d love to hear from you. Your insights help us make things better. Feel free to reach out
-							to us at{" "}
+						<Text className="paragraph" style={paragraph}>
+							We&apos;re sorry to see you go. If you have any feedback or suggestions on how we can
+							improve, we&apos;d love to hear from you. Your insights help us make things better. Feel
+							free to reach out to us at{" "}
 							<Link href="mailto:contact@grantflow.ai" style={link}>
 								contact@grantflow.ai
 							</Link>
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Thank you for being part of GrantFlow.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Warm regards,
 							<br />
 							Vsphera Team
@@ -225,16 +226,16 @@ const buttonContainer = {
 };
 
 const button = {
+	alignItems: "center",
 	backgroundColor: "#1e13f8",
 	border: "0",
 	borderRadius: "4px",
 	color: "#ffffff",
 	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
 	fontFamily: "'Sora', sans-serif",
 	fontSize: "14px",
 	fontWeight: "400",
+	justifyContent: "center",
 	padding: "4px 12px",
 	textDecoration: "none",
 	width: "124px",
