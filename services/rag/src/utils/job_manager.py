@@ -224,8 +224,7 @@ class JobManager:
 
             if current_pipeline_stage is not None:
                 await session.execute(select(RagGenerationJob).where(RagGenerationJob.id == self.job_id))
-                job = await session.get(RagGenerationJob, self.job_id)
-                if job:
+                if job := await session.get(RagGenerationJob, self.job_id):
                     job.current_stage = current_pipeline_stage
 
             await session.commit()

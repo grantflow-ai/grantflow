@@ -1,25 +1,21 @@
-import base64
-import binascii
 import time
 from asyncio import gather
 from typing import Any
-from uuid import UUID
 
 from litestar import post
 from litestar.exceptions import ValidationException
 from sqlalchemy import insert, select
 from sqlalchemy.exc import SQLAlchemyError
 
+from services.crawler.src.utils import decode_pubsub_message
 from packages.db.src.utils import update_source_indexing_status
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.shared_utils.src.exceptions import (
-    DeserializationError,
     ValidationError,
     DatabaseError,
 )
 from packages.shared_utils.src.gcs import (
     construct_object_uri,
-    resolve_parent_id_for_notification,
     upload_blob,
 )
 from packages.shared_utils.src.logger import get_logger
@@ -28,19 +24,17 @@ from packages.shared_utils.src.pubsub import (
     CrawlingRequest,
     PubSubEvent,
 )
-from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.crawler.src.extraction import crawl_url, FileContent
 from services.crawler.src.utils import filter_url
-from packages.db.src.constants import RAG_FILE
 from packages.db.src.tables import (
-    RagSource,
     RagFile,
     GrantApplicationSource,
     GrantTemplateSource,
     GrantingInstitutionSource,
+    GrantTemplate,
 )
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 
@@ -49,53 +43,11 @@ configure_otel("crawler")
 logger = get_logger(__name__)
 
 
-async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
-    logger.debug(
-        "Decoding PubSub message",
-        message_id=event.message.message_id,
-        publish_time=event.message.publish_time,
-    )
-
-    try:
-        encoded_data = event.message.data
-        if not encoded_data:
-            logger.warning("PubSub message missing data field")
-            raise ValidationError("PubSub message missing data field")
-
-        logger.debug("Decoding base64 data", data_length=len(encoded_data))
-        decoded_data = base64.b64decode(encoded_data).decode()
-
-        logger.debug("Deserializing crawling request", decoded_length=len(decoded_data))
-        request = deserialize(decoded_data, CrawlingRequest)
-
-        logger.debug(
-            "PubSub message decoded successfully",
-            source_id=str(request["source_id"]),
-            entity_type=request["entity_type"],
-            entity_id=str(request["entity_id"]),
-            url=request["url"],
-            trace_id=request.get("trace_id"),
-        )
-
-        return request
-    except (DeserializationError, binascii.Error, UnicodeDecodeError) as e:
-        logger.error(
-            "Validation error processing PubSub message",
-            error_type=type(e).__name__,
-            error_message=str(e),
-            message_id=event.message.message_id,
-        )
-        raise ValidationError(
-            "Failed to decode PubSub message",
-            context={"message": event.message, "error": str(e)},
-        ) from e
-
-
 async def handle_gcs_file_upload(
     file: FileContent,
     crawling_request: CrawlingRequest,
     session_maker: async_sessionmaker[Any],
-    original_source_id: str,
+    source_id: str,
 ) -> None:
     start_time = time.time()
     logger.debug(
@@ -103,40 +55,18 @@ async def handle_gcs_file_upload(
         filename=file["filename"],
         file_size=len(file["content"]),
         entity_id=str(crawling_request["entity_id"]),
-        original_source_id=original_source_id,
+        source_id=source_id,
     )
+    object_path = construct_object_uri(
+        entity_type=crawling_request["entity_type"],
+        entity_id=crawling_request["entity_id"],
+        source_id=source_id,
+        blob_name=file["filename"],
+    )
+    logger.debug("Constructed object path", object_path=object_path)
 
     async with session_maker() as session, session.begin():
         try:
-            db_start = time.time()
-            source_id = await session.scalar(
-                insert(RagSource)
-                .values(
-                    {
-                        "indexing_status": SourceIndexingStatusEnum.CREATED,
-                        "source_type": RAG_FILE,
-                        "text_content": "",
-                    }
-                )
-                .returning(RagSource.id)
-            )
-            db_insert_duration = time.time() - db_start
-
-            logger.debug(
-                "Created RagSource record",
-                source_id=str(source_id),
-                db_insert_duration_ms=round(db_insert_duration * 1000, 2),
-            )
-
-            object_path = construct_object_uri(
-                entity_type=crawling_request["entity_type"],
-                entity_id=crawling_request["entity_id"],
-                source_id=source_id,
-                blob_name=file["filename"],
-            )
-
-            logger.debug("Constructed object path", object_path=object_path)
-
             file_extension = file["filename"].split(".")[-1].lower()
             mime_type = SUPPORTED_FILE_EXTENSIONS[file_extension]
 
@@ -160,79 +90,54 @@ async def handle_gcs_file_upload(
                 )
             )
 
-            logger.debug("Creating parent association")
-
-            parent_id = await resolve_parent_id_for_notification(
-                session=session,
-                source_id=original_source_id,
-                entity_type=crawling_request["entity_type"],
-                entity_id=str(crawling_request["entity_id"]),
-            )
-
             if crawling_request["entity_type"] == "granting_institution":
                 await session.execute(
                     insert(GrantingInstitutionSource).values(
                         {
                             "rag_source_id": source_id,
-                            "granting_institution_id": UUID(parent_id),
+                            "granting_institution_id": crawling_request["entity_id"],
+                        }
+                    )
+                )
+            elif crawling_request["entity_type"] == "grant_application":
+                await session.execute(
+                    insert(GrantApplicationSource).values(
+                        {
+                            "rag_source_id": source_id,
+                            "grant_application_id": crawling_request["entity_id"],
+                        }
+                    )
+                )
+            elif crawling_request["entity_type"] == "grant_template":
+                await session.execute(
+                    insert(GrantTemplateSource).values(
+                        {
+                            "rag_source_id": source_id,
+                            "grant_template_id": crawling_request["entity_id"],
                         }
                     )
                 )
             else:
-                grant_app_source = await session.scalar(
-                    select(GrantApplicationSource.grant_application_id).where(
-                        GrantApplicationSource.rag_source_id == original_source_id
-                    )
+                raise ValidationError(
+                    "No rag source was found for the provided entity",
+                    context={
+                        "entity_type": crawling_request["entity_type"],
+                        "entity_id": crawling_request["entity_id"],
+                    },
                 )
-                if grant_app_source:
-                    await session.execute(
-                        insert(GrantApplicationSource).values(
-                            {
-                                "rag_source_id": source_id,
-                                "grant_application_id": grant_app_source,
-                            }
-                        )
-                    )
-                else:
-                    grant_template_source = await session.scalar(
-                        select(GrantTemplateSource.grant_template_id).where(
-                            GrantTemplateSource.rag_source_id == original_source_id
-                        )
-                    )
-                    if grant_template_source:
-                        await session.execute(
-                            insert(GrantTemplateSource).values(
-                                {
-                                    "rag_source_id": source_id,
-                                    "grant_template_id": grant_template_source,
-                                }
-                            )
-                        )
-
-            commit_start = time.time()
-            await session.commit()
-            commit_duration = time.time() - commit_start
-
-            logger.debug(
-                "Database transaction committed",
-                commit_duration_ms=round(commit_duration * 1000, 2),
-            )
 
             upload_start = time.time()
             await upload_blob(object_path, file["content"])
-            upload_duration = time.time() - upload_start
 
-            total_duration = time.time() - start_time
             logger.info(
                 "File uploaded to GCS successfully",
                 filename=file["filename"],
                 source_id=str(source_id),
                 file_size=len(file["content"]),
                 object_path=object_path,
-                upload_duration_ms=round(upload_duration * 1000, 2),
-                total_duration_ms=round(total_duration * 1000, 2),
+                upload_duration_ms=round((time.time() - upload_start) * 1000, 2),
+                total_duration_ms=round((time.time() - start_time) * 1000, 2),
             )
-
         except SQLAlchemyError as e:
             logger.error("Failed to create RagFile entry in DB", exc_info=e)
             await session.rollback()
@@ -282,23 +187,26 @@ async def handle_url_crawling(
         trace_id=trace_id,
     )
 
-    async with session_maker() as session:
-        parent_id = await resolve_parent_id_for_notification(
-            session=session,
-            source_id=str(crawling_request["source_id"]),
-            entity_type=crawling_request["entity_type"],
-            entity_id=str(crawling_request["entity_id"]),
-        )
+    parent_id = crawling_request["entity_id"]
+    if crawling_request["entity_type"] == "grant_template":
+        async with session_maker() as session:
+            parent_id = await session.scalar(
+                select(GrantTemplate.grant_application_id).where(
+                    GrantTemplate.id == crawling_request["entity_id"]
+                )
+            )
 
     await update_source_indexing_status(
         logger=logger,
         session_maker=session_maker,
         source_id=crawling_request["source_id"],
-        parent_id=UUID(parent_id),
+        parent_id=parent_id,
         identifier=crawling_request["url"],
         text_content="",
         vectors=None,
         indexing_status=SourceIndexingStatusEnum.INDEXING,
+        should_send_notifications=crawling_request["entity_type"]
+        != "granting_institution",
     )
 
     try:
@@ -314,7 +222,6 @@ async def handle_url_crawling(
             source_id=str(crawling_request["source_id"]),
         )
 
-        crawl_duration = time.time() - crawl_start
         logger.debug(
             "URL crawling completed",
             url=crawling_request["url"],
@@ -322,7 +229,7 @@ async def handle_url_crawling(
             content_length=len(content),
             file_count=len(files),
             trace_id=trace_id,
-            crawl_duration_ms=round(crawl_duration * 1000, 2),
+            crawl_duration_ms=round((time.time() - crawl_start) * 1000, 2),
         )
 
         if files_to_uploads := [
@@ -344,7 +251,7 @@ async def handle_url_crawling(
                         file=file,
                         crawling_request=crawling_request,
                         session_maker=session_maker,
-                        original_source_id=str(crawling_request["source_id"]),
+                        source_id=str(crawling_request["source_id"]),
                     )
                     for file in files_to_uploads
                 ]
@@ -369,26 +276,19 @@ async def handle_url_crawling(
             trace_id=trace_id,
         )
 
-        async with session_maker() as session:
-            parent_id = await resolve_parent_id_for_notification(
-                session=session,
-                source_id=str(crawling_request["source_id"]),
-                entity_type=crawling_request["entity_type"],
-                entity_id=str(crawling_request["entity_id"]),
-            )
-
         await update_source_indexing_status(
             logger=logger,
             session_maker=session_maker,
             source_id=crawling_request["source_id"],
-            parent_id=UUID(parent_id),
+            parent_id=parent_id,
             identifier=crawling_request["url"],
             text_content=content,
             vectors=vectors,
             indexing_status=SourceIndexingStatusEnum.FINISHED,
+            should_send_notifications=crawling_request["entity_type"]
+            != "granting_institution",
         )
 
-        total_duration = time.time() - start_time
         logger.info(
             "URL crawling completed successfully",
             url=crawling_request["url"],
@@ -397,37 +297,30 @@ async def handle_url_crawling(
             content_length=len(content),
             file_count=len(files),
             trace_id=trace_id,
-            total_duration_ms=round(total_duration * 1000, 2),
+            total_duration_ms=round((time.time() - start_time) * 1000, 2),
         )
 
     except Exception as e:
-        error_duration = time.time() - start_time
         logger.exception(
             "Error during URL crawling",
             url=crawling_request["url"],
             source_id=str(crawling_request["source_id"]),
             error_type=type(e).__name__,
             trace_id=trace_id,
-            error_duration_ms=round(error_duration * 1000, 2),
+            error_duration_ms=round((time.time() - start_time) * 1000, 2),
         )
-
-        async with session_maker() as session:
-            parent_id = await resolve_parent_id_for_notification(
-                session=session,
-                source_id=str(crawling_request["source_id"]),
-                entity_type=crawling_request["entity_type"],
-                entity_id=str(crawling_request["entity_id"]),
-            )
 
         await update_source_indexing_status(
             logger=logger,
             session_maker=session_maker,
             source_id=crawling_request["source_id"],
-            parent_id=UUID(parent_id),
+            parent_id=parent_id,
             identifier=crawling_request["url"],
             text_content="",
             vectors=None,
             indexing_status=SourceIndexingStatusEnum.FAILED,
+            should_send_notifications=crawling_request["entity_type"]
+            != "granting_institution",
         )
 
 

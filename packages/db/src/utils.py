@@ -109,6 +109,7 @@ async def update_source_indexing_status(
     text_content: str,
     vectors: list[VectorDTO] | None,
     indexing_status: SourceIndexingStatusEnum,
+    should_send_notifications: bool = True,
 ) -> None:
     async with session_maker() as session, session.begin():
         try:
@@ -122,17 +123,19 @@ async def update_source_indexing_status(
             )
             if vectors:
                 await session.execute(insert(TextVector).values(vectors))
+
             await session.commit()
 
-            await publish_notification(
-                parent_id=parent_id,
-                event="source_processing",
-                data=SourceProcessingResult(
-                    source_id=source_id,
-                    indexing_status=indexing_status,
-                    identifier=identifier,
-                ),
-            )
+            if should_send_notifications:
+                await publish_notification(
+                    parent_id=parent_id,
+                    event="source_processing",
+                    data=SourceProcessingResult(
+                        source_id=source_id,
+                        indexing_status=indexing_status,
+                        identifier=identifier,
+                    ),
+                )
         except SQLAlchemyError as e:
             logger.exception(
                 "Database operation error",
@@ -141,12 +144,13 @@ async def update_source_indexing_status(
                 error_type="DatabaseError" if "connection" in str(e).lower() else "SQLAlchemyError",
             )
             await session.rollback()
-            await publish_notification(
-                parent_id=parent_id,
-                event="source_processing",
-                data=SourceProcessingResult(
-                    source_id=source_id,
-                    indexing_status=SourceIndexingStatusEnum.FAILED,
-                    identifier=identifier,
-                ),
-            )
+            if should_send_notifications:
+                await publish_notification(
+                    parent_id=parent_id,
+                    event="source_processing",
+                    data=SourceProcessingResult(
+                        source_id=source_id,
+                        indexing_status=SourceIndexingStatusEnum.FAILED,
+                        identifier=identifier,
+                    ),
+                )
