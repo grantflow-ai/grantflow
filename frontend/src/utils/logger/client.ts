@@ -9,7 +9,7 @@ export function getLogger(): ILogLayer {
 	singleton ??= initLogger();
 	return singleton;
 }
-2;
+
 function initLogger(): ILogLayer {
 	const logger = new LogLayer({
 		errorSerializer: serializeError,
