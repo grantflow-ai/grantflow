@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
@@ -816,3 +817,74 @@ async def handle_duplicate_application(
         application_id=new_app_id,
         session_maker=session_maker,
     )
+
+
+@get(
+    "/organizations/{organization_id:uuid}/applications",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    operation_id="ListOrganizationApplications",
+)
+async def handle_list_organization_applications(
+    organization_id: UUID,
+    session_maker: async_sessionmaker[Any],
+) -> ApplicationListResponse:
+    logger.info(
+        "Listing organization applications",
+        organization_id=organization_id,
+        limit=5,
+    )
+
+    async with session_maker() as session:
+        ninety_days_ago = datetime.now(UTC) - timedelta(days=90)
+
+        query = (
+            select(GrantApplication, GrantTemplate.submission_date)
+            .join(
+                GrantApplication.project,
+            )
+            .where(
+                GrantApplication.project.has(organization_id=organization_id),
+                GrantApplication.deleted_at.is_(None),
+                GrantApplication.updated_at >= ninety_days_ago,
+            )
+            .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
+        )
+
+        query = query.order_by(GrantApplication.updated_at.desc()).limit(5)
+
+        results = await session.execute(query)
+        rows = results.all()
+
+        application_items: list[ApplicationListItemResponse] = []
+        for row in rows:
+            app = row[0]
+            submission_date = row[1]
+
+            item: ApplicationListItemResponse = {
+                "id": str(app.id),
+                "project_id": str(app.project_id),
+                "title": app.title,
+                "status": app.status,
+                "created_at": app.created_at.isoformat(),
+                "updated_at": app.updated_at.isoformat(),
+            }
+            if app.description:
+                item["description"] = app.description
+            if submission_date:
+                item["submission_date"] = submission_date.isoformat()
+                item["deadline"] = submission_date.isoformat()
+            if app.completed_at:
+                item["completed_at"] = app.completed_at.isoformat()
+            if app.parent_id:
+                item["parent_id"] = str(app.parent_id)
+            application_items.append(item)
+
+        return ApplicationListResponse(
+            applications=application_items,
+            pagination=PaginationMetadata(
+                total=len(application_items),
+                limit=5,
+                offset=0,
+                has_more=False,
+            ),
+        )
