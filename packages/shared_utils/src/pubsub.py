@@ -347,7 +347,7 @@ async def ensure_subscription_for_parent_id(parent_id: UUID) -> str:
                 "name": subscription_path,
                 "topic": topic_path,
                 "filter": f'attributes.parent_id = "{parent_id}"',
-                "ack_deadline_seconds": 20,
+                "ack_deadline_seconds": 600,
             },
         )
         logger.info("subscription created", subscription_path=subscription_path)

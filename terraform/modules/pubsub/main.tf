@@ -32,9 +32,33 @@ variable "message_retention_duration" {
 }
 
 variable "ack_deadline_seconds" {
-  description = "Acknowledgment deadline in seconds"
+  description = "Acknowledgment deadline in seconds (deprecated, use specific variables)"
   type        = number
   default     = 60
+}
+
+variable "file_indexing_ack_deadline" {
+  description = "Acknowledgment deadline for file-indexing subscription in seconds"
+  type        = number
+  default     = 900
+}
+
+variable "url_crawling_ack_deadline" {
+  description = "Acknowledgment deadline for url-crawling subscription in seconds"
+  type        = number
+  default     = 600
+}
+
+variable "rag_processing_ack_deadline" {
+  description = "Acknowledgment deadline for rag-processing subscription in seconds"
+  type        = number
+  default     = 900
+}
+
+variable "dlq_ack_deadline" {
+  description = "Acknowledgment deadline for dead letter queue subscriptions in seconds"
+  type        = number
+  default     = 1200
 }
 
 variable "enable_dead_letter" {
@@ -90,8 +114,8 @@ resource "google_pubsub_subscription" "file_indexing_subscription" {
   name  = "file-indexing-subscription"
   topic = google_pubsub_topic.file_indexing.name
 
-  # ~keep 10 minutes for file processing (max allowed by Pub/Sub)
-  ack_deadline_seconds = 600
+  # ~keep File processing deadline (configurable)
+  ack_deadline_seconds = var.file_indexing_ack_deadline
 
   # ~keep Increased backoff for indexer to handle burst traffic gracefully
   retry_policy {
@@ -141,7 +165,7 @@ resource "google_pubsub_subscription" "file_indexing_dlq_subscription" {
   name  = "file-indexing-dlq-subscription"
   topic = google_pubsub_topic.file_indexing_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
   message_retention_duration = "604800s"
 
@@ -160,8 +184,8 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
   name  = "url-crawling-subscription"
   topic = google_pubsub_topic.url_crawling.name
 
-  # ~keep 5 minutes for URL crawling
-  ack_deadline_seconds = 300
+  # ~keep URL crawling deadline (configurable)
+  ack_deadline_seconds = var.url_crawling_ack_deadline
 
   retry_policy {
     minimum_backoff = "10s"
@@ -201,7 +225,7 @@ resource "google_pubsub_subscription" "url_crawling_dlq_subscription" {
   name  = "url-crawling-dlq-subscription"
   topic = google_pubsub_topic.url_crawling_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
   message_retention_duration = "604800s"
 
@@ -226,7 +250,7 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
   name  = "rag-processing-subscription"
   topic = google_pubsub_topic.rag_processing.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.rag_processing_ack_deadline
 
   retry_policy {
     minimum_backoff = "30s"
@@ -266,7 +290,7 @@ resource "google_pubsub_subscription" "rag_processing_dlq_subscription" {
   name  = "rag-processing-dlq-subscription"
   topic = google_pubsub_topic.rag_processing_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
   message_retention_duration = "604800s"
 
@@ -301,7 +325,7 @@ resource "google_pubsub_subscription" "frontend_notifications_dlq_subscription" 
   name  = "frontend-notifications-dlq-subscription"
   topic = google_pubsub_topic.frontend_notifications_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
   message_retention_duration = "604800s"
 
