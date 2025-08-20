@@ -93,6 +93,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	application_id: null | string;
 	organization_id: null | string;
 	project_id: null | string;
 	template_id: null | string;
@@ -297,6 +298,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	application_id: null | string;
 	organization_id: null | string;
 	project_id: null | string;
 	template_id: null | string;
@@ -517,6 +519,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	application_id: null | string;
 	organization_id: null | string;
 	project_id: string;
 	source_id: string;
@@ -1423,6 +1426,7 @@ export namespace API {
 };
 
 	export interface PathParameters {
+	application_id: null | string;
 	organization_id: null | string;
 	project_id: string;
 	template_id: null | string;
