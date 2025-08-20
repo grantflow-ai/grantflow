@@ -107,6 +107,20 @@ export async function listApplications(
 	);
 }
 
+export async function listOrganizationApplications(
+	organizationId: string,
+): Promise<API.ListOrganizationApplications.Http200.ResponseBody> {
+	const url = `organizations/${organizationId}/applications`;
+
+	return withAuthRedirect(
+		getClient()
+			.get(url, {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.ListOrganizationApplications.Http200.ResponseBody>(),
+	);
+}
+
 export async function triggerAutofill(
 	organizationId: string,
 	projectId: string,
