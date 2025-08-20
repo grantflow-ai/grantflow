@@ -11,9 +11,14 @@ from packages.shared_utils.src.exceptions import BackendError, DeserializationEr
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize, serialize
 from packages.shared_utils.src.sync import run_sync
-from .logger import get_logger
-from .pubsub_otel import create_pubsub_publish_span, inject_trace_context
+from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.pubsub_otel import (
+    create_pubsub_publish_span,
+    inject_trace_context,
+)
 import time
+
+from packages.shared_utils.src.shared_types import EntityType
 
 logger = get_logger(__name__)
 
@@ -37,7 +42,7 @@ class PubSubEvent(msgspec.Struct, rename="camel"):
 
 class CrawlingRequest(TypedDict):
     source_id: UUID
-    entity_type: Literal["organization", "granting_institution"]
+    entity_type: EntityType
     entity_id: UUID
     url: str
     trace_id: NotRequired[str]
@@ -106,7 +111,7 @@ async def publish_url_crawling_task(
     *,
     url: str,
     source_id: str | UUID,
-    entity_type: Literal["organization", "granting_institution"],
+    entity_type: EntityType,
     entity_id: str | UUID,
     trace_id: str | None = None,
 ) -> str:
@@ -371,7 +376,7 @@ async def publish_notification[T](
         ),
     )
 
-    logger.debug(
+    logger.info(
         "Publishing notification",
         topic_path=topic_path,
         notification_event=event,
@@ -410,15 +415,15 @@ async def publish_notification[T](
             span.set_attribute("messaging.message.id", message_id)
 
         logger.info(
-            "Published source processing message",
+            "Published notification",
             message_id=message_id,
             trace_id=trace_id,
         )
         return str(message_id)
     except MessageTooLargeError as e:
-        logger.error("Error publishing source processing message", error=str(e))
+        logger.error("Error publishing notification", error=str(e))
         raise BackendError(
-            "Error publishing source processing message", context={"error": str(e)}
+            "Error publishing notification", context={"error": str(e)}
         ) from e
 
 
