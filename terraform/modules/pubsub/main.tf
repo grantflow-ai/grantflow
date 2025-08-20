@@ -40,7 +40,7 @@ variable "ack_deadline_seconds" {
 variable "file_indexing_ack_deadline" {
   description = "Acknowledgment deadline for file-indexing subscription in seconds"
   type        = number
-  default     = 900
+  default     = 600
 }
 
 variable "url_crawling_ack_deadline" {
@@ -52,13 +52,13 @@ variable "url_crawling_ack_deadline" {
 variable "rag_processing_ack_deadline" {
   description = "Acknowledgment deadline for rag-processing subscription in seconds"
   type        = number
-  default     = 900
+  default     = 600
 }
 
 variable "dlq_ack_deadline" {
   description = "Acknowledgment deadline for dead letter queue subscriptions in seconds"
   type        = number
-  default     = 1200
+  default     = 600
 }
 
 variable "enable_dead_letter" {

@@ -1,4 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
+// eslint-disable-next-line import-x/no-unresolved
 import { useCookies } from "react-cookie";
 import { vi } from "vitest";
 import { COOKIE_CONSENT } from "@/constants";
