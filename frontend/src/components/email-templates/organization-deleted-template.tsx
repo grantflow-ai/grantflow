@@ -59,7 +59,7 @@ export default function OrganizationDeletedTemplate({
 						<Heading style={heading}>Dear Researcher</Heading>
 
 						<Text style={paragraph}>
-							We confirm that the organization {organizationName || "[Organization Name]"}  has been
+							We confirm that the organization {organizationName || "[Organization Name]"} has been
 							removed from GrantFlow.
 							<br />
 							All associated documents, data, projects, and member access has been deleted.
