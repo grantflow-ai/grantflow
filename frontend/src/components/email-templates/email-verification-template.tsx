@@ -20,16 +20,38 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 	return (
 		<Html>
 			<Head>
+				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
 				/>
+				<style>
+					{`
+            @media (max-width: 600px) {
+              .container {
+                width: 100% !important;
+                padding: 20px !important;
+              }
+              .content {
+                padding: 20px !important;
+              }
+              .heading {
+                font-size: 22px !important;
+              }
+              .paragraph {
+                font-size: 16px !important;
+                line-height: 24px !important;
+              }
+            }
+          `}
+				</style>
 			</Head>
 			<Preview>Verify your email to complete your GrantFlow registration</Preview>
 			<Body style={main}>
-				<Container style={container}>
+				<Container style={container} className="container">
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -50,10 +72,12 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 						</div>
 					</Section>
 
-					<Section style={content}>
-						<Heading style={heading}>Dear Researcher</Heading>
+					<Section style={content} className="content">
+						<Heading style={heading} className="heading">
+							Dear Researcher
+						</Heading>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							Thanks for signing up! To complete your registration, please verify your email address by
 							clicking the button below:
 						</Text>
@@ -82,7 +106,7 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 							</Button>
 						</Section>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							If the button doesn&apos;t work, you can copy and paste the following link into your
 							browser:{" "}
 							<Link href={verificationUrl} style={link}>
@@ -90,15 +114,17 @@ export default function EmailVerificationTemplate({ verificationUrl }: EmailVeri
 							</Link>
 						</Text>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							This link will expire in 24 hours for security reasons.
 							<br />
 							If you didn&apos;t create an account, you can safely ignore this email.
 						</Text>
 
-						<Text style={paragraph}>Looking forward to helping you simplify your grant applications,</Text>
+						<Text style={paragraph} className="paragraph">
+							Looking forward to helping you simplify your grant applications,
+						</Text>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							Warm regards,
 							<br />
 							Vsphera Team

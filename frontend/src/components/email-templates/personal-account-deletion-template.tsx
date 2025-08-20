@@ -22,16 +22,38 @@ export default function PersonalAccountDeletionTemplate({
 	return (
 		<Html>
 			<Head>
+				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
 				/>
+				<style>
+					{`
+            @media (max-width: 600px) {
+              .container {
+                width: 100% !important;
+                padding: 20px !important;
+              }
+              .content {
+                padding: 20px !important;
+              }
+              .heading {
+                font-size: 22px !important;
+              }
+              .paragraph {
+                font-size: 16px !important;
+                line-height: 24px !important;
+              }
+            }
+          `}
+				</style>
 			</Head>
 			<Preview>Your GrantFlow Account Is Scheduled for Deletion</Preview>
 			<Body style={main}>
-				<Container style={container}>
+				<Container style={container} className="container">
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -53,14 +75,16 @@ export default function PersonalAccountDeletionTemplate({
 						</div>
 					</Section>
 
-					<Section style={content}>
-						<Heading style={heading}>Dear Researcher</Heading>
+					<Section style={content} className="content">
+						<Heading style={heading} className="heading">
+							Dear Researcher
+						</Heading>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							We confirm that your GrantFlow account has been scheduled for deletion, as requested. All associated data including research projects, applications, and personal information will be permanently removed from our system in 10 days.
 						</Text>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							If you change your mind or would like to recover your account before deletion is finalized, simply reply to this email or contact our support team at 
 						</Text>
 
@@ -86,13 +110,13 @@ export default function PersonalAccountDeletionTemplate({
 							</Button>
 						</Section>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							We're sorry to see you go. If you have any feedback or suggestions about how we could improve, we’d love to hear from you.
 						</Text>
 
-						<Text style={paragraph}>Thank you for being part of GrantFlow.</Text>
+						<Text style={paragraph} className="paragraph">Thank you for being part of GrantFlow.</Text>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							Warm regards,
 							<br />
 							Vsphera Team
@@ -189,16 +213,16 @@ const buttonContainer = {
 };
 
 const button = {
+	alignItems: "center",
 	backgroundColor: "#1e13f8",
 	border: "0",
 	borderRadius: "4px",
 	color: "#ffffff",
 	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
 	fontFamily: "'Sora', sans-serif",
 	fontSize: "14px",
 	fontWeight: "400",
+	justifyContent: "center",
 	padding: "4px 12px",
 	textDecoration: "none",
 	width: "124px",
