@@ -215,6 +215,8 @@ describe("Application Store", () => {
 				completed_at: undefined,
 				created_at: "2023-01-01T00:00:00Z",
 				deadline: undefined,
+				editor_document_id: "123",
+				editor_document_init: false,
 				form_inputs: undefined,
 				grant_template: {
 					...GrantTemplateFactory.build(),
@@ -256,6 +258,8 @@ describe("Application Store", () => {
 				completed_at: undefined,
 				created_at: "2023-01-01T00:00:00Z",
 				deadline: undefined,
+				editor_document_id: "123",
+				editor_document_init: false,
 				form_inputs: undefined,
 				grant_template: undefined,
 				id: "test-app-id-2",

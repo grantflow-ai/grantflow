@@ -8,7 +8,7 @@ import { EditorPromptWindow } from "./editor-prompt-window";
 import { EditorSections } from "./editor-sections";
 import { EditorWarning } from "./editor-warning";
 
-export function EditorContainer({ documentId }: { documentId: string }) {
+export function EditorContainer({ documentId, initialContent }: { documentId: string; initialContent?: string }) {
 	const editorRef = useRef<EditorRef>(null);
 
 	const [editorSections, setEditorSections] = useState<{ level: number; text: string }[]>([]);
@@ -25,6 +25,7 @@ export function EditorContainer({ documentId }: { documentId: string }) {
 						<Editor
 							crdtUrl={getEnv().NEXT_PUBLIC_CRDT_SERVER_URL}
 							documentId={documentId}
+							initialMarkdownContent={initialContent}
 							onContentChange={() => {
 								if (editorRef.current) {
 									setEditorSections(editorRef.current.getHeadings());
