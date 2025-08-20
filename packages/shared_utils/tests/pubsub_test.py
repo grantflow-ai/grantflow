@@ -105,7 +105,7 @@ async def test_publish_url_crawling_task_success(mock_publisher_client: Mock) ->
             url="https://example.com",
             source_id=source_id,
             entity_id=entity_id,
-            entity_type="organization",
+            entity_type="grant_application",
         )
 
         assert result == "test-message-id"
@@ -143,7 +143,7 @@ async def test_publish_url_crawling_task_with_all_params(
             url="https://example.com",
             source_id=source_id,
             entity_id=entity_id,
-            entity_type="organization",
+            entity_type="grant_application",
         )
 
         assert result == "test-message-id"
@@ -179,7 +179,7 @@ async def test_publish_url_crawling_task_message_too_large(
             await publish_url_crawling_task(
                 url="https://example.com" + "x" * 10000000,
                 source_id="323e4567-e89b-12d3-a456-426614174000",
-                entity_type="organization",
+                entity_type="grant_application",
                 entity_id="223e4567-e89b-12d3-a456-426614174000",
             )
 
@@ -206,7 +206,7 @@ async def test_publish_url_crawling_task_with_string_ids(
         result = await publish_url_crawling_task(
             url="https://example.com",
             source_id="323e4567-e89b-12d3-a456-426614174000",
-            entity_type="organization",
+            entity_type="grant_application",
             entity_id="223e4567-e89b-12d3-a456-426614174000",
         )
 
@@ -234,7 +234,7 @@ async def test_publish_url_crawling_task_with_none_project(
         result = await publish_url_crawling_task(
             url="https://example.com",
             source_id="323e4567-e89b-12d3-a456-426614174000",
-            entity_type="organization",
+            entity_type="grant_application",
             entity_id="223e4567-e89b-12d3-a456-426614174000",
         )
 
@@ -244,7 +244,7 @@ async def test_publish_url_crawling_task_with_none_project(
         call_args = mock_publisher_client.publish.call_args
         data_bytes = call_args[0][1]
         published_data = deserialize(data_bytes, CrawlingRequest)
-        assert published_data["entity_type"] == "organization"
+        assert published_data["entity_type"] == "grant_application"
 
 
 async def test_publish_notification_success(mock_publisher_client: Mock) -> None:
@@ -600,7 +600,7 @@ def test_pubsub_event_typed_dict() -> None:
 def test_crawling_request_typed_dict() -> None:
     request: CrawlingRequest = {
         "source_id": UUID("323e4567-e89b-12d3-a456-426614174000"),
-        "entity_type": "organization",
+        "entity_type": "grant_application",
         "entity_id": UUID("223e4567-e89b-12d3-a456-426614174000"),
         "url": "https://example.com",
     }

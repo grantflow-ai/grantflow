@@ -526,7 +526,7 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
             return_value="Complete application text",
         ),
     ):
-        result_text, section_texts = await grant_application_text_generation_pipeline_handler(
+        result_text, section_texts = await grant_application_text_generation_pipeline_handler(  # type: ignore[misc]
             grant_application_id=application.id,
             session_maker=async_session_maker,
             job_manager=mock_job_manager,

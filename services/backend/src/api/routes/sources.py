@@ -23,7 +23,6 @@ from packages.db.src.tables import (
 from packages.shared_utils.src.constants import SUPPORTED_FILE_EXTENSIONS
 from packages.shared_utils.src.exceptions import BackendError, DatabaseError, ValidationError
 from packages.shared_utils.src.gcs import (
-    EntityType,
     construct_object_uri,
     create_signed_upload_url,
     delete_blob,
@@ -40,7 +39,7 @@ from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import DELETE_SOURCE, log_organization_audit_from_request
 
 if TYPE_CHECKING:
-    from packages.shared_utils.src.shared_types import ParentType
+    from packages.shared_utils.src.shared_types import EntityType
 
 logger = get_logger(__name__)
 
@@ -76,23 +75,24 @@ class UrlCrawlingResponse(TypedDict):
     source_id: str
 
 
-def determine_entity_info(
+def _determine_entity_info(
     application_id: UUID | None = None,
     template_id: UUID | None = None,
     granting_institution_id: UUID | None = None,
     organization_id: UUID | None = None,
-) -> tuple["ParentType", UUID, EntityType, UUID]:
-    """Determine parent type, parent ID, entity type, and entity ID from parameters."""
+) -> tuple["EntityType", UUID, "EntityType", UUID]:
+    if (application_id or template_id) and not organization_id:
+        raise BackendError("organization_id required for grant application sources")
+
     if application_id:
-        if not organization_id:
-            raise BackendError("organization_id required for grant application sources")
-        return "grant_application", application_id, "organization", organization_id
+        return "grant_application", application_id, "grant_application", organization_id  # type: ignore[return-value]
+
+    if template_id:
+        return "grant_template", template_id, "grant_template", organization_id  # type: ignore[return-value]
+
     if granting_institution_id:
         return "granting_institution", granting_institution_id, "granting_institution", granting_institution_id
-    if template_id:
-        if not organization_id:
-            raise BackendError("organization_id required for grant template sources")
-        return "grant_template", template_id, "organization", organization_id
+
     raise BackendError("Missing parent_id")
 
 
@@ -117,7 +117,7 @@ async def handle_create_rag_source(
     granting_institution_id: UUID | None = None,
     template_id: UUID | None = None,
 ) -> UUID:
-    parent_type, parent_id, entity_type, entity_id = determine_entity_info(
+    parent_type, parent_id, entity_type, entity_id = _determine_entity_info(
         application_id=application_id,
         template_id=template_id,
         granting_institution_id=granting_institution_id,
@@ -127,15 +127,14 @@ async def handle_create_rag_source(
     async with session_maker() as session, session.begin():
         try:
             rag_url_alias = aliased(RagUrl)
-            rag_source = await session.scalar(
+            if rag_source := await session.scalar(
                 select(RagSource)
                 .join(rag_url_alias)
                 .where(
                     rag_url_alias.url == url,
                     RagSource.deleted_at.is_(None),
                 )
-            )
-            if rag_source:
+            ):
                 if rag_source.indexing_status != SourceIndexingStatusEnum.FAILED:
                     return UUID(str(rag_source.id))
 
@@ -201,16 +200,7 @@ async def handle_create_rag_source(
                         }
                     )
                 )
-            elif parent_type == "granting_institution":
-                await session.execute(
-                    insert(GrantingInstitutionSource).values(
-                        {
-                            "rag_source_id": source_id,
-                            "granting_institution_id": parent_id,
-                        }
-                    )
-                )
-            else:
+            elif parent_type == "grant_template":
                 await session.execute(
                     insert(GrantTemplateSource).values(
                         {
@@ -219,6 +209,16 @@ async def handle_create_rag_source(
                         }
                     )
                 )
+            else:
+                await session.execute(
+                    insert(GrantingInstitutionSource).values(
+                        {
+                            "rag_source_id": source_id,
+                            "granting_institution_id": parent_id,
+                        }
+                    )
+                )
+
             logger.info(
                 "Created new rag source",
                 source_id=source_id,
@@ -498,7 +498,7 @@ async def handle_create_upload_url(
 
     await asyncio.sleep(0.2)
 
-    _, _, entity_type, entity_id = determine_entity_info(
+    _, _, entity_type, entity_id = _determine_entity_info(
         application_id=application_id,
         template_id=template_id,
         granting_institution_id=granting_institution_id,
@@ -565,7 +565,7 @@ async def handle_crawl_url(
 
     await asyncio.sleep(0.2)
 
-    _, _, entity_type, entity_id = determine_entity_info(
+    _, _, entity_type, entity_id = _determine_entity_info(
         application_id=application_id,
         template_id=template_id,
         granting_institution_id=granting_institution_id,
