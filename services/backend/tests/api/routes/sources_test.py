@@ -114,6 +114,7 @@ async def test_retrieve_granting_institution_sources(
 async def test_retrieve_template_sources(
     test_client: TestingClientType,
     project: Project,
+    grant_application: GrantApplication,
     grant_template: GrantTemplate,
     grant_template_file: GrantTemplateSource,
     grant_template_url: GrantTemplateSource,
@@ -122,7 +123,7 @@ async def test_retrieve_template_sources(
     project_member_user: OrganizationUser,
 ) -> None:
     response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -163,10 +164,11 @@ async def test_retrieve_grant_application_sources_unauthorized(
 async def test_retrieve_grant_template_sources_unauthorized(
     test_client: TestingClientType,
     project: Project,
+    grant_application: GrantApplication,
     grant_template: GrantTemplate,
 ) -> None:
     response = await test_client.get(
-        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources",
         headers={"Authorization": "Bearer invalid_token"},
     )
 
@@ -268,13 +270,14 @@ async def test_delete_template_source(
     mock_delete_blob: AsyncMock,
     test_client: TestingClientType,
     project: Project,
+    grant_application: GrantApplication,
     grant_template: GrantTemplate,
     grant_template_file: GrantTemplateSource,
     project_member_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     response = await test_client.delete(
-        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/{grant_template_file.rag_source_id}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources/{grant_template_file.rag_source_id}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -409,6 +412,7 @@ async def test_create_granting_institution_upload_url(
 async def test_create_template_upload_url(
     test_client: TestingClientType,
     project: Project,
+    grant_application: GrantApplication,
     grant_template: GrantTemplate,
     project_member_user: OrganizationUser,
     mocker: MockerFixture,
@@ -421,7 +425,7 @@ async def test_create_template_upload_url(
     test_blob_name = "test_document.pdf"
 
     response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/upload-url?blob_name={test_blob_name}",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources/upload-url?blob_name={test_blob_name}",
         headers={"Authorization": "Bearer some_token"},
     )
 
@@ -529,13 +533,14 @@ async def test_handle_crawl_url_grant_template(
     test_client: TestingClientType,
     mock_publish_url_crawling_task: AsyncMock,
     project: Project,
+    grant_application: GrantApplication,
     grant_template: GrantTemplate,
     project_member_user: OrganizationUser,
 ) -> None:
     request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
 
     response = await test_client.post(
-        f"/organizations/{project.organization_id}/projects/{project.id}/grant_templates/{grant_template.id}/sources/crawl-url",
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources/crawl-url",
         json=request_data,
         headers={"Authorization": "Bearer some_token"},
     )
