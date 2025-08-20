@@ -109,17 +109,8 @@ export async function listApplications(
 
 export async function listOrganizationApplications(
 	organizationId: string,
-	params?: {
-		search?: string;
-	},
 ): Promise<API.ListOrganizationApplications.Http200.ResponseBody> {
-	const searchParams = new URLSearchParams();
-
-	if (params?.search) searchParams.set("search", params.search);
-
-	const queryString = searchParams.toString();
-	const baseUrl = `organizations/${organizationId}/applications`;
-	const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+	const url = `organizations/${organizationId}/applications`;
 
 	return withAuthRedirect(
 		getClient()

@@ -327,44 +327,7 @@ describe("grant-applications actions", () => {
 			expect(result).toEqual(mockResponse);
 		});
 
-		it("should list organization applications with search param", async () => {
-			const params = {
-				search: "research grant",
-			};
-
-			const mockResponse = {
-				applications: ApplicationFactory.batch(2),
-				pagination: {
-					has_more: false,
-					limit: 5,
-					offset: 0,
-					total: 2,
-				},
-			};
-
-			const mockGet = vi.fn().mockReturnValue({
-				json: vi.fn().mockResolvedValue(mockResponse),
-			});
-
-			vi.mocked(getClient).mockReturnValue({
-				get: mockGet,
-			} as any);
-
-			const result = await listOrganizationApplications(mockOrganizationId, params);
-
-			const expectedUrl = `organizations/${mockOrganizationId}/applications?search=research+grant`;
-
-			expect(mockGet).toHaveBeenCalledWith(expectedUrl, {
-				headers: { Authorization: "Bearer mock-token" },
-			});
-			expect(result).toEqual(mockResponse);
-		});
-
 		it("should handle empty results", async () => {
-			const params = {
-				search: "nonexistent",
-			};
-
 			const mockResponse = {
 				applications: [],
 				pagination: {
@@ -383,7 +346,7 @@ describe("grant-applications actions", () => {
 				get: mockGet,
 			} as any);
 
-			const result = await listOrganizationApplications(mockOrganizationId, params);
+			const result = await listOrganizationApplications(mockOrganizationId);
 
 			expect(result.applications).toHaveLength(0);
 			expect(result.pagination.total).toBe(0);

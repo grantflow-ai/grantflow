@@ -827,15 +827,10 @@ async def handle_duplicate_application(
 async def handle_list_organization_applications(
     organization_id: UUID,
     session_maker: async_sessionmaker[Any],
-    search: str | None = Parameter(
-        default=None,
-        description="Search query for filtering applications by title",
-    ),
 ) -> ApplicationListResponse:
     logger.info(
         "Listing organization applications",
         organization_id=organization_id,
-        search=search,
         limit=5,
     )
 
@@ -851,18 +846,13 @@ async def handle_list_organization_applications(
             .where(
                 GrantApplication.project.has(organization_id=organization_id),
                 GrantApplication.deleted_at.is_(None),
-                GrantApplication.created_at >= ninety_days_ago,  # Only applications from last 90 days
+                GrantApplication.updated_at >= ninety_days_ago,  # Only applications updated in last 90 days
             )
             .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
         )
 
-        # Apply search filter if provided
-        if search:
-            search_pattern = f"%{search}%"
-            query = query.where(GrantApplication.title.ilike(search_pattern))
-
-        # Order by created_at desc and limit to 5
-        query = query.order_by(GrantApplication.created_at.desc()).limit(5)
+        # Order by updated_at desc and limit to 5
+        query = query.order_by(GrantApplication.updated_at.desc()).limit(5)
 
         results = await session.execute(query)
         rows = results.all()
