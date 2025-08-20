@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 from unittest.mock import ANY, AsyncMock, patch
@@ -1050,3 +1050,223 @@ async def test_application_status_transitions_preserve_generating(
     our_app = next((app for app in data["applications"] if app["id"] == str(grant_application.id)), None)
     assert our_app is not None
     assert our_app["status"] == ApplicationStatusEnum.GENERATING.value
+
+
+async def test_list_organization_applications(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test listing applications at organization level"""
+
+    # Create another project in the same organization
+    async with async_session_maker() as session, session.begin():
+        second_project = Project(
+            organization_id=project.organization_id,
+            name="Second Project",
+        )
+        session.add(second_project)
+        await session.commit()
+        second_project_id = second_project.id
+
+    # Create applications in both projects
+    async with async_session_maker() as session, session.begin():
+        now = datetime.now(UTC)
+
+        # Create 3 applications in first project (recent)
+        for i in range(3):
+            app = GrantApplication(
+                project_id=project.id,
+                title=f"Project 1 - App {i}",
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+                created_at=now - timedelta(days=i * 10),  # 0, 10, 20 days ago
+            )
+            session.add(app)
+
+        # Create 3 applications in second project (recent)
+        for i in range(3):
+            app = GrantApplication(
+                project_id=second_project_id,
+                title=f"Project 2 - App {i}",
+                status=ApplicationStatusEnum.IN_PROGRESS,
+                created_at=now - timedelta(days=i * 15),  # 0, 15, 30 days ago
+            )
+            session.add(app)
+
+        # Create an old application (> 90 days)
+        old_app = GrantApplication(
+            project_id=project.id,
+            title="Old Application",
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+            created_at=now - timedelta(days=100),  # 100 days ago - should be filtered out
+        )
+        session.add(old_app)
+
+        await session.commit()
+
+    # Test the organization-level endpoint
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/applications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    # Should return only 5 most recent applications
+    assert len(data["applications"]) == 5
+    assert data["pagination"]["total"] == 5
+    assert data["pagination"]["limit"] == 5
+    assert data["pagination"]["offset"] == 0
+    assert data["pagination"]["has_more"] is False
+
+    # Check that applications are from both projects
+    project_ids = {app["project_id"] for app in data["applications"]}
+    assert len(project_ids) == 2  # Should have apps from both projects
+
+    # Check ordering (most recent first)
+    created_dates = [app["created_at"] for app in data["applications"]]
+    assert created_dates == sorted(created_dates, reverse=True)
+
+
+async def test_list_organization_applications_with_grant_template(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test listing organization applications with grant template submission dates"""
+
+    async with async_session_maker() as session, session.begin():
+        # Create application with grant template
+        app = GrantApplication(
+            project_id=project.id,
+            title="Application with Template",
+            status=ApplicationStatusEnum.WORKING_DRAFT,
+        )
+        session.add(app)
+        await session.flush()
+
+        template = GrantTemplate(
+            grant_application_id=app.id,
+            grant_sections=[],
+            submission_date=date(2025, 12, 31),
+        )
+        session.add(template)
+        await session.commit()
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/applications",
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 1
+    assert data["applications"][0]["title"] == "Application with Template"
+    assert "submission_date" in data["applications"][0]
+    assert "deadline" in data["applications"][0]
+    assert data["applications"][0]["submission_date"] == "2025-12-31"
+
+
+async def test_list_organization_applications_unauthorized(
+    test_client: TestingClientType,
+    project: Project,
+) -> None:
+    """Test that unauthenticated users cannot access organization applications"""
+
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/applications",
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
+
+
+async def test_list_organization_applications_with_search(
+    test_client: TestingClientType,
+    async_session_maker: async_sessionmaker[Any],
+    project: Project,
+    project_member_user: OrganizationUser,
+) -> None:
+    """Test searching organization applications by title"""
+
+    async with async_session_maker() as session, session.begin():
+        # Create applications with different titles
+        apps = [
+            GrantApplication(
+                project_id=project.id,
+                title="Cancer Research Grant",
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+            ),
+            GrantApplication(
+                project_id=project.id,
+                title="Neuroscience Study Proposal",
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+            ),
+            GrantApplication(
+                project_id=project.id,
+                title="Climate Research Initiative",
+                status=ApplicationStatusEnum.IN_PROGRESS,
+            ),
+            GrantApplication(
+                project_id=project.id,
+                title="AI for Healthcare",
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+            ),
+            GrantApplication(
+                project_id=project.id,
+                title="Research Equipment Purchase",
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+            ),
+            GrantApplication(
+                project_id=project.id,
+                title="Quantum Computing Research",
+                status=ApplicationStatusEnum.WORKING_DRAFT,
+            ),
+        ]
+        for app in apps:
+            session.add(app)
+        await session.commit()
+
+    # Test search for "research"
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/applications",
+        params={"search": "research"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    # Should return applications with "research" in title, limited to 5
+    assert len(data["applications"]) <= 5
+    for app in data["applications"]:
+        assert "research" in app["title"].lower()
+
+    # Test search for "cancer"
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/applications",
+        params={"search": "cancer"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 1
+    assert data["applications"][0]["title"] == "Cancer Research Grant"
+
+    # Test search with no results
+    response = await test_client.get(
+        f"/organizations/{project.organization_id}/applications",
+        params={"search": "nonexistent"},
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+
+    assert len(data["applications"]) == 0
+    assert data["pagination"]["total"] == 0
