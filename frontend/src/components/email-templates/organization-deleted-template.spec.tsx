@@ -3,8 +3,8 @@ import OrganizationDeletedTemplate from "./organization-deleted-template";
 
 describe("OrganizationDeletedTemplate", () => {
 	const mockProps = {
-		organizationName: "Acme Research Inc.",
 		contactUsUrl: "https://grantflow.ai/support",
+		organizationName: "Acme Research Inc.",
 	};
 
 	it("renders email with organization name", async () => {
@@ -12,9 +12,7 @@ describe("OrganizationDeletedTemplate", () => {
 
 		expect(html).toContain("Organization Acme Research Inc. Has Been Deleted");
 		expect(html).toContain("Dear Researcher");
-		expect(html).toContain(
-			"We confirm that the organization <!-- -->Acme Research Inc.<!-- --> has been removed",
-		);
+		expect(html).toContain("We confirm that the organization <!-- -->Acme Research Inc.<!-- --> has been removed");
 	});
 
 	it("includes the main confirmation message", async () => {
@@ -26,7 +24,9 @@ describe("OrganizationDeletedTemplate", () => {
 	it("includes a message about contacting support for errors", async () => {
 		const html = await render(<OrganizationDeletedTemplate {...mockProps} />);
 
-		expect(html).toContain("If this action was taken in error or you have any questions, please contact our support team.");
+		expect(html).toContain(
+			"If this action was taken in error or you have any questions, please contact our support team.",
+		);
 	});
 
 	it("includes the Contact Us button with the correct href", async () => {

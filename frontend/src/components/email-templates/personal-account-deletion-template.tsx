@@ -16,16 +16,15 @@ interface PersonalAccountDeletionTemplateProps {
 	contactUsUrl: string;
 }
 
-export default function PersonalAccountDeletionTemplate({
-	contactUsUrl,
-}: PersonalAccountDeletionTemplateProps) {
+export default function PersonalAccountDeletionTemplate({ contactUsUrl }: PersonalAccountDeletionTemplateProps) {
 	return (
 		<Html>
 			<Head>
-				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<meta content="text/html; charset=UTF-8" httpEquiv="Content-Type" />
+				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+				<link href="https://fonts.googleapis.com" rel="preconnect" />
+				<link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
+				{/* eslint-disable-next-line @next/next/no-page-custom-font */}
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
@@ -53,7 +52,7 @@ export default function PersonalAccountDeletionTemplate({
 			</Head>
 			<Preview>Your GrantFlow Account Is Scheduled for Deletion</Preview>
 			<Body style={main}>
-				<Container style={container} className="container">
+				<Container className="container" style={container}>
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -75,34 +74,36 @@ export default function PersonalAccountDeletionTemplate({
 						</div>
 					</Section>
 
-					<Section style={content} className="content">
-						<Heading style={heading} className="heading">
+					<Section className="content" style={content}>
+						<Heading className="heading" style={heading}>
 							Dear Researcher
 						</Heading>
 
-						<Text style={paragraph} className="paragraph">
-							We confirm that your GrantFlow account has been scheduled for deletion, as requested. All associated data including research projects, applications, and personal information will be permanently removed from our system in 10 days.
+						<Text className="paragraph" style={paragraph}>
+							We confirm that your GrantFlow account has been scheduled for deletion, as requested. All
+							associated data including research projects, applications, and personal information will be
+							permanently removed from our system in 10 days.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
-							If you change your mind or would like to recover your account before deletion is finalized, simply reply to this email or contact our support team at 
+						<Text className="paragraph" style={paragraph}>
+							If you change your mind or would like to recover your account before deletion is finalized,
+							simply reply to this email or contact our support team at
 						</Text>
 
 						<Section style={buttonContainer}>
 							<Button href={contactUsUrl} style={button}>
 								<span style={{ marginRight: "6px" }}>Contact Us</span>
 
-								
-<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="13"
-									height="16"
-									viewBox="0 0 24 24"
+								<svg
 									fill="none"
+									height="16"
 									stroke="currentColor"
-									strokeWidth="2"
 									strokeLinecap="round"
 									strokeLinejoin="round"
+									strokeWidth="2"
+									viewBox="0 0 24 24"
+									width="13"
+									xmlns="http://www.w3.org/2000/svg"
 								>
 									<title>Right Arrow Icon</title>
 									<path d="m9 18 6-6-6-6" />
@@ -110,13 +111,16 @@ export default function PersonalAccountDeletionTemplate({
 							</Button>
 						</Section>
 
-						<Text style={paragraph} className="paragraph">
-							We're sorry to see you go. If you have any feedback or suggestions about how we could improve, we’d love to hear from you.
+						<Text className="paragraph" style={paragraph}>
+							We&apos;re sorry to see you go. If you have any feedback or suggestions about how we could
+							improve, we&apos;d love to hear from you.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">Thank you for being part of GrantFlow.</Text>
+						<Text className="paragraph" style={paragraph}>
+							Thank you for being part of GrantFlow.
+						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Warm regards,
 							<br />
 							Vsphera Team
@@ -227,8 +231,6 @@ const button = {
 	textDecoration: "none",
 	width: "124px",
 };
-
-
 
 const footer = {
 	borderTop: "1px solid #E1DFEB",

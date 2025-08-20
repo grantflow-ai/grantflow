@@ -26,10 +26,11 @@ export default function WelcomeEmailTemplate({
 	return (
 		<Html>
 			<Head>
-				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+				<meta content="text/html; charset=UTF-8" httpEquiv="Content-Type" />
+				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+				<link href="https://fonts.googleapis.com" rel="preconnect" />
+				<link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
+				{/* eslint-disable-next-line @next/next/no-page-custom-font */}
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
@@ -57,7 +58,7 @@ export default function WelcomeEmailTemplate({
 			</Head>
 			<Preview>You&apos;ve been invited to collaborate on {projectName}</Preview>
 			<Body style={main}>
-				<Container style={container} className="container">
+				<Container className="container" style={container}>
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -79,12 +80,12 @@ export default function WelcomeEmailTemplate({
 						</div>
 					</Section>
 
-					<Section style={content} className="content">
-						<Heading style={heading} className="heading">
+					<Section className="content" style={content}>
+						<Heading className="heading" style={heading}>
 							Dear Researcher
 						</Heading>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							You have been invited by <strong>{inviterName}</strong> to collaborate on the research
 							project <strong style={projectNameStyle}>&quot;{projectName}&quot;</strong> within the
 							GrantFlow platform.
@@ -96,25 +97,25 @@ export default function WelcomeEmailTemplate({
 							contribute to grant applications and related documentation.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							To accept the invitation, please click the link below:
 						</Text>
 
 						<Section style={buttonContainer}>
 							<Button href={acceptInvitationUrl} style={button}>
 								<span style={{ verticalAlign: "middle" }}>Accept Invitation</span>
-								<span style={{ verticalAlign: "middle", display: "inline-block" }}>
+								<span style={{ display: "inline-block", verticalAlign: "middle" }}>
 									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
+										className="lucide lucide-chevron-right-icon lucide-chevron-right"
 										fill="none"
+										height="16"
 										stroke="currentColor"
-										strokeWidth="2"
 										strokeLinecap="round"
 										strokeLinejoin="round"
-										className="lucide lucide-chevron-right-icon lucide-chevron-right"
+										strokeWidth="2"
+										viewBox="0 0 24 24"
+										width="16"
+										xmlns="http://www.w3.org/2000/svg"
 									>
 										<title>Right Arrow Icon</title>
 										<path d="m9 18 6-6-6-6" />
@@ -123,16 +124,16 @@ export default function WelcomeEmailTemplate({
 							</Button>
 						</Section>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							If you do not yet have a GrantFlow account, you will be guided through a brief sign-up
 							process before accessing the project.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							We look forward to your participation.
 						</Text>
 
-						<Text style={paragraph} className="paragraph">
+						<Text className="paragraph" style={paragraph}>
 							Warm regards,
 							<br />
 							Vsphera Team
