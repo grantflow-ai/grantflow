@@ -995,6 +995,48 @@ export namespace API {
 };
 };
 
+	export namespace ListOrganizationApplications {
+	export namespace Http200 {
+	export type ResponseBody = {
+	applications: {
+	completed_at?: string;
+	created_at: string;
+	deadline?: string;
+	description?: string;
+	id: string;
+	parent_id?: string;
+	project_id: string;
+	status: "CANCELLED" | "GENERATING" | "IN_PROGRESS" | "WORKING_DRAFT";
+	submission_date?: string;
+	title: string;
+	updated_at: string;
+}[];
+	pagination: {
+	has_more: boolean;
+	limit: number;
+	offset: number;
+	total: number;
+};
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	organization_id: string;
+};
+
+	export interface QueryParameters {
+	search?: null | string;
+};
+};
+
 	export namespace ListOrganizationInvitations {
 	export namespace Http200 {
 	export type ResponseBody = {
