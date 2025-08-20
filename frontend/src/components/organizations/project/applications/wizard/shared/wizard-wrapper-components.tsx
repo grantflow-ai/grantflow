@@ -132,7 +132,7 @@ export function WizardHeader() {
 						color="betaBadge"
 						leftIcon={<Image alt="Beta logo" height={16} src="/icons/button-logo-white.svg" width={16} />}
 					>
-						BETA
+						<span className="relative top-[0.5px]">BETA</span>
 					</ThemeBadge>
 					{showHeaderInfo ? (
 						<>
