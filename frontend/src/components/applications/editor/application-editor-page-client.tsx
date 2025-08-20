@@ -59,9 +59,14 @@ export function ApplicationEditorPageClient() {
 		);
 	}
 
-	if (!(application && project)) {
+	if (!(application && project && application.editor_document_id && application.text)) {
 		return null;
 	}
 
-	return <EditorContainer documentId="" />;
+	return (
+		<EditorContainer
+			documentId={application.editor_document_id}
+			initialContent={application.editor_document_init ? undefined : application.text}
+		/>
+	);
 }
