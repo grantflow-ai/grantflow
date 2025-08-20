@@ -390,7 +390,7 @@ async def test_publish_notification_too_large(mock_publisher_client: Mock) -> No
                 data=test_data,
             )
 
-        assert "Error publishing source processing message" in str(exc_info.value)
+        assert "Error publishing notification" in str(exc_info.value)
 
 
 async def test_pull_notifications_success(mock_subscriber_client: Mock) -> None:

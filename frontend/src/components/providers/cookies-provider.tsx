@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+// eslint-disable-next-line import-x/no-unresolved
 import { CookiesProvider } from "react-cookie";
 
 interface CookiesProviderWrapperProps {

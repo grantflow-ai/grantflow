@@ -92,6 +92,7 @@ class LoginResponseFactory(TypedDictFactory[LoginResponse]):
 
 class ExtractedSectionDTOFactory(TypedDictFactory[ExtractedSectionDTO]):
     __model__ = ExtractedSectionDTO
+
     title = faker.sentence
     is_long_form = True
     parent_id = None
@@ -134,6 +135,7 @@ class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
 
 class UpdateOrganizationRequestBodyFactory(TypedDictFactory[UpdateOrganizationRequestBody]):
     __model__ = UpdateOrganizationRequestBody
+
     full_name = faker.company
 
     @classmethod
@@ -207,12 +209,14 @@ class AppGrantingInstitutionResponseFactory(TypedDictFactory[AppGrantingInstitut
 
 class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
     __model__ = ResearchObjective
+
     objective = faker.sentence
     description = faker.paragraph
 
 
 class ResearchDeepDiveFactory(TypedDictFactory[ResearchDeepDive]):
     __model__ = ResearchDeepDive
+
     executive_summary = faker.paragraph
 
     @classmethod
