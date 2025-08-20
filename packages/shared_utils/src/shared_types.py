@@ -1,3 +1,3 @@
 from typing import Literal
 
-ParentType = Literal["grant_application", "granting_institution", "grant_template"]
+EntityType = Literal["grant_application", "grant_template", "granting_institution"]

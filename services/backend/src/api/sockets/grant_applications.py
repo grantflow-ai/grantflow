@@ -25,9 +25,6 @@ async def handle_grant_application_notifications(
     project_id: UUID,
     application_id: UUID,
 ) -> AsyncGenerator[WebsocketMessage[dict[str, Any]]]:
-    connection_start = time.time()
-    messages_sent = 0
-
     logger.info(
         "WebSocket connection established for notifications",
         organization_id=str(organization_id),
@@ -42,7 +39,6 @@ async def handle_grant_application_notifications(
             organization_id=str(organization_id),
             project_id=str(project_id),
             application_id=str(application_id),
-            messages_sent_so_far=messages_sent,
         )
         try:
             messages = await pull_notifications(
@@ -58,11 +54,9 @@ async def handle_grant_application_notifications(
                     poll_duration_ms=round(poll_duration * 1000, 2),
                 )
                 for message in messages:
-                    messages_sent += 1
                     logger.debug(
                         "Sending message to WebSocket client",
                         notification_event=message.get("event"),
-                        message_number=messages_sent,
                         application_id=str(application_id),
                     )
                     yield message
@@ -72,7 +66,6 @@ async def handle_grant_application_notifications(
                     application_id=str(application_id),
                     poll_duration_ms=round(poll_duration * 1000, 2),
                 )
-
         except gcp_exceptions.DeadlineExceeded:
             logger.debug(
                 "Pub/Sub pull timed out (expected behavior), continuing polling",
@@ -81,7 +74,6 @@ async def handle_grant_application_notifications(
                 application_id=str(application_id),
             )
         except Exception as e:
-            connection_duration = time.time() - connection_start
             logger.error(
                 "Error pulling notifications, continuing polling",
                 organization_id=str(organization_id),
@@ -89,8 +81,6 @@ async def handle_grant_application_notifications(
                 application_id=str(application_id),
                 error=str(e),
                 error_type=type(e).__name__,
-                connection_duration_seconds=round(connection_duration, 2),
-                total_messages_sent=messages_sent,
                 exc_info=e,
             )
 

@@ -27,13 +27,18 @@ from packages.shared_utils.src.gcs import (
 
 
 @pytest.fixture(autouse=True)
-def reset_refs() -> None:
+def reset_refs() -> Generator[None, None, None]:
+    # Reset before test
+    storage_client_ref.value = None
+    bucket_ref.value = None
+    yield
+    # Reset after test to ensure clean state for subsequent tests
     storage_client_ref.value = None
     bucket_ref.value = None
 
 
 @pytest.fixture
-def mock_env_vars() -> Generator[None]:
+def mock_env_vars() -> Generator[None, None, None]:
     with patch.dict(
         os.environ,
         {
@@ -235,13 +240,13 @@ async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) 
 
 
 def test_construct_object_uri() -> None:
-    entity_type = "organization"
+    entity_type = "grant_application"
     entity_id = "entity-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        entity_type="organization",
+        entity_type="grant_application",
         entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
@@ -283,7 +288,7 @@ def test_construct_object_uri_with_granting_institution() -> None:
 
 
 def test_parse_object_uri_valid() -> None:
-    entity_type = "organization"
+    entity_type = "grant_application"
     entity_id = "223e4567-e89b-12d3-a456-426614174001"
     source_id = "323e4567-e89b-12d3-a456-426614174002"
     blob_name = "test-file.pdf"
@@ -300,7 +305,7 @@ def test_parse_object_uri_valid() -> None:
 async def test_create_signed_upload_url(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    entity_type = "organization"
+    entity_type = "grant_application"
     entity_id = "entity-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
@@ -311,17 +316,36 @@ async def test_create_signed_upload_url(
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
 
+    # Ensure clean state by resetting refs at test level
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
+        # Configure environment mocks to avoid early returns
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
-            entity_type="organization",
+            entity_type="grant_application",
             entity_id=entity_id,
             source_id=source_id,
             blob_name=blob_name,
@@ -352,13 +376,32 @@ async def test_create_signed_upload_url_with_uuids(
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
 
+    # Ensure clean state by resetting refs at test level
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
+        # Configure environment mocks to avoid early returns
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
@@ -382,7 +425,7 @@ async def test_create_signed_upload_url_with_uuids(
 async def test_create_signed_upload_url_error(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    entity_type = "organization"
+    entity_type = "grant_application"
     entity_id = "entity-456"
     source_id = "source-789"
     blob_name = "test-file.pdf"
@@ -393,18 +436,37 @@ async def test_create_signed_upload_url_error(
     mock_blob.generate_signed_url.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 
+    # Ensure clean state by resetting refs at test level
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
         pytest.raises(ExternalOperationError) as exc_info,
     ):
+        # Configure environment mocks to avoid early returns
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         await create_signed_upload_url(
-            entity_type="organization",
+            entity_type="grant_application",
             entity_id=entity_id,
             source_id=source_id,
             blob_name=blob_name,
@@ -418,7 +480,7 @@ async def test_create_signed_upload_url_error(
 async def test_create_signed_upload_url_with_content_type(
     mock_env_vars: None, mock_bucket: MagicMock
 ) -> None:
-    entity_type = "organization"
+    entity_type = "grant_application"
     entity_id = "entity-123"
     source_id = "source-456"
     blob_name = "test-file.pdf"
@@ -431,17 +493,36 @@ async def test_create_signed_upload_url_with_content_type(
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
 
+    # Ensure clean state by resetting refs at test level
+    storage_client_ref.value = None
+    bucket_ref.value = None
+
     with (
         patch("packages.shared_utils.src.gcs.get_bucket") as mock_get_bucket,
         patch(
             "packages.shared_utils.src.gcs.run_sync",
             side_effect=lambda f, *args: f(*args) if callable(f) else f,
         ),
+        patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
+        # Configure environment mocks to avoid early returns
+        def mock_get_env_impl(
+            key: str, fallback: str | None = None, raise_on_missing: bool = True
+        ) -> str:
+            if key == "DEBUG":
+                return "False"
+            elif key == "STORAGE_EMULATOR_HOST":
+                return ""
+            elif key == "GCS_BUCKET_NAME":
+                return "test-bucket"
+            else:
+                return fallback or ""
+
+        mock_get_env.side_effect = mock_get_env_impl
         mock_get_bucket.return_value = mock_bucket
 
         url = await create_signed_upload_url(
-            entity_type="organization",
+            entity_type="grant_application",
             entity_id=entity_id,
             source_id=source_id,
             blob_name=blob_name,
@@ -524,7 +605,7 @@ def test_parse_object_uri_granting_institution() -> None:
 
 
 def test_parse_object_uri_invalid_three_components() -> None:
-    object_path = "organization/parent-456/test-file.pdf"
+    object_path = "grant_application/parent-456/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
@@ -533,7 +614,7 @@ def test_parse_object_uri_invalid_three_components() -> None:
 
 
 def test_parse_object_uri_invalid_five_components() -> None:
-    object_path = "organization/ws-123/grant_application/app-456/test-file.pdf"
+    object_path = "grant_application/ws-123/grant_application/app-456/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
@@ -543,7 +624,7 @@ def test_parse_object_uri_invalid_five_components() -> None:
 
 
 def test_parse_object_uri_invalid_two_components() -> None:
-    object_path = "organization/test-file.pdf"
+    object_path = "grant_application/test-file.pdf"
 
     with pytest.raises(ValidationError) as exc_info:
         parse_object_uri(object_path=object_path)
@@ -553,7 +634,7 @@ def test_parse_object_uri_invalid_two_components() -> None:
 
 
 def test_parse_object_uri_invalid_uuid() -> None:
-    object_path = "organization/invalid-uuid/source-789/test-file.pdf"
+    object_path = "grant_application/invalid-uuid/source-789/test-file.pdf"
 
     with pytest.raises(ValueError) as exc_info:
         parse_object_uri(object_path=object_path)
@@ -562,13 +643,13 @@ def test_parse_object_uri_invalid_uuid() -> None:
 
 
 def test_construct_and_parse_round_trip() -> None:
-    entity_type = "organization"
+    entity_type = "grant_application"
     entity_id = UUID("223e4567-e89b-12d3-a456-426614174001")
     source_id = UUID("323e4567-e89b-12d3-a456-426614174002")
     blob_name = "test-file.pdf"
 
     uri = construct_object_uri(
-        entity_type="organization",
+        entity_type="grant_application",
         entity_id=entity_id,
         source_id=source_id,
         blob_name=blob_name,
