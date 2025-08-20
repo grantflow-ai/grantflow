@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+import base64
+import binascii
+
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from httpx import AsyncClient, Timeout
+
 from packages.shared_utils.src.logger import get_logger
-
 from services.crawler.src.constants import SKIP_DOMAINS
-
-if TYPE_CHECKING:
-    pass
-
+from packages.shared_utils.src.pubsub import PubSubEvent, CrawlingRequest
+from packages.shared_utils.src.exceptions import ValidationError, DeserializationError
+from packages.shared_utils.src.serialization import deserialize
 
 client = AsyncClient(timeout=Timeout(15))
 logger = get_logger(__name__)
@@ -72,3 +73,42 @@ def filter_url(url: str) -> bool:
         return True
 
     return parsed.scheme not in {"http", "https"}
+
+
+async def decode_pubsub_message(event: PubSubEvent) -> CrawlingRequest:
+    encoded_data = event.message.data
+    if not encoded_data:
+        logger.warning("PubSub message missing data field")
+        raise ValidationError("PubSub message missing data field")
+
+    logger.debug(
+        "Decoding PubSub message",
+        message_id=event.message.message_id,
+        publish_time=event.message.publish_time,
+    )
+
+    try:
+        decoded_data = base64.b64decode(encoded_data).decode()
+        request = deserialize(decoded_data, CrawlingRequest)
+
+        logger.debug(
+            "PubSub message decoded successfully",
+            source_id=str(request["source_id"]),
+            entity_type=request["entity_type"],
+            entity_id=str(request["entity_id"]),
+            url=request["url"],
+            trace_id=request.get("trace_id"),
+        )
+
+        return request
+    except (DeserializationError, binascii.Error, UnicodeDecodeError) as e:
+        logger.error(
+            "Validation error processing PubSub message",
+            error_type=type(e).__name__,
+            error_message=str(e),
+            message_id=event.message.message_id,
+        )
+        raise ValidationError(
+            "Failed to decode PubSub message",
+            context={"message": event.message, "error": str(e)},
+        ) from e

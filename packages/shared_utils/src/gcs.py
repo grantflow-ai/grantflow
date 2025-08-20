@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypedDict, cast
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
 from google.api_core import exceptions
@@ -7,8 +7,6 @@ from google.cloud import storage
 from google.cloud.exceptions import ClientError
 from google.cloud.storage import Bucket
 from google.oauth2.service_account import Credentials
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.shared_utils.src.constants import ONE_MINUTE_SECONDS
 from packages.shared_utils.src.env import get_env
@@ -17,14 +15,12 @@ from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.sync import run_sync
+from packages.shared_utils.src.shared_types import EntityType
 
 logger = get_logger(__name__)
 
 storage_client_ref = Ref[storage.Client]()
 bucket_ref = Ref[Bucket]()
-
-
-EntityType = Literal["organization", "granting_institution"]
 
 
 class URIParseResult(TypedDict):
@@ -127,13 +123,16 @@ def parse_object_uri(
     object_path: str,
 ) -> URIParseResult:
     components = object_path.split("/")
-
     if len(components) == 4:
         entity_type_str, entity_id_str, source_id_str, blob_name = components
 
-        if entity_type_str not in ("organization", "granting_institution"):
+        if entity_type_str not in (
+            "grant_application",
+            "grant_template",
+            "granting_institution",
+        ):
             raise ValidationError(
-                "Invalid entity type. Must be 'organization' or 'granting_institution'",
+                "Invalid entity type. Must be one of: grant_application, grant_template, granting_institution",
                 context={
                     "entity_type": entity_type_str,
                     "object_path": object_path,
@@ -281,65 +280,3 @@ async def delete_blob(blob_path: str) -> None:
                 "error": str(e),
             },
         ) from e
-
-
-async def resolve_parent_id_for_notification(
-    session: AsyncSession,
-    source_id: str | UUID,
-    entity_type: str,
-    entity_id: str | UUID,
-) -> str:
-    """Resolve the actual parent ID for notifications.
-
-    For granting institutions, entity_id == parent_id.
-    For organizations, we need to find the grant application or template that owns this source.
-
-    Args:
-        session: SQLAlchemy async session
-        source_id: The RAG source ID to look up
-        entity_type: Either "organization" or "granting_institution"
-        entity_id: The entity ID from the GCS path
-
-    Returns:
-        The parent ID as a string (grant application ID, template ID, or granting institution ID)
-    """
-    from packages.db.src.tables import (
-        GrantApplicationSource,
-        GrantTemplateSource,
-    )
-
-    if entity_type == "granting_institution":
-        return str(entity_id)
-
-    grant_app_source = await session.scalar(
-        select(GrantApplicationSource.grant_application_id).where(
-            GrantApplicationSource.rag_source_id == str(source_id)
-        )
-    )
-    if grant_app_source:
-        logger.debug(
-            "Found grant application parent",
-            source_id=str(source_id),
-            parent_id=str(grant_app_source),
-        )
-        return str(grant_app_source)
-
-    grant_template_source = await session.scalar(
-        select(GrantTemplateSource.grant_template_id).where(
-            GrantTemplateSource.rag_source_id == str(source_id)
-        )
-    )
-    if grant_template_source:
-        logger.debug(
-            "Found grant template parent",
-            source_id=str(source_id),
-            parent_id=str(grant_template_source),
-        )
-        return str(grant_template_source)
-
-    logger.warning(
-        "No parent association found for source, using entity_id",
-        source_id=str(source_id),
-        entity_id=str(entity_id),
-    )
-    return str(entity_id)
