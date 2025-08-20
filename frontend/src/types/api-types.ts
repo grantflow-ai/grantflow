@@ -211,6 +211,8 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	editor_document_init: boolean;
+	editor_document_id: string;
 };
 };
 
@@ -760,6 +762,8 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	editor_document_init: boolean;
+	editor_document_id: string;
 };
 };
 
@@ -1346,6 +1350,8 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	editor_document_id: string | null;
+	editor_document_init: boolean;
 };
 };
 
@@ -1631,6 +1637,8 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
+	editor_document_init: boolean;
+	editor_document_id: string;
 };
 };
 
