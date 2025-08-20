@@ -12,7 +12,9 @@ describe("OrganizationDeletedTemplate", () => {
 
 		expect(html).toContain("Organization Acme Research Inc. Has Been Deleted");
 		expect(html).toContain("Dear Researcher");
-		expect(html).toContain("We confirm that the organization Acme Research Inc. has been removed");
+		expect(html).toContain(
+			"We confirm that the organization <!-- -->Acme Research Inc.<!-- --> has been removed",
+		);
 	});
 
 	it("includes the main confirmation message", async () => {
@@ -37,7 +39,7 @@ describe("OrganizationDeletedTemplate", () => {
 	it("includes the feedback request message", async () => {
 		const html = await render(<OrganizationDeletedTemplate {...mockProps} />);
 
-		expect(html).toContain("We're sorry to see you go.");
+		expect(html).toContain("We&#x27;re sorry to see you go.");
 		expect(html).toContain("contact@grantflow.ai");
 	});
 
