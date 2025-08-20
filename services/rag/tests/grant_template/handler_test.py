@@ -508,7 +508,6 @@ async def test_grant_template_generation_pipeline_missing_sources(
     with patch(
         "services.rag.src.grant_template.handler.verify_rag_sources_indexed", new_callable=AsyncMock
     ) as mock_verify:
-        # Use "indexing timeout" in error message to trigger the right notification event
         mock_verify.side_effect = ValidationError("indexing timeout - No RAG sources found")
 
         result = await grant_template_generation_pipeline_handler(
@@ -562,7 +561,6 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     mock_job_manager.update_job_status = AsyncMock()
     mock_job_manager.add_notification = AsyncMock()
 
-    # Use "indexing failed" in the error message to trigger the right notification event
     mock_verify = AsyncMock(side_effect=ValidationError("indexing failed - no rag sources found"))
 
     with patch("services.rag.src.grant_template.handler.verify_rag_sources_indexed", mock_verify):

@@ -835,7 +835,6 @@ async def handle_list_organization_applications(
     )
 
     async with session_maker() as session:
-        # Calculate the date 90 days ago
         ninety_days_ago = datetime.now(UTC) - timedelta(days=90)
 
         query = (
@@ -846,12 +845,11 @@ async def handle_list_organization_applications(
             .where(
                 GrantApplication.project.has(organization_id=organization_id),
                 GrantApplication.deleted_at.is_(None),
-                GrantApplication.updated_at >= ninety_days_ago,  # Only applications updated in last 90 days
+                GrantApplication.updated_at >= ninety_days_ago,
             )
             .outerjoin(GrantTemplate, GrantTemplate.grant_application_id == GrantApplication.id)
         )
 
-        # Order by updated_at desc and limit to 5
         query = query.order_by(GrantApplication.updated_at.desc()).limit(5)
 
         results = await session.execute(query)

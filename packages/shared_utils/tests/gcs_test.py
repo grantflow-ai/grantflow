@@ -28,11 +28,9 @@ from packages.shared_utils.src.gcs import (
 
 @pytest.fixture(autouse=True)
 def reset_refs() -> Generator[None, None, None]:
-    # Reset before test
     storage_client_ref.value = None
     bucket_ref.value = None
     yield
-    # Reset after test to ensure clean state for subsequent tests
     storage_client_ref.value = None
     bucket_ref.value = None
 
@@ -316,7 +314,6 @@ async def test_create_signed_upload_url(
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
 
-    # Ensure clean state by resetting refs at test level
     storage_client_ref.value = None
     bucket_ref.value = None
 
@@ -328,7 +325,7 @@ async def test_create_signed_upload_url(
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
-        # Configure environment mocks to avoid early returns
+
         def mock_get_env_impl(
             key: str, fallback: str | None = None, raise_on_missing: bool = True
         ) -> str:
@@ -376,7 +373,6 @@ async def test_create_signed_upload_url_with_uuids(
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
 
-    # Ensure clean state by resetting refs at test level
     storage_client_ref.value = None
     bucket_ref.value = None
 
@@ -388,7 +384,7 @@ async def test_create_signed_upload_url_with_uuids(
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
-        # Configure environment mocks to avoid early returns
+
         def mock_get_env_impl(
             key: str, fallback: str | None = None, raise_on_missing: bool = True
         ) -> str:
@@ -436,7 +432,6 @@ async def test_create_signed_upload_url_error(
     mock_blob.generate_signed_url.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 
-    # Ensure clean state by resetting refs at test level
     storage_client_ref.value = None
     bucket_ref.value = None
 
@@ -449,7 +444,7 @@ async def test_create_signed_upload_url_error(
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
         pytest.raises(ExternalOperationError) as exc_info,
     ):
-        # Configure environment mocks to avoid early returns
+
         def mock_get_env_impl(
             key: str, fallback: str | None = None, raise_on_missing: bool = True
         ) -> str:
@@ -493,7 +488,6 @@ async def test_create_signed_upload_url_with_content_type(
     mock_blob.generate_signed_url.return_value = expected_signed_url
     mock_bucket.blob.return_value = mock_blob
 
-    # Ensure clean state by resetting refs at test level
     storage_client_ref.value = None
     bucket_ref.value = None
 
@@ -505,7 +499,7 @@ async def test_create_signed_upload_url_with_content_type(
         ),
         patch("packages.shared_utils.src.gcs.get_env") as mock_get_env,
     ):
-        # Configure environment mocks to avoid early returns
+
         def mock_get_env_impl(
             key: str, fallback: str | None = None, raise_on_missing: bool = True
         ) -> str:

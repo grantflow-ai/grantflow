@@ -1060,7 +1060,6 @@ async def test_list_organization_applications(
 ) -> None:
     """Test listing applications at organization level"""
 
-    # Create another project in the same organization
     async with async_session_maker() as session, session.begin():
         second_project = Project(
             organization_id=project.organization_id,
@@ -1070,42 +1069,37 @@ async def test_list_organization_applications(
         await session.commit()
         second_project_id = second_project.id
 
-    # Create applications in both projects
     async with async_session_maker() as session, session.begin():
         now = datetime.now(UTC)
 
-        # Create 3 applications in first project (recently updated)
         for i in range(3):
             app = GrantApplication(
                 project_id=project.id,
                 title=f"Project 1 - App {i}",
                 status=ApplicationStatusEnum.WORKING_DRAFT,
-                updated_at=now - timedelta(days=i * 10),  # 0, 10, 20 days ago
+                updated_at=now - timedelta(days=i * 10),
             )
             session.add(app)
 
-        # Create 3 applications in second project (recently updated)
         for i in range(3):
             app = GrantApplication(
                 project_id=second_project_id,
                 title=f"Project 2 - App {i}",
                 status=ApplicationStatusEnum.IN_PROGRESS,
-                updated_at=now - timedelta(days=i * 15),  # 0, 15, 30 days ago
+                updated_at=now - timedelta(days=i * 15),
             )
             session.add(app)
 
-        # Create an old application (not updated in > 90 days)
         old_app = GrantApplication(
             project_id=project.id,
             title="Old Application",
             status=ApplicationStatusEnum.WORKING_DRAFT,
-            updated_at=now - timedelta(days=100),  # 100 days ago - should be filtered out
+            updated_at=now - timedelta(days=100),
         )
         session.add(old_app)
 
         await session.commit()
 
-    # Test the organization-level endpoint
     response = await test_client.get(
         f"/organizations/{project.organization_id}/applications",
         headers={"Authorization": "Bearer some_token"},
@@ -1114,18 +1108,15 @@ async def test_list_organization_applications(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
 
-    # Should return only 5 most recent applications
     assert len(data["applications"]) == 5
     assert data["pagination"]["total"] == 5
     assert data["pagination"]["limit"] == 5
     assert data["pagination"]["offset"] == 0
     assert data["pagination"]["has_more"] is False
 
-    # Check that applications are from both projects
     project_ids = {app["project_id"] for app in data["applications"]}
-    assert len(project_ids) == 2  # Should have apps from both projects
+    assert len(project_ids) == 2
 
-    # Check ordering (most recent first)
     created_dates = [app["created_at"] for app in data["applications"]]
     assert created_dates == sorted(created_dates, reverse=True)
 
@@ -1139,7 +1130,6 @@ async def test_list_organization_applications_with_grant_template(
     """Test listing organization applications with grant template submission dates"""
 
     async with async_session_maker() as session, session.begin():
-        # Create application with grant template
         app = GrantApplication(
             project_id=project.id,
             title="Application with Template",
