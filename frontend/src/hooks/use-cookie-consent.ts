@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// eslint-disable-next-line import-x/no-unresolved
 import { useCookies } from "react-cookie";
 import { COOKIE_CONSENT } from "@/constants";
 
