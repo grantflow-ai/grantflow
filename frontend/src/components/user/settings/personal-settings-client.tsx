@@ -1,17 +1,17 @@
 "use client";
 
 import { signOut } from "firebase/auth";
+import { X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { deleteAccount, getSoleOwnedOrganizations, getSoleOwnedProjects } from "@/actions/user";
-import { DeleteAccountModal } from "@/components/user/modals/delete-account-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DeleteAccountModal } from "@/components/user/modals/delete-account-modal";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { X } from "lucide-react";
 
 export function PersonalSettingsClient() {
 	const { clearUser, user } = useUserStore();
