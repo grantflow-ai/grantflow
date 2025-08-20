@@ -492,8 +492,8 @@ async def test_handle_crawl_url_grant_application(
     mock_publish_url_crawling_task.assert_called_once_with(
         url="https://example.org/docs",
         source_id=ANY,
-        entity_type="organization",
-        entity_id=project.organization_id,
+        entity_type="grant_application",
+        entity_id=grant_application.id,
         trace_id=ANY,
     )
 
@@ -547,8 +547,8 @@ async def test_handle_crawl_url_grant_template(
     mock_publish_url_crawling_task.assert_called_once_with(
         url="https://example.org/docs",
         source_id=ANY,
-        entity_type="organization",
-        entity_id=project.organization_id,
+        entity_type="grant_template",
+        entity_id=grant_template.id,
         trace_id=ANY,
     )
 
