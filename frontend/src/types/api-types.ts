@@ -1031,10 +1031,6 @@ export namespace API {
 	export interface PathParameters {
 	organization_id: string;
 };
-
-	export interface QueryParameters {
-	search?: null | string;
-};
 };
 
 	export namespace ListOrganizationInvitations {

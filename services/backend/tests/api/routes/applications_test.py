@@ -1074,32 +1074,32 @@ async def test_list_organization_applications(
     async with async_session_maker() as session, session.begin():
         now = datetime.now(UTC)
 
-        # Create 3 applications in first project (recent)
+        # Create 3 applications in first project (recently updated)
         for i in range(3):
             app = GrantApplication(
                 project_id=project.id,
                 title=f"Project 1 - App {i}",
                 status=ApplicationStatusEnum.WORKING_DRAFT,
-                created_at=now - timedelta(days=i * 10),  # 0, 10, 20 days ago
+                updated_at=now - timedelta(days=i * 10),  # 0, 10, 20 days ago
             )
             session.add(app)
 
-        # Create 3 applications in second project (recent)
+        # Create 3 applications in second project (recently updated)
         for i in range(3):
             app = GrantApplication(
                 project_id=second_project_id,
                 title=f"Project 2 - App {i}",
                 status=ApplicationStatusEnum.IN_PROGRESS,
-                created_at=now - timedelta(days=i * 15),  # 0, 15, 30 days ago
+                updated_at=now - timedelta(days=i * 15),  # 0, 15, 30 days ago
             )
             session.add(app)
 
-        # Create an old application (> 90 days)
+        # Create an old application (not updated in > 90 days)
         old_app = GrantApplication(
             project_id=project.id,
             title="Old Application",
             status=ApplicationStatusEnum.WORKING_DRAFT,
-            created_at=now - timedelta(days=100),  # 100 days ago - should be filtered out
+            updated_at=now - timedelta(days=100),  # 100 days ago - should be filtered out
         )
         session.add(old_app)
 
@@ -1182,91 +1182,3 @@ async def test_list_organization_applications_unauthorized(
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
-
-
-async def test_list_organization_applications_with_search(
-    test_client: TestingClientType,
-    async_session_maker: async_sessionmaker[Any],
-    project: Project,
-    project_member_user: OrganizationUser,
-) -> None:
-    """Test searching organization applications by title"""
-
-    async with async_session_maker() as session, session.begin():
-        # Create applications with different titles
-        apps = [
-            GrantApplication(
-                project_id=project.id,
-                title="Cancer Research Grant",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-            ),
-            GrantApplication(
-                project_id=project.id,
-                title="Neuroscience Study Proposal",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-            ),
-            GrantApplication(
-                project_id=project.id,
-                title="Climate Research Initiative",
-                status=ApplicationStatusEnum.IN_PROGRESS,
-            ),
-            GrantApplication(
-                project_id=project.id,
-                title="AI for Healthcare",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-            ),
-            GrantApplication(
-                project_id=project.id,
-                title="Research Equipment Purchase",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-            ),
-            GrantApplication(
-                project_id=project.id,
-                title="Quantum Computing Research",
-                status=ApplicationStatusEnum.WORKING_DRAFT,
-            ),
-        ]
-        for app in apps:
-            session.add(app)
-        await session.commit()
-
-    # Test search for "research"
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/applications",
-        params={"search": "research"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    # Should return applications with "research" in title, limited to 5
-    assert len(data["applications"]) <= 5
-    for app in data["applications"]:
-        assert "research" in app["title"].lower()
-
-    # Test search for "cancer"
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/applications",
-        params={"search": "cancer"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 1
-    assert data["applications"][0]["title"] == "Cancer Research Grant"
-
-    # Test search with no results
-    response = await test_client.get(
-        f"/organizations/{project.organization_id}/applications",
-        params={"search": "nonexistent"},
-        headers={"Authorization": "Bearer some_token"},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()
-
-    assert len(data["applications"]) == 0
-    assert data["pagination"]["total"] == 0
