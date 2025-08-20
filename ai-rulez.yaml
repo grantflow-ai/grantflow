@@ -15,24 +15,28 @@ outputs:
 agents:
   - name: "system-architect"
     description: "System architecture and design decisions"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       System architecture specialist for scalable, maintainable systems.
       Focus: system design, architecture patterns, infrastructure, microservices, Terraform
   
   - name: "typescript-engineer"
     description: "TypeScript/React development specialist"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       TypeScript/React expert for modern web development.
       Focus: TypeScript strict, React 19, Next.js 15 App Router, Zustand, testing with ::testing/factories
   
   - name: "python-engineer"
     description: "Python backend development specialist"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       Python backend engineer for async web services.
       Focus: Python 3.13+, Litestar async, SQLAlchemy 2.0, structlog with key=value pairs
   
   - name: "devsecops-agent"
     description: "DevSecOps, CI/CD, and security specialist"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       DevSecOps engineer for secure CI/CD and cloud infrastructure.
       
@@ -57,6 +61,7 @@ agents:
   
   - name: "code-reviewer"
     description: "Code quality, correctness, and convention compliance"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       Code review specialist ensuring quality, correctness, and alignment with GrantFlow conventions.
       
@@ -79,6 +84,7 @@ agents:
   
   - name: "database-engineer"
     description: "Database design, migrations, and query optimization"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       Database specialist for PostgreSQL, SQLAlchemy 2.0, and Alembic migrations.
       
@@ -96,6 +102,7 @@ agents:
   
   - name: "test-engineer"
     description: "Test strategy, coverage, and test implementation"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       Testing specialist for comprehensive test coverage and strategy.
       
@@ -115,6 +122,7 @@ agents:
   
   - name: "performance-optimizer"
     description: "Performance analysis and optimization"
+    targets: [".claude/agents/*.md"]
     system_prompt: |
       Performance specialist for optimization and scalability.
       
@@ -140,6 +148,7 @@ rules:
   
   - name: "Claude Agent Delegation"
     priority: 95
+    targets: ["CLAUDE.md", ".claude/**/*.md"]
     content: |
       **📌 CLAUDE ASSISTANTS ONLY - This section applies ONLY to Claude AI**
       
