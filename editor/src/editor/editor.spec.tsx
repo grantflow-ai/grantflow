@@ -7,6 +7,40 @@ const crdtUrl = "ws://127.0.0.1:1234";
 const documentId = "123";
 
 describe("Editor", () => {
+	it("renders with correct existing content", async () => {
+		let markdownOutput: string | undefined = "";
+
+		const Test = () => {
+			const ref = useRef<EditorRef>(null);
+			return (
+				<>
+					<Editor
+						ref={ref}
+						crdtUrl={crdtUrl}
+						documentId={documentId}
+						initialMarkdownContent="# hello world"
+					/>
+					<button
+						type="button"
+						data-testid="save-button"
+						onClick={() => {
+							markdownOutput = ref.current?.getMarkdown();
+						}}
+					>
+						Save
+					</button>
+				</>
+			);
+		};
+		render(<Test />);
+
+		const textbox = screen.getByTestId("simple-editor-content").firstChild;
+		assert(textbox);
+
+		fireEvent.click(screen.getByTestId("save-button"));
+		expect(markdownOutput).toContain("hello world");
+	});
+
 	it("returns correct markdown after editing", async () => {
 		let markdownOutput: string | undefined = "";
 
