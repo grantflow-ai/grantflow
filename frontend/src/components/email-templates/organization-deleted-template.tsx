@@ -24,16 +24,38 @@ export default function OrganizationDeletedTemplate({
 	return (
 		<Html>
 			<Head>
+				<meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				<link
 					href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap"
 					rel="stylesheet"
 				/>
+				<style>
+					{`
+            @media (max-width: 600px) {
+              .container {
+                width: 100% !important;
+                padding: 20px !important;
+              }
+              .content {
+                padding: 20px !important;
+              }
+              .heading {
+                font-size: 22px !important;
+              }
+              .paragraph {
+                font-size: 16px !important;
+                line-height: 24px !important;
+              }
+            }
+          `}
+				</style>
 			</Head>
 			<Preview>Organization {organizationName} Has Been Deleted</Preview>
 			<Body style={main}>
-				<Container style={container}>
+				<Container style={container} className="container">
 					<Section style={header}>
 						<div style={headerContent}>
 							<Img
@@ -55,17 +77,19 @@ export default function OrganizationDeletedTemplate({
 						</div>
 					</Section>
 
-					<Section style={content}>
-						<Heading style={heading}>Dear Researcher</Heading>
+					<Section style={content} className="content">
+						<Heading style={heading} className="heading">
+							Dear Researcher
+						</Heading>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							We confirm that the organization {organizationName || "[Organization Name]"} has been
 							removed from GrantFlow.
 							<br />
 							All associated documents, data, projects, and member access has been deleted.
 						</Text>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							If this action was taken in error or you have any questions, please contact our support
 							team.
 						</Text>
@@ -74,8 +98,7 @@ export default function OrganizationDeletedTemplate({
 							<Button href={contactUsUrl} style={button}>
 								<span style={{ marginRight: "6px" }}>Contact Us</span>
 
-								
-<svg
+								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									width="13"
 									height="16"
@@ -92,7 +115,7 @@ export default function OrganizationDeletedTemplate({
 							</Button>
 						</Section>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							We're sorry to see you go. If you have any feedback or suggestions on how we can improve,
 							we’d love to hear from you. Your insights help us make things better. Feel free to reach out
 							to us at{" "}
@@ -101,9 +124,11 @@ export default function OrganizationDeletedTemplate({
 							</Link>
 						</Text>
 
-						<Text style={paragraph}>Thank you for being part of GrantFlow.</Text>
+						<Text style={paragraph} className="paragraph">
+							Thank you for being part of GrantFlow.
+						</Text>
 
-						<Text style={paragraph}>
+						<Text style={paragraph} className="paragraph">
 							Warm regards,
 							<br />
 							Vsphera Team
