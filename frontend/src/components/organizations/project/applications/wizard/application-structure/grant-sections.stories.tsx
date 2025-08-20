@@ -3,15 +3,31 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "@storybook/test";
 import { useState } from "react";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { DragDropContext, type DragDropContextData } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
+
+const mockDragDropContext = {
+	getDragState: (): DragDropContextData => ({
+		activeIndex: -1,
+		activeItem: null,
+		isAnyDragging: false,
+		overIndex: -1,
+		overItem: null,
+		sections: [],
+		zone: null,
+		zonePercent: null,
+	}),
+};
 
 const meta: Meta<typeof SortableSection> = {
 	component: SortableSection,
 	decorators: [
 		(Story) => (
-			<div className="w-full max-w-4xl mx-auto p-4 bg-gray-50 min-h-screen">
-				<Story />
-			</div>
+			<DragDropContext.Provider value={mockDragDropContext}>
+				<div className="w-full max-w-4xl mx-auto p-4 bg-gray-50 min-h-screen">
+					<Story />
+				</div>
+			</DragDropContext.Provider>
 		),
 	],
 	parameters: {
