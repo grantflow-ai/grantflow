@@ -227,6 +227,8 @@ export const ApplicationFactory = new Factory<API.CreateApplication.Http201.Resp
 	completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
 	created_at: factory.date.past().toISOString(),
 	deadline: factory.datatype.boolean() ? factory.date.future().toISOString() : undefined,
+	editor_document_id: "123",
+	editor_document_init: false,
 	form_inputs: factory.datatype.boolean() ? FormInputsFactory.build() : undefined,
 	grant_template: factory.datatype.boolean() ? (GrantTemplateFactory.build() as any) : undefined,
 	id: factory.string.uuid(),
@@ -362,18 +364,24 @@ export const UpdateGrantTemplateRequestFactory = new Factory<API.UpdateGrantTemp
 	const sectionCount = factory.number.int({ max: 10, min: 1 });
 	return {
 		grant_sections: Array.from({ length: sectionCount }, (_, index) => ({
-			depends_on: factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 2, min: 0 } }),
+			depends_on: factory.helpers.multiple(() => factory.string.uuid(), {
+				count: { max: 2, min: 0 },
+			}),
 			generation_instructions: factory.lorem.paragraph(),
 			id: factory.string.uuid(),
 			is_clinical_trial: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
 			is_detailed_research_plan: factory.helpers.maybe(() => factory.datatype.boolean()) ?? null,
-			keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+			keywords: factory.helpers.multiple(() => factory.lorem.word(), {
+				count: { max: 5, min: 1 },
+			}),
 			max_words: factory.number.int({ max: 5000, min: 100 }),
 			order: index,
 			parent_id: factory.datatype.boolean() ? factory.string.uuid() : null,
 			search_queries: factory.helpers.multiple(() => factory.lorem.sentence(), { count: { max: 3, min: 0 } }),
 			title: factory.lorem.sentence(),
-			topics: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+			topics: factory.helpers.multiple(() => factory.lorem.word(), {
+				count: { max: 5, min: 1 },
+			}),
 		})),
 		submission_date: factory.date.future().toISOString(),
 	};
@@ -534,6 +542,8 @@ export const ApplicationWithTemplateFactory = new Factory<API.CreateApplication.
 	});
 	return {
 		...baseApplication,
+		editor_document_id: "123",
+		editor_document_init: false,
 		grant_template: grantTemplate,
 	};
 });
@@ -872,7 +882,9 @@ export const CreateOrganizationInvitationRequestFactory = new Factory<API.Create
 		email: factory.internet.email(),
 		has_all_projects_access: factory.datatype.boolean(),
 		project_ids: factory.datatype.boolean()
-			? factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 3, min: 1 } })
+			? factory.helpers.multiple(() => factory.string.uuid(), {
+					count: { max: 3, min: 1 },
+				})
 			: undefined,
 		role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
 	}),
@@ -887,7 +899,9 @@ export const UpdateOrganizationInvitationRequestFactory = new Factory<API.Update
 export const UpdateMemberRoleOrgRequestFactory = new Factory<API.UpdateMemberRole.RequestBody>((factory) => ({
 	has_all_projects_access: factory.datatype.boolean(),
 	project_ids: factory.datatype.boolean()
-		? factory.helpers.multiple(() => factory.string.uuid(), { count: { max: 3, min: 1 } })
+		? factory.helpers.multiple(() => factory.string.uuid(), {
+				count: { max: 3, min: 1 },
+			})
 		: undefined,
 	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
 }));
