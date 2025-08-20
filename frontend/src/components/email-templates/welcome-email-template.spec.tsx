@@ -1,7 +1,6 @@
 import { render } from "@react-email/render";
 import WelcomeEmailTemplate from "./welcome-email-template";
 
-
 describe("WelcomeEmailTemplate", () => {
 	const mockProps = {
 		acceptInvitationUrl: "https://grantflow.ai/accept-invitation?token=test-token",

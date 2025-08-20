@@ -1,7 +1,6 @@
 import { render } from "@react-email/render";
 import EmailVerificationTemplate from "./email-verification-template";
 
-
 describe("EmailVerificationTemplate", () => {
 	const mockVerificationUrl = "https://grantflow.ai/verify-email?token=test-token";
 
