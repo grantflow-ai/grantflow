@@ -16,6 +16,7 @@ import {
 	generateApplication,
 	getApplication,
 	listApplications,
+	listOrganizationApplications,
 	triggerAutofill,
 	updateApplication,
 } from "./grant-applications";
@@ -295,6 +296,123 @@ describe("grant-applications actions", () => {
 				},
 			);
 			expect(result).toEqual(mockResponse);
+		});
+	});
+
+	describe("listOrganizationApplications", () => {
+		it("should list organization applications without params", async () => {
+			const mockResponse = {
+				applications: ApplicationFactory.batch(5),
+				pagination: {
+					has_more: false,
+					limit: 5,
+					offset: 0,
+					total: 5,
+				},
+			};
+
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
+			});
+
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
+
+			const result = await listOrganizationApplications(mockOrganizationId);
+
+			expect(mockGet).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/applications`, {
+				headers: { Authorization: "Bearer mock-token" },
+			});
+			expect(result).toEqual(mockResponse);
+		});
+
+		it("should list organization applications with search param", async () => {
+			const params = {
+				search: "research grant",
+			};
+
+			const mockResponse = {
+				applications: ApplicationFactory.batch(2),
+				pagination: {
+					has_more: false,
+					limit: 5,
+					offset: 0,
+					total: 2,
+				},
+			};
+
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
+			});
+
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
+
+			const result = await listOrganizationApplications(mockOrganizationId, params);
+
+			const expectedUrl = `organizations/${mockOrganizationId}/applications?search=research+grant`;
+
+			expect(mockGet).toHaveBeenCalledWith(expectedUrl, {
+				headers: { Authorization: "Bearer mock-token" },
+			});
+			expect(result).toEqual(mockResponse);
+		});
+
+		it("should handle empty results", async () => {
+			const params = {
+				search: "nonexistent",
+			};
+
+			const mockResponse = {
+				applications: [],
+				pagination: {
+					has_more: false,
+					limit: 5,
+					offset: 0,
+					total: 0,
+				},
+			};
+
+			const mockGet = vi.fn().mockReturnValue({
+				json: vi.fn().mockResolvedValue(mockResponse),
+			});
+
+			vi.mocked(getClient).mockReturnValue({
+				get: mockGet,
+			} as any);
+
+			const result = await listOrganizationApplications(mockOrganizationId, params);
+
+			expect(result.applications).toHaveLength(0);
+			expect(result.pagination.total).toBe(0);
+		});
+
+		it("should handle errors when listing organization applications", async () => {
+			const mockError = new HTTPError(
+				new Response(JSON.stringify({ detail: "Internal server error" }), {
+					status: 500,
+					statusText: "Internal Server Error",
+				}),
+				new Request("http://test.com"),
+				{
+					method: "GET",
+					onDownloadProgress: () => {},
+					onUploadProgress: () => {},
+					prefixUrl: "",
+					retry: {
+						count: 0,
+						delay: 0,
+						methods: ["GET", "POST"],
+						statusCodes: [408, 413, 429, 500, 502, 503, 504],
+					},
+				} as any,
+			);
+
+			vi.mocked(withAuthRedirect).mockRejectedValue(mockError);
+
+			await expect(listOrganizationApplications(mockOrganizationId)).rejects.toThrow(mockError);
 		});
 	});
 
