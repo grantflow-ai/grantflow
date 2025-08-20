@@ -84,11 +84,15 @@ def _determine_entity_info(
     if (application_id or template_id) and not organization_id:
         raise BackendError("organization_id required for grant application sources")
 
-    if application_id:
-        return "grant_application", application_id, "grant_application", organization_id  # type: ignore[return-value]
-
     if template_id:
-        return "grant_template", template_id, "grant_template", organization_id  # type: ignore[return-value]
+        # the parent_id value for grant_template is the grant application id ~keep
+        if not application_id:
+            raise BackendError("application_id required for grant template sources")
+
+        return "grant_template", application_id, "grant_template", template_id
+
+    if application_id:
+        return "grant_application", application_id, "grant_application", application_id
 
     if granting_institution_id:
         return "granting_institution", granting_institution_id, "granting_institution", granting_institution_id
@@ -98,10 +102,10 @@ def _determine_entity_info(
 
 def _create_operation_id_creator(key: str) -> OperationIDCreator:
     def _create_operation_id(_: HTTPRouteHandler, __: Method, paths: list[str | PathParameterDefinition]) -> str:
-        if "applications" in paths:
-            return key.format(value="GrantApplication")
         if "grant_templates" in paths:
             return key.format(value="GrantTemplate")
+        if "applications" in paths:
+            return key.format(value="GrantApplication")
         return key.format(value="GrantingInstitution")
 
     return _create_operation_id
@@ -196,7 +200,7 @@ async def handle_create_rag_source(
                     insert(GrantApplicationSource).values(
                         {
                             "rag_source_id": source_id,
-                            "grant_application_id": parent_id,
+                            "grant_application_id": entity_id,
                         }
                     )
                 )
@@ -205,7 +209,7 @@ async def handle_create_rag_source(
                     insert(GrantTemplateSource).values(
                         {
                             "rag_source_id": source_id,
-                            "grant_template_id": parent_id,
+                            "grant_template_id": entity_id,
                         }
                     )
                 )
@@ -214,7 +218,7 @@ async def handle_create_rag_source(
                     insert(GrantingInstitutionSource).values(
                         {
                             "rag_source_id": source_id,
-                            "granting_institution_id": parent_id,
+                            "granting_institution_id": entity_id,
                         }
                     )
                 )
@@ -240,7 +244,7 @@ async def handle_create_rag_source(
 @get(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
-        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/granting-institutions/{granting_institution_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -257,20 +261,7 @@ async def handle_retrieve_rag_sources(
     async with session_maker() as session:
         rag_poly = with_polymorphic(RagSource, [RagFile, RagUrl])
 
-        if application_id:
-            stmt = (
-                select(rag_poly)
-                .join(
-                    GrantApplicationSource,
-                    GrantApplicationSource.rag_source_id == rag_poly.id,
-                )
-                .where(
-                    GrantApplicationSource.grant_application_id == application_id,
-                    GrantApplicationSource.deleted_at.is_(None),
-                    rag_poly.deleted_at.is_(None),
-                )
-            )
-        elif template_id:
+        if template_id:
             stmt = (
                 select(rag_poly)
                 .join(
@@ -280,6 +271,19 @@ async def handle_retrieve_rag_sources(
                 .where(
                     GrantTemplateSource.grant_template_id == template_id,
                     GrantTemplateSource.deleted_at.is_(None),
+                    rag_poly.deleted_at.is_(None),
+                )
+            )
+        elif application_id:
+            stmt = (
+                select(rag_poly)
+                .join(
+                    GrantApplicationSource,
+                    GrantApplicationSource.rag_source_id == rag_poly.id,
+                )
+                .where(
+                    GrantApplicationSource.grant_application_id == application_id,
+                    GrantApplicationSource.deleted_at.is_(None),
                     rag_poly.deleted_at.is_(None),
                 )
             )
@@ -331,7 +335,7 @@ async def handle_retrieve_rag_sources(
 @delete(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
-        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/granting-institutions/{granting_institution_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -350,21 +354,21 @@ async def handle_delete_rag_source(
     async with session_maker() as session, session.begin():
         rag_poly = with_polymorphic(RagSource, [RagFile, RagUrl])
 
-        if application_id:
-            statement = (
-                select(rag_poly)
-                .join(GrantApplicationSource)
-                .where(
-                    GrantApplicationSource.grant_application_id == application_id,
-                    rag_poly.id == source_id,
-                )
-            )
-        elif template_id:
+        if template_id:
             statement = (
                 select(rag_poly)
                 .join(GrantTemplateSource)
                 .where(
                     GrantTemplateSource.grant_template_id == template_id,
+                    rag_poly.id == source_id,
+                )
+            )
+        elif application_id:
+            statement = (
+                select(rag_poly)
+                .join(GrantApplicationSource)
+                .where(
+                    GrantApplicationSource.grant_application_id == application_id,
                     rag_poly.id == source_id,
                 )
             )
@@ -383,17 +387,7 @@ async def handle_delete_rag_source(
             result = await session.execute(statement)
             source = result.scalar_one()
 
-            if application_id:
-                audit_org_id = await session.scalar(
-                    select(Project.organization_id)
-                    .join(GrantApplication)
-                    .where(
-                        GrantApplication.id == application_id,
-                        GrantApplication.deleted_at.is_(None),
-                        Project.deleted_at.is_(None),
-                    )
-                )
-            elif template_id:
+            if template_id:
                 audit_org_id = await session.scalar(
                     select(Project.organization_id)
                     .join(GrantApplication)
@@ -401,6 +395,16 @@ async def handle_delete_rag_source(
                     .where(
                         GrantTemplate.id == template_id,
                         GrantTemplate.deleted_at.is_(None),
+                        GrantApplication.deleted_at.is_(None),
+                        Project.deleted_at.is_(None),
+                    )
+                )
+            elif application_id:
+                audit_org_id = await session.scalar(
+                    select(Project.organization_id)
+                    .join(GrantApplication)
+                    .where(
+                        GrantApplication.id == application_id,
                         GrantApplication.deleted_at.is_(None),
                         Project.deleted_at.is_(None),
                     )
@@ -456,7 +460,7 @@ async def handle_delete_rag_source(
 @post(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
-        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/granting-institutions/{granting_institution_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -522,7 +526,7 @@ async def handle_create_upload_url(
 @post(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
-        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
         "/granting-institutions/{granting_institution_id:uuid}/sources/crawl-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
