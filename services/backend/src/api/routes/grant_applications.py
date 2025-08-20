@@ -18,6 +18,7 @@ from packages.db.src.json_objects import (
     ResearchObjective,
 )
 from packages.db.src.tables import (
+    EditorDocument,
     GrantApplication,
     GrantApplicationSource,
     GrantTemplate,
@@ -120,6 +121,8 @@ class ApplicationResponse(TypedDict):
     rag_job_id: NotRequired[str]
     parent_id: NotRequired[str]
     deadline: NotRequired[str]
+    editor_document_id: str | None
+    editor_document_init: bool
     created_at: str
     updated_at: str
 
@@ -198,6 +201,12 @@ async def _handle_retrieve_application(
             "rag_sources": [],
             "created_at": grant_application.created_at.isoformat(),
             "updated_at": grant_application.updated_at.isoformat(),
+            "editor_document_id": str(grant_application.editor_documents[0].id)
+            if grant_application.editor_documents
+            else None,
+            "editor_document_init": grant_application.editor_documents[0].crdt is not None
+            if grant_application.editor_documents
+            else False,
         }
 
         if grant_application.description:
@@ -296,6 +305,14 @@ async def handle_create_application(
                     }
                 )
                 .returning(GrantApplication)
+            )
+
+            await session.execute(
+                insert(EditorDocument).values(
+                    {
+                        "grant_application_id": application.id,
+                    }
+                )
             )
 
             await session.scalar(
@@ -755,6 +772,14 @@ async def handle_duplicate_application(
                     }
                 )
                 .returning(GrantApplication)
+            )
+
+            await session.execute(
+                insert(EditorDocument).values(
+                    {
+                        "grant_application_id": new_app.id,
+                    }
+                )
             )
 
             new_app_id = new_app.id
