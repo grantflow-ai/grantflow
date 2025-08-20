@@ -30,7 +30,7 @@ describe("PersonalAccountDeletionTemplate", () => {
 
 	it("includes the feedback request message", async () => {
 		const html = await render(<PersonalAccountDeletionTemplate {...mockProps} />);
-		expect(html).toContain("We're sorry to see you go.");
+		expect(html).toContain("We&#x27;re sorry to see you go.");
 	});
 
 	it("includes the correct sign-off", async () => {
