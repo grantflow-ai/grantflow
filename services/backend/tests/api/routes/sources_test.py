@@ -364,8 +364,8 @@ async def test_create_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        entity_type="organization",
-        entity_id=project.organization_id,
+        entity_type="grant_application",
+        entity_id=grant_application.id,
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
@@ -431,8 +431,8 @@ async def test_create_template_upload_url(
     assert result["url"] == mock_signed_url
 
     mock_create_url.assert_called_once_with(
-        entity_type="organization",
-        entity_id=project.organization_id,
+        entity_type="grant_template",
+        entity_id=grant_template.id,
         source_id=ANY,
         blob_name=test_blob_name,
         trace_id=ANY,
