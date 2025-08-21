@@ -31,7 +31,9 @@ const getInputClasses = (
 ) => {
 	return cn(
 		"w-full bg-white text-dark text-sm rounded-sm p-3 placeholder:text-sm",
-		disabled ? "placeholder:text-input-muted" : "placeholder:text-input-placeholder",
+		disabled
+			? "placeholder:text-input-muted border-input-muted"
+			: "placeholder:text-input-placeholder border-input-muted",
 		variant === "field" && "ring-1 ring-input-border",
 		errorMessage && "border-error",
 		icon && "pr-10",
