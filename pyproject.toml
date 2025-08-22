@@ -195,6 +195,19 @@ explicit_package_bases = true
 mypy_path = [ "." ]
 exclude = [ "^cloud_functions/.*", "^terraform/.*" ]
 
+[[tool.mypy.overrides]]
+module = [
+  "google.cloud.*",
+  "google.cloud.firestore",
+  "google.cloud.firestore_v1",
+  "google.cloud.pubsub_v1",
+  "firebase_admin.*",
+  "firebase_functions.*",
+]
+ignore_missing_imports = true
+follow_imports = "skip"
+no_implicit_reexport = false
+
 [tool.uv.workspace]
 members = [
   "packages/db",
