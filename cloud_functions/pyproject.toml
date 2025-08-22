@@ -22,6 +22,28 @@ dependencies = [
   "sqlalchemy>=2",
 ]
 
+[tool.mypy]
+python_version = "3.13"
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = [
+  "google.cloud.*",
+  "google.cloud.firestore",
+  "google.cloud.firestore_v1",
+  "google.cloud.pubsub_v1",
+  "firebase_admin.*",
+  "firebase_functions.*",
+  "cloudevents.*",
+  "docx.*",
+  "markdown",
+]
+ignore_missing_imports = true
+follow_imports = "skip"
+no_implicit_reexport = false
+
 [tool.uv]
 dev-dependencies = [
   "types-requests>=2.32.0", # Specific to cloud_functions, not in root

@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 from typing import NotRequired, TypedDict
 
-from google.cloud import firestore  # type: ignore[attr-defined]
+from google.cloud import firestore
 from google.cloud.exceptions import GoogleCloudError
 from litestar import Response, get, post
 from litestar.status_codes import (

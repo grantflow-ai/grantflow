@@ -4,7 +4,7 @@ import json
 import os
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 import functions_framework
 import httpx
@@ -18,11 +18,80 @@ from sqlalchemy.orm import sessionmaker
 
 logger = __import__("logging").getLogger(__name__)
 
+
+class EmailResponse(TypedDict):
+    """Response from email notification functions."""
+
+    status: str
+    message: str
+
+
+class ApplicationData(TypedDict):
+    """Application data structure."""
+
+    id: str
+    title: str
+    text: str
+    created_at: str
+
+
+class UserData(TypedDict):
+    """User data structure."""
+
+    email: str
+    name: str
+
+
+class ProjectData(TypedDict):
+    """Project data structure."""
+
+    id: str
+    name: str
+
+
+class ApplicationDataResponse(TypedDict):
+    """Complete application data response."""
+
+    application: ApplicationData
+    user: UserData
+    project: ProjectData
+
+
+class GrantAlertTemplateData(TypedDict):
+    """Template data for grant alerts."""
+
+    grants: list[dict[str, Any]]
+    frequency: str
+    unsubscribe_url: str
+
+
+class GrantAlertNotification(TypedDict):
+    """Grant alert notification data."""
+
+    email: str
+    template_data: GrantAlertTemplateData
+    template_type: NotRequired[str]
+
+
+class ApplicationNotification(TypedDict):
+    """Application notification data."""
+
+    application_id: str
+    template_type: NotRequired[str]
+
+
+class ResendAttachment(TypedDict):
+    """Resend email attachment structure."""
+
+    filename: str
+    content: str
+
+
 template_dir = Path(__file__).parent / "templates"
 jinja_env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
 
 
-async def get_application_data(application_id: str) -> dict[str, Any]:
+async def get_application_data(application_id: str) -> ApplicationDataResponse:
     """Fetch application data from the database."""
     db_connection_string = os.environ.get("DATABASE_CONNECTION_STRING")
     if not db_connection_string:
@@ -59,22 +128,23 @@ async def get_application_data(application_id: str) -> dict[str, Any]:
         org_result = await session.execute(select(Organization).where(Organization.id == project.organization_id))
         organization = org_result.scalar_one()
 
-        return {
-            "application": {
-                "id": str(application.id),
-                "title": application.title,
-                "text": application.text,
-                "created_at": application.created_at.isoformat(),
-            },
-            "user": {
-                "email": organization.contact_email or (org_user.firebase_uid if org_user else "user@example.com"),
-                "name": organization.contact_person_name or organization.name,
-            },
-            "project": {
-                "id": str(project.id),
-                "name": project.name,
-            },
-        }
+        response: ApplicationDataResponse = ApplicationDataResponse(
+            application=ApplicationData(
+                id=str(application.id),
+                title=application.title,
+                text=application.text,
+                created_at=application.created_at.isoformat(),
+            ),
+            user=UserData(
+                email=organization.contact_email or (org_user.firebase_uid if org_user else "user@example.com"),
+                name=organization.contact_person_name or organization.name,
+            ),
+            project=ProjectData(
+                id=str(project.id),
+                name=project.name,
+            ),
+        )
+        return response
 
 
 def markdown_to_docx(markdown_text: str) -> bytes:
@@ -123,7 +193,7 @@ def markdown_to_docx(markdown_text: str) -> bytes:
 
 
 async def send_resend_email(
-    to_email: str, subject: str, html: str, attachments: list[dict[str, Any]]
+    to_email: str, subject: str, html: str, attachments: list[ResendAttachment]
 ) -> dict[str, Any]:
     """Send email via Resend API."""
     resend_api_key = os.environ.get("RESEND_API_KEY")
@@ -153,7 +223,7 @@ async def send_resend_email(
         return response.json()  # type: ignore[no-any-return]
 
 
-async def send_grant_alert_email(notification_data: dict[str, Any]) -> dict[str, Any]:
+async def send_grant_alert_email(notification_data: GrantAlertNotification) -> EmailResponse:
     """Send grant alert email to subscriber."""
     try:
         email = notification_data["email"]
@@ -178,14 +248,14 @@ async def send_grant_alert_email(notification_data: dict[str, Any]) -> dict[str,
             len(template_data["grants"]),
         )
 
-        return {"status": "success", "message": "Grant alert sent successfully"}
+        return EmailResponse(status="success", message="Grant alert sent successfully")
 
     except Exception as e:
         logger.exception("Failed to send grant alert email")
-        return {"status": "error", "message": f"Failed to send grant alert: {e!s}"}
+        return EmailResponse(status="error", message=f"Failed to send grant alert: {e!s}")
 
 
-async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
+async def send_application_email(cloud_event: CloudEvent) -> EmailResponse:
     """Send email notification for generated application or grant alerts."""
     try:
         event_data = cloud_event.data
@@ -199,9 +269,9 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
             if "data" in pubsub_message:
                 message_data = base64.b64decode(pubsub_message["data"]).decode("utf-8")
             else:
-                return {"status": "error", "message": "No data in Pub/Sub message"}
+                return EmailResponse(status="error", message="No data in Pub/Sub message")
         else:
-            return {"status": "error", "message": "Invalid CloudEvent format"}
+            return EmailResponse(status="error", message="Invalid CloudEvent format")
 
         notification_data = json.loads(message_data)
 
@@ -215,7 +285,7 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
         application_id = notification_data.get("application_id")
 
         if not application_id:
-            return {"status": "error", "message": "Missing application_id in message"}
+            return EmailResponse(status="error", message="Missing application_id in message")
 
         app_data = await get_application_data(application_id)
 
@@ -232,15 +302,15 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
             editor_url=f"{site_url}/projects/{app_data['project']['id']}/applications/{app_data['application']['id']}/editor",
         )
 
-        attachments = [
-            {
-                "filename": f"{app_data['application']['title']}.md",
-                "content": base64.b64encode(app_data["application"]["text"].encode()).decode(),
-            },
-            {
-                "filename": f"{app_data['application']['title']}.docx",
-                "content": base64.b64encode(docx_content).decode(),
-            },
+        attachments: list[ResendAttachment] = [
+            ResendAttachment(
+                filename=f"{app_data['application']['title']}.md",
+                content=base64.b64encode(app_data["application"]["text"].encode()).decode(),
+            ),
+            ResendAttachment(
+                filename=f"{app_data['application']['title']}.docx",
+                content=base64.b64encode(docx_content).decode(),
+            ),
         ]
 
         subject = f"Your Grant Application is Ready - {app_data['application']['title']}"
@@ -248,11 +318,11 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
 
         logger.info("Email sent successfully for application %s to %s", application_id, app_data["user"]["email"])
 
-        return {"status": "success", "message": "Email sent successfully"}
+        return EmailResponse(status="success", message="Email sent successfully")
 
     except Exception as e:
         logger.exception("Failed to send application email")
-        return {"status": "error", "message": f"Failed to send email: {e!s}"}
+        return EmailResponse(status="error", message=f"Failed to send email: {e!s}")
 
 
 @functions_framework.cloud_event
