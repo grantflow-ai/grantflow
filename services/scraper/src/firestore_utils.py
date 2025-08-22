@@ -7,8 +7,10 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from google.cloud import firestore
+from google.cloud.exceptions import GoogleCloudError
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+from services.scraper.src.dtos import validate_grant_data
 
 if TYPE_CHECKING:
     from google.cloud.firestore import AsyncClient, AsyncCollectionReference
@@ -22,9 +24,16 @@ def get_firestore_client() -> AsyncClient:
 
     Returns:
         AsyncClient: Firestore async client
+
+    Raises:
+        GoogleCloudError: If client creation fails
     """
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    return firestore.AsyncClient(project=project_id)
+    try:
+        return firestore.AsyncClient(project=project_id)
+    except GoogleCloudError as e:
+        logger.error("Failed to create Firestore client", project_id=project_id, error=str(e))
+        raise
 
 
 async def get_grants_collection() -> AsyncCollectionReference:
@@ -55,38 +64,59 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
 
     Returns:
         str: Document ID of saved grant
+
+    Raises:
+        GoogleCloudError: If Firestore operation fails
     """
     start_time = time.time()
-    collection = await get_grants_collection()
 
-    # Extract identifier from URL if available
-    url = grant_info.get("url", "")
-    grant_id = url.split("/")[-1] if url else None
+    # Validate grant data
+    validation_errors = validate_grant_data(grant_info)
+    if validation_errors:
+        logger.warning("Invalid grant data", errors=validation_errors, grant_info=grant_info)
+        raise ValueError(f"Invalid grant data: {', '.join(validation_errors)}")
 
-    # Prepare document data
-    doc_data = {
-        **grant_info,
-        "created_at": datetime.now(UTC).isoformat(),
-        "updated_at": datetime.now(UTC).isoformat(),
-        "scraped_at": datetime.now(UTC).isoformat(),
-    }
+    try:
+        collection = await get_grants_collection()
 
-    # Save document with custom ID if available, otherwise auto-generate
-    if grant_id:
-        doc_ref = collection.document(grant_id)
-        await doc_ref.set(doc_data, merge=True)
-    else:
-        doc_ref = await collection.add(doc_data)
-        grant_id = doc_ref.id
+        # Extract identifier from URL if available
+        url = grant_info.get("url", "")
+        grant_id = url.split("/")[-1] if url else None
 
-    duration = time.time() - start_time
-    logger.info(
-        "Saved grant document to Firestore",
-        grant_id=grant_id,
-        duration_ms=round(duration * 1000, 2),
-    )
+        # Prepare document data
+        doc_data = {
+            **grant_info,
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
+            "scraped_at": datetime.now(UTC).isoformat(),
+        }
 
-    return grant_id
+        # Save document with custom ID if available, otherwise auto-generate
+        if grant_id:
+            doc_ref = collection.document(grant_id)
+            await doc_ref.set(doc_data, merge=True)
+        else:
+            doc_ref = await collection.add(doc_data)
+            grant_id = doc_ref.id
+
+        duration = time.time() - start_time
+        logger.info(
+            "Saved grant document to Firestore",
+            grant_id=grant_id,
+            duration_ms=round(duration * 1000, 2),
+        )
+
+        return grant_id
+
+    except GoogleCloudError as e:
+        duration = time.time() - start_time
+        logger.error(
+            "Failed to save grant document to Firestore",
+            grant_info=grant_info,
+            duration_ms=round(duration * 1000, 2),
+            error=str(e),
+        )
+        raise
 
 
 async def save_grant_page_content(grant_id: str, content: str) -> None:
@@ -148,44 +178,60 @@ async def batch_save_grants(grants: list[GrantInfo]) -> int:
 
     Returns:
         int: Number of grants saved
+
+    Raises:
+        GoogleCloudError: If batch operation fails
     """
     start_time = time.time()
-    client = get_firestore_client()
-    collection = await get_grants_collection()
-
-    batch = client.batch()
     saved_count = 0
 
-    for grant_info in grants:
-        url = grant_info.get("url", "")
-        grant_id = url.split("/")[-1] if url else None
+    try:
+        client = get_firestore_client()
+        collection = await get_grants_collection()
 
-        doc_data = {
-            **grant_info,
-            "created_at": datetime.now(UTC).isoformat(),
-            "updated_at": datetime.now(UTC).isoformat(),
-            "scraped_at": datetime.now(UTC).isoformat(),
-        }
+        batch = client.batch()
 
-        doc_ref = collection.document(grant_id) if grant_id else collection.document()
+        for grant_info in grants:
+            url = grant_info.get("url", "")
+            grant_id = url.split("/")[-1] if url else None
 
-        batch.set(doc_ref, doc_data, merge=True)
-        saved_count += 1
+            doc_data = {
+                **grant_info,
+                "created_at": datetime.now(UTC).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
+                "scraped_at": datetime.now(UTC).isoformat(),
+            }
 
-        # Firestore batch limit is 500 operations
-        if saved_count % 500 == 0:
+            doc_ref = collection.document(grant_id) if grant_id else collection.document()
+
+            batch.set(doc_ref, doc_data, merge=True)
+            saved_count += 1
+
+            # Firestore batch limit is 500 operations
+            if saved_count % 500 == 0:
+                await batch.commit()
+                batch = client.batch()
+
+        # Commit remaining operations
+        if saved_count % 500 != 0:
             await batch.commit()
-            batch = client.batch()
 
-    # Commit remaining operations
-    if saved_count % 500 != 0:
-        await batch.commit()
+        duration = time.time() - start_time
+        logger.info(
+            "Batch saved grants to Firestore",
+            count=saved_count,
+            duration_ms=round(duration * 1000, 2),
+        )
 
-    duration = time.time() - start_time
-    logger.info(
-        "Batch saved grants to Firestore",
-        count=saved_count,
-        duration_ms=round(duration * 1000, 2),
-    )
+        return saved_count
 
-    return saved_count
+    except GoogleCloudError as e:
+        duration = time.time() - start_time
+        logger.error(
+            "Failed to batch save grants to Firestore",
+            total_grants=len(grants),
+            saved_count=saved_count,
+            duration_ms=round(duration * 1000, 2),
+            error=str(e),
+        )
+        raise
