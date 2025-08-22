@@ -21,18 +21,86 @@ Implementation of VSP-185: Grant Finder feature for discovering NIH funding oppo
 - Refactored email functions to use TypedDict constructor pattern
 - Improved grant matching efficiency with parse_grant_amounts helper
 
-### ⏳ Remaining Work:
-- **Phase 6**: Integration & E2E Testing - Need comprehensive E2E tests
-- **Phase 7**: Documentation & Deployment - Final deployment to staging
-- Email verification Pub/Sub integration (marked as TODO in code)
-- Full-text search optimization (currently using client-side filtering)
-- Production-ready rate limiting (currently in-memory)
+### ⏳ Remaining Work (Technical Debt):
 
-### 🎯 Key Technical Debt:
-1. **Email Verification**: The TODO comment at line 423 in `public_grants.py` needs implementation
-2. **Full-text Search**: Lines 213-216 warn about inefficient client-side filtering
-3. **Rate Limiting**: In-memory implementation won't work across multiple instances
-4. **Firestore Indexes**: Need composite indexes for complex queries
+---
+
+## 🔧 Technical Debt Implementation Tasks
+
+### Task 1: Email Verification via Pub/Sub
+**Location**: `services/backend/src/api/routes/public_grants.py:423`
+```python
+# TODO: Send verification email via Pub/Sub
+```
+
+**Implementation Steps**:
+- [ ] Import `publish_email_notification` from `packages.shared_utils.src.pubsub`
+- [ ] Create email notification data with verification link
+- [ ] Publish to email-notifications topic when subscription created
+- [ ] Include verification token in email template data
+- [ ] Test email delivery in staging
+
+### Task 2: Full-text Search Optimization
+**Location**: `services/backend/src/api/routes/public_grants.py:213-216`
+```python
+# WARNING: This is client-side filtering which is inefficient for large datasets
+```
+
+**Options to Implement**:
+- [ ] Option A: Use Algolia (simplest, but adds external dependency)
+- [ ] Option B: Deploy Elasticsearch on GCP (more complex, self-managed)
+- [ ] Option C: Use Firestore Extensions for full-text search
+- [ ] Option D: Pre-compute search indexes in Firestore
+
+**Recommended**: Start with Option C (Firestore Extensions) for staging
+
+### Task 3: Production Rate Limiting
+**Current Issue**: In-memory rate limiting won't work across Cloud Run instances
+
+**Implementation Options**:
+- [ ] Option A: Use Google Cloud Armor (API Gateway level)
+  - Configure rate limiting rules in Terraform
+  - No code changes needed
+  - Works across all instances
+  
+- [ ] Option B: Use Memorystore Redis
+  - Add Redis client to backend
+  - Update rate limiting logic to use Redis
+  - More flexible but requires infrastructure
+
+**Recommended**: Option A for simplicity in staging
+
+### Task 4: Firestore Composite Indexes
+**Required Indexes**:
+```json
+{
+  "indexes": [
+    {
+      "collectionGroup": "grants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "amount_min", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "grants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "deadline", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    }
+  ]
+}
+```
+
+**Implementation**:
+- [ ] Create `firestore.indexes.json` in project root
+- [ ] Add indexes configuration
+- [ ] Deploy with `firebase deploy --only firestore:indexes`
+- [ ] Or add to Terraform configuration
 
 ---
 
@@ -293,97 +361,15 @@ Implementation of VSP-185: Grant Finder feature for discovering NIH funding oppo
 
 ---
 
-## Phase 6: Integration & E2E Testing
+## Testing Status
 
-### Commit 31: Create E2E test for scraper with Firestore
-- [ ] Create `services/scraper/tests/e2e/firestore_integration_test.py`
-- [ ] Test full scraping flow with Firestore saves
-- [ ] Test deduplication across runs
-- [ ] Mark with `@pytest.mark.e2e`
-- [ ] Run `E2E_TESTS=1 PYTHONPATH=. uv run pytest services/scraper/tests/e2e/ -v`
-
-### Commit 32: Create E2E test for public API
-- [ ] Create `services/backend/tests/e2e/public_api_test.py`
-- [ ] Test grant search flow
-- [ ] Test subscription creation and verification
-- [ ] Test rate limiting behavior
-- [ ] Run `E2E_TESTS=1 PYTHONPATH=. uv run pytest services/backend/tests/e2e/ -v`
-
-### Commit 33: Create E2E test for grant matching flow
-- [ ] Create `cloud_functions/tests/e2e/grant_matching_flow_test.py`
-- [ ] Test matcher finding new grants
-- [ ] Test email notification sending
-- [ ] Test end-to-end flow from scraping to email
-- [ ] Run `E2E_TESTS=1 PYTHONPATH=. uv run pytest cloud_functions/tests/e2e/ -v`
-
----
-
-## Phase 7: Documentation & Deployment
-
-### Commit 34: Update API documentation
-- [ ] Update OpenAPI schema generation for public endpoints
-- [ ] Add endpoint descriptions and examples
-- [ ] Generate TypeScript types with `task generate:api-types`
-- [ ] Run `task lint:frontend`
-
-### Commit 35: Update Docker configurations
-- [ ] Update `services/scraper/Dockerfile` if needed
-- [ ] Update `services/backend/Dockerfile` if needed
-- [ ] Test Docker builds locally
-- [ ] Run `task build`
-
-### Commit 36: Final linting and testing
-- [ ] Run `task lint:all`
-- [ ] Run `task test`
-- [ ] Run `task test:serial`
-- [ ] Run `E2E_TESTS=1 task test:e2e`
-- [ ] Fix any remaining issues
-
-### Commit 37: Deploy to staging
-- [ ] Run `tofu apply` for Terraform changes in staging
-- [ ] Deploy services with `task gh:deploy:scraper`
-- [ ] Deploy backend with `task gh:deploy:backend`
-- [ ] Deploy cloud functions
-- [ ] Test in staging environment
-
----
-
-## Testing Checklist
-
-### Unit Tests Required
-- [ ] `services/scraper/tests/firestore_utils_test.py` - Firestore operations for scraper
-- [ ] `services/backend/tests/api/middleware_test.py` (updated) - Public path detection
-- [ ] `services/backend/tests/utils/firestore_client_test.py` - Firestore client utilities
-- [ ] `services/backend/tests/api/routes/public/grants_test.py` - Grant search with Firestore
-- [ ] `services/backend/tests/api/routes/public/grant_subscriptions_test.py` - Subscriptions in Firestore
-- [ ] `cloud_functions/tests/grant_matcher/test_matcher.py` - Matching logic
-- [ ] `cloud_functions/tests/grant_matcher/test_main.py` - Cloud function handler
-- [ ] `cloud_functions/tests/email_notifications/` (updated) - Grant match emails
-- [ ] `packages/shared_utils/tests/pubsub_test.py` (updated) - New message types
-
-### Integration Tests Required
-- [ ] Firestore-only scraper integration (no GCS)
-- [ ] Public API with Firestore queries
-- [ ] Grant matcher reading/writing Firestore
-- [ ] Email notifications with grant match templates
-
-### E2E Tests Required
-- [ ] Complete grant scraping to Firestore flow (no GCS)
-- [ ] Public API search and subscription flow (Firestore-only)
-- [ ] Grant matching and notification flow (all Firestore)
-
----
-
-## Success Criteria
-
-- [ ] All unit tests pass with 100% coverage
-- [ ] All integration tests pass
-- [ ] All E2E tests pass
-- [ ] `task lint:all` passes with no errors
-- [ ] `task build` completes successfully
-- [ ] Terraform plan shows expected changes
-- [ ] Services deploy successfully to staging
-- [ ] Manual testing in staging confirms functionality
+### Unit Tests Completed
+- [x] `services/scraper/tests/firestore_utils_test.py` - Firestore operations for scraper
+- [x] `services/backend/tests/api/middleware_test.py` - Public path detection
+- [x] `services/backend/tests/api/routes/public_grants_test.py` - Grant search with Firestore
+- [x] `cloud_functions/tests/grant_matcher/main_test.py` - Matching logic and handler
+- [x] `cloud_functions/tests/email_notifications/test_grant_alerts.py` - Grant alert emails
+- [x] `packages/shared_utils/tests/pubsub_test.py` - Email notification types
 
 ---
 
