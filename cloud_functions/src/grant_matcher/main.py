@@ -73,6 +73,45 @@ def get_publisher_client() -> pubsub_v1.PublisherClient:
     return pubsub_v1.PublisherClient()
 
 
+def parse_grant_amounts(amount_str: str) -> tuple[int | None, int | None]:
+    """Parse grant amount string to extract min and max values.
+
+    Args:
+        amount_str: Amount string like "$50,000 - $100,000" or "$50K"
+
+    Returns:
+        tuple: (min_amount, max_amount) or (None, None) if unparsable
+    """
+    if not amount_str:
+        return None, None
+
+    # Remove commas and dollar signs
+    clean_str = amount_str.replace(",", "").replace("$", "")
+
+    # Handle K/M suffixes
+    multiplier = 1
+    if "M" in clean_str.upper():
+        multiplier = 1_000_000
+        clean_str = clean_str.upper().replace("M", "")
+    elif "K" in clean_str.upper():
+        multiplier = 1_000
+        clean_str = clean_str.upper().replace("K", "")
+
+    # Extract all numeric values
+    import re  # noqa: PLC0415
+
+    numbers = re.findall(r"\d+(?:\.\d+)?", clean_str)
+
+    if not numbers:
+        return None, None
+
+    amounts = [int(float(n) * multiplier) for n in numbers]
+
+    if len(amounts) == 1:
+        return amounts[0], amounts[0]
+    return min(amounts), max(amounts)
+
+
 def match_grant_with_subscription(grant: GrantData, subscription: SubscriptionData) -> bool:
     """Check if a grant matches subscription criteria.
 
@@ -85,60 +124,47 @@ def match_grant_with_subscription(grant: GrantData, subscription: SubscriptionDa
     """
     search_params = subscription.get("search_params", {})
 
-    # Check category match
-    if search_params.get("category"):
+    # Early return if no search criteria
+    if not search_params:
+        return True
+
+    # Category filter
+    if category_filter := search_params.get("category"):
         grant_category = grant.get("category", "").lower()
-        search_category = search_params["category"].lower()
-        if grant_category != search_category:
+        if grant_category != category_filter.lower():
             return False
 
-    # Check amount range
-    if search_params.get("min_amount") is not None:
-        try:
-            grant_amount_str = grant.get("amount", "")
-            # Extract numeric value from strings like "$50,000 - $100,000"
-            amounts = []
-            for part in grant_amount_str.replace(",", "").split("-"):
-                num_str = "".join(c for c in part if c.isdigit())
-                if num_str:
-                    amounts.append(int(num_str))
+    # Amount range filters
+    min_filter = search_params.get("min_amount")
+    max_filter = search_params.get("max_amount")
 
-            if amounts and max(amounts) < search_params["min_amount"]:
-                return False
-        except (ValueError, AttributeError):
-            pass
+    if min_filter is not None or max_filter is not None:
+        grant_min, grant_max = parse_grant_amounts(grant.get("amount", ""))
 
-    if search_params.get("max_amount") is not None:
-        try:
-            grant_amount_str = grant.get("amount", "")
-            amounts = []
-            for part in grant_amount_str.replace(",", "").split("-"):
-                num_str = "".join(c for c in part if c.isdigit())
-                if num_str:
-                    amounts.append(int(num_str))
-
-            if amounts and min(amounts) > search_params["max_amount"]:
-                return False
-        except (ValueError, AttributeError):
-            pass
-
-    # Check deadline range
-    if search_params.get("deadline_after"):
-        grant_deadline = grant.get("deadline", "")
-        if grant_deadline and grant_deadline < search_params["deadline_after"]:
+        if min_filter is not None and grant_max is not None and grant_max < min_filter:
             return False
 
-    if search_params.get("deadline_before"):
-        grant_deadline = grant.get("deadline", "")
-        if grant_deadline and grant_deadline > search_params["deadline_before"]:
+        if max_filter is not None and grant_min is not None and grant_min > max_filter:
             return False
 
-    # Check search query in title/description
-    if search_params.get("query"):
-        query_lower = search_params["query"].lower()
-        title_match = query_lower in grant.get("title", "").lower()
-        desc_match = query_lower in grant.get("description", "").lower()
-        if not (title_match or desc_match):
+    # Deadline filters
+    grant_deadline = grant.get("deadline", "")
+
+    if (deadline_after := search_params.get("deadline_after")) and grant_deadline and grant_deadline < deadline_after:
+        return False
+
+    if (
+        (deadline_before := search_params.get("deadline_before"))
+        and grant_deadline
+        and grant_deadline > deadline_before
+    ):
+        return False
+
+    # Text search in title/description
+    if query := search_params.get("query"):
+        query_lower = query.lower()
+        searchable_text = grant.get("title", "").lower() + " " + grant.get("description", "").lower()
+        if query_lower not in searchable_text:
             return False
 
     return True
