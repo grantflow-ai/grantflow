@@ -45,6 +45,11 @@ data "archive_file" "email_notification_source" {
     content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/application_ready.html")
     filename = "templates/application_ready.html"
   }
+
+  source {
+    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/grant_alert.html")
+    filename = "templates/grant_alert.html"
+  }
 }
 
 resource "google_storage_bucket_object" "email_notification_source" {

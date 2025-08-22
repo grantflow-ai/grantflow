@@ -4,18 +4,57 @@ These endpoints are publicly accessible without authentication.
 Part of the Grant Finder feature (VSP-281, VSP-282).
 """
 
-from __future__ import annotations
-
 import secrets
+import time
+from collections import defaultdict
 from typing import NotRequired, TypedDict
 
-from google.cloud import firestore
+from google.cloud import firestore  # type: ignore[attr-defined]
+from google.cloud.exceptions import GoogleCloudError
 from litestar import Response, get, post
-from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from litestar.status_codes import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_429_TOO_MANY_REQUESTS,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 
+from services.backend.src.common_types import APIRequest  # noqa: TC001
+
 logger = get_logger(__name__)
+
+# Simple in-memory rate limiting for public endpoints
+# For production, use Redis or a dedicated rate limiting service
+_request_counts: dict[str, list[float]] = defaultdict(list)
+_RATE_LIMIT_REQUESTS = 60  # requests per window
+_RATE_LIMIT_WINDOW = 300  # 5 minutes in seconds
+
+
+def check_rate_limit(client_ip: str) -> bool:
+    """Check if client has exceeded rate limit.
+
+    Args:
+        client_ip: Client IP address
+
+    Returns:
+        bool: True if within rate limit, False if exceeded
+    """
+    now = time.time()
+    window_start = now - _RATE_LIMIT_WINDOW
+
+    # Clean old requests outside the window
+    _request_counts[client_ip] = [req_time for req_time in _request_counts[client_ip] if req_time > window_start]
+
+    # Check if within limit
+    if len(_request_counts[client_ip]) >= _RATE_LIMIT_REQUESTS:
+        return False
+
+    # Add current request
+    _request_counts[client_ip].append(now)
+    return True
 
 
 class GrantSearchParams(TypedDict):
@@ -31,19 +70,29 @@ class GrantSearchParams(TypedDict):
     offset: NotRequired[int]
 
 
-class GrantInfo(TypedDict):
-    """Grant information returned from search."""
+class GrantInfoResponse(TypedDict):
+    """Grant information response with ID from Firestore."""
 
     id: str
     title: str
+    release_date: str
+    expired_date: str
+    activity_code: str
+    organization: str
+    parent_organization: str
+    participating_orgs: str
+    document_number: str
+    document_type: str
+    clinical_trials: str
+    url: str
+    # Optional fields for enhanced data
     description: NotRequired[str]
-    url: NotRequired[str]
-    deadline: NotRequired[str]
     amount: NotRequired[str]
+    amount_min: NotRequired[int]
+    amount_max: NotRequired[int]
     category: NotRequired[str]
     eligibility: NotRequired[str]
-    created_at: str
-    updated_at: str
+    deadline: NotRequired[str]
 
 
 class SubscriptionRequest(TypedDict):
@@ -74,6 +123,7 @@ def get_firestore_client() -> firestore.AsyncClient:
 
 @get("/public/grants")
 async def search_grants(
+    request: "APIRequest",
     search_query: str | None = None,
     category: str | None = None,
     min_amount: int | None = None,
@@ -82,7 +132,7 @@ async def search_grants(
     deadline_before: str | None = None,
     limit: int = 20,
     offset: int = 0,
-) -> Response[list[GrantInfo]]:
+) -> Response[list[GrantInfoResponse] | dict[str, str]]:
     """Search for grants in Firestore.
 
     This is a public endpoint that doesn't require authentication.
@@ -100,6 +150,15 @@ async def search_grants(
     Returns:
         List of grants matching the search criteria
     """
+    # Rate limiting check
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(client_ip):
+        logger.warning("Rate limit exceeded", client_ip=client_ip)
+        return Response(
+            content={"error": "Rate limit exceeded. Try again later."},
+            status_code=HTTP_429_TOO_MANY_REQUESTS,
+        )
+
     limit = min(limit, 100)
 
     logger.info(
@@ -112,76 +171,109 @@ async def search_grants(
         offset=offset,
     )
 
-    client = get_firestore_client()
-    grants_ref = client.collection("grants")
+    try:
+        client = get_firestore_client()
+        grants_ref = client.collection("grants")
 
-    # Build query
-    query_ref = grants_ref
+        # Build query
+        query_ref = grants_ref
 
-    # Add filters based on search parameters
-    if category:
-        query_ref = query_ref.where("category", "==", category)
+        # Add filters based on search parameters
+        if category:
+            query_ref = query_ref.where("category", "==", category)
 
-    if min_amount is not None:
-        query_ref = query_ref.where("amount_min", ">=", min_amount)
+        if min_amount is not None:
+            query_ref = query_ref.where("amount_min", ">=", min_amount)
 
-    if max_amount is not None:
-        query_ref = query_ref.where("amount_max", "<=", max_amount)
+        if max_amount is not None:
+            query_ref = query_ref.where("amount_max", "<=", max_amount)
 
-    if deadline_after:
-        query_ref = query_ref.where("deadline", ">=", deadline_after)
+        if deadline_after:
+            query_ref = query_ref.where("deadline", ">=", deadline_after)
 
-    if deadline_before:
-        query_ref = query_ref.where("deadline", "<=", deadline_before)
+        if deadline_before:
+            query_ref = query_ref.where("deadline", "<=", deadline_before)
 
-    # Apply ordering, limit and offset
-    query_ref = query_ref.order_by("created_at", direction=firestore.Query.DESCENDING)
-    query_ref = query_ref.limit(limit)
+        # Apply ordering, limit and offset
+        query_ref = query_ref.order_by("created_at", direction=firestore.Query.DESCENDING)
+        query_ref = query_ref.limit(limit)
 
-    if offset > 0:
-        query_ref = query_ref.offset(offset)
+        if offset > 0:
+            query_ref = query_ref.offset(offset)
 
-    # Execute query
-    docs = query_ref.stream()
+        # Execute query
+        docs = query_ref.stream()
 
-    results: list[GrantInfo] = []
-    async for doc in docs:
-        data = doc.to_dict()
+        results: list[GrantInfoResponse] = []
+        async for doc in docs:
+            data = doc.to_dict()
 
-        # If we have a search query, filter by title/description
-        # (Firestore doesn't support full-text search natively)
-        if search_query:
-            query_lower = search_query.lower()
-            title_match = query_lower in data.get("title", "").lower()
-            desc_match = query_lower in data.get("description", "").lower()
-            if not (title_match or desc_match):
-                continue
+            # If we have a search query, filter by title/description
+            # WARNING: This is client-side filtering which is inefficient for large datasets
+            # TODO: For production, implement proper full-text search with:
+            # - Algolia, Elasticsearch, or Typesense for dedicated search
+            # - Firestore Extensions for full-text search
+            # - Pre-computed search indexes
+            if search_query:
+                query_lower = search_query.lower()
+                title_match = query_lower in data.get("title", "").lower()
+                desc_match = query_lower in data.get("description", "").lower()
+                if not (title_match or desc_match):
+                    continue
 
-        grant_info: GrantInfo = {
-            "id": doc.id,
-            "title": data.get("title", ""),
-            "description": data.get("description", ""),
-            "url": data.get("url", ""),
-            "deadline": data.get("deadline", ""),
-            "amount": data.get("amount", ""),
-            "category": data.get("category", ""),
-            "eligibility": data.get("eligibility", ""),
-            "created_at": data.get("created_at", ""),
-            "updated_at": data.get("updated_at", ""),
-        }
+            grant_info: GrantInfoResponse = {
+                "id": doc.id,
+                "title": data.get("title", ""),
+                "release_date": data.get("release_date", ""),
+                "expired_date": data.get("expired_date", ""),
+                "activity_code": data.get("activity_code", ""),
+                "organization": data.get("organization", ""),
+                "parent_organization": data.get("parent_organization", ""),
+                "participating_orgs": data.get("participating_orgs", ""),
+                "document_number": data.get("document_number", ""),
+                "document_type": data.get("document_type", ""),
+                "clinical_trials": data.get("clinical_trials", ""),
+                "url": data.get("url", ""),
+                # Optional fields
+                "description": data.get("description"),
+                "amount": data.get("amount"),
+                "amount_min": data.get("amount_min"),
+                "amount_max": data.get("amount_max"),
+                "category": data.get("category"),
+                "eligibility": data.get("eligibility"),
+                "deadline": data.get("deadline"),
+            }
 
-        results.append(grant_info)
+            results.append(grant_info)
 
-    logger.info("Public grant search completed", result_count=len(results))
+        logger.info("Public grant search completed", result_count=len(results))
 
-    return Response(
-        content=results,
-        status_code=HTTP_200_OK,
-    )
+        return Response(
+            content=results,
+            status_code=HTTP_200_OK,
+        )
+
+    except GoogleCloudError as e:
+        logger.error(
+            "Failed to search grants in Firestore",
+            error=str(e),
+            search_params={
+                "search_query": search_query,
+                "category": category,
+                "min_amount": min_amount,
+                "max_amount": max_amount,
+                "limit": limit,
+                "offset": offset,
+            },
+        )
+        return Response(
+            content={"error": "Search service temporarily unavailable"},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @get("/public/grants/{grant_id:str}")
-async def get_grant_details(grant_id: str) -> Response[GrantInfo | dict[str, str]]:
+async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[str, str]]:
     """Get details for a specific grant.
 
     This is a public endpoint that doesn't require authentication.
@@ -206,17 +298,27 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfo | dict[str, str
         )
 
     data = doc.to_dict()
-    grant_info: GrantInfo = {
+    grant_info: GrantInfoResponse = {
         "id": doc.id,
         "title": data.get("title", ""),
-        "description": data.get("description", ""),
+        "release_date": data.get("release_date", ""),
+        "expired_date": data.get("expired_date", ""),
+        "activity_code": data.get("activity_code", ""),
+        "organization": data.get("organization", ""),
+        "parent_organization": data.get("parent_organization", ""),
+        "participating_orgs": data.get("participating_orgs", ""),
+        "document_number": data.get("document_number", ""),
+        "document_type": data.get("document_type", ""),
+        "clinical_trials": data.get("clinical_trials", ""),
         "url": data.get("url", ""),
-        "deadline": data.get("deadline", ""),
-        "amount": data.get("amount", ""),
-        "category": data.get("category", ""),
-        "eligibility": data.get("eligibility", ""),
-        "created_at": data.get("created_at", ""),
-        "updated_at": data.get("updated_at", ""),
+        # Optional fields
+        "description": data.get("description"),
+        "amount": data.get("amount"),
+        "amount_min": data.get("amount_min"),
+        "amount_max": data.get("amount_max"),
+        "category": data.get("category"),
+        "eligibility": data.get("eligibility"),
+        "deadline": data.get("deadline"),
     }
 
     logger.info("Public grant details retrieved", grant_id=grant_id)
@@ -228,7 +330,9 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfo | dict[str, str
 
 
 @post("/public/grants/subscribe")
-async def create_subscription(data: SubscriptionRequest) -> Response[SubscriptionResponse | dict[str, str]]:
+async def create_subscription(
+    request: "APIRequest", data: SubscriptionRequest
+) -> Response[SubscriptionResponse | dict[str, str]]:
     """Create an email subscription for grant alerts.
 
     This is a public endpoint that doesn't require authentication.
@@ -240,12 +344,24 @@ async def create_subscription(data: SubscriptionRequest) -> Response[Subscriptio
     Returns:
         Subscription response with ID and verification status
     """
+    # Rate limiting check
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(client_ip):
+        logger.warning("Rate limit exceeded for subscription", client_ip=client_ip)
+        return Response(
+            content={"error": "Rate limit exceeded. Try again later."},
+            status_code=HTTP_429_TOO_MANY_REQUESTS,
+        )
+
     email = data["email"]
     search_params = data["search_params"]
     frequency = data.get("frequency", "daily")
 
     # Validate email format
-    if "@" not in email or "." not in email:
+    import re  # noqa: PLC0415
+
+    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    if not re.match(email_pattern, email) or len(email) > 254:
         logger.warning("Invalid email format", email=email)
         return Response(
             content={"error": "Invalid email format"},
@@ -267,59 +383,67 @@ async def create_subscription(data: SubscriptionRequest) -> Response[Subscriptio
         search_params=search_params,
     )
 
-    client = get_firestore_client()
-    subscriptions_ref = client.collection("subscriptions")
+    try:
+        client = get_firestore_client()
+        subscriptions_ref = client.collection("subscriptions")
 
-    # Check if subscription already exists for this email
-    existing = subscriptions_ref.where("email", "==", email).limit(1).stream()
-    existing_docs = [doc async for doc in existing]
+        # Check if subscription already exists for this email
+        existing = subscriptions_ref.where("email", "==", email).limit(1).stream()
+        existing_docs = [doc async for doc in existing]
 
-    if existing_docs:
-        # Update existing subscription
-        doc = existing_docs[0]
-        await doc.reference.update(
-            {
+        if existing_docs:
+            # Update existing subscription
+            doc = existing_docs[0]
+            await doc.reference.update(
+                {
+                    "search_params": search_params,
+                    "frequency": frequency,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                }
+            )
+            subscription_id = doc.id
+            logger.info("Updated existing subscription", subscription_id=subscription_id)
+        else:
+            # Create new subscription
+            verification_token = secrets.token_urlsafe(32)
+
+            doc_data = {
+                "email": email,
                 "search_params": search_params,
                 "frequency": frequency,
+                "verified": False,
+                "verification_token": verification_token,
+                "created_at": firestore.SERVER_TIMESTAMP,
                 "updated_at": firestore.SERVER_TIMESTAMP,
             }
-        )
-        subscription_id = doc.id
-        logger.info("Updated existing subscription", subscription_id=subscription_id)
-    else:
-        # Create new subscription
-        verification_token = secrets.token_urlsafe(32)
 
-        doc_data = {
-            "email": email,
-            "search_params": search_params,
-            "frequency": frequency,
-            "verified": False,
-            "verification_token": verification_token,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            doc_ref = await subscriptions_ref.add(doc_data)
+            subscription_id = doc_ref.id
+
+            # TODO: Send verification email via Pub/Sub
+            logger.info(
+                "Created new subscription",
+                subscription_id=subscription_id,
+                verification_token=verification_token,
+            )
+
+        response: SubscriptionResponse = {
+            "subscription_id": subscription_id,
+            "verification_required": True,
+            "message": "Please check your email to verify your subscription",
         }
 
-        doc_ref = await subscriptions_ref.add(doc_data)
-        subscription_id = doc_ref.id
-
-        # TODO: Send verification email via Pub/Sub
-        logger.info(
-            "Created new subscription",
-            subscription_id=subscription_id,
-            verification_token=verification_token,
+        return Response(
+            content=response,
+            status_code=HTTP_201_CREATED,
         )
 
-    response: SubscriptionResponse = {
-        "subscription_id": subscription_id,
-        "verification_required": True,
-        "message": "Please check your email to verify your subscription",
-    }
-
-    return Response(
-        content=response,
-        status_code=HTTP_201_CREATED,
-    )
+    except GoogleCloudError as e:
+        logger.error("Failed to create grant subscription", email=email, error=str(e))
+        return Response(
+            content={"error": "Subscription service temporarily unavailable"},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @get("/public/grants/verify/{token:str}")
