@@ -80,6 +80,13 @@ from services.backend.src.api.routes.projects import (
     handle_update_member_role,
     handle_update_project,
 )
+from services.backend.src.api.routes.public_grants import (
+    create_subscription,
+    get_grant_details,
+    search_grants,
+    unsubscribe,
+    verify_subscription,
+)
 from services.backend.src.api.routes.rag_jobs import handle_retrieve_rag_job
 from services.backend.src.api.routes.sources import (
     handle_crawl_url,
@@ -152,6 +159,12 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_rag_job,
     list_notifications,
     dismiss_notification,
+    # Public grant endpoints (no auth required)
+    search_grants,
+    get_grant_details,
+    create_subscription,
+    verify_subscription,
+    unsubscribe,
 ]
 
 
