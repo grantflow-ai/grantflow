@@ -153,8 +153,40 @@ async def send_resend_email(
         return response.json()  # type: ignore[no-any-return]
 
 
+async def send_grant_alert_email(notification_data: dict[str, Any]) -> dict[str, Any]:
+    """Send grant alert email to subscriber."""
+    try:
+        email = notification_data["email"]
+        template_data = notification_data["template_data"]
+
+        template = jinja_env.get_template("grant_alert.html")
+        html_content = template.render(
+            grants=template_data["grants"],
+            frequency=template_data["frequency"],
+            unsubscribe_url=template_data["unsubscribe_url"],
+        )
+
+        subject = (
+            f"🎯 {len(template_data['grants'])} New Grant{'s' if len(template_data['grants']) != 1 else ''} Available"
+        )
+
+        await send_resend_email(email, subject, html_content, [])
+
+        logger.info(
+            "Grant alert email sent successfully to %s with %d grants",
+            email,
+            len(template_data["grants"]),
+        )
+
+        return {"status": "success", "message": "Grant alert sent successfully"}
+
+    except Exception as e:
+        logger.exception("Failed to send grant alert email")
+        return {"status": "error", "message": f"Failed to send grant alert: {e!s}"}
+
+
 async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
-    """Send email notification for generated application."""
+    """Send email notification for generated application or grant alerts."""
     try:
         event_data = cloud_event.data
         if event_data is None:
@@ -172,6 +204,14 @@ async def send_application_email(cloud_event: CloudEvent) -> dict[str, Any]:
             return {"status": "error", "message": "Invalid CloudEvent format"}
 
         notification_data = json.loads(message_data)
+
+        # Check if this is a grant alert or application notification
+        template_type = notification_data.get("template_type")
+
+        if template_type == "grant_alert":
+            return await send_grant_alert_email(notification_data)
+
+        # Otherwise, handle as application notification
         application_id = notification_data.get("application_id")
 
         if not application_id:
