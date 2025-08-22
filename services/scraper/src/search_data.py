@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import tempfile
 from datetime import UTC, date, datetime
-from json import dumps
 from typing import TYPE_CHECKING, Final, cast
 
 from anyio import Path as AsyncPath
@@ -10,7 +9,7 @@ from packages.shared_utils.src.logger import get_logger
 from pandas import read_csv
 from playwright.async_api import async_playwright
 from services.scraper.src.exceptions import ScraperError
-from services.scraper.src.gcs_utils import upload_blob
+from services.scraper.src.firestore_utils import batch_save_grants
 
 logger = get_logger(__name__)
 
@@ -230,9 +229,9 @@ async def download_search_data(  # noqa: PLR0915
                 await tmp_path.unlink(missing_ok=True)
                 raise ScraperError(f"Failed to process downloaded CSV: {e!s}") from e
 
-            blob_path = f"scraper-results/grants_search_csv_{to_date.strftime('%d_%m_%Y')}.json"
-            await upload_blob(blob_path, dumps(search_data).encode("utf-8"))
-            logger.info("Saved search results to GCS", blob_path=blob_path)
+            # Save search results to Firestore
+            await batch_save_grants(search_data)
+            logger.info("Saved search results to Firestore", count=len(search_data))
 
             return search_data
 

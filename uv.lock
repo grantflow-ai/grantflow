@@ -3145,24 +3145,26 @@ source = { virtual = "services/scraper" }
 dependencies = [
     { name = "anyio" },
     { name = "beautifulsoup4" },
+    { name = "google-cloud-firestore" },
     { name = "html-to-markdown" },
     { name = "httpx" },
     { name = "mdformat" },
     { name = "pandas" },
     { name = "playwright" },
-    { name = "shared-utils", extra = ["gcs", "server"] },
+    { name = "shared-utils", extra = ["server"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "anyio", specifier = ">=4.6.2.post1" },
     { name = "beautifulsoup4", specifier = ">=4.12.3" },
+    { name = "google-cloud-firestore", specifier = ">=2.21.0" },
     { name = "html-to-markdown", specifier = ">=0.1.10" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mdformat", specifier = ">=0.7.20" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "playwright", specifier = ">=1.49.1" },
-    { name = "shared-utils", extras = ["server", "gcs"], editable = "packages/shared_utils" },
+    { name = "shared-utils", extras = ["server"], editable = "packages/shared_utils" },
 ]
 
 [[package]]
