@@ -1,20 +1,3 @@
-"""
-Synthetic Migrations for Vector Benchmarking
-
-This module provides utilities to temporarily modify the production schema
-for benchmarking different vector configurations. The key insight is that
-we can test different vector dimensions using the same production code!
-
-Key classes:
-- VectorTableModifier: Applies temporary schema changes
-- BENCHMARK_CONFIGURATIONS: Predefined test configurations
-
-Usage:
-    modifier = VectorTableModifier(session)
-    await modifier.modify_vector_dimension(256)
-    # Now your production code runs with 256d vectors!
-"""
-
 from typing import Any
 
 from packages.shared_utils.src.logger import get_logger
@@ -25,25 +8,6 @@ logger = get_logger(__name__)
 
 
 class VectorTableModifier:
-    """
-    Applies synthetic modifications to the existing text_vectors table for benchmarking.
-
-    This allows testing different vector dimensions and index parameters
-    without creating a separate schema - we use the real production code!
-
-    Example:
-        async with session_maker() as session:
-            modifier = VectorTableModifier(session)
-
-            # Test with smaller vectors
-            await modifier.modify_vector_dimension(128)
-            # Now all your production RAG code uses 128d vectors!
-
-            # Test with different index parameters
-            await modifier.modify_index_parameters(m=32, ef_construction=128)
-            # Now HNSW index is faster but potentially less accurate
-    """
-
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.original_dimension = 384
@@ -51,27 +15,6 @@ class VectorTableModifier:
         self._original_constants: dict[str, Any] = {}
 
     async def modify_vector_dimension(self, new_dimension: int) -> None:
-        """
-        Changes the vector column dimension for benchmarking.
-
-        This is the core functionality - it lets you test your production
-        code with different vector sizes to see performance impact.
-
-        Steps:
-        1. Drop existing HNSW index (PostgreSQL requires this before column changes)
-        2. Clear existing vectors (they're the wrong dimension now)
-        3. Drop and recreate the column with new dimension (bypasses SQLAlchemy constraints)
-        4. Recreate index with same parameters
-
-        Args:
-            new_dimension: New vector dimension to test
-                          Common values: 128, 256, 384 (current), 512, 768, 1024
-
-        Example:
-            await modifier.modify_vector_dimension(256)
-            # Now embedding.shape == (256,) instead of (384,)
-            # All your RAG code works unchanged!
-        """
         logger.info(
             "Modifying text_vectors table", original_dimension=self.original_dimension, new_dimension=new_dimension
         )
@@ -128,33 +71,6 @@ class VectorTableModifier:
         )
 
     async def modify_index_parameters(self, m: int = 48, ef_construction: int = 256) -> None:
-        """
-        Changes HNSW index parameters for benchmarking.
-
-        HNSW is the index type used for fast similarity search. These parameters
-        control the speed vs accuracy tradeoff:
-
-        - m: Number of connections per node in the graph
-          * Higher m = better recall (accuracy) but more memory usage
-          * Lower m = faster queries but potentially worse recall
-          * Production uses 48, try 16 (fast) or 64 (accurate)
-
-        - ef_construction: Size of dynamic candidate list during index building
-          * Higher ef_construction = better index quality but slower to build
-          * Lower ef_construction = faster index building but potentially worse quality
-          * Production uses 256, try 128 (fast build) or 512 (high quality)
-
-        Args:
-            m: HNSW M parameter (default 48 = production)
-            ef_construction: HNSW ef_construction parameter (default 256 = production)
-
-        Example:
-            # Fast index (trades accuracy for speed)
-            await modifier.modify_index_parameters(m=16, ef_construction=128)
-
-            # High-quality index (trades speed for accuracy)
-            await modifier.modify_index_parameters(m=64, ef_construction=512)
-        """
         logger.info("Modifying HNSW index parameters", m=m, ef_construction=ef_construction)
 
         await self.session.execute(text("DROP INDEX IF EXISTS idx_text_vectors_embedding"))
@@ -170,12 +86,6 @@ class VectorTableModifier:
         logger.info("Successfully modified index parameters")
 
     async def restore_original_schema(self) -> None:
-        """
-        Restores the original production schema.
-
-        This ensures tests don't leave the database in a modified state.
-        Always call this in test cleanup!
-        """
         if not self.applied_modifications:
             return
 
@@ -256,20 +166,6 @@ BENCHMARK_CONFIGURATIONS = {
 
 
 def get_configuration_info(config_name: str) -> dict[str, Any]:
-    """
-    Get detailed information about a benchmark configuration.
-
-    Args:
-        config_name: Name of configuration
-
-    Returns:
-        Configuration details including dimension, index params, and use case
-
-    Example:
-        info = get_configuration_info("small_fast")
-        print(f"Dimension: {info['dimension']}")
-        print(f"Use case: {info['use_case']}")
-    """
     if config_name not in BENCHMARK_CONFIGURATIONS:
         raise ValueError(f"Unknown configuration: {config_name}. Available: {list(BENCHMARK_CONFIGURATIONS.keys())}")
 
@@ -277,16 +173,4 @@ def get_configuration_info(config_name: str) -> dict[str, Any]:
 
 
 def list_available_configurations() -> list[str]:
-    """
-    List all available benchmark configurations.
-
-    Returns:
-        List of configuration names
-
-    Example:
-        configs = list_available_configurations()
-        for config in configs:
-            info = get_configuration_info(config)
-            print(f"{config}: {info['description']}")
-    """
     return list(BENCHMARK_CONFIGURATIONS.keys())

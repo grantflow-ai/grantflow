@@ -12,7 +12,6 @@ from packages.shared_utils.src.discord import (
 
 
 def test_create_scraper_report_embed_required_fields() -> None:
-    """Test that all required fields are present in the embed."""
     embed = create_scraper_report_embed(
         environment="test",
         date_range="2025-07-01 to 2025-07-02",
@@ -40,7 +39,6 @@ def test_create_scraper_report_embed_required_fields() -> None:
 
 
 def test_create_scraper_report_embed_with_optional_fields() -> None:
-    """Test embed creation with all optional fields."""
     embed = create_scraper_report_embed(
         environment="staging",
         date_range="2025-07-01 to 2025-07-02",
@@ -61,7 +59,6 @@ def test_create_scraper_report_embed_with_optional_fields() -> None:
 
 
 def test_create_scraper_report_embed_large_numbers() -> None:
-    """Test embed creation with large numbers (comma formatting)."""
     embed = create_scraper_report_embed(
         environment="prod",
         date_range="2025-07-01 to 2025-07-02",
@@ -89,7 +86,6 @@ def test_create_scraper_report_embed_large_numbers() -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_with_embed(mock_client_class: Mock) -> None:
-    """Test sending Discord webhook with embed content."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 204
@@ -122,7 +118,6 @@ async def test_send_discord_webhook_with_embed(mock_client_class: Mock) -> None:
 async def test_send_discord_webhook_with_content_and_embed(
     mock_client_class: Mock,
 ) -> None:
-    """Test sending Discord webhook with both content and embed."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 204
@@ -147,7 +142,6 @@ async def test_send_discord_webhook_with_content_and_embed(
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_http_error(mock_client_class: Mock) -> None:
-    """Test Discord webhook with HTTP error response."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 429
@@ -165,7 +159,6 @@ async def test_send_discord_webhook_http_error(mock_client_class: Mock) -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_network_error(mock_client_class: Mock) -> None:
-    """Test Discord webhook with network error."""
     mock_client = AsyncMock()
     mock_client.post.side_effect = Exception("Connection failed")
     mock_client_class.return_value.__aenter__.return_value = mock_client
@@ -180,7 +173,6 @@ async def test_send_discord_webhook_network_error(mock_client_class: Mock) -> No
 
 @patch("packages.shared_utils.src.discord.send_discord_webhook")
 async def test_send_scraper_report_success(mock_send_webhook: AsyncMock) -> None:
-    """Test sending scraper report with success status."""
     mock_send_webhook.return_value = True
 
     result = await send_scraper_report(
@@ -210,7 +202,6 @@ async def test_send_scraper_report_success(mock_send_webhook: AsyncMock) -> None
 
 @patch("packages.shared_utils.src.discord.send_discord_webhook")
 async def test_send_scraper_report_failure(mock_send_webhook: AsyncMock) -> None:
-    """Test sending scraper report with failure status."""
     mock_send_webhook.return_value = True
 
     result = await send_scraper_report(
@@ -242,7 +233,6 @@ async def test_send_scraper_report_failure(mock_send_webhook: AsyncMock) -> None
 async def test_send_scraper_report_webhook_failure(
     mock_send_webhook: AsyncMock,
 ) -> None:
-    """Test send_scraper_report when webhook sending fails."""
     mock_send_webhook.return_value = False
 
     result = await send_scraper_report(
@@ -261,7 +251,6 @@ async def test_send_scraper_report_webhook_failure(
 
 
 def test_create_scraper_report_embed_zero_values() -> None:
-    """Test embed creation with zero values."""
     embed = create_scraper_report_embed(
         environment="test",
         date_range="2025-07-01 to 2025-07-02",
@@ -287,7 +276,6 @@ def test_create_scraper_report_embed_zero_values() -> None:
 
 
 def test_create_scraper_report_embed_without_total_files() -> None:
-    """Test embed creation without total files in bucket."""
     embed = create_scraper_report_embed(
         environment="test",
         date_range="2025-07-01 to 2025-07-02",

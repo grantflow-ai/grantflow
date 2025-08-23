@@ -1,5 +1,3 @@
-"""Tests for OpenTelemetry context in logger."""
-
 from unittest.mock import Mock, patch
 from typing import Any
 
@@ -7,7 +5,6 @@ from packages.shared_utils.src.logger import add_otel_context
 
 
 def test_add_otel_context_with_valid_span() -> None:
-    """Test adding OTEL context when valid span exists."""
     with patch("opentelemetry.trace") as mock_trace:
         mock_span = Mock()
         mock_span_context = Mock()
@@ -32,7 +29,6 @@ def test_add_otel_context_with_valid_span() -> None:
 
 
 def test_add_otel_context_with_invalid_span() -> None:
-    """Test adding OTEL context when span is invalid."""
     with patch("opentelemetry.trace") as mock_trace:
         mock_span = Mock()
         mock_span_context = Mock()
@@ -52,7 +48,6 @@ def test_add_otel_context_with_invalid_span() -> None:
 
 
 def test_add_otel_context_import_error() -> None:
-    """Test handling when OpenTelemetry import fails."""
     with patch(
         "builtins.__import__",
         side_effect=ImportError("No module named opentelemetry"),
@@ -69,7 +64,6 @@ def test_add_otel_context_import_error() -> None:
 
 
 def test_add_otel_context_preserves_existing_fields() -> None:
-    """Test that existing log fields are preserved."""
     with patch("opentelemetry.trace") as mock_trace:
         mock_span = Mock()
         mock_span_context = Mock()
@@ -102,7 +96,6 @@ def test_add_otel_context_preserves_existing_fields() -> None:
 
 
 def test_add_otel_context_trace_id_formatting() -> None:
-    """Test proper formatting of trace_id and span_id."""
     with patch("opentelemetry.trace") as mock_trace:
         mock_span = Mock()
         mock_span_context = Mock()
@@ -123,7 +116,6 @@ def test_add_otel_context_trace_id_formatting() -> None:
 
 
 def test_add_otel_context_with_zero_ids() -> None:
-    """Test handling of zero trace_id and span_id."""
     with patch("opentelemetry.trace") as mock_trace:
         mock_span = Mock()
         mock_span_context = Mock()

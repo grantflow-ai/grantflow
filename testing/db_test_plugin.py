@@ -50,7 +50,6 @@ for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects
 
 @pytest.fixture(scope="session")
 def worker_id(request: Any) -> str:
-    """Get the xdist worker id, or 'master' if not running under xdist."""
     workerinput = getattr(request.config, "workerinput", {})
     return workerinput.get("workerid", "master") if workerinput else "master"
 
@@ -64,8 +63,6 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
-    """Create a unique test database for each worker process."""
-
     base_connection_string = os.getenv("DATABASE_URL") or "postgresql://grantflow:grantflow@localhost:5432/postgres"
 
     process_id = os.getpid()
@@ -137,8 +134,6 @@ async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmake
 
 @pytest.fixture(scope="session")
 async def database_snapshot(db_connection_string: str, async_session_maker: async_sessionmaker[Any]) -> str:
-    """Create a database snapshot after seeding for fast test isolation."""
-
     await seed_db()
 
     f"test_snapshot_{os.getpid()}"
@@ -173,8 +168,6 @@ async def database_snapshot(db_connection_string: str, async_session_maker: asyn
 async def restore_database_snapshot(
     database_snapshot: str, db_connection_string: str, request: pytest.FixtureRequest
 ) -> AsyncGenerator[None]:
-    """Restore database to clean snapshot state before each test."""
-
     if "no_cleanup" in request.keywords:
         yield
         return
@@ -185,7 +178,6 @@ async def restore_database_snapshot(
 
 
 async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
-    """Restore database from template snapshot."""
     parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
     admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
     db_name = parsed.path.lstrip("/")

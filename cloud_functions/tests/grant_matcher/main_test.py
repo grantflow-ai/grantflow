@@ -1,9 +1,5 @@
-"""Tests for grant matcher cloud function."""
-
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
-
-import pytest
 
 from cloud_functions.src.grant_matcher.main import (
     GrantData,
@@ -13,11 +9,8 @@ from cloud_functions.src.grant_matcher.main import (
     should_send_notification,
 )
 
-# Tests for grant matching logic
-
 
 def test_match_grant_with_subscription_category() -> None:
-    """Test matching based on category."""
     grant: GrantData = {
         "title": "Test Grant",
         "category": "Healthcare",
@@ -37,7 +30,6 @@ def test_match_grant_with_subscription_category() -> None:
 
 
 def test_match_grant_with_subscription_amount_range() -> None:
-    """Test matching based on amount range."""
     grant: GrantData = {
         "title": "Test Grant",
         "amount": "$50,000 - $100,000",
@@ -60,7 +52,6 @@ def test_match_grant_with_subscription_amount_range() -> None:
 
 
 def test_match_grant_with_subscription_deadline() -> None:
-    """Test matching based on deadline."""
     grant: GrantData = {
         "title": "Test Grant",
         "deadline": "2024-06-15",
@@ -83,7 +74,6 @@ def test_match_grant_with_subscription_deadline() -> None:
 
 
 def test_match_grant_with_subscription_search_query() -> None:
-    """Test matching based on search query."""
     grant: GrantData = {
         "title": "Cancer Research Grant",
         "description": "Funding for innovative cancer treatments",
@@ -103,7 +93,6 @@ def test_match_grant_with_subscription_search_query() -> None:
 
 
 def test_match_grant_with_subscription_multiple_criteria() -> None:
-    """Test matching with multiple criteria."""
     grant: GrantData = {
         "title": "Healthcare Innovation Grant",
         "category": "Healthcare",
@@ -129,11 +118,7 @@ def test_match_grant_with_subscription_multiple_criteria() -> None:
     assert match_grant_with_subscription(grant, subscription) is False
 
 
-# Tests for notification frequency logic
-
-
 def testshould_send_notification_first_time() -> None:
-    """Test sending first notification (no last_sent)."""
     subscription: SubscriptionData = {
         "email": "test@example.com",
         "search_params": {},
@@ -145,7 +130,6 @@ def testshould_send_notification_first_time() -> None:
 
 
 def testshould_send_notification_daily_frequency() -> None:
-    """Test daily notification frequency."""
     now = datetime.now(UTC)
 
     subscription: SubscriptionData = {
@@ -163,7 +147,6 @@ def testshould_send_notification_daily_frequency() -> None:
 
 
 def testshould_send_notification_weekly_frequency() -> None:
-    """Test weekly notification frequency."""
     now = datetime.now(UTC)
 
     subscription: SubscriptionData = {
@@ -180,12 +163,7 @@ def testshould_send_notification_weekly_frequency() -> None:
     assert should_send_notification(subscription, "weekly") is True
 
 
-# Tests for batch subscription processing
-
-
-@pytest.mark.asyncio
 async def test_process_subscriptions_batch_verified() -> None:
-    """Test processing verified subscriptions with matching grants."""
     mock_sub_ref = Mock()
     mock_sub_ref.update = Mock()
 
@@ -224,9 +202,7 @@ async def test_process_subscriptions_batch_verified() -> None:
     mock_sub_ref.update.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_process_subscriptions_batch_skip_unverified() -> None:
-    """Test that unverified subscriptions are skipped."""
     mock_sub_doc = Mock()
     mock_sub_doc.id = "sub-123"
     mock_sub_doc.to_dict.return_value = {
@@ -252,9 +228,7 @@ async def test_process_subscriptions_batch_skip_unverified() -> None:
     mock_publisher.publish.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_process_subscriptions_batch_respect_frequency() -> None:
-    """Test that notification frequency is respected."""
     now = datetime.now(UTC)
 
     mock_sub_doc = Mock()
@@ -283,13 +257,9 @@ async def test_process_subscriptions_batch_respect_frequency() -> None:
     mock_publisher.publish.assert_not_called()
 
 
-# Tests for the main cloud function
-
-
 @patch("cloud_functions.src.grant_matcher.main._get_publisher_client")
 @patch("cloud_functions.src.grant_matcher.main._get_firestore_client")
 def test_match_grants_cron_request(mock_firestore: Mock, mock_publisher: Mock) -> None:
-    """Test function handles cron requests (no auth required)."""
     from cloud_functions.src.grant_matcher.main import match_grants
 
     mock_db = Mock()
@@ -319,7 +289,6 @@ def test_match_grants_no_new_grants(
     mock_publisher: Mock,
     mock_asyncio_run: Mock,
 ) -> None:
-    """Test handling when no new grants are found."""
     from cloud_functions.src.grant_matcher.main import match_grants
 
     mock_request = Mock()
@@ -348,7 +317,6 @@ def test_match_grants_successful_processing(
     mock_publisher: Mock,
     mock_asyncio_run: Mock,
 ) -> None:
-    """Test successful grant matching and notification sending."""
     from cloud_functions.src.grant_matcher.main import match_grants
 
     mock_request = Mock()

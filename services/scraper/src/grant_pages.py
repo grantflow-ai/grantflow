@@ -13,14 +13,6 @@ logger = get_logger(__name__)
 
 
 async def download_and_save_pages(*, urls: list[str]) -> None:
-    """Download HTML pages from the provided URLs and save them as markdown files.
-
-    Args:
-        urls (list[str]): A list of URLs to download and process.
-
-    Returns:
-        None
-    """
     html_pages = await gather(*(download_page_html(url=url) for url in urls))
 
     save_tasks = []
@@ -35,15 +27,6 @@ async def download_and_save_pages(*, urls: list[str]) -> None:
 
 
 async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
-    """Convert HTML content to markdown and save it to Firestore.
-
-    Args:
-        soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
-        result_name (str): The name of the result used to name the saved file.
-
-    Returns:
-        None
-    """
     markdown = convert_to_markdown(soup)
     formatted_markdown = text(markdown)
 
@@ -52,15 +35,6 @@ async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
 
 
 async def download_grant_pages(*, search_results: list[GrantInfo], existing_file_identifiers: set[str]) -> int:
-    """Download grant pages from search results and save them as markdown files.
-
-    Args:
-        search_results (list[dict]): A list of grant search results. Each result should include a "url" field.
-        existing_file_identifiers (set[str]): A set of existing identifiers already in storage.
-
-    Returns:
-        Number of new files downloaded
-    """
     all_urls = [result["url"] for result in search_results]
     logger.info("Found %d total search results", len(all_urls))
 

@@ -16,10 +16,6 @@ interface GCSEventData {
 	name: string;
 }
 
-/**
- * Extracts the object path from a signed upload URL
- * The URL format includes the object name as a query parameter
- */
 export function extractObjectPathFromUrl(uploadUrl: string): null | string {
 	try {
 		const url = new URL(uploadUrl);

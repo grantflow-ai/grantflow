@@ -2,8 +2,6 @@ from typing import NotRequired, TypedDict
 
 
 class GrantInfo(TypedDict):
-    """A type representing a grant information row in the scrapped excel sheet."""
-
     title: str
     release_date: str
     expired_date: str
@@ -25,14 +23,6 @@ class GrantInfo(TypedDict):
 
 
 def validate_grant_data(grant_data: GrantInfo) -> list[str]:
-    """Validate grant data and return list of validation errors.
-
-    Args:
-        grant_data: Grant data to validate
-
-    Returns:
-        list[str]: List of validation error messages (empty if valid)
-    """
     errors: list[str] = []
 
     required_fields = ["title", "url", "organization"]

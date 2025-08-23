@@ -1,5 +1,3 @@
-"""Tests for email notification function."""
-
 import base64
 import json
 from typing import Any
@@ -18,7 +16,6 @@ from cloud_functions.src.email_notifications.main import (
 
 @pytest.fixture
 def cloud_event_data() -> dict[str, Any]:
-    """Create test cloud event data."""
     return {
         "application_id": "123e4567-e89b-12d3-a456-426614174000",
     }
@@ -26,7 +23,6 @@ def cloud_event_data() -> dict[str, Any]:
 
 @pytest.fixture
 def mock_cloud_event(cloud_event_data: dict[str, Any]) -> CloudEvent:
-    """Create mock CloudEvent."""
     message_data = base64.b64encode(json.dumps(cloud_event_data).encode()).decode("utf-8")
     attributes = {
         "type": "google.cloud.pubsub.topic.v1.messagePublished",
@@ -43,7 +39,6 @@ def mock_cloud_event(cloud_event_data: dict[str, Any]) -> CloudEvent:
 
 @pytest.fixture
 def mock_application_data() -> dict[str, Any]:
-    """Create mock application data from database."""
     return {
         "application": {
             "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -65,7 +60,6 @@ def mock_application_data() -> dict[str, Any]:
 async def test_get_application_data_success(
     mock_application_data: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Test successful retrieval of application data."""
     monkeypatch.setenv("DATABASE_CONNECTION_STRING", "postgresql://test:test@localhost/test")
 
     with (
@@ -115,7 +109,6 @@ async def test_get_application_data_success(
 
 
 async def test_get_application_data_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test application not found error."""
     monkeypatch.setenv("DATABASE_CONNECTION_STRING", "postgresql://test:test@localhost/test")
 
     with (
@@ -137,7 +130,6 @@ async def test_get_application_data_not_found(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_markdown_to_docx() -> None:
-    """Test markdown to DOCX conversion."""
     markdown_text = """# Test Document
 
 ## Section 1
@@ -165,7 +157,6 @@ Another paragraph with **bold** text.
 
 
 async def test_send_resend_email_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test successful email sending via Resend API."""
     monkeypatch.setenv("RESEND_API_KEY", "test-api-key")
 
     mock_response = Mock()
@@ -197,7 +188,6 @@ async def test_send_resend_email_success(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 async def test_send_resend_email_api_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test Resend API error handling."""
     monkeypatch.setenv("RESEND_API_KEY", "test-api-key")
 
     mock_response = Mock()
@@ -223,7 +213,6 @@ async def test_send_application_email_success(
     mock_application_data: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test successful application email sending."""
     monkeypatch.setenv("SITE_URL", "https://test.grantflow.ai")
 
     with (
@@ -264,7 +253,6 @@ async def test_send_application_email_success(
 
 
 async def test_send_application_email_invalid_event() -> None:
-    """Test handling of invalid CloudEvent format."""
     invalid_event = CloudEvent({"type": "test", "source": "test"})
 
     result = await send_application_email(invalid_event)
@@ -274,7 +262,6 @@ async def test_send_application_email_invalid_event() -> None:
 
 
 async def test_send_application_email_missing_application_id() -> None:
-    """Test handling of missing application_id."""
     message_data = base64.b64encode(json.dumps({}).encode()).decode("utf-8")
     event_attributes = {
         "type": "google.cloud.pubsub.topic.v1.messagePublished",
@@ -292,7 +279,6 @@ async def test_send_application_email_missing_application_id() -> None:
 async def test_send_application_email_database_error(
     mock_cloud_event: CloudEvent, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Test handling of database errors."""
     with patch("cloud_functions.src.email_notifications.main.get_application_data") as mock_get_data:
         mock_get_data.side_effect = Exception("Database connection failed")
 
@@ -303,7 +289,6 @@ async def test_send_application_email_database_error(
 
 
 def test_sync_wrapper_success(mock_cloud_event: CloudEvent, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test the synchronous wrapper function for success case."""
     from cloud_functions.src.email_notifications.main import main
 
     with patch("cloud_functions.src.email_notifications.main.send_application_email") as mock_send:
@@ -313,7 +298,6 @@ def test_sync_wrapper_success(mock_cloud_event: CloudEvent, monkeypatch: pytest.
 
 
 def test_sync_wrapper_error(mock_cloud_event: CloudEvent, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test the synchronous wrapper function for error case."""
     from cloud_functions.src.email_notifications.main import main
 
     with patch("cloud_functions.src.email_notifications.main.send_application_email") as mock_send:

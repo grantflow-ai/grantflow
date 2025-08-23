@@ -1,5 +1,3 @@
-"""Tests for public grant search API endpoints."""
-
 from collections.abc import AsyncIterator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -12,7 +10,6 @@ from litestar.testing import AsyncTestClient
 
 @pytest.fixture
 def mock_firestore_client() -> AsyncMock:
-    """Create a mock Firestore client."""
     mock_client = AsyncMock()
     mock_client.collection = MagicMock()
     return mock_client
@@ -20,7 +17,6 @@ def mock_firestore_client() -> AsyncMock:
 
 @pytest.fixture
 async def public_test_client() -> AsyncIterator[AsyncTestClient[Any]]:
-    """Create test client specifically for public endpoints."""
     from litestar.testing import AsyncTestClient
 
     from services.backend.src.api.routes.public_grants import (
@@ -48,7 +44,6 @@ async def public_test_client() -> AsyncIterator[AsyncTestClient[Any]]:
 
 @pytest.fixture
 def mock_grant_docs() -> list[MagicMock]:
-    """Create mock grant documents."""
     docs = []
     for i in range(3):
         mock_doc = MagicMock()
@@ -72,8 +67,6 @@ def mock_grant_docs() -> list[MagicMock]:
 async def test_search_grants_no_filters(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
-    """Test searching grants without filters."""
-
     async def mock_stream() -> AsyncIterator[MagicMock]:
         for doc in mock_grant_docs:
             yield doc
@@ -106,8 +99,6 @@ async def test_search_grants_no_filters(
 async def test_search_grants_with_query(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
-    """Test searching grants with text query."""
-
     async def mock_stream() -> AsyncIterator[MagicMock]:
         for doc in mock_grant_docs:
             yield doc
@@ -137,8 +128,6 @@ async def test_search_grants_with_query(
 async def test_search_grants_with_category_filter(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
-    """Test searching grants with category filter."""
-
     async def mock_stream() -> AsyncIterator[MagicMock]:
         for doc in mock_grant_docs:
             yield doc
@@ -166,8 +155,6 @@ async def test_search_grants_with_category_filter(
 async def test_search_grants_with_amount_filters(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
-    """Test searching grants with amount filters."""
-
     async def mock_stream() -> AsyncIterator[MagicMock]:
         for doc in mock_grant_docs:
             yield doc
@@ -200,8 +187,6 @@ async def test_search_grants_with_amount_filters(
 async def test_search_grants_with_pagination(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
-    """Test searching grants with pagination."""
-
     async def mock_stream() -> AsyncIterator[MagicMock]:
         yield mock_grant_docs[1]
 
@@ -228,7 +213,6 @@ async def test_search_grants_with_pagination(
 async def test_get_grant_details_success(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
-    """Test getting grant details successfully."""
     mock_doc = mock_grant_docs[0]
     mock_doc_ref = MagicMock()
     mock_doc_ref.get = AsyncMock(return_value=mock_doc)
@@ -251,7 +235,6 @@ async def test_get_grant_details_success(
 async def test_get_grant_details_not_found(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test getting grant details when grant doesn't exist."""
     mock_doc = MagicMock()
     mock_doc.exists = False
     mock_doc_ref = MagicMock()
@@ -274,8 +257,6 @@ async def test_get_grant_details_not_found(
 async def test_create_subscription_success(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test creating a grant subscription successfully."""
-
     async def mock_stream_empty() -> AsyncIterator[Any]:
         if False:
             yield
@@ -314,7 +295,6 @@ async def test_create_subscription_success(
 async def test_create_subscription_invalid_email(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test creating a subscription with invalid email."""
     with patch(
         "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
     ):
@@ -334,7 +314,6 @@ async def test_create_subscription_invalid_email(
 async def test_create_subscription_invalid_frequency(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test creating a subscription with invalid frequency."""
     with patch(
         "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
     ):
@@ -355,7 +334,6 @@ async def test_create_subscription_invalid_frequency(
 async def test_create_subscription_update_existing(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test updating an existing subscription."""
     mock_existing_doc = MagicMock()
     mock_existing_doc.id = "existing-sub-123"
     mock_existing_doc.reference.update = AsyncMock()
@@ -392,7 +370,6 @@ async def test_create_subscription_update_existing(
 async def test_verify_subscription_success(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test verifying a subscription successfully."""
     mock_doc = MagicMock()
     mock_doc.id = "sub-123"
     mock_doc.reference.update = AsyncMock()
@@ -422,8 +399,6 @@ async def test_verify_subscription_success(
 async def test_verify_subscription_invalid_token(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test verifying a subscription with invalid token."""
-
     async def mock_stream_empty() -> AsyncIterator[Any]:
         if False:
             yield
@@ -447,7 +422,6 @@ async def test_verify_subscription_invalid_token(
 
 
 async def test_unsubscribe_success(public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock) -> None:
-    """Test unsubscribing successfully."""
     mock_doc = MagicMock()
     mock_doc.reference.delete = AsyncMock()
 
@@ -479,8 +453,6 @@ async def test_unsubscribe_success(public_test_client: AsyncTestClient[Any], moc
 async def test_unsubscribe_no_subscription(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test unsubscribing when no subscription exists."""
-
     async def mock_stream_empty() -> AsyncIterator[Any]:
         if False:
             yield
@@ -509,8 +481,6 @@ async def test_unsubscribe_no_subscription(
 async def test_search_grants_limit_enforcement(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    """Test that search grants enforces max limit of 100."""
-
     async def mock_stream() -> AsyncIterator[Any]:
         if False:
             yield

@@ -1,11 +1,3 @@
-/**
- * Comprehensive store reset utility for testing
- *
- * This module provides utilities to reset all Zustand stores to their initial state
- * for proper test isolation. It handles both stores with built-in reset functions
- * and those requiring manual state reset.
- */
-
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNotificationStore } from "@/stores/notification-store";
@@ -74,10 +66,6 @@ export function resetAllStores(): void {
 	clearPersistedStoreData();
 }
 
-/**
- * Reset specific store by name.
- * Useful for testing specific store functionality in isolation.
- */
 export function resetStore(
 	storeName: "application" | "navigation" | "notification" | "organization" | "project" | "user" | "wizard",
 ): void {
@@ -123,12 +111,6 @@ export function resetStore(
 	}
 }
 
-/**
- * Clear persisted store data from localStorage.
- *
- * Some stores use Zustand's persist middleware which saves state to localStorage.
- * This can cause test pollution if not properly cleared.
- */
 function clearPersistedStoreData(): void {
 	const persistedStoreKeys = ["navigation-store", "user-store", "wizard-store", "organization-store"];
 

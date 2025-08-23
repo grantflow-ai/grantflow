@@ -1,14 +1,3 @@
-"""
-Configurable RAG Quality Benchmark Test
-
-This test uses the RAG pipeline to provide retrieval quality metrics:
-- retrieve_documents() for actual document retrieval
-- evaluate_retrieval_relevance() for AI-powered quality assessment
-- Search queries and semantic similarity evaluation
-- Production-grade performance and quality analysis
-
-"""
-
 import os
 import time
 from datetime import UTC, datetime
@@ -49,12 +38,6 @@ async def create_and_index_rag_source(
     overlap_chars: int,
     model_name: str,
 ) -> tuple[str, list[dict[str, Any]], str]:
-    """
-    Create and index RAG source with chunking and embedding generation.
-
-    This is a simplified version for testing that creates chunks and generates
-    mock vectors for benchmarking purposes.
-    """
     from packages.shared_utils.src.embeddings import generate_embeddings
     from testing.factories import RagFileFactory
 
@@ -152,7 +135,6 @@ async def create_and_index_rag_source(
 
 @pytest.fixture
 def rag_quality_configurations() -> dict[str, dict[str, Any]]:
-    """Load chunking configurations from YAML file."""
     config_path = Path(__file__).parent / "chunking_configs.yaml"
     with config_path.open() as file:
         config_data = yaml.safe_load(file)
@@ -162,7 +144,6 @@ def rag_quality_configurations() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture
 def rag_quality_results_dir() -> Path:
-    """Create results directory for configurable RAG quality benchmarks."""
     results_dir = RESULTS_FOLDER / "configurable_rag_quality_benchmarks"
     results_dir.mkdir(parents=True, exist_ok=True)
     return results_dir
@@ -170,14 +151,12 @@ def rag_quality_results_dir() -> Path:
 
 @pytest.fixture
 def cfp_content() -> str:
-    """Load CFP content for RAG testing."""
     cfp_file_path = FIXTURES_FOLDER / "cfps" / "melanoma_alliance.md"
     return cfp_file_path.read_text()
 
 
 @pytest.fixture
 async def cleanup_rag_test_data(async_session_maker: async_sessionmaker[Any]) -> Any:
-    """Cleanup RAG test data after configurable tests."""
     from packages.db.src.tables import GrantApplicationSource, RagFile, RagSource, TextVector
     from sqlalchemy import delete, select
 
@@ -210,16 +189,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
     grant_application: Any,
     db_connection_string: str,
 ) -> None:
-    """
-    Configurable RAG quality benchmark using the production pipeline.
-
-    This test:
-    1. Uses actual retrieve_documents() function for retrieval
-    2. Employs evaluate_retrieval_relevance() for AI-powered quality assessment
-    3. Tests all 4 configurations with performance and quality metrics
-    4. Generates production-grade comparison reports
-    5. Provides authentic RAG pipeline evaluation (not simplified metrics)
-    """
     os.environ["DATABASE_CONNECTION_STRING"] = db_connection_string
 
     from packages.db.src.connection import engine_ref, session_maker_ref
@@ -628,7 +597,6 @@ async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
 
 
 def calculate_std_dev(values: list[int]) -> float:
-    """Calculate standard deviation of chunk sizes."""
     if not values:
         return 0.0
 
@@ -638,8 +606,6 @@ def calculate_std_dev(values: list[int]) -> float:
 
 
 def extract_model_data_from_results(results: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Extract all metrics for each model from the benchmark results."""
-
     model_data = {}
 
     for result in results:
@@ -675,8 +641,6 @@ def extract_model_data_from_results(results: list[dict[str, Any]]) -> dict[str, 
 
 
 def generate_markdown_comparison_table(model_data: dict[str, dict[str, Any]]) -> str:
-    """Generate a comprehensive markdown table with all metrics."""
-
     if not model_data:
         return "❌ No model data available"
 
@@ -748,8 +712,6 @@ def generate_markdown_comparison_table(model_data: dict[str, dict[str, Any]]) ->
 
 
 def generate_csv_comparison_table(model_data: dict[str, dict[str, Any]]) -> str:
-    """Generate a CSV format table for spreadsheet analysis."""
-
     if not model_data:
         return "No model data available"
 
@@ -791,8 +753,6 @@ def generate_csv_comparison_table(model_data: dict[str, dict[str, Any]]) -> str:
 def generate_rag_quality_analysis(
     results: list[dict[str, Any]], configurations: dict[str, dict[str, Any]]
 ) -> dict[str, Any]:
-    """Generate comprehensive analysis comparing all configurations with complete metrics tables."""
-
     model_comparison_data = extract_model_data_from_results(results)
 
     chunking_comparison = generate_dynamic_chunking_comparison(results)
@@ -817,7 +777,6 @@ def generate_rag_quality_analysis(
 
 
 def extract_rag_config_summary(result: dict[str, Any]) -> dict[str, Any]:
-    """Extract key metrics from a RAG configuration result."""
     return {
         "chunk_count": result["chunking_analysis"]["chunk_count"],
         "avg_chunk_size": result["chunking_analysis"]["avg_chunk_size"],
@@ -835,7 +794,6 @@ def extract_rag_config_summary(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def calculate_rag_comparison_ratios(config1: dict[str, Any], config2: dict[str, Any]) -> dict[str, float]:
-    """Calculate comparison ratios between two RAG configurations."""
     c1_perf = config1["performance_metrics"]
     c2_perf = config2["performance_metrics"]
     c1_chunk = config1["chunking_analysis"]
@@ -863,7 +821,6 @@ def calculate_rag_comparison_ratios(config1: dict[str, Any], config2: dict[str, 
 
 
 def create_rag_best_summary(result: dict[str, Any] | None, metric_type: str) -> dict[str, Any] | None:
-    """Create a summary for the best RAG configuration."""
     if not result:
         return None
 
@@ -905,7 +862,6 @@ def create_rag_best_summary(result: dict[str, Any] | None, metric_type: str) -> 
 
 
 def generate_dynamic_chunking_comparison(results: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """Generate dynamic chunking comparison based on available configurations."""
     if len(results) < 2:
         return None
 
@@ -950,7 +906,6 @@ def generate_dynamic_chunking_comparison(results: list[dict[str, Any]]) -> dict[
 
 
 def get_model_display_name(model_name: str, dimension: int) -> str:
-    """Generate a display name for the embedding model."""
     if "MiniLM" in model_name:
         return f"MiniLM ({dimension}d)"
     if "scibert" in model_name.lower():
@@ -968,8 +923,6 @@ def get_model_display_name(model_name: str, dimension: int) -> str:
 def generate_rag_configurable_insights(
     results: list[dict[str, Any]], chunking_comparison: dict[str, Any] | None
 ) -> dict[str, str]:
-    """Generate configurable insights covering both performance and RAG quality."""
-
     insights = {}
 
     if chunking_comparison and "comparison_ratios" in chunking_comparison:
@@ -1031,7 +984,6 @@ def generate_rag_configurable_insights(
 
 
 def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> None:
-    """Generate a markdown summary report of the RAG quality benchmark results."""
     markdown_lines = []
 
     markdown_lines.extend(_build_header_section(analysis["summary"]))
@@ -1052,7 +1004,6 @@ def generate_markdown_summary(analysis: dict[str, Any], output_path: Path) -> No
 
 
 def _build_header_section(summary: dict[str, Any]) -> list[str]:
-    """Build the header section of the markdown report."""
     return [
         "# RAG Quality Benchmark Results",
         "",
@@ -1065,7 +1016,6 @@ def _build_header_section(summary: dict[str, Any]) -> list[str]:
 
 
 def _build_configs_section(analysis: dict[str, Any]) -> list[str]:
-    """Build the configurations overview section."""
     if "detailed_results" not in analysis:
         return []
 
@@ -1091,7 +1041,6 @@ def _build_configs_section(analysis: dict[str, Any]) -> list[str]:
 
 
 def _build_performance_section(perf_best: dict[str, Any]) -> list[str]:
-    """Build the performance best results section."""
     lines = ["## Best Performance Results", ""]
 
     categories = {
@@ -1111,7 +1060,6 @@ def _build_performance_section(perf_best: dict[str, Any]) -> list[str]:
 
 
 def _build_rag_quality_section(rag_best: dict[str, Any]) -> list[str]:
-    """Build the RAG quality best results section."""
     lines = ["## Best RAG Quality Results", ""]
 
     categories = {
@@ -1134,7 +1082,6 @@ def _build_rag_quality_section(rag_best: dict[str, Any]) -> list[str]:
 
 
 def _format_best_section(title: str, best: dict[str, Any]) -> list[str]:
-    """Format a best result section with metrics."""
     lines = [f"### {title}", f"**Best**: {best['config']} - {best['description']}"]
 
     if "throughput" in best:
@@ -1167,7 +1114,6 @@ def _format_best_section(title: str, best: dict[str, Any]) -> list[str]:
 
 
 def _build_comparison_section(chunking_analysis: dict[str, Any] | None) -> list[str]:
-    """Build the chunking strategy comparison section."""
     if not chunking_analysis:
         return []
 
@@ -1201,7 +1147,6 @@ def _build_comparison_section(chunking_analysis: dict[str, Any] | None) -> list[
 
 
 def _build_comparison_rows(metrics_a: dict[str, Any], metrics_b: dict[str, Any], ratios: dict[str, float]) -> list[str]:
-    """Build comparison table rows."""
     metrics = [
         ("Chunk Count", "chunk_count", "chunk_count_ratio", ""),
         ("Insertion Throughput", "insertion_throughput", "insertion_speed_ratio", " ops/sec"),
@@ -1224,7 +1169,6 @@ def _build_comparison_rows(metrics_a: dict[str, Any], metrics_b: dict[str, Any],
 
 
 def _format_metric_value(value: Any, unit: str, key: str) -> str:
-    """Format a metric value based on its unit and key."""
     if unit == "%":
         return f"{value:.1%}"
     if unit == "s":
@@ -1239,7 +1183,6 @@ def _format_metric_value(value: Any, unit: str, key: str) -> str:
 
 
 def _build_insights_section(insights: dict[str, str]) -> list[str]:
-    """Build the key insights section."""
     if not insights:
         return []
 
@@ -1264,7 +1207,6 @@ def _build_insights_section(insights: dict[str, str]) -> list[str]:
 
 
 def _build_footer_section(summary: dict[str, Any]) -> list[str]:
-    """Build the footer section."""
     return [
         "---",
         "",
@@ -1275,8 +1217,6 @@ def _build_footer_section(summary: dict[str, Any]) -> list[str]:
 
 
 def print_rag_quality_summary(analysis: dict[str, Any]) -> None:
-    """Print a configurable RAG quality summary."""
-
     analysis["summary"]
 
     perf_best = analysis["performance_best"]

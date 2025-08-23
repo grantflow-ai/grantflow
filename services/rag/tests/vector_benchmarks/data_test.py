@@ -1,18 +1,3 @@
-"""
-Test Data Generation for Vector Benchmarking
-
-This module generates realistic test data for vector benchmarking.
-Since we're using the real production schema, we need to create
-proper entities (users, projects, rag_sources) to test with.
-
-Key functions:
-- create_test_entities: Creates users, projects, and rag_sources
-- generate_test_chunks: Creates realistic text chunks for indexing
-- create_test_vectors: Uses production embedding service to generate vectors
-
-The beauty of this approach: we test with real data structures!
-"""
-
 import hashlib
 import random
 import uuid
@@ -27,49 +12,12 @@ logger = get_logger(__name__)
 
 
 class BenchmarkDataGenerator:
-    """
-    Generates realistic test data for vector benchmarking.
-
-    This creates proper database entities using production models,
-    so we can test the real RAG pipeline with different vector configurations.
-
-    Example:
-        generator = BenchmarkDataGenerator(session)
-
-        # Create base entities
-        user, project, rag_source = await generator.create_test_entities()
-
-        # Create test chunks
-        chunks = await generator.generate_test_chunks(1000, rag_source.id)
-
-        # Generate vectors using production code
-        vectors = await generator.create_test_vectors(chunks, dimension=256)
-    """
-
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def generate_test_chunks(
         self, chunk_count: int, rag_source_id: uuid.UUID, categories: list[str] | None = None
     ) -> list[Chunk]:
-        """
-        Generates realistic text chunks for vector testing.
-
-        These chunks simulate real grant documents, research papers, etc.
-        They're structured like your production data but with predictable content.
-
-        Args:
-            chunk_count: Number of chunks to generate
-            rag_source_id: ID of RAG source these chunks belong to
-            categories: List of content categories (defaults to grant-related)
-
-        Returns:
-            List of Chunk objects ready for vector generation
-
-        Example:
-            chunks = await generator.generate_test_chunks(1000, rag_source.id)
-            # Creates 1000 realistic chunks with grant-related content
-        """
         if categories is None:
             categories = [
                 "grant_proposal",
@@ -190,25 +138,6 @@ class BenchmarkDataGenerator:
     async def create_test_vectors(
         self, chunks: list[Chunk], rag_source_id: uuid.UUID, dimension: int = 384
     ) -> list[VectorDTO]:
-        """
-        Creates realistic vector embeddings for chunks.
-
-        For benchmarking, we create deterministic embeddings based on content hash.
-        This ensures consistent vectors across test runs while maintaining realistic
-        embedding properties (normalized, diverse).
-
-        Args:
-            chunks: List of chunks to create vectors for
-            rag_source_id: RAG source ID for the vectors
-            dimension: Vector dimension (must match current table dimension)
-
-        Returns:
-            List of VectorDTO objects ready for database insertion
-
-        Example:
-            vectors = await generator.create_test_vectors(chunks, rag_source.id, 256)
-            # Creates 256-dimensional vectors for all chunks
-        """
         logger.info("Creating test vectors", chunks_count=len(chunks), dimension=dimension)
 
         vectors = []
@@ -239,20 +168,6 @@ class BenchmarkDataGenerator:
         return vectors
 
     async def generate_query_vectors(self, count: int, dimension: int = 384) -> list[list[float]]:
-        """
-        Generate normalized query vectors for testing.
-
-        Args:
-            count: Number of query vectors to generate
-            dimension: Dimension of each query vector
-
-        Returns:
-            List of normalized vectors for similarity testing
-
-        Example:
-            query_vectors = await generator.generate_query_vectors(50, 384)
-            # Creates 50 test query vectors with 384 dimensions
-        """
         query_vectors = []
         for i in range(count):
             query_vector = [0.1 * ((i + 1) % 10)] * dimension
@@ -266,20 +181,6 @@ class BenchmarkDataGenerator:
         return query_vectors
 
     async def insert_vectors_to_database(self, vectors: list[VectorDTO]) -> None:
-        """
-        Inserts vectors into the database using production models.
-
-        This tests the real database insertion code with your test vectors.
-        For benchmark tests with non-standard dimensions, uses raw SQL to bypass
-        SQLAlchemy's hardcoded dimension validation.
-
-        Args:
-            vectors: List of VectorDTO objects to insert
-
-        Example:
-            await generator.insert_vectors_to_database(vectors)
-            # Vectors are now in the text_vectors table
-        """
         logger.info("Inserting vectors into database", vectors_count=len(vectors))
 
         if not vectors:
@@ -300,7 +201,6 @@ class BenchmarkDataGenerator:
         logger.info("Successfully inserted vectors", vectors_count=len(vectors))
 
     async def _insert_vectors_orm(self, vectors: list[VectorDTO]) -> None:
-        """Insert vectors using SQLAlchemy ORM (for standard 384-dimension vectors)."""
         batch_size = 1000
         for i in range(0, len(vectors), batch_size):
             batch = vectors[i : i + batch_size]
@@ -324,7 +224,6 @@ class BenchmarkDataGenerator:
             )
 
     async def _insert_vectors_raw_sql(self, vectors: list[VectorDTO]) -> None:
-        """Insert vectors using raw SQL (for non-standard dimensions in benchmark tests)."""
         import json
 
         from sqlalchemy import text
@@ -363,7 +262,6 @@ class BenchmarkDataGenerator:
             )
 
     async def _ensure_rag_sources_exist(self, vectors: list[VectorDTO]) -> None:
-        """Ensure all referenced RagSources exist in the database to avoid foreign key violations."""
         import uuid
 
         from packages.db.src.enums import SourceIndexingStatusEnum

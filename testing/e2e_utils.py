@@ -302,8 +302,6 @@ def validate_embedding_quality(
 
 
 class ProgressReporter:
-    """Progress reporter for long-running tests to provide important info even when failing."""
-
     def __init__(self, logger: logging.Logger, test_name: str, total_steps: int) -> None:
         self.logger = logger
         self.test_name = test_name
@@ -314,7 +312,6 @@ class ProgressReporter:
         self.last_step_time = time.time()
 
     def report_step(self, step_name: str, details: dict[str, Any] | None = None) -> None:
-        """Report progress of a test step."""
         self.current_step += 1
         current_time = time.time()
         elapsed = current_time - self.start_time
@@ -355,7 +352,6 @@ class ProgressReporter:
         self.last_step_time = current_time
 
     def report_final_status(self, success: bool, result_info: dict[str, Any] | None = None) -> None:
-        """Report final test status with comprehensive info."""
         elapsed = time.time() - self.start_time
         status_emoji = "✅" if success else "❌"
         status_text = "SUCCESS" if success else "FAILURE"
@@ -382,7 +378,6 @@ def create_heavy_test_context(
     total_steps: int,
     expected_timeout_minutes: int = 30,
 ) -> ProgressReporter:
-    """Create a context for heavy integration tests with progress reporting."""
     logger.info(
         "🚀 Starting heavy integration test: %s | Expected steps: %d | Max timeout: %dm",
         test_name,

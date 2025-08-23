@@ -15,7 +15,6 @@ async def test_list_notifications_empty(
     test_client: TestingClientType,
     project_member_user: None,
 ) -> None:
-    """Test listing notifications when none exist."""
     response = await test_client.get(
         "/notifications",
         headers={"Authorization": "Bearer some_token"},
@@ -36,7 +35,6 @@ async def test_list_notifications_with_data(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test listing notifications with sample data."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -111,7 +109,6 @@ async def test_list_notifications_excludes_expired(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test that expired notifications are excluded."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -153,7 +150,6 @@ async def test_list_notifications_excludes_expired(
 async def test_list_notifications_unauthorized(
     test_client: TestingClientType,
 ) -> None:
-    """Test that unauthorized requests are rejected."""
     response = await test_client.get("/notifications")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
@@ -164,7 +160,6 @@ async def test_dismiss_notification_success(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test successfully dismissing a notification."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -201,7 +196,6 @@ async def test_dismiss_notification_not_found(
     test_client: TestingClientType,
     project_member_user: None,
 ) -> None:
-    """Test dismissing a non-existent notification."""
     non_existent_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(
@@ -216,7 +210,6 @@ async def test_dismiss_notification_not_found(
 async def test_dismiss_notification_unauthorized(
     test_client: TestingClientType,
 ) -> None:
-    """Test that unauthorized requests are rejected."""
     notification_id = UUID("00000000-0000-0000-0000-000000000000")
 
     response = await test_client.post(f"/notifications/{notification_id}/dismiss")
@@ -229,7 +222,6 @@ async def test_dismiss_notification_already_dismissed(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test dismissing an already dismissed notification."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():
@@ -260,7 +252,6 @@ async def test_notification_with_extra_data(
     async_session_maker: async_sessionmaker[Any],
     project_member_user: None,
 ) -> None:
-    """Test notification with extra metadata."""
     firebase_uid = "a" * 128
 
     async with async_session_maker() as session, session.begin():

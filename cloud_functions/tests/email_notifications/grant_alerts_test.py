@@ -2,20 +2,15 @@ import base64
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from cloudevents.http import CloudEvent
 
-# Tests for grant alert email functionality
 
-
-@pytest.mark.asyncio
 @patch("cloud_functions.src.email_notifications.main.send_resend_email")
 @patch("cloud_functions.src.email_notifications.main.jinja_env")
 async def test_send_grant_alert_email_success(
     mock_jinja_env: MagicMock,
     mock_send_resend: AsyncMock,
 ) -> None:
-    """Test successful grant alert email sending."""
     from cloud_functions.src.email_notifications.main import send_grant_alert_email
 
     mock_template = MagicMock()
@@ -71,14 +66,12 @@ async def test_send_grant_alert_email_success(
     )
 
 
-@pytest.mark.asyncio
 @patch("cloud_functions.src.email_notifications.main.send_resend_email")
 @patch("cloud_functions.src.email_notifications.main.jinja_env")
 async def test_send_grant_alert_single_grant(
     mock_jinja_env: MagicMock,
     mock_send_resend: AsyncMock,
 ) -> None:
-    """Test grant alert email with single grant (singular subject)."""
     from cloud_functions.src.email_notifications.main import send_grant_alert_email
 
     mock_template = MagicMock()
@@ -111,12 +104,10 @@ async def test_send_grant_alert_single_grant(
     assert args[1] == "🎯 1 New Grant Available"
 
 
-@pytest.mark.asyncio
 @patch("cloud_functions.src.email_notifications.main.send_resend_email")
 async def test_send_grant_alert_email_failure(
     mock_send_resend: AsyncMock,
 ) -> None:
-    """Test grant alert email sending failure."""
     from cloud_functions.src.email_notifications.main import send_grant_alert_email
 
     mock_send_resend.side_effect = Exception("Resend API error")
@@ -137,12 +128,10 @@ async def test_send_grant_alert_email_failure(
     assert "Failed to send grant alert: Resend API error" in result["message"]
 
 
-@pytest.mark.asyncio
 @patch("cloud_functions.src.email_notifications.main.send_grant_alert_email")
 async def test_main_function_routes_grant_alerts(
     mock_send_grant_alert: AsyncMock,
 ) -> None:
-    """Test that main function routes grant alerts correctly."""
     from cloud_functions.src.email_notifications.main import send_application_email
 
     mock_send_grant_alert.return_value = {
@@ -178,14 +167,12 @@ async def test_main_function_routes_grant_alerts(
     mock_send_grant_alert.assert_called_once_with(grant_alert_data)
 
 
-@pytest.mark.asyncio
 @patch("cloud_functions.src.email_notifications.main.get_application_data")
 @patch("cloud_functions.src.email_notifications.main.send_resend_email")
 async def test_main_function_routes_application_emails(
     mock_send_resend: AsyncMock,
     mock_get_app_data: AsyncMock,
 ) -> None:
-    """Test that main function still handles application emails."""
     from cloud_functions.src.email_notifications.main import send_application_email
 
     mock_get_app_data.return_value = {

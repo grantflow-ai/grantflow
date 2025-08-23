@@ -18,9 +18,6 @@ export async function dismissNotification(notificationId: string) {
 	);
 }
 
-/**
- * Get all notifications for the current user
- */
 export async function getNotifications() {
 	return withAuthRedirect(
 		getClient()

@@ -19,18 +19,6 @@ TODAY_DATE: Final[date] = datetime.now(UTC).date()
 
 
 def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE) -> str:
-    """Create a query string for the NIH grant search page.
-
-    The new NIH site automatically downloads results when navigating with search parameters.
-
-    Args:
-        from_date: The start date of the search.
-        to_date: The end date of the search.
-
-    Returns:
-        The query string.
-    """
-
     logger.info("Creating query string for date range", from_date=from_date.isoformat(), to_date=to_date.isoformat())
 
     qs = {
@@ -45,22 +33,6 @@ def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TOD
 async def download_search_data(  # noqa: PLR0915
     *, to_date: date = TODAY_DATE, from_date: date = DEFAULT_FROM_DATE
 ) -> list[GrantInfo]:
-    """Download the CSV file from the NIH grant search page and
-        return the data as a list of dictionaries.
-
-    The NIH site has been redesigned and now uses a different download mechanism.
-    This function navigates to the search page and attempts to trigger the download.
-
-    Raises:
-        ScraperError: If the download does not occur.
-
-    Args:
-        to_date: The end date of the search.
-        from_date: The start date of the search.
-
-    Returns:
-        The data as a list of dictionaries
-    """
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         context = await browser.new_context(

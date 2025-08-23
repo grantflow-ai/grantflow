@@ -496,19 +496,6 @@ async def publish_subscription_verification_email(
     frequency: str = "daily",
     trace_id: str | None = None,
 ) -> str:
-    """Publish email notification for subscription verification.
-
-    Args:
-        email: User's email address
-        subscription_id: ID of the subscription
-        verification_token: Token for email verification
-        search_params: Search parameters for the subscription
-        frequency: Notification frequency (daily/weekly)
-        trace_id: Optional trace ID for correlation
-
-    Returns:
-        Message ID from Pub/Sub
-    """
     client = get_publisher_client()
 
     data = SubscriptionVerificationRequest(

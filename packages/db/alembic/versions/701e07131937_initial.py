@@ -1,11 +1,3 @@
-"""initial
-
-Revision ID: 701e07131937
-Revises:
-Create Date: 2025-07-18 14:38:17.787102
-
-"""
-
 from collections.abc import Sequence
 
 import pgvector.sqlalchemy
@@ -19,8 +11,6 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
-
     op.create_table(
         "granting_institutions",
         sa.Column("full_name", sa.String(length=255), nullable=False),
@@ -498,8 +488,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
-
     op.drop_index(op.f("ix_grant_template_sources_deleted_at"), table_name="grant_template_sources")
     op.drop_index(op.f("ix_grant_template_sources_created_at"), table_name="grant_template_sources")
     op.drop_table("grant_template_sources")

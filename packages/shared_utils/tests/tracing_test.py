@@ -1,5 +1,3 @@
-"""Tests for OpenTelemetry tracing utilities."""
-
 from unittest.mock import Mock, patch
 
 import pytest
@@ -13,7 +11,6 @@ from packages.shared_utils.src.tracing import (
 
 
 def test_start_span_with_trace_id_success() -> None:
-    """Test successful span creation with trace ID."""
     with (
         patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer,
         patch("packages.shared_utils.src.tracing.bind_contextvars") as mock_bind,
@@ -52,7 +49,6 @@ def test_start_span_with_trace_id_success() -> None:
 
 
 def test_start_span_with_trace_id_without_trace_id() -> None:
-    """Test span creation without trace ID."""
     with (
         patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer,
         patch("packages.shared_utils.src.tracing.bind_contextvars") as mock_bind,
@@ -79,7 +75,6 @@ def test_start_span_with_trace_id_without_trace_id() -> None:
 
 
 def test_start_span_with_trace_id_exception_handling() -> None:
-    """Test span exception handling and status setting."""
     with (
         patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer,
         patch("packages.shared_utils.src.tracing.bind_contextvars"),
@@ -111,7 +106,6 @@ def test_start_span_with_trace_id_exception_handling() -> None:
 
 
 def test_start_span_with_none_attributes() -> None:
-    """Test span creation with None attribute values."""
     with patch("packages.shared_utils.src.tracing.get_tracer") as mock_get_tracer:
         mock_tracer = Mock()
         mock_span = Mock()
@@ -132,7 +126,6 @@ def test_start_span_with_none_attributes() -> None:
 
 
 def test_add_span_attributes_with_current_span() -> None:
-    """Test adding attributes to current span."""
     with patch(
         "packages.shared_utils.src.tracing.trace.get_current_span"
     ) as mock_get_span:
@@ -150,7 +143,6 @@ def test_add_span_attributes_with_current_span() -> None:
 
 
 def test_add_span_attributes_with_non_recording_span() -> None:
-    """Test adding attributes when span is not recording."""
     with patch(
         "packages.shared_utils.src.tracing.trace.get_current_span"
     ) as mock_get_span:
@@ -164,7 +156,6 @@ def test_add_span_attributes_with_non_recording_span() -> None:
 
 
 def test_record_exception_with_recording_span() -> None:
-    """Test recording exception in current span."""
     with patch(
         "packages.shared_utils.src.tracing.trace.get_current_span"
     ) as mock_get_span:
@@ -184,7 +175,6 @@ def test_record_exception_with_recording_span() -> None:
 
 
 def test_record_exception_not_escaped() -> None:
-    """Test recording exception without escaped flag."""
     with patch(
         "packages.shared_utils.src.tracing.trace.get_current_span"
     ) as mock_get_span:
@@ -203,7 +193,6 @@ def test_record_exception_not_escaped() -> None:
 
 
 def test_record_exception_with_non_recording_span() -> None:
-    """Test recording exception when span is not recording."""
     with patch(
         "packages.shared_utils.src.tracing.trace.get_current_span"
     ) as mock_get_span:

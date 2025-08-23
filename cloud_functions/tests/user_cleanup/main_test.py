@@ -1,5 +1,3 @@
-"""Tests for user cleanup cloud function."""
-
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -15,11 +13,8 @@ from cloud_functions.src.user_cleanup.main import (
     main,
 )
 
-# Tests for main entry point
-
 
 def test_main_calls_cleanup_function(mock_request: Mock) -> None:
-    """Test that main function calls the cleanup function."""
     with patch("cloud_functions.src.user_cleanup.main.cleanup_expired_entities") as mock_cleanup:
         mock_cleanup.return_value = {"statusCode": 200, "body": {"processed": 0}}
 
@@ -32,12 +27,8 @@ def test_main_calls_cleanup_function(mock_request: Mock) -> None:
             assert result["statusCode"] == 200  # type: ignore[index,call-overload]
 
 
-# Tests for cleanup expired users function
-
-
 @pytest.mark.xfail(reason="Tests need to be updated for new database-based implementation", strict=False)
 async def test_cleanup_expired_users_no_expired() -> None:
-    """Test successful cleanup when no users are expired."""
     with (
         patch("firebase_admin._apps", [Mock()]),
         patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
@@ -71,7 +62,6 @@ async def test_cleanup_expired_users_no_expired() -> None:
 
 @pytest.mark.xfail(reason="Tests need to be updated for new database-based implementation", strict=False)
 async def test_cleanup_expired_users_with_expired() -> None:
-    """Test successful cleanup with expired users."""
     with (
         patch("firebase_admin._apps", [Mock()]),
         patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
@@ -121,7 +111,6 @@ async def test_cleanup_expired_users_with_expired() -> None:
 
 @pytest.mark.xfail(reason="Tests need to be updated for new database-based implementation", strict=False)
 async def test_cleanup_with_user_deletion_error() -> None:
-    """Test cleanup when user deletion fails."""
     with (
         patch("firebase_admin._apps", [Mock()]),
         patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
@@ -165,7 +154,6 @@ async def test_cleanup_with_user_deletion_error() -> None:
 
 @pytest.mark.xfail(reason="Tests need to be updated for new database-based implementation", strict=False)
 async def test_cleanup_firebase_initialization() -> None:
-    """Test Firebase initialization when not already initialized."""
     with (
         patch("firebase_admin._apps", []),
         patch("firebase_admin.initialize_app") as mock_init,
@@ -194,7 +182,6 @@ async def test_cleanup_firebase_initialization() -> None:
 
 @pytest.mark.xfail(reason="Tests need to be updated for new database-based implementation", strict=False)
 async def test_cleanup_unexpected_error() -> None:
-    """Test cleanup with unexpected error."""
     with (
         patch("firebase_admin._apps", [Mock()]),
         patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
@@ -207,11 +194,7 @@ async def test_cleanup_unexpected_error() -> None:
         assert "Entity cleanup function failed" in result["body"]["error"]
 
 
-# Tests for delete user completely function
-
-
 async def test_hard_delete_user_success() -> None:
-    """Test successful complete user deletion."""
     with (
         patch("firebase_admin.auth.delete_user") as mock_auth_delete,
         patch("cloud_functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
@@ -226,7 +209,6 @@ async def test_hard_delete_user_success() -> None:
 
 
 async def test_hard_delete_user_with_auth_error() -> None:
-    """Test user deletion when Firebase Auth fails."""
     with (
         patch("firebase_admin.auth.delete_user") as mock_auth_delete,
         patch("cloud_functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
@@ -243,7 +225,6 @@ async def test_hard_delete_user_with_auth_error() -> None:
 
 
 async def test_hard_delete_user_with_general_auth_error() -> None:
-    """Test user deletion with general Firebase Auth error."""
     with (
         patch("firebase_admin.auth.delete_user") as mock_auth_delete,
         patch("cloud_functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
@@ -257,11 +238,7 @@ async def test_hard_delete_user_with_general_auth_error() -> None:
         mock_db_delete.assert_called_once_with("user123")
 
 
-# Tests for delete user from database function
-
-
 async def testdelete_user_from_database_success() -> None:
-    """Test successful database user deletion."""
     with (
         patch("cloud_functions.src.user_cleanup.main.get_database_url") as mock_get_url,
         patch("cloud_functions.src.user_cleanup.main.create_async_engine") as mock_create_engine,
@@ -298,7 +275,6 @@ async def testdelete_user_from_database_success() -> None:
 
 
 async def testdelete_user_from_database_with_error() -> None:
-    """Test database deletion with error."""
     with (
         patch("cloud_functions.src.user_cleanup.main.get_database_url") as mock_get_url,
         patch("cloud_functions.src.user_cleanup.main.create_async_engine") as mock_create_engine,
@@ -332,11 +308,7 @@ async def testdelete_user_from_database_with_error() -> None:
         mock_engine.dispose.assert_called_once()
 
 
-# Tests for get database URL function
-
-
 def testget_database_url_cloud_sql_construction(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test Cloud SQL URL construction."""
     monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "grantflow-test")
     monkeypatch.setenv("CLOUD_SQL_INSTANCE", "test-instance")
     monkeypatch.setenv("DATABASE_NAME", "testdb")
@@ -351,7 +323,6 @@ def testget_database_url_cloud_sql_construction(monkeypatch: pytest.MonkeyPatch)
 
 
 def testget_database_url_cloud_sql_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test Cloud SQL URL with default values."""
     monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "grantflow-test")
     monkeypatch.setenv("DATABASE_PASSWORD", "testpass")
 
@@ -364,7 +335,6 @@ def testget_database_url_cloud_sql_with_defaults(monkeypatch: pytest.MonkeyPatch
 
 
 def testget_database_url_local_database_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test local database URL fallback."""
     monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://local:local@localhost:5432/local")
 
@@ -374,7 +344,6 @@ def testget_database_url_local_database_url(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def testget_database_url_default_local_database_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test default local database URL."""
     monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
