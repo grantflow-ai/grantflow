@@ -1,15 +1,3 @@
-"""
-Vector Benchmark Database Manager
-
-This module manages test databases for vector benchmarking by:
-1. Creating isolated test database with production schema
-2. Applying synthetic migrations to modify vector dimensions
-3. Using real production code for benchmarking
-4. Cleaning up after tests
-
-Key advantage: Tests your actual code paths with different vector configurations!
-"""
-
 import os
 
 from packages.db.src.tables import Base
@@ -23,23 +11,6 @@ logger = get_logger(__name__)
 
 
 class VectorBenchmarkDatabaseManager:
-    """
-    Manages isolated test database for vector benchmarking.
-
-    This creates a separate database with the full production schema,
-    then applies synthetic migrations to test different vector configurations.
-
-    Usage:
-        manager = VectorBenchmarkDatabaseManager()
-        await manager.setup_benchmark_database()
-
-        # Database now has production schema ready for modification
-        async with manager.get_session() as session:
-            modifier = VectorTableModifier(session)
-            await modifier.modify_vector_dimension(256)
-            # Now test with 256d vectors using production code!
-    """
-
     def __init__(self) -> None:
         self.worker_id = os.getenv("PYTEST_XDIST_WORKER", "main")
         self.process_id = os.getpid()
@@ -54,15 +25,6 @@ class VectorBenchmarkDatabaseManager:
         self.current_modifier: VectorTableModifier | None = None
 
     async def setup_benchmark_database(self) -> None:
-        """
-        Creates isolated test database with full production schema.
-
-        Steps:
-        1. Create new database
-        2. Enable pgvector extension
-        3. Create all production tables (users, projects, rag_sources, text_vectors, etc.)
-        4. Ready for synthetic migrations!
-        """
         logger.info("Setting up benchmark database", db_name=self.db_name)
 
         admin_engine = create_async_engine(self.admin_db_url, isolation_level="AUTOCOMMIT")
@@ -90,20 +52,6 @@ class VectorBenchmarkDatabaseManager:
         logger.info("Benchmark database ready", db_url=self.benchmark_db_url)
 
     async def apply_vector_configuration(self, config_name: str) -> VectorTableModifier:
-        """
-        Applies a predefined vector configuration for benchmarking.
-
-        Args:
-            config_name: One of the keys from BENCHMARK_CONFIGURATIONS
-                        e.g., "small_fast", "medium_balanced", "current_production"
-
-        Returns:
-            VectorTableModifier instance for further customization
-
-        Example:
-            modifier = await manager.apply_vector_configuration("small_fast")
-            # Now text_vectors table has 128d vectors with fast HNSW index
-        """
         if config_name not in BENCHMARK_CONFIGURATIONS:
             raise ValueError(
                 f"Unknown configuration: {config_name}. Available: {list(BENCHMARK_CONFIGURATIONS.keys())}"
@@ -143,25 +91,11 @@ class VectorBenchmarkDatabaseManager:
             return modifier
 
     def get_session(self) -> async_sessionmaker[AsyncSession]:
-        """
-        Returns session maker for database operations.
-
-        Use this to get sessions for your benchmark tests:
-
-        async with manager.get_session() as session:
-            # Your benchmark code here - uses production models!
-            result = await session.execute(select(TextVector).limit(10))
-        """
         if not self.session_maker:
             raise RuntimeError("Database not set up. Call setup_benchmark_database() first.")
         return self.session_maker
 
     async def cleanup_benchmark_database(self) -> None:
-        """
-        Cleans up test database and restores any schema modifications.
-
-        Always call this after tests to avoid leaving modified databases around.
-        """
         logger.info("Cleaning up benchmark database", db_name=self.db_name)
 
         if self.current_modifier is not None:
@@ -190,11 +124,6 @@ class VectorBenchmarkDatabaseManager:
             await admin_engine.dispose()
 
     async def reset_tables(self) -> None:
-        """
-        Clears all data from tables without dropping schema.
-
-        Use this between benchmark runs to ensure clean state.
-        """
         if not self.session_maker:
             return
 
@@ -222,23 +151,6 @@ class VectorBenchmarkDatabaseManager:
 
 
 async def create_benchmark_database_with_config(config_name: str) -> VectorBenchmarkDatabaseManager:
-    """
-    One-liner to create benchmark database with specific configuration.
-
-    Args:
-        config_name: Configuration to apply (e.g., "small_fast", "current_production")
-
-    Returns:
-        Ready-to-use database manager
-
-    Example:
-        manager = await create_benchmark_database_with_config("small_fast")
-        # Database now has 128d vectors with fast HNSW index
-
-        async with manager.get_session() as session:
-            # Use production code with modified vector table!
-            pass
-    """
     manager = VectorBenchmarkDatabaseManager()
     await manager.setup_benchmark_database()
     await manager.apply_vector_configuration(config_name)

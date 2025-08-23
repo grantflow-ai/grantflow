@@ -25,10 +25,6 @@ else:
 
 
 def parse_json_from_ai_response(text: str) -> dict[str, Any]:
-    """
-    Robustly parse JSON from AI response text that may contain extra content.
-    Handles cases where AI returns valid JSON followed by additional text.
-    """
     try:
         result: dict[str, Any] = json.loads(text)
         return result

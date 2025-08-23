@@ -54,7 +54,6 @@ def sample_documents() -> list[str]:
 
 
 async def test_function_import() -> None:
-    """Test that the main function can be imported and has correct signature"""
     import inspect
 
     from services.rag.src.autofill.research_plan_handler import handle_research_plan
@@ -71,7 +70,6 @@ async def test_function_import() -> None:
 async def test_validation_failure(
     mock_logger: MagicMock, mock_session_maker: MagicMock, sample_request: AutofillRequestDTO
 ) -> None:
-    """Test handling of validation failures"""
     with patch(
         "services.rag.src.autofill.research_plan_handler.verify_rag_sources_indexed", new_callable=AsyncMock
     ) as mock_validate:
@@ -83,7 +81,6 @@ async def test_validation_failure(
 
 
 def test_parse_research_objectives_validation(mock_logger: MagicMock) -> None:
-    """Test objective parsing and validation"""
     from services.rag.src.autofill.research_plan_handler import parse_and_validate_objectives
 
     valid_response = {
@@ -102,7 +99,6 @@ def test_parse_research_objectives_validation(mock_logger: MagicMock) -> None:
 
 
 def test_format_documents_for_context(mock_logger: MagicMock) -> None:
-    """Test document formatting"""
     from services.rag.src.autofill.research_plan_handler import format_documents_for_research_plan_context
 
     documents = ["Short content", "A" * 500]
@@ -118,7 +114,6 @@ def test_format_documents_for_context(mock_logger: MagicMock) -> None:
 
 
 def test_format_existing_objectives(mock_logger: MagicMock) -> None:
-    """Test existing objectives formatting"""
     from services.rag.src.autofill.research_plan_handler import format_existing_objectives_text
 
     objectives = [
@@ -141,7 +136,6 @@ def test_format_existing_objectives(mock_logger: MagicMock) -> None:
 
 
 def test_no_objectives_generated_error(mock_logger: MagicMock) -> None:
-    """Test error when no objectives are generated"""
     from services.rag.src.autofill.research_plan_handler import parse_and_validate_objectives
 
     empty_response: dict[str, Any] = {"research_objectives": []}
@@ -151,7 +145,6 @@ def test_no_objectives_generated_error(mock_logger: MagicMock) -> None:
 
 
 def test_objective_without_tasks_error(mock_logger: MagicMock) -> None:
-    """Test error when objective has no research tasks"""
     from services.rag.src.autofill.research_plan_handler import parse_and_validate_objectives
 
     response_without_tasks = {

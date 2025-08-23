@@ -1,5 +1,3 @@
-"""Test Discord webhook to verify monitoring is working."""
-
 import asyncio
 from datetime import UTC, datetime
 
@@ -7,8 +5,6 @@ import httpx
 
 
 async def test_discord_webhook() -> bool | None:
-    """Test the Discord webhook with a sample alert."""
-
     webhook_url = "https://discord.com/api/webhooks/1389591048962969661/h7QTWNUUPRsL1HwrhfJx15VmiDKIU0mR_SgOvdTMEQbn9eyuZ0XO6mDtG0Q0p6iFYYyY"
 
     embed = {

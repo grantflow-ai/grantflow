@@ -13,8 +13,6 @@ logger = __import__("logging").getLogger(__name__)
 
 
 def get_mention_for_alert(alert_policy: str, priority: str) -> str:
-    """Get Discord role mention based on alert type and priority."""
-
     if priority != "HIGH":
         return ""
 
@@ -43,7 +41,6 @@ def get_mention_for_alert(alert_policy: str, priority: str) -> str:
 
 
 def _extract_message_data(cloud_event: CloudEvent) -> str:
-    """Extract message data from CloudEvent."""
     if isinstance(cloud_event.data, dict) and "message" in cloud_event.data:
         pubsub_message = cloud_event.data["message"]
         if "data" in pubsub_message:
@@ -57,7 +54,6 @@ def _extract_message_data(cloud_event: CloudEvent) -> str:
 
 
 def _parse_alert_fields(alert_data: dict[str, Any]) -> tuple[str, str, str, str, dict[str, Any] | None]:
-    """Parse alert fields from alert data."""
     incident = None
     alert_policy = "Unknown Policy"
     condition_name = "Unknown Condition"
@@ -103,7 +99,6 @@ def _parse_alert_fields(alert_data: dict[str, Any]) -> tuple[str, str, str, str,
 
 
 def _get_alert_priority_and_style(alert_policy: str) -> tuple[str, str, int]:
-    """Get alert priority, emoji, and color based on alert policy."""
     alert_policy_lower = (alert_policy or "").lower()
     if "error" in alert_policy_lower or "failure" in alert_policy_lower:
         return "HIGH", "🚨", 0xFF0000
@@ -120,7 +115,6 @@ def _build_embed_fields(
     incident: dict[str, Any] | None,
     alert_data: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Build embed fields for Discord message."""
     fields = [
         {"name": "🎯 Condition", "value": condition_name, "inline": True},
         {"name": "📊 State", "value": state, "inline": True},
@@ -146,7 +140,6 @@ def _build_embed_fields(
 
 
 async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
-    """Forward GCP App Hosting alerts to Discord webhook."""
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     environment = os.environ.get("ENVIRONMENT", "unknown")
     project_id = os.environ.get("PROJECT_ID", "unknown")
@@ -202,7 +195,6 @@ async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any
 
 
 def create_test_alert_embed(environment: str, project_id: str) -> dict[str, Any]:
-    """Create a test alert embed for monitoring verification."""
     return {
         "title": "🧪 **App Hosting Monitoring Test**",
         "description": "Test alert to verify App Hosting monitoring is properly configured",
@@ -223,7 +215,6 @@ def create_test_alert_embed(environment: str, project_id: str) -> dict[str, Any]
 
 
 async def send_test_alert(webhook_url: str, environment: str, project_id: str) -> bool:
-    """Send a test alert to verify Discord integration."""
     embed = create_test_alert_embed(environment, project_id)
 
     payload = {"content": "🚀 **Monitoring Test** - App Hosting alerts are now active!", "embeds": [embed]}
@@ -238,7 +229,6 @@ async def send_test_alert(webhook_url: str, environment: str, project_id: str) -
 
 @functions_framework.cloud_event
 def app_hosting_alert_to_discord_sync(cloud_event: CloudEvent) -> None:
-    """Cloud Functions entry point for app hosting alerts."""
     result = asyncio.run(app_hosting_alert_to_discord(cloud_event))
 
     if result["status"] == "error":

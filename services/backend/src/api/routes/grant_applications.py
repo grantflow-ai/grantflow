@@ -664,7 +664,6 @@ async def handle_trigger_autofill(
     data: AutofillRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> AutofillResponse:
-    """Trigger autofill for a grant application"""
     trace_id = get_trace_id(request)
 
     logger.info(
@@ -726,7 +725,6 @@ async def handle_duplicate_application(
     data: DuplicateApplicationRequestBody,
     session_maker: async_sessionmaker[Any],
 ) -> ApplicationResponse:
-    """Duplicate an existing grant application with forking model"""
     logger.info(
         "Duplicating application",
         organization_id=organization_id,

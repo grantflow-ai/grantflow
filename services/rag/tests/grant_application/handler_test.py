@@ -26,7 +26,6 @@ from services.rag.src.grant_application.utils import is_grant_long_form_section
 
 
 def create_mock_job_manager() -> MagicMock:
-    """Create a mock JobManager for testing."""
     mock_job = AsyncMock()
     mock_job.id = UUID("00000000-0000-0000-0000-000000000002")
 

@@ -1,10 +1,3 @@
-"""
-Benchmark Testing Utilities
-
-This module extends the e2e testing framework for performance benchmarking.
-It provides decorators and utilities specifically for benchmark tests.
-"""
-
 import functools
 import os
 import time
@@ -21,8 +14,6 @@ from testing.e2e_utils import save_test_results
 
 
 class BenchmarkCategory(str, Enum):
-    """Categories for different types of benchmarks."""
-
     VECTOR = "vector"
     DATABASE = "database"
     API = "api"
@@ -32,8 +23,6 @@ class BenchmarkCategory(str, Enum):
 
 @dataclass
 class BenchmarkScenario:
-    """Configuration for a benchmark scenario."""
-
     name: str
     description: str
     category: BenchmarkCategory
@@ -76,28 +65,6 @@ def benchmark[F: Callable[..., Any]](
     save_results: bool = True,
     warm_up: bool = False,
 ) -> Callable[[F], F]:
-    """
-    Decorator for benchmark tests.
-
-    This extends the e2e_test pattern but adds benchmark-specific features:
-    - Warm-up runs to stabilize performance
-    - Multiple iterations for statistical significance
-    - Performance metrics collection
-    - Benchmark-specific result formatting
-
-    Args:
-        category: Type of benchmark (vector, database, api, etc.)
-        timeout: Test timeout in seconds (uses scenario default if None)
-        save_results: Whether to save benchmark results to disk
-        warm_up: Whether to perform warm-up runs before measurement
-
-    Example:
-        @benchmark(category=BenchmarkCategory.VECTOR, timeout=300)
-        async def test_vector_insertion_performance(logger):
-            # Benchmark code here
-            pass
-    """
-
     def decorator(func: F) -> F:
         scenario = BENCHMARK_SCENARIOS.get(category, BENCHMARK_SCENARIOS[BenchmarkCategory.VECTOR])
         test_timeout = timeout or scenario.timeout
@@ -243,15 +210,12 @@ def benchmark[F: Callable[..., Any]](
 
 
 def benchmark_vector(timeout: int | None = None, **kwargs: Any) -> Callable[[Any], Any]:
-    """Convenience decorator for vector benchmarks."""
     return benchmark(category=BenchmarkCategory.VECTOR, timeout=timeout, **kwargs)
 
 
 def benchmark_database(timeout: int | None = None, **kwargs: Any) -> Callable[[Any], Any]:
-    """Convenience decorator for database benchmarks."""
     return benchmark(category=BenchmarkCategory.DATABASE, timeout=timeout, **kwargs)
 
 
 def benchmark_api(timeout: int | None = None, **kwargs: Any) -> Callable[[Any], Any]:
-    """Convenience decorator for API benchmarks."""
     return benchmark(category=BenchmarkCategory.API, timeout=timeout, **kwargs)

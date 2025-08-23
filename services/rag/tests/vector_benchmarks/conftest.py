@@ -1,22 +1,3 @@
-"""
-Pytest Fixtures for Vector Benchmarking
-
-This module provides fixtures for vector benchmarking tests.
-The key advantage: we use the real production database schema
-with synthetic modifications for testing different vector configurations.
-
-Key fixtures:
-- benchmark_db_manager: Manages isolated test database
-- benchmark_session: Provides database session for tests
-- test_data_generator: Generates realistic test data
-- baseline_entities: Creates basic test entities (user, project, rag_source)
-
-Usage in tests:
-    @e2e_test(category=E2ETestCategory.VECTOR_BENCHMARK)
-    async def test_my_benchmark(benchmark_session, test_data_generator):
-        # Your benchmark code here
-"""
-
 import asyncio
 import uuid
 from collections.abc import AsyncGenerator
@@ -37,12 +18,6 @@ logger = get_logger(__name__)
 
 @pytest.fixture(scope="session")
 def event_loop() -> Any:
-    """
-    Create event loop for async tests.
-
-    This ensures all async fixtures and tests run in the same event loop.
-    Required for session-scoped async fixtures.
-    """
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -52,12 +27,6 @@ def event_loop() -> Any:
 async def vector_table_modifier(
     async_session_maker: async_sessionmaker[AsyncSession],
 ) -> AsyncGenerator[VectorTableModifier]:
-    """
-    Vector table modifier for changing schema during tests.
-
-    This provides a shared interface for all vector-related schema changes.
-    Tests can use this to modify vector dimensions or index parameters.
-    """
     async with async_session_maker() as session:
         modifier = VectorTableModifier(session)
         yield modifier
@@ -72,12 +41,6 @@ async def vector_table_modifier(
 async def benchmark_rag_source(
     async_session_maker: async_sessionmaker[AsyncSession], grant_application: Any
 ) -> RagFile:
-    """
-    Creates a RagFile source for benchmarking.
-
-    This creates a RagFile and associates it with a grant application
-    for vector benchmarking.
-    """
     from packages.db.src.tables import GrantApplicationSource
 
     async with async_session_maker() as session:
@@ -95,52 +58,17 @@ async def benchmark_rag_source(
 
 @pytest.fixture
 async def test_data_generator(async_session_maker: async_sessionmaker[AsyncSession]) -> BenchmarkDataGenerator:
-    """
-    Test data generator for creating realistic benchmark data.
-
-    This uses the production database models to create proper
-    test entities and vectors.
-
-    Usage:
-        async def test_something(test_data_generator, benchmark_rag_source):
-            # Generate test data
-            chunks = await test_data_generator.generate_test_chunks(1000, benchmark_rag_source.id)
-    """
     async with async_session_maker() as session:
         return BenchmarkDataGenerator(session)
 
 
 @pytest.fixture
 async def benchmark_entities(project: Any, grant_application: Any, benchmark_rag_source: Any) -> dict[str, Any]:
-    """
-    Returns test entities for benchmarking using existing fixtures.
-
-    This provides a consistent interface that uses the existing
-    project, grant_application, and rag_source fixtures.
-
-    Usage:
-        async def test_something(benchmark_entities):
-            project = benchmark_entities["project"]
-            grant_application = benchmark_entities["grant_application"]
-            rag_source = benchmark_entities["rag_source"]
-            # Ready to create test data
-    """
     return {"project": project, "grant_application": grant_application, "rag_source": benchmark_rag_source}
 
 
 @pytest.fixture(params=["small_fast", "medium_balanced", "current_production"])
 async def configured_vector_db(async_session_maker: async_sessionmaker[AsyncSession], request: Any) -> dict[str, Any]:
-    """
-    Parametrized fixture that tests multiple vector configurations.
-
-    This fixture creates multiple vector configurations for comprehensive testing.
-    It yields each configuration with the session_maker for database access.
-
-    Configurations:
-    - small_fast: Optimized for speed with smaller dimensions
-    - medium_balanced: Balanced between speed and quality
-    - current_production: Matches current production settings
-    """
     config_name = request.param
 
     benchmark_configurations: dict[str, dict[str, Any]] = {
@@ -173,20 +101,6 @@ async def configured_vector_db(async_session_maker: async_sessionmaker[AsyncSess
 async def small_dataset(
     async_session_maker: async_sessionmaker[AsyncSession],
 ) -> AsyncGenerator[dict[str, Any]]:
-    """
-    Create small test dataset of vectors with different dimensions.
-
-    This generates a reasonable number of vectors to use in benchmarks.
-
-    Yields:
-        Dictionary with test data configuration
-
-    Example:
-        async def test_vector_insertion(small_dataset):
-            # Access generator and vectors
-            generator = small_dataset["generator"]
-            vectors = small_dataset["vectors"]
-    """
     async with async_session_maker() as session:
         generator = BenchmarkDataGenerator(session)
 
@@ -211,14 +125,6 @@ async def small_dataset(
 async def medium_dataset(
     async_session_maker: async_sessionmaker[AsyncSession], benchmark_entities: dict[str, Any]
 ) -> dict[str, Any]:
-    """
-    Creates medium dataset (10000 vectors) for comprehensive tests.
-
-    Usage:
-        async def test_something(medium_dataset):
-            vectors = medium_dataset["vectors"]
-            # 10000 vectors ready for testing
-    """
     async with async_session_maker() as session:
         generator = BenchmarkDataGenerator(session)
         rag_source = benchmark_entities["rag_source"]
@@ -233,14 +139,6 @@ async def medium_dataset(
 async def large_dataset(
     async_session_maker: async_sessionmaker[AsyncSession], benchmark_entities: dict[str, Any]
 ) -> dict[str, Any]:
-    """
-    Creates large dataset (50000 vectors) for performance tests.
-
-    Usage:
-        async def test_something(large_dataset):
-            vectors = large_dataset["vectors"]
-            # 50000 vectors ready for testing
-    """
     async with async_session_maker() as session:
         generator = BenchmarkDataGenerator(session)
         rag_source = benchmark_entities["rag_source"]

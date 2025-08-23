@@ -9,14 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { parseShortcutKeys } from "@/utils";
 
 export interface UndoRedoButtonProps extends Omit<ButtonProps, "type">, UseUndoRedoConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -30,11 +23,6 @@ export function HistoryShortcutBadge({
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for triggering undo/redo actions in a Tiptap editor.
- *
- * For custom button implementations, use the `useHistory` hook instead.
- */
 export const UndoRedoButton = React.forwardRef<HTMLButtonElement, UndoRedoButtonProps>(
 	(
 		{

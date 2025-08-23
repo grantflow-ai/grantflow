@@ -1,10 +1,3 @@
-"""
-Performance measurement utilities for RAG E2E tests.
-
-Provides convenient decorators, context managers, and helper functions
-to easily integrate the unified performance framework into existing tests.
-"""
-
 import contextlib
 import logging
 from collections.abc import Callable
@@ -30,8 +23,6 @@ result_manager = PerformanceResultManager(RESULTS_BASE_PATH)
 
 
 class StageTimer:
-    """Context manager for timing individual pipeline stages."""
-
     def __init__(self, stage_name: str, stage_times: dict[str, float]) -> None:
         self.stage_name = stage_name
         self.stage_times = stage_times
@@ -50,8 +41,6 @@ class StageTimer:
 
 
 class PerformanceTestContext:
-    """Context manager for comprehensive performance testing."""
-
     def __init__(
         self,
         test_name: str,
@@ -137,11 +126,9 @@ class PerformanceTestContext:
         self._log_performance_summary()
 
     def stage_timer(self, stage_name: str) -> StageTimer:
-        """Get a timer for a specific pipeline stage."""
         return StageTimer(stage_name, self.stage_times)
 
     def set_content(self, content: str, section_texts: dict[str, str] | list[str] | None = None) -> None:
-        """Set the generated content for quality analysis."""
         self.generated_content = content
         if section_texts:
             if isinstance(section_texts, dict):
@@ -150,21 +137,17 @@ class PerformanceTestContext:
                 self.section_texts = section_texts
 
     def add_llm_call(self, count: int = 1) -> None:
-        """Track LLM calls made during the test."""
         self.llm_calls_made += count
 
     def add_warning(self, message: str) -> None:
-        """Add a warning to the test result."""
         self.warnings.append(message)
         self.logger.warning(message)
 
     def add_error(self, message: str) -> None:
-        """Add an error to the test result."""
         self.errors.append(message)
         self.logger.error(message)
 
     def save_result(self) -> "PerformanceResult":
-        """Manually save the performance result and return it."""
         if not self.start_time:
             raise ValueError("Test not started - cannot save result")
 
@@ -200,7 +183,6 @@ class PerformanceTestContext:
             raise
 
     def _log_performance_summary(self) -> None:
-        """Log comprehensive performance summary."""
         if not self.result:
             return
 
@@ -258,16 +240,6 @@ def performance_test(
     expected_patterns: list[str] | None = None,
     configuration: dict[str, Any] | None = None,
 ) -> Callable[[F], F]:
-    """
-    Decorator for automatic performance measurement.
-
-    Usage:
-        @performance_test(TestCategory.GRANT_TEMPLATE)
-        async def test_my_template_generation():
-            # Test implementation
-            pass
-    """
-
     def decorator(func: F) -> F:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -298,28 +270,24 @@ def performance_test(
 def grant_template_performance_test(
     baseline_test_name: str | None = None, expected_patterns: list[str] | None = None
 ) -> Callable[[F], F]:
-    """Decorator for grant template performance tests."""
     return performance_test(TestCategory.GRANT_TEMPLATE, baseline_test_name, expected_patterns)
 
 
 def grant_application_performance_test(
     baseline_test_name: str | None = None, expected_patterns: list[str] | None = None
 ) -> Callable[[F], F]:
-    """Decorator for grant application performance tests."""
     return performance_test(TestCategory.GRANT_APPLICATION, baseline_test_name, expected_patterns)
 
 
 def optimization_performance_test(
     baseline_test_name: str, expected_patterns: list[str] | None = None
 ) -> Callable[[F], F]:
-    """Decorator for optimization performance tests."""
     return performance_test(TestCategory.OPTIMIZATION, baseline_test_name, expected_patterns)
 
 
 def create_performance_context(
     test_name: str, test_category: TestCategory, logger: logging.Logger | None = None, **kwargs: Any
 ) -> PerformanceTestContext:
-    """Create a performance context for manual usage."""
     return PerformanceTestContext(test_name=test_name, test_category=test_category, logger=logger, **kwargs)
 
 
@@ -331,7 +299,6 @@ def quick_performance_analysis(
     stage_times: dict[str, float] | None = None,
     section_texts: dict[str, str] | None = None,
 ) -> PerformanceResult:
-    """Quick performance analysis without full context management."""
     analyzer = PerformanceAnalyzer(test_category)
 
     return analyzer.create_performance_result(
@@ -345,18 +312,15 @@ def quick_performance_analysis(
 
 
 def get_performance_baseline(test_name: str) -> float | None:
-    """Get baseline performance time for comparison."""
     return result_manager.get_baseline_time(test_name)
 
 
 def save_performance_result(result: PerformanceResult, subfolder: str | None = None) -> Path:
-    """Save a performance result to disk."""
     return result_manager.save_result(result, subfolder)
 
 
 @contextlib.asynccontextmanager
 async def timed_stage(stage_name: str, stage_times: dict[str, float], logger: logging.Logger | None = None) -> Any:
-    """Async context manager for timing a specific stage."""
     if logger:
         logger.debug("Starting stage: %s", stage_name)
 
@@ -372,7 +336,6 @@ async def timed_stage(stage_name: str, stage_times: dict[str, float], logger: lo
 
 
 def grant_template_test(test_name: str, logger: logging.Logger | None = None, **kwargs: Any) -> PerformanceTestContext:
-    """Async context manager for grant template performance testing."""
     return PerformanceTestContext(
         test_name=test_name, test_category=TestCategory.GRANT_TEMPLATE, logger=logger, **kwargs
     )
@@ -381,7 +344,6 @@ def grant_template_test(test_name: str, logger: logging.Logger | None = None, **
 def grant_application_test(
     test_name: str, logger: logging.Logger | None = None, baseline_test_name: str | None = None, **kwargs: Any
 ) -> PerformanceTestContext:
-    """Async context manager for grant application performance testing."""
     return PerformanceTestContext(
         test_name=test_name,
         test_category=TestCategory.GRANT_APPLICATION,
@@ -392,7 +354,6 @@ def grant_application_test(
 
 
 def assert_performance_targets(result: PerformanceResult | None, min_grade: str = "C") -> None:
-    """Assert that performance meets minimum targets."""
     if result is None:
         raise AssertionError("Performance result is None - test framework error")
 
@@ -409,7 +370,6 @@ def assert_performance_targets(result: PerformanceResult | None, min_grade: str 
 
 
 def safe_performance_test(perf_ctx: PerformanceTestContext, assertion_func: Callable[[], None]) -> None:
-    """Safely run performance test with guaranteed result saving."""
     try:
         assertion_func()
     except Exception as e:
@@ -423,7 +383,6 @@ def safe_performance_test(perf_ctx: PerformanceTestContext, assertion_func: Call
 
 
 def assert_quality_targets(result: PerformanceResult | None, min_score: float = 70.0) -> None:
-    """Assert that quality meets minimum targets."""
     if result is None:
         raise AssertionError("Performance result is None - test framework error")
     quality_score = result.quality_metrics.overall_quality_score
@@ -433,7 +392,6 @@ def assert_quality_targets(result: PerformanceResult | None, min_score: float = 
 
 
 def assert_optimization_success(result: PerformanceResult | None, min_improvement: float = 20.0) -> None:
-    """Assert that optimization was successful."""
     if result is None:
         raise AssertionError("Performance result is None - test framework error")
     if not result.optimization_metrics:

@@ -81,7 +81,7 @@ export function CookiePreferencesModal({ onCancel, onSavePreferences, show }: Co
 									data-testid="essential-cookies-switch"
 									disabled
 									onChange={function noop() {
-										// Essential cookies cannot be toggled
+										// ~keep - Required for disabled switch
 									}}
 									tooltipContent="Essential cookies are required for GrantFlow to function properly and cannot be disabled."
 									useCustomDisabledColor

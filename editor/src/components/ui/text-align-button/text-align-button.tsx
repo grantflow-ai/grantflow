@@ -9,14 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { parseShortcutKeys } from "@/utils";
 
 export interface TextAlignButtonProps extends Omit<ButtonProps, "type">, UseTextAlignConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -30,11 +23,6 @@ export function TextAlignShortcutBadge({
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for setting text alignment in a Tiptap editor.
- *
- * For custom button implementations, use the `useTextAlign` hook instead.
- */
 export const TextAlignButton = React.forwardRef<HTMLButtonElement, TextAlignButtonProps>(
 	(
 		{

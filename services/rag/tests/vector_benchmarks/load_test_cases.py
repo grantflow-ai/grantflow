@@ -1,10 +1,3 @@
-"""
-Load Test Cases for Vector Benchmarks
-
-This module implements load testing scenarios using the comprehensive
-load testing framework.
-"""
-
 from typing import Any
 
 import pytest
@@ -34,11 +27,6 @@ async def test_vector_search_load(
     config: LoadTestConfiguration,
     logger: Any,
 ) -> None:
-    """
-    Test vector search performance under concurrent load.
-
-    This simulates realistic multi-user scenarios with different load patterns.
-    """
     logger.info("Starting vector search load test", description=config.description)
     logger.info("Expected use case", expected_use_case=config.expected_use_case)
 
@@ -139,11 +127,6 @@ async def test_vector_search_load(
 async def test_dimension_load_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Compare load testing performance across different vector dimensions.
-
-    This test helps determine if lower dimensions handle load better.
-    """
     logger.info("Starting dimension load comparison test")
 
     dimensions_to_test = [128, 256, 384]
@@ -224,13 +207,6 @@ async def test_dimension_load_comparison(
 async def test_index_parameter_load_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Compare load testing performance across different HNSW index settings.
-
-    This test verifies how different index settings affect query performance.
-    It's important to find the right balance between index build time,
-    memory usage, and query performance.
-    """
     logger.info("Starting index parameter load comparison test")
 
     index_params = {
@@ -328,13 +304,6 @@ async def test_index_parameter_load_comparison(
 async def test_result_quality_by_dimension(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Test result quality across different vector dimensions.
-
-    This test verifies that vector search quality is acceptable
-    at different dimensions. Lower dimensions should still return
-    relevant results.
-    """
     logger.info("Starting result quality by dimension test")
 
     dimensions_to_test = [128, 256, 384]

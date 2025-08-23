@@ -11,28 +11,12 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 
 export const CODE_BLOCK_SHORTCUT_KEY = "mod+alt+c";
 
-/**
- * Configuration for the code block functionality
- */
 export interface UseCodeBlockConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * Whether the button should hide when code block is not available.
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
-	/**
-	 * Callback function called after a successful code block toggle.
-	 */
 	onToggled?: () => void;
 }
 
-/**
- * Checks if code block can be toggled in the current editor state
- */
 export function canToggle(editor: Editor | null, turnInto = true): boolean {
 	if (!editor?.isEditable) return false;
 	if (!isNodeInSchema("codeBlock", editor) || isNodeTypeSelected(editor, ["image"])) return false;
@@ -60,9 +44,6 @@ export function canToggle(editor: Editor | null, turnInto = true): boolean {
 	}
 }
 
-/**
- * Toggles code block in the editor
- */
 export function toggleCodeBlock(editor: Editor | null): boolean {
 	if (!editor?.isEditable) return false;
 	if (!canToggle(editor)) return false;
@@ -113,9 +94,6 @@ export function toggleCodeBlock(editor: Editor | null): boolean {
 	}
 }
 
-/**
- * Determines if the code block button should be shown
- */
 export function shouldShowButton(props: { editor: Editor | null; hideWhenUnavailable: boolean }): boolean {
 	const { editor, hideWhenUnavailable } = props;
 

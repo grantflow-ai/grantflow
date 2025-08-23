@@ -50,7 +50,6 @@ CFP_CACHE_TTL_SECONDS = 3600
 
 
 def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dict[str, str]]) -> str:
-    """Create a stable cache key from source IDs and organization mapping."""
     cache_data = {
         "source_ids": sorted(source_ids),
         "organizations": dict(sorted(organization_mapping.items())),
@@ -60,7 +59,6 @@ def _create_cache_key(source_ids: list[str], organization_mapping: dict[str, dic
 
 
 def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
-    """Get cached CFP extraction result if still valid."""
     if cache_key not in _cfp_extraction_cache:
         return None
 
@@ -77,7 +75,6 @@ def _get_cached_cfp_result(cache_key: str) -> ExtractedCFPData | None:
 
 
 def _cache_cfp_result(cache_key: str, result: ExtractedCFPData) -> None:
-    """Cache CFP extraction result."""
     _cfp_extraction_cache[cache_key] = (result, time.time())
     logger.debug("CFP result cached", cache_key=cache_key, cache_size=len(_cfp_extraction_cache))
 
@@ -136,16 +133,6 @@ EXTRACT_CFP_DATA_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
 
 async def get_rag_sources_data(source_ids: list[str], session_maker: async_sessionmaker[Any]) -> list[RagSourceData]:
-    """
-    Retrieve text content and chunks from multiple RAG sources with optimized batch processing.
-
-    Args:
-        source_ids: List of RAG source IDs to retrieve
-        session_maker: Database session maker
-
-    Returns:
-        List of RagSourceData containing content and chunks for each source
-    """
     async with session_maker() as session:
         sources_result = await session.execute(
             select(RagSource.id, RagSource.source_type, RagSource.text_content).where(RagSource.id.in_(source_ids))
@@ -389,19 +376,6 @@ async def extract_cfp_data_multi_source(task_description: str, **_: Any) -> Extr
 async def handle_extract_cfp_data_from_rag_sources(
     *, source_ids: list[str], organization_mapping: dict[str, dict[str, str]], session_maker: async_sessionmaker[Any]
 ) -> ExtractedCFPData:
-    """
-    Extract CFP data from multiple RAG sources (files and URLs).
-    Uses intelligent caching to avoid redundant LLM calls.
-
-    Args:
-        source_ids: List of RAG source IDs to use for extraction
-        organization_mapping: Mapping of organization IDs to names/abbreviations
-        session_maker: Database session maker
-
-    Returns:
-        Extracted CFP data synthesized from all sources
-    """
-
     cache_key = _create_cache_key(source_ids, organization_mapping)
     cached_result = _get_cached_cfp_result(cache_key)
     if cached_result is not None:

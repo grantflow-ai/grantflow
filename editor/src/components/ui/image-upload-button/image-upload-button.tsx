@@ -9,14 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { parseShortcutKeys } from "@/utils";
 
 export interface ImageUploadButtonProps extends Omit<ButtonProps, "type">, UseImageUploadConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -24,11 +17,6 @@ export function ImageShortcutBadge({ shortcutKeys = IMAGE_UPLOAD_SHORTCUT_KEY }:
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for uploading/inserting images in a Tiptap editor.
- *
- * For custom button implementations, use the `useImage` hook instead.
- */
 export const ImageUploadButton = React.forwardRef<HTMLButtonElement, ImageUploadButtonProps>(
 	(
 		{

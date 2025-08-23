@@ -1,12 +1,5 @@
-/**
- * Distributed tracing utilities for API layer
- */
-
 import { log } from "@/utils/logger/client";
 
-/**
- * Create trace headers for API requests
- */
 export function createTraceHeaders(traceId: string, operation: string): Record<string, string> {
 	return {
 		"X-Operation": operation,
@@ -16,16 +9,10 @@ export function createTraceHeaders(traceId: string, operation: string): Record<s
 	};
 }
 
-/**
- * Generate a trace ID for tracing requests across services
- */
 export function generateTraceId(): string {
 	return crypto.randomUUID();
 }
 
-/**
- * Log a structured trace event
- */
 export function logTraceEvent(
 	traceId: string,
 	operation: string,

@@ -1,9 +1,6 @@
-"""Unit test for batch enrichment to verify functionality."""
-
 from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
-import pytest
 from packages.shared_utils.src.logger import get_logger
 
 from services.rag.src.grant_application.batch_enrich_objectives import handle_batch_enrich_objectives
@@ -14,10 +11,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-@pytest.mark.asyncio
 async def test_batch_enrichment_calls_single_llm_request() -> None:
-    """Test that batch enrichment makes a single LLM call instead of multiple."""
-
     mock_objectives: list[ResearchObjective] = [
         {
             "number": 1,
@@ -131,10 +125,7 @@ async def test_batch_enrichment_calls_single_llm_request() -> None:
         logger.info("Batch enrichment successfully processes multiple objectives in a single LLM call")
 
 
-@pytest.mark.asyncio
 async def test_batch_enrichment_vs_individual_calls() -> None:
-    """Compare batch enrichment to individual enrichment calls."""
-
     individual_calls = 3
     batch_calls = 1
 

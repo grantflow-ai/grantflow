@@ -2,18 +2,11 @@ import { cookies } from "next/headers";
 import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
 import { getOrganizationFromJWT } from "./jwt";
 
-/**
- * Clear the selected organization cookie
- */
 export async function clearSelectedOrganization(): Promise<void> {
 	const cookieStore = await cookies();
 	cookieStore.delete(SELECTED_ORGANIZATION_COOKIE);
 }
 
-/**
- * Get the current organization ID from cookies or JWT
- * Priority: Cookie > JWT default > null
- */
 export async function getCurrentOrganizationId(): Promise<null | string> {
 	const cookieStore = await cookies();
 
@@ -30,9 +23,6 @@ export async function getCurrentOrganizationId(): Promise<null | string> {
 	return null;
 }
 
-/**
- * Set the selected organization in a cookie
- */
 export async function setSelectedOrganization(organizationId: string): Promise<void> {
 	const cookieStore = await cookies();
 

@@ -25,7 +25,6 @@ REVOKE_PROJECT_ACCESS = "REVOKE_PROJECT_ACCESS"
 
 
 def get_client_ip(request: APIRequest) -> str | None:
-    """Extract client IP address from request headers."""
     headers = request.headers
     for header in ["X-Forwarded-For", "X-Real-IP", "X-Client-IP"]:
         if ip := headers.get(header):
@@ -42,18 +41,6 @@ async def log_organization_audit(
     target_user_firebase_uid: str | None = None,
     ip_address: str | None = None,
 ) -> None:
-    """
-    Log an audit event for organization actions.
-
-    Args:
-        session: Database session
-        organization_id: UUID of the organization
-        user_firebase_uid: Firebase UID of the user performing the action
-        action: Action being performed (use constants above)
-        details: Additional details about the action
-        target_user_firebase_uid: Firebase UID of the target user (for member actions)
-        ip_address: Client IP address
-    """
     try:
         await session.execute(
             insert(OrganizationAuditLog).values(
@@ -89,17 +76,6 @@ async def log_organization_audit_from_request(
     details: dict[str, Any] | None = None,
     target_user_firebase_uid: str | None = None,
 ) -> None:
-    """
-    Convenience function to log audit events from an API request.
-
-    Args:
-        session: Database session
-        request: API request object
-        organization_id: UUID of the organization
-        action: Action being performed (use constants above)
-        details: Additional details about the action
-        target_user_firebase_uid: Firebase UID of the target user (for member actions)
-    """
     if not request.auth:
         logger.warning("Cannot log audit event: no authenticated user", action=action)
         return

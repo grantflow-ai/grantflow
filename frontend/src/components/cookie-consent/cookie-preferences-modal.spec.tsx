@@ -25,7 +25,6 @@ describe("CookiePreferencesModal", () => {
 			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
 		);
 
-		// Click Save without toggling analytics (should be false by default)
 		fireEvent.click(screen.getByTestId("cookie-preferences-save"));
 
 		expect(mockOnSavePreferences).toHaveBeenCalledOnce();
@@ -41,10 +40,8 @@ describe("CookiePreferencesModal", () => {
 			<CookiePreferencesModal onCancel={mockOnCancel} onSavePreferences={mockOnSavePreferences} show={true} />,
 		);
 
-		// Toggle analytics to true
 		fireEvent.click(screen.getByTestId("analytics-cookies-switch"));
 
-		// Then save preferences
 		fireEvent.click(screen.getByTestId("cookie-preferences-save"));
 
 		expect(mockOnSavePreferences).toHaveBeenCalledOnce();
@@ -61,14 +58,11 @@ describe("CookiePreferencesModal", () => {
 
 		const analyticsSwitch = screen.getByTestId("analytics-cookies-switch");
 
-		// Initial state should be false
 		expect(analyticsSwitch).toHaveAttribute("aria-checked", "false");
 
-		// Click to toggle to true
 		fireEvent.click(analyticsSwitch);
 		expect(analyticsSwitch).toHaveAttribute("aria-checked", "true");
 
-		// Click to toggle back to false
 		fireEvent.click(analyticsSwitch);
 		expect(analyticsSwitch).toHaveAttribute("aria-checked", "false");
 	});
@@ -86,7 +80,6 @@ describe("CookiePreferencesModal", () => {
 		expect(essentialSwitch).toBeDisabled();
 		expect(essentialSwitch).toHaveAttribute("aria-checked", "true");
 
-		// Clicking disabled switch should not call any handlers
 		fireEvent.click(essentialSwitch);
 		expect(mockOnCancel).not.toHaveBeenCalled();
 		expect(mockOnSavePreferences).not.toHaveBeenCalled();
@@ -102,7 +95,6 @@ describe("CookiePreferencesModal", () => {
 
 		const essentialSwitch = screen.getByTestId("essential-cookies-switch");
 
-		// Multiple clicks should not change the state
 		fireEvent.click(essentialSwitch);
 		fireEvent.click(essentialSwitch);
 		fireEvent.click(essentialSwitch);
@@ -147,15 +139,12 @@ describe("CookiePreferencesModal", () => {
 
 		const analyticsSwitch = screen.getByTestId("analytics-cookies-switch");
 
-		// Toggle analytics on
 		fireEvent.click(analyticsSwitch);
 		expect(analyticsSwitch).toHaveAttribute("aria-checked", "true");
 
-		// Click cancel (should not call save)
 		fireEvent.click(screen.getByTestId("cookie-preferences-cancel"));
 		expect(mockOnSavePreferences).not.toHaveBeenCalled();
 
-		// Analytics should still be in the toggled state if modal reopens
 		expect(analyticsSwitch).toHaveAttribute("aria-checked", "true");
 	});
 
@@ -169,12 +158,10 @@ describe("CookiePreferencesModal", () => {
 
 		const analyticsSwitch = screen.getByTestId("analytics-cookies-switch");
 
-		// Toggle multiple times: false -> true -> false -> true
 		fireEvent.click(analyticsSwitch);
 		fireEvent.click(analyticsSwitch);
 		fireEvent.click(analyticsSwitch);
 
-		// Save with final state (true)
 		fireEvent.click(screen.getByTestId("cookie-preferences-save"));
 
 		expect(mockOnSavePreferences).toHaveBeenCalledWith({ analytics: true });
