@@ -94,28 +94,30 @@ async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_doc
         assert call_args[1]["merge"] is True
 
 
-async def test_save_grant_document_without_url(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
+async def test_save_grant_document_auto_generated_id(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
     grant_info: dict[str, str] = {
         "title": "Test Grant",
         "organization": "NIH",
         "description": "Test Description",
-        "url": "",
+        "url": "https://grants.nih.gov",  # URL without document ID
     }
 
-    mock_document.id = "auto-generated-id"
-    mock_collection.add = AsyncMock(return_value=mock_document)
+    mock_document.set = AsyncMock()
+    mock_collection.document.return_value = mock_document
 
     with patch("services.scraper.src.firestore_utils.get_grants_collection", return_value=mock_collection):
         grant_id = await save_grant_document(cast("GrantInfo", grant_info))
 
-        assert grant_id == "auto-generated-id"
+        assert grant_id == "grants.nih.gov"
+        mock_collection.document.assert_called_once_with("grants.nih.gov")
 
-        call_args = mock_collection.add.call_args
+        call_args = mock_document.set.call_args
         doc_data = call_args[0][0]
         assert "created_at" in doc_data
         assert "updated_at" in doc_data
         assert "scraped_at" in doc_data
         assert doc_data["title"] == "Test Grant"
+        assert call_args[1]["merge"] is True
 
 
 async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
@@ -159,8 +161,8 @@ async def test_get_existing_grant_identifiers(mock_collection: AsyncMock) -> Non
             self.index += 1
             return doc
 
-    mock_query = AsyncMock()
-    mock_query.stream.return_value = MockAsyncIterator(mock_docs)
+    mock_query = MagicMock()
+    mock_query.stream = MagicMock(return_value=MockAsyncIterator(mock_docs))
     mock_collection.select.return_value = mock_query
 
     with patch("services.scraper.src.firestore_utils.get_grants_collection", return_value=mock_collection):
