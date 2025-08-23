@@ -56,8 +56,8 @@ async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY
     return {
         "search_results_count": search_results_count,
         "new_files_downloaded": new_files_downloaded,
-        "existing_grants_skipped": existing_grants_skipped,
-        "existing_grants_count": existing_grants_count,
+        "existing_files_skipped": existing_grants_skipped,
+        "existing_files_count": existing_grants_count,
         "total_duration_ms": total_duration_ms,
     }
 
@@ -96,7 +96,7 @@ async def handle_scraper_request() -> dict[str, str]:
                     date_range=f"{DEFAULT_FROM_DATE.isoformat()} to {TODAY_DATE.isoformat()}",
                     search_results_found=int(metrics["search_results_count"]),
                     new_files_downloaded=int(metrics["new_files_downloaded"]),
-                    existing_files_skipped=int(metrics["existing_grants_skipped"]),
+                    existing_files_skipped=int(metrics["existing_files_skipped"]),
                     total_processing_time_ms=metrics["total_duration_ms"],
                     bucket_name="firestore:grants",
                     total_files_in_bucket=total_grants_in_firestore,
