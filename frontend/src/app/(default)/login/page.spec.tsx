@@ -152,14 +152,14 @@ describe.sequential("Login Page", () => {
 			expect(submitButton).toBeDisabled();
 
 			await user.type(emailInput, "invalid-email");
-			await user.tab(); // Trigger validation
+			await user.tab();
 
 			await waitFor(() => {
 				expect(submitButton).toBeDisabled();
 			});
 
 			await user.clear(emailInput);
-			await user.tab(); // Trigger validation
+			await user.tab();
 
 			await waitFor(() => {
 				expect(submitButton).toBeDisabled();

@@ -57,7 +57,7 @@ const DraggableWrapper = ({
 						setIsEditing(true);
 					}}
 					onRemove={() => {
-						/* Remove action */
+						// ~keep - No-op for Storybook demo
 					}}
 					onSave={(updated) => {
 						setCurrentObjective(updated);

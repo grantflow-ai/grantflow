@@ -104,7 +104,7 @@ resource "google_project_iam_member" "grant_matcher_pubsub" {
 resource "google_cloud_scheduler_job" "grant_matcher_invoker" {
   name             = "grant-matcher-scheduler-${var.environment}"
   description      = "Invoke grant matcher function daily"
-  schedule         = "0 9 * * *"  # 9 AM UTC daily
+  schedule         = "0 9 * * *"  
   time_zone        = "UTC"
   attempt_deadline = "600s"
 
@@ -131,7 +131,6 @@ resource "google_cloudfunctions2_function_iam_member" "grant_matcher_invoker" {
   member         = "serviceAccount:${google_service_account.grant_matcher_sa.email}"
 }
 
-# Enable required APIs
 resource "google_project_service" "cloudfunctions" {
   service            = "cloudfunctions.googleapis.com"
   disable_on_destroy = false

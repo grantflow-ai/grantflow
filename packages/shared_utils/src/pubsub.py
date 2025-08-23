@@ -92,6 +92,16 @@ class EmailNotificationRequest(TypedDict):
     trace_id: NotRequired[str]
 
 
+class SubscriptionVerificationRequest(TypedDict):
+    email: str
+    subscription_id: str
+    verification_token: str
+    template_type: str
+    search_params: NotRequired[dict[str, Any]]
+    frequency: NotRequired[str]
+    trace_id: NotRequired[str]
+
+
 def get_publisher_client() -> pubsub.PublisherClient:
     if not client_ref.value:
         client_ref.value = pubsub.PublisherClient()
@@ -474,6 +484,87 @@ async def publish_email_notification(
         logger.error("Error publishing email notification message", error=str(e))
         raise BackendError(
             "Error publishing email notification message", context={"error": str(e)}
+        ) from e
+
+
+async def publish_subscription_verification_email(
+    *,
+    email: str,
+    subscription_id: str,
+    verification_token: str,
+    search_params: dict[str, Any] | None = None,
+    frequency: str = "daily",
+    trace_id: str | None = None,
+) -> str:
+    """Publish email notification for subscription verification.
+
+    Args:
+        email: User's email address
+        subscription_id: ID of the subscription
+        verification_token: Token for email verification
+        search_params: Search parameters for the subscription
+        frequency: Notification frequency (daily/weekly)
+        trace_id: Optional trace ID for correlation
+
+    Returns:
+        Message ID from Pub/Sub
+    """
+    client = get_publisher_client()
+
+    data = SubscriptionVerificationRequest(
+        email=email,
+        subscription_id=subscription_id,
+        verification_token=verification_token,
+        template_type="subscription_verification",
+    )
+
+    if search_params:
+        data["search_params"] = search_params
+    if frequency:
+        data["frequency"] = frequency
+    if trace_id:
+        data["trace_id"] = trace_id
+
+    try:
+        message_data = serialize(data)
+        topic_path = client.topic_path(
+            project=get_env("GCP_PROJECT_ID", fallback="grantflow"),
+            topic=get_env(
+                "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC", fallback="email-notifications"
+            ),
+        )
+
+        with create_pubsub_publish_span(
+            topic_path, "SubscriptionVerificationRequest"
+        ) as span:
+            span.set_attribute("email", email)
+            span.set_attribute("subscription_id", subscription_id)
+            if trace_id:
+                span.set_attribute("trace_id", trace_id)
+
+            attributes = {"notification_type": "subscription_verification"}
+            if trace_id:
+                attributes["trace_id"] = trace_id
+            attributes = inject_trace_context(attributes)
+
+            future = client.publish(topic_path, message_data, **attributes)
+            message_id = await run_sync(future.result)
+
+            span.set_attribute("messaging.message.id", message_id)
+
+        logger.info(
+            "Published subscription verification email",
+            message_id=message_id,
+            email=email,
+            subscription_id=subscription_id,
+            trace_id=trace_id,
+        )
+        return str(message_id)
+    except MessageTooLargeError as e:
+        logger.error("Error publishing subscription verification email", error=str(e))
+        raise BackendError(
+            "Error publishing subscription verification email",
+            context={"error": str(e)},
         ) from e
 
 
