@@ -238,7 +238,6 @@ async def test_handle_scraper_request_success_with_discord(
         "ENVIRONMENT": "staging",
         "STORAGE_EMULATOR_HOST": "localhost:8080",
         "DEBUG": "True",
-        "SCRAPER_GCS_BUCKET_NAME": "local-storage",
     }.get(key, fallback)
 
     mock_metrics = {
@@ -267,7 +266,7 @@ async def test_handle_scraper_request_success_with_discord(
     assert call_kwargs["new_files_downloaded"] == 10
     assert call_kwargs["existing_files_skipped"] == 15
     assert call_kwargs["total_processing_time_ms"] == 45000.0
-    assert call_kwargs["bucket_name"] == "local-storage"
+    assert call_kwargs["bucket_name"] == "firestore:grants"
     assert call_kwargs["success"] is True
     assert call_kwargs["total_files_in_bucket"] == 100
 
@@ -365,7 +364,6 @@ async def test_handle_scraper_request_discord_send_fails(
         "ENVIRONMENT": "staging",
         "STORAGE_EMULATOR_HOST": "localhost:8080",
         "DEBUG": "True",
-        "SCRAPER_GCS_BUCKET_NAME": "local-storage",
     }.get(key, fallback)
 
     mock_metrics = {
