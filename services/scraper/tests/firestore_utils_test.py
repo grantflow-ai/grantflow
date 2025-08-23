@@ -1,4 +1,3 @@
-from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -73,6 +72,7 @@ async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_doc
     grant_info: dict[str, str] = {
         "url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-123",
         "title": "Test Grant",
+        "organization": "NIH",
         "description": "Test Description",
     }
 
@@ -97,7 +97,9 @@ async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_doc
 async def test_save_grant_document_without_url(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
     grant_info: dict[str, str] = {
         "title": "Test Grant",
+        "organization": "NIH",
         "description": "Test Description",
+        "url": "",
     }
 
     mock_document.id = "auto-generated-id"
@@ -142,12 +144,23 @@ async def test_get_existing_grant_identifiers(mock_collection: AsyncMock) -> Non
         mock_doc.id = f"grant-{i}"
         mock_docs.append(mock_doc)
 
-    async def mock_stream() -> AsyncIterator[AsyncMock]:
-        for doc in mock_docs:
-            yield doc
+    class MockAsyncIterator:
+        def __init__(self, docs: list[AsyncMock]) -> None:
+            self.docs = docs
+            self.index = 0
+
+        def __aiter__(self) -> "MockAsyncIterator":
+            return self
+
+        async def __anext__(self) -> AsyncMock:
+            if self.index >= len(self.docs):
+                raise StopAsyncIteration
+            doc = self.docs[self.index]
+            self.index += 1
+            return doc
 
     mock_query = AsyncMock()
-    mock_query.stream.return_value = mock_stream()
+    mock_query.stream.return_value = MockAsyncIterator(mock_docs)
     mock_collection.select.return_value = mock_query
 
     with patch("services.scraper.src.firestore_utils.get_grants_collection", return_value=mock_collection):
