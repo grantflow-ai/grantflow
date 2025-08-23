@@ -63,17 +63,17 @@ resource "google_cloudfunctions2_function" "grant_matcher" {
   }
 
   service_config {
-    max_instance_count               = 10
-    min_instance_count               = 0
-    available_memory                 = "512Mi"
-    timeout_seconds                  = 540
+    max_instance_count = 10
+    min_instance_count = 0
+    available_memory   = "512Mi"
+    timeout_seconds    = 540
     environment_variables = {
       GCP_PROJECT_ID = var.project_id
       ENVIRONMENT    = var.environment
     }
-    service_account_email            = google_service_account.grant_matcher_sa.email
-    ingress_settings                 = "ALLOW_INTERNAL_ONLY"
-    all_traffic_on_latest_revision   = true
+    service_account_email          = google_service_account.grant_matcher_sa.email
+    ingress_settings               = "ALLOW_INTERNAL_ONLY"
+    all_traffic_on_latest_revision = true
   }
 
   depends_on = [
@@ -104,7 +104,7 @@ resource "google_project_iam_member" "grant_matcher_pubsub" {
 resource "google_cloud_scheduler_job" "grant_matcher_invoker" {
   name             = "grant-matcher-scheduler-${var.environment}"
   description      = "Invoke grant matcher function daily"
-  schedule         = "0 9 * * *"  
+  schedule         = "0 9 * * *"
   time_zone        = "UTC"
   attempt_deadline = "600s"
 

@@ -193,9 +193,9 @@ async def test_send_scraper_report(mock_send_webhook: AsyncMock) -> None:
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.download_search_data")
 @patch("services.scraper.src.main.download_grant_pages")
-@patch("services.scraper.src.main.get_existing_file_identifiers")
+@patch("services.scraper.src.main.get_existing_grant_identifiers")
 async def test_run_scraper_with_metrics(
-    mock_get_existing_file_identifiers: AsyncMock,
+    mock_get_existing_grant_identifiers: AsyncMock,
     mock_download_grant_pages: AsyncMock,
     mock_download_search_data: AsyncMock,
     mock_send_report: AsyncMock,
@@ -207,7 +207,7 @@ async def test_run_scraper_with_metrics(
     ]
     mock_download_search_data.return_value = mock_search_results
     mock_download_grant_pages.return_value = 2
-    mock_get_existing_file_identifiers.return_value = {"existing1"}
+    mock_get_existing_grant_identifiers.return_value = {"existing1"}
 
     metrics = await run_scraper(
         from_date=date(2025, 7, 1),
@@ -222,7 +222,7 @@ async def test_run_scraper_with_metrics(
     assert isinstance(metrics["total_duration_ms"], float)
 
 
-@patch("services.scraper.src.main.get_existing_file_identifiers")
+@patch("services.scraper.src.main.get_existing_grant_identifiers")
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
 @patch("services.scraper.src.main.get_env")
@@ -230,7 +230,7 @@ async def test_handle_scraper_request_success_with_discord(
     mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
-    mock_get_existing_files: AsyncMock,
+    mock_get_existing_grants: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
@@ -250,7 +250,7 @@ async def test_handle_scraper_request_success_with_discord(
     }
     mock_run_scraper.return_value = mock_metrics
     mock_send_report.return_value = True
-    mock_get_existing_files.return_value = {f"file_{i}" for i in range(100)}
+    mock_get_existing_grants.return_value = {f"file_{i}" for i in range(100)}
 
     response = await test_client.post("/")
 
@@ -349,7 +349,7 @@ async def test_handle_scraper_request_no_discord_url(
     mock_send_report.assert_not_called()
 
 
-@patch("services.scraper.src.main.get_existing_file_identifiers")
+@patch("services.scraper.src.main.get_existing_grant_identifiers")
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
 @patch("services.scraper.src.main.get_env")
@@ -357,7 +357,7 @@ async def test_handle_scraper_request_discord_send_fails(
     mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
-    mock_get_existing_files: AsyncMock,
+    mock_get_existing_grants: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
@@ -377,7 +377,7 @@ async def test_handle_scraper_request_discord_send_fails(
     }
     mock_run_scraper.return_value = mock_metrics
     mock_send_report.side_effect = Exception("Discord API error")
-    mock_get_existing_files.return_value = {f"file_{i}" for i in range(50)}
+    mock_get_existing_grants.return_value = {f"file_{i}" for i in range(50)}
 
     response = await test_client.post("/")
 
