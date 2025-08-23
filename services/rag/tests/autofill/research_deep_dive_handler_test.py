@@ -56,7 +56,6 @@ def sample_application() -> dict[str, Any]:
 
 
 async def test_generate_field_answer(mock_logger: MagicMock) -> None:
-    """Test single field answer generation"""
     from services.rag.src.autofill.research_deep_dive_handler import generate_field_answer
 
     with patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion:
@@ -76,7 +75,6 @@ async def test_generate_field_answer(mock_logger: MagicMock) -> None:
 
 
 def test_function_import_deep_dive() -> None:
-    """Test that the main function can be imported and has correct signature"""
     import inspect
 
     from services.rag.src.autofill.research_deep_dive_handler import handle_research_deep_dive
@@ -91,7 +89,6 @@ def test_function_import_deep_dive() -> None:
 
 
 def test_field_mapping_keys() -> None:
-    """Test that field mapping contains expected keys for filtering logic"""
     from services.rag.src.autofill.constants import RESEARCH_DEEP_DIVE_FIELD_MAPPING
 
     expected_fields = {
@@ -114,7 +111,6 @@ def test_field_mapping_keys() -> None:
 
 
 def test_format_documents_for_context(mock_logger: MagicMock) -> None:
-    """Test document formatting for context"""
     from services.rag.src.autofill.research_deep_dive_handler import format_documents_for_context
 
     documents = ["Medical research shows promising results", "A" * 400]
@@ -129,7 +125,6 @@ def test_format_documents_for_context(mock_logger: MagicMock) -> None:
 
 
 def test_format_research_objectives(mock_logger: MagicMock) -> None:
-    """Test research objectives formatting"""
     from services.rag.src.autofill.research_deep_dive_handler import format_research_objectives
 
     objectives = [
@@ -148,7 +143,6 @@ def test_format_research_objectives(mock_logger: MagicMock) -> None:
 
 
 def test_format_existing_answers(mock_logger: MagicMock) -> None:
-    """Test existing answers formatting"""
     from services.rag.src.autofill.research_deep_dive_handler import format_existing_answers
 
     existing_answers = {
@@ -169,7 +163,6 @@ def test_format_existing_answers(mock_logger: MagicMock) -> None:
 
 
 async def test_answer_too_short_validation(mock_logger: MagicMock) -> None:
-    """Test that very short answers are rejected"""
     from services.rag.src.autofill.research_deep_dive_handler import generate_field_answer
 
     with patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion:
@@ -186,7 +179,6 @@ async def test_answer_too_short_validation(mock_logger: MagicMock) -> None:
 
 
 def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
-    """Test that all expected fields are in FIELD_MAPPING"""
     from services.rag.src.autofill.constants import RESEARCH_DEEP_DIVE_FIELD_MAPPING
 
     expected_fields = [
@@ -208,7 +200,6 @@ def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
 async def test_validation_failure_handling(
     mock_logger: MagicMock, mock_session_maker: AsyncMock, sample_request: AutofillRequestDTO
 ) -> None:
-    """Test handling of validation failures"""
     with patch(
         "services.rag.src.autofill.research_deep_dive_handler.verify_rag_sources_indexed", new_callable=AsyncMock
     ) as mock_validate:

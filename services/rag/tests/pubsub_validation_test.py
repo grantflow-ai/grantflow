@@ -88,7 +88,6 @@ def test_handle_pubsub_message_missing_parent_type() -> None:
         handle_pubsub_message(event)
 
 
-@pytest.mark.asyncio
 async def test_handle_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker = AsyncMock()
 
@@ -107,7 +106,6 @@ async def test_handle_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_handle_request_grant_template_success() -> None:
     mock_session_maker = AsyncMock()
 
@@ -126,7 +124,6 @@ async def test_handle_request_grant_template_success() -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_handle_request_grant_application_success() -> None:
     mock_session_maker = AsyncMock()
 
@@ -145,7 +142,6 @@ async def test_handle_request_grant_application_success() -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_handle_request_pipeline_error_propagates() -> None:
     mock_session_maker = AsyncMock()
 

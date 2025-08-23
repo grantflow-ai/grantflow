@@ -12,8 +12,6 @@ logger = __import__("logging").getLogger(__name__)
 
 
 async def budget_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
-    """Forward GCP budget alerts to Discord webhook."""
-
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     environment = os.environ.get("ENVIRONMENT", "unknown")
 
@@ -101,7 +99,6 @@ async def budget_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
 
 @functions_framework.cloud_event
 def budget_alert_to_discord_sync(cloud_event: CloudEvent) -> None:
-    """Cloud Functions entry point for budget alerts."""
     result = asyncio.run(budget_alert_to_discord(cloud_event))
 
     if result["status"] == "error":

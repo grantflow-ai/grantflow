@@ -14,14 +14,7 @@ import { parseShortcutKeys } from "@/utils";
 import "@/components/ui/color-highlight-button/color-highlight-button.scss";
 
 export interface ColorHighlightButtonProps extends Omit<ButtonProps, "type">, UseColorHighlightConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -33,11 +26,6 @@ export function ColorHighlightShortcutBadge({
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for applying color highlights in a Tiptap editor.
- *
- * For custom button implementations, use the `useColorHighlight` hook instead.
- */
 export const ColorHighlightButton = React.forwardRef<HTMLButtonElement, ColorHighlightButtonProps>(
 	(
 		{

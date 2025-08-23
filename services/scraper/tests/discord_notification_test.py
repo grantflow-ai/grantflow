@@ -12,7 +12,6 @@ from services.scraper.src.main import run_scraper
 
 
 def test_create_scraper_report_embed_success() -> None:
-    """Test creating a successful scraper report embed."""
     embed = create_scraper_report_embed(
         environment="staging",
         date_range="2025-07-01 to 2025-07-02",
@@ -48,7 +47,6 @@ def test_create_scraper_report_embed_success() -> None:
 
 
 def test_create_scraper_report_embed_failure() -> None:
-    """Test creating a failed scraper report embed."""
     embed = create_scraper_report_embed(
         environment="prod",
         date_range="2025-07-01 to 2025-07-02",
@@ -71,8 +69,6 @@ def test_create_scraper_report_embed_failure() -> None:
 
 
 def test_create_scraper_report_embed_time_formatting() -> None:
-    """Test different time formatting scenarios."""
-
     embed = create_scraper_report_embed(
         environment="staging",
         date_range="2025-07-01 to 2025-07-02",
@@ -112,7 +108,6 @@ def test_create_scraper_report_embed_time_formatting() -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_success(mock_client_class: Mock) -> None:
-    """Test successful Discord webhook sending."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 204
@@ -133,7 +128,6 @@ async def test_send_discord_webhook_success(mock_client_class: Mock) -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_failure(mock_client_class: Mock) -> None:
-    """Test Discord webhook sending failure."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 400
@@ -151,7 +145,6 @@ async def test_send_discord_webhook_failure(mock_client_class: Mock) -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_exception(mock_client_class: Mock) -> None:
-    """Test Discord webhook sending with exception."""
     mock_client = AsyncMock()
     mock_client.post.side_effect = Exception("Network error")
     mock_client_class.return_value.__aenter__.return_value = mock_client
@@ -165,7 +158,6 @@ async def test_send_discord_webhook_exception(mock_client_class: Mock) -> None:
 
 
 async def test_send_discord_webhook_empty_url() -> None:
-    """Test Discord webhook with empty URL."""
     result = await send_discord_webhook(
         webhook_url="",
         content="Test message",
@@ -176,7 +168,6 @@ async def test_send_discord_webhook_empty_url() -> None:
 
 @patch("packages.shared_utils.src.discord.send_discord_webhook")
 async def test_send_scraper_report(mock_send_webhook: AsyncMock) -> None:
-    """Test sending a complete scraper report."""
     mock_send_webhook.return_value = True
 
     result = await send_scraper_report(
@@ -209,8 +200,6 @@ async def test_run_scraper_with_metrics(
     mock_download_search_data: AsyncMock,
     mock_send_report: AsyncMock,
 ) -> None:
-    """Test run_scraper returns correct metrics."""
-
     mock_search_results = [
         {"url": "https://example.com/grant1"},
         {"url": "https://example.com/grant2"},
@@ -244,8 +233,6 @@ async def test_handle_scraper_request_success_with_discord(
     mock_get_existing_files: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test successful scraper request sends Discord notification."""
-
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
         "ENVIRONMENT": "staging",
@@ -294,8 +281,6 @@ async def test_handle_scraper_request_failure_with_discord(
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test failed scraper request sends Discord failure notification."""
-
     def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
         env_map = {
             "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
@@ -334,8 +319,6 @@ async def test_handle_scraper_request_no_discord_url(
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test scraper request without Discord URL configured."""
-
     def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
         env_map = {
             "DISCORD_WEBHOOK_URL": "",
@@ -377,8 +360,6 @@ async def test_handle_scraper_request_discord_send_fails(
     mock_get_existing_files: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test scraper request when Discord notification fails."""
-
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
         "ENVIRONMENT": "staging",

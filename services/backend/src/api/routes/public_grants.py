@@ -19,8 +19,6 @@ logger = get_logger(__name__)
 
 
 class GrantSearchParams(TypedDict):
-    """Parameters for grant search."""
-
     query: NotRequired[str]
     category: NotRequired[str]
     min_amount: NotRequired[int]
@@ -32,8 +30,6 @@ class GrantSearchParams(TypedDict):
 
 
 class GrantInfoResponse(TypedDict):
-    """Grant information response with ID from Firestore."""
-
     id: str
     title: str
     release_date: str
@@ -56,27 +52,18 @@ class GrantInfoResponse(TypedDict):
 
 
 class SubscriptionRequest(TypedDict):
-    """Request to create an email subscription."""
-
     email: str
     search_params: GrantSearchParams
     frequency: NotRequired[str]
 
 
 class SubscriptionResponse(TypedDict):
-    """Response for subscription creation."""
-
     subscription_id: str
     verification_required: bool
     message: str
 
 
 def get_firestore_client() -> firestore.AsyncClient:
-    """Get Firestore client instance.
-
-    Returns:
-        firestore.AsyncClient: Firestore async client
-    """
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
     return firestore.AsyncClient(project=project_id)
 
@@ -92,23 +79,6 @@ async def search_grants(
     limit: int = 20,
     offset: int = 0,
 ) -> Response[list[GrantInfoResponse] | dict[str, str]]:
-    """Search for grants in Firestore.
-
-    This is a public endpoint that doesn't require authentication.
-
-    Args:
-        search_query: Search query string
-        category: Grant category filter
-        min_amount: Minimum grant amount
-        max_amount: Maximum grant amount
-        deadline_after: ISO date string for minimum deadline
-        deadline_before: ISO date string for maximum deadline
-        limit: Number of results to return (max 100)
-        offset: Number of results to skip
-
-    Returns:
-        List of grants matching the search criteria
-    """
     limit = min(limit, 100)
 
     logger.info(
@@ -215,16 +185,6 @@ async def search_grants(
 
 @get("/public/grants/{grant_id:str}")
 async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[str, str]]:
-    """Get details for a specific grant.
-
-    This is a public endpoint that doesn't require authentication.
-
-    Args:
-        grant_id: Grant document ID
-
-    Returns:
-        Grant details
-    """
     logger.info("Public grant details request", grant_id=grant_id)
 
     client = get_firestore_client()
@@ -273,17 +233,6 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[
 async def create_subscription(
     data: SubscriptionRequest,
 ) -> Response[SubscriptionResponse | dict[str, str]]:
-    """Create an email subscription for grant alerts.
-
-    This is a public endpoint that doesn't require authentication.
-    Creates a subscription that will be verified via email.
-
-    Args:
-        data: Subscription request with email and search parameters
-
-    Returns:
-        Subscription response with ID and verification status
-    """
     email = data["email"]
     search_params = data["search_params"]
     frequency = data.get("frequency", "daily")
@@ -397,16 +346,6 @@ async def create_subscription(
 
 @get("/public/grants/verify/{token:str}")
 async def verify_subscription(token: str) -> Response[dict[str, str]]:
-    """Verify an email subscription.
-
-    This is a public endpoint that doesn't require authentication.
-
-    Args:
-        token: Verification token from email
-
-    Returns:
-        Verification status message
-    """
     logger.info("Verifying subscription", token=token)
 
     client = get_firestore_client()
@@ -445,16 +384,6 @@ async def verify_subscription(token: str) -> Response[dict[str, str]]:
 
 @post("/public/grants/unsubscribe")
 async def unsubscribe(email: str) -> Response[dict[str, str]]:
-    """Unsubscribe from grant alerts.
-
-    This is a public endpoint that doesn't require authentication.
-
-    Args:
-        email: Email address to unsubscribe
-
-    Returns:
-        Unsubscribe status message
-    """
     logger.info("Unsubscribing from grant alerts", email=email)
 
     client = get_firestore_client()

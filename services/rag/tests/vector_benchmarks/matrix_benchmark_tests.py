@@ -1,10 +1,3 @@
-"""
-Matrix-Based Vector Benchmark Tests
-
-This module implements comprehensive parameter matrix testing for systematic
-performance optimization. Tests are organized by optimization focus area.
-"""
-
 from typing import Any
 
 import pytest
@@ -38,12 +31,6 @@ async def test_dimension_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic dimension optimization testing.
-
-    Tests all dimensions with consistent parameters to find optimal dimension.
-    This gives us clear data on dimension vs performance trade-offs.
-    """
     logger.info("Testing dimension optimization", description=params.description)
     logger.info("Parameters", dimension=params.dimension, dataset_size=params.dataset_size)
 
@@ -118,11 +105,6 @@ async def test_hnsw_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic HNSW parameter optimization testing.
-
-    Tests different M and ef_construction combinations to find optimal index settings.
-    """
     logger.info("Testing HNSW optimization", description=params.description)
     logger.info("Parameters", m=params.m, ef_construction=params.ef_construction)
 
@@ -201,11 +183,6 @@ async def test_scale_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic dataset scale optimization testing.
-
-    Tests how performance scales with different dataset sizes.
-    """
     logger.info("Testing scale optimization", description=params.description)
     logger.info("Dataset size", dataset_size=params.dataset_size)
 
@@ -285,11 +262,6 @@ async def test_batch_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic batch size optimization testing.
-
-    Tests different batch sizes to find optimal insertion strategy.
-    """
     logger.info("Testing batch optimization", description=params.description)
     logger.info("Batch size", batch_size=params.batch_size)
 
@@ -352,11 +324,6 @@ async def test_search_optimization_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Systematic search parameter optimization testing.
-
-    Tests different search k values and their impact on performance.
-    """
     logger.info("Testing search optimization", description=params.description)
     logger.info("Search k", search_k=params.search_k)
 
@@ -429,11 +396,6 @@ async def test_production_candidates_matrix(
     params: VectorTestParameters,
     logger: Any,
 ) -> None:
-    """
-    Test production candidate configurations with large datasets.
-
-    These are the final configurations being considered for production deployment.
-    """
     logger.info("Testing production candidate", description=params.description)
     logger.info("Expected use case", expected_use_case=params.expected_use_case)
 
@@ -508,7 +470,6 @@ async def test_production_candidates_matrix(
 
 
 async def run_matrix_summary() -> None:
-    """Helper to print matrix summaries for planning."""
     matrices = {
         "Dimension Optimization": DIMENSION_OPTIMIZATION_MATRIX,
         "HNSW Optimization": HNSW_OPTIMIZATION_MATRIX,

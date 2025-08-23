@@ -52,7 +52,6 @@ def test_categorize_text_empty() -> None:
     )
 
 
-@pytest.mark.asyncio
 async def test_categorize_text_async() -> None:
     text = "Applications must include budgets of $25,000."
 
@@ -154,7 +153,6 @@ async def test_nlp_categorizer_smoke(logger: Any) -> None:
     assert total_sentences > 0, "No sentences categorized"
 
 
-@pytest.mark.asyncio
 async def test_nlp_categorization_performance_benchmark(sample_cfp_texts: list[str]) -> None:
     times = []
     accuracy_scores = []
@@ -179,7 +177,6 @@ async def test_nlp_categorization_performance_benchmark(sample_cfp_texts: list[s
     assert avg_accuracy > 0, f"No categories detected on average: {avg_accuracy}"
 
 
-@pytest.mark.asyncio
 async def test_nlp_categorization_accuracy_benchmark() -> None:
     test_cases = [
         ("Budget must not exceed $50,000", {"money": 1}),

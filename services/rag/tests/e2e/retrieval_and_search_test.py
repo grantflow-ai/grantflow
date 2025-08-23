@@ -1,8 +1,3 @@
-"""
-Comprehensive test suite for document retrieval and search functionality.
-Tests search query generation, document retrieval, and relevance scoring.
-"""
-
 import logging
 import time
 from datetime import UTC, datetime
@@ -35,10 +30,6 @@ async def test_retrieval_smoke(
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    """
-    Quick smoke test for document retrieval functionality.
-    Verifies basic retrieval with simple queries.
-    """
     start_time = time.time()
 
     async with async_session_maker() as session:
@@ -72,10 +63,6 @@ async def test_retrieval_quality_assessment(
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    """
-    Test retrieval quality with diversity metrics.
-    Evaluates whether retrieved documents are diverse and relevant.
-    """
     start_time = time.time()
 
     async with async_session_maker() as session:
@@ -122,10 +109,6 @@ async def test_retrieval_semantic_evaluation(
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    """
-    Test retrieval with semantic evaluation of relevance.
-    Uses AI to evaluate whether retrieved documents are relevant to the query.
-    """
     start_time = time.time()
 
     async with async_session_maker() as session:
@@ -178,10 +161,6 @@ async def test_retrieval_with_custom_queries(
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    """
-    Test retrieval with custom search queries.
-    Evaluates performance with specific query patterns.
-    """
     start_time = time.time()
 
     query_patterns = {
@@ -228,9 +207,6 @@ async def test_retrieval_with_custom_queries(
 async def test_search_query_generation_basic(
     logger: logging.Logger,
 ) -> None:
-    """
-    Test basic search query generation functionality.
-    """
     start_time = time.time()
 
     test_prompts = [
@@ -274,9 +250,6 @@ async def test_search_query_quality_assessment(
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    """
-    Test search query generation quality with AI evaluation.
-    """
     start_time = time.time()
 
     template_id = str(uuid4())
@@ -327,10 +300,6 @@ async def test_search_query_quality_assessment(
 async def test_search_query_context_sensitivity(
     logger: logging.Logger,
 ) -> None:
-    """
-    Test that search query generation is sensitive to context.
-    Different contexts should produce different queries.
-    """
     contexts = {
         "technical": "Generate queries for technical aspects of CRISPR-Cas9 gene editing in melanoma research",
         "clinical": "Generate queries for clinical trial design and patient recruitment strategies",
@@ -371,10 +340,6 @@ async def test_search_and_retrieval_integration(
     async_session_maker: async_sessionmaker[Any],
     melanoma_alliance_full_application_id: str,
 ) -> None:
-    """
-    Integration test for search query generation and document retrieval.
-    Tests the complete flow from query generation to retrieval.
-    """
     start_time = time.time()
 
     context = "Comprehensive melanoma research grant application focusing on immunotherapy"

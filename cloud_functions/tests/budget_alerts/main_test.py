@@ -1,5 +1,3 @@
-"""Tests for budget alert function."""
-
 import base64
 import json
 from typing import Any
@@ -10,8 +8,6 @@ import pytest
 
 from cloud_functions.src.budget_alerts.main import budget_alert_to_discord, budget_alert_to_discord_sync
 
-# Tests for budget alert to Discord function
-
 
 async def test_budget_alert_critical_priority(
     mock_request: Mock,
@@ -19,7 +15,6 @@ async def test_budget_alert_critical_priority(
     mock_discord_webhook_response: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test successful critical budget alert (100%+ usage)."""
     monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
     budget_alert_data["costAmount"] = 105.00
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
@@ -56,7 +51,6 @@ async def test_budget_alert_high_priority(
     budget_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test successful high budget alert (90-99% usage)."""
     budget_alert_data["costAmount"] = 95.00
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -84,7 +78,6 @@ async def test_budget_alert_medium_priority(
     budget_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test successful medium budget alert (75-89% usage)."""
     budget_alert_data["costAmount"] = 80.00
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -112,7 +105,6 @@ async def test_budget_alert_low_priority(
     budget_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test successful low budget alert (<75% usage)."""
     budget_alert_data["costAmount"] = 50.00
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -140,7 +132,6 @@ async def test_budget_alert_with_forecast(
     budget_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test budget alert includes forecast information when available."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -170,7 +161,6 @@ async def test_budget_alert_without_forecast(
     budget_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test budget alert without forecast information."""
     budget_alert_data.pop("forecastedAmount", None)
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -193,7 +183,6 @@ async def test_budget_alert_without_forecast(
 
 
 async def test_budget_alert_missing_webhook_url(mock_request: Mock, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test error when Discord webhook URL is not configured."""
     monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
 
     result = await budget_alert_to_discord(mock_request)
@@ -203,7 +192,6 @@ async def test_budget_alert_missing_webhook_url(mock_request: Mock, monkeypatch:
 
 
 async def test_budget_alert_invalid_json_data(mock_request: Mock) -> None:
-    """Test error handling for invalid JSON data."""
     pubsub_data = {"message": {"data": base64.b64encode(b"invalid json").decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -214,7 +202,6 @@ async def test_budget_alert_invalid_json_data(mock_request: Mock) -> None:
 
 
 async def test_budget_alert_missing_budget_data(mock_request: Mock) -> None:
-    """Test handling of missing budget data with defaults."""
     incomplete_data = {"budgetDisplayName": "Test Budget"}
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(incomplete_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -239,7 +226,6 @@ async def test_budget_alert_missing_budget_data(mock_request: Mock) -> None:
 
 
 async def test_budget_alert_zero_budget_amount(mock_request: Mock, budget_alert_data: dict[str, Any]) -> None:
-    """Test handling of zero budget amount to avoid division by zero."""
     budget_alert_data["budgetAmount"] = 0
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -266,7 +252,6 @@ async def test_budget_alert_discord_webhook_failure(
     mock_request: Mock,
     budget_alert_data: dict[str, Any],
 ) -> None:
-    """Test error handling when Discord webhook fails."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -287,7 +272,6 @@ async def test_budget_alert_httpx_request_error(
     mock_request: Mock,
     budget_alert_data: dict[str, Any],
 ) -> None:
-    """Test error handling for HTTP request errors."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -302,15 +286,11 @@ async def test_budget_alert_httpx_request_error(
         assert "Discord webhook request failed" in result["message"]
 
 
-# Tests for synchronous wrapper function
-
-
 def test_budget_alert_sync_wrapper(
     mock_request: Mock,
     budget_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test that the sync wrapper correctly calls the async function."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 

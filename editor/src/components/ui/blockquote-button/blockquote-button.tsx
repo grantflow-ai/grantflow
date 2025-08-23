@@ -9,14 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { parseShortcutKeys } from "@/utils";
 
 export interface BlockquoteButtonProps extends Omit<ButtonProps, "type">, UseBlockquoteConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -24,11 +17,6 @@ export function BlockquoteShortcutBadge({ shortcutKeys = BLOCKQUOTE_SHORTCUT_KEY
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for toggling blockquote in a Tiptap editor.
- *
- * For custom button implementations, use the `useBlockquote` hook instead.
- */
 export const BlockquoteButton = React.forwardRef<HTMLButtonElement, BlockquoteButtonProps>(
 	(
 		{

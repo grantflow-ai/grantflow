@@ -1,5 +1,3 @@
-"""Firestore utilities for the scraper service."""
-
 import time
 from datetime import UTC, datetime
 
@@ -14,14 +12,6 @@ logger = get_logger(__name__)
 
 
 def get_firestore_client() -> AsyncClient:
-    """Get Firestore client instance.
-
-    Returns:
-        AsyncClient: Firestore async client
-
-    Raises:
-        GoogleCloudError: If client creation fails
-    """
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
     try:
         return firestore.AsyncClient(project=project_id)
@@ -31,37 +21,16 @@ def get_firestore_client() -> AsyncClient:
 
 
 async def get_grants_collection() -> AsyncCollectionReference:
-    """Get the grants collection reference.
-
-    Returns:
-        AsyncCollectionReference: Reference to grants collection
-    """
     client = get_firestore_client()
     return client.collection("grants")
 
 
 async def get_subscriptions_collection() -> AsyncCollectionReference:
-    """Get the subscriptions collection reference.
-
-    Returns:
-        AsyncCollectionReference: Reference to subscriptions collection
-    """
     client = get_firestore_client()
     return client.collection("subscriptions")
 
 
 async def save_grant_document(grant_info: GrantInfo) -> str:
-    """Save a grant document to Firestore.
-
-    Args:
-        grant_info: Grant information dictionary
-
-    Returns:
-        str: Document ID of saved grant
-
-    Raises:
-        GoogleCloudError: If Firestore operation fails
-    """
     start_time = time.time()
 
     validation_errors = validate_grant_data(grant_info)
@@ -110,12 +79,6 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
 
 
 async def save_grant_page_content(grant_id: str, content: str) -> None:
-    """Save grant page content to Firestore.
-
-    Args:
-        grant_id: Grant document ID
-        content: Markdown content of grant page
-    """
     start_time = time.time()
     collection = await get_grants_collection()
 
@@ -138,11 +101,6 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
 
 
 async def get_existing_grant_identifiers() -> set[str]:
-    """Get existing grant identifiers from Firestore.
-
-    Returns:
-        set[str]: Set of existing grant IDs
-    """
     start_time = time.time()
     collection = await get_grants_collection()
 
@@ -160,17 +118,6 @@ async def get_existing_grant_identifiers() -> set[str]:
 
 
 async def batch_save_grants(grants: list[GrantInfo]) -> int:
-    """Save multiple grants to Firestore in batch.
-
-    Args:
-        grants: List of grant information dictionaries
-
-    Returns:
-        int: Number of grants saved
-
-    Raises:
-        GoogleCloudError: If batch operation fails
-    """
     start_time = time.time()
     saved_count = 0
 

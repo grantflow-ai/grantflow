@@ -942,8 +942,6 @@ async def test_generate_application_status_transition_to_generating(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test that application status transitions to GENERATING when RAG generation starts"""
-
     async with async_session_maker() as session, session.begin():
         grant_application.status = ApplicationStatusEnum.WORKING_DRAFT
         grant_application.title = "Test Application"
@@ -1018,8 +1016,6 @@ async def test_application_status_transitions_preserve_generating(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test that GENERATING status is preserved and displayed correctly"""
-
     async with async_session_maker() as session:
         app = await session.get(GrantApplication, grant_application.id)
         app.status = ApplicationStatusEnum.GENERATING
@@ -1058,8 +1054,6 @@ async def test_list_organization_applications(
     project: Project,
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test listing applications at organization level"""
-
     async with async_session_maker() as session, session.begin():
         second_project = Project(
             organization_id=project.organization_id,
@@ -1127,8 +1121,6 @@ async def test_list_organization_applications_with_grant_template(
     project: Project,
     project_member_user: OrganizationUser,
 ) -> None:
-    """Test listing organization applications with grant template submission dates"""
-
     async with async_session_maker() as session, session.begin():
         app = GrantApplication(
             project_id=project.id,
@@ -1165,8 +1157,6 @@ async def test_list_organization_applications_unauthorized(
     test_client: TestingClientType,
     project: Project,
 ) -> None:
-    """Test that unauthenticated users cannot access organization applications"""
-
     response = await test_client.get(
         f"/organizations/{project.organization_id}/applications",
     )

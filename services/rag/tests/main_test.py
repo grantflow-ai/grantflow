@@ -71,7 +71,6 @@ def mock_grant_application_handler(mocker: MockerFixture) -> AsyncMock:
 
 @pytest.fixture(autouse=True)
 def mock_llm_initialization(mocker: MockerFixture) -> None:
-    """Mock LLM initialization to prevent credential errors in tests."""
     mocker.patch("services.rag.src.main.init_llm_connection", return_value=None)
 
 

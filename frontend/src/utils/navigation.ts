@@ -2,13 +2,6 @@ interface BaseNavigationParams {
 	query?: Record<string, string>;
 }
 
-/**
- * Clean navigation routes without URL parameters or exposed IDs
- *
- * - All routes are static (e.g., /organization/project, /organization/project/application/editor)
- * - Entity context is managed through the navigation store
- * - UUIDs are used for API calls but never in URLs
- */
 export const routes = {
 	acceptInvitation: ({ query }: BaseNavigationParams = {}) => {
 		const params = new URLSearchParams(query);

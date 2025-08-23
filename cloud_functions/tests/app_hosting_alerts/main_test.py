@@ -1,5 +1,3 @@
-"""Tests for app hosting alert function."""
-
 import base64
 import json
 from typing import Any
@@ -15,8 +13,6 @@ from cloud_functions.src.app_hosting_alerts.main import (
     send_test_alert,
 )
 
-# Tests for app hosting alert to Discord function
-
 
 async def test_app_hosting_alert_high_priority(
     mock_request: Mock,
@@ -24,7 +20,6 @@ async def test_app_hosting_alert_high_priority(
     mock_discord_webhook_response: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test successful high priority alert processing."""
     monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
     app_hosting_alert_data["incident"]["policy_name"] = "Critical Error Alert"
 
@@ -62,7 +57,6 @@ async def test_app_hosting_alert_medium_priority(
     app_hosting_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test successful medium priority alert processing."""
     app_hosting_alert_data["incident"]["policy_name"] = "Memory Usage Alert"
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -90,7 +84,6 @@ async def test_app_hosting_alert_low_priority(
     app_hosting_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test successful low priority alert processing."""
     app_hosting_alert_data["incident"]["policy_name"] = "General Monitoring"
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -113,7 +106,6 @@ async def test_app_hosting_alert_low_priority(
 
 
 async def test_app_hosting_alert_missing_webhook_url(mock_request: Mock, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test error when Discord webhook URL is not configured."""
     monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
 
     result = await app_hosting_alert_to_discord(mock_request)
@@ -123,7 +115,6 @@ async def test_app_hosting_alert_missing_webhook_url(mock_request: Mock, monkeyp
 
 
 async def test_app_hosting_alert_invalid_json_data(mock_request: Mock) -> None:
-    """Test error handling for invalid JSON data."""
     pubsub_data = {"message": {"data": base64.b64encode(b"invalid json").decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -134,7 +125,6 @@ async def test_app_hosting_alert_invalid_json_data(mock_request: Mock) -> None:
 
 
 async def test_app_hosting_alert_missing_incident_data(mock_request: Mock) -> None:
-    """Test handling of missing incident data."""
     incomplete_data = {"no_incident": "data"}
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(incomplete_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
@@ -161,7 +151,6 @@ async def test_app_hosting_alert_discord_webhook_failure(
     mock_request: Mock,
     app_hosting_alert_data: dict[str, Any],
 ) -> None:
-    """Test error handling when Discord webhook fails."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -183,7 +172,6 @@ async def test_app_hosting_alert_httpx_request_error(
     mock_request: Mock,
     app_hosting_alert_data: dict[str, Any],
 ) -> None:
-    """Test error handling for HTTP request errors."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
@@ -198,11 +186,7 @@ async def test_app_hosting_alert_httpx_request_error(
         assert "Discord webhook request failed" in result["message"]
 
 
-# Tests for create test alert embed function
-
-
 def test_create_test_alert_embed_creates_valid_embed() -> None:
-    """Test that create_test_alert_embed creates a valid embed structure."""
     embed = create_test_alert_embed("staging", "grantflow-staging")
 
     assert "🧪" in embed["title"]
@@ -219,11 +203,7 @@ def test_create_test_alert_embed_creates_valid_embed() -> None:
     assert env_field["value"] == "staging"
 
 
-# Tests for send test alert function
-
-
 async def test_send_test_alert_success(mock_discord_webhook_response: Mock) -> None:
-    """Test successful test alert sending."""
     webhook_url = "https://discord.com/api/webhooks/123/test"
 
     with patch("httpx.AsyncClient") as mock_client:
@@ -245,7 +225,6 @@ async def test_send_test_alert_success(mock_discord_webhook_response: Mock) -> N
 
 
 async def test_send_test_alert_failure() -> None:
-    """Test failed test alert sending."""
     webhook_url = "https://discord.com/api/webhooks/123/test"
 
     with patch("httpx.AsyncClient") as mock_client:
@@ -258,15 +237,11 @@ async def test_send_test_alert_failure() -> None:
         assert result is False
 
 
-# Tests for synchronous wrapper function
-
-
 def test_app_hosting_alert_sync_wrapper(
     mock_request: Mock,
     app_hosting_alert_data: dict[str, Any],
     mock_discord_webhook_response: Mock,
 ) -> None:
-    """Test that the sync wrapper correctly calls the async function."""
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(app_hosting_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 

@@ -1,1 +1,0 @@
-"""Grant matcher tests package."""

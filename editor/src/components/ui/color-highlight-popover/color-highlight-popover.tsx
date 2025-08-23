@@ -19,24 +19,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 export interface ColorHighlightPopoverContentProps {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * Optional colors to use in the highlight popover.
-	 * If not provided, defaults to a predefined set of colors.
-	 */
 	colors?: HighlightColor[];
 }
 
 export interface ColorHighlightPopoverProps
 	extends Omit<ButtonProps, "type">,
 		Pick<UseColorHighlightConfig, "editor" | "hideWhenUnavailable" | "onApplied"> {
-	/**
-	 * Optional colors to use in the highlight popover.
-	 * If not provided, defaults to a predefined set of colors.
-	 */
 	colors?: HighlightColor[];
 }
 

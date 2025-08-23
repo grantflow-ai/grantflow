@@ -1,8 +1,3 @@
-"""
-Section generation with shared retrieval and improved parallelization.
-Preserves quality while improving speed through intelligent batching and caching.
-"""
-
 import time
 from typing import Final
 
@@ -55,20 +50,6 @@ async def generate_sections_with_shared_retrieval(
     research_deep_dives: list[ResearchObjective],
     application_id: str,
 ) -> dict[str, str]:
-    """
-    Generate multiple sections using shared retrieval for efficiency.
-
-    Performance optimization: Single retrieval call for all sections instead of
-    individual calls, reducing latency and improving consistency.
-
-    Args:
-        sections: List of sections to generate
-        research_deep_dives: Research context for generation
-        application_id: Application ID for retrieval
-
-    Returns:
-        Dictionary mapping section IDs to generated text
-    """
     if not sections:
         return {}
 
@@ -147,17 +128,6 @@ async def _generate_single_section_with_context(
     research_deep_dives: list[ResearchObjective],
     shared_context: str,
 ) -> str:
-    """
-    Generate a single section using shared retrieval context.
-
-    Args:
-        section: Section configuration
-        research_deep_dives: Research context
-        shared_context: Pre-retrieved shared context
-
-    Returns:
-        Generated section text
-    """
     section_title = section.get("title", "Section")
 
     logger.info(
@@ -340,11 +310,6 @@ async def generate_section_text(
     research_deep_dives: list[ResearchObjective],
     application_id: str,
 ) -> str:
-    """
-    Generate text for a single section (backward compatibility).
-
-    For new code, prefer generate_sections_with_shared_retrieval for better performance.
-    """
     results = await generate_sections_with_shared_retrieval([section], research_deep_dives, application_id)
 
     section_id = section.get("id", section.get("title", "section"))

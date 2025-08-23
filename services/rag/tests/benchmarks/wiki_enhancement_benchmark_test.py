@@ -13,7 +13,6 @@ from services.rag.src.utils.wikidata_client import get_scientific_context
 
 @pytest.fixture
 def mock_httpx_response(mocker: MockerFixture) -> MagicMock:
-    """Mock httpx response."""
     response = MagicMock()
     response.raise_for_status = MagicMock()
     return response
@@ -21,7 +20,6 @@ def mock_httpx_response(mocker: MockerFixture) -> MagicMock:
 
 @pytest.fixture
 def mock_httpx_client(mocker: MockerFixture) -> AsyncMock:
-    """Mock httpx client with proper async context manager."""
     client = AsyncMock()
     client.__aenter__ = AsyncMock(return_value=client)
     client.__aexit__ = AsyncMock(return_value=None)
@@ -31,7 +29,6 @@ def mock_httpx_client(mocker: MockerFixture) -> AsyncMock:
 async def test_wikidata_context_generation_performance(
     mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock
 ) -> None:
-    """Test Wikidata context generation performance with mocked responses."""
     test_terms = [
         "machine learning",
         "artificial intelligence",
@@ -81,7 +78,6 @@ async def test_wikidata_context_generation_performance(
 
 
 async def test_objective_enrichment_performance(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test objective enrichment performance with mocked responses."""
     test_enrichment_data: ObjectiveEnrichmentDTO = {
         "research_objective": {
             "enriched_objective": "",
@@ -145,7 +141,6 @@ async def test_objective_enrichment_performance(mock_httpx_client: AsyncMock, mo
 
 
 async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test wiki enhancement scalability with different term counts."""
     term_counts = [5, 10, 20]
     scalability_results = []
 
@@ -195,7 +190,6 @@ async def test_wiki_enhancement_scalability(mock_httpx_client: AsyncMock, mock_h
 
 
 async def test_batch_processing_efficiency(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test that batch processing is working efficiently."""
     test_terms = [f"term_{i}" for i in range(15)]
 
     mock_httpx_response.json.return_value = {

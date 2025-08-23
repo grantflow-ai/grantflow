@@ -1,5 +1,3 @@
-"""Tests for Firestore utilities."""
-
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -22,7 +20,6 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def mock_firestore_client() -> AsyncMock:
-    """Create a mock Firestore client."""
     mock_client = AsyncMock(spec=AsyncClient)
     mock_client.collection = MagicMock()
     return mock_client
@@ -30,20 +27,17 @@ def mock_firestore_client() -> AsyncMock:
 
 @pytest.fixture
 def mock_collection() -> AsyncMock:
-    """Create a mock collection reference."""
     return AsyncMock(spec=AsyncCollectionReference)
 
 
 @pytest.fixture
 def mock_document() -> AsyncMock:
-    """Create a mock document reference."""
     mock_doc = AsyncMock(spec=AsyncDocumentReference)
     mock_doc.id = "test-grant-123"
     return mock_doc
 
 
 def test_get_firestore_client() -> None:
-    """Test getting Firestore client instance."""
     with patch("services.scraper.src.firestore_utils.firestore.AsyncClient") as mock_client_class:
         mock_client_class.return_value = MagicMock(spec=AsyncClient)
 
@@ -54,7 +48,6 @@ def test_get_firestore_client() -> None:
 
 
 async def test_get_grants_collection(mock_firestore_client: AsyncMock) -> None:
-    """Test getting grants collection reference."""
     mock_collection = AsyncMock(spec=AsyncCollectionReference)
     mock_firestore_client.collection.return_value = mock_collection
 
@@ -66,7 +59,6 @@ async def test_get_grants_collection(mock_firestore_client: AsyncMock) -> None:
 
 
 async def test_get_subscriptions_collection(mock_firestore_client: AsyncMock) -> None:
-    """Test getting subscriptions collection reference."""
     mock_collection = AsyncMock(spec=AsyncCollectionReference)
     mock_firestore_client.collection.return_value = mock_collection
 
@@ -78,7 +70,6 @@ async def test_get_subscriptions_collection(mock_firestore_client: AsyncMock) ->
 
 
 async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
-    """Test saving a grant document with URL-based ID."""
     grant_info: dict[str, str] = {
         "url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-123",
         "title": "Test Grant",
@@ -104,7 +95,6 @@ async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_doc
 
 
 async def test_save_grant_document_without_url(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
-    """Test saving a grant document without URL (auto-generated ID)."""
     grant_info: dict[str, str] = {
         "title": "Test Grant",
         "description": "Test Description",
@@ -127,7 +117,6 @@ async def test_save_grant_document_without_url(mock_collection: AsyncMock, mock_
 
 
 async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
-    """Test saving grant page content."""
     grant_id = "PA-24-123"
     content = "# Grant Title\n\nGrant content here..."
 
@@ -147,7 +136,6 @@ async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document
 
 
 async def test_get_existing_grant_identifiers(mock_collection: AsyncMock) -> None:
-    """Test getting existing grant identifiers from Firestore."""
     mock_docs = []
     for i in range(3):
         mock_doc = AsyncMock()
@@ -170,7 +158,6 @@ async def test_get_existing_grant_identifiers(mock_collection: AsyncMock) -> Non
 
 
 async def test_batch_save_grants(mock_firestore_client: AsyncMock, mock_collection: AsyncMock) -> None:
-    """Test batch saving multiple grants."""
     grants: list[dict[str, str]] = [
         {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-001", "title": "Grant 1"},
         {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-002", "title": "Grant 2"},
@@ -204,7 +191,6 @@ async def test_batch_save_grants(mock_firestore_client: AsyncMock, mock_collecti
 
 
 async def test_batch_save_grants_large_batch(mock_firestore_client: AsyncMock, mock_collection: AsyncMock) -> None:
-    """Test batch saving with more than 500 grants (Firestore batch limit)."""
     grants: list[dict[str, str]] = [{"title": f"Grant {i}"} for i in range(501)]
 
     mock_batch = AsyncMock()

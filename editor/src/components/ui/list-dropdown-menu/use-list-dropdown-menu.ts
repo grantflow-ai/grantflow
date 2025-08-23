@@ -11,23 +11,9 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 import { isNodeInSchema } from "@/utils";
 
-/**
- * Configuration for the list dropdown menu functionality
- */
 export interface UseListDropdownMenuConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * The list types to display in the dropdown.
-	 * @default ["bulletList", "orderedList", "taskList"]
-	 */
 	types?: ListType[];
-	/**
-	 * Whether the dropdown should be hidden when no list types are available
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
 }
 
@@ -89,9 +75,6 @@ export function shouldShowListDropdown(params: {
 	return true;
 }
 
-/**
- * Gets the currently active list type from the available types
- */
 export function getActiveListType(editor: Editor | null, availableTypes: ListType[]): ListType | undefined {
 	if (!editor?.isEditable) return undefined;
 	return availableTypes.find((type) => isListActive(editor, type));
