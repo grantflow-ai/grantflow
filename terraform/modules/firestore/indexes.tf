@@ -1,6 +1,6 @@
 resource "google_firestore_index" "grants_category_amount_min" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "grants"
 
   fields {
@@ -21,7 +21,7 @@ resource "google_firestore_index" "grants_category_amount_min" {
 
 resource "google_firestore_index" "grants_category_amount_max" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "grants"
 
   fields {
@@ -42,7 +42,7 @@ resource "google_firestore_index" "grants_category_amount_max" {
 
 resource "google_firestore_index" "grants_deadline" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "grants"
 
   fields {
@@ -58,7 +58,7 @@ resource "google_firestore_index" "grants_deadline" {
 
 resource "google_firestore_index" "grants_amount_range" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "grants"
 
   fields {
@@ -79,7 +79,7 @@ resource "google_firestore_index" "grants_amount_range" {
 
 resource "google_firestore_index" "grants_deadline_range" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "grants"
 
   fields {
@@ -100,7 +100,7 @@ resource "google_firestore_index" "grants_deadline_range" {
 
 resource "google_firestore_index" "subscriptions_email" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "subscriptions"
 
   fields {
@@ -111,7 +111,7 @@ resource "google_firestore_index" "subscriptions_email" {
 
 resource "google_firestore_index" "subscriptions_verification_token" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "subscriptions"
 
   fields {
@@ -122,7 +122,7 @@ resource "google_firestore_index" "subscriptions_verification_token" {
 
 resource "google_firestore_index" "subscriptions_verified" {
   project    = var.project_id
-  database   = google_firestore_database.main.name
+  database   = google_firestore_database.database.name
   collection = "subscriptions"
 
   fields {

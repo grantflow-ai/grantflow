@@ -11,7 +11,7 @@ resource "google_firestore_database" "database" {
   location_id = var.region
   type        = "FIRESTORE_NATIVE"
 
-  concurrency_mode     = "OPTIMISTIC"
+  concurrency_mode            = "OPTIMISTIC"
   app_engine_integration_mode = "DISABLED"
 
   depends_on = [google_project_service.firestore]
