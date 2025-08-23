@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import time
-from typing import TYPE_CHECKING
+from datetime import date
 
 from litestar import post
 from packages.shared_utils.src.discord import send_scraper_report
@@ -12,9 +10,6 @@ from packages.shared_utils.src.server import create_litestar_app
 from services.scraper.src.firestore_utils import get_existing_grant_identifiers
 from services.scraper.src.grant_pages import download_grant_pages
 from services.scraper.src.search_data import DEFAULT_FROM_DATE, TODAY_DATE, download_search_data
-
-if TYPE_CHECKING:
-    from datetime import date
 
 configure_otel("scraper")
 
@@ -117,7 +112,7 @@ async def handle_scraper_request() -> dict[str, str]:
                     new_files_downloaded=int(metrics["new_files_downloaded"]),
                     existing_files_skipped=int(metrics["existing_grants_skipped"]),
                     total_processing_time_ms=metrics["total_duration_ms"],
-                    bucket_name="firestore:grants",  # Using Firestore collection name
+                    bucket_name="firestore:grants",
                     total_files_in_bucket=total_grants_in_firestore,
                     success=True,
                 )

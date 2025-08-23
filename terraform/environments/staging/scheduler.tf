@@ -1,11 +1,9 @@
-# Grant Finder Feature - Cloud Scheduler for grant matcher
 
-# Grant Matcher daily job - runs at 3 AM UTC
 resource "google_cloud_scheduler_job" "grant_matcher_daily" {
   name     = "grant-matcher-daily-${var.environment}"
   project  = var.project_id
   region   = var.region
-  schedule = "0 3 * * *"  # 3 AM UTC daily
+  schedule = "0 3 * * *"  
   time_zone = "UTC"
   
   description = "Daily job to match new grants against user subscriptions"

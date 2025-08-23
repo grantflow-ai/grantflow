@@ -1,13 +1,7 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
+from bs4 import BeautifulSoup
 from httpx import AsyncClient, Timeout
 from packages.shared_utils.src.html import sanitize_html as shared_sanitize_html
 from packages.shared_utils.src.logger import get_logger
-
-if TYPE_CHECKING:
-    from bs4 import BeautifulSoup
 
 logger = get_logger(__name__)
 client = AsyncClient(timeout=Timeout(15))

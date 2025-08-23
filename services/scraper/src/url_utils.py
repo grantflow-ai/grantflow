@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def get_identifier_from_nih_url(url: str) -> str:
     """Extract the grant identifier from the NIH page URL.
 

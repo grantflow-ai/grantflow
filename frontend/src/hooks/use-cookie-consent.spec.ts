@@ -28,7 +28,7 @@ describe("useCookieConsent", () => {
 				consentData: undefined,
 				hasConsent: false,
 				hasInteracted: false,
-				isHydrated: true, // In test environment, useEffect runs immediately
+				isHydrated: true,
 				saveConsent: expect.any(Function),
 			});
 		});
@@ -63,7 +63,6 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			// In test environment, useEffect runs synchronously
 			expect(result.current.isHydrated).toBe(true);
 		});
 
@@ -93,7 +92,6 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			// In test environment, cookies are read immediately since isHydrated is true
 			expect(result.current.consentData).toEqual(mockConsentData);
 		});
 
@@ -198,7 +196,6 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			// In test environment, this will be true since the cookie has consentGiven: true
 			expect(result.current.hasConsent).toBe(true);
 		});
 
@@ -287,7 +284,6 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			// In test environment, this will be true since the cookie has hasInteracted: true
 			expect(result.current.hasInteracted).toBe(true);
 		});
 
@@ -436,7 +432,6 @@ describe("useCookieConsent", () => {
 
 			const saveConsentRef2 = result.current.saveConsent;
 
-			// The function is recreated on each render since it's not useCallback wrapped
 			expect(typeof saveConsentRef1).toBe("function");
 			expect(typeof saveConsentRef2).toBe("function");
 		});
@@ -556,7 +551,7 @@ describe("useCookieConsent", () => {
 		});
 
 		it("should handle when react-cookie returns undefined values", async () => {
-			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]); // Use empty object instead of undefined
+			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 
 			const { result } = renderHook(() => useCookieConsent());
 
@@ -580,7 +575,6 @@ describe("useCookieConsent", () => {
 				return useCookieConsent();
 			});
 
-			// In test environment with useEffect running immediately, we get 2 renders
 			expect(renderCount).toBe(2);
 
 			rerender();
@@ -596,7 +590,6 @@ describe("useCookieConsent", () => {
 
 			rerender();
 
-			// Since saveConsent is not memoized, it creates new function reference
 			expect(result.current.saveConsent).not.toBe(initialSaveConsent);
 			expect(typeof result.current.saveConsent).toBe("function");
 		});
@@ -666,7 +659,6 @@ describe("useCookieConsent", () => {
 
 	describe("Hydration Mismatch Prevention", () => {
 		it("should return same initial values for server and client before hydration", () => {
-			// Simulate server-side render
 			mockUseCookies.mockReturnValue([
 				{ [COOKIE_CONSENT]: { consentGiven: true, hasInteracted: true } },
 				mockSetCookie,
@@ -676,8 +668,6 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			// In test environment, useEffect runs immediately so isHydrated is true
-			// But the logic still works correctly - when hydrated, it reads from cookies
 			expect(result.current.isHydrated).toBe(true);
 			expect(result.current.hasConsent).toBe(true);
 			expect(result.current.hasInteracted).toBe(true);
@@ -694,13 +684,11 @@ describe("useCookieConsent", () => {
 
 			const { result } = renderHook(() => useCookieConsent());
 
-			// In test environment, hydration happens immediately
 			expect(result.current.isHydrated).toBe(true);
 			expect(result.current.hasConsent).toBe(true);
 			expect(result.current.hasInteracted).toBe(true);
 			expect(result.current.consentData).toEqual({ consentGiven: true, hasInteracted: true });
 
-			// Values should remain consistent after any async operations
 			await act(async () => {
 				await new Promise((resolve) => setTimeout(resolve, 0));
 			});
@@ -711,17 +699,14 @@ describe("useCookieConsent", () => {
 		});
 
 		it("should ensure consistent behavior across SSR and client-side rendering", async () => {
-			// Test multiple instances to ensure consistency
 			mockUseCookies.mockReturnValue([{}, mockSetCookie, mockRemoveCookie, mockUpdateCookies]);
 			const instance1 = renderHook(() => useCookieConsent());
 			const instance2 = renderHook(() => useCookieConsent());
 
-			// Both instances should have same initial state
 			expect(instance1.result.current.isHydrated).toBe(instance2.result.current.isHydrated);
 			expect(instance1.result.current.hasConsent).toBe(instance2.result.current.hasConsent);
 			expect(instance1.result.current.hasInteracted).toBe(instance2.result.current.hasInteracted);
 
-			// After hydration, both should be consistent
 			await act(async () => {
 				await Promise.all([
 					new Promise((resolve) => setTimeout(resolve, 0)),

@@ -1,11 +1,6 @@
-from __future__ import annotations
+from typing import Final
 
-from typing import TYPE_CHECKING, Final
-
-from bs4 import Comment, Tag
-
-if TYPE_CHECKING:
-    from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment, Tag
 
 HTML_TAGS_TO_DECOMPOSE: Final[set[str]] = {
     "script",

@@ -46,7 +46,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 			let projectIds: string[] = [];
 
 			if (permission === "ADMIN") {
-				// Admin always gets all projects access
 				hasAllProjectsAccess = true;
 				projectIds = projects.map((project) => project.id);
 			} else {
@@ -60,7 +59,6 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 				role: permission,
 			});
 
-			// Reset form
 			setName("");
 			setEmail("");
 			setPermission(undefined);

@@ -73,7 +73,6 @@ Object.defineProperty(globalThis, "localStorage", {
 
 describe.sequential("Onboarding Page", () => {
 	beforeEach(() => {
-		// Default to consent given
 		mockUseCookieConsent.mockReturnValue({
 			hasConsent: true,
 			isHydrated: true,
@@ -153,14 +152,12 @@ describe.sequential("Onboarding Page", () => {
 			const lastNameInput = screen.getByLabelText(/last name/i);
 			const emailInput = screen.getByLabelText(/email/i);
 
-			// The form inputs should be enabled when consent is given
 			expect(firstNameInput).not.toBeDisabled();
 			expect(lastNameInput).not.toBeDisabled();
 			expect(emailInput).not.toBeDisabled();
 		});
 
 		it("verifies SigninForm receives correct isDisabled prop value", () => {
-			// Test with consent denied
 			mockUseCookieConsent.mockReturnValue({
 				hasConsent: false,
 				isHydrated: true,
@@ -168,7 +165,6 @@ describe.sequential("Onboarding Page", () => {
 
 			render(<OnboardingPage />);
 
-			// Check that form elements are disabled when consent is denied
 			const firstNameInput = screen.getByLabelText(/first name/i);
 			const lastNameInput = screen.getByLabelText(/last name/i);
 			const emailInput = screen.getByLabelText(/email/i);
@@ -189,7 +185,6 @@ describe.sequential("Onboarding Page", () => {
 			const googleButton = screen.getByRole("button", { name: /google/i });
 			const orcidButton = screen.getByRole("button", { name: /orcid/i });
 
-			// Both social signin buttons should be disabled when consent is false
 			expect(googleButton).toBeDisabled();
 			expect(orcidButton).toBeDisabled();
 		});
@@ -197,14 +192,12 @@ describe.sequential("Onboarding Page", () => {
 		it("shows correct disabled state when consent changes", () => {
 			const { rerender } = render(<OnboardingPage />);
 
-			// Initially consent is given (from beforeEach)
 			let googleButton = screen.getByRole("button", { name: /google/i });
 			let orcidButton = screen.getByRole("button", { name: /orcid/i });
 
 			expect(googleButton).not.toBeDisabled();
 			expect(orcidButton).not.toBeDisabled();
 
-			// Change to no consent
 			mockUseCookieConsent.mockReturnValue({
 				hasConsent: false,
 				isHydrated: true,
@@ -220,7 +213,6 @@ describe.sequential("Onboarding Page", () => {
 		});
 
 		it("passes hasConsent value correctly to form and social signin components", () => {
-			// Test with consent given
 			mockUseCookieConsent.mockReturnValue({
 				hasConsent: true,
 				isHydrated: true,
@@ -228,12 +220,10 @@ describe.sequential("Onboarding Page", () => {
 
 			render(<OnboardingPage />);
 
-			// Verify that SigninForm prop isDisabled={!hasConsent} results in enabled form
 			const firstNameInput = screen.getByLabelText(/first name/i);
 			const lastNameInput = screen.getByLabelText(/last name/i);
 			const emailInput = screen.getByLabelText(/email/i);
 
-			// All inputs should be enabled when consent is given
 			expect(firstNameInput).not.toBeDisabled();
 			expect(lastNameInput).not.toBeDisabled();
 			expect(emailInput).not.toBeDisabled();
