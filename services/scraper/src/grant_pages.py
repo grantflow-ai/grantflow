@@ -1,31 +1,18 @@
-from __future__ import annotations
-
 from asyncio import gather
-from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 from html_to_markdown import convert_to_markdown
 from mdformat import text
 from packages.shared_utils.src.logger import get_logger
-from services.scraper.src.gcs_utils import upload_blob
+from services.scraper.src.dtos import GrantInfo
+from services.scraper.src.firestore_utils import save_grant_page_content
 from services.scraper.src.html_utils import download_page_html
 from services.scraper.src.url_utils import get_identifier_from_nih_url
-
-if TYPE_CHECKING:
-    from services.scraper.src.dtos import GrantInfo
 
 logger = get_logger(__name__)
 
 
 async def download_and_save_pages(*, urls: list[str]) -> None:
-    """Download HTML pages from the provided URLs and save them as markdown files.
-
-    Args:
-        urls (list[str]): A list of URLs to download and process.
-
-    Returns:
-        None
-    """
     html_pages = await gather(*(download_page_html(url=url) for url in urls))
 
     save_tasks = []
@@ -40,33 +27,14 @@ async def download_and_save_pages(*, urls: list[str]) -> None:
 
 
 async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
-    """Convert HTML content to markdown and save it to the storage.
-
-    Args:
-        soup (BeautifulSoup): The BeautifulSoup object representing the HTML content.
-        result_name (str): The name of the result used to name the saved file.
-
-    Returns:
-        None
-    """
     markdown = convert_to_markdown(soup)
     formatted_markdown = text(markdown)
 
-    blob_path = f"scraper-results/grant_search_result_{result_name}.md"
-    await upload_blob(blob_path, formatted_markdown.encode("utf-8"))
-    logger.debug("Saved markdown page to GCS", blob_path=blob_path, result_name=result_name)
+    await save_grant_page_content(result_name, formatted_markdown)
+    logger.debug("Saved markdown page to Firestore", grant_id=result_name)
 
 
 async def download_grant_pages(*, search_results: list[GrantInfo], existing_file_identifiers: set[str]) -> int:
-    """Download grant pages from search results and save them as markdown files.
-
-    Args:
-        search_results (list[dict]): A list of grant search results. Each result should include a "url" field.
-        existing_file_identifiers (set[str]): A set of existing identifiers already in storage.
-
-    Returns:
-        Number of new files downloaded
-    """
     all_urls = [result["url"] for result in search_results]
     logger.info("Found %d total search results", len(all_urls))
 

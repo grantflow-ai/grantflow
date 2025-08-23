@@ -352,7 +352,6 @@ async def create_grant_template_for_application(
     application_id: str,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Create a grant template with the required sections for testing."""
     grant_sections = [
         {
             "id": "abstract",

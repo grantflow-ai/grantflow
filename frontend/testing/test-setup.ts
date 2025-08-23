@@ -1,10 +1,3 @@
-/**
- * Global test setup utilities
- *
- * This module provides setup functions that should be used in test files
- * to ensure proper test isolation and consistent test environment.
- */
-
 import { beforeEach } from "vitest";
 import { resetAllStores } from "./store-reset";
 

@@ -216,7 +216,7 @@ async def test_download_blob_success(
 async def test_download_blob_error(mock_env_vars: None, mock_bucket: MagicMock) -> None:
     blob_name = "test-blob"
     mock_blob = MagicMock()
-    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_error = ClientError("Test error")
     mock_blob.download_as_bytes.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 
@@ -428,7 +428,7 @@ async def test_create_signed_upload_url_error(
     expected_blob_path = f"{entity_type}/{entity_id}/{source_id}/{blob_name}"
 
     mock_blob = MagicMock()
-    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_error = ClientError("Test error")
     mock_blob.generate_signed_url.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 
@@ -562,7 +562,7 @@ async def test_upload_blob_error(mock_env_vars: None, mock_bucket: MagicMock) ->
     content = b"test content"
 
     mock_blob = MagicMock()
-    mock_error = ClientError("Test error")  # type: ignore[no-untyped-call]
+    mock_error = ClientError("Test error")
     mock_blob.upload_from_string.side_effect = mock_error
     mock_bucket.blob.return_value = mock_blob
 

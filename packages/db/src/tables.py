@@ -52,15 +52,12 @@ class Base(DeclarativeBase):
 
     @property
     def is_deleted(self) -> bool:
-        """Check if the record is soft deleted."""
         return self.deleted_at is not None
 
     def soft_delete(self) -> None:
-        """Mark the record as soft deleted."""
         self.deleted_at = datetime.now(UTC)
 
     def restore(self) -> None:
-        """Restore a soft deleted record."""
         self.deleted_at = None
 
     def _get_relationship_value(self, key: str) -> Any:

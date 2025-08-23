@@ -499,7 +499,6 @@ async def test_grant_template_generation_pipeline_missing_sources(
     async_session_maker: async_sessionmaker[Any],
     test_grant_template: GrantTemplate,
 ) -> None:
-    """Test that the pipeline fails gracefully when grant template has no sources."""
     mock_job_manager = AsyncMock()
     mock_job_manager.create_grant_template_job = AsyncMock()
     mock_job_manager.update_job_status = AsyncMock()
@@ -535,8 +534,6 @@ async def test_grant_template_generation_pipeline_unindexed_sources(
     async_session_maker: async_sessionmaker[Any],
     test_grant_template: GrantTemplate,
 ) -> None:
-    """Test that the pipeline fails when sources are not properly indexed."""
-
     source = RagFileFactory.build(
         text_content="Test content",
         source_type="rag_file",
@@ -591,7 +588,6 @@ async def test_extract_and_enrich_sections_empty_cfp_content(
     mock_extracted_sections: list[ExtractedSectionDTO],
     mock_section_metadata: list[SectionMetadata],
 ) -> None:
-    """Test extract_and_enrich_sections with empty CFP content."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = AsyncMock()
@@ -623,7 +619,6 @@ async def test_extract_and_enrich_sections_validation_error(
     cfp_subject: str,
     nih_organization: GrantingInstitution,
 ) -> None:
-    """Test that extract_and_enrich_sections handles validation errors properly."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = AsyncMock()
@@ -651,7 +646,6 @@ async def test_extract_and_enrich_sections_backend_error(
     nih_organization: GrantingInstitution,
     mock_extracted_sections: list[ExtractedSectionDTO],
 ) -> None:
-    """Test that extract_and_enrich_sections handles backend errors properly."""
     parent_id = UUID("550e8400-e29b-41d4-a716-446655440000")
 
     mock_job_manager = AsyncMock()
@@ -683,7 +677,6 @@ async def test_get_rag_sources_data_with_nlp_analysis(
     async_session_maker: async_sessionmaker[Any],
     grant_template_with_sources: GrantTemplate,
 ) -> None:
-    """Test that get_rag_sources_data includes NLP analysis."""
     async with async_session_maker() as session:
         stmt = select(GrantTemplateSource.rag_source_id).where(
             GrantTemplateSource.grant_template_id == grant_template_with_sources.id
@@ -728,7 +721,6 @@ async def test_get_rag_sources_data_with_nlp_analysis(
 
 
 def test_format_rag_sources_for_prompt_with_nlp(mock_rag_sources: list[RagSourceData]) -> None:
-    """Test that prompt formatting includes NLP analysis."""
     formatted = format_rag_sources_for_prompt(mock_rag_sources)
 
     assert "NLP Analysis:" in formatted

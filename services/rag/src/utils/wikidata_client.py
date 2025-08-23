@@ -14,7 +14,6 @@ WIKIDATA_MAX_RETRIES = 3
 
 
 def _build_sparql_query(terms: list[str]) -> str:
-    """Build SPARQL query for scientific term expansion."""
     quoted_terms = [f'"{term}"' for term in terms]
     terms_filter = " || ".join([f"?label = {term}" for term in quoted_terms])
 
@@ -44,7 +43,6 @@ def _build_sparql_query(terms: list[str]) -> str:
 
 
 async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_id: str | None = None) -> Any:
-    """Make SPARQL request with exponential backoff retry logic."""
     for attempt in range(WIKIDATA_MAX_RETRIES):
         try:
             with start_span_with_trace_id("wikidata_sparql_query", trace_id=trace_id) as span:
@@ -93,7 +91,6 @@ async def _make_request_with_retry(client: httpx.AsyncClient, query: str, trace_
 
 
 def _parse_wikidata_response(data: dict[str, Any]) -> list[dict[str, Any]]:
-    """Parse Wikidata SPARQL response into structured format."""
     results = []
 
     if "results" in data and "bindings" in data["results"]:
@@ -110,7 +107,6 @@ def _parse_wikidata_response(data: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 async def expand_scientific_terms(terms: list[str], trace_id: str | None = None) -> list[dict[str, Any]]:
-    """Expand scientific terms using Wikidata knowledge base."""
     if not terms:
         return []
 
@@ -162,7 +158,6 @@ async def expand_scientific_terms(terms: list[str], trace_id: str | None = None)
 
 
 async def get_scientific_context(terms: list[str], trace_id: str | None = None) -> str:
-    """Generate scientific context from expanded terms."""
     if not terms:
         return ""
 

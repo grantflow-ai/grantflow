@@ -14,8 +14,6 @@ async def test_duplicate_application_success(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test successful application duplication with forking model"""
-
     project_id = grant_application.project_id
 
     async with async_session_maker() as session:
@@ -61,8 +59,6 @@ async def test_duplicate_application_not_found(
     project: Project,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test duplicating non-existent application"""
-
     non_existent_id = uuid4()
 
     response = await test_client.post(
@@ -83,8 +79,6 @@ async def test_duplicate_application_wrong_project(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test duplicating application from different project"""
-
     async with async_session_maker() as session:
         other_project = Project(name="Other Project", organization_id=project_owner_user.organization_id)
         session.add(other_project)
@@ -109,8 +103,6 @@ async def test_duplicate_with_grant_template(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test that grant template is properly duplicated"""
-
     async with async_session_maker() as session:
         from sqlalchemy import select
 
@@ -166,8 +158,6 @@ async def test_duplicate_preserves_rag_sources(
     grant_application_file: GrantApplicationSource,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test that RAG sources are properly duplicated"""
-
     async with async_session_maker() as session:
         app = await session.get(GrantApplication, grant_application_file.grant_application_id)
         project_id = app.project_id
@@ -204,8 +194,6 @@ async def test_duplicate_application_validation_error(
     project_owner_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test validation error with invalid title"""
-
     project_id = grant_application.project_id
 
     async with async_session_maker() as session:
@@ -227,8 +215,6 @@ async def test_duplicate_application_preserves_status_as_draft(
     grant_application: GrantApplication,
     project_owner_user: OrganizationUser,
 ) -> None:
-    """Test that duplicated application always starts as DRAFT regardless of original status"""
-
     project_id = grant_application.project_id
 
     async with async_session_maker() as session:
@@ -257,8 +243,6 @@ async def test_duplicate_application_long_title(
     project_owner_user: OrganizationUser,
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    """Test duplication with very long title"""
-
     project_id = grant_application.project_id
     long_title = "A" * 300
 

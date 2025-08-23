@@ -133,7 +133,6 @@ async def test_delete_user_with_sole_owned_projects(
     project_owner_user: OrganizationUser,
     firebase_uid: str,
 ) -> None:
-    """Test that user deletion is blocked when user is sole owner of projects."""
     mocker.patch(
         "services.backend.src.api.routes.user.get_user_deletion_status",
         return_value=None,
@@ -161,7 +160,6 @@ async def test_delete_user_with_multiple_owners(
     project_owner_user: ProjectMember,
     firebase_uid: str,
 ) -> None:
-    """Test that user deletion succeeds when project has multiple owners."""
     from datetime import UTC, datetime, timedelta
 
     mocker.patch(
@@ -210,8 +208,6 @@ async def test_get_sole_owned_projects(
     project_owner_user: ProjectMember,
     firebase_uid: str,
 ) -> None:
-    """Test getting list of sole-owned organizations (API returns organizations despite endpoint name)."""
-
     async with async_session_maker() as session, session.begin():
         shared_org = Organization(name="Shared Organization", description="Organization with multiple owners")
         session.add(shared_org)
@@ -256,7 +252,6 @@ async def test_get_sole_owned_projects_empty(
     async_session_maker: async_sessionmaker[Any],
     firebase_uid: str,
 ) -> None:
-    """Test getting sole-owned projects when user has none."""
     response = await test_client.get(
         "/user/sole-owned-projects",
         headers={"Authorization": "Bearer test_token"},

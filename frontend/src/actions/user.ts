@@ -4,10 +4,6 @@ import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
-/**
- * Delete the current user's account (soft delete)
- * This will mark the account for deletion with a grace period for restoration
- */
 export async function deleteAccount() {
 	return withAuthRedirect(
 		getClient()
@@ -18,10 +14,6 @@ export async function deleteAccount() {
 	);
 }
 
-/**
- * Get list of organizations where the user is the sole owner
- * These must be handled before account deletion
- */
 export async function getSoleOwnedOrganizations() {
 	return withAuthRedirect(
 		getClient()
@@ -32,10 +24,6 @@ export async function getSoleOwnedOrganizations() {
 	);
 }
 
-/**
- * Get list of projects where the user is the sole owner
- * These must be handled before account deletion
- */
 export async function getSoleOwnedProjects() {
 	return withAuthRedirect(
 		getClient()

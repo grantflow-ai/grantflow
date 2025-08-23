@@ -23,6 +23,7 @@ from services.backend.src.utils.jwt import verify_jwt_token
 logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema"}
+PUBLIC_PATH_PREFIXES = {"/public/grants"}
 ADMIN_PATHS = {"granting-institutions"}
 ADMIN_SOURCES_PATTERNS = [
     "/granting-institutions/{granting_institution_id}/sources",
@@ -34,7 +35,6 @@ DEV_BYPASS_PREFIX = "/dev/"
 
 
 def _matches_source_pattern(path: str, pattern: str) -> bool:
-    """Check if a path matches an admin sources pattern with path parameters."""
     pattern_parts = pattern.split("/")
     path_parts = path.split("/")
 
@@ -49,15 +49,14 @@ def _matches_source_pattern(path: str, pattern: str) -> bool:
 
 class AuthMiddleware(AbstractAuthenticationMiddleware):
     def _is_public_path(self, path: str) -> bool:
-        """Check if path is public (no authentication required)."""
-        return any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema")
+        if any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema"):
+            return True
+        return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
 
     def _is_dev_bypass(self, path: str) -> bool:
-        """Check if path uses dev bypass."""
         return path.startswith(DEV_BYPASS_PREFIX)
 
     def _is_admin_path(self, path: str) -> bool:
-        """Check if path requires admin authentication."""
         if any(
             path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
             for admin_path in ADMIN_PATHS
@@ -146,8 +145,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
 
 class TraceIdMiddleware(ASGIMiddleware):
-    """Middleware to extract or generate trace IDs for request tracing and OpenTelemetry integration."""
-
     async def handle(self, scope: Scope, receive: Receive, send: Send, next_app: ASGIApp) -> None:
         scope_type = scope.get("type")
         if scope_type not in ("http", "websocket"):
@@ -190,5 +187,4 @@ class TraceIdMiddleware(ASGIMiddleware):
 
 
 def get_trace_id(request: Request[Any, Any, APIRequestState]) -> str | None:
-    """Get the trace ID from the request state."""
     return getattr(request.state, "trace_id", None)

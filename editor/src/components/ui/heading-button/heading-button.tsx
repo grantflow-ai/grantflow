@@ -9,14 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { parseShortcutKeys } from "@/utils";
 
 export interface HeadingButtonProps extends Omit<ButtonProps, "type">, UseHeadingConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -30,11 +23,6 @@ export function HeadingShortcutBadge({
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for toggling heading in a Tiptap editor.
- *
- * For custom button implementations, use the `useHeading` hook instead.
- */
 export const HeadingButton = React.forwardRef<HTMLButtonElement, HeadingButtonProps>(
 	(
 		{

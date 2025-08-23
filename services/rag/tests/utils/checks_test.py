@@ -106,7 +106,6 @@ async def link_source_to_template(session: Any, template_id: Any, source_id: Any
     await session.flush()
 
 
-@pytest.mark.asyncio
 async def test_all_sources_finished_grant_application(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -126,7 +125,6 @@ async def test_all_sources_finished_grant_application(
     mock_publish_notification.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_all_sources_finished_grant_template(
     test_grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
@@ -151,7 +149,6 @@ async def test_all_sources_finished_grant_template(
 # TODO: Convert this complex recursive test - requires mocking the state change
 
 
-@pytest.mark.asyncio
 async def test_all_sources_failed_grant_application(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -187,7 +184,6 @@ async def test_all_sources_failed_grant_application(
     assert exc_info.value.context["error_type"] == "indexing_failure"
 
 
-@pytest.mark.asyncio
 async def test_all_sources_failed_grant_template(
     test_grant_template: GrantTemplate,
     async_session_maker: async_sessionmaker[Any],
@@ -226,7 +222,6 @@ async def test_all_sources_failed_grant_template(
 # TODO: Convert this complex recursive test - requires mocking the recursive behavior
 
 
-@pytest.mark.asyncio
 async def test_empty_sources_list(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -245,7 +240,6 @@ async def test_empty_sources_list(
     assert notification_call.kwargs["data"]["data"]["total_count"] == 0
 
 
-@pytest.mark.asyncio
 async def test_mixed_statuses_with_at_least_one_finished(
     test_grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],

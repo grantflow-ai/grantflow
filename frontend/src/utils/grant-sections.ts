@@ -190,9 +190,6 @@ export const executeMainToSubConversion = async (
 	);
 };
 
-/**
- * Drop indicator visibility calculation result
- */
 export interface DropIndicatorState {
 	isSubsectionWidth: boolean;
 	showAbove: boolean;

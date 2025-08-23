@@ -15,7 +15,6 @@ from services.rag.src.utils.wikidata_client import (
 
 @pytest.fixture
 def mock_httpx_response(mocker: MockerFixture) -> MagicMock:
-    """Mock httpx response."""
     response = MagicMock()
     response.raise_for_status = MagicMock()
     return response
@@ -23,7 +22,6 @@ def mock_httpx_response(mocker: MockerFixture) -> MagicMock:
 
 @pytest.fixture
 def mock_httpx_client(mocker: MockerFixture) -> AsyncMock:
-    """Mock httpx client with proper async context manager."""
     client = AsyncMock()
     client.__aenter__ = AsyncMock(return_value=client)
     client.__aexit__ = AsyncMock(return_value=None)
@@ -31,7 +29,6 @@ def mock_httpx_client(mocker: MockerFixture) -> AsyncMock:
 
 
 async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test successful scientific context retrieval."""
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -55,13 +52,11 @@ async def test_get_scientific_context_success(mock_httpx_client: AsyncMock, mock
 
 
 async def test_get_scientific_context_empty_terms() -> None:
-    """Test handling of empty terms list."""
     result = await get_scientific_context([], "test-trace")
     assert result == ""
 
 
 async def test_get_scientific_context_http_error(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test handling of HTTP errors."""
     mock_httpx_response.raise_for_status.side_effect = httpx.HTTPError("HTTP Error")
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
@@ -73,7 +68,6 @@ async def test_get_scientific_context_http_error(mock_httpx_client: AsyncMock, m
 
 
 async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock) -> None:
-    """Test handling of network errors."""
     mock_httpx_client.get.side_effect = httpx.HTTPError("Network error")
 
     with pytest.MonkeyPatch().context() as m:
@@ -84,7 +78,6 @@ async def test_get_scientific_context_network_error(mock_httpx_client: AsyncMock
 
 
 def test_build_sparql_query() -> None:
-    """Test SPARQL query building."""
     terms = ["machine learning", "artificial intelligence"]
     query = _build_sparql_query(terms)
 
@@ -95,7 +88,6 @@ def test_build_sparql_query() -> None:
 
 
 def test_parse_wikidata_response_success() -> None:
-    """Test successful response parsing."""
     mock_response: dict[str, Any] = {
         "results": {
             "bindings": [
@@ -116,7 +108,6 @@ def test_parse_wikidata_response_success() -> None:
 
 
 def test_parse_wikidata_response_empty() -> None:
-    """Test parsing empty response."""
     mock_response: dict[str, Any] = {"results": {"bindings": []}}
 
     result = _parse_wikidata_response(mock_response)
@@ -124,7 +115,6 @@ def test_parse_wikidata_response_empty() -> None:
 
 
 def test_parse_wikidata_response_malformed() -> None:
-    """Test parsing malformed response."""
     mock_response: dict[str, str] = {"invalid": "structure"}
 
     result = _parse_wikidata_response(mock_response)
@@ -132,7 +122,6 @@ def test_parse_wikidata_response_malformed() -> None:
 
 
 async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test batch processing of terms."""
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -157,7 +146,6 @@ async def test_batch_processing(mock_httpx_client: AsyncMock, mock_httpx_respons
 
 
 async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test successful term expansion."""
     mock_httpx_response.json.return_value = {
         "results": {
             "bindings": [
@@ -182,13 +170,11 @@ async def test_expand_scientific_terms_success(mock_httpx_client: AsyncMock, moc
 
 
 async def test_expand_scientific_terms_empty() -> None:
-    """Test handling of empty terms list."""
     result = await expand_scientific_terms([], "test-trace")
     assert result == []
 
 
 async def test_expand_scientific_terms_http_error(mock_httpx_client: AsyncMock, mock_httpx_response: MagicMock) -> None:
-    """Test handling of HTTP errors in term expansion."""
     mock_httpx_response.raise_for_status.side_effect = httpx.HTTPError("HTTP Error")
     mock_httpx_client.get = AsyncMock(return_value=mock_httpx_response)
 
@@ -200,7 +186,6 @@ async def test_expand_scientific_terms_http_error(mock_httpx_client: AsyncMock, 
 
 
 async def test_expand_scientific_terms_network_error(mock_httpx_client: AsyncMock) -> None:
-    """Test handling of network errors in term expansion."""
     mock_httpx_client.get.side_effect = httpx.HTTPError("Network error")
 
     with pytest.MonkeyPatch().context() as m:

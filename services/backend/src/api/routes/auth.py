@@ -29,7 +29,6 @@ class LoginResponse(TypedDict):
 
 
 def _get_role_priority(role: UserRoleEnum) -> int:
-    """Return role priority for organization selection. Higher is better."""
     role_priorities = {
         UserRoleEnum.OWNER: 3,
         UserRoleEnum.ADMIN: 2,

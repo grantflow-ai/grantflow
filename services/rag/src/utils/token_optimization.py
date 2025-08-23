@@ -1,5 +1,3 @@
-"""Optimized token counting with batching, caching, and rate limiting."""
-
 from functools import lru_cache
 from typing import TypedDict
 
@@ -10,16 +8,6 @@ logger = get_logger(__name__)
 
 
 def estimate_performance_improvement(baseline_time: float, objectives_count: int) -> float:
-    """Estimate potential performance improvement based on baseline time and objectives count.
-
-    Args:
-        baseline_time: The baseline processing time in seconds
-        objectives_count: The number of objectives processed
-
-    Returns:
-        Estimated percentage improvement
-    """
-
     base_improvement = 30.0
     per_objective_improvement = 5.0
 
@@ -32,12 +20,10 @@ def estimate_performance_improvement(baseline_time: float, objectives_count: int
 
 @lru_cache(maxsize=2000)
 def cached_estimate_token_count(text: str) -> int:
-    """Cached local token estimation - much faster than API calls."""
     return estimate_token_count(text)
 
 
 async def batch_count_tokens(texts: list[str]) -> list[int]:
-    """Batch token counting using local estimation for efficiency."""
     if not texts:
         return []
 
@@ -45,7 +31,6 @@ async def batch_count_tokens(texts: list[str]) -> list[int]:
 
 
 async def optimized_count_tokens(text: str) -> int:
-    """Optimized single token counting with caching."""
     if not text:
         return 0
 
@@ -53,7 +38,6 @@ async def optimized_count_tokens(text: str) -> int:
 
 
 def estimate_prompt_tokens(text: str) -> int:
-    """Estimate tokens for a prompt using cached estimation."""
     if not text:
         return 0
 
@@ -71,7 +55,6 @@ class SentenceInfo(TypedDict):
 async def smart_parse_documents_with_batched_tokens(
     sentence_infos: list[SentenceInfo], max_tokens: int
 ) -> tuple[list[str], int]:
-    """Parse documents with batched token counting for efficiency."""
     if not sentence_infos:
         return [], 0
 

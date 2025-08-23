@@ -9,44 +9,17 @@ import "@/components/node/image-upload-node/image-upload-node.scss";
 import { isNumber } from "@tool-belt/type-predicates";
 
 export interface FileItem {
-	/**
-	 * Unique identifier for the file item
-	 */
 	id: string;
-	/**
-	 * The actual File object being uploaded
-	 */
 	file: File;
-	/**
-	 * Current upload progress as a percentage (0-100)
-	 */
 	progress: number;
-	/**
-	 * Current status of the file upload process
-	 * @default "uploading"
-	 */
 	status: "uploading" | "success" | "error";
 
-	/**
-	 * URL to the uploaded file, available after successful upload
-	 * @optional
-	 */
 	url?: string;
-	/**
-	 * Controller that can be used to abort the upload process
-	 * @optional
-	 */
 	abortController?: AbortController;
 }
 
 export interface UploadOptions {
-	/**
-	 * Maximum allowed file size in bytes
-	 */
 	maxSize: number;
-	/**
-	 * Maximum number of files that can be uploaded
-	 */
 	limit: number;
 	/**
 	 * String specifying acceptable file types (MIME types or extensions)
@@ -75,9 +48,6 @@ export interface UploadOptions {
 	onError?: (error: Error) => void;
 }
 
-/**
- * Custom hook for managing multiple file uploads with progress tracking and cancellation
- */
 function useFileUpload(options: UploadOptions) {
 	const [fileItems, setFileItems] = React.useState<FileItem[]>([]);
 
@@ -251,17 +221,9 @@ interface ImageUploadDragAreaProps {
 	 * @param {File[]} files - Array of File objects that were dropped or selected
 	 */
 	onFile: (files: File[]) => void;
-	/**
-	 * Optional child elements to render inside the drag area
-	 * @optional
-	 * @default undefined
-	 */
 	children?: React.ReactNode;
 }
 
-/**
- * A component that creates a drag-and-drop area for image uploads
- */
 const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({ onFile, children }) => {
 	const [isDragOver, setIsDragOver] = React.useState(false);
 	const [isDragActive, setIsDragActive] = React.useState(false);
@@ -313,19 +275,10 @@ const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({ onFile, child
 };
 
 interface ImageUploadPreviewProps {
-	/**
-	 * The file item to preview
-	 */
 	fileItem: FileItem;
-	/**
-	 * Callback to remove this file from upload queue
-	 */
 	onRemove: () => void;
 }
 
-/**
- * Component that displays a preview of an uploading file with progress
- */
 const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({ fileItem, onRemove }) => {
 	const formatFileSize = (bytes: number) => {
 		if (bytes === 0) return "0 Bytes";
