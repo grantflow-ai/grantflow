@@ -21,7 +21,7 @@ def is_grantflow_email(email: str) -> bool:
     return email.endswith("@grantflow.ai")
 
 
-@identity_fn.before_user_created()
+@identity_fn.before_user_created()  # type: ignore[misc]
 def before_create(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeCreateResponse | None:
     """
     Firebase Auth blocking function for user registration.
@@ -56,7 +56,7 @@ def before_create(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeCre
     )
 
 
-@identity_fn.before_user_signed_in()
+@identity_fn.before_user_signed_in()  # type: ignore[misc]
 def before_sign_in(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeSignInResponse | None:
     """
     Firebase Auth blocking function for user sign-in.

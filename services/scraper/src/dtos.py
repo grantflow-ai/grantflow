@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import NotRequired, TypedDict
 
 
@@ -17,7 +15,6 @@ class GrantInfo(TypedDict):
     document_type: str
     clinical_trials: str
     url: str
-    # Optional fields for enhanced data
     description: NotRequired[str]
     amount: NotRequired[str]
     amount_min: NotRequired[int]
@@ -38,21 +35,17 @@ def validate_grant_data(grant_data: GrantInfo) -> list[str]:
     """
     errors: list[str] = []
 
-    # Required fields validation
     required_fields = ["title", "url", "organization"]
     errors.extend([f"Missing required field: {field}" for field in required_fields if not grant_data.get(field)])
 
-    # URL validation
     url = grant_data.get("url", "")
     if url and not (url.startswith(("http://", "https://"))):
         errors.append("URL must start with http:// or https://")
 
-    # Title length validation
     title = grant_data.get("title", "")
     if len(title) > 500:
         errors.append("Title must be 500 characters or less")
 
-    # Amount validation if present
     amount_min = grant_data.get("amount_min")
     amount_max = grant_data.get("amount_max")
     if amount_min is not None and amount_min < 0:

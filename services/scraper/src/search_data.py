@@ -1,20 +1,17 @@
-from __future__ import annotations
-
 import tempfile
 from datetime import UTC, date, datetime
-from typing import TYPE_CHECKING, Final, cast
+from typing import Final, cast
 
 from anyio import Path as AsyncPath
 from packages.shared_utils.src.logger import get_logger
 from pandas import read_csv
 from playwright.async_api import async_playwright
+from services.scraper.src.dtos import GrantInfo
 from services.scraper.src.exceptions import ScraperError
 from services.scraper.src.firestore_utils import batch_save_grants
 
 logger = get_logger(__name__)
 
-if TYPE_CHECKING:
-    from services.scraper.src.dtos import GrantInfo
 
 NIH_GRANT_BASE_URL: Final[str] = "https://grants.nih.gov/funding/nih-guide-for-grants-and-contracts"
 DEFAULT_FROM_DATE: Final[date] = date(1991, 1, 2)
@@ -229,7 +226,6 @@ async def download_search_data(  # noqa: PLR0915
                 await tmp_path.unlink(missing_ok=True)
                 raise ScraperError(f"Failed to process downloaded CSV: {e!s}") from e
 
-            # Save search results to Firestore
             await batch_save_grants(search_data)
             logger.info("Saved search results to Firestore", count=len(search_data))
 

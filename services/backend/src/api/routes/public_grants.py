@@ -1,12 +1,5 @@
-"""Public grant search API endpoints.
-
-These endpoints are publicly accessible without authentication.
-Part of the Grant Finder feature (VSP-281, VSP-282).
-"""
-
+import re
 import secrets
-import time
-from collections import defaultdict
 from typing import NotRequired, TypedDict
 
 from google.cloud import firestore
@@ -16,45 +9,13 @@ from litestar.status_codes import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_429_TOO_MANY_REQUESTS,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
-
-from services.backend.src.common_types import APIRequest  # noqa: TC001
+from packages.shared_utils.src.pubsub import publish_subscription_verification_email
 
 logger = get_logger(__name__)
-
-# Simple in-memory rate limiting for public endpoints
-# For production, use Redis or a dedicated rate limiting service
-_request_counts: dict[str, list[float]] = defaultdict(list)
-_RATE_LIMIT_REQUESTS = 60  # requests per window
-_RATE_LIMIT_WINDOW = 300  # 5 minutes in seconds
-
-
-def check_rate_limit(client_ip: str) -> bool:
-    """Check if client has exceeded rate limit.
-
-    Args:
-        client_ip: Client IP address
-
-    Returns:
-        bool: True if within rate limit, False if exceeded
-    """
-    now = time.time()
-    window_start = now - _RATE_LIMIT_WINDOW
-
-    # Clean old requests outside the window
-    _request_counts[client_ip] = [req_time for req_time in _request_counts[client_ip] if req_time > window_start]
-
-    # Check if within limit
-    if len(_request_counts[client_ip]) >= _RATE_LIMIT_REQUESTS:
-        return False
-
-    # Add current request
-    _request_counts[client_ip].append(now)
-    return True
 
 
 class GrantSearchParams(TypedDict):
@@ -85,7 +46,6 @@ class GrantInfoResponse(TypedDict):
     document_type: str
     clinical_trials: str
     url: str
-    # Optional fields for enhanced data
     description: NotRequired[str]
     amount: NotRequired[str]
     amount_min: NotRequired[int]
@@ -100,7 +60,7 @@ class SubscriptionRequest(TypedDict):
 
     email: str
     search_params: GrantSearchParams
-    frequency: NotRequired[str]  # daily, weekly
+    frequency: NotRequired[str]
 
 
 class SubscriptionResponse(TypedDict):
@@ -123,7 +83,6 @@ def get_firestore_client() -> firestore.AsyncClient:
 
 @get("/public/grants")
 async def search_grants(
-    request: "APIRequest",
     search_query: str | None = None,
     category: str | None = None,
     min_amount: int | None = None,
@@ -150,15 +109,6 @@ async def search_grants(
     Returns:
         List of grants matching the search criteria
     """
-    # Rate limiting check
-    client_ip = request.client.host if request.client else "unknown"
-    if not check_rate_limit(client_ip):
-        logger.warning("Rate limit exceeded", client_ip=client_ip)
-        return Response(
-            content={"error": "Rate limit exceeded. Try again later."},
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
-        )
-
     limit = min(limit, 100)
 
     logger.info(
@@ -175,10 +125,8 @@ async def search_grants(
         client = get_firestore_client()
         grants_ref = client.collection("grants")
 
-        # Build query
         query_ref = grants_ref
 
-        # Add filters based on search parameters
         if category:
             query_ref = query_ref.where("category", "==", category)
 
@@ -194,26 +142,20 @@ async def search_grants(
         if deadline_before:
             query_ref = query_ref.where("deadline", "<=", deadline_before)
 
-        # Apply ordering, limit and offset
         query_ref = query_ref.order_by("created_at", direction=firestore.Query.DESCENDING)
         query_ref = query_ref.limit(limit)
 
         if offset > 0:
             query_ref = query_ref.offset(offset)
 
-        # Execute query
         docs = query_ref.stream()
 
         results: list[GrantInfoResponse] = []
         async for doc in docs:
             data = doc.to_dict()
 
-            # If we have a search query, filter by title/description
             # WARNING: This is client-side filtering which is inefficient for large datasets
             # TODO: For production, implement proper full-text search with:
-            # - Algolia, Elasticsearch, or Typesense for dedicated search
-            # - Firestore Extensions for full-text search
-            # - Pre-computed search indexes
             if search_query:
                 query_lower = search_query.lower()
                 title_match = query_lower in data.get("title", "").lower()
@@ -234,7 +176,6 @@ async def search_grants(
                 "document_type": data.get("document_type", ""),
                 "clinical_trials": data.get("clinical_trials", ""),
                 "url": data.get("url", ""),
-                # Optional fields
                 "description": data.get("description"),
                 "amount": data.get("amount"),
                 "amount_min": data.get("amount_min"),
@@ -311,7 +252,6 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[
         "document_type": data.get("document_type", ""),
         "clinical_trials": data.get("clinical_trials", ""),
         "url": data.get("url", ""),
-        # Optional fields
         "description": data.get("description"),
         "amount": data.get("amount"),
         "amount_min": data.get("amount_min"),
@@ -331,7 +271,7 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[
 
 @post("/public/grants/subscribe")
 async def create_subscription(
-    request: "APIRequest", data: SubscriptionRequest
+    data: SubscriptionRequest,
 ) -> Response[SubscriptionResponse | dict[str, str]]:
     """Create an email subscription for grant alerts.
 
@@ -344,21 +284,9 @@ async def create_subscription(
     Returns:
         Subscription response with ID and verification status
     """
-    # Rate limiting check
-    client_ip = request.client.host if request.client else "unknown"
-    if not check_rate_limit(client_ip):
-        logger.warning("Rate limit exceeded for subscription", client_ip=client_ip)
-        return Response(
-            content={"error": "Rate limit exceeded. Try again later."},
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
-        )
-
     email = data["email"]
     search_params = data["search_params"]
     frequency = data.get("frequency", "daily")
-
-    # Validate email format
-    import re  # noqa: PLC0415
 
     email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(email_pattern, email) or len(email) > 254:
@@ -368,7 +296,6 @@ async def create_subscription(
             status_code=HTTP_400_BAD_REQUEST,
         )
 
-    # Validate frequency
     if frequency not in ["daily", "weekly"]:
         logger.warning("Invalid frequency", frequency=frequency)
         return Response(
@@ -387,12 +314,10 @@ async def create_subscription(
         client = get_firestore_client()
         subscriptions_ref = client.collection("subscriptions")
 
-        # Check if subscription already exists for this email
         existing = subscriptions_ref.where("email", "==", email).limit(1).stream()
         existing_docs = [doc async for doc in existing]
 
         if existing_docs:
-            # Update existing subscription
             doc = existing_docs[0]
             await doc.reference.update(
                 {
@@ -404,7 +329,6 @@ async def create_subscription(
             subscription_id = doc.id
             logger.info("Updated existing subscription", subscription_id=subscription_id)
         else:
-            # Create new subscription
             verification_token = secrets.token_urlsafe(32)
 
             doc_data = {
@@ -420,7 +344,32 @@ async def create_subscription(
             doc_ref = await subscriptions_ref.add(doc_data)
             subscription_id = doc_ref.id
 
-            # TODO: Send verification email via Pub/Sub
+            try:
+                import uuid  # noqa: PLC0415
+
+                trace_id = str(uuid.uuid4())
+                await publish_subscription_verification_email(
+                    email=email,
+                    subscription_id=subscription_id,
+                    verification_token=verification_token,
+                    search_params=dict(search_params),
+                    frequency=frequency,
+                    trace_id=trace_id,
+                )
+                logger.info(
+                    "Sent verification email",
+                    subscription_id=subscription_id,
+                    email=email,
+                    trace_id=trace_id,
+                )
+            except Exception as e:
+                logger.error(
+                    "Failed to send verification email",
+                    subscription_id=subscription_id,
+                    email=email,
+                    error=str(e),
+                )
+
             logger.info(
                 "Created new subscription",
                 subscription_id=subscription_id,
@@ -463,7 +412,6 @@ async def verify_subscription(token: str) -> Response[dict[str, str]]:
     client = get_firestore_client()
     subscriptions_ref = client.collection("subscriptions")
 
-    # Find subscription by token
     query = subscriptions_ref.where("verification_token", "==", token).limit(1)
     docs = query.stream()
 
@@ -478,7 +426,6 @@ async def verify_subscription(token: str) -> Response[dict[str, str]]:
 
     doc = subscription_docs[0]
 
-    # Update subscription as verified
     await doc.reference.update(
         {
             "verified": True,
@@ -513,7 +460,6 @@ async def unsubscribe(email: str) -> Response[dict[str, str]]:
     client = get_firestore_client()
     subscriptions_ref = client.collection("subscriptions")
 
-    # Find subscription by email
     query = subscriptions_ref.where("email", "==", email).limit(1)
     docs = query.stream()
 
@@ -526,7 +472,6 @@ async def unsubscribe(email: str) -> Response[dict[str, str]]:
             status_code=HTTP_200_OK,
         )
 
-    # Delete subscription
     for doc in subscription_docs:
         await doc.reference.delete()
 

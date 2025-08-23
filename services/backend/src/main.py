@@ -159,7 +159,6 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_rag_job,
     list_notifications,
     dismiss_notification,
-    # Public grant endpoints (no auth required)
     search_grants,
     get_grant_details,
     create_subscription,

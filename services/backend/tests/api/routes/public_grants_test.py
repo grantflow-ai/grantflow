@@ -1,18 +1,13 @@
 """Tests for public grant search API endpoints."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
+from collections.abc import AsyncIterator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from litestar import Litestar
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
-
-    from litestar.testing import AsyncTestClient
+from litestar.testing import AsyncTestClient
 
 
 @pytest.fixture
@@ -79,7 +74,6 @@ async def test_search_grants_no_filters(
 ) -> None:
     """Test searching grants without filters."""
 
-    # Create async generator for stream
     async def mock_stream() -> AsyncIterator[MagicMock]:
         for doc in mock_grant_docs:
             yield doc
@@ -113,7 +107,6 @@ async def test_search_grants_with_query(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
 ) -> None:
     """Test searching grants with text query."""
-    # Return all grants and let the application filter them
 
     async def mock_stream() -> AsyncIterator[MagicMock]:
         for doc in mock_grant_docs:
@@ -126,7 +119,6 @@ async def test_search_grants_with_query(
     mock_query.offset = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
-    # Set up collection to return mock_query directly for the chain
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
@@ -137,7 +129,6 @@ async def test_search_grants_with_query(
 
     assert response.status_code == HTTP_200_OK
     data = response.json()
-    # "Grant 1" should match "Test Grant 1"
     assert len(data) == 1
     assert data[0]["id"] == "PA-24-001"
     assert data[0]["title"] == "Test Grant 1"
@@ -189,7 +180,6 @@ async def test_search_grants_with_amount_filters(
     mock_query.where = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
-    # The collection itself should act as the initial query
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_collection.limit = MagicMock(return_value=mock_query)
@@ -201,7 +191,6 @@ async def test_search_grants_with_amount_filters(
         response = await public_test_client.get("/public/grants", params={"min_amount": 100000, "max_amount": 500000})
 
     assert response.status_code == HTTP_200_OK
-    # First where is called on collection, second on the returned query
     assert mock_collection.where.call_count == 1
     assert mock_query.where.call_count == 1
     mock_collection.where.assert_called_once_with("amount_min", ">=", 100000)
@@ -214,7 +203,6 @@ async def test_search_grants_with_pagination(
     """Test searching grants with pagination."""
 
     async def mock_stream() -> AsyncIterator[MagicMock]:
-        # Return only one doc due to pagination
         yield mock_grant_docs[1]
 
     mock_query = MagicMock()
@@ -224,7 +212,6 @@ async def test_search_grants_with_pagination(
     mock_query.offset = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
-    # Set up the collection to return mock_query for chaining
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
@@ -289,15 +276,13 @@ async def test_create_subscription_success(
 ) -> None:
     """Test creating a grant subscription successfully."""
 
-    # Mock no existing subscription - properly empty async generator
     async def mock_stream_empty() -> AsyncIterator[Any]:
-        # Don't yield anything for empty results
         if False:
             yield
 
     mock_query = MagicMock()
     mock_query.stream.return_value = mock_stream_empty()
-    mock_query.limit = MagicMock(return_value=mock_query)  # Add limit to chain
+    mock_query.limit = MagicMock(return_value=mock_query)
 
     mock_doc_ref = MagicMock()
     mock_doc_ref.id = "sub-123"
@@ -358,7 +343,7 @@ async def test_create_subscription_invalid_frequency(
             json={
                 "email": "test@example.com",
                 "search_params": {"category": "Research"},
-                "frequency": "hourly",  # Invalid
+                "frequency": "hourly",
             },
         )
 
@@ -371,7 +356,6 @@ async def test_create_subscription_update_existing(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
     """Test updating an existing subscription."""
-    # Mock existing subscription - use MagicMock for the doc since it's yielded
     mock_existing_doc = MagicMock()
     mock_existing_doc.id = "existing-sub-123"
     mock_existing_doc.reference.update = AsyncMock()
@@ -381,7 +365,7 @@ async def test_create_subscription_update_existing(
 
     mock_query = MagicMock()
     mock_query.stream.return_value = mock_stream_existing()
-    mock_query.limit = MagicMock(return_value=mock_query)  # Add limit to chain
+    mock_query.limit = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
     mock_collection.where = MagicMock(return_value=mock_query)
@@ -418,7 +402,7 @@ async def test_verify_subscription_success(
 
     mock_query = MagicMock()
     mock_query.stream.return_value = mock_stream()
-    mock_query.limit = MagicMock(return_value=mock_query)  # Add limit to chain
+    mock_query.limit = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
     mock_collection.where = MagicMock(return_value=mock_query)
@@ -441,13 +425,12 @@ async def test_verify_subscription_invalid_token(
     """Test verifying a subscription with invalid token."""
 
     async def mock_stream_empty() -> AsyncIterator[Any]:
-        # Don't yield anything for empty results
         if False:
             yield
 
     mock_query = MagicMock()
     mock_query.stream.return_value = mock_stream_empty()
-    mock_query.limit = MagicMock(return_value=mock_query)  # Add limit to chain
+    mock_query.limit = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
     mock_collection.where = MagicMock(return_value=mock_query)
@@ -473,7 +456,7 @@ async def test_unsubscribe_success(public_test_client: AsyncTestClient[Any], moc
 
     mock_query = MagicMock()
     mock_query.stream.return_value = mock_stream()
-    mock_query.limit = MagicMock(return_value=mock_query)  # Add limit to chain
+    mock_query.limit = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
     mock_collection.where = MagicMock(return_value=mock_query)
@@ -499,13 +482,12 @@ async def test_unsubscribe_no_subscription(
     """Test unsubscribing when no subscription exists."""
 
     async def mock_stream_empty() -> AsyncIterator[Any]:
-        # Don't yield anything for empty results
         if False:
             yield
 
     mock_query = MagicMock()
     mock_query.stream.return_value = mock_stream_empty()
-    mock_query.limit = MagicMock(return_value=mock_query)  # Add limit to chain
+    mock_query.limit = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
     mock_collection.where = MagicMock(return_value=mock_query)
@@ -530,7 +512,6 @@ async def test_search_grants_limit_enforcement(
     """Test that search grants enforces max limit of 100."""
 
     async def mock_stream() -> AsyncIterator[Any]:
-        # Don't yield anything for empty results
         if False:
             yield
 
@@ -541,15 +522,13 @@ async def test_search_grants_limit_enforcement(
     mock_query.offset = MagicMock(return_value=mock_query)
 
     mock_collection = MagicMock()
-    # Set up the collection to return mock_query for chaining
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
     with patch(
         "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
     ):
-        response = await public_test_client.get("/public/grants", params={"limit": 200})  # Request more than max
+        response = await public_test_client.get("/public/grants", params={"limit": 200})
 
     assert response.status_code == HTTP_200_OK
-    # Should be capped at 100
     mock_query.limit.assert_called_once_with(100)

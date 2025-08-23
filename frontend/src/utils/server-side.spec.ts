@@ -315,7 +315,7 @@ describe("Server-side Utils", () => {
 		});
 
 		it("should handle partial consent data", async () => {
-			const partialData = { consentGiven: true }; // Missing hasInteracted
+			const partialData = { consentGiven: true };
 			mockCookieStore.get.mockReturnValue({ value: JSON.stringify(partialData) });
 
 			const result = await checkCookieConsent();
@@ -610,7 +610,6 @@ describe("Server-side Utils", () => {
 
 			await expect(withAuthRedirect(successPromise)).rejects.toThrow("NEXT_REDIRECT");
 
-			// Should redirect due to consent, not due to HTTP error
 			expect(vi.mocked(log.warn)).toHaveBeenCalledWith(
 				"No cookie consent found, redirecting to onboarding",
 				expect.objectContaining({

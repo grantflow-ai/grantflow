@@ -1,20 +1,14 @@
 """Firestore utilities for the scraper service."""
 
-from __future__ import annotations
-
 import time
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from google.cloud import firestore
 from google.cloud.exceptions import GoogleCloudError
+from google.cloud.firestore import AsyncClient, AsyncCollectionReference
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
-from services.scraper.src.dtos import validate_grant_data
-
-if TYPE_CHECKING:
-    from google.cloud.firestore import AsyncClient, AsyncCollectionReference
-    from services.scraper.src.dtos import GrantInfo
+from services.scraper.src.dtos import GrantInfo, validate_grant_data
 
 logger = get_logger(__name__)
 
@@ -70,7 +64,6 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
     """
     start_time = time.time()
 
-    # Validate grant data
     validation_errors = validate_grant_data(grant_info)
     if validation_errors:
         logger.warning("Invalid grant data", errors=validation_errors, grant_info=grant_info)
@@ -79,11 +72,9 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
     try:
         collection = await get_grants_collection()
 
-        # Extract identifier from URL if available
         url = grant_info.get("url", "")
         grant_id = url.split("/")[-1] if url else None
 
-        # Prepare document data
         doc_data = {
             **grant_info,
             "created_at": datetime.now(UTC).isoformat(),
@@ -91,7 +82,6 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
             "scraped_at": datetime.now(UTC).isoformat(),
         }
 
-        # Save document with custom ID if available, otherwise auto-generate
         if grant_id:
             doc_ref = collection.document(grant_id)
             await doc_ref.set(doc_data, merge=True)
@@ -156,7 +146,6 @@ async def get_existing_grant_identifiers() -> set[str]:
     start_time = time.time()
     collection = await get_grants_collection()
 
-    # Query all documents but only fetch IDs
     docs = collection.select([]).stream()
     identifiers = {doc.id async for doc in docs}
 
@@ -207,12 +196,10 @@ async def batch_save_grants(grants: list[GrantInfo]) -> int:
             batch.set(doc_ref, doc_data, merge=True)
             saved_count += 1
 
-            # Firestore batch limit is 500 operations
             if saved_count % 500 == 0:
                 await batch.commit()
                 batch = client.batch()
 
-        # Commit remaining operations
         if saved_count % 500 != 0:
             await batch.commit()
 

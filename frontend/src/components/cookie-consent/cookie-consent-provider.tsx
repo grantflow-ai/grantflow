@@ -41,7 +41,7 @@ export function CookieConsentProvider() {
 			hasInteracted: true,
 			preferences: {
 				analytics: preferences.analytics,
-				essential: true, // Always true
+				essential: true,
 			},
 		};
 

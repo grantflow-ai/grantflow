@@ -23,7 +23,7 @@ from services.backend.src.utils.jwt import verify_jwt_token
 logger = get_logger(__name__)
 
 PUBLIC_PATHS = {"login", "health", "schema"}
-PUBLIC_PATH_PREFIXES = {"/public/grants"}  # All /public/grants/* endpoints are public
+PUBLIC_PATH_PREFIXES = {"/public/grants"}
 ADMIN_PATHS = {"granting-institutions"}
 ADMIN_SOURCES_PATTERNS = [
     "/granting-institutions/{granting_institution_id}/sources",

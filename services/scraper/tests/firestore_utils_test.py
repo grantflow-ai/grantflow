@@ -1,7 +1,6 @@
 """Tests for Firestore utilities."""
 
-from __future__ import annotations
-
+from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,8 +17,6 @@ from services.scraper.src.firestore_utils import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
-
     from services.scraper.src.dtos import GrantInfo
 
 
@@ -97,7 +94,6 @@ async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_doc
         assert grant_id == "PA-24-123"
         mock_collection.document.assert_called_once_with("PA-24-123")
 
-        # Verify the document data includes timestamps
         call_args = mock_document.set.call_args
         doc_data = call_args[0][0]
         assert "created_at" in doc_data
@@ -122,7 +118,6 @@ async def test_save_grant_document_without_url(mock_collection: AsyncMock, mock_
 
         assert grant_id == "auto-generated-id"
 
-        # Verify the document data includes timestamps
         call_args = mock_collection.add.call_args
         doc_data = call_args[0][0]
         assert "created_at" in doc_data
@@ -144,7 +139,6 @@ async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document
 
         mock_collection.document.assert_called_once_with(grant_id)
 
-        # Verify the update data
         call_args = mock_document.update.call_args
         update_data = call_args[0][0]
         assert update_data["page_content"] == content
@@ -154,14 +148,12 @@ async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document
 
 async def test_get_existing_grant_identifiers(mock_collection: AsyncMock) -> None:
     """Test getting existing grant identifiers from Firestore."""
-    # Create mock documents
     mock_docs = []
     for i in range(3):
         mock_doc = AsyncMock()
         mock_doc.id = f"grant-{i}"
         mock_docs.append(mock_doc)
 
-    # Create async generator for stream
     async def mock_stream() -> AsyncIterator[AsyncMock]:
         for doc in mock_docs:
             yield doc
@@ -182,7 +174,7 @@ async def test_batch_save_grants(mock_firestore_client: AsyncMock, mock_collecti
     grants: list[dict[str, str]] = [
         {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-001", "title": "Grant 1"},
         {"url": "https://grants.nih.gov/grants/guide/pa-files/PA-24-002", "title": "Grant 2"},
-        {"title": "Grant 3"},  # No URL, should use auto-generated ID
+        {"title": "Grant 3"},
     ]
 
     mock_batch = AsyncMock()
@@ -205,16 +197,14 @@ async def test_batch_save_grants(mock_firestore_client: AsyncMock, mock_collecti
         assert mock_batch.set.call_count == 3
         mock_batch.commit.assert_called_once()
 
-        # Verify document IDs
         calls = mock_collection.document.call_args_list
         assert calls[0][0][0] == "PA-24-001"
         assert calls[1][0][0] == "PA-24-002"
-        assert calls[2] == (())  # Auto-generated ID call
+        assert calls[2] == (())
 
 
 async def test_batch_save_grants_large_batch(mock_firestore_client: AsyncMock, mock_collection: AsyncMock) -> None:
     """Test batch saving with more than 500 grants (Firestore batch limit)."""
-    # Create 501 grants to test batch splitting
     grants: list[dict[str, str]] = [{"title": f"Grant {i}"} for i in range(501)]
 
     mock_batch = AsyncMock()
@@ -233,5 +223,4 @@ async def test_batch_save_grants_large_batch(mock_firestore_client: AsyncMock, m
 
         assert saved_count == 501
         assert mock_batch.set.call_count == 501
-        # Should commit twice: once at 500, once for remaining 1
         assert mock_batch.commit.call_count == 2

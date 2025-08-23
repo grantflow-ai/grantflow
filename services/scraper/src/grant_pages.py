@@ -1,18 +1,13 @@
-from __future__ import annotations
-
 from asyncio import gather
-from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 from html_to_markdown import convert_to_markdown
 from mdformat import text
 from packages.shared_utils.src.logger import get_logger
+from services.scraper.src.dtos import GrantInfo
 from services.scraper.src.firestore_utils import save_grant_page_content
 from services.scraper.src.html_utils import download_page_html
 from services.scraper.src.url_utils import get_identifier_from_nih_url
-
-if TYPE_CHECKING:
-    from services.scraper.src.dtos import GrantInfo
 
 logger = get_logger(__name__)
 

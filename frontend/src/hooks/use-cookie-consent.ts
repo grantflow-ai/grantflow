@@ -24,7 +24,6 @@ export function useCookieConsent() {
 		setIsHydrated(true);
 	}, []);
 
-	// Reading consent cookies after hydration to prevent mismatch for server-side components
 	const consentData = isHydrated ? (cookies[COOKIE_CONSENT] as CookieConsentData | undefined) : undefined;
 
 	const saveConsent = (data: CookieConsentData) => {
