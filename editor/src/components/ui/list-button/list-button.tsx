@@ -9,14 +9,7 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { parseShortcutKeys } from "@/utils";
 
 export interface ListButtonProps extends Omit<ButtonProps, "type">, UseListConfig {
-	/**
-	 * Optional text to display alongside the icon.
-	 */
 	text?: string;
-	/**
-	 * Optional show shortcut keys in the button.
-	 * @default false
-	 */
 	showShortcut?: boolean;
 }
 
@@ -30,11 +23,6 @@ export function ListShortcutBadge({
 	return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
-/**
- * Button component for toggling lists in a Tiptap editor.
- *
- * For custom button implementations, use the `useList` hook instead.
- */
 export const ListButton = React.forwardRef<HTMLButtonElement, ListButtonProps>(
 	(
 		{

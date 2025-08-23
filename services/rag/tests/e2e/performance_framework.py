@@ -1,13 +1,3 @@
-"""
-Unified Performance Measurement Framework for RAG E2E Tests.
-
-Combines the best aspects of grant template and grant application performance testing:
-- Stage-by-stage timing from grant template approach
-- Rich quality validation from grant application approach
-- Optimization tracking and baseline comparisons
-- Comprehensive result analysis and trend tracking
-"""
-
 import json
 import logging
 import re
@@ -19,8 +9,6 @@ from typing import Any, NotRequired, TypedDict
 
 
 class PerformanceResultParams(TypedDict):
-    """Parameters for creating a performance result."""
-
     test_name: str
     test_id: str
     total_time: float
@@ -37,8 +25,6 @@ class PerformanceResultParams(TypedDict):
 
 
 class TestCategory(Enum):
-    """Test category for performance classification."""
-
     GRANT_TEMPLATE = "grant_template"
     GRANT_APPLICATION = "grant_application"
     OPTIMIZATION = "optimization"
@@ -47,8 +33,6 @@ class TestCategory(Enum):
 
 
 class PerformanceGrade(Enum):
-    """Performance grade classification."""
-
     A = "A"
     B = "B"
     C = "C"
@@ -58,8 +42,6 @@ class PerformanceGrade(Enum):
 
 @dataclass
 class StageTimingConfig:
-    """Configuration for individual stage timing targets."""
-
     stage_name: str
     target_seconds: float
     critical_threshold: float
@@ -68,8 +50,6 @@ class StageTimingConfig:
 
 @dataclass
 class PerformanceTargets:
-    """Performance targets for different test categories."""
-
     excellent_seconds: float
     good_seconds: float
     acceptable_seconds: float
@@ -77,7 +57,6 @@ class PerformanceTargets:
     stage_configs: list[StageTimingConfig]
 
     def get_grade(self, total_time: float) -> PerformanceGrade:
-        """Calculate performance grade based on total time."""
         if total_time <= self.excellent_seconds:
             return PerformanceGrade.A
         if total_time <= self.good_seconds:
@@ -91,8 +70,6 @@ class PerformanceTargets:
 
 @dataclass
 class StageMetrics:
-    """Metrics for individual pipeline stage."""
-
     stage_name: str
     duration_seconds: float
     meets_target: bool
@@ -103,8 +80,6 @@ class StageMetrics:
 
 @dataclass
 class QualityMetrics:
-    """Comprehensive quality metrics for generated content."""
-
     total_characters: int
     total_words: int
     total_lines: int
@@ -132,8 +107,6 @@ class QualityMetrics:
 
 @dataclass
 class OptimizationMetrics:
-    """Metrics for optimization analysis and baseline comparisons."""
-
     baseline_time_seconds: float | None
     optimized_time_seconds: float
     improvement_factor: float | None
@@ -151,8 +124,6 @@ class OptimizationMetrics:
 
 @dataclass
 class PerformanceResult:
-    """Comprehensive performance test result."""
-
     test_name: str
     test_category: TestCategory
     timestamp: str
@@ -178,8 +149,6 @@ class PerformanceResult:
 
 
 class PerformanceAnalyzer:
-    """Unified performance analyzer for RAG pipeline tests."""
-
     GRANT_TEMPLATE_TARGETS = PerformanceTargets(
         excellent_seconds=60,
         good_seconds=120,
@@ -212,7 +181,6 @@ class PerformanceAnalyzer:
         self.logger = logger or logging.getLogger(__name__)
 
     def _get_targets_for_category(self, category: TestCategory) -> PerformanceTargets:
-        """Get performance targets based on test category."""
         if category == TestCategory.GRANT_TEMPLATE:
             return self.GRANT_TEMPLATE_TARGETS
         if category in [
@@ -226,7 +194,6 @@ class PerformanceAnalyzer:
         return self.GRANT_APPLICATION_TARGETS
 
     def analyze_stage_timing(self, stage_times: dict[str, float], total_time: float) -> list[StageMetrics]:
-        """Analyze individual stage performance."""
         stage_metrics = []
 
         for config in self.targets.stage_configs:
@@ -247,7 +214,6 @@ class PerformanceAnalyzer:
 
     @staticmethod
     def analyze_content_quality(**kwargs: Any) -> QualityMetrics:
-        """Analyze content quality with comprehensive metrics."""
         content = kwargs.get("content", "")
         section_texts = kwargs.get("section_texts")
         expected_patterns = kwargs.get("expected_patterns")
@@ -312,8 +278,6 @@ class PerformanceAnalyzer:
     def calculate_performance_score(
         self, total_time: float, stage_metrics: list[StageMetrics], quality_score: float
     ) -> float:
-        """Calculate composite performance score (0-100)."""
-
         target_time = self.targets.good_seconds
         time_score = 0 if total_time == 0 else max(0, min(100, (target_time / total_time) * 100))
 
@@ -326,7 +290,6 @@ class PerformanceAnalyzer:
 
     @staticmethod
     def analyze_optimization(**kwargs: Any) -> OptimizationMetrics:
-        """Analyze optimization performance vs baseline."""
         current_time = kwargs["current_time"]
         baseline_time = kwargs.get("baseline_time")
         current_llm_calls = kwargs.get("current_llm_calls")
@@ -375,7 +338,6 @@ class PerformanceAnalyzer:
         )
 
     def create_performance_result(self, **kwargs: Any) -> PerformanceResult:
-        """Create comprehensive performance result from parameters object."""
         test_name = kwargs["test_name"]
         test_id = kwargs["test_id"]
         total_time = kwargs["total_time"]
@@ -438,14 +400,11 @@ class PerformanceAnalyzer:
 
 
 class PerformanceResultManager:
-    """Manages saving, loading, and analyzing performance results."""
-
     def __init__(self, results_base_path: str | Path) -> None:
         self.results_path = Path(results_base_path)
         self.results_path.mkdir(parents=True, exist_ok=True)
 
     def save_result(self, result: PerformanceResult, subfolder: str | None = None) -> Path:
-        """Save performance result to disk."""
         save_path = self.results_path
         if subfolder:
             save_path = save_path / subfolder
@@ -466,7 +425,6 @@ class PerformanceResultManager:
         return file_path
 
     def load_results(self, test_name_pattern: str | None = None) -> list[PerformanceResult]:
-        """Load performance results from disk."""
         results = []
         pattern = f"*{test_name_pattern}*.json" if test_name_pattern else "*.json"
 
@@ -485,7 +443,6 @@ class PerformanceResultManager:
         return results
 
     def get_baseline_time(self, test_name: str) -> float | None:
-        """Get baseline time for a specific test."""
         results = self.load_results(test_name)
         if not results:
             return None
@@ -495,15 +452,12 @@ class PerformanceResultManager:
 
 
 def create_grant_template_analyzer() -> PerformanceAnalyzer:
-    """Create analyzer configured for grant template tests."""
     return PerformanceAnalyzer(TestCategory.GRANT_TEMPLATE)
 
 
 def create_grant_application_analyzer() -> PerformanceAnalyzer:
-    """Create analyzer configured for grant application tests."""
     return PerformanceAnalyzer(TestCategory.GRANT_APPLICATION)
 
 
 def create_optimization_analyzer() -> PerformanceAnalyzer:
-    """Create analyzer configured for optimization tests."""
     return PerformanceAnalyzer(TestCategory.OPTIMIZATION)

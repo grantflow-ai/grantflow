@@ -14,26 +14,10 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 
 export type ListType = "bulletList" | "orderedList" | "taskList";
 
-/**
- * Configuration for the list functionality
- */
 export interface UseListConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * The type of list to toggle.
-	 */
 	type: ListType;
-	/**
-	 * Whether the button should hide when list is not available.
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
-	/**
-	 * Callback function called after a successful toggle.
-	 */
 	onToggled?: () => void;
 }
 
@@ -55,9 +39,6 @@ export const LIST_SHORTCUT_KEYS: Record<ListType, string> = {
 	taskList: "mod+shift+9",
 };
 
-/**
- * Checks if a list can be toggled in the current editor state
- */
 export function canToggleList(editor: Editor | null, type: ListType, turnInto = true): boolean {
 	if (!editor?.isEditable) return false;
 	if (!isNodeInSchema(type, editor) || isNodeTypeSelected(editor, ["image"])) return false;
@@ -94,9 +75,6 @@ export function canToggleList(editor: Editor | null, type: ListType, turnInto = 
 	}
 }
 
-/**
- * Checks if list is currently active
- */
 export function isListActive(editor: Editor | null, type: ListType): boolean {
 	if (!editor?.isEditable) return false;
 
@@ -112,9 +90,6 @@ export function isListActive(editor: Editor | null, type: ListType): boolean {
 	}
 }
 
-/**
- * Toggles list in the editor
- */
 export function toggleList(editor: Editor | null, type: ListType): boolean {
 	if (!editor?.isEditable) return false;
 	if (!canToggleList(editor, type)) return false;
@@ -174,9 +149,6 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
 	}
 }
 
-/**
- * Determines if the list button should be shown
- */
 export function shouldShowButton(props: {
 	editor: Editor | null;
 	type: ListType;

@@ -6,29 +6,12 @@ import { HeadingIcon } from "@/components/icons/heading-icon";
 import { canToggle, headingIcons, isHeadingActive, type Level, shouldShowButton } from "@/components/ui/heading-button";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
-/**
- * Configuration for the heading dropdown menu functionality
- */
 export interface UseHeadingDropdownMenuConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * Available heading levels to show in the dropdown
-	 * @default [1, 2, 3, 4, 5, 6]
-	 */
 	levels?: Level[];
-	/**
-	 * Whether the dropdown should hide when headings are not available.
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
 }
 
-/**
- * Gets the currently active heading level from the available levels
- */
 export function getActiveHeadingLevel(editor: Editor | null, levels: Level[] = [1, 2, 3, 4, 5, 6]): Level | undefined {
 	if (!editor?.isEditable) return undefined;
 	return levels.find((level) => isHeadingActive(editor, level));

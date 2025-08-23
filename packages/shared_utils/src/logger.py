@@ -122,7 +122,6 @@ def error_detail_processor(_: Any, __: str, event_dict: EventDict) -> EventDict:
 
 
 def add_otel_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:
-    """Add OpenTelemetry context to log entries."""
     try:
         from opentelemetry import trace
 

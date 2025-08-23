@@ -21,10 +21,6 @@ TestingClientType = AsyncTestClient[Litestar]
 async def isolated_grant_application(
     async_session_maker: async_sessionmaker[Any], project: Project
 ) -> GrantApplication:
-    """
-    Create a grant application that is isolated for each test.
-    This avoids conflicts when tests modify applications.
-    """
     from testing.factories import GrantApplicationFactory
 
     async with async_session_maker() as session, session.begin():
@@ -37,10 +33,6 @@ async def isolated_grant_application(
 
 @pytest.fixture
 async def isolated_project(async_session_maker: async_sessionmaker[Any], organization: Organization) -> Project:
-    """
-    Create a project that is isolated for each test.
-    This avoids conflicts when tests modify projects.
-    """
     from testing.factories import ProjectFactory
 
     async with async_session_maker() as session, session.begin():

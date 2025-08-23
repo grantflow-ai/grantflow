@@ -11,28 +11,12 @@ import { findNodePosition, isNodeInSchema, isNodeTypeSelected, isValidPosition }
 
 export const BLOCKQUOTE_SHORTCUT_KEY = "mod+shift+b";
 
-/**
- * Configuration for the blockquote functionality
- */
 export interface UseBlockquoteConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * Whether the button should hide when blockquote is not available.
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
-	/**
-	 * Callback function called after a successful toggle.
-	 */
 	onToggled?: () => void;
 }
 
-/**
- * Checks if blockquote can be toggled in the current editor state
- */
 export function canToggleBlockquote(editor: Editor | null, turnInto = true): boolean {
 	if (!editor?.isEditable) return false;
 	if (!isNodeInSchema("blockquote", editor) || isNodeTypeSelected(editor, ["image"])) return false;
@@ -60,9 +44,6 @@ export function canToggleBlockquote(editor: Editor | null, turnInto = true): boo
 	}
 }
 
-/**
- * Toggles blockquote formatting for a specific node or the current selection
- */
 export function toggleBlockquote(editor: Editor | null): boolean {
 	if (!editor?.isEditable) return false;
 	if (!canToggleBlockquote(editor)) return false;
@@ -111,9 +92,6 @@ export function toggleBlockquote(editor: Editor | null): boolean {
 	}
 }
 
-/**
- * Determines if the blockquote button should be shown
- */
 export function shouldShowButton(props: { editor: Editor | null; hideWhenUnavailable: boolean }): boolean {
 	const { editor, hideWhenUnavailable } = props;
 

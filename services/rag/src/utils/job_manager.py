@@ -20,14 +20,11 @@ logger = get_logger(__name__)
 
 
 class JobManager:
-    """Manages RAG generation job lifecycle and notifications."""
-
     def __init__(self, session_maker: async_sessionmaker[Any], job_id: UUID | None = None) -> None:
         self.session_maker = session_maker
         self.job_id = job_id
 
     async def create_grant_template_job(self, grant_template_id: UUID, total_stages: int) -> GrantTemplateGenerationJob:
-        """Create a new grant template generation job or return existing one."""
         logger.debug(
             "Attempting to create grant template job",
             template_id=str(grant_template_id),
@@ -113,7 +110,6 @@ class JobManager:
     async def create_grant_application_job(
         self, grant_application_id: UUID, total_stages: int
     ) -> GrantApplicationGenerationJob:
-        """Create a new grant application generation job or return existing one."""
         async with self.session_maker() as session:
             existing_job_result = await session.execute(
                 select(GrantApplicationGenerationJob).where(
@@ -156,7 +152,6 @@ class JobManager:
         error_message: str | None = None,
         error_details: dict[str, Any] | None = None,
     ) -> None:
-        """Update job status and related timestamps."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -182,7 +177,6 @@ class JobManager:
         current_stage: int,
         checkpoint_data: dict[str, Any] | None = None,
     ) -> None:
-        """Update job progress stage and checkpoint data."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -247,7 +241,6 @@ class JobManager:
         )
 
     async def increment_retry_count(self) -> int:
-        """Increment the retry count for a job and return the new count."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -260,7 +253,6 @@ class JobManager:
             return int(job.retry_count)
 
     async def get_job(self) -> RagGenerationJob | None:
-        """Get the current job."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 
@@ -271,7 +263,6 @@ class JobManager:
             )
 
     async def get_job_notifications(self, limit: int | None = None) -> list[GenerationNotification]:
-        """Get notifications for the current job, ordered by creation time."""
         if not self.job_id:
             raise ValueError("Job ID not set. Create a job first.")
 

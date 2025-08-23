@@ -14,9 +14,6 @@ export interface UseFontSizeConfig {
 	onToggled?: () => void;
 }
 
-/**
- * Checks if font size can be set in the current editor state
- */
 export function canSetFontSize(editor: Editor | null, fontSize: string): boolean {
 	if (!editor?.isEditable) return false;
 	if (isNodeTypeSelected(editor, ["image"])) return false;

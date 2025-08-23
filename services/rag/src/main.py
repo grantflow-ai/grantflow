@@ -82,7 +82,6 @@ def handle_pubsub_message(message: PubSubEvent) -> RagRequest | AutofillRequest:
 
 
 async def handle_autofill_request(request: AutofillRequest, session_maker: async_sessionmaker[Any]) -> dict[str, Any]:
-    """Handle autofill requests"""
     trace_id = request.get("trace_id")
 
     logger.info(

@@ -19,7 +19,6 @@ pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 @pytest.fixture(scope="session", autouse=True)
 def preload_models() -> None:
-    """Preload ML models during test setup to avoid timeouts during execution."""
     import logging
     import time
 

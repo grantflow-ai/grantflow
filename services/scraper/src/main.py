@@ -17,15 +17,6 @@ logger = get_logger(__name__)
 
 
 async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE) -> dict[str, int | float]:
-    """Run the scraper.
-
-    Args:
-        from_date: The start date of the search.
-        to_date: The end date of the search.
-
-    Returns:
-        Dictionary with scraper run metrics
-    """
     start_time = time.time()
 
     logger.info(
@@ -73,11 +64,6 @@ async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY
 
 @post("/")
 async def handle_scraper_request() -> dict[str, str]:
-    """Handle HTTP scraper requests from cloud scheduler.
-
-    Returns:
-        Response indicating success.
-    """
     start_time = time.time()
     logger.info("Received scraper request")
 

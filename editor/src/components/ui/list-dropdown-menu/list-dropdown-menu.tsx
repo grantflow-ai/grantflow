@@ -16,27 +16,10 @@ import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 import { useListDropdownMenu } from "./use-list-dropdown-menu";
 
 export interface ListDropdownMenuProps extends Omit<ButtonProps, "type"> {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor;
-	/**
-	 * The list types to display in the dropdown.
-	 */
 	types?: ListType[];
-	/**
-	 * Whether the dropdown should be hidden when no list types are available
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
-	/**
-	 * Callback for when the dropdown opens or closes
-	 */
 	onOpenChange?: (isOpen: boolean) => void;
-	/**
-	 * Whether to render the dropdown menu in a portal
-	 * @default false
-	 */
 	portal?: boolean;
 }
 

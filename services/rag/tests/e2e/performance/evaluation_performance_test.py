@@ -1,8 +1,3 @@
-"""
-Comprehensive evaluation performance test suite.
-Tests baseline performance, optimizations, caching, complexity routing, and quality validation.
-"""
-
 import logging
 import time
 from typing import Any
@@ -29,10 +24,6 @@ from services.rag.tests.e2e.performance_utils import PerformanceTestContext
 async def test_evaluation_framework_baseline(
     logger: logging.Logger,
 ) -> None:
-    """
-    Baseline performance test for the evaluation framework.
-    Measures timing and quality consistency of LLM evaluations.
-    """
     perf_ctx = PerformanceTestContext(
         test_name="evaluation_framework_baseline",
         test_category=TestCategory.EVALUATION,
@@ -151,10 +142,6 @@ async def test_evaluation_framework_baseline(
 async def test_evaluation_consistency(
     logger: logging.Logger,
 ) -> None:
-    """
-    Test evaluation consistency for the same content.
-    Measures how consistently the evaluation framework scores identical content.
-    """
     perf_ctx = PerformanceTestContext(
         test_name="evaluation_consistency",
         test_category=TestCategory.EVALUATION,
@@ -250,11 +237,6 @@ async def test_evaluation_consistency(
 async def test_evaluation_optimization_performance(
     logger: logging.Logger,
 ) -> None:
-    """
-    Test evaluation optimizations with real grant application content.
-    Measures actual performance improvements from caching, complexity routing, and adaptive timeouts.
-    """
-
     clear_evaluation_cache()
     reset_adaptive_timeouts()
 
@@ -520,8 +502,6 @@ async def test_evaluation_optimization_performance(
 async def test_content_complexity_analysis(
     logger: logging.Logger,
 ) -> None:
-    """Test content complexity analysis with different content types."""
-
     perf_ctx = PerformanceTestContext(
         test_name="content_complexity_analysis",
         test_category=TestCategory.EVALUATION,
@@ -641,8 +621,6 @@ async def test_content_complexity_analysis(
 async def test_smart_evaluation_routing(
     logger: logging.Logger,
 ) -> None:
-    """Test smart evaluation routing based on content complexity."""
-
     criteria = [
         EvaluationCriterion(
             name="Content Quality",
@@ -792,8 +770,6 @@ async def test_smart_evaluation_routing(
 async def test_complexity_analysis_edge_cases(
     logger: logging.Logger,
 ) -> None:
-    """Test edge cases and boundary conditions for complexity analysis."""
-
     perf_ctx = PerformanceTestContext(
         test_name="complexity_edge_cases",
         test_category=TestCategory.EVALUATION,

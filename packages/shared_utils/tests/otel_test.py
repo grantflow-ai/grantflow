@@ -1,5 +1,3 @@
-"""Tests for OpenTelemetry configuration."""
-
 import os
 from unittest.mock import Mock, patch
 
@@ -7,7 +5,6 @@ from packages.shared_utils.src.otel import configure_otel, get_meter, get_tracer
 
 
 def test_configure_otel_development_environment() -> None:
-    """Test OTEL configuration in development environment."""
     with (
         patch.dict(
             os.environ,
@@ -39,7 +36,6 @@ def test_configure_otel_development_environment() -> None:
 
 
 def test_configure_otel_production_with_cloud_trace() -> None:
-    """Test OTEL configuration in production with Cloud Trace enabled."""
     with (
         patch.dict(
             os.environ,
@@ -70,7 +66,6 @@ def test_configure_otel_production_with_cloud_trace() -> None:
 
 
 def test_configure_otel_development_with_cloud_trace_enabled() -> None:
-    """Test OTEL configuration in development with ENABLE_CLOUD_TRACE."""
     with (
         patch.dict(
             os.environ,
@@ -95,7 +90,6 @@ def test_configure_otel_development_with_cloud_trace_enabled() -> None:
 
 
 def test_get_tracer_with_name() -> None:
-    """Test getting tracer with specific name."""
     with patch("packages.shared_utils.src.otel.trace.get_tracer") as mock_get_tracer:
         mock_tracer = Mock()
         mock_get_tracer.return_value = mock_tracer
@@ -107,7 +101,6 @@ def test_get_tracer_with_name() -> None:
 
 
 def test_get_tracer_without_name() -> None:
-    """Test getting tracer without specific name uses module name."""
     with patch("packages.shared_utils.src.otel.trace.get_tracer") as mock_get_tracer:
         mock_tracer = Mock()
         mock_get_tracer.return_value = mock_tracer
@@ -119,7 +112,6 @@ def test_get_tracer_without_name() -> None:
 
 
 def test_get_meter_with_name() -> None:
-    """Test getting meter with specific name."""
     with patch("packages.shared_utils.src.otel.metrics.get_meter") as mock_get_meter:
         mock_meter = Mock()
         mock_get_meter.return_value = mock_meter
@@ -131,7 +123,6 @@ def test_get_meter_with_name() -> None:
 
 
 def test_get_meter_without_name() -> None:
-    """Test getting meter without specific name uses module name."""
     with patch("packages.shared_utils.src.otel.metrics.get_meter") as mock_get_meter:
         mock_meter = Mock()
         mock_get_meter.return_value = mock_meter
