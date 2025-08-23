@@ -10,7 +10,6 @@ from services.rag.src.utils.scientific_context import (
 
 
 def test_format_scientific_context_success() -> None:
-    """Test successful scientific context formatting."""
     test_context = "Machine learning is a subset of artificial intelligence."
     result = format_scientific_context(test_context)
 
@@ -20,19 +19,16 @@ def test_format_scientific_context_success() -> None:
 
 
 def test_format_scientific_context_empty() -> None:
-    """Test formatting empty context."""
     result = format_scientific_context("")
     assert result == ""
 
 
 def test_format_scientific_context_none() -> None:
-    """Test formatting None context."""
     result = format_scientific_context(None)  # type: ignore
     assert result == ""
 
 
 def test_format_scientific_context_template_error(mocker: MockerFixture) -> None:
-    """Test handling of template formatting errors."""
     mock_template = MagicMock()
     mock_template.substitute.return_value = MagicMock()
     mock_template.substitute.return_value.to_string.side_effect = Exception("Template error")
@@ -45,7 +41,6 @@ def test_format_scientific_context_template_error(mocker: MockerFixture) -> None
 
 
 def test_extract_scientific_terms_from_context_success() -> None:
-    """Test successful extraction of scientific terms."""
     test_context = "**machine learning** is related to **artificial intelligence** and **neural networks**."
     result = extract_scientific_terms_from_context(test_context)
 
@@ -56,26 +51,22 @@ def test_extract_scientific_terms_from_context_success() -> None:
 
 
 def test_extract_scientific_terms_from_context_empty() -> None:
-    """Test extraction from empty context."""
     result = extract_scientific_terms_from_context("")
     assert result == []
 
 
 def test_extract_scientific_terms_from_context_none() -> None:
-    """Test extraction from None context."""
     result = extract_scientific_terms_from_context(None)  # type: ignore
     assert result == []
 
 
 def test_extract_scientific_terms_from_context_no_terms() -> None:
-    """Test extraction when no terms are found."""
     test_context = "This is a regular text without any scientific terms."
     result = extract_scientific_terms_from_context(test_context)
     assert result == []
 
 
 def test_extract_scientific_terms_from_context_duplicates() -> None:
-    """Test extraction removes duplicate terms."""
     test_context = "**machine learning** and **machine learning** are the same."
     result = extract_scientific_terms_from_context(test_context)
 
@@ -84,7 +75,6 @@ def test_extract_scientific_terms_from_context_duplicates() -> None:
 
 
 def test_extract_scientific_terms_from_context_whitespace() -> None:
-    """Test extraction handles whitespace properly."""
     test_context = "**  machine learning  ** and **artificial intelligence**"
     result = extract_scientific_terms_from_context(test_context)
 
@@ -94,7 +84,6 @@ def test_extract_scientific_terms_from_context_whitespace() -> None:
 
 
 def test_extract_scientific_terms_from_context_regex_error(mocker: MockerFixture) -> None:
-    """Test handling of regex errors."""
     mocker.patch("re.findall", side_effect=Exception("Regex error"))
 
     test_context = "**machine learning**"
@@ -104,7 +93,6 @@ def test_extract_scientific_terms_from_context_regex_error(mocker: MockerFixture
 
 
 def test_validate_scientific_context_valid() -> None:
-    """Test validation of valid scientific context."""
     test_context = """## Scientific Foundation Context
 **machine learning** and **artificial intelligence** are key concepts.
 
@@ -120,7 +108,6 @@ This context provides foundational scientific concepts and terminology relevant 
 
 
 def test_validate_scientific_context_empty() -> None:
-    """Test validation of empty context."""
     result = validate_scientific_context("")
 
     assert result["is_valid"] is False
@@ -131,7 +118,6 @@ def test_validate_scientific_context_empty() -> None:
 
 
 def test_validate_scientific_context_none() -> None:
-    """Test validation of None context."""
     result = validate_scientific_context(None)  # type: ignore
 
     assert result["is_valid"] is False
@@ -142,7 +128,6 @@ def test_validate_scientific_context_none() -> None:
 
 
 def test_validate_scientific_context_missing_header() -> None:
-    """Test validation when scientific context header is missing."""
     test_context = "**machine learning** is important."
 
     result = validate_scientific_context(test_context)
@@ -155,7 +140,6 @@ def test_validate_scientific_context_missing_header() -> None:
 
 
 def test_validate_scientific_context_no_terms() -> None:
-    """Test validation when no scientific terms are found."""
     test_context = """## Scientific Foundation Context
 This is a context without any scientific terms."""
 
@@ -169,7 +153,6 @@ This is a context without any scientific terms."""
 
 
 def test_validate_scientific_context_multiple_errors() -> None:
-    """Test validation with multiple errors."""
     test_context = "This context has no header and no terms."
 
     result = validate_scientific_context(test_context)
@@ -184,7 +167,6 @@ def test_validate_scientific_context_multiple_errors() -> None:
 
 
 def test_validate_scientific_context_extraction_error(mocker: MockerFixture) -> None:
-    """Test validation when term extraction fails."""
     mocker.patch(
         "services.rag.src.utils.scientific_context.extract_scientific_terms_from_context",
         side_effect=Exception("Extraction error"),
@@ -203,7 +185,6 @@ def test_validate_scientific_context_extraction_error(mocker: MockerFixture) -> 
 
 
 def test_validation_result_structure() -> None:
-    """Test that ValidationResult has the correct structure."""
     result = validate_scientific_context("")
 
     assert isinstance(result, dict)

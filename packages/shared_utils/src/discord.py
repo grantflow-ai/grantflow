@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime, UTC
 from typing import Any
 
@@ -15,17 +13,6 @@ async def send_discord_webhook(
     embed: dict[str, Any] | None = None,
     username: str | None = None,
 ) -> bool:
-    """Send a message to Discord via webhook.
-
-    Args:
-        webhook_url: Discord webhook URL
-        content: Simple text content (optional)
-        embed: Rich embed content (optional)
-        username: Override webhook username (optional)
-
-    Returns:
-        True if message was sent successfully, False otherwise
-    """
     if not webhook_url:
         logger.warning("Discord webhook URL not provided")
         return False
@@ -74,24 +61,6 @@ def create_scraper_report_embed(
     success: bool = True,
     error_message: str | None = None,
 ) -> dict[str, Any]:
-    """Create a Discord embed for scraper run report.
-
-    Args:
-        environment: Environment name (staging, prod)
-        date_range: Date range that was scraped
-        search_results_found: Total search results found
-        new_files_downloaded: Number of new files downloaded
-        existing_files_skipped: Number of existing files skipped
-        total_processing_time_ms: Total processing time in milliseconds
-        bucket_name: GCS bucket name
-        total_files_in_bucket: Total files in bucket (optional)
-        success: Whether the run was successful
-        error_message: Error message if failed (optional)
-
-    Returns:
-        Discord embed dictionary
-    """
-
     if total_processing_time_ms < 1000:
         time_str = f"{total_processing_time_ms:.0f}ms"
     elif total_processing_time_ms < 60000:
@@ -167,24 +136,6 @@ async def send_scraper_report(
     success: bool = True,
     error_message: str | None = None,
 ) -> bool:
-    """Send a scraper run report to Discord.
-
-    Args:
-        webhook_url: Discord webhook URL
-        environment: Environment name (staging, prod)
-        date_range: Date range that was scraped
-        search_results_found: Total search results found
-        new_files_downloaded: Number of new files downloaded
-        existing_files_skipped: Number of existing files skipped
-        total_processing_time_ms: Total processing time in milliseconds
-        bucket_name: GCS bucket name
-        total_files_in_bucket: Total files in bucket (optional)
-        success: Whether the run was successful
-        error_message: Error message if failed (optional)
-
-    Returns:
-        True if message was sent successfully, False otherwise
-    """
     embed = create_scraper_report_embed(
         environment=environment,
         date_range=date_range,

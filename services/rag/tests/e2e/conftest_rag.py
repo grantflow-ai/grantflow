@@ -1,5 +1,3 @@
-"""Simplified conftest for RAG e2e tests with real application data."""
-
 import json
 from typing import Any, cast
 from uuid import UUID
@@ -17,13 +15,11 @@ TEST_APPLICATIONS = {
 
 @pytest.fixture
 def real_application_ids() -> dict[str, str]:
-    """Map of application names to real UUIDs."""
     return TEST_APPLICATIONS
 
 
 @pytest.fixture
 async def melanoma_application_data(async_session_maker: async_sessionmaker[Any]) -> dict[str, Any]:
-    """Get the real melanoma alliance application data from database."""
     async with async_session_maker() as session:
         application = await retrieve_application(application_id=MELANOMA_APPLICATION_ID, session=session)
 
@@ -41,7 +37,6 @@ async def melanoma_application_data(async_session_maker: async_sessionmaker[Any]
 
 @pytest.fixture
 def simple_test_objectives() -> list[dict[str, Any]]:
-    """Simple test objectives for baseline testing."""
     return [
         {
             "id": "obj-1",
@@ -102,7 +97,6 @@ def simple_test_objectives() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def baseline_performance_targets() -> dict[str, float]:
-    """Performance targets for baseline testing."""
     return {
         "total_time_limit": 900,
         "work_plan_time_limit": 300,
@@ -115,7 +109,6 @@ def baseline_performance_targets() -> dict[str, float]:
 
 @pytest.fixture
 def mock_job_manager() -> Any:
-    """Mock job manager for testing."""
     from services.rag.src.utils.job_manager import JobManager
 
     async def create_mock_job_manager(session_maker: Any, application_id: UUID) -> JobManager:
@@ -127,7 +120,6 @@ def mock_job_manager() -> Any:
 
 
 def load_grant_template_fixture(application_id: str) -> dict[str, Any]:
-    """Load grant template from test fixtures."""
     template_path = FIXTURES_FOLDER / application_id / "grant_template.json"
     if template_path.exists():
         return cast("dict[str, Any]", json.loads(template_path.read_text()))
@@ -137,8 +129,6 @@ def load_grant_template_fixture(application_id: str) -> dict[str, Any]:
 def analyze_pipeline_timing(
     total_time: float, stage_timings: dict[str, float], targets: dict[str, float]
 ) -> dict[str, Any]:
-    """Analyze pipeline performance against targets."""
-
     analysis: dict[str, Any] = {
         "total_time": total_time,
         "stage_breakdown": stage_timings,

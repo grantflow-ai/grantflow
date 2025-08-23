@@ -85,10 +85,10 @@ export const RagSourcesSuccess: Story = {
 				footer: (
 					<RagSourcesFooter
 						onBackToUploads={() => {
-							/* Back to uploads action */
+							// ~keep - No-op for Storybook demo
 						}}
 						onContinue={() => {
-							/* Continue action */
+							// ~keep - No-op for Storybook demo
 						}}
 					/>
 				),
@@ -153,10 +153,10 @@ export const RagSourcesWithFailures: Story = {
 				footer: (
 					<RagSourcesFooter
 						onBackToUploads={() => {
-							/* Back to uploads action */
+							// ~keep - No-op for Storybook demo
 						}}
 						onContinue={() => {
-							/* Continue action */
+							// ~keep - No-op for Storybook demo
 						}}
 					/>
 				),
@@ -196,10 +196,10 @@ export const RagSourcesEmpty: Story = {
 				footer: (
 					<RagSourcesFooter
 						onBackToUploads={() => {
-							/* Back to uploads action */
+							// ~keep - No-op for Storybook demo
 						}}
 						onContinue={() => {
-							/* Continue action */
+							// ~keep - No-op for Storybook demo
 						}}
 					/>
 				),
@@ -224,7 +224,7 @@ export const SectionDeletionWarning: Story = {
 						<AppButton
 							data-testid="cancel-delete-button"
 							onClick={() => {
-								/* Cancel action */
+								// ~keep - No-op for Storybook demo
 							}}
 							variant="secondary"
 						>
@@ -233,7 +233,7 @@ export const SectionDeletionWarning: Story = {
 						<AppButton
 							data-testid="confirm-delete-button"
 							onClick={() => {
-								/* Delete action */
+								// ~keep - No-op for Storybook demo
 							}}
 							variant="primary"
 						>
@@ -261,7 +261,7 @@ export const SectionDeletionSimple: Story = {
 						<AppButton
 							data-testid="cancel-delete-button"
 							onClick={() => {
-								/* Cancel action */
+								// ~keep - No-op for Storybook demo
 							}}
 							variant="secondary"
 						>
@@ -270,7 +270,7 @@ export const SectionDeletionSimple: Story = {
 						<AppButton
 							data-testid="confirm-delete-button"
 							onClick={() => {
-								/* Delete action */
+								// ~keep - No-op for Storybook demo
 							}}
 							variant="primary"
 						>
@@ -298,7 +298,7 @@ export const SectionReorderWarning: Story = {
 						<AppButton
 							data-testid="cancel-move-button"
 							onClick={() => {
-								/* Cancel action */
+								// ~keep - No-op for Storybook demo
 							}}
 							variant="secondary"
 						>
@@ -307,7 +307,7 @@ export const SectionReorderWarning: Story = {
 						<AppButton
 							data-testid="confirm-move-button"
 							onClick={() => {
-								/* Convert and remove action */
+								// ~keep - No-op for Storybook demo
 							}}
 							variant="primary"
 						>
@@ -363,10 +363,10 @@ export const RagSourcesManyItems: Story = {
 				footer: (
 					<RagSourcesFooter
 						onBackToUploads={() => {
-							/* Back to uploads action */
+							// ~keep - No-op for Storybook demo
 						}}
 						onContinue={() => {
-							/* Continue action */
+							// ~keep - No-op for Storybook demo
 						}}
 					/>
 				),

@@ -272,7 +272,6 @@ describe("CookieConsentProvider", () => {
 				expect(screen.getByTestId("cookie-consent-modal")).toHaveStyle({ display: "block" });
 			});
 
-			// Navigate to preferences modal
 			const customizeButton = screen.getByTestId("customize-button");
 			await user.click(customizeButton);
 
@@ -348,7 +347,6 @@ describe("CookieConsentProvider", () => {
 
 			render(<CookieConsentProvider />);
 
-			// Navigate to preferences modal
 			await waitFor(() => {
 				expect(screen.getByTestId("cookie-consent-modal")).toHaveStyle({ display: "block" });
 			});
@@ -360,7 +358,6 @@ describe("CookieConsentProvider", () => {
 				expect(screen.getByTestId("cookie-preferences-modal")).toHaveStyle({ display: "block" });
 			});
 
-			// Cancel preferences
 			const cancelButton = screen.getByTestId("cancel-button");
 			await user.click(cancelButton);
 
@@ -383,7 +380,6 @@ describe("CookieConsentProvider", () => {
 
 			render(<CookieConsentProvider />);
 
-			// Navigate to preferences modal
 			await waitFor(() => {
 				expect(screen.getByTestId("cookie-consent-modal")).toHaveStyle({ display: "block" });
 			});
@@ -395,10 +391,8 @@ describe("CookieConsentProvider", () => {
 				expect(screen.getByTestId("cookie-preferences-modal")).toHaveStyle({ display: "block" });
 			});
 
-			// Reset mock calls from navigation
 			mockSaveConsent.mockClear();
 
-			// Cancel preferences
 			const cancelButton = screen.getByTestId("cancel-button");
 			await user.click(cancelButton);
 
@@ -423,14 +417,12 @@ describe("CookieConsentProvider", () => {
 				expect(screen.getByTestId("cookie-consent-modal")).toHaveStyle({ display: "block" });
 			});
 
-			// Rapid clicks on customize and accept
 			const customizeButton = screen.getByTestId("customize-button");
 			const acceptButton = screen.getByTestId("accept-all-button");
 
 			await user.click(customizeButton);
 			await user.click(acceptButton);
 
-			// Should still work correctly - accept should take precedence
 			expect(mockSaveConsent).toHaveBeenCalledWith({
 				consentGiven: true,
 				hasInteracted: true,
@@ -459,12 +451,10 @@ describe("CookieConsentProvider", () => {
 
 			const acceptButton = screen.getByTestId("accept-all-button");
 
-			// Multiple rapid clicks
 			await user.click(acceptButton);
 			await user.click(acceptButton);
 			await user.click(acceptButton);
 
-			// Should handle multiple calls without issues
 			expect(mockSaveConsent).toHaveBeenCalledTimes(3);
 		});
 
@@ -499,7 +489,6 @@ describe("CookieConsentProvider", () => {
 
 			render(<CookieConsentProvider />);
 
-			// Verify hook was called
 			expect(mockUseCookieConsent).toHaveBeenCalledTimes(1);
 		});
 	});

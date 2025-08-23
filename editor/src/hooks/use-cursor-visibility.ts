@@ -3,13 +3,7 @@ import * as React from "react";
 import { useWindowSize } from "@/hooks/use-window-size";
 
 export interface CursorVisibilityOptions {
-	/**
-	 * The Tiptap editor instance
-	 */
 	editor?: Editor | null;
-	/**
-	 * Reference to the toolbar element that may obscure the cursor
-	 */
 	overlayHeight?: number;
 }
 

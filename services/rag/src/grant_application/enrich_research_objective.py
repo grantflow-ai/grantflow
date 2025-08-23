@@ -294,7 +294,6 @@ async def enrich_objective_with_wikidata(
     enrichment_data: ObjectiveEnrichmentDTO,
     trace_id: str | None = None,
 ) -> EnrichmentDataDTO:
-    """Enhance enrichment data with Wikidata scientific context."""
     try:
         all_terms = []
         all_terms.extend(enrichment_data["research_objective"]["core_scientific_terms"])

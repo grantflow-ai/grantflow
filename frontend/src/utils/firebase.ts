@@ -14,9 +14,6 @@ const instanceRef: { app: FirebaseApp | null; auth: Auth | null; storage: Fireba
 	storage: null,
 };
 
-/**
- * Converts a Firebase User object to our UserInfo type
- */
 export function convertFirebaseUser(user: User): UserInfo {
 	return {
 		customClaims: null,
@@ -39,10 +36,6 @@ export function convertFirebaseUser(user: User): UserInfo {
 	};
 }
 
-/**
- * Creates a minimal UserInfo object for simple cases
- * Useful when you need to create a UserInfo from partial data
- */
 export function createUserInfo(data: {
 	displayName?: null | string;
 	email?: null | string;
@@ -87,9 +80,6 @@ export function createUserInfo(data: {
 	};
 }
 
-/**
- * Deletes the user's profile photo from Firebase Storage and updates their profile
- */
 export async function deleteProfilePhoto(user: User): Promise<void> {
 	const auth = getFirebaseAuth();
 
@@ -171,9 +161,6 @@ export function getFirebaseStorage(): FirebaseStorage {
 	return instanceRef.storage;
 }
 
-/**
- * Uploads a profile photo to Firebase Storage and updates the user's profile
- */
 export async function uploadProfilePhoto(user: User, file: File): Promise<string> {
 	const storage = getFirebaseStorage();
 	const auth = getFirebaseAuth();

@@ -9,27 +9,17 @@ logger = __import__("logging").getLogger(__name__)
 
 
 class CustomClaims(TypedDict):
-    """Custom claims added to user tokens."""
-
     domain: str
     access_level: str
     registration_time: NotRequired[int]
 
 
 def is_grantflow_email(email: str) -> bool:
-    """Check if email belongs to grantflow.ai domain."""
     return email.endswith("@grantflow.ai")
 
 
-@identity_fn.before_user_created()
+@identity_fn.before_user_created()  # type: ignore[misc]
 def before_create(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeCreateResponse | None:
-    """
-    Firebase Auth blocking function for user registration.
-
-    This function blocks registration attempts for users who don't have
-    a @grantflow.ai email address.
-    """
-
     user = event.data
     email = user.email or ""
 
@@ -56,15 +46,8 @@ def before_create(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeCre
     )
 
 
-@identity_fn.before_user_signed_in()
+@identity_fn.before_user_signed_in()  # type: ignore[misc]
 def before_sign_in(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeSignInResponse | None:
-    """
-    Firebase Auth blocking function for user sign-in.
-
-    This function blocks sign-in attempts for users who don't have
-    a @grantflow.ai email address.
-    """
-
     user = event.data
     email = user.email or ""
 

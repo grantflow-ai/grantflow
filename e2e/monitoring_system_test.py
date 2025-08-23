@@ -1,5 +1,3 @@
-"""Test comprehensive monitoring system for GrantFlow App Hosting."""
-
 import asyncio
 import os
 from datetime import UTC, datetime
@@ -16,7 +14,6 @@ class MonitoringTester:
         self.project_id = "grantflow"
 
     async def send_discord_message(self, content: str | None = None, embed: dict[str, Any] | None = None) -> bool:
-        """Send a message to Discord."""
         payload: dict[str, Any] = {}
         if content:
             payload["content"] = content
@@ -32,7 +29,6 @@ class MonitoringTester:
             return False
 
     def create_error_alert_embed(self) -> dict[str, Any]:
-        """Create a sample error alert embed."""
         return {
             "title": "🚨 **App Hosting Critical Error** - STAGING",
             "description": "**High Error Rate Detected**\nApplication error rate exceeded 5 errors/minute threshold",
@@ -60,7 +56,6 @@ class MonitoringTester:
         }
 
     def create_memory_alert_embed(self) -> dict[str, Any]:
-        """Create a sample memory alert embed."""
         return {
             "title": "⚠️ **App Hosting Memory Warning** - STAGING",
             "description": "**High Memory Usage Detected**\nMemory utilization above 80% threshold",
@@ -85,7 +80,6 @@ class MonitoringTester:
         }
 
     def create_deployment_alert_embed(self) -> dict[str, Any]:
-        """Create a sample deployment failure alert."""
         return {
             "title": "🚨 **Deployment Failure** - STAGING",
             "description": "**App Hosting deployment failed**\nBuild process encountered errors during deployment",
@@ -111,7 +105,6 @@ class MonitoringTester:
         }
 
     def create_success_embed(self) -> dict[str, Any]:
-        """Create a monitoring system success embed."""
         return {
             "title": "✅ **Monitoring System Test Complete**",
             "description": "App Hosting monitoring is properly configured and operational",
@@ -138,8 +131,6 @@ class MonitoringTester:
         }
 
     async def test_all_alert_types(self) -> bool:
-        """Test all types of monitoring alerts."""
-
         error_embed = self.create_error_alert_embed()
         success = await self.send_discord_message(
             content="@here **CRITICAL ALERT** - App Hosting errors detected!", embed=error_embed
@@ -172,8 +163,6 @@ class MonitoringTester:
 
 
 async def main() -> None:
-    """Main test function."""
-
     webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
 
     if not webhook_url:

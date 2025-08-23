@@ -60,30 +60,11 @@ export const HIGHLIGHT_COLORS = [
 ];
 export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number];
 
-/**
- * Configuration for the color highlight functionality
- */
 export interface UseColorHighlightConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * The color to apply when toggling the highlight.
-	 */
 	highlightColor?: string;
-	/**
-	 * Optional label to display alongside the icon.
-	 */
 	label?: string;
-	/**
-	 * Whether the button should hide when the mark is not available.
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
-	/**
-	 * Called when the highlight is applied.
-	 */
 	onApplied?: ({ color, label }: { color: string; label: string }) => void;
 }
 

@@ -14,26 +14,10 @@ import { isExtensionAvailable, isNodeTypeSelected } from "@/utils";
 
 export type TextAlign = "left" | "center" | "right" | "justify";
 
-/**
- * Configuration for the text align functionality
- */
 export interface UseTextAlignConfig {
-	/**
-	 * The Tiptap editor instance.
-	 */
 	editor?: Editor | null;
-	/**
-	 * The text alignment to apply.
-	 */
 	align: TextAlign;
-	/**
-	 * Whether the button should hide when alignment is not available.
-	 * @default false
-	 */
 	hideWhenUnavailable?: boolean;
-	/**
-	 * Callback function called after a successful alignment change.
-	 */
 	onAligned?: () => void;
 }
 
@@ -58,9 +42,6 @@ export const textAlignLabels: Record<TextAlign, string> = {
 	right: "Align right",
 };
 
-/**
- * Checks if text alignment can be performed in the current editor state
- */
 export function canSetTextAlign(editor: Editor | null, align: TextAlign): boolean {
 	if (!editor?.isEditable) return false;
 	if (!isExtensionAvailable(editor, "textAlign") || isNodeTypeSelected(editor, ["image"])) return false;
@@ -74,17 +55,11 @@ export function hasSetTextAlign(commands: ChainedCommands): commands is ChainedC
 	return "setTextAlign" in commands;
 }
 
-/**
- * Checks if the text alignment is currently active
- */
 export function isTextAlignActive(editor: Editor | null, align: TextAlign): boolean {
 	if (!editor?.isEditable) return false;
 	return editor.isActive({ textAlign: align });
 }
 
-/**
- * Sets text alignment in the editor
- */
 export function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
 	if (!editor?.isEditable) return false;
 	if (!canSetTextAlign(editor, align)) return false;
@@ -97,9 +72,6 @@ export function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
 	return false;
 }
 
-/**
- * Determines if the text align button should be shown
- */
 export function shouldShowButton(props: {
 	editor: Editor | null;
 	hideWhenUnavailable: boolean;

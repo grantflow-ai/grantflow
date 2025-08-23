@@ -16,7 +16,6 @@ from services.backend.src.utils.firebase import (
 
 @pytest.fixture
 def mock_firestore_client(mocker: Any) -> dict[str, Any]:
-    """Mock Firestore client with collection and document methods."""
     mock_client = MagicMock()
     mock_collection = MagicMock()
     mock_doc = MagicMock()
@@ -41,7 +40,6 @@ def mock_firestore_client(mocker: Any) -> dict[str, Any]:
 
 
 async def test_schedule_user_deletion_success(mock_firestore_client: dict[str, Any]) -> None:
-    """Test successful user deletion scheduling."""
     uid = "test-firebase-uid-123"
     grace_period_days = 30
 
@@ -65,7 +63,6 @@ async def test_schedule_user_deletion_success(mock_firestore_client: dict[str, A
 
 
 async def test_schedule_user_deletion_custom_grace_period(mock_firestore_client: dict[str, Any]) -> None:
-    """Test scheduling with custom grace period."""
     uid = "test-firebase-uid-456"
     grace_period_days = 7
 
@@ -80,7 +77,6 @@ async def test_schedule_user_deletion_custom_grace_period(mock_firestore_client:
 
 
 async def test_schedule_user_deletion_firestore_error(mock_firestore_client: dict[str, Any]) -> None:
-    """Test handling of Firestore errors during scheduling."""
     uid = "test-firebase-uid-error"
 
     mock_firestore_client["document"].set.side_effect = Exception("Firestore error")
@@ -90,7 +86,6 @@ async def test_schedule_user_deletion_firestore_error(mock_firestore_client: dic
 
 
 async def test_schedule_user_deletion_zero_grace_period(mock_firestore_client: dict[str, Any]) -> None:
-    """Test scheduling with zero grace period (immediate deletion)."""
     uid = "test-firebase-uid-immediate"
     grace_period_days = 0
 
@@ -105,7 +100,6 @@ async def test_schedule_user_deletion_zero_grace_period(mock_firestore_client: d
 
 
 async def test_get_user_deletion_status_found(mock_firestore_client: dict[str, Any]) -> None:
-    """Test retrieving existing deletion status."""
     uid = "test-firebase-uid-existing"
 
     mock_doc_snapshot = MagicMock()
@@ -133,7 +127,6 @@ async def test_get_user_deletion_status_found(mock_firestore_client: dict[str, A
 
 
 async def test_get_user_deletion_status_not_found(mock_firestore_client: dict[str, Any]) -> None:
-    """Test retrieving non-existent deletion status."""
     uid = "test-firebase-uid-nonexistent"
 
     mock_doc_snapshot = MagicMock()
@@ -147,7 +140,6 @@ async def test_get_user_deletion_status_not_found(mock_firestore_client: dict[st
 
 
 async def test_get_user_deletion_status_firestore_error(mock_firestore_client: dict[str, Any]) -> None:
-    """Test handling of Firestore errors during status retrieval."""
     uid = "test-firebase-uid-error"
 
     mock_firestore_client["document"].get.side_effect = Exception("Firestore query error")
@@ -157,7 +149,6 @@ async def test_get_user_deletion_status_firestore_error(mock_firestore_client: d
 
 
 async def test_cancel_user_deletion_success(mock_firestore_client: dict[str, Any]) -> None:
-    """Test successful deletion cancellation."""
     uid = "test-firebase-uid-cancel"
 
     mock_doc_snapshot = MagicMock()
@@ -180,7 +171,6 @@ async def test_cancel_user_deletion_success(mock_firestore_client: dict[str, Any
 
 
 async def test_cancel_user_deletion_not_found(mock_firestore_client: dict[str, Any]) -> None:
-    """Test cancellation when no deletion request exists."""
     uid = "test-firebase-uid-no-deletion"
 
     mock_doc_snapshot = MagicMock()
@@ -197,7 +187,6 @@ async def test_cancel_user_deletion_not_found(mock_firestore_client: dict[str, A
 
 
 async def test_cancel_user_deletion_firestore_error(mock_firestore_client: dict[str, Any]) -> None:
-    """Test handling of Firestore errors during cancellation."""
     uid = "test-firebase-uid-cancel-error"
 
     mock_doc_ref = MagicMock()
@@ -210,7 +199,6 @@ async def test_cancel_user_deletion_firestore_error(mock_firestore_client: dict[
 
 
 async def test_cancel_user_deletion_update_error(mock_firestore_client: dict[str, Any]) -> None:
-    """Test handling of Firestore errors during update."""
     uid = "test-firebase-uid-update-error"
 
     mock_doc_snapshot = MagicMock()
@@ -227,8 +215,6 @@ async def test_cancel_user_deletion_update_error(mock_firestore_client: dict[str
 
 
 async def test_get_user_success(mocker: Any) -> None:
-    """Test successful user retrieval."""
-
     mock_app = MagicMock()
     mocker.patch(
         "services.backend.src.utils.firebase.get_firebase_app",
@@ -277,8 +263,6 @@ async def test_get_user_success(mocker: Any) -> None:
 
 
 async def test_get_user_not_found(mocker: Any) -> None:
-    """Test user not found scenario."""
-
     mock_app = MagicMock()
     mocker.patch(
         "services.backend.src.utils.firebase.get_firebase_app",
@@ -299,8 +283,6 @@ async def test_get_user_not_found(mocker: Any) -> None:
 
 
 async def test_get_user_firebase_error(mocker: Any) -> None:
-    """Test Firebase error handling."""
-
     mock_app = MagicMock()
     mocker.patch(
         "services.backend.src.utils.firebase.get_firebase_app",
@@ -320,8 +302,6 @@ async def test_get_user_firebase_error(mocker: Any) -> None:
 
 
 async def test_get_users_success(mocker: Any) -> None:
-    """Test successful batch user retrieval."""
-
     mock_app = MagicMock()
     mocker.patch(
         "services.backend.src.utils.firebase.get_firebase_app",
@@ -393,6 +373,5 @@ async def test_get_users_success(mocker: Any) -> None:
 
 
 async def test_get_users_empty_list(mocker: Any) -> None:
-    """Test get_users with empty uid list."""
     result = await get_users([])
     assert result == {}

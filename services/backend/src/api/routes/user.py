@@ -56,11 +56,6 @@ class GetSoleOwnedOrganizationsResponse(TypedDict):
 
 @delete("/user", operation_id="DeleteUser", status_code=200)
 async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any]) -> DeleteUserResponse:
-    """
-    Schedule user account for deletion with grace period.
-    User will be removed from all projects immediately.
-    Account will be permanently deleted after grace period.
-    """
     firebase_uid = request.auth
     if not firebase_uid:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -161,10 +156,6 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
 async def get_sole_owned_projects(
     request: APIRequest, session_maker: async_sessionmaker[Any]
 ) -> GetSoleOwnedProjectsResponse:
-    """
-    Get list of projects where the user is the sole owner.
-    These projects must be handled before account deletion.
-    """
     firebase_uid = request.auth
     if not firebase_uid:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -206,10 +197,6 @@ async def get_sole_owned_projects(
 async def get_sole_owned_organizations(
     request: APIRequest, session_maker: async_sessionmaker[Any]
 ) -> GetSoleOwnedOrganizationsResponse:
-    """
-    Get list of organizations where the user is the sole owner.
-    These organizations must be handled before account deletion.
-    """
     firebase_uid = request.auth
     if not firebase_uid:
         raise HTTPException(status_code=401, detail="Unauthorized")

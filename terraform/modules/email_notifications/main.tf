@@ -9,7 +9,6 @@ terraform {
   }
 }
 
-# trivy:ignore:AVD-GCP-0066
 # ~keep Default encryption is acceptable for function source code
 resource "google_storage_bucket" "email_notification_functions" {
   name                        = "${var.project_id}-email-notification-functions"
@@ -44,6 +43,11 @@ data "archive_file" "email_notification_source" {
   source {
     content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/application_ready.html")
     filename = "templates/application_ready.html"
+  }
+
+  source {
+    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/grant_alert.html")
+    filename = "templates/grant_alert.html"
   }
 }
 

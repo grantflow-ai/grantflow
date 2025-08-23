@@ -172,7 +172,6 @@ async def get_users(uids: list[str]) -> dict[str, dict[str, Any]]:
 
 
 async def delete_user(uid: str) -> None:
-    """Delete a user from Firebase Auth"""
     handler = as_async_callable(firebase_delete_user)
     try:
         await handler(uid, app=get_firebase_app())
@@ -189,7 +188,6 @@ _firestore_client_ref = Ref[Any]()
 
 
 def get_firestore_client() -> Any:
-    """Get Firestore client instance"""
     if _firestore_client_ref.value is None:
         logger.debug("Initializing Firestore client")
         _firestore_client_ref.value = AsyncClient()
@@ -197,7 +195,6 @@ def get_firestore_client() -> Any:
 
 
 async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[str, Any]:
-    """Schedule a user for deletion in Firestore"""
     db = get_firestore_client()
     deletion_date = datetime.now(UTC) + timedelta(days=grace_period_days)
 
@@ -225,7 +222,6 @@ async def schedule_user_deletion(uid: str, grace_period_days: int = 30) -> dict[
 
 
 async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
-    """Get user deletion status from Firestore"""
     db = get_firestore_client()
 
     try:
@@ -245,7 +241,6 @@ async def get_user_deletion_status(uid: str) -> dict[str, Any] | None:
 
 
 async def cancel_user_deletion(uid: str) -> bool:
-    """Cancel scheduled user deletion"""
     db = get_firestore_client()
 
     try:
@@ -272,7 +267,6 @@ async def cancel_user_deletion(uid: str) -> bool:
 
 
 async def schedule_organization_deletion(organization_id: str, grace_period_days: int = 30) -> dict[str, Any]:
-    """Schedule an organization for deletion in Firestore"""
     db = get_firestore_client()
     scheduled_hard_delete_at = datetime.now(UTC) + timedelta(days=grace_period_days)
 
@@ -300,7 +294,6 @@ async def schedule_organization_deletion(organization_id: str, grace_period_days
 
 
 async def get_organization_deletion_status(organization_id: str) -> dict[str, Any] | None:
-    """Get organization deletion status from Firestore"""
     db = get_firestore_client()
 
     try:
@@ -320,7 +313,6 @@ async def get_organization_deletion_status(organization_id: str) -> dict[str, An
 
 
 async def cancel_organization_deletion(organization_id: str) -> bool:
-    """Cancel scheduled organization deletion"""
     db = get_firestore_client()
 
     try:

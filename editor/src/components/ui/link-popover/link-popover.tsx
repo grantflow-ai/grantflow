@@ -17,47 +17,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 export interface LinkMainProps {
-	/**
-	 * The URL to set for the link.
-	 */
 	url: string;
-	/**
-	 * Function to update the URL state.
-	 */
 	setUrl: React.Dispatch<React.SetStateAction<string | null>>;
-	/**
-	 * Function to set the link in the editor.
-	 */
 	setLink: () => void;
-	/**
-	 * Function to remove the link from the editor.
-	 */
 	removeLink: () => void;
-	/**
-	 * Function to open the link.
-	 */
 	openLink: () => void;
-	/**
-	 * Whether the link is currently active in the editor.
-	 */
 	isActive: boolean;
 }
 
 export interface LinkPopoverProps extends Omit<ButtonProps, "type">, UseLinkPopoverConfig {
-	/**
-	 * Callback for when the popover opens or closes.
-	 */
 	onOpenChange?: (isOpen: boolean) => void;
-	/**
-	 * Whether to automatically open the popover when a link is active.
-	 * @default true
-	 */
 	autoOpenOnLinkActive?: boolean;
 }
 
-/**
- * Link button component for triggering the link popover
- */
 export const LinkButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, children, ...props }, ref) => {
 	return (
 		<Button
@@ -77,9 +49,6 @@ export const LinkButton = React.forwardRef<HTMLButtonElement, ButtonProps>(({ cl
 
 LinkButton.displayName = "LinkButton";
 
-/**
- * Main content component for the link popover
- */
 const LinkMain: React.FC<LinkMainProps> = ({ url, setUrl, setLink, removeLink, openLink, isActive }) => {
 	const isMobile = useIsMobile();
 
@@ -157,9 +126,6 @@ const LinkMain: React.FC<LinkMainProps> = ({ url, setUrl, setLink, removeLink, o
 	);
 };
 
-/**
- * Link content component for standalone use
- */
 export const LinkContent: React.FC<{
 	editor?: Editor | null;
 }> = ({ editor }) => {
@@ -170,11 +136,6 @@ export const LinkContent: React.FC<{
 	return <LinkMain {...linkPopover} />;
 };
 
-/**
- * Link popover component for Tiptap editors.
- *
- * For custom popover implementations, use the `useLinkPopover` hook instead.
- */
 export const LinkPopover = React.forwardRef<HTMLButtonElement, LinkPopoverProps>(
 	(
 		{

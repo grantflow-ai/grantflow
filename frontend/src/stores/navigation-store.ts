@@ -1,15 +1,5 @@
 import { create } from "zustand";
 
-/**
- * Navigation store for managing application context without URL parameters
- *
- * Design principles:
- * - URLs are clean and contain no IDs (e.g., /project, /application/editor)
- * - UUIDs are used directly in network traffic for API calls
- * - Context is maintained in this store for navigation state
- * - No slug system needed - just direct UUID → API calls
- */
-
 interface NavigationActions {
 	clearActiveApplication: () => void;
 	clearActiveProject: () => void;

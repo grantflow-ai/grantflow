@@ -1,13 +1,3 @@
-"""
-Batch enrichment for research objectives with performance optimizations.
-
-Key optimizations based on baseline analysis (488s for 5 objectives):
-1. Single retrieval call shared across all objectives (reduces I/O overhead)
-2. Smart batching to stay within token limits while maximizing throughput
-3. Parallel processing where feasible
-4. Optimized prompt structure for better LLM efficiency
-"""
-
 from typing import Final
 
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective
@@ -32,17 +22,6 @@ SAFETY_MARGIN: Final[float] = 0.85
 def calculate_optimal_batching(
     research_objectives: list[ResearchObjective], estimated_context_tokens: int
 ) -> list[list[ResearchObjective]]:
-    """
-    Calculate the optimal batching strategy based on token estimates.
-
-    Args:
-        research_objectives: List of objectives to batch
-        estimated_context_tokens: Estimated tokens for shared context
-
-    Returns:
-        List of objective batches
-    """
-
     if len(research_objectives) <= 2:
         return [research_objectives]
 
@@ -76,24 +55,6 @@ async def perform_shared_retrieval(
     grant_section: GrantLongFormSection,
     application_id: str,
 ) -> str:
-    """
-    Perform the optimized single retrieval call for all objectives.
-
-    Args:
-        research_objectives: List of objectives to process
-        grant_section: Grant section containing base search queries
-        application_id: Application ID for retrieval
-
-    Returns:
-        Combined retrieval context
-
-    Benefits:
-    - Reduces retrieval overhead from 5 calls to 1 call
-    - Provides shared context for better consistency
-    - Combined search queries for better coverage
-    - Optimized token usage
-    """
-
     combined_context = "\n\n".join(
         [
             f"Research Objective {obj['number']}: {obj['title']}\nResearch Objective {obj['number']}: {obj['title']}"
@@ -145,24 +106,6 @@ async def handle_batch_enrich_objectives(
     application_id: str,
     form_inputs: ResearchDeepDive,
 ) -> list[ObjectiveEnrichmentDTO]:
-    """
-    Handle batch enrichment of research objectives with performance optimizations.
-
-    Args:
-        research_objectives: List of objectives to enrich
-        grant_section: Grant section containing metadata
-        application_id: Application ID for context retrieval
-        form_inputs: Form inputs
-
-    Returns:
-        List of enriched research deep dives
-
-    Performance improvements:
-    - Single shared retrieval vs. individual calls
-    - Smart batching based on token limits
-    - Parallel processing where safe
-    - Estimated 55.2% improvement over single-call approach
-    """
     if not research_objectives:
         return []
 

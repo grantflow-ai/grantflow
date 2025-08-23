@@ -1,11 +1,3 @@
-"""create-editor-document
-
-Revision ID: 5130dc110c69
-Revises: b22ffa3669e7
-Create Date: 2025-08-06 15:47:22.998086
-
-"""
-
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -19,7 +11,6 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
     op.create_table(
         "editor_documents",
         sa.Column("grant_application_id", sa.UUID(), nullable=True),
@@ -40,7 +31,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Downgrade schema."""
     op.drop_index(op.f("ix_editor_documents_grant_application_id"), table_name="editor_documents")
     op.drop_index(op.f("ix_editor_documents_deleted_at"), table_name="editor_documents")
     op.drop_index(op.f("ix_editor_documents_created_at"), table_name="editor_documents")

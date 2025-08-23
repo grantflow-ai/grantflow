@@ -1,21 +1,17 @@
-from __future__ import annotations
-
 import tempfile
 from datetime import UTC, date, datetime
-from json import dumps
-from typing import TYPE_CHECKING, Final, cast
+from typing import Final, cast
 
 from anyio import Path as AsyncPath
 from packages.shared_utils.src.logger import get_logger
 from pandas import read_csv
 from playwright.async_api import async_playwright
+from services.scraper.src.dtos import GrantInfo
 from services.scraper.src.exceptions import ScraperError
-from services.scraper.src.gcs_utils import upload_blob
+from services.scraper.src.firestore_utils import batch_save_grants
 
 logger = get_logger(__name__)
 
-if TYPE_CHECKING:
-    from services.scraper.src.dtos import GrantInfo
 
 NIH_GRANT_BASE_URL: Final[str] = "https://grants.nih.gov/funding/nih-guide-for-grants-and-contracts"
 DEFAULT_FROM_DATE: Final[date] = date(1991, 1, 2)
@@ -23,18 +19,6 @@ TODAY_DATE: Final[date] = datetime.now(UTC).date()
 
 
 def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE) -> str:
-    """Create a query string for the NIH grant search page.
-
-    The new NIH site automatically downloads results when navigating with search parameters.
-
-    Args:
-        from_date: The start date of the search.
-        to_date: The end date of the search.
-
-    Returns:
-        The query string.
-    """
-
     logger.info("Creating query string for date range", from_date=from_date.isoformat(), to_date=to_date.isoformat())
 
     qs = {
@@ -49,22 +33,6 @@ def create_query_string(from_date: date = DEFAULT_FROM_DATE, to_date: date = TOD
 async def download_search_data(  # noqa: PLR0915
     *, to_date: date = TODAY_DATE, from_date: date = DEFAULT_FROM_DATE
 ) -> list[GrantInfo]:
-    """Download the CSV file from the NIH grant search page and
-        return the data as a list of dictionaries.
-
-    The NIH site has been redesigned and now uses a different download mechanism.
-    This function navigates to the search page and attempts to trigger the download.
-
-    Raises:
-        ScraperError: If the download does not occur.
-
-    Args:
-        to_date: The end date of the search.
-        from_date: The start date of the search.
-
-    Returns:
-        The data as a list of dictionaries
-    """
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         context = await browser.new_context(
@@ -230,9 +198,8 @@ async def download_search_data(  # noqa: PLR0915
                 await tmp_path.unlink(missing_ok=True)
                 raise ScraperError(f"Failed to process downloaded CSV: {e!s}") from e
 
-            blob_path = f"scraper-results/grants_search_csv_{to_date.strftime('%d_%m_%Y')}.json"
-            await upload_blob(blob_path, dumps(search_data).encode("utf-8"))
-            logger.info("Saved search results to GCS", blob_path=blob_path)
+            await batch_save_grants(search_data)
+            logger.info("Saved search results to Firestore", count=len(search_data))
 
             return search_data
 
