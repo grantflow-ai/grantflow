@@ -4,7 +4,7 @@ import { ChevronDown, Mail, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserRole } from "@/types/user";
+import { UserRole } from "@/types";
 
 interface EditPermissionModalProps {
 	currentUserRole: UserRole;

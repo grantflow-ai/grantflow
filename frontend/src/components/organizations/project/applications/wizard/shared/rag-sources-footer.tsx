@@ -1,5 +1,5 @@
 import { AppButton } from "@/components/app/buttons/app-button";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 
 interface RagSourcesFooterProps {
 	onBackToUploads?: () => void;

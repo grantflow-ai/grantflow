@@ -4,19 +4,14 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import {
-	ApplicationStructureLeftPane,
-	DragDropSectionManager,
-} from "@/components/organizations/project/applications/wizard/application-structure";
-import { WizardRightPane } from "@/components/organizations/project/applications/wizard/shared";
-import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/shared/rag-sources-dialog-utils";
-import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
-import type { API } from "@/types/api-types";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { useApplicationStore, useWizardStore } from "@/stores";
+import type { API, GrantSection, UpdateGrantSection } from "@/types";
+import { WizardRightPane } from "../shared";
+import { createRagSourcesDialog } from "../shared/rag-sources-dialog-utils";
+import type { WizardDialogRef } from "../shared/wizard-dialog";
+import { ApplicationStructureLeftPane, DragDropSectionManager } from "./index";
 
 const isDetailedSection = (
 	section: GrantSection,

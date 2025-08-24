@@ -7,12 +7,12 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { AppButton } from "@/components/app/buttons";
 import { AppTextarea, InputField } from "@/components/app/fields";
-import { ThemeBadge } from "@/components/shared/theme-badge";
+import { ThemeBadge } from "@/components/shared";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
+import type { GrantSection, UpdateGrantSection } from "@/types";
+import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types";
 import { SectionWithDropIndicators } from "./section-drop-indicator";
 import { SectionIconButton } from "./section-icon-button";
 

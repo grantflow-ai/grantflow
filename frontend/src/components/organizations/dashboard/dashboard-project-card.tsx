@@ -9,7 +9,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 
 interface DashboardProjectCardProps {
 	onClick?: (projectId: string) => void;

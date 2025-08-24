@@ -1,6 +1,6 @@
 "use client";
 
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 
 interface DashboardStatsProps {
 	initialProjects: API.ListProjects.Http200.ResponseBody;

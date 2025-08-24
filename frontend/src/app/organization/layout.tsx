@@ -4,9 +4,9 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { NotificationContainer } from "@/components/app/feedback/notification-container";
 import SharedLayout from "@/components/layout/shared-layout";
-import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
-import { SWRProvider } from "@/components/providers/swr-provider";
+import { AppSidebar } from "@/components/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SWRProvider } from "@/providers/swr-provider";
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return (

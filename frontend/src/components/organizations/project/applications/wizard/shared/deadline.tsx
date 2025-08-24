@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { getDeadlineInfo } from "@/utils/date-time";
 
 function TimeUnit({ unit, value }: { unit: "day" | "week"; value: number }) {

@@ -1,6 +1,6 @@
 "use server";
 
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
@@ -34,12 +34,7 @@ export async function getSoleOwnedProjects() {
 	);
 }
 
-/**
- * Restore a soft-deleted account within the grace period
- * @param token - Restoration token sent via email
- */
 export async function restoreAccount(token: string) {
-	// NOTE: Backend endpoint not yet implemented
 	return withAuthRedirect(
 		getClient()
 			.post("user/restore", {

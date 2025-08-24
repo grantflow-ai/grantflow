@@ -4,7 +4,7 @@ import Image from "next/image";
 import React from "react";
 
 import AppInput from "@/components/app/fields/input-field";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { isValidUrl } from "@/utils/validation";
 
 export function UrlInput({ parentId }: { parentId?: string }) {

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { LinkPreviewItem } from "./link-preview-item";
 
 vi.mock("lucide-react", () => ({

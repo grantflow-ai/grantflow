@@ -16,9 +16,7 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { useUserStore } from "@/stores/user-store";
+import { useNewApplicationModalStore, useOrganizationStore, useUserStore } from "@/stores";
 import { routes } from "@/utils/navigation";
 import { CustomSidebarTrigger } from "./customer-trigger";
 import { NavMain } from "./nav-main";

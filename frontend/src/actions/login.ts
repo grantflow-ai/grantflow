@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SELECTED_ORGANIZATION_COOKIE, SESSION_COOKIE } from "@/constants";
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 import { getClient } from "@/utils/api/server";
 import { getEnv } from "@/utils/env";
 import { getOrganizationFromJWT } from "@/utils/jwt";

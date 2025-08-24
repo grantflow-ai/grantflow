@@ -18,9 +18,8 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useOrganizationStore } from "@/stores/organization-store";
-import type { API } from "@/types/api-types";
+import { useNavigationStore, useOrganizationStore } from "@/stores";
+import type { API } from "@/types";
 import { routes } from "@/utils/navigation";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];

@@ -1,4 +1,4 @@
-import { IconTick } from "@/components/onboarding/icons";
+import { IconTick } from "./icons";
 
 const benefitItems = [
 	{
