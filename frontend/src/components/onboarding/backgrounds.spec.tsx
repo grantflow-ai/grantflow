@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { OnboardingGradientBackgroundBottom, OnboardingGradientBackgroundTop, StackedHighlight } from ".";
+import { OnboardingGradientBackgroundBottom, OnboardingGradientBackgroundTop, StackedHighlight } from "./backgrounds";
 
 describe.sequential("Onboarding Background Components", () => {
 	afterEach(() => {

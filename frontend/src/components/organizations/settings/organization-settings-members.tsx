@@ -12,7 +12,7 @@ import {
 	updateOrganizationMemberRole,
 } from "@/actions/organization";
 import { getProjects } from "@/actions/project";
-import { InviteCollaboratorModal } from "@/components/organizations";
+import { InviteCollaboratorModal } from "@/components/organizations/modals/invite-collaborator-modal";
 import {
 	DropdownMenu,
 	DropdownMenuContent,

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AvatarGroup } from "@/components/app/app-avatar";
-import { Notification } from "@/components/organizations";
+import { Notification } from "@/components/organizations/dashboard/notification";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface AppHeaderProps {

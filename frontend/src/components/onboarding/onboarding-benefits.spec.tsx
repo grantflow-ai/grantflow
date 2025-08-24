@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { BenefitsList } from ".";
+import { BenefitsList } from "./onboarding-benefits";
 
 describe.sequential("BenefitsList", () => {
 	afterEach(() => {

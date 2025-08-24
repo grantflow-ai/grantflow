@@ -29,7 +29,7 @@ vi.mock("@/components/landing-page/testimonials-section", () => ({
 	TestimonialsSection: () => <div data-testid="mock-testimonials-section" />,
 }));
 
-vi.mock("@/components/cookie-consent", () => ({
+vi.mock("@/components/cookie-consent/cookie-consent-provider", () => ({
 	CookieConsentProvider: () => <div data-testid="mock-cookie-consent-provider" />,
 }));
 

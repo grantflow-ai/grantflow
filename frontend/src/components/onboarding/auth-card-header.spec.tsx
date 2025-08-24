@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { AuthCardHeader } from ".";
+import { AuthCardHeader } from "./auth-card-header";
 
 describe.sequential("AuthCardHeader", () => {
 	afterEach(() => {
