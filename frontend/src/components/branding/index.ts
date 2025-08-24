@@ -1,3 +1,2 @@
 export { BrandPattern } from "./brand-pattern";
-export * from "./icons";
-export { Logo } from "./logo";
+export { Logo, LogoDark } from "./icons/logo";
