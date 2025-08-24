@@ -124,7 +124,6 @@ describe.sequential("GrantCard", () => {
 
 	describe("Deadline formatting", () => {
 		beforeEach(() => {
-			// Mock Date to ensure consistent testing
 			vi.useFakeTimers();
 			vi.setSystemTime(new Date("2024-01-15T12:00:00Z"));
 		});
@@ -155,14 +154,14 @@ describe.sequential("GrantCard", () => {
 		});
 
 		it("displays days when deadline is within a week", () => {
-			const grant = GrantFactory.build({ deadline: "2024-01-20T23:59:59Z" }); // 5 days away
+			const grant = GrantFactory.build({ deadline: "2024-01-20T23:59:59Z" });
 			render(<GrantCard grant={grant} />);
 
 			expect(screen.getByTestId("grant-deadline")).toHaveTextContent("5 days");
 		});
 
 		it("displays weeks when deadline is within a month", () => {
-			const grant = GrantFactory.build({ deadline: "2024-02-05T23:59:59Z" }); // ~3 weeks away
+			const grant = GrantFactory.build({ deadline: "2024-02-05T23:59:59Z" });
 			render(<GrantCard grant={grant} />);
 
 			expect(screen.getByTestId("grant-deadline")).toHaveTextContent("weeks");
@@ -183,25 +182,21 @@ describe.sequential("GrantCard", () => {
 		});
 
 		it("applies correct color classes based on deadline", () => {
-			// Test red color for urgent deadlines (within 7 days)
 			const urgentGrant = GrantFactory.build({ deadline: "2024-01-20T23:59:59Z" });
 			const { rerender } = render(<GrantCard grant={urgentGrant} />);
 			let deadlineElement = screen.getByTestId("grant-deadline").querySelector(".font-medium");
 			expect(deadlineElement).toHaveClass("text-red-600");
 
-			// Test orange color for approaching deadlines (within 30 days)
 			const approachingGrant = GrantFactory.build({ deadline: "2024-02-10T23:59:59Z" });
 			rerender(<GrantCard grant={approachingGrant} />);
 			deadlineElement = screen.getByTestId("grant-deadline").querySelector(".font-medium");
 			expect(deadlineElement).toHaveClass("text-orange-600");
 
-			// Test green color for distant deadlines
 			const distantGrant = GrantFactory.build({ deadline: "2024-06-15T23:59:59Z" });
 			rerender(<GrantCard grant={distantGrant} />);
 			deadlineElement = screen.getByTestId("grant-deadline").querySelector(".font-medium");
 			expect(deadlineElement).toHaveClass("text-green-600");
 
-			// Test gray color for expired deadlines
 			const expiredGrant = GrantFactory.build({ deadline: "2024-01-10T23:59:59Z" });
 			rerender(<GrantCard grant={expiredGrant} />);
 			deadlineElement = screen.getByTestId("grant-deadline").querySelector(".font-medium");
@@ -285,11 +280,9 @@ describe.sequential("GrantCard", () => {
 			const grant = GrantFactory.build({ title: "Test Grant" });
 			render(<GrantCard grant={grant} />);
 
-			// Title should be an h3
 			const title = screen.getByTestId("grant-title");
 			expect(title.tagName).toBe("H3");
 
-			// Check for proper heading hierarchy
 			expect(title).toHaveClass("text-lg", "font-semibold");
 		});
 	});

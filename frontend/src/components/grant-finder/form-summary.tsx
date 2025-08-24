@@ -30,7 +30,7 @@ export function FormSummary({ formData }: FormSummaryProps) {
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2" data-testid="form-summary-grid">
-					{/* Keywords */}
+					{}
 					<div data-testid="form-summary-keywords">
 						<div className="text-sm font-medium text-gray-600" data-testid="form-summary-keywords-label">
 							Keywords
@@ -40,7 +40,7 @@ export function FormSummary({ formData }: FormSummaryProps) {
 						</div>
 					</div>
 
-					{/* Activity Codes */}
+					{}
 					<div data-testid="form-summary-activity-codes">
 						<div
 							className="text-sm font-medium text-gray-600"
@@ -53,7 +53,7 @@ export function FormSummary({ formData }: FormSummaryProps) {
 						</div>
 					</div>
 
-					{/* Institution Location */}
+					{}
 					<div data-testid="form-summary-institution-location">
 						<div
 							className="text-sm font-medium text-gray-600"
@@ -69,7 +69,7 @@ export function FormSummary({ formData }: FormSummaryProps) {
 						</div>
 					</div>
 
-					{/* Career Stage */}
+					{}
 					<div data-testid="form-summary-career-stage">
 						<div
 							className="text-sm font-medium text-gray-600"
@@ -82,7 +82,7 @@ export function FormSummary({ formData }: FormSummaryProps) {
 						</div>
 					</div>
 
-					{/* Email */}
+					{}
 					<div className="sm:col-span-2" data-testid="form-summary-email">
 						<div className="text-sm font-medium text-gray-600" data-testid="form-summary-email-label">
 							Email for alerts
@@ -93,7 +93,7 @@ export function FormSummary({ formData }: FormSummaryProps) {
 					</div>
 				</div>
 
-				{/* Preferences */}
+				{}
 				{(formData.agreeToTerms || formData.agreeToUpdates) && (
 					<div className="border-t border-gray-200 pt-4" data-testid="form-summary-preferences">
 						<div className="text-sm font-medium text-gray-600" data-testid="form-summary-preferences-label">

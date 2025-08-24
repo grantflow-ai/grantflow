@@ -36,7 +36,7 @@ describe.sequential("SearchResults", () => {
 
 		it("shows loading state initially", () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["cancer"] });
-			mockSearchGrants.mockImplementation(() => new Promise(() => {})); // Never resolves
+			mockSearchGrants.mockImplementation(() => new Promise(() => {}));
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -191,7 +191,7 @@ describe.sequential("SearchResults", () => {
 	describe("Load more functionality", () => {
 		it("shows load more button when there are more results", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["popular"] });
-			const mockGrants = GrantFactory.batch(20); // Exactly limit count
+			const mockGrants = GrantFactory.batch(20);
 			mockSearchGrants.mockResolvedValue(mockGrants);
 
 			render(<SearchResults searchParams={searchParams} />);
@@ -205,7 +205,7 @@ describe.sequential("SearchResults", () => {
 
 		it("hides load more button when no more results", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["limited"] });
-			const mockGrants = GrantFactory.batch(10); // Less than limit
+			const mockGrants = GrantFactory.batch(10);
 			mockSearchGrants.mockResolvedValue(mockGrants);
 
 			render(<SearchResults searchParams={searchParams} />);
@@ -224,21 +224,17 @@ describe.sequential("SearchResults", () => {
 
 			render(<SearchResults searchParams={searchParams} />);
 
-			// Wait for initial load
 			await waitFor(() => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(20);
 			});
 
-			// Click load more
 			const loadMoreButton = screen.getByTestId("load-more-button");
 			await user.click(loadMoreButton);
 
-			// Wait for additional grants to load
 			await waitFor(() => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(35);
 			});
 
-			// Check second API call parameters
 			expect(mockSearchGrants).toHaveBeenNthCalledWith(2, {
 				limit: 20,
 				offset: 20,
@@ -250,7 +246,7 @@ describe.sequential("SearchResults", () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["loading"] });
 			const initialGrants = GrantFactory.batch(20);
 
-			mockSearchGrants.mockResolvedValueOnce(initialGrants).mockImplementation(() => new Promise(() => {})); // Never resolves
+			mockSearchGrants.mockResolvedValueOnce(initialGrants).mockImplementation(() => new Promise(() => {}));
 
 			render(<SearchResults searchParams={searchParams} />);
 
@@ -263,7 +259,7 @@ describe.sequential("SearchResults", () => {
 
 			expect(loadMoreButton).toBeDisabled();
 			expect(screen.getByText("Loading...")).toBeInTheDocument();
-			expect(screen.getByRole("progressbar")).toBeInTheDocument(); // Loading spinner
+			expect(screen.getByRole("progressbar")).toBeInTheDocument();
 		});
 
 		it("handles error during load more gracefully", async () => {
@@ -282,7 +278,6 @@ describe.sequential("SearchResults", () => {
 			await user.click(loadMoreButton);
 
 			await waitFor(() => {
-				// When API fails, we show error state
 				expect(screen.getByTestId("search-results-error")).toBeInTheDocument();
 				expect(screen.getByText("Failed to load grants. Please try again.")).toBeInTheDocument();
 			});
@@ -291,7 +286,7 @@ describe.sequential("SearchResults", () => {
 		it("hides load more button after loading final batch", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["final"] });
 			const initialGrants = GrantFactory.batch(20);
-			const finalGrants = GrantFactory.batch(5); // Less than limit
+			const finalGrants = GrantFactory.batch(5);
 
 			mockSearchGrants.mockResolvedValueOnce(initialGrants).mockResolvedValueOnce(finalGrants);
 
@@ -325,7 +320,6 @@ describe.sequential("SearchResults", () => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(3);
 			});
 
-			// Change search parameters
 			const newSearchParams = SearchParamsFactory.build({
 				keywords: ["updated"],
 			});
@@ -357,7 +351,6 @@ describe.sequential("SearchResults", () => {
 
 			const { rerender } = render(<SearchResults searchParams={initialSearchParams} />);
 
-			// Load more to get to offset 20
 			await waitFor(() => {
 				expect(screen.getByTestId("load-more-button")).toBeInTheDocument();
 			});
@@ -369,7 +362,6 @@ describe.sequential("SearchResults", () => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(30);
 			});
 
-			// Change search parameters - should reset
 			const newSearchParams = SearchParamsFactory.build({
 				keywords: ["reset"],
 			});
@@ -382,7 +374,6 @@ describe.sequential("SearchResults", () => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(15);
 			});
 
-			// Should call with offset 0 again
 			expect(mockSearchGrants).toHaveBeenLastCalledWith({
 				limit: 20,
 				offset: 0,
@@ -395,7 +386,6 @@ describe.sequential("SearchResults", () => {
 		it("correctly processes grants from API", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["typeguard"] });
 
-			// API always returns a valid Grant array
 			const grants = GrantFactory.batch(3);
 			mockSearchGrants.mockResolvedValue(grants);
 
@@ -409,7 +399,6 @@ describe.sequential("SearchResults", () => {
 		it("handles empty array response", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["no-results"] });
 
-			// API returns empty array when no results
 			mockSearchGrants.mockResolvedValue([]);
 
 			render(<SearchResults searchParams={searchParams} />);
@@ -432,7 +421,6 @@ describe.sequential("SearchResults", () => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(5);
 			});
 
-			// Should only be called once
 			expect(mockSearchGrants).toHaveBeenCalledTimes(1);
 		});
 
@@ -453,20 +441,16 @@ describe.sequential("SearchResults", () => {
 
 			const loadMoreButton = screen.getByTestId("load-more-button");
 
-			// Click multiple times rapidly
 			await user.click(loadMoreButton);
 			await user.click(loadMoreButton);
 			await user.click(loadMoreButton);
 
-			// Button should be disabled during loading
 			expect(loadMoreButton).toBeDisabled();
 
-			// Wait for completion
 			await waitFor(() => {
 				expect(screen.getAllByTestId("grant-card")).toHaveLength(30);
 			});
 
-			// Should only make one additional call
 			expect(mockSearchGrants).toHaveBeenCalledTimes(2);
 		});
 	});

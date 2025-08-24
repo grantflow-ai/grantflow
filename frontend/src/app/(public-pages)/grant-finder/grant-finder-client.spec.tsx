@@ -75,21 +75,20 @@ describe.sequential("GrantFinderClient", () => {
 
 		render(<GrantFinderClient />);
 
-		// Fill and submit the wizard
 		const keywordsTextarea = screen.getByTestId("keywords-textarea");
 		await user.type(keywordsTextarea, "CRISPR research");
 
 		const nextButton = screen.getByTestId("wizard-next-button");
-		await user.click(nextButton); // Activity codes
-		await user.click(nextButton); // Institution location
+		await user.click(nextButton);
+		await user.click(nextButton);
 
 		const institutionSelect = screen.getByTestId("institution-location-select");
 		await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
-		await user.click(nextButton); // Career stage
+		await user.click(nextButton);
 
 		const careerSelect = screen.getByTestId("career-stage-select");
 		await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
-		await user.click(nextButton); // Email alerts
+		await user.click(nextButton);
 
 		const emailInput = screen.getByTestId("email-alerts-input");
 		await user.type(emailInput, "test@research.edu");
@@ -112,7 +111,6 @@ describe.sequential("GrantFinderClient", () => {
 
 		render(<GrantFinderClient />);
 
-		// Submit wizard with specific parameters
 		const keywordsTextarea = screen.getByTestId("keywords-textarea");
 		await user.type(keywordsTextarea, "machine learning, AI");
 
@@ -141,7 +139,6 @@ describe.sequential("GrantFinderClient", () => {
 			expect(screen.getByTestId("search-results-container")).toBeInTheDocument();
 		});
 
-		// Verify API was called with correct parameters
 		expect(mockSearchGrants).toHaveBeenCalledWith({
 			limit: 20,
 			offset: 0,
@@ -155,10 +152,8 @@ describe.sequential("GrantFinderClient", () => {
 
 		render(<GrantFinderClient />);
 
-		// Initially shows CTA
 		expect(screen.getByTestId("grant-finder-cta")).toBeInTheDocument();
 
-		// Submit wizard
 		const keywordsTextarea = screen.getByTestId("keywords-textarea");
 		await user.type(keywordsTextarea, "test");
 
@@ -194,7 +189,6 @@ describe.sequential("GrantFinderClient", () => {
 
 		render(<GrantFinderClient />);
 
-		// Submit wizard to get to results
 		const keywordsTextarea = screen.getByTestId("keywords-textarea");
 		await user.type(keywordsTextarea, "biology");
 
@@ -223,11 +217,9 @@ describe.sequential("GrantFinderClient", () => {
 			expect(screen.getByTestId("search-results-container")).toBeInTheDocument();
 		});
 
-		// Click New Search
 		const newSearchButton = screen.getByTestId("new-search-button");
 		await user.click(newSearchButton);
 
-		// Should return to wizard
 		expect(screen.getByTestId("search-wizard")).toBeInTheDocument();
 		expect(screen.queryByTestId("search-results-container")).not.toBeInTheDocument();
 		expect(screen.getByTestId("grant-finder-cta")).toBeInTheDocument();
@@ -250,10 +242,8 @@ describe.sequential("GrantFinderClient", () => {
 
 			render(<GrantFinderClient />);
 
-			// Initially visible
 			expect(screen.getByTestId("priority-access-link")).toBeInTheDocument();
 
-			// Submit wizard
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "test");
 
@@ -291,11 +281,9 @@ describe.sequential("GrantFinderClient", () => {
 
 			render(<GrantFinderClient />);
 
-			// Initially not showing results
 			expect(screen.getByTestId("search-wizard")).toBeInTheDocument();
 			expect(screen.queryByTestId("search-results-container")).not.toBeInTheDocument();
 
-			// Submit to show results
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "state test");
 
@@ -332,7 +320,6 @@ describe.sequential("GrantFinderClient", () => {
 
 			render(<GrantFinderClient />);
 
-			// Submit with specific params
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "search params test");
 
