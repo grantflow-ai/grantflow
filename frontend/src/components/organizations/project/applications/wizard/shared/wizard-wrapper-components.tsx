@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { ThemeBadge } from "@/components/shared";
+import { ThemeBadge } from "@/components/shared/theme-badge";
 import { WizardStep } from "@/constants";
 import { MIN_TITLE_LENGTH, useApplicationStore, useWizardStore } from "@/stores";
 import { routes } from "@/utils/navigation";

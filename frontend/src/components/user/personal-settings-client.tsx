@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { deleteAccount, getSoleOwnedOrganizations, getSoleOwnedProjects } from "@/actions/user";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { DeleteAccountModal } from "@/components/user";
+import { DeleteAccountModal } from "@/components/user/delete-account-modal";
 import { useNotificationStore, useUserStore } from "@/stores";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
