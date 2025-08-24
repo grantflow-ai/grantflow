@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,

@@ -1,4 +1,4 @@
-import { AppCardDescription, AppCardHeader, AppCardTitle } from "@/components/app";
+import { AppCardDescription, AppCardHeader, AppCardTitle } from "@/components/app/app-card";
 
 export function AuthCardHeader({
 	className,

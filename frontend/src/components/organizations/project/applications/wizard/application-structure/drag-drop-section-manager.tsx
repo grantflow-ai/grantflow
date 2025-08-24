@@ -5,9 +5,9 @@ import Image from "next/image";
 import type { RefObject } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
 import {

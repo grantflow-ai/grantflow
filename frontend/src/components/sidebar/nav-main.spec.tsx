@@ -3,7 +3,9 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
 import { listApplications } from "@/actions/grant-applications";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useNavigationStore, useOrganizationStore, useProjectStore } from "@/stores";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useProjectStore } from "@/stores/project-store";
 import { NavMain } from "./nav-main";
 
 vi.mock("@/actions/grant-applications");

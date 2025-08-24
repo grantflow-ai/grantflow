@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { RefObject } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import type { WizardDialogRef } from "../shared/wizard-dialog";
 import { DragDropSectionManager } from "./drag-drop-section-manager";

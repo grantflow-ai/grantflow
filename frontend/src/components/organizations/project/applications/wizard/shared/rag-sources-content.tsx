@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 
 const FILE_ICON_MAP = {
 	csv: <Image alt="CSV file" height={20} src="/icons/file-csv.svg" width={20} />,

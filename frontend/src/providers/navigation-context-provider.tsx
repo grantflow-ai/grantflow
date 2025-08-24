@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
 import { getProject } from "@/actions/project";
-import { useApplicationStore, useNavigationStore, useOrganizationStore, useProjectStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useProjectStore } from "@/stores/project-store";
 
 interface NavigationContextProviderProps {
 	children: ReactNode;

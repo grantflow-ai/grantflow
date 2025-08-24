@@ -16,13 +16,11 @@ import {
 	WelcomeModal,
 } from "@/components/organizations";
 import { useOrganization } from "@/hooks/use-organization";
-import {
-	useNavigationStore,
-	useNewApplicationModalStore,
-	useNotificationStore,
-	useOrganizationStore,
-	useProjectStore,
-} from "@/stores";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
+import { useNotificationStore } from "@/stores/notification-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";

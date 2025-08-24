@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ThemeBadge } from "@/components/shared/theme-badge";
 import { WizardStep } from "@/constants";
-import { MIN_TITLE_LENGTH, useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
 import { routes } from "@/utils/navigation";
 import { Deadline } from "./deadline";
 

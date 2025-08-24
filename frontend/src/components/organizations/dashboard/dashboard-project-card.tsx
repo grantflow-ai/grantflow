@@ -2,7 +2,8 @@
 
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { AppCard, AppCardContent, AvatarGroup } from "@/components/app";
+import { AvatarGroup } from "@/components/app/app-avatar";
+import { AppCard, AppCardContent } from "@/components/app/app-card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,

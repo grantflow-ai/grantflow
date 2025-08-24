@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import {
 	Dialog,
 	DialogContent,

@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { useNavigationStore, useProjectStore } from "@/stores";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useProjectStore } from "@/stores/project-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
