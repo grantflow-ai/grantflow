@@ -1,6 +1,6 @@
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
-import { ToastListener } from "@/components/shared";
+import { ToastListener } from "@/components/shared/toast-listener";
 import { Toaster } from "@/components/ui/sonner";
 import { CookiesProviderWrapper } from "@/providers/cookies-provider";
 
