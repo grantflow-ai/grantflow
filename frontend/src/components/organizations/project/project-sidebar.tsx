@@ -15,7 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useUserStore } from "@/stores";
+import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
-import { type TemplateGenerationEvent, useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { FilePreviewCard } from "../shared/file-preview-card";
 import { LinkPreviewItem } from "../shared/link-preview-item";

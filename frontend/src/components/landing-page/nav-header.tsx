@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LogoDark } from "@/components/branding";
+import { LogoDark } from "@/components/branding/icons/logo";
 import { IconGoAhead } from "@/components/icons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";

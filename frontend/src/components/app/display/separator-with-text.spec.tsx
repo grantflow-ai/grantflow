@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { SeparatorWithText } from "@/components/app";
+import { SeparatorWithText } from "@/components/app/display/separator-with-text";
 
 describe.sequential("SeparatorWithText", () => {
 	afterEach(() => {

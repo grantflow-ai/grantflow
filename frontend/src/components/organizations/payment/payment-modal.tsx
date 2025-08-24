@@ -1,6 +1,7 @@
 import { TabsTrigger } from "@radix-ui/react-tabs";
 import { ChevronRight } from "lucide-react";
-import { AppButton, BaseModal } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
+import { BaseModal } from "@/components/app/feedback/base-modal";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 

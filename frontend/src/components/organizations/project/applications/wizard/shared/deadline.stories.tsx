@@ -1,7 +1,7 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import { Deadline } from "./deadline";
 
 const meta: Meta<typeof Deadline> = {

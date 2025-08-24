@@ -1,7 +1,8 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory } from "::testing/factories";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationStructureStep } from "./application-structure-step";
 
 vi.mock("./application-structure-left-pane", () => ({

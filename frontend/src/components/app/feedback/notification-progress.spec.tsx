@@ -1,7 +1,7 @@
 import { RagProcessingStatusFactory } from "::testing/factories";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
-import { NotificationProgress } from "@/components/app";
+import { NotificationProgress } from "@/components/app/feedback/notification-progress";
 
 describe.sequential("NotificationProgress", () => {
 	afterEach(() => {

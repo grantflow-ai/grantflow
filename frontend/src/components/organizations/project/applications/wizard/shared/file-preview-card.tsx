@@ -3,9 +3,14 @@
 import { ExternalLink, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
+import {
+	AppDropdownMenu,
+	AppDropdownMenuContent,
+	AppDropdownMenuItem,
+	AppDropdownMenuTrigger,
+} from "@/components/app/app-dropdown";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { log } from "@/utils/logger/client";
 

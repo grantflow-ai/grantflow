@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { action } from "storybook/actions";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import { LinkPreviewItem } from "./link-preview-item";
 
 const meta: Meta<typeof LinkPreviewItem> = {

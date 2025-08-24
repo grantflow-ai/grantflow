@@ -2,7 +2,8 @@ import { ApplicationWithTemplateFactory, ResearchObjectiveFactory } from "::test
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
-import { useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import { ResearchPlanStep } from "./research-plan-step";
 
 const meta: Meta<typeof ResearchPlanStep> = {

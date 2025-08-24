@@ -4,7 +4,8 @@ import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
-import { useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 
 import { WizardClientComponent } from "./wizard-client";
 

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useNavigationStore } from "@/stores";
+import { useNavigationStore } from "@/stores/navigation-store";
 import { routes } from "@/utils/navigation";
 
 interface UseNavigationContextOptions {

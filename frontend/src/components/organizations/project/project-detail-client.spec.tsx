@@ -49,7 +49,7 @@ vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
 	AvatarGroup: vi.fn(() => <div data-testid="mock-avatar-group" />),
 }));
-vi.mock("./applications/delete-application-modal", () => ({
+vi.mock("./delete-application-modal", () => ({
 	DeleteApplicationModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
 }));
 vi.mock("./application-list", () => ({
@@ -80,7 +80,7 @@ const mockCreateApplication = vi.mocked(await import("@/actions/grant-applicatio
 const mockGetProjectMembers = vi.mocked(await import("@/actions/project").then((m) => m.getProjectMembers));
 
 const MockDeleteApplicationModal = vi.mocked(
-	await import("./applications/delete-application-modal").then((m) => m.DeleteApplicationModal),
+	await import("./delete-application-modal").then((m) => m.DeleteApplicationModal),
 );
 const MockApplicationList = vi.mocked(await import("./application-list").then((m) => m.ApplicationList));
 

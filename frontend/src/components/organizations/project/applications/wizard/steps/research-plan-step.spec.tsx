@@ -9,7 +9,9 @@ import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useApplicationStore, useOrganizationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";

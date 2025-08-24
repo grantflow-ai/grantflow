@@ -1,7 +1,7 @@
 "use client";
 
 import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import type { Objective } from "@/stores";
+import type { Objective } from "@/stores/wizard-store";
 import { DraggableObjectiveCard } from "./draggable-objective-card";
 
 interface ObjectiveDragDropItem extends DragDropItem {
