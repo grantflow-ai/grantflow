@@ -133,11 +133,18 @@ tasks:
       - uv run litestar --app services.backend.src.main:app schema typescript --output frontend/src/types/api-types.ts
       - task: lint:frontend
 
+  generate:openapi-schema:
+    desc: Generate the OpenAPI schema from backend API
+    env:
+      PYTHONPATH: "{{.PYTHON_PATH}}"
+    cmds:
+      - uv run litestar --app services.backend.src.main:app schema openapi --output openapi.json
+      - pnpm biome format --write openapi.json
+
   generate:ai-rules:
     desc: Generate AI assistant configuration files (CLAUDE.md, .windsurfrules, .cursorrules) from ai-rulez.yaml
     cmds:
       - uvx ai-rulez generate --recursive
-
 
   db:up:
     desc: Start the local PostgreSQL database container if not already running
@@ -284,7 +291,6 @@ tasks:
       - task: db:migrate
       - echo "✅ Database reset complete!"
 
-
   frontend:install:
     desc: Install dependencies for both frontend folders using pnpm workspace
     cmds:
@@ -356,7 +362,6 @@ tasks:
     cmds:
       - pnpm test:coverage
 
-
   editor:dev:
     desc: Start the editor development server
     dir: editor
@@ -392,7 +397,6 @@ tasks:
     dir: editor
     cmds:
       - pnpm run storybook
-
 
   crdt:dev:
     desc: Start the CRDT server in development mode with hot-reloading
@@ -436,7 +440,6 @@ tasks:
     cmds:
       - pnpm run lint
 
-
   backend:install:
     desc: Install services dependencies using uv
     cmds:
@@ -468,7 +471,6 @@ tasks:
       - task: service:rag:test
       - task: crdt:test
       - task: _packages:test
-
 
   service:backend:dev:
     desc: Start the backend API service in development mode with hot-reloading
@@ -676,8 +678,6 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
-
-
   emulator:pubsub:up:
     desc: Start the Google Cloud Pub/Sub emulator for local development
     cmds:
@@ -687,7 +687,6 @@ tasks:
     desc: Start the Google Cloud Storage emulator for local development
     cmds:
       - docker compose --profile gcs up
-
 
   lint:all:
     desc: Run all linters and formatters on all files
@@ -847,7 +846,6 @@ tasks:
       - echo "Running trivy on terraform directory..."
       - trivy config ./terraform
 
-
   gh:deploy:backend:
     desc: Deploy backend service to Cloud Run via GitHub Actions
     cmds:
@@ -873,7 +871,6 @@ tasks:
     cmds:
       - gh workflow run "Deploy to Cloud Run" --ref development -f service=scraper -f use_latest=true
 
-
   cloud-functions:generate-requirements:
     desc: Generate requirements.txt files from pyproject.toml for cloud functions
     cmds:
@@ -897,7 +894,6 @@ tasks:
       - echo "🧪 Running cloud functions tests..."
       - uv run pytest cloud_functions/tests -v
       - echo "✅ Cloud functions tests completed!"
-
 
   _dev:check:
     internal: true

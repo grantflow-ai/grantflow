@@ -34,6 +34,13 @@ from services.backend.src.api.routes.granting_institutions import (
 from services.backend.src.api.routes.granting_institutions import (
     handle_update_organization as handle_update_granting_institution,
 )
+from services.backend.src.api.routes.grants import (
+    create_subscription,
+    get_grant_details,
+    search_grants,
+    unsubscribe,
+    verify_subscription,
+)
 from services.backend.src.api.routes.notifications import (
     dismiss_notification,
     list_notifications,
@@ -79,13 +86,6 @@ from services.backend.src.api.routes.projects import (
     handle_update_invitation_role,
     handle_update_member_role,
     handle_update_project,
-)
-from services.backend.src.api.routes.public_grants import (
-    create_subscription,
-    get_grant_details,
-    search_grants,
-    unsubscribe,
-    verify_subscription,
 )
 from services.backend.src.api.routes.rag_jobs import handle_retrieve_rag_job
 from services.backend.src.api.routes.sources import (

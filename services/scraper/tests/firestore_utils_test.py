@@ -99,7 +99,7 @@ async def test_save_grant_document_auto_generated_id(mock_collection: AsyncMock,
         "title": "Test Grant",
         "organization": "NIH",
         "description": "Test Description",
-        "url": "https://grants.nih.gov",  # URL without document ID
+        "url": "https://grants.nih.gov",
     }
 
     mock_document.set = AsyncMock()

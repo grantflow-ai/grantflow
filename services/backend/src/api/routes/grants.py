@@ -68,7 +68,7 @@ def get_firestore_client() -> firestore.AsyncClient:
     return firestore.AsyncClient(project=project_id)
 
 
-@get("/public/grants")
+@get("/grants")
 async def search_grants(
     search_query: str | None = None,
     category: str | None = None,
@@ -183,7 +183,7 @@ async def search_grants(
         )
 
 
-@get("/public/grants/{grant_id:str}")
+@get("/grants/{grant_id:str}")
 async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[str, str]]:
     logger.info("Public grant details request", grant_id=grant_id)
 
@@ -229,7 +229,7 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[
     )
 
 
-@post("/public/grants/subscribe")
+@post("/grants/subscribe")
 async def create_subscription(
     data: SubscriptionRequest,
 ) -> Response[SubscriptionResponse | dict[str, str]]:
@@ -344,7 +344,7 @@ async def create_subscription(
         )
 
 
-@get("/public/grants/verify/{token:str}")
+@get("/grants/verify/{token:str}")
 async def verify_subscription(token: str) -> Response[dict[str, str]]:
     logger.info("Verifying subscription", token=token)
 
@@ -382,7 +382,7 @@ async def verify_subscription(token: str) -> Response[dict[str, str]]:
     )
 
 
-@post("/public/grants/unsubscribe")
+@post("/grants/unsubscribe")
 async def unsubscribe(email: str) -> Response[dict[str, str]]:
     logger.info("Unsubscribing from grant alerts", email=email)
 
