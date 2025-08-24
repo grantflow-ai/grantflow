@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore } from "@/stores";
 
 export function usePollingCleanup() {
 	const stopPolling = useWizardStore((state) => state.polling.stop);

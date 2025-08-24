@@ -6,8 +6,7 @@ import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
 import { AppButton } from "@/components/app";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useProjectStore } from "@/stores/project-store";
+import { useNavigationStore, useProjectStore } from "@/stores";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 

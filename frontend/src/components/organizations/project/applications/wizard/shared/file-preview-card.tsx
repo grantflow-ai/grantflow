@@ -5,8 +5,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithId } from "@/types/files";
+import { useApplicationStore } from "@/stores";
+import type { FileWithId } from "@/types";
 import { log } from "@/utils/logger/client";
 
 const FILE_ICON_MAP = {

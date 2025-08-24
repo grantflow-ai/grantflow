@@ -2,8 +2,7 @@ import { ApplicationWithTemplateFactory, GrantTemplateFactory, RagSourceFactory 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore, useWizardStore } from "@/stores";
 import { WizardFooter } from "./wizard-wrapper-components";
 
 const meta: Meta<typeof WizardFooter> = {

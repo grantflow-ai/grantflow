@@ -9,7 +9,7 @@ import {
 	getProjects as handleGetProjects,
 	updateProject as handleUpdateProject,
 } from "@/actions/project";
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 import { log } from "@/utils/logger/client";
 
 export type ProjectsListType = API.ListProjects.Http200.ResponseBody;

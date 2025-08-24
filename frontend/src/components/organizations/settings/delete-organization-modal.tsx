@@ -5,8 +5,7 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { useUserStore } from "@/stores/user-store";
+import { useOrganizationStore, useUserStore } from "@/stores";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -38,8 +37,6 @@ export function DeleteOrganizationModal({
 
 		setIsDeleting(true);
 		try {
-			// TODO: Implement organization deletion API call
-
 			log.info("Deleting organization", { organizationId });
 
 			clearOrganization();

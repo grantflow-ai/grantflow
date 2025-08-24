@@ -5,7 +5,7 @@ import type React from "react";
 import { AppCard, AppCardContent } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
-import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
+import { SocialSigninButton } from ".";
 import { AuthCardHeader } from "./auth-card-header";
 import { SigninForm } from "./signin-form";
 

@@ -4,9 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
 import { WizardClientComponent } from "@/components/organizations/project/applications/wizard";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
+import { useNavigationStore, useOrganizationStore, useProjectStore } from "@/stores";
 import { routes } from "@/utils/navigation";
 
 export function ApplicationWizardPageClient() {

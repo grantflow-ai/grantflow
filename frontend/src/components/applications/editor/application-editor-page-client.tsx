@@ -2,10 +2,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
-import { EditorContainer } from "@/components/organizations/project/applications/editor/editor-container";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
+import { EditorContainer } from "@/components/organizations";
+import { useNavigationStore, useOrganizationStore, useProjectStore } from "@/stores";
 import { routes } from "@/utils/navigation";
 
 export function ApplicationEditorPageClient() {

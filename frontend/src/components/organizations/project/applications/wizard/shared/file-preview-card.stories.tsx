@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { action } from "storybook/actions";
-import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithId } from "@/types/files";
+import { useApplicationStore } from "@/stores";
+import type { FileWithId } from "@/types";
 import { FilePreviewCard } from "./file-preview-card";
 
 const meta: Meta<typeof FilePreviewCard> = {

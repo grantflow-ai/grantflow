@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe } from "vitest";
 
-import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
+import { SocialSigninButton } from ".";
 
 describe.sequential("SocialSigninButton", () => {
 	afterEach(() => {

@@ -1,4 +1,4 @@
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 import { getClient } from "@/utils/api";
 
 export async function createSubscription(

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 import { login } from "@/actions/login";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { useUserStore } from "@/stores/user-store";
+import { useUserStore } from "@/stores";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";

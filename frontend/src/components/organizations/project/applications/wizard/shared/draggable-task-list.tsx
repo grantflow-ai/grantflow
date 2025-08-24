@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore } from "@/stores";
 import { DraggableTaskItem } from "./draggable-task-item";
 
 interface DraggableTaskListProps {

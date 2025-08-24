@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppButton } from "@/components/app";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore, useWizardStore } from "@/stores";
 import { GenerationCompleteModal } from "../generation-complete-modal";
 
 export function GenerateCompleteStep() {

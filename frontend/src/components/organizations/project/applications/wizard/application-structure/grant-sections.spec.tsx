@@ -7,7 +7,7 @@ import {
 	hasDetailedResearchPlanUpdate,
 	hasGenerationInstructions,
 	hasMaxWords,
-} from "@/types/grant-sections";
+} from "@/types";
 import { SortableSection } from "./grant-sections";
 
 vi.mock("@dnd-kit/sortable", () => ({

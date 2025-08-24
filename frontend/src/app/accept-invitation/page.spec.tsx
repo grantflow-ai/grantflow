@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { acceptInvitation } from "@/actions/project";
-import { useUserStore } from "@/stores/user-store";
+import { useUserStore } from "@/stores";
 import AcceptInvitationPage from "./page";
 
 vi.mock("next/navigation");
