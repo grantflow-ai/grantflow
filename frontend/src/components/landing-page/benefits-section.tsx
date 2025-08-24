@@ -1,9 +1,9 @@
 import Image from "next/image";
-import { HowItWorksCard } from "@/components/landing-page/howitworks-card";
-import { IconBenefitFirst, IconBenefitSecond } from "@/components/landing-page/icons";
-import { ScaleElement } from "@/components/landing-page/scale-element";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
 import { cn } from "@/lib/utils";
+import { HowItWorksCard } from "./howitworks-card";
+import { IconBenefitFirst, IconBenefitSecond } from "./icons";
+import { ScaleElement } from "./scale-element";
+import { ScrollFadeElement } from "./scroll-fade-element";
 
 const benefitsCardHeader = "font-heading font-medium text-stone-800 text-3xl md:text-4xl";
 const benefitsCardBackground = "bg-stone-50/60";
