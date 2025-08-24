@@ -1,4 +1,4 @@
-import type { FormData } from "../types";
+import type { FormData } from "@/components/grant-finder/types";
 
 interface KeywordsStepProps {
 	formData: FormData;

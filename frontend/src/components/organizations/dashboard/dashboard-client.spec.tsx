@@ -52,10 +52,10 @@ vi.mock("@/components/layout/app-header", () => ({
 vi.mock("./dashboard-project-card", () => ({
 	DashboardProjectCard: vi.fn(() => <div data-testid="mock-project-card" />),
 }));
-vi.mock("../modals/delete-project-modal", () => ({
+vi.mock("@/components/organizations/modals/delete-project-modal", () => ({
 	DeleteProjectModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
 }));
-vi.mock("../modals/new-application-modal", () => ({
+vi.mock("@/components/organizations/modals/new-application-modal", () => ({
 	default: vi.fn(() => <div data-testid="mock-new-application-modal" />),
 }));
 vi.mock("@/components/app", () => ({
@@ -67,7 +67,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 	TooltipContent: vi.fn(() => <div />),
 	TooltipTrigger: vi.fn(({ children }) => <div>{children}</div>),
 }));
-vi.mock("../payment/payment-link", () => ({
+vi.mock("@/components/organizations/payment/payment-link", () => ({
 	default: vi.fn(() => <div data-testid="mock-payment-link" />),
 }));
 vi.mock("./dashboard-stats", () => ({
@@ -117,10 +117,14 @@ const MockDashboardProjectCard = vi.mocked(
 	await import("./dashboard-project-card").then((m) => m.DashboardProjectCard),
 );
 const MockWelcomeModal = vi.mocked(await import("./welcome/welcome-modal").then((m) => m.WelcomeModal));
-const MockPaymentLink = vi.mocked(await import("../payment/payment-link").then((m) => m.default));
-const MockNewApplicationModal = vi.mocked(await import("../modals/new-application-modal").then((m) => m.default));
+const MockPaymentLink = vi.mocked(
+	await import("@/components/organizations/payment/payment-link").then((m) => m.default),
+);
+const MockNewApplicationModal = vi.mocked(
+	await import("@/components/organizations/modals/new-application-modal").then((m) => m.default),
+);
 const MockDeleteProjectModal = vi.mocked(
-	await import("../modals/delete-project-modal").then((m) => m.DeleteProjectModal),
+	await import("@/components/organizations/modals/delete-project-modal").then((m) => m.DeleteProjectModal),
 );
 
 describe("DashboardClient", () => {
