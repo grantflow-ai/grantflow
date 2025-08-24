@@ -6,7 +6,7 @@ import { GripHorizontal } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { IconButton } from "@/components/app/buttons/icon-button";
-import AppTextArea from "@/components/app/forms/textarea-field";
+import AppTextArea from "@/components/app/fields/textarea-field";
 
 interface DraggableTaskItemProps {
 	isEditing?: boolean;
