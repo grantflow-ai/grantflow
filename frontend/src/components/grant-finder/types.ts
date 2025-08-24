@@ -8,7 +8,6 @@ export interface FormData {
 	keywords: string;
 }
 
-// Match the actual API response type
 export interface Grant {
 	activity_code: string;
 	amount?: string;

@@ -10,7 +10,7 @@ const formatDeadline = (deadline: string | undefined) => {
 	const date = new Date(deadline);
 	const today = new Date();
 
-	// Set both dates to start of day in UTC to avoid timezone issues
+	// ~keep Set both dates to start of day in UTC to avoid timezone issues
 	const dateUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 	const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
 	const daysUntil = Math.round((dateUTC.getTime() - todayUTC.getTime()) / (1000 * 60 * 60 * 24));
@@ -35,7 +35,7 @@ const getDeadlineColor = (deadline: string | undefined) => {
 	const date = new Date(deadline);
 	const today = new Date();
 
-	// Set both dates to start of day in UTC to avoid timezone issues
+	// ~keep Set both dates to start of day in UTC to avoid timezone issues
 	const dateUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 	const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
 	const daysUntil = Math.round((dateUTC.getTime() - todayUTC.getTime()) / (1000 * 60 * 60 * 24));

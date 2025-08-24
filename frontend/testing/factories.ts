@@ -907,7 +907,6 @@ export const UpdateMemberRoleOrgRequestFactory = new Factory<API.UpdateMemberRol
 	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
 }));
 
-// Grant Finder Factories
 export const GrantFactory = new Factory<Grant>((factory) => {
 	const today = new Date();
 	const futureDate = new Date(today.getTime() + factory.number.int({ max: 90, min: 1 }) * 24 * 60 * 60 * 1000);
@@ -1025,7 +1024,6 @@ export const FormDataFactory = new Factory<FormData>((factory) => ({
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }).join(", "),
 }));
 
-// Grant Search API Response Factories
 export const GrantsSearchResponseFactory = new Factory<API.GrantsSearchGrants.Http200.ResponseBody>(
 	(factory) =>
 		GrantFactory.batch(factory.number.int({ max: 20, min: 0 })) as API.GrantsSearchGrants.Http200.ResponseBody,

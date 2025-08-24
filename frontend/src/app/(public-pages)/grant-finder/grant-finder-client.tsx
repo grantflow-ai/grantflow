@@ -25,13 +25,13 @@ export function GrantFinderClient() {
 			className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700"
 			data-testid="grant-finder-client"
 		>
-			{/* Hero Background */}
+			{}
 			<div
 				className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700"
 				data-testid="hero-background"
 			/>
 
-			{/* Hero Section */}
+			{}
 			<section className="relative z-10 pb-20 pt-32" data-testid="grant-finder-hero">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8" data-testid="hero-content">
 					<div className="mx-auto max-w-5xl text-center">
@@ -51,11 +51,11 @@ export function GrantFinderClient() {
 				</div>
 			</section>
 
-			{/* Main Content */}
+			{}
 			<section className="relative z-10 min-h-screen bg-gray-50 py-16" data-testid="grant-finder-main">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8" data-testid="main-content">
 					<div className="mx-auto max-w-5xl">
-						{/* Title Badge */}
+						{}
 						<div className="mb-8 text-center" data-testid="main-content-header">
 							<h2 className="mt-4 text-3xl font-bold text-gray-900" data-testid="main-content-title">
 								Find Your Next Grant in Minutes
@@ -69,7 +69,7 @@ export function GrantFinderClient() {
 							</p>
 						</div>
 
-						{/* Search Wizard or Results */}
+						{}
 						{showResults ? (
 							<>
 								<div className="mb-6 flex justify-between" data-testid="search-results-header">
@@ -100,7 +100,7 @@ export function GrantFinderClient() {
 				</div>
 			</section>
 
-			{/* CTA Section */}
+			{}
 			{!showResults && (
 				<section className="relative z-10 border-t bg-white py-16" data-testid="grant-finder-cta">
 					<div className="container mx-auto px-4 sm:px-6 lg:px-8">

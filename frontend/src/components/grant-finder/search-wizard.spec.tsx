@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SearchWizard } from "./search-wizard";
 
-// Mock the toast
 vi.mock("sonner", () => ({
 	toast: {
 		success: vi.fn(),
@@ -81,7 +80,6 @@ describe.sequential("SearchWizard", () => {
 		it("navigates through all steps in order", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Step 1: Keywords
 			expect(screen.getByTestId("keywords-step")).toBeInTheDocument();
 
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
@@ -90,14 +88,12 @@ describe.sequential("SearchWizard", () => {
 			let nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Step 2: Activity codes
 			expect(screen.getByTestId("activity-codes-step")).toBeInTheDocument();
 			expect(screen.getByTestId("activity-codes-step-title")).toHaveTextContent("NIH Activity Codes");
 
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Step 3: Institution location
 			expect(screen.getByTestId("institution-location-step")).toBeInTheDocument();
 			expect(screen.getByTestId("institution-location-step-title")).toHaveTextContent("Institution Location");
 
@@ -107,7 +103,6 @@ describe.sequential("SearchWizard", () => {
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Step 4: Career stage
 			expect(screen.getByTestId("career-stage-step")).toBeInTheDocument();
 			expect(screen.getByTestId("career-stage-step-title")).toHaveTextContent("Career Stage");
 
@@ -117,7 +112,6 @@ describe.sequential("SearchWizard", () => {
 			nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Step 5: Email alerts
 			expect(screen.getByTestId("email-alerts-step")).toBeInTheDocument();
 			expect(screen.getByTestId("email-alerts-step-title")).toHaveTextContent("Email for Alerts");
 		});
@@ -125,43 +119,38 @@ describe.sequential("SearchWizard", () => {
 		it("can navigate backwards through steps", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Navigate to step 3
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
 
 			const nextButton = screen.getByTestId("wizard-next-button");
-			await user.click(nextButton); // Step 2
-			await user.click(nextButton); // Step 3
+			await user.click(nextButton);
+			await user.click(nextButton);
 
 			expect(screen.getByTestId("institution-location-step")).toBeInTheDocument();
 
-			// Navigate backwards
 			const backButton = screen.getByTestId("wizard-back-button");
-			await user.click(backButton); // Back to step 2
+			await user.click(backButton);
 
 			expect(screen.getByTestId("activity-codes-step")).toBeInTheDocument();
 
-			await user.click(backButton); // Back to step 1
+			await user.click(backButton);
 			expect(screen.getByTestId("keywords-step")).toBeInTheDocument();
 		});
 
 		it("preserves form data across steps", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Fill in keywords and navigate forward
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR, gene editing");
 
 			const nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
-			await user.click(nextButton); // Skip activity codes step
+			await user.click(nextButton);
 
-			// Go back to keywords step
 			const backButton = screen.getByTestId("wizard-back-button");
 			await user.click(backButton);
 			await user.click(backButton);
 
-			// Check that keywords are preserved
 			expect(screen.getByTestId("keywords-textarea")).toHaveValue("CRISPR, gene editing");
 		});
 	});
@@ -185,14 +174,12 @@ describe.sequential("SearchWizard", () => {
 		it("does not validate activity codes step (optional)", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Navigate to activity codes step
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
 
 			let nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Activity codes step should allow proceeding without selection
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).not.toBeDisabled();
 		});
@@ -200,19 +187,16 @@ describe.sequential("SearchWizard", () => {
 		it("validates institution location step", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Navigate to institution location step
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
 
 			let nextButton = screen.getByTestId("wizard-next-button");
-			await user.click(nextButton); // Activity codes
-			await user.click(nextButton); // Institution location
+			await user.click(nextButton);
+			await user.click(nextButton);
 
-			// Should be disabled without selection
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			// Enable after selection
 			const institutionSelect = screen.getByTestId("institution-location-select");
 			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
 
@@ -222,24 +206,21 @@ describe.sequential("SearchWizard", () => {
 		it("validates career stage step", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Navigate to career stage step
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR");
 
 			let nextButton = screen.getByTestId("wizard-next-button");
-			await user.click(nextButton); // Activity codes
-			await user.click(nextButton); // Institution location
+			await user.click(nextButton);
+			await user.click(nextButton);
 
 			const institutionSelect = screen.getByTestId("institution-location-select");
 			await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
 
-			await user.click(nextButton); // Career stage
+			await user.click(nextButton);
 
-			// Should be disabled without selection
 			nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 
-			// Enable after selection
 			const careerSelect = screen.getByTestId("career-stage-select");
 			await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
 
@@ -249,20 +230,17 @@ describe.sequential("SearchWizard", () => {
 		it("validates email alerts step", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Navigate to email step without filling email form
 			await navigateToEmailStep(user, { fillEmailForm: false });
 
 			const submitButton = screen.getByTestId("wizard-submit-button");
 			expect(submitButton).toBeDisabled();
 			expect(submitButton).toHaveTextContent("Get Alerts");
 
-			// Enter email but no terms agreement
 			const emailInput = screen.getByTestId("email-alerts-input");
 			await user.type(emailInput, "test@example.com");
 
 			expect(submitButton).toBeDisabled();
 
-			// Agree to terms
 			const termsCheckbox = screen.getByTestId("terms-checkbox");
 			await user.click(termsCheckbox);
 
@@ -283,14 +261,12 @@ describe.sequential("SearchWizard", () => {
 		it("submits form with correct data format", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Fill out complete form
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "CRISPR, cancer research, gene editing");
 
 			const nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Skip activity codes
 			await user.click(nextButton);
 
 			const institutionSelect = screen.getByTestId("institution-location-select");
@@ -325,12 +301,11 @@ describe.sequential("SearchWizard", () => {
 		it("submits form with minimal required data", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Only fill required fields
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "machine learning");
 
 			const nextButton = screen.getByTestId("wizard-next-button");
-			await user.click(nextButton); // Skip activity codes
+			await user.click(nextButton);
 			await user.click(nextButton);
 
 			const institutionSelect = screen.getByTestId("institution-location-select");
@@ -400,44 +375,38 @@ describe.sequential("SearchWizard", () => {
 		it("preserves all form data during navigation", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Fill step 1
 			const keywordsTextarea = screen.getByTestId("keywords-textarea");
 			await user.type(keywordsTextarea, "proteomics");
 			const nextButton = screen.getByTestId("wizard-next-button");
 			await user.click(nextButton);
 
-			// Fill step 2 - activity codes would need MultiSelect interaction
-			await user.click(nextButton); // Skip for now
+			await user.click(nextButton);
 
-			// Fill step 3
 			const institutionSelect = screen.getByTestId("institution-location-select");
 			await user.selectOptions(institutionSelect, "U.S. institution with foreign component");
 			await user.click(nextButton);
 
-			// Fill step 4
 			const careerSelect = screen.getByTestId("career-stage-select");
 			await user.selectOptions(careerSelect, "Mid-career (11–20 yrs)");
 			await user.click(nextButton);
 
-			// Fill step 5
 			const emailInput = screen.getByTestId("email-alerts-input");
 			await user.type(emailInput, "test@research.edu");
 			const termsCheckbox = screen.getByTestId("terms-checkbox");
 			await user.click(termsCheckbox);
 
-			// Navigate back and verify data persistence
 			const backButton = screen.getByTestId("wizard-back-button");
-			await user.click(backButton); // Step 4
+			await user.click(backButton);
 
 			expect(screen.getByTestId("career-stage-select")).toHaveValue("Mid-career (11–20 yrs)");
 
-			await user.click(backButton); // Step 3
+			await user.click(backButton);
 			expect(screen.getByTestId("institution-location-select")).toHaveValue(
 				"U.S. institution with foreign component",
 			);
 
-			await user.click(backButton); // Step 2 (activity codes)
-			await user.click(backButton); // Step 1
+			await user.click(backButton);
+			await user.click(backButton);
 
 			expect(screen.getByTestId("keywords-textarea")).toHaveValue("proteomics");
 		});
@@ -447,7 +416,6 @@ describe.sequential("SearchWizard", () => {
 		it("has proper heading hierarchy", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Check first step heading
 			const keywordsTitle = screen.getByTestId("keywords-step-title");
 			expect(keywordsTitle.tagName).toBe("H3");
 		});
@@ -474,7 +442,6 @@ describe.sequential("SearchWizard", () => {
 		it("handles empty form submission gracefully", async () => {
 			render(<SearchWizard onSubmit={mockOnSubmit} />);
 
-			// Try to navigate through without filling required fields
 			const nextButton = screen.getByTestId("wizard-next-button");
 			expect(nextButton).toBeDisabled();
 		});
@@ -508,7 +475,6 @@ describe.sequential("SearchWizard", () => {
 	});
 });
 
-// Helper function to navigate to the email step
 async function navigateToEmailStep(
 	user: ReturnType<typeof userEvent.setup>,
 	options: Partial<{ fillEmailForm?: boolean; keywords: string }> = {},
@@ -517,18 +483,17 @@ async function navigateToEmailStep(
 	await user.type(keywordsTextarea, options.keywords ?? "CRISPR");
 
 	const nextButton = screen.getByTestId("wizard-next-button");
-	await user.click(nextButton); // Activity codes (skip)
-	await user.click(nextButton); // Institution location
+	await user.click(nextButton);
+	await user.click(nextButton);
 
 	const institutionSelect = screen.getByTestId("institution-location-select");
 	await user.selectOptions(institutionSelect, "U.S. institution (no foreign component)");
-	await user.click(nextButton); // Career stage
+	await user.click(nextButton);
 
 	const careerSelect = screen.getByTestId("career-stage-select");
 	await user.selectOptions(careerSelect, "Early-stage (≤ 10 yrs)");
-	await user.click(nextButton); // Email alerts
+	await user.click(nextButton);
 
-	// Only fill email form if explicitly requested
 	if (options.fillEmailForm) {
 		const emailInput = screen.getByTestId("email-alerts-input");
 		await user.type(emailInput, "test@example.com");

@@ -130,13 +130,11 @@ describe.sequential("SubscriptionForm", () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["recovery"] });
 			render(<SubscriptionForm searchParams={searchParams} />);
 
-			// Trigger validation error
 			const submitButton = screen.getByTestId("subscription-submit-button");
 			await user.click(submitButton);
 
 			expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
 
-			// Enter email and submit again
 			const emailInput = screen.getByTestId("subscription-email-input");
 			await user.type(emailInput, "valid@email.com");
 
@@ -145,7 +143,6 @@ describe.sequential("SubscriptionForm", () => {
 
 			await user.click(submitButton);
 
-			// Error should be cleared during submission
 			expect(screen.queryByTestId("subscription-error")).not.toBeInTheDocument();
 		});
 	});
@@ -214,7 +211,7 @@ describe.sequential("SubscriptionForm", () => {
 		it("shows loading state during submission", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["loading"] });
 
-			mockCreateSubscription.mockImplementation(() => new Promise(() => {})); // Never resolves
+			mockCreateSubscription.mockImplementation(() => new Promise(() => {}));
 
 			render(<SubscriptionForm searchParams={searchParams} />);
 
@@ -226,13 +223,13 @@ describe.sequential("SubscriptionForm", () => {
 
 			expect(submitButton).toBeDisabled();
 			expect(screen.getByText("Subscribing...")).toBeInTheDocument();
-			expect(screen.getByRole("progressbar")).toBeInTheDocument(); // Loading spinner
+			expect(screen.getByRole("progressbar")).toBeInTheDocument();
 		});
 
 		it("disables email input during submission", async () => {
 			const searchParams = SearchParamsFactory.build({ keywords: ["disabled"] });
 
-			mockCreateSubscription.mockImplementation(() => new Promise(() => {})); // Never resolves
+			mockCreateSubscription.mockImplementation(() => new Promise(() => {}));
 
 			render(<SubscriptionForm searchParams={searchParams} />);
 
@@ -405,14 +402,12 @@ describe.sequential("SubscriptionForm", () => {
 
 			const submitButton = screen.getByTestId("subscription-submit-button");
 
-			// First attempt - fails
 			await user.click(submitButton);
 
 			await waitFor(() => {
 				expect(screen.getByTestId("subscription-error")).toBeInTheDocument();
 			});
 
-			// Second attempt - succeeds
 			await user.click(submitButton);
 
 			await waitFor(() => {

@@ -303,7 +303,6 @@ describe("grants", () => {
 				email: mockSubscriptionRequest.email,
 				search_params: mockSubscriptionRequest.search_params,
 			};
-			// Remove frequency from request data for this test
 			await createSubscription(requestWithoutFrequency);
 
 			expect(mockClient.post).toHaveBeenCalledWith("grants/subscribe", {

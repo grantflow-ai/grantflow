@@ -48,9 +48,9 @@ export function ProgressBar({ currentStep, steps }: ProgressBarProps) {
 
 	return (
 		<div className="w-full" data-testid="progress-bar">
-			{/* Progress line and circles container */}
+			{}
 			<div className="relative mb-3 h-4" data-testid="progress-bar-container">
-				{/* Progress lines */}
+				{}
 				<div
 					className="absolute top-2 flex h-px bg-gray-300"
 					data-testid="progress-bar-lines"
@@ -80,7 +80,7 @@ export function ProgressBar({ currentStep, steps }: ProgressBarProps) {
 					})}
 				</div>
 
-				{/* Circles */}
+				{}
 				<div
 					className="grid h-4 items-center"
 					data-testid="progress-bar-circles"
@@ -106,7 +106,7 @@ export function ProgressBar({ currentStep, steps }: ProgressBarProps) {
 				</div>
 			</div>
 
-			{/* Labels */}
+			{}
 			<div
 				className="grid"
 				data-testid="progress-bar-labels"
