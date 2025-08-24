@@ -1,7 +1,7 @@
 import { IconGoAhead } from "@/components/icons";
+import { LandingPageScrollButton } from "@/components/landing-page/scroll-button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LandingPageScrollButton } from "../scroll-button";
 import type { PaymentRecurrence } from "./payment-plan.types";
 import { PaymentPlanCard } from "./payment-plan-card";
 import { PaymentPlansList } from "./payment-plans.constants";

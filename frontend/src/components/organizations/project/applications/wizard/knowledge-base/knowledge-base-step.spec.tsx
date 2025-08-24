@@ -20,7 +20,7 @@ vi.mock("@/actions/sources", () => ({
 	deleteApplicationSource: vi.fn(),
 }));
 
-vi.mock("../url-input", () => ({
+vi.mock("@/components/organizations/project/applications/wizard/url-input", () => ({
 	UrlInput: () => (
 		<button data-testid="url-input" type="button">
 			URL Input Component
@@ -28,7 +28,7 @@ vi.mock("../url-input", () => ({
 	),
 }));
 
-vi.mock("../template-file-uploader", () => ({
+vi.mock("@/components/organizations/project/applications/wizard/template-file-uploader", () => ({
 	TemplateFileUploader: () => (
 		<button data-testid="template-file-uploader" type="button">
 			Template File Uploader

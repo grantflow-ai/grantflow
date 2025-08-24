@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import AppTextArea from "@/components/app/fields/textarea-field";
+import { TemplateFileUploader } from "@/components/organizations/project/applications/wizard/template-file-uploader";
+import { UrlInput } from "@/components/organizations/project/applications/wizard/url-input";
+import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { TemplateFileUploader } from "../template-file-uploader";
-import { UrlInput } from "../url-input";
-import { WizardLeftPane } from "../wizard-left-pane";
 import { ApplicationPreview } from "./application-preview";
 
 const TITLE_MAX_LENGTH = 120;

@@ -1,18 +1,18 @@
 "use client";
 
+import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
+import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
+import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
+import { TemplateFileUploader } from "@/components/organizations/project/applications/wizard/template-file-uploader";
+import { UrlInput } from "@/components/organizations/project/applications/wizard/url-input";
+import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
+import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { Separator } from "@/components/ui/separator";
 import { SourceIndexingStatus } from "@/enums";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
-import { FilePreviewCard } from "../file-preview-card";
-import { LinkPreviewItem } from "../link-preview-item";
-import { PreviewCard } from "../preview-card";
-import { TemplateFileUploader } from "../template-file-uploader";
-import { UrlInput } from "../url-input";
-import { WizardLeftPane } from "../wizard-left-pane";
-import { WizardRightPane } from "../wizard-right-pane";
 
 export function KnowledgeBaseStep() {
 	const application = useApplicationStore((state) => state.application);
