@@ -22,7 +22,7 @@ import {
 } from "@/components/onboarding/backgrounds";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 import { SigninForm } from "@/components/onboarding/signin-form";
-import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
+import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useUserStore } from "@/stores/user-store";
