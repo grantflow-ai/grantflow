@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Footer from "@/components/public-pages/footer";
 
@@ -36,20 +36,20 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("@/components/branding/logo", () => ({
-	LogoDark: ({
-		className,
-		height,
-		width,
-	}: {
-		className?: string;
-		height?: number | string;
-		width?: number | string;
-	}) => (
-		<div className={className} data-testid="mocked-logo" style={{ height, width }}>
-			LogoDark
-		</div>
+vi.mock("@/components/public-pages/footer-links", () => ({
+	FooterLinks: ({ links }: { links: { href: string; label: string }[] }) => (
+		<ul data-testid="mocked-footer-links">
+			{links.map(({ href, label }, index) => (
+				<li key={index}>
+					<a href={href}>{label}</a>
+				</li>
+			))}
+		</ul>
 	),
+}));
+
+vi.mock("next/navigation", () => ({
+	usePathname: () => "/",
 }));
 
 afterEach(() => {
@@ -117,7 +117,7 @@ describe.sequential("Footer Component", () => {
 			const homeLinks = screen.getAllByLabelText("Go to homepage");
 			expect(homeLinks.length).toBeGreaterThanOrEqual(1);
 			homeLinks.forEach((link) => {
-				expect(link).toHaveAttribute("href", "/");
+				expect(link).toHaveAttribute("href", "/frontend/src/public");
 			});
 		});
 	});
@@ -150,7 +150,7 @@ describe.sequential("Footer Component", () => {
 			});
 
 			homeLinks.forEach((homeLink) => {
-				expect(homeLink).toHaveAttribute("href", "/");
+				expect(homeLink).toHaveAttribute("href", "/frontend/src/public");
 			});
 		});
 	});

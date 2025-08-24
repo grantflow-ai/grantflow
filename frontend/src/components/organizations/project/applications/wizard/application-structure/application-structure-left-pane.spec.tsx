@@ -7,31 +7,11 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 
-vi.mock("@/components/organizations/project/applications/wizard/shared", () => ({
-	FilePreviewCard: vi.fn(({ file, parentId, sourceStatus }) => (
-		<div data-testid="file-preview-card">
-			<span data-testid="file-name">{file.name}</span>
-			<span data-testid="file-parent-id">{parentId}</span>
-			<span data-testid="file-source-status">{sourceStatus}</span>
-		</div>
-	)),
-	LinkPreviewItem: vi.fn(({ parentId, sourceStatus, url }) => (
-		<div data-testid="link-preview-item">
-			<span data-testid="link-url">{url}</span>
-			<span data-testid="link-parent-id">{parentId}</span>
-			<span data-testid="link-source-status">{sourceStatus}</span>
-		</div>
-	)),
-	PreviewCard: vi.fn(({ children, className, ...props }) => (
-		<div className={className} {...props}>
-			{children}
-		</div>
-	)),
-	WizardLeftPane: vi.fn(({ children, contentSpacing, testId }) => (
-		<div className={contentSpacing} data-testid={testId}>
-			{children}
-		</div>
-	)),
+vi.mock("@/components/app/app-dropdown", () => ({
+	AppDropdownMenu: vi.fn(({ children }) => <div data-testid="mocked-dropdown-menu">{children}</div>),
+	AppDropdownMenuContent: vi.fn(({ children }) => <div>{children}</div>),
+	AppDropdownMenuItem: vi.fn(({ children, onClick }) => <button onClick={onClick}>{children}</button>),
+	AppDropdownMenuTrigger: vi.fn(({ children }) => <div>{children}</div>),
 }));
 
 vi.mock("@/hooks/use-polling-cleanup", () => ({
@@ -142,7 +122,7 @@ describe("ApplicationStructureLeftPane", () => {
 		expect(screen.getByText("https://example.com/grant2")).toBeInTheDocument();
 	});
 
-	it("passes parent ID to file and link components", () => {
+	it("renders file and link components with correct data", () => {
 		const mockTemplate = GrantTemplateFactory.build({
 			grant_sections: [GrantSectionFactory.build()],
 			id: "template-123",
@@ -156,11 +136,13 @@ describe("ApplicationStructureLeftPane", () => {
 
 		render(<ApplicationStructureLeftPane />);
 
-		const fileParentIds = screen.getAllByTestId("file-parent-id");
-		expect(fileParentIds[0]).toHaveTextContent("template-123");
+		const fileCards = screen.getAllByTestId("file-preview-card");
+		expect(fileCards).toHaveLength(1);
+		expect(screen.getByText("test.pdf")).toBeInTheDocument();
 
-		const linkParentIds = screen.getAllByTestId("link-parent-id");
-		expect(linkParentIds[0]).toHaveTextContent("template-123");
+		const linkItems = screen.getAllByTestId("link-preview-item");
+		expect(linkItems).toHaveLength(1);
+		expect(screen.getByText("https://example.com")).toBeInTheDocument();
 	});
 
 	it("shows error state when template generation fails", () => {

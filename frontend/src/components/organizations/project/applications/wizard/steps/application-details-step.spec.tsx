@@ -7,7 +7,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationDetailsStep } from "./application-details-step";
 
-vi.mock("@/components/organizations/project/applications/wizard/shared", () => ({
+vi.mock("../template-file-uploader", () => ({
 	TemplateFileUploader: vi.fn(({ parentId }) => (
 		<div data-testid="template-file-uploader">
 			<span data-testid="uploader-parent-id">{parentId}</span>
