@@ -15,7 +15,7 @@ vi.mock("@/components/organizations/project/applications/wizard/shared", () => (
 	)),
 }));
 
-vi.mock("../shared/application-preview", () => ({
+vi.mock("../application-preview", () => ({
 	ApplicationPreview: vi.fn(({ connectionStatus, connectionStatusColor, draftTitle, parentId }) => (
 		<div data-testid="application-preview">
 			<span data-testid="preview-title">{draftTitle}</span>
@@ -26,11 +26,11 @@ vi.mock("../shared/application-preview", () => ({
 	)),
 }));
 
-vi.mock("../shared/wizard-left-pane", () => ({
+vi.mock("../wizard-left-pane", () => ({
 	WizardLeftPane: vi.fn(({ children }) => <div data-testid="wizard-left-pane">{children}</div>),
 }));
 
-vi.mock("../shared/url-input", () => ({
+vi.mock("../url-input", () => ({
 	UrlInput: vi.fn(({ parentId }) => (
 		<div data-testid="url-input">
 			<span data-testid="url-input-parent-id">{parentId}</span>

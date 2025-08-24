@@ -1,17 +1,15 @@
 import Link from "next/link";
-import { CookieConsentProvider } from "@/components/cookie-consent";
+import { CookieConsentProvider } from "@/components/cookie-consent/cookie-consent-provider";
 import { IconGoAhead } from "@/components/icons";
-import {
-	BenefitsSection,
-	CoreFeaturesSection,
-	EarlyAccessSection,
-	GradientBackground,
-	HeroBanner,
-	LandingPageButton,
-	LandingPageScrollButton,
-	PaymentPlans,
-	TestimonialsSection,
-} from "@/components/landing-page";
+import { GradientBackground } from "@/components/landing-page/backgrounds";
+import { BenefitsSection } from "@/components/landing-page/benefits-section";
+import { LandingPageButton } from "@/components/landing-page/button";
+import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
+import { EarlyAccessSection } from "@/components/landing-page/early-access-section";
+import { HeroBanner } from "@/components/landing-page/hero-banner";
+import { PaymentPlans } from "@/components/landing-page/payment-plans/payment-plans";
+import { LandingPageScrollButton } from "@/components/landing-page/scroll-button";
+import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
 
 const CONTENT_CTA_SECTION = {
 	description:

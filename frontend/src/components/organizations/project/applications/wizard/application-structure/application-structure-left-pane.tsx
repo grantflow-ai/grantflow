@@ -6,10 +6,10 @@ import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
-import { FilePreviewCard } from "../shared/file-preview-card";
-import { LinkPreviewItem } from "../shared/link-preview-item";
-import { PreviewCard } from "../shared/preview-card";
-import { WizardLeftPane } from "../shared/wizard-left-pane";
+import { FilePreviewCard } from "../file-preview-card";
+import { LinkPreviewItem } from "../link-preview-item";
+import { PreviewCard } from "../preview-card";
+import { WizardLeftPane } from "../wizard-left-pane";
 
 const ANALYZING_STEPS = [
 	{

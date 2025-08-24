@@ -31,7 +31,7 @@ vi.mock("./shared", () => ({
 	WizardHeader: () => <div data-testid="wizard-header">Header</div>,
 }));
 
-vi.mock("./shared/wizard-dialog", () => ({
+vi.mock("./wizard-dialog", () => ({
 	WizardDialog: () => <div data-testid="wizard-dialog">Dialog</div>,
 }));
 

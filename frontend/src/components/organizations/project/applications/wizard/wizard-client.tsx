@@ -18,13 +18,13 @@ import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-st
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
-import { WizardDialog, type WizardDialogRef } from "./shared/wizard-dialog";
-import { WizardFooter, WizardHeader } from "./shared/wizard-wrapper-components";
 import { ApplicationDetailsStep } from "./steps/application-details-step";
 import { GenerateCompleteStep } from "./steps/generate-complete-step";
 import { KnowledgeBaseStep } from "./steps/knowledge-base-step";
 import { ResearchDeepDiveStep } from "./steps/research-deep-dive-step";
 import { ResearchPlanStep } from "./steps/research-plan-step";
+import { WizardDialog, type WizardDialogRef } from "./wizard-dialog";
+import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;
