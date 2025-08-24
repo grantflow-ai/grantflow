@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { Logo } from "@/components/branding/logo";
+import { Logo } from "./logo";
 
 describe.sequential("Logo Component", () => {
 	afterEach(() => {

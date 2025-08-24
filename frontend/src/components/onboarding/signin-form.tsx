@@ -4,7 +4,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
 import AppInput from "@/components/app/fields/input-field";
-import { IconGoAhead } from "@/components/branding/icons";
+import { IconGoAhead } from "@/components/icons";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 

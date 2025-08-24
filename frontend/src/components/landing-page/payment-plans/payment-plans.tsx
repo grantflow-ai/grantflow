@@ -1,4 +1,4 @@
-import { IconGoAhead } from "@/components/branding/icons";
+import { IconGoAhead } from "@/components/icons";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LandingPageScrollButton } from "../scroll-button";

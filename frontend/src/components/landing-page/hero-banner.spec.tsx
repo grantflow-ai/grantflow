@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
 
-import { HeroBanner } from "@/components/landing-page/hero-banner";
+import { HeroBanner } from "./hero-banner";
 
 vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,
