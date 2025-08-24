@@ -16,7 +16,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 
 interface CollapsedSidebarProps {

@@ -7,7 +7,7 @@ import {
 	pointerWithin,
 } from "@dnd-kit/core";
 import type { ZoneType } from "@/components/organizations/project/applications/wizard/application-structure/drag-drop-context";
-import type { GrantSection } from "@/types";
+import type { GrantSection } from "@/types/grant-sections";
 
 export const createZoneCollisionDetection = (): CollisionDetection => {
 	return (args) => {

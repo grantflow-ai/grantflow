@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
-import { WizardClientComponent } from "@/components/organizations/project/applications/wizard";
+import { WizardClientComponent } from "@/components/organizations/project/applications/wizard/wizard-client";
 import { useNavigationStore, useOrganizationStore, useProjectStore } from "@/stores";
 import { routes } from "@/utils/navigation";
 

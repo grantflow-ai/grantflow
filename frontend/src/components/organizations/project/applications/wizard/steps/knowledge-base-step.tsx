@@ -5,16 +5,14 @@ import { Separator } from "@/components/ui/separator";
 import { SourceIndexingStatus } from "@/enums";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores";
-import type { FileWithSource, UrlWithSource } from "@/types";
-import {
-	FilePreviewCard,
-	LinkPreviewItem,
-	PreviewCard,
-	TemplateFileUploader,
-	WizardLeftPane,
-	WizardRightPane,
-} from "../shared";
+import type { FileWithSource, UrlWithSource } from "@/types/files";
+import { FilePreviewCard } from "../shared/file-preview-card";
+import { LinkPreviewItem } from "../shared/link-preview-item";
+import { PreviewCard } from "../shared/preview-card";
+import { TemplateFileUploader } from "../shared/template-file-uploader";
 import { UrlInput } from "../shared/url-input";
+import { WizardLeftPane } from "../shared/wizard-left-pane";
+import { WizardRightPane } from "../shared/wizard-right-pane";
 
 export function KnowledgeBaseStep() {
 	const application = useApplicationStore((state) => state.application);

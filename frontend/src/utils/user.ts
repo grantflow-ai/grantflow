@@ -1,4 +1,4 @@
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/user";
 
 export function generateBackgroundColor(userId: string): string {
 	const colors = [

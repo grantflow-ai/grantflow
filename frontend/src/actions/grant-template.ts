@@ -1,6 +1,6 @@
 "use server";
 
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 import { createTraceHeaders, generateTraceId, logTraceEvent } from "@/utils/tracing";

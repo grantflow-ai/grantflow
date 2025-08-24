@@ -1,6 +1,6 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import type { ZoneType } from "@/components/organizations/project/applications/wizard/application-structure/drag-drop-context";
-import type { GrantSection, UpdateGrantSection } from "@/types";
+import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { log } from "@/utils/logger/client";
 
 export const determineNewParentId = (overSection: GrantSection, zone: ZoneType): null | string => {

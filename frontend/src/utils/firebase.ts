@@ -4,7 +4,7 @@ import { type FirebaseApp, initializeApp } from "firebase/app";
 import { type Auth, browserSessionPersistence, getAuth, setPersistence, updateProfile, type User } from "firebase/auth";
 import { deleteObject, type FirebaseStorage, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
-import type { UserInfo } from "@/types";
+import type { UserInfo } from "@/types/user";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 

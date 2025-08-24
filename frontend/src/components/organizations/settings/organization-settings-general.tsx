@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useOrganizationStore } from "@/stores";
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
 

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { AppDropdownMenu, AppDropdownMenuContent, AppDropdownMenuItem, AppDropdownMenuTrigger } from "@/components/app";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores";
-import type { FileWithId } from "@/types";
+import type { FileWithId } from "@/types/files";
 import { log } from "@/utils/logger/client";
 
 const FILE_ICON_MAP = {

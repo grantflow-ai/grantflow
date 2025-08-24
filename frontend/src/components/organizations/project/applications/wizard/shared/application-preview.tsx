@@ -6,7 +6,7 @@ import { ThemeBadge } from "@/components/shared/theme-badge";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { SourceIndexingStatus } from "@/enums";
 import { useApplicationStore } from "@/stores";
-import type { FileWithSource, UrlWithSource } from "@/types";
+import type { FileWithSource, UrlWithSource } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 import { LinkPreviewItem } from "./link-preview-item";
 import { PreviewCard } from "./preview-card";

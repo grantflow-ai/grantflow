@@ -19,7 +19,7 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { useNavigationStore, useOrganizationStore } from "@/stores";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
