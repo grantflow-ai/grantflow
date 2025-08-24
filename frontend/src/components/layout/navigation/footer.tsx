@@ -18,6 +18,10 @@ const LinkedInLink = () => {
 
 const links = [
 	{
+		href: "/grant-finder",
+		label: "Grant Finder",
+	},
+	{
 		href: "/terms",
 		label: "Terms of Use",
 	},
