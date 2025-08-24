@@ -36,7 +36,7 @@ vi.mock("./preview-loading", () => ({
 	PreviewLoadingComponent: () => <div data-testid="preview-loading-mock">PreviewLoading Mock</div>,
 }));
 
-vi.mock("../objective-form", () => ({
+vi.mock("./objective-form", () => ({
 	ObjectiveForm: ({
 		objectiveNumber,
 		onSaveAction,
