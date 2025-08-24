@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
-import AppTextArea from "@/components/app/forms/textarea-field";
+import AppTextArea from "@/components/app/fields/textarea-field";
 import { cn } from "@/lib/utils";
 
 export interface ObjectiveFormData {

@@ -28,7 +28,7 @@ vi.mock("@/components/app/buttons/icon-button", () => ({
 	),
 }));
 
-vi.mock("@/components/app/forms/textarea-field", () => ({
+vi.mock("@/components/app/fields/textarea-field", () => ({
 	default: ({ label, onChange, placeholder, value, ...props }: any) => (
 		<div>
 			<label htmlFor={props.id}>{label}</label>

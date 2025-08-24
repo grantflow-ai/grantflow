@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AppTextArea from "@/components/app/forms/textarea-field";
+import AppTextArea from "@/components/app/fields/textarea-field";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/stores/application-store";
