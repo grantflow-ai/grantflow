@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { BaseModal } from "@/components/app/feedback/base-modal";
 
 interface DeleteAccountModalProps {

@@ -1,7 +1,7 @@
 import { ApplicationFactory, FileWithIdFactory } from "::testing/factories";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { FilePreviewCard } from "./file-preview-card";
 

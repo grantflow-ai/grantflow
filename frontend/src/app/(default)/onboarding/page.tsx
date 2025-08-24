@@ -9,10 +9,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { login } from "@/actions/login";
-import { AppCard, AppCardContent } from "@/components/app";
+import { AppCard, AppCardContent } from "@/components/app/app-card";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
-import { LogoDark } from "@/components/branding";
+import { LogoDark } from "@/components/branding/icons/logo";
 import { CookieConsentProvider } from "@/components/cookie-consent";
 import {
 	AuthCardHeader,
@@ -25,7 +25,7 @@ import {
 } from "@/components/onboarding";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
-import { useUserStore } from "@/stores";
+import { useUserStore } from "@/stores/user-store";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";

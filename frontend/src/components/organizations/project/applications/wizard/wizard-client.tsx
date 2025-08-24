@@ -13,7 +13,8 @@ import {
 	type SourceProcessingNotificationMessage,
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
-import { type TemplateGenerationEvent, useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";

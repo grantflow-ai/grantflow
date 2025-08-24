@@ -2,9 +2,9 @@
 
 import { Coffee } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { BaseModal } from "@/components/app/feedback/base-modal";
-import { useWizardStore } from "@/stores";
+import { useWizardStore } from "@/stores/wizard-store";
 
 interface GenerationCompleteModalProps {
 	isOpen: boolean;

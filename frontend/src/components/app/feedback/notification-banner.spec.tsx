@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe } from "vitest";
-import type { NotificationData } from "@/components/app";
-import { NotificationBanner } from "@/components/app";
+import { NotificationBanner } from "@/components/app/feedback/notification-banner";
+import type { NotificationData } from "@/stores/notification-store";
 
 describe.sequential("NotificationBanner", () => {
 	afterEach(() => {

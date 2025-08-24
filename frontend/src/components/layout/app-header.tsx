@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AvatarGroup } from "@/components/app";
+import { AvatarGroup } from "@/components/app/app-avatar";
 import { Notification } from "@/components/organizations";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 

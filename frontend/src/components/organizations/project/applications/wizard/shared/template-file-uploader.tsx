@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
 import { log } from "@/utils/logger/client";

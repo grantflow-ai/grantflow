@@ -13,7 +13,8 @@ import {
 } from "@/actions/grant-applications";
 import { getProjectMembers } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { AppButton, AvatarGroup } from "@/components/app";
+import { AvatarGroup } from "@/components/app/app-avatar";
+import { AppButton } from "@/components/app/buttons/app-button";
 import AppHeader from "@/components/layout/app-header";
 import {
 	ApplicationList,
@@ -24,13 +25,11 @@ import {
 import type { InviteOptions } from "@/components/organizations/modals/invite-collaborator-modal";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import {
-	useNavigationStore,
-	useNewApplicationModalStore,
-	useOrganizationStore,
-	useProjectStore,
-	useUserStore,
-} from "@/stores";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
+import { useOrganizationStore } from "@/stores/organization-store";
+import { useProjectStore } from "@/stores/project-store";
+import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";

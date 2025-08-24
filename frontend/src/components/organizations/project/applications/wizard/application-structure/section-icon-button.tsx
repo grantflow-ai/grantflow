@@ -1,5 +1,5 @@
 import type React from "react";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 
 export function SectionIconButton({
 	children,

@@ -18,7 +18,8 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useNavigationStore, useOrganizationStore } from "@/stores";
+import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
 

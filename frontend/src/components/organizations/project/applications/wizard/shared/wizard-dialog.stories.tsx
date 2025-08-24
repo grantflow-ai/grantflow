@@ -2,7 +2,7 @@ import { ApplicationWithTemplateFactory, GrantTemplateFactory, RagSourceFactory 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import { RagSourcesContent } from "./rag-sources-content";
 import { RagSourcesFooter } from "./rag-sources-footer";
 import { WizardDialog, type WizardDialogRef } from "./wizard-dialog";

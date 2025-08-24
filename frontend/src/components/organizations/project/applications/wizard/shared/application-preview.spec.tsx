@@ -3,7 +3,7 @@ import { resetAllStores } from "::testing/store-reset";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
 import { ApplicationPreview } from "./application-preview";
 
 vi.mock("@/components/shared", () => ({

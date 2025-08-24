@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { BrandPattern } from "@/components/branding";
+import { BrandPattern } from "@/components/branding/brand-pattern";
 import { IconGoAhead } from "@/components/icons";
 import { AnimatedGradientBackground } from "./backgrounds-animated";
 import { NavHeader } from "./nav-header";

@@ -1,5 +1,5 @@
 import type React from "react";
-import { AppCard } from "@/components/app";
+import { AppCard } from "@/components/app/app-card";
 import { cn } from "@/lib/utils";
 
 interface PreviewCardProps extends React.ComponentProps<typeof AppCard> {

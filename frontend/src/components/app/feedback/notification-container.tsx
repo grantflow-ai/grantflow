@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 
 import { NotificationBanner } from "@/components/app/feedback/notification-banner";
-import { useNotificationStore } from "@/stores";
+import { useNotificationStore } from "@/stores/notification-store";
 
 export function NotificationContainer() {
 	const { notifications, removeNotification } = useNotificationStore();

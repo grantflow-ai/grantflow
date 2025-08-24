@@ -3,7 +3,8 @@ import { resetAllStores } from "::testing/store-reset";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useApplicationStore, useWizardStore } from "@/stores";
+import { useApplicationStore } from "@/stores/application-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 
 vi.mock("@/components/organizations/project/applications/wizard/shared", () => ({
