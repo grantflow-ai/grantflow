@@ -3,8 +3,15 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from google.cloud.exceptions import GoogleCloudError
 from litestar import Litestar
-from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
+from litestar.status_codes import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 from litestar.testing import AsyncTestClient
 
 
@@ -19,7 +26,7 @@ def mock_firestore_client() -> AsyncMock:
 async def public_test_client() -> AsyncIterator[AsyncTestClient[Any]]:
     from litestar.testing import AsyncTestClient
 
-    from services.backend.src.api.routes.public_grants import (
+    from services.backend.src.api.routes.grants import (
         create_subscription,
         get_grant_details,
         search_grants,
@@ -84,10 +91,8 @@ async def test_search_grants_no_filters(
     mock_collection.offset.return_value = mock_query
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants")
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants")
 
     assert response.status_code == HTTP_200_OK
     data = response.json()
@@ -113,10 +118,8 @@ async def test_search_grants_with_query(
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants", params={"search_query": "Grant 1"})
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants", params={"search_query": "Grant 1"})
 
     assert response.status_code == HTTP_200_OK
     data = response.json()
@@ -143,10 +146,8 @@ async def test_search_grants_with_category_filter(
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants", params={"category": "Research"})
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants", params={"category": "Research"})
 
     assert response.status_code == HTTP_200_OK
     mock_collection.where.assert_called_once_with("category", "==", "Research")
@@ -172,10 +173,8 @@ async def test_search_grants_with_amount_filters(
     mock_collection.limit = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants", params={"min_amount": 100000, "max_amount": 500000})
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants", params={"min_amount": 100000, "max_amount": 500000})
 
     assert response.status_code == HTTP_200_OK
     assert mock_collection.where.call_count == 1
@@ -200,10 +199,8 @@ async def test_search_grants_with_pagination(
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants", params={"limit": 1, "offset": 1})
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants", params={"limit": 1, "offset": 1})
 
     assert response.status_code == HTTP_200_OK
     mock_query.limit.assert_called_once_with(1)
@@ -221,10 +218,8 @@ async def test_get_grant_details_success(
     mock_collection.document.return_value = mock_doc_ref
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants/PA-24-000")
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants/PA-24-000")
 
     assert response.status_code == HTTP_200_OK
     data = response.json()
@@ -244,10 +239,8 @@ async def test_get_grant_details_not_found(
     mock_collection.document.return_value = mock_doc_ref
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants/NONEXISTENT")
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants/NONEXISTENT")
 
     assert response.status_code == HTTP_404_NOT_FOUND
     data = response.json()
@@ -273,11 +266,9 @@ async def test_create_subscription_success(
     mock_collection.add = AsyncMock(return_value=mock_doc_ref)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
         response = await public_test_client.post(
-            "/public/grants/subscribe",
+            "/grants/subscribe",
             json={
                 "email": "test@example.com",
                 "search_params": {"category": "Research"},
@@ -295,11 +286,9 @@ async def test_create_subscription_success(
 async def test_create_subscription_invalid_email(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
         response = await public_test_client.post(
-            "/public/grants/subscribe",
+            "/grants/subscribe",
             json={
                 "email": "invalid-email",
                 "search_params": {"category": "Research"},
@@ -314,11 +303,9 @@ async def test_create_subscription_invalid_email(
 async def test_create_subscription_invalid_frequency(
     public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
 ) -> None:
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
         response = await public_test_client.post(
-            "/public/grants/subscribe",
+            "/grants/subscribe",
             json={
                 "email": "test@example.com",
                 "search_params": {"category": "Research"},
@@ -349,11 +336,9 @@ async def test_create_subscription_update_existing(
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
         response = await public_test_client.post(
-            "/public/grants/subscribe",
+            "/grants/subscribe",
             json={
                 "email": "test@example.com",
                 "search_params": {"category": "Research"},
@@ -385,10 +370,8 @@ async def test_verify_subscription_success(
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants/verify/test-token-123")
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants/verify/test-token-123")
 
     assert response.status_code == HTTP_200_OK
     data = response.json()
@@ -411,10 +394,8 @@ async def test_verify_subscription_invalid_token(
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants/verify/invalid-token")
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants/verify/invalid-token")
 
     assert response.status_code == HTTP_400_BAD_REQUEST
     data = response.json()
@@ -436,11 +417,9 @@ async def test_unsubscribe_success(public_test_client: AsyncTestClient[Any], moc
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
         response = await public_test_client.post(
-            "/public/grants/unsubscribe",
+            "/grants/unsubscribe",
             params={"email": "test@example.com"},
         )
 
@@ -465,11 +444,9 @@ async def test_unsubscribe_no_subscription(
     mock_collection.where = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
         response = await public_test_client.post(
-            "/public/grants/unsubscribe",
+            "/grants/unsubscribe",
             params={"email": "test@example.com"},
         )
 
@@ -495,10 +472,106 @@ async def test_search_grants_limit_enforcement(
     mock_collection.order_by = MagicMock(return_value=mock_query)
     mock_firestore_client.collection.return_value = mock_collection
 
-    with patch(
-        "services.backend.src.api.routes.public_grants.get_firestore_client", return_value=mock_firestore_client
-    ):
-        response = await public_test_client.get("/public/grants", params={"limit": 200})
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants", params={"limit": 200})
 
     assert response.status_code == HTTP_200_OK
     mock_query.limit.assert_called_once_with(100)
+
+
+async def test_search_grants_firestore_error(
+    public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
+) -> None:
+    mock_firestore_client.collection.side_effect = GoogleCloudError("Firestore connection failed")
+
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants")
+
+    assert response.status_code == HTTP_500_INTERNAL_SERVER_ERROR
+    data = response.json()
+    assert data["error"] == "Search service temporarily unavailable"
+
+
+async def test_get_grant_details_firestore_error(
+    public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
+) -> None:
+    mock_doc_ref = MagicMock()
+    mock_doc_ref.get = AsyncMock(side_effect=GoogleCloudError("Firestore connection failed"))
+
+    mock_collection = MagicMock()
+    mock_collection.document.return_value = mock_doc_ref
+    mock_firestore_client.collection.return_value = mock_collection
+
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get("/grants/PA-24-000")
+
+    assert response.status_code >= 400
+
+
+async def test_create_subscription_firestore_error(
+    public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock
+) -> None:
+    mock_firestore_client.collection.side_effect = GoogleCloudError("Firestore connection failed")
+
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.post(
+            "/grants/subscribe",
+            json={
+                "email": "test@example.com",
+                "search_params": {"category": "Research"},
+                "frequency": "daily",
+            },
+        )
+
+    assert response.status_code == HTTP_500_INTERNAL_SERVER_ERROR
+    data = response.json()
+    assert data["error"] == "Subscription service temporarily unavailable"
+
+
+async def test_search_grants_with_deadline_filters(
+    public_test_client: AsyncTestClient[Any], mock_firestore_client: AsyncMock, mock_grant_docs: list[MagicMock]
+) -> None:
+    async def mock_stream() -> AsyncIterator[MagicMock]:
+        for doc in mock_grant_docs:
+            yield doc
+
+    mock_query = MagicMock()
+    mock_query.stream.return_value = mock_stream()
+    mock_query.order_by = MagicMock(return_value=mock_query)
+    mock_query.limit = MagicMock(return_value=mock_query)
+    mock_query.offset = MagicMock(return_value=mock_query)
+    mock_query.where = MagicMock(return_value=mock_query)
+
+    mock_collection = MagicMock()
+    mock_collection.where = MagicMock(return_value=mock_query)
+    mock_collection.order_by = MagicMock(return_value=mock_query)
+    mock_collection.limit = MagicMock(return_value=mock_query)
+    mock_collection.offset = MagicMock(return_value=mock_query)
+    mock_firestore_client.collection.return_value = mock_collection
+
+    with patch("services.backend.src.api.routes.grants.get_firestore_client", return_value=mock_firestore_client):
+        response = await public_test_client.get(
+            "/grants", params={"deadline_after": "2024-01-01", "deadline_before": "2024-12-31"}
+        )
+
+    assert response.status_code == HTTP_200_OK
+    assert mock_query.where.call_count >= 1
+    calls = [str(call) for call in mock_query.where.call_args_list]
+    deadline_calls = [call for call in calls if "deadline" in call]
+    assert len(deadline_calls) >= 1
+
+
+async def test_create_subscription_missing_email(public_test_client: AsyncTestClient[Any]) -> None:
+    response = await public_test_client.post(
+        "/grants/subscribe",
+        json={
+            "search_params": {"category": "Research"},
+            "frequency": "daily",
+        },
+    )
+    assert response.status_code == HTTP_400_BAD_REQUEST
+
+
+async def test_unsubscribe_missing_email(public_test_client: AsyncTestClient[Any]) -> None:
+    response = await public_test_client.post("/grants/unsubscribe")
+    assert response.status_code == HTTP_400_BAD_REQUEST

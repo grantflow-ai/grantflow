@@ -69,3 +69,4 @@ sentence-transformers/
 storybook-static/
 terraform.rc
 testing/test_data/results/
+openapi.json
