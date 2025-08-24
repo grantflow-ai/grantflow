@@ -1,4 +1,5 @@
 import { Factory } from "interface-forge";
+import type { FormData, Grant, SearchParams } from "@/components/grant-finder/types";
 import { SourceIndexingStatus } from "@/enums";
 import type { SourceProcessingNotification, WebsocketMessage } from "@/hooks/use-application-notifications";
 import type { API } from "@/types/api-types";
@@ -905,3 +906,145 @@ export const UpdateMemberRoleOrgRequestFactory = new Factory<API.UpdateMemberRol
 		: undefined,
 	role: factory.helpers.arrayElement(["ADMIN", "COLLABORATOR", "OWNER"]),
 }));
+
+export const GrantFactory = new Factory<Grant>((factory) => {
+	const today = new Date();
+	const futureDate = new Date(today.getTime() + factory.number.int({ max: 90, min: 1 }) * 24 * 60 * 60 * 1000);
+
+	return {
+		activity_code: factory.helpers.arrayElement([
+			"R01",
+			"R21",
+			"R03",
+			"K99",
+			"F31",
+			"F32",
+			"T32",
+			"P01",
+			"U01",
+			"SBIR",
+		]),
+		amount: factory.datatype.boolean()
+			? `$${factory.number.int({ max: 1_000_000, min: 100_000 }).toLocaleString()}`
+			: undefined,
+		amount_max: factory.datatype.boolean() ? factory.number.int({ max: 2_000_000, min: 500_000 }) : undefined,
+		amount_min: factory.datatype.boolean() ? factory.number.int({ max: 500_000, min: 50_000 }) : undefined,
+		category: factory.datatype.boolean()
+			? factory.helpers.arrayElement([
+					"Basic Research",
+					"Clinical Research",
+					"Training",
+					"Career Development",
+					"Small Business",
+				])
+			: undefined,
+		clinical_trials: factory.helpers.arrayElement(["Required", "Optional", "Not Allowed"]),
+		deadline: factory.datatype.boolean() ? futureDate.toISOString() : undefined,
+		description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+		document_number: factory.string.alphanumeric({ length: 10 }),
+		document_type: factory.helpers.arrayElement([
+			"Notice of Funding Opportunity",
+			"Program Announcement",
+			"Request for Applications",
+		]),
+		eligibility: factory.datatype.boolean() ? factory.lorem.sentence() : undefined,
+		expired_date: factory.date.future().toISOString(),
+		id: factory.string.uuid(),
+		organization: factory.helpers.arrayElement([
+			"National Institutes of Health",
+			"National Science Foundation",
+			"Department of Energy",
+			"Department of Defense",
+			"NIH",
+		]),
+		parent_organization: "U.S. Department of Health and Human Services",
+		participating_orgs: factory.helpers
+			.multiple(() => factory.company.name(), { count: { max: 3, min: 0 } })
+			.join(", "),
+		release_date: factory.date.past().toISOString(),
+		title: factory.lorem.sentence({ max: 12, min: 5 }),
+		url: factory.internet.url(),
+	};
+});
+
+export const SearchParamsFactory = new Factory<SearchParams>((factory) => ({
+	activityCodes: factory.datatype.boolean()
+		? factory.helpers.multiple(
+				() =>
+					factory.helpers.arrayElement([
+						"R01",
+						"R21",
+						"R03",
+						"K99",
+						"F31",
+						"F32",
+						"T32",
+						"P01",
+						"U01",
+						"SBIR",
+					]),
+				{ count: { max: 3, min: 1 } },
+			)
+		: undefined,
+	careerStage: factory.datatype.boolean()
+		? factory.helpers.arrayElement(["Early-stage (≤ 10 yrs)", "Mid-career (11–20 yrs)", "Senior (> 20 yrs)"])
+		: undefined,
+	email: factory.datatype.boolean() ? factory.internet.email() : undefined,
+	institutionLocation: factory.datatype.boolean()
+		? factory.helpers.arrayElement([
+				"U.S. institution (no foreign component)",
+				"U.S. institution with foreign component",
+				"Non-U.S. (foreign) institution",
+			])
+		: undefined,
+	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }),
+}));
+
+export const FormDataFactory = new Factory<FormData>((factory) => ({
+	activityCodes: factory.helpers.multiple(
+		() => factory.helpers.arrayElement(["R01", "R21", "R03", "K99", "F31", "F32", "T32", "P01", "U01", "SBIR"]),
+		{ count: { max: 3, min: 0 } },
+	),
+	agreeToTerms: factory.datatype.boolean(),
+	agreeToUpdates: factory.datatype.boolean(),
+	careerStage: factory.helpers.arrayElement([
+		"Early-stage (≤ 10 yrs)",
+		"Mid-career (11–20 yrs)",
+		"Senior (> 20 yrs)",
+	]),
+	email: factory.internet.email(),
+	institutionLocation: factory.helpers.arrayElement([
+		"U.S. institution (no foreign component)",
+		"U.S. institution with foreign component",
+		"Non-U.S. (foreign) institution",
+	]),
+	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }).join(", "),
+}));
+
+export const GrantsSearchResponseFactory = new Factory<API.GrantsSearchGrants.Http200.ResponseBody>(
+	(factory) =>
+		GrantFactory.batch(factory.number.int({ max: 20, min: 0 })) as API.GrantsSearchGrants.Http200.ResponseBody,
+);
+
+export const GrantSubscriptionRequestFactory = new Factory<API.GrantsSubscribeCreateSubscription.RequestBody>(
+	(factory) => ({
+		email: factory.internet.email(),
+		search_params: {
+			category: factory.datatype.boolean() ? factory.lorem.word() : "",
+			deadline_after: factory.datatype.boolean() ? factory.date.recent().toISOString().split("T")[0] : "",
+			deadline_before: factory.datatype.boolean() ? factory.date.future().toISOString().split("T")[0] : "",
+			limit: factory.number.int({ max: 50, min: 10 }),
+			max_amount: factory.datatype.boolean() ? factory.number.int({ max: 2_000_000, min: 100_000 }) : 0,
+			min_amount: factory.datatype.boolean() ? factory.number.int({ max: 100_000, min: 0 }) : 0,
+			offset: factory.number.int({ max: 100, min: 0 }),
+			query: factory.lorem.words({ max: 5, min: 1 }),
+		},
+	}),
+);
+
+export const GrantSubscriptionResponseFactory = new Factory<API.GrantsSubscribeCreateSubscription.Http201.ResponseBody>(
+	(factory) => ({
+		message: factory.lorem.sentence(),
+		subscription_id: factory.string.uuid(),
+	}),
+);

@@ -125,7 +125,13 @@ export function NavHeader() {
 							Prices
 						</LandingPageScrollButton>
 					)}
-					<NavLink href="/about" isActive={false} label="About us" theme="dark" />
+					<NavLink
+						href="/grant-finder"
+						isActive={pathname === "/grant-finder"}
+						label="Grant Finder"
+						theme="dark"
+					/>
+					<NavLink href="/about" isActive={pathname === "/about"} label="About us" theme="dark" />
 					{isHomePage && (
 						<LandingPageScrollButton
 							aria-label="Go to Waitlist Form"
@@ -211,6 +217,15 @@ export function NavHeader() {
 						Prices
 					</LandingPageScrollButton>
 				)}
+				<NavLink
+					href="/grant-finder"
+					isActive={pathname === "/grant-finder"}
+					label="Grant Finder"
+					onClick={() => {
+						setIsMobileMenuOpen(false);
+					}}
+					theme="dark"
+				/>
 				<NavLink
 					href="/about"
 					isActive={pathname === "/about"}
