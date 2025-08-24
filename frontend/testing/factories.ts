@@ -950,9 +950,6 @@ export const GrantFactory = new Factory<Grant>((factory) => {
 		eligibility: factory.datatype.boolean() ? factory.lorem.sentence() : undefined,
 		expired_date: factory.date.future().toISOString(),
 		id: factory.string.uuid(),
-		opportunity_number: factory.datatype.boolean()
-			? `${factory.helpers.arrayElement(["RFA", "PAR", "PAS"])}-${factory.string.alphanumeric({ casing: "upper", length: 2 })}-${factory.string.numeric(3)}`
-			: undefined,
 		organization: factory.helpers.arrayElement([
 			"National Institutes of Health",
 			"National Science Foundation",
@@ -966,7 +963,7 @@ export const GrantFactory = new Factory<Grant>((factory) => {
 			.join(", "),
 		release_date: factory.date.past().toISOString(),
 		title: factory.lorem.sentence({ max: 12, min: 5 }),
-		url: factory.datatype.boolean() ? factory.internet.url() : undefined,
+		url: factory.internet.url(),
 	};
 });
 

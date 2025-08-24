@@ -1,3 +1,6 @@
+import type { API } from "@/types/api-types";
+
+// UI-specific form data that doesn't directly map to API
 export interface FormData {
 	activityCodes: string[];
 	agreeToTerms: boolean;
@@ -7,30 +10,8 @@ export interface FormData {
 	institutionLocation: string;
 	keywords: string;
 }
-
-export interface Grant {
-	activity_code: string;
-	amount?: string;
-	amount_max?: number;
-	amount_min?: number;
-	category?: string;
-	clinical_trials: string;
-	deadline?: string;
-	description?: string;
-	document_number: string;
-	document_type: string;
-	eligibility?: string;
-	expired_date: string;
-	id: string;
-	opportunity_number?: string;
-	organization: string;
-	parent_organization: string;
-	participating_orgs: string;
-	release_date: string;
-	title: string;
-	url?: string;
-}
-
+export type Grant = GrantsResponse extends infer T | Record<string, never> ? ExtractArrayType<T> : never;
+// UI search params that will be transformed to API QueryParameters
 export interface SearchParams {
 	activityCodes?: string[];
 	careerStage?: string;
@@ -38,6 +19,12 @@ export interface SearchParams {
 	institutionLocation?: string;
 	keywords: string[];
 }
+
+type ExtractArrayType<T> = T extends readonly (infer U)[] ? U : never;
+
+// Extract the Grant type from the API response
+// The API returns either an empty object or an array of grants
+type GrantsResponse = API.GrantsSearchGrants.Http200.ResponseBody;
 
 export const ACTIVITY_CODES = [
 	"R01 - Research Project Grant",

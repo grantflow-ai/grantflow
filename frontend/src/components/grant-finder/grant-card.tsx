@@ -63,11 +63,6 @@ export function GrantCard({ grant }: GrantCardProps) {
 								{grant.activity_code}
 							</span>
 						)}
-						{grant.opportunity_number && (
-							<span className="text-xs text-gray-500" data-testid="opportunity-number">
-								{grant.opportunity_number}
-							</span>
-						)}
 					</div>
 
 					<h3 className="mb-2 text-lg font-semibold text-gray-900" data-testid="grant-title">

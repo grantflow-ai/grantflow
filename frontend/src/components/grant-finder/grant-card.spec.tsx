@@ -46,20 +46,6 @@ describe.sequential("GrantCard", () => {
 		expect(screen.queryByTestId("activity-code-badge")).not.toBeInTheDocument();
 	});
 
-	it("displays opportunity number when present", () => {
-		const grant = GrantFactory.build({ opportunity_number: "RFA-CA-123" });
-		render(<GrantCard grant={grant} />);
-
-		expect(screen.getByTestId("opportunity-number")).toHaveTextContent("RFA-CA-123");
-	});
-
-	it("does not display opportunity number when not present", () => {
-		const grant = GrantFactory.build({ opportunity_number: undefined });
-		render(<GrantCard grant={grant} />);
-
-		expect(screen.queryByTestId("opportunity-number")).not.toBeInTheDocument();
-	});
-
 	it("displays organization name", () => {
 		const grant = GrantFactory.build({ organization: "National Cancer Institute" });
 		render(<GrantCard grant={grant} />);
@@ -255,6 +241,7 @@ describe.sequential("GrantCard", () => {
 				participating_orgs: "NIH",
 				release_date: "2024-01-01T00:00:00Z",
 				title: "Test Grant",
+				url: "https://grants.nih.gov/test",
 			};
 
 			render(<GrantCard grant={minimalGrant} />);
