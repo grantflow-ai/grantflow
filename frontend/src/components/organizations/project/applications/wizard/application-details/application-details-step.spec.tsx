@@ -15,7 +15,7 @@ vi.mock("../template-file-uploader", () => ({
 	)),
 }));
 
-vi.mock("../application-preview", () => ({
+vi.mock("./application-preview", () => ({
 	ApplicationPreview: vi.fn(({ connectionStatus, connectionStatusColor, draftTitle, parentId }) => (
 		<div data-testid="application-preview">
 			<span data-testid="preview-title">{draftTitle}</span>
@@ -26,8 +26,8 @@ vi.mock("../application-preview", () => ({
 	)),
 }));
 
-vi.mock("../wizard-left-pane", () => ({
-	WizardLeftPane: vi.fn(({ children }) => <div data-testid="wizard-left-pane">{children}</div>),
+vi.mock("../../wizard-left-pane", () => ({
+	WizardLeftPane: vi.fn(({ children, testId }) => <div {...(testId && { "data-testid": testId })}>{children}</div>),
 }));
 
 vi.mock("../url-input", () => ({
@@ -54,7 +54,6 @@ describe("ApplicationDetailsStep", () => {
 		render(<ApplicationDetailsStep />);
 
 		expect(screen.getByTestId("application-details-step")).toBeInTheDocument();
-		expect(screen.getByTestId("wizard-left-pane")).toBeInTheDocument();
 		expect(screen.getByTestId("application-preview")).toBeInTheDocument();
 
 		expect(screen.getByTestId("application-title-header")).toHaveTextContent("Application Title");

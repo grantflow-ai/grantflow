@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import type { WizardDialogRef } from "../wizard-dialog";
+import type { WizardDialogRef } from "../modal/wizard-dialog";
 import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 vi.mock("@/hooks/use-drag-and-drop", () => ({

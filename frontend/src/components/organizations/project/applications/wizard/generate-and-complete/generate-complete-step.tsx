@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { GenerationCompleteModal } from "../generation-complete-modal";
+import { GenerationCompleteModal } from "./generation-complete-modal";
 
 export function GenerateCompleteStep() {
 	const application = useApplicationStore((state) => state.application);

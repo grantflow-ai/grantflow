@@ -21,7 +21,7 @@ import {
 	updateReorder,
 } from "@/utils/grant-sections";
 import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
-import type { WizardDialogRef } from "../wizard-dialog";
+import type { WizardDialogRef } from "../modal/wizard-dialog";
 import { DragDropContext, type DragDropContextData, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";

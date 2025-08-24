@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
-import TermsPage from "@/app/(public-pages)/terms/page";
+import TermsPage from "./page";
 
 vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,
