@@ -135,6 +135,8 @@ export namespace API {
 	created_at: string;
 	deadline?: string;
 	description?: string;
+	editor_document_id: null | string;
+	editor_document_init: boolean;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -211,8 +213,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	editor_document_init: boolean;
-	editor_document_id: string;
 };
 };
 
@@ -686,6 +686,8 @@ export namespace API {
 	created_at: string;
 	deadline?: string;
 	description?: string;
+	editor_document_id: null | string;
+	editor_document_init: boolean;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -762,8 +764,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	editor_document_init: boolean;
-	editor_document_id: string;
 };
 };
 
@@ -900,6 +900,168 @@ export namespace API {
 	name: string;
 }[];
 };
+};
+};
+
+	export namespace GrantsGrantIdGetGrantDetails {
+	export namespace Http200 {
+	export type ResponseBody = {
+	
+} | {
+	activity_code: string;
+	amount?: string;
+	amount_max?: number;
+	amount_min?: number;
+	category?: string;
+	clinical_trials: string;
+	deadline?: string;
+	description?: string;
+	document_number: string;
+	document_type: string;
+	eligibility?: string;
+	expired_date: string;
+	id: string;
+	organization: string;
+	parent_organization: string;
+	participating_orgs: string;
+	release_date: string;
+	title: string;
+	url: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	grant_id: string;
+};
+};
+
+	export namespace GrantsSearchGrants {
+	export namespace Http200 {
+	export type ResponseBody = {
+	
+} | {
+	activity_code: string;
+	amount?: string;
+	amount_max?: number;
+	amount_min?: number;
+	category?: string;
+	clinical_trials: string;
+	deadline?: string;
+	description?: string;
+	document_number: string;
+	document_type: string;
+	eligibility?: string;
+	expired_date: string;
+	id: string;
+	organization: string;
+	parent_organization: string;
+	participating_orgs: string;
+	release_date: string;
+	title: string;
+	url: string;
+}[];
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface QueryParameters {
+	category?: null | string;
+	deadline_after?: null | string;
+	deadline_before?: null | string;
+	limit?: number;
+	max_amount?: null | number;
+	min_amount?: null | number;
+	offset?: number;
+	search_query?: null | string;
+};
+};
+
+	export namespace GrantsSubscribeCreateSubscription {
+	export namespace Http201 {
+	export type ResponseBody = {
+	
+} | {
+	message: string;
+	subscription_id: string;
+	verification_required: boolean;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export type RequestBody = {
+	email: string;
+	frequency?: string;
+	search_params: {
+	category: string;
+	deadline_after: string;
+	deadline_before: string;
+	limit: number;
+	max_amount: number;
+	min_amount: number;
+	offset: number;
+	query: string;
+};
+};
+};
+
+	export namespace GrantsUnsubscribeUnsubscribe {
+	export namespace Http201 {
+	export type ResponseBody = {
+	
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface QueryParameters {
+	email: string;
+};
+};
+
+	export namespace GrantsVerifyTokenVerifySubscription {
+	export namespace Http200 {
+	export type ResponseBody = {
+	
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	token: string;
 };
 };
 
@@ -1274,6 +1436,8 @@ export namespace API {
 	created_at: string;
 	deadline?: string;
 	description?: string;
+	editor_document_id: null | string;
+	editor_document_init: boolean;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -1350,8 +1514,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	editor_document_id: string | null;
-	editor_document_init: boolean;
 };
 };
 
@@ -1561,6 +1723,8 @@ export namespace API {
 	created_at: string;
 	deadline?: string;
 	description?: string;
+	editor_document_id: null | string;
+	editor_document_init: boolean;
 	form_inputs?: {
 	background_context: string;
 	hypothesis: string;
@@ -1637,8 +1801,6 @@ export namespace API {
 	text?: string;
 	title: string;
 	updated_at: string;
-	editor_document_init: boolean;
-	editor_document_id: string;
 };
 };
 
