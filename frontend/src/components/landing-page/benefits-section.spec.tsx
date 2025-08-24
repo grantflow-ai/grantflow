@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
-import { BenefitsSection } from "@/components/landing-page/benefits-section";
+import { BenefitsSection } from "./benefits-section";
 
 vi.mock("./scroll-fade-element", () => ({
 	ScrollFadeElement: vi.fn().mockImplementation(({ children, className, delay }) => (

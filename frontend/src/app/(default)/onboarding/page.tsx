@@ -12,7 +12,7 @@ import { login } from "@/actions/login";
 import { AppCard, AppCardContent } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
-import { LogoDark } from "@/components/branding/logo";
+import { LogoDark } from "@/components/branding";
 import { CookieConsentProvider } from "@/components/cookie-consent";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {

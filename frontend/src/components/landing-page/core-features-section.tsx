@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { HTMLProps } from "react";
-import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articles-animated";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+import { AnimatedFeatureArticle } from "./feature-articles-animated";
+import { ScrollFadeElement } from "./scroll-fade-element";
 
 const CORE_FEATURES = [
 	{

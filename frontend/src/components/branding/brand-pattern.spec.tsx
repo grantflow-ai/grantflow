@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { BrandPattern } from "@/components/branding/brand-pattern";
+import { BrandPattern } from "./brand-pattern";
 
 describe.sequential("BrandPattern Component", () => {
 	afterEach(() => {
