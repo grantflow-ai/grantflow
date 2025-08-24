@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppCard, TextareaField } from "@/components/app";
+import { AppCard } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
+import { TextareaField } from "@/components/app/fields";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
