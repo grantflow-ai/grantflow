@@ -78,7 +78,10 @@ export function FilePreviewCard({
 	};
 
 	return (
-		<div className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-1 transition-all w-14">
+		<div
+			className="hover:bg-app-gray-100 group relative flex cursor-pointer flex-col items-center justify-center rounded bg-white p-1 transition-all w-14"
+			data-testid="file-preview-card"
+		>
 			<div
 				aria-label={`File ${file.name} - right click for options, double click to open`}
 				className="w-full"

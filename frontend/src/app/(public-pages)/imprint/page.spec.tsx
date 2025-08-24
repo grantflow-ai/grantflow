@@ -7,7 +7,11 @@ vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,
 }));
 
-vi.mock("@/components/shared/info-legal-page-components", () => ({
+vi.mock("@/components/landing-page/nav-header", () => ({
+	NavHeader: () => <header data-testid="nav-header" />,
+}));
+
+vi.mock("@/components/public-pages/info-legal-page-components", () => ({
 	LegalPageContainer: ({ children, title }: { children: React.ReactNode; title: string }) => (
 		<div data-testid="legal-container" data-title={title}>
 			{children}

@@ -43,7 +43,7 @@ vi.mock("@/utils/logger", () => ({
 	log: { error: vi.fn() },
 }));
 vi.mock("@/components/layout/app-header", () => ({
-	AppHeader: vi.fn(() => <div data-testid="mock-app-header" />),
+	default: vi.fn(() => <div data-testid="mock-app-header" />),
 }));
 vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),

@@ -36,9 +36,18 @@ vi.mock("@/stores/project-store", () => ({
 vi.mock("@/stores/user-store", () => ({
 	useUserStore: vi.fn(),
 }));
+vi.mock("@/stores/new-application-modal-store", () => ({
+	useNewApplicationModalStore: vi.fn(),
+}));
 vi.mock("@/utils/navigation");
+vi.mock("sonner", () => ({
+	toast: {
+		error: vi.fn(),
+		success: vi.fn(),
+	},
+}));
 vi.mock("@/components/layout/app-header", () => ({
-	AppHeader: vi.fn(() => <div data-testid="mock-app-header" />),
+	default: vi.fn(() => <div data-testid="mock-app-header" />),
 }));
 vi.mock("./dashboard-project-card", () => ({
 	DashboardProjectCard: vi.fn(() => <div data-testid="mock-project-card" />),
@@ -46,8 +55,8 @@ vi.mock("./dashboard-project-card", () => ({
 vi.mock("../modals/delete-project-modal", () => ({
 	DeleteProjectModal: vi.fn(() => <div data-testid="mock-delete-modal" />),
 }));
-vi.mock("../modals/invite-collaborator-modal", () => ({
-	InviteCollaboratorModal: vi.fn(() => <div data-testid="mock-invite-modal" />),
+vi.mock("../modals/new-application-modal", () => ({
+	default: vi.fn(() => <div data-testid="mock-new-application-modal" />),
 }));
 vi.mock("@/components/app", () => ({
 	AppButton: vi.fn(({ children, ...props }) => <button {...props}>{children}</button>),
@@ -98,6 +107,9 @@ const mockUseNotificationStore = vi.mocked(
 	await import("@/stores/notification-store").then((m) => m.useNotificationStore),
 );
 const mockUseUserStore = vi.mocked(await import("@/stores/user-store").then((m) => m.useUserStore));
+const mockUseNewApplicationModalStore = vi.mocked(
+	await import("@/stores/new-application-modal-store").then((m) => m.useNewApplicationModalStore),
+);
 const mockCreateProject = vi.mocked(await import("@/actions/project").then((m) => m.createProject));
 
 const MockDashboardStats = vi.mocked(await import("./dashboard-stats").then((m) => m.DashboardStats));
@@ -106,6 +118,10 @@ const MockDashboardProjectCard = vi.mocked(
 );
 const MockWelcomeModal = vi.mocked(await import("./welcome/welcome-modal").then((m) => m.WelcomeModal));
 const MockPaymentLink = vi.mocked(await import("../payment/payment-link").then((m) => m.default));
+const MockNewApplicationModal = vi.mocked(await import("../modals/new-application-modal").then((m) => m.default));
+const MockDeleteProjectModal = vi.mocked(
+	await import("../modals/delete-project-modal").then((m) => m.DeleteProjectModal),
+);
 
 describe("DashboardClient", () => {
 	const defaultProps = {
@@ -137,6 +153,11 @@ describe("DashboardClient", () => {
 		mockUseNotificationStore.mockReturnValue({ addNotification: mockAddNotification });
 		mockUseUserStore.mockReturnValue({
 			user: { displayName: "Test User", email: "test@example.com" },
+		});
+		mockUseNewApplicationModalStore.mockReturnValue({
+			closeModal: vi.fn(),
+			isModalOpen: false,
+			openModal: vi.fn(),
 		});
 		mockUseSWR.mockReturnValue({
 			data: defaultProps.initialProjects,
@@ -298,5 +319,56 @@ describe("DashboardClient", () => {
 		render(<DashboardClient {...defaultProps} initialSelectedOrganizationId={null} />);
 
 		expect(screen.getByTestId("dashboard-title")).toBeInTheDocument();
+	});
+
+	it("should render new application modal when open", () => {
+		mockUseNewApplicationModalStore.mockReturnValue({
+			closeModal: vi.fn(),
+			isModalOpen: true,
+			openModal: vi.fn(),
+		});
+
+		render(<DashboardClient {...defaultProps} />);
+
+		expect(MockNewApplicationModal).toHaveBeenCalledWith(
+			{
+				isOpen: true,
+				onClose: expect.any(Function),
+				onCreate: expect.any(Function),
+				projects: defaultProps.initialProjects,
+			},
+			undefined,
+		);
+	});
+
+	it("should render delete project modal", () => {
+		render(<DashboardClient {...defaultProps} />);
+
+		expect(MockDeleteProjectModal).toHaveBeenCalledWith(
+			{
+				isOpen: false,
+				onClose: expect.any(Function),
+				onConfirm: expect.any(Function),
+			},
+			undefined,
+		);
+	});
+
+	it("should handle project creation errors", async () => {
+		const user = userEvent.setup();
+		mockCreateProject.mockRejectedValue(new Error("Creation failed"));
+
+		render(<DashboardClient {...defaultProps} />);
+
+		const createButton = screen.getByTestId("new-research-project-button");
+		await user.click(createButton);
+
+		expect(mockCreateProject).toHaveBeenCalled();
+		expect(mockAddNotification).toHaveBeenCalledWith({
+			message: "Failed to create project. Please try again.",
+			projectName: "",
+			title: "Error creating project",
+			type: "warning",
+		});
 	});
 });
