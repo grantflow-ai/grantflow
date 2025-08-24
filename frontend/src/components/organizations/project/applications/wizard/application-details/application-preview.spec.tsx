@@ -19,7 +19,7 @@ vi.mock("@/components/ui/empty-state-preview", () => ({
 	EmptyStatePreview: vi.fn(() => <div data-testid="empty-state-preview">Empty State</div>),
 }));
 
-vi.mock("./file-preview-card", () => ({
+vi.mock("../file-preview-card", () => ({
 	FilePreviewCard: vi.fn(({ file, parentId, sourceStatus }) => (
 		<div data-testid="file-preview-card">
 			<span data-testid="file-name">{file.name}</span>
@@ -29,7 +29,7 @@ vi.mock("./file-preview-card", () => ({
 	)),
 }));
 
-vi.mock("./link-preview-item", () => ({
+vi.mock("../link-preview-item", () => ({
 	LinkPreviewItem: vi.fn(({ parentId, sourceStatus, url }) => (
 		<div data-testid="link-preview-item">
 			<span data-testid="link-url">{url}</span>
@@ -39,11 +39,11 @@ vi.mock("./link-preview-item", () => ({
 	)),
 }));
 
-vi.mock("./preview-card", () => ({
+vi.mock("../preview-card", () => ({
 	PreviewCard: vi.fn(({ children, ...props }) => <div {...props}>{children}</div>),
 }));
 
-vi.mock("./wizard-right-pane", () => ({
+vi.mock("../wizard-right-pane", () => ({
 	WizardRightPane: vi.fn(({ children, padding }) => (
 		<div className={padding} data-testid="wizard-right-pane">
 			{children}

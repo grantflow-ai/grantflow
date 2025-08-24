@@ -17,13 +17,13 @@ import { useApplicationStore } from "@/stores/application-store";
 import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
+import { ApplicationDetailsStep } from "./application-details/application-details-step";
 import { ApplicationStructureStep } from "./application-structure/application-structure-step";
-import { ApplicationDetailsStep } from "./steps/application-details-step";
-import { GenerateCompleteStep } from "./steps/generate-complete-step";
-import { KnowledgeBaseStep } from "./steps/knowledge-base-step";
-import { ResearchDeepDiveStep } from "./steps/research-deep-dive-step";
-import { ResearchPlanStep } from "./steps/research-plan-step";
-import { WizardDialog, type WizardDialogRef } from "./wizard-dialog";
+import { GenerateCompleteStep } from "./generate-and-complete/generate-complete-step";
+import { KnowledgeBaseStep } from "./knowledge-base/knowledge-base-step";
+import { WizardDialog, type WizardDialogRef } from "./modal/wizard-dialog";
+import { ResearchDeepDiveStep } from "./research-deep-dive/research-deep-dive-step";
+import { ResearchPlanStep } from "./research-plan/research-plan-step";
 import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 interface WizardClientComponentProps {

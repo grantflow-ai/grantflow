@@ -7,10 +7,10 @@ import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { ObjectiveForm, type ObjectiveFormData } from "../objective-form";
-import { PreviewLoadingComponent } from "../preview-loading";
-import type { WizardDialogRef } from "../wizard-dialog";
+import type { WizardDialogRef } from "../modal/wizard-dialog";
 import { WizardLeftPane } from "../wizard-left-pane";
+import { ObjectiveForm, type ObjectiveFormData } from "./objective-form";
+import { PreviewLoadingComponent } from "./preview-loading";
 import { ResearchPlanPreview } from "./research-plan-preview";
 
 export const MAX_OBJECTIVES = 5;

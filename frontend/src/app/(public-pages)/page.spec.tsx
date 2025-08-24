@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-import LandingPage from "@/app/(public-pages)/page";
+import LandingPage from "./page";
 
 vi.mock("@/components/landing-page/backgrounds", () => ({
 	GradientBackground: ({ children, className }: { children?: React.ReactNode; className?: string }) => (

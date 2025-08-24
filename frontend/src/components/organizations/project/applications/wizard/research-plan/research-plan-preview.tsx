@@ -6,8 +6,8 @@ import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { useObjectiveManagement } from "@/hooks/use-objective-management";
 import { useApplicationStore } from "@/stores/application-store";
 import { type Objective, useWizardStore } from "@/stores/wizard-store";
-import { ObjectiveList } from "../objective-list";
-import type { WizardDialogRef } from "../wizard-dialog";
+import type { WizardDialogRef } from "../modal/wizard-dialog";
+import { ObjectiveList } from "./objective-list";
 
 interface ResearchPlanPreviewProps {
 	dialogRef: RefObject<null | WizardDialogRef>;
