@@ -3,7 +3,7 @@ import { triggerAutofill as triggerAutofillAction } from "@/actions/grant-applic
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
 import { useOrganizationStore } from "@/stores/organization-store";
-import type { API } from "@/types/api-types";
+import type { API } from "@/types";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
 

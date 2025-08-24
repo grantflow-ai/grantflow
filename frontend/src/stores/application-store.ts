@@ -22,8 +22,7 @@ import {
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
-import type { API } from "@/types/api-types";
-import type { FileWithId } from "@/types/files";
+import type { API, FileWithId } from "@/types";
 import { getEnv } from "@/utils/env";
 import { log } from "@/utils/logger/client";
 import { withRetry } from "@/utils/retry";

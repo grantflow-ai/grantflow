@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { deleteAccount, getSoleOwnedProjects } from "@/actions/user";
 import { AppButton } from "@/components/app";
 import { BaseModal } from "@/components/app/feedback/base-modal";
-import { useUserStore } from "@/stores/user-store";
+import { useUserStore } from "@/stores";
 import { log } from "@/utils/logger/client";
 
 interface DeleteAccountModalProps {

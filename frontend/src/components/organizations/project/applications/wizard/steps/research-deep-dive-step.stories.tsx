@@ -2,8 +2,7 @@ import { ApplicationWithTemplateFactory } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { WizardStep } from "@/constants";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore, useWizardStore } from "@/stores";
 import { ResearchDeepDiveStep } from "./research-deep-dive-step";
 
 const meta: Meta<typeof ResearchDeepDiveStep> = {

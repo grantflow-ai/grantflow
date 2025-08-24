@@ -1,14 +1,8 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import type { ZoneType } from "@/components/organizations/project/applications/wizard/application-structure/drag-drop-context";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import type { GrantSection, UpdateGrantSection } from "@/types";
 import { log } from "@/utils/logger/client";
 
-/**
- * Determines the new parent ID when moving sections in drag-and-drop operations
- * @param overSection The section being dragged over
- * @param zone The zone type (required for main-to-main operations)
- * @returns The new parent ID for the active section
- */
 export const determineNewParentId = (overSection: GrantSection, zone: ZoneType): null | string => {
 	const overIsChild = overSection.parent_id !== null;
 
@@ -19,24 +13,10 @@ export const determineNewParentId = (overSection: GrantSection, zone: ZoneType):
 	return zone === "sibling" ? null : overSection.id;
 };
 
-/**
- * Checks if a section has subsections
- * @param sectionId The ID of the section to check
- * @param sections Array of all sections
- * @returns True if the section has subsections, false otherwise
- */
 export const hasSubSections = (sectionId: string, sections: GrantSection[]): boolean => {
 	return sections.some((section) => section.parent_id === sectionId);
 };
 
-/**
- * Calculates the target index for main section reordering
- * @param sections Array of all sections
- * @param overItemId ID of the section being dragged over
- * @param originalIndex Original index of the section being dragged
- * @param activeIndex Current index of the active section
- * @returns Target index for reordering
- */
 export const getTargetIndexForMainSectionReorder = (
 	sections: GrantSection[],
 	overItemId: string,
@@ -52,14 +32,6 @@ export const getTargetIndexForMainSectionReorder = (
 	return activeIndex > lastSubSectionIndex ? lastSubSectionIndex + 1 : lastSubSectionIndex;
 };
 
-/**
- * Reorders sections when moving a main section with subsections
- * @param sections Array of all sections
- * @param activeMainSectionId ID of the main section being moved
- * @param overItemId ID of the section being dragged over
- * @param overItem The section object being dragged over
- * @returns Reordered array of sections
- */
 export const reorderMainWhenOverMainHasSubSections = (
 	sections: GrantSection[],
 	activeMainSectionId: string,
@@ -98,12 +70,6 @@ export const reorderMainWhenOverMainHasSubSections = (
 	];
 };
 
-/**
- * Assigns order and parent_id to sections based on their position in the array
- * @param sections Array of sections to assign order and parent
- * @param parentAssignmentFn Optional function to determine new parent for each section
- * @returns Array of sections with updated order and parent_id
- */
 export const assignOrderAndParent = (
 	sections: GrantSection[],
 	parentAssignmentFn?: (section: GrantSection) => null | string,
@@ -118,15 +84,6 @@ export const assignOrderAndParent = (
 	});
 };
 
-/**
- * Orchestrates section reordering with arrayMove and order/parent assignment
- * @param sections Array of all sections
- * @param activeIndex Current index of active section
- * @param targetIndex Target index for reordering
- * @param toUpdateGrantSection Function to convert section to update format
- * @param updateGrantSections Function to update sections in store
- * @param parentAssignmentFn Optional function to reassign parent relationships
- */
 export const updateReorder = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -148,13 +105,6 @@ export const updateReorder = async (
 	);
 };
 
-/**
- * Updates sections that are already reordered with order/parent assignment
- * @param reorderedSections Pre-reordered array of sections
- * @param toUpdateGrantSection Function to convert section to update format
- * @param updateGrantSections Function to update sections in store
- * @param parentAssignmentFn Optional function to reassign parent relationships
- */
 export const updateBackendWithReorderedSections = async (
 	reorderedSections: GrantSection[],
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
@@ -165,16 +115,6 @@ export const updateBackendWithReorderedSections = async (
 	await updateGrantSections(updatedSectionsWithOrderAndParent.map(toUpdateGrantSection));
 };
 
-/**
- * Executes main-to-subsection conversion with correct target index calculation
- * @param sections Array of all sections
- * @param activeIndex Current index of active section
- * @param overIndex Index of section being dragged over
- * @param activeItem The section being converted
- * @param newParentId New parent ID for the converted section
- * @param toUpdateGrantSection Function to convert section to update format
- * @param updateGrantSections Function to update sections in store
- */
 export const executeMainToSubConversion = async (
 	sections: GrantSection[],
 	activeIndex: number,
@@ -196,16 +136,6 @@ export interface DropIndicatorState {
 	showBelow: boolean;
 }
 
-/**
- * Calculates drop indicator when dragging subsection to main section
- * @param activeItem The subsection being dragged
- * @param overItem The main section being dragged over
- * @param activeIndex Current index of active subsection
- * @param overIndex Index of main section being dragged over
- * @param defaultResult Default drop indicator state to use as fallback
- * @param zone The drag zone ("sibling" for main width, "child"/"null" for subsection width)
- * @returns Drop indicator state for sub-to-main drag scenario
- */
 const calculateSubToMainDropIndicator = (
 	activeItem: GrantSection,
 	overItem: GrantSection,
@@ -236,14 +166,6 @@ const calculateSubToMainDropIndicator = (
 	};
 };
 
-/**
- * Calculates drop indicator when dragging main section to subsection
- * @param activeItem The section being dragged
- * @param overItem The section being dragged over
- * @param sections Array of all sections
- * @param defaultResult Default drop indicator state to use as fallback
- * @returns Drop indicator state for main-to-sub drag scenario
- */
 const calculateMainToSubDropIndicator = (
 	activeItem: GrantSection,
 	overItem: GrantSection,
@@ -259,15 +181,6 @@ const calculateMainToSubDropIndicator = (
 	return defaultResult;
 };
 
-/**
- * Calculates drop indicator when dragging subsection to subsection
- * @param activeItem The section being dragged
- * @param overItem The section being dragged over
- * @param activeIndex Current index of active section
- * @param overIndex Index of section being dragged over
- * @param defaultResult Default drop indicator state to use as fallback
- * @returns Drop indicator state for sub-to-sub drag scenario
- */
 const calculateSubToSubDropIndicator = (
 	activeItem: GrantSection,
 	overItem: GrantSection,
@@ -285,16 +198,6 @@ const calculateSubToSubDropIndicator = (
 	return defaultResult;
 };
 
-/**
- * Calculates drop indicator when dragging main section to main section
- * @param activeItem The section being dragged
- * @param overItem The section being dragged over
- * @param activeIndex Current index of active section
- * @param overIndex Index of section being dragged over
- * @param sections Array of all sections
- * @param defaultResult Default drop indicator state to use as fallback
- * @returns Drop indicator state for main-to-main drag scenario
- */
 const calculateMainToMainDropIndicator = (
 	activeItem: GrantSection,
 	overItem: GrantSection,
@@ -333,17 +236,6 @@ const calculateMainToMainDropIndicator = (
 	};
 };
 
-/**
- * Calculates drop indicator visibility based on drag-and-drop context
- * Uses optimized logic with early returns and safe fallbacks
- * @param activeItem The section being dragged
- * @param overItem The section being dragged over
- * @param activeIndex Current index of active section
- * @param overIndex Index of section being dragged over
- * @param sections Array of all sections
- * @param currentSectionId ID of the current section being evaluated
- * @returns Drop indicator state with visibility and positioning
- */
 export function calculateDropIndicatorVisibility(
 	activeItem: GrantSection,
 	overItem: GrantSection,

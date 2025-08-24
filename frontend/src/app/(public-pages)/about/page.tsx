@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { NavHeader } from "@/components/landing-page";
 import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/public-pages";
-import { LegalPageContainer } from "@/components/shared/info-legal-page-components";
+import { LegalPageContainer } from "@/components/public-pages/info-legal-page-components";
 import { cn } from "@/lib/utils";
 
 const subHeadingClasses = "font-heading font-medium text-3xl md:text-4xl";

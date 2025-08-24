@@ -1,4 +1,4 @@
-import { EditorContainer } from "@/components/organizations/project/applications/editor/editor-container";
+import { EditorContainer } from "@/components/organizations";
 
 export default function ApplicationEditorDemoPage() {
 	return <EditorContainer documentId="123" />;

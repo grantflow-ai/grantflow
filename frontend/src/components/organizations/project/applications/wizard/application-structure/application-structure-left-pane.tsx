@@ -3,9 +3,8 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
-import { useApplicationStore } from "@/stores/application-store";
-import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
-import type { FileWithSource, UrlWithSource } from "@/types/files";
+import { type TemplateGenerationEvent, useApplicationStore, useWizardStore } from "@/stores";
+import type { FileWithSource, UrlWithSource } from "@/types";
 import { FilePreviewCard, LinkPreviewItem, PreviewCard, WizardLeftPane } from "../shared";
 
 const ANALYZING_STEPS = [

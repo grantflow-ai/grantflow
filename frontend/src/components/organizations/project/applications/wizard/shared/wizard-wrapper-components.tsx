@@ -3,12 +3,11 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/app/buttons/app-button";
-import { Deadline } from "@/components/organizations/project/applications/wizard/shared/index";
-import { ThemeBadge } from "@/components/shared/theme-badge";
+import { ThemeBadge } from "@/components/shared";
 import { WizardStep } from "@/constants";
-import { useApplicationStore } from "@/stores/application-store";
-import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
+import { MIN_TITLE_LENGTH, useApplicationStore, useWizardStore } from "@/stores";
 import { routes } from "@/utils/navigation";
+import { Deadline } from "./index";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,

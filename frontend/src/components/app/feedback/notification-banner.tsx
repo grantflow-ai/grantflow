@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { NotificationData } from "@/stores/notification-store";
+import type { NotificationData } from "@/stores";
 
 interface NotificationBannerProps {
 	className?: string;

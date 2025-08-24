@@ -8,9 +8,7 @@ import {
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-import { useApplicationStore } from "@/stores/application-store";
-import { useOrganizationStore } from "@/stores/organization-store";
+import { useApplicationStore, useOrganizationStore } from "@/stores";
 
 import { ResearchPlanPreview } from "./research-plan-preview";
 

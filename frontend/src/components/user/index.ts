@@ -1,2 +1,2 @@
-export { DeleteAccountModal } from "./modals/delete-account-modal";
-export { PersonalSettingsClient } from "./settings/personal-settings-client";
+export { DeleteAccountModal } from "./delete-account-modal";
+export { PersonalSettingsClient } from "./personal-settings-client";

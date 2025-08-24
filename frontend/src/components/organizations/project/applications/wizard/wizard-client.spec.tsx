@@ -4,8 +4,7 @@ import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore, useWizardStore } from "@/stores";
 
 import { WizardClientComponent } from "./wizard-client";
 
@@ -35,7 +34,7 @@ vi.mock("./shared/wizard-dialog", () => ({
 	WizardDialog: () => <div data-testid="wizard-dialog">Dialog</div>,
 }));
 
-vi.mock("@/components/shared/notification-handler", () => ({
+vi.mock("@/components/shared", () => ({
 	NotificationHandler: ({ notification }: any) => (
 		<div data-testid="notification-handler">Notification: {notification?.data?.event}</div>
 	),

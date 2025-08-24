@@ -1,7 +1,7 @@
 import { ApplicationWithTemplateFactory } from "::testing/factories";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { RagSourcesFooter } from "./rag-sources-footer";
 
 describe.sequential("RagSourcesFooter", () => {

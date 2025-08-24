@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AppCard } from "@/components/app";
-import type { Objective } from "@/stores/wizard-store";
+import type { Objective } from "@/stores";
 import { EditableObjective, ObjectiveCardContent, ObjectiveHeader } from "./objective-components";
 
 interface DraggableObjectiveCardProps {

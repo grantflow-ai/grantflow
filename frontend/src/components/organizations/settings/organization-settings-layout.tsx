@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/app";
 import { cn } from "@/lib/utils";
-import { UserRole } from "@/types/user";
+import { UserRole } from "@/types";
 import { routes } from "@/utils/navigation";
 
 interface OrganizationSettingsLayoutProps {

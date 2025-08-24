@@ -3,10 +3,10 @@ import { resetAllStores } from "::testing/store-reset";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { ApplicationPreview } from "./application-preview";
 
-vi.mock("@/components/shared/theme-badge", () => ({
+vi.mock("@/components/shared", () => ({
 	ThemeBadge: vi.fn(({ children, className, leftIcon }) => (
 		<span className={className} data-testid="theme-badge">
 			{leftIcon && <span data-testid="badge-icon">{leftIcon}</span>}

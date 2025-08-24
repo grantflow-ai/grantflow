@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach } from "vitest";
 
-import Footer from "@/components/public-pages/footer";
+import { Footer } from "@/components/public-pages";
 
 vi.mock("next/image", () => ({
 	default: vi

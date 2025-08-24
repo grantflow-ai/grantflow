@@ -1,5 +1,11 @@
 "use client";
 
+import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
+import { Separator } from "@/components/ui/separator";
+import { SourceIndexingStatus } from "@/enums";
+import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
+import { useApplicationStore } from "@/stores";
+import type { FileWithSource, UrlWithSource } from "@/types";
 import {
 	FilePreviewCard,
 	LinkPreviewItem,
@@ -7,13 +13,7 @@ import {
 	TemplateFileUploader,
 	WizardLeftPane,
 	WizardRightPane,
-} from "@/components/organizations/project/applications/wizard/shared";
-import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
-import { Separator } from "@/components/ui/separator";
-import { SourceIndexingStatus } from "@/enums";
-import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
-import { useApplicationStore } from "@/stores/application-store";
-import type { FileWithSource, UrlWithSource } from "@/types/files";
+} from "../shared";
 import { UrlInput } from "../shared/url-input";
 
 export function KnowledgeBaseStep() {

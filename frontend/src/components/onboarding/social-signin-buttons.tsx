@@ -1,5 +1,5 @@
 import { AppButton } from "@/components/app/buttons/app-button";
-import { IconSocialGoogle, IconSocialOrcid } from "@/components/onboarding/icons";
+import { IconSocialGoogle, IconSocialOrcid } from "./icons";
 
 export function SocialSigninButton({
 	isDisabled,

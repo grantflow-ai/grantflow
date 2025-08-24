@@ -4,8 +4,7 @@ import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore, useWizardStore } from "@/stores";
 
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 

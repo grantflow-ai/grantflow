@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
-import { type Objective, useWizardStore } from "@/stores/wizard-store";
+import { type Objective, useWizardStore } from "@/stores";
 
 export interface ObjectiveManagement {
 	editingObjectiveId: null | number;
