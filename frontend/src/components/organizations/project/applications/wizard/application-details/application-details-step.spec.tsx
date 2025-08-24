@@ -7,7 +7,7 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import { ApplicationDetailsStep } from "./application-details-step";
 
-vi.mock("../template-file-uploader", () => ({
+vi.mock("@/components/organizations/project/applications/wizard/template-file-uploader", () => ({
 	TemplateFileUploader: vi.fn(({ parentId }) => (
 		<div data-testid="template-file-uploader">
 			<span data-testid="uploader-parent-id">{parentId}</span>
@@ -26,11 +26,11 @@ vi.mock("./application-preview", () => ({
 	)),
 }));
 
-vi.mock("../../wizard-left-pane", () => ({
+vi.mock("@/components/organizations/project/applications/wizard/wizard-left-pane", () => ({
 	WizardLeftPane: vi.fn(({ children, testId }) => <div {...(testId && { "data-testid": testId })}>{children}</div>),
 }));
 
-vi.mock("../url-input", () => ({
+vi.mock("@/components/organizations/project/applications/wizard/url-input", () => ({
 	UrlInput: vi.fn(({ parentId }) => (
 		<div data-testid="url-input">
 			<span data-testid="url-input-parent-id">{parentId}</span>

@@ -2,10 +2,10 @@ import { ApplicationFactory, GrantSectionFactory, GrantTemplateFactory } from ":
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { RefObject } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import type { WizardDialogRef } from "../modal/wizard-dialog";
 import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 vi.mock("@/hooks/use-drag-and-drop", () => ({

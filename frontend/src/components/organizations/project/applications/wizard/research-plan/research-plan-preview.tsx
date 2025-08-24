@@ -1,12 +1,12 @@
 "use client";
 
 import type { RefObject } from "react";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { useObjectiveManagement } from "@/hooks/use-objective-management";
 import { useApplicationStore } from "@/stores/application-store";
 import { type Objective, useWizardStore } from "@/stores/wizard-store";
-import type { WizardDialogRef } from "../modal/wizard-dialog";
 import { ObjectiveList } from "./objective-list";
 
 interface ResearchPlanPreviewProps {
