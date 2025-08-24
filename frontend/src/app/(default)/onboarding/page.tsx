@@ -14,18 +14,18 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
 import { LogoDark } from "@/components/branding";
 import { CookieConsentProvider } from "@/components/cookie-consent";
-import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
+	AuthCardHeader,
+	BenefitsList,
 	OnboardingGradientBackgroundBottom,
 	OnboardingGradientBackgroundTop,
+	SigninForm,
+	SocialSigninButton,
 	StackedHighlight,
-} from "@/components/onboarding/backgrounds";
-import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
-import { SigninForm } from "@/components/onboarding/signin-form";
-import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
+} from "@/components/onboarding";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
-import { useUserStore } from "@/stores/user-store";
+import { useUserStore } from "@/stores";
 import { handleGoogleSignup, handleOrcidSignup } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";

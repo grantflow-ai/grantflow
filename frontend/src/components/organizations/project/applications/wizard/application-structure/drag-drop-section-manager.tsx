@@ -6,11 +6,10 @@ import type { RefObject } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app";
-import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
-import { useApplicationStore } from "@/stores/application-store";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
+import { useApplicationStore } from "@/stores";
+import type { GrantSection, UpdateGrantSection } from "@/types";
+import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types";
 import {
 	assignOrderAndParent,
 	determineNewParentId,
@@ -22,6 +21,7 @@ import {
 	updateReorder,
 } from "@/utils/grant-sections";
 import { createZoneCollisionDetection } from "@/utils/zone-collision-detection";
+import type { WizardDialogRef } from "../shared/wizard-dialog";
 import { DragDropContext, type DragDropContextData, type ZoneType } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 import { SectionIconButton } from "./section-icon-button";

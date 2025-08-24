@@ -114,7 +114,7 @@ interface PaymentModalProps {
 	onClose: () => void;
 }
 
-export default function Paymentmodal({ isOpen, onClose }: PaymentModalProps) {
+export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
 	return (
 		<>
 			{isOpen && (

@@ -3,7 +3,7 @@ import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { horizontalListSortingStrategy, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useMemo, useState } from "react";
-import type { Objective } from "@/stores/wizard-store";
+import type { Objective } from "@/stores";
 import { DraggableObjectiveCard } from "./draggable-objective-card";
 
 const singleCardDecorator = [

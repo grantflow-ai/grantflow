@@ -20,7 +20,7 @@ vi.mock("next-themes", () => ({
 	}),
 }));
 
-vi.mock("@/components/shared/toast-listener", () => ({
+vi.mock("@/components/shared", () => ({
 	ToastListener: () => <div data-testid="toast-listener" />,
 }));
 

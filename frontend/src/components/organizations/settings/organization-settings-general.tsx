@@ -5,8 +5,8 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { UserRole } from "@/types/user";
+import { useOrganizationStore } from "@/stores";
+import { UserRole } from "@/types";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
 
@@ -66,7 +66,6 @@ export function OrganizationSettingsGeneral({
 
 		setIsUploading(true);
 		try {
-			// TODO: Implement logo upload
 			toast.success("Logo upload functionality coming soon");
 		} catch (error) {
 			log.error("Error uploading logo", error);

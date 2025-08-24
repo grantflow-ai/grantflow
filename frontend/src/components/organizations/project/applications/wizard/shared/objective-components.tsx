@@ -11,7 +11,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Objective } from "@/stores/wizard-store";
+import type { Objective } from "@/stores";
 import { DraggableTaskList } from "./draggable-task-list";
 
 interface EditableObjectiveProps {

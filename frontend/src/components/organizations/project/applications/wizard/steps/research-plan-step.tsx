@@ -5,12 +5,11 @@ import Image from "next/image";
 import type { RefObject } from "react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useApplicationStore, useWizardStore } from "@/stores";
 import { WizardLeftPane } from "../shared";
 import { ObjectiveForm, type ObjectiveFormData } from "../shared/objective-form";
 import { PreviewLoadingComponent } from "../shared/preview-loading";
+import type { WizardDialogRef } from "../shared/wizard-dialog";
 import { ResearchPlanPreview } from "./research-plan-preview";
 
 export const MAX_OBJECTIVES = 5;

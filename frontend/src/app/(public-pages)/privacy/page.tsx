@@ -3,7 +3,7 @@ import {
 	LegalPageContainer,
 	TitledLegalSection,
 	UntitledLegalSection,
-} from "@/components/shared/info-legal-page-components";
+} from "@/components/public-pages/info-legal-page-components";
 
 const terms = [
 	{

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { AppDialogDescription, AppDialogTitle } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { PROGRESS_BAR_STEPS } from "@/constants";
-import { useUserStore } from "@/stores/user-store";
+import { useUserStore } from "@/stores";
 import { routes } from "@/utils/navigation";
 import { WelcomeModalContent } from "./modal-overlay";
 import { ProgressBar } from "./progress-bar";

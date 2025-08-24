@@ -2,7 +2,7 @@ import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
-import { useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore } from "@/stores";
 
 describe("usePollingCleanup", () => {
 	beforeEach(() => {

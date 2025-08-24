@@ -1,7 +1,7 @@
 import { Link } from "lucide-react";
 import Image from "next/image";
 import { SourceIndexingStatus } from "@/enums";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 
 export function LinkPreviewItem({
 	parentId,

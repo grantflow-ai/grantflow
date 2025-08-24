@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ThemeProvider } from "next-themes";
 import { toast } from "sonner";
+import { AppButton } from "@/components/app";
 import { Toaster } from "../ui/sonner";
-import { AppButton } from "./buttons/app-button";
 
 const meta: Meta<typeof Toaster> = {
 	component: Toaster,

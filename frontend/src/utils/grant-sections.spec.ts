@@ -1,6 +1,6 @@
 import { GrantSectionDetailedFactory } from "::testing/factories";
 import { describe, expect, it, vi } from "vitest";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import type { GrantSection, UpdateGrantSection } from "@/types";
 import {
 	assignOrderAndParent,
 	calculateDropIndicatorVisibility,

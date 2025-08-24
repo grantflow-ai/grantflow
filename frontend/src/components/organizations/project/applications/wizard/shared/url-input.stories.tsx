@@ -2,7 +2,7 @@ import { ApplicationWithTemplateFactory, GrantTemplateFactory, RagSourceFactory 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { action } from "storybook/actions";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { UrlInput } from "./url-input";
 
 const meta: Meta<typeof UrlInput> = {

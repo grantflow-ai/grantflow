@@ -5,9 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppCard } from "@/components/app";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { TextareaField } from "@/components/app/fields";
-import { useApplicationStore } from "@/stores/application-store";
-import { useWizardStore } from "@/stores/wizard-store";
-import type { API } from "@/types/api-types";
+import { useApplicationStore, useWizardStore } from "@/stores";
+import type { API } from "@/types";
 import { log } from "@/utils/logger/client";
 
 type FormInputs = NonNullable<API.RetrieveApplication.Http200.ResponseBody["form_inputs"]>;

@@ -1,7 +1,7 @@
 import { ApplicationWithTemplateFactory, GrantTemplateFactory, RagSourceFactory } from "::testing/factories";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { useApplicationStore } from "@/stores/application-store";
+import { useApplicationStore } from "@/stores";
 import { RagSourcesContent } from "./rag-sources-content";
 
 describe.sequential("RagSourcesContent", () => {

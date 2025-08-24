@@ -5,9 +5,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { createApplication } from "@/actions/grant-applications";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
-import { useNavigationStore } from "@/stores/navigation-store";
-import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
+import { useNavigationStore, useOrganizationStore, useProjectStore } from "@/stores";
 import { routes } from "@/utils/navigation";
 
 export function NewApplicationClient() {

@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/public-pages/icons/icons";
+import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/public-pages";
 
 const allIcons = [
 	{ Component: IconDraft, name: "IconDraft" },
