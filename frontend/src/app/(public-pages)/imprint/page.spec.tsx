@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
-import ImprintPage from "@/app/(public-pages)/imprint/page";
+import ImprintPage from "./page";
 
 vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,

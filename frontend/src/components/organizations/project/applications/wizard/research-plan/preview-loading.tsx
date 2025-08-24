@@ -1,6 +1,6 @@
 "use client";
 
-import { WizardRightPane } from "./wizard-right-pane";
+import { WizardRightPane } from "../wizard-right-pane";
 
 export function PreviewLoadingComponent() {
 	return (

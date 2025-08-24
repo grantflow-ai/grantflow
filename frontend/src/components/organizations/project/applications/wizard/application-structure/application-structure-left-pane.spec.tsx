@@ -10,7 +10,11 @@ import { ApplicationStructureLeftPane } from "./application-structure-left-pane"
 vi.mock("@/components/app/app-dropdown", () => ({
 	AppDropdownMenu: vi.fn(({ children }) => <div data-testid="mocked-dropdown-menu">{children}</div>),
 	AppDropdownMenuContent: vi.fn(({ children }) => <div>{children}</div>),
-	AppDropdownMenuItem: vi.fn(({ children, onClick }) => <button onClick={onClick}>{children}</button>),
+	AppDropdownMenuItem: vi.fn(({ children, onClick }) => (
+		<button onClick={onClick} type="button">
+			{children}
+		</button>
+	)),
 	AppDropdownMenuTrigger: vi.fn(({ children }) => <div>{children}</div>),
 }));
 

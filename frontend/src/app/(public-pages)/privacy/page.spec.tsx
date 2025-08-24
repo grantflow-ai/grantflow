@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
-import PrivacyPolicyPage from "@/app/(public-pages)/privacy/page";
+import PrivacyPolicyPage from "./page";
 
 vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,

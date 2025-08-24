@@ -14,7 +14,7 @@ vi.mock("@/utils/api/server", () => ({
 }));
 
 const mockGetEnv = vi.fn();
-vi.mock("../utils/env", () => ({
+vi.mock("@/utils/env", () => ({
 	getEnv: () => mockGetEnv(),
 }));
 

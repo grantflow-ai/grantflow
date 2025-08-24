@@ -32,7 +32,7 @@ vi.mock("./research-plan-preview", () => ({
 	ResearchPlanPreview: () => <div data-testid="research-plan-preview-mock">ResearchPlanPreview Mock</div>,
 }));
 
-vi.mock("../preview-loading", () => ({
+vi.mock("./preview-loading", () => ({
 	PreviewLoadingComponent: () => <div data-testid="preview-loading-mock">PreviewLoading Mock</div>,
 }));
 
