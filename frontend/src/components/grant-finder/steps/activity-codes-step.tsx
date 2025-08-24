@@ -1,4 +1,4 @@
-import { MultiSelect } from "../multi-select";
+import { MultiSelect } from "@/components/app/forms/multi-select";
 import { ACTIVITY_CODES, type FormData } from "../types";
 
 interface ActivityCodesStepProps {

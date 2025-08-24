@@ -3,6 +3,7 @@
 import { CheckCircle, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { createSubscription } from "@/actions/grants";
+import type { API } from "@/types/api-types";
 import type { SearchParams } from "./types";
 
 interface SubscriptionFormProps {
@@ -27,7 +28,7 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 			setLoading(true);
 			setError(null);
 
-			await createSubscription({
+			const requestBody: API.GrantsSubscribeCreateSubscription.RequestBody = {
 				email,
 				search_params: {
 					category: "",
@@ -39,7 +40,8 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 					offset: 0,
 					query: searchParams.keywords.join(" "),
 				},
-			});
+			};
+			await createSubscription(requestBody);
 
 			setSuccess(true);
 			setEmail("");

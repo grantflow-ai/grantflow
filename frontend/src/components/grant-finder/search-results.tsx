@@ -31,7 +31,8 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 					search_query: searchParams.keywords.join(" "),
 				};
 
-				const results = (await searchGrants(queryParams)) as Grant[];
+				const response = await searchGrants(queryParams);
+				const results: Grant[] = Array.isArray(response) ? (response as Grant[]) : [];
 				setGrants(results);
 				setOffset(limit);
 				setHasMore(results.length === limit);
@@ -57,7 +58,8 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 				search_query: searchParams.keywords.join(" "),
 			};
 
-			const results = (await searchGrants(queryParams)) as Grant[];
+			const response = await searchGrants(queryParams);
+			const results: Grant[] = Array.isArray(response) ? (response as Grant[]) : [];
 
 			if (reset) {
 				setGrants(results);
