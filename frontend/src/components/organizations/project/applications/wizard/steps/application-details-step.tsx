@@ -5,8 +5,8 @@ import AppTextArea from "@/components/app/fields/textarea-field";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { cn } from "@/lib/utils";
 import { useApplicationStore, useWizardStore } from "@/stores";
-import { TemplateFileUploader } from "../shared";
 import { ApplicationPreview } from "../shared/application-preview";
+import { TemplateFileUploader } from "../shared/template-file-uploader";
 import { UrlInput } from "../shared/url-input";
 import { WizardLeftPane } from "../shared/wizard-left-pane";
 

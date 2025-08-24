@@ -1,5 +1,5 @@
 import SharedLayout from "@/components/layout/shared-layout";
-import { Footer } from "@/components/public-pages";
+import Footer from "@/components/public-pages/footer";
 
 export default function LandingPagesLayout({ children }: { children: React.ReactNode }) {
 	return (

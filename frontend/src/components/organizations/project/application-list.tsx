@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { ApplicationCard } from "./application-card";
 
 interface ApplicationListProps {

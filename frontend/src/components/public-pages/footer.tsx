@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { FooterLinks } from "@/components/public-pages";
+import { FooterLinks } from "@/components/public-pages/footer-links";
 
 const LinkedInLink = () => {
 	return (

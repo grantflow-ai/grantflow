@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { GrantSection } from "@/types";
+import type { GrantSection } from "@/types/grant-sections";
 import { calculateDropIndicatorVisibility } from "@/utils/grant-sections";
 import { useDragDropContext, type ZoneType } from "./drag-drop-context";
 

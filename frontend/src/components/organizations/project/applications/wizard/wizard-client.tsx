@@ -14,18 +14,16 @@ import {
 	useApplicationNotifications,
 } from "@/hooks/use-application-notifications";
 import { type TemplateGenerationEvent, useApplicationStore, useWizardStore } from "@/stores";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
-import {
-	ApplicationDetailsStep,
-	ApplicationStructureStep,
-	GenerateCompleteStep,
-	KnowledgeBaseStep,
-	ResearchDeepDiveStep,
-	ResearchPlanStep,
-} from "./index";
-import { WizardFooter, WizardHeader } from "./shared";
+import { ApplicationStructureStep } from "./application-structure/application-structure-step";
 import { WizardDialog, type WizardDialogRef } from "./shared/wizard-dialog";
+import { WizardFooter, WizardHeader } from "./shared/wizard-wrapper-components";
+import { ApplicationDetailsStep } from "./steps/application-details-step";
+import { GenerateCompleteStep } from "./steps/generate-complete-step";
+import { KnowledgeBaseStep } from "./steps/knowledge-base-step";
+import { ResearchDeepDiveStep } from "./steps/research-deep-dive-step";
+import { ResearchPlanStep } from "./steps/research-plan-step";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;

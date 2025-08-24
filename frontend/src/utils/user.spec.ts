@@ -1,4 +1,4 @@
-import { UserRole } from "@/types";
+import { UserRole } from "@/types/user";
 import { generateInitials, getRoleLabel } from "./user";
 
 describe("User Utilities", () => {

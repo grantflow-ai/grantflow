@@ -11,7 +11,7 @@ import { getApplication, updateApplication } from "@/actions/grant-applications"
 import { updateGrantTemplate } from "@/actions/grant-template";
 import { retrieveRagJob } from "@/actions/rag-jobs";
 import { crawlTemplateUrl, createTemplateSourceUploadUrl, deleteTemplateSource } from "@/actions/sources";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { getEnv } from "@/utils/env";
 

@@ -23,7 +23,7 @@ import {
 	useOrganizationStore,
 	useProjectStore,
 } from "@/stores";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";

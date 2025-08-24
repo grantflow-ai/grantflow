@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore } from "@/stores";
-import type { FileWithId } from "@/types";
+import type { FileWithId } from "@/types/files";
 import { formatBytes } from "@/utils/format";
 import { log } from "@/utils/logger/client";
 

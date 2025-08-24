@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { NavHeader } from "@/components/landing-page";
-import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/public-pages";
+import { IconDraft, IconHourglass, IconOrganize, IconRefine } from "@/components/public-pages/icons/icons";
 import { LegalPageContainer } from "@/components/public-pages/info-legal-page-components";
 import { cn } from "@/lib/utils";
 

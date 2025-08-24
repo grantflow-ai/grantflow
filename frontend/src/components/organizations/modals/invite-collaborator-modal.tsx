@@ -7,7 +7,7 @@ import { AppButton } from "@/components/app";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 
 export interface InviteOptions {
 	email: string;

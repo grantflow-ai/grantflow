@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { useApplicationStore, useWizardStore } from "@/stores";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { ResearchDeepDiveContent } from "./research-deep-dive-content";
 
