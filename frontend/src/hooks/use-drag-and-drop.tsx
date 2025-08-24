@@ -1,6 +1,5 @@
 "use client";
 
-// biome-ignore lint/style/useImportType: sorting conflicts with eslint due to type presence
 import {
 	closestCenter,
 	type CollisionDetection,
