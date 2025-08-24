@@ -6,10 +6,10 @@ import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
-import { ApplicationPreview } from "../shared/application-preview";
-import { TemplateFileUploader } from "../shared/template-file-uploader";
-import { UrlInput } from "../shared/url-input";
-import { WizardLeftPane } from "../shared/wizard-left-pane";
+import { ApplicationPreview } from "../application-preview";
+import { TemplateFileUploader } from "../template-file-uploader";
+import { UrlInput } from "../url-input";
+import { WizardLeftPane } from "../wizard-left-pane";
 
 const TITLE_MAX_LENGTH = 120;
 

@@ -10,9 +10,9 @@ import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
-import { createRagSourcesDialog } from "../shared/rag-sources-dialog-utils";
-import type { WizardDialogRef } from "../shared/wizard-dialog";
-import { WizardRightPane } from "../shared/wizard-right-pane";
+import { createRagSourcesDialog } from "../rag-sources-dialog-utils";
+import type { WizardDialogRef } from "../wizard-dialog";
+import { WizardRightPane } from "../wizard-right-pane";
 import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 import { DragDropSectionManager } from "./drag-drop-section-manager";
 

@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe } from "vitest";
 
-import { IconSocialGoogle, IconSocialOrcid, IconTick } from ".";
+import { IconSocialGoogle, IconSocialOrcid, IconTick } from "./icons";
 
 describe.sequential("Social Icon Components", () => {
 	afterEach(() => {

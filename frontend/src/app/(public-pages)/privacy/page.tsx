@@ -1,4 +1,4 @@
-import { NavHeader } from "@/components/landing-page";
+import { NavHeader } from "@/components/landing-page/nav-header";
 import {
 	LegalPageContainer,
 	TitledLegalSection,

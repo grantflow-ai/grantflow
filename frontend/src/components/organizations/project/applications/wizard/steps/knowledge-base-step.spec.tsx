@@ -20,7 +20,7 @@ vi.mock("@/actions/sources", () => ({
 	deleteApplicationSource: vi.fn(),
 }));
 
-vi.mock("../shared/url-input", () => ({
+vi.mock("../url-input", () => ({
 	UrlInput: () => (
 		<button data-testid="url-input" type="button">
 			URL Input Component
@@ -28,7 +28,7 @@ vi.mock("../shared/url-input", () => ({
 	),
 }));
 
-vi.mock("../shared/template-file-uploader", () => ({
+vi.mock("../template-file-uploader", () => ({
 	TemplateFileUploader: () => (
 		<button data-testid="template-file-uploader" type="button">
 			Template File Uploader
