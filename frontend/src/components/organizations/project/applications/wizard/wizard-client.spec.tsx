@@ -9,24 +9,39 @@ import { useWizardStore } from "@/stores/wizard-store";
 
 import { WizardClientComponent } from "./wizard-client";
 
-vi.mock("./index", () => ({
+vi.mock("./steps/application-details-step", () => ({
 	ApplicationDetailsStep: ({ connectionStatus, connectionStatusColor }: any) => (
 		<div data-testid="application-details-step">
 			Status: {connectionStatus} - Color: {connectionStatusColor}
 		</div>
 	),
+}));
+
+vi.mock("./application-structure/application-structure-step", () => ({
 	ApplicationStructureStep: ({ dialogRef }: any) => (
 		<div data-testid="application-structure-step">Dialog ref: {dialogRef ? "present" : "missing"}</div>
 	),
+}));
+
+vi.mock("./steps/generate-complete-step", () => ({
 	GenerateCompleteStep: () => <div data-testid="generate-complete-step">Generate Complete</div>,
+}));
+
+vi.mock("./steps/knowledge-base-step", () => ({
 	KnowledgeBaseStep: () => <div data-testid="knowledge-base-step">Knowledge Base</div>,
+}));
+
+vi.mock("./steps/research-deep-dive-step", () => ({
 	ResearchDeepDiveStep: () => <div data-testid="research-deep-dive-step">Research Deep Dive</div>,
+}));
+
+vi.mock("./steps/research-plan-step", () => ({
 	ResearchPlanStep: ({ dialogRef }: any) => (
 		<div data-testid="research-plan-step">Dialog ref: {dialogRef ? "present" : "missing"}</div>
 	),
 }));
 
-vi.mock("./shared", () => ({
+vi.mock("./wizard-wrapper-components", () => ({
 	WizardFooter: () => <div data-testid="wizard-footer">Footer</div>,
 	WizardHeader: () => <div data-testid="wizard-header">Header</div>,
 }));
@@ -35,7 +50,7 @@ vi.mock("./wizard-dialog", () => ({
 	WizardDialog: () => <div data-testid="wizard-dialog">Dialog</div>,
 }));
 
-vi.mock("@/components/shared", () => ({
+vi.mock("@/components/shared/notification-handler", () => ({
 	NotificationHandler: ({ notification }: any) => (
 		<div data-testid="notification-handler">Notification: {notification?.data?.event}</div>
 	),
