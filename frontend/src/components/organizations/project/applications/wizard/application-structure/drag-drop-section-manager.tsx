@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { AppButton } from "@/components/app";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores";
-import type { GrantSection, UpdateGrantSection } from "@/types";
-import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types";
+import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { hasDetailedResearchPlan, hasDetailedResearchPlanUpdate } from "@/types/grant-sections";
 import {
 	assignOrderAndParent,
 	determineNewParentId,

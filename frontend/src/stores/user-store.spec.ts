@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { updateEmail, updateProfile } from "firebase/auth";
-import type { UserInfo } from "@/types";
+import type { UserInfo } from "@/types/user";
 import { createUserInfo, deleteProfilePhoto, getFirebaseAuth, uploadProfilePhoto } from "@/utils/firebase";
 
 import { useUserStore } from "./user-store";

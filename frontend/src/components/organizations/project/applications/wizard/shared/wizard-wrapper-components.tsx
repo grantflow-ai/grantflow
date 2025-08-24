@@ -7,7 +7,7 @@ import { ThemeBadge } from "@/components/shared/theme-badge";
 import { WizardStep } from "@/constants";
 import { MIN_TITLE_LENGTH, useApplicationStore, useWizardStore } from "@/stores";
 import { routes } from "@/utils/navigation";
-import { Deadline } from "./index";
+import { Deadline } from "./deadline";
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,

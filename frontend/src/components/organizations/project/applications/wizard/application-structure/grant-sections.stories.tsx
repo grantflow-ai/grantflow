@@ -2,7 +2,7 @@ import { GrantSectionDetailedFactory } from "::testing/factories";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "@storybook/test";
 import { useState } from "react";
-import type { GrantSection, UpdateGrantSection } from "@/types";
+import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { DragDropContext, type DragDropContextData } from "./drag-drop-context";
 import { SortableSection } from "./grant-sections";
 

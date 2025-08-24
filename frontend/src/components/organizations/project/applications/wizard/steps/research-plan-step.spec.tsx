@@ -10,7 +10,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore, useOrganizationStore, useWizardStore } from "@/stores";
-import type { API } from "@/types";
+import type { API } from "@/types/api-types";
 
 import { MAX_OBJECTIVES, ResearchPlanStep } from "./research-plan-step";
 

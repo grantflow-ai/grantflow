@@ -2,7 +2,7 @@ import { GrantSectionFactory } from "::testing/factories";
 import type { Active, Collision, Data, DataRef } from "@dnd-kit/core";
 import { pointerWithin } from "@dnd-kit/core";
 import { describe, expect, it, vi } from "vitest";
-import type { GrantSection } from "@/types";
+import type { GrantSection } from "@/types/grant-sections";
 import { createZoneCollisionDetection } from "./zone-collision-detection";
 
 vi.mock("@dnd-kit/core", async () => {

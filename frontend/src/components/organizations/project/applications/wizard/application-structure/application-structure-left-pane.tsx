@@ -4,8 +4,11 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { type TemplateGenerationEvent, useApplicationStore, useWizardStore } from "@/stores";
-import type { FileWithSource, UrlWithSource } from "@/types";
-import { FilePreviewCard, LinkPreviewItem, PreviewCard, WizardLeftPane } from "../shared";
+import type { FileWithSource, UrlWithSource } from "@/types/files";
+import { FilePreviewCard } from "../shared/file-preview-card";
+import { LinkPreviewItem } from "../shared/link-preview-item";
+import { PreviewCard } from "../shared/preview-card";
+import { WizardLeftPane } from "../shared/wizard-left-pane";
 
 const ANALYZING_STEPS = [
 	{

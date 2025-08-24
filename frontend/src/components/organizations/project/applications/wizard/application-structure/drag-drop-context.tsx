@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { GrantSection } from "@/types";
+import type { GrantSection } from "@/types/grant-sections";
 
 export interface ZoneCollisionData {
 	zone: null | ZoneType;

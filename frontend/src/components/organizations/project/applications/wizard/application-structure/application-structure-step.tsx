@@ -7,11 +7,13 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore, useWizardStore } from "@/stores";
-import type { API, GrantSection, UpdateGrantSection } from "@/types";
-import { WizardRightPane } from "../shared";
+import type { API } from "@/types/api-types";
+import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { createRagSourcesDialog } from "../shared/rag-sources-dialog-utils";
 import type { WizardDialogRef } from "../shared/wizard-dialog";
-import { ApplicationStructureLeftPane, DragDropSectionManager } from "./index";
+import { WizardRightPane } from "../shared/wizard-right-pane";
+import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
+import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 const isDetailedSection = (
 	section: GrantSection,

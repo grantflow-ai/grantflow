@@ -1,10 +1,10 @@
 "use client";
 
 import type { RefObject } from "react";
+import { WizardRightPane } from "@/components/organizations";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { useObjectiveManagement } from "@/hooks/use-objective-management";
 import { type Objective, useApplicationStore, useWizardStore } from "@/stores";
-import { WizardRightPane } from "../shared";
 import { ObjectiveList } from "../shared/objective-list";
 import type { WizardDialogRef } from "../shared/wizard-dialog";
 

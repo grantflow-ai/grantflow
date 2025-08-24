@@ -11,8 +11,8 @@ import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { GrantSection, UpdateGrantSection } from "@/types";
-import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types";
+import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
 import { SectionWithDropIndicators } from "./section-drop-indicator";
 import { SectionIconButton } from "./section-icon-button";
 
