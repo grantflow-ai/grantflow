@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { NotificationContainer } from "@/components/app/feedback/notification-container";
 import SharedLayout from "@/components/layout/shared-layout";
-import { AppSidebar } from "@/components/sidebar";
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SWRProvider } from "@/providers/swr-provider";
 

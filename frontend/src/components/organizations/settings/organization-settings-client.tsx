@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { getOrganizationMembers } from "@/actions/organization";
-import { AppHeader } from "@/components/layout";
+import AppHeader from "@/components/layout/app-header";
 import {
 	OrganizationSettingsGeneral,
 	OrganizationSettingsLayout,
 	OrganizationSettingsMembers,
 	OrganizationSettingsNotifications,
 } from "@/components/organizations";
-import { PersonalSettingsClient } from "@/components/user";
+import { PersonalSettingsClient } from "@/components/user/personal-settings-client";
 import { useOrganizationStore } from "@/stores";
 import type { UserRole } from "@/types";
 import { routes } from "@/utils/navigation";

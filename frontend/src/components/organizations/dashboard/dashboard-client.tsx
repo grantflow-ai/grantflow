@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { createProject, deleteProject as deleteProjectAction, getProjects } from "@/actions/project";
-import { AppHeader } from "@/components/layout";
+import AppHeader from "@/components/layout/app-header";
 import {
 	DashboardProjectCard,
 	DashboardStats,

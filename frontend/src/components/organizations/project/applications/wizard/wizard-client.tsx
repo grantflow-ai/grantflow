@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { NotificationHandler } from "@/components/shared";
+import { NotificationHandler } from "@/components/shared/notification-handler";
 import { WizardStep } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
 import {

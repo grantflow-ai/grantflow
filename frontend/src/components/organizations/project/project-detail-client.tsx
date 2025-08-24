@@ -14,7 +14,7 @@ import {
 import { getProjectMembers } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AppButton, AvatarGroup } from "@/components/app";
-import { AppHeader } from "@/components/layout";
+import AppHeader from "@/components/layout/app-header";
 import {
 	ApplicationList,
 	DeleteApplicationModal,
