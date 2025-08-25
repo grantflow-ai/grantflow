@@ -6,24 +6,23 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { createProject, deleteProject as deleteProjectAction, getProjects } from "@/actions/project";
-import { AppHeader } from "@/components/layout/app-header";
-import { DeleteProjectModal } from "@/components/organizations";
+import AppHeader from "@/components/layout/app-header";
+import { DashboardProjectCard } from "@/components/organizations/dashboard/dashboard-project-card";
+import { DashboardStats } from "@/components/organizations/dashboard/dashboard-stats";
+import { WelcomeModal } from "@/components/organizations/dashboard/welcome/welcome-modal";
+import { DeleteProjectModal } from "@/components/organizations/modals/delete-project-modal";
+import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
+import PaymentLink from "@/components/organizations/payment/payment-link";
 import { useOrganization } from "@/hooks/use-organization";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
-
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import NewApplicationModal from "../modals/new-application-modal";
-import PaymentLink from "../payment/payment-link";
-import { DashboardProjectCard } from "./dashboard-project-card";
-import { DashboardStats } from "./dashboard-stats";
-import { WelcomeModal } from "./welcome/welcome-modal";
 
 interface DashboardClientProps {
 	initialOrganizations: API.ListOrganizations.Http200.ResponseBody;

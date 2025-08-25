@@ -1,6 +1,6 @@
 import { FileTextIcon, X } from "lucide-react";
 
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatBytes } from "@/utils/format";
 

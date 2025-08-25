@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { BrandPattern } from "@/components/branding/brand-pattern";
-import { IconGoAhead } from "@/components/branding/icons";
-import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
+import { IconGoAhead } from "@/components/icons";
+import { AnimatedGradientBackground } from "./backgrounds-animated";
 import { NavHeader } from "./nav-header";
 import { LandingPageScrollButton } from "./scroll-button";
 

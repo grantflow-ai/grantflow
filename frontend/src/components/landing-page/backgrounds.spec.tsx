@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
-import { GradientBackground } from "@/components/landing-page/backgrounds";
+import { GradientBackground } from "./backgrounds";
 
 describe.sequential("Background Components", () => {
 	afterEach(() => {

@@ -4,19 +4,17 @@ import { Plus } from "lucide-react";
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
-import {
-	ApplicationStructureLeftPane,
-	DragDropSectionManager,
-} from "@/components/organizations/project/applications/wizard/application-structure";
-import { WizardRightPane } from "@/components/organizations/project/applications/wizard/shared";
-import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/shared/rag-sources-dialog-utils";
-import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
+import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/modal/rag-sources-dialog-utils";
+import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
+import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
+import { DragDropSectionManager } from "./drag-drop-section-manager";
 
 const isDetailedSection = (
 	section: GrantSection,

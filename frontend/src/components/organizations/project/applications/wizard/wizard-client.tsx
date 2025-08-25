@@ -2,19 +2,6 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import {
-	ApplicationDetailsStep,
-	ApplicationStructureStep,
-	GenerateCompleteStep,
-	KnowledgeBaseStep,
-	ResearchDeepDiveStep,
-	ResearchPlanStep,
-} from "@/components/organizations/project/applications/wizard/index";
-import { WizardFooter, WizardHeader } from "@/components/organizations/project/applications/wizard/shared";
-import {
-	WizardDialog,
-	type WizardDialogRef,
-} from "@/components/organizations/project/applications/wizard/shared/wizard-dialog";
 import { NotificationHandler } from "@/components/shared/notification-handler";
 import { WizardStep } from "@/constants";
 import { SourceIndexingStatus } from "@/enums";
@@ -30,6 +17,14 @@ import { useApplicationStore } from "@/stores/application-store";
 import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
+import { ApplicationDetailsStep } from "./application-details/application-details-step";
+import { ApplicationStructureStep } from "./application-structure/application-structure-step";
+import { GenerateCompleteStep } from "./generate-and-complete/generate-complete-step";
+import { KnowledgeBaseStep } from "./knowledge-base/knowledge-base-step";
+import { WizardDialog, type WizardDialogRef } from "./modal/wizard-dialog";
+import { ResearchDeepDiveStep } from "./research-deep-dive/research-deep-dive-step";
+import { ResearchPlanStep } from "./research-plan/research-plan-step";
+import { WizardFooter, WizardHeader } from "./wizard-wrapper-components";
 
 interface WizardClientComponentProps {
 	application: API.RetrieveApplication.Http200.ResponseBody;
@@ -71,7 +66,6 @@ export function WizardClientComponent({
 	};
 
 	useEffect(() => {
-		// TODO: remove, these are debug logs
 		log.info("[useApplicationNotifications] connectionStatus changed", {
 			connectionStatus,
 			organizationId,
@@ -80,7 +74,6 @@ export function WizardClientComponent({
 	}, [connectionStatus, organizationId, projectId]);
 
 	useEffect(() => {
-		// TODO: remove, these are debug logs
 		log.info("[useApplicationNotifications] notifications changed", {
 			notifications,
 			organizationId,

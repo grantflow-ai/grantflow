@@ -2,12 +2,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn, userEvent, within } from "@storybook/test";
 import Link from "next/link";
 import type React from "react";
-import { AppCard, AppCardContent } from "@/components/app";
+import { AppCard, AppCardContent } from "@/components/app/app-card";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
-import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
 import { AuthCardHeader } from "./auth-card-header";
 import { SigninForm } from "./signin-form";
+import { SocialSigninButton } from "./social-signin-buttons";
 
 const meta: Meta<typeof SigninForm> = {
 	argTypes: {

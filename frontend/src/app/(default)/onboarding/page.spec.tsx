@@ -47,7 +47,7 @@ vi.mock("@/actions/login", () => ({
 	login: vi.fn(),
 }));
 
-vi.mock("@/components/cookie-consent", () => ({
+vi.mock("@/components/cookie-consent/cookie-consent-provider", () => ({
 	CookieConsentProvider: () => null,
 }));
 

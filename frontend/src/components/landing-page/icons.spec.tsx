@@ -11,7 +11,7 @@ import {
 	IconEarlyAccessBenefit3,
 	IconEarlyAccessBenefit4,
 	IconHamburger,
-} from "@/components/landing-page/icons";
+} from "./icons";
 
 const allIcons = [
 	{ Component: IconBenefitFirst, hasDefaultSize: true, name: "IconBenefitFirst" },
