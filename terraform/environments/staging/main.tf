@@ -104,6 +104,8 @@ module "cloud_run" {
   rag_memory_limit = "2Gi" # ~keep Reduced memory since processing one URL at a time
   rag_cpu_limit    = "1"   # ~keep Single CPU for single URL processing
 
+  scraper_memory_limit = "2Gi" # ~keep Increased memory to match crawler/indexer for document processing
+
   crdt_server_memory_limit = "2Gi"
 
   discord_webhook_url   = var.discord_webhook_url

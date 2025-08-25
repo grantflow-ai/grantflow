@@ -91,6 +91,7 @@ module "cloud_run" {
   memory_limit                  = var.memory_limit
   crawler_memory_limit          = "4Gi" # ~keep Same as default but explicit for crawler due to browser automation needs
   indexer_memory_limit          = "4Gi" # ~keep Increased memory for indexer to prevent OOM issues
+  scraper_memory_limit          = "4Gi" # ~keep Increased memory to match crawler/indexer for document processing
   indexer_concurrency_limit     = 50    # ~keep Optimized concurrency for indexer (10 instances × 50 = 500 concurrent)
   discord_webhook_url           = var.discord_webhook_url
 
