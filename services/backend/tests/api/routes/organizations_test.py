@@ -453,7 +453,7 @@ async def test_delete_organization_schedule_error(
     project_owner_user: OrganizationUser,
     otp_code: str,
 ) -> None:
-    with patch("services.backend.src.utils.firebase.schedule_organization_deletion") as mock_schedule:
+    with patch("services.backend.src.api.routes.organizations.schedule_organization_deletion") as mock_schedule:
         mock_schedule.side_effect = Exception("Firebase error")
 
         response = await test_client.delete(

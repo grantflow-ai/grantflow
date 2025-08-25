@@ -1,7 +1,12 @@
 import base64
 import json
+import os
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
+
+# Set environment variables before importing the module
+os.environ.setdefault("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
+os.environ.setdefault("ENVIRONMENT", "test")
 
 import httpx
 import pytest
@@ -15,23 +20,19 @@ async def test_budget_alert_critical_priority(
     mock_discord_webhook_response: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
     budget_alert_data["costAmount"] = 105.00
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
         assert result["message"] == "Alert sent to Discord"
 
-        mock_context.post.assert_called_once()
-        call_args = mock_context.post.call_args
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
 
         assert call_args[0][0] == "https://discord.com/api/webhooks/123/test"
 
@@ -55,16 +56,13 @@ async def test_budget_alert_high_priority(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -82,16 +80,13 @@ async def test_budget_alert_medium_priority(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -109,16 +104,13 @@ async def test_budget_alert_low_priority(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -135,16 +127,13 @@ async def test_budget_alert_with_forecast(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -165,16 +154,13 @@ async def test_budget_alert_without_forecast(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -183,9 +169,8 @@ async def test_budget_alert_without_forecast(
 
 
 async def test_budget_alert_missing_webhook_url(mock_request: Mock, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
-
-    result = await budget_alert_to_discord(mock_request)
+    with patch("cloud_functions.src.budget_alerts.main.webhook_url", None):
+        result = await budget_alert_to_discord(mock_request)
 
     assert result["status"] == "error"
     assert "Discord webhook URL not configured" in result["message"]
@@ -206,18 +191,15 @@ async def test_budget_alert_missing_budget_data(mock_request: Mock) -> None:
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(incomplete_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_response = Mock()
-        mock_response.status_code = 204
-        mock_context.post.return_value = mock_response
-
+    mock_response = Mock()
+    mock_response.status_code = 204
+    mock_post = AsyncMock(return_value=mock_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -230,18 +212,15 @@ async def test_budget_alert_zero_budget_amount(mock_request: Mock, budget_alert_
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_response = Mock()
-        mock_response.status_code = 204
-        mock_context.post.return_value = mock_response
-
+    mock_response = Mock()
+    mock_response.status_code = 204
+    mock_post = AsyncMock(return_value=mock_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
 
-        call_args = mock_context.post.call_args
+        call_args = mock_post.call_args
         payload = call_args[1]["json"]
         embed = payload["embeds"][0]
 
@@ -255,13 +234,10 @@ async def test_budget_alert_discord_webhook_failure(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_response = Mock()
-        mock_response.status_code = 400
-        mock_context.post.return_value = mock_response
-
+    mock_response = Mock()
+    mock_response.status_code = 400
+    mock_post = AsyncMock(return_value=mock_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "error"
@@ -275,11 +251,8 @@ async def test_budget_alert_httpx_request_error(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.side_effect = httpx.RequestError("Connection failed")
-
+    mock_post = AsyncMock(side_effect=httpx.RequestError("Connection failed"))
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         result = await budget_alert_to_discord(mock_request)
 
         assert result["status"] == "error"
@@ -294,11 +267,8 @@ def test_budget_alert_sync_wrapper(
     pubsub_data = {"message": {"data": base64.b64encode(json.dumps(budget_alert_data).encode()).decode("utf-8")}}
     mock_request.data = pubsub_data
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_discord_webhook_response
-
+    mock_post = AsyncMock(return_value=mock_discord_webhook_response)
+    with patch("cloud_functions.src.budget_alerts.main.http_client.post", mock_post):
         budget_alert_to_discord_sync(mock_request)
 
-        mock_context.post.assert_called_once()
+        mock_post.assert_called_once()

@@ -19,30 +19,10 @@ resource "google_storage_bucket" "grant_matcher_functions" {
   }
 }
 
-data "archive_file" "grant_matcher_source" {
-  type        = "zip"
-  output_path = "/tmp/grant-matcher-function.zip"
-
-  source {
-    content  = file("${path.root}/../cloud_functions/src/grant_matcher/__init__.py")
-    filename = "__init__.py"
-  }
-
-  source {
-    content  = file("${path.root}/../cloud_functions/src/grant_matcher/main.py")
-    filename = "main.py"
-  }
-
-  source {
-    content  = file("${path.root}/../cloud_functions/requirements.txt")
-    filename = "requirements.txt"
-  }
-}
-
 resource "google_storage_bucket_object" "grant_matcher_source" {
-  name   = "grant-matcher-function-${data.archive_file.grant_matcher_source.output_md5}.zip"
+  name   = "grant-matcher-function-${filemd5("/tmp/grant-matcher-function.zip")}.zip"
   bucket = google_storage_bucket.grant_matcher_functions.name
-  source = data.archive_file.grant_matcher_source.output_path
+  source = "/tmp/grant-matcher-function.zip"
 }
 
 resource "google_cloudfunctions2_function" "grant_matcher" {

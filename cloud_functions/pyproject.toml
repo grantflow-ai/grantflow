@@ -10,6 +10,7 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 dependencies = [
   "asyncpg>=0.29",
   "cloudevents>=1.10",
+  "db",
   "firebase-admin>=6.5",
   "firebase-functions>=0.1.1",
   "functions-framework>=3.5",
@@ -19,6 +20,7 @@ dependencies = [
   "jinja2>=3.1",
   "markdown>=3.5",
   "python-docx>=1.1",
+  "shared-utils[ai,gcs,pubsub]",
   "sqlalchemy>=2",
 ]
 
