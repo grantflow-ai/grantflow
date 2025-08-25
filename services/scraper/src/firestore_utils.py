@@ -91,10 +91,23 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
     start_time = time.time()
     collection = await get_grants_collection()
 
+    # Extract a description from the markdown content (first 500 chars of non-header text)
+    lines = content.split("\n")
+    description_lines = []
+    for line in lines:
+        # Skip headers and empty lines
+        if line.strip() and not line.startswith("#"):
+            description_lines.append(line.strip())
+            if len(" ".join(description_lines)) >= 500:
+                break
+
+    description = " ".join(description_lines)[:500] if description_lines else ""
+
     doc_ref = collection.document(grant_id)
     await doc_ref.set(
         {
             "page_content": content,
+            "description": description,  # Add searchable description field
             "content_scraped_at": datetime.now(UTC).isoformat(),
             "updated_at": datetime.now(UTC).isoformat(),
         },
@@ -106,6 +119,7 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
         "Saved grant page content to Firestore",
         grant_id=grant_id,
         content_length=len(content),
+        description_length=len(description),
         duration_ms=round(duration * 1000, 2),
     )
 
