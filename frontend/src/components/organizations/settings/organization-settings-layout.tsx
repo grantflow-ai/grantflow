@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";

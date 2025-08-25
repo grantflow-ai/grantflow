@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { InviteCollaboratorModal } from "@/components/organizations";
+import { InviteCollaboratorModal } from "./invite-collaborator-modal";
 
 const getLatestModal = async () => {
 	const modals = await screen.findAllByTestId("invite-collaborator-modal");

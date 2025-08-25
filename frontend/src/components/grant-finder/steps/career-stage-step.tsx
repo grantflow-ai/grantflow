@@ -1,4 +1,4 @@
-import { CAREER_STAGES, type FormData } from "../types";
+import { CAREER_STAGES, type FormData } from "@/components/grant-finder/types";
 
 interface CareerStageStepProps {
 	formData: FormData;

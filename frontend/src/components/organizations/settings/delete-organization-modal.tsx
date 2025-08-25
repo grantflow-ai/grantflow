@@ -38,8 +38,6 @@ export function DeleteOrganizationModal({
 
 		setIsDeleting(true);
 		try {
-			// TODO: Implement organization deletion API call
-
 			log.info("Deleting organization", { organizationId });
 
 			clearOrganization();

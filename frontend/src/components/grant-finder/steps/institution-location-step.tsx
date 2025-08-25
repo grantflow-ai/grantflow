@@ -1,4 +1,4 @@
-import { type FormData, INSTITUTION_LOCATIONS } from "../types";
+import { type FormData, INSTITUTION_LOCATIONS } from "@/components/grant-finder/types";
 
 interface InstitutionLocationStepProps {
 	formData: FormData;

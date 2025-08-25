@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { NotificationContainer } from "@/components/app/feedback/notification-container";
 import SharedLayout from "@/components/layout/shared-layout";
 
-import { SWRProvider } from "@/components/providers/swr-provider";
+import { SWRProvider } from "@/providers/swr-provider";
 
 export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return (

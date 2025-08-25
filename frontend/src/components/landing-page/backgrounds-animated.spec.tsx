@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach } from "vitest";
 
-import { AnimatedGradientBackground } from "@/components/landing-page/backgrounds-animated";
+import { AnimatedGradientBackground } from "./backgrounds-animated";
 
 afterEach(() => {
 	cleanup();

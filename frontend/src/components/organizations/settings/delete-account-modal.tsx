@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { deleteAccount, getSoleOwnedProjects } from "@/actions/user";
-import { AppButton } from "@/components/app";
+import { AppButton } from "@/components/app/buttons/app-button";
 import { BaseModal } from "@/components/app/feedback/base-modal";
 import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";

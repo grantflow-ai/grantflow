@@ -6,8 +6,10 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createProject } from "@/actions/project";
-import { AppCard, AppCardContent, AppInput, AppTextarea } from "@/components/app";
+import { AppCard, AppCardContent } from "@/components/app/app-card";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
+import { AppInput } from "@/components/app/fields/app-input";
+import { AppTextarea } from "@/components/app/fields/app-textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { log } from "@/utils/logger/client";
 

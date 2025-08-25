@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-import LandingPage from "@/app/(public-pages)/page";
+import LandingPage from "./page";
 
 vi.mock("@/components/landing-page/backgrounds", () => ({
 	GradientBackground: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
@@ -29,7 +29,7 @@ vi.mock("@/components/landing-page/testimonials-section", () => ({
 	TestimonialsSection: () => <div data-testid="mock-testimonials-section" />,
 }));
 
-vi.mock("@/components/cookie-consent", () => ({
+vi.mock("@/components/cookie-consent/cookie-consent-provider", () => ({
 	CookieConsentProvider: () => <div data-testid="mock-cookie-consent-provider" />,
 }));
 

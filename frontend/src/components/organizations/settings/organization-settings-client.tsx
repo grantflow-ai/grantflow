@@ -4,18 +4,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { getOrganizationMembers } from "@/actions/organization";
-import { AppHeader } from "@/components/layout/app-header";
-import {
-	OrganizationSettingsGeneral,
-	OrganizationSettingsLayout,
-	OrganizationSettingsMembers,
-	OrganizationSettingsNotifications,
-} from "@/components/organizations";
+import AppHeader from "@/components/layout/app-header";
+import { OrganizationSettingsGeneral } from "@/components/organizations/settings/organization-settings-general";
+import { OrganizationSettingsLayout } from "@/components/organizations/settings/organization-settings-layout";
+import { OrganizationSettingsMembers } from "@/components/organizations/settings/organization-settings-members";
+import { OrganizationSettingsNotifications } from "@/components/organizations/settings/organization-settings-notifications";
+import { PersonalSettingsClient } from "@/components/user/personal-settings-client";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { UserRole } from "@/types/user";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { PersonalSettingsClient } from "../../user/settings/personal-settings-client";
 
 interface OrganizationSettingsClientProps {
 	activeTab: "account" | "billing" | "members" | "notifications" | "personal";

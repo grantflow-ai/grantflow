@@ -9,38 +9,6 @@ import {
 import type { ZoneType } from "@/components/organizations/project/applications/wizard/application-structure/drag-drop-context";
 import type { GrantSection } from "@/types/grant-sections";
 
-/**
- * Creates a custom collision detection algorithm that enhances dnd-kit's pointerWithin
- * collision detection with zone information for grant sections.
- *
- * This collision detection function:
- * 1. Activates when dragging any section (main or sub-section)
- * 2. Only calculates zones when hovering over main sections
- * 3. Divides sections into two zones based on mouse X position:
- *    - Left 16%: "sibling" zone (drop as sibling section)
- *    - Right 84%: "child" zone (drop as child subsection)
- * 4. Adds zone and zonePercent data to all collision objects
- *
- * @returns A collision detection function compatible with dnd-kit's DndContext
- *
- * @example
- * ```tsx
- * const zoneCollisionDetection = createZoneCollisionDetection();
- *
- * <DndContext collisionDetection={zoneCollisionDetection}>
- *   // Your drag and drop components
- * </DndContext>
- * ```
- *
- * @example Accessing zone data in drag handlers:
- * ```tsx
- * const onDragMove = (event) => {
- *   const collision = event.collisions?.find(c => c.id === overItem?.id);
- *   const zone = collision?.data?.zone; // "sibling" | "child" | null
- *   const zonePercent = collision?.data?.zonePercent; // 0-100 | null
- * };
- * ```
- */
 export const createZoneCollisionDetection = (): CollisionDetection => {
 	return (args) => {
 		const { active, droppableRects, pointerCoordinates } = args;

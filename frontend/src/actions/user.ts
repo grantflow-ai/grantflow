@@ -34,12 +34,7 @@ export async function getSoleOwnedProjects() {
 	);
 }
 
-/**
- * Restore a soft-deleted account within the grace period
- * @param token - Restoration token sent via email
- */
 export async function restoreAccount(token: string) {
-	// NOTE: Backend endpoint not yet implemented
 	return withAuthRedirect(
 		getClient()
 			.post("user/restore", {
