@@ -4,11 +4,11 @@ import { Info, Mail, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { DeleteAccountModal } from "@/components/organizations/settings/delete-account-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
+import { DeleteAccountModal } from "./delete-account-modal";
 
 interface OrganizationSettingsAccountProps {
 	organizationId: string;

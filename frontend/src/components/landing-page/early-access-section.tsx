@@ -1,11 +1,12 @@
 import Image from "next/image";
 
+import { GradientBackground } from "./backgrounds";
 import {
 	IconEarlyAccessBenefit1,
 	IconEarlyAccessBenefit2,
 	IconEarlyAccessBenefit3,
 	IconEarlyAccessBenefit4,
-} from "@/components/landing-page/icons";
+} from "./icons";
 import {
 	MotionAside,
 	MotionDiv,
@@ -15,9 +16,8 @@ import {
 	MotionParagraph,
 	MotionSection,
 	MotionUnorderedList,
-} from "@/components/landing-page/motion-components";
-import { WaitlistForm } from "@/components/landing-page/waitlist-form";
-import { GradientBackground } from "./backgrounds";
+} from "./motion-components";
+import { WaitlistForm } from "./waitlist-form";
 
 const SECTION_HEADERS = {
 	badge: "Early Access Registration Now Open!",

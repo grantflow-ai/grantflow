@@ -9,11 +9,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { login } from "@/actions/login";
-import { AppCard, AppCardContent } from "@/components/app";
+import { AppCard, AppCardContent } from "@/components/app/app-card";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
-import { LogoDark } from "@/components/branding/logo";
-import { CookieConsentProvider } from "@/components/cookie-consent";
+import { LogoDark } from "@/components/branding/icons/logo";
+import { CookieConsentProvider } from "@/components/cookie-consent/cookie-consent-provider";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import {
 	OnboardingGradientBackgroundBottom,
@@ -22,7 +22,7 @@ import {
 } from "@/components/onboarding/backgrounds";
 import { BenefitsList } from "@/components/onboarding/onboarding-benefits";
 import { SigninForm } from "@/components/onboarding/signin-form";
-import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
+import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useUserStore } from "@/stores/user-store";

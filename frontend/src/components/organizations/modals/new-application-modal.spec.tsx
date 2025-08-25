@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
+import NewApplicationModal from "./new-application-modal";
 
 describe.sequential("NewApplicationModal", () => {
 	afterEach(() => {

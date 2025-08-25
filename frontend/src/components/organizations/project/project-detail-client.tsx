@@ -13,10 +13,14 @@ import {
 } from "@/actions/grant-applications";
 import { getProjectMembers } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
-import { AppButton, AvatarGroup } from "@/components/app";
-import { AppHeader } from "@/components/layout/app-header";
-import { InviteCollaboratorModal } from "@/components/organizations";
+import { AvatarGroup } from "@/components/app/app-avatar";
+import { AppButton } from "@/components/app/buttons/app-button";
+import AppHeader from "@/components/layout/app-header";
+import type { InviteOptions } from "@/components/organizations/modals/invite-collaborator-modal";
+import { InviteCollaboratorModal } from "@/components/organizations/modals/invite-collaborator-modal";
 import NewApplicationModal from "@/components/organizations/modals/new-application-modal";
+import { ApplicationList } from "@/components/organizations/project/application-list";
+import { DeleteApplicationModal } from "@/components/organizations/project/delete-application-modal";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DEFAULT_APPLICATION_TITLE } from "@/constants";
 import { useNavigationStore } from "@/stores/navigation-store";
@@ -27,9 +31,6 @@ import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import type { InviteOptions } from "../modals/invite-collaborator-modal";
-import { ApplicationList } from "./application-list";
-import { DeleteApplicationModal } from "./applications/delete-application-modal";
 
 export function ProjectDetailClient() {
 	const router = useRouter();

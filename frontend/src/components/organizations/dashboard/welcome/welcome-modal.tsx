@@ -4,7 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppDialogDescription, AppDialogTitle } from "@/components/app";
+import { AppDialogDescription, AppDialogTitle } from "@/components/app/app-dialog";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { PROGRESS_BAR_STEPS } from "@/constants";
 import { useUserStore } from "@/stores/user-store";

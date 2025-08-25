@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { IconGoAhead } from "@/components/branding/icons";
-import { CookieConsentProvider } from "@/components/cookie-consent";
+import { CookieConsentProvider } from "@/components/cookie-consent/cookie-consent-provider";
+import { IconGoAhead } from "@/components/icons";
 import { GradientBackground } from "@/components/landing-page/backgrounds";
 import { BenefitsSection } from "@/components/landing-page/benefits-section";
 import { LandingPageButton } from "@/components/landing-page/button";

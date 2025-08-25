@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { AppButton } from "@/components/app";
-import Paymentmodal from "./payment-modal";
+import { AppButton } from "@/components/app/buttons/app-button";
+import PaymentModal from "./payment-modal";
 
 export default function PaymentLink() {
 	const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -27,7 +27,7 @@ export default function PaymentLink() {
 				</div>
 			</article>
 
-			<Paymentmodal
+			<PaymentModal
 				isOpen={showPaymentModal}
 				onClose={() => {
 					setShowPaymentModal(false);

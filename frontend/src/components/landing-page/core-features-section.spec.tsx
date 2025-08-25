@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 
-import { CoreFeaturesSection } from "@/components/landing-page/core-features-section";
+import { CoreFeaturesSection } from "./core-features-section";
 
 vi.mock("motion/react", async () => {
 	const actual = vi.importActual("motion/react");

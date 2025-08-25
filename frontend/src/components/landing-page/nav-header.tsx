@@ -4,13 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IconGoAhead } from "@/components/branding/icons";
-import { LogoDark } from "@/components/branding/logo";
-import { IconCancel, IconHamburger } from "@/components/landing-page/icons";
+import { LogoDark } from "@/components/branding/icons/logo";
+import { IconGoAhead } from "@/components/icons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { disableScroll, enableScroll } from "@/utils/window";
 import { LandingPageButton } from "./button";
+import { IconCancel, IconHamburger } from "./icons";
 import { LandingPageScrollButton } from "./scroll-button";
 
 const BREAKPOINT_MD = 768;

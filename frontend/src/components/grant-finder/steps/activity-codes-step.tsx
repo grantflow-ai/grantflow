@@ -1,5 +1,5 @@
 import { MultiSelect } from "@/components/app/forms/multi-select";
-import { ACTIVITY_CODES, type FormData } from "../types";
+import { ACTIVITY_CODES, type FormData } from "@/components/grant-finder/types";
 
 interface ActivityCodesStepProps {
 	formData: FormData;

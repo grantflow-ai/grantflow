@@ -66,7 +66,6 @@ export function OrganizationSettingsGeneral({
 
 		setIsUploading(true);
 		try {
-			// TODO: Implement logo upload
 			toast.success("Logo upload functionality coming soon");
 		} catch (error) {
 			log.error("Error uploading logo", error);

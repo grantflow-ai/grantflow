@@ -28,6 +28,12 @@ vi.mock("@/components/ui/sonner", () => ({
 	Toaster: () => <div data-testid="toaster" />,
 }));
 
+vi.mock("@/providers/cookies-provider", () => ({
+	CookiesProviderWrapper: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="cookies-provider">{children}</div>
+	),
+}));
+
 afterEach(() => {
 	cleanup();
 });

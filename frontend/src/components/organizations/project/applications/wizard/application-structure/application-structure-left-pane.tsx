@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { FilePreviewCard } from "@/components/organizations/project/applications/wizard/file-preview-card";
+import { LinkPreviewItem } from "@/components/organizations/project/applications/wizard/link-preview-item";
+import { PreviewCard } from "@/components/organizations/project/applications/wizard/preview-card";
+import { WizardLeftPane } from "@/components/organizations/project/applications/wizard/wizard-left-pane";
 import { usePollingCleanup } from "@/hooks/use-polling-cleanup";
 import { useApplicationStore } from "@/stores/application-store";
 import { type TemplateGenerationEvent, useWizardStore } from "@/stores/wizard-store";
 import type { FileWithSource, UrlWithSource } from "@/types/files";
-import { FilePreviewCard, LinkPreviewItem, PreviewCard, WizardLeftPane } from "../shared";
 
 const ANALYZING_STEPS = [
 	{

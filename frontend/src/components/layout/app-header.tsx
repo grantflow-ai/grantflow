@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AvatarGroup } from "@/components/app";
+import { AvatarGroup } from "@/components/app/app-avatar";
 import { Notification } from "@/components/organizations/dashboard/notification";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
@@ -13,7 +13,7 @@ interface AppHeaderProps {
 	}[];
 }
 
-export function AppHeader({ projectTeamMembers }: AppHeaderProps) {
+export default function AppHeader({ projectTeamMembers }: AppHeaderProps) {
 	const [isNotificationOpen, setNotificationOpen] = useState(false);
 	const notificationRef = useRef<HTMLButtonElement>(null);
 	useOnClickOutside(notificationRef, () => {

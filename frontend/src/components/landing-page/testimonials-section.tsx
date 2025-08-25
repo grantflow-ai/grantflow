@@ -1,7 +1,6 @@
 import Image from "next/image";
-
-import { MotionArticle, MotionBlockquote, MotionImage } from "@/components/landing-page/motion-components";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+import { MotionArticle, MotionBlockquote, MotionImage } from "./motion-components";
+import { ScrollFadeElement } from "./scroll-fade-element";
 
 const CONTENT = {
 	heading: "Why Researchers Join GrantFlow?",
