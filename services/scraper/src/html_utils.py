@@ -1,6 +1,4 @@
-from bs4 import BeautifulSoup
 from httpx import AsyncClient, Timeout
-from packages.shared_utils.src.html import sanitize_html as shared_sanitize_html
 from packages.shared_utils.src.logger import get_logger
 
 logger = get_logger(__name__)
@@ -20,8 +18,3 @@ async def download_page_html(url: str) -> str:
     )
 
     return response.text
-
-
-def sanitize_html(soup: BeautifulSoup) -> str:
-    sanitized_soup = shared_sanitize_html(soup)
-    return str(sanitized_soup.prettify())

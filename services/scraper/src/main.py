@@ -1,5 +1,6 @@
 import time
 from datetime import date
+from typing import NotRequired, TypedDict
 
 from litestar import post
 from packages.shared_utils.src.discord import send_scraper_report
@@ -14,6 +15,18 @@ from services.scraper.src.search_data import DEFAULT_FROM_DATE, TODAY_DATE, down
 configure_otel("scraper")
 
 logger = get_logger(__name__)
+
+
+class ScraperResponse(TypedDict):
+    message: str
+    status: str
+    search_results_count: NotRequired[int]
+    search_results_found: NotRequired[int]
+    new_files_downloaded: NotRequired[int]
+    existing_files_skipped: NotRequired[int]
+    existing_files_count: NotRequired[int]
+    total_duration_ms: NotRequired[float]
+    total_processing_time_ms: NotRequired[float]
 
 
 async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY_DATE) -> dict[str, int | float]:
@@ -63,7 +76,7 @@ async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY
 
 
 @post("/")
-async def handle_scraper_request() -> dict[str, str]:
+async def handle_scraper_request() -> ScraperResponse:
     start_time = time.time()
     logger.info("Received scraper request")
 
@@ -108,7 +121,14 @@ async def handle_scraper_request() -> dict[str, str]:
         else:
             logger.info("Discord webhook URL not configured, skipping notification")
 
-        return {"status": "success", "message": "Scraper completed successfully"}
+        return ScraperResponse(
+            status="success",
+            message="Finished scraping NIH grants",
+            search_results_found=int(metrics["search_results_count"]),
+            new_files_downloaded=int(metrics["new_files_downloaded"]),
+            existing_files_skipped=int(metrics["existing_files_skipped"]),
+            total_processing_time_ms=metrics["total_duration_ms"],
+        )
 
     except Exception as e:
         error_duration = time.time() - start_time
