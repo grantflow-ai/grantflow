@@ -58,9 +58,11 @@ interface SortableSectionProps {
 	isDetailedSection: (section: GrantSection) => boolean;
 	isDragDisabled?: boolean;
 	isExpanded: boolean;
+	isNewlyCreated?: boolean;
 	isSubsection?: boolean;
 	onAddSubsection?: (parentId: string) => void;
 	onDelete: () => void;
+	onSectionInteraction?: () => void;
 	onToggleExpand: () => void;
 	onUpdate: (updates: Partial<GrantSection>) => void;
 	section: GrantSection;
@@ -71,9 +73,11 @@ export function SortableSection({
 	isDetailedSection: _isDetailedSection,
 	isDragDisabled = false,
 	isExpanded,
+	isNewlyCreated = false,
 	isSubsection = false,
 	onAddSubsection,
 	onDelete: _onDelete,
+	onSectionInteraction,
 	onToggleExpand,
 	onUpdate,
 	section,
@@ -151,12 +155,20 @@ export function SortableSection({
 		[onToggleExpand],
 	);
 
+	const handleMouseEnter = useCallback(() => {
+		if (isNewlyCreated && onSectionInteraction) {
+			onSectionInteraction();
+		}
+	}, [isNewlyCreated, onSectionInteraction]);
+
 	return (
 		<SectionWithDropIndicators section={section}>
+			{/** biome-ignore lint/a11y/noStaticElementInteractions: hover on whole section is needed */}
 			<div
-				className={`group rounded outline-1 outline-offset-[-1px] outline-primary transition-all duration-200 hover:outline-2 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
+				className={`group rounded outline-1 outline-offset-[-1px] ${isNewlyCreated ? "outline-muted" : "outline-primary hover:outline-2"} transition-all duration-200 ${isCurrentlyDragging ? "bg-app-gray-500" : "bg-white"} ${isSubsection ? "ml-[6.875rem] px-3 py-2" : "px-3 py-4"}`}
 				data-sortable-id={section.id}
 				data-testid="section-container"
+				onMouseEnter={handleMouseEnter}
 				ref={setNodeRef}
 				style={style}
 			>
@@ -323,7 +335,7 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 					>
 						<span
 							className={`pointer-events-none inline-block size-2.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-								formData.isResearchPlan ? "translate-x-5" : "translate-x-0"
+								formData.isResearchPlan ? "translate-x-2.5" : "translate-x-0"
 							}`}
 						/>
 					</button>

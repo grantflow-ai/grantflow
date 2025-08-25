@@ -60,6 +60,7 @@ describe("SortableSection", () => {
 	const mockOnDelete = vi.fn();
 	const mockOnToggleExpand = vi.fn();
 	const mockOnAddSubsection = vi.fn();
+	const mockOnSectionInteraction = vi.fn();
 	const mockIsDetailedSection = vi.fn();
 	const mockToUpdateGrantSection = vi.fn();
 
@@ -241,6 +242,78 @@ describe("SortableSection", () => {
 			title: "Updated Title",
 		});
 		expect(mockOnToggleExpand).toHaveBeenCalled();
+	});
+
+	describe("newly created sections", () => {
+		it("renders with gray outline when isNewlyCreated is true", () => {
+			const section = GrantSectionFactory.build({ title: "New Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={true}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			expect(container).toHaveClass("outline-app-gray-200");
+			expect(container).not.toHaveClass("outline-primary");
+		});
+
+		it("renders with primary outline when isNewlyCreated is false", () => {
+			const section = GrantSectionFactory.build({ title: "Existing Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={false}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			expect(container).toHaveClass("outline-primary");
+			expect(container).not.toHaveClass("outline-app-gray-200");
+		});
+
+		it("calls onSectionInteraction on mouse enter when newly created", async () => {
+			const section = GrantSectionFactory.build({ title: "New Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={true}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			await user.hover(container);
+
+			expect(mockOnSectionInteraction).toHaveBeenCalled();
+		});
+
+		it("does not call onSectionInteraction on mouse enter when not newly created", async () => {
+			const section = GrantSectionFactory.build({ title: "Existing Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={false}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			await user.hover(container);
+
+			expect(mockOnSectionInteraction).not.toHaveBeenCalled();
+		});
 	});
 
 	it("calls onToggleExpand when cancel is clicked", async () => {

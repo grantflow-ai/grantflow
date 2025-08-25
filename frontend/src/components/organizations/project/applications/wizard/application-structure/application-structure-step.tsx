@@ -1,18 +1,15 @@
 "use client";
 
-import { Plus } from "lucide-react";
 import Image from "next/image";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
-import { AppButton } from "@/components/app/buttons/app-button";
 import { createRagSourcesDialog } from "@/components/organizations/project/applications/wizard/modal/rag-sources-dialog-utils";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
 import { WizardRightPane } from "@/components/organizations/project/applications/wizard/wizard-right-pane";
 import { EmptyStatePreview } from "@/components/ui/empty-state-preview";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
 import type { API } from "@/types/api-types";
-import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
+import type { GrantSection } from "@/types/grant-sections";
 import { ApplicationStructureLeftPane } from "./application-structure-left-pane";
 import { DragDropSectionManager } from "./drag-drop-section-manager";
 
@@ -20,27 +17,6 @@ const isDetailedSection = (
 	section: GrantSection,
 ): section is API.UpdateGrantTemplate.RequestBody["grant_sections"][0] => {
 	return "max_words" in section;
-};
-
-const toUpdateGrantSection = (section: GrantSection): UpdateGrantSection => {
-	if (isDetailedSection(section)) {
-		return section;
-	}
-
-	return {
-		depends_on: [],
-		generation_instructions: "",
-		id: section.id,
-		is_clinical_trial: null,
-		is_detailed_research_plan: null,
-		keywords: [],
-		max_words: 3000,
-		order: section.order,
-		parent_id: section.parent_id,
-		search_queries: [],
-		title: section.title,
-		topics: [],
-	};
 };
 
 interface ApplicationStructureStepProps {
@@ -130,53 +106,9 @@ export function ApplicationStructureStep({ dialogRef }: ApplicationStructureStep
 
 function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null | WizardDialogRef> }) {
 	const application = useApplicationStore((state) => state.application);
-	const updateGrantSections = useApplicationStore((state) => state.updateGrantSections);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
 
 	const grantSections = application?.grant_template?.grant_sections ?? [];
-
-	const handleAddNewSection = useCallback(
-		async (parentId: null | string = null) => {
-			const isSubsection = parentId !== null;
-			let insertIndex: number;
-
-			if (isSubsection && parentId) {
-				const parentIndex = grantSections.findIndex((s) => s.id === parentId);
-				if (parentIndex === -1) return;
-
-				insertIndex = parentIndex + 1;
-			} else {
-				insertIndex = 0;
-			}
-
-			const sectionsToUpdate = grantSections.map(toUpdateGrantSection);
-
-			const newSection: UpdateGrantSection = {
-				depends_on: [],
-				generation_instructions: "",
-				id: `section-${crypto.randomUUID()}`,
-				is_clinical_trial: null,
-				is_detailed_research_plan: null,
-				keywords: [],
-				max_words: 3000,
-				order: 0,
-				parent_id: parentId,
-				search_queries: [],
-				title: isSubsection ? "New Sub-section" : "New Section",
-				topics: [],
-			};
-
-			sectionsToUpdate.splice(insertIndex, 0, newSection);
-
-			const finalSections = sectionsToUpdate.map((section, index) => ({
-				...section,
-				order: index,
-			}));
-
-			await updateGrantSections(finalSections);
-		},
-		[grantSections, updateGrantSections],
-	);
 
 	if (!application) {
 		return (
@@ -204,11 +136,7 @@ function ApplicationStructurePreview({ dialogRef }: { dialogRef: RefObject<null 
 
 	return (
 		<WizardRightPane padding="p-5 md:p-6" testId="application-structure-preview-pane">
-			<SectionEditor
-				dialogRef={dialogRef}
-				isDetailedSection={isDetailedSection}
-				onAddSection={handleAddNewSection}
-			/>
+			<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={isDetailedSection} />
 		</WizardRightPane>
 	);
 }
@@ -223,45 +151,6 @@ function GeneratingLoader() {
 				src="/animations/analyzing-loader.gif"
 				width={96}
 			/>
-		</div>
-	);
-}
-
-function PreviewHeader({ onAddSection }: { onAddSection: (parentId?: null | string) => Promise<void> }) {
-	return (
-		<div className="mb-2 flex justify-end">
-			<AppButton
-				data-testid="add-new-section-button"
-				leftIcon={<Plus />}
-				onClick={() => onAddSection()}
-				size="sm"
-				variant="secondary"
-			>
-				Add New Section
-			</AppButton>
-		</div>
-	);
-}
-
-function SectionEditor({
-	dialogRef,
-	isDetailedSection,
-	onAddSection,
-}: {
-	dialogRef: RefObject<null | WizardDialogRef>;
-	isDetailedSection: (section: GrantSection) => boolean;
-	onAddSection: (parentId?: null | string) => Promise<void>;
-}) {
-	return (
-		<div className="flex flex-col size-full" data-testid="application-structure-sections">
-			<PreviewHeader onAddSection={onAddSection} />
-			<ScrollArea className="flex-1">
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={isDetailedSection}
-					onAddSection={onAddSection}
-				/>
-			</ScrollArea>
 		</div>
 	);
 }

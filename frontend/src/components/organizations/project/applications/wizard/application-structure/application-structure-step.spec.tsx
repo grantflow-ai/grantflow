@@ -85,6 +85,5 @@ describe("ApplicationStructureStep", () => {
 		render(<ApplicationStructureStep dialogRef={mockDialogRef} />);
 
 		expect(screen.getByTestId("application-structure-sections")).toBeInTheDocument();
-		expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 	});
 });
