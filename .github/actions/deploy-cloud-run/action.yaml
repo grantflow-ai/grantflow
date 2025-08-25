@@ -103,6 +103,7 @@ runs:
           DEPLOYMENT_TIMESTAMP=${{ github.run_id }}
         flags: |
           --max-instances=10
+          ${{ inputs.service == 'scraper' && '--allow-unauthenticated' || '' }}
 
     - name: Get revision name
       id: get-revision
