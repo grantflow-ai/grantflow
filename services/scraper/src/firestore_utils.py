@@ -49,7 +49,7 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
         collection = await get_grants_collection()
 
         url = grant_info.get("url", "")
-        grant_id = url.split("/")[-1] if url else None
+        grant_id: str | None = url.split("/")[-1] if url else None
 
         doc_data = {
             **grant_info,
@@ -72,6 +72,8 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
             duration_ms=round(duration * 1000, 2),
         )
 
+        if grant_id is None:
+            raise ValueError("Grant ID should never be None at this point")
         return grant_id
 
     except GoogleCloudError as e:
