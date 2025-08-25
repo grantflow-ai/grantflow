@@ -37,14 +37,25 @@ def mock_document() -> AsyncMock:
 
 
 def test_get_firestore_client() -> None:
-    with patch("services.scraper.src.firestore_utils.firestore.AsyncClient") as mock_client_class:
-        mock_client_class.return_value = MagicMock(spec=AsyncClient)
+    import os
 
-        client = get_firestore_client()
+    original_project = os.environ.get("GCP_PROJECT_ID")
+    os.environ["GCP_PROJECT_ID"] = "grantflow-test"
 
-        assert client is not None
-        call_args = mock_client_class.call_args
-        assert call_args[1]["project"] == "grantflow-test"
+    try:
+        with patch("services.scraper.src.firestore_utils.firestore.AsyncClient") as mock_client_class:
+            mock_client_class.return_value = MagicMock(spec=AsyncClient)
+
+            client = get_firestore_client()
+
+            assert client is not None
+            call_args = mock_client_class.call_args
+            assert call_args[1]["project"] == "grantflow-test"
+    finally:
+        if original_project:
+            os.environ["GCP_PROJECT_ID"] = original_project
+        else:
+            os.environ.pop("GCP_PROJECT_ID", None)
 
 
 async def test_get_grants_collection(mock_firestore_client: AsyncMock) -> None:
@@ -73,7 +84,7 @@ async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_doc
         grant_id = await save_grant_document(cast("GrantInfo", grant_info))
 
         assert grant_id == "PA-24-123"
-        mock_collection.document.assert_called_once_with("PA-24-123")
+        mock_collection.document.assert_called_once_with("PA-24-123.html")
 
         call_args = mock_document.set.call_args
         doc_data = call_args[0][0]
@@ -99,7 +110,7 @@ async def test_save_grant_document_auto_generated_id(mock_collection: AsyncMock,
         grant_id = await save_grant_document(cast("GrantInfo", grant_info))
 
         assert grant_id == "grants.nih.gov"
-        mock_collection.document.assert_called_once_with("grants.nih.gov")
+        mock_collection.document.assert_called_once_with("grants.nih.gov.html")
 
         call_args = mock_document.set.call_args
         doc_data = call_args[0][0]
@@ -120,7 +131,7 @@ async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document
     with patch("services.scraper.src.firestore_utils.get_grants_collection", return_value=mock_collection):
         await save_grant_page_content(grant_id, content)
 
-        mock_collection.document.assert_called_once_with(grant_id)
+        mock_collection.document.assert_called_once_with(f"{grant_id}.html")
 
         call_args = mock_document.set.call_args
         doc_data = call_args[0][0]
@@ -176,8 +187,8 @@ async def test_batch_save_grants(mock_firestore_client: AsyncMock, mock_collecti
         mock_batch.commit.assert_called_once()
 
         calls = mock_collection.document.call_args_list
-        assert calls[0][0][0] == "PA-24-001"
-        assert calls[1][0][0] == "PA-24-002"
+        assert calls[0][0][0] == "PA-24-001.html"
+        assert calls[1][0][0] == "PA-24-002.html"
         assert calls[2] == (())
 
 
