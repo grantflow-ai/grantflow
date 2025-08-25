@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from services.scraper.src.html_utils import download_page_html
@@ -14,6 +14,7 @@ async def test_download_page_html() -> None:
         mock_response.status_code = 200
         mock_response.headers = {"content-type": "text/html"}
         mock_response.content = b"<html><body>Test Page</body></html>"
+        mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
         html = await download_page_html(url)
