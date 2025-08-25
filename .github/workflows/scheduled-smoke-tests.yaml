@@ -42,6 +42,31 @@ jobs:
         with:
           ref: ${{ inputs.branch || 'development' }}
 
+      - name: Setup Node.js for Firebase CLI
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Java for Firestore Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Firebase Emulator
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}
+          restore-keys: firebase-emulators-
+
+      - name: Start Firebase Emulator Suite
+        uses: invertase/firebase-emulator-action@v1
+        with:
+          ports: 'firestore:8080'
+          project_id: 'grantflow-test'
+          cache: true
+
       - name: Send Discord notification - Tests starting
         run: |
           curl -H "Content-Type: application/json" \
@@ -69,6 +94,8 @@ jobs:
           timeout: 300
         env:
           E2E_TESTS: "1"
+          FIRESTORE_EMULATOR_HOST: "localhost:8080"
+          GCP_PROJECT_ID: "grantflow-test"
         continue-on-error: true
 
       - name: Run Indexer Smoke Tests

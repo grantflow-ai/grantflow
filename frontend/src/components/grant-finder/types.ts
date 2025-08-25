@@ -1,6 +1,5 @@
 import type { API } from "@/types/api-types";
 
-// UI-specific form data that doesn't directly map to API
 export interface FormData {
 	activityCodes: string[];
 	agreeToTerms: boolean;
@@ -11,7 +10,6 @@ export interface FormData {
 	keywords: string;
 }
 export type Grant = GrantsResponse extends infer T | Record<string, never> ? ExtractArrayType<T> : never;
-// UI search params that will be transformed to API QueryParameters
 export interface SearchParams {
 	activityCodes?: string[];
 	careerStage?: string;
@@ -22,8 +20,6 @@ export interface SearchParams {
 
 type ExtractArrayType<T> = T extends readonly (infer U)[] ? U : never;
 
-// Extract the Grant type from the API response
-// The API returns either an empty object or an array of grants
 type GrantsResponse = API.GrantsSearchGrants.Http200.ResponseBody;
 
 export const ACTIVITY_CODES = [

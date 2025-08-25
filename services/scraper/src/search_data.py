@@ -1,5 +1,6 @@
 import tempfile
 from datetime import UTC, date, datetime
+from pathlib import Path
 from typing import Final, cast
 
 from anyio import Path as AsyncPath
@@ -57,106 +58,87 @@ async def download_search_data(  # noqa: PLR0915
             current_url = page.url
             logger.info("Page loaded", title=title, current_url=current_url)
 
-            search_selectors = [
-                "text=Search the Guide",
-                "button:has-text('Search')",
-                "text=Advanced Search",
-                "[aria-label*='Search']",
-                "a[href*='search']",
-                "button[id*='search']",
-            ]
+            try:
+                logger.info("Looking for Advanced Search link")
+                advanced_search = await page.wait_for_selector("text=Advanced Search", timeout=5000)
+                if advanced_search:
+                    await advanced_search.click()
+                    logger.info("Clicked Advanced Search link")
+                    await page.wait_for_timeout(2000)
+                else:
+                    raise ScraperError("Could not find Advanced Search link")
+            except Exception as e:
+                logger.error("Failed to click Advanced Search", error=str(e))
+                debug_path = Path("/tmp") / "scraper_debug_no_advanced_search.png"  # noqa: S108
+                await page.screenshot(path=str(debug_path))
+                raise ScraperError(f"Failed to find Advanced Search link: {e}") from e
 
-            search_clicked = False
-            for selector in search_selectors:
-                try:
-                    logger.info("Looking for search element", selector=selector)
-                    element = await page.wait_for_selector(selector, timeout=2000)
-                    if element:
-                        await element.click()
-                        logger.info("Clicked search element", selector=selector)
-                        search_clicked = True
-                        await page.wait_for_timeout(2000)
-                        break
-                except Exception as e:
-                    logger.debug("Failed to click search element", selector=selector, error=str(e))
-                    continue
+            debug_path = Path("/tmp") / "scraper_debug_after_search.png"  # noqa: S108
+            await page.screenshot(path=str(debug_path))
+            logger.info("Screenshot saved", path=str(debug_path))
 
-            await page.screenshot(path="scraper_debug_after_search.png")
-            logger.info("Screenshot saved to scraper_debug_after_search.png")
+            try:
+                logger.info("Waiting for search dialog to open")
+                await page.wait_for_selector("div[role='dialog']", timeout=5000)
 
-            if search_clicked:
-                try:
-                    active_checkbox = await page.wait_for_selector(
-                        "input[type='checkbox'][value='Active Opportunities']", timeout=2000
-                    )
-                    if active_checkbox:
-                        is_checked = await active_checkbox.is_checked()
-                        if not is_checked:
-                            await active_checkbox.click()
-                            logger.info("Checked 'Active Opportunities' checkbox")
-                except Exception:
-                    logger.debug("Could not find or check Active Opportunities checkbox")
+                date_inputs = await page.query_selector_all("input[placeholder*='mm/dd/yyyy']")
 
-                try:
-                    date_inputs = await page.query_selector_all("input[type='text'][value*='/']")
+                if len(date_inputs) >= 2:
+                    from_date_input = date_inputs[0]
+                    to_date_input = date_inputs[1]
 
-                    if len(date_inputs) >= 2:
-                        from_date_input = date_inputs[0]
-                        to_date_input = date_inputs[1]
+                    await from_date_input.click()
+                    await from_date_input.click(click_count=3)
+                    await page.keyboard.press("Control+A")
+                    await from_date_input.type(from_date.strftime("%m/%d/%Y"))
+                    logger.info("Filled from_date", date=from_date.strftime("%m/%d/%Y"))
 
-                        await from_date_input.click()
-                        await from_date_input.click(click_count=3)
-                        await from_date_input.type(from_date.strftime("%m/%d/%Y"))
-                        logger.info("Filled from_date", date=from_date.strftime("%m/%d/%Y"))
+                    await to_date_input.click()
+                    await to_date_input.click(click_count=3)
+                    await page.keyboard.press("Control+A")
+                    await to_date_input.type(to_date.strftime("%m/%d/%Y"))
+                    logger.info("Filled to_date", date=to_date.strftime("%m/%d/%Y"))
 
-                        await to_date_input.click()
-                        await to_date_input.click(click_count=3)
-                        await to_date_input.type(to_date.strftime("%m/%d/%Y"))
-                        logger.info("Filled to_date", date=to_date.strftime("%m/%d/%Y"))
+                    await page.wait_for_timeout(500)
+                else:
+                    logger.warning("Could not find date input fields", found_inputs=len(date_inputs))
+            except Exception as e:
+                logger.warning("Could not fill date fields", error=str(e))
 
-                        await page.wait_for_timeout(500)
-                    else:
-                        logger.warning("Could not find date input fields", found_inputs=len(date_inputs))
-                except Exception as e:
-                    logger.warning("Could not fill date fields", error=str(e))
+            try:
+                logger.info("Looking for Search button in dialog")
+                search_button = await page.wait_for_selector(
+                    "div[role='dialog'] button:has-text('Search')", timeout=5000
+                )
+                if search_button:
+                    await search_button.click()
+                    logger.info("Clicked Search button in dialog")
+                    await page.wait_for_timeout(5000)
+                else:
+                    logger.warning("Could not find Search button in dialog")
+            except Exception as e:
+                logger.error("Failed to click Search button", error=str(e))
+                debug_path = Path("/tmp") / "scraper_debug_no_search_button.png"  # noqa: S108
+                await page.screenshot(path=str(debug_path))
 
-                submit_selectors = [
-                    "button:has-text('Search')",
-                    "button[type='submit']",
-                    "[aria-label='Search']",
-                    "text=Submit",
-                    "button.btn-primary",
-                ]
-
-                for selector in submit_selectors:
-                    try:
-                        logger.info("Looking for submit button", selector=selector)
-                        submit_btn = await page.wait_for_selector(selector, timeout=2000)
-                        if submit_btn:
-                            is_visible = await submit_btn.is_visible()
-                            btn_text = await submit_btn.text_content()
-                            if is_visible and btn_text and "Advanced" not in btn_text:
-                                logger.info("Clicking submit button", selector=selector, text=btn_text)
-                                await submit_btn.click()
-                                await page.wait_for_timeout(3000)
-                                break
-                    except Exception as e:
-                        logger.debug("Failed to click submit button", selector=selector, error=str(e))
-                        continue
-
-                await page.screenshot(path="scraper_debug_after_submit.png")
-                logger.info("Screenshot saved to scraper_debug_after_submit.png")
+            debug_path = Path("/tmp") / "scraper_debug_after_submit.png"  # noqa: S108
+            await page.screenshot(path=str(debug_path))
+            logger.info("Screenshot saved", path=str(debug_path))
 
             download = None
             try:
-                logger.info("Waiting for automatic download...")
-                download = await page.wait_for_event("download", timeout=5000)
-                logger.info("Download started automatically")
-            except Exception:
-                logger.info("No automatic download detected, looking for export button")
+                logger.info("Looking for Export Results button")
+                export_button = await page.wait_for_selector("text=Export Results", timeout=10000)
+                if export_button:
+                    logger.info("Found Export Results button, clicking")
+                    await export_button.click()
+                    download = await page.wait_for_event("download", timeout=10000)
+                    logger.info("Download started after clicking Export Results")
+                else:
+                    logger.warning("Could not find Export Results button")
+            except Exception as e:
+                logger.error("Failed to export results", error=str(e))
                 export_selectors = [
-                    "text=Export Results",
-                    "text=Export",
                     "button:has-text('Export')",
                     "[aria-label*='Export']",
                     "[title*='Export']",
@@ -164,16 +146,16 @@ async def download_search_data(  # noqa: PLR0915
 
                 for selector in export_selectors:
                     try:
-                        logger.info("Trying selector", selector=selector)
+                        logger.info("Trying alternative selector", selector=selector)
                         button = await page.wait_for_selector(selector, timeout=2000)
                         if button:
-                            logger.info("Found export button, clicking", selector=selector)
+                            logger.info("Found export button with alternative selector", selector=selector)
                             await button.click()
                             download = await page.wait_for_event("download", timeout=5000)
                             logger.info("Download started after button click")
                             break
                     except Exception:
-                        logger.debug("Selector not found", selector=selector)
+                        logger.debug("Alternative selector not found", selector=selector)
                         continue
 
             if not download:
