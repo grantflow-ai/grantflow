@@ -20,7 +20,6 @@ vi.mock("sonner", () => ({
 
 const mockUseDragAndDrop = vi.mocked(useDragAndDrop);
 const mockUpdateGrantSections = vi.fn();
-const mockOnAddSection = vi.fn();
 const mockIsDetailedSection = vi.fn((section: GrantSection) => "max_words" in section);
 
 interface DragDropHandlers<T> {
@@ -57,13 +56,12 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 		});
 
 		mockUpdateGrantSections.mockResolvedValue(undefined);
-		mockOnAddSection.mockResolvedValue(undefined);
 		useApplicationStore.getState().updateGrantSections = mockUpdateGrantSections;
 	});
 
 	describe("Section CRUD Outcomes", () => {
 		describe("Adding Sections", () => {
-			it("adds main section at the end of the list", async () => {
+			it("renders add new section button and tracks newly created sections", () => {
 				const sections = [
 					GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null }),
 					GrantSectionFactory.build({ id: "main-2", order: 1, parent_id: null }),
@@ -75,20 +73,12 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
-				await mockOnAddSection(null);
-
-				expect(mockOnAddSection).toHaveBeenCalledWith(null);
+				expect(screen.getByTestId("add-new-section-button")).toBeInTheDocument();
 			});
 
-			it("adds subsection under the correct parent", async () => {
+			it("shows newly created sections with muted outline initially", () => {
 				const sections = [GrantSectionFactory.build({ id: "main-1", order: 0, parent_id: null })];
 
 				useApplicationStore.setState({
@@ -97,17 +87,11 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
-				await mockOnAddSection("main-1");
-
-				expect(mockOnAddSection).toHaveBeenCalledWith("main-1");
+				// Initially no sections should be newly created
+				const sectionContainers = screen.getAllByTestId("section-container");
+				expect(sectionContainers[0]).not.toHaveClass("outline-muted");
 			});
 		});
 
@@ -125,13 +109,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const deleteButtons = screen.getAllByTestId("delete-section-button");
 				fireEvent.click(deleteButtons[1]);
@@ -160,13 +138,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const [deleteButton] = screen.getAllByTestId("delete-section-button");
 				fireEvent.click(deleteButton);
@@ -202,13 +174,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const deleteButtons = screen.getAllByTestId("delete-section-button");
 				fireEvent.click(deleteButtons[2]);
@@ -250,13 +216,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const [deleteButton] = screen.getAllByTestId("delete-section-button");
 				fireEvent.click(deleteButton);
@@ -314,13 +274,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const expandButtons = screen.getAllByTestId("expand-section-button");
 				fireEvent.click(expandButtons[1]);
@@ -364,13 +318,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 0, 2, sections[0], sections[2]);
 
@@ -399,13 +347,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 0, 4, sections[0], sections[4]);
 
@@ -438,13 +380,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 0, 2, sections[0], sections[2]);
 
@@ -489,13 +425,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 0, 3, sections[0], sections[3]);
 
@@ -538,13 +468,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 0, 1, sections[0], sections[1]);
 
@@ -567,13 +491,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 1, 3, sections[1], sections[3]);
 
@@ -601,13 +519,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 1, 3, sections[1], sections[3]);
 
@@ -630,13 +542,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				await dragHandlers.onReorder(sections, 2, 1, sections[2], sections[1]);
 
@@ -673,13 +579,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 				await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
@@ -715,13 +615,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("sibling", dragHandlers);
 
@@ -748,13 +642,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -780,13 +668,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -826,13 +708,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const expandButtons = screen.getAllByTestId("expand-section-button");
 
@@ -866,13 +742,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const expandButton = screen.getByTestId("expand-section-button");
 				fireEvent.click(expandButton);
@@ -912,13 +782,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				const [, section2Container] = screen.getAllByTestId("section-container");
 
@@ -947,13 +811,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			await dragHandlers.onReorder(sections, 0, 2, sections[0], sections[2]);
 
@@ -977,13 +835,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			await dragHandlers.onReorder(sections, 0, 3, sections[0], sections[3]);
 
@@ -1004,13 +856,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			await dragHandlers.onReorder(sections, 0, 0, sections[0], sections[0]);
 
@@ -1033,13 +879,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			try {
 				await dragHandlers.onReorder(sections, 0, 1, sections[0], sections[1]);
@@ -1062,13 +902,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			const deleteButtons = screen.getAllByTestId("delete-section-button");
 			fireEvent.click(deleteButtons[1]);
@@ -1104,13 +938,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			const expandButton = screen.getByTestId("expand-section-button");
 			fireEvent.click(expandButton);
@@ -1151,13 +979,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			await dragHandlers.onReorder(sections, 1, 2, sections[1], sections[2]);
 
@@ -1211,13 +1033,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			await dragHandlers.onReorder(sections, 0, 3, sections[0], sections[3]);
 
@@ -1264,13 +1080,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				}),
 			});
 
-			render(
-				<DragDropSectionManager
-					dialogRef={dialogRef}
-					isDetailedSection={mockIsDetailedSection}
-					onAddSection={mockOnAddSection}
-				/>,
-			);
+			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			await dragHandlers.onReorder(sections, 0, 0, sections[0], sections[0]);
 
@@ -1322,13 +1132,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -1354,13 +1158,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -1398,13 +1196,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -1427,13 +1219,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -1471,13 +1257,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -1505,13 +1285,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("sibling", dragHandlers);
 
@@ -1538,13 +1312,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("sibling", dragHandlers);
 
@@ -1570,13 +1338,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("child", dragHandlers);
 
@@ -1600,13 +1362,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 					}),
 				});
 
-				render(
-					<DragDropSectionManager
-						dialogRef={dialogRef}
-						isDetailedSection={mockIsDetailedSection}
-						onAddSection={mockOnAddSection}
-					/>,
-				);
+				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 				setupZoneTest("sibling", dragHandlers);
 
