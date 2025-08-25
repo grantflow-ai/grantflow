@@ -174,7 +174,6 @@ source = { virtual = "services/backend" }
 dependencies = [
     { name = "db" },
     { name = "firebase-admin" },
-    { name = "google-cloud-firestore" },
     { name = "pyjwt" },
     { name = "shared-utils", extra = ["gcs", "pubsub", "server"] },
 ]
@@ -188,7 +187,6 @@ dev = [
 requires-dist = [
     { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.7" },
-    { name = "google-cloud-firestore", specifier = ">=2.16" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]
@@ -3149,7 +3147,7 @@ source = { virtual = "services/scraper" }
 dependencies = [
     { name = "anyio" },
     { name = "beautifulsoup4" },
-    { name = "google-cloud-firestore" },
+    { name = "db" },
     { name = "html-to-markdown" },
     { name = "httpx" },
     { name = "mdformat" },
@@ -3162,7 +3160,7 @@ dependencies = [
 requires-dist = [
     { name = "anyio", specifier = ">=4.6.2.post1" },
     { name = "beautifulsoup4", specifier = ">=4.12.3" },
-    { name = "google-cloud-firestore", specifier = ">=2.21" },
+    { name = "db", editable = "packages/db" },
     { name = "html-to-markdown", specifier = ">=1.3.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mdformat", specifier = ">=0.7.20" },

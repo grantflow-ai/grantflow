@@ -297,6 +297,70 @@ class GrantingInstitution(BaseWithUUIDPK):
         back_populates="granting_institution",
         cascade="all, delete-orphan",
     )
+    grants: Relationship[list["Grant"]] = relationship("Grant", back_populates="granting_institution")
+
+
+class Grant(BaseWithUUIDPK):
+    __tablename__ = "grants"
+
+    granting_institution_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("granting_institutions.id", ondelete="CASCADE"), index=True
+    )
+
+    title: Mapped[str] = mapped_column(String(500), index=True)
+    description: Mapped[str] = mapped_column(Text)
+    release_date: Mapped[str] = mapped_column(String(50), index=True)
+    expired_date: Mapped[str] = mapped_column(String(50), index=True)
+    activity_code: Mapped[str] = mapped_column(String(50), index=True)
+    organization: Mapped[str] = mapped_column(String(255))
+    parent_organization: Mapped[str] = mapped_column(String(255))
+    participating_orgs: Mapped[str] = mapped_column(Text)
+    document_number: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    document_type: Mapped[str] = mapped_column(String(100))
+    clinical_trials: Mapped[str] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text)
+
+    amount: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    amount_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    amount_max: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    eligibility: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    granting_institution: Relationship["GrantingInstitution"] = relationship(
+        "GrantingInstitution", back_populates="grants"
+    )
+
+    __table_args__ = (
+        Index("idx_grants_institution_release", "granting_institution_id", "release_date"),
+        Index("idx_grants_institution_expired", "granting_institution_id", "expired_date"),
+        Index("idx_grants_release_expired", "release_date", "expired_date"),
+        Index("idx_grants_activity_code", "activity_code"),
+        Index("idx_grants_description_fts", text("to_tsvector('english', description)"), postgresql_using="gin"),
+        CheckConstraint("amount_min IS NULL OR amount_min >= 0", name="check_amount_min_non_negative"),
+        CheckConstraint("amount_max IS NULL OR amount_max >= 0", name="check_amount_max_non_negative"),
+        CheckConstraint(
+            "amount_min IS NULL OR amount_max IS NULL OR amount_min <= amount_max", name="check_amount_min_le_max"
+        ),
+    )
+
+
+class GrantMatchingSubscription(BaseWithUUIDPK):
+    __tablename__ = "grant_matching_subscriptions"
+
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    search_params: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    frequency: Mapped[str] = mapped_column(String(20), default="daily")
+    verified: Mapped[bool] = mapped_column(default=False, index=True)
+    verification_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    last_notification_sent: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    unsubscribed: Mapped[bool] = mapped_column(default=False)
+    unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("ix_grant_matching_subs_email_verified", "email", "verified"),
+        Index("ix_grant_matching_subs_verified_frequency", "verified", "frequency"),
+        CheckConstraint("frequency IN ('daily', 'weekly', 'monthly')", name="check_subscription_frequency"),
+    )
 
 
 class GrantingInstitutionSource(Base):

@@ -4,28 +4,34 @@ import json
 import re
 from datetime import UTC, datetime, timedelta
 from typing import NotRequired, TypedDict
+from uuid import UUID
 
 import functions_framework
 from flask import Request
-from google.cloud import firestore, pubsub_v1
+from google.cloud import pubsub_v1
+from packages.db.src.connection import get_session_maker
+from packages.db.src.tables import Grant, GrantMatchingSubscription
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 logger = get_logger(__name__)
 
 
 class GrantData(TypedDict):
+    id: str
     title: str
     description: NotRequired[str]
     url: NotRequired[str]
     deadline: NotRequired[str]
-    amount: NotRequired[str]
-    category: NotRequired[str]
-    eligibility: NotRequired[str]
-    scraped_at: NotRequired[datetime]
+    amount: NotRequired[str | None]
+    category: NotRequired[str | None]
+    eligibility: NotRequired[str | None]
 
 
 class SubscriptionData(TypedDict):
+    id: str
     email: str
     search_params: dict[str, str | int | float | None]
     frequency: str
@@ -44,11 +50,6 @@ class MatcherResponse(TypedDict):
     grants_processed: int
     subscriptions_processed: int
     notifications_sent: int
-
-
-def _get_firestore_client() -> firestore.Client:
-    project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    return firestore.Client(project=project_id)
 
 
 def _get_publisher_client() -> pubsub_v1.PublisherClient:
@@ -83,8 +84,10 @@ def _parse_grant_amounts(amount_str: str) -> tuple[int | None, int | None]:
 
 def _match_category(grant: GrantData, category_filter: str | float | None) -> bool:
     if category_filter and isinstance(category_filter, str):
-        grant_category = grant.get("category", "").lower()
-        return grant_category == category_filter.lower()
+        grant_category = grant.get("category")
+        if grant_category:
+            return grant_category.lower() == category_filter.lower()
+        return False
     return True
 
 
@@ -92,7 +95,11 @@ def _match_amount(grant: GrantData, min_filter: str | float | None, max_filter: 
     if min_filter is None and max_filter is None:
         return True
 
-    grant_min, grant_max = _parse_grant_amounts(grant.get("amount", ""))
+    amount_str = grant.get("amount")
+    if not amount_str:
+        return True
+
+    grant_min, grant_max = _parse_grant_amounts(amount_str)
 
     if isinstance(min_filter, (int, float)) and grant_max is not None and grant_max < min_filter:
         return False
@@ -153,59 +160,54 @@ def should_send_notification(subscription: SubscriptionData, frequency: str) -> 
 
 
 def _create_notification_message(
-    sub_data: dict[str, str], sub_doc: firestore.DocumentSnapshot, matching_grants: list[dict[str, str]], frequency: str
+    subscription: SubscriptionData, matching_grants: list[dict[str, str]], frequency: str
 ) -> EmailNotificationMessage:
     return {
-        "email": sub_data["email"],
+        "email": subscription["email"],
         "template_type": "grant_alert",
         "template_data": {
             "grants": matching_grants,
             "frequency": frequency,
-            "subscription_id": sub_doc.id,
-            "unsubscribe_url": f"https://grantflow.ai/grants/unsubscribe?id={sub_doc.id}",
+            "subscription_id": subscription["id"],
+            "unsubscribe_url": f"https://grantflow.ai/grants/unsubscribe?id={subscription['id']}",
         },
     }
 
 
 async def process_subscriptions_batch(
-    subscriptions: list[firestore.DocumentSnapshot],
-    new_grants: list[tuple[str, GrantData]],
+    subscriptions: list[SubscriptionData],
+    new_grants: list[GrantData],
     publisher: pubsub_v1.PublisherClient,
     topic_path: str,
-    db: firestore.Client,  # noqa: ARG001
+    session_maker: async_sessionmaker[AsyncSession],
 ) -> int:
     notifications_sent = 0
 
-    for sub_doc in subscriptions:
-        sub_data = sub_doc.to_dict()
-        if not sub_data:
+    for subscription in subscriptions:
+        if not subscription.get("verified", False):
             continue
 
-        if not sub_data.get("verified", False):
+        frequency = subscription.get("frequency", "daily")
+        if not should_send_notification(subscription, frequency):
             continue
 
-        frequency = sub_data.get("frequency", "daily")
-        if not should_send_notification(sub_data, frequency):
-            continue
-
-        matching_grants = []
-        for grant_id, grant_data in new_grants:
-            if match_grant_with_subscription(grant_data, sub_data):
-                matching_grants.append(
-                    {
-                        "id": grant_id,
-                        "title": grant_data.get("title", ""),
-                        "url": grant_data.get("url", ""),
-                        "deadline": grant_data.get("deadline", ""),
-                        "amount": grant_data.get("amount", ""),
-                    }
-                )
+        matching_grants = [
+            {
+                "id": grant_data["id"],
+                "title": grant_data.get("title", ""),
+                "url": grant_data.get("url", ""),
+                "deadline": grant_data.get("deadline", ""),
+                "amount": grant_data.get("amount") or "",
+            }
+            for grant_data in new_grants
+            if match_grant_with_subscription(grant_data, subscription)
+        ]
 
         if matching_grants:
-            dedup_content = f"{sub_data['email']}-{datetime.now(UTC).date()}-{len(matching_grants)}"
+            dedup_content = f"{subscription['email']}-{datetime.now(UTC).date()}-{len(matching_grants)}"
             dedup_id = hashlib.sha256(dedup_content.encode()).hexdigest()[:16]
 
-            message = _create_notification_message(sub_data, sub_doc, matching_grants, frequency)
+            message = _create_notification_message(subscription, matching_grants, frequency)
 
             message_data = json.dumps(message).encode("utf-8")
             future = publisher.publish(
@@ -218,59 +220,92 @@ async def process_subscriptions_batch(
                 future.result(timeout=30)
                 notifications_sent += 1
 
-                sub_doc.reference.update(
-                    {
-                        "last_notification_sent": firestore.SERVER_TIMESTAMP,
-                    }
-                )
+                async with session_maker() as session, session.begin():
+                    await session.execute(
+                        update(GrantMatchingSubscription)
+                        .where(GrantMatchingSubscription.id == UUID(subscription["id"]))
+                        .values(last_notification_sent=datetime.now(UTC))
+                    )
 
                 logger.info(
                     "Sent grant alert notification",
-                    email=sub_data["email"],
+                    email=subscription["email"],
                     grant_count=len(matching_grants),
                     dedup_id=dedup_id,
                 )
             except Exception as e:
                 logger.error(
                     "Failed to send notification",
-                    email=sub_data["email"],
+                    email=subscription["email"],
                     error=str(e),
                 )
 
     return notifications_sent
 
 
-def _fetch_new_grants(db: firestore.Client, cutoff_time: datetime) -> list[tuple[str, GrantData]]:
-    grants_ref = db.collection("grants")
-    new_grants_query = grants_ref.where("scraped_at", ">=", cutoff_time)
+async def _fetch_new_grants(session_maker: async_sessionmaker[AsyncSession], cutoff_time: datetime) -> list[GrantData]:
+    async with session_maker() as session:
+        result = await session.execute(select(Grant).where(Grant.created_at >= cutoff_time))
+        grants = result.scalars().all()
 
-    new_grants: list[tuple[str, GrantData]] = []
-    for grant_doc in new_grants_query.stream():
-        grant_data = grant_doc.to_dict()
-        if grant_data:
-            new_grants.append((grant_doc.id, grant_data))
+        grants_data: list[GrantData] = []
+        for grant in grants:
+            grant_data = GrantData(
+                id=str(grant.id),
+                title=grant.title,
+                description=grant.description,
+                url=grant.url,
+                deadline=grant.expired_date,
+                amount=grant.amount,
+                category=grant.category,
+                eligibility=grant.eligibility,
+            )
+            grants_data.append(grant_data)
 
-    return new_grants
+        return grants_data
 
 
-def _fetch_verified_subscriptions(db: firestore.Client) -> list[firestore.DocumentSnapshot]:
-    subscriptions_ref = db.collection("subscriptions")
-    subscriptions_query = subscriptions_ref.where("verified", "==", True)
-    return list(subscriptions_query.stream())
+async def _fetch_verified_subscriptions(session_maker: async_sessionmaker[AsyncSession]) -> list[SubscriptionData]:
+    async with session_maker() as session:
+        result = await session.execute(
+            select(GrantMatchingSubscription).where(
+                GrantMatchingSubscription.verified.is_(True), GrantMatchingSubscription.unsubscribed.is_(False)
+            )
+        )
+        subscriptions = result.scalars().all()
+
+        subscriptions_data: list[SubscriptionData] = []
+        for sub in subscriptions:
+            sub_data = SubscriptionData(
+                id=str(sub.id),
+                email=sub.email,
+                search_params=sub.search_params,
+                frequency=sub.frequency,
+                verified=sub.verified,
+            )
+            if sub.last_notification_sent:
+                sub_data["last_notification_sent"] = sub.last_notification_sent
+            subscriptions_data.append(sub_data)
+
+        return subscriptions_data
 
 
 @functions_framework.http
 def match_grants(request: Request) -> tuple[MatcherResponse, int]:  # noqa: ARG001
+    return asyncio.run(_match_grants_async())
+
+
+async def _match_grants_async() -> tuple[MatcherResponse, int]:
     logger.info("Starting grant matcher function")
 
-    db = _get_firestore_client()
+    session_maker = get_session_maker()
     publisher = _get_publisher_client()
 
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
     topic_path = publisher.topic_path(project_id, "email-notifications")
 
     cutoff_time = datetime.now(UTC) - timedelta(days=1)
-    new_grants = _fetch_new_grants(db, cutoff_time)
+    new_grants = await _fetch_new_grants(session_maker, cutoff_time)
 
     logger.info("Found new grants", count=len(new_grants))
 
@@ -280,25 +315,27 @@ def match_grants(request: Request) -> tuple[MatcherResponse, int]:  # noqa: ARG0
             message="No new grants", grants_processed=0, subscriptions_processed=0, notifications_sent=0
         ), 200
 
-    all_subscriptions = _fetch_verified_subscriptions(db)
+    all_subscriptions = await _fetch_verified_subscriptions(session_maker)
 
     batch_size = 100
     total_notifications = 0
     subscription_count = len(all_subscriptions)
 
     subscriptions = []
-    for sub_doc in all_subscriptions:
-        subscriptions.append(sub_doc)
+    for subscription in all_subscriptions:
+        subscriptions.append(subscription)
 
         if len(subscriptions) >= batch_size:
-            notifications = asyncio.run(
-                process_subscriptions_batch(subscriptions, new_grants, publisher, topic_path, db)
+            notifications = await process_subscriptions_batch(
+                subscriptions, new_grants, publisher, topic_path, session_maker
             )
             total_notifications += notifications
             subscriptions = []
 
     if subscriptions:
-        notifications = asyncio.run(process_subscriptions_batch(subscriptions, new_grants, publisher, topic_path, db))
+        notifications = await process_subscriptions_batch(
+            subscriptions, new_grants, publisher, topic_path, session_maker
+        )
         total_notifications += notifications
 
     logger.info(

@@ -7,9 +7,9 @@ from anyio import Path as AsyncPath
 from packages.shared_utils.src.logger import get_logger
 from pandas import read_csv
 from playwright.async_api import Download, Page, async_playwright
+from services.scraper.src.db_utils import batch_save_grants
 from services.scraper.src.dtos import GrantInfo
 from services.scraper.src.exceptions import ScraperError
-from services.scraper.src.firestore_utils import batch_save_grants
 
 logger = get_logger(__name__)
 

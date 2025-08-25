@@ -11,7 +11,7 @@ classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Lang
 dependencies = [
   "anyio>=4.6.2.post1",
   "beautifulsoup4>=4.12.3",
-  "google-cloud-firestore>=2.21",
+  "db",
   "html-to-markdown>=1.3.2",
   "httpx>=0.28.1",
   "mdformat>=0.7.20",

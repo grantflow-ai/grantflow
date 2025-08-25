@@ -264,6 +264,12 @@ resource "google_project_iam_member" "scraper_trace_agent" {
   member  = "serviceAccount:${google_service_account.scraper.email}"
 }
 
+resource "google_project_iam_member" "scraper_cloudsql_client" {
+  project = "grantflow"
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.scraper.email}"
+}
+
 resource "google_service_account_iam_member" "github_actions_act_as_scraper" {
   service_account_id = google_service_account.scraper.name
   role               = "roles/iam.serviceAccountUser"

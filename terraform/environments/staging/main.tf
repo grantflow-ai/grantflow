@@ -113,7 +113,7 @@ module "cloud_run" {
   enable_http2          = false
   request_timeout       = 300
   concurrency_limit     = 80
-  debug                 = "1"  # Enable debug logging for staging
+  debug                 = "1"  
 
 }
 
@@ -175,12 +175,13 @@ module "email_notifications" {
   rag_service_account_email = module.cloud_run.rag_service_account_email
 }
 
-module "firestore" {
-  source      = "./terraform/modules/firestore"
+module "grant_matcher" {
+  source      = "../../modules/grant_matcher"
   project_id  = var.project_id
   region      = var.region
   environment = var.environment
 }
+
 
 resource "google_bigquery_dataset" "frontend" {
   dataset_id  = "grantflow_frontend"

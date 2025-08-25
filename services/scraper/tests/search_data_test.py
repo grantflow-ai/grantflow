@@ -72,7 +72,7 @@ async def test_download_search_data_success() -> None:
     with (
         patch("services.scraper.src.search_data.async_playwright") as mock_async_playwright,
         patch("services.scraper.src.search_data.read_csv", return_value=mock_data_frame),
-        patch("services.scraper.src.search_data.batch_save_grants", new_callable=AsyncMock),
+        patch("services.scraper.src.search_data.batch_save_grants", new_callable=AsyncMock) as mock_batch_save,
         patch("services.scraper.src.search_data.AsyncPath") as mock_async_path,
     ):
         mock_async_playwright.return_value.__aenter__.return_value = mock_playwright
@@ -80,10 +80,17 @@ async def test_download_search_data_success() -> None:
         mock_path_instance.unlink = AsyncMock()
         mock_async_path.return_value.__truediv__.return_value = mock_path_instance
 
+        mock_batch_save.return_value = 1
+
         result = await download_search_data(from_date=date(2020, 1, 1), to_date=date(2020, 12, 31))
 
         assert len(result) == 1
         assert result[0]["title"] == "Test Grant"
+
+        mock_batch_save.assert_called_once()
+        called_grants = mock_batch_save.call_args[0][0]
+        assert len(called_grants) == 1
+        assert called_grants[0]["title"] == "Test Grant"
 
 
 @pytest.mark.asyncio
