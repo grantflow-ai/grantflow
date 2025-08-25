@@ -45,13 +45,13 @@ jobs:
       - name: Setup Node.js for Firebase CLI
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Setup Java for Firestore Emulator
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Cache Firebase Emulator
         uses: actions/cache@v4
