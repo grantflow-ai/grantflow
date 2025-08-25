@@ -701,7 +701,7 @@ tasks:
       - uv run pytest services/scraper/tests -v -n0
 
   service:scraper:test:e2e:
-    desc: Run scraper service end-to-end tests (requires Firestore emulator)
+    desc: Run scraper service end-to-end tests
     dotenv: [".env"]
     env:
       E2E_TESTS: "1"
@@ -710,7 +710,7 @@ tasks:
       - uv run pytest services/scraper/tests/e2e/ -v
 
   service:scraper:test:e2e:smoke:
-    desc: Run scraper e2e smoke tests (< 5 min, requires Firestore emulator)
+    desc: Run scraper e2e smoke tests (< 5 min)
     dotenv: [".env"]
     env:
       E2E_TESTS: "1"
@@ -719,7 +719,7 @@ tasks:
       - uv run pytest services/scraper/tests/e2e/ -m smoke -v
 
   service:scraper:test:e2e:quality:
-    desc: Run scraper e2e quality assessment tests (< 10 min, requires Firestore emulator)
+    desc: Run scraper e2e quality assessment tests (< 10 min)
     dotenv: [".env"]
     env:
       E2E_TESTS: "1"
@@ -728,7 +728,7 @@ tasks:
       - uv run pytest services/scraper/tests/e2e/ -m quality_assessment -v
 
   service:scraper:test:e2e:full:
-    desc: Run complete scraper e2e test suite (10+ min, requires Firestore emulator)
+    desc: Run complete scraper e2e test suite (10+ min)
     dotenv: [".env"]
     env:
       E2E_TESTS: "1"

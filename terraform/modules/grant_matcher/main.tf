@@ -71,6 +71,14 @@ resource "google_cloudfunctions2_function" "grant_matcher" {
       GCP_PROJECT_ID = var.project_id
       ENVIRONMENT    = var.environment
     }
+
+    secret_environment_variables {
+      key        = "DATABASE_CONNECTION_STRING"
+      project_id = var.project_id
+      secret     = "DATABASE_CONNECTION_STRING"
+      version    = "latest"
+    }
+
     service_account_email          = google_service_account.grant_matcher_sa.email
     ingress_settings               = "ALLOW_INTERNAL_ONLY"
     all_traffic_on_latest_revision = true
@@ -89,15 +97,17 @@ resource "google_service_account" "grant_matcher_sa" {
   description  = "Service account for grant matcher cloud function"
 }
 
-resource "google_project_iam_member" "grant_matcher_firestore" {
-  project = var.project_id
-  role    = "roles/datastore.user"
-  member  = "serviceAccount:${google_service_account.grant_matcher_sa.email}"
-}
 
-resource "google_project_iam_member" "grant_matcher_pubsub" {
+resource "google_project_iam_member" "grant_matcher_permissions" {
+  for_each = toset([
+    "roles/pubsub.publisher",
+    "roles/cloudsql.client",
+    "roles/logging.logWriter",
+    "roles/secretmanager.secretAccessor"
+  ])
+
   project = var.project_id
-  role    = "roles/pubsub.publisher"
+  role    = each.value
   member  = "serviceAccount:${google_service_account.grant_matcher_sa.email}"
 }
 

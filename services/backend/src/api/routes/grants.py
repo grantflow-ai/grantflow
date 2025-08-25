@@ -1,32 +1,23 @@
-import re
 import secrets
-from typing import NotRequired, TypedDict
+from datetime import UTC, datetime
+from typing import Any, NotRequired, TypedDict
 
-from google.cloud import firestore
-from google.cloud.exceptions import GoogleCloudError
 from litestar import Response, get, post
 from litestar.status_codes import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from packages.shared_utils.src.env import get_env
+from packages.db.src.tables import Grant, GrantMatchingSubscription
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.pubsub import publish_subscription_verification_email
+from sqlalchemy import func, insert, or_, select, update
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = get_logger(__name__)
-
-
-class GrantSearchParams(TypedDict):
-    query: NotRequired[str]
-    category: NotRequired[str]
-    min_amount: NotRequired[int]
-    max_amount: NotRequired[int]
-    deadline_after: NotRequired[str]
-    deadline_before: NotRequired[str]
-    limit: NotRequired[int]
-    offset: NotRequired[int]
 
 
 class GrantInfoResponse(TypedDict):
@@ -48,34 +39,31 @@ class GrantInfoResponse(TypedDict):
     amount_max: NotRequired[int]
     category: NotRequired[str]
     eligibility: NotRequired[str]
-    deadline: NotRequired[str]
+    deadline: NotRequired[str | None]
 
 
 class SubscriptionRequest(TypedDict):
     email: str
-    search_params: GrantSearchParams
+    search_params: NotRequired[dict[str, Any]]
     frequency: NotRequired[str]
 
 
 class SubscriptionResponse(TypedDict):
-    subscription_id: str
-    verification_required: bool
+    id: str
     message: str
 
 
-def get_firestore_client() -> firestore.AsyncClient:
-    project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    return firestore.AsyncClient(project=project_id)
+class UnsubscribeRequest(TypedDict):
+    email: str
 
 
 @get("/grants")
 async def search_grants(
+    session_maker: async_sessionmaker[Any],
     search_query: str | None = None,
     category: str | None = None,
     min_amount: int | None = None,
     max_amount: int | None = None,
-    deadline_after: str | None = None,
-    deadline_before: str | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> Response[list[GrantInfoResponse] | dict[str, str]]:
@@ -92,96 +80,71 @@ async def search_grants(
     )
 
     try:
-        client = get_firestore_client()
-        grants_ref = client.collection("grants")
+        async with session_maker() as session:
+            query = select(Grant)
 
-        query_ref = grants_ref
-
-        if category:
-            query_ref = query_ref.where("category", "==", category)
-
-        if min_amount is not None:
-            query_ref = query_ref.where("amount_min", ">=", min_amount)
-
-        if max_amount is not None:
-            query_ref = query_ref.where("amount_max", "<=", max_amount)
-
-        if deadline_after:
-            query_ref = query_ref.where("deadline", ">=", deadline_after)
-
-        if deadline_before:
-            query_ref = query_ref.where("deadline", "<=", deadline_before)
-
-        query_ref = query_ref.order_by("created_at", direction=firestore.Query.DESCENDING)
-
-        docs = query_ref.stream()
-
-        results: list[GrantInfoResponse] = []
-        count = 0
-        async for doc in docs:
-            # Skip non-metadata documents (page content docs don't have .html suffix)
-            if not doc.id.endswith(".html"):
-                continue
-
-            data = doc.to_dict()
-
-            # Client-side text search since Firestore doesn't support full-text search
             if search_query:
-                query_lower = search_query.lower()
-                title_match = query_lower in data.get("title", "").lower()
-                org_match = query_lower in data.get("organization", "").lower()
-                parent_org_match = query_lower in data.get("parent_organization", "").lower()
-                doc_num_match = query_lower in data.get("document_number", "").lower()
-                if not (title_match or org_match or parent_org_match or doc_num_match):
-                    continue
+                search_vector = func.to_tsvector("english", Grant.description)
+                search_tsquery = func.plainto_tsquery("english", search_query)
+                text_filter = or_(
+                    func.lower(Grant.title).contains(search_query.lower()),
+                    func.lower(Grant.organization).contains(search_query.lower()),
+                    func.lower(Grant.parent_organization).contains(search_query.lower()),
+                    func.lower(Grant.document_number).contains(search_query.lower()),
+                    search_vector.op("@@")(search_tsquery),
+                )
+                query = query.where(text_filter)
 
-            # Apply offset and limit after filtering
-            if count < offset:
-                count += 1
-                continue
+            if category:
+                query = query.where(Grant.category == category)
 
-            if len(results) >= limit:
-                break
+            if min_amount is not None:
+                query = query.where(Grant.amount_min >= min_amount)
 
-            count += 1
+            if max_amount is not None:
+                query = query.where(Grant.amount_max <= max_amount)
 
-            # Remove .html suffix from ID for cleaner API response
-            grant_id = doc.id.removesuffix(".html")
+            query = query.order_by(Grant.created_at.desc()).offset(offset).limit(limit)
 
-            grant_info: GrantInfoResponse = {
-                "id": grant_id,
-                "title": data.get("title", ""),
-                "release_date": data.get("release_date", ""),
-                "expired_date": data.get("expired_date", ""),
-                "activity_code": data.get("activity_code", ""),
-                "organization": data.get("organization", ""),
-                "parent_organization": data.get("parent_organization", ""),
-                "participating_orgs": data.get("participating_orgs", ""),
-                "document_number": data.get("document_number", ""),
-                "document_type": data.get("document_type", ""),
-                "clinical_trials": data.get("clinical_trials", ""),
-                "url": data.get("url", ""),
-                "description": data.get("description"),
-                "amount": data.get("amount"),
-                "amount_min": data.get("amount_min"),
-                "amount_max": data.get("amount_max"),
-                "category": data.get("category"),
-                "eligibility": data.get("eligibility"),
-                "deadline": data.get("deadline"),
-            }
+            result = await session.execute(query)
+            grants = result.scalars().all()
 
-            results.append(grant_info)
+            results: list[GrantInfoResponse] = []
+            for grant in grants:
+                grant_info: GrantInfoResponse = {
+                    "id": str(grant.id),
+                    "title": grant.title,
+                    "release_date": grant.release_date,
+                    "expired_date": grant.expired_date,
+                    "activity_code": grant.activity_code,
+                    "organization": grant.organization,
+                    "parent_organization": grant.parent_organization,
+                    "participating_orgs": grant.participating_orgs,
+                    "document_number": grant.document_number,
+                    "document_type": grant.document_type,
+                    "clinical_trials": grant.clinical_trials,
+                    "url": grant.url,
+                    "description": grant.description,
+                    "amount": grant.amount,
+                    "amount_min": grant.amount_min,
+                    "amount_max": grant.amount_max,
+                    "category": grant.category,
+                    "eligibility": grant.eligibility,
+                    "deadline": None,
+                }
 
-        logger.info("Public grant search completed", result_count=len(results))
+                results.append(grant_info)
 
-        return Response(
-            content=results,
-            status_code=HTTP_200_OK,
-        )
+            logger.info("Public grant search completed", result_count=len(results))
 
-    except GoogleCloudError as e:
+            return Response(
+                content=results,
+                status_code=HTTP_200_OK,
+            )
+
+    except SQLAlchemyError as e:
         logger.error(
-            "Failed to search grants in Firestore",
+            "Failed to search grants in database",
             error=str(e),
             search_params={
                 "search_query": search_query,
@@ -199,172 +162,128 @@ async def search_grants(
 
 
 @get("/grants/{grant_id:str}")
-async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[str, str]]:
+async def get_grant_details(
+    grant_id: str, session_maker: async_sessionmaker[Any]
+) -> Response[GrantInfoResponse | dict[str, str]]:
     logger.info("Public grant details request", grant_id=grant_id)
 
-    client = get_firestore_client()
+    try:
+        async with session_maker() as session:
+            query = select(Grant).where(Grant.document_number == grant_id)
+            result = await session.execute(query)
+            grant = result.scalar_one_or_none()
 
-    # Try with .html suffix first (metadata documents)
-    doc_id = grant_id if grant_id.endswith(".html") else f"{grant_id}.html"
-    doc_ref = client.collection("grants").document(doc_id)
-    doc = await doc_ref.get()
+            if not grant:
+                logger.warning("Grant not found", document_number=grant_id)
+                return Response(
+                    content={"error": "Grant not found"},
+                    status_code=HTTP_404_NOT_FOUND,
+                )
 
-    if not doc.exists:
-        # Try without .html suffix as fallback
-        doc_ref = client.collection("grants").document(grant_id)
-        doc = await doc_ref.get()
+            grant_info: GrantInfoResponse = {
+                "id": str(grant.id),
+                "title": grant.title,
+                "release_date": grant.release_date,
+                "expired_date": grant.expired_date,
+                "activity_code": grant.activity_code,
+                "organization": grant.organization,
+                "parent_organization": grant.parent_organization,
+                "participating_orgs": grant.participating_orgs,
+                "document_number": grant.document_number,
+                "document_type": grant.document_type,
+                "clinical_trials": grant.clinical_trials,
+                "url": grant.url,
+                "description": grant.description,
+                "amount": grant.amount,
+                "amount_min": grant.amount_min,
+                "amount_max": grant.amount_max,
+                "category": grant.category,
+                "eligibility": grant.eligibility,
+                "deadline": None,
+            }
 
-        if not doc.exists:
-            logger.warning("Grant not found", grant_id=grant_id)
+            logger.info("Public grant details retrieved", document_number=grant_id)
+
             return Response(
-                content={"error": "Grant not found"},
-                status_code=404,
+                content=grant_info,
+                status_code=HTTP_200_OK,
             )
 
-    data = doc.to_dict()
-
-    # Remove .html suffix from ID for cleaner API response
-    clean_id = doc.id.removesuffix(".html")
-
-    grant_info: GrantInfoResponse = {
-        "id": clean_id,
-        "title": data.get("title", ""),
-        "release_date": data.get("release_date", ""),
-        "expired_date": data.get("expired_date", ""),
-        "activity_code": data.get("activity_code", ""),
-        "organization": data.get("organization", ""),
-        "parent_organization": data.get("parent_organization", ""),
-        "participating_orgs": data.get("participating_orgs", ""),
-        "document_number": data.get("document_number", ""),
-        "document_type": data.get("document_type", ""),
-        "clinical_trials": data.get("clinical_trials", ""),
-        "url": data.get("url", ""),
-        "description": data.get("description"),
-        "amount": data.get("amount"),
-        "amount_min": data.get("amount_min"),
-        "amount_max": data.get("amount_max"),
-        "category": data.get("category"),
-        "eligibility": data.get("eligibility"),
-        "deadline": data.get("deadline"),
-    }
-
-    logger.info("Public grant details retrieved", grant_id=grant_id)
-
-    return Response(
-        content=grant_info,
-        status_code=HTTP_200_OK,
-    )
+    except SQLAlchemyError as e:
+        logger.error("Failed to retrieve grant details", document_number=grant_id, error=str(e))
+        return Response(
+            content={"error": "Grant service temporarily unavailable"},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @post("/grants/subscribe")
 async def create_subscription(
     data: SubscriptionRequest,
+    session_maker: async_sessionmaker[Any],
 ) -> Response[SubscriptionResponse | dict[str, str]]:
-    email = data["email"]
-    search_params = data["search_params"]
-    frequency = data.get("frequency", "daily")
-
-    email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    if not re.match(email_pattern, email) or len(email) > 254:
-        logger.warning("Invalid email format", email=email)
-        return Response(
-            content={"error": "Invalid email format"},
-            status_code=HTTP_400_BAD_REQUEST,
-        )
-
-    if frequency not in ["daily", "weekly"]:
-        logger.warning("Invalid frequency", frequency=frequency)
-        return Response(
-            content={"error": "Invalid frequency. Must be 'daily' or 'weekly'"},
-            status_code=HTTP_400_BAD_REQUEST,
-        )
-
-    logger.info(
-        "Creating grant subscription",
-        email=email,
-        frequency=frequency,
-        search_params=search_params,
-    )
+    logger.info("Creating grant subscription", email=data["email"])
 
     try:
-        client = get_firestore_client()
-        subscriptions_ref = client.collection("subscriptions")
-
-        existing = subscriptions_ref.where("email", "==", email).limit(1).stream()
-        existing_docs = [doc async for doc in existing]
-
-        if existing_docs:
-            doc = existing_docs[0]
-            await doc.reference.update(
-                {
-                    "search_params": search_params,
-                    "frequency": frequency,
-                    "updated_at": firestore.SERVER_TIMESTAMP,
-                }
-            )
-            subscription_id = doc.id
-            logger.info("Updated existing subscription", subscription_id=subscription_id)
-        else:
+        async with session_maker() as session, session.begin():
             verification_token = secrets.token_urlsafe(32)
 
-            doc_data = {
-                "email": email,
-                "search_params": search_params,
-                "frequency": frequency,
+            subscription_data = {
+                "email": data["email"],
+                "search_params": data.get("search_params", {}),
+                "frequency": data.get("frequency", "daily"),
                 "verified": False,
                 "verification_token": verification_token,
-                "created_at": firestore.SERVER_TIMESTAMP,
-                "updated_at": firestore.SERVER_TIMESTAMP,
+                "unsubscribed": False,
             }
 
-            doc_ref = await subscriptions_ref.add(doc_data)
-            subscription_id = doc_ref.id
-
             try:
-                import uuid  # noqa: PLC0415
+                result = await session.execute(
+                    insert(GrantMatchingSubscription)
+                    .values(**subscription_data)
+                    .returning(GrantMatchingSubscription.id)
+                )
+                subscription_id = result.scalar_one()
 
-                trace_id = str(uuid.uuid4())
                 await publish_subscription_verification_email(
-                    email=email,
-                    subscription_id=subscription_id,
+                    email=data["email"],
+                    subscription_id=str(subscription_id),
                     verification_token=verification_token,
-                    search_params=dict(search_params),
-                    frequency=frequency,
-                    trace_id=trace_id,
+                    search_params=data.get("search_params"),
+                    frequency=data.get("frequency", "daily"),
                 )
+
                 logger.info(
-                    "Sent verification email",
-                    subscription_id=subscription_id,
-                    email=email,
-                    trace_id=trace_id,
+                    "Grant subscription created",
+                    subscription_id=str(subscription_id),
+                    email=data["email"],
                 )
-            except Exception as e:
-                logger.error(
-                    "Failed to send verification email",
-                    subscription_id=subscription_id,
-                    email=email,
+
+                return Response(
+                    content=SubscriptionResponse(
+                        id=str(subscription_id),
+                        message="Subscription created successfully. Please check your email to verify.",
+                    ),
+                    status_code=HTTP_201_CREATED,
+                )
+
+            except IntegrityError as e:
+                logger.warning(
+                    "Duplicate subscription attempt",
+                    email=data["email"],
                     error=str(e),
                 )
+                return Response(
+                    content={"error": "A subscription with this email already exists"},
+                    status_code=HTTP_400_BAD_REQUEST,
+                )
 
-            logger.info(
-                "Created new subscription",
-                subscription_id=subscription_id,
-                verification_token=verification_token,
-            )
-
-        response: SubscriptionResponse = {
-            "subscription_id": subscription_id,
-            "verification_required": True,
-            "message": "Please check your email to verify your subscription",
-        }
-
-        return Response(
-            content=response,
-            status_code=HTTP_201_CREATED,
+    except SQLAlchemyError as e:
+        logger.error(
+            "Failed to create grant subscription",
+            email=data["email"],
+            error=str(e),
         )
-
-    except GoogleCloudError as e:
-        logger.error("Failed to create grant subscription", email=email, error=str(e))
         return Response(
             content={"error": "Subscription service temporarily unavailable"},
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -372,68 +291,97 @@ async def create_subscription(
 
 
 @get("/grants/verify/{token:str}")
-async def verify_subscription(token: str) -> Response[dict[str, str]]:
-    logger.info("Verifying subscription", token=token)
+async def verify_subscription(token: str, session_maker: async_sessionmaker[Any]) -> Response[dict[str, str]]:
+    logger.info("Verifying grant subscription", token=token[:8] + "...")
 
-    client = get_firestore_client()
-    subscriptions_ref = client.collection("subscriptions")
+    try:
+        async with session_maker() as session, session.begin():
+            subscription = await session.scalar(
+                select(GrantMatchingSubscription)
+                .where(GrantMatchingSubscription.verification_token == token)
+                .where(GrantMatchingSubscription.verified.is_(False))
+                .where(GrantMatchingSubscription.unsubscribed.is_(False))
+            )
 
-    query = subscriptions_ref.where("verification_token", "==", token).limit(1)
-    docs = query.stream()
+            if not subscription:
+                logger.warning("Invalid or expired verification token", token=token[:8] + "...")
+                return Response(
+                    content={"error": "Invalid or expired verification token"},
+                    status_code=HTTP_404_NOT_FOUND,
+                )
 
-    subscription_docs = [doc async for doc in docs]
+            await session.execute(
+                update(GrantMatchingSubscription)
+                .where(GrantMatchingSubscription.id == subscription.id)
+                .values(verified=True, verification_token=None)
+            )
 
-    if not subscription_docs:
-        logger.warning("Invalid verification token", token=token)
-        return Response(
-            content={"error": "Invalid or expired verification token"},
-            status_code=HTTP_400_BAD_REQUEST,
+            logger.info(
+                "Grant subscription verified",
+                subscription_id=str(subscription.id),
+                email=subscription.email,
+            )
+
+            return Response(
+                content={"message": "Subscription verified successfully"},
+                status_code=HTTP_200_OK,
+            )
+
+    except SQLAlchemyError as e:
+        logger.error(
+            "Failed to verify grant subscription",
+            token=token[:8] + "...",
+            error=str(e),
         )
-
-    doc = subscription_docs[0]
-
-    await doc.reference.update(
-        {
-            "verified": True,
-            "verification_token": None,
-            "verified_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        }
-    )
-
-    logger.info("Subscription verified", subscription_id=doc.id)
-
-    return Response(
-        content={"message": "Subscription verified successfully"},
-        status_code=HTTP_200_OK,
-    )
+        return Response(
+            content={"error": "Verification service temporarily unavailable"},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @post("/grants/unsubscribe")
-async def unsubscribe(email: str) -> Response[dict[str, str]]:
-    logger.info("Unsubscribing from grant alerts", email=email)
+async def unsubscribe(data: UnsubscribeRequest, session_maker: async_sessionmaker[Any]) -> Response[dict[str, str]]:
+    logger.info("Unsubscribing from grant notifications", email=data["email"])
 
-    client = get_firestore_client()
-    subscriptions_ref = client.collection("subscriptions")
+    try:
+        async with session_maker() as session, session.begin():
+            subscription = await session.scalar(
+                select(GrantMatchingSubscription)
+                .where(GrantMatchingSubscription.email == data["email"])
+                .where(GrantMatchingSubscription.unsubscribed.is_(False))
+            )
 
-    query = subscriptions_ref.where("email", "==", email).limit(1)
-    docs = query.stream()
+            if not subscription:
+                logger.warning("No active subscription found", email=data["email"])
+                return Response(
+                    content={"error": "No active subscription found for this email"},
+                    status_code=HTTP_404_NOT_FOUND,
+                )
 
-    subscription_docs = [doc async for doc in docs]
+            await session.execute(
+                update(GrantMatchingSubscription)
+                .where(GrantMatchingSubscription.id == subscription.id)
+                .values(unsubscribed=True, unsubscribed_at=datetime.now(UTC))
+            )
 
-    if not subscription_docs:
-        logger.warning("No subscription found", email=email)
-        return Response(
-            content={"message": "No subscription found for this email"},
-            status_code=HTTP_200_OK,
+            logger.info(
+                "Grant subscription cancelled",
+                subscription_id=str(subscription.id),
+                email=data["email"],
+            )
+
+            return Response(
+                content={"message": "Successfully unsubscribed from grant notifications"},
+                status_code=HTTP_200_OK,
+            )
+
+    except SQLAlchemyError as e:
+        logger.error(
+            "Failed to unsubscribe from grant notifications",
+            email=data["email"],
+            error=str(e),
         )
-
-    for doc in subscription_docs:
-        await doc.reference.delete()
-
-    logger.info("Unsubscribed from grant alerts", email=email, count=len(subscription_docs))
-
-    return Response(
-        content={"message": "Successfully unsubscribed from grant alerts"},
-        status_code=HTTP_200_OK,
-    )
+        return Response(
+            content={"error": "Unsubscribe service temporarily unavailable"},
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        )
