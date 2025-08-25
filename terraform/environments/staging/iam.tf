@@ -8,13 +8,13 @@ resource "google_service_account" "grant_matcher" {
 resource "google_project_iam_member" "scraper_firestore_user" {
   project = var.project_id
   role    = "roles/datastore.user"
-  member  = "serviceAccount:scraper-${var.environment}@${var.project_id}.iam.gserviceaccount.com"
+  member  = "serviceAccount:scraper-service@${var.project_id}.iam.gserviceaccount.com"
 }
 
 resource "google_project_iam_member" "backend_firestore_user" {
   project = var.project_id
   role    = "roles/datastore.user"
-  member  = "serviceAccount:backend-${var.environment}@${var.project_id}.iam.gserviceaccount.com"
+  member  = "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
 }
 
 resource "google_project_iam_member" "grant_matcher_firestore_user" {
