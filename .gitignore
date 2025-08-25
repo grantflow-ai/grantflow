@@ -50,6 +50,7 @@ build/
 CLAUDE.md
 coverage.*
 coverage/
+htmlcov/
 crash.*.log
 crash.log
 dist/
