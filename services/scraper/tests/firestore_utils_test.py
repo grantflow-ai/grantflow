@@ -112,7 +112,7 @@ async def test_save_grant_document_auto_generated_id(mock_collection: AsyncMock,
 
 async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
     grant_id = "PA-24-123"
-    content = "# Grant Title\n\nGrant content here..."
+    content = "# Grant Title\n\nThis is the grant description that will be extracted for search purposes.\n\nMore content here..."
 
     mock_collection.document.return_value = mock_document
     mock_document.set = AsyncMock()
@@ -125,6 +125,10 @@ async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document
         call_args = mock_document.set.call_args
         doc_data = call_args[0][0]
         assert doc_data["page_content"] == content
+        assert (
+            doc_data["description"]
+            == "This is the grant description that will be extracted for search purposes. More content here..."
+        )
         assert "content_scraped_at" in doc_data
         assert "updated_at" in doc_data
         assert call_args[1]["merge"] is True

@@ -113,28 +113,43 @@ async def search_grants(
             query_ref = query_ref.where("deadline", "<=", deadline_before)
 
         query_ref = query_ref.order_by("created_at", direction=firestore.Query.DESCENDING)
-        query_ref = query_ref.limit(limit)
-
-        if offset > 0:
-            query_ref = query_ref.offset(offset)
 
         docs = query_ref.stream()
 
         results: list[GrantInfoResponse] = []
+        count = 0
         async for doc in docs:
+            # Skip non-metadata documents (page content docs don't have .html suffix)
+            if not doc.id.endswith(".html"):
+                continue
+
             data = doc.to_dict()
 
-            # WARNING: This is client-side filtering which is inefficient for large datasets
-            # TODO: For production, implement proper full-text search with:
+            # Client-side text search since Firestore doesn't support full-text search
             if search_query:
                 query_lower = search_query.lower()
                 title_match = query_lower in data.get("title", "").lower()
-                desc_match = query_lower in data.get("description", "").lower()
-                if not (title_match or desc_match):
+                org_match = query_lower in data.get("organization", "").lower()
+                parent_org_match = query_lower in data.get("parent_organization", "").lower()
+                doc_num_match = query_lower in data.get("document_number", "").lower()
+                if not (title_match or org_match or parent_org_match or doc_num_match):
                     continue
 
+            # Apply offset and limit after filtering
+            if count < offset:
+                count += 1
+                continue
+
+            if len(results) >= limit:
+                break
+
+            count += 1
+
+            # Remove .html suffix from ID for cleaner API response
+            grant_id = doc.id.removesuffix(".html")
+
             grant_info: GrantInfoResponse = {
-                "id": doc.id,
+                "id": grant_id,
                 "title": data.get("title", ""),
                 "release_date": data.get("release_date", ""),
                 "expired_date": data.get("expired_date", ""),
@@ -188,19 +203,31 @@ async def get_grant_details(grant_id: str) -> Response[GrantInfoResponse | dict[
     logger.info("Public grant details request", grant_id=grant_id)
 
     client = get_firestore_client()
-    doc_ref = client.collection("grants").document(grant_id)
+
+    # Try with .html suffix first (metadata documents)
+    doc_id = grant_id if grant_id.endswith(".html") else f"{grant_id}.html"
+    doc_ref = client.collection("grants").document(doc_id)
     doc = await doc_ref.get()
 
     if not doc.exists:
-        logger.warning("Grant not found", grant_id=grant_id)
-        return Response(
-            content={"error": "Grant not found"},
-            status_code=404,
-        )
+        # Try without .html suffix as fallback
+        doc_ref = client.collection("grants").document(grant_id)
+        doc = await doc_ref.get()
+
+        if not doc.exists:
+            logger.warning("Grant not found", grant_id=grant_id)
+            return Response(
+                content={"error": "Grant not found"},
+                status_code=404,
+            )
 
     data = doc.to_dict()
+
+    # Remove .html suffix from ID for cleaner API response
+    clean_id = doc.id.removesuffix(".html")
+
     grant_info: GrantInfoResponse = {
-        "id": doc.id,
+        "id": clean_id,
         "title": data.get("title", ""),
         "release_date": data.get("release_date", ""),
         "expired_date": data.get("expired_date", ""),
