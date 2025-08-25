@@ -168,6 +168,8 @@ filterwarnings = [
   "ignore::DeprecationWarning:tracerite.*",
   "ignore::DeprecationWarning:spacy.*",
   "ignore::DeprecationWarning:weasel.*",
+  "ignore:pkg_resources is deprecated:UserWarning:google.*",
+  "ignore:Use of deprecated default '__check_model__':DeprecationWarning:polyfactory.*",
 ]
 # Run tests serially without retries for stability
 addopts = [

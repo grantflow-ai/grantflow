@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from html_to_markdown import convert_to_markdown
 from mdformat import text
 from packages.shared_utils.src.logger import get_logger
+from services.scraper.src.db_utils import save_grant_page_content
 from services.scraper.src.dtos import GrantInfo
-from services.scraper.src.firestore_utils import save_grant_page_content
 from services.scraper.src.html_utils import download_page_html
 from services.scraper.src.url_utils import get_identifier_from_nih_url
 
@@ -31,7 +31,7 @@ async def save_markdown_page(*, soup: BeautifulSoup, result_name: str) -> None:
     formatted_markdown = text(markdown)
 
     await save_grant_page_content(result_name, formatted_markdown)
-    logger.debug("Saved markdown page to Firestore", grant_id=result_name)
+    logger.debug("Saved markdown page to PostgreSQL", grant_id=result_name)
 
 
 async def download_grant_pages(*, search_results: list[GrantInfo], existing_file_identifiers: set[str]) -> int:

@@ -8,7 +8,7 @@ from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.server import create_litestar_app
-from services.scraper.src.firestore_utils import get_existing_grant_identifiers
+from services.scraper.src.db_utils import get_existing_grant_identifiers
 from services.scraper.src.grant_pages import download_grant_pages
 from services.scraper.src.search_data import DEFAULT_FROM_DATE, TODAY_DATE, download_search_data
 
@@ -38,7 +38,6 @@ async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY
         to_date=to_date.isoformat(),
     )
 
-    # Get existing grant identifiers BEFORE downloading search data
     existing_grant_identifiers = await get_existing_grant_identifiers()
     logger.info("Found existing grant identifiers", count=len(existing_grant_identifiers))
 
@@ -85,7 +84,7 @@ async def handle_scraper_request() -> ScraperResponse:
     environment = get_env("ENVIRONMENT", raise_on_missing=False, fallback="staging")
 
     try:
-        logger.info("Using Firestore for grant storage")
+        logger.info("Using PostgreSQL for grant storage")
 
         metrics = await run_scraper()
 
@@ -97,12 +96,11 @@ async def handle_scraper_request() -> ScraperResponse:
 
         if discord_webhook_url:
             try:
-                total_grants_in_firestore = None
                 try:
                     all_grants = await get_existing_grant_identifiers()
-                    total_grants_in_firestore = len(all_grants)
+                    total_grants_in_postgresql = len(all_grants)
                 except (ValueError, RuntimeError, OSError) as ex:
-                    logger.warning("Could not get total grant count from Firestore", error=str(ex))
+                    logger.warning("Could not get total grant count from PostgreSQL", error=str(ex))
 
                 await send_scraper_report(
                     webhook_url=discord_webhook_url,
@@ -112,8 +110,8 @@ async def handle_scraper_request() -> ScraperResponse:
                     new_files_downloaded=int(metrics["new_files_downloaded"]),
                     existing_files_skipped=int(metrics["existing_files_skipped"]),
                     total_processing_time_ms=metrics["total_duration_ms"],
-                    bucket_name="firestore:grants",
-                    total_files_in_bucket=total_grants_in_firestore,
+                    bucket_name="postgresql:grants",
+                    total_files_in_bucket=total_grants_in_postgresql,
                     success=True,
                 )
                 logger.info("Discord notification sent successfully")
@@ -149,7 +147,7 @@ async def handle_scraper_request() -> ScraperResponse:
                     new_files_downloaded=0,
                     existing_files_skipped=0,
                     total_processing_time_ms=round(error_duration * 1000, 2),
-                    bucket_name="firestore:grants",
+                    bucket_name="postgresql:grants",
                     success=False,
                     error_message=str(e),
                 )
@@ -165,5 +163,5 @@ app = create_litestar_app(
     route_handlers=[
         handle_scraper_request,
     ],
-    add_session_maker=False,
+    add_session_maker=True,
 )

@@ -236,7 +236,7 @@ async def test_handle_scraper_request_success_with_discord(
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
         "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
+        "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
         "DEBUG": "True",
     }.get(key, fallback)
 
@@ -266,7 +266,7 @@ async def test_handle_scraper_request_success_with_discord(
     assert call_kwargs["new_files_downloaded"] == 10
     assert call_kwargs["existing_files_skipped"] == 15
     assert call_kwargs["total_processing_time_ms"] == 45000.0
-    assert call_kwargs["bucket_name"] == "firestore:grants"
+    assert call_kwargs["bucket_name"] == "postgresql:grants"
     assert call_kwargs["success"] is True
     assert call_kwargs["total_files_in_bucket"] == 100
 
@@ -284,7 +284,7 @@ async def test_handle_scraper_request_failure_with_discord(
         env_map = {
             "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
             "ENVIRONMENT": "staging",
-            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
             "DEBUG": "True",
         }
         return env_map.get(key, fallback)
@@ -322,7 +322,7 @@ async def test_handle_scraper_request_no_discord_url(
         env_map = {
             "DISCORD_WEBHOOK_URL": "",
             "ENVIRONMENT": "staging",
-            "STORAGE_EMULATOR_HOST": "localhost:8080",
+            "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
             "DEBUG": "True",
         }
         return env_map.get(key, fallback)
@@ -362,7 +362,7 @@ async def test_handle_scraper_request_discord_send_fails(
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
         "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
+        "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
         "DEBUG": "True",
     }.get(key, fallback)
 

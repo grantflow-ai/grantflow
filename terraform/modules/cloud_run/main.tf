@@ -853,6 +853,21 @@ resource "google_cloud_run_v2_service" "scraper" {
       }
 
       env {
+        name  = "INSTANCE_CONNECTION_NAME"
+        value = var.database_connection_name
+      }
+
+      env {
+        name = "DATABASE_CONNECTION_STRING"
+        value_source {
+          secret_key_ref {
+            secret  = "DATABASE_CONNECTION_STRING"
+            version = "latest"
+          }
+        }
+      }
+
+      env {
         name = "GCS_SERVICE_ACCOUNT_CREDENTIALS"
         value_source {
           secret_key_ref {
@@ -860,6 +875,18 @@ resource "google_cloud_run_v2_service" "scraper" {
             version = "latest"
           }
         }
+      }
+
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.database_connection_name]
       }
     }
 
