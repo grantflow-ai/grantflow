@@ -46,11 +46,24 @@ vi.mock("./section-drop-indicator", () => ({
 	)),
 }));
 
+vi.mock("@radix-ui/react-tooltip", () => ({
+	__esModule: true,
+	Content: vi.fn(({ children }) => <div>{children}</div>),
+	Portal: vi.fn(({ children }) => <div>{children}</div>),
+	Provider: vi.fn(({ children }) => <div>{children}</div>),
+	Root: vi.fn(({ children }) => <div>{children}</div>),
+	Trigger: vi.fn(({ asChild, children }) => (asChild ? children : <div>{children}</div>)),
+}));
+
 vi.mock("@/components/ui/tooltip", () => ({
-	Tooltip: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipContent: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipProvider: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipTrigger: vi.fn(({ children }) => <div>{children}</div>),
+}));
+
+vi.mock("next/image", () => ({
+	__esModule: true,
+	default: vi.fn(({ alt, height, src, width }) => <img alt={alt} height={height} src={src} width={width} />),
 }));
 
 describe("SortableSection", () => {
@@ -258,7 +271,7 @@ describe("SortableSection", () => {
 			);
 
 			const container = screen.getByTestId("section-container");
-			expect(container).toHaveClass("outline-app-gray-200");
+			expect(container).toHaveClass("outline-muted");
 			expect(container).not.toHaveClass("outline-primary");
 		});
 
@@ -276,7 +289,7 @@ describe("SortableSection", () => {
 
 			const container = screen.getByTestId("section-container");
 			expect(container).toHaveClass("outline-primary");
-			expect(container).not.toHaveClass("outline-app-gray-200");
+			expect(container).not.toHaveClass("outline-muted");
 		});
 
 		it("calls onSectionInteraction on mouse enter when newly created", async () => {
