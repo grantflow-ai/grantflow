@@ -1,12 +1,13 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
+import { GripVertical, Plus } from "lucide-react";
 import Image from "next/image";
 import type { RefObject } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
 import type { WizardDialogRef } from "@/components/organizations/project/applications/wizard/modal/wizard-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { type DragDropHandlers, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useApplicationStore } from "@/stores/application-store";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
@@ -30,9 +31,11 @@ interface SectionListProps {
 	expandedSectionId: null | string;
 	handleAddNewSection: (parentId?: null | string) => Promise<void>;
 	handleDeleteSection: (sectionId: string) => Promise<void>;
+	handleSectionInteraction: (sectionId: string) => void;
 	handleUpdateSection: (sectionId: string, updates: Partial<GrantSection>) => Promise<void>;
 	isDetailedSection: (section: GrantSection) => boolean;
 	mainSections: GrantSection[];
+	newlyCreatedSectionIds: Set<string>;
 	subsectionsByParent: Record<string, GrantSection[]>;
 	toggleSectionExpanded: (sectionId: string) => void;
 }
@@ -366,15 +369,14 @@ const handleMainToMainReorder = async (
 export function DragDropSectionManager({
 	dialogRef,
 	isDetailedSection,
-	onAddSection,
 }: {
 	dialogRef: RefObject<null | WizardDialogRef>;
 	isDetailedSection: (section: GrantSection) => boolean;
-	onAddSection: (parentId?: null | string) => Promise<void>;
 }) {
 	const application = useApplicationStore((state) => state.application);
 	const grantSections = application?.grant_template?.grant_sections ?? [];
 	const [expandedSectionId, setExpandedSectionId] = useState<null | string>(null);
+	const [newlyCreatedSectionIds, setNewlyCreatedSectionIds] = useState<Set<string>>(new Set());
 	const [pendingParentChange, setPendingParentChange] = useState<{
 		newParentId: null | string;
 		sectionId: string;
@@ -525,9 +527,61 @@ export function DragDropSectionManager({
 
 	const handleAddNewSection = useCallback(
 		async (parentId: null | string = null) => {
-			await onAddSection(parentId);
+			const isSubsection = parentId !== null;
+			let insertIndex: number;
+
+			if (isSubsection && parentId) {
+				const parentIndex = grantSections.findIndex((s) => s.id === parentId);
+				if (parentIndex === -1) return;
+
+				insertIndex = parentIndex + 1;
+			} else {
+				insertIndex = 0;
+			}
+
+			const sectionsToUpdate = grantSections.map(toUpdateGrantSection);
+
+			const newSectionId = `section-${crypto.randomUUID()}`;
+			const newSection: UpdateGrantSection = {
+				depends_on: [],
+				generation_instructions: "",
+				id: newSectionId,
+				is_clinical_trial: null,
+				is_detailed_research_plan: null,
+				keywords: [],
+				max_words: 3000,
+				order: 0,
+				parent_id: parentId,
+				search_queries: [],
+				title: isSubsection ? "New Sub-section" : "New Section",
+				topics: [],
+			};
+
+			sectionsToUpdate.splice(insertIndex, 0, newSection);
+
+			const finalSections = sectionsToUpdate.map((section, index) => ({
+				...section,
+				order: index,
+			}));
+
+			await useApplicationStore.getState().updateGrantSections(finalSections);
+
+			setNewlyCreatedSectionIds((prev) => new Set([newSectionId, ...prev]));
 		},
-		[onAddSection],
+		[grantSections, toUpdateGrantSection],
+	);
+
+	const handleSectionInteraction = useCallback(
+		(sectionId: string) => {
+			if (newlyCreatedSectionIds.has(sectionId)) {
+				setNewlyCreatedSectionIds((prev) => {
+					const next = new Set(prev);
+					next.delete(sectionId);
+					return next;
+				});
+			}
+		},
+		[newlyCreatedSectionIds],
 	);
 
 	const dragHandlers: DragDropHandlers<GrantSection> = useMemo(
@@ -696,25 +750,42 @@ export function DragDropSectionManager({
 	}, []);
 
 	return (
-		<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
-			<DragDropContext.Provider value={{ getDragState }}>
-				<div className="mb-3 space-y-2 p-1">
-					{grantSections.length > 0 && (
-						<SectionList
-							expandedSectionId={expandedSectionId}
-							handleAddNewSection={handleAddNewSection}
-							handleDeleteSection={handleDeleteSection}
-							handleUpdateSection={handleUpdateSection}
-							isDetailedSection={isDetailedSection}
-							mainSections={mainSections}
-							subsectionsByParent={subsectionsByParent}
-							toggleSectionExpanded={toggleSectionExpanded}
-							toUpdateGrantSection={toUpdateGrantSection}
-						/>
-					)}
-				</div>
-			</DragDropContext.Provider>
-		</DragDropWrapper>
+		<div className="flex flex-col size-full" data-testid="application-structure-sections">
+			<div className="mb-2 flex justify-end">
+				<AppButton
+					data-testid="add-new-section-button"
+					leftIcon={<Plus />}
+					onClick={() => handleAddNewSection()}
+					size="sm"
+					variant="secondary"
+				>
+					Add New Section
+				</AppButton>
+			</div>
+			<ScrollArea className="flex-1">
+				<DragDropWrapper items={grantSections} renderDragOverlay={renderDragOverlay}>
+					<DragDropContext.Provider value={{ getDragState }}>
+						<div className="mb-3 space-y-2 p-1">
+							{grantSections.length > 0 && (
+								<SectionList
+									expandedSectionId={expandedSectionId}
+									handleAddNewSection={handleAddNewSection}
+									handleDeleteSection={handleDeleteSection}
+									handleSectionInteraction={handleSectionInteraction}
+									handleUpdateSection={handleUpdateSection}
+									isDetailedSection={isDetailedSection}
+									mainSections={mainSections}
+									newlyCreatedSectionIds={newlyCreatedSectionIds}
+									subsectionsByParent={subsectionsByParent}
+									toggleSectionExpanded={toggleSectionExpanded}
+									toUpdateGrantSection={toUpdateGrantSection}
+								/>
+							)}
+						</div>
+					</DragDropContext.Provider>
+				</DragDropWrapper>
+			</ScrollArea>
+		</div>
 	);
 }
 
@@ -778,9 +849,11 @@ function SectionList({
 	expandedSectionId,
 	handleAddNewSection,
 	handleDeleteSection,
+	handleSectionInteraction,
 	handleUpdateSection,
 	isDetailedSection,
 	mainSections,
+	newlyCreatedSectionIds,
 	subsectionsByParent,
 	toggleSectionExpanded,
 	toUpdateGrantSection,
@@ -794,8 +867,12 @@ function SectionList({
 					<SortableSection
 						isDetailedSection={isDetailedSection}
 						isExpanded={expandedSectionId === section.id}
+						isNewlyCreated={newlyCreatedSectionIds.has(section.id)}
 						onAddSubsection={() => handleAddNewSection(section.id)}
 						onDelete={() => handleDeleteSection(section.id)}
+						onSectionInteraction={() => {
+							handleSectionInteraction(section.id);
+						}}
 						onToggleExpand={() => {
 							toggleSectionExpanded(section.id);
 						}}
@@ -807,9 +884,13 @@ function SectionList({
 						<SortableSection
 							isDetailedSection={isDetailedSection}
 							isExpanded={expandedSectionId === subsection.id}
+							isNewlyCreated={newlyCreatedSectionIds.has(subsection.id)}
 							isSubsection
 							key={subsection.id}
 							onDelete={() => handleDeleteSection(subsection.id)}
+							onSectionInteraction={() => {
+								handleSectionInteraction(subsection.id);
+							}}
 							onToggleExpand={() => {
 								toggleSectionExpanded(subsection.id);
 							}}

@@ -1,10 +1,12 @@
 "use client";
 
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { IconButton } from "@/components/app/buttons/icon-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export interface ObjectiveFormData {
@@ -152,9 +154,24 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 
 				<div className="flex items-center justify-between">
 					<h3 className="font-semibold font-heading text-app-black leading-snug">Tasks</h3>
-					<IconButton data-testid="add-task-button" onClick={addTask} size="sm" type="button" variant="solid">
-						<Plus className="w-4 h-4" />
-					</IconButton>
+					<TooltipProvider delayDuration={300}>
+						<TooltipPrimitive.Root>
+							<TooltipTrigger asChild>
+								<IconButton
+									data-testid="add-task-button"
+									onClick={addTask}
+									size="sm"
+									type="button"
+									variant="solid"
+								>
+									<Plus className="w-4 h-4" />
+								</IconButton>
+							</TooltipTrigger>
+							<TooltipContent side="top">
+								<p>Add Task</p>
+							</TooltipContent>
+						</TooltipPrimitive.Root>
+					</TooltipProvider>
 				</div>
 
 				{formData.tasks.map((task, index) => (

@@ -16,18 +16,23 @@ function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root
 function TooltipContent({
 	children,
 	className,
-	showArrow = false,
-	sideOffset = 0,
+	showArrow = true,
+	side = "top",
+	sideOffset = 4,
 	...props
-}: { showArrow?: boolean } & React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: {
+	showArrow?: boolean;
+	side?: "bottom" | "left" | "right" | "top";
+} & React.ComponentProps<typeof TooltipPrimitive.Content>) {
 	return (
 		<TooltipPrimitive.Portal>
 			<TooltipPrimitive.Content
 				className={cn(
-					"bg-secondary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-[2px] px-3 py-1 text-xs text-balance",
+					"bg-secondary text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-[3px] px-3 py-1 text-sm text-balance",
 					className,
 				)}
 				data-slot="tooltip-content"
+				side={side}
 				sideOffset={sideOffset}
 				{...props}
 			>
