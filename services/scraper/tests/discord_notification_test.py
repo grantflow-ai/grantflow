@@ -256,7 +256,7 @@ async def test_handle_scraper_request_success_with_discord(
     assert response.status_code == 201
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert response_data["message"] == "Scraper completed successfully"
+    assert response_data["message"] == "Finished scraping NIH grants"
 
     mock_send_report.assert_called_once()
     call_kwargs = mock_send_report.call_args[1]
@@ -343,7 +343,7 @@ async def test_handle_scraper_request_no_discord_url(
     assert response.status_code == 201
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert response_data["message"] == "Scraper completed successfully"
+    assert response_data["message"] == "Finished scraping NIH grants"
 
     mock_send_report.assert_not_called()
 
@@ -382,6 +382,6 @@ async def test_handle_scraper_request_discord_send_fails(
     assert response.status_code == 201
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert response_data["message"] == "Scraper completed successfully"
+    assert response_data["message"] == "Finished scraping NIH grants"
 
     mock_send_report.assert_called_once()

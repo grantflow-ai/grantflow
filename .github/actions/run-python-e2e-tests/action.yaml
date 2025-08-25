@@ -134,6 +134,9 @@ runs:
               elif [[ "${{ inputs.service }}" == "scraper" ]]; then
                 cat > services/${{ inputs.service }}/.env << EOF
               DEBUG=True
+              FIRESTORE_EMULATOR_HOST=localhost:8080
+              GCP_PROJECT_ID=grantflow-test
+              ENVIRONMENT=test
               EOF
               fi
 

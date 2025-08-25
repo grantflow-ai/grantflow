@@ -1,6 +1,8 @@
+import os
 import time
 from datetime import UTC, datetime
 
+import google.auth.credentials
 from google.cloud import firestore
 from google.cloud.exceptions import GoogleCloudError
 from google.cloud.firestore import AsyncClient, AsyncCollectionReference
@@ -13,21 +15,26 @@ logger = get_logger(__name__)
 
 def get_firestore_client() -> AsyncClient:
     project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
+
+    emulator_host = os.getenv("FIRESTORE_EMULATOR_HOST")
+
     try:
+        if emulator_host:
+            logger.info("Using Firestore emulator", host=emulator_host, project_id=project_id)
+            credentials = google.auth.credentials.AnonymousCredentials()  # type: ignore[no-untyped-call]
+            return firestore.AsyncClient(project=project_id, credentials=credentials)
+        logger.info("Using production Firestore", project_id=project_id)
         return firestore.AsyncClient(project=project_id)
     except GoogleCloudError as e:
-        logger.error("Failed to create Firestore client", project_id=project_id, error=str(e))
+        logger.error(
+            "Failed to create Firestore client", project_id=project_id, emulator_host=emulator_host, error=str(e)
+        )
         raise
 
 
 async def get_grants_collection() -> AsyncCollectionReference:
     client = get_firestore_client()
     return client.collection("grants")
-
-
-async def get_subscriptions_collection() -> AsyncCollectionReference:
-    client = get_firestore_client()
-    return client.collection("subscriptions")
 
 
 async def save_grant_document(grant_info: GrantInfo) -> str:
@@ -83,12 +90,13 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
     collection = await get_grants_collection()
 
     doc_ref = collection.document(grant_id)
-    await doc_ref.update(
+    await doc_ref.set(
         {
             "page_content": content,
             "content_scraped_at": datetime.now(UTC).isoformat(),
             "updated_at": datetime.now(UTC).isoformat(),
-        }
+        },
+        merge=True,
     )
 
     duration = time.time() - start_time

@@ -8,10 +8,10 @@ from services.scraper.src.firestore_utils import (
     get_existing_grant_identifiers,
     get_firestore_client,
     get_grants_collection,
-    get_subscriptions_collection,
     save_grant_document,
     save_grant_page_content,
 )
+from services.scraper.tests.test_utils import MockAsyncIterator, create_mock_firestore_doc
 
 if TYPE_CHECKING:
     from services.scraper.src.dtos import GrantInfo
@@ -43,7 +43,8 @@ def test_get_firestore_client() -> None:
         client = get_firestore_client()
 
         assert client is not None
-        mock_client_class.assert_called_once_with(project="grantflow")
+        call_args = mock_client_class.call_args
+        assert call_args[1]["project"] == "grantflow-test"
 
 
 async def test_get_grants_collection(mock_firestore_client: AsyncMock) -> None:
@@ -55,17 +56,6 @@ async def test_get_grants_collection(mock_firestore_client: AsyncMock) -> None:
 
         assert collection == mock_collection
         mock_firestore_client.collection.assert_called_once_with("grants")
-
-
-async def test_get_subscriptions_collection(mock_firestore_client: AsyncMock) -> None:
-    mock_collection = AsyncMock(spec=AsyncCollectionReference)
-    mock_firestore_client.collection.return_value = mock_collection
-
-    with patch("services.scraper.src.firestore_utils.get_firestore_client", return_value=mock_firestore_client):
-        collection = await get_subscriptions_collection()
-
-        assert collection == mock_collection
-        mock_firestore_client.collection.assert_called_once_with("subscriptions")
 
 
 async def test_save_grant_document_with_url(mock_collection: AsyncMock, mock_document: AsyncMock) -> None:
@@ -125,41 +115,23 @@ async def test_save_grant_page_content(mock_collection: AsyncMock, mock_document
     content = "# Grant Title\n\nGrant content here..."
 
     mock_collection.document.return_value = mock_document
-    mock_document.update = AsyncMock()
+    mock_document.set = AsyncMock()
 
     with patch("services.scraper.src.firestore_utils.get_grants_collection", return_value=mock_collection):
         await save_grant_page_content(grant_id, content)
 
         mock_collection.document.assert_called_once_with(grant_id)
 
-        call_args = mock_document.update.call_args
-        update_data = call_args[0][0]
-        assert update_data["page_content"] == content
-        assert "content_scraped_at" in update_data
-        assert "updated_at" in update_data
+        call_args = mock_document.set.call_args
+        doc_data = call_args[0][0]
+        assert doc_data["page_content"] == content
+        assert "content_scraped_at" in doc_data
+        assert "updated_at" in doc_data
+        assert call_args[1]["merge"] is True
 
 
 async def test_get_existing_grant_identifiers(mock_collection: AsyncMock) -> None:
-    mock_docs = []
-    for i in range(3):
-        mock_doc = AsyncMock()
-        mock_doc.id = f"grant-{i}"
-        mock_docs.append(mock_doc)
-
-    class MockAsyncIterator:
-        def __init__(self, docs: list[AsyncMock]) -> None:
-            self.docs = docs
-            self.index = 0
-
-        def __aiter__(self) -> "MockAsyncIterator":
-            return self
-
-        async def __anext__(self) -> AsyncMock:
-            if self.index >= len(self.docs):
-                raise StopAsyncIteration
-            doc = self.docs[self.index]
-            self.index += 1
-            return doc
+    mock_docs = [create_mock_firestore_doc(f"grant-{i}") for i in range(3)]
 
     mock_query = MagicMock()
     mock_query.stream = MagicMock(return_value=MockAsyncIterator(mock_docs))

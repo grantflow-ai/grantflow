@@ -86,6 +86,34 @@ services:
       timeout: 5s
       retries: 10
 
+  firebase-emulator:
+    profiles:
+      - all
+      - services
+      - scraper
+    image: node:22-alpine
+    restart: always
+    ports:
+      - "8080:8080"  
+      - "4000:4000"  
+    environment:
+      GCLOUD_PROJECT: demo-project
+      FIRESTORE_EMULATOR_HOST: 0.0.0.0:8080
+    volumes:
+      - ./firebase.json:/app/firebase.json:ro
+    working_dir: /app
+    command: >
+      sh -c "
+      apk add --no-cache openjdk21-jre &&
+      npm install -g firebase-tools &&
+      firebase emulators:start --project demo-project
+      "
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   backend:
     profiles:
       - all
@@ -236,9 +264,11 @@ services:
     build:
       dockerfile: ./services/scraper/Dockerfile
     environment:
-      GOOGLE_CLOUD_PROJECT: grantflow
+      GOOGLE_CLOUD_PROJECT: demo-project
+      GCLOUD_PROJECT: demo-project
       GOOGLE_CLOUD_REGION: us-central1
       STORAGE_EMULATOR_HOST: http://gcs-emulator:4443
+      FIRESTORE_EMULATOR_HOST: firebase-emulator:8080
       SCRAPER_GCS_BUCKET_NAME: grantflow-scraper
       DEBUG: "True"
     env_file:
@@ -250,7 +280,10 @@ services:
       - ./packages:/app/packages:cached
     command: "uvicorn services.scraper.src.main:app --host 0.0.0.0 --log-level info --reload"
     depends_on:
-      - gcs-emulator
+      gcs-emulator:
+        condition: service_started
+      firebase-emulator:
+        condition: service_healthy
 
   pgadmin:
     profiles:
