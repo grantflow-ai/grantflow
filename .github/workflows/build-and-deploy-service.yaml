@@ -1,24 +1,22 @@
-name: "Build: CRDT Server"
+name: "Build & Deploy Service"
 
 on:
-  push:
-    branches:
-      - main
-      - development
-    paths:
-      - ".github/workflows/build-service-crdt-server.yaml"
-      - ".github/actions/**"
-      - "crdt/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-  release:
-    types: [published]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service:
+        description: "Service name to build and deploy"
+        required: true
+        type: string
+      timeout:
+        description: "Timeout in minutes for the workflow"
+        required: false
+        type: number
+        default: 30
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: ${{ inputs.timeout }}
     permissions:
       contents: read
       id-token: write
@@ -36,7 +34,7 @@ jobs:
           else
               echo "image_tag=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
-
+          
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
               echo "project_id=grantflow" >> $GITHUB_OUTPUT
               echo "environment=production" >> $GITHUB_OUTPUT
@@ -45,10 +43,10 @@ jobs:
               echo "environment=staging" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build service
+      - name: Build and push service
         uses: ./.github/actions/build-service
         with:
-          service: crdt
+          service: ${{ inputs.service }}
           image_tag: ${{ steps.config.outputs.image_tag }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER || 'projects/362880548799/locations/global/workloadIdentityPools/github/providers/github-actions-pool' }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
@@ -56,7 +54,7 @@ jobs:
       - name: Deploy to Cloud Run
         uses: ./.github/actions/deploy-cloud-run
         with:
-          service: crdt
+          service: ${{ inputs.service }}
           image_tag: ${{ steps.config.outputs.image_tag }}
           environment: ${{ steps.config.outputs.environment }}
           project_id: ${{ steps.config.outputs.project_id }}
