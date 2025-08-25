@@ -89,32 +89,27 @@ async def get_application_data(application_id: str) -> ApplicationDataResponse:
     if not db_connection_string:
         raise ValueError("DATABASE_CONNECTION_STRING not configured")
 
-    engine = create_async_engine(db_connection_string)
+    engine = create_async_engine(db_connection_string, pool_pre_ping=True, pool_size=5, max_overflow=10)
     async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore[call-overload]
 
     async with async_session_maker() as session:
-        app_result = await session.execute(
-            select(GrantApplication, Project)
+        result = await session.execute(
+            select(GrantApplication, Project, Organization, OrganizationUser)
             .join(Project, GrantApplication.project_id == Project.id)
+            .join(Organization, Project.organization_id == Organization.id)
+            .outerjoin(
+                OrganizationUser,
+                (OrganizationUser.organization_id == Organization.id) & (OrganizationUser.role == "OWNER"),
+            )
             .where(GrantApplication.id == application_id)
-        )
-        app_row = app_result.first()
-
-        if not app_row:
-            raise ValueError(f"Application {application_id} not found")
-
-        application, project = app_row
-
-        org_result = await session.execute(
-            select(OrganizationUser)
-            .where(OrganizationUser.organization_id == project.organization_id)
-            .where(OrganizationUser.role == "OWNER")
             .limit(1)
         )
-        org_user = org_result.scalar_one_or_none()
+        row = result.first()
 
-        org_result = await session.execute(select(Organization).where(Organization.id == project.organization_id))
-        organization = org_result.scalar_one()
+        if not row:
+            raise ValueError(f"Application {application_id} not found")
+
+        application, project, organization, org_user = row
 
         return ApplicationDataResponse(
             application=ApplicationData(
@@ -177,34 +172,35 @@ def markdown_to_docx(markdown_text: str) -> bytes:
     return buffer.read()
 
 
+resend_api_key = os.environ.get("RESEND_API_KEY")
+if not resend_api_key:
+    raise ValueError("RESEND_API_KEY not configured at module load")
+
+http_client = httpx.AsyncClient(timeout=30.0)
+
+
 async def send_resend_email(
     to_email: str, subject: str, html: str, attachments: list[ResendAttachment]
 ) -> dict[str, Any]:
-    resend_api_key = os.environ.get("RESEND_API_KEY")
-    if not resend_api_key:
-        raise ValueError("RESEND_API_KEY not configured")
+    response = await http_client.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {resend_api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "from": "GrantFlow <notifications@grantflow.ai>",
+            "to": [to_email],
+            "subject": subject,
+            "html": html,
+            "attachments": attachments,
+        },
+    )
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {resend_api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": "GrantFlow <notifications@grantflow.ai>",
-                "to": [to_email],
-                "subject": subject,
-                "html": html,
-                "attachments": attachments,
-            },
-            timeout=30.0,
-        )
+    if response.status_code != 200:
+        raise Exception(f"Resend API error: {response.status_code} - {response.text}")
 
-        if response.status_code != 200:
-            raise Exception(f"Resend API error: {response.status_code} - {response.text}")
-
-        return response.json()  # type: ignore[no-any-return]
+    return response.json()  # type: ignore[no-any-return]
 
 
 async def send_subscription_verification_email(notification_data: SubscriptionVerificationData) -> EmailResponse:

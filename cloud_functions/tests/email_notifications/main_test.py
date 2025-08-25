@@ -1,7 +1,13 @@
 import base64
 import json
+import os
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
+
+# Set environment variables before importing the module
+os.environ.setdefault("RESEND_API_KEY", "test-resend-api-key")
+os.environ.setdefault("DATABASE_CONNECTION_STRING", "postgresql+asyncpg://test:test@localhost:5432/test")
+os.environ.setdefault("SITE_URL", "https://test.grantflow.ai")
 
 import pytest
 from cloudevents.http import CloudEvent
@@ -83,9 +89,6 @@ async def test_get_application_data_success(
         mock_project.name = "Test Project"
         mock_project.organization_id = "org-123"
 
-        mock_app_result = Mock()
-        mock_app_result.first.return_value = (mock_application, mock_project)
-
         mock_org_user = Mock()
         mock_org_user.firebase_uid = "user-123"
         mock_org_user_result = Mock()
@@ -98,7 +101,10 @@ async def test_get_application_data_success(
         mock_org_result = Mock()
         mock_org_result.scalar_one.return_value = mock_organization
 
-        mock_session.execute.side_effect = [mock_app_result, mock_org_user_result, mock_org_result]
+        mock_app_result = Mock()
+        mock_app_result.first.return_value = (mock_application, mock_project, mock_organization, mock_org_user)
+
+        mock_session.execute.return_value = mock_app_result
 
         result = await get_application_data("123e4567-e89b-12d3-a456-426614174000")
 
@@ -157,17 +163,12 @@ Another paragraph with **bold** text.
 
 
 async def test_send_resend_email_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("RESEND_API_KEY", "test-api-key")
-
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"id": "email-123", "status": "sent"}
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_response
-
+    mock_post = AsyncMock(return_value=mock_response)
+    with patch("cloud_functions.src.email_notifications.main.http_client.post", mock_post):
         result = await send_resend_email(
             to_email="test@example.com",
             subject="Test Email",
@@ -178,34 +179,31 @@ async def test_send_resend_email_success(monkeypatch: pytest.MonkeyPatch) -> Non
         assert result["id"] == "email-123"
         assert result["status"] == "sent"
 
-        mock_context.post.assert_called_once()
-        call_args = mock_context.post.call_args
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
 
         assert call_args[0][0] == "https://api.resend.com/emails"
-        assert call_args[1]["headers"]["Authorization"] == "Bearer test-api-key"
+        assert call_args[1]["headers"]["Authorization"] == "Bearer test-resend-api-key"
         assert call_args[1]["json"]["to"] == ["test@example.com"]
         assert call_args[1]["json"]["subject"] == "Test Email"
 
 
 async def test_send_resend_email_api_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("RESEND_API_KEY", "test-api-key")
-
     mock_response = Mock()
     mock_response.status_code = 400
     mock_response.text = "Invalid API key"
 
-    with patch("httpx.AsyncClient") as mock_client:
-        mock_context = AsyncMock()
-        mock_client.return_value.__aenter__.return_value = mock_context
-        mock_context.post.return_value = mock_response
-
-        with pytest.raises(Exception, match="Resend API error: 400"):
-            await send_resend_email(
-                to_email="test@example.com",
-                subject="Test Email",
-                html="<p>Test content</p>",
-                attachments=[],
-            )
+    mock_post = AsyncMock(return_value=mock_response)
+    with (
+        patch("cloud_functions.src.email_notifications.main.http_client.post", mock_post),
+        pytest.raises(Exception, match="Resend API error: 400"),
+    ):
+        await send_resend_email(
+            to_email="test@example.com",
+            subject="Test Email",
+            html="<p>Test content</p>",
+            attachments=[],
+        )
 
 
 async def test_send_application_email_success(
@@ -213,8 +211,6 @@ async def test_send_application_email_success(
     mock_application_data: dict[str, Any],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("SITE_URL", "https://test.grantflow.ai")
-
     with (
         patch("cloud_functions.src.email_notifications.main.get_application_data") as mock_get_data,
         patch("cloud_functions.src.email_notifications.main.send_resend_email") as mock_send_email,

@@ -182,6 +182,7 @@ async def process_subscriptions_batch(
     session_maker: async_sessionmaker[AsyncSession],
 ) -> int:
     notifications_sent = 0
+    subscription_updates: list[UUID] = []
 
     for subscription in subscriptions:
         if not subscription.get("verified", False):
@@ -219,13 +220,7 @@ async def process_subscriptions_batch(
             try:
                 future.result(timeout=30)
                 notifications_sent += 1
-
-                async with session_maker() as session, session.begin():
-                    await session.execute(
-                        update(GrantMatchingSubscription)
-                        .where(GrantMatchingSubscription.id == UUID(subscription["id"]))
-                        .values(last_notification_sent=datetime.now(UTC))
-                    )
+                subscription_updates.append(UUID(subscription["id"]))
 
                 logger.info(
                     "Sent grant alert notification",
@@ -239,6 +234,15 @@ async def process_subscriptions_batch(
                     email=subscription["email"],
                     error=str(e),
                 )
+
+    if subscription_updates:
+        async with session_maker() as session, session.begin():
+            await session.execute(
+                update(GrantMatchingSubscription)
+                .where(GrantMatchingSubscription.id.in_(subscription_updates))
+                .values(last_notification_sent=datetime.now(UTC))
+            )
+            logger.info("Batch updated subscription timestamps", count=len(subscription_updates))
 
     return notifications_sent
 

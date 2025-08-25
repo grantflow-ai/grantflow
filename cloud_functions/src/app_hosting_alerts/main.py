@@ -11,13 +11,15 @@ from cloudevents.http import CloudEvent
 
 logger = __import__("logging").getLogger(__name__)
 
+webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+environment = os.environ.get("ENVIRONMENT", "unknown")
+project_id = os.environ.get("PROJECT_ID", "unknown")
+discord_role_alerts = os.environ.get("DISCORD_ROLE_ALERTS")
+http_client = httpx.AsyncClient(timeout=30.0)
+
 
 def get_mention_for_alert(alert_policy: str, priority: str) -> str:
-    if priority != "HIGH":
-        return ""
-
-    discord_role_alerts = os.environ.get("DISCORD_ROLE_ALERTS")
-    if not discord_role_alerts:
+    if priority != "HIGH" or not discord_role_alerts:
         return ""
 
     critical_keywords = [
@@ -140,10 +142,6 @@ def _build_embed_fields(
 
 
 async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
-    environment = os.environ.get("ENVIRONMENT", "unknown")
-    project_id = os.environ.get("PROJECT_ID", "unknown")
-
     if not webhook_url:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
@@ -179,8 +177,7 @@ async def app_hosting_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any
 
         payload = {"content": content, "embeds": [embed]}
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(webhook_url, json=payload, timeout=30.0)
+        response = await http_client.post(webhook_url, json=payload)
 
         if response.status_code == 204:
             return {"status": "success", "message": "Alert sent to Discord"}
@@ -220,8 +217,7 @@ async def send_test_alert(webhook_url: str, environment: str, project_id: str) -
     payload = {"content": "🚀 **Monitoring Test** - App Hosting alerts are now active!", "embeds": [embed]}
 
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(webhook_url, json=payload, timeout=30.0)
+        response = await http_client.post(webhook_url, json=payload)
         return bool(response.status_code == 204)
     except httpx.RequestError:
         return False
