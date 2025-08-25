@@ -10,7 +10,7 @@ vi.mock("./application-structure-left-pane", () => ({
 }));
 
 vi.mock("./drag-drop-section-manager", () => ({
-	DragDropSectionManager: () => <div data-testid="drag-drop-section-manager">Section Manager</div>,
+	DragDropSectionManager: () => <div data-testid="application-structure-sections">Section Manager</div>,
 }));
 
 vi.mock("next/image", () => ({
