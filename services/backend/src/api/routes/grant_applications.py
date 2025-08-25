@@ -802,19 +802,24 @@ async def handle_duplicate_application(
                     new_app_id=str(new_app.id),
                 )
 
-            rag_sources = await session.execute(
-                select(GrantApplicationSource).where(
+            rag_sources_result = await session.execute(
+                select(GrantApplicationSource.rag_source_id).where(
                     GrantApplicationSource.grant_application_id == application_id,
                     GrantApplicationSource.deleted_at.is_(None),
                 )
             )
-            for rag_source in rag_sources.scalars():
+            rag_source_ids = list(rag_sources_result.scalars())
+
+            if rag_source_ids:
                 await session.execute(
                     insert(GrantApplicationSource).values(
-                        {
-                            "grant_application_id": new_app.id,
-                            "rag_source_id": rag_source.rag_source_id,
-                        }
+                        [
+                            {
+                                "grant_application_id": new_app.id,
+                                "rag_source_id": source_id,
+                            }
+                            for source_id in rag_source_ids
+                        ]
                     )
                 )
 

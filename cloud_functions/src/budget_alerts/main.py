@@ -10,11 +10,12 @@ from cloudevents.http import CloudEvent
 
 logger = __import__("logging").getLogger(__name__)
 
+webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+environment = os.environ.get("ENVIRONMENT", "unknown")
+http_client = httpx.AsyncClient(timeout=30.0)
+
 
 async def budget_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
-    environment = os.environ.get("ENVIRONMENT", "unknown")
-
     if not webhook_url:
         return {"status": "error", "message": "Discord webhook URL not configured"}
 
@@ -75,15 +76,13 @@ async def budget_alert_to_discord(cloud_event: CloudEvent) -> dict[str, Any]:
                 }
             )
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                webhook_url,
-                json={
-                    "content": f"@here Budget threshold exceeded for {environment}!" if percentage >= 90 else None,
-                    "embeds": [embed],
-                },
-                timeout=30.0,
-            )
+        response = await http_client.post(
+            webhook_url,
+            json={
+                "content": f"@here Budget threshold exceeded for {environment}!" if percentage >= 90 else None,
+                "embeds": [embed],
+            },
+        )
 
         if response.status_code == 204:
             return {"status": "success", "message": "Alert sent to Discord"}

@@ -14,6 +14,9 @@ def cloud_functions_env() -> None:
     os.environ.setdefault("PROJECT_ID", "grantflow-test")
     os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "grantflow-test")
     os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test")
+    os.environ.setdefault("RESEND_API_KEY", "test-resend-api-key")
+    os.environ.setdefault("DATABASE_CONNECTION_STRING", "postgresql+asyncpg://test:test@localhost:5432/test")
+    os.environ.setdefault("SITE_URL", "https://test.grantflow.ai")
 
 
 @pytest.fixture
