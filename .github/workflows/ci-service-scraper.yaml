@@ -30,4 +30,3 @@ jobs:
               uses: ./.github/actions/run-python-tests
               with:
                   target: scraper
-                  chromium: true

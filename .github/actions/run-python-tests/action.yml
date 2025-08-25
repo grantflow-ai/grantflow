@@ -29,7 +29,7 @@ runs:
           shell: bash
           run: |
               # Only set up PostgreSQL for services that need database access
-              if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "indexer" || "${{ inputs.target }}" == "crawler" || "${{ inputs.target }}" == "rag" || "${{ inputs.target }}" == "db" ]]; then
+              if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "indexer" || "${{ inputs.target }}" == "crawler" || "${{ inputs.target }}" == "rag" || "${{ inputs.target }}" == "scraper" || "${{ inputs.target }}" == "db" ]]; then
                   # Install PostgreSQL 17 and pgvector
                   sudo apt-get update
                   sudo apt-get install -y wget ca-certificates
