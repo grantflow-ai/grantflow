@@ -46,11 +46,24 @@ vi.mock("./section-drop-indicator", () => ({
 	)),
 }));
 
+vi.mock("@radix-ui/react-tooltip", () => ({
+	__esModule: true,
+	Content: vi.fn(({ children }) => <div>{children}</div>),
+	Portal: vi.fn(({ children }) => <div>{children}</div>),
+	Provider: vi.fn(({ children }) => <div>{children}</div>),
+	Root: vi.fn(({ children }) => <div>{children}</div>),
+	Trigger: vi.fn(({ asChild, children }) => (asChild ? children : <div>{children}</div>)),
+}));
+
 vi.mock("@/components/ui/tooltip", () => ({
-	Tooltip: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipContent: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipProvider: vi.fn(({ children }) => <div>{children}</div>),
 	TooltipTrigger: vi.fn(({ children }) => <div>{children}</div>),
+}));
+
+vi.mock("next/image", () => ({
+	__esModule: true,
+	default: vi.fn(({ alt, height, src, width }) => <img alt={alt} height={height} src={src} width={width} />),
 }));
 
 describe("SortableSection", () => {
@@ -60,6 +73,7 @@ describe("SortableSection", () => {
 	const mockOnDelete = vi.fn();
 	const mockOnToggleExpand = vi.fn();
 	const mockOnAddSubsection = vi.fn();
+	const mockOnSectionInteraction = vi.fn();
 	const mockIsDetailedSection = vi.fn();
 	const mockToUpdateGrantSection = vi.fn();
 
@@ -241,6 +255,78 @@ describe("SortableSection", () => {
 			title: "Updated Title",
 		});
 		expect(mockOnToggleExpand).toHaveBeenCalled();
+	});
+
+	describe("newly created sections", () => {
+		it("renders with gray outline when isNewlyCreated is true", () => {
+			const section = GrantSectionFactory.build({ title: "New Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={true}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			expect(container).toHaveClass("outline-muted");
+			expect(container).not.toHaveClass("outline-primary");
+		});
+
+		it("renders with primary outline when isNewlyCreated is false", () => {
+			const section = GrantSectionFactory.build({ title: "Existing Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={false}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			expect(container).toHaveClass("outline-primary");
+			expect(container).not.toHaveClass("outline-muted");
+		});
+
+		it("calls onSectionInteraction on mouse enter when newly created", async () => {
+			const section = GrantSectionFactory.build({ title: "New Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={true}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			await user.hover(container);
+
+			expect(mockOnSectionInteraction).toHaveBeenCalled();
+		});
+
+		it("does not call onSectionInteraction on mouse enter when not newly created", async () => {
+			const section = GrantSectionFactory.build({ title: "Existing Section" });
+
+			render(
+				<SortableSection
+					{...defaultProps}
+					isNewlyCreated={false}
+					onSectionInteraction={mockOnSectionInteraction}
+					section={section}
+				/>,
+			);
+
+			const container = screen.getByTestId("section-container");
+			await user.hover(container);
+
+			expect(mockOnSectionInteraction).not.toHaveBeenCalled();
+		});
 	});
 
 	it("calls onToggleExpand when cancel is clicked", async () => {

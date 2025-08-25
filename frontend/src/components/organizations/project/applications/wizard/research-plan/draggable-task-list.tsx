@@ -1,7 +1,9 @@
 "use client";
 
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Plus } from "lucide-react";
 import { IconButton } from "@/components/app/buttons/icon-button";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type DragDropItem, useDragAndDrop } from "@/hooks/use-drag-and-drop";
 import { useWizardStore } from "@/stores/wizard-store";
 import { DraggableTaskItem } from "./draggable-task-item";
@@ -71,15 +73,24 @@ export function DraggableTaskList({
 					Tasks
 				</div>
 				{isEditing && (
-					<IconButton
-						data-testid="add-task-button"
-						onClick={onTaskAdd}
-						size="sm"
-						type="button"
-						variant="solid"
-					>
-						<Plus className="w-4 h-4" />
-					</IconButton>
+					<TooltipProvider delayDuration={300}>
+						<TooltipPrimitive.Root>
+							<TooltipTrigger asChild>
+								<IconButton
+									data-testid="add-task-button"
+									onClick={onTaskAdd}
+									size="sm"
+									type="button"
+									variant="solid"
+								>
+									<Plus className="w-4 h-4" />
+								</IconButton>
+							</TooltipTrigger>
+							<TooltipContent side="top">
+								<p>Add Task</p>
+							</TooltipContent>
+						</TooltipPrimitive.Root>
+					</TooltipProvider>
 				)}
 			</div>
 			<DragDropWrapper items={dragDropItems}>
