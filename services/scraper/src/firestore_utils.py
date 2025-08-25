@@ -59,7 +59,9 @@ async def save_grant_document(grant_info: GrantInfo) -> str:
         }
 
         if grant_id:
-            doc_ref = collection.document(grant_id)
+            # Add .html suffix for metadata documents
+            doc_id = f"{grant_id}.html"
+            doc_ref = collection.document(doc_id)
             await doc_ref.set(doc_data, merge=True)
         else:
             doc_ref = await collection.add(doc_data)
@@ -103,7 +105,9 @@ async def save_grant_page_content(grant_id: str, content: str) -> None:
 
     description = " ".join(description_lines)[:500] if description_lines else ""
 
-    doc_ref = collection.document(grant_id)
+    # Add .html suffix for metadata documents to match API expectations
+    doc_id = f"{grant_id}.html"
+    doc_ref = collection.document(doc_id)
     await doc_ref.set(
         {
             "page_content": content,
@@ -162,7 +166,8 @@ async def batch_save_grants(grants: list[GrantInfo]) -> int:
                 "scraped_at": datetime.now(UTC).isoformat(),
             }
 
-            doc_ref = collection.document(grant_id) if grant_id else collection.document()
+            # Add .html suffix for metadata documents
+            doc_ref = collection.document(f"{grant_id}.html") if grant_id else collection.document()
 
             batch.set(doc_ref, doc_data, merge=True)
             saved_count += 1
