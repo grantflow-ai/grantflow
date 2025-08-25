@@ -211,6 +211,12 @@ variable "rag_service_account_email" {
   default     = ""
 }
 
+variable "debug" {
+  description = "Enable debug logging (set to '1' to enable)"
+  type        = string
+  default     = ""
+}
+
 
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -266,6 +272,10 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "grantflow-staging-uploads"
       }
 
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -418,6 +428,10 @@ resource "google_cloud_run_v2_service" "crawler" {
         value = "grantflow-staging-uploads"
       }
 
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -525,6 +539,10 @@ resource "google_cloud_run_v2_service" "indexer" {
         value = "grantflow-staging-uploads"
       }
 
+      env {
+        name  = "DEBUG"
+        value = var.debug
+      }
 
       env {
         name  = "INSTANCE_CONNECTION_NAME"
@@ -811,6 +829,11 @@ resource "google_cloud_run_v2_service" "scraper" {
       env {
         name  = "DISCORD_WEBHOOK_URL"
         value = var.discord_webhook_url
+      }
+
+      env {
+        name  = "DEBUG"
+        value = var.debug
       }
 
       env {

@@ -111,6 +111,7 @@ module "cloud_run" {
   enable_http2          = false
   request_timeout       = 300
   concurrency_limit     = 80
+  debug                 = "1"  # Enable debug logging for staging
 
 }
 
@@ -173,7 +174,7 @@ module "email_notifications" {
 }
 
 module "firestore" {
-  source      = "../../modules/firestore"
+  source      = "./terraform/modules/firestore"
   project_id  = var.project_id
   region      = var.region
   environment = var.environment
