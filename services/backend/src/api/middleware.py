@@ -51,6 +51,8 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
     def _is_public_path(self, path: str) -> bool:
         if any(path == f"/{public_path}" for public_path in PUBLIC_PATHS) or path.startswith("/schema"):
             return True
+        if path.startswith("/grants"):
+            return True
         return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
 
     def _is_dev_bypass(self, path: str) -> bool:
