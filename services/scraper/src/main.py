@@ -38,11 +38,12 @@ async def run_scraper(from_date: date = DEFAULT_FROM_DATE, to_date: date = TODAY
         to_date=to_date.isoformat(),
     )
 
-    search_results = await download_search_data(from_date=from_date, to_date=to_date)
-    logger.info("Downloaded search results", count=len(search_results))
-
+    # Get existing grant identifiers BEFORE downloading search data
     existing_grant_identifiers = await get_existing_grant_identifiers()
     logger.info("Found existing grant identifiers", count=len(existing_grant_identifiers))
+
+    search_results = await download_search_data(from_date=from_date, to_date=to_date)
+    logger.info("Downloaded search results", count=len(search_results))
 
     new_files_downloaded = await download_grant_pages(
         search_results=search_results, existing_file_identifiers=existing_grant_identifiers
