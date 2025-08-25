@@ -360,6 +360,12 @@ resource "google_cloud_run_v2_service" "backend" {
   ingress = "INGRESS_TRAFFIC_ALL"
 }
 
+resource "google_cloud_run_v2_service_iam_member" "backend_public" {
+  location = var.region
+  name     = google_cloud_run_v2_service.backend.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
 
 resource "google_cloud_run_v2_service" "crawler" {
   name                = "crawler"
@@ -940,6 +946,13 @@ resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker_scraper" {
   name     = google_cloud_run_v2_service.scraper.name
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.scheduler_invoker.email}"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "scraper_public" {
+  location = var.region
+  name     = google_cloud_run_v2_service.scraper.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
 
 data "google_project" "project" {}
