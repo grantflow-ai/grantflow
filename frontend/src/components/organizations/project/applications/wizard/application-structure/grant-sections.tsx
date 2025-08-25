@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
@@ -11,7 +12,7 @@ import InputField from "@/components/app/fields/input-field";
 import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
 import { SectionWithDropIndicators } from "./section-drop-indicator";
@@ -175,7 +176,7 @@ export function SortableSection({
 
 				{isExpanded && (
 					<div
-						className="overflow-hidden transition-all duration-200 ease-in-out opacity-100"
+						className="transition-all duration-200 ease-in-out opacity-100"
 						data-testid="edit-form-container"
 					>
 						<SectionEditForm
@@ -426,36 +427,39 @@ function SectionHeader({
 				</div>
 				<div className="flex items-center justify-end" data-interactive="true">
 					<TooltipProvider delayDuration={300}>
-						<Tooltip>
+						<TooltipPrimitive.Root>
 							<TooltipTrigger asChild>
-								<SectionIconButton
-									className="size-7 opacity-0 group-hover:opacity-100 transition-opacity"
-									data-testid="delete-section-button"
-									onClick={onDelete}
-								>
-									<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
-								</SectionIconButton>
+								<div className="opacity-0 group-hover:opacity-100 transition-opacity">
+									<SectionIconButton
+										className="size-7"
+										data-testid="delete-section-button"
+										onClick={onDelete}
+									>
+										<Image alt="Delete" height={24} src="/icons/delete.svg" width={24} />
+									</SectionIconButton>
+								</div>
 							</TooltipTrigger>
-							<TooltipContent sideOffset={5}>
+							<TooltipContent sideOffset={8}>
 								<p>{isSubsection ? "Delete Sub-section" : "Delete Section"}</p>
 							</TooltipContent>
-						</Tooltip>
+						</TooltipPrimitive.Root>
 
 						{!isSubsection && (
-							<Tooltip>
+							<TooltipPrimitive.Root>
 								<TooltipTrigger asChild>
-									<SectionIconButton
-										className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-										data-testid="add-subsection-button"
-										onClick={() => onAddSubsection?.(section.id)}
-									>
-										<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
-									</SectionIconButton>
+									<div className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+										<SectionIconButton
+											data-testid="add-subsection-button"
+											onClick={() => onAddSubsection?.(section.id)}
+										>
+											<Image alt="Add" height={20} src="/icons/plus.svg" width={20} />
+										</SectionIconButton>
+									</div>
 								</TooltipTrigger>
-								<TooltipContent sideOffset={5}>
+								<TooltipContent sideOffset={8}>
 									<p>Add Sub-section</p>
 								</TooltipContent>
-							</Tooltip>
+							</TooltipPrimitive.Root>
 						)}
 					</TooltipProvider>
 
