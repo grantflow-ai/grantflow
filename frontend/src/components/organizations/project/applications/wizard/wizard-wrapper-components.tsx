@@ -51,25 +51,64 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
+	const router = useRouter();
 	const currentStep = useWizardStore((state) => state.currentStep);
 	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
-	const toNextStep = useWizardStore((state) => state.toNextStep);
+	const isGeneratingApplication = useWizardStore((state) => state.isGeneratingApplication);
 	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
 	const validateStepNext = useWizardStore((state) => state.validateStepNext);
+
 	const title = useApplicationStore((state) => state.application?.title);
+	const applicationText = useApplicationStore((state) => state.application?.text);
 	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
 
 	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
-
 	const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
+	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
+
 	const localValidation = isApplicationDetailsStep
 		? !!(title && title.trim().length >= MIN_TITLE_LENGTH && ragSources && ragSources.length > 0)
 		: true;
+	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
 
-	const disabled = !(validateStepNext() && localValidation);
-	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
+	const getButtonDisabledState = () => {
+		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
+			return isGeneratingApplication || !(validateStepNext() && localValidation);
+		}
 
-	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(currentStep, disabled);
+		return !(validateStepNext() && localValidation);
+	};
+
+	const disabled = getButtonDisabledState();
+
+	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(
+		currentStep,
+		disabled,
+		hasApplicationText,
+	);
+
+	const handleRightButtonClick = async () => {
+		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
+			if (hasApplicationText) {
+				useWizardStore.getState().toNextStep();
+				return;
+			}
+
+			const success = await useWizardStore.getState().generateApplication();
+			if (success) {
+				useWizardStore.getState().toNextStep();
+			}
+			return;
+		}
+
+		if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
+			router.push(routes.organization.root());
+			useWizardStore.getState().reset();
+			return;
+		}
+
+		useWizardStore.getState().toNextStep();
+	};
 
 	return (
 		<footer
@@ -98,7 +137,7 @@ export function WizardFooter() {
 				data-testid="continue-button"
 				disabled={disabled}
 				leftIcon={leftIcon}
-				onClick={toNextStep}
+				onClick={handleRightButtonClick}
 				rightIcon={rightIcon}
 				size="lg"
 				variant="primary"
@@ -208,16 +247,19 @@ function ApplicationProgressBar({ currentStep, stepTitles }: { currentStep: Wiza
 	);
 }
 
-function generateFooterRightButtonProps(currentStep: WizardStep, disabled?: boolean) {
+function generateFooterRightButtonProps(currentStep: WizardStep, disabled?: boolean, hasApplicationText?: boolean) {
 	const isApproveStep = currentStep === WizardStep.APPLICATION_STRUCTURE;
+	const isResearchDeepDiveStep = currentStep === WizardStep.RESEARCH_DEEP_DIVE;
 	const isGenerateStep = currentStep === WizardStep.GENERATE_AND_COMPLETE;
+
+	const shouldShowGenerate = isResearchDeepDiveStep && !hasApplicationText;
 
 	return {
 		leftIcon: (() => {
 			if (isApproveStep) {
 				return styledIcon(<Image alt="Approve" height={16} src="/icons/approve.svg" width={16} />, disabled);
 			}
-			if (isGenerateStep) {
+			if (shouldShowGenerate) {
 				return styledIcon(
 					<Image alt="Generate" height={16} src="/icons/button-logo-white.svg" width={16} />,
 					disabled,
@@ -229,12 +271,15 @@ function generateFooterRightButtonProps(currentStep: WizardStep, disabled?: bool
 			if (isApproveStep) {
 				return "Approve and Continue";
 			}
-			if (isGenerateStep) {
+			if (shouldShowGenerate) {
 				return "Generate";
+			}
+			if (isGenerateStep) {
+				return "Go To Dashboard";
 			}
 			return "Next";
 		})(),
-		rightIcon: isGenerateStep
+		rightIcon: shouldShowGenerate
 			? undefined
 			: styledIcon(<Image alt="Go ahead" height={15} src="/icons/go-ahead-white.svg" width={15} />, disabled),
 	};

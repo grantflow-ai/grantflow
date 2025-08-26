@@ -230,13 +230,14 @@ export const ResearchPlanAutofilling: Story = {
 	name: "Step 4: Research Plan - Autofilling (Button Disabled)",
 };
 
-export const ResearchDeepDiveStep: Story = {
+export const ResearchDeepDiveStepGenerate: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
+					text: undefined,
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -249,12 +250,71 @@ export const ResearchDeepDiveStep: Story = {
 						research_deep_dive: false,
 						research_plan: false,
 					},
+					isGeneratingApplication: false,
 				});
 			}, []);
 			return <Story />;
 		},
 	],
-	name: "Step 5: Research Deep Dive - Standard",
+	name: "Step 5: Research Deep Dive - Generate Button (No Final App Text Generated)",
+};
+
+export const ResearchDeepDiveStepNext: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const grantTemplate = GrantTemplateFactory.build();
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					text: "This is the generated application text.",
+					title: "Climate Change Research Grant Application",
+				});
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+				useWizardStore.setState({
+					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+					isAutofillLoading: {
+						research_deep_dive: false,
+						research_plan: false,
+					},
+					isGeneratingApplication: false,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Step 5: Research Deep Dive - Next Button (Has App Text)",
+};
+
+export const ResearchDeepDiveStepGenerating: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const grantTemplate = GrantTemplateFactory.build();
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					text: undefined,
+					title: "Climate Change Research Grant Application",
+				});
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+				useWizardStore.setState({
+					currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+					isAutofillLoading: {
+						research_deep_dive: false,
+						research_plan: false,
+					},
+					isGeneratingApplication: true, // Generate button disabled
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Step 5: Research Deep Dive - Generating (Button Disabled)",
 };
 
 export const ResearchDeepDiveAutofilling: Story = {
@@ -264,6 +324,7 @@ export const ResearchDeepDiveAutofilling: Story = {
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
+					text: undefined,
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -276,6 +337,7 @@ export const ResearchDeepDiveAutofilling: Story = {
 						research_deep_dive: true,
 						research_plan: false,
 					},
+					isGeneratingApplication: false,
 				});
 			}, []);
 			return <Story />;
@@ -284,13 +346,14 @@ export const ResearchDeepDiveAutofilling: Story = {
 	name: "Step 5: Research Deep Dive - Autofilling (Button Disabled)",
 };
 
-export const FinalStep: Story = {
+export const FinalStepWithApplicationText: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
+					text: "This is the complete generated application text ready for dashboard.", // Has application text - enables dashboard button
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -305,16 +368,17 @@ export const FinalStep: Story = {
 			return <Story />;
 		},
 	],
-	name: "Step 6: Generate and Complete - Generate Button",
+	name: "Step 6: Go To Dashboard - Button Enabled (Has App Text)",
 };
 
-export const FinalStepGenerating: Story = {
+export const FinalStepNoApplicationText: Story = {
 	decorators: [
 		(Story) => {
 			useEffect(() => {
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
+					text: undefined, // No application text - disables dashboard button
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -323,13 +387,13 @@ export const FinalStepGenerating: Story = {
 				});
 				useWizardStore.setState({
 					currentStep: WizardStep.GENERATE_AND_COMPLETE,
-					isGeneratingApplication: true,
+					isGeneratingApplication: false,
 				});
 			}, []);
 			return <Story />;
 		},
 	],
-	name: "Step 6: Generating Application - Button Disabled",
+	name: "Step 6: Go To Dashboard - Button Disabled (No App Text)",
 };
 
 export const OperationsInProgress: Story = {
