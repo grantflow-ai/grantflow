@@ -207,7 +207,7 @@ interface ApplicationActions {
 	checkAndRestoreJobState: () => Promise<void>;
 	clearRestoredJobState: () => void;
 	createApplication: (organizationId: string, projectId: string) => Promise<void>;
-	generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
+	generateApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<boolean>;
 	generateTemplate: (templateId: string) => Promise<void>;
 	getApplication: (organizationId: string, projectId: string, applicationId: string) => Promise<void>;
 	removeFile: (file: FileWithId, parentId: string) => Promise<void>;
@@ -590,11 +590,15 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 				application_id: applicationId,
 				project_id: projectId,
 			});
+
+			return true;
 		} catch (error: unknown) {
 			log.error("generateApplication", error);
 			toast.error("Failed to generate grant application", {
 				description: "An unexpected error occurred. Please try again.",
 			});
+
+			return false;
 		}
 	},
 
