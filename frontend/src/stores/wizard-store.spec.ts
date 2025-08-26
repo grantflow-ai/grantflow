@@ -479,7 +479,7 @@ describe.sequential("wizard store", () => {
 		});
 
 		it("should start generation and polling when no text exists", async () => {
-			const mockGenerateApplication = vi.fn();
+			const mockGenerateApplication = vi.fn().mockResolvedValue(true);
 			const mockStart = vi.fn();
 			const applicationWithoutText = ApplicationWithTemplateFactory.build({
 				text: undefined,
