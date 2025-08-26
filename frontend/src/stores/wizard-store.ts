@@ -62,7 +62,7 @@ interface WizardActions {
 	checkApplicationGeneration: () => Promise<void>;
 	checkTemplateGeneration: () => Promise<void>;
 	createObjective: (objective: Objective) => Promise<void>;
-	generateApplication: () => Promise<void>;
+	generateApplication: () => Promise<boolean>;
 	handleApplicationInit: (projectId: string, applicationId?: string) => Promise<void>;
 	handleTitleChange: (title: string) => void;
 	hasTemplateSourcesWithStatuses: (statuses: RagSourceStatus | RagSourceStatus[]) => boolean;
@@ -333,30 +333,46 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 			}, "Create research objective");
 		},
 
-		generateApplication: async () => {
+		generateApplication: async (): Promise<boolean> => {
 			const { application, generateApplication } = useApplicationStore.getState();
 			const { polling } = get();
 
 			if (!application) {
 				log.error("generateApplication: No application found");
-				return;
+				return false;
 			}
 
 			if (application.text && application.text.trim().length > 0) {
 				log.info("generateApplication: Application already has text, skipping generation");
-				return;
+				return true;
 			}
 
 			try {
 				const { selectedOrganizationId } = useOrganizationStore.getState();
-				if (!selectedOrganizationId) return;
-
-				await generateApplication(selectedOrganizationId, application.project_id, application.id);
+				if (!selectedOrganizationId) return false;
 
 				set((state) => ({
 					...state,
 					isGeneratingApplication: true,
 				}));
+
+				const genTriggered = await generateApplication(
+					selectedOrganizationId,
+					application.project_id,
+					application.id,
+				);
+
+				if (!genTriggered) {
+					log.error(
+						"generateApplication",
+						"Application generation not triggered due to an error during the API call",
+					);
+					set((state) => ({
+						...state,
+						isGeneratingApplication: false,
+					}));
+					return false;
+				}
 
 				polling.start(get().checkApplicationGeneration, POLLING_INTERVAL_DURATION, false);
 
@@ -364,12 +380,15 @@ export const useWizardStore = create<WizardActions & WizardState>()((set, get) =
 					application_id: application.id,
 					project_id: application.project_id,
 				});
+
+				return true;
 			} catch (error) {
 				log.error("generateApplication", error);
 				set((state) => ({
 					...state,
 					isGeneratingApplication: false,
 				}));
+				return false;
 			}
 		},
 

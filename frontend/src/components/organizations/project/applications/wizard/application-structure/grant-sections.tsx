@@ -242,7 +242,7 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 				</div>
 
 				<div className="flex gap-4 h-12">
-					<div className="flex-1">
+					<div className="w-64">
 						<InputField
 							label={`Max ${formData.useWords ? "words" : "characters"}`}
 							onChange={(e) => {
@@ -257,7 +257,7 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 							value={formData.max_words}
 						/>
 					</div>
-					<div className="flex-1 items-center w-full">
+					<div className="flex-1 items-center max-w-64">
 						<Label className="block text-start text-xs font-light text-input-label">Words/Characters</Label>
 						<Select
 							onValueChange={(value) => {
@@ -265,10 +265,13 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 							}}
 							value={formData.useWords ? "words" : "characters"}
 						>
-							<SelectTrigger className="w-full" data-testid="word-character-selector">
+							<SelectTrigger
+								className="w-full shadow-none rounded-sm"
+								data-testid="word-character-selector"
+							>
 								<SelectValue />
 							</SelectTrigger>
-							<SelectContent data-testid="word-character-dropdown">
+							<SelectContent className="shadown-none rounded-sm" data-testid="word-character-dropdown">
 								<SelectItem data-testid="words-option" value="words">
 									Words
 								</SelectItem>
@@ -334,8 +337,8 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 						type="button"
 					>
 						<span
-							className={`pointer-events-none inline-block size-2.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-								formData.isResearchPlan ? "translate-x-2.5" : "translate-x-0"
+							className={`pointer-events-none inline-block size-[12px] -translate-y-px transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+								formData.isResearchPlan ? "translate-x-[9px]" : "translate-x-0"
 							}`}
 						/>
 					</button>

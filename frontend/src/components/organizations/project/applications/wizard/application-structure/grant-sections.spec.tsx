@@ -63,7 +63,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 
 vi.mock("next/image", () => ({
 	__esModule: true,
-	default: vi.fn(({ alt, height, src, width }) => <img alt={alt} height={height} src={src} width={width} />),
+	default: ({ alt }: { alt: string }) => <div data-testid={`image-${alt}`} />,
 }));
 
 describe("SortableSection", () => {
@@ -426,7 +426,7 @@ describe("SortableSection", () => {
 		const badge = screen.getByTestId("research-plan-badge");
 		expect(badge).toBeInTheDocument();
 		expect(badge).toHaveTextContent("Research Plan");
-		expect(badge.querySelector('img[alt="Research Plan"]')).toBeInTheDocument();
+		expect(badge.querySelector('[data-testid="image-Research Plan"]')).toBeInTheDocument();
 	});
 
 	it("does not display research plan badge when is_detailed_research_plan is false", () => {
