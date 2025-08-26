@@ -158,9 +158,9 @@ test.describe("Application Wizard", () => {
 
 		await expect(page.locator('[data-testid="generate-complete-step"]')).toBeVisible();
 
-		const generateButton = page.locator('[data-testid="generate-application-button"]');
-		await expect(generateButton).toBeVisible();
-		await generateButton.click();
+		const dashboardButton = page.locator('[data-testid="go-to-dashboard-button"]');
+		await expect(dashboardButton).toBeVisible();
+		await dashboardButton.click();
 
 		await page.waitForTimeout(1000);
 

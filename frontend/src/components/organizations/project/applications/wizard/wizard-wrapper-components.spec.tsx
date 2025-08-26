@@ -93,14 +93,62 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			expect(continueButtons[0]).toHaveTextContent("Approve and Continue");
 		});
 
-		it("displays generation action on generate and complete step", () => {
+		it("displays generate action on research deep dive step when no application text exists", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+			});
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						created_at: new Date().toISOString(),
+						grant_application_id: "test-app-id",
+						grant_sections: [],
+						id: "test-template-id",
+						rag_sources: [],
+						updated_at: new Date().toISOString(),
+					},
+					text: undefined,
+				},
+			});
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).toHaveTextContent("Generate");
+		});
+
+		it("displays next action on research deep dive step when application text exists", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+			});
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						created_at: new Date().toISOString(),
+						grant_application_id: "test-app-id",
+						grant_sections: [],
+						id: "test-template-id",
+						rag_sources: [],
+						updated_at: new Date().toISOString(),
+					},
+					text: "Existing application text",
+				},
+			});
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).toHaveTextContent("Next");
+		});
+
+		it("displays go to dashboard action on generate and complete step", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.GENERATE_AND_COMPLETE,
 			});
 			render(<WizardFooter />);
 
 			const continueButtons = screen.getAllByTestId("continue-button");
-			expect(continueButtons[0]).toHaveTextContent("Generate");
+			expect(continueButtons[0]).toHaveTextContent("Go To Dashboard");
 		});
 
 		it("displays standard next action on other steps", () => {
