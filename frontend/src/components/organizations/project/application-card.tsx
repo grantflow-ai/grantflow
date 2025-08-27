@@ -1,4 +1,4 @@
-import { format, differenceInDays } from "date-fns";
+import { differenceInDays,format  } from "date-fns";
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -46,9 +46,21 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 	},
 };
 
-function getRemainingTime(deadline: string) {
+interface ApplicationCardProps {
+	application: API.ListApplications.Http200.ResponseBody["applications"][0];
+	onDelete: (id: string) => void;
+	onDuplicate: (id: string, currentTitle: string) => void;
+	onOpen: (applicationId: string, applicationTitle: string) => void;
+}
+
+
+
+
+
+export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
+	function getRemainingTime(deadline: string) {
 	const totalDays = differenceInDays(new Date(deadline), new Date());
-	if (totalDays < 0) return "Deadline passed";
+	if (totalDays < 0) return ( <span>Deadline passed</span>)
 	const weeks = Math.floor(totalDays / 7);
 	const days = totalDays % 7;
 	if (weeks > 0 && days > 0) {
@@ -63,15 +75,6 @@ function getRemainingTime(deadline: string) {
 	}
 	return <span className="font-semibold">{days} weeks</span>;
 }
-
-interface ApplicationCardProps {
-	application: API.ListApplications.Http200.ResponseBody["applications"][0];
-	onDelete: (id: string) => void;
-	onDuplicate: (id: string, currentTitle: string) => void;
-	onOpen: (applicationId: string, applicationTitle: string) => void;
-}
-
-export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
 	const statusStyles = statusStyleMap[application.status];
 	return (
 		<div
