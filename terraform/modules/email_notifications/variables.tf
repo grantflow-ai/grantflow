@@ -19,3 +19,8 @@ variable "rag_service_account_email" {
   description = "Email of the RAG service account that will publish to the topic"
   type        = string
 }
+
+variable "backend_service_account_email" {
+  description = "Email of the Backend service account that will publish to the topic"
+  type        = string
+}

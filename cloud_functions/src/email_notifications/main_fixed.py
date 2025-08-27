@@ -2,9 +2,11 @@ import asyncio
 import base64
 import json
 import os
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Any, NotRequired, TypedDict
+from uuid import UUID
 
 import functions_framework
 import httpx
@@ -12,12 +14,52 @@ from cloudevents.http import CloudEvent
 from docx import Document
 from jinja2 import Environment, FileSystemLoader
 from markdown import markdown
-from packages.db.src.tables import GrantApplication, Organization, OrganizationUser, Project
-from sqlalchemy import select
+from sqlalchemy import UUID as SA_UUID
+from sqlalchemy import DateTime, String, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 logger = __import__("logging").getLogger(__name__)
+
+
+class Base(DeclarativeBase):
+    __abstract__ = True
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
+
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    contact_email: Mapped[str | None] = mapped_column(String(255))
+    contact_person_name: Mapped[str | None] = mapped_column(String(255))
+
+
+class OrganizationUser(Base):
+    __tablename__ = "organization_users"
+
+    id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True))
+    firebase_uid: Mapped[str] = mapped_column(String(128))
+    role: Mapped[str] = mapped_column(String(50))
+
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    organization_id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True))
+
+
+class GrantApplication(Base):
+    __tablename__ = "grant_applications"
+
+    id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    title: Mapped[str] = mapped_column(String(500))
+    text: Mapped[str | None] = mapped_column()
+    project_id: Mapped[UUID] = mapped_column(SA_UUID(as_uuid=True))
 
 
 class EmailResponse(TypedDict):
@@ -175,6 +217,13 @@ def markdown_to_docx(markdown_text: str) -> bytes:
 resend_api_key = os.environ.get("RESEND_API_KEY")
 if not resend_api_key:
     raise ValueError("RESEND_API_KEY not configured at module load")
+
+logger.info(
+    "API key debug",
+    raw_length=len(resend_api_key),
+    ends_with_newline=resend_api_key.endswith("\n"),
+    repr_value=repr(resend_api_key),
+)
 
 resend_api_key = resend_api_key.strip()
 

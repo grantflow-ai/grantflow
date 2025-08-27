@@ -4,7 +4,6 @@ import os
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
-# Set environment variables before importing the module
 os.environ.setdefault("RESEND_API_KEY", "test-resend-api-key")
 os.environ.setdefault("DATABASE_CONNECTION_STRING", "postgresql+asyncpg://test:test@localhost:5432/test")
 os.environ.setdefault("SITE_URL", "https://test.grantflow.ai")

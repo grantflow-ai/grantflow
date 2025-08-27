@@ -8,6 +8,11 @@ output "backend_service_id" {
   value       = google_cloud_run_v2_service.backend.name
 }
 
+output "backend_service_account_email" {
+  description = "The email of the backend service account"
+  value       = google_cloud_run_v2_service.backend.template[0].service_account
+}
+
 
 output "crawler_url" {
   description = "The URL of the deployed crawler service"

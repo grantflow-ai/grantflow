@@ -4,7 +4,6 @@ import os
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
-# Set environment variables before importing the module
 os.environ.setdefault("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("PROJECT_ID", "grantflow-test")

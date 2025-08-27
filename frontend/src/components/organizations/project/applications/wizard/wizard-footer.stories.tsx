@@ -308,7 +308,7 @@ export const ResearchDeepDiveStepGenerating: Story = {
 						research_deep_dive: false,
 						research_plan: false,
 					},
-					isGeneratingApplication: true, // Generate button disabled
+					isGeneratingApplication: true,
 				});
 			}, []);
 			return <Story />;
@@ -353,7 +353,7 @@ export const FinalStepWithApplicationText: Story = {
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
-					text: "This is the complete generated application text ready for dashboard.", // Has application text - enables dashboard button
+					text: "This is the complete generated application text ready for dashboard.",
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
@@ -378,7 +378,7 @@ export const FinalStepNoApplicationText: Story = {
 				const grantTemplate = GrantTemplateFactory.build();
 				const application = ApplicationWithTemplateFactory.build({
 					grant_template: grantTemplate,
-					text: undefined, // No application text - disables dashboard button
+					text: undefined,
 					title: "Climate Change Research Grant Application",
 				});
 				useApplicationStore.setState({
