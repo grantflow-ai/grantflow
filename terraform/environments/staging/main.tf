@@ -168,11 +168,12 @@ module "monitoring" {
 }
 
 module "email_notifications" {
-  source                    = "../../modules/email_notifications"
-  project_id                = var.project_id
-  region                    = var.region
-  environment               = var.environment
-  rag_service_account_email = module.cloud_run.rag_service_account_email
+  source                        = "../../modules/email_notifications"
+  project_id                    = var.project_id
+  region                        = var.region
+  environment                   = var.environment
+  rag_service_account_email     = module.cloud_run.rag_service_account_email
+  backend_service_account_email = module.cloud_run.backend_service_account_email
 }
 
 module "grant_matcher" {

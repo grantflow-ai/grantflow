@@ -680,9 +680,6 @@ tasks:
     cmds:
       - uv run pytest services/rag/tests/e2e/ -m e2e_full -v
 
-  # ==============================================================================
-  # SCRAPER SERVICE TASKS
-  # ==============================================================================
 
   service:scraper:test:
     desc: Run scraper service tests with detailed output (parallel execution)

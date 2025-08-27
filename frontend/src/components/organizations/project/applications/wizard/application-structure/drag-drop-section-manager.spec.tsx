@@ -89,7 +89,6 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 
 				render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
-				// Initially no sections should be newly created
 				const sectionContainers = screen.getAllByTestId("section-container");
 				expect(sectionContainers[0]).not.toHaveClass("outline-muted");
 			});
