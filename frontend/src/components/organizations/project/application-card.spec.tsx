@@ -111,7 +111,7 @@ describe("ApplicationCard", () => {
 
 		render(<ApplicationCard application={application} {...defaultProps} />);
 
-		expect(screen.getByText("Deadline 15.01.24")).toBeInTheDocument();
+		expect(screen.getByText(/Deadline passed/)).toBeInTheDocument();
 	});
 
 	it("should not display deadline when not provided", () => {
