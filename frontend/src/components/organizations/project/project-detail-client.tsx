@@ -31,6 +31,8 @@ import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
+import { getOrganizationMembers } from "@/actions/organization";
+
 
 export function ProjectDetailClient() {
 	const router = useRouter();
@@ -112,7 +114,13 @@ export function ProjectDetailClient() {
 			revalidateOnFocus: false,
 		},
 	);
-
+const {data: OrganizationMember} = useSWR(
+		selectedOrganizationId ? `/organizations/${selectedOrganizationId}/members` : null,
+		() => (selectedOrganizationId ? getOrganizationMembers(selectedOrganizationId) : null),
+		{
+			revalidateOnFocus: false,
+		},
+	)
 	const { data: projectMembers, mutate: mutateMembers } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/members`
@@ -304,6 +312,7 @@ export function ProjectDetailClient() {
 	}
 
 	const currentUserRole = projectMembers?.find((member) => member.firebase_uid === user?.uid)?.role;
+	const ownerEmail = OrganizationMember?.find((member)=> member.role === "OWNER")?.email
 
 	return (
 		<section className="w-full h-full overflow-y-scroll flex flex-col">
@@ -443,6 +452,7 @@ export function ProjectDetailClient() {
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
+				ownerEmail = {ownerEmail}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
 			/>
 

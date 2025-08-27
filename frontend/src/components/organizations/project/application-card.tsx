@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -46,6 +46,24 @@ const statusStyleMap: Record<ApplicationStatus, StatusStyle> = {
 	},
 };
 
+function getRemainingTime(deadline: string) {
+	const totalDays = differenceInDays(new Date(deadline), new Date());
+	if (totalDays < 0) return "Deadline passed";
+	const weeks = Math.floor(totalDays / 7);
+	const days = totalDays % 7;
+	if (weeks > 0 && days > 0) {
+		return (
+			<>
+				<span className="font-semibold">{weeks}</span> weeks and <span className="font-semibold">{days}</span>
+			</>
+		);
+	}
+	if (weeks > 0) {
+		return <span className="font-semibold">{weeks} weeks</span>;
+	}
+	return <span className="font-semibold">{days} weeks</span>;
+}
+
 interface ApplicationCardProps {
 	application: API.ListApplications.Http200.ResponseBody["applications"][0];
 	onDelete: (id: string) => void;
@@ -57,9 +75,8 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 	const statusStyles = statusStyleMap[application.status];
 	return (
 		<div
-			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4"
+			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4 bg-preview-bg border-[#E1DFEB] hover:border-primary hover:border-2 transition-all"
 			data-testid={`application-card-${application.id}`}
-			style={{ backgroundColor: "#FAF9FB", borderColor: "#E1DFEB" }}
 		>
 			<header className="flex flex-col gap-3">
 				<div className="flex items-start justify-between">
@@ -82,11 +99,6 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 							<span className="text-[10px] font-normal text-app-gray-600">
 								Last edited {format(new Date(application.updated_at), "dd.MM.yy")}
 							</span>
-							{application.deadline && (
-								<span className="text-[10px] font-normal text-app-gray-600">
-									Deadline {format(new Date(application.deadline), "dd.MM.yy")}
-								</span>
-							)}
 						</div>
 					</div>
 
@@ -148,7 +160,19 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 			</header>
 
 			<main className="flex h-full w-full items-end justify-between pt-3">
-				<div className="w-full" />
+				{application.deadline && (
+					<div className="w-[237px] bg-app-lavender-gray px-2 py-1 flex gap-0.5 rounded-[2px]">
+						<div>
+							<Image alt="Application deadline" height={16} src="/icons/deadline.svg" width={16} />
+						</div>
+						<p className="text-sm font-normal font-sans text-app-black">
+							{/* <span className="font-semibold mr-0.5">4</span>
+						weeks and
+						<span className="font-semibold ml-0.5">3</span> days to the deadline */}
+							{getRemainingTime(application.deadline)}to the deadline
+						</p>
+					</div>
+				)}
 
 				<AppButton
 					className="w-[97px] py-0.5 bg-white"

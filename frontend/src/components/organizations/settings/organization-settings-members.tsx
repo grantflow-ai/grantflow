@@ -67,6 +67,7 @@ export function OrganizationSettingsMembers({
 	organizationId,
 }: OrganizationSettingsMembersProps) {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+	
 	const [editingMember, setEditingMember] = useState<null | OrganizationMember>(null);
 	const { addNotification } = useNotificationStore();
 
@@ -237,6 +238,7 @@ export function OrganizationSettingsMembers({
 			</div>
 		);
 	}
+	const ownerEmail = members.find((member) =>member.role === "OWNER" )?.email
 
 	return (
 		<div className="w-full" data-testid="organization-settings-members">
@@ -328,7 +330,8 @@ export function OrganizationSettingsMembers({
 					setIsInviteModalOpen(false);
 				}}
 				onInvite={handleInvite}
-				projects={projects}
+				ownerEmail={ownerEmail}
+				projects={projects}	
 			/>
 
 			<EditPermissionModal

@@ -3,6 +3,16 @@ import { Plus } from "lucide-react";
 import type { API } from "@/types/api-types";
 import { ApplicationCard } from "./application-card";
 
+  
+
+
+
+
+
+
+
+
+
 interface ApplicationListProps {
 	applications: API.ListApplications.Http200.ResponseBody["applications"];
 	isCreatingApplication: boolean;
