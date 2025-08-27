@@ -33,7 +33,7 @@ interface ResearchProject {
 export function InviteCollaboratorModal({ isOpen, onClose, onInvite, ownerEmail, projects = [] }: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
-	const [emailError, setEmailError] = useState<string | null>(null)
+	const [emailError, setEmailError] = useState<null | string>(null)
 	const [permission, setPermission] = useState<CollaboratorPermission>();
 	const [projectAccess, setProjectAccess] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
