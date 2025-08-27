@@ -31,12 +31,12 @@ data "archive_file" "email_notification_source" {
   output_path = "${path.module}/email-notification-function.zip"
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/email_notifications/main.py")
+    content  = file("${path.root}/../cloud_functions/src/email_notifications/main_fixed.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/requirements.txt")
+    content  = file("${path.root}/../cloud_functions/requirements_fixed.txt")
     filename = "requirements.txt"
   }
 
@@ -48,6 +48,11 @@ data "archive_file" "email_notification_source" {
   source {
     content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/grant_alert.html")
     filename = "templates/grant_alert.html"
+  }
+
+  source {
+    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/subscription_verification.html")
+    filename = "templates/subscription_verification.html"
   }
 }
 
@@ -120,6 +125,12 @@ resource "google_pubsub_topic_iam_member" "rag_publisher" {
   topic  = google_pubsub_topic.email_notifications.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${var.rag_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "backend_publisher" {
+  topic  = google_pubsub_topic.email_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.backend_service_account_email}"
 }
 
 resource "google_cloudfunctions2_function" "email_notification" {
@@ -201,5 +212,49 @@ resource "google_logging_metric" "email_notification_operations" {
   label_extractors = {
     status = "EXTRACT(jsonPayload.status)"
   }
+}
+
+resource "google_cloudfunctions2_function_iam_member" "email_notification_pubsub_invoker" {
+  project        = var.project_id
+  location       = google_cloudfunctions2_function.email_notification.location
+  cloud_function = google_cloudfunctions2_function.email_notification.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_cloudfunctions2_function_iam_member" "email_notification_eventarc_invoker" {
+  project        = var.project_id
+  location       = google_cloudfunctions2_function.email_notification.location
+  cloud_function = google_cloudfunctions2_function.email_notification.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+}
+
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
+resource "google_cloud_run_service_iam_member" "email_notification_pubsub_invoker" {
+  project  = var.project_id
+  location = google_cloudfunctions2_function.email_notification.location
+  service  = google_cloudfunctions2_function.email_notification.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_cloud_run_service_iam_member" "email_notification_eventarc_invoker" {
+  project  = var.project_id
+  location = google_cloudfunctions2_function.email_notification.location
+  service  = google_cloudfunctions2_function.email_notification.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+}
+
+resource "google_cloud_run_service_iam_member" "email_notification_compute_invoker" {
+  project  = var.project_id
+  location = google_cloudfunctions2_function.email_notification.location
+  service  = google_cloudfunctions2_function.email_notification.name
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 

@@ -202,7 +202,6 @@ class TestEnrichGrantData:
         mock_grant.amount_min = None
         mock_grant.eligibility = None
 
-        # Mock the update results and the select query
         mock_update_result1 = MagicMock()
         mock_update_result1.rowcount = 0
 
@@ -212,17 +211,16 @@ class TestEnrichGrantData:
         mock_select_result = MagicMock()
         mock_select_result.scalars = MagicMock(return_value=MagicMock(all=MagicMock(return_value=[mock_grant])))
 
-        # Mock for the update query that sets extracted data
         mock_update_result3 = MagicMock()
         mock_update_result3.rowcount = 1
 
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(
             side_effect=[
-                mock_update_result1,  # First update (category from activity_code)
-                mock_update_result2,  # Second update (category from document_type)
-                mock_select_result,  # Select grants to enrich
-                mock_update_result3,  # Update with extracted data
+                mock_update_result1,
+                mock_update_result2,
+                mock_select_result,
+                mock_update_result3,
             ]
         )
         mock_session.commit = AsyncMock()
@@ -262,11 +260,9 @@ class TestEnrichGrantData:
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(
             side_effect=[
-                MagicMock(rowcount=0),  # First update
-                MagicMock(rowcount=0),  # Second update
-                MagicMock(
-                    scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[mock_grant])))
-                ),  # Select
+                MagicMock(rowcount=0),
+                MagicMock(rowcount=0),
+                MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[mock_grant])))),
             ]
         )
         mock_session.commit = AsyncMock()
@@ -294,11 +290,9 @@ class TestEnrichGrantData:
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock(
             side_effect=[
-                MagicMock(rowcount=0),  # First update
-                MagicMock(rowcount=0),  # Second update
-                MagicMock(
-                    scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[mock_grant])))
-                ),  # Select
+                MagicMock(rowcount=0),
+                MagicMock(rowcount=0),
+                MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[mock_grant])))),
             ]
         )
         mock_session.commit = AsyncMock()
