@@ -1,8 +1,8 @@
 "use client";
 
-import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 interface NotificationSettings {
 	collaborationActivity: boolean;
@@ -14,11 +14,9 @@ interface OrganizationSettingsNotificationsProps {
 	organizationId: string;
 }
 
-
 export function OrganizationSettingsNotifications({
 	organizationId: _organizationId,
 }: OrganizationSettingsNotificationsProps) {
-	
 	const [settings, setSettings] = useState<NotificationSettings>({
 		collaborationActivity: true,
 		deadlineReminders: true,
@@ -40,9 +38,7 @@ export function OrganizationSettingsNotifications({
 	return (
 		<div className="w-[660px] gap-8 flex flex-col" data-testid="organization-settings-notifications">
 			<div className="">
-				<h2 className="text-base font-cabin font-semibold text-app-black">
-					General Email Notifications
-				</h2>
+				<h2 className="text-base font-cabin font-semibold text-app-black">General Email Notifications</h2>
 			</div>
 
 			<div className="flex flex-col gap-6">
@@ -71,7 +67,7 @@ export function OrganizationSettingsNotifications({
 							Get notified 6 days and 1 day before a grant deadline.
 						</p>
 					</div>
-					
+
 					<Switch
 						checked={settings.deadlineReminders}
 						data-testid="organization-deadline-reminders-toggle"
@@ -79,14 +75,11 @@ export function OrganizationSettingsNotifications({
 							handleToggle("deadlineReminders");
 						}}
 					/>
-
 				</div>
 
 				<div className="flex items-start justify-between">
 					<div className="flex-1">
-						<h3 className="text-base font-sans font-normal text-app-black mb-1">
-							Collaboration Activity
-						</h3>
+						<h3 className="text-base font-sans font-normal text-app-black mb-1">Collaboration Activity</h3>
 						<div className="space-y-1">
 							<p className="text-sm font-sans font-normal text-app-gray-500">
 								Notify me when someone comments or edits
@@ -96,7 +89,7 @@ export function OrganizationSettingsNotifications({
 							</p>
 						</div>
 					</div>
-					
+
 					<Switch
 						checked={settings.collaborationActivity}
 						data-testid="organization-collaboration-activity-toggle"
@@ -109,4 +102,3 @@ export function OrganizationSettingsNotifications({
 		</div>
 	);
 }
-

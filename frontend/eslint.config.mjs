@@ -299,6 +299,12 @@ export default eslintTS.config(
 			"no-console": "off",
 		},
 	},
+	{
+		files: ["next-env.d.ts"],
+		rules: {
+		"@typescript-eslint/triple-slash-reference": "off",
+		},
+	},
 
 	biomeConfig,
 );

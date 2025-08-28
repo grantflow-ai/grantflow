@@ -11,6 +11,7 @@ import {
 	duplicateApplication,
 	listApplications,
 } from "@/actions/grant-applications";
+import { getOrganizationMembers } from "@/actions/organization";
 import { getProjectMembers } from "@/actions/project";
 import { inviteCollaborator } from "@/actions/project-invitation";
 import { AvatarGroup } from "@/components/app/app-avatar";
@@ -31,8 +32,6 @@ import { useUserStore } from "@/stores/user-store";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import { getOrganizationMembers } from "@/actions/organization";
-
 
 export function ProjectDetailClient() {
 	const router = useRouter();
@@ -114,13 +113,13 @@ export function ProjectDetailClient() {
 			revalidateOnFocus: false,
 		},
 	);
-const {data: OrganizationMember} = useSWR(
+	const { data: OrganizationMember } = useSWR(
 		selectedOrganizationId ? `/organizations/${selectedOrganizationId}/members` : null,
 		() => (selectedOrganizationId ? getOrganizationMembers(selectedOrganizationId) : null),
 		{
 			revalidateOnFocus: false,
 		},
-	)
+	);
 	const { data: projectMembers, mutate: mutateMembers } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/members`
@@ -312,7 +311,7 @@ const {data: OrganizationMember} = useSWR(
 	}
 
 	const currentUserRole = projectMembers?.find((member) => member.firebase_uid === user?.uid)?.role;
-	const ownerEmail = OrganizationMember?.find((member)=> member.role === "OWNER")?.email
+	const ownerEmail = OrganizationMember?.find((member) => member.role === "OWNER")?.email;
 
 	return (
 		<section className="w-full h-full overflow-y-scroll flex flex-col">
@@ -452,7 +451,7 @@ const {data: OrganizationMember} = useSWR(
 					setShowInviteModal(false);
 				}}
 				onInvite={handleInviteCollaborator}
-				ownerEmail = {ownerEmail}
+				ownerEmail={ownerEmail}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
 			/>
 

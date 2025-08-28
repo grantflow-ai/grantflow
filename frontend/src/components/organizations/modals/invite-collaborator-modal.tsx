@@ -21,7 +21,7 @@ interface InviteCollaboratorModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onInvite: (options: InviteOptions) => Promise<void>;
-	ownerEmail?: string
+	ownerEmail?: string;
 	projects: ResearchProject[];
 }
 
@@ -30,17 +30,22 @@ interface ResearchProject {
 	name: string;
 }
 
-export function InviteCollaboratorModal({ isOpen, onClose, onInvite, ownerEmail, projects = [] }: InviteCollaboratorModalProps) {
+export function InviteCollaboratorModal({
+	isOpen,
+	onClose,
+	onInvite,
+	ownerEmail,
+	projects = [],
+}: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
-	const [emailError, setEmailError] = useState<null | string>(null)
+	const [emailError, setEmailError] = useState<null | string>(null);
 	const [permission, setPermission] = useState<CollaboratorPermission>();
 	const [projectAccess, setProjectAccess] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
 	const handleSubmit = async () => {
-
 		if (!(email && permission)) return;
 
 		setIsSubmitting(true);
@@ -93,16 +98,16 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, ownerEmail,
 		setSelectedProjects(selectedProjects.filter((id) => id !== projectId));
 	};
 
-	const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
-const newEmail = e.target.value
-setEmail(newEmail)
+	const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const newEmail = e.target.value;
+		setEmail(newEmail);
 
-if(ownerEmail && newEmail === ownerEmail){
-	setEmailError("The user is already the owner of the organization.");
-}else {
-	setEmailError(null)
-}
-	}
+		if (ownerEmail && newEmail === ownerEmail) {
+			setEmailError("The user is already the owner of the organization.");
+		} else {
+			setEmailError(null);
+		}
+	};
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
@@ -308,7 +313,7 @@ if(ownerEmail && newEmail === ownerEmail){
 						<AppButton
 							className=" px-4 py-2 "
 							data-testid="send-invitation-button"
-							disabled={!(email && permission) || isSubmitting || emailError !== null}
+							disabled={!(email && permission) || isSubmitting || !!emailError}
 							onClick={handleSubmit}
 							type="button"
 							variant="primary"
