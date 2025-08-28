@@ -1,4 +1,4 @@
-import { differenceInDays,format  } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
@@ -53,28 +53,25 @@ interface ApplicationCardProps {
 	onOpen: (applicationId: string, applicationTitle: string) => void;
 }
 
-
-
-
-
 export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
 	function getRemainingTime(deadline: string) {
-	const totalDays = differenceInDays(new Date(deadline), new Date());
-	if (totalDays < 0) return ( <span>Deadline passed</span>)
-	const weeks = Math.floor(totalDays / 7);
-	const days = totalDays % 7;
-	if (weeks > 0 && days > 0) {
-		return (
-			<>
-				<span className="font-semibold">{weeks}</span> weeks and <span className="font-semibold">{days}</span>
-			</>
-		);
+		const totalDays = differenceInDays(new Date(deadline), new Date());
+		if (totalDays < 0) return <span>Deadline passed</span>;
+		const weeks = Math.floor(totalDays / 7);
+		const days = totalDays % 7;
+		if (weeks > 0 && days > 0) {
+			return (
+				<>
+					<span className="font-semibold">{weeks}</span> weeks and{" "}
+					<span className="font-semibold">{days}</span>
+				</>
+			);
+		}
+		if (weeks > 0) {
+			return <span className="font-semibold">{weeks} weeks</span>;
+		}
+		return <span className="font-semibold">{days} weeks</span>;
 	}
-	if (weeks > 0) {
-		return <span className="font-semibold">{weeks} weeks</span>;
-	}
-	return <span className="font-semibold">{days} weeks</span>;
-}
 	const statusStyles = statusStyleMap[application.status];
 	return (
 		<div
@@ -169,9 +166,6 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 							<Image alt="Application deadline" height={16} src="/icons/deadline.svg" width={16} />
 						</div>
 						<p className="text-sm font-normal font-sans text-app-black">
-							{/* <span className="font-semibold mr-0.5">4</span>
-						weeks and
-						<span className="font-semibold ml-0.5">3</span> days to the deadline */}
 							{getRemainingTime(application.deadline)}to the deadline
 						</p>
 					</div>
