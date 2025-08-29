@@ -6,6 +6,10 @@ vi.mock("@/components/layout/shared-layout", () => ({
 	default: vi.fn().mockImplementation(({ children }) => <div data-testid="mock-shared-layout">{children}</div>),
 }));
 
+vi.mock("@/components/auth-provider", () => ({
+	AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 describe.sequential("DefaultLayout", () => {
 	afterEach(() => {
 		cleanup();

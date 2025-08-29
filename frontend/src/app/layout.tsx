@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { AuthProvider } from "@/components/auth-provider";
 import { cn } from "@/lib/utils";
 import { getEnv } from "@/utils/env";
 import { fontCabin, fontSora, fontSourceSans } from "@/utils/fonts";
@@ -67,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				)}
 				suppressHydrationWarning
 			>
-				<AuthProvider>{children}</AuthProvider>
+				{children}
 			</body>
 		</html>
 	);
