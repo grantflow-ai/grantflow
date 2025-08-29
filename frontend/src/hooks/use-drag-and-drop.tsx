@@ -1,8 +1,8 @@
 "use client";
 
 import {
-	closestCenter,
 	type CollisionDetection,
+	closestCenter,
 	DndContext,
 	type DragEndEvent,
 	type DragMoveEvent,
