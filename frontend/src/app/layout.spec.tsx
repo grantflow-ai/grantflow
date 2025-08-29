@@ -2,11 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 
 import RootLayout from "@/app/layout";
 
-
-vi.mock("@/components/auth-provider",()=>({
-	AuthProvider: ({children}:{children: React.ReactNode}) => children
-}))
-
 vi.mock("@/utils/env", () => ({
 	getEnv: () => ({ NEXT_PUBLIC_SITE_URL: "https://example.com" }),
 }));

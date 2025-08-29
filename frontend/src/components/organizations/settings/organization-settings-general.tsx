@@ -23,8 +23,6 @@ export function OrganizationSettingsGeneral({
 }: OrganizationSettingsGeneralProps) {
 	const { organization, updateOrganization } = useOrganizationStore();
 	const { user } = useUserStore();
-
-	// Single source of truth for the form fields
 	const [organizationName, setOrganizationName] = useState("");
 	const [institutionName, setInstitutionName] = useState("");
 	const [contactName, setContactName] = useState("");
