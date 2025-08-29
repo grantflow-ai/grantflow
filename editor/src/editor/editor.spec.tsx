@@ -8,7 +8,7 @@ const documentId = "123";
 
 describe("Editor", () => {
 	it("renders with correct existing content", async () => {
-		let markdownOutput: string | undefined = "";
+		let htmloutput: string | undefined = "";
 
 		const Test = () => {
 			const ref = useRef<EditorRef>(null);
@@ -24,7 +24,7 @@ describe("Editor", () => {
 						type="button"
 						data-testid="save-button"
 						onClick={() => {
-							markdownOutput = ref.current?.getMarkdown();
+							htmloutput = ref.current?.getHTML();
 						}}
 					>
 						Save
@@ -38,41 +38,7 @@ describe("Editor", () => {
 		assert(textbox);
 
 		fireEvent.click(screen.getByTestId("save-button"));
-		expect(markdownOutput).toContain("hello world");
-	});
-
-	it("returns correct markdown after editing", async () => {
-		let markdownOutput: string | undefined = "";
-
-		const Test = () => {
-			const ref = useRef<EditorRef>(null);
-			return (
-				<>
-					<Editor ref={ref} crdtUrl={crdtUrl} documentId={documentId} />
-					<button
-						type="button"
-						data-testid="save-button"
-						onClick={() => {
-							markdownOutput = ref.current?.getMarkdown();
-						}}
-					>
-						Save
-					</button>
-				</>
-			);
-		};
-		render(<Test />);
-
-		const textbox = screen.getByTestId("simple-editor-content").firstChild;
-		assert(textbox);
-
-		await act(async () => {
-			textbox.textContent = "New content.";
-			fireEvent.input(textbox, { target: { textContent: "New content." } });
-			fireEvent.blur(textbox);
-		});
-		fireEvent.click(screen.getByTestId("save-button"));
-		expect(markdownOutput).toContain("New content");
+		expect(htmloutput).toContain("hello world");
 	});
 
 	it("returns correct json after editing", async () => {

@@ -36,7 +36,7 @@ export function EditorContainer({ documentId, initialContent }: { documentId: st
 					</div>
 				</div>
 				<div className="min-w-[207px] w-[207px] flex flex-col gap-3 mt-3">
-					<EditorExportButton />
+					<EditorExportButton editorRef={editorRef} />
 					<EditorSections
 						onSectionClick={(index) => editorRef.current?.scrollToHeading(index)}
 						sections={editorSections}
