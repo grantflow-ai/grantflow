@@ -270,7 +270,8 @@ export default eslintTS.config(
 			"**/storybook-static",
 			"dist",
 			"build",
-			"functions"
+			"functions",
+			"next-env.d.ts"
 		],
 	},
 	{
