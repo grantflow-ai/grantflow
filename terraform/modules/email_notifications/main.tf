@@ -247,7 +247,7 @@ resource "google_cloud_run_service_iam_member" "email_notification_eventarc_invo
   location = google_cloudfunctions2_function.email_notification.location
   service  = google_cloudfunctions2_function.email_notification.name
   role     = "roles/run.invoker"
-  member   = "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+  member   = "serviceAccount:${google_service_account.email_notification.email}"
 }
 
 resource "google_cloud_run_service_iam_member" "email_notification_compute_invoker" {
