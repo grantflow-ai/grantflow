@@ -245,25 +245,3 @@ resource "google_logging_metric" "entity_cleanup_operations" {
     status = "EXTRACT(jsonPayload.status)"
   }
 }
-
-
-
-output "entity_cleanup_function_name" {
-  description = "Name of the entity cleanup Cloud Function"
-  value       = google_cloudfunctions2_function.entity_cleanup.name
-}
-
-output "entity_cleanup_schedule" {
-  description = "Schedule for entity cleanup job"
-  value       = google_cloud_scheduler_job.entity_cleanup_daily.schedule
-}
-
-output "user_deletion_grace_period" {
-  description = "Grace period for user deletion in days"
-  value       = "10"
-}
-
-output "organization_deletion_grace_period" {
-  description = "Grace period for organization deletion in days"
-  value       = "30"
-}
