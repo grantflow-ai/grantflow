@@ -321,9 +321,3 @@ resource "google_monitoring_dashboard" "pubsub_dashboard" {
     }
   })
 }
-
-variable "notification_channels" {
-  description = "List of notification channel IDs for alerts"
-  type        = list(string)
-  default     = []
-}
