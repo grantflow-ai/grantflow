@@ -75,7 +75,24 @@ class UrlCrawlingResponse(TypedDict):
     source_id: str
 
 
-def _determine_entity_info(
+async def _get_application_id_from_template(
+    session_maker: async_sessionmaker[Any],
+    template_id: UUID,
+) -> UUID:
+    async with session_maker() as session:
+        result: UUID | None = await session.scalar(
+            select(GrantTemplate.grant_application_id).where(
+                GrantTemplate.id == template_id,
+                GrantTemplate.deleted_at.is_(None),
+            )
+        )
+        if not result:
+            raise NotFoundException("Grant template not found")
+        return result
+
+
+async def _determine_entity_info(
+    session_maker: async_sessionmaker[Any],
     application_id: UUID | None = None,
     template_id: UUID | None = None,
     granting_institution_id: UUID | None = None,
@@ -87,7 +104,7 @@ def _determine_entity_info(
     if template_id:
         # the parent_id value for grant_template is the grant application id ~keep
         if not application_id:
-            raise BackendError("application_id required for grant template sources")
+            application_id = await _get_application_id_from_template(session_maker, template_id)
 
         return "grant_template", application_id, "grant_template", template_id
 
@@ -121,7 +138,8 @@ async def handle_create_rag_source(
     granting_institution_id: UUID | None = None,
     template_id: UUID | None = None,
 ) -> UUID:
-    parent_type, parent_id, entity_type, entity_id = _determine_entity_info(
+    parent_type, parent_id, entity_type, entity_id = await _determine_entity_info(
+        session_maker=session_maker,
         application_id=application_id,
         template_id=template_id,
         granting_institution_id=granting_institution_id,
@@ -245,6 +263,7 @@ async def handle_create_rag_source(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources",
         "/granting-institutions/{granting_institution_id:uuid}/sources",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -336,6 +355,7 @@ async def handle_retrieve_rag_sources(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/{source_id:uuid}",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/{source_id:uuid}",
         "/granting-institutions/{granting_institution_id:uuid}/sources/{source_id:uuid}",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -461,6 +481,7 @@ async def handle_delete_rag_source(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/upload-url",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/upload-url",
         "/granting-institutions/{granting_institution_id:uuid}/sources/upload-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -502,7 +523,8 @@ async def handle_create_upload_url(
 
     await asyncio.sleep(0.2)
 
-    _, _, entity_type, entity_id = _determine_entity_info(
+    _, _, entity_type, entity_id = await _determine_entity_info(
+        session_maker=session_maker,
         application_id=application_id,
         template_id=template_id,
         granting_institution_id=granting_institution_id,
@@ -527,6 +549,7 @@ async def handle_create_upload_url(
     [
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/sources/crawl-url",
         "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/applications/{application_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
+        "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/grant_templates/{template_id:uuid}/sources/crawl-url",
         "/granting-institutions/{granting_institution_id:uuid}/sources/crawl-url",
     ],
     allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
@@ -569,7 +592,8 @@ async def handle_crawl_url(
 
     await asyncio.sleep(0.2)
 
-    _, _, entity_type, entity_id = _determine_entity_info(
+    _, _, entity_type, entity_id = await _determine_entity_info(
+        session_maker=session_maker,
         application_id=application_id,
         template_id=template_id,
         granting_institution_id=granting_institution_id,
