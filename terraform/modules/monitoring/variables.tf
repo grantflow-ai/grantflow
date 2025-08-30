@@ -1,4 +1,3 @@
-# Budget variables
 variable "enable_billing_budget" {
   description = "Whether to create billing budget alerts"
   type        = bool
@@ -11,7 +10,6 @@ variable "monthly_budget_amount" {
   default     = "500"
 }
 
-# Main variables
 variable "project_id" {
   description = "The project ID to deploy monitoring resources to"
   type        = string
@@ -68,7 +66,6 @@ variable "alert_thresholds" {
   }
 }
 
-# PubSub Logging
 variable "notification_channels" {
   description = "List of notification channel IDs for alerts"
   type        = list(string)
