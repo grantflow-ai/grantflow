@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
@@ -6,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useOrganizationStore } from "@/stores/organization-store";
+import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
@@ -20,10 +22,12 @@ export function OrganizationSettingsGeneral({
 	userRole = UserRole.COLLABORATOR,
 }: OrganizationSettingsGeneralProps) {
 	const { organization, updateOrganization } = useOrganizationStore();
-	const [organizationName, setOrganizationName] = useState(organization?.name ?? "");
-	const [institutionName, setInstitutionName] = useState(organization?.institutional_affiliation ?? "");
-	const [contactName, setContactName] = useState(organization?.contact_person_name ?? "");
-	const [contactEmail, setContactEmail] = useState(organization?.contact_email ?? "");
+	const { user } = useUserStore();
+	const [organizationName, setOrganizationName] = useState("");
+	const [institutionName, setInstitutionName] = useState("");
+	const [contactName, setContactName] = useState("");
+	const [contactEmail, setContactEmail] = useState("");
+
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -35,12 +39,12 @@ export function OrganizationSettingsGeneral({
 
 	useEffect(() => {
 		if (organization) {
-			setOrganizationName(organization.name);
+			setOrganizationName(organization.name || "");
 			setInstitutionName(organization.institutional_affiliation ?? "");
-			setContactName(organization.contact_person_name ?? "");
-			setContactEmail(organization.contact_email ?? "");
+			setContactName(organization.contact_person_name || user?.displayName || "");
+			setContactEmail(organization.contact_email || user?.email || "");
 		}
-	}, [organization]);
+	}, [organization, user]);
 
 	useEffect(() => {
 		if (searchParams.get("focus") === "name") {
@@ -160,7 +164,7 @@ export function OrganizationSettingsGeneral({
 									setOrganizationName(e.target.value);
 								}
 							}}
-							placeholder="Name Name"
+							placeholder="Type here the organisation Name"
 							readOnly={isReadOnly}
 							ref={nameInputRef}
 							type="text"
@@ -184,7 +188,7 @@ export function OrganizationSettingsGeneral({
 									setInstitutionName(e.target.value);
 								}
 							}}
-							placeholder="Name Name"
+							placeholder="Institution or Affiliation name..."
 							readOnly={isReadOnly}
 							type="text"
 							value={institutionName}
