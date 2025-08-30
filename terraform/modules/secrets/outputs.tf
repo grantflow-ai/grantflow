@@ -42,3 +42,11 @@ output "secrets_key_id" {
   description = "The ID of the KMS key used for secret encryption"
   value       = google_kms_crypto_key.secrets_key.id
 }
+
+output "firebase_app_hosting_secrets" {
+  description = "Map of Firebase App Hosting secret IDs"
+  value = {
+    for k, v in google_secret_manager_secret.firebase_app_hosting :
+    k => v.secret_id
+  }
+}

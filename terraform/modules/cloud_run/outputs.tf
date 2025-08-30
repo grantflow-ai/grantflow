@@ -49,3 +49,34 @@ output "rag_service_account_email" {
   description = "The email of the RAG service account"
   value       = var.rag_service_account_email != "" ? var.rag_service_account_email : "${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
+
+output "pubsub_invoker_service_account_email" {
+  value       = google_service_account.pubsub_invoker.email
+  description = "Email address of the service account used for Pub/Sub to invoke Cloud Run"
+}
+
+output "scheduler_invoker_service_account_email" {
+  value       = google_service_account.scheduler_invoker.email
+  description = "Email address of the service account used for Cloud Scheduler to invoke Cloud Run"
+}
+
+output "scraper_url" {
+  description = "The URL of the deployed scraper service"
+  value       = google_cloud_run_v2_service.scraper.uri
+}
+
+output "scraper_service_id" {
+  description = "The ID of the scraper service"
+  value       = google_cloud_run_v2_service.scraper.name
+}
+
+output "crdt_server_url" {
+  description = "The URL of the deployed CRDT server"
+  value       = google_cloud_run_v2_service.crdt_server.uri
+}
+
+output "crdt_server_service_id" {
+  description = "The ID of the CRDT server service"
+  value       = google_cloud_run_v2_service.crdt_server.name
+}
+

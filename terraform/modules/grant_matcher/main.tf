@@ -135,22 +135,3 @@ resource "google_project_service" "artifactregistry" {
   service            = "artifactregistry.googleapis.com"
   disable_on_destroy = false
 }
-
-variable "project_id" {
-  description = "GCP project ID"
-  type        = string
-}
-
-variable "region" {
-  description = "GCP region"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
-}
-
-output "grant_matcher_function_uri" {
-  value = google_cloudfunctions2_function.grant_matcher.service_config[0].uri
-}
