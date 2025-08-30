@@ -9,6 +9,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { API } from "@/types/api-types";
+import { getDeadlineInfo } from "@/utils/date-time";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
@@ -54,12 +55,12 @@ interface ApplicationCardProps {
 }
 
 export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: ApplicationCardProps) {
+	const deadlineInfo = getDeadlineInfo(application.deadline);
 	const statusStyles = statusStyleMap[application.status];
 	return (
 		<div
-			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4"
+			className="relative flex h-[206px] flex-col rounded-lg border px-4 py-4 bg-preview-bg border-[#E1DFEB] hover:border-primary hover:border-2 transition-all"
 			data-testid={`application-card-${application.id}`}
-			style={{ backgroundColor: "#FAF9FB", borderColor: "#E1DFEB" }}
 		>
 			<header className="flex flex-col gap-3">
 				<div className="flex items-start justify-between">
@@ -82,11 +83,6 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 							<span className="text-[10px] font-normal text-app-gray-600">
 								Last edited {format(new Date(application.updated_at), "dd.MM.yy")}
 							</span>
-							{application.deadline && (
-								<span className="text-[10px] font-normal text-app-gray-600">
-									Deadline {format(new Date(application.deadline), "dd.MM.yy")}
-								</span>
-							)}
 						</div>
 					</div>
 
@@ -147,11 +143,34 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 				)}
 			</header>
 
-			<main className="flex h-full w-full items-end justify-between pt-3">
-				<div className="w-full" />
+			<main className="flex h-full w-full items-end pt-3">
+				{application.deadline && (
+					<div className="w-fit bg-app-lavender-gray px-2 py-1 flex gap-0.5 rounded-[2px]">
+						<div>
+							<Image alt="Application deadline" height={16} src="/icons/deadline.svg" width={16} />
+						</div>
+						<p className="text-sm font-normal font-sans text-app-black">
+							{deadlineInfo.status === "passed" && <span>Deadline passed</span>}
+							{deadlineInfo.status === "active" && deadlineInfo.timeBreakdown && (
+								<>
+									{deadlineInfo.timeBreakdown.weeks > 0 && (
+										<span className="font-semibold">{deadlineInfo.timeBreakdown.weeks} weeks </span>
+									)}
+									{deadlineInfo.timeBreakdown.weeks > 0 &&
+										deadlineInfo.timeBreakdown.days > 0 &&
+										" and "}
+									{deadlineInfo.timeBreakdown.days > 0 && (
+										<span className="font-semibold">{deadlineInfo.timeBreakdown.days} days </span>
+									)}
+								</>
+							)}
+							to the deadline
+						</p>
+					</div>
+				)}
 
 				<AppButton
-					className="w-[97px] py-0.5 bg-white"
+					className="ml-auto w-[97px] py-0.5 bg-white"
 					data-testid={`application-card-open-button-${application.id}`}
 					onClick={() => {
 						onOpen(application.id, application.title);

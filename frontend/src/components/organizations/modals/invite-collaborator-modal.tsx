@@ -21,6 +21,7 @@ interface InviteCollaboratorModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onInvite: (options: InviteOptions) => Promise<void>;
+	ownerEmail?: string;
 	projects: ResearchProject[];
 }
 
@@ -29,9 +30,16 @@ interface ResearchProject {
 	name: string;
 }
 
-export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = [] }: InviteCollaboratorModalProps) {
+export function InviteCollaboratorModal({
+	isOpen,
+	onClose,
+	onInvite,
+	ownerEmail,
+	projects = [],
+}: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
+	const [emailError, setEmailError] = useState<null | string>(null);
 	const [permission, setPermission] = useState<CollaboratorPermission>();
 	const [projectAccess, setProjectAccess] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +98,16 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 		setSelectedProjects(selectedProjects.filter((id) => id !== projectId));
 	};
 
+	const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const newEmail = e.target.value;
+		setEmail(newEmail);
+
+		if (ownerEmail && newEmail === ownerEmail) {
+			setEmailError("The user is already the owner of the organization.");
+		} else {
+			setEmailError(null);
+		}
+	};
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={isOpen}>
 			<DialogContent
@@ -139,18 +157,19 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 							</label>
 							<div className="relative">
 								<input
-									className="w-full h-10 px-3 border border-app-gray-400 rounded bg-white font-body text-sm text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary"
+									className={`w-full h-10 px-3 border rounded bg-white font-body text-sm text-app-gray-600 placeholder:text-app-gray-400 outline-none focus:border-primary ${
+										emailError ? "border-red-500" : "border-app-gray-400"
+									}`}
 									data-testid="email-input"
 									id="member-email"
-									onChange={(e) => {
-										setEmail(e.target.value);
-									}}
+									onChange={handleEmailChange}
 									placeholder="Type here the member email"
 									type="email"
 									value={email}
 								/>
 								<Mail className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-app-gray-600" />
 							</div>
+							{emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
 						</div>
 
 						<h4 className="font-cabin text-app-black font-semibold text-base">Permission and access</h4>
@@ -294,7 +313,7 @@ export function InviteCollaboratorModal({ isOpen, onClose, onInvite, projects = 
 						<AppButton
 							className=" px-4 py-2 "
 							data-testid="send-invitation-button"
-							disabled={!(email && permission) || isSubmitting}
+							disabled={!(email && permission) || isSubmitting || !!emailError}
 							onClick={handleSubmit}
 							type="button"
 							variant="primary"
