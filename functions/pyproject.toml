@@ -48,5 +48,5 @@ no_implicit_reexport = false
 
 [tool.uv]
 dev-dependencies = [
-  "types-requests>=2.32.0", # Specific to cloud_functions, not in root
+  "types-requests>=2.32.0", # Specific to functions, not in root
 ]

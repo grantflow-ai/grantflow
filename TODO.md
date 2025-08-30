@@ -72,7 +72,7 @@
 - [x] **6.2** Assess Firestore references ✅
   - [x] Identified Firestore is still needed for deletion tracking
   - [x] Keep Firestore for user/organization deletion requests
-  - [x] Maintain google-cloud-firestore in cloud_functions dependencies
+  - [x] Maintain google-cloud-firestore in functions dependencies
 - [ ] **6.3** Update tests for migrated functions
   - [ ] Update grant_matcher tests to use PostgreSQL mocks
   - [ ] Verify all tests pass with new architecture

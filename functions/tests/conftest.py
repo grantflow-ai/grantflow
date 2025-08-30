@@ -8,7 +8,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def cloud_functions_env() -> None:
+def functions_env() -> None:
     os.environ.setdefault("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/test")
     os.environ.setdefault("ENVIRONMENT", "test")
     os.environ.setdefault("PROJECT_ID", "grantflow-test")

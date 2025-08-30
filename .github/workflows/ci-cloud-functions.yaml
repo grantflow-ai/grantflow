@@ -7,14 +7,14 @@ on:
       - development*
     paths:
       - ".github/workflows/ci-cloud-functions.yaml"
-      - "cloud_functions/**"
+      - "../../cloud/**"
   push:
     branches:
       - main
       - development
     paths:
       - ".github/workflows/ci-cloud-functions.yaml"
-      - "cloud_functions/**"
+      - "../../cloud/**"
 
 jobs:
   test:
@@ -27,4 +27,4 @@ jobs:
       - name: Run Tests
         uses: ./.github/actions/run-python-tests
         with:
-          target: cloud_functions
+          target: functions

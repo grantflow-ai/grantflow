@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from cloud_functions.src.user_cleanup.main import (
+from functions.src.user_cleanup.main import (
     cleanup_expired_entities,
     delete_user_from_database,
     get_database_url,
@@ -15,7 +15,7 @@ from cloud_functions.src.user_cleanup.main import (
 
 
 def test_main_calls_cleanup_function(mock_request: Mock) -> None:
-    with patch("cloud_functions.src.user_cleanup.main.cleanup_expired_entities") as mock_cleanup:
+    with patch("functions.src.user_cleanup.main.cleanup_expired_entities") as mock_cleanup:
         mock_cleanup.return_value = {"statusCode": 200, "body": {"processed": 0}}
 
         with patch("asyncio.run") as mock_run:
@@ -31,7 +31,7 @@ def test_main_calls_cleanup_function(mock_request: Mock) -> None:
 async def test_cleanup_expired_users_no_expired() -> None:
     with (
         patch("firebase_admin._apps", [Mock()]),
-        patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
+        patch("functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
     ):
         mock_db = Mock()
         mock_firestore.return_value = mock_db
@@ -64,8 +64,8 @@ async def test_cleanup_expired_users_no_expired() -> None:
 async def test_cleanup_expired_users_with_expired() -> None:
     with (
         patch("firebase_admin._apps", [Mock()]),
-        patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
-        patch("cloud_functions.src.user_cleanup.main.hard_delete_user", new_callable=AsyncMock) as mock_delete,
+        patch("functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
+        patch("functions.src.user_cleanup.main.hard_delete_user", new_callable=AsyncMock) as mock_delete,
     ):
         mock_db = Mock()
         mock_firestore.return_value = mock_db
@@ -113,8 +113,8 @@ async def test_cleanup_expired_users_with_expired() -> None:
 async def test_cleanup_with_user_deletion_error() -> None:
     with (
         patch("firebase_admin._apps", [Mock()]),
-        patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
-        patch("cloud_functions.src.user_cleanup.main.hard_delete_user") as mock_delete,
+        patch("functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
+        patch("functions.src.user_cleanup.main.hard_delete_user") as mock_delete,
     ):
         mock_db = Mock()
         mock_firestore.return_value = mock_db
@@ -157,7 +157,7 @@ async def test_cleanup_firebase_initialization() -> None:
     with (
         patch("firebase_admin._apps", []),
         patch("firebase_admin.initialize_app") as mock_init,
-        patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
+        patch("functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
     ):
         mock_db = Mock()
         mock_firestore.return_value = mock_db
@@ -184,7 +184,7 @@ async def test_cleanup_firebase_initialization() -> None:
 async def test_cleanup_unexpected_error() -> None:
     with (
         patch("firebase_admin._apps", [Mock()]),
-        patch("cloud_functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
+        patch("functions.src.user_cleanup.main.firestore.AsyncClient") as mock_firestore,
     ):
         mock_firestore.side_effect = Exception("Firestore connection error")
 
@@ -197,7 +197,7 @@ async def test_cleanup_unexpected_error() -> None:
 async def test_hard_delete_user_success() -> None:
     with (
         patch("firebase_admin.auth.delete_user") as mock_auth_delete,
-        patch("cloud_functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
+        patch("functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
     ):
         mock_auth_delete.return_value = None
         mock_db_delete.return_value = None
@@ -211,7 +211,7 @@ async def test_hard_delete_user_success() -> None:
 async def test_hard_delete_user_with_auth_error() -> None:
     with (
         patch("firebase_admin.auth.delete_user") as mock_auth_delete,
-        patch("cloud_functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
+        patch("functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
     ):
         from firebase_admin import auth
 
@@ -227,7 +227,7 @@ async def test_hard_delete_user_with_auth_error() -> None:
 async def test_hard_delete_user_with_general_auth_error() -> None:
     with (
         patch("firebase_admin.auth.delete_user") as mock_auth_delete,
-        patch("cloud_functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
+        patch("functions.src.user_cleanup.main.delete_user_from_database") as mock_db_delete,
     ):
         mock_auth_delete.side_effect = Exception("Firebase error")
         mock_db_delete.return_value = None
@@ -240,9 +240,9 @@ async def test_hard_delete_user_with_general_auth_error() -> None:
 
 async def testdelete_user_from_database_success() -> None:
     with (
-        patch("cloud_functions.src.user_cleanup.main.get_database_url") as mock_get_url,
-        patch("cloud_functions.src.user_cleanup.main.create_async_engine") as mock_create_engine,
-        patch("cloud_functions.src.user_cleanup.main.async_sessionmaker") as mock_sessionmaker,
+        patch("functions.src.user_cleanup.main.get_database_url") as mock_get_url,
+        patch("functions.src.user_cleanup.main.create_async_engine") as mock_create_engine,
+        patch("functions.src.user_cleanup.main.async_sessionmaker") as mock_sessionmaker,
     ):
         mock_get_url.return_value = "postgresql+asyncpg://test:test@localhost:5432/test"
 
@@ -276,9 +276,9 @@ async def testdelete_user_from_database_success() -> None:
 
 async def testdelete_user_from_database_with_error() -> None:
     with (
-        patch("cloud_functions.src.user_cleanup.main.get_database_url") as mock_get_url,
-        patch("cloud_functions.src.user_cleanup.main.create_async_engine") as mock_create_engine,
-        patch("cloud_functions.src.user_cleanup.main.async_sessionmaker") as mock_sessionmaker,
+        patch("functions.src.user_cleanup.main.get_database_url") as mock_get_url,
+        patch("functions.src.user_cleanup.main.create_async_engine") as mock_create_engine,
+        patch("functions.src.user_cleanup.main.async_sessionmaker") as mock_sessionmaker,
     ):
         mock_get_url.return_value = "postgresql+asyncpg://test:test@localhost:5432/test"
 

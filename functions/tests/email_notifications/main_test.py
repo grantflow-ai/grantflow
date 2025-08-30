@@ -11,7 +11,7 @@ os.environ.setdefault("SITE_URL", "https://test.grantflow.ai")
 import pytest
 from cloudevents.http import CloudEvent
 
-from cloud_functions.src.email_notifications.main import (
+from functions.src.email_notifications.main import (
     get_application_data,
     markdown_to_docx,
     send_application_email,
@@ -68,8 +68,8 @@ async def test_get_application_data_success(
     monkeypatch.setenv("DATABASE_CONNECTION_STRING", "postgresql://test:test@localhost/test")
 
     with (
-        patch("cloud_functions.src.email_notifications.main.create_async_engine"),
-        patch("cloud_functions.src.email_notifications.main.sessionmaker") as mock_sessionmaker,
+        patch("functions.src.email_notifications.main.create_async_engine"),
+        patch("functions.src.email_notifications.main.sessionmaker") as mock_sessionmaker,
     ):
         mock_session = AsyncMock()
         mock_session_maker = Mock()
@@ -117,8 +117,8 @@ async def test_get_application_data_not_found(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setenv("DATABASE_CONNECTION_STRING", "postgresql://test:test@localhost/test")
 
     with (
-        patch("cloud_functions.src.email_notifications.main.create_async_engine"),
-        patch("cloud_functions.src.email_notifications.main.sessionmaker") as mock_sessionmaker,
+        patch("functions.src.email_notifications.main.create_async_engine"),
+        patch("functions.src.email_notifications.main.sessionmaker") as mock_sessionmaker,
     ):
         mock_session = AsyncMock()
         mock_session_maker = Mock()
@@ -167,7 +167,7 @@ async def test_send_resend_email_success(monkeypatch: pytest.MonkeyPatch) -> Non
     mock_response.json.return_value = {"id": "email-123", "status": "sent"}
 
     mock_post = AsyncMock(return_value=mock_response)
-    with patch("cloud_functions.src.email_notifications.main.http_client.post", mock_post):
+    with patch("functions.src.email_notifications.main.http_client.post", mock_post):
         result = await send_resend_email(
             to_email="test@example.com",
             subject="Test Email",
@@ -194,7 +194,7 @@ async def test_send_resend_email_api_error(monkeypatch: pytest.MonkeyPatch) -> N
 
     mock_post = AsyncMock(return_value=mock_response)
     with (
-        patch("cloud_functions.src.email_notifications.main.http_client.post", mock_post),
+        patch("functions.src.email_notifications.main.http_client.post", mock_post),
         pytest.raises(Exception, match="Resend API error: 400"),
     ):
         await send_resend_email(
@@ -211,9 +211,9 @@ async def test_send_application_email_success(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with (
-        patch("cloud_functions.src.email_notifications.main.get_application_data") as mock_get_data,
-        patch("cloud_functions.src.email_notifications.main.send_resend_email") as mock_send_email,
-        patch("cloud_functions.src.email_notifications.main.jinja_env") as mock_jinja_env,
+        patch("functions.src.email_notifications.main.get_application_data") as mock_get_data,
+        patch("functions.src.email_notifications.main.send_resend_email") as mock_send_email,
+        patch("functions.src.email_notifications.main.jinja_env") as mock_jinja_env,
     ):
         mock_template = Mock()
         mock_template.render.return_value = "<html>Test email content</html>"
@@ -274,7 +274,7 @@ async def test_send_application_email_missing_application_id() -> None:
 async def test_send_application_email_database_error(
     mock_cloud_event: CloudEvent, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    with patch("cloud_functions.src.email_notifications.main.get_application_data") as mock_get_data:
+    with patch("functions.src.email_notifications.main.get_application_data") as mock_get_data:
         mock_get_data.side_effect = Exception("Database connection failed")
 
         result = await send_application_email(mock_cloud_event)
@@ -284,18 +284,18 @@ async def test_send_application_email_database_error(
 
 
 def test_sync_wrapper_success(mock_cloud_event: CloudEvent, monkeypatch: pytest.MonkeyPatch) -> None:
-    from cloud_functions.src.email_notifications.main import main
+    from functions.src.email_notifications.main import main
 
-    with patch("cloud_functions.src.email_notifications.main.send_application_email") as mock_send:
+    with patch("functions.src.email_notifications.main.send_application_email") as mock_send:
         mock_send.return_value = {"status": "success", "message": "Email sent successfully"}
 
         main(mock_cloud_event)
 
 
 def test_sync_wrapper_error(mock_cloud_event: CloudEvent, monkeypatch: pytest.MonkeyPatch) -> None:
-    from cloud_functions.src.email_notifications.main import main
+    from functions.src.email_notifications.main import main
 
-    with patch("cloud_functions.src.email_notifications.main.send_application_email") as mock_send:
+    with patch("functions.src.email_notifications.main.send_application_email") as mock_send:
         mock_send.return_value = {"status": "error", "message": "Test error"}
 
         with pytest.raises(Exception, match="Test error"):

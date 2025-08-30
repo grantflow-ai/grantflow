@@ -1,4 +1,4 @@
-!cloud_functions/requirements.txt
+!functions/requirements.txt
 *$py.class
 **/*.log
 **/.venv

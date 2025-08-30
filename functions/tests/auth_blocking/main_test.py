@@ -1,4 +1,4 @@
-from cloud_functions.src.auth_blocking.main import is_grantflow_email
+from functions.src.auth_blocking.main import is_grantflow_email
 
 
 def test_is_grantflow_email_valid() -> None:
