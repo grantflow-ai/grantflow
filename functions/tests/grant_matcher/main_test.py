@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
-from cloud_functions.src.grant_matcher.main import (
+from functions.src.grant_matcher.main import (
     GrantData,
     SubscriptionData,
     _match_grants_async,
@@ -275,9 +275,9 @@ async def test_process_subscriptions_batch_respect_frequency() -> None:
     mock_publisher.publish.assert_not_called()
 
 
-@patch("cloud_functions.src.grant_matcher.main._get_publisher_client")
-@patch("cloud_functions.src.grant_matcher.main.get_session_maker")
-@patch("cloud_functions.src.grant_matcher.main._fetch_new_grants")
+@patch("functions.src.grant_matcher.main._get_publisher_client")
+@patch("functions.src.grant_matcher.main.get_session_maker")
+@patch("functions.src.grant_matcher.main._fetch_new_grants")
 async def test_match_grants_async_no_new_grants(
     mock_fetch_grants: AsyncMock, mock_session_maker: Mock, mock_publisher: Mock
 ) -> None:
@@ -293,11 +293,11 @@ async def test_match_grants_async_no_new_grants(
     mock_fetch_grants.assert_called_once()
 
 
-@patch("cloud_functions.src.grant_matcher.main._get_publisher_client")
-@patch("cloud_functions.src.grant_matcher.main.get_session_maker")
-@patch("cloud_functions.src.grant_matcher.main._fetch_new_grants")
-@patch("cloud_functions.src.grant_matcher.main._fetch_verified_subscriptions")
-@patch("cloud_functions.src.grant_matcher.main.process_subscriptions_batch")
+@patch("functions.src.grant_matcher.main._get_publisher_client")
+@patch("functions.src.grant_matcher.main.get_session_maker")
+@patch("functions.src.grant_matcher.main._fetch_new_grants")
+@patch("functions.src.grant_matcher.main._fetch_verified_subscriptions")
+@patch("functions.src.grant_matcher.main.process_subscriptions_batch")
 async def test_match_grants_async_successful_processing(
     mock_process_batch: AsyncMock,
     mock_fetch_subscriptions: AsyncMock,
@@ -327,10 +327,10 @@ async def test_match_grants_async_successful_processing(
     mock_process_batch.assert_called_once()
 
 
-@patch("cloud_functions.src.grant_matcher.main._get_publisher_client")
-@patch("cloud_functions.src.grant_matcher.main.get_session_maker")
-@patch("cloud_functions.src.grant_matcher.main._fetch_new_grants")
-@patch("cloud_functions.src.grant_matcher.main._fetch_verified_subscriptions")
+@patch("functions.src.grant_matcher.main._get_publisher_client")
+@patch("functions.src.grant_matcher.main.get_session_maker")
+@patch("functions.src.grant_matcher.main._fetch_new_grants")
+@patch("functions.src.grant_matcher.main._fetch_verified_subscriptions")
 async def test_match_grants_async_with_batching(
     mock_fetch_subscriptions: AsyncMock,
     mock_fetch_grants: AsyncMock,
@@ -347,7 +347,7 @@ async def test_match_grants_async_with_batching(
     mock_fetch_subscriptions.return_value = mock_subscriptions
 
     with patch(
-        "cloud_functions.src.grant_matcher.main.process_subscriptions_batch", new_callable=AsyncMock
+        "functions.src.grant_matcher.main.process_subscriptions_batch", new_callable=AsyncMock
     ) as mock_process_batch:
         mock_process_batch.return_value = 10
 

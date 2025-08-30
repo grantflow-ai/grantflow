@@ -5,7 +5,7 @@ Serverless Python functions for event processing and monitoring.
 ## Structure
 
 ```
-cloud_functions/
+functions/
 ├── src/
 │   ├── app_hosting_alerts/    # Firebase App Hosting alert notifications
 │   ├── auth_blocking/         # User authentication validation

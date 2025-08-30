@@ -11,7 +11,7 @@ os.environ.setdefault("PROJECT_ID", "grantflow-test")
 import httpx
 import pytest
 
-from cloud_functions.src.app_hosting_alerts.main import (
+from functions.src.app_hosting_alerts.main import (
     app_hosting_alert_to_discord,
     app_hosting_alert_to_discord_sync,
     create_test_alert_embed,
@@ -31,7 +31,7 @@ async def test_app_hosting_alert_high_priority(
     mock_cloud_event.data = app_hosting_alert_data
 
     mock_post = AsyncMock(return_value=mock_discord_webhook_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await app_hosting_alert_to_discord(mock_cloud_event)
 
         assert result["status"] == "success"
@@ -63,7 +63,7 @@ async def test_app_hosting_alert_medium_priority(
     mock_request.data = pubsub_data
 
     mock_post = AsyncMock(return_value=mock_discord_webhook_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await app_hosting_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
@@ -87,7 +87,7 @@ async def test_app_hosting_alert_low_priority(
     mock_request.data = pubsub_data
 
     mock_post = AsyncMock(return_value=mock_discord_webhook_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await app_hosting_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
@@ -101,7 +101,7 @@ async def test_app_hosting_alert_low_priority(
 
 
 async def test_app_hosting_alert_missing_webhook_url(mock_request: Mock, monkeypatch: pytest.MonkeyPatch) -> None:
-    with patch("cloud_functions.src.app_hosting_alerts.main.webhook_url", None):
+    with patch("functions.src.app_hosting_alerts.main.webhook_url", None):
         result = await app_hosting_alert_to_discord(mock_request)
 
     assert result["status"] == "error"
@@ -126,7 +126,7 @@ async def test_app_hosting_alert_missing_incident_data(mock_request: Mock) -> No
     mock_response = Mock()
     mock_response.status_code = 204
     mock_post = AsyncMock(return_value=mock_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await app_hosting_alert_to_discord(mock_request)
 
         assert result["status"] == "success"
@@ -149,7 +149,7 @@ async def test_app_hosting_alert_discord_webhook_failure(
     mock_response.status_code = 400
     mock_response.text = "Bad Request"
     mock_post = AsyncMock(return_value=mock_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await app_hosting_alert_to_discord(mock_request)
 
         assert result["status"] == "error"
@@ -164,7 +164,7 @@ async def test_app_hosting_alert_httpx_request_error(
     mock_request.data = pubsub_data
 
     mock_post = AsyncMock(side_effect=httpx.RequestError("Connection failed"))
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await app_hosting_alert_to_discord(mock_request)
 
         assert result["status"] == "error"
@@ -192,7 +192,7 @@ async def test_send_test_alert_success(mock_discord_webhook_response: Mock) -> N
     webhook_url = "https://discord.com/api/webhooks/123/test"
 
     mock_post = AsyncMock(return_value=mock_discord_webhook_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await send_test_alert(webhook_url, "staging", "grantflow-staging")
 
         assert result is True
@@ -210,7 +210,7 @@ async def test_send_test_alert_failure() -> None:
     webhook_url = "https://discord.com/api/webhooks/123/test"
 
     mock_post = AsyncMock(side_effect=httpx.RequestError("Connection failed"))
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         result = await send_test_alert(webhook_url, "staging", "grantflow-staging")
 
         assert result is False
@@ -225,7 +225,7 @@ def test_app_hosting_alert_sync_wrapper(
     mock_request.data = pubsub_data
 
     mock_post = AsyncMock(return_value=mock_discord_webhook_response)
-    with patch("cloud_functions.src.app_hosting_alerts.main.http_client.post", mock_post):
+    with patch("functions.src.app_hosting_alerts.main.http_client.post", mock_post):
         app_hosting_alert_to_discord_sync(mock_request)
 
         mock_post.assert_called_once()

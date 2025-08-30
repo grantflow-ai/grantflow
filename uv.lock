@@ -1092,7 +1092,7 @@ dev = [
 [[package]]
 name = "grantflow-cloud-functions"
 version = "0.1.0"
-source = { virtual = "cloud_functions" }
+source = { virtual = "functions" }
 dependencies = [
     { name = "asyncpg" },
     { name = "cloudevents" },

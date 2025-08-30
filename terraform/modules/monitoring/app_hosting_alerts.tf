@@ -367,12 +367,12 @@ data "archive_file" "app_hosting_function" {
   output_path = "${path.module}/app-hosting-alert-function.zip"
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/app_hosting_alerts/main.py")
+    content  = file("${path.root}/../functions/src/app_hosting_alerts/main.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("${path.module}/../../cloud_functions/requirements.txt")
+    content  = file("${path.module}/../../../functions/requirements.txt")
     filename = "requirements.txt"
   }
 }

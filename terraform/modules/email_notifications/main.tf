@@ -31,27 +31,27 @@ data "archive_file" "email_notification_source" {
   output_path = "${path.module}/email-notification-function.zip"
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/email_notifications/main_fixed.py")
+    content  = file("${path.root}/../functions/src/email_notifications/main_fixed.py")
     filename = "main.py"
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/requirements_fixed.txt")
+    content  = file("${path.root}/../functions/requirements.txt")
     filename = "requirements.txt"
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/application_ready.html")
+    content  = file("${path.root}/../functions/src/email_notifications/templates/application_ready.html")
     filename = "templates/application_ready.html"
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/grant_alert.html")
+    content  = file("${path.root}/../functions/src/email_notifications/templates/grant_alert.html")
     filename = "templates/grant_alert.html"
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/src/email_notifications/templates/subscription_verification.html")
+    content  = file("${path.root}/../functions/src/email_notifications/templates/subscription_verification.html")
     filename = "templates/subscription_verification.html"
   }
 }
