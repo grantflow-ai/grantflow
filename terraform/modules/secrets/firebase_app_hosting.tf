@@ -50,11 +50,3 @@ resource "google_secret_manager_secret_iam_binding" "firebase_app_hosting_access
     "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firebaseapphosting.iam.gserviceaccount.com"
   ]
 }
-
-output "firebase_app_hosting_secrets" {
-  description = "Map of Firebase App Hosting secret IDs"
-  value = {
-    for k, v in google_secret_manager_secret.firebase_app_hosting :
-    k => v.secret_id
-  }
-}
