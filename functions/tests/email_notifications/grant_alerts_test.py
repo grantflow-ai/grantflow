@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from cloudevents.http import CloudEvent
 
 
-@patch("cloud_functions.src.email_notifications.main.send_resend_email")
-@patch("cloud_functions.src.email_notifications.main.jinja_env")
+@patch("functions.src.email_notifications.main.send_resend_email")
+@patch("functions.src.email_notifications.main.jinja_env")
 async def test_send_grant_alert_email_success(
     mock_jinja_env: MagicMock,
     mock_send_resend: AsyncMock,
 ) -> None:
-    from cloud_functions.src.email_notifications.main import send_grant_alert_email
+    from functions.src.email_notifications.main import send_grant_alert_email
 
     mock_template = MagicMock()
     mock_template.render.return_value = "<html>Grant Alert</html>"
@@ -66,13 +66,13 @@ async def test_send_grant_alert_email_success(
     )
 
 
-@patch("cloud_functions.src.email_notifications.main.send_resend_email")
-@patch("cloud_functions.src.email_notifications.main.jinja_env")
+@patch("functions.src.email_notifications.main.send_resend_email")
+@patch("functions.src.email_notifications.main.jinja_env")
 async def test_send_grant_alert_single_grant(
     mock_jinja_env: MagicMock,
     mock_send_resend: AsyncMock,
 ) -> None:
-    from cloud_functions.src.email_notifications.main import send_grant_alert_email
+    from functions.src.email_notifications.main import send_grant_alert_email
 
     mock_template = MagicMock()
     mock_template.render.return_value = "<html>Single Grant</html>"
@@ -104,11 +104,11 @@ async def test_send_grant_alert_single_grant(
     assert args[1] == "🎯 1 New Grant Available"
 
 
-@patch("cloud_functions.src.email_notifications.main.send_resend_email")
+@patch("functions.src.email_notifications.main.send_resend_email")
 async def test_send_grant_alert_email_failure(
     mock_send_resend: AsyncMock,
 ) -> None:
-    from cloud_functions.src.email_notifications.main import send_grant_alert_email
+    from functions.src.email_notifications.main import send_grant_alert_email
 
     mock_send_resend.side_effect = Exception("Resend API error")
 
@@ -128,11 +128,11 @@ async def test_send_grant_alert_email_failure(
     assert "Failed to send grant alert: Resend API error" in result["message"]
 
 
-@patch("cloud_functions.src.email_notifications.main.send_grant_alert_email")
+@patch("functions.src.email_notifications.main.send_grant_alert_email")
 async def test_main_function_routes_grant_alerts(
     mock_send_grant_alert: AsyncMock,
 ) -> None:
-    from cloud_functions.src.email_notifications.main import send_application_email
+    from functions.src.email_notifications.main import send_application_email
 
     mock_send_grant_alert.return_value = {
         "status": "success",
@@ -167,13 +167,13 @@ async def test_main_function_routes_grant_alerts(
     mock_send_grant_alert.assert_called_once_with(grant_alert_data)
 
 
-@patch("cloud_functions.src.email_notifications.main.get_application_data")
-@patch("cloud_functions.src.email_notifications.main.send_resend_email")
+@patch("functions.src.email_notifications.main.get_application_data")
+@patch("functions.src.email_notifications.main.send_resend_email")
 async def test_main_function_routes_application_emails(
     mock_send_resend: AsyncMock,
     mock_get_app_data: AsyncMock,
 ) -> None:
-    from cloud_functions.src.email_notifications.main import send_application_email
+    from functions.src.email_notifications.main import send_application_email
 
     mock_get_app_data.return_value = {
         "application": {
@@ -210,9 +210,9 @@ async def test_main_function_routes_application_emails(
         },
     )
 
-    with patch("cloud_functions.src.email_notifications.main.markdown_to_docx") as mock_docx:
+    with patch("functions.src.email_notifications.main.markdown_to_docx") as mock_docx:
         mock_docx.return_value = b"docx content"
-        with patch("cloud_functions.src.email_notifications.main.jinja_env") as mock_jinja:
+        with patch("functions.src.email_notifications.main.jinja_env") as mock_jinja:
             mock_template = MagicMock()
             mock_template.render.return_value = "<html>Application Ready</html>"
             mock_jinja.get_template.return_value = mock_template

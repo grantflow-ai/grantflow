@@ -10,7 +10,7 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - **[`/terraform`](./terraform/README.md)** - Infrastructure as Code using OpenTofu
   - `environments/` - Environment-specific configurations (staging, production)
   - `modules/` - Reusable Terraform modules
-- **[`/cloud_functions`](./cloud_functions/README.md)** - Serverless monitoring & automation
+- **[`/functions`](functions/README.md)** - Serverless monitoring & automation
   - `app_hosting_alerts/` - Firebase deployment notifications
   - `auth_blocking/` - User authentication validation
   - `budget_alerts/` - Cost monitoring alerts
