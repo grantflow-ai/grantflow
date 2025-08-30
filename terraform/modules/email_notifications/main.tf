@@ -36,7 +36,7 @@ data "archive_file" "email_notification_source" {
   }
 
   source {
-    content  = file("${path.root}/../cloud_functions/requirements_fixed.txt")
+    content  = file("${path.root}/../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
 
