@@ -8,16 +8,6 @@ terraform {
   }
 }
 
-variable "region" {
-  description = "The region for networking resources"
-  type        = string
-  default     = "us-central1"
-}
-
-variable "project_id" {
-  description = "The Google Cloud project ID"
-  type        = string
-}
 
 resource "google_compute_network" "default" {
   project                                   = var.project_id

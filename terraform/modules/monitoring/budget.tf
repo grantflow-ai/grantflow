@@ -46,11 +46,7 @@ resource "google_billing_budget" "monthly_budget" {
   }
 }
 
-variable "enable_billing_budget" {
-  description = "Whether to create billing budget alerts"
-  type        = bool
-  default     = false
-}
+
 
 resource "google_pubsub_topic" "budget_alerts" {
   name = "budget-alerts-${var.environment}"
@@ -195,11 +191,4 @@ data "archive_file" "function" {
     content  = file("${path.module}/../../cloud_functions/requirements.txt")
     filename = "requirements.txt"
   }
-}
-
-
-variable "monthly_budget_amount" {
-  description = "Monthly budget amount in USD"
-  type        = string
-  default     = "500"
 }
