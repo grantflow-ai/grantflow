@@ -11,7 +11,6 @@ import { AppTextarea } from "@/components/app/fields/app-textarea";
 import InputField from "@/components/app/fields/input-field";
 import { ThemeBadge } from "@/components/shared/theme-badge";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GrantSection, UpdateGrantSection } from "@/types/grant-sections";
 import { hasDetailedResearchPlan, hasGenerationInstructions, hasMaxWords } from "@/types/grant-sections";
@@ -236,15 +235,14 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 						Words/Characters count
 					</h3>
 					<p className="text-app-gray-600 text-base font-normal leading-tight">
-						This helps AI generate content that fits the grant&apos;s requirements. Choose if the limit
-						applies to words or characters.
+						This helps AI generate content that fits the grant&apos;s requirements.
 					</p>
 				</div>
 
-				<div className="flex gap-4 h-12">
+				<div className="gap-4 h-12">
 					<div className="w-64">
 						<InputField
-							label={`Max ${formData.useWords ? "words" : "characters"}`}
+							label="Max words/characters"
 							onChange={(e) => {
 								setFormData({
 									...formData,
@@ -252,34 +250,11 @@ function SectionEditForm({ formData, isSubsection, onCancel, onSave, section, se
 								});
 							}}
 							placeholder="3,000"
+							showCountTypeTag
 							testId={`max-count-${section.id}`}
 							type="number"
 							value={formData.max_words}
 						/>
-					</div>
-					<div className="flex-1 items-center max-w-64">
-						<Label className="block text-start text-xs font-light text-input-label">Words/Characters</Label>
-						<Select
-							onValueChange={(value) => {
-								setFormData({ ...formData, useWords: value === "words" });
-							}}
-							value={formData.useWords ? "words" : "characters"}
-						>
-							<SelectTrigger
-								className="w-full shadow-none rounded-sm"
-								data-testid="word-character-selector"
-							>
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent className="shadown-none rounded-sm" data-testid="word-character-dropdown">
-								<SelectItem data-testid="words-option" value="words">
-									Words
-								</SelectItem>
-								<SelectItem data-testid="characters-option" value="characters">
-									Characters
-								</SelectItem>
-							</SelectContent>
-						</Select>
 					</div>
 				</div>
 
