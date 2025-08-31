@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
 import { getProject } from "@/actions/project";
+import { LoadingState } from "@/components/organizations/project/loading-state";
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -100,12 +101,7 @@ export function NavigationContextProvider({
 	]);
 
 	if (isLoading) {
-		return (
-			<div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-				<div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary" />
-				<p className="text-gray-600 font-medium">Loading...</p>
-			</div>
-		);
+		return <LoadingState />;
 	}
 
 	if (error) {

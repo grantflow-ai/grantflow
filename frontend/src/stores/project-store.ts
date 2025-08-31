@@ -16,13 +16,11 @@ export type ProjectsListType = API.ListProjects.Http200.ResponseBody;
 export type ProjectType = API.GetProject.Http200.ResponseBody | null;
 
 interface ProjectState {
-	areOperationsInProgress: boolean;
 	project: ProjectType;
 	projects: ProjectsListType;
 }
 
 const initialState: ProjectState = {
-	areOperationsInProgress: false,
 	project: null,
 	projects: [],
 };
@@ -42,14 +40,12 @@ interface ProjectActions {
 export const useProjectStore = create<ProjectActions & ProjectState>((set, get) => ({
 	...initialState,
 	createProject: async (organizationId: string, data: API.CreateProject.RequestBody) => {
-		set({ areOperationsInProgress: true });
 		try {
 			const response = await handleCreateProject(organizationId, data);
 
 			const projectsResponse = await handleGetProjects(organizationId);
 
 			set({
-				areOperationsInProgress: false,
 				projects: projectsResponse,
 			});
 
@@ -62,17 +58,14 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		} catch (error: unknown) {
 			log.error("createProject", error);
 			toast.error("Failed to create project");
-			set({ areOperationsInProgress: false });
 		}
 	},
 
 	deleteProject: async (organizationId: string, projectId: string) => {
-		set({ areOperationsInProgress: true });
 		const toastId = toast.loading("Deleting research project ");
 		try {
 			await handleDeleteProject(organizationId, projectId);
 			set((state) => ({
-				areOperationsInProgress: false,
 				project: state.project?.id === projectId ? null : state.project,
 				projects: state.projects.filter((p) => p.id !== projectId),
 			}));
@@ -81,19 +74,16 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		} catch (error: unknown) {
 			log.error("deleteProject", error);
 			toast.error("Failed to delete research project.", { id: toastId });
-			set({ areOperationsInProgress: false });
 		}
 	},
 
 	duplicateProject: async (organizationId: string, projectId: string) => {
-		set({ areOperationsInProgress: true });
 		const toastId = toast.loading("Duplicating research project");
 		try {
 			await handleDuplicateProject(organizationId, projectId);
 			const projectsResponse = await handleGetProjects(organizationId);
 
 			set({
-				areOperationsInProgress: false,
 				projects: projectsResponse,
 			});
 
@@ -101,16 +91,13 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		} catch (error: unknown) {
 			log.error("duplicateProject", error);
 			toast.error("Failed to duplicate research project.", { id: toastId });
-			set({ areOperationsInProgress: false });
 		}
 	},
 
 	getProject: async (organizationId: string, projectId: string) => {
-		set({ areOperationsInProgress: true });
 		try {
 			const response = await handleGetProject(organizationId, projectId);
 			set({
-				areOperationsInProgress: false,
 				project: response,
 			});
 			log.info("project-store.ts: getProject: ", {
@@ -120,16 +107,13 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		} catch (error: unknown) {
 			log.error("getProject", error);
 			toast.error("Failed to retrieve project");
-			set({ areOperationsInProgress: false });
 		}
 	},
 
 	getProjects: async (organizationId: string) => {
-		set({ areOperationsInProgress: true });
 		try {
 			const response = await handleGetProjects(organizationId);
 			set({
-				areOperationsInProgress: false,
 				projects: response,
 			});
 			log.info("project-store.ts: getProjects: ", {
@@ -139,7 +123,6 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		} catch (error: unknown) {
 			log.error("getProjects", error);
 			toast.error("Failed to retrieve projects");
-			set({ areOperationsInProgress: false });
 		}
 	},
 
@@ -172,8 +155,6 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 		const previousProject = project;
 		const previousProjects = projects;
 
-		set({ areOperationsInProgress: true });
-
 		try {
 			await handleUpdateProject(organizationId, projectId, data);
 
@@ -181,7 +162,6 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			const projectsResponse = await handleGetProjects(organizationId);
 
 			set({
-				areOperationsInProgress: false,
 				project: project?.id === projectId ? updatedProject : project,
 				projects: projectsResponse,
 			});
@@ -189,7 +169,6 @@ export const useProjectStore = create<ProjectActions & ProjectState>((set, get) 
 			toast.success("Project updated successfully");
 		} catch (error: unknown) {
 			set({
-				areOperationsInProgress: false,
 				project: previousProject,
 				projects: previousProjects,
 			});
