@@ -203,6 +203,28 @@ describe("SortableSection", () => {
 		expect(input).toHaveValue(5000);
 	});
 
+	it("displays count type tag in max count input field", () => {
+		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const tag = screen.getByText("Characters");
+		expect(tag).toBeInTheDocument();
+		expect(tag.parentElement).toHaveAttribute("data-type", "Characters");
+	});
+
+	it("limits max count input to 7 digits", async () => {
+		const section = GrantSectionDetailedFactory.build({ max_words: 3000 });
+
+		render(<SortableSection {...defaultProps} isExpanded={true} section={section} />);
+
+		const input = screen.getByTestId(`max-count-${section.id}`);
+		await user.clear(input);
+		await user.type(input, "12345678");
+
+		expect(input).toHaveValue(1_234_567);
+	});
+
 	it("updates AI prompt when edited", async () => {
 		const section = GrantSectionDetailedFactory.build();
 

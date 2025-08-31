@@ -166,4 +166,72 @@ describe.sequential("AppInput Component", () => {
 		expect(input).toHaveAttribute("autoComplete", "email");
 		expect(input).toHaveAttribute("required");
 	});
+
+	describe("Count Type Tag", () => {
+		it("displays Characters tag when showCountTypeTag is true with chars countType", () => {
+			render(<AppInput countType="chars" showCountTypeTag testId="test-input" />);
+
+			const tag = screen.getByText("Characters");
+			expect(tag).toBeInTheDocument();
+			expect(tag.parentElement).toHaveAttribute("data-type", "Characters");
+		});
+
+		it("displays Words tag when showCountTypeTag is true with words countType", () => {
+			render(<AppInput countType="words" showCountTypeTag testId="test-input" />);
+
+			const tag = screen.getByText("Words");
+			expect(tag).toBeInTheDocument();
+			expect(tag.parentElement).toHaveAttribute("data-type", "Characters");
+		});
+
+		it("does not display tag when showCountTypeTag is false", () => {
+			render(<AppInput countType="chars" showCountTypeTag={false} testId="test-input" />);
+
+			expect(screen.queryByText("Characters")).not.toBeInTheDocument();
+		});
+
+		it("hides icon when showCountTypeTag is true", () => {
+			const { container } = render(
+				<AppInput icon={<Mail data-testid="mail-icon" />} showCountTypeTag testId="test-input" />,
+			);
+
+			expect(container.querySelector('[data-testid="mail-icon"]')).not.toBeInTheDocument();
+			expect(screen.getByText("Characters")).toBeInTheDocument();
+		});
+
+		it("shows icon when showCountTypeTag is false", () => {
+			const { container } = render(
+				<AppInput icon={<Mail data-testid="mail-icon" />} showCountTypeTag={false} testId="test-input" />,
+			);
+
+			expect(container.querySelector('[data-testid="mail-icon"]')).toBeInTheDocument();
+			expect(screen.queryByText("Characters")).not.toBeInTheDocument();
+		});
+	});
+
+	describe("Number Input Restrictions", () => {
+		it("limits number input to 7 digits", async () => {
+			const user = userEvent.setup();
+			const handleChange = vi.fn();
+
+			render(<AppInput onChange={handleChange} testId="test-input" type="number" />);
+
+			const input = screen.getByTestId("test-input");
+			await user.type(input, "12345678");
+
+			expect(input).toHaveValue(1_234_567);
+			expect(handleChange).toHaveBeenCalledTimes(7);
+		});
+
+		it("allows non-number inputs to exceed 7 characters", async () => {
+			const user = userEvent.setup();
+
+			render(<AppInput testId="test-input" type="text" />);
+
+			const input = screen.getByTestId("test-input");
+			await user.type(input, "12345678");
+
+			expect(input).toHaveValue("12345678");
+		});
+	});
 });
