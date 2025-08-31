@@ -24,7 +24,6 @@ export function NavigationContextProvider({
 	requireProject = false,
 }: NavigationContextProviderProps) {
 	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<null | string>(null);
 
 	const { activeApplicationId, activeProjectId, clearActiveApplication, clearActiveProject } = useNavigationStore();
@@ -68,22 +67,16 @@ export function NavigationContextProvider({
 		}
 
 		const loadData = async () => {
-			setIsLoading(true);
 			setError(null);
 
 			if (activeProjectId && !(await loadProjectData()) && requireProject) {
 				router.replace(redirectTo);
-				setIsLoading(false);
 				return;
 			}
 
 			if (activeApplicationId && !(await loadApplicationData()) && requireApplication) {
 				router.replace(redirectTo);
-				setIsLoading(false);
-				return;
 			}
-
-			setIsLoading(false);
 		};
 
 		void loadData();
@@ -98,15 +91,6 @@ export function NavigationContextProvider({
 		loadProjectData,
 		loadApplicationData,
 	]);
-
-	if (isLoading) {
-		return (
-			<div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-				<div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary" />
-				<p className="text-gray-600 font-medium">Loading...</p>
-			</div>
-		);
-	}
 
 	if (error) {
 		return (
