@@ -167,6 +167,60 @@ export const NumberInput: Story = {
 	},
 };
 
+export const WithCharacterTag: Story = {
+	args: {
+		countType: "chars",
+		label: "Max Characters Input",
+		maxCount: 3000,
+		onChange: action("changed"),
+		placeholder: "3,000",
+		showCountTypeTag: true,
+		testId: "char-tag-input",
+		type: "number",
+	},
+};
+
+export const WithWordTag: Story = {
+	args: {
+		countType: "words",
+		label: "Max Words Input",
+		maxCount: 500,
+		onChange: action("changed"),
+		placeholder: "500",
+		showCountTypeTag: true,
+		testId: "word-tag-input",
+		type: "number",
+	},
+};
+
+export const CharacterTagWithCount: Story = {
+	args: {
+		countType: "chars",
+		label: "Content with Character Tag",
+		maxCount: 100,
+		onChange: action("changed"),
+		placeholder: "Type your content here...",
+		showCount: true,
+		showCountTypeTag: true,
+		testId: "char-tag-count-input",
+		value: "This shows both the character tag and count",
+	},
+};
+
+export const WordTagWithCount: Story = {
+	args: {
+		countType: "words",
+		label: "Content with Word Tag",
+		maxCount: 50,
+		onChange: action("changed"),
+		placeholder: "Type your content here...",
+		showCount: true,
+		showCountTypeTag: true,
+		testId: "word-tag-count-input",
+		value: "This example shows both the word tag inside the input and the count above",
+	},
+};
+
 export const AllVariants: Story = {
 	decorators: [
 		() => (
@@ -199,6 +253,26 @@ export const AllVariants: Story = {
 					placeholder="Type something..."
 					showCount={true}
 					testId="char-count"
+				/>
+				<AppInput
+					countType="chars"
+					label="With Character Tag"
+					maxCount={3000}
+					onChange={action("char-tag-changed")}
+					placeholder="3,000"
+					showCountTypeTag={true}
+					testId="char-tag"
+					type="number"
+				/>
+				<AppInput
+					countType="words"
+					label="With Word Tag"
+					maxCount={500}
+					onChange={action("word-tag-changed")}
+					placeholder="500"
+					showCountTypeTag={true}
+					testId="word-tag"
+					type="number"
 				/>
 				<AppInput
 					label="Field Variant"

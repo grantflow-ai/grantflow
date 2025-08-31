@@ -26,6 +26,7 @@ const getInputClasses = (
 	variant: "default" | "field",
 	errorMessage: null | React.ReactNode | string | undefined,
 	icon: React.ReactNode | undefined,
+	showCountTypeTag: boolean | undefined,
 	disabled?: boolean,
 	className?: string,
 ) => {
@@ -36,7 +37,7 @@ const getInputClasses = (
 			: "placeholder:text-input-placeholder border-input-muted",
 		variant === "field" && "ring-1 ring-input-border",
 		errorMessage && "border-error",
-		icon && "pr-10",
+		(icon ?? showCountTypeTag) && "pr-10",
 		"focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input",
 		"focus-visible:border focus-visible:border-primary",
 		className,
@@ -51,6 +52,7 @@ export default function AppInput({
 	label,
 	maxCount,
 	showCount = false,
+	showCountTypeTag = false,
 	testId,
 	variant = "default",
 	...props
@@ -62,6 +64,7 @@ export default function AppInput({
 	label?: string;
 	maxCount?: number;
 	showCount?: boolean;
+	showCountTypeTag?: boolean;
 	testId?: string;
 	variant?: "default" | "field";
 } & React.InputHTMLAttributes<HTMLInputElement>) {
@@ -88,7 +91,7 @@ export default function AppInput({
 				)}
 
 				{showCount && (
-					<div className={`ps-4 text-xs ${textColorClass}`} data-testid={`${testId}-${countType}-count`}>
+					<div className={`text-xs ${textColorClass}`} data-testid={`${testId}-${countType}-count`}>
 						{formattedCount}
 						{formattedMaxCount ? `/${formattedMaxCount}` : ""}
 					</div>
@@ -98,20 +101,42 @@ export default function AppInput({
 			<div className="relative">
 				<Input
 					{...props}
-					className={getInputClasses(variant, errorMessage, icon, props.disabled, className)}
+					className={getInputClasses(
+						variant,
+						errorMessage,
+						icon,
+						showCountTypeTag,
+						props.disabled,
+						className,
+					)}
 					data-testid={testId}
 					disabled={props.disabled}
 					id={props.id ?? testId}
 					maxLength={countType === "chars" ? maxCount : undefined}
 					onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						setText(e.target.value);
+						const inputValue = e.target.value;
+						if (props.type === "number" && inputValue.replaceAll(/\D/g, "").length > 7) {
+							return;
+						}
+						setText(inputValue);
 						props.onChange?.(e);
 					}}
 					placeholder={props.placeholder}
 					value={displayText}
 				/>
 
-				{icon && (
+				{showCountTypeTag && (
+					<div
+						className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 bg-indigo-100 rounded-2xl inline-flex justify-start items-center gap-[2.85px]"
+						data-type="Characters"
+					>
+						<div className="justify-start text-app-gray-600 text-[10px] leading-3">
+							{countType === "chars" ? "Characters" : "Words"}
+						</div>
+					</div>
+				)}
+
+				{icon && !showCountTypeTag && (
 					<div
 						className={cn(
 							"absolute right-3 top-1/2 -translate-y-1/2",
