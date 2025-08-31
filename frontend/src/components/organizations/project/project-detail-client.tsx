@@ -101,7 +101,7 @@ export function ProjectDetailClient() {
 		}
 	}, [selectedOrganizationId, getProjects]);
 
-	const { data: applicationsData, isLoading } = useSWR(
+	const { data: applicationsData } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`
 			: null,
@@ -113,6 +113,7 @@ export function ProjectDetailClient() {
 			revalidateOnFocus: false,
 		},
 	);
+
 	const { data: OrganizationMember } = useSWR(
 		selectedOrganizationId ? `/organizations/${selectedOrganizationId}/members` : null,
 		() => (selectedOrganizationId ? getOrganizationMembers(selectedOrganizationId) : null),
@@ -120,6 +121,7 @@ export function ProjectDetailClient() {
 			revalidateOnFocus: false,
 		},
 	);
+
 	const { data: projectMembers, mutate: mutateMembers } = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/members`
@@ -223,6 +225,7 @@ export function ProjectDetailClient() {
 	const handleCreateApplication = async () => {
 		if (!(project && selectedOrganizationId)) return;
 		setIsCreatingApplication(true);
+
 		try {
 			const application = await createApplication(selectedOrganizationId, project.id, {
 				title: DEFAULT_APPLICATION_TITLE,
@@ -425,7 +428,6 @@ export function ProjectDetailClient() {
 						<ApplicationList
 							applications={applications}
 							isCreatingApplication={isCreatingApplication}
-							isLoading={isLoading}
 							onCreate={handleCreateApplication}
 							onDelete={handleDeleteApplication}
 							onDuplicate={handleDuplicateApplication}
