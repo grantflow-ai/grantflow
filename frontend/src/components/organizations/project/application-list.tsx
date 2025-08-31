@@ -6,7 +6,6 @@ import { ApplicationCard } from "./application-card";
 interface ApplicationListProps {
 	applications: API.ListApplications.Http200.ResponseBody["applications"];
 	isCreatingApplication: boolean;
-	isLoading: boolean;
 	onCreate: () => void;
 	onDelete: (id: string) => void;
 	onDuplicate: (id: string, currentTitle: string) => void;
@@ -17,22 +16,12 @@ interface ApplicationListProps {
 export function ApplicationList({
 	applications,
 	isCreatingApplication,
-	isLoading,
 	onCreate,
 	onDelete,
 	onDuplicate,
 	onOpen,
 	searchQuery,
 }: ApplicationListProps) {
-	if (isLoading) {
-		return (
-			<div className="flex flex-col items-center justify-center h-64 gap-4">
-				<div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-primary" />
-				<div className="text-[#636170] font-medium">Loading applications...</div>
-			</div>
-		);
-	}
-
 	if (applications.length === 0) {
 		const getEmptyStateButtonText = () => {
 			if (searchQuery) return "No applications found";

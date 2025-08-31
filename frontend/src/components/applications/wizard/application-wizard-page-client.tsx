@@ -15,8 +15,9 @@ export function ApplicationWizardPageClient() {
 	const { selectedOrganizationId } = useOrganizationStore();
 	const { activeApplicationId } = useNavigationStore();
 	const [application, setApplication] = useState<Awaited<ReturnType<typeof getApplication>> | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<null | string>(null);
+
+	const isLoading = !(application ?? error);
 
 	useEffect(() => {
 		async function loadApplication() {
@@ -26,7 +27,6 @@ export function ApplicationWizardPageClient() {
 			}
 
 			try {
-				setIsLoading(true);
 				const app = await getApplication(selectedOrganizationId, project.id, activeApplicationId);
 				setApplication(app);
 			} catch {
@@ -35,8 +35,6 @@ export function ApplicationWizardPageClient() {
 				setTimeout(() => {
 					router.replace(routes.organization.project.detail());
 				}, 2000);
-			} finally {
-				setIsLoading(false);
 			}
 		}
 

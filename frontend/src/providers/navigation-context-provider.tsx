@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
 import { getProject } from "@/actions/project";
-import { LoadingState } from "@/components/organizations/project/loading-state";
 import { useApplicationStore } from "@/stores/application-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -25,7 +24,6 @@ export function NavigationContextProvider({
 	requireProject = false,
 }: NavigationContextProviderProps) {
 	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<null | string>(null);
 
 	const { activeApplicationId, activeProjectId, clearActiveApplication, clearActiveProject } = useNavigationStore();
@@ -69,22 +67,16 @@ export function NavigationContextProvider({
 		}
 
 		const loadData = async () => {
-			setIsLoading(true);
 			setError(null);
 
 			if (activeProjectId && !(await loadProjectData()) && requireProject) {
 				router.replace(redirectTo);
-				setIsLoading(false);
 				return;
 			}
 
 			if (activeApplicationId && !(await loadApplicationData()) && requireApplication) {
 				router.replace(redirectTo);
-				setIsLoading(false);
-				return;
 			}
-
-			setIsLoading(false);
 		};
 
 		void loadData();
@@ -99,10 +91,6 @@ export function NavigationContextProvider({
 		loadProjectData,
 		loadApplicationData,
 	]);
-
-	if (isLoading) {
-		return <LoadingState />;
-	}
 
 	if (error) {
 		return (
