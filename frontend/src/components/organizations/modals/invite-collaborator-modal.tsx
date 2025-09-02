@@ -23,6 +23,7 @@ interface InviteCollaboratorModalProps {
 	onInvite: (options: InviteOptions) => Promise<void>;
 	ownerEmail?: string;
 	projects: ResearchProject[];
+	projectId?: string
 }
 
 interface ResearchProject {
@@ -36,6 +37,7 @@ export function InviteCollaboratorModal({
 	onInvite,
 	ownerEmail,
 	projects = [],
+	projectId,
 }: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -56,6 +58,8 @@ export function InviteCollaboratorModal({
 			if (permission === "ADMIN") {
 				hasAllProjectsAccess = true;
 				projectIds = projects.map((project) => project.id);
+			} else if(projectId){
+				projectIds = [projectId];
 			} else {
 				projectIds = selectedProjects;
 			}
@@ -218,6 +222,9 @@ export function InviteCollaboratorModal({
 							</Select>
 						</div>
 
+						{
+							!projectId && (
+
 						<div className="flex flex-col gap-2">
 							<div className="flex flex-wrap items-center gap-2">
 								{selectedProjects.map((projectId) => {
@@ -299,6 +306,9 @@ export function InviteCollaboratorModal({
 								</Select>
 							</div>
 						</div>
+							)
+						}
+
 					</div>
 
 					<div className="flex items-center justify-between">

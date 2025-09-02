@@ -25,7 +25,7 @@ import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { generateInitials } from "@/utils/user";
-import { EditPermissionModal } from "./edit-permission-modal";
+import { EditPermissionModal, type CollaboratorPermission } from "./edit-permission-modal";
 
 interface OrganizationMember {
 	displayName?: string;
@@ -52,6 +52,8 @@ interface ProjectAccess {
 	project_name: string;
 }
 
+
+
 const AVATAR_COLORS = ["bg-[#369e94]", "bg-[#9747ff]", "bg-[#4dc283]", "bg-[#ff6b6b]", "bg-[#4ecdc4]", "bg-[#45b7d1]"];
 
 const ROLE_LABELS = {
@@ -61,6 +63,59 @@ const ROLE_LABELS = {
 };
 
 const EMPTY_PROJECTS: API.ListProjects.Http200.ResponseBody = [];
+
+// const mockMembersData = [
+// 	{
+// 		created_at: "2024-08-15T09:00:00Z",
+// 		display_name: "Current User (Owner)",
+// 		email: "owner@example.com",
+// 		firebase_uid: "uid-owner",
+// 		has_all_projects_access: true,
+// 		projectAccess: [],
+// 		role: UserRole.OWNER,
+// 		photo_url: "",
+// 	},
+// 	{
+// 		created_at: "2024-08-15T10:00:00Z",
+// 		display_name: "John Doe",
+// 		email: "john.doe@example.com",
+// 		firebase_uid: "uid-john-doe",
+// 		has_all_projects_access: true,
+// 		projectAccess: [],
+// 		role: UserRole.ADMIN,
+// 		photo_url: "",
+// 	},
+// 	{
+// 		created_at: "2024-08-15T11:00:00Z",
+// 		display_name: "Jane Smith",
+// 		email: "jane.smith@example.com",
+// 		firebase_uid: "uid-jane-smith",
+// 		has_all_projects_access: false,
+// 		projectAccess: [
+// 			{ project_id: "proj1", project_name: "Project Alpha", granted_at: "2024-08-15T11:00:00Z" },
+// 			{ project_id: "proj2", project_name: "Project Beta", granted_at: "2024-08-15T11:00:00Z" },
+// 		],
+// 		role: UserRole.COLLABORATOR,
+// 		photo_url: "",
+// 	},
+// ];
+
+// const mockInvitationsData = [
+// 	{
+// 		id: "invite-1",
+// 		email: "pending@example.com",
+// 		role: UserRole.COLLABORATOR,
+// 		invitation_sent_at: "2024-08-16T09:00:00Z",
+// 		has_all_projects_access: false,
+// 		project_ids: [],
+// 	},
+// ];
+
+// const mockProjects = [
+// 	{ id: "proj1", name: "Project Alpha" },
+// 	{ id: "proj2", name: "Project Beta" },
+// ];
+
 export function OrganizationSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
@@ -71,6 +126,10 @@ export function OrganizationSettingsMembers({
 	const [editingMember, setEditingMember] = useState<null | OrganizationMember>(null);
 	const { addNotification } = useNotificationStore();
 
+	// --- MOCK DATA ---
+	// const members = mockMembersData;
+	// const invitations = mockInvitationsData;
+	// const isLoading = false;
 	const { data: members = [], isLoading } = useSWR(
 		`/organizations/${organizationId}/members`,
 		() => getOrganizationMembers(organizationId),
@@ -207,7 +266,7 @@ export function OrganizationSettingsMembers({
 		hasAllProjectsAccess: member.has_all_projects_access,
 		joinedAt: member.created_at,
 		photoUrl: member.photo_url,
-		projectAccess: member.project_access,
+		projectAccess: member.projectAccess,
 		role: member.role as UserRole,
 		status: "active" as const,
 	}));
@@ -335,13 +394,17 @@ export function OrganizationSettingsMembers({
 			/>
 
 			<EditPermissionModal
-				currentUserRole={currentUserRole}
 				isOpen={editingMember !== null}
-				member={editingMember}
+				member={editingMember as (OrganizationMember & { role: CollaboratorPermission }) | null}
 				onClose={() => {
 					setEditingMember(null);
 				}}
-				onUpdateRole={handleUpdateRole}
+				onEdit={async (options) => {
+					if (!editingMember) return;
+					await handleUpdateRole(editingMember.firebaseUid, options.role as UserRole, options.hasAllProjectsAccess);
+				}}
+				ownerEmail={ownerEmail}
+				projects={projects}
 			/>
 		</div>
 	);
