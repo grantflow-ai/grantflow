@@ -6,7 +6,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { listApplications } from "@/actions/grant-applications";
+
+import {listOrganizationApplications} from "@/actions/grant-applications"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
@@ -69,10 +70,9 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const router = useRouter();
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
-	const { activeProjectId } = useNavigationStore();
 	const { selectedOrganizationId } = useOrganizationStore();
 	const [recentApplications, setRecentApplications] = useState<
-		API.ListApplications.Http200.ResponseBody["applications"]
+		API.ListOrganizationApplications.Http200.ResponseBody["applications"]
 	>([]);
 
 	const handleExpandSidebar = () => {
@@ -88,10 +88,10 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	};
 
 	useEffect(() => {
-		if (activeProjectId && selectedOrganizationId) {
+		if (selectedOrganizationId) {
 			const fetchApplications = async () => {
 				try {
-					const response = await listApplications(selectedOrganizationId, activeProjectId, { limit: 8 });
+					const response = await listOrganizationApplications(selectedOrganizationId);
 					setRecentApplications(response.applications);
 				} catch {
 					toast.error("Failed to fetch recent applications.");
@@ -99,7 +99,7 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 			};
 			void fetchApplications();
 		}
-	}, [activeProjectId, selectedOrganizationId]);
+	}, [selectedOrganizationId]);
 
 	return (
 		<SidebarMenu {...props} className="flex flex-col gap-8 group-data-[collapsible=icon]:gap-6">

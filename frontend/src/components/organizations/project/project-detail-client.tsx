@@ -454,6 +454,7 @@ export function ProjectDetailClient() {
 				}}
 				onInvite={handleInviteCollaborator}
 				ownerEmail={ownerEmail}
+				projectId={project.id}
 				projects={projects.map((p) => ({ id: p.id, name: p.name }))}
 			/>
 
