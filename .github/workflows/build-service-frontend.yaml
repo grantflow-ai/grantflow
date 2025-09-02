@@ -124,7 +124,7 @@ jobs:
                   service_account: ${{ vars.WIF_SERVICE_ACCOUNT || 'githubactions@grantflow.iam.gserviceaccount.com' }}
 
             - name: Setup Cloud SDK
-              uses: google-github-actions/setup-gcloud@v2
+              uses: google-github-actions/setup-gcloud@v3
 
             - name: Setup Task
               uses: ./.github/actions/setup-task
