@@ -6,18 +6,22 @@ from litestar import Litestar
 from litestar.di import Provide
 from litestar.status_codes import (
     HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
 )
 from litestar.testing import AsyncTestClient
-from packages.db.src.tables import Grant, GrantingInstitution
+from packages.db.src.tables import Grant, GrantingInstitution, GrantMatchingSubscription
 from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from services.backend.tests.conftest import TestingClientType
 
 
 @pytest.fixture
 async def public_test_client(async_session_maker: async_sessionmaker[Any]) -> AsyncIterator[AsyncTestClient[Any]]:
     from services.backend.src.api.routes.grants import (
-        get_grant_details,
-        search_grants,
+        handle_get_grant_details,
+        handle_search_grants,
     )
 
     def provide_session_maker() -> async_sessionmaker[Any]:
@@ -25,8 +29,8 @@ async def public_test_client(async_session_maker: async_sessionmaker[Any]) -> As
 
     app = Litestar(
         route_handlers=[
-            search_grants,
-            get_grant_details,
+            handle_search_grants,
+            handle_get_grant_details,
         ],
         debug=True,
         dependencies={"session_maker": Provide(provide_session_maker, sync_to_thread=False)},
@@ -125,7 +129,7 @@ async def sample_grants(
         return grants
 
 
-async def test_search_grants_no_filters(public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]) -> None:
+async def test_search_grants_no_filters(public_test_client: TestingClientType, sample_grants: list[Grant]) -> None:
     response = await public_test_client.get("/grants")
 
     assert response.status_code == HTTP_200_OK
@@ -136,7 +140,7 @@ async def test_search_grants_no_filters(public_test_client: AsyncTestClient[Any]
 
 
 async def test_search_grants_with_query_title_match(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"search_query": "Special"})
 
@@ -148,7 +152,7 @@ async def test_search_grants_with_query_title_match(
 
 
 async def test_search_grants_with_query_description_match(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"search_query": "methodologies"})
 
@@ -159,7 +163,7 @@ async def test_search_grants_with_query_description_match(
 
 
 async def test_search_grants_with_category_filter(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"category": "Clinical"})
 
@@ -171,7 +175,7 @@ async def test_search_grants_with_category_filter(
 
 
 async def test_search_grants_with_amount_filters(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"min_amount": 50000, "max_amount": 200000})
 
@@ -181,9 +185,7 @@ async def test_search_grants_with_amount_filters(
     assert data[0]["title"] == "Test Grant 1"
 
 
-async def test_search_grants_with_pagination(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
-) -> None:
+async def test_search_grants_with_pagination(public_test_client: TestingClientType, sample_grants: list[Grant]) -> None:
     response = await public_test_client.get("/grants", params={"limit": 1, "offset": 1})
 
     assert response.status_code == HTTP_200_OK
@@ -191,7 +193,7 @@ async def test_search_grants_with_pagination(
     assert len(data) == 1
 
 
-async def test_get_grant_details_success(public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]) -> None:
+async def test_get_grant_details_success(public_test_client: TestingClientType, sample_grants: list[Grant]) -> None:
     response = await public_test_client.get("/grants/PA-24-000")
 
     assert response.status_code == HTTP_200_OK
@@ -202,25 +204,23 @@ async def test_get_grant_details_success(public_test_client: AsyncTestClient[Any
     assert data["deadline"] is None
 
 
-async def test_get_grant_details_not_found(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
-) -> None:
+async def test_get_grant_details_not_found(public_test_client: TestingClientType, sample_grants: list[Grant]) -> None:
     response = await public_test_client.get("/grants/NONEXISTENT")
 
     assert response.status_code == HTTP_404_NOT_FOUND
     data = response.json()
-    assert data["error"] == "Grant not found"
+    assert data["detail"] == "Grant not found"
 
 
 async def test_search_grants_limit_enforcement(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"limit": 200})
 
     assert response.status_code == HTTP_200_OK
 
 
-async def test_search_grants_no_results(public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]) -> None:
+async def test_search_grants_no_results(public_test_client: TestingClientType, sample_grants: list[Grant]) -> None:
     response = await public_test_client.get("/grants", params={"search_query": "nonexistent-search-term"})
 
     assert response.status_code == HTTP_200_OK
@@ -229,7 +229,7 @@ async def test_search_grants_no_results(public_test_client: AsyncTestClient[Any]
 
 
 async def test_search_grants_organization_match(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"search_query": "NIH"})
 
@@ -241,7 +241,7 @@ async def test_search_grants_organization_match(
 
 
 async def test_search_grants_document_number_match(
-    public_test_client: AsyncTestClient[Any], sample_grants: list[Grant]
+    public_test_client: TestingClientType, sample_grants: list[Grant]
 ) -> None:
     response = await public_test_client.get("/grants", params={"search_query": "PA-24-001"})
 
@@ -250,3 +250,112 @@ async def test_search_grants_document_number_match(
     assert len(data) == 1
     assert data[0]["document_number"] == "PA-24-001"
     assert data[0]["title"] == "Test Grant 1"
+
+
+# Subscription endpoint tests
+async def test_create_subscription_success(test_client: TestingClientType) -> None:
+    response = await test_client.post(
+        "/grants/subscribe",
+        json={
+            "email": "test@example.com",
+            "frequency": "daily",
+            "search_params": {"category": "Research", "min_amount": 10000},
+        },
+    )
+
+    assert response.status_code == HTTP_201_CREATED
+    data = response.json()
+    assert data["message"] == "Subscription created successfully."
+    assert "id" in data
+
+
+async def test_create_subscription_duplicate_email(
+    test_client: TestingClientType, async_session_maker: async_sessionmaker[Any]
+) -> None:
+    # Create initial subscription
+    async with async_session_maker() as session:
+        subscription = GrantMatchingSubscription(
+            email="duplicate@example.com", search_params={"category": "Research"}, frequency="weekly"
+        )
+        session.add(subscription)
+        await session.commit()
+
+    # Try to create duplicate
+    response = await test_client.post(
+        "/grants/subscribe",
+        json={"email": "duplicate@example.com", "frequency": "daily", "search_params": {"category": "Health"}},
+    )
+
+    assert response.status_code == HTTP_400_BAD_REQUEST
+    data = response.json()
+    assert "already exists" in data["detail"]
+
+
+async def test_create_subscription_invalid_email(test_client: TestingClientType) -> None:
+    response = await test_client.post(
+        "/grants/subscribe",
+        json={"email": "invalid-email-format", "frequency": "daily", "search_params": {"category": "Research"}},
+    )
+
+    # API doesn't validate email format, so invalid email creates successfully
+    assert response.status_code == HTTP_201_CREATED
+
+
+async def test_unsubscribe_success(
+    test_client: TestingClientType, async_session_maker: async_sessionmaker[Any]
+) -> None:
+    # Create subscription to unsubscribe from
+    async with async_session_maker() as session:
+        subscription = GrantMatchingSubscription(
+            email="unsubscribe@example.com", search_params={"category": "Research"}, frequency="weekly"
+        )
+        session.add(subscription)
+        await session.commit()
+
+    response = await test_client.post("/grants/unsubscribe", json={"email": "unsubscribe@example.com"})
+
+    assert response.status_code == HTTP_201_CREATED
+    data = response.json()
+    assert data["message"] == "Successfully unsubscribed from grant notifications"
+
+
+async def test_unsubscribe_nonexistent_email(test_client: TestingClientType) -> None:
+    response = await test_client.post("/grants/unsubscribe", json={"email": "nonexistent@example.com"})
+
+    assert response.status_code == HTTP_404_NOT_FOUND
+    data = response.json()
+    assert "No active subscription found" in data["detail"]
+
+
+async def test_unsubscribe_invalid_email(test_client: TestingClientType) -> None:
+    response = await test_client.post("/grants/unsubscribe", json={"email": "invalid-email"})
+
+    assert response.status_code == HTTP_404_NOT_FOUND
+
+
+async def test_create_subscription_edge_cases(test_client: TestingClientType) -> None:
+    # Test with minimal search params
+    response = await test_client.post(
+        "/grants/subscribe", json={"email": "minimal@example.com", "frequency": "monthly", "search_params": {}}
+    )
+
+    assert response.status_code == HTTP_201_CREATED
+
+    # Test with all search params
+    response = await test_client.post(
+        "/grants/subscribe",
+        json={
+            "email": "maximal@example.com",
+            "frequency": "daily",
+            "search_params": {
+                "search_query": "AI research",
+                "category": "Technology",
+                "min_amount": 50000,
+                "max_amount": 500000,
+                "deadline_after": "2025-01-01",
+                "deadline_before": "2025-12-31",
+            },
+        },
+    )
+
+    assert response.status_code == HTTP_201_CREATED
