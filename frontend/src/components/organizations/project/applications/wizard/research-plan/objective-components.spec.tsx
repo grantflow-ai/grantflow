@@ -1,6 +1,7 @@
 import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ResearchObjectiveFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
+import type { useSortable } from "@dnd-kit/sortable";
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import React from "react";
@@ -299,10 +300,14 @@ describe.sequential("ObjectiveComponents", () => {
 	describe("ObjectiveHeader", () => {
 		function renderObjectiveHeader(overrides = {}) {
 			const defaultProps = {
-				attributes: { "data-testid": "drag-attributes" },
+				attributes: { "data-testid": "drag-attributes" } as unknown as ReturnType<
+					typeof useSortable
+				>["attributes"],
 				index: 1,
 				isEditing: false,
-				listeners: { "data-testid": "drag-listeners" },
+				listeners: { "data-testid": "drag-listeners" } as unknown as ReturnType<
+					typeof useSortable
+				>["listeners"],
 				objective: ResearchObjectiveFactory.build({ title: "Header Objective" }),
 				objectivesCount: 3,
 				onCancel: vi.fn(),

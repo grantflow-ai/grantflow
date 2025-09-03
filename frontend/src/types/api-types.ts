@@ -1013,6 +1013,8 @@ export namespace API {
 
 	export interface QueryParameters {
 	category?: null | string;
+	deadline_after?: null | string;
+	deadline_before?: null | string;
 	limit?: number;
 	max_amount?: null | number;
 	min_amount?: null | number;
@@ -1216,7 +1218,7 @@ export namespace API {
 	export namespace Http200 {
 	export type ResponseBody = {
 	created_at: string;
-	display_name: string;
+	display_name: null | string;
 	email: string;
 	firebase_uid: string;
 	has_all_projects_access: boolean;

@@ -25,10 +25,10 @@ interface Task {
 }
 
 interface TaskHeaderProps {
-	attributes: any;
+	attributes: ReturnType<typeof useSortable>["attributes"];
 	isDragDisabled: boolean;
 	isEditing?: boolean;
-	listeners: any;
+	listeners: ReturnType<typeof useSortable>["listeners"];
 	objectiveIndex: number;
 	onTaskDelete?: () => void;
 	taskIndex: number;
