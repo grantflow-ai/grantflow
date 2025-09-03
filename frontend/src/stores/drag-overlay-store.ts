@@ -14,6 +14,10 @@ interface DragOverlayState {
 
 export const useDragOverlayStore = create<DragOverlayState>((set) => ({
 	activeItem: undefined,
-	clearActiveItem: () => { set({ activeItem: undefined }); },
-	setActiveItem: (item) => { set({ activeItem: item }); },
+	clearActiveItem: () => {
+		set({ activeItem: undefined });
+	},
+	setActiveItem: (item) => {
+		set({ activeItem: item });
+	},
 }));
