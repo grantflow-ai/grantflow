@@ -110,14 +110,6 @@ vi.mock("@grantflow/editor", () => ({
 	}),
 }));
 
-vi.mock("next-themes", () => ({
-	ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
-	useTheme: vi.fn().mockReturnValue({
-		setTheme: vi.fn(),
-		theme: "system",
-	}),
-}));
-
 vi.mock("@segment/analytics-next", () => ({
 	AnalyticsBrowser: {
 		load: vi.fn().mockReturnValue({

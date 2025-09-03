@@ -3,23 +3,6 @@ import { afterEach } from "vitest";
 
 import SharedLayout from "./shared-layout";
 
-vi.mock("next-themes", () => ({
-	ThemeProvider: ({ attribute, children, defaultTheme, enableSystem }: any) => (
-		<div
-			data-attribute={attribute}
-			data-default-theme={defaultTheme}
-			data-enable-system={enableSystem}
-			data-testid="theme-provider"
-		>
-			{children}
-		</div>
-	),
-	useTheme: () => ({
-		setTheme: vi.fn(),
-		theme: "light",
-	}),
-}));
-
 vi.mock("@/components/shared/toast-listener", () => ({
 	ToastListener: () => <div data-testid="toast-listener" />,
 }));
@@ -39,29 +22,16 @@ afterEach(() => {
 });
 
 describe.sequential("SharedLayout", () => {
-	it("renders children within theme provider", () => {
+	it("renders children within cookies provider", () => {
 		render(
 			<SharedLayout>
 				<div data-testid="child-component">Test Content</div>
 			</SharedLayout>,
 		);
 
-		expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
+		expect(screen.getByTestId("cookies-provider")).toBeInTheDocument();
 		expect(screen.getByTestId("child-component")).toBeInTheDocument();
 		expect(screen.getByText("Test Content")).toBeInTheDocument();
-	});
-
-	it("configures theme provider with correct props", () => {
-		render(
-			<SharedLayout>
-				<div>Content</div>
-			</SharedLayout>,
-		);
-
-		const themeProvider = screen.getByTestId("theme-provider");
-		expect(themeProvider).toHaveAttribute("data-attribute", "class");
-		expect(themeProvider).toHaveAttribute("data-default-theme", "light");
-		expect(themeProvider).toHaveAttribute("data-enable-system", "true");
 	});
 
 	it("includes toaster component", () => {
@@ -119,7 +89,7 @@ describe.sequential("SharedLayout", () => {
 			</SharedLayout>,
 		);
 
-		const container = screen.getByTestId("theme-provider");
+		const container = screen.getByTestId("cookies-provider");
 		const children = [...container.children];
 
 		expect(children).toHaveLength(3);
@@ -131,7 +101,7 @@ describe.sequential("SharedLayout", () => {
 	it("handles empty children", () => {
 		render(<SharedLayout>{null}</SharedLayout>);
 
-		expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
+		expect(screen.getByTestId("cookies-provider")).toBeInTheDocument();
 		expect(screen.getByTestId("toaster")).toBeInTheDocument();
 		expect(screen.getByTestId("toast-listener")).toBeInTheDocument();
 	});
