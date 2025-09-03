@@ -174,7 +174,11 @@ source = { virtual = "services/backend" }
 dependencies = [
     { name = "db" },
     { name = "firebase-admin" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "markdown" },
     { name = "pyjwt" },
+    { name = "python-docx" },
     { name = "shared-utils", extra = ["gcs", "pubsub", "server"] },
 ]
 
@@ -187,7 +191,11 @@ dev = [
 requires-dist = [
     { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.7" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "jinja2", specifier = ">=3.1" },
+    { name = "markdown", specifier = ">=3.5" },
     { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "python-docx", specifier = ">=1.1" },
     { name = "shared-utils", extras = ["server", "gcs", "pubsub"], editable = "packages/shared_utils" },
 ]
 

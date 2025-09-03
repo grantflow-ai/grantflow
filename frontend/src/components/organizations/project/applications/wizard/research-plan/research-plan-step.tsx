@@ -57,6 +57,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 						>
 							Research plan
 						</h2>
+						{/* Temporarily hidden - autofill functionality
 						<AppButton
 							className="shrink-0"
 							data-testid="ai-try-button"
@@ -67,6 +68,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 						>
 							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
 						</AppButton>
+						*/}
 					</div>
 					<p className="text-muted-foreground-dark leading-tight" data-testid="research-plan-description">
 						Define your key objectives and break them into actionable tasks. This structure forms the

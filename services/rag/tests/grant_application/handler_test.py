@@ -369,7 +369,7 @@ async def test_generate_grant_section_texts_with_mocked_llm(
             return_value="Mocked work plan text.",
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
+            "services.rag.src.grant_application.handler.generate_section_text",
             return_value={
                 "abstract": mock_section_text,
                 "research_plan": mock_section_text,
@@ -517,7 +517,7 @@ async def test_grant_application_text_generation_pipeline_handler_with_mocked_ll
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
+            "services.rag.src.grant_application.handler.generate_section_text",
             return_value=mocked_section_texts,
         ),
         patch(
@@ -683,7 +683,7 @@ async def test_pipeline_database_error_during_save(
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
+            "services.rag.src.grant_application.handler.generate_section_text",
             return_value=mocked_section_texts,
         ),
         patch(
@@ -757,7 +757,7 @@ async def test_pipeline_backend_error_during_generation(
             return_value=None,
         ),
         patch(
-            "services.rag.src.grant_application.handler.generate_sections_with_shared_retrieval",
+            "services.rag.src.grant_application.handler.generate_section_text",
             side_effect=BackendError("Insufficient context for generation"),
         ),
     ):
