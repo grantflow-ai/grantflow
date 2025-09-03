@@ -54,7 +54,7 @@ export default function Footer() {
 				</div>
 			</div>
 			<div className="px-7.5 hidden items-center justify-between py-6 md:flex">
-				<Link aria-label="Go to homepage" href="/frontend/src/public">
+				<Link aria-label="Go to homepage" href="/">
 					<Image alt="logo" height={57} src="/assets/logo-horizontal.svg" width={56} />
 				</Link>
 				<nav aria-label="footer-navigation">
