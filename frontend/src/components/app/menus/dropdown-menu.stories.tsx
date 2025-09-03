@@ -7,7 +7,7 @@ import {
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
 	DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 
 const meta: Meta<typeof DropdownMenu> = {
 	component: DropdownMenu,
