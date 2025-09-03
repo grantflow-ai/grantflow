@@ -75,7 +75,7 @@
 		"globals": "^16.3.0",
 		"interface-forge": "^2.6.2",
 		"jsdom": "^26.1.0",
-		"knip": "^5.63.0",
+		"knip": "^5.63.1",
 		"pino-pretty": "^13.1.1",
 		"playwright": "^1.55.0",
 		"postcss": "^8.5.6",
