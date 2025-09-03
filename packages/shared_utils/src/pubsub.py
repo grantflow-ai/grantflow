@@ -79,6 +79,8 @@ class RagRequest(TypedDict):
 class AutofillRequest(TypedDict):
     application_id: UUID
     autofill_type: Literal["research_plan", "research_deep_dive"]
+    field_name: NotRequired[str]
+    context: NotRequired[dict[str, Any]]
     trace_id: NotRequired[str]
 
 

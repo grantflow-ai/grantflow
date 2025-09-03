@@ -252,7 +252,6 @@ async def test_search_grants_document_number_match(
     assert data[0]["title"] == "Test Grant 1"
 
 
-# Subscription endpoint tests
 async def test_create_subscription_success(test_client: TestingClientType) -> None:
     response = await test_client.post(
         "/grants/subscribe",
@@ -272,7 +271,6 @@ async def test_create_subscription_success(test_client: TestingClientType) -> No
 async def test_create_subscription_duplicate_email(
     test_client: TestingClientType, async_session_maker: async_sessionmaker[Any]
 ) -> None:
-    # Create initial subscription
     async with async_session_maker() as session:
         subscription = GrantMatchingSubscription(
             email="duplicate@example.com", search_params={"category": "Research"}, frequency="weekly"
@@ -280,7 +278,6 @@ async def test_create_subscription_duplicate_email(
         session.add(subscription)
         await session.commit()
 
-    # Try to create duplicate
     response = await test_client.post(
         "/grants/subscribe",
         json={"email": "duplicate@example.com", "frequency": "daily", "search_params": {"category": "Health"}},
@@ -297,14 +294,12 @@ async def test_create_subscription_invalid_email(test_client: TestingClientType)
         json={"email": "invalid-email-format", "frequency": "daily", "search_params": {"category": "Research"}},
     )
 
-    # API doesn't validate email format, so invalid email creates successfully
     assert response.status_code == HTTP_201_CREATED
 
 
 async def test_unsubscribe_success(
     test_client: TestingClientType, async_session_maker: async_sessionmaker[Any]
 ) -> None:
-    # Create subscription to unsubscribe from
     async with async_session_maker() as session:
         subscription = GrantMatchingSubscription(
             email="unsubscribe@example.com", search_params={"category": "Research"}, frequency="weekly"
@@ -334,14 +329,12 @@ async def test_unsubscribe_invalid_email(test_client: TestingClientType) -> None
 
 
 async def test_create_subscription_edge_cases(test_client: TestingClientType) -> None:
-    # Test with minimal search params
     response = await test_client.post(
         "/grants/subscribe", json={"email": "minimal@example.com", "frequency": "monthly", "search_params": {}}
     )
 
     assert response.status_code == HTTP_201_CREATED
 
-    # Test with all search params
     response = await test_client.post(
         "/grants/subscribe",
         json={

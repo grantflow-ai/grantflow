@@ -33,8 +33,10 @@ def mock_session_maker() -> MagicMock:
 
 @pytest.fixture
 def sample_request() -> AutofillRequest:
+    from uuid import UUID
+
     return {
-        "application_id": "123e4567-e89b-12d3-a456-426614174000",
+        "application_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "autofill_type": "research_plan",
     }
 
@@ -171,15 +173,12 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
 
     from services.rag.src.autofill.research_plan_handler import _validate_research_plan_response
 
-    # Test missing research_objectives
     with pytest.raises(ValidationError, match="Missing 'research_objectives'"):
         _validate_research_plan_response({"something_else": []})
 
-    # Test empty objectives list
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 0"):
         _validate_research_plan_response({"research_objectives": []})
 
-    # Test too many objectives
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 4"):
         _validate_research_plan_response(
             {
@@ -212,7 +211,6 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
             }
         )
 
-    # Test objective with short title
     with pytest.raises(ValidationError, match="title too short"):
         _validate_research_plan_response(
             {
@@ -233,7 +231,6 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
             }
         )
 
-    # Test objective with short description
     with pytest.raises(ValidationError, match="description too short"):
         _validate_research_plan_response(
             {
@@ -254,7 +251,6 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
             }
         )
 
-    # Test duplicate objective numbers
     with pytest.raises(ValidationError, match="Duplicate objective number"):
         _validate_research_plan_response(
             {
@@ -281,7 +277,6 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
             }
         )
 
-    # Test objective with no tasks
     with pytest.raises(ValidationError, match="must have 2-5 tasks"):
         _validate_research_plan_response(
             {
@@ -297,7 +292,6 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
             }
         )
 
-    # Test task with short description
     with pytest.raises(ValidationError, match="task.*description too short"):
         _validate_research_plan_response(
             {
