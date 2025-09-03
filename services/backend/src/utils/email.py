@@ -3,10 +3,11 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import httpx
-from services.backend.src.utils.docx import markdown_to_docx
 from jinja2 import Environment, FileSystemLoader
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
+
+from services.backend.src.utils.docx import markdown_to_docx
 
 logger = get_logger(__name__)
 
@@ -42,43 +43,6 @@ async def send_resend_email(
             },
         )
         response.raise_for_status()
-
-
-async def send_subscription_verification_email(
-    email: str,
-    subscription_id: str,
-    verification_token: str,
-    search_params: dict[str, Any] | None = None,
-    frequency: str = "daily",
-) -> None:
-    site_url = get_env("SITE_URL", fallback="https://grantflow.ai")
-    verification_url = f"{site_url}/grants/verify/{verification_token}"
-
-    search_params = search_params or {}
-
-    template = jinja_env.get_template("subscription_verification.html")
-    html_content = template.render(
-        verification_url=verification_url,
-        frequency=frequency,
-        search_query=search_params.get("query"),
-        category=search_params.get("category"),
-        min_amount=search_params.get("min_amount"),
-        max_amount=search_params.get("max_amount"),
-    )
-
-    subject = "Verify Your GrantFlow Grant Alert Subscription"
-
-    await send_resend_email(
-        to_email=email,
-        subject=subject,
-        html=html_content,
-    )
-
-    logger.info(
-        "Subscription verification email sent",
-        email=email,
-        subscription_id=subscription_id,
-    )
 
 
 async def send_grant_alert_email(
