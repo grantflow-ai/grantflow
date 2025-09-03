@@ -177,7 +177,6 @@ def test_markdown_to_docx_single_digit_numbered_lists() -> None:
         ]
         assert len(number_calls) == 3
 
-        # Extract the text from each numbered list call
         number_texts = [call.args[0] for call in number_calls]
         assert "First item" in number_texts
         assert "Second item" in number_texts

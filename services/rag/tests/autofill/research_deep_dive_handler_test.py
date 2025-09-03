@@ -1,11 +1,14 @@
 import types
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from packages.shared_utils.src.pubsub import AutofillRequest
 
 from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
+
+if TYPE_CHECKING:
+    from packages.db.src.json_objects import ResearchObjective
 
 
 @pytest.fixture
@@ -33,8 +36,10 @@ def mock_session_maker() -> MagicMock:
 
 @pytest.fixture
 def sample_request() -> AutofillRequest:
+    from uuid import UUID
+
     return {
-        "application_id": "123e4567-e89b-12d3-a456-426614174000",
+        "application_id": UUID("123e4567-e89b-12d3-a456-426614174000"),
         "autofill_type": "research_deep_dive",
     }
 
@@ -115,51 +120,52 @@ def test_field_mapping_keys() -> None:
 
 
 def test_format_research_objectives(mock_logger: MagicMock) -> None:
+    from typing import cast
+
     from services.rag.src.autofill.research_deep_dive_handler import _format_research_objectives
 
-    objectives = [
-        {"number": 1, "title": "First Objective", "description": "Description of first objective"},
-        {"number": 2, "title": "Second Objective"},
+    objectives_data = [
+        {
+            "number": 1,
+            "title": "First Objective",
+            "description": "Description of first objective",
+            "research_tasks": [],
+        },
+        {"number": 2, "title": "Second Objective", "research_tasks": []},
     ]
 
+    objectives = cast("list[ResearchObjective]", objectives_data)
     result = _format_research_objectives(objectives)
 
     assert "1. First Objective" in result
     assert "Description of first objective" in result
     assert "2. Second Objective" in result
 
-    result = _format_research_objectives([])
+    empty_objectives = cast("list[ResearchObjective]", [])
+    result = _format_research_objectives(empty_objectives)
     assert result == ""
 
 
 def test_validate_answer_response(mock_logger: MagicMock) -> None:
     from services.rag.src.autofill.research_deep_dive_handler import _validate_answer_response
 
-    # Valid response (needs ~200-500 words)
-    valid_response = {
-        "answer": "This is a valid answer that meets the minimum length requirement. " * 30  # ~210 words
-    }
+    valid_response = {"answer": "This is a valid answer that meets the minimum length requirement. " * 30}
     _validate_answer_response(valid_response)
 
-    # Test missing answer field
     with pytest.raises(ValueError, match="Missing 'answer' field"):
         _validate_answer_response({"something_else": "value"})
 
-    # Test non-string answer
     with pytest.raises(ValueError, match="Answer must be a string"):
         _validate_answer_response({"answer": 123})
 
-    # Test answer too short
     with pytest.raises(ValueError, match="Answer too short"):
         _validate_answer_response({"answer": "Too short"})
 
-    # Test answer with too few words
     with pytest.raises(ValueError, match="Answer has too few words"):
-        _validate_answer_response({"answer": "word " * 50})  # 50 words, needs ~150+
+        _validate_answer_response({"answer": "word " * 50})
 
-    # Test answer with too many words
     with pytest.raises(ValueError, match="Answer has too many words"):
-        _validate_answer_response({"answer": "word " * 700})  # 700 words, max ~600
+        _validate_answer_response({"answer": "word " * 700})
 
 
 def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
@@ -176,9 +182,14 @@ def test_field_mapping_completeness(mock_logger: MagicMock) -> None:
         "preliminary_data",
     ]
 
+    from typing import cast
+
+    from services.rag.src.autofill.research_deep_dive_handler import ResearchDeepDiveKey
+
     for field in expected_fields:
-        assert field in RESEARCH_DEEP_DIVE_FIELD_MAPPING
-        assert len(RESEARCH_DEEP_DIVE_FIELD_MAPPING[field]) > 10
+        field_key = cast("ResearchDeepDiveKey", field)
+        assert field_key in RESEARCH_DEEP_DIVE_FIELD_MAPPING
+        assert len(RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_key]) > 10
 
 
 async def test_generate_research_deep_dive_content_with_mocks(

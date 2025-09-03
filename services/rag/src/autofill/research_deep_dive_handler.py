@@ -1,7 +1,7 @@
 from asyncio import gather
 from typing import Any, Final, Literal, TypedDict, cast
 
-from packages.db.src.json_objects import ResearchDeepDive
+from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.logger import get_logger
 
@@ -77,7 +77,6 @@ RESEARCH_DEEP_DIVE_USER_PROMPT = PromptTemplate(
     """,
 )
 
-# Schema for answer response
 answer_response_schema = {
     "type": "object",
     "properties": {
@@ -93,7 +92,6 @@ answer_response_schema = {
 
 
 def _validate_answer_response(response: Any) -> None:
-    """Validate an answer response."""
     if not isinstance(response, dict):
         raise ValueError(f"Response must be a dictionary, got {type(response).__name__}")
 
@@ -108,16 +106,15 @@ def _validate_answer_response(response: Any) -> None:
     if len(answer) < MIN_ANSWER_LENGTH:
         raise ValueError(f"Answer too short: {len(answer)} characters (min: {MIN_ANSWER_LENGTH})")
 
-    # Check word count (approximately 200-500 words)
     word_count = len(answer.split())
-    if word_count < 150:  # Allow some flexibility
+    if word_count < 150:
         raise ValueError(f"Answer has too few words: {word_count} (target: 200-500)")
 
-    if word_count > 600:  # Allow some flexibility
+    if word_count > 600:
         raise ValueError(f"Answer has too many words: {word_count} (target: 200-500)")
 
 
-def _format_research_objectives(objectives: list[dict[str, Any]]) -> str:
+def _format_research_objectives(objectives: list[ResearchObjective]) -> str:
     formatted = []
     for i, obj in enumerate(objectives):
         title = obj.get("title", f"Objective {i + 1}")

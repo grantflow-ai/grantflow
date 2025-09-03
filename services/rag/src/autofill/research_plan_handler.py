@@ -117,7 +117,6 @@ research_plan_schema = {
 
 
 def _validate_objective_fields(obj: dict[str, Any], obj_number: int) -> None:
-    """Validate title and description fields of an objective."""
     if "title" not in obj or not obj["title"]:
         raise ValidationError(f"Objective {obj_number} missing or empty 'title'")
 
@@ -138,7 +137,6 @@ def _validate_objective_fields(obj: dict[str, Any], obj_number: int) -> None:
 
 
 def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
-    """Validate research tasks for an objective."""
     if "research_tasks" not in obj:
         raise ValidationError(f"Objective {obj_number} missing 'research_tasks'")
 
@@ -163,7 +161,6 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
                 context={"type": type(task).__name__},
             )
 
-        # Validate task number
         if "number" not in task:
             raise ValidationError(f"Objective {obj_number} task {j + 1} missing 'number'")
 
@@ -181,7 +178,6 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
             )
         seen_task_numbers.add(task_number)
 
-        # Validate task title and description
         if "title" not in task or not task["title"]:
             raise ValidationError(f"Objective {obj_number} task {task_number} missing or empty 'title'")
 
@@ -202,7 +198,6 @@ def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
 
 
 def _validate_objective_number(obj: dict[str, Any], i: int, seen_numbers: set[int]) -> int:
-    """Validate objective number and check for duplicates."""
     if "number" not in obj:
         raise ValidationError(f"Objective {i + 1} missing 'number' field")
 

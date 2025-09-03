@@ -1,5 +1,5 @@
 from contextlib import suppress
-from typing import Any
+from typing import Any, cast
 
 from litestar import post
 from packages.shared_utils.src.ai import init_llm_connection
@@ -73,7 +73,7 @@ async def handle_request(
     )
 
     if "autofill_type" in request:
-        await handle_autofill_request(request=request, session_maker=session_maker)
+        await handle_autofill_request(request=cast("AutofillRequest", request), session_maker=session_maker)
         return
 
     if request["parent_type"] == "grant_template":

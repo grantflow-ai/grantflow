@@ -25,23 +25,33 @@ def create_pubsub_event(data: dict[str, str]) -> PubSubEvent:
 
 
 def test_handle_pubsub_message_valid_grant_template() -> None:
+    from typing import cast
+
+    from packages.shared_utils.src.pubsub import RagRequest
+
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_template"}
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
+    rag_result = cast("RagRequest", result)
 
-    assert str(result["parent_id"]) == data["parent_id"]
-    assert result["parent_type"] == data["parent_type"]
+    assert str(rag_result["parent_id"]) == data["parent_id"]
+    assert rag_result["parent_type"] == data["parent_type"]
 
 
 def test_handle_pubsub_message_valid_grant_application() -> None:
+    from typing import cast
+
+    from packages.shared_utils.src.pubsub import RagRequest
+
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_application"}
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
+    rag_result = cast("RagRequest", result)
 
-    assert str(result["parent_id"]) == data["parent_id"]
-    assert result["parent_type"] == data["parent_type"]
+    assert str(rag_result["parent_id"]) == data["parent_id"]
+    assert rag_result["parent_type"] == data["parent_type"]
 
 
 def test_handle_pubsub_message_invalid_parent_type() -> None:
