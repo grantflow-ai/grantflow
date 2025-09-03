@@ -201,7 +201,7 @@ export function OrganizationSettingsMembers({
 	}, [canInvite, onInviteHandlerChange, openInviteModal]);
 
 	const mappedMembers: OrganizationMember[] = members.map((member) => ({
-		displayName: member.display_name,
+		displayName: member.display_name ?? undefined,
 		email: member.email,
 		firebaseUid: member.firebase_uid,
 		hasAllProjectsAccess: member.has_all_projects_access,
