@@ -903,18 +903,16 @@ export namespace API {
 };
 };
 
-	export namespace GrantsGrantIdGetGrantDetails {
+	export namespace GrantsGrantIdHandleGetGrantDetails {
 	export namespace Http200 {
 	export type ResponseBody = {
-	
-} | {
 	activity_code: string;
 	amount?: string;
 	amount_max?: number;
 	amount_min?: number;
 	category?: string;
 	clinical_trials: string;
-	deadline?: string;
+	deadline?: null | string;
 	description?: string;
 	document_number: string;
 	document_type: string;
@@ -943,18 +941,16 @@ export namespace API {
 };
 };
 
-	export namespace GrantsSearchGrants {
+	export namespace GrantsHandleSearchGrants {
 	export namespace Http200 {
 	export type ResponseBody = {
-	
-} | {
 	activity_code: string;
 	amount?: string;
 	amount_max?: number;
 	amount_min?: number;
 	category?: string;
 	clinical_trials: string;
-	deadline?: string;
+	deadline?: null | string;
 	description?: string;
 	document_number: string;
 	document_type: string;
@@ -980,8 +976,6 @@ export namespace API {
 
 	export interface QueryParameters {
 	category?: null | string;
-	deadline_after?: null | string;
-	deadline_before?: null | string;
 	limit?: number;
 	max_amount?: null | number;
 	min_amount?: null | number;
@@ -990,14 +984,11 @@ export namespace API {
 };
 };
 
-	export namespace GrantsSubscribeCreateSubscription {
+	export namespace GrantsSubscribeHandleCreateSubscription {
 	export namespace Http201 {
 	export type ResponseBody = {
-	
-} | {
+	id: string;
 	message: string;
-	subscription_id: string;
-	verification_required: boolean;
 };
 };
 
@@ -1012,23 +1003,16 @@ export namespace API {
 	export type RequestBody = {
 	email: string;
 	frequency?: string;
-	search_params: {
-	category: string;
-	deadline_after: string;
-	deadline_before: string;
-	limit: number;
-	max_amount: number;
-	min_amount: number;
-	offset: number;
-	query: string;
+	search_params?: {
+	
 };
 };
 };
 
-	export namespace GrantsUnsubscribeUnsubscribe {
+	export namespace GrantsUnsubscribeHandleUnsubscribe {
 	export namespace Http201 {
 	export type ResponseBody = {
-	
+	message: string;
 };
 };
 
@@ -1040,15 +1024,16 @@ export namespace API {
 };
 };
 
-	export interface QueryParameters {
+	export type RequestBody = {
 	email: string;
 };
 };
 
-	export namespace GrantsVerifyTokenVerifySubscription {
-	export namespace Http200 {
+	export namespace HandleEmailNotificationWebhook {
+	export namespace Http201 {
 	export type ResponseBody = {
-	
+	message: string;
+	status: "success";
 };
 };
 
@@ -1060,8 +1045,29 @@ export namespace API {
 };
 };
 
-	export interface PathParameters {
-	token: string;
+	export type RequestBody = {
+	message: {
+	attributes: null | {
+	
+};
+	data: null | string;
+	messageId: null | string;
+	orderingKey: null | string;
+	publishTime: null | string;
+};
+	subscription?: null | string;
+};
+};
+
+	export namespace HandleGrantMatcherWebhook {
+	export namespace Http201 {
+	export type ResponseBody = {
+	grants_processed: number;
+	message: string;
+	notifications_sent: number;
+	status: "success";
+	subscriptions_processed: number;
+};
 };
 };
 

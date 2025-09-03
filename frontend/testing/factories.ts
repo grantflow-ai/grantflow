@@ -1021,12 +1021,14 @@ export const FormDataFactory = new Factory<FormData>((factory) => ({
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }).join(", "),
 }));
 
-export const GrantsSearchResponseFactory = new Factory<API.GrantsSearchGrants.Http200.ResponseBody>(
+export const GrantsSearchResponseFactory = new Factory<API.GrantsHandleSearchGrants.Http200.ResponseBody>(
 	(factory) =>
-		GrantFactory.batch(factory.number.int({ max: 20, min: 0 })) as API.GrantsSearchGrants.Http200.ResponseBody,
+		GrantFactory.batch(
+			factory.number.int({ max: 20, min: 0 }),
+		) as API.GrantsHandleSearchGrants.Http200.ResponseBody,
 );
 
-export const GrantSubscriptionRequestFactory = new Factory<API.GrantsSubscribeCreateSubscription.RequestBody>(
+export const GrantSubscriptionRequestFactory = new Factory<API.GrantsSubscribeHandleCreateSubscription.RequestBody>(
 	(factory) => ({
 		email: factory.internet.email(),
 		search_params: {
@@ -1042,9 +1044,8 @@ export const GrantSubscriptionRequestFactory = new Factory<API.GrantsSubscribeCr
 	}),
 );
 
-export const GrantSubscriptionResponseFactory = new Factory<API.GrantsSubscribeCreateSubscription.Http201.ResponseBody>(
-	(factory) => ({
+export const GrantSubscriptionResponseFactory =
+	new Factory<API.GrantsSubscribeHandleCreateSubscription.Http201.ResponseBody>((factory) => ({
+		id: factory.string.uuid(),
 		message: factory.lorem.sentence(),
-		subscription_id: factory.string.uuid(),
-	}),
-);
+	}));

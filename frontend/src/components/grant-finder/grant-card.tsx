@@ -90,8 +90,8 @@ export function GrantCard({ grant }: GrantCardProps) {
 					<Calendar className="h-4 w-4 text-gray-400" />
 					<div className="text-sm">
 						<div className="text-gray-500">Deadline</div>
-						<div className={`font-medium ${getDeadlineColor(grant.deadline)}`}>
-							{formatDeadline(grant.deadline)}
+						<div className={`font-medium ${getDeadlineColor(grant.deadline ?? undefined)}`}>
+							{formatDeadline(grant.deadline ?? undefined)}
 						</div>
 					</div>
 				</div>

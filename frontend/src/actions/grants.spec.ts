@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getClient } from "@/utils/api";
-import { createSubscription, getGrantDetails, searchGrants, unsubscribe, verifySubscription } from "./grants";
+import { createSubscription, getGrantDetails, searchGrants, unsubscribe } from "./grants";
 
 vi.mock("@/utils/api", () => ({
 	getClient: vi.fn(),
@@ -355,53 +355,6 @@ describe("grants", () => {
 		});
 	});
 
-	describe("verifySubscription", () => {
-		const mockVerificationResponse = {};
-
-		it("should verify subscription with correct parameters", async () => {
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(mockVerificationResponse),
-			});
-
-			const token = "verification-token-123";
-			const result = await verifySubscription(token);
-
-			expect(mockClient.get).toHaveBeenCalledWith(`grants/verify/${token}`);
-			expect(result).toEqual(mockVerificationResponse);
-		});
-
-		it("should handle API errors correctly", async () => {
-			const error = new Error("Invalid verification token");
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockRejectedValue(error),
-			});
-
-			await expect(verifySubscription("invalid-token")).rejects.toThrow("Invalid verification token");
-		});
-
-		it("should handle different token formats", async () => {
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(mockVerificationResponse),
-			});
-
-			const tokens = ["simple-token", "jwt-like.token.here", "uuid-format-token-123-456", "base64encoded=="];
-
-			for (const token of tokens) {
-				await verifySubscription(token);
-				expect(mockClient.get).toHaveBeenCalledWith(`grants/verify/${token}`);
-			}
-		});
-
-		it("should handle expired token errors", async () => {
-			const expiredTokenError = new Error("Verification token has expired");
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockRejectedValue(expiredTokenError),
-			});
-
-			await expect(verifySubscription("expired-token")).rejects.toThrow("Verification token has expired");
-		});
-	});
-
 	describe("unsubscribe", () => {
 		const mockUnsubscribeResponse = {};
 
@@ -595,10 +548,9 @@ describe("grants", () => {
 			await searchGrants();
 			await getGrantDetails("grant-123");
 			await createSubscription(mockRequestData);
-			await verifySubscription("token-123");
 			await unsubscribe("test@example.com");
 
-			expect(mockGetClient).toHaveBeenCalledTimes(5);
+			expect(mockGetClient).toHaveBeenCalledTimes(4);
 		});
 
 		it("should use correct HTTP methods", async () => {
@@ -622,7 +574,6 @@ describe("grants", () => {
 
 			await searchGrants();
 			await getGrantDetails("grant-123");
-			await verifySubscription("token-123");
 
 			expect(mockClient.get).toHaveBeenCalledTimes(3);
 
@@ -659,9 +610,6 @@ describe("grants", () => {
 
 			await createSubscription(mockRequestData);
 			expect(mockClient.post).toHaveBeenCalledWith("grants/subscribe", expect.any(Object));
-
-			await verifySubscription("token-123");
-			expect(mockClient.get).toHaveBeenCalledWith("grants/verify/token-123");
 
 			await unsubscribe("test@example.com");
 			expect(mockClient.post).toHaveBeenCalledWith("grants/unsubscribe", expect.any(Object));

@@ -21,7 +21,6 @@ interface ResearchPlanStepProps {
 
 export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 	const application = useApplicationStore((state) => state.application);
-	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
 	const showResearchPlanInfoBanner = useWizardStore((state) => state.showResearchPlanInfoBanner);
 	const setShowResearchPlanInfoBanner = useWizardStore((state) => state.setShowResearchPlanInfoBanner);
