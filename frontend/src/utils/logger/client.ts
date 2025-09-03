@@ -15,7 +15,7 @@ function initLogger(): ILogLayer {
 		errorSerializer: serializeError,
 		plugins: [
 			{
-				onBeforeMessageOut(params: PluginBeforeMessageOutParams, _log: ILogLayer): any[] {
+				onBeforeMessageOut(params: PluginBeforeMessageOutParams, _log: ILogLayer): unknown[] {
 					if (params.messages.length > 0 && typeof params.messages[0] === "string") {
 						params.messages[0] = `[Client] ${params.messages[0]}`;
 					}

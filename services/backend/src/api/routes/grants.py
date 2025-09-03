@@ -61,6 +61,8 @@ async def handle_search_grants(
     category: str | None = None,
     min_amount: int | None = None,
     max_amount: int | None = None,
+    deadline_after: str | None = None,
+    deadline_before: str | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> list[GrantInfoResponse]:
@@ -72,6 +74,8 @@ async def handle_search_grants(
         category=category,
         min_amount=min_amount,
         max_amount=max_amount,
+        deadline_after=deadline_after,
+        deadline_before=deadline_before,
         limit=limit,
         offset=offset,
     )
@@ -100,6 +104,12 @@ async def handle_search_grants(
 
             if max_amount is not None:
                 query = query.where(Grant.amount_max <= max_amount)
+
+            if deadline_after is not None:
+                query = query.where(Grant.expired_date >= deadline_after)
+
+            if deadline_before is not None:
+                query = query.where(Grant.expired_date <= deadline_before)
 
             query = query.order_by(Grant.created_at.desc()).offset(offset).limit(limit)
 
@@ -144,6 +154,8 @@ async def handle_search_grants(
                 "category": category,
                 "min_amount": min_amount,
                 "max_amount": max_amount,
+                "deadline_after": deadline_after,
+                "deadline_before": deadline_before,
                 "limit": limit,
                 "offset": offset,
             },
