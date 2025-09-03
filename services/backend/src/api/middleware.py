@@ -25,13 +25,13 @@ logger = get_logger(__name__)
 PUBLIC_PATHS = {"login", "health", "schema", "grants"}
 PUBLIC_PATH_PREFIXES: set[str] = set()
 ADMIN_PATHS = {"granting-institutions"}
+WEBHOOK_PATHS = {"/webhooks/pubsub/email-notifications", "/webhooks/scheduler/grant-matcher"}
 ADMIN_SOURCES_PATTERNS = [
     "/granting-institutions/{granting_institution_id}/sources",
     "/granting-institutions/{granting_institution_id}/sources/{source_id}",
     "/granting-institutions/{granting_institution_id}/sources/upload-url",
     "/granting-institutions/{granting_institution_id}/sources/crawl-url",
 ]
-DEV_BYPASS_PREFIX = "/dev/"
 
 
 def _matches_source_pattern(path: str, pattern: str) -> bool:
@@ -55,9 +55,6 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return True
         return any(path.startswith(prefix) for prefix in PUBLIC_PATH_PREFIXES)
 
-    def _is_dev_bypass(self, path: str) -> bool:
-        return path.startswith(DEV_BYPASS_PREFIX)
-
     def _is_admin_path(self, path: str) -> bool:
         if any(
             path == f"/{admin_path}" or (path.startswith(f"/{admin_path}/") and len(path.split("/")) <= 3)
@@ -67,6 +64,9 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
         return any(_matches_source_pattern(path, pattern) for pattern in ADMIN_SOURCES_PATTERNS)
 
+    def _is_webhook_path(self, path: str) -> bool:
+        return path in WEBHOOK_PATHS
+
     async def authenticate_request(
         self, connection: ASGIConnection[Any, Any, Any, APIRequestState]
     ) -> AuthenticationResult:
@@ -74,16 +74,16 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             return AuthenticationResult(user=None, auth=None)
 
         path = connection.url.path
+        auth_header = connection.headers.get("Authorization", "").strip()
 
         if self._is_public_path(path):
             return AuthenticationResult(user=None, auth=None)
 
-        if self._is_dev_bypass(path):
-            if get_env("ENABLE_DEV_BYPASS", False):
-                return AuthenticationResult(user=None, auth="dev-bypass-user")
-            raise NotAuthorizedException("Dev bypass not enabled")
-
-        auth_header = connection.headers.get("Authorization", "").strip()
+        if self._is_webhook_path(path):
+            webhook_token = get_env("PUBSUB_WEBHOOK_TOKEN")
+            if webhook_token in auth_header:
+                return AuthenticationResult(user=None, auth=None)
+            raise NotAuthorizedException
 
         if self._is_admin_path(path):
             access_code = get_env("ADMIN_ACCESS_CODE")

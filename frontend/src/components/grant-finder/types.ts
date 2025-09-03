@@ -20,7 +20,7 @@ export interface SearchParams {
 
 type ExtractArrayType<T> = T extends readonly (infer U)[] ? U : never;
 
-type GrantsResponse = API.GrantsSearchGrants.Http200.ResponseBody;
+type GrantsResponse = API.GrantsHandleSearchGrants.Http200.ResponseBody;
 
 export const ACTIVITY_CODES = [
 	"R01 - Research Project Grant",

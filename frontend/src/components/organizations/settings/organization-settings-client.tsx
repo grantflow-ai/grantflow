@@ -60,7 +60,7 @@ export function OrganizationSettingsClient({ activeTab }: OrganizationSettingsCl
 
 	const projectTeamMembers = organizationMembers.map((member) => ({
 		backgroundColor: generateBackgroundColor(member.firebase_uid),
-		initials: generateInitials(member.display_name, member.email),
+		initials: generateInitials(member.display_name ?? undefined, member.email),
 		...(member.photo_url && { imageUrl: member.photo_url }),
 	}));
 

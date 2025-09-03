@@ -1,28 +1,28 @@
 from typing import Any
 
+from packages.db.src.json_objects import ResearchDeepDive, ResearchObjective
+from packages.db.src.tables import GrantApplication
+from packages.shared_utils.src.pubsub import AutofillRequest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.dto import AutofillRequestDTO, AutofillResponseDTO
-
-from .research_deep_dive_handler import handle_research_deep_dive
-from .research_plan_handler import handle_research_plan
+from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
+from services.rag.src.autofill.research_plan_handler import generate_research_plan_content
+from services.rag.src.utils.checks import verify_rag_sources_indexed
 
 
 async def handle_autofill_request(
-    request: AutofillRequestDTO, session_maker: async_sessionmaker[Any], logger: Any
-) -> AutofillResponseDTO:
-    autofill_type = request["autofill_type"]
+    request: AutofillRequest, session_maker: async_sessionmaker[Any]
+) -> list[ResearchObjective] | ResearchDeepDive:
+    async with session_maker() as session:
+        application = await session.scalar(
+            select(GrantApplication).where(GrantApplication.id == request["application_id"])
+        )
 
-    if autofill_type == "research_plan":
-        return await handle_research_plan(request, session_maker, logger)
-    if autofill_type == "research_deep_dive":
-        return await handle_research_deep_dive(request, session_maker, logger)
+    await verify_rag_sources_indexed(
+        parent_id=application.id, session_maker=session_maker, entity_type=GrantApplication
+    )
 
-    error_response: AutofillResponseDTO = {
-        "success": False,
-        "data": {},
-        "error": f"Unknown autofill type: {autofill_type}",
-    }
-    if field_name := request.get("field_name"):
-        error_response["field_name"] = field_name
-    return error_response
+    if request["autofill_type"] == "research_plan":
+        return await generate_research_plan_content(application=application)
+    return await generate_research_deep_dive_content(application=application)

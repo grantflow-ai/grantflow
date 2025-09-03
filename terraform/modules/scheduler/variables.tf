@@ -30,3 +30,14 @@ variable "timezone" {
   type        = string
   default     = "Europe/Berlin"
 }
+
+variable "backend_url" {
+  description = "The URL of the backend Cloud Run service"
+  type        = string
+}
+
+variable "pubsub_webhook_token" {
+  description = "Token for authenticating webhook requests"
+  type        = string
+  sensitive   = true
+}

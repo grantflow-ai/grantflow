@@ -1021,30 +1021,28 @@ export const FormDataFactory = new Factory<FormData>((factory) => ({
 	keywords: factory.helpers.multiple(() => factory.lorem.word(), { count: { max: 5, min: 1 } }).join(", "),
 }));
 
-export const GrantsSearchResponseFactory = new Factory<API.GrantsSearchGrants.Http200.ResponseBody>(
+export const GrantsSearchResponseFactory = new Factory<API.GrantsHandleSearchGrants.Http200.ResponseBody>(
 	(factory) =>
-		GrantFactory.batch(factory.number.int({ max: 20, min: 0 })) as API.GrantsSearchGrants.Http200.ResponseBody,
+		GrantFactory.batch(
+			factory.number.int({ max: 20, min: 0 }),
+		) as API.GrantsHandleSearchGrants.Http200.ResponseBody,
 );
 
-export const GrantSubscriptionRequestFactory = new Factory<API.GrantsSubscribeCreateSubscription.RequestBody>(
-	(factory) => ({
-		email: factory.internet.email(),
-		search_params: {
-			category: factory.datatype.boolean() ? factory.lorem.word() : "",
-			deadline_after: factory.datatype.boolean() ? factory.date.recent().toISOString().split("T")[0] : "",
-			deadline_before: factory.datatype.boolean() ? factory.date.future().toISOString().split("T")[0] : "",
-			limit: factory.number.int({ max: 50, min: 10 }),
-			max_amount: factory.datatype.boolean() ? factory.number.int({ max: 2_000_000, min: 100_000 }) : 0,
-			min_amount: factory.datatype.boolean() ? factory.number.int({ max: 100_000, min: 0 }) : 0,
-			offset: factory.number.int({ max: 100, min: 0 }),
-			query: factory.lorem.words({ max: 5, min: 1 }),
-		},
-	}),
-);
+export const GrantSubscriptionRequestFactory = new Factory<API.CreateSubscription.RequestBody>((factory) => ({
+	email: factory.internet.email(),
+	search_params: {
+		category: factory.datatype.boolean() ? factory.lorem.word() : "",
+		deadline_after: factory.datatype.boolean() ? factory.date.recent().toISOString().split("T")[0] : "",
+		deadline_before: factory.datatype.boolean() ? factory.date.future().toISOString().split("T")[0] : "",
+		limit: factory.number.int({ max: 50, min: 10 }),
+		max_amount: factory.datatype.boolean() ? factory.number.int({ max: 2_000_000, min: 100_000 }) : 0,
+		min_amount: factory.datatype.boolean() ? factory.number.int({ max: 100_000, min: 0 }) : 0,
+		offset: factory.number.int({ max: 100, min: 0 }),
+		query: factory.lorem.words({ max: 5, min: 1 }),
+	},
+}));
 
-export const GrantSubscriptionResponseFactory = new Factory<API.GrantsSubscribeCreateSubscription.Http201.ResponseBody>(
-	(factory) => ({
-		message: factory.lorem.sentence(),
-		subscription_id: factory.string.uuid(),
-	}),
-);
+export const GrantSubscriptionResponseFactory = new Factory<API.CreateSubscription.Http201.ResponseBody>((factory) => ({
+	id: factory.string.uuid(),
+	message: factory.lorem.sentence(),
+}));

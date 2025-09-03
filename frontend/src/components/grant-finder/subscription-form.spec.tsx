@@ -281,7 +281,7 @@ describe.sequential("SubscriptionForm", () => {
 				expect(screen.getByTestId("subscription-success")).toBeInTheDocument();
 				expect(screen.getByTestId("success-title")).toHaveTextContent("Success! You're subscribed");
 				expect(screen.getByTestId("success-message")).toHaveTextContent(
-					"We'll notify you when new grants matching your criteria become available. Check your email to confirm your subscription.",
+					"We'll notify you when new grants matching your criteria become available.",
 				);
 			});
 		});

@@ -5,7 +5,7 @@ export enum UserRole {
 }
 
 export interface UserInfo {
-	customClaims: null | Record<string, any>;
+	customClaims: null | Record<string, unknown>;
 	disabled: boolean;
 	displayName: null | string;
 	email: null | string;
