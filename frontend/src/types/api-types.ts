@@ -466,6 +466,31 @@ export namespace API {
 };
 };
 
+	export namespace CreateSubscription {
+	export namespace Http201 {
+	export type ResponseBody = {
+	id: string;
+	message: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export type RequestBody = {
+	email: string;
+	frequency?: string;
+	search_params?: {
+	
+};
+};
+};
+
 	export namespace DeleteApplication {
 	export namespace Http204 {
 	export type ResponseBody = undefined;
@@ -814,6 +839,44 @@ export namespace API {
 };
 };
 
+	export namespace GetGrantDetails {
+	export namespace Http200 {
+	export type ResponseBody = {
+	activity_code: string;
+	amount?: string;
+	amount_max?: number;
+	amount_min?: number;
+	category?: string;
+	clinical_trials: string;
+	deadline?: null | string;
+	description?: string;
+	document_number: string;
+	document_type: string;
+	eligibility?: string;
+	expired_date: string;
+	id: string;
+	organization: string;
+	parent_organization: string;
+	participating_orgs: string;
+	release_date: string;
+	title: string;
+	url: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export interface PathParameters {
+	grant_id: string;
+};
+};
+
 	export namespace GetOrganization {
 	export namespace Http200 {
 	export type ResponseBody = {
@@ -903,41 +966,15 @@ export namespace API {
 };
 };
 
-	export namespace GrantsGrantIdHandleGetGrantDetails {
-	export namespace Http200 {
+	export namespace GrantMatcherWebhook {
+	export namespace Http201 {
 	export type ResponseBody = {
-	activity_code: string;
-	amount?: string;
-	amount_max?: number;
-	amount_min?: number;
-	category?: string;
-	clinical_trials: string;
-	deadline?: null | string;
-	description?: string;
-	document_number: string;
-	document_type: string;
-	eligibility?: string;
-	expired_date: string;
-	id: string;
-	organization: string;
-	parent_organization: string;
-	participating_orgs: string;
-	release_date: string;
-	title: string;
-	url: string;
+	grants_processed: number;
+	message: string;
+	notifications_sent: number;
+	status: "success";
+	subscriptions_processed: number;
 };
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export interface PathParameters {
-	grant_id: string;
 };
 };
 
@@ -984,51 +1021,6 @@ export namespace API {
 };
 };
 
-	export namespace GrantsSubscribeHandleCreateSubscription {
-	export namespace Http201 {
-	export type ResponseBody = {
-	id: string;
-	message: string;
-};
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export type RequestBody = {
-	email: string;
-	frequency?: string;
-	search_params?: {
-	
-};
-};
-};
-
-	export namespace GrantsUnsubscribeHandleUnsubscribe {
-	export namespace Http201 {
-	export type ResponseBody = {
-	message: string;
-};
-};
-
-	export namespace Http400 {
-	export type ResponseBody = {
-	detail: string;
-	extra?: Record<string, unknown> | null | unknown[];
-	status_code: number;
-};
-};
-
-	export type RequestBody = {
-	email: string;
-};
-};
-
 	export namespace HandleEmailNotificationWebhook {
 	export namespace Http201 {
 	export type ResponseBody = {
@@ -1056,18 +1048,6 @@ export namespace API {
 	publishTime: null | string;
 };
 	subscription?: null | string;
-};
-};
-
-	export namespace HandleGrantMatcherWebhook {
-	export namespace Http201 {
-	export type ResponseBody = {
-	grants_processed: number;
-	message: string;
-	notifications_sent: number;
-	status: "success";
-	subscriptions_processed: number;
-};
 };
 };
 
@@ -1719,6 +1699,26 @@ export namespace API {
 	
 };
 	field_name?: string;
+};
+};
+
+	export namespace Unsubscribe {
+	export namespace Http201 {
+	export type ResponseBody = {
+	message: string;
+};
+};
+
+	export namespace Http400 {
+	export type ResponseBody = {
+	detail: string;
+	extra?: Record<string, unknown> | null | unknown[];
+	status_code: number;
+};
+};
+
+	export type RequestBody = {
+	email: string;
 };
 };
 

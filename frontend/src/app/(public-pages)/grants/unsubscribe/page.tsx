@@ -13,6 +13,20 @@ interface UnsubscribeState {
 
 type UnsubscribeStatus = "error" | "idle" | "submitting" | "success";
 
+const getErrorMessage = (error: unknown): string => {
+	if (!(error instanceof Error)) {
+		return "Failed to unsubscribe. Please try again or contact support.";
+	}
+
+	if (error.message.includes("404")) {
+		return "No active subscription found for this email address.";
+	}
+	if (error.message.includes("400")) {
+		return "Invalid request. Please check your email and try again.";
+	}
+	return "Failed to unsubscribe. Please try again or contact support.";
+};
+
 export default function UnsubscribePage() {
 	return (
 		<Suspense
@@ -79,20 +93,8 @@ function UnsubscribeContent() {
 		} catch (error) {
 			log.error("Failed to unsubscribe", error);
 
-			let errorMessage = "Failed to unsubscribe. ";
-
-			if (error instanceof Error) {
-				if (error.message.includes("404")) {
-					errorMessage = "No active subscription found for this email address.";
-				} else if (error.message.includes("400")) {
-					errorMessage = "Invalid request. Please check your email and try again.";
-				} else {
-					errorMessage += "Please try again or contact support.";
-				}
-			}
-
 			setState({
-				message: errorMessage,
+				message: getErrorMessage(error),
 				status: "error",
 			});
 		}

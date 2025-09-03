@@ -2,19 +2,17 @@ import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 
 export async function createSubscription(
-	data: API.GrantsSubscribeHandleCreateSubscription.RequestBody,
-): Promise<API.GrantsSubscribeHandleCreateSubscription.Http201.ResponseBody> {
+	data: API.CreateSubscription.RequestBody,
+): Promise<API.CreateSubscription.Http201.ResponseBody> {
 	return getClient()
 		.post("grants/subscribe", {
-			json: data satisfies API.GrantsSubscribeHandleCreateSubscription.RequestBody,
+			json: data satisfies API.CreateSubscription.RequestBody,
 		})
-		.json<API.GrantsSubscribeHandleCreateSubscription.Http201.ResponseBody>();
+		.json<API.CreateSubscription.Http201.ResponseBody>();
 }
 
-export async function getGrantDetails(
-	grantId: string,
-): Promise<API.GrantsGrantIdHandleGetGrantDetails.Http200.ResponseBody> {
-	return getClient().get(`grants/${grantId}`).json<API.GrantsGrantIdHandleGetGrantDetails.Http200.ResponseBody>();
+export async function getGrantDetails(grantId: string): Promise<API.GetGrantDetails.Http200.ResponseBody> {
+	return getClient().get(`grants/${grantId}`).json<API.GetGrantDetails.Http200.ResponseBody>();
 }
 
 export async function searchGrants(
@@ -48,12 +46,12 @@ export async function searchGrants(
 		.json<API.GrantsHandleSearchGrants.Http200.ResponseBody>();
 }
 
-export async function unsubscribe(email: string): Promise<API.GrantsUnsubscribeHandleUnsubscribe.Http201.ResponseBody> {
+export async function unsubscribe(email: string): Promise<API.Unsubscribe.Http201.ResponseBody> {
 	return getClient()
 		.post("grants/unsubscribe", {
 			json: {
 				email,
 			},
 		})
-		.json<API.GrantsUnsubscribeHandleUnsubscribe.Http201.ResponseBody>();
+		.json<API.Unsubscribe.Http201.ResponseBody>();
 }
