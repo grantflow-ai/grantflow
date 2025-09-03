@@ -101,6 +101,7 @@ async def test_client(
             self.custom_claims: dict[str, Any] = {}
             self.tenant_id = None
             self.provider_data: list[Any] = []
+            self.user_metadata = None
 
     async def mock_firebase_get_users(identifiers: list[Any], app: Any = None) -> MockResult:
         users = [MockUser(identifier.uid) for identifier in identifiers]
