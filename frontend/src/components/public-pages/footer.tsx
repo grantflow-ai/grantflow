@@ -47,7 +47,7 @@ export default function Footer() {
 					<FooterLinks links={links} />
 				</nav>
 				<div className="mt-6 flex w-full items-center justify-between">
-					<Link aria-label="Go to homepage" href="/frontend/src/public">
+					<Link aria-label="Go to homepage" href="/">
 						<Image alt="logo" height={40} src="/assets/logo-horizontal-text.svg" width={162} />
 					</Link>
 					<LinkedInLink />
