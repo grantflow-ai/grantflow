@@ -1,7 +1,5 @@
-import base64
-import binascii
-import time
-from typing import TYPE_CHECKING, Any
+from contextlib import suppress
+from typing import Any
 
 from litestar import post
 from packages.shared_utils.src.ai import init_llm_connection
@@ -11,121 +9,51 @@ from packages.shared_utils.src.exceptions import (
 )
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
-from packages.shared_utils.src.pubsub import AutofillRequest, PubSubEvent, RagRequest
+from packages.shared_utils.src.pubsub import AutofillRequest, PubSubEvent, RagRequest, decode_pubsub_message
 from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from services.rag.src.autofill.handler import handle_autofill_request as handle_autofill_request_impl
+from services.rag.src.autofill.handler import handle_autofill_request
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 from services.rag.src.grant_template.handler import grant_template_generation_pipeline_handler
-
-if TYPE_CHECKING:
-    from services.rag.src.dto import AutofillRequestDTO
 
 configure_otel("rag")
 
 logger = get_logger(__name__)
 
 
-def handle_pubsub_message(message: PubSubEvent) -> RagRequest | AutofillRequest:
-    start_time = time.time()
+def handle_pubsub_message(event: PubSubEvent) -> RagRequest | AutofillRequest:
     logger.debug(
-        "Decoding PubSub message", message_id=message.message.message_id, publish_time=message.message.publish_time
+        "Decoding PubSub message", message_id=event.message.message_id, publish_time=event.message.publish_time
     )
-
+    decoded_data = decode_pubsub_message(event=event)
     try:
-        encoded_data = message.message.data
-        if not encoded_data:
-            logger.error("PubSub message missing data field", message_id=message.message.message_id)
-            raise ValidationError("PubSub message missing data field")
-
-        logger.debug("Decoding base64 data", data_length=len(encoded_data))
-        decoded_data = base64.b64decode(encoded_data).decode()
-
-        logger.debug("Deserializing message", decoded_length=len(decoded_data))
-
-        try:
-            rag_request = deserialize(decoded_data, RagRequest)
-            decode_duration = time.time() - start_time
-            logger.debug(
-                "PubSub message decoded as RagRequest",
-                parent_type=rag_request["parent_type"],
-                parent_id=str(rag_request["parent_id"]),
-                trace_id=rag_request.get("trace_id"),
-                decode_duration_ms=round(decode_duration * 1000, 2),
-            )
-            return rag_request
-        except DeserializationError:
+        with suppress(DeserializationError):
             autofill_request = deserialize(decoded_data, AutofillRequest)
-            decode_duration = time.time() - start_time
             logger.debug(
                 "PubSub message decoded as AutofillRequest",
-                parent_type=autofill_request["parent_type"],
-                parent_id=str(autofill_request["parent_id"]),
                 autofill_type=autofill_request["autofill_type"],
                 trace_id=autofill_request.get("trace_id"),
-                decode_duration_ms=round(decode_duration * 1000, 2),
             )
             return autofill_request
 
-    except (DeserializationError, binascii.Error, UnicodeDecodeError) as e:
-        decode_duration = time.time() - start_time
+        rag_request = deserialize(decoded_data, RagRequest)
+        logger.debug(
+            "PubSub message decoded as RagRequest",
+            parent_type=rag_request["parent_type"],
+            parent_id=str(rag_request["parent_id"]),
+            trace_id=rag_request.get("trace_id"),
+        )
+        return rag_request
+    except DeserializationError as e:
         logger.error(
             "Failed to parse PubSub message",
             error=str(e),
-            message_id=message.message.message_id,
+            message_id=event.message.message_id,
             error_type=type(e).__name__,
-            decode_duration_ms=round(decode_duration * 1000, 2),
         )
-        raise ValidationError("Invalid pubsub message format") from e
-
-
-async def handle_autofill_request(request: AutofillRequest, session_maker: async_sessionmaker[Any]) -> dict[str, Any]:
-    trace_id = request.get("trace_id")
-
-    logger.info(
-        "Processing autofill request",
-        application_id=str(request["parent_id"]),
-        autofill_type=request["autofill_type"],
-        field_name=request.get("field_name"),
-        trace_id=trace_id,
-    )
-
-    try:
-        handler_request: AutofillRequestDTO = {
-            "parent_type": request["parent_type"],
-            "parent_id": str(request["parent_id"]),
-            "autofill_type": request["autofill_type"],
-        }
-
-        if request.get("field_name"):
-            handler_request["field_name"] = request["field_name"]
-        if request.get("context"):
-            handler_request["context"] = request["context"]
-        if trace_id:
-            handler_request["trace_id"] = trace_id
-
-        result = await handle_autofill_request_impl(handler_request, session_maker, logger)
-
-        logger.info(
-            "Autofill generation completed",
-            application_id=str(request["parent_id"]),
-            autofill_type=request["autofill_type"],
-            success=result["success"],
-            trace_id=trace_id,
-        )
-
-        return dict(result)
-
-    except Exception as e:
-        logger.exception(
-            "Autofill generation failed",
-            application_id=str(request["parent_id"]),
-            autofill_type=request["autofill_type"],
-            trace_id=trace_id,
-        )
-        return {"success": False, "error": str(e)}
+        raise ValidationError("Invalid pubsub message format", context={"error": str(e)}) from e
 
 
 @post("/")
@@ -133,127 +61,32 @@ async def handle_request(
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
-    start_time = time.time()
+    request = handle_pubsub_message(data)
+    trace_id = request.get("trace_id")
+
     logger.debug(
         "Received PubSub request",
         message_id=data.message.message_id if data.message else "unknown",
         publish_time=data.message.publish_time if data.message else "unknown",
+        trace_id=trace_id,
+        request=request,
     )
 
-    request = handle_pubsub_message(data)
+    if "autofill_type" in request:
+        await handle_autofill_request(request=request, session_maker=session_maker)
+        return
 
-    if isinstance(request, dict) and "autofill_type" in request:
-        autofill_request: AutofillRequest = request  # type: ignore[assignment]
-        trace_id = autofill_request.get("trace_id")
-
-        try:
-            result = await handle_autofill_request(autofill_request, session_maker)
-
-            total_duration = time.time() - start_time
-            logger.info(
-                "Autofill request completed",
-                application_id=str(autofill_request["parent_id"]),
-                autofill_type=autofill_request["autofill_type"],
-                success=result["success"],
-                trace_id=trace_id,
-                total_duration_ms=round(total_duration * 1000, 2),
-            )
-            return
-        except Exception as e:
-            error_duration = time.time() - start_time
-            logger.exception(
-                "Unexpected error during autofill processing",
-                application_id=str(autofill_request["parent_id"]),
-                autofill_type=autofill_request["autofill_type"],
-                trace_id=trace_id,
-                error_type=type(e).__name__,
-                error_duration_ms=round(error_duration * 1000, 2),
-            )
-            raise
-    else:
-        rag_request: RagRequest = request
-        trace_id = rag_request.get("trace_id")
-
-        logger.debug(
-            "Starting RAG processing pipeline",
-            parent_type=rag_request["parent_type"],
-            parent_id=str(rag_request["parent_id"]),
-            trace_id=trace_id,
+    if request["parent_type"] == "grant_template":
+        await grant_template_generation_pipeline_handler(
+            grant_template_id=request["parent_id"],
+            session_maker=session_maker,
         )
+        return
 
-        try:
-            pipeline_start = time.time()
-
-            if rag_request["parent_type"] == "grant_template":
-                logger.debug(
-                    "Processing grant template",
-                    grant_template_id=str(rag_request["parent_id"]),
-                    trace_id=trace_id,
-                )
-                template_result = await grant_template_generation_pipeline_handler(
-                    grant_template_id=rag_request["parent_id"],
-                    session_maker=session_maker,
-                )
-                if template_result is None:
-                    logger.info(
-                        "Grant template generation failed but notification was sent",
-                        grant_template_id=str(rag_request["parent_id"]),
-                        trace_id=trace_id,
-                    )
-                    return
-            else:
-                logger.debug(
-                    "Processing grant application",
-                    grant_application_id=str(rag_request["parent_id"]),
-                    trace_id=trace_id,
-                )
-                application_result = await grant_application_text_generation_pipeline_handler(
-                    grant_application_id=rag_request["parent_id"],
-                    session_maker=session_maker,
-                )
-                if application_result is None:
-                    logger.info(
-                        "Grant application generation failed but notification was sent",
-                        grant_application_id=str(rag_request["parent_id"]),
-                        trace_id=trace_id,
-                    )
-                    return
-
-            pipeline_duration = time.time() - pipeline_start
-            total_duration = time.time() - start_time
-
-            logger.info(
-                "RAG processing completed successfully",
-                parent_type=rag_request["parent_type"],
-                parent_id=str(rag_request["parent_id"]),
-                trace_id=trace_id,
-                pipeline_duration_ms=round(pipeline_duration * 1000, 2),
-                total_duration_ms=round(total_duration * 1000, 2),
-            )
-
-        except RuntimeError as e:
-            error_duration = time.time() - start_time
-            logger.warning(
-                "Failed to process RAG request - parent entity may have been deleted",
-                parent_type=rag_request["parent_type"],
-                parent_id=str(rag_request["parent_id"]),
-                trace_id=trace_id,
-                error_type=type(e).__name__,
-                error=str(e),
-                error_duration_ms=round(error_duration * 1000, 2),
-            )
-            return
-        except Exception as e:
-            error_duration = time.time() - start_time
-            logger.exception(
-                "Unexpected error during RAG processing",
-                parent_type=rag_request["parent_type"],
-                parent_id=str(rag_request["parent_id"]),
-                trace_id=trace_id,
-                error_type=type(e).__name__,
-                error_duration_ms=round(error_duration * 1000, 2),
-            )
-            raise
+    await grant_application_text_generation_pipeline_handler(
+        grant_application_id=request["parent_id"],
+        session_maker=session_maker,
+    )
 
 
 async def before_server_start() -> None:
