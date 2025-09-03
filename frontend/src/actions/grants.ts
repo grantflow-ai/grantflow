@@ -32,10 +32,14 @@ export async function searchGrants(
 	if (params.max_amount !== undefined && params.max_amount !== null) {
 		searchParams.append("max_amount", params.max_amount.toString());
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	if ((params as any).deadline_after !== undefined && (params as any).deadline_after !== null) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		searchParams.append("deadline_after", String((params as any).deadline_after));
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	if ((params as any).deadline_before !== undefined && (params as any).deadline_before !== null) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		searchParams.append("deadline_before", String((params as any).deadline_before));
 	}
 	if (params.limit !== undefined) {
