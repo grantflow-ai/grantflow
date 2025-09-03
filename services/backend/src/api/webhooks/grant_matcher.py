@@ -1,20 +1,17 @@
-import asyncio
 import hashlib
-import json
 import re
 from datetime import UTC, datetime, timedelta
-from typing import NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
-import functions_framework
-from flask import Request
-from google.cloud import pubsub_v1
-from packages.db.src.connection import get_session_maker
+from litestar import post
 from packages.db.src.tables import Grant, GrantMatchingSubscription
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from services.backend.src.utils.email import send_grant_alert_email
 
 logger = get_logger(__name__)
 
@@ -35,25 +32,15 @@ class SubscriptionData(TypedDict):
     email: str
     search_params: dict[str, str | int | float | None]
     frequency: str
-    verified: bool
     last_notification_sent: NotRequired[datetime]
 
 
-class EmailNotificationMessage(TypedDict):
-    email: str
-    template_type: str
-    template_data: dict[str, list[dict[str, str]] | str]
-
-
 class MatcherResponse(TypedDict):
+    status: Literal["success"]
     message: str
     grants_processed: int
     subscriptions_processed: int
     notifications_sent: int
-
-
-def _get_publisher_client() -> pubsub_v1.PublisherClient:
-    return pubsub_v1.PublisherClient()
 
 
 def _parse_grant_amounts(amount_str: str) -> tuple[int | None, int | None]:
@@ -159,35 +146,59 @@ def should_send_notification(subscription: SubscriptionData, frequency: str) -> 
     return False
 
 
-def _create_notification_message(
-    subscription: SubscriptionData, matching_grants: list[dict[str, str]], frequency: str
-) -> EmailNotificationMessage:
-    return {
-        "email": subscription["email"],
-        "template_type": "grant_alert",
-        "template_data": {
-            "grants": matching_grants,
-            "frequency": frequency,
-            "subscription_id": subscription["id"],
-            "unsubscribe_url": f"https://grantflow.ai/grants/unsubscribe?id={subscription['id']}",
-        },
-    }
+async def _fetch_new_grants(session_maker: async_sessionmaker[AsyncSession], cutoff_time: datetime) -> list[GrantData]:
+    async with session_maker() as session:
+        result = await session.execute(select(Grant).where(Grant.created_at >= cutoff_time))
+        grants = result.scalars().all()
+
+        grants_data: list[GrantData] = []
+        for grant in grants:
+            grant_data = GrantData(
+                id=str(grant.id),
+                title=grant.title,
+                description=grant.description,
+                url=grant.url,
+                deadline=grant.expired_date,
+                amount=grant.amount,
+                category=grant.category,
+                eligibility=grant.eligibility,
+            )
+            grants_data.append(grant_data)
+
+        return grants_data
+
+
+async def _fetch_active_subscriptions(session_maker: async_sessionmaker[AsyncSession]) -> list[SubscriptionData]:
+    async with session_maker() as session:
+        result = await session.execute(
+            select(GrantMatchingSubscription).where(GrantMatchingSubscription.unsubscribed.is_(False))
+        )
+        subscriptions = result.scalars().all()
+
+        subscriptions_data: list[SubscriptionData] = []
+        for sub in subscriptions:
+            sub_data = SubscriptionData(
+                id=str(sub.id),
+                email=sub.email,
+                search_params=sub.search_params,
+                frequency=sub.frequency,
+            )
+            if sub.last_notification_sent:
+                sub_data["last_notification_sent"] = sub.last_notification_sent
+            subscriptions_data.append(sub_data)
+
+        return subscriptions_data
 
 
 async def process_subscriptions_batch(
     subscriptions: list[SubscriptionData],
     new_grants: list[GrantData],
-    publisher: pubsub_v1.PublisherClient,
-    topic_path: str,
     session_maker: async_sessionmaker[AsyncSession],
 ) -> int:
     notifications_sent = 0
     subscription_updates: list[UUID] = []
 
     for subscription in subscriptions:
-        if not subscription.get("verified", False):
-            continue
-
         frequency = subscription.get("frequency", "daily")
         if not should_send_notification(subscription, frequency):
             continue
@@ -208,17 +219,16 @@ async def process_subscriptions_batch(
             dedup_content = f"{subscription['email']}-{datetime.now(UTC).date()}-{len(matching_grants)}"
             dedup_id = hashlib.sha256(dedup_content.encode()).hexdigest()[:16]
 
-            message = _create_notification_message(subscription, matching_grants, frequency)
-
-            message_data = json.dumps(message).encode("utf-8")
-            future = publisher.publish(
-                topic_path,
-                message_data,
-                deduplication_id=dedup_id,
-            )
+            site_url = get_env("SITE_URL", fallback="https://grantflow.ai")
+            unsubscribe_url = f"{site_url}/grants/unsubscribe?id={subscription['id']}"
 
             try:
-                future.result(timeout=30)
+                await send_grant_alert_email(
+                    email=subscription["email"],
+                    grants=matching_grants,
+                    frequency=frequency,
+                    unsubscribe_url=unsubscribe_url,
+                )
                 notifications_sent += 1
                 subscription_updates.append(UUID(subscription["id"]))
 
@@ -247,66 +257,13 @@ async def process_subscriptions_batch(
     return notifications_sent
 
 
-async def _fetch_new_grants(session_maker: async_sessionmaker[AsyncSession], cutoff_time: datetime) -> list[GrantData]:
-    async with session_maker() as session:
-        result = await session.execute(select(Grant).where(Grant.created_at >= cutoff_time))
-        grants = result.scalars().all()
-
-        grants_data: list[GrantData] = []
-        for grant in grants:
-            grant_data = GrantData(
-                id=str(grant.id),
-                title=grant.title,
-                description=grant.description,
-                url=grant.url,
-                deadline=grant.expired_date,
-                amount=grant.amount,
-                category=grant.category,
-                eligibility=grant.eligibility,
-            )
-            grants_data.append(grant_data)
-
-        return grants_data
-
-
-async def _fetch_verified_subscriptions(session_maker: async_sessionmaker[AsyncSession]) -> list[SubscriptionData]:
-    async with session_maker() as session:
-        result = await session.execute(
-            select(GrantMatchingSubscription).where(
-                GrantMatchingSubscription.verified.is_(True), GrantMatchingSubscription.unsubscribed.is_(False)
-            )
-        )
-        subscriptions = result.scalars().all()
-
-        subscriptions_data: list[SubscriptionData] = []
-        for sub in subscriptions:
-            sub_data = SubscriptionData(
-                id=str(sub.id),
-                email=sub.email,
-                search_params=sub.search_params,
-                frequency=sub.frequency,
-                verified=sub.verified,
-            )
-            if sub.last_notification_sent:
-                sub_data["last_notification_sent"] = sub.last_notification_sent
-            subscriptions_data.append(sub_data)
-
-        return subscriptions_data
-
-
-@functions_framework.http
-def match_grants(request: Request) -> tuple[MatcherResponse, int]:  # noqa: ARG001
-    return asyncio.run(_match_grants_async())
-
-
-async def _match_grants_async() -> tuple[MatcherResponse, int]:
-    logger.info("Starting grant matcher function")
-
-    session_maker = get_session_maker()
-    publisher = _get_publisher_client()
-
-    project_id = get_env("GCP_PROJECT_ID", fallback="grantflow")
-    topic_path = publisher.topic_path(project_id, "email-notifications")
+@post(
+    "/webhooks/scheduler/grant-matcher",
+    operation_id="GrantMatcherWebhook",
+    tags=["Webhooks"],
+)
+async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -> MatcherResponse:
+    logger.info("Starting grant matcher webhook")
 
     cutoff_time = datetime.now(UTC) - timedelta(days=1)
     new_grants = await _fetch_new_grants(session_maker, cutoff_time)
@@ -316,10 +273,14 @@ async def _match_grants_async() -> tuple[MatcherResponse, int]:
     if not new_grants:
         logger.info("No new grants to process")
         return MatcherResponse(
-            message="No new grants", grants_processed=0, subscriptions_processed=0, notifications_sent=0
-        ), 200
+            status="success",
+            message="No new grants to process",
+            grants_processed=0,
+            subscriptions_processed=0,
+            notifications_sent=0,
+        )
 
-    all_subscriptions = await _fetch_verified_subscriptions(session_maker)
+    all_subscriptions = await _fetch_active_subscriptions(session_maker)
 
     batch_size = 100
     total_notifications = 0
@@ -330,16 +291,12 @@ async def _match_grants_async() -> tuple[MatcherResponse, int]:
         subscriptions.append(subscription)
 
         if len(subscriptions) >= batch_size:
-            notifications = await process_subscriptions_batch(
-                subscriptions, new_grants, publisher, topic_path, session_maker
-            )
+            notifications = await process_subscriptions_batch(subscriptions, new_grants, session_maker)
             total_notifications += notifications
             subscriptions = []
 
     if subscriptions:
-        notifications = await process_subscriptions_batch(
-            subscriptions, new_grants, publisher, topic_path, session_maker
-        )
+        notifications = await process_subscriptions_batch(subscriptions, new_grants, session_maker)
         total_notifications += notifications
 
     logger.info(
@@ -350,8 +307,9 @@ async def _match_grants_async() -> tuple[MatcherResponse, int]:
     )
 
     return MatcherResponse(
+        status="success",
         message="Grant matching completed",
         grants_processed=len(new_grants),
         subscriptions_processed=subscription_count,
         notifications_sent=total_notifications,
-    ), 200
+    )

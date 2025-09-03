@@ -47,3 +47,23 @@ output "frontend_notifications_topic_name" {
   description = "The name of the frontend notifications topic"
   value       = google_pubsub_topic.frontend_notifications.name
 }
+
+output "email_notifications_topic_id" {
+  description = "The ID of the email notifications topic"
+  value       = google_pubsub_topic.email_notifications.id
+}
+
+output "email_notifications_topic_name" {
+  description = "The name of the email notifications topic"
+  value       = google_pubsub_topic.email_notifications.name
+}
+
+output "email_notifications_subscription_id" {
+  description = "The ID of the email notifications subscription"
+  value       = google_pubsub_subscription.email_notifications_subscription.id
+}
+
+output "email_notifications_subscription_name" {
+  description = "The name of the email notifications subscription"
+  value       = google_pubsub_subscription.email_notifications_subscription.name
+}

@@ -1,23 +1,24 @@
+import { isNotNullish, isString } from "@tool-belt/type-predicates";
 import type { API } from "@/types/api-types";
 import { getClient } from "@/utils/api";
 
 export async function createSubscription(
-	data: API.GrantsSubscribeCreateSubscription.RequestBody,
-): Promise<API.GrantsSubscribeCreateSubscription.Http201.ResponseBody> {
+	data: API.CreateSubscription.RequestBody,
+): Promise<API.CreateSubscription.Http201.ResponseBody> {
 	return getClient()
 		.post("grants/subscribe", {
-			json: data satisfies API.GrantsSubscribeCreateSubscription.RequestBody,
+			json: data satisfies API.CreateSubscription.RequestBody,
 		})
-		.json<API.GrantsSubscribeCreateSubscription.Http201.ResponseBody>();
+		.json<API.CreateSubscription.Http201.ResponseBody>();
 }
 
-export async function getGrantDetails(grantId: string): Promise<API.GrantsGrantIdGetGrantDetails.Http200.ResponseBody> {
-	return getClient().get(`grants/${grantId}`).json<API.GrantsGrantIdGetGrantDetails.Http200.ResponseBody>();
+export async function getGrantDetails(grantId: string): Promise<API.GetGrantDetails.Http200.ResponseBody> {
+	return getClient().get(`grants/${grantId}`).json<API.GetGrantDetails.Http200.ResponseBody>();
 }
 
 export async function searchGrants(
-	params: API.GrantsSearchGrants.QueryParameters = {},
-): Promise<API.GrantsSearchGrants.Http200.ResponseBody> {
+	params: API.GrantsHandleSearchGrants.QueryParameters = {},
+): Promise<API.GrantsHandleSearchGrants.Http200.ResponseBody> {
 	const searchParams = new URLSearchParams();
 
 	if (params.search_query !== undefined && params.search_query !== null) {
@@ -32,10 +33,10 @@ export async function searchGrants(
 	if (params.max_amount !== undefined && params.max_amount !== null) {
 		searchParams.append("max_amount", params.max_amount.toString());
 	}
-	if (params.deadline_after !== undefined && params.deadline_after !== null) {
+	if (isNotNullish(params.deadline_after) && isString(params.deadline_after)) {
 		searchParams.append("deadline_after", params.deadline_after);
 	}
-	if (params.deadline_before !== undefined && params.deadline_before !== null) {
+	if (isNotNullish(params.deadline_before) && isString(params.deadline_before)) {
 		searchParams.append("deadline_before", params.deadline_before);
 	}
 	if (params.limit !== undefined) {
@@ -49,23 +50,15 @@ export async function searchGrants(
 		.get("grants", {
 			searchParams,
 		})
-		.json<API.GrantsSearchGrants.Http200.ResponseBody>();
+		.json<API.GrantsHandleSearchGrants.Http200.ResponseBody>();
 }
 
-export async function unsubscribe(email: string): Promise<API.GrantsUnsubscribeUnsubscribe.Http201.ResponseBody> {
+export async function unsubscribe(email: string): Promise<API.Unsubscribe.Http201.ResponseBody> {
 	return getClient()
 		.post("grants/unsubscribe", {
-			searchParams: {
+			json: {
 				email,
 			},
 		})
-		.json<API.GrantsUnsubscribeUnsubscribe.Http201.ResponseBody>();
-}
-
-export async function verifySubscription(
-	token: string,
-): Promise<API.GrantsVerifyTokenVerifySubscription.Http200.ResponseBody> {
-	return getClient()
-		.get(`grants/verify/${token}`)
-		.json<API.GrantsVerifyTokenVerifySubscription.Http200.ResponseBody>();
+		.json<API.Unsubscribe.Http201.ResponseBody>();
 }

@@ -347,18 +347,14 @@ class Grant(BaseWithUUIDPK):
 class GrantMatchingSubscription(BaseWithUUIDPK):
     __tablename__ = "grant_matching_subscriptions"
 
-    email: Mapped[str] = mapped_column(String(255), index=True)
+    email: Mapped[str] = mapped_column(String(255), index=True, unique=True)
     search_params: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     frequency: Mapped[str] = mapped_column(String(20), default="daily")
-    verified: Mapped[bool] = mapped_column(default=False, index=True)
-    verification_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     last_notification_sent: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     unsubscribed: Mapped[bool] = mapped_column(default=False)
     unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
-        Index("ix_grant_matching_subs_email_verified", "email", "verified"),
-        Index("ix_grant_matching_subs_verified_frequency", "verified", "frequency"),
         CheckConstraint("frequency IN ('daily', 'weekly', 'monthly')", name="check_subscription_frequency"),
     )
 

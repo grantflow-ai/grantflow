@@ -40,11 +40,11 @@ interface SectionFormData {
 }
 
 interface SectionHeaderProps {
-	attributes: any;
+	attributes: ReturnType<typeof useSortable>["attributes"];
 	isDragDisabled?: boolean;
 	isExpanded: boolean;
 	isSubsection: boolean;
-	listeners: any;
+	listeners: ReturnType<typeof useSortable>["listeners"];
 	onAddSubsection?: (parentId: string) => void;
 	onDelete: () => void;
 	onHeaderClick: (e: React.MouseEvent) => void;

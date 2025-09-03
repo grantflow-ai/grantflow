@@ -57,3 +57,39 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
 
   depends_on = [google_project_service.scheduler]
 }
+
+resource "google_cloud_scheduler_job" "grant_matcher" {
+  name      = "grant-matcher-${var.environment}"
+  region    = var.region
+  schedule  = "0 9 * * *"
+  time_zone = "UTC"
+
+  description = "Daily grant matching and notification job"
+
+  http_target {
+    uri         = "${var.backend_url}/webhooks/scheduler/grant-matcher"
+    http_method = "POST"
+
+    headers = {
+      "Content-Type"  = "application/json"
+      "Authorization" = var.pubsub_webhook_token
+    }
+
+    oidc_token {
+      service_account_email = var.scheduler_invoker_service_account_email
+      audience              = var.backend_url
+    }
+  }
+
+  retry_config {
+    retry_count          = 3
+    max_retry_duration   = "900s"
+    min_backoff_duration = "60s"
+    max_backoff_duration = "300s"
+    max_doublings        = 3
+  }
+
+  attempt_deadline = "600s"
+
+  depends_on = [google_project_service.scheduler]
+}

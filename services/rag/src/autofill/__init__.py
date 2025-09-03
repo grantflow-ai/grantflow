@@ -1,9 +1,9 @@
 from .handler import handle_autofill_request
-from .research_deep_dive_handler import handle_research_deep_dive
-from .research_plan_handler import handle_research_plan
+from .research_deep_dive_handler import generate_research_deep_dive_content
+from .research_plan_handler import generate_research_plan_content
 
 __all__ = [
+    "generate_research_deep_dive_content",
+    "generate_research_plan_content",
     "handle_autofill_request",
-    "handle_research_deep_dive",
-    "handle_research_plan",
 ]

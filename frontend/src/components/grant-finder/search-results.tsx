@@ -25,7 +25,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 				setLoading(true);
 				setError(null);
 
-				const queryParams: API.GrantsSearchGrants.QueryParameters = {
+				const queryParams: API.GrantsHandleSearchGrants.QueryParameters = {
 					limit,
 					offset: 0,
 					search_query: searchParams.keywords.join(" "),
@@ -52,7 +52,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 			setError(null);
 
 			const currentOffset = reset ? 0 : offset;
-			const queryParams: API.GrantsSearchGrants.QueryParameters = {
+			const queryParams: API.GrantsHandleSearchGrants.QueryParameters = {
 				limit,
 				offset: currentOffset,
 				search_query: searchParams.keywords.join(" "),

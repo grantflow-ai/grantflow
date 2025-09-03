@@ -10,7 +10,6 @@ from packages.db.src.enums import UserRoleEnum
 
 from services.backend.src.api.middleware import (
     ADMIN_PATHS,
-    DEV_BYPASS_PREFIX,
     PUBLIC_PATHS,
     AuthMiddleware,
     TraceIdMiddleware,
@@ -264,28 +263,6 @@ async def test_authenticate_options_method(app: MagicMock) -> None:
 
     assert result.user is None
     assert result.auth is None
-
-
-async def test_authenticate_dev_bypass_enabled(app: MagicMock, mock_get_env: MagicMock) -> None:
-    middleware = AuthMiddleware(app=app)
-    mock_get_env.side_effect = lambda key, default=None: True if key == "ENABLE_DEV_BYPASS" else "test-admin-code"
-
-    connection = MockASGIConnection(url_path=f"{DEV_BYPASS_PREFIX}test-endpoint", app=app)
-
-    result: AuthenticationResult = await middleware.authenticate_request(connection)
-
-    assert result.user is None
-    assert result.auth == "dev-bypass-user"
-
-
-async def test_authenticate_dev_bypass_disabled(app: MagicMock, mock_get_env: MagicMock) -> None:
-    middleware = AuthMiddleware(app=app)
-    mock_get_env.side_effect = lambda key, default=None: False if key == "ENABLE_DEV_BYPASS" else "test-admin-code"
-
-    connection = MockASGIConnection(url_path=f"{DEV_BYPASS_PREFIX}test-endpoint", app=app)
-
-    with pytest.raises(NotAuthorizedException, match="Dev bypass not enabled"):
-        await middleware.authenticate_request(connection)
 
 
 async def test_authenticate_admin_source_patterns(app: MagicMock, mock_get_env: MagicMock) -> None:

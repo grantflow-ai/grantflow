@@ -28,7 +28,7 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 			setLoading(true);
 			setError(null);
 
-			const requestBody: API.GrantsSubscribeCreateSubscription.RequestBody = {
+			const requestBody: API.CreateSubscription.RequestBody = {
 				email,
 				search_params: {
 					category: "",
@@ -62,8 +62,7 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 							Success! You&apos;re subscribed
 						</h3>
 						<p className="mt-1 text-sm text-green-700" data-testid="success-message">
-							We&apos;ll notify you when new grants matching your criteria become available. Check your
-							email to confirm your subscription.
+							We&apos;ll notify you when new grants matching your criteria become available.
 						</p>
 					</div>
 				</div>
