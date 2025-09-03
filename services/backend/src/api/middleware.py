@@ -25,13 +25,14 @@ logger = get_logger(__name__)
 PUBLIC_PATHS = {"login", "health", "schema", "grants"}
 PUBLIC_PATH_PREFIXES: set[str] = set()
 ADMIN_PATHS = {"granting-institutions"}
-WEBHOOK_PATHS = {"/webhooks/pubsub/email-notifications"}
+WEBHOOK_PATHS = {"/webhooks/pubsub/email-notifications", "/webhooks/scheduler/grant-matcher"}
 ADMIN_SOURCES_PATTERNS = [
     "/granting-institutions/{granting_institution_id}/sources",
     "/granting-institutions/{granting_institution_id}/sources/{source_id}",
     "/granting-institutions/{granting_institution_id}/sources/upload-url",
     "/granting-institutions/{granting_institution_id}/sources/crawl-url",
 ]
+
 
 def _matches_source_pattern(path: str, pattern: str) -> bool:
     pattern_parts = pattern.split("/")
