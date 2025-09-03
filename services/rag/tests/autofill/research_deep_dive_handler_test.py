@@ -3,7 +3,6 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from packages.shared_utils.src.pubsub import AutofillRequest
 
 from services.rag.src.autofill.research_deep_dive_handler import generate_research_deep_dive_content
@@ -60,21 +59,21 @@ async def test_generate_field_answer(mock_logger: MagicMock) -> None:
 
     from services.rag.src.autofill.research_deep_dive_handler import _generate_field_answer
 
-    with patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion, \
-         patch("services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries") as mock_search, \
-         patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve:
-
+    with (
+        patch("services.rag.src.autofill.research_deep_dive_handler.handle_completions_request") as mock_completion,
+        patch("services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries") as mock_search,
+        patch("services.rag.src.autofill.research_deep_dive_handler.retrieve_documents") as mock_retrieve,
+    ):
         mock_search.return_value = ["search query 1"]
         mock_retrieve.return_value = ["Document content about medical research"]
         mock_completion.return_value = {
-            "answer": "This is a generated answer about research background that provides comprehensive details about the context and motivation for this important medical research project. " * 5
+            "answer": "This is a generated answer about research background that provides comprehensive details about the context and motivation for this important medical research project. "
+            * 5
         }
 
         app = GrantApplication(id="test-id", title="Test Application")
         result = await _generate_field_answer(
-            application=app,
-            field_name="background_context",
-            objectives_text="Test objectives"
+            application=app, field_name="background_context", objectives_text="Test objectives"
         )
 
         assert len(result) >= 50
@@ -189,13 +188,17 @@ async def test_generate_research_deep_dive_content_with_mocks(
 
     app = GrantApplication(id="test-id", title="Test Application", research_objectives=[])
 
-    with patch(
-        "services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries", new_callable=AsyncMock
-    ) as mock_search, patch(
-        "services.rag.src.autofill.research_deep_dive_handler.retrieve_documents", new_callable=AsyncMock
-    ) as mock_retrieve, patch(
-        "services.rag.src.autofill.research_deep_dive_handler._generate_field_answer", new_callable=AsyncMock
-    ) as mock_generate:
+    with (
+        patch(
+            "services.rag.src.autofill.research_deep_dive_handler.handle_create_search_queries", new_callable=AsyncMock
+        ) as mock_search,
+        patch(
+            "services.rag.src.autofill.research_deep_dive_handler.retrieve_documents", new_callable=AsyncMock
+        ) as mock_retrieve,
+        patch(
+            "services.rag.src.autofill.research_deep_dive_handler._generate_field_answer", new_callable=AsyncMock
+        ) as mock_generate,
+    ):
         mock_search.return_value = ["search query 1", "search query 2"]
         mock_retrieve.return_value = ["Document content 1", "Document content 2"]
         mock_generate.return_value = "Generated answer text " * 30

@@ -116,6 +116,112 @@ research_plan_schema = {
 }
 
 
+def _validate_objective_fields(obj: dict[str, Any], obj_number: int) -> None:
+    """Validate title and description fields of an objective."""
+    if "title" not in obj or not obj["title"]:
+        raise ValidationError(f"Objective {obj_number} missing or empty 'title'")
+
+    if len(obj["title"]) < 10:
+        raise ValidationError(
+            f"Objective {obj_number} title too short (min 10 chars)",
+            context={"title": obj["title"], "length": len(obj["title"])},
+        )
+
+    if "description" not in obj or not obj["description"]:
+        raise ValidationError(f"Objective {obj_number} missing or empty 'description'")
+
+    if len(obj["description"]) < 50:
+        raise ValidationError(
+            f"Objective {obj_number} description too short (min 50 chars)",
+            context={"description": obj["description"][:50], "length": len(obj["description"])},
+        )
+
+
+def _validate_research_tasks(obj: dict[str, Any], obj_number: int) -> None:
+    """Validate research tasks for an objective."""
+    if "research_tasks" not in obj:
+        raise ValidationError(f"Objective {obj_number} missing 'research_tasks'")
+
+    tasks = obj["research_tasks"]
+    if not isinstance(tasks, list):
+        raise ValidationError(
+            f"Objective {obj_number} research_tasks must be a list",
+            context={"type": type(tasks).__name__},
+        )
+
+    if len(tasks) < 2 or len(tasks) > 5:
+        raise ValidationError(
+            f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
+            context={"count": len(tasks)},
+        )
+
+    seen_task_numbers = set()
+    for j, task in enumerate(tasks):
+        if not isinstance(task, dict):
+            raise ValidationError(
+                f"Objective {obj_number} task {j + 1} must be a dictionary",
+                context={"type": type(task).__name__},
+            )
+
+        # Validate task number
+        if "number" not in task:
+            raise ValidationError(f"Objective {obj_number} task {j + 1} missing 'number'")
+
+        task_number = task["number"]
+        if not isinstance(task_number, int) or task_number < 1 or task_number > 5:
+            raise ValidationError(
+                f"Task number must be an integer between 1 and 5, got {task_number}",
+                context={"objective": obj_number, "task_index": j, "number": task_number},
+            )
+
+        if task_number in seen_task_numbers:
+            raise ValidationError(
+                f"Duplicate task number {task_number} in objective {obj_number}",
+                context={"objective": obj_number, "task_number": task_number},
+            )
+        seen_task_numbers.add(task_number)
+
+        # Validate task title and description
+        if "title" not in task or not task["title"]:
+            raise ValidationError(f"Objective {obj_number} task {task_number} missing or empty 'title'")
+
+        if len(task["title"]) < 10:
+            raise ValidationError(
+                f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
+                context={"title": task["title"], "length": len(task["title"])},
+            )
+
+        if "description" not in task or not task["description"]:
+            raise ValidationError(f"Objective {obj_number} task {task_number} missing or empty 'description'")
+
+        if len(task["description"]) < 50:
+            raise ValidationError(
+                f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
+                context={"description": task["description"][:50], "length": len(task["description"])},
+            )
+
+
+def _validate_objective_number(obj: dict[str, Any], i: int, seen_numbers: set[int]) -> int:
+    """Validate objective number and check for duplicates."""
+    if "number" not in obj:
+        raise ValidationError(f"Objective {i + 1} missing 'number' field")
+
+    obj_number = obj["number"]
+    if not isinstance(obj_number, int) or obj_number < 1 or obj_number > 3:
+        raise ValidationError(
+            f"Objective number must be an integer between 1 and 3, got {obj_number}",
+            context={"index": i, "number": obj_number},
+        )
+
+    if obj_number in seen_numbers:
+        raise ValidationError(
+            f"Duplicate objective number: {obj_number}",
+            context={"index": i, "number": obj_number},
+        )
+    seen_numbers.add(obj_number)
+    return obj_number
+
+
 def _validate_research_plan_response(response: Any) -> None:
     if not isinstance(response, dict):
         raise ValidationError(
@@ -139,7 +245,7 @@ def _validate_research_plan_response(response: Any) -> None:
             context={"count": len(objectives)},
         )
 
-    seen_numbers = set()
+    seen_numbers: set[int] = set()
     for i, obj in enumerate(objectives):
         if not isinstance(obj, dict):
             raise ValidationError(
@@ -147,104 +253,10 @@ def _validate_research_plan_response(response: Any) -> None:
                 context={"type": type(obj).__name__, "index": i},
             )
 
-        # Validate objective number
-        if "number" not in obj:
-            raise ValidationError(f"Objective {i + 1} missing 'number' field")
+        obj_number = _validate_objective_number(obj, i, seen_numbers)
+        _validate_objective_fields(obj, obj_number)
 
-        obj_number = obj["number"]
-        if not isinstance(obj_number, int) or obj_number < 1 or obj_number > 3:
-            raise ValidationError(
-                f"Objective number must be an integer between 1 and 3, got {obj_number}",
-                context={"index": i, "number": obj_number},
-            )
-
-        if obj_number in seen_numbers:
-            raise ValidationError(
-                f"Duplicate objective number: {obj_number}",
-                context={"index": i, "number": obj_number},
-            )
-        seen_numbers.add(obj_number)
-
-        # Validate title and description
-        if "title" not in obj or not obj["title"]:
-            raise ValidationError(f"Objective {obj_number} missing or empty 'title'")
-
-        if len(obj["title"]) < 10:
-            raise ValidationError(
-                f"Objective {obj_number} title too short (min 10 chars)",
-                context={"title": obj["title"], "length": len(obj["title"])},
-            )
-
-        if "description" not in obj or not obj["description"]:
-            raise ValidationError(f"Objective {obj_number} missing or empty 'description'")
-
-        if len(obj["description"]) < 50:
-            raise ValidationError(
-                f"Objective {obj_number} description too short (min 50 chars)",
-                context={"description": obj["description"][:50], "length": len(obj["description"])},
-            )
-
-        # Validate research tasks
-        if "research_tasks" not in obj:
-            raise ValidationError(f"Objective {obj_number} missing 'research_tasks'")
-
-        tasks = obj["research_tasks"]
-        if not isinstance(tasks, list):
-            raise ValidationError(
-                f"Objective {obj_number} research_tasks must be a list",
-                context={"type": type(tasks).__name__},
-            )
-
-        if len(tasks) < 2 or len(tasks) > 5:
-            raise ValidationError(
-                f"Objective {obj_number} must have 2-5 tasks, got {len(tasks)}",
-                context={"count": len(tasks)},
-            )
-
-        seen_task_numbers = set()
-        for j, task in enumerate(tasks):
-            if not isinstance(task, dict):
-                raise ValidationError(
-                    f"Objective {obj_number} task {j + 1} must be a dictionary",
-                    context={"type": type(task).__name__},
-                )
-
-            # Validate task number
-            if "number" not in task:
-                raise ValidationError(f"Objective {obj_number} task {j + 1} missing 'number'")
-
-            task_number = task["number"]
-            if not isinstance(task_number, int) or task_number < 1 or task_number > 5:
-                raise ValidationError(
-                    f"Task number must be an integer between 1 and 5, got {task_number}",
-                    context={"objective": obj_number, "task_index": j, "number": task_number},
-                )
-
-            if task_number in seen_task_numbers:
-                raise ValidationError(
-                    f"Duplicate task number {task_number} in objective {obj_number}",
-                    context={"objective": obj_number, "task_number": task_number},
-                )
-            seen_task_numbers.add(task_number)
-
-            # Validate task title and description
-            if "title" not in task or not task["title"]:
-                raise ValidationError(f"Objective {obj_number} task {task_number} missing or empty 'title'")
-
-            if len(task["title"]) < 10:
-                raise ValidationError(
-                    f"Objective {obj_number} task {task_number} title too short (min 10 chars)",
-                    context={"title": task["title"], "length": len(task["title"])},
-                )
-
-            if "description" not in task or not task["description"]:
-                raise ValidationError(f"Objective {obj_number} task {task_number} missing or empty 'description'")
-
-            if len(task["description"]) < 50:
-                raise ValidationError(
-                    f"Objective {obj_number} task {task_number} description too short (min 50 chars)",
-                    context={"description": task["description"][:50], "length": len(task["description"])},
-                )
+        _validate_research_tasks(obj, obj_number)
 
 
 async def generate_research_plan_content(application: GrantApplication) -> list[ResearchObjective]:
