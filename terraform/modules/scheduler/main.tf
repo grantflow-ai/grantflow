@@ -61,7 +61,7 @@ resource "google_cloud_scheduler_job" "scraper_daily" {
 resource "google_cloud_scheduler_job" "grant_matcher" {
   name      = "grant-matcher-${var.environment}"
   region    = var.region
-  schedule  = "0 9 * * *"  # Daily at 9 AM UTC
+  schedule  = "0 9 * * *" # Daily at 9 AM UTC
   time_zone = "UTC"
 
   description = "Daily grant matching and notification job"
@@ -89,7 +89,7 @@ resource "google_cloud_scheduler_job" "grant_matcher" {
     max_doublings        = 3
   }
 
-  attempt_deadline = "600s"  # 10 minutes timeout for the job
+  attempt_deadline = "600s" # 10 minutes timeout for the job
 
   depends_on = [google_project_service.scheduler]
 }
