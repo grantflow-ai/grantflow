@@ -22,7 +22,9 @@ export const Default: Story = {
 		children: (
 			<>
 				<DropdownMenuTrigger asChild>
-					<button className="px-3 py-2 bg-primary text-white rounded">Open Menu</button>
+					<button className="px-3 py-2 bg-primary text-white rounded" type="button">
+						Open Menu
+					</button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
 					<DropdownMenuItem>Menu item</DropdownMenuItem>
@@ -38,7 +40,9 @@ export const FigmaSpecPreview: Story = {
 	render: () => (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<button className="px-3 py-2 bg-primary text-white rounded">Open Menu</button>
+				<button className="px-3 py-2 bg-primary text-white rounded" type="button">
+					Open Menu
+				</button>
 			</DropdownMenuTrigger>
 
 			<DropdownMenuContent
@@ -71,7 +75,9 @@ export const CheckboxMenuItem: Story = {
 		children: (
 			<>
 				<DropdownMenuTrigger asChild>
-					<button className="px-3 py-2 bg-primary text-white rounded">Open Menu</button>
+					<button className="px-3 py-2 bg-primary text-white rounded" type="button">
+						Open Menu
+					</button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
 					<DropdownMenuCheckboxItem checked={true}>Menu item</DropdownMenuCheckboxItem>
@@ -87,7 +93,9 @@ export const RadioMenuItem: Story = {
 		children: (
 			<>
 				<DropdownMenuTrigger asChild>
-					<button className="px-3 py-2 bg-primary text-white rounded">Open Menu</button>
+					<button className="px-3 py-2 bg-primary text-white rounded" type="button">
+						Open Menu
+					</button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
 					<DropdownMenuRadioGroup value="none">
