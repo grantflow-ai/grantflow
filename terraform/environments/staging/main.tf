@@ -35,6 +35,10 @@ module "secrets" {
   environment = var.environment
 }
 
+data "google_secret_manager_secret_version" "pubsub_webhook_token" {
+  secret = "PUBSUB_WEBHOOK_TOKEN"
+}
+
 module "iam" {
   source = "../../modules/iam"
 }
@@ -152,7 +156,9 @@ module "scheduler" {
   region                                  = var.region
   environment                             = var.environment
   scraper_url                             = module.cloud_run.scraper_url
+  backend_url                             = module.cloud_run.backend_url
   scheduler_invoker_service_account_email = module.cloud_run.scheduler_invoker_service_account_email
+  pubsub_webhook_token                    = data.google_secret_manager_secret_version.pubsub_webhook_token.secret_data
   timezone                                = "Europe/Berlin"
 }
 
@@ -169,13 +175,6 @@ module "monitoring" {
     memory_threshold     = 0.95
     cpu_threshold        = 0.90
   }
-}
-
-module "grant_matcher" {
-  source      = "../../modules/grant_matcher"
-  project_id  = var.project_id
-  region      = var.region
-  environment = var.environment
 }
 
 
