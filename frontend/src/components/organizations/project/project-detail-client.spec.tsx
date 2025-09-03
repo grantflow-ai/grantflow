@@ -326,7 +326,8 @@ describe("ProjectDetailClient", () => {
 		expect(MockApplicationList).toHaveBeenCalledWith(
 			expect.objectContaining({
 				applications: [],
-				isLoading: true,
+				isCreatingApplication: false,
+				searchQuery: "",
 			}),
 			undefined,
 		);

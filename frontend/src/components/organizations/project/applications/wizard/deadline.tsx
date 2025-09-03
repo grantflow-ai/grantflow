@@ -51,6 +51,10 @@ export function Deadline() {
 
 	const deadlineInfo = getDeadlineInfo(submissionDate);
 
+	if (deadlineInfo.status === "not_set") {
+		return null;
+	}
+
 	return (
 		<div
 			className="rounded-xs bg-app-lavender-gray relative box-border flex w-full flex-row items-center justify-center gap-0.5 px-2 py-1 text-sm text-app-black"

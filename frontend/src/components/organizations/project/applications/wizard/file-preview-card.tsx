@@ -102,16 +102,16 @@ export function FilePreviewCard({
 					data-testid="file-context-menu"
 				>
 					<AppDropdownMenuItem
-						className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
+						className="group flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-app-gray-100"
 						data-testid="file-menu-open"
 						disabled={!canActuallyOpen}
 						onClick={handleOpen}
 					>
-						<ExternalLink className="size-4 text-app-gray-600" />
+						<ExternalLink className="size-4 text-app-black group-hover:text-white" />
 						Open
 					</AppDropdownMenuItem>
 					<AppDropdownMenuItem
-						className={`flex items-center gap-2 rounded px-2 py-1.5 text-sm ${
+						className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm ${
 							canRemove
 								? "cursor-pointer text-app-red hover:bg-app-gray-100"
 								: "cursor-not-allowed text-app-gray-400"
@@ -121,7 +121,9 @@ export function FilePreviewCard({
 						onClick={handleRemove}
 						title={isIndexing ? "Cannot remove file while indexing is in progress" : "Remove file"}
 					>
-						<Trash2 className={`size-4 ${canRemove ? "" : "text-app-gray-400"}`} />
+						<Trash2
+							className={`size-4 ${canRemove ? "text-app-black group-hover:text-white" : "text-app-gray-400"}`}
+						/>
 						{isIndexing ? "Remove (indexing...)" : "Remove"}
 					</AppDropdownMenuItem>
 				</AppDropdownMenuContent>
