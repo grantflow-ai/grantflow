@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ThemeProvider } from "next-themes";
 import { toast } from "sonner";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { Toaster } from "@/components/ui/sonner";
@@ -8,11 +7,9 @@ const meta: Meta<typeof Toaster> = {
 	component: Toaster,
 	decorators: [
 		(Story) => (
-			<ThemeProvider attribute="class" defaultTheme="light" enableSystem={true}>
-				<div className="min-h-screen bg-gray-100 p-8">
-					<Story />
-				</div>
-			</ThemeProvider>
+			<div className="min-h-screen bg-gray-100 p-8">
+				<Story />
+			</div>
 		),
 	],
 	parameters: {

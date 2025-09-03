@@ -1,12 +1,9 @@
 "use client";
 
 import { CircleCheck, Info, LoaderCircle, TriangleAlert, XCircle } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-	const { theme = "system" } = useTheme();
-
 	return (
 		<Sonner
 			className="toaster group"
@@ -18,7 +15,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 				warning: <TriangleAlert className="size-5" />,
 			}}
 			position="bottom-center"
-			theme={theme as ToasterProps["theme"]}
+			theme="light"
 			toastOptions={{
 				classNames: {
 					actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
