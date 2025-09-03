@@ -88,6 +88,7 @@ function ResearchDeepDiveHeader({
 						🔄 Reset (Dev)
 					</AppButton>
 				)}
+				{/* Temporarily hidden - autofill functionality
 				<AppButton
 					className="shrink-0"
 					data-testid="ai-try-button"
@@ -98,6 +99,7 @@ function ResearchDeepDiveHeader({
 				>
 					{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
 				</AppButton>
+				*/}
 			</div>
 		</div>
 	);

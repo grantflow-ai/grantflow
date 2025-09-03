@@ -92,6 +92,7 @@ EXTRACT_RELATIONSHIPS_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Focus on identifying the most significant and meaningful relationships rather than attempting to connect every possible pair of research elements. Quality is more important than quantity - each relationship should be substantive and contribute to understanding the research plan.
     """,
 )
+
 relationships_schema = {
     "type": "object",
     "properties": {

@@ -27,9 +27,7 @@ from services.rag.src.grant_application.enrich_research_objective import (
     enrich_objective_with_wikidata,
 )
 from services.rag.src.grant_application.extract_relationships import handle_extract_relationships
-from services.rag.src.grant_application.generate_section_text import (
-    generate_sections_with_shared_retrieval,
-)
+from services.rag.src.grant_application.generate_section_text import generate_section_text
 from services.rag.src.grant_application.generate_work_plan_text import generate_work_plan_component_text
 from services.rag.src.grant_application.utils import (
     generate_application_text,
@@ -265,7 +263,7 @@ async def generate_grant_section_texts(
         if isinstance(s, dict) and s.get("is_detailed_research_plan") is not None
     ]
 
-    return await generate_sections_with_shared_retrieval(
+    return await generate_section_text(
         sections=long_form_sections,
         research_deep_dives=research_objectives,
         application_id=application_id,
@@ -424,7 +422,7 @@ async def grant_application_text_generation_pipeline_handler(
             total_pipeline_stages=GRANT_APPLICATION_PIPELINE_STAGES,
         )
 
-        section_texts = await generate_sections_with_shared_retrieval(
+        section_texts = await generate_section_text(
             application_id=str(application_id),
             sections=grant_template.grant_sections,  # type: ignore[arg-type]
             research_deep_dives=grant_application.research_objectives or [],
