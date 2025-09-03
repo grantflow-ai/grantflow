@@ -151,7 +151,7 @@ async def handle_search_grants(
         raise DatabaseError("Search service temporarily unavailable") from e
 
 
-@get("/grants/{grant_id:str}")
+@get("/grants/{grant_id:str}", operation_id="GetGrantDetails")
 async def handle_get_grant_details(grant_id: str, session_maker: async_sessionmaker[Any]) -> GrantInfoResponse:
     logger.info("Public grant details request", grant_id=grant_id)
 
@@ -195,7 +195,7 @@ async def handle_get_grant_details(grant_id: str, session_maker: async_sessionma
         raise DatabaseError("Grant service temporarily unavailable") from e
 
 
-@post("/grants/subscribe")
+@post("/grants/subscribe", operation_id="CreateSubscription")
 async def handle_create_subscription(
     data: SubscriptionRequest,
     session_maker: async_sessionmaker[Any],
@@ -247,7 +247,7 @@ async def handle_create_subscription(
         raise DatabaseError("Subscription service temporarily unavailable") from e
 
 
-@post("/grants/unsubscribe")
+@post("/grants/unsubscribe", operation_id="Unsubscribe")
 async def handle_unsubscribe(
     data: UnsubscribeRequest,
     session_maker: async_sessionmaker[Any],

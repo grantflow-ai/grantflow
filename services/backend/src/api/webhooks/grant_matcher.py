@@ -259,7 +259,7 @@ async def process_subscriptions_batch(
 
 @post(
     "/webhooks/scheduler/grant-matcher",
-    operation_id="HandleGrantMatcherWebhook",
+    operation_id="GrantMatcherWebhook",
     tags=["Webhooks"],
 )
 async def handle_grant_matcher_webhook(session_maker: async_sessionmaker[Any]) -> MatcherResponse:

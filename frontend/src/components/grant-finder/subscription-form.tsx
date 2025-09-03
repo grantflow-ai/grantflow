@@ -28,7 +28,7 @@ export function SubscriptionForm({ searchParams }: SubscriptionFormProps) {
 			setLoading(true);
 			setError(null);
 
-			const requestBody: API.GrantsSubscribeHandleCreateSubscription.RequestBody = {
+			const requestBody: API.CreateSubscription.RequestBody = {
 				email,
 				search_params: {
 					category: "",
