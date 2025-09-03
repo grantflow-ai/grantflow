@@ -23,7 +23,7 @@ from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest, TableIdResponse
 from services.backend.src.utils.audit import DELETE_PROJECT, log_organization_audit_from_request
-from services.backend.src.utils.firebase import get_user_by_email, get_users
+from services.backend.src.utils.firebase import FirebaseUser, get_user_by_email, get_users
 
 logger = get_logger(__name__)
 
@@ -162,12 +162,13 @@ async def handle_retrieve_projects(
             firebase_users[uid] = msgspec.json.decode(data)
 
     if missing_uids := list(set(all_member_uids) - set(firebase_users.keys())):
-        fetched_users = await get_users(missing_uids)
+        fetched_users: dict[str, FirebaseUser] = await get_users(missing_uids)
 
         for uid, user_data in fetched_users.items():
             await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
 
-        firebase_users.update(fetched_users)
+        # Convert FirebaseUser objects to dict for consistency
+        firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
     return [
         ProjectListItemResponse(
@@ -284,12 +285,13 @@ async def handle_retrieve_project(
             firebase_users[uid] = msgspec.json.decode(data)
 
     if missing_uids := list(set(member_uids) - set(firebase_users.keys())):
-        fetched_users = await get_users(missing_uids)
+        fetched_users: dict[str, FirebaseUser] = await get_users(missing_uids)
 
         for uid, user_data in fetched_users.items():
             await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
 
-        firebase_users.update(fetched_users)
+        # Convert FirebaseUser objects to dict for consistency
+        firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
     return ProjectResponse(
         id=str(project.id),
@@ -396,7 +398,7 @@ async def handle_create_invitation_redirect_url(
             if inviter.role != UserRoleEnum.OWNER and data["role"] == UserRoleEnum.OWNER:
                 raise ValidationException("Invitee role must be equal to or lower than the inviter's role")
 
-            firebase_user = await get_user_by_email(data["email"])
+            firebase_user: FirebaseUser | None = await get_user_by_email(data["email"])
             if firebase_user:
                 existing_member = await session.scalar(
                     select(OrganizationUser)
@@ -616,7 +618,7 @@ async def handle_accept_invitation(
             if invitation.accepted_at is not None:
                 raise ValidationException("Invitation has already been accepted")
 
-            firebase_user = await get_user_by_email(invitation.email)
+            firebase_user: FirebaseUser | None = await get_user_by_email(invitation.email)
             if not firebase_user:
                 raise ValidationException("User not found in Firebase")
 
@@ -746,15 +748,17 @@ async def handle_list_project_members(
             return []
 
         uids = [pu.firebase_uid for pu in project_users]
-        firebase_users = await get_users(uids)
+        firebase_users: dict[str, FirebaseUser] = await get_users(uids)
 
         members: list[ProjectMemberResponse] = []
         for project_user in project_users:
-            firebase_user = firebase_users.get(project_user.firebase_uid, {})
+            firebase_user: FirebaseUser = firebase_users.get(
+                project_user.firebase_uid, FirebaseUser(local_id="", uid="")
+            )
 
             member: ProjectMemberResponse = {
                 "firebase_uid": project_user.firebase_uid,
-                "email": firebase_user.get("email", ""),
+                "email": firebase_user.get("email") or "",
                 "display_name": firebase_user.get("displayName"),
                 "photo_url": firebase_user.get("photoURL"),
                 "role": project_user.role,
@@ -829,12 +833,12 @@ async def handle_update_member_role(
             target_member.role = data["role"]
             await session.commit()
 
-            firebase_user = await get_users([firebase_uid])
-            user_data = firebase_user.get(firebase_uid, {})
+            firebase_users_result: dict[str, FirebaseUser] = await get_users([firebase_uid])
+            user_data: FirebaseUser = firebase_users_result.get(firebase_uid, FirebaseUser(local_id="", uid=""))
 
             return ProjectMemberResponse(
                 firebase_uid=firebase_uid,
-                email=user_data.get("email", ""),
+                email=user_data.get("email") or "",
                 display_name=user_data.get("displayName"),
                 photo_url=user_data.get("photoURL"),
                 role=data["role"],

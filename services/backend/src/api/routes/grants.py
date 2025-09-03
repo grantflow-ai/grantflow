@@ -1,18 +1,11 @@
-import secrets
 from datetime import UTC, datetime
 from typing import Any, NotRequired, TypedDict
 
-from litestar import Response, get, post
-from litestar.status_codes import (
-    HTTP_200_OK,
-    HTTP_201_CREATED,
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_500_INTERNAL_SERVER_ERROR,
-)
+from litestar import get, post
+from litestar.exceptions import NotFoundException, ValidationException
 from packages.db.src.tables import Grant, GrantMatchingSubscription
+from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.pubsub import publish_subscription_verification_email
 from sqlalchemy import func, insert, or_, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -57,16 +50,22 @@ class UnsubscribeRequest(TypedDict):
     email: str
 
 
+class UnsubscribeResponse(TypedDict):
+    message: str
+
+
 @get("/grants")
-async def search_grants(
+async def handle_search_grants(
     session_maker: async_sessionmaker[Any],
     search_query: str | None = None,
     category: str | None = None,
     min_amount: int | None = None,
     max_amount: int | None = None,
+    deadline_after: str | None = None,
+    deadline_before: str | None = None,
     limit: int = 20,
     offset: int = 0,
-) -> Response[list[GrantInfoResponse] | dict[str, str]]:
+) -> list[GrantInfoResponse]:
     limit = min(limit, 100)
 
     logger.info(
@@ -75,6 +74,8 @@ async def search_grants(
         category=category,
         min_amount=min_amount,
         max_amount=max_amount,
+        deadline_after=deadline_after,
+        deadline_before=deadline_before,
         limit=limit,
         offset=offset,
     )
@@ -103,6 +104,12 @@ async def search_grants(
 
             if max_amount is not None:
                 query = query.where(Grant.amount_max <= max_amount)
+
+            if deadline_after is not None:
+                query = query.where(Grant.expired_date >= deadline_after)
+
+            if deadline_before is not None:
+                query = query.where(Grant.expired_date <= deadline_before)
 
             query = query.order_by(Grant.created_at.desc()).offset(offset).limit(limit)
 
@@ -136,11 +143,7 @@ async def search_grants(
                 results.append(grant_info)
 
             logger.info("Public grant search completed", result_count=len(results))
-
-            return Response(
-                content=results,
-                status_code=HTTP_200_OK,
-            )
+            return results
 
     except SQLAlchemyError as e:
         logger.error(
@@ -151,20 +154,17 @@ async def search_grants(
                 "category": category,
                 "min_amount": min_amount,
                 "max_amount": max_amount,
+                "deadline_after": deadline_after,
+                "deadline_before": deadline_before,
                 "limit": limit,
                 "offset": offset,
             },
         )
-        return Response(
-            content={"error": "Search service temporarily unavailable"},
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        raise DatabaseError("Search service temporarily unavailable") from e
 
 
-@get("/grants/{grant_id:str}")
-async def get_grant_details(
-    grant_id: str, session_maker: async_sessionmaker[Any]
-) -> Response[GrantInfoResponse | dict[str, str]]:
+@get("/grants/{grant_id:str}", operation_id="GetGrantDetails")
+async def handle_get_grant_details(grant_id: str, session_maker: async_sessionmaker[Any]) -> GrantInfoResponse:
     logger.info("Public grant details request", grant_id=grant_id)
 
     try:
@@ -175,10 +175,7 @@ async def get_grant_details(
 
             if not grant:
                 logger.warning("Grant not found", document_number=grant_id)
-                return Response(
-                    content={"error": "Grant not found"},
-                    status_code=HTTP_404_NOT_FOUND,
-                )
+                raise NotFoundException("Grant not found")
 
             grant_info: GrantInfoResponse = {
                 "id": str(grant.id),
@@ -203,37 +200,26 @@ async def get_grant_details(
             }
 
             logger.info("Public grant details retrieved", document_number=grant_id)
-
-            return Response(
-                content=grant_info,
-                status_code=HTTP_200_OK,
-            )
+            return grant_info
 
     except SQLAlchemyError as e:
         logger.error("Failed to retrieve grant details", document_number=grant_id, error=str(e))
-        return Response(
-            content={"error": "Grant service temporarily unavailable"},
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        raise DatabaseError("Grant service temporarily unavailable") from e
 
 
-@post("/grants/subscribe")
-async def create_subscription(
+@post("/grants/subscribe", operation_id="CreateSubscription")
+async def handle_create_subscription(
     data: SubscriptionRequest,
     session_maker: async_sessionmaker[Any],
-) -> Response[SubscriptionResponse | dict[str, str]]:
+) -> SubscriptionResponse:
     logger.info("Creating grant subscription", email=data["email"])
 
     try:
         async with session_maker() as session, session.begin():
-            verification_token = secrets.token_urlsafe(32)
-
             subscription_data = {
                 "email": data["email"],
                 "search_params": data.get("search_params", {}),
                 "frequency": data.get("frequency", "daily"),
-                "verified": False,
-                "verification_token": verification_token,
                 "unsubscribed": False,
             }
 
@@ -245,26 +231,15 @@ async def create_subscription(
                 )
                 subscription_id = result.scalar_one()
 
-                await publish_subscription_verification_email(
-                    email=data["email"],
-                    subscription_id=str(subscription_id),
-                    verification_token=verification_token,
-                    search_params=data.get("search_params"),
-                    frequency=data.get("frequency", "daily"),
-                )
-
                 logger.info(
                     "Grant subscription created",
                     subscription_id=str(subscription_id),
                     email=data["email"],
                 )
 
-                return Response(
-                    content=SubscriptionResponse(
-                        id=str(subscription_id),
-                        message="Subscription created successfully. Please check your email to verify.",
-                    ),
-                    status_code=HTTP_201_CREATED,
+                return SubscriptionResponse(
+                    id=str(subscription_id),
+                    message="Subscription created successfully.",
                 )
 
             except IntegrityError as e:
@@ -273,10 +248,7 @@ async def create_subscription(
                     email=data["email"],
                     error=str(e),
                 )
-                return Response(
-                    content={"error": "A subscription with this email already exists"},
-                    status_code=HTTP_400_BAD_REQUEST,
-                )
+                raise ValidationException("A subscription with this email already exists") from e
 
     except SQLAlchemyError as e:
         logger.error(
@@ -284,63 +256,14 @@ async def create_subscription(
             email=data["email"],
             error=str(e),
         )
-        return Response(
-            content={"error": "Subscription service temporarily unavailable"},
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        raise DatabaseError("Subscription service temporarily unavailable") from e
 
 
-@get("/grants/verify/{token:str}")
-async def verify_subscription(token: str, session_maker: async_sessionmaker[Any]) -> Response[dict[str, str]]:
-    logger.info("Verifying grant subscription", token=token[:8] + "...")
-
-    try:
-        async with session_maker() as session, session.begin():
-            subscription = await session.scalar(
-                select(GrantMatchingSubscription)
-                .where(GrantMatchingSubscription.verification_token == token)
-                .where(GrantMatchingSubscription.verified.is_(False))
-                .where(GrantMatchingSubscription.unsubscribed.is_(False))
-            )
-
-            if not subscription:
-                logger.warning("Invalid or expired verification token", token=token[:8] + "...")
-                return Response(
-                    content={"error": "Invalid or expired verification token"},
-                    status_code=HTTP_404_NOT_FOUND,
-                )
-
-            await session.execute(
-                update(GrantMatchingSubscription)
-                .where(GrantMatchingSubscription.id == subscription.id)
-                .values(verified=True, verification_token=None)
-            )
-
-            logger.info(
-                "Grant subscription verified",
-                subscription_id=str(subscription.id),
-                email=subscription.email,
-            )
-
-            return Response(
-                content={"message": "Subscription verified successfully"},
-                status_code=HTTP_200_OK,
-            )
-
-    except SQLAlchemyError as e:
-        logger.error(
-            "Failed to verify grant subscription",
-            token=token[:8] + "...",
-            error=str(e),
-        )
-        return Response(
-            content={"error": "Verification service temporarily unavailable"},
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
-@post("/grants/unsubscribe")
-async def unsubscribe(data: UnsubscribeRequest, session_maker: async_sessionmaker[Any]) -> Response[dict[str, str]]:
+@post("/grants/unsubscribe", operation_id="Unsubscribe")
+async def handle_unsubscribe(
+    data: UnsubscribeRequest,
+    session_maker: async_sessionmaker[Any],
+) -> UnsubscribeResponse:
     logger.info("Unsubscribing from grant notifications", email=data["email"])
 
     try:
@@ -353,10 +276,7 @@ async def unsubscribe(data: UnsubscribeRequest, session_maker: async_sessionmake
 
             if not subscription:
                 logger.warning("No active subscription found", email=data["email"])
-                return Response(
-                    content={"error": "No active subscription found for this email"},
-                    status_code=HTTP_404_NOT_FOUND,
-                )
+                raise NotFoundException("No active subscription found for this email")
 
             await session.execute(
                 update(GrantMatchingSubscription)
@@ -370,9 +290,8 @@ async def unsubscribe(data: UnsubscribeRequest, session_maker: async_sessionmake
                 email=data["email"],
             )
 
-            return Response(
-                content={"message": "Successfully unsubscribed from grant notifications"},
-                status_code=HTTP_200_OK,
+            return UnsubscribeResponse(
+                message="Successfully unsubscribed from grant notifications",
             )
 
     except SQLAlchemyError as e:
@@ -381,7 +300,4 @@ async def unsubscribe(data: UnsubscribeRequest, session_maker: async_sessionmake
             email=data["email"],
             error=str(e),
         )
-        return Response(
-            content={"error": "Unsubscribe service temporarily unavailable"},
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        raise DatabaseError("Unsubscribe service temporarily unavailable") from e

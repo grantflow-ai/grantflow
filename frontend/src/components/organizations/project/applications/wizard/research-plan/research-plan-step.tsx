@@ -21,7 +21,6 @@ interface ResearchPlanStepProps {
 
 export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 	const application = useApplicationStore((state) => state.application);
-	const triggerAutofill = useWizardStore((state) => state.triggerAutofill);
 	const isAutofillLoading = useWizardStore((state) => state.isAutofillLoading.research_plan);
 	const showResearchPlanInfoBanner = useWizardStore((state) => state.showResearchPlanInfoBanner);
 	const setShowResearchPlanInfoBanner = useWizardStore((state) => state.setShowResearchPlanInfoBanner);
@@ -57,16 +56,7 @@ export function ResearchPlanStep({ dialogRef }: ResearchPlanStepProps) {
 						>
 							Research plan
 						</h2>
-						<AppButton
-							className="shrink-0"
-							data-testid="ai-try-button"
-							disabled={isAutofillLoading || !application}
-							leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
-							onClick={() => triggerAutofill("research_plan")}
-							variant="secondary"
-						>
-							{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-						</AppButton>
+						{}
 					</div>
 					<p className="text-muted-foreground-dark leading-tight" data-testid="research-plan-description">
 						Define your key objectives and break them into actionable tasks. This structure forms the

@@ -1,5 +1,6 @@
 "use client";
 
+import type { useSortable } from "@dnd-kit/sortable";
 import { Edit, GripHorizontal, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -27,10 +28,10 @@ interface ObjectiveCardContentProps {
 }
 
 interface ObjectiveHeaderProps {
-	attributes: any;
+	attributes: ReturnType<typeof useSortable>["attributes"];
 	index: number;
 	isEditing: boolean;
-	listeners: any;
+	listeners: ReturnType<typeof useSortable>["listeners"];
 	objective: Objective;
 	objectivesCount: number;
 	onCancel: () => void;

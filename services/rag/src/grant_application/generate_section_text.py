@@ -17,35 +17,205 @@ logger = get_logger(__name__)
 
 SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     name="optimized_section_generation",
-    template="""Write the ${section_title} section for a grant application.
+    template="""
+    Write the ${section_title} section for a grant application.
 
-## Instructions
-${instructions}
+    ## Instructions
+    ${instructions}
 
-## Research Context
-${context}
+    ## Research Context
+    ${context}
 
-## Content Requirements
-- Write substantive, detailed content with specific examples and evidence
-- Include clear objectives, methodological approaches, and expected outcomes
-- Structure content with clear headings, subheadings, and logical flow
-- Incorporate timeline information, milestones, and work plan elements where relevant
-- Use professional academic language with precise scientific terminology
-- Ensure content directly addresses all section requirements comprehensively
-- Provide sufficient detail to demonstrate expertise and feasibility
-- Include specific research questions, hypotheses, and experimental designs
-- Address potential challenges and mitigation strategies
-- Connect to broader research context and clinical significance
+    ## Content Requirements
+        - Write substantive, detailed content with specific examples and evidence
+        - Include clear objectives, methodological approaches, and expected outcomes
+        - Structure content with clear headings, subheadings, and logical flow
+        - Incorporate timeline information, milestones, and work plan elements where relevant
+        - Use professional academic language with precise scientific terminology
+        - Ensure content directly addresses all section requirements comprehensively
+        - Provide sufficient detail to demonstrate expertise and feasibility
+        - Include specific research questions, hypotheses, and experimental designs
+        - Address potential challenges and mitigation strategies
+        - Connect to broader research context and clinical significance
 
-## Format Guidelines
-- Use markdown formatting with proper headers (## for main sections, ### for subsections)
-- Include bullet points or numbered lists for clarity where appropriate
-- Aim for comprehensive coverage - target 600-1000 words for substantial sections
-- Include specific metrics, timelines, and measurable outcomes""",
+    ## Format Guidelines
+        - Use markdown formatting with proper headers (## for main sections, ### for subsections)
+        - Include bullet points or numbered lists for clarity where appropriate
+        - Aim for comprehensive coverage - target 600-1000 words for substantial sections
+        - Include specific metrics, timelines, and measurable outcomes
+""",
 )
 
 
-async def generate_sections_with_shared_retrieval(
+async def _generate_single_section_with_context(
+    section: GrantLongFormSection,
+    research_deep_dives: list[ResearchObjective],
+    shared_context: str,
+) -> str:
+    section_title = section.get("title", "Section")
+
+    logger.info(
+        "Generating section with shared context",
+        section_title=section_title,
+        shared_context_length=len(shared_context),
+    )
+
+    research_context_parts = [
+        f"""
+        ## Research Objective {research_objective["number"]}: {research_objective["title"]}
+
+        **Objective Details:**
+        {research_objective.get("description", research_objective["title"])}
+
+        **Research Context:**
+        {research_objective.get("enriched_text", "No additional context available.")}
+
+        **Key Elements:**
+        - Research Focus: {research_objective.get("focus_area", "Not specified")}
+        - Methodology: {research_objective.get("methodology", "To be determined")}
+        - Expected Outcomes: {research_objective.get("expected_outcomes", "Detailed outcomes to be defined")}
+        """
+        for research_objective in research_deep_dives
+    ]
+
+    research_context = "\n\n".join(research_context_parts)
+
+    combined_context = f"""
+    # Grant Application Context
+
+    {shared_context}
+
+    # Detailed Research Objectives
+
+    {research_context}
+
+    # Section Generation Guidelines
+    This section should integrate the above context to create comprehensive, detailed content that demonstrates:
+    1. Deep understanding of the research domain
+    2. Clear connection to stated objectives
+    3. Specific methodological approaches
+    4. Realistic timelines and milestones
+    5. Innovation and feasibility
+    6. Professional academic writing quality
+    """
+
+    task_description = (
+        f"Generate the {section_title} section. Instructions: {section.get('generation_instructions', '')}"
+    )
+    validation_error = await handle_source_validation(
+        task_description=task_description,
+        max_length=section.get("max_words", 1000),
+        minimum_percentage=MIN_WORDS_RATIO * 100,
+        retrieval_context=shared_context,
+        research_context=research_context,
+    )
+    if validation_error:
+        logger.warning(
+            "Source validation failed for section",
+            section_title=section_title,
+            error=validation_error,
+        )
+
+        return ""
+
+    validated_context = combined_context
+
+    prompt = SECTION_PROMPT.to_string(
+        section_title=section_title,
+        instructions=section.get("generation_instructions", f"Write the {section_title} section"),
+        context=validated_context,
+    )
+
+    result = await with_prompt_evaluation(
+        prompt_identifier="optimized_section_generation",
+        prompt_handler=generate_long_form_text,
+        prompt=prompt,
+        increment=15,
+        retries=3,
+        passing_score=80,
+        criteria=[
+            EvaluationCriterion(
+                name="Content Depth and Detail",
+                evaluation_instructions="""
+                Evaluate whether the content provides sufficient depth, specific details, and comprehensive coverage of the topic.
+                    - Content should be substantive (600+ words for major sections)
+                    - Include specific examples, methodologies, and timelines
+                    - Demonstrate expert knowledge with concrete details
+                    - Avoid generic statements in favor of specific, actionable content
+            """,
+                weight=1.0,
+            ),
+            EvaluationCriterion(
+                name="Structural Completeness",
+                evaluation_instructions="""
+                Assess whether the content includes key structural elements and proper organization.
+                    - Clear objectives and research questions
+                    - Methodological approaches and experimental designs
+                    - Work plan elements with timelines
+                    - Expected outcomes and success metrics
+                    - Proper section organization with headers and subheadings
+                """,
+                weight=0.95,
+            ),
+            EvaluationCriterion(
+                name="Context Integration and Evidence",
+                evaluation_instructions="""
+                Evaluate how effectively the content integrates information from the provided research context.
+                    - Clear use of provided research context and retrieval data
+                    - Specific evidence from context incorporated naturally
+                    - Strong connections to stated research objectives
+                    - Relevant citations and references to context material
+                    - Claims supported by context evidence
+                    - Research objectives clearly addressed
+                    - Context information woven into narrative seamlessly
+                    - No contradictions with provided context
+                """,
+                weight=0.85,
+            ),
+            EvaluationCriterion(
+                name="Academic Quality and Rigor",
+                evaluation_instructions="""
+                Assess the professional quality, scientific accuracy, and academic appropriateness of the writing.
+                    - Professional, scholarly tone throughout
+                    - Precise scientific terminology used correctly
+                    - Clear, concise writing with proper grammar
+                    - Appropriate academic register and style
+                    - Demonstrates understanding of research methodologies
+                    - Uses appropriate statistical and analytical approaches
+                    - Shows awareness of field standards and best practices
+                    - Maintains objectivity and scientific rigor
+                """,
+                weight=0.8,
+            ),
+            EvaluationCriterion(
+                name="Feasibility and Innovation",
+                evaluation_instructions="""
+                Evaluate whether the content demonstrates feasible research approaches and innovative elements.
+                    - Realistic timelines and resource requirements
+                    - Appropriate methodological choices for objectives
+                    - Awareness of potential challenges and limitations
+                    - Practical implementation considerations
+                    - Novel approaches or methodologies where appropriate
+                    - Creative solutions to research problems
+                    - Advancement beyond current state of knowledge
+                    - Potential for significant impact in the field
+                """,
+                weight=0.75,
+            ),
+        ],
+    )
+
+    logger.info(
+        "Section generation completed",
+        section_title=section_title,
+        result_length=len(result),
+        word_count=len(result.split()),
+    )
+
+    return result
+
+
+async def generate_section_text(
     sections: list[GrantLongFormSection],
     research_deep_dives: list[ResearchObjective],
     application_id: str,
@@ -121,199 +291,3 @@ async def generate_sections_with_shared_retrieval(
     )
 
     return results
-
-
-async def _generate_single_section_with_context(
-    section: GrantLongFormSection,
-    research_deep_dives: list[ResearchObjective],
-    shared_context: str,
-) -> str:
-    section_title = section.get("title", "Section")
-
-    logger.info(
-        "Generating section with shared context",
-        section_title=section_title,
-        shared_context_length=len(shared_context),
-    )
-
-    research_context_parts = []
-    for research_objective in research_deep_dives:
-        context_part = f"""## Research Objective {research_objective["number"]}: {research_objective["title"]}
-
-**Objective Details:**
-{research_objective.get("description", research_objective["title"])}
-
-**Research Context:**
-{research_objective.get("enriched_text", "No additional context available.")}
-
-**Key Elements:**
-- Research Focus: {research_objective.get("focus_area", "Not specified")}
-- Methodology: {research_objective.get("methodology", "To be determined")}
-- Expected Outcomes: {research_objective.get("expected_outcomes", "Detailed outcomes to be defined")}"""
-        research_context_parts.append(context_part)
-
-    research_context = "\n\n".join(research_context_parts)
-
-    combined_context = f"""# Grant Application Context
-
-{shared_context}
-
-# Detailed Research Objectives
-
-{research_context}
-
-# Section Generation Guidelines
-This section should integrate the above context to create comprehensive, detailed content that demonstrates:
-1. Deep understanding of the research domain
-2. Clear connection to stated objectives
-3. Specific methodological approaches
-4. Realistic timelines and milestones
-5. Innovation and feasibility
-6. Professional academic writing quality"""
-
-    task_description = (
-        f"Generate the {section_title} section. Instructions: {section.get('generation_instructions', '')}"
-    )
-    validation_error = await handle_source_validation(
-        task_description=task_description,
-        max_length=section.get("max_words", 1000),
-        minimum_percentage=MIN_WORDS_RATIO * 100,
-        retrieval_context=shared_context,
-        research_context=research_context,
-    )
-    if validation_error:
-        logger.warning(
-            "Source validation failed for section",
-            section_title=section_title,
-            error=validation_error,
-        )
-
-        return ""
-
-    validated_context = combined_context
-
-    prompt = SECTION_PROMPT.to_string(
-        section_title=section_title,
-        instructions=section.get("generation_instructions", f"Write the {section_title} section"),
-        context=validated_context,
-    )
-
-    result = await with_prompt_evaluation(
-        prompt_identifier="optimized_section_generation",
-        prompt_handler=generate_long_form_text,
-        prompt=prompt,
-        increment=15,
-        retries=3,
-        passing_score=80,
-        criteria=[
-            EvaluationCriterion(
-                name="Content Depth and Detail",
-                evaluation_instructions="""Evaluate whether the content provides sufficient depth, specific details, and comprehensive coverage of the topic.
-
-## Requirements
-- Content should be substantive (600+ words for major sections)
-- Include specific examples, methodologies, and timelines
-- Demonstrate expert knowledge with concrete details
-- Avoid generic statements in favor of specific, actionable content
-
-## Quality Indicators
-- Detailed methodological descriptions
-- Specific research questions and hypotheses
-- Concrete timelines and milestones
-- Evidence-based claims and citations""",
-                weight=1.0,
-            ),
-            EvaluationCriterion(
-                name="Structural Completeness",
-                evaluation_instructions="""Assess whether the content includes key structural elements and proper organization.
-
-## Required Elements
-- Clear objectives and research questions
-- Methodological approaches and experimental designs
-- Work plan elements with timelines
-- Expected outcomes and success metrics
-- Proper section organization with headers and subheadings
-
-## Structure Quality
-- Logical flow from introduction to conclusion
-- Clear headings and subheadings (markdown formatted)
-- Bullet points and numbered lists where appropriate
-- Comprehensive coverage of all section requirements""",
-                weight=0.95,
-            ),
-            EvaluationCriterion(
-                name="Context Integration and Evidence",
-                evaluation_instructions="""Evaluate how effectively the content integrates information from the provided research context.
-
-## Integration Quality
-- Clear use of provided research context and retrieval data
-- Specific evidence from context incorporated naturally
-- Strong connections to stated research objectives
-- Relevant citations and references to context material
-
-## Evidence Standards
-- Claims supported by context evidence
-- Research objectives clearly addressed
-- Context information woven into narrative seamlessly
-- No contradictions with provided context""",
-                weight=0.85,
-            ),
-            EvaluationCriterion(
-                name="Academic Quality and Rigor",
-                evaluation_instructions="""Assess the professional quality, scientific accuracy, and academic appropriateness of the writing.
-
-## Academic Standards
-- Professional, scholarly tone throughout
-- Precise scientific terminology used correctly
-- Clear, concise writing with proper grammar
-- Appropriate academic register and style
-
-## Research Competence
-- Demonstrates understanding of research methodologies
-- Uses appropriate statistical and analytical approaches
-- Shows awareness of field standards and best practices
-- Maintains objectivity and scientific rigor""",
-                weight=0.8,
-            ),
-            EvaluationCriterion(
-                name="Feasibility and Innovation",
-                evaluation_instructions="""Evaluate whether the content demonstrates feasible research approaches and innovative elements.
-
-## Feasibility Assessment
-- Realistic timelines and resource requirements
-- Appropriate methodological choices for objectives
-- Awareness of potential challenges and limitations
-- Practical implementation considerations
-
-## Innovation Elements
-- Novel approaches or methodologies where appropriate
-- Creative solutions to research problems
-- Advancement beyond current state of knowledge
-- Potential for significant impact in the field""",
-                weight=0.75,
-            ),
-        ],
-    )
-
-    logger.info(
-        "Section generation completed",
-        section_title=section_title,
-        result_length=len(result),
-        word_count=len(result.split()),
-    )
-
-    return result
-
-
-async def generate_section_text(
-    section: GrantLongFormSection,
-    research_deep_dives: list[ResearchObjective],
-    application_id: str,
-) -> str:
-    results = await generate_sections_with_shared_retrieval([section], research_deep_dives, application_id)
-
-    section_id = section.get("id", section.get("title", "section"))
-    return results.get(section_id, "")
-
-
-optimized_generate_grant_section_texts = generate_sections_with_shared_retrieval

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getClient } from "@/utils/api";
-import { createSubscription, getGrantDetails, searchGrants, unsubscribe, verifySubscription } from "./grants";
+import { createSubscription, getGrantDetails, searchGrants, unsubscribe } from "./grants";
 
 vi.mock("@/utils/api", () => ({
 	getClient: vi.fn(),
@@ -355,53 +355,6 @@ describe("grants", () => {
 		});
 	});
 
-	describe("verifySubscription", () => {
-		const mockVerificationResponse = {};
-
-		it("should verify subscription with correct parameters", async () => {
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(mockVerificationResponse),
-			});
-
-			const token = "verification-token-123";
-			const result = await verifySubscription(token);
-
-			expect(mockClient.get).toHaveBeenCalledWith(`grants/verify/${token}`);
-			expect(result).toEqual(mockVerificationResponse);
-		});
-
-		it("should handle API errors correctly", async () => {
-			const error = new Error("Invalid verification token");
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockRejectedValue(error),
-			});
-
-			await expect(verifySubscription("invalid-token")).rejects.toThrow("Invalid verification token");
-		});
-
-		it("should handle different token formats", async () => {
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockResolvedValue(mockVerificationResponse),
-			});
-
-			const tokens = ["simple-token", "jwt-like.token.here", "uuid-format-token-123-456", "base64encoded=="];
-
-			for (const token of tokens) {
-				await verifySubscription(token);
-				expect(mockClient.get).toHaveBeenCalledWith(`grants/verify/${token}`);
-			}
-		});
-
-		it("should handle expired token errors", async () => {
-			const expiredTokenError = new Error("Verification token has expired");
-			mockClient.get.mockReturnValue({
-				json: vi.fn().mockRejectedValue(expiredTokenError),
-			});
-
-			await expect(verifySubscription("expired-token")).rejects.toThrow("Verification token has expired");
-		});
-	});
-
 	describe("unsubscribe", () => {
 		const mockUnsubscribeResponse = {};
 
@@ -414,7 +367,7 @@ describe("grants", () => {
 			const result = await unsubscribe(email);
 
 			expect(mockClient.post).toHaveBeenCalledWith("grants/unsubscribe", {
-				searchParams: {
+				json: {
 					email,
 				},
 			});
@@ -446,7 +399,7 @@ describe("grants", () => {
 				await unsubscribe(email);
 
 				expect(mockClient.post).toHaveBeenCalledWith("grants/unsubscribe", {
-					searchParams: {
+					json: {
 						email,
 					},
 				});
@@ -462,7 +415,7 @@ describe("grants", () => {
 			await expect(unsubscribe("invalid-email")).rejects.toThrow("Invalid email format");
 		});
 
-		it("should encode email in search params correctly", async () => {
+		it("should send email in json body correctly", async () => {
 			mockClient.post.mockReturnValue({
 				json: vi.fn().mockResolvedValue(mockUnsubscribeResponse),
 			});
@@ -470,9 +423,8 @@ describe("grants", () => {
 			const emailWithSpecialChars = "user+test@example.com";
 			await unsubscribe(emailWithSpecialChars);
 
-			// eslint-disable-next-line prefer-destructuring
-			const searchParams = mockClient.post.mock.calls[0][1].searchParams;
-			expect(searchParams.email).toBe(emailWithSpecialChars);
+			const jsonBody = mockClient.post.mock.calls[0][1].json;
+			expect(jsonBody.email).toBe(emailWithSpecialChars);
 		});
 	});
 
@@ -595,10 +547,9 @@ describe("grants", () => {
 			await searchGrants();
 			await getGrantDetails("grant-123");
 			await createSubscription(mockRequestData);
-			await verifySubscription("token-123");
 			await unsubscribe("test@example.com");
 
-			expect(mockGetClient).toHaveBeenCalledTimes(5);
+			expect(mockGetClient).toHaveBeenCalledTimes(4);
 		});
 
 		it("should use correct HTTP methods", async () => {
@@ -622,9 +573,8 @@ describe("grants", () => {
 
 			await searchGrants();
 			await getGrantDetails("grant-123");
-			await verifySubscription("token-123");
 
-			expect(mockClient.get).toHaveBeenCalledTimes(3);
+			expect(mockClient.get).toHaveBeenCalledTimes(2);
 
 			await createSubscription(mockRequestData);
 			await unsubscribe("test@example.com");
@@ -659,9 +609,6 @@ describe("grants", () => {
 
 			await createSubscription(mockRequestData);
 			expect(mockClient.post).toHaveBeenCalledWith("grants/subscribe", expect.any(Object));
-
-			await verifySubscription("token-123");
-			expect(mockClient.get).toHaveBeenCalledWith("grants/verify/token-123");
 
 			await unsubscribe("test@example.com");
 			expect(mockClient.post).toHaveBeenCalledWith("grants/unsubscribe", expect.any(Object));

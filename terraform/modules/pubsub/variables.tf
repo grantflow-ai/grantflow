@@ -89,3 +89,20 @@ variable "rag_service_account_email" {
   type        = string
   default     = ""
 }
+
+variable "backend_url" {
+  description = "URL of the backend Cloud Run service"
+  type        = string
+}
+
+variable "backend_service_account_email" {
+  description = "Email of the backend service account"
+  type        = string
+  default     = ""
+}
+
+variable "email_notifications_ack_deadline" {
+  description = "Acknowledgment deadline for email-notifications subscription in seconds"
+  type        = number
+  default     = 60
+}

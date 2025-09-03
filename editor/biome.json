@@ -219,7 +219,7 @@
 				"noDuplicateObjectKeys": "error",
 				"noDuplicateParameters": "error",
 				"noEmptyBlockStatements": "off",
-				"noExplicitAny": "off",
+				"noExplicitAny": "error",
 				"noExtraNonNullAssertion": "error",
 				"noFallthroughSwitchClause": "error",
 				"noFunctionAssign": "error",
@@ -249,6 +249,25 @@
 				}
 			},
 			"includes": ["package.json"]
+		},
+		{
+			"includes": [
+				"**/*.spec.ts",
+				"**/*.spec.tsx",
+				"**/testing/**/*",
+				"**/*.test.ts",
+				"**/*.test.tsx",
+				"**/*.stories.ts",
+				"**/*.stories.tsx",
+				"**/tests/**/*"
+			],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off"
+					}
+				}
+			}
 		}
 	],
 	"vcs": {

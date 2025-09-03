@@ -1,3 +1,5 @@
+import binascii
+from base64 import b64decode
 from typing import Any, Literal, NotRequired, TypedDict
 from uuid import UUID
 
@@ -7,7 +9,11 @@ from google.cloud.pubsub_v1.publisher.exceptions import MessageTooLargeError
 
 from packages.db.src.enums import SourceIndexingStatusEnum
 from packages.shared_utils.src.env import get_env
-from packages.shared_utils.src.exceptions import BackendError, DeserializationError
+from packages.shared_utils.src.exceptions import (
+    BackendError,
+    DeserializationError,
+    ValidationError,
+)
 from packages.shared_utils.src.ref import Ref
 from packages.shared_utils.src.serialization import deserialize, serialize
 from packages.shared_utils.src.sync import run_sync
@@ -71,8 +77,7 @@ class RagRequest(TypedDict):
 
 
 class AutofillRequest(TypedDict):
-    parent_type: Literal["grant_application"]
-    parent_id: UUID
+    application_id: UUID
     autofill_type: Literal["research_plan", "research_deep_dive"]
     field_name: NotRequired[str]
     context: NotRequired[dict[str, Any]]
@@ -96,7 +101,7 @@ class SubscriptionVerificationRequest(TypedDict):
     email: str
     subscription_id: str
     verification_token: str
-    template_type: str
+    template_type: Literal["subscription_verification"]
     search_params: NotRequired[dict[str, Any]]
     frequency: NotRequired[str]
     trace_id: NotRequired[str]
@@ -115,6 +120,35 @@ def get_subscriber_client() -> pubsub.SubscriberClient:
         subscriber_client_ref.value = client
 
     return subscriber_client_ref.value
+
+
+def decode_pubsub_message(event: PubSubEvent) -> str:
+    logger.debug(
+        "Decoding PubSub event",
+        message_id=event.message.message_id,
+        publish_time=event.message.publish_time,
+    )
+
+    try:
+        encoded_data = event.message.data
+        if not encoded_data:
+            logger.error(
+                "PubSub message missing data field", message_id=event.message.message_id
+            )
+            raise ValidationError("PubSub message missing data field")
+
+        logger.debug("Decoding base64 data", data_length=len(encoded_data))
+        return b64decode(encoded_data).decode()
+    except (binascii.Error, UnicodeDecodeError) as e:
+        logger.error(
+            "Failed to parse PubSub message",
+            error=str(e),
+            message_id=event.message.message_id,
+            error_type=type(e).__name__,
+        )
+        raise ValidationError(
+            "Invalid pubsub message format", context={"error": str(e)}
+        ) from e
 
 
 async def publish_url_crawling_task(
@@ -262,8 +296,7 @@ async def publish_autofill_task(
     client = get_publisher_client()
 
     autofill_request = AutofillRequest(
-        parent_type="grant_application",
-        parent_id=UUID(str(parent_id)),
+        application_id=UUID(str(parent_id)),
         autofill_type=autofill_type,
     )
 

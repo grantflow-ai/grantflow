@@ -124,7 +124,7 @@ const handleMainToSubReorder = async (
 	overItem: GrantSection,
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
-	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+	dialogRef: React.RefObject<null | WizardDialogRef>,
 	zone?: null | ZoneType,
 ): Promise<void> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
@@ -262,7 +262,7 @@ const handleMainToMainChildZoneReorder = async (
 	overItem: GrantSection,
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
-	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+	dialogRef: React.RefObject<null | WizardDialogRef>,
 ): Promise<void> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const newParentId = overItem.id;
@@ -333,7 +333,7 @@ const handleMainToMainReorder = async (
 	toUpdateGrantSection: (section: GrantSection) => UpdateGrantSection,
 	updateGrantSections: (sections: UpdateGrantSection[]) => Promise<void>,
 	zone: null | ZoneType,
-	dialogRef: React.RefObject<{ close: () => void; open: (options: any) => void } | null>,
+	dialogRef: React.RefObject<null | WizardDialogRef>,
 ): Promise<unknown> => {
 	const hasActiveSubSections = hasSubSections(activeItem.id, sections);
 	const hasOverSubSections = hasSubSections(overItem.id, sections);
