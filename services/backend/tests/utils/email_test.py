@@ -1,19 +1,14 @@
 import base64
-from datetime import UTC, datetime
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from uuid import uuid4
 
 import pytest
-from packages.db.src.tables import GrantApplication, Organization, Project
 from pytest_mock import MockerFixture
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.utils.email import (
     send_application_ready_email,
     send_grant_alert_email,
     send_resend_email,
-    send_subscription_verification_email,
 )
 
 
@@ -114,44 +109,6 @@ async def test_send_resend_email_without_attachments(
     assert call_args.kwargs["json"]["attachments"] == []
 
 
-
-
-
-
-async def test_send_subscription_verification_email(
-    mock_httpx_post: AsyncMock,
-    mock_email_env: None,
-    mock_jinja_template: MagicMock,
-    mock_site_url: str,
-) -> None:
-    await send_subscription_verification_email(
-        email="subscriber@example.com",
-        subscription_id="sub-123",
-        verification_token="verify-token-456",
-        search_params={
-            "query": "AI research",
-            "category": "Technology",
-            "min_amount": 10000,
-            "max_amount": 100000,
-        },
-        frequency="weekly",
-    )
-
-    mock_jinja_template.render.assert_called_once_with(
-        verification_url=f"{mock_site_url}/grants/verify/verify-token-456",
-        frequency="weekly",
-        search_query="AI research",
-        category="Technology",
-        min_amount=10000,
-        max_amount=100000,
-    )
-
-    mock_httpx_post.assert_called_once()
-    call_args = mock_httpx_post.call_args
-    assert call_args.kwargs["json"]["to"] == ["subscriber@example.com"]
-    assert call_args.kwargs["json"]["subject"] == "Verify Your GrantFlow Grant Alert Subscription"
-
-
 async def test_send_grant_alert_email(
     mock_httpx_post: AsyncMock,
     mock_email_env: None,
@@ -247,4 +204,3 @@ async def test_send_application_ready_email(
 
     decoded_docx = base64.b64decode(docx_attachment["content"])
     assert decoded_docx == b"docx-content"
-
