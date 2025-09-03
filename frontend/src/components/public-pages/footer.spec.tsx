@@ -117,7 +117,7 @@ describe.sequential("Footer Component", () => {
 			const homeLinks = screen.getAllByLabelText("Go to homepage");
 			expect(homeLinks.length).toBeGreaterThanOrEqual(1);
 			homeLinks.forEach((link) => {
-				expect(link).toHaveAttribute("href", "/frontend/src/public");
+				expect(link).toHaveAttribute("href", "/");
 			});
 		});
 	});
@@ -150,7 +150,7 @@ describe.sequential("Footer Component", () => {
 			});
 
 			homeLinks.forEach((homeLink) => {
-				expect(homeLink).toHaveAttribute("href", "/frontend/src/public");
+				expect(homeLink).toHaveAttribute("href", "/");
 			});
 		});
 	});
