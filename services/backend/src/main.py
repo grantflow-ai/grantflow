@@ -35,11 +35,10 @@ from services.backend.src.api.routes.granting_institutions import (
     handle_update_organization as handle_update_granting_institution,
 )
 from services.backend.src.api.routes.grants import (
-    create_subscription,
-    get_grant_details,
-    search_grants,
-    unsubscribe,
-    verify_subscription,
+    handle_create_subscription,
+    handle_get_grant_details,
+    handle_search_grants,
+    handle_unsubscribe,
 )
 from services.backend.src.api.routes.notifications import (
     dismiss_notification,
@@ -99,6 +98,7 @@ from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
 from services.backend.src.api.webhooks.email_sending import handle_email_notification_webhook
+from services.backend.src.api.webhooks.grant_matcher import handle_grant_matcher_webhook
 from services.backend.src.utils.firebase import get_firebase_app
 
 configure_otel("backend")
@@ -160,12 +160,12 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_retrieve_rag_job,
     list_notifications,
     dismiss_notification,
-    search_grants,
-    get_grant_details,
-    create_subscription,
-    verify_subscription,
-    unsubscribe,
+    handle_search_grants,
+    handle_get_grant_details,
+    handle_create_subscription,
+    handle_unsubscribe,
     handle_email_notification_webhook,
+    handle_grant_matcher_webhook,
 ]
 
 
