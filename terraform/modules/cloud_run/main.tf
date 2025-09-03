@@ -133,6 +133,31 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "rag-processing"
       }
 
+      env {
+        name  = "EMAIL_NOTIFICATIONS_PUBSUB_TOPIC"
+        value = "email-notifications"
+      }
+
+      env {
+        name = "PUBSUB_WEBHOOK_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = "PUBSUB_WEBHOOK_TOKEN"
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "RESEND_API_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = "RESEND_API_KEY"
+            version = "latest"
+          }
+        }
+      }
+
 
       volume_mounts {
         name       = "cloudsql"

@@ -294,3 +294,88 @@ resource "google_pubsub_topic_iam_member" "frontend_notifications_dlq_publisher"
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
+
+resource "google_pubsub_topic" "email_notifications" {
+  name = "email-notifications"
+
+  message_retention_duration = var.message_retention_duration
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+resource "google_pubsub_subscription" "email_notifications_subscription" {
+  name  = "email-notifications-subscription"
+  topic = google_pubsub_topic.email_notifications.name
+
+  ack_deadline_seconds = var.email_notifications_ack_deadline
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "300s"
+  }
+
+  enable_message_ordering = false
+
+  push_config {
+    push_endpoint = "${var.backend_url}/webhooks/pubsub/email-notifications"
+
+    oidc_token {
+      service_account_email = var.pubsub_invoker_service_account_email
+      audience              = var.backend_url
+    }
+
+    attributes = {
+      "x-goog-version" = "v1"
+    }
+  }
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.email_notifications_dlq.id
+    max_delivery_attempts = 5
+  }
+
+  expiration_policy {
+    ttl = "2678400s"
+  }
+}
+
+resource "google_pubsub_topic" "email_notifications_dlq" {
+  name = "email-notifications-dlq"
+
+  labels = {
+    purpose = "dead-letter-queue"
+  }
+}
+
+resource "google_pubsub_subscription" "email_notifications_dlq_subscription" {
+  name  = "email-notifications-dlq-subscription"
+  topic = google_pubsub_topic.email_notifications_dlq.name
+
+  ack_deadline_seconds = var.dlq_ack_deadline
+
+  message_retention_duration = "604800s"
+
+  retain_acked_messages = true
+}
+
+resource "google_pubsub_topic_iam_member" "rag_email_notifications_publisher" {
+  count  = var.rag_service_account_email != "" ? 1 : 0
+  topic  = google_pubsub_topic.email_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.rag_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "backend_email_notifications_publisher" {
+  count  = var.backend_service_account_email != "" ? 1 : 0
+  topic  = google_pubsub_topic.email_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.backend_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "email_notifications_dlq_publisher" {
+  topic  = google_pubsub_topic.email_notifications_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}

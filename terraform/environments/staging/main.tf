@@ -113,7 +113,7 @@ module "cloud_run" {
   enable_http2          = false
   request_timeout       = 300
   concurrency_limit     = 80
-  debug                 = "1"  
+  debug                 = "1"
 
 }
 
@@ -140,6 +140,10 @@ module "pubsub" {
   indexer_url = module.cloud_run.indexer_url
   crawler_url = module.cloud_run.crawler_url
   rag_url     = module.cloud_run.rag_url
+  backend_url = module.cloud_run.backend_url
+
+  backend_service_account_email    = module.iam.backend_service_account_email
+  email_notifications_ack_deadline = 60 # ~keep 1 minute for email notifications
 }
 
 module "scheduler" {
@@ -165,15 +169,6 @@ module "monitoring" {
     memory_threshold     = 0.95
     cpu_threshold        = 0.90
   }
-}
-
-module "email_notifications" {
-  source                        = "../../modules/email_notifications"
-  project_id                    = var.project_id
-  region                        = var.region
-  environment                   = var.environment
-  rag_service_account_email     = module.cloud_run.rag_service_account_email
-  backend_service_account_email = module.cloud_run.backend_service_account_email
 }
 
 module "grant_matcher" {
