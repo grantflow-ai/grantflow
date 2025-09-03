@@ -367,7 +367,7 @@ describe("grants", () => {
 			const result = await unsubscribe(email);
 
 			expect(mockClient.post).toHaveBeenCalledWith("grants/unsubscribe", {
-				searchParams: {
+				json: {
 					email,
 				},
 			});
@@ -399,7 +399,7 @@ describe("grants", () => {
 				await unsubscribe(email);
 
 				expect(mockClient.post).toHaveBeenCalledWith("grants/unsubscribe", {
-					searchParams: {
+					json: {
 						email,
 					},
 				});
@@ -415,7 +415,7 @@ describe("grants", () => {
 			await expect(unsubscribe("invalid-email")).rejects.toThrow("Invalid email format");
 		});
 
-		it("should encode email in search params correctly", async () => {
+		it("should send email in json body correctly", async () => {
 			mockClient.post.mockReturnValue({
 				json: vi.fn().mockResolvedValue(mockUnsubscribeResponse),
 			});
@@ -423,9 +423,8 @@ describe("grants", () => {
 			const emailWithSpecialChars = "user+test@example.com";
 			await unsubscribe(emailWithSpecialChars);
 
-			// eslint-disable-next-line prefer-destructuring
-			const searchParams = mockClient.post.mock.calls[0][1].searchParams;
-			expect(searchParams.email).toBe(emailWithSpecialChars);
+			const jsonBody = mockClient.post.mock.calls[0][1].json;
+			expect(jsonBody.email).toBe(emailWithSpecialChars);
 		});
 	});
 
@@ -575,7 +574,7 @@ describe("grants", () => {
 			await searchGrants();
 			await getGrantDetails("grant-123");
 
-			expect(mockClient.get).toHaveBeenCalledTimes(3);
+			expect(mockClient.get).toHaveBeenCalledTimes(2);
 
 			await createSubscription(mockRequestData);
 			await unsubscribe("test@example.com");
