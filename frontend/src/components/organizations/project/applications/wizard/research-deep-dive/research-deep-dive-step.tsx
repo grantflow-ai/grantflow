@@ -70,18 +70,7 @@ function ResearchDeepDiveHeader({ onResetFormInputs }: { onResetFormInputs: () =
 						🔄 Reset (Dev)
 					</AppButton>
 				)}
-				{/* Temporarily hidden - autofill functionality
-				<AppButton
-					className="shrink-0"
-					data-testid="ai-try-button"
-					disabled={isAutofillLoading || !application}
-					leftIcon={<Image alt="AI Try" height={16} src="/icons/button-logo.svg" width={16} />}
-					onClick={onTriggerAutofill}
-					variant="secondary"
-				>
-					{isAutofillLoading ? "Generating..." : "Let the AI Try!"}
-				</AppButton>
-				*/}
+				{}
 			</div>
 		</div>
 	);

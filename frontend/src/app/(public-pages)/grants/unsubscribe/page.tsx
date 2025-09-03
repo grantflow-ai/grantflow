@@ -86,7 +86,6 @@ function UnsubscribeContent() {
 
 			log.info("Successfully unsubscribed from grant alerts");
 
-			// Redirect to grant finder after 3 seconds
 			setTimeout(() => {
 				router.push("/grant-finder");
 			}, 3000);
@@ -153,7 +152,6 @@ function UnsubscribeContent() {
 							id="email"
 							onChange={(e) => {
 								setEmail(e.target.value);
-								// Clear error state when user starts typing
 								if (state.status === "error") {
 									setState({ message: "", status: "idle" });
 								}

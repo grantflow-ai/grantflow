@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.audit import log_organization_audit_from_request
-from services.backend.src.utils.firebase import get_users
+from services.backend.src.utils.firebase import FirebaseUser, get_users
 
 logger = get_logger(__name__)
 
@@ -52,7 +52,7 @@ class OrganizationMemberResponse(TypedDict):
     updated_at: str
 
     email: str
-    display_name: str
+    display_name: str | None
     photo_url: NotRequired[str]
 
 
@@ -99,11 +99,11 @@ async def handle_list_organization_members(
         }
 
     firebase_uids = [member.firebase_uid for member in members]
-    users_data = await get_users(firebase_uids)
+    users_data: dict[str, FirebaseUser] = await get_users(firebase_uids)
 
     result = []
     for member in members:
-        user_data = users_data.get(member.firebase_uid, {})
+        user_data: FirebaseUser = users_data.get(member.firebase_uid, FirebaseUser(local_id="", uid=""))
 
         member_response = OrganizationMemberResponse(
             firebase_uid=member.firebase_uid,
@@ -119,8 +119,8 @@ async def handle_list_organization_members(
             ],
             created_at=member.created_at.isoformat(),
             updated_at=member.updated_at.isoformat(),
-            email=user_data.get("email", ""),
-            display_name=user_data.get("displayName", ""),
+            email=user_data.get("email") or "",
+            display_name=user_data.get("displayName"),
         )
 
         if photo_url := user_data.get("photoURL"):

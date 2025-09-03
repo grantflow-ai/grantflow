@@ -52,17 +52,20 @@ class ProviderUserInfo(TypedDict):
 
 class FirebaseUser(TypedDict):
     local_id: Required[str]
+    uid: Required[str]  # Alias for local_id for backward compatibility
     display_name: NotRequired[str | None]
+    displayName: NotRequired[str | None]  # Alias for display_name
     email: NotRequired[str | None]
     phone_number: NotRequired[str | None]
     photo_url: NotRequired[str | None]
+    photoURL: NotRequired[str | None]  # Alias for photo_url
     email_verified: NotRequired[bool]
     disabled: NotRequired[bool]
     valid_since: NotRequired[str | None]
     created_at: NotRequired[str | None]
     last_login_at: NotRequired[str | None]
     last_refresh_at: NotRequired[str | None]
-    provider_user_info: NotRequired[list[ProviderUserInfo]]
+    provider_user_info: NotRequired[list[ProviderUserInfo] | None]
     custom_attributes: NotRequired[str | None]
     tenant_id: NotRequired[str | None]
 
@@ -105,9 +108,12 @@ async def get_user_by_email(email: str) -> FirebaseUser | None:
         user = await handler(email, app=get_firebase_app())
         return FirebaseUser(
             local_id=user.uid,
+            uid=user.uid,  # Add uid alias
             email=user.email,
             display_name=user.display_name,
+            displayName=user.display_name,  # Add displayName alias
             photo_url=user.photo_url,
+            photoURL=user.photo_url,  # Add photoURL alias
             phone_number=user.phone_number,
             email_verified=user.email_verified,
             disabled=user.disabled,
@@ -154,9 +160,12 @@ async def get_user(uid: str) -> FirebaseUser | None:
         user = await handler(uid, app=get_firebase_app())
         return FirebaseUser(
             local_id=user.uid,
+            uid=user.uid,  # Add uid alias
             email=user.email,
             display_name=user.display_name,
+            displayName=user.display_name,  # Add displayName alias
             photo_url=user.photo_url,
+            photoURL=user.photo_url,  # Add photoURL alias
             phone_number=user.phone_number,
             email_verified=user.email_verified,
             disabled=user.disabled,
@@ -210,9 +219,12 @@ async def get_users(uids: list[str]) -> dict[str, FirebaseUser]:
         for user in result.users:
             users_dict[user.uid] = FirebaseUser(
                 local_id=user.uid,
+                uid=user.uid,  # Add uid alias
                 email=user.email,
                 display_name=user.display_name,
+                displayName=user.display_name,  # Add displayName alias
                 photo_url=user.photo_url,
+                photoURL=user.photo_url,  # Add photoURL alias
                 phone_number=user.phone_number,
                 email_verified=user.email_verified,
                 disabled=user.disabled,

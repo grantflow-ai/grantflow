@@ -167,15 +167,15 @@ async def test_grant_matcher_webhook_with_matches(
     assert data["status"] == "success"
     assert data["grants_processed"] == 1
     assert data["subscriptions_processed"] == 4
-    assert data["notifications_sent"] == 3  # Now includes previously "unverified" subscription
+    assert data["notifications_sent"] == 3
 
     assert mock_send_grant_alert_email.call_count == 3
 
     call_args_list = [call.kwargs["email"] for call in mock_send_grant_alert_email.call_args_list]
     assert "research@university.edu" in call_args_list
     assert "weekly@example.com" in call_args_list
-    assert "unverified@example.com" in call_args_list  # Now receives notifications
-    assert "clinical@hospital.org" not in call_args_list  # Still no match for Clinical category
+    assert "unverified@example.com" in call_args_list
+    assert "clinical@hospital.org" not in call_args_list
 
 
 async def test_grant_matcher_webhook_no_new_grants(
