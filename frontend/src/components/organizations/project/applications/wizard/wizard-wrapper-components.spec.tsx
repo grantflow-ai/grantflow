@@ -1,4 +1,4 @@
-import { ApplicationFactory } from "::testing/factories";
+import { ApplicationFactory, GrantTemplateFactory } from "::testing/factories";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
@@ -217,6 +217,19 @@ describe.sequential("WizardHeader", () => {
 
 	describe.sequential("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
+			const applicationWithDeadline = ApplicationFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					submission_date: new Date("2025-12-31").toISOString(),
+				},
+				title: "Test Application",
+			});
+
+			useApplicationStore.setState({
+				application: applicationWithDeadline,
+				areAppOperationsInProgress: false,
+			});
+
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
 			});
@@ -225,6 +238,30 @@ describe.sequential("WizardHeader", () => {
 			const appNames = screen.getAllByTestId("app-name");
 			expect(appNames[0]).toHaveTextContent("Test Application");
 			expect(screen.getByTestId("deadline-component")).toBeInTheDocument();
+		});
+
+		it("does not show deadline component when no submission date is set", () => {
+			const applicationWithoutDeadline = ApplicationFactory.build({
+				grant_template: {
+					...GrantTemplateFactory.build(),
+					submission_date: undefined,
+				},
+				title: "Test Application",
+			});
+
+			useApplicationStore.setState({
+				application: applicationWithoutDeadline,
+				areAppOperationsInProgress: false,
+			});
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+			});
+			render(<WizardHeader />);
+
+			const appNames = screen.getAllByTestId("app-name");
+			expect(appNames[0]).toHaveTextContent("Test Application");
+			expect(screen.queryByTestId("deadline-component")).not.toBeInTheDocument();
 		});
 
 		it("truncates long application title", () => {
