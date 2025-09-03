@@ -250,16 +250,17 @@ async def test_get_user_success(mocker: Any) -> None:
     result = await get_user("test-uid-123")
 
     assert result is not None
-    assert result["uid"] == "test-uid-123"
+    assert result["local_id"] == "test-uid-123"
     assert result["email"] == "test@example.com"
-    assert result["displayName"] == "Test User"
-    assert result["photoURL"] == "https://example.com/photo.jpg"
-    assert result["phoneNumber"] == "+1234567890"
-    assert result["emailVerified"] is True
+    assert result["display_name"] == "Test User"
+    assert result["photo_url"] == "https://example.com/photo.jpg"
+    assert result["phone_number"] == "+1234567890"
+    assert result["email_verified"] is True
     assert result["disabled"] is False
-    assert result["customClaims"] == {"role": "user"}
-    assert len(result["providerData"]) == 1
-    assert result["providerData"][0]["providerId"] == "google.com"
+    assert result["custom_attributes"] == "{'role': 'user'}"
+    assert result["provider_user_info"] is not None
+    assert len(result["provider_user_info"]) == 1
+    assert result["provider_user_info"][0]["provider_id"] == "google.com"
 
 
 async def test_get_user_not_found(mocker: Any) -> None:
@@ -352,24 +353,24 @@ async def test_get_users_success(mocker: Any) -> None:
     assert "uid2" in result
 
     user1 = result["uid1"]
-    assert user1["uid"] == "uid1"
+    assert user1["local_id"] == "uid1"
     assert user1["email"] == "user1@example.com"
-    assert user1["displayName"] == "User One"
-    assert user1["photoURL"] is None
-    assert user1["phoneNumber"] is None
-    assert user1["emailVerified"] is True
+    assert user1["display_name"] == "User One"
+    assert user1["photo_url"] is None
+    assert user1["phone_number"] is None
+    assert user1["email_verified"] is True
     assert user1["disabled"] is False
-    assert user1["customClaims"] is None
+    assert user1["custom_attributes"] is None
 
     user2 = result["uid2"]
-    assert user2["uid"] == "uid2"
+    assert user2["local_id"] == "uid2"
     assert user2["email"] == "user2@example.com"
-    assert user2["displayName"] == "User Two"
-    assert user2["photoURL"] == "https://example.com/user2.jpg"
-    assert user2["phoneNumber"] == "+9876543210"
-    assert user2["emailVerified"] is False
+    assert user2["display_name"] == "User Two"
+    assert user2["photo_url"] == "https://example.com/user2.jpg"
+    assert user2["phone_number"] == "+9876543210"
+    assert user2["email_verified"] is False
     assert user2["disabled"] is True
-    assert user2["customClaims"] == {"role": "admin"}
+    assert user2["custom_attributes"] == "{'role': 'admin'}"
 
 
 async def test_get_users_empty_list(mocker: Any) -> None:
