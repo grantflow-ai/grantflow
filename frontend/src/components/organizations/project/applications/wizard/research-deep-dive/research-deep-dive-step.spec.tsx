@@ -2,7 +2,6 @@ import { setupAuthenticatedTest } from "::testing/auth-helpers";
 import { ApplicationWithTemplateFactory } from "::testing/factories";
 import { resetAllStores } from "::testing/store-reset";
 import { cleanup, render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useApplicationStore } from "@/stores/application-store";
 import { useWizardStore } from "@/stores/wizard-store";
@@ -63,16 +62,17 @@ describe.sequential("ResearchDeepDiveStep", () => {
 		});
 	});
 
-	describe("AI Try Button Behavior", () => {
+	// AI Try Button tests disabled - button was removed from the component
+	// These tests are preserved in case the feature is re-enabled in the future
+	describe.skip("AI Try Button Behavior (Disabled)", () => {
 		it("renders AI Try button with correct default text", () => {
 			const application = ApplicationWithTemplateFactory.build();
 			useApplicationStore.setState({ application });
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			expect(aiButton).toBeInTheDocument();
-			expect(aiButton).toHaveTextContent("Let the AI Try!");
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 
 		it("enables AI Try button when not loading and application exists", () => {
@@ -81,8 +81,8 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			expect(aiButton).toBeEnabled();
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 
 		it("disables AI Try button when autofill is loading", () => {
@@ -95,8 +95,8 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			expect(aiButton).toBeDisabled();
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 
 		it("shows loading text when autofill is loading", () => {
@@ -109,8 +109,8 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			expect(aiButton).toHaveTextContent("Generating...");
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 
 		it("disables AI Try button when no application exists", () => {
@@ -118,12 +118,11 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			expect(aiButton).toBeDisabled();
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 
 		it("calls triggerAutofill with correct parameters when clicked", async () => {
-			const user = userEvent.setup();
 			const mockTriggerAutofill = vi.fn();
 
 			useWizardStore.setState({ triggerAutofill: mockTriggerAutofill });
@@ -133,14 +132,11 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			await user.click(aiButton);
-
-			expect(mockTriggerAutofill).toHaveBeenCalledWith("research_deep_dive");
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 
 		it("does not call triggerAutofill when button is disabled", async () => {
-			const user = userEvent.setup();
 			const mockTriggerAutofill = vi.fn();
 
 			useWizardStore.setState({
@@ -153,15 +149,13 @@ describe.sequential("ResearchDeepDiveStep", () => {
 
 			render(<ResearchDeepDiveStep />);
 
-			const aiButton = screen.getByTestId("ai-try-button");
-			await user.click(aiButton);
-
-			expect(mockTriggerAutofill).not.toHaveBeenCalled();
+			const aiButton = screen.queryByTestId("ai-try-button");
+			expect(aiButton).not.toBeInTheDocument();
 		});
 	});
 
 	describe("Button States Combination", () => {
-		it("shows both buttons in development with application", () => {
+		it("shows only reset button in development with application", () => {
 			vi.stubEnv("NODE_ENV", "development");
 
 			const application = ApplicationWithTemplateFactory.build();
@@ -170,10 +164,10 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			render(<ResearchDeepDiveStep />);
 
 			expect(screen.getByTestId("dev-reset-button")).toBeInTheDocument();
-			expect(screen.getByTestId("ai-try-button")).toBeInTheDocument();
+			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
 		});
 
-		it("shows only AI button in production", () => {
+		it("shows no buttons in production", () => {
 			vi.stubEnv("NODE_ENV", "production");
 
 			const application = ApplicationWithTemplateFactory.build();
@@ -182,10 +176,10 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			render(<ResearchDeepDiveStep />);
 
 			expect(screen.queryByTestId("dev-reset-button")).not.toBeInTheDocument();
-			expect(screen.getByTestId("ai-try-button")).toBeInTheDocument();
+			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
 		});
 
-		it("disables AI button but enables reset button when no application in development", () => {
+		it("shows reset button when no application in development", () => {
 			vi.stubEnv("NODE_ENV", "development");
 
 			useApplicationStore.setState({ application: null });
@@ -193,7 +187,7 @@ describe.sequential("ResearchDeepDiveStep", () => {
 			render(<ResearchDeepDiveStep />);
 
 			expect(screen.getByTestId("dev-reset-button")).toBeEnabled();
-			expect(screen.getByTestId("ai-try-button")).toBeDisabled();
+			expect(screen.queryByTestId("ai-try-button")).not.toBeInTheDocument();
 		});
 	});
 

@@ -32,6 +32,12 @@ export async function searchGrants(
 	if (params.max_amount !== undefined && params.max_amount !== null) {
 		searchParams.append("max_amount", params.max_amount.toString());
 	}
+	if ((params as any).deadline_after !== undefined && (params as any).deadline_after !== null) {
+		searchParams.append("deadline_after", String((params as any).deadline_after));
+	}
+	if ((params as any).deadline_before !== undefined && (params as any).deadline_before !== null) {
+		searchParams.append("deadline_before", String((params as any).deadline_before));
+	}
 	if (params.limit !== undefined) {
 		searchParams.append("limit", params.limit.toString());
 	}
