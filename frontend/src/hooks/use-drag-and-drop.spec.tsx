@@ -64,7 +64,6 @@ describe.sequential("useDragAndDrop", () => {
 
 			expect(result.current.activeItem).toBeUndefined();
 			expect(result.current.DragDropWrapper).toBeDefined();
-			expect(result.current.isItemDragging).toBeDefined();
 		});
 
 		it("should accept custom handlers", () => {
@@ -95,60 +94,6 @@ describe.sequential("useDragAndDrop", () => {
 			const { result } = renderHook(() => useDragAndDrop({}, {}));
 
 			expect(result.current.DragDropWrapper).toBeDefined();
-		});
-	});
-
-	describe("isItemDragging", () => {
-		it("should return false when no item is being dragged", () => {
-			const { result } = renderHook(() => useDragAndDrop());
-
-			expect(result.current.isItemDragging("item-1")).toBe(false);
-			expect(result.current.isItemDragging("item-2")).toBe(false);
-		});
-
-		it("should return true for active item during drag", () => {
-			const { result } = renderHook(() => useDragAndDrop());
-			const items = createTestItems();
-
-			render(
-				<result.current.DragDropWrapper items={items}>
-					<div>Test content</div>
-				</result.current.DragDropWrapper>,
-			);
-
-			expect(result.current.isItemDragging("item-1")).toBe(false);
-			expect(result.current.isItemDragging("nonexistent")).toBe(false);
-		});
-
-		it("should defer activeId setting with setTimeout on drag start", async () => {
-			vi.useFakeTimers();
-			const { result } = renderHook(() => useDragAndDrop());
-			const items = createTestItems();
-
-			render(
-				<result.current.DragDropWrapper items={items}>
-					<div>Test content</div>
-				</result.current.DragDropWrapper>,
-			);
-
-			const dragStartHandler = (globalThis as any).testDragStart;
-			expect(dragStartHandler).toBeDefined();
-
-			const event = { active: { id: "item-1" } };
-
-			act(() => {
-				dragStartHandler(event);
-			});
-
-			expect(result.current.isItemDragging("item-1")).toBe(false);
-
-			act(() => {
-				vi.runAllTimers();
-			});
-
-			expect(result.current.isItemDragging("item-1")).toBe(true);
-
-			vi.useRealTimers();
 		});
 	});
 
