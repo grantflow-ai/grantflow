@@ -135,7 +135,7 @@ async def _generate_field_answer(
     prompt_with_title = RESEARCH_DEEP_DIVE_USER_PROMPT.substitute(
         application_title=application.title,
         objectives_text=objectives_text,
-        question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name]
+        question=RESEARCH_DEEP_DIVE_FIELD_MAPPING[field_name],
     )
     search_queries = await handle_create_search_queries(user_prompt=str(prompt_with_title))
 

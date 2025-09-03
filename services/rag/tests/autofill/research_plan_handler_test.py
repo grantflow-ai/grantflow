@@ -3,7 +3,6 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from packages.shared_utils.src.pubsub import AutofillRequest
 
 from services.rag.src.autofill.research_plan_handler import generate_research_plan_content
@@ -72,13 +71,17 @@ async def test_generate_research_plan_content_with_mocks(
 
     app = GrantApplication(id="test-id", title="Test Application")
 
-    with patch(
-        "services.rag.src.autofill.research_plan_handler.handle_create_search_queries", new_callable=AsyncMock
-    ) as mock_search, patch(
-        "services.rag.src.autofill.research_plan_handler.retrieve_documents", new_callable=AsyncMock
-    ) as mock_retrieve, patch(
-        "services.rag.src.autofill.research_plan_handler.handle_completions_request", new_callable=AsyncMock
-    ) as mock_completion:
+    with (
+        patch(
+            "services.rag.src.autofill.research_plan_handler.handle_create_search_queries", new_callable=AsyncMock
+        ) as mock_search,
+        patch(
+            "services.rag.src.autofill.research_plan_handler.retrieve_documents", new_callable=AsyncMock
+        ) as mock_retrieve,
+        patch(
+            "services.rag.src.autofill.research_plan_handler.handle_completions_request", new_callable=AsyncMock
+        ) as mock_completion,
+    ):
         mock_search.return_value = ["search query 1", "search query 2"]
         mock_retrieve.return_value = ["Document content 1", "Document content 2"]
         mock_completion.return_value = {
@@ -89,8 +92,8 @@ async def test_generate_research_plan_content_with_mocks(
                     "description": "A" * 60,
                     "research_tasks": [
                         {"number": 1, "title": "Task 1 Title", "description": "B" * 60},
-                        {"number": 2, "title": "Task 2 Title", "description": "B" * 60}
-                    ]
+                        {"number": 2, "title": "Task 2 Title", "description": "B" * 60},
+                    ],
                 },
                 {
                     "number": 2,
@@ -98,9 +101,9 @@ async def test_generate_research_plan_content_with_mocks(
                     "description": "A" * 60,
                     "research_tasks": [
                         {"number": 1, "title": "Task 1 Title", "description": "B" * 60},
-                        {"number": 2, "title": "Task 2 Title", "description": "B" * 60}
-                    ]
-                }
+                        {"number": 2, "title": "Task 2 Title", "description": "B" * 60},
+                    ],
+                },
             ]
         }
 
@@ -126,14 +129,14 @@ def test_validate_research_plan_response(mock_logger: MagicMock) -> None:
                     {
                         "number": 1,
                         "title": "First Test Task",
-                        "description": "This is a detailed description of the first test task with sufficient content"
+                        "description": "This is a detailed description of the first test task with sufficient content",
                     },
                     {
                         "number": 2,
                         "title": "Second Test Task",
-                        "description": "This is a detailed description of the second test task with sufficient content"
-                    }
-                ]
+                        "description": "This is a detailed description of the second test task with sufficient content",
+                    },
+                ],
             },
             {
                 "number": 2,
@@ -143,15 +146,15 @@ def test_validate_research_plan_response(mock_logger: MagicMock) -> None:
                     {
                         "number": 1,
                         "title": "Another Test Task",
-                        "description": "This is a detailed description of another test task with sufficient content"
+                        "description": "This is a detailed description of another test task with sufficient content",
                     },
                     {
                         "number": 2,
                         "title": "Final Test Task",
-                        "description": "This is a detailed description of the final test task with sufficient content"
-                    }
-                ]
-            }
+                        "description": "This is a detailed description of the final test task with sufficient content",
+                    },
+                ],
+            },
         ]
     }
 
@@ -178,65 +181,142 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
 
     # Test too many objectives
     with pytest.raises(ValidationError, match="Expected 2-3 research objectives, got 4"):
-        _validate_research_plan_response({
-            "research_objectives": [
-                {"number": 1, "title": "Obj 1", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2},
-                {"number": 2, "title": "Obj 2", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2},
-                {"number": 3, "title": "Obj 3", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2},
-                {"number": 4, "title": "Obj 4", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2},
-            ]
-        })
+        _validate_research_plan_response(
+            {
+                "research_objectives": [
+                    {
+                        "number": 1,
+                        "title": "Obj 1",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2,
+                    },
+                    {
+                        "number": 2,
+                        "title": "Obj 2",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2,
+                    },
+                    {
+                        "number": 3,
+                        "title": "Obj 3",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2,
+                    },
+                    {
+                        "number": 4,
+                        "title": "Obj 4",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Task 1", "description": "B" * 60}] * 2,
+                    },
+                ]
+            }
+        )
 
     # Test objective with short title
     with pytest.raises(ValidationError, match="title too short"):
-        _validate_research_plan_response({
-            "research_objectives": [
-                {"number": 1, "title": "Short", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2},
-                {"number": 2, "title": "Valid Title", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2},
-            ]
-        })
+        _validate_research_plan_response(
+            {
+                "research_objectives": [
+                    {
+                        "number": 1,
+                        "title": "Short",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2,
+                    },
+                    {
+                        "number": 2,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2,
+                    },
+                ]
+            }
+        )
 
     # Test objective with short description
     with pytest.raises(ValidationError, match="description too short"):
-        _validate_research_plan_response({
-            "research_objectives": [
-                {"number": 1, "title": "Valid Title", "description": "Too short", "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2},
-                {"number": 2, "title": "Valid Title", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2},
-            ]
-        })
+        _validate_research_plan_response(
+            {
+                "research_objectives": [
+                    {
+                        "number": 1,
+                        "title": "Valid Title",
+                        "description": "Too short",
+                        "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2,
+                    },
+                    {
+                        "number": 2,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2,
+                    },
+                ]
+            }
+        )
 
     # Test duplicate objective numbers
     with pytest.raises(ValidationError, match="Duplicate objective number"):
-        _validate_research_plan_response({
-            "research_objectives": [
-                {"number": 1, "title": "Valid Title", "description": "A" * 60, "research_tasks": [
-                    {"number": 1, "title": "Valid Task Title", "description": "B" * 60},
-                    {"number": 2, "title": "Valid Task Title", "description": "B" * 60}
-                ]},
-                {"number": 1, "title": "Valid Title", "description": "A" * 60, "research_tasks": [
-                    {"number": 1, "title": "Valid Task Title", "description": "B" * 60},
-                    {"number": 2, "title": "Valid Task Title", "description": "B" * 60}
-                ]},
-            ]
-        })
+        _validate_research_plan_response(
+            {
+                "research_objectives": [
+                    {
+                        "number": 1,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [
+                            {"number": 1, "title": "Valid Task Title", "description": "B" * 60},
+                            {"number": 2, "title": "Valid Task Title", "description": "B" * 60},
+                        ],
+                    },
+                    {
+                        "number": 1,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [
+                            {"number": 1, "title": "Valid Task Title", "description": "B" * 60},
+                            {"number": 2, "title": "Valid Task Title", "description": "B" * 60},
+                        ],
+                    },
+                ]
+            }
+        )
 
     # Test objective with no tasks
     with pytest.raises(ValidationError, match="must have 2-5 tasks"):
-        _validate_research_plan_response({
-            "research_objectives": [
-                {"number": 1, "title": "Valid Title", "description": "A" * 60, "research_tasks": []},
-                {"number": 2, "title": "Valid Title", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2},
-            ]
-        })
+        _validate_research_plan_response(
+            {
+                "research_objectives": [
+                    {"number": 1, "title": "Valid Title", "description": "A" * 60, "research_tasks": []},
+                    {
+                        "number": 2,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2,
+                    },
+                ]
+            }
+        )
 
     # Test task with short description
     with pytest.raises(ValidationError, match="task.*description too short"):
-        _validate_research_plan_response({
-            "research_objectives": [
-                {"number": 1, "title": "Valid Title", "description": "A" * 60, "research_tasks": [
-                    {"number": 1, "title": "Valid Task Title", "description": "Too short"},
-                    {"number": 2, "title": "Valid Task Title", "description": "B" * 60}
-                ]},
-                {"number": 2, "title": "Valid Title", "description": "A" * 60, "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2},
-            ]
-        })
+        _validate_research_plan_response(
+            {
+                "research_objectives": [
+                    {
+                        "number": 1,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [
+                            {"number": 1, "title": "Valid Task Title", "description": "Too short"},
+                            {"number": 2, "title": "Valid Task Title", "description": "B" * 60},
+                        ],
+                    },
+                    {
+                        "number": 2,
+                        "title": "Valid Title",
+                        "description": "A" * 60,
+                        "research_tasks": [{"number": 1, "title": "Valid Task Title", "description": "B" * 60}] * 2,
+                    },
+                ]
+            }
+        )

@@ -60,9 +60,8 @@ async def _generate_single_section_with_context(
         shared_context_length=len(shared_context),
     )
 
-    research_context_parts = []
-    for research_objective in research_deep_dives:
-        research_context_parts.append(f"""
+    research_context_parts = [
+        f"""
         ## Research Objective {research_objective["number"]}: {research_objective["title"]}
 
         **Objective Details:**
@@ -75,7 +74,9 @@ async def _generate_single_section_with_context(
         - Research Focus: {research_objective.get("focus_area", "Not specified")}
         - Methodology: {research_objective.get("methodology", "To be determined")}
         - Expected Outcomes: {research_objective.get("expected_outcomes", "Detailed outcomes to be defined")}
-        """)
+        """
+        for research_objective in research_deep_dives
+    ]
 
     research_context = "\n\n".join(research_context_parts)
 
