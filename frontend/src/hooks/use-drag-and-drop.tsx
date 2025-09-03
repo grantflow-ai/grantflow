@@ -21,7 +21,8 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+import { useDragOverlayStore } from "../stores/drag-overlay-store";
 
 export interface DragDropConfig {
 	collisionDetection?: CollisionDetection;
@@ -57,7 +58,6 @@ export interface DragDropResult<T extends DragDropItem> {
 		items: T[];
 		renderDragOverlay?: (activeItem: T | undefined) => React.ReactNode;
 	}>;
-	isItemDragging: (itemId: string) => boolean;
 }
 
 export function useDragAndDrop<T extends DragDropItem>(
@@ -71,8 +71,6 @@ export function useDragAndDrop<T extends DragDropItem>(
 		enablePointer = true,
 		strategy = "vertical",
 	} = config;
-
-	const [activeId, setActiveId] = useState<null | string>(null);
 
 	const pointerSensor = useSensor(PointerSensor, {
 		activationConstraint: {
@@ -94,8 +92,6 @@ export function useDragAndDrop<T extends DragDropItem>(
 	}
 	const sensors = useSensors(...sensorArray);
 
-	const isItemDragging = useCallback((itemId: string) => activeId === itemId, [activeId]);
-
 	const DragDropWrapper = useCallback(
 		function DragDropWrapper({
 			children,
@@ -111,9 +107,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 
 				onDragStart?.(event, draggedItem);
 
-				setTimeout(() => {
-					setActiveId(event.active.id as string);
-				}, 0);
+				useDragOverlayStore.getState().setActiveItem(draggedItem);
 			};
 
 			const handleDragOver = async (event: DragOverEvent) => {
@@ -146,7 +140,7 @@ export function useDragAndDrop<T extends DragDropItem>(
 			const handleDragEnd = async (event: DragEndEvent) => {
 				const { active, over } = event;
 
-				setActiveId(null);
+				useDragOverlayStore.getState().clearActiveItem();
 
 				if (!over) {
 					return;
@@ -176,7 +170,6 @@ export function useDragAndDrop<T extends DragDropItem>(
 				}
 			};
 
-			const activeItem = items.find((item) => item.id === activeId);
 			const sortableIds = items.map((item) => item.id);
 			const sortingStrategy =
 				strategy === "horizontal" ? horizontalListSortingStrategy : verticalListSortingStrategy;
@@ -193,16 +186,25 @@ export function useDragAndDrop<T extends DragDropItem>(
 					<SortableContext items={sortableIds} strategy={sortingStrategy}>
 						{children}
 					</SortableContext>
-					<DragOverlay>{renderDragOverlay ? renderDragOverlay(activeItem) : null}</DragOverlay>
+					<CustomDragOverlay renderOverlay={renderDragOverlay} />
 				</DndContext>
 			);
+
+			function CustomDragOverlay({
+				renderOverlay,
+			}: {
+				renderOverlay?: (activeItem: T | undefined) => React.ReactNode;
+			}) {
+				const { activeItem } = useDragOverlayStore();
+
+				return <DragOverlay>{renderOverlay ? renderOverlay(activeItem as T) : null}</DragOverlay>;
+			}
 		},
-		[sensors, onDragStart, onDragOver, onDragMove, onDragEnd, onReorder, activeId, strategy, collisionDetection],
+		[sensors, onDragStart, onDragOver, onDragMove, onDragEnd, onReorder, strategy, collisionDetection],
 	);
 
 	return {
 		activeItem: undefined,
 		DragDropWrapper,
-		isItemDragging,
 	};
 }
