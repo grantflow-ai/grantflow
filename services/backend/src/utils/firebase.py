@@ -123,11 +123,23 @@ async def get_user_by_email(email: str) -> FirebaseUser | None:
                     phone_number=provider.phone_number,
                 )
                 for provider in user.provider_data
-            ] if user.provider_data else None,
-            valid_since=str(user.tokens_valid_after_timestamp) if hasattr(user, 'tokens_valid_after_timestamp') and user.tokens_valid_after_timestamp else None,
-            created_at=str(user.user_metadata.creation_timestamp) if user.user_metadata and user.user_metadata.creation_timestamp else None,
-            last_login_at=str(user.user_metadata.last_sign_in_timestamp) if user.user_metadata and user.user_metadata.last_sign_in_timestamp else None,
-            last_refresh_at=str(user.user_metadata.last_refresh_timestamp) if user.user_metadata and hasattr(user.user_metadata, 'last_refresh_timestamp') and user.user_metadata.last_refresh_timestamp else None,
+            ]
+            if user.provider_data
+            else None,
+            valid_since=str(user.tokens_valid_after_timestamp)
+            if hasattr(user, "tokens_valid_after_timestamp") and user.tokens_valid_after_timestamp
+            else None,
+            created_at=str(user.user_metadata.creation_timestamp)
+            if user.user_metadata and user.user_metadata.creation_timestamp
+            else None,
+            last_login_at=str(user.user_metadata.last_sign_in_timestamp)
+            if user.user_metadata and user.user_metadata.last_sign_in_timestamp
+            else None,
+            last_refresh_at=str(user.user_metadata.last_refresh_timestamp)
+            if user.user_metadata
+            and hasattr(user.user_metadata, "last_refresh_timestamp")
+            and user.user_metadata.last_refresh_timestamp
+            else None,
         )
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
@@ -160,11 +172,23 @@ async def get_user(uid: str) -> FirebaseUser | None:
                     phone_number=provider.phone_number,
                 )
                 for provider in user.provider_data
-            ] if user.provider_data else None,
-            valid_since=str(user.tokens_valid_after_timestamp) if hasattr(user, 'tokens_valid_after_timestamp') and user.tokens_valid_after_timestamp else None,
-            created_at=str(user.user_metadata.creation_timestamp) if user.user_metadata and user.user_metadata.creation_timestamp else None,
-            last_login_at=str(user.user_metadata.last_sign_in_timestamp) if user.user_metadata and user.user_metadata.last_sign_in_timestamp else None,
-            last_refresh_at=str(user.user_metadata.last_refresh_timestamp) if user.user_metadata and hasattr(user.user_metadata, 'last_refresh_timestamp') and user.user_metadata.last_refresh_timestamp else None,
+            ]
+            if user.provider_data
+            else None,
+            valid_since=str(user.tokens_valid_after_timestamp)
+            if hasattr(user, "tokens_valid_after_timestamp") and user.tokens_valid_after_timestamp
+            else None,
+            created_at=str(user.user_metadata.creation_timestamp)
+            if user.user_metadata and user.user_metadata.creation_timestamp
+            else None,
+            last_login_at=str(user.user_metadata.last_sign_in_timestamp)
+            if user.user_metadata and user.user_metadata.last_sign_in_timestamp
+            else None,
+            last_refresh_at=str(user.user_metadata.last_refresh_timestamp)
+            if user.user_metadata
+            and hasattr(user.user_metadata, "last_refresh_timestamp")
+            and user.user_metadata.last_refresh_timestamp
+            else None,
         )
     except FirebaseError as e:
         if "USER_NOT_FOUND" in str(e):
@@ -204,11 +228,23 @@ async def get_users(uids: list[str]) -> dict[str, FirebaseUser]:
                         phone_number=provider.phone_number,
                     )
                     for provider in user.provider_data
-                ] if user.provider_data else None,
-                valid_since=str(user.tokens_valid_after_timestamp) if hasattr(user, 'tokens_valid_after_timestamp') and user.tokens_valid_after_timestamp else None,
-                created_at=str(user.user_metadata.creation_timestamp) if user.user_metadata and user.user_metadata.creation_timestamp else None,
-                last_login_at=str(user.user_metadata.last_sign_in_timestamp) if user.user_metadata and user.user_metadata.last_sign_in_timestamp else None,
-                last_refresh_at=str(user.user_metadata.last_refresh_timestamp) if user.user_metadata and hasattr(user.user_metadata, 'last_refresh_timestamp') and user.user_metadata.last_refresh_timestamp else None,
+                ]
+                if user.provider_data
+                else None,
+                valid_since=str(user.tokens_valid_after_timestamp)
+                if hasattr(user, "tokens_valid_after_timestamp") and user.tokens_valid_after_timestamp
+                else None,
+                created_at=str(user.user_metadata.creation_timestamp)
+                if user.user_metadata and user.user_metadata.creation_timestamp
+                else None,
+                last_login_at=str(user.user_metadata.last_sign_in_timestamp)
+                if user.user_metadata and user.user_metadata.last_sign_in_timestamp
+                else None,
+                last_refresh_at=str(user.user_metadata.last_refresh_timestamp)
+                if user.user_metadata
+                and hasattr(user.user_metadata, "last_refresh_timestamp")
+                and user.user_metadata.last_refresh_timestamp
+                else None,
             )
         return users_dict
     except FirebaseError as e:
