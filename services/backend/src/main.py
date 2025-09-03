@@ -98,6 +98,7 @@ from services.backend.src.api.routes.user import delete_user, get_sole_owned_org
 from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
+from services.backend.src.api.webhooks.email_sending import handle_email_notification_webhook
 from services.backend.src.utils.firebase import get_firebase_app
 
 configure_otel("backend")
@@ -164,6 +165,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     create_subscription,
     verify_subscription,
     unsubscribe,
+    handle_email_notification_webhook,
 ]
 
 
