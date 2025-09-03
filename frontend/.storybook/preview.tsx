@@ -18,19 +18,6 @@ const preview: Preview = {
 		),
 	],
 	parameters: {
-		backgrounds: {
-			default: "light",
-			values: [
-				{
-					name: "light",
-					value: "var(--background-light)",
-				},
-				{
-					name: "dark",
-					value: "var(--background-dark)",
-				},
-			],
-		},
 		controls: {
 			matchers: {
 				color: /(background|color)$/i,
