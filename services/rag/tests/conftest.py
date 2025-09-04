@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -10,6 +11,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
+from testing.scenarios.base import BaseScenario, list_available_scenarios, load_scenario
 from testing.utils import create_grant_application_data, process_granting_institution
 
 load_dotenv()
@@ -49,6 +51,16 @@ def preload_models() -> None:
 
     elapsed_time = time.time() - start_time
     logger.info("Model preloading completed in %.2f seconds", elapsed_time)
+
+
+@pytest.fixture
+def available_scenarios() -> list[str]:
+    return list_available_scenarios()
+
+
+@pytest.fixture
+def scenario_loader() -> Callable[[str], BaseScenario]:
+    return load_scenario
 
 
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
