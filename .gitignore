@@ -3,6 +3,7 @@
 **/*.log
 **/.venv
 **/__pycache__/
+venv/
 **/http-client.private.env.json
 *.iml
 *.pem
