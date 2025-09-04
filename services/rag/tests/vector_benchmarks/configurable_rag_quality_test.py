@@ -10,7 +10,7 @@ from packages.shared_utils.src.dto import VectorDTO
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER, RESULTS_FOLDER
-from testing.benchmark_utils import benchmark_vector
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 from testing.rag_ai_evaluation import evaluate_query_generation_quality, evaluate_retrieval_relevance
 from testing.rag_evaluation import (
     assess_query_quality,
@@ -179,7 +179,7 @@ async def cleanup_rag_test_data(async_session_maker: async_sessionmaker[Any]) ->
     return _cleanup
 
 
-@benchmark_vector(timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
 async def test_configurable_rag_quality_benchmark(  # noqa: PLR0915
     async_session_maker: async_sessionmaker[Any],
     cfp_content: str,

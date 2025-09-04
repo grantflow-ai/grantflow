@@ -4,7 +4,7 @@ from typing import Any, cast
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.benchmark_utils import benchmark_vector
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from .data_test import BenchmarkDataGenerator
 from .framework import BenchmarkResult, VectorBenchmarkFramework
@@ -12,7 +12,7 @@ from .framework import BenchmarkResult, VectorBenchmarkFramework
 logger = get_logger(__name__)
 
 
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_baseline_vector_insertion(
     async_session_maker: async_sessionmaker[AsyncSession], benchmark_entities: dict[str, Any], logger: Any
 ) -> None:
@@ -44,7 +44,7 @@ async def test_baseline_vector_insertion(
     )
 
 
-@benchmark_vector(timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=180)
 async def test_baseline_similarity_search(
     async_session_maker: async_sessionmaker[AsyncSession], benchmark_entities: dict[str, Any], logger: Any
 ) -> None:
@@ -87,7 +87,7 @@ async def test_baseline_similarity_search(
     )
 
 
-@benchmark_vector(timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=600)
 async def test_dimension_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
@@ -195,7 +195,7 @@ async def test_dimension_comparison(
         )
 
 
-@benchmark_vector(timeout=400)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=400)
 async def test_index_parameter_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
@@ -306,7 +306,7 @@ async def test_index_parameter_comparison(
         )
 
 
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], project: Any, logger: Any) -> None:
     db_config = configured_vector_db
     config_name = str(db_config["config_name"])
@@ -420,7 +420,7 @@ async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], pr
         )
 
 
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], project: Any, logger: Any) -> None:
     db_config = configured_vector_db
     config_name = str(db_config["config_name"])
@@ -526,7 +526,7 @@ async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], projec
         )
 
 
-@benchmark_vector(timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=120)
 async def test_configuration_baseline(configured_vector_db: dict[str, Any], project: Any, logger: Any) -> None:
     db_config = configured_vector_db
     config_name = str(db_config["config_name"])

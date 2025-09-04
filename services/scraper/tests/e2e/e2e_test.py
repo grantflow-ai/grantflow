@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from services.scraper.src.db_utils import get_existing_grant_identifiers
 from services.scraper.src.main import run_scraper
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 
 def _setup_test_environment(project_suffix: str = "test") -> None:
@@ -67,7 +67,7 @@ async def _verify_postgresql_changes(
     )
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.SCRAPER, timeout=600)
 async def test_scraper_smoke(logger: logging.Logger) -> None:
     _setup_test_environment("smoke-test")
 
@@ -92,7 +92,7 @@ async def test_scraper_smoke(logger: logging.Logger) -> None:
     logger.info("Scraper smoke test passed successfully")
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.SCRAPER, timeout=1800)
 async def test_scraper_full_e2e(logger: logging.Logger) -> None:
     _setup_test_environment("full-e2e-test")
 
