@@ -11,7 +11,7 @@ import {
 	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
-} from "../../ui/select";
+} from "@/components/ui/select";
 
 const meta: Meta<typeof Select> = {
 	component: Select,
