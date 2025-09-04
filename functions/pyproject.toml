@@ -12,7 +12,7 @@ dependencies = [
   "cloudevents>=1.10",
   "db",
   "firebase-admin>=6.5",
-  "firebase-functions>=0.1.1",
+  "firebase-functions>=0.4.3",
   "functions-framework>=3.5",
   "google-cloud-firestore>=2.11",
   "google-cloud-pubsub>=2.18",
