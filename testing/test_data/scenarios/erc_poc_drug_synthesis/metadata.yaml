@@ -54,7 +54,7 @@ form_inputs:
   scientific_infrastructure: "Our laboratory is equipped with advanced facilities for peptide synthesis, characterization, and condensate formation studies."
 
 cfp_mapping:
-  file: "erc_poc_2025.md"
+  file: "erc-proof-of-concept-2025-cfp.md"
   grant_type: "ERC-2025-PoC"
   sections:
     - "Section 1a: The idea – Breakthrough Innovation potential"
