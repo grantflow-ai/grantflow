@@ -14,8 +14,23 @@ class CustomClaims(TypedDict):
     registration_time: NotRequired[int]
 
 
-def is_grantflow_email(email: str) -> bool:
-    return email.endswith("@grantflow.ai")
+WHITELISTED_EMAILS = {
+    "jacob.hanna@weizmann.ac.il",
+    "koren_7@icloud.com",
+    "masha.niv@mail.huji.ac.il",
+    "mor.grinstein@gmail.com",
+    "odedrechavi@gmail.com",
+    "ronelasaf@gmail.com",
+    "rotem1shalita@gmail.com",
+    "rotblat@bgu.ac.il",
+    "weilmiguel@gmail.com",
+    "yaelcoh@tlvmc.gov.il",
+}
+
+
+def is_authorized_email(email: str) -> bool:
+    email_lower = email.lower()
+    return email_lower.endswith("@grantflow.ai") or email_lower in WHITELISTED_EMAILS
 
 
 @identity_fn.before_user_created()  # type: ignore[misc]
@@ -25,12 +40,12 @@ def before_create(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeCre
 
     logger.info("Registration attempt for email: %s", email)
 
-    if not is_grantflow_email(email):
-        logger.warning("Blocking registration attempt for email: %s - not from grantflow.ai domain", email)
+    if not is_authorized_email(email):
+        logger.warning("Blocking registration attempt for email: %s - not authorized", email)
 
         raise https_fn.HttpsError(
             code=https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
-            message="Access restricted to grantflow.ai team members only.",
+            message="Access restricted to authorized users only.",
         )
 
     custom_claims: CustomClaims = {
@@ -53,12 +68,12 @@ def before_sign_in(event: identity_fn.AuthBlockingEvent) -> identity_fn.BeforeSi
 
     logger.info("Sign-in attempt for email: %s", email)
 
-    if not is_grantflow_email(email):
-        logger.warning("Blocking sign-in attempt for email: %s - not from grantflow.ai domain", email)
+    if not is_authorized_email(email):
+        logger.warning("Blocking sign-in attempt for email: %s - not authorized", email)
 
         raise https_fn.HttpsError(
             code=https_fn.FunctionsErrorCode.PERMISSION_DENIED,
-            message="Access restricted to grantflow.ai team members only.",
+            message="Access restricted to authorized users only.",
         )
 
     logger.info("Allowing sign-in for email: %s", email)
