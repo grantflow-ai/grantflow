@@ -45,7 +45,7 @@ form_inputs:
   scientific_infrastructure: "Access to flow cytometry, cell culture facilities, and in vivo testing capabilities."
 
 cfp_mapping:
-  file: "melanoma_alliance_cfp.md"
+  file: "melanoma-alliance-cfp.md"
   grant_type: "Melanoma Alliance Research Grant"
   sections:
     - "Research Plan"
