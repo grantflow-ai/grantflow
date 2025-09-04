@@ -376,12 +376,13 @@ describe("Sources Actions", () => {
 				const result = await createTemplateSourceUploadUrl(
 					mockOrganizationId,
 					mockProjectId,
+					mockApplicationId,
 					mockTemplateId,
 					mockFileName,
 				);
 
 				expect(mockPost).toHaveBeenCalledWith(
-					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/upload-url?blob_name=${mockFileName}`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant_templates/${mockTemplateId}/sources/upload-url?blob_name=${mockFileName}`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -400,7 +401,13 @@ describe("Sources Actions", () => {
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
 				await expect(
-					createTemplateSourceUploadUrl(mockOrganizationId, mockProjectId, mockTemplateId, mockFileName),
+					createTemplateSourceUploadUrl(
+						mockOrganizationId,
+						mockProjectId,
+						mockApplicationId,
+						mockTemplateId,
+						mockFileName,
+					),
 				).rejects.toThrow("API Error");
 			});
 
@@ -424,7 +431,13 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await createTemplateSourceUploadUrl(mockOrganizationId, mockProjectId, mockTemplateId, mockFileName);
+				await createTemplateSourceUploadUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockTemplateId,
+					mockFileName,
+				);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});

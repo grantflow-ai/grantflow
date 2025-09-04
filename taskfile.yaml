@@ -749,6 +749,7 @@ tasks:
       - task: lint:frontend
       - task: lint:python
       - task: lint:codespell
+      - task: lint:terraform
 
   lint:frontend:
     desc: Run all frontend linters (Biome, ESLint, and TypeScript)
@@ -860,15 +861,15 @@ tasks:
   lint:terraform:
     desc: Run all Terraform linters (tofu validate, tflint, trivy)
     deps:
+      - task: lint:terraform:fmt
       - task: lint:terraform:validate
       - task: lint:terraform:tflint
       - task: lint:terraform:trivy
 
   lint:terraform:validate:
     desc: Validate Terraform configuration using tofu validate
-    preconditions:
-      - sh: command -v tofu
-        msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+    status:
+      - '! command -v tofu'
     cmds:
       - echo "Validating terraform configuration..."
       - tofu -chdir=terraform init -backend=false
@@ -876,27 +877,24 @@ tasks:
 
   lint:terraform:fmt:
     desc: Format Terraform code using tofu fmt
-    preconditions:
-      - sh: command -v tofu
-        msg: "OpenTofu is not installed. Please install it from https://opentofu.org/docs/intro/install/"
+    status:
+      - '! command -v tofu'
     cmds:
       - echo "Formatting terraform code..."
       - tofu fmt -recursive ./terraform
 
   lint:terraform:tflint:
     desc: Lint Terraform code with tflint
-    preconditions:
-      - sh: command -v tflint
-        msg: "tflint is not installed. Please install it from https://github.com/terraform-linters/tflint"
+    status:
+      - '! command -v tflint'
     cmds:
       - echo "Running tflint on terraform directory..."
       - tflint --chdir=terraform
 
   lint:terraform:trivy:
     desc: Security scan Terraform code with trivy
-    preconditions:
-      - sh: command -v trivy
-        msg: "trivy is not installed. Please install it from https://aquasecurity.github.io/trivy/"
+    status:
+      - '! command -v trivy'
     cmds:
       - echo "Running trivy on terraform directory..."
       - trivy config ./terraform

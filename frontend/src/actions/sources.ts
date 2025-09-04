@@ -63,13 +63,14 @@ export async function createApplicationSourceUploadUrl(
 export async function createTemplateSourceUploadUrl(
 	organizationId: string,
 	projectId: string,
+	applicationId: string,
 	templateId: string,
 	fileName: string,
 ): Promise<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody> {
 	return withAuthRedirect(
 		getClient()
 			.post(
-				`organizations/${organizationId}/projects/${projectId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`,
+				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`,
 				{
 					headers: await createAuthHeaders(),
 				},

@@ -234,8 +234,15 @@ const uploadFileInDevelopment = async (
 	if (!selectedOrganizationId) {
 		throw new Error("No organization selected");
 	}
-	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
-	const { url } = await createUploadUrl(selectedOrganizationId, application.project_id, parentId, file.name);
+	const { url } = isApplicationParent
+		? await createApplicationSourceUploadUrl(selectedOrganizationId, application.project_id, parentId, file.name)
+		: await createTemplateSourceUploadUrl(
+				selectedOrganizationId,
+				application.project_id,
+				application.id,
+				parentId,
+				file.name,
+			);
 
 	log.info("[file-upload] Upload URL created", {
 		fileName: file.name,
@@ -310,8 +317,15 @@ const uploadFileInProduction = async (
 	if (!selectedOrganizationId) {
 		throw new Error("No organization selected");
 	}
-	const createUploadUrl = isApplicationParent ? createApplicationSourceUploadUrl : createTemplateSourceUploadUrl;
-	const { url } = await createUploadUrl(selectedOrganizationId, application.project_id, parentId, file.name);
+	const { url } = isApplicationParent
+		? await createApplicationSourceUploadUrl(selectedOrganizationId, application.project_id, parentId, file.name)
+		: await createTemplateSourceUploadUrl(
+				selectedOrganizationId,
+				application.project_id,
+				application.id,
+				parentId,
+				file.name,
+			);
 
 	log.info("[file-upload] Upload URL created", {
 		fileName: file.name,
