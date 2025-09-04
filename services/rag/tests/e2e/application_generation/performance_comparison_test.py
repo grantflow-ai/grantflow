@@ -6,6 +6,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
+from testing.scenarios.base import load_scenario
 
 from services.rag.src.grant_application.handler import grant_application_text_generation_pipeline_handler
 
@@ -25,8 +26,12 @@ async def test_application_generation_performance_baseline(
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
+    scenario = load_scenario("melanoma_alliance_baseline")
+
     performance_context.set_metadata("test_type", "performance_baseline")
     performance_context.set_metadata("measurement_focus", "generation_speed")
+    performance_context.set_metadata("scenario_name", scenario.scenario_name)
+    performance_context.set_metadata("source_files_count", len(scenario.get_source_files()))
 
     logger.info("⏱️ Establishing performance baseline for application generation")
 
@@ -91,8 +96,11 @@ async def test_generation_smoke_test(
     async_session_maker: async_sessionmaker[Any],
     performance_context: PerformanceTestContext,
 ) -> None:
+    scenario = load_scenario("melanoma_alliance_baseline")
+
     performance_context.set_metadata("test_type", "smoke_test")
     performance_context.set_metadata("quick_validation", True)
+    performance_context.set_metadata("scenario_name", scenario.scenario_name)
 
     logger.info("💨 Running quick smoke test for application generation")
 
