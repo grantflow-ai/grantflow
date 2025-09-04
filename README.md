@@ -497,12 +497,12 @@ E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)"
 ```
 
 **Writing E2E Tests**:
-Use the `@e2e_test` decorator from `testing.e2e_utils`:
+Use the `@performance_test` decorator from `testing.performance_framework`:
 
 ```python
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.performance_framework import TestExecutionSpeed, TestDomain, performance_test
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.EXAMPLE, timeout=60)
 async def test_basic_functionality(logger: logging.Logger) -> None:
     # Test implementation
 ```

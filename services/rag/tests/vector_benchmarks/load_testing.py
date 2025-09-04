@@ -7,7 +7,7 @@ from typing import Any
 
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.benchmark_utils import BenchmarkCategory, benchmark
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from .enhanced_metrics import EnhancedPerformanceTracker
 from .framework import VectorBenchmarkFramework
@@ -357,7 +357,7 @@ def format_load_test_results(result: LoadTestResult) -> str:
     return summary
 
 
-@benchmark(category=BenchmarkCategory.VECTOR, timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
 async def benchmark_load_test(
     config: LoadTestConfiguration,
     session_maker: async_sessionmaker[AsyncSession],
