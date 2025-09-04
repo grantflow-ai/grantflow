@@ -6,12 +6,18 @@ from packages.shared_utils.src.exceptions import (
     UrlParsingError,
     ValidationError,
 )
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.performance_framework import (
+    TestExecutionSpeed,
+    TestDomain,
+    performance_test,
+)
 
 from services.crawler.src.extraction import extract_links, prepare_url_data
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=120)
+@performance_test(
+    execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.CRAWLER, timeout=120
+)
 @pytest.mark.parametrize(
     "test_url,expected_content",
     [
@@ -57,7 +63,9 @@ async def test_url_content_extraction(
         pytest.fail(f"Unexpected URL extraction error for {test_url}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL)
+@performance_test(
+    execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.CRAWLER
+)
 async def test_link_extraction_comprehensive(logger: logging.Logger) -> None:
     logger.info("Running comprehensive link extraction test")
 

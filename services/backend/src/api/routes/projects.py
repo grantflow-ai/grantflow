@@ -167,7 +167,6 @@ async def handle_retrieve_projects(
         for uid, user_data in fetched_users.items():
             await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
 
-        # Convert FirebaseUser objects to dict for consistency
         firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
     return [
@@ -290,7 +289,6 @@ async def handle_retrieve_project(
         for uid, user_data in fetched_users.items():
             await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
 
-        # Convert FirebaseUser objects to dict for consistency
         firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
 
     return ProjectResponse(

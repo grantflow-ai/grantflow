@@ -3,10 +3,10 @@
 This framework provides comprehensive benchmarking for vector database performance across different dimensions and configurations. The key insight is that we use **synthetic migrations** to modify your production schema temporarily, allowing us to test your real RAG code with different vector configurations.
 
 **Important**: These tests require:
-- `BENCHMARK_TESTS=1` environment variable 
+- `E2E_TESTS=1` environment variable 
 - `PYTHONPATH=.` for proper imports
 - Must be run from the repository root directory
-- Use the `@benchmark_vector` decorator, which applies the `benchmark` pytest marker
+- Use the `@performance_test` decorator with appropriate execution speed and domain
 
 ## Overview
 
@@ -20,9 +20,9 @@ This approach ensures benchmarks reflect real-world performance!
 
 ## Implementation Details
 
-- **Environment Variable**: `BENCHMARK_TESTS=1` (required to enable benchmark tests)
-- **Pytest Marker**: `benchmark` (applied automatically by `@benchmark_vector` decorator)
-- **Test File Naming**: Tests use `@benchmark_vector()` decorator from `testing.benchmark_utils`
+- **Environment Variable**: `E2E_TESTS=1` (required to enable performance tests)
+- **Pytest Marker**: Applied automatically by `@performance_test` decorator based on execution speed
+- **Test File Naming**: Tests use `@performance_test()` decorator from `testing.performance_framework`
 - **Data Generation**: Uses `BenchmarkDataGenerator` class from `data_test.py`
 - **Database Setup**: Creates isolated test databases per worker to avoid conflicts
 
@@ -30,16 +30,16 @@ This approach ensures benchmarks reflect real-world performance!
 
 ```bash
 # Run all vector benchmarks (from repository root)
-PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m benchmark -v
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m vector_benchmark -v
 
 # Run specific test
-PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_baseline_vector_insertion -v
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_baseline_vector_insertion -v
 
 # Run baseline tests only
-PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py -k "baseline" -v
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py -k "baseline" -v
 
 # Run dimension scaling test
-PYTHONPATH=. BENCHMARK_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_vector_dimension_scaling -v
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_vector_dimension_scaling -v
 
 # Important: Always run from repository root with PYTHONPATH=.
 ```
@@ -176,7 +176,9 @@ results = await framework.run_comprehensive_benchmark(vectors, queries)
 ### Testing Different Vector Dimensions
 
 ```python
-@benchmark_vector(timeout=300)
+from testing.performance_framework import performance_test, TestExecutionSpeed, TestDomain
+
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_my_dimension_benchmark(async_session_maker, benchmark_entities, logger):
     # Test 512d vectors using synthetic migrations
     async with async_session_maker() as session:
@@ -192,7 +194,7 @@ async def test_my_dimension_benchmark(async_session_maker, benchmark_entities, l
 ### Testing Custom Index Parameters
 
 ```python
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_custom_index_params(async_session_maker, logger):
     async with async_session_maker() as session:
         modifier = VectorTableModifier(session)
@@ -207,7 +209,7 @@ async def test_custom_index_params(async_session_maker, logger):
 ### Using Fixtures for Common Patterns
 
 ```python
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_with_dataset(small_dataset, async_session_maker, logger):
     # small_dataset fixture provides vectors ready to use
     vectors = small_dataset["vectors"]
@@ -264,7 +266,7 @@ class VectorBenchmarkFramework:
 ### Adding New Test Cases
 
 ```python
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_my_benchmark(async_session_maker, benchmark_entities, logger):
     async with async_session_maker() as session:
         generator = BenchmarkDataGenerator(session)

@@ -6,7 +6,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from testing.e2e_utils import E2ETestCategory, e2e_test
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.grant_template.nlp_categorizer import (
     CATEGORY_LABELS,
@@ -123,7 +123,7 @@ def sample_cfp_texts() -> list[str]:
     ]
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.NLP_CATEGORIZATION, timeout=60)
 async def test_nlp_categorizer_smoke(logger: Any) -> None:
     test_data_dir = Path(__file__).parent.parent.parent.parent / "testing/test_data/nlp_cfp_samples"
     txt_files = list(test_data_dir.glob("*.txt"))
@@ -204,7 +204,7 @@ async def test_nlp_categorization_accuracy_benchmark() -> None:
     assert accuracy_rate >= 0.8, f"Accuracy rate {accuracy_rate:.2f} below threshold"
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.NLP_CATEGORIZATION, timeout=300)
 async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
     test_data_dir = Path(__file__).parent.parent.parent.parent / "testing/test_data/nlp_cfp_samples"
     results_dir = Path(__file__).parent / "benchmark_results"

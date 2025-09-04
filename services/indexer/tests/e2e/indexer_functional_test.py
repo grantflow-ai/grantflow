@@ -12,11 +12,8 @@ from packages.shared_utils.src.extraction import extract_file_content
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER, TEST_DATA_SOURCES
-from testing.e2e_utils import (
-    E2ETestCategory,
-    e2e_test,
-)
 from testing.evaluation_utils import cosine_similarity
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.indexer.src.processing import process_source
 
@@ -31,7 +28,7 @@ FIXTURE_FILES = list(FIXTURES_FOLDER.glob("**/*.json"))
 SMALL_FIXTURE_FILES = [f for f in FIXTURE_FILES if f.stat().st_size < 200000]
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.INDEXER, timeout=60)
 @pytest.mark.parametrize("data_file", QUICK_TEST_FILES)
 async def test_extraction_smoke(logger: logging.Logger, data_file: Path) -> None:
     logger.info("Running smoke test for extracting text from %s", data_file.name)
@@ -57,7 +54,7 @@ async def test_extraction_smoke(logger: logging.Logger, data_file: Path) -> None
         pytest.fail(f"Extraction failed for {data_file.name}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=90)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.INDEXER, timeout=90)
 @pytest.mark.parametrize("data_file", QUICK_TEST_FILES)
 async def test_chunking_smoke(logger: logging.Logger, data_file: Path) -> None:
     logger.info("Running smoke test for chunking from %s", data_file.name)
@@ -84,7 +81,7 @@ async def test_chunking_smoke(logger: logging.Logger, data_file: Path) -> None:
         pytest.fail(f"Chunking failed for {data_file.name}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SMOKE, timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.INDEXER, timeout=120)
 async def test_embedding_generation_smoke(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
@@ -111,7 +108,7 @@ async def test_embedding_generation_smoke(
         pytest.fail(f"Embedding generation failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.INDEXER, timeout=180)
 @pytest.mark.parametrize("data_file", QUALITY_TEST_FILES)
 async def test_semantic_coherence_assessment(
     logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationSource
@@ -158,7 +155,7 @@ async def test_semantic_coherence_assessment(
         pytest.fail(f"Semantic coherence assessment failed for {data_file.name}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=240)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=240)
 async def test_embedding_similarity_evaluation(
     logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
@@ -194,7 +191,7 @@ async def test_embedding_similarity_evaluation(
         pytest.fail(f"Similarity evaluation failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.INDEXER, timeout=300)
 async def test_database_integration_quality(
     logger: logging.Logger,
     async_session_maker: async_sessionmaker[Any],
@@ -231,7 +228,7 @@ async def test_database_integration_quality(
         pytest.fail(f"Database integration quality test failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.E2E_FULL, timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.INDEXER, timeout=600)
 @pytest.mark.parametrize("data_file", FULL_TEST_SUITE)
 async def test_comprehensive_pipeline_evaluation(
     logger: logging.Logger,

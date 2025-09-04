@@ -62,8 +62,6 @@ describe.sequential("ResearchDeepDiveStep", () => {
 		});
 	});
 
-	// AI Try Button tests disabled - button was removed from the component
-	// These tests are preserved in case the feature is re-enabled in the future
 	describe.skip("AI Try Button Behavior (Disabled)", () => {
 		it("renders AI Try button with correct default text", () => {
 			const application = ApplicationWithTemplateFactory.build();

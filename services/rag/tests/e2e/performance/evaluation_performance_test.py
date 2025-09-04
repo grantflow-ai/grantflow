@@ -3,7 +3,7 @@ import time
 from typing import Any
 from unittest.mock import patch
 
-from testing.e2e_utils import e2e_test
+from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 
 from services.rag.src.utils.evaluation import (
     ContentComplexity,
@@ -16,101 +16,91 @@ from services.rag.src.utils.evaluation import (
     reset_adaptive_timeouts,
     smart_evaluate_output,
 )
-from services.rag.tests.e2e.performance_framework import TestCategory
-from services.rag.tests.e2e.performance_utils import PerformanceTestContext
 
 
-@e2e_test(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 async def test_evaluation_framework_baseline(
     logger: logging.Logger,
+    performance_context: PerformanceTestContext,
 ) -> None:
-    perf_ctx = PerformanceTestContext(
-        test_name="evaluation_framework_baseline",
-        test_category=TestCategory.EVALUATION,
-        logger=logger,
-        configuration={
-            "test_type": "baseline_performance",
-            "evaluation_scenarios": 3,
-        },
-    )
+    performance_context.set_metadata("test_type", "baseline_performance")
+    performance_context.set_metadata("evaluation_scenarios", 3)
 
     evaluation_count = 0
     total_time = 0.0
     avg_time = 0.0
+    logger.info("=== EVALUATION FRAMEWORK BASELINE TEST ===")
 
-    with perf_ctx:
-        logger.info("=== EVALUATION FRAMEWORK BASELINE TEST ===")
+    criteria = [
+        EvaluationCriterion(
+            name="Content Quality",
+            evaluation_instructions="Rate overall content quality from 0-100",
+            weight=1.0,
+        ),
+    ]
 
-        criteria = [
-            EvaluationCriterion(
-                name="Content Quality",
-                evaluation_instructions="Rate overall content quality from 0-100",
-                weight=1.0,
-            ),
-        ]
+    test_cases = [
+        {
+            "content": "Comprehensive research plan with clear objectives, methodology, and outcomes.",
+            "expected_score": 85,
+            "label": "high_quality",
+        },
+        {
+            "content": "Basic research plan with some structure and detail.",
+            "expected_score": 65,
+            "label": "medium_quality",
+        },
+        {
+            "content": "Brief plan with minimal detail.",
+            "expected_score": 35,
+            "label": "low_quality",
+        },
+    ]
 
-        test_cases = [
-            {
-                "content": "Comprehensive research plan with clear objectives, methodology, and outcomes.",
-                "expected_score": 85,
-                "label": "high_quality",
-            },
-            {
-                "content": "Basic research plan with some structure and detail.",
-                "expected_score": 65,
-                "label": "medium_quality",
-            },
-            {
-                "content": "Brief plan with minimal detail.",
-                "expected_score": 35,
-                "label": "low_quality",
-            },
-        ]
+    all_content = []
+    total_time = 0.0
+    evaluation_count = 0
 
-        all_content = []
-        total_time = 0.0
-        evaluation_count = 0
+    for test_case in test_cases:
+        performance_context.start_stage(f"evaluate_{test_case['label']}")
+        start_time = time.time()
 
-        for test_case in test_cases:
-            with perf_ctx.stage_timer(f"evaluate_{test_case['label']}"):
-                start_time = time.time()
-
-                with patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request:
-                    mock_request.return_value = {
-                        "criteria": {
-                            "Content Quality": {
-                                "score": test_case["expected_score"],
-                                "instructions": f"Evaluated {test_case['label']} content",
-                            }
-                        }
+        with patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request:
+            mock_request.return_value = {
+                "criteria": {
+                    "Content Quality": {
+                        "score": test_case["expected_score"],
+                        "instructions": f"Evaluated {test_case['label']} content",
                     }
+                }
+            }
 
-                    result = await evaluate_prompt_output(
-                        criteria=criteria,
-                        prompt="Evaluate this research plan content",
-                        model_output=str(test_case["content"]),
-                    )
+            result = await evaluate_prompt_output(
+                criteria=criteria,
+                prompt="Evaluate this research plan content",
+                model_output=str(test_case["content"]),
+            )
 
-                    end_time = time.time()
-                    eval_time = end_time - start_time
-                    total_time += eval_time
-                    evaluation_count += 1
+            end_time = time.time()
+            eval_time = end_time - start_time
+            total_time += eval_time
+            evaluation_count += 1
 
-                    perf_ctx.add_llm_call()
+            performance_context.add_llm_call()
 
-                    score = result["criteria"]["Content Quality"]["score"]
+            score = result["criteria"]["Content Quality"]["score"]
 
-                    logger.info(
-                        "Evaluation completed: %s in %.2fs, score: %d",
-                        test_case["label"],
-                        eval_time,
-                        score,
-                    )
+            logger.info(
+                "Evaluation completed: %s in %.2fs, score: %d",
+                test_case["label"],
+                eval_time,
+                score,
+            )
 
-                    all_content.append(f"## {str(test_case['label']).upper()}\n{test_case['content']}")
+            all_content.append(f"## {str(test_case['label']).upper()}\n{test_case['content']}")
 
         content_dict = {f"case_{i}": content for i, content in enumerate(all_content)}
-        perf_ctx.set_content("\n\n".join(all_content), content_dict)
+        performance_context.set_content("\n\n".join(all_content), content_dict)
 
         avg_time = total_time / evaluation_count if evaluation_count > 0 else 0
 
@@ -118,9 +108,9 @@ async def test_evaluation_framework_baseline(
         logger.info("Total evaluations: %d", evaluation_count)
         logger.info("Total time: %.2fs", total_time)
         logger.info("Average time per evaluation: %.2fs", avg_time)
-        logger.info("LLM calls made: %d", perf_ctx.llm_calls_made)
+        logger.info("LLM calls made: %d", performance_context.llm_calls_made)
 
-        perf_ctx.configuration.update(
+        performance_context.configuration.update(
             {
                 "total_evaluations": evaluation_count,
                 "avg_evaluation_time": avg_time,
@@ -132,32 +122,25 @@ async def test_evaluation_framework_baseline(
         assert evaluation_count == 3, f"Expected 3 evaluations, got {evaluation_count}"
         assert total_time > 0, "Total evaluation time should be positive"
         assert avg_time < 10, f"Average evaluation time too high: {avg_time:.2f}s"
-        assert perf_ctx.llm_calls_made == 3, f"Expected 3 LLM calls, got {perf_ctx.llm_calls_made}"
+        assert performance_context.llm_calls_made == 3, (
+            f"Expected 3 LLM calls, got {performance_context.llm_calls_made}"
+        )
     except AssertionError as e:
-        perf_ctx.add_error(str(e))
+        performance_context.add_error(str(e))
         raise
 
 
-@e2e_test(timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=180)
 async def test_evaluation_consistency(
     logger: logging.Logger,
+    performance_context: PerformanceTestContext,
 ) -> None:
-    perf_ctx = PerformanceTestContext(
-        test_name="evaluation_consistency",
-        test_category=TestCategory.EVALUATION,
-        logger=logger,
-        configuration={
-            "test_type": "consistency_check",
-            "trials": 3,
-        },
-    )
-
     scores: list[int] = []
     avg_score = 0.0
     score_std = 0.0
     consistency_percentage = 0.0
 
-    with perf_ctx:
+    with performance_context:
         logger.info("=== EVALUATION CONSISTENCY TEST ===")
 
         criterion = EvaluationCriterion(
@@ -171,7 +154,7 @@ async def test_evaluation_consistency(
 
         for trial in range(3):
             with (
-                perf_ctx.stage_timer(f"trial_{trial + 1}"),
+                performance_context.stage_timer(f"trial_{trial + 1}"),
                 patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request,
             ):
                 base_score = 75 + (trial * 2)
@@ -193,7 +176,7 @@ async def test_evaluation_consistency(
 
                 score = result["criteria"]["Content Analysis"]["score"]
                 scores.append(score)
-                perf_ctx.add_llm_call()
+                performance_context.add_llm_call()
 
                 logger.info("Trial %d: score = %d", trial + 1, score)
 
@@ -213,9 +196,9 @@ async def test_evaluation_consistency(
             "scores": f"Scores: {scores}",
             "stats": f"Avg: {avg_score:.1f}, StdDev: {score_std:.1f}",
         }
-        perf_ctx.set_content(f"Test Content:\n{test_content}\n\nResults:\n{content_dict!s}", content_dict)
+        performance_context.set_content(f"Test Content:\n{test_content}\n\nResults:\n{content_dict!s}", content_dict)
 
-        perf_ctx.configuration.update(
+        performance_context.configuration.update(
             {
                 "scores": scores,
                 "avg_score": avg_score,
@@ -229,31 +212,22 @@ async def test_evaluation_consistency(
         assert score_std < 10, f"Score variance too high: {score_std:.1f}"
         assert consistency_percentage > 50, f"Consistency too low: {consistency_percentage:.1f}%"
     except AssertionError as e:
-        perf_ctx.add_error(str(e))
+        performance_context.add_error(str(e))
         raise
 
 
-@e2e_test(timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.AI_EVALUATION, timeout=600)
 async def test_evaluation_optimization_performance(
     logger: logging.Logger,
+    performance_context: PerformanceTestContext,
 ) -> None:
     clear_evaluation_cache()
     reset_adaptive_timeouts()
 
-    perf_ctx = PerformanceTestContext(
-        test_name="evaluation_optimization_performance",
-        test_category=TestCategory.EVALUATION,
-        logger=logger,
-        configuration={
-            "test_type": "optimization_performance",
-            "features_tested": ["caching", "complexity_routing", "adaptive_timeouts"],
-        },
-    )
-
     routing_results: dict[str, dict[str, Any]] = {}
     final_stats: dict[str, Any] = {}
 
-    with perf_ctx:
+    with performance_context:
         logger.info("=== EVALUATION OPTIMIZATION PERFORMANCE TEST ===")
 
         criteria = [
@@ -338,7 +312,7 @@ async def test_evaluation_optimization_performance(
         }
 
         logger.info("Testing cache performance...")
-        with perf_ctx.stage_timer("cache_performance_test"):
+        with performance_context.stage_timer("cache_performance_test"):
             cache_times: dict[str, list[float]] = {"first_call": [], "cached_call": []}
 
             for content in test_contents.values():
@@ -352,7 +326,7 @@ async def test_evaluation_optimization_performance(
                 )
                 first_call_time = time.time() - start_time
                 cache_times["first_call"].append(first_call_time)
-                perf_ctx.add_llm_call()
+                performance_context.add_llm_call()
 
                 start_time = time.time()
                 result2, analysis2 = await smart_evaluate_output(
@@ -384,7 +358,7 @@ async def test_evaluation_optimization_performance(
         clear_evaluation_cache()
 
         logger.info("Testing complexity routing performance...")
-        with perf_ctx.stage_timer("complexity_routing_test"):
+        with performance_context.stage_timer("complexity_routing_test"):
             routing_results = {}
 
             for content_type, content in test_contents.items():
@@ -399,7 +373,7 @@ async def test_evaluation_optimization_performance(
                     record_performance=True,
                 )
                 routing_time = time.time() - start_time
-                perf_ctx.add_llm_call()
+                performance_context.add_llm_call()
 
                 routing_results[content_type] = {
                     "complexity_level": complexity_analysis.complexity_level.value,
@@ -422,7 +396,7 @@ async def test_evaluation_optimization_performance(
             performance_results_dict["complexity_routing"] = routing_results
 
         logger.info("Testing adaptive timeout learning...")
-        with perf_ctx.stage_timer("adaptive_timeout_test"):
+        with performance_context.stage_timer("adaptive_timeout_test"):
             adaptive_results: dict[str, dict[str, Any]] = {"before_learning": {}, "after_learning": {}}
 
             initial_stats = get_adaptive_timeout_stats()
@@ -438,7 +412,7 @@ async def test_evaluation_optimization_performance(
                             auto_route=True,
                             record_performance=True,
                         )
-                        perf_ctx.add_llm_call()
+                        performance_context.add_llm_call()
                     except Exception:
                         logger.warning("Evaluation failed in adaptive test", exc_info=True)
 
@@ -479,8 +453,8 @@ async def test_evaluation_optimization_performance(
 - Adaptive learning: {"✓ Improving" if final_stats.get("success_rate", 0) > 0.8 else "⚠ Needs more data"}
         """
 
-        perf_ctx.set_content(results_content, list(test_contents.values()))
-        perf_ctx.configuration.update(performance_results_dict)
+        performance_context.set_content(results_content, list(test_contents.values()))
+        performance_context.configuration.update(performance_results_dict)
 
     try:
         assert performance_results_dict["cache_performance"]["speedup_factor"] > 5, "Cache should provide >5x speedup"
@@ -489,7 +463,7 @@ async def test_evaluation_optimization_performance(
         )
         assert final_stats.get("total_evaluations", 0) >= 15, "Should have recorded at least 15 evaluations"
     except AssertionError as e:
-        perf_ctx.add_error(str(e))
+        performance_context.add_error(str(e))
         raise
 
     logger.info("=== OPTIMIZATION IMPACT SUMMARY ===")
@@ -498,28 +472,23 @@ async def test_evaluation_optimization_performance(
     logger.info("Adaptive learning: %d evaluations processed", final_stats.get("total_evaluations", 0))
 
 
-@e2e_test(timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=180)
 async def test_content_complexity_analysis(
     logger: logging.Logger,
+    performance_context: PerformanceTestContext,
 ) -> None:
-    perf_ctx = PerformanceTestContext(
-        test_name="content_complexity_analysis",
-        test_category=TestCategory.EVALUATION,
-        logger=logger,
-    )
-
     simple_analysis = None
     moderate_analysis = None
     complex_analysis = None
 
-    with perf_ctx:
+    with performance_context:
         simple_content = """
         This is a simple research proposal.
         We want to study basic patterns in data.
         The goal is to find interesting results.
         """
 
-        with perf_ctx.stage_timer("simple_content_analysis"):
+        with performance_context.stage_timer("simple_content_analysis"):
             simple_analysis = analyze_content_complexity(simple_content)
 
         assert simple_analysis.complexity_level == ContentComplexity.SIMPLE
@@ -545,7 +514,7 @@ async def test_content_complexity_analysis(
         The methodology ensures comprehensive evaluation of research variables.
         """
 
-        with perf_ctx.stage_timer("moderate_content_analysis"):
+        with performance_context.stage_timer("moderate_content_analysis"):
             moderate_analysis = analyze_content_complexity(moderate_content)
 
         assert moderate_analysis.complexity_level in [ContentComplexity.MODERATE, ContentComplexity.COMPLEX]
@@ -588,7 +557,7 @@ async def test_content_complexity_analysis(
         computational research methodology and empirical validation techniques.
         """
 
-        with perf_ctx.stage_timer("complex_content_analysis"):
+        with performance_context.stage_timer("complex_content_analysis"):
             complex_analysis = analyze_content_complexity(complex_content)
 
         assert complex_analysis.complexity_level in [ContentComplexity.COMPLEX, ContentComplexity.VERY_COMPLEX]
@@ -611,15 +580,16 @@ async def test_content_complexity_analysis(
         assert simple_analysis.recommended_timeout < moderate_analysis.recommended_timeout
         assert moderate_analysis.recommended_timeout <= complex_analysis.recommended_timeout
     except AssertionError as e:
-        perf_ctx.add_error(str(e))
+        performance_context.add_error(str(e))
         raise
 
     logger.info("Content complexity analysis validation completed successfully")
 
 
-@e2e_test(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 async def test_smart_evaluation_routing(
     logger: logging.Logger,
+    performance_context: PerformanceTestContext,
 ) -> None:
     criteria = [
         EvaluationCriterion(
@@ -634,18 +604,15 @@ async def test_smart_evaluation_routing(
         ),
     ]
 
-    perf_ctx = PerformanceTestContext(
-        test_name="smart_evaluation_routing",
-        test_category=TestCategory.EVALUATION,
-        logger=logger,
-    )
-
     analysis = None
     result = None
     multi_criteria_analysis = None
     single_criteria_analysis = None
 
-    with perf_ctx, patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request:
+    with (
+        performance_context,
+        patch("services.rag.src.utils.completion.make_google_completions_request") as mock_request,
+    ):
         mock_request.return_value = {
             "criteria": {
                 "Content Quality": {"score": 85, "instructions": "Good quality content"},
@@ -655,7 +622,7 @@ async def test_smart_evaluation_routing(
 
         simple_content = "Basic research proposal with simple methodology."
 
-        with perf_ctx.stage_timer("simple_routing_test"):
+        with performance_context.stage_timer("simple_routing_test"):
             result, analysis = await smart_evaluate_output(
                 criteria=criteria,
                 prompt="Evaluate this research proposal",
@@ -686,7 +653,7 @@ async def test_smart_evaluation_routing(
             advanced regression techniques and multivariate correlation analysis.
             """
 
-        with perf_ctx.stage_timer("complex_routing_test"):
+        with performance_context.stage_timer("complex_routing_test"):
             result, analysis = await smart_evaluate_output(
                 criteria=criteria,
                 prompt="Evaluate this research proposal",
@@ -704,7 +671,7 @@ async def test_smart_evaluation_routing(
             analysis.recommended_timeout,
         )
 
-        with perf_ctx.stage_timer("manual_override_test"):
+        with performance_context.stage_timer("manual_override_test"):
             result, analysis = await smart_evaluate_output(
                 criteria=criteria,
                 prompt="Evaluate this research proposal",
@@ -735,7 +702,7 @@ async def test_smart_evaluation_routing(
             }
         }
 
-        with perf_ctx.stage_timer("multi_criteria_timeout_test"):
+        with performance_context.stage_timer("multi_criteria_timeout_test"):
             _, analysis = await smart_evaluate_output(
                 criteria=many_criteria,
                 prompt="Evaluate this research proposal",
@@ -760,36 +727,31 @@ async def test_smart_evaluation_routing(
         assert multi_criteria_analysis is not None
         assert single_criteria_analysis is not None
     except AssertionError as e:
-        perf_ctx.add_error(str(e))
+        performance_context.add_error(str(e))
         raise
 
     logger.info("Smart evaluation routing validation completed successfully")
 
 
-@e2e_test(timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.AI_EVALUATION, timeout=120)
 async def test_complexity_analysis_edge_cases(
     logger: logging.Logger,
+    performance_context: PerformanceTestContext,
 ) -> None:
-    perf_ctx = PerformanceTestContext(
-        test_name="complexity_edge_cases",
-        test_category=TestCategory.EVALUATION,
-        logger=logger,
-    )
-
     empty_analysis = None
     single_word_analysis = None
     long_analysis = None
     technical_analysis = None
 
-    with perf_ctx:
-        with perf_ctx.stage_timer("empty_content_test"):
+    with performance_context:
+        with performance_context.stage_timer("empty_content_test"):
             empty_analysis = analyze_content_complexity("")
 
         assert empty_analysis.complexity_level == ContentComplexity.SIMPLE
         assert empty_analysis.word_count == 0
         assert empty_analysis.confidence_score < 0.5
 
-        with perf_ctx.stage_timer("single_word_test"):
+        with performance_context.stage_timer("single_word_test"):
             single_word_analysis = analyze_content_complexity("methodology")
 
         assert single_word_analysis.complexity_level == ContentComplexity.SIMPLE
@@ -798,7 +760,7 @@ async def test_complexity_analysis_edge_cases(
 
         long_unstructured = " ".join(["word"] * 1000)
 
-        with perf_ctx.stage_timer("long_unstructured_test"):
+        with performance_context.stage_timer("long_unstructured_test"):
             long_analysis = analyze_content_complexity(long_unstructured)
 
         assert long_analysis.word_count == 1000
@@ -807,14 +769,14 @@ async def test_complexity_analysis_edge_cases(
 
         technical_content = "statistical regression analysis correlation methodology optimization algorithm"
 
-        with perf_ctx.stage_timer("high_technical_density_test"):
+        with performance_context.stage_timer("high_technical_density_test"):
             technical_analysis = analyze_content_complexity(technical_content)
 
     try:
         assert technical_analysis.word_count < 10
         assert technical_analysis.technical_terms_count >= 5
     except AssertionError as e:
-        perf_ctx.add_error(str(e))
+        performance_context.add_error(str(e))
         raise
 
     logger.info("Edge cases validation completed successfully")
