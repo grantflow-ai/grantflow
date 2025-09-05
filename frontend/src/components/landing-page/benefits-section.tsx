@@ -42,11 +42,11 @@ export function BenefitsSection() {
 				<Image
 					alt="background"
 					aria-hidden="true"
-					className="size-full object-none xl:object-cover"
+					className="size-full object-cover xl:object-cover"
 					height={0}
 					priority
 					src="/assets/landing-bg-pattern.svg"
-					style={{ height: "auto", width: "100%" }}
+					style={{ minHeight: "100%", width: "100%" }}
 					width={0}
 				/>
 			</div>
