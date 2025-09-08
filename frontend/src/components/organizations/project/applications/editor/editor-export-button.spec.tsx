@@ -5,18 +5,11 @@ import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorExportButton } from "./editor-export-button";
 
-const mockGetClient = vi.hoisted(() => vi.fn());
-const mockCreateAuthHeaders = vi.hoisted(() => vi.fn());
-const mockWithAuthRedirect = vi.hoisted(() => vi.fn());
+const mockConvertFile = vi.hoisted(() => vi.fn());
 const mockToastError = vi.hoisted(() => vi.fn());
 
-vi.mock("@/utils/api", () => ({
-	getClient: mockGetClient,
-}));
-
-vi.mock("@/utils/server-side", () => ({
-	createAuthHeaders: mockCreateAuthHeaders,
-	withAuthRedirect: mockWithAuthRedirect,
+vi.mock("@/actions/file-conversion", () => ({
+	convertFile: mockConvertFile,
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
@@ -51,17 +44,7 @@ describe.sequential("EditorExportButton", () => {
 			getHTML: vi.fn().mockReturnValue("<p>Test content</p>"),
 		} as unknown as EditorRef;
 
-		const mockPost = vi.fn();
-		mockGetClient.mockReturnValue({
-			post: mockPost,
-		} as any);
-
-		mockCreateAuthHeaders.mockResolvedValue({ Authorization: "Bearer test-token" });
-
-		mockWithAuthRedirect.mockImplementation(async () => {
-			const mockBlob = new Blob(["test content"], { type: "application/pdf" });
-			return mockBlob;
-		});
+		mockConvertFile.mockResolvedValue(new Blob(["test content"], { type: "application/pdf" }));
 
 		mockCreateObjectURL.mockReturnValue("blob:test-url");
 		mockRevokeObjectURL.mockImplementation(() => {});
@@ -91,6 +74,7 @@ describe.sequential("EditorExportButton", () => {
 		await waitFor(() => {
 			expect(screen.getByTestId("editor-export-list")).toBeInTheDocument();
 			expect(screen.getByTestId("editor-export-pdf")).toBeInTheDocument();
+			expect(screen.getByTestId("editor-export-markdown")).toBeInTheDocument();
 		});
 	});
 
@@ -104,14 +88,10 @@ describe.sequential("EditorExportButton", () => {
 		const docxButton = screen.getByTestId("editor-export-list");
 		await user.click(docxButton);
 
-		const mockPost = mockGetClient().post;
-		expect(mockPost).toHaveBeenCalledWith("files/convert", {
-			headers: { Authorization: "Bearer test-token" },
-			json: {
-				filename: "grant_application.docx",
-				html_content: "<p>Test content</p>",
-				output_format: "docx",
-			},
+		expect(mockConvertFile).toHaveBeenCalledWith({
+			filename: "grant_application.docx",
+			html_content: "<p>Test content</p>",
+			output_format: "docx",
 		});
 	});
 
@@ -125,14 +105,27 @@ describe.sequential("EditorExportButton", () => {
 		const pdfButton = screen.getByTestId("editor-export-pdf");
 		await user.click(pdfButton);
 
-		const mockPost = mockGetClient().post;
-		expect(mockPost).toHaveBeenCalledWith("files/convert", {
-			headers: { Authorization: "Bearer test-token" },
-			json: {
-				filename: "grant_application.pdf",
-				html_content: "<p>Test content</p>",
-				output_format: "pdf",
-			},
+		expect(mockConvertFile).toHaveBeenCalledWith({
+			filename: "grant_application.pdf",
+			html_content: "<p>Test content</p>",
+			output_format: "pdf",
+		});
+	});
+
+	it("exports as md when Markdown button is clicked", async () => {
+		const user = userEvent.setup();
+		render(<EditorExportButton editorRef={mockEditorRef} />);
+
+		const exportButton = screen.getByTestId("editor-export-button");
+		await user.click(exportButton);
+
+		const markdownButton = screen.getByTestId("editor-export-markdown");
+		await user.click(markdownButton);
+
+		expect(mockConvertFile).toHaveBeenCalledWith({
+			filename: "grant_application.md",
+			html_content: "<p>Test content</p>",
+			output_format: "md",
 		});
 	});
 });

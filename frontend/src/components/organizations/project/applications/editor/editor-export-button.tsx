@@ -4,14 +4,13 @@ import Image from "next/image";
 import type * as React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { convertFile } from "@/actions/file-conversion";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getClient } from "@/utils/api";
-import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
 const DOWNLOAD_DISMISS_TIMEOUT = 4000;
 
@@ -27,7 +26,11 @@ export function EditorExportButton({ editorRef }: { editorRef: React.RefObject<E
 		await handleExport("docx", "grant_application.docx");
 	};
 
-	const handleExport = async (format: "docx" | "pdf", filename: string) => {
+	const handleMarkdownExport = async () => {
+		await handleExport("md", "grant_application.md");
+	};
+
+	const handleExport = async (format: "docx" | "md" | "pdf", filename: string) => {
 		try {
 			if (!editorRef.current) {
 				throw new Error("Editor not available");
@@ -41,18 +44,11 @@ export function EditorExportButton({ editorRef }: { editorRef: React.RefObject<E
 
 			setIsLoading(true);
 
-			const fileBlob = await withAuthRedirect(
-				getClient()
-					.post("files/convert", {
-						headers: await createAuthHeaders(),
-						json: {
-							filename,
-							html_content: htmlContent,
-							output_format: format,
-						},
-					})
-					.blob(),
-			);
+			const fileBlob = await convertFile({
+				filename,
+				html_content: htmlContent,
+				output_format: format,
+			});
 
 			const url = globalThis.URL.createObjectURL(fileBlob);
 			const link = document.createElement("a");
@@ -62,8 +58,8 @@ export function EditorExportButton({ editorRef }: { editorRef: React.RefObject<E
 			link.click();
 			link.remove();
 			globalThis.URL.revokeObjectURL(url);
-			setDownloaded(true);
 
+			setDownloaded(true);
 			setTimeout(() => {
 				setDownloaded(false);
 			}, DOWNLOAD_DISMISS_TIMEOUT);
@@ -109,6 +105,12 @@ export function EditorExportButton({ editorRef }: { editorRef: React.RefObject<E
 						<div className="flex items-center gap-1 text-base" data-testid="editor-export-list-item">
 							<Image alt="PDF" height={29} src="/icons/file-pdf.svg" width={21} />
 							<span>PDF</span>
+						</div>
+					</DropdownMenuItem>
+					<DropdownMenuItem data-testid="editor-export-markdown" onClick={handleMarkdownExport}>
+						<div className="flex items-center gap-1 text-base" data-testid="editor-export-list-item">
+							<Image alt="Markdown" height={25} src="/icons/file-markdown.svg" width={17} />
+							<span>Markdown</span>
 						</div>
 					</DropdownMenuItem>
 				</DropdownMenuContent>

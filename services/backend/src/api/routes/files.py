@@ -1,19 +1,21 @@
 from typing import Literal, TypedDict
 
+from html_to_markdown import convert_to_markdown
 from litestar import Response, post
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from packages.shared_utils.src.logger import get_logger
 
 from services.backend.src.api.middleware import get_trace_id
 from services.backend.src.common_types import APIRequest
-from services.backend.src.utils.document_converter import convert_html_to_docx, convert_html_to_pdf
+from services.backend.src.utils.docx import html_to_docx
+from services.backend.src.utils.pdf import html_to_pdf
 
 logger = get_logger(__name__)
 
 
 class FileConversionRequest(TypedDict):
     html_content: str
-    output_format: Literal["docx", "pdf"]
+    output_format: Literal["docx", "pdf", "md"]
     filename: str
 
 
@@ -23,7 +25,7 @@ class FileConversionRequest(TypedDict):
 async def handle_convert_file(
     data: FileConversionRequest,
     request: APIRequest,
-) -> Response:
+) -> Response[bytes]:
     trace_id = get_trace_id(request)
     html_content = data["html_content"]
     output_format = data["output_format"].lower()
@@ -44,17 +46,22 @@ async def handle_convert_file(
         if not filename.endswith(f".{output_format}"):
             filename = f"{filename}.{output_format}"
 
-        content_type = (
-            "application/pdf"
-            if output_format == "pdf"
-            else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
-
-        file_content = (
-            await convert_html_to_pdf(html_content)
-            if output_format == "pdf"
-            else await convert_html_to_docx(html_content)
-        )
+        if output_format == "pdf":
+            content_type = "application/pdf"
+            file_content = await html_to_pdf(html_content)
+        elif output_format == "docx":
+            content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            file_content = html_to_docx(html_content)
+        elif output_format == "md":
+            content_type = "text/markdown"
+            file_content = convert_to_markdown(
+                html_content,
+                escape_asterisks=False,
+                escape_misc=False,
+                escape_underscores=False,
+                heading_style="atx",
+                strip=["colgroup", "col"],
+            ).encode("utf-8")
 
         logger.info(
             "File conversion completed successfully",
@@ -64,7 +71,7 @@ async def handle_convert_file(
             trace_id=trace_id,
         )
 
-        return Response(
+        return Response[bytes](
             content=file_content,
             media_type=content_type,
             headers={
