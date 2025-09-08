@@ -2,13 +2,23 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useCallback, useMemo } from "react";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { ThemeBadge } from "@/components/shared/theme-badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
-import { MIN_TITLE_LENGTH, useWizardStore } from "@/stores/wizard-store";
+import { useWizardStore } from "@/stores/wizard-store";
 import { routes } from "@/utils/navigation";
+import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
 import { Deadline } from "./deadline";
+
+const APPLICATION_DETAILS_TOOLTIP_MESSAGES = {
+	[ApplicationDetailsValidationReason.RAG_SOURCES_MISSING]: "Please upload at least one document or URL",
+	[ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING]: (processingCount: number, totalCount: number) =>
+		`Processing ${processingCount} of ${totalCount} documents...`,
+	[ApplicationDetailsValidationReason.TITLE_INVALID]: "Title must be at least 10 characters long",
+} as const;
 
 const WIZARD_STEP_ORDER: WizardStep[] = [
 	WizardStep.APPLICATION_DETAILS,
@@ -51,99 +61,15 @@ export function StepIndicator({ isLastStep, type }: { isLastStep: boolean; type:
 }
 
 export function WizardFooter() {
-	const router = useRouter();
 	const currentStep = useWizardStore((state) => state.currentStep);
-	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
-	const isGeneratingApplication = useWizardStore((state) => state.isGeneratingApplication);
-	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
-	const validateStepNext = useWizardStore((state) => state.validateStepNext);
-
-	const title = useApplicationStore((state) => state.application?.title);
-	const applicationText = useApplicationStore((state) => state.application?.text);
-	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
-
-	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
-	const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
-	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
-
-	const localValidation = isApplicationDetailsStep
-		? !!(title && title.trim().length >= MIN_TITLE_LENGTH && ragSources && ragSources.length > 0)
-		: true;
-	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
-
-	const getButtonDisabledState = () => {
-		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
-			return isGeneratingApplication || !(validateStepNext() && localValidation);
-		}
-
-		return !(validateStepNext() && localValidation);
-	};
-
-	const disabled = getButtonDisabledState();
-
-	const { leftIcon, rightButtonText, rightIcon } = generateFooterRightButtonProps(
-		currentStep,
-		disabled,
-		hasApplicationText,
-	);
-
-	const handleRightButtonClick = async () => {
-		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
-			if (hasApplicationText) {
-				useWizardStore.getState().toNextStep();
-				return;
-			}
-
-			const success = await useWizardStore.getState().generateApplication();
-			if (success) {
-				useWizardStore.getState().toNextStep();
-			}
-			return;
-		}
-
-		if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
-			router.push(routes.organization.root());
-			useWizardStore.getState().reset();
-			return;
-		}
-
-		useWizardStore.getState().toNextStep();
-	};
 
 	return (
 		<footer
 			className="relative flex h-auto w-full items-center justify-between border-t-1 border-gray-100 bg-surface-primary p-6"
 			data-testid="wizard-footer"
 		>
-			{showBack ? (
-				<AppButton
-					data-testid="back-button"
-					disabled={backDisabled}
-					leftIcon={styledIcon(
-						<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />,
-						backDisabled,
-					)}
-					onClick={toPreviousStep}
-					size="lg"
-					theme="dark"
-					variant="secondary"
-				>
-					Back
-				</AppButton>
-			) : (
-				<div />
-			)}
-			<AppButton
-				data-testid="continue-button"
-				disabled={disabled}
-				leftIcon={leftIcon}
-				onClick={handleRightButtonClick}
-				rightIcon={rightIcon}
-				size="lg"
-				variant="primary"
-			>
-				{rightButtonText}
-			</AppButton>
+			<LeftButton currentStep={currentStep} />
+			<RightButton currentStep={currentStep} />
 		</footer>
 	);
 }
@@ -305,6 +231,32 @@ function getStepTitleClass(index: number, currentStepIndex: number) {
 	return "text-app-gray-400";
 }
 
+function LeftButton({ currentStep }: { currentStep: WizardStep }) {
+	const isGeneratingTemplate = useWizardStore((state) => state.isGeneratingTemplate);
+	const toPreviousStep = useWizardStore((state) => state.toPreviousStep);
+
+	const showBack = currentStep !== WizardStep.APPLICATION_DETAILS;
+	const backDisabled = currentStep === WizardStep.APPLICATION_STRUCTURE && isGeneratingTemplate;
+
+	if (!showBack) {
+		return <div />;
+	}
+
+	return (
+		<AppButton
+			data-testid="back-button"
+			disabled={backDisabled}
+			leftIcon={styledIcon(<Image alt="Go back" height={15} src="/icons/go-back.svg" width={15} />, backDisabled)}
+			onClick={toPreviousStep}
+			size="lg"
+			theme="dark"
+			variant="secondary"
+		>
+			Back
+		</AppButton>
+	);
+}
+
 function ProgressTitles({ currentStep, stepTitles }: { currentStep: WizardStep; stepTitles: WizardStep[] }) {
 	const currentStepIndex = stepTitles.indexOf(currentStep);
 
@@ -336,6 +288,123 @@ function ProgressTitles({ currentStep, stepTitles }: { currentStep: WizardStep; 
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function RightButton({ currentStep }: { currentStep: WizardStep }) {
+	const router = useRouter();
+
+	const isGeneratingApplication = useWizardStore((state) => state.isGeneratingApplication);
+	const validateStepNext = useWizardStore((state) => state.validateStepNext);
+
+	const title = useApplicationStore((state) => state.application?.title);
+	const applicationText = useApplicationStore((state) => state.application?.text);
+	const ragSources = useApplicationStore((state) => state.application?.grant_template?.rag_sources);
+
+	const isApplicationDetailsStep = currentStep === WizardStep.APPLICATION_DETAILS;
+
+	const validation = isApplicationDetailsStep ? validateApplicationDetailsStep(title, ragSources) : null;
+	const localValidation = validation ? validation.isValid : true;
+
+	const hasApplicationText = !!(applicationText && applicationText.trim().length > 0);
+
+	const disabled = useMemo(() => {
+		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
+			return isGeneratingApplication || !(validateStepNext() && localValidation);
+		}
+
+		return !(validateStepNext() && localValidation);
+	}, [currentStep, isGeneratingApplication, validateStepNext, localValidation]);
+
+	const { leftIcon, rightButtonText, rightIcon } = useMemo(
+		() => generateFooterRightButtonProps(currentStep, disabled, hasApplicationText),
+		[currentStep, disabled, hasApplicationText],
+	);
+
+	const handleRightButtonClick = useCallback(async () => {
+		if (currentStep === WizardStep.RESEARCH_DEEP_DIVE) {
+			if (hasApplicationText) {
+				useWizardStore.getState().toNextStep();
+				return;
+			}
+
+			const success = await useWizardStore.getState().generateApplication();
+			if (success) {
+				useWizardStore.getState().toNextStep();
+			}
+			return;
+		}
+
+		if (currentStep === WizardStep.GENERATE_AND_COMPLETE) {
+			router.push(routes.organization.root());
+			useWizardStore.getState().reset();
+			return;
+		}
+
+		useWizardStore.getState().toNextStep();
+	}, [currentStep, hasApplicationText, router]);
+
+	if (currentStep !== WizardStep.APPLICATION_DETAILS || !disabled || !validation) {
+		return (
+			<AppButton
+				data-testid="continue-button"
+				disabled={disabled}
+				leftIcon={leftIcon}
+				onClick={handleRightButtonClick}
+				rightIcon={rightIcon}
+				size="lg"
+				variant="primary"
+			>
+				{rightButtonText}
+			</AppButton>
+		);
+	}
+
+	if (validation.reason === ApplicationDetailsValidationReason.VALID) {
+		return (
+			<AppButton
+				data-testid="continue-button"
+				disabled={disabled}
+				leftIcon={leftIcon}
+				onClick={handleRightButtonClick}
+				rightIcon={rightIcon}
+				size="lg"
+				variant="primary"
+			>
+				{rightButtonText}
+			</AppButton>
+		);
+	}
+
+	const tooltipMessage =
+		validation.reason === ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING
+			? APPLICATION_DETAILS_TOOLTIP_MESSAGES[validation.reason](
+					validation.processingCount!,
+					validation.totalCount!,
+				)
+			: APPLICATION_DETAILS_TOOLTIP_MESSAGES[validation.reason];
+
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<div className="inline-block">
+					<AppButton
+						data-testid="continue-button"
+						disabled={disabled}
+						leftIcon={leftIcon}
+						onClick={handleRightButtonClick}
+						rightIcon={rightIcon}
+						size="lg"
+						variant="primary"
+					>
+						{rightButtonText}
+					</AppButton>
+				</div>
+			</TooltipTrigger>
+			<TooltipContent side="left" sideOffset={12}>
+				{tooltipMessage}
+			</TooltipContent>
+		</Tooltip>
 	);
 }
 
