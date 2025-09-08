@@ -100,7 +100,7 @@ function BenefitsCard({
 				benefitsCardBorder,
 			)}
 		>
-			<div className="bg-background inline-flex items-center gap-1 rounded-2xl px-2.5 py-0.5 text-white">
+			<div className="bg-[var(--app-dark-blue)] inline-flex items-center gap-1 rounded-2xl px-2.5 py-0.5 text-white">
 				<BadgeIcon className="size-5 md:size-4" />
 				<span className="font-button align-bottom md:text-sm">{badge}</span>
 			</div>
