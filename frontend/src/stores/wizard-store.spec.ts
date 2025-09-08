@@ -165,61 +165,141 @@ describe.sequential("wizard store", () => {
 		it("should require minimum title length for APPLICATION_DETAILS", () => {
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
 
-			const { application } = useApplicationStore.getState();
-			useApplicationStore.setState({
-				application: {
-					...application,
-					grant_template: {
-						...application?.grant_template,
-						rag_sources: [],
-					},
-					title: "Short",
-				} as any,
+			const applicationWithShortTitle = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+				title: "Short",
 			});
 
+			useApplicationStore.setState({ application: applicationWithShortTitle });
 			expect(useWizardStore.getState().validateStepNext()).toBe(false);
-
-			useApplicationStore.setState({
-				application: {
-					...useApplicationStore.getState().application,
-					grant_template: {
-						...useApplicationStore.getState().application?.grant_template,
-						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
-					},
-					title: "This is a longer title that meets requirements",
-				} as any,
+			const applicationWithLongTitle = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				}),
+				title: "This is a longer title that meets requirements",
 			});
 
+			useApplicationStore.setState({ application: applicationWithLongTitle });
 			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+		});
+
+		it("should require RAG sources to exist for APPLICATION_DETAILS", () => {
+			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
+
+			const applicationWithoutSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [],
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithoutSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+		});
+
+		it("should require RAG sources to be processed (FINISHED or FAILED) for APPLICATION_DETAILS", () => {
+			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
+			const applicationWithCreatedSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "CREATED" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+					],
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithCreatedSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			const applicationWithIndexingSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+					],
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithIndexingSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			const applicationWithFinishedSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+					],
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithFinishedSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			const applicationWithFailedSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
+					],
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithFailedSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+			const applicationWithMixedSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: [
+						{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
+						{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
+					],
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithMixedSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(true);
+		});
+
+		it("should handle edge cases for APPLICATION_DETAILS validation", () => {
+			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_DETAILS });
+			const applicationWithoutTemplate = ApplicationWithTemplateFactory.build({
+				grant_template: undefined,
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithoutTemplate });
+			expect(useWizardStore.getState().validateStepNext()).toBe(false);
+			const applicationWithUndefinedSources = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					rag_sources: undefined,
+				}),
+				title: "This is a longer title that meets requirements",
+			});
+
+			useApplicationStore.setState({ application: applicationWithUndefinedSources });
+			expect(useWizardStore.getState().validateStepNext()).toBe(false);
 		});
 
 		it("should require grant sections for APPLICATION_STRUCTURE", () => {
 			useWizardStore.setState({ currentStep: WizardStep.APPLICATION_STRUCTURE });
-
-			const { application } = useApplicationStore.getState();
-
-			useApplicationStore.setState({
-				application: {
-					...application,
-					grant_template: {
-						...application?.grant_template,
-						grant_sections: [],
-					},
-				} as any,
+			const applicationWithoutSections = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [],
+				}),
 			});
 
+			useApplicationStore.setState({ application: applicationWithoutSections });
 			expect(useWizardStore.getState().validateStepNext()).toBe(false);
-
-			useApplicationStore.setState({
-				application: {
-					...useApplicationStore.getState().application,
-					grant_template: {
-						...useApplicationStore.getState().application?.grant_template,
-						grant_sections: [{ title: "Test Section" }],
-					},
-				} as any,
+			const applicationWithSections = ApplicationWithTemplateFactory.build({
+				grant_template: GrantTemplateFactory.build({
+					grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
+				}),
 			});
 
+			useApplicationStore.setState({ application: applicationWithSections });
 			expect(useWizardStore.getState().validateStepNext()).toBe(true);
 		});
 	});
@@ -590,8 +670,8 @@ describe.sequential("wizard store", () => {
 				expect(mockTriggerAutofill).not.toHaveBeenCalled();
 			});
 
-			it("should show error when documents are still indexing", async () => {
-				const { toast } = await import("sonner");
+			it("should not trigger autofill when documents are still indexing", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
 				const application = ApplicationWithTemplateFactory.build({
 					rag_sources: [
 						{ filename: "doc1.pdf", sourceId: "1", status: "INDEXING" as const },
@@ -603,13 +683,56 @@ describe.sequential("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_plan");
 
-				expect(toast.error).toHaveBeenCalledWith(
-					"Please wait for all documents to finish processing before using autofill",
-				);
+				expect(mockTriggerAutofill).not.toHaveBeenCalled();
+				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
 			});
 
-			it("should show error when no documents are uploaded", async () => {
-				const { toast } = await import("sonner");
+			it("should not trigger autofill when documents are still being created", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+				const application = ApplicationWithTemplateFactory.build({
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "CREATED" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FINISHED" as const },
+					],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(mockTriggerAutofill).not.toHaveBeenCalled();
+				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
+			});
+
+			it("should allow autofill when all documents have FAILED status", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+
+				vi.mocked(mockTriggerAutofill).mockResolvedValue({
+					application_id: "app-123",
+					autofill_type: "research_plan",
+					message_id: "msg-123",
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					id: "app-123",
+					project_id: "proj-123",
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "FAILED" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FAILED" as const },
+					],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
+					autofill_type: "research_plan",
+				});
+			});
+
+			it("should not trigger autofill when no documents are uploaded", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
 				const application = ApplicationWithTemplateFactory.build({
 					rag_sources: [],
 				});
@@ -618,14 +741,14 @@ describe.sequential("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_plan");
 
-				expect(toast.error).toHaveBeenCalledWith("Please upload at least one document before using autofill");
+				expect(mockTriggerAutofill).not.toHaveBeenCalled();
+				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
 			});
 
-			it("should successfully trigger autofill for research plan", async () => {
+			it("should successfully trigger autofill for research plan with FINISHED documents", async () => {
 				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
-				const { toast } = await import("sonner");
 
-				(mockTriggerAutofill as any).mockResolvedValue({
+				vi.mocked(mockTriggerAutofill).mockResolvedValue({
 					application_id: "app-123",
 					autofill_type: "research_plan",
 					message_id: "msg-123",
@@ -639,19 +762,21 @@ describe.sequential("wizard store", () => {
 
 				useApplicationStore.setState({ application });
 
+				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
+
 				await useWizardStore.getState().triggerAutofill("research_plan");
 
 				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
 					autofill_type: "research_plan",
 				});
 
-				expect(toast.success).toHaveBeenCalledWith("Autofill request sent. Processing your documents...");
+				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(true);
 			});
 
-			it("should trigger autofill with field name for research deep dive", async () => {
+			it("should trigger autofill with field name for research deep dive with FINISHED documents", async () => {
 				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
 
-				(mockTriggerAutofill as any).mockResolvedValue({
+				vi.mocked(mockTriggerAutofill).mockResolvedValue({
 					application_id: "app-123",
 					autofill_type: "research_deep_dive",
 					field_name: "hypothesis",
@@ -676,10 +801,9 @@ describe.sequential("wizard store", () => {
 
 			it("should handle autofill errors gracefully", async () => {
 				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
-				const { toast } = await import("sonner");
 
 				const error = new Error("API Error: Rate limit exceeded");
-				(mockTriggerAutofill as any).mockRejectedValue(error);
+				vi.mocked(mockTriggerAutofill).mockRejectedValue(error);
 
 				const application = ApplicationWithTemplateFactory.build({
 					id: "app-123",
@@ -691,8 +815,37 @@ describe.sequential("wizard store", () => {
 
 				await useWizardStore.getState().triggerAutofill("research_plan");
 
-				expect(toast.error).toHaveBeenCalledWith("Autofill error: API Error: Rate limit exceeded");
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
+					autofill_type: "research_plan",
+				});
 				expect(useWizardStore.getState().isAutofillLoading.research_plan).toBe(false);
+			});
+
+			it("should allow autofill when documents have mixed FINISHED and FAILED status", async () => {
+				const { triggerAutofill: mockTriggerAutofill } = await import("@/actions/grant-applications");
+
+				vi.mocked(mockTriggerAutofill).mockResolvedValue({
+					application_id: "app-123",
+					autofill_type: "research_plan",
+					message_id: "msg-123",
+				});
+
+				const application = ApplicationWithTemplateFactory.build({
+					id: "app-123",
+					project_id: "proj-123",
+					rag_sources: [
+						{ filename: "doc1.pdf", sourceId: "1", status: "FINISHED" as const },
+						{ filename: "doc2.pdf", sourceId: "2", status: "FAILED" as const },
+					],
+				});
+
+				useApplicationStore.setState({ application });
+
+				await useWizardStore.getState().triggerAutofill("research_plan");
+
+				expect(mockTriggerAutofill).toHaveBeenCalledWith("mock-org-id", "proj-123", "app-123", {
+					autofill_type: "research_plan",
+				});
 			});
 		});
 	});
