@@ -73,6 +73,48 @@ export const FirstStepTitleNoSources: Story = {
 	name: "Step 1: Title but No Sources - Next Button Disabled",
 };
 
+export const FirstStepProcessingDocuments: Story = {
+	decorators: [
+		(Story) => {
+			useEffect(() => {
+				const ragSources = [
+					RagSourceFactory.build({
+						filename: "grant-guidelines.pdf",
+						sourceId: "1",
+						status: "FINISHED",
+					}),
+					RagSourceFactory.build({
+						filename: "research-paper.pdf",
+						sourceId: "2",
+						status: "INDEXING",
+					}),
+					RagSourceFactory.build({
+						filename: "methodology.docx",
+						sourceId: "3",
+						status: "CREATED",
+					}),
+				];
+				const grantTemplate = GrantTemplateFactory.build({
+					rag_sources: ragSources,
+				});
+				const application = ApplicationWithTemplateFactory.build({
+					grant_template: grantTemplate,
+					title: "Climate Change Research Grant Application",
+				});
+				useApplicationStore.setState({
+					application,
+					areAppOperationsInProgress: false,
+				});
+				useWizardStore.setState({
+					currentStep: WizardStep.APPLICATION_DETAILS,
+				});
+			}, []);
+			return <Story />;
+		},
+	],
+	name: "Step 1: Processing Documents - Next Button Disabled with Tooltip",
+};
+
 export const FirstStepValid: Story = {
 	decorators: [
 		(Story) => {
