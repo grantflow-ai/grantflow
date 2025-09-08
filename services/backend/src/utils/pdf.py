@@ -1,9 +1,5 @@
-from io import BytesIO
+from typing import Final
 
-from bs4 import BeautifulSoup
-from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Pt
 from packages.shared_utils.src.exceptions import FileParsingError
 from packages.shared_utils.src.logger import get_logger
 from weasyprint import CSS, HTML
@@ -11,7 +7,7 @@ from weasyprint.text.fonts import FontConfiguration
 
 logger = get_logger(__name__)
 
-DEFAULT_HTML_TEMPLATE = """
+DEFAULT_HTML_TEMPLATE: Final[str] = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -74,7 +70,7 @@ DEFAULT_HTML_TEMPLATE = """
 </html>
 """
 
-DEFAULT_CSS = """
+DEFAULT_CSS: Final[str] = """
             @page {
                 size: A4;
                 margin: 1.5cm;
@@ -134,10 +130,10 @@ DEFAULT_CSS = """
         """
 
 
-async def convert_html_to_pdf(html_content: str) -> bytes:
+async def html_to_pdf(html_content: str) -> bytes:
     try:
         logger.info(
-            "Starting PDF conversion with WeasyPrint",
+            "Starting PDF conversion",
             html_length=len(html_content),
         )
 
@@ -149,7 +145,7 @@ async def convert_html_to_pdf(html_content: str) -> bytes:
         )
 
         html_doc = HTML(string=html_content)
-        pdf_bytes = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
+        pdf_bytes: bytes = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
 
         logger.info(
             "PDF conversion completed successfully",
@@ -157,7 +153,6 @@ async def convert_html_to_pdf(html_content: str) -> bytes:
         )
 
         return pdf_bytes
-
     except MemoryError as e:
         logger.error(
             "Memory error during PDF conversion",
@@ -166,87 +161,4 @@ async def convert_html_to_pdf(html_content: str) -> bytes:
         )
         raise FileParsingError(
             f"Memory error in PDF conversion: {e!s}", context={"error": str(e), "error_type": "memory_error"}
-        ) from e
-
-
-def _parse_html_to_docx(html: str, doc: Document) -> None:
-    soup = BeautifulSoup(html, "html.parser")
-
-    for element in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "li", "table", "div", "span"]):
-        text = element.get_text(strip=True)
-        if not text:
-            continue
-
-        if element.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-            level = int(element.name[1])
-            heading = doc.add_heading(text, level=level)
-            heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-
-        elif element.name == "p":
-            p = doc.add_paragraph(text)
-            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-
-        elif element.name in ["ul", "ol"]:
-            for li in element.find_all("li", recursive=False):
-                li_text = li.get_text(strip=True)
-                if li_text:
-                    p = doc.add_paragraph(li_text, style="List Bullet")
-
-        elif element.name == "li":
-            p = doc.add_paragraph(text, style="List Bullet")
-
-        elif element.name == "table":
-            rows = element.find_all("tr")
-            if rows:
-                max_cols = max(len(row.find_all(["td", "th"])) for row in rows)
-                if max_cols > 0:
-                    table = doc.add_table(rows=len(rows), cols=max_cols)
-                    table.style = "Table Grid"
-
-                    for i, row in enumerate(rows):
-                        cells = row.find_all(["td", "th"])
-                        for j, cell in enumerate(cells):
-                            if j < len(table.rows[i].cells):
-                                cell_text = cell.get_text(strip=True)
-                                table.rows[i].cells[j].text = cell_text
-
-        elif element.name in ["div", "span"] and element.parent.name not in ["p", "li", "td", "th"]:
-            p = doc.add_paragraph(text)
-            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-
-
-async def convert_html_to_docx(html_content: str) -> bytes:
-    try:
-        logger.info(
-            "Starting DOCX conversion with python-docx",
-            html_length=len(html_content),
-        )
-
-        doc = Document()
-
-        style = doc.styles["Normal"]
-        style.font.name = "Arial"
-        style.font.size = Pt(11)
-
-        _parse_html_to_docx(html_content, doc)
-
-        docx_bytes = BytesIO()
-        doc.save(docx_bytes)
-        docx_bytes.seek(0)
-
-        logger.info(
-            "DOCX conversion completed successfully",
-            docx_size=len(docx_bytes.getvalue()),
-        )
-
-        return docx_bytes.getvalue()
-
-    except MemoryError as e:
-        logger.error(
-            "Memory error during DOCX conversion",
-            error_type=type(e).__name__,
-            error=str(e),
-        )
-        raise FileParsingError(
-            f"Memory error in DOCX conversion: {e!s}", context={"error": str(e), "error_type": "memory_error"}
         ) from e
