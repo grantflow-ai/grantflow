@@ -6,6 +6,7 @@ import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { createDebounce } from "@/utils/debounce";
 import { log } from "@/utils/logger/client";
+import { ApplicationDetailsValidationReason, validateApplicationDetailsStep } from "@/utils/wizard-validation";
 
 const DEBOUNCE_DELAY_MS = 2000;
 const POLLING_INTERVAL_DURATION = 2000;
@@ -162,32 +163,40 @@ const renumberObjectives = (objectives: Objective[]): Objective[] => {
 };
 
 function validateApplicationDetails(application: API.RetrieveApplication.Http200.ResponseBody): boolean {
-	const titleValid = !!(application.title && application.title.trim().length >= MIN_TITLE_LENGTH);
-	const ragSourcesCount = application.grant_template?.rag_sources.length ?? 0;
-	const ragSourcesValid = ragSourcesCount > 0;
-	const result = titleValid && ragSourcesValid;
+	const ragSources = application.grant_template?.rag_sources ?? [];
+	const validation = validateApplicationDetailsStep(application.title, ragSources);
 
-	const titleLength = application.title ? application.title.length : 0;
-
-	let reason: string;
-	if (!titleValid) {
-		reason = `Title invalid (length: ${titleLength}, min: ${MIN_TITLE_LENGTH})`;
-	} else if (ragSourcesValid) {
-		reason = "Valid";
-	} else {
-		reason = `No RAG sources (count: ${ragSourcesCount})`;
+	let reasonMessage: string;
+	switch (validation.reason) {
+		case ApplicationDetailsValidationReason.RAG_SOURCES_MISSING: {
+			reasonMessage = "No RAG sources (count: 0)";
+			break;
+		}
+		case ApplicationDetailsValidationReason.RAG_SOURCES_PROCESSING: {
+			reasonMessage = `RAG sources still processing (${validation.processingCount} of ${validation.totalCount})`;
+			break;
+		}
+		case ApplicationDetailsValidationReason.TITLE_INVALID: {
+			reasonMessage = `Title invalid (length: ${application.title ? application.title.length : 0}, min: ${MIN_TITLE_LENGTH})`;
+			break;
+		}
+		case ApplicationDetailsValidationReason.VALID: {
+			reasonMessage = "Valid";
+			break;
+		}
 	}
 
 	log.info("[Wizard Store] validateStepNext APPLICATION_DETAILS", {
 		hasGrantTemplate: !!application.grant_template,
-		ragSourcesCount,
-		reason,
-		result,
+		ragSourcesCount: ragSources.length,
+		ragSourcesStatuses: ragSources.map((s) => s.status),
+		reason: reasonMessage,
+		result: validation.isValid,
 		title: application.title,
-		titleLength,
+		titleLength: application.title ? application.title.length : 0,
 	});
 
-	return result;
+	return validation.isValid;
 }
 
 function validateResearchDeepDive(application: API.RetrieveApplication.Http200.ResponseBody): boolean {

@@ -1,5 +1,6 @@
 import { ApplicationFactory, GrantTemplateFactory } from "::testing/factories";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WizardStep } from "@/constants";
 import { useApplicationStore } from "@/stores/application-store";
@@ -100,14 +101,10 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
-					grant_template: {
-						created_at: new Date().toISOString(),
-						grant_application_id: "test-app-id",
+					grant_template: GrantTemplateFactory.build({
 						grant_sections: [],
-						id: "test-template-id",
 						rag_sources: [],
-						updated_at: new Date().toISOString(),
-					},
+					}),
 					text: undefined,
 				},
 			});
@@ -124,14 +121,10 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			useApplicationStore.setState({
 				application: {
 					...ApplicationFactory.build(),
-					grant_template: {
-						created_at: new Date().toISOString(),
-						grant_application_id: "test-app-id",
+					grant_template: GrantTemplateFactory.build({
 						grant_sections: [],
-						id: "test-template-id",
 						rag_sources: [],
-						updated_at: new Date().toISOString(),
-					},
+					}),
 					text: "Existing application text",
 				},
 			});
@@ -188,6 +181,492 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 			const backButton = screen.getByTestId("back-button");
 			expect(backButton).toBeDisabled();
 		});
+
+		it("disables continue button when RAG sources are not processed (APPLICATION_DETAILS)", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
+							{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+						],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).toBeDisabled();
+		});
+
+		it("enables continue button when RAG sources are processed (APPLICATION_DETAILS)", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
+							{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+						],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).not.toBeDisabled();
+		});
+
+		it("enables continue button with mixed FINISHED and FAILED RAG sources (APPLICATION_DETAILS)", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
+							{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
+						],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).not.toBeDisabled();
+		});
+
+		it("disables continue button when RAG sources are CREATED (APPLICATION_DETAILS)", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "CREATED" },
+							{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+						],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).toBeDisabled();
+		});
+
+		it("handles edge cases with no RAG sources (APPLICATION_DETAILS)", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						rag_sources: [],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).toBeDisabled();
+		});
+
+		it("handles edge case with no grant template (APPLICATION_DETAILS)", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: undefined,
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).toBeDisabled();
+		});
+
+		it("uses local validation only for APPLICATION_DETAILS step", () => {
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [{ id: "1", order: 0, parent_id: null, title: "Test Section" }],
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
+							{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
+						],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButtons = screen.getAllByTestId("continue-button");
+			expect(continueButtons[0]).not.toBeDisabled();
+		});
+	});
+
+	describe.sequential("Tooltip Functionality", () => {
+		it("displays tooltip when button is disabled due to missing RAG sources", async () => {
+			const user = userEvent.setup();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: GrantTemplateFactory.build({
+						grant_sections: [],
+						rag_sources: [],
+					}),
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+
+			await user.hover(continueButton.parentElement!);
+			await waitFor(() => {
+				expect(screen.getByRole("tooltip")).toBeInTheDocument();
+			});
+		});
+
+		it("displays tooltip when button is disabled due to RAG sources processing", async () => {
+			const user = userEvent.setup();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						created_at: new Date().toISOString(),
+						grant_application_id: "test-app-id",
+						grant_sections: [],
+						id: "test-template-id",
+						rag_sources: [
+							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
+							{ filename: "test2.pdf", sourceId: "2", status: "INDEXING" },
+							{ filename: "test3.pdf", sourceId: "3", status: "CREATED" },
+						],
+						updated_at: new Date().toISOString(),
+					},
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+
+			await user.hover(continueButton.parentElement!);
+			await waitFor(() => {
+				expect(screen.getByRole("tooltip")).toBeInTheDocument();
+			});
+		});
+
+		it("displays tooltip when button is disabled due to invalid title", async () => {
+			const user = userEvent.setup();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						created_at: new Date().toISOString(),
+						grant_application_id: "test-app-id",
+						grant_sections: [],
+						id: "test-template-id",
+						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
+						updated_at: new Date().toISOString(),
+					},
+					title: "Short",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+
+			await user.hover(continueButton.parentElement!);
+			await waitFor(() => {
+				expect(screen.getByRole("tooltip")).toBeInTheDocument();
+			});
+		});
+
+		it("does not display tooltip for enabled button on APPLICATION_DETAILS step", async () => {
+			const user = userEvent.setup();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_DETAILS,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					grant_template: {
+						created_at: new Date().toISOString(),
+						grant_application_id: "test-app-id",
+						grant_sections: [],
+						id: "test-template-id",
+						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
+						updated_at: new Date().toISOString(),
+					},
+					title: "This is a valid title that meets minimum requirements",
+				},
+				areAppOperationsInProgress: false,
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
+			await user.hover(continueButton);
+
+			expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+		});
+
+		it("does not display tooltip on non-APPLICATION_DETAILS steps", async () => {
+			const user = userEvent.setup();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				validateStepNext: vi.fn(() => false),
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).toBeDisabled();
+
+			await user.hover(continueButton);
+
+			expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+		});
+	});
+
+	describe.sequential("Button Click Behavior", () => {
+		it("calls toNextStep when continue button is clicked on regular steps", async () => {
+			const user = userEvent.setup();
+			const mockToNextStep = vi.fn();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.KNOWLEDGE_BASE,
+				toNextStep: mockToNextStep,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			render(<WizardFooter />);
+
+			const continueButton = screen.getByTestId("continue-button");
+			expect(continueButton).not.toBeDisabled();
+
+			await user.click(continueButton);
+			expect(mockToNextStep).toHaveBeenCalledOnce();
+		});
+
+		it("calls generateApplication when Generate button is clicked on RESEARCH_DEEP_DIVE step", async () => {
+			const user = userEvent.setup();
+			const mockGenerateApplication = vi.fn().mockResolvedValue(true);
+			const mockToNextStep = vi.fn();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				generateApplication: mockGenerateApplication,
+				toNextStep: mockToNextStep,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					text: undefined,
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const generateButton = screen.getByTestId("continue-button");
+			expect(generateButton).toHaveTextContent("Generate");
+
+			await user.click(generateButton);
+
+			await waitFor(() => {
+				expect(mockGenerateApplication).toHaveBeenCalledOnce();
+				expect(mockToNextStep).toHaveBeenCalledOnce();
+			});
+		});
+
+		it("calls toNextStep directly when Next button is clicked on RESEARCH_DEEP_DIVE with existing text", async () => {
+			const user = userEvent.setup();
+			const mockToNextStep = vi.fn();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				toNextStep: mockToNextStep,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					text: "Existing application text",
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const nextButton = screen.getByTestId("continue-button");
+			expect(nextButton).toHaveTextContent("Next");
+
+			await user.click(nextButton);
+			expect(mockToNextStep).toHaveBeenCalledOnce();
+		});
+
+		it("navigates to dashboard and resets wizard when Go To Dashboard is clicked", async () => {
+			const user = userEvent.setup();
+			const mockReset = vi.fn();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.GENERATE_AND_COMPLETE,
+				reset: mockReset,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			render(<WizardFooter />);
+
+			const dashboardButton = screen.getByTestId("continue-button");
+			expect(dashboardButton).toHaveTextContent("Go To Dashboard");
+
+			await user.click(dashboardButton);
+
+			expect(mockPush).toHaveBeenCalledWith("/organization");
+			expect(mockReset).toHaveBeenCalledOnce();
+		});
+
+		it("calls toPreviousStep when back button is clicked", async () => {
+			const user = userEvent.setup();
+			const mockToPreviousStep = vi.fn();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.APPLICATION_STRUCTURE,
+				toPreviousStep: mockToPreviousStep,
+			});
+
+			render(<WizardFooter />);
+
+			const backButton = screen.getByTestId("back-button");
+			await user.click(backButton);
+
+			expect(mockToPreviousStep).toHaveBeenCalledOnce();
+		});
+
+		it("does not call generateApplication again when generation fails", async () => {
+			const user = userEvent.setup();
+			const mockGenerateApplication = vi.fn().mockResolvedValue(false);
+			const mockToNextStep = vi.fn();
+
+			useWizardStore.setState({
+				currentStep: WizardStep.RESEARCH_DEEP_DIVE,
+				generateApplication: mockGenerateApplication,
+				toNextStep: mockToNextStep,
+				validateStepNext: vi.fn(() => true),
+			});
+
+			useApplicationStore.setState({
+				application: {
+					...ApplicationFactory.build(),
+					text: undefined,
+				},
+			});
+
+			render(<WizardFooter />);
+
+			const generateButton = screen.getByTestId("continue-button");
+			await user.click(generateButton);
+
+			await waitFor(() => {
+				expect(mockGenerateApplication).toHaveBeenCalledOnce();
+				expect(mockToNextStep).not.toHaveBeenCalled();
+			});
+		});
 	});
 });
 
@@ -218,10 +697,9 @@ describe.sequential("WizardHeader", () => {
 	describe.sequential("Header Information Display", () => {
 		it("shows application name and deadline after first step", () => {
 			const applicationWithDeadline = ApplicationFactory.build({
-				grant_template: {
-					...GrantTemplateFactory.build(),
+				grant_template: GrantTemplateFactory.build({
 					submission_date: new Date("2025-12-31").toISOString(),
-				},
+				}),
 				title: "Test Application",
 			});
 
@@ -242,10 +720,9 @@ describe.sequential("WizardHeader", () => {
 
 		it("does not show deadline component when no submission date is set", () => {
 			const applicationWithoutDeadline = ApplicationFactory.build({
-				grant_template: {
-					...GrantTemplateFactory.build(),
+				grant_template: GrantTemplateFactory.build({
 					submission_date: undefined,
-				},
+				}),
 				title: "Test Application",
 			});
 
@@ -316,7 +793,10 @@ describe.sequential("WizardHeader", () => {
 			mockPush.mockClear();
 		});
 
-		it("resets wizard store and navigates to project page when exit button is clicked", () => {
+		it("resets wizard store and navigates to project page when exit button is clicked", async () => {
+			const user = userEvent.setup();
+			const mockReset = vi.fn();
+
 			const application = ApplicationFactory.build({
 				project_id: "test-project-id",
 				title: "Test Application",
@@ -330,20 +810,20 @@ describe.sequential("WizardHeader", () => {
 			useWizardStore.setState({
 				currentStep: WizardStep.APPLICATION_STRUCTURE,
 				isGeneratingTemplate: true,
+				reset: mockReset,
 			});
 
 			render(<WizardHeader />);
 
 			const exitButton = screen.getByTestId("exit-button");
-			fireEvent.click(exitButton);
+			await user.click(exitButton);
 
-			expect(useWizardStore.getState().currentStep).toBe(WizardStep.APPLICATION_DETAILS);
-			expect(useWizardStore.getState().isGeneratingTemplate).toBe(false);
-
+			expect(mockReset).toHaveBeenCalledOnce();
 			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 		});
 
-		it("navigates to projects list if no project_id available", () => {
+		it("navigates to projects list if no project_id available", async () => {
+			const user = userEvent.setup();
 			const application = ApplicationFactory.build({
 				project_id: undefined,
 				title: "Test Application",
@@ -357,12 +837,13 @@ describe.sequential("WizardHeader", () => {
 			render(<WizardHeader />);
 
 			const exitButton = screen.getByTestId("exit-button");
-			fireEvent.click(exitButton);
+			await user.click(exitButton);
 
 			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 		});
 
-		it("navigates to projects list if no application available", () => {
+		it("navigates to projects list if no application available", async () => {
+			const user = userEvent.setup();
 			useApplicationStore.setState({
 				application: null,
 				areAppOperationsInProgress: false,
@@ -371,7 +852,7 @@ describe.sequential("WizardHeader", () => {
 			render(<WizardHeader />);
 
 			const exitButton = screen.getByTestId("exit-button");
-			fireEvent.click(exitButton);
+			await user.click(exitButton);
 
 			expect(mockPush).toHaveBeenCalledWith("/organization/project");
 		});
