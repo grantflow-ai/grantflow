@@ -2103,4 +2103,16 @@ export namespace API {
 	role: "ADMIN" | "COLLABORATOR" | "OWNER";
 };
 };
+
+  export namespace ConvertFile {
+	export namespace Http201 {
+	export type ResponseBody = Blob
+};
+
+	export type RequestBody = {
+		html_content: string;
+		output_format: "docx" | "pdf" | "md";
+		filename: string;
+	};
+}
 };

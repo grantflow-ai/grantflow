@@ -7,6 +7,7 @@ from packages.shared_utils.src.server import create_litestar_app
 
 from services.backend.src.api.middleware import AuthMiddleware, TraceIdMiddleware
 from services.backend.src.api.routes.auth import handle_create_otp, handle_login
+from services.backend.src.api.routes.files import handle_convert_file
 from services.backend.src.api.routes.grant_applications import (
     handle_create_application,
     handle_delete_application,
@@ -137,6 +138,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_delete_invitation,
     handle_update_invitation_role,
     handle_accept_invitation,
+    handle_convert_file,
     handle_create_application,
     handle_list_applications,
     handle_list_organization_applications,
