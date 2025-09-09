@@ -149,6 +149,50 @@ export function OrganizationSettingsGeneral({
 
 	useAutoSave(handleSave, [organizationName, institutionName, contactName, contactEmail]);
 
+	const renderLogoContent = () => {
+		if (organization?.logo_url) {
+			return (
+				<>
+					<Image alt="Organization Logo" className="object-cover" fill src={organization.logo_url} />
+					{canEdit && (
+						<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
+							<button
+								className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+								onClick={(e) => {
+									e.stopPropagation();
+									fileInputRef.current?.click();
+								}}
+								type="button"
+							>
+								<RefreshCw className="text-white size-4" />
+							</button>
+							<button
+								className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+								onClick={(e) => {
+									e.stopPropagation();
+									handleLogoDelete();
+								}}
+								type="button"
+							>
+								<Trash2 className="text-white size-4" />
+							</button>
+						</div>
+					)}
+				</>
+			);
+		}
+		if (organization?.name) {
+			return (
+				<OrganizationAvatar
+					className="size-full"
+					organizationId={organization.id}
+					organizationName={organization.name}
+				/>
+			);
+		}
+		return <Plus className="size-4 text-app-gray-700" />;
+	};
+
 	return (
 		<div className="flex flex-col gap-10 max-w-[655px] px-6 " data-testid="organization-settings-general">
 			<div className="flex flex-col gap-6 ">
@@ -169,49 +213,7 @@ export function OrganizationSettingsGeneral({
 								onClick={handleLogoContainerClick}
 								type="button"
 							>
-								{organization?.logo_url ? (
-									<>
-										<Image
-											alt="Organization Logo"
-											className="object-cover"
-											fill
-											src={organization.logo_url}
-										/>
-
-										{canEdit && (
-											<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
-												<button
-													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
-													onClick={(e) => {
-														e.stopPropagation();
-														fileInputRef.current?.click();
-													}}
-													type="button"
-												>
-													<RefreshCw className="text-white size-4" />
-												</button>
-												<button
-													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleLogoDelete();
-													}}
-													type="button"
-												>
-													<Trash2 className="text-white size-4" />
-												</button>
-											</div>
-										)}
-									</>
-								) : organization?.name ? (
-									<OrganizationAvatar
-										className="size-full"
-										organizationId={organization.id}
-										organizationName={organization.name}
-									/>
-								) : (
-									<Plus className="size-4 text-app-gray-700" />
-								)}
+								{renderLogoContent()}
 							</button>
 							<input
 								accept="image/*"

@@ -49,6 +49,7 @@ export function ProjectDetailClient() {
 	const [applicationToDelete, setApplicationToDelete] = useState<null | string>(null);
 	const [isCreatingApplication, setIsCreatingApplication] = useState(false);
 	const [isFirstEdit, setIsFirstEdit] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
 	const titleInputRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -84,10 +85,10 @@ export function ProjectDetailClient() {
 	}, [isEditingTitle]);
 
 	useEffect(() => {
-		if (!project) {
-			router.replace(routes.organization.root());
+		if (project) {
+			setIsLoading(false);
 		}
-	}, [project, router]);
+	}, [project]);
 
 	useEffect(() => {
 		if (project?.name) {
@@ -101,7 +102,11 @@ export function ProjectDetailClient() {
 		}
 	}, [selectedOrganizationId, getProjects]);
 
-	const { data: applicationsData } = useSWR(
+	const {
+		data: applicationsData,
+		isLoading: isApplicationsLoading,
+		isValidating: isApplicationsValidating,
+	} = useSWR(
 		project && selectedOrganizationId
 			? `/organizations/${selectedOrganizationId}/projects/${project.id}/applications?search=${searchQuery}`
 			: null,
@@ -309,6 +314,14 @@ export function ProjectDetailClient() {
 		}
 	};
 
+	if (isLoading) {
+		return (
+			<div className="w-full h-full flex items-center justify-center">
+				<p className="text-app-gray-600">Loading project...</p>
+			</div>
+		);
+	}
+
 	if (!project) {
 		return null;
 	}
@@ -428,6 +441,7 @@ export function ProjectDetailClient() {
 						<ApplicationList
 							applications={applications}
 							isCreatingApplication={isCreatingApplication}
+							isLoading={isApplicationsLoading || isApplicationsValidating}
 							onCreate={handleCreateApplication}
 							onDelete={handleDeleteApplication}
 							onDuplicate={handleDuplicateApplication}
