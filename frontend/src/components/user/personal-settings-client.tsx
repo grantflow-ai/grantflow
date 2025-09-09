@@ -131,6 +131,30 @@ export function PersonalSettingsClient() {
 	useAutoSave(handleSave, [displayName]);
 	const userInitials = generateInitials(user?.displayName ?? undefined, user?.email ?? undefined);
 
+	const logoButtonClasses = [
+		"group",
+		"w-[93px]",
+		"h-[95px]",
+		"rounded",
+		"bg-preview-bg",
+		"flex",
+		"items-center",
+		"justify-center",
+		"relative",
+		"overflow-hidden",
+		"transition-colors",
+	];
+
+	if (!user?.photoURL) {
+		logoButtonClasses.push(
+			"border",
+			"border-dashed",
+			"border-app-gray-100",
+			"cursor-pointer",
+			"hover:border-primary",
+		);
+	}
+
 	return (
 		<div className="flex flex-col gap-10 max-w-[607px]" data-testid="personal-settings">
 			<div className="flex flex-col gap-6">
@@ -139,11 +163,12 @@ export function PersonalSettingsClient() {
 						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Profile Image</h3>
 						<div className="flex flex-col gap-3">
 							<button
-								className="group size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors cursor-pointer hover:border-primary"
+								className={logoButtonClasses.join(" ")}
 								data-testid="user-avatar-container"
-								onClick={() => fileInputRef.current?.click()}
-								style={{
-									backgroundColor: user?.uid ? generateBackgroundColor(user.uid) : "#cccccc",
+								onClick={() => {
+									if (!user?.photoURL) {
+										fileInputRef.current?.click();
+									}
 								}}
 								type="button"
 							>
@@ -174,9 +199,16 @@ export function PersonalSettingsClient() {
 										</div>
 									</>
 								) : (
-									<span className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
-										{userInitials}
-									</span>
+									<div
+										className="size-full flex items-center justify-center"
+										style={{
+											backgroundColor: user?.uid ? generateBackgroundColor(user.uid) : "#cccccc",
+										}}
+									>
+										<span className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
+											{userInitials}
+										</span>
+									</div>
 								)}
 							</button>
 							<input

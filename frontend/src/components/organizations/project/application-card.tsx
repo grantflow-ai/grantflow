@@ -1,15 +1,9 @@
 import { format } from "date-fns";
-import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { AppButton } from "@/components/app/buttons/app-button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { API } from "@/types/api-types";
 import { getDeadlineInfo } from "@/utils/date-time";
+import { CardActionMenu } from "../dashboard/card-action-menu";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
@@ -87,39 +81,14 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 					</div>
 
 					<div>
-						<DropdownMenu modal={false}>
-							<DropdownMenuTrigger
-								className="-mt-2 cursor-pointer"
-								data-testid="project-card-menu-trigger"
-							>
-								<MoreVertical className="size-4 text-app-gray-600" />
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								className="w-[200px] rounded-sm border border-app-gray-200 bg-white p-0 shadow-none group"
-								data-testid="project-card-menu"
-							>
-								<DropdownMenuItem
-									className="p-3 font-normal text-base text-gray-700 flex items-center gap-2  cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group-hover:text-gray-400 group"
-									data-testid="project-card-delete"
-									onClick={() => {
-										onDelete(application.id);
-									}}
-								>
-									<Trash2 className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
-									Delete
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									className="p-3 font-normal text-base text-gray-700 flex items-center gap-2  cursor-pointer data-[highlighted]:bg-primary data-[highlighted]:!text-white transition-colors group-hover:text-gray-400 group"
-									data-testid="project-card-duplicate"
-									onClick={() => {
-										onDuplicate(application.id, application.title);
-									}}
-								>
-									<Copy className="size-4 text-gray-700 group-data-[highlighted]:text-white" />
-									Duplicate
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<CardActionMenu
+							onDelete={() => {
+								onDelete?.(application.id);
+							}}
+							onDuplicate={() => {
+								onDuplicate?.(application.id, application.title);
+							}}
+						/>
 					</div>
 				</div>
 
