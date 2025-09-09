@@ -52,8 +52,6 @@ interface ProjectAccess {
 	project_name: string;
 }
 
-
-
 const AVATAR_COLORS = ["bg-[#369e94]", "bg-[#9747ff]", "bg-[#4dc283]", "bg-[#ff6b6b]", "bg-[#4ecdc4]", "bg-[#45b7d1]"];
 
 const ROLE_LABELS = {
@@ -288,6 +286,18 @@ export function OrganizationSettingsMembers({
 			revalidateOnFocus: false,
 		},
 	);
+
+	// Temporary mock for testing the scrollbar
+	const mockProjects = [
+		{ id: "proj1", name: "Project Alpha" },
+		{ id: "proj2", name: "Project Beta" },
+		{ id: "proj3", name: "Project Gamma" },
+		{ id: "proj4", name: "Project Delta" },
+		{ id: "proj5", name: "Project Epsilon" },
+		{ id: "proj6", name: "Project Zeta" },
+		{ id: "proj7", name: "Project Eta" },
+	];
+
 	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
@@ -390,7 +400,7 @@ export function OrganizationSettingsMembers({
 				}}
 				onInvite={handleInvite}
 				ownerEmail={ownerEmail}
-				projects={projects}
+				projects={mockProjects}
 			/>
 
 			<EditPermissionModal
@@ -401,7 +411,11 @@ export function OrganizationSettingsMembers({
 				}}
 				onEdit={async (options) => {
 					if (!editingMember) return;
-					await handleUpdateRole(editingMember.firebaseUid, options.role as UserRole, options.hasAllProjectsAccess);
+					await handleUpdateRole(
+						editingMember.firebaseUid,
+						options.role as UserRole,
+						options.hasAllProjectsAccess,
+					);
 				}}
 				ownerEmail={ownerEmail}
 				projects={projects}
