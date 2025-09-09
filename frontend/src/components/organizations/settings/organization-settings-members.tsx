@@ -25,7 +25,7 @@ import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { generateInitials } from "@/utils/user";
-import { EditPermissionModal, type CollaboratorPermission } from "./edit-permission-modal";
+import { type CollaboratorPermission, EditPermissionModal } from "./edit-permission-modal";
 
 interface OrganizationMember {
 	displayName?: string;
@@ -208,7 +208,7 @@ export function OrganizationSettingsMembers({
 		hasAllProjectsAccess: member.has_all_projects_access,
 		joinedAt: member.created_at,
 		photoUrl: member.photo_url,
-		projectAccess: member.projectAccess,
+		projectAccess: member.project_access,
 		role: member.role as UserRole,
 		status: "active" as const,
 	}));
@@ -338,7 +338,7 @@ export function OrganizationSettingsMembers({
 
 			<EditPermissionModal
 				isOpen={editingMember !== null}
-				member={editingMember as (OrganizationMember & { role: CollaboratorPermission }) | null}
+				member={editingMember as ({ role: CollaboratorPermission } & OrganizationMember) | null}
 				onClose={() => {
 					setEditingMember(null);
 				}}

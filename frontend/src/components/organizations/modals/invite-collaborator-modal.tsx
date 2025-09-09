@@ -22,8 +22,8 @@ interface InviteCollaboratorModalProps {
 	onClose: () => void;
 	onInvite: (options: InviteOptions) => Promise<void>;
 	ownerEmail?: string;
-	projects: ResearchProject[];
 	projectId?: string;
+	projects: ResearchProject[];
 }
 
 interface ResearchProject {
@@ -36,8 +36,8 @@ export function InviteCollaboratorModal({
 	onClose,
 	onInvite,
 	ownerEmail,
-	projects = [],
 	projectId,
+	projects = [],
 }: InviteCollaboratorModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -281,7 +281,9 @@ export function InviteCollaboratorModal({
 												</span>
 											</div>
 										</SelectTrigger>
-										<SelectContent className={`border border-app-gray-200 bg-white scroll-box ${projects.length >= 6 ? "max-h-[266px] overflow-auto ":"" }`}>
+										<SelectContent
+											className={`border border-app-gray-200 bg-white scroll-box ${projects.length >= 6 ? "max-h-[266px] overflow-auto " : ""}`}
+										>
 											{projects.map((project) => (
 												<SelectItem
 													className=" group px-3 py-2 cursor-pointer text-app-black text-[14px]"

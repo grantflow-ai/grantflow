@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
 import { listOrganizationApplications } from "@/actions/grant-applications";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
@@ -19,11 +18,9 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
-import { group } from "console";
 import { DashboardIcon } from "../icons/dashboard-icon";
 import { NoteStackIcon } from "../icons/note-stack-icon";
 import { SettingsIcon } from "../icons/settings-icon";
@@ -75,8 +72,8 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
 	const { selectedOrganizationId } = useOrganizationStore();
-	const [activeCollapsible, setActiveCollapsible] = useState<string | null>(isSettingsActive ? "settings" : null )
-	const isDashboardActive = pathname === routes.organization.root()
+	const [activeCollapsible, setActiveCollapsible] = useState<null | string>(isSettingsActive ? "settings" : null);
+	const isDashboardActive = pathname === routes.organization.root();
 	const [recentApplications, setRecentApplications] = useState<
 		API.ListOrganizationApplications.Http200.ResponseBody["applications"]
 	>([]);
@@ -112,16 +109,28 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 			<SidebarMenuItem className="">
 				<SidebarMenuButton asChild className="text-primary" data-testid="dashboard-button" tooltip="Dashboard">
 					<Link className="flex items-center gap-2" href={routes.organization.root()}>
-						<DashboardIcon className={`size-4 shrink-0 group-data-[collapsible=icon]:hidden ${isDashboardActive?"text-primary":"text-app-gray-700"}`} />
-						<DashboardIcon className={`size-4 shrink-0 hidden group-data-[collapsible=icon]:block ${isDashboardActive?"text-primary":"text-app-black"}`} />
-						<span className={`group-data-[collapsible=icon]:hidden text-sm font-normal leading-5  ${isDashboardActive ? "text-primary": "text-app-black"}`}>
+						<DashboardIcon
+							className={`size-4 shrink-0 group-data-[collapsible=icon]:hidden ${isDashboardActive ? "text-primary" : "text-app-gray-700"}`}
+						/>
+						<DashboardIcon
+							className={`size-4 shrink-0 hidden group-data-[collapsible=icon]:block ${isDashboardActive ? "text-primary" : "text-app-black"}`}
+						/>
+						<span
+							className={`group-data-[collapsible=icon]:hidden text-sm font-normal leading-5  ${isDashboardActive ? "text-primary" : "text-app-black"}`}
+						>
 							Dashboard
 						</span>
 					</Link>
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 
-			<Collapsible className="group/collapsible" open={activeCollapsible === "applications"} onOpenChange={(isOpen)=> setActiveCollapsible(isOpen ? "applications" : null)}>
+			<Collapsible
+				className="group/collapsible"
+				onOpenChange={(isOpen) => {
+					setActiveCollapsible(isOpen ? "applications" : null);
+				}}
+				open={activeCollapsible === "applications"}
+			>
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
@@ -201,7 +210,13 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					</CollapsibleContent>
 				</SidebarMenuItem>
 			</Collapsible>
-			<Collapsible className="group/collapsible" open={activeCollapsible === "settings"} onOpenChange={(isOpen)=> setActiveCollapsible(isOpen ? "settings" : null )}>
+			<Collapsible
+				className="group/collapsible"
+				onOpenChange={(isOpen) => {
+					setActiveCollapsible(isOpen ? "settings" : null);
+				}}
+				open={activeCollapsible === "settings"}
+			>
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton

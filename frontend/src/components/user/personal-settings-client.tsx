@@ -1,24 +1,23 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import {RefreshCw, Trash2, X } from "lucide-react";
+import { RefreshCw, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { deleteAccount, getSoleOwnedOrganizations, getSoleOwnedProjects } from "@/actions/user";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DeleteAccountModal } from "@/components/user/delete-account-modal";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
-import {useAutoSave} from "@/hooks/use-auto-save"
 
 export function PersonalSettingsClient() {
-	const { clearUser, user, updateDisplayName, updateProfilePhoto, deleteProfilePhoto } = useUserStore();
+	const { clearUser, deleteProfilePhoto, updateDisplayName, updateProfilePhoto, user } = useUserStore();
 	const { addNotification } = useNotificationStore();
 	const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-	const [isUpdating, setIsUpdating] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,14 +63,11 @@ export function PersonalSettingsClient() {
 	const handleSave = async () => {
 		if (!user || user.displayName === displayName) return;
 
-		setIsUpdating(true);
 		try {
 			await updateDisplayName(displayName);
 			toast.info("User profile updated");
 		} catch {
 			toast.error("Failed to update profile");
-		} finally {
-			setIsUpdating(false);
 		}
 	};
 
@@ -120,7 +116,7 @@ export function PersonalSettingsClient() {
 		}
 	};
 
-	const handleDeletePhoto = async () =>{
+	const handleDeletePhoto = async () => {
 		setIsUploading(true);
 		try {
 			await deleteProfilePhoto();
@@ -130,11 +126,9 @@ export function PersonalSettingsClient() {
 		} finally {
 			setIsUploading(false);
 		}
-	}
+	};
 
-
-
-	useAutoSave(handleSave, [displayName])
+	useAutoSave(handleSave, [displayName]);
 	const userInitials = generateInitials(user?.displayName ?? undefined, user?.email ?? undefined);
 
 	return (
@@ -155,30 +149,29 @@ export function PersonalSettingsClient() {
 							>
 								{user?.photoURL ? (
 									<>
-									
-									<Image alt="User Avatar" className="object-cover" fill src={user.photoURL} />
-									<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
-												<button
-													onClick={(e) => {
-														e.stopPropagation();
-														fileInputRef.current?.click();
-													}}
-													type="button"
-													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
-												>
-													<RefreshCw className="text-white size-4" />
-												</button>
-												<button
-													onClick={(e) => {
-														e.stopPropagation();
-														handleDeletePhoto();
-													}}
-													type="button"
-													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
-												>
-													<Trash2 className="text-white size-4" />
-												</button>
-											</div>
+										<Image alt="User Avatar" className="object-cover" fill src={user.photoURL} />
+										<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
+											<button
+												className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												onClick={(e) => {
+													e.stopPropagation();
+													fileInputRef.current?.click();
+												}}
+												type="button"
+											>
+												<RefreshCw className="text-white size-4" />
+											</button>
+											<button
+												className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												onClick={(e) => {
+													e.stopPropagation();
+													handleDeletePhoto();
+												}}
+												type="button"
+											>
+												<Trash2 className="text-white size-4" />
+											</button>
+										</div>
 									</>
 								) : (
 									<span className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
@@ -239,11 +232,11 @@ export function PersonalSettingsClient() {
 							<input
 								className="w-full h-10 pl-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary cursor-not-allowed"
 								data-testid="user-email-input"
+								disabled
 								onChange={(e) => {
 									setEmail(e.target.value);
 								}}
 								placeholder="Email@address.com"
-								disabled
 								type="email"
 								value={email}
 							/>

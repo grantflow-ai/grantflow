@@ -24,14 +24,13 @@ export function OrganizationSettingsNotifications({
 	});
 
 	const handleToggle = (key: keyof NotificationSettings) => {
-		
-			const isEnabled = !settings[key];
-			if (isEnabled) {
-				toast.success("Notifications enabled successfully");
-			} else {
-				toast.success("Notifications disabled successfully");
-			}
-			setSettings((prev)=>({...prev, [key]: isEnabled}));
+		const isEnabled = !settings[key];
+		if (isEnabled) {
+			toast.success("Notifications enabled successfully");
+		} else {
+			toast.success("Notifications disabled successfully");
+		}
+		setSettings((prev) => ({ ...prev, [key]: isEnabled }));
 	};
 
 	return (
