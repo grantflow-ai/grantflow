@@ -62,58 +62,6 @@ const ROLE_LABELS = {
 
 const EMPTY_PROJECTS: API.ListProjects.Http200.ResponseBody = [];
 
-// const mockMembersData = [
-// 	{
-// 		created_at: "2024-08-15T09:00:00Z",
-// 		display_name: "Current User (Owner)",
-// 		email: "owner@example.com",
-// 		firebase_uid: "uid-owner",
-// 		has_all_projects_access: true,
-// 		projectAccess: [],
-// 		role: UserRole.OWNER,
-// 		photo_url: "",
-// 	},
-// 	{
-// 		created_at: "2024-08-15T10:00:00Z",
-// 		display_name: "John Doe",
-// 		email: "john.doe@example.com",
-// 		firebase_uid: "uid-john-doe",
-// 		has_all_projects_access: true,
-// 		projectAccess: [],
-// 		role: UserRole.ADMIN,
-// 		photo_url: "",
-// 	},
-// 	{
-// 		created_at: "2024-08-15T11:00:00Z",
-// 		display_name: "Jane Smith",
-// 		email: "jane.smith@example.com",
-// 		firebase_uid: "uid-jane-smith",
-// 		has_all_projects_access: false,
-// 		projectAccess: [
-// 			{ project_id: "proj1", project_name: "Project Alpha", granted_at: "2024-08-15T11:00:00Z" },
-// 			{ project_id: "proj2", project_name: "Project Beta", granted_at: "2024-08-15T11:00:00Z" },
-// 		],
-// 		role: UserRole.COLLABORATOR,
-// 		photo_url: "",
-// 	},
-// ];
-
-// const mockInvitationsData = [
-// 	{
-// 		id: "invite-1",
-// 		email: "pending@example.com",
-// 		role: UserRole.COLLABORATOR,
-// 		invitation_sent_at: "2024-08-16T09:00:00Z",
-// 		has_all_projects_access: false,
-// 		project_ids: [],
-// 	},
-// ];
-
-// const mockProjects = [
-// 	{ id: "proj1", name: "Project Alpha" },
-// 	{ id: "proj2", name: "Project Beta" },
-// ];
-
 export function OrganizationSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
@@ -124,10 +72,6 @@ export function OrganizationSettingsMembers({
 	const [editingMember, setEditingMember] = useState<null | OrganizationMember>(null);
 	const { addNotification } = useNotificationStore();
 
-	// --- MOCK DATA ---
-	// const members = mockMembersData;
-	// const invitations = mockInvitationsData;
-	// const isLoading = false;
 	const { data: members = [], isLoading } = useSWR(
 		`/organizations/${organizationId}/members`,
 		() => getOrganizationMembers(organizationId),
@@ -287,17 +231,6 @@ export function OrganizationSettingsMembers({
 		},
 	);
 
-	// Temporary mock for testing the scrollbar
-	const mockProjects = [
-		{ id: "proj1", name: "Project Alpha" },
-		{ id: "proj2", name: "Project Beta" },
-		{ id: "proj3", name: "Project Gamma" },
-		{ id: "proj4", name: "Project Delta" },
-		{ id: "proj5", name: "Project Epsilon" },
-		{ id: "proj6", name: "Project Zeta" },
-		{ id: "proj7", name: "Project Eta" },
-	];
-
 	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
@@ -400,7 +333,7 @@ export function OrganizationSettingsMembers({
 				}}
 				onInvite={handleInvite}
 				ownerEmail={ownerEmail}
-				projects={mockProjects}
+				projects={projects}
 			/>
 
 			<EditPermissionModal
