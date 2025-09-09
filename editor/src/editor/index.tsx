@@ -40,10 +40,8 @@ import Collaboration from "@tiptap/extension-collaboration";
 import { EditorExtensions } from "@/editor/editor-extensions";
 import { markdownToYDoc } from "@/utils/text-transformers";
 
-type MarkdownStorage = { getMarkdown: () => string };
-
 export type EditorRef = {
-	getMarkdown: () => string;
+	getHTML: () => string;
 	getJSON: () => unknown;
 	getHeadings: () => { level: HeadingLevels; text: string }[];
 	scrollToHeading: (headingIndex: number) => boolean;
@@ -217,10 +215,8 @@ export const Editor = React.forwardRef(function Editor(
 
 				return extractHeadings(json);
 			},
+			getHTML: () => editor?.getHTML() ?? "",
 			getJSON: () => editor?.getJSON(),
-			getMarkdown: () =>
-				// @ts-expect-error: markdown is injected by tiptap-markdown extension
-				(editor?.storage.markdown as MarkdownStorage)?.getMarkdown?.() ?? "",
 			scrollToHeading: (headingIndex: number) => {
 				if (!editor) return false;
 				const h2Nodes = editor.$nodes("heading", { level: HeadingLevels.H2 }) || [];

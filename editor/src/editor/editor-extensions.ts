@@ -9,7 +9,6 @@ import { FontFamily, FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { Typography } from "@tiptap/extension-typography";
 import { Selection } from "@tiptap/extensions";
 import { StarterKit } from "@tiptap/starter-kit";
-import { Markdown } from "tiptap-markdown";
 import { HorizontalRule } from "@/components/node/horizontal-rule-node/horizontal-rule-node-extension";
 import { ImageUploadNode } from "@/components/node/image-upload-node/image-upload-node-extension";
 import { handleImageUpload, MAX_FILE_SIZE } from "@/utils";
@@ -22,7 +21,6 @@ export const EditorExtensions = [
 			openOnClick: false,
 		},
 	}),
-	Markdown,
 	HorizontalRule,
 	TextAlign.configure({ types: ["heading", "paragraph"] }),
 	TaskList,
