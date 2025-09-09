@@ -13,12 +13,12 @@ const hashCode = (str: string) => {
 };
 
 interface OrganizationAvatarProps {
-	organizationName: string;
-	organizationId: string;
 	className?: string;
+	organizationId: string;
+	organizationName: string;
 }
 
-export function OrganizationAvatar({ organizationName, organizationId, className }: OrganizationAvatarProps) {
+export function OrganizationAvatar({ className, organizationId, organizationName }: OrganizationAvatarProps) {
 	const initials = generateInitials(organizationName, organizationId);
 	const colorIndex = hashCode(organizationId) % AVATAR_COLORS.length;
 	const colorClass = AVATAR_COLORS[colorIndex];
@@ -26,8 +26,8 @@ export function OrganizationAvatar({ organizationName, organizationId, className
 	return (
 		<div
 			className={`flex items-center justify-center  ${className}`}
-			style={{ backgroundColor: colorClass }}
 			data-test="organization-avatar"
+			style={{ backgroundColor: colorClass }}
 		>
 			<span className="font-medium text-app-black font-cabin leading-[30px] text-2xl">{initials}</span>
 		</div>
