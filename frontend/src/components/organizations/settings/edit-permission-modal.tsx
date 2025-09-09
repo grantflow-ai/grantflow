@@ -9,27 +9,27 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { API } from "@/types/api-types";
 
+export type CollaboratorPermission = Exclude<API.CreateOrganizationInvitation.RequestBody["role"], "OWNER">;
 export interface EditOptions {
 	email: string;
 	hasAllProjectsAccess?: boolean;
 	projectIds?: string[];
 	role: CollaboratorPermission;
 }
-export type CollaboratorPermission = Exclude<API.CreateOrganizationInvitation.RequestBody["role"], "OWNER">;
 
 interface EditPermissionModalProps {
 	isOpen: boolean;
-	onClose: () => void;
-	onEdit: (options: EditOptions) => Promise<void>;
-	ownerEmail?: string;
-	projects: ResearchProject[];
-	projectId?: string;
 	member: {
 		displayName?: string;
 		email?: string;
-		role: CollaboratorPermission;
 		projectAccess?: { project_id: string }[];
+		role: CollaboratorPermission;
 	} | null;
+	onClose: () => void;
+	onEdit: (options: EditOptions) => Promise<void>;
+	ownerEmail?: string;
+	projectId?: string;
+	projects: ResearchProject[];
 }
 
 interface ResearchProject {
@@ -39,12 +39,12 @@ interface ResearchProject {
 
 export function EditPermissionModal({
 	isOpen,
+	member,
 	onClose,
 	onEdit,
 	ownerEmail,
-	projects = [],
 	projectId,
-	member,
+	projects = [],
 }: EditPermissionModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
