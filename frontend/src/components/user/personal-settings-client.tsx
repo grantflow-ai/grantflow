@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { X } from "lucide-react";
+import {RefreshCw, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,9 +12,10 @@ import { useNotificationStore } from "@/stores/notification-store";
 import { useUserStore } from "@/stores/user-store";
 import { getFirebaseAuth } from "@/utils/firebase";
 import { generateBackgroundColor, generateInitials } from "@/utils/user";
+import {useAutoSave} from "@/hooks/use-auto-save"
 
 export function PersonalSettingsClient() {
-	const { clearUser, user } = useUserStore();
+	const { clearUser, user, updateDisplayName, updateProfilePhoto, deleteProfilePhoto } = useUserStore();
 	const { addNotification } = useNotificationStore();
 	const [displayName, setDisplayName] = useState(user?.displayName ?? "");
 	const [isUpdating, setIsUpdating] = useState(false);
@@ -31,7 +32,7 @@ export function PersonalSettingsClient() {
 		}
 	}, [user]);
 
-	const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
 
@@ -47,7 +48,8 @@ export function PersonalSettingsClient() {
 
 		setIsUploading(true);
 		try {
-			toast.success("Avatar upload functionality coming soon");
+			await updateProfilePhoto(file);
+			toast.success("Avatar upload successful");
 		} catch {
 			toast.error("Failed to upload avatar");
 		} finally {
@@ -59,12 +61,13 @@ export function PersonalSettingsClient() {
 		}
 	};
 
-	const handleSave = () => {
-		if (!user) return;
+	const handleSave = async () => {
+		if (!user || user.displayName === displayName) return;
 
 		setIsUpdating(true);
 		try {
-			toast.info("User profile update coming soon");
+			await updateDisplayName(displayName);
+			toast.info("User profile updated");
 		} catch {
 			toast.error("Failed to update profile");
 		} finally {
@@ -117,6 +120,21 @@ export function PersonalSettingsClient() {
 		}
 	};
 
+	const handleDeletePhoto = async () =>{
+		setIsUploading(true);
+		try {
+			await deleteProfilePhoto();
+			toast.success("Avatar removed successfully");
+		} catch {
+			toast.error("Failed to remove avatar");
+		} finally {
+			setIsUploading(false);
+		}
+	}
+
+
+
+	useAutoSave(handleSave, [displayName])
 	const userInitials = generateInitials(user?.displayName ?? undefined, user?.email ?? undefined);
 
 	return (
@@ -127,7 +145,7 @@ export function PersonalSettingsClient() {
 						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Profile Image</h3>
 						<div className="flex flex-col gap-3">
 							<button
-								className="size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors cursor-pointer hover:border-primary"
+								className="group size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors cursor-pointer hover:border-primary"
 								data-testid="user-avatar-container"
 								onClick={() => fileInputRef.current?.click()}
 								style={{
@@ -136,7 +154,32 @@ export function PersonalSettingsClient() {
 								type="button"
 							>
 								{user?.photoURL ? (
+									<>
+									
 									<Image alt="User Avatar" className="object-cover" fill src={user.photoURL} />
+									<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														fileInputRef.current?.click();
+													}}
+													type="button"
+													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												>
+													<RefreshCw className="text-white size-4" />
+												</button>
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														handleDeletePhoto();
+													}}
+													type="button"
+													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												>
+													<Trash2 className="text-white size-4" />
+												</button>
+											</div>
+									</>
 								) : (
 									<span className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
 										{userInitials}
@@ -194,12 +237,13 @@ export function PersonalSettingsClient() {
 						</div>
 						<div className="relative">
 							<input
-								className="w-full h-10 pl-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary"
+								className="w-full h-10 pl-3 pr-10 border border-app-gray-600 rounded bg-white text-[14px] font-body text-app-gray-600 placeholder:text-app-gray-600 focus:outline-none focus:border-primary cursor-not-allowed"
 								data-testid="user-email-input"
 								onChange={(e) => {
 									setEmail(e.target.value);
 								}}
 								placeholder="Email@address.com"
+								disabled
 								type="email"
 								value={email}
 							/>
@@ -266,18 +310,6 @@ export function PersonalSettingsClient() {
 						</button>
 					</div>
 				</div>
-			</div>
-
-			<div className="flex justify-end">
-				<button
-					className="cursor-pointer px-4 py-2 bg-primary text-white rounded font-button text-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-					data-testid="user-save-button"
-					disabled={isUpdating}
-					onClick={handleSave}
-					type="button"
-				>
-					{isUpdating ? "Saving..." : "Save Changes"}
-				</button>
 			</div>
 
 			<DeleteAccountModal

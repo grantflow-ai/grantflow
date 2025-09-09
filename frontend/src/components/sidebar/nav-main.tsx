@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import {listOrganizationApplications} from "@/actions/grant-applications"
+import { listOrganizationApplications } from "@/actions/grant-applications";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +23,10 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
 import type { API } from "@/types/api-types";
 import { routes } from "@/utils/navigation";
+import { group } from "console";
+import { DashboardIcon } from "../icons/dashboard-icon";
+import { NoteStackIcon } from "../icons/note-stack-icon";
+import { SettingsIcon } from "../icons/settings-icon";
 
 type ApplicationStatus = API.ListApplications.Http200.ResponseBody["applications"][0]["status"];
 
@@ -71,6 +75,8 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 	const isSettingsActive = pathname.startsWith("/organization/settings");
 	const { setOpen, state } = useSidebar();
 	const { selectedOrganizationId } = useOrganizationStore();
+	const [activeCollapsible, setActiveCollapsible] = useState<string | null>(isSettingsActive ? "settings" : null )
+	const isDashboardActive = pathname === routes.organization.root()
 	const [recentApplications, setRecentApplications] = useState<
 		API.ListOrganizationApplications.Http200.ResponseBody["applications"]
 	>([]);
@@ -105,29 +111,17 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 		<SidebarMenu {...props} className="flex flex-col gap-8 group-data-[collapsible=icon]:gap-6">
 			<SidebarMenuItem className="">
 				<SidebarMenuButton asChild className="text-primary" data-testid="dashboard-button" tooltip="Dashboard">
-					<Link className="flex items-center gap-2" href={routes.organization.project.detail()}>
-						<Image
-							alt="Dashboard"
-							className="size-4 shrink-0 group-data-[collapsible=icon]:hidden"
-							height={16}
-							src="/icons/dashboard.svg"
-							width={16}
-						/>
-						<Image
-							alt="Dashboard"
-							className="size-6 shrink-0 hidden group-data-[collapsible=icon]:block"
-							height={24}
-							src="/icons/dashboard-blue.svg"
-							width={24}
-						/>
-						<span className="group-data-[collapsible=icon]:hidden text-sm font-normal leading-5 text-app-black">
+					<Link className="flex items-center gap-2" href={routes.organization.root()}>
+						<DashboardIcon className={`size-4 shrink-0 group-data-[collapsible=icon]:hidden ${isDashboardActive?"text-primary":"text-app-gray-700"}`} />
+						<DashboardIcon className={`size-4 shrink-0 hidden group-data-[collapsible=icon]:block ${isDashboardActive?"text-primary":"text-app-black"}`} />
+						<span className={`group-data-[collapsible=icon]:hidden text-sm font-normal leading-5  ${isDashboardActive ? "text-primary": "text-app-black"}`}>
 							Dashboard
 						</span>
 					</Link>
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 
-			<Collapsible className="group/collapsible" defaultOpen>
+			<Collapsible className="group/collapsible" open={activeCollapsible === "applications"} onOpenChange={(isOpen)=> setActiveCollapsible(isOpen ? "applications" : null)}>
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
@@ -136,20 +130,8 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 							onClick={handleExpandSidebar}
 							tooltip="Recent Applications"
 						>
-							<Image
-								alt="Recent Applications"
-								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden group-data-[state=closed]/collapsible:hidden"
-								height={16}
-								src="/icons/note-stack-blue.svg"
-								width={16}
-							/>
-							<Image
-								alt="Recent Applications"
-								className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block group-data-[state=closed]/collapsible:block"
-								height={16}
-								src="/icons/note_stack.svg"
-								width={16}
-							/>
+							<NoteStackIcon className="size-4 shrink-0 group-data-[collapsible=icon]:hidden group-data-[state=closed]/collapsible:hidden text-primary" />
+							<NoteStackIcon className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block group-data-[state=closed]/collapsible:block text-app-gray-700" />
 							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal text-primary group-data-[state=closed]/collapsible:text-app-black">
 								Recent Applications
 							</span>
@@ -219,31 +201,35 @@ export function NavMain({ userRole, ...props }: NavMainProps) {
 					</CollapsibleContent>
 				</SidebarMenuItem>
 			</Collapsible>
-			<Collapsible className="group/collapsible" defaultOpen>
+			<Collapsible className="group/collapsible" open={activeCollapsible === "settings"} onOpenChange={(isOpen)=> setActiveCollapsible(isOpen ? "settings" : null )}>
 				<SidebarMenuItem className="flex flex-col gap-4">
 					<CollapsibleTrigger asChild>
 						<SidebarMenuButton
-							className="flex items-center gap-2 hover:!bg-transparent"
+							className="flex items-center gap-2 hover:!bg-transparent data-[active=true]:!bg-transparent"
 							data-testid="settings-trigger"
 							isActive={isSettingsActive}
 							onClick={handleExpandSidebar}
 							tooltip="Settings"
 						>
-							<Image
-								alt="Recent Applications"
-								className="size-4 shrink-0 group-data-[collapsible=icon]:hidden group-data-[state=closed]/collapsible:hidden"
-								height={16}
-								src="/icons/settings-blue.svg"
-								width={16}
+							<SettingsIcon
+								className={`size-4 shrink-0 group-data-[collapsible=icon]:hidden ${
+									isSettingsActive
+										? "text-primary"
+										: "text-primary group-data-[state=closed]/collapsible:text-app-gray-700"
+								}`}
 							/>
-							<Image
-								alt="Settings"
-								className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block group-data-[state=closed]/collapsible:block"
-								height={16}
-								src="/icons/settings.svg"
-								width={16}
+							<SettingsIcon
+								className={`size-4 shrink-0 hidden group-data-[collapsible=icon]:block ${
+									isSettingsActive ? "text-primary" : "text-app-gray-700"
+								}`}
 							/>
-							<span className="group-data-[collapsible=icon]:hidden text-sm font-normal text-primary group-data-[state=closed]/collapsible:text-app-black  ">
+							<span
+								className={`group-data-[collapsible=icon]:hidden text-sm font-normal ${
+									isSettingsActive
+										? "text-primary"
+										: "text-primary group-data-[state=closed]/collapsible:text-app-black"
+								}`}
+							>
 								Settings
 							</span>
 							<ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />

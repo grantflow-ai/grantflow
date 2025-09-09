@@ -44,7 +44,7 @@ export function EditPermissionModal({
 	ownerEmail,
 	projects = [],
 	projectId,
-	member
+	member,
 }: EditPermissionModalProps) {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -54,17 +54,14 @@ export function EditPermissionModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
-
-
-
-	useEffect(()=>{
-		if(member){
-			setName(member.displayName ?? "")
-			setEmail(member.email ?? "")
-			setPermission(member.role)
-			setSelectedProjects(member.projectAccess?.map((p) => p.project_id) ?? [])
+	useEffect(() => {
+		if (member) {
+			setName(member.displayName ?? "");
+			setEmail(member.email ?? "");
+			setPermission(member.role);
+			setSelectedProjects(member.projectAccess?.map((p) => p.project_id) ?? []);
 		}
-	}, [member])
+	}, [member]);
 	const handleSubmit = async () => {
 		if (!(email && permission)) return;
 
@@ -76,7 +73,7 @@ export function EditPermissionModal({
 			if (permission === "ADMIN") {
 				hasAllProjectsAccess = true;
 				projectIds = projects.map((project) => project.id);
-			} else if(projectId){
+			} else if (projectId) {
 				projectIds = [projectId];
 			} else {
 				projectIds = selectedProjects;
@@ -140,7 +137,7 @@ export function EditPermissionModal({
 					<div className="flex items-start justify-between">
 						<div className="flex flex-col gap-1">
 							<DialogTitle className="font-cabin font-medium text-2xl leading-[30px] text-app-black">
-								Edit Member Details 
+								Edit Member Details
 							</DialogTitle>
 							<DialogDescription className="font-body text-base font-normal text-app-gray-600">
 								Control access and permission levels across research projects.
@@ -240,93 +237,91 @@ export function EditPermissionModal({
 							</Select>
 						</div>
 
-						{
-							!projectId && (
+						{!projectId && (
+							<div className="flex flex-col gap-2">
+								<div className="flex flex-wrap items-center gap-2">
+									{selectedProjects.map((projectId) => {
+										const project = projects.find((p) => p.id === projectId);
+										if (!project) return null;
 
-						<div className="flex flex-col gap-2">
-							<div className="flex flex-wrap items-center gap-2">
-								{selectedProjects.map((projectId) => {
-									const project = projects.find((p) => p.id === projectId);
-									if (!project) return null;
-
-									return (
-										<div
-											className="flex items-center gap-1 px-2
+										return (
+											<div
+												className="flex items-center gap-1 px-2
 	  py-1 bg-secondary rounded-[20px] text-white text-[12px]
 	  font-body"
-											key={project.id}
-										>
-											<button
-												className="p-0 text-white"
-												onClick={() => {
-													handleRemoveProject(project.id);
-												}}
-												type="button"
-											>
-												<X className="size-3" />
-											</button>
-											<span> {project.name}</span>
-										</div>
-									);
-								})}
-							</div>
-							<div>
-								<label
-									className="font-body text-xs font-normal text-app-gray-400"
-									htmlFor="project-access"
-								>
-									Research Projects Access
-								</label>
-								<Select
-									onValueChange={(projectId) => {
-										if (projectId && !selectedProjects.includes(projectId)) {
-											setSelectedProjects([...selectedProjects, projectId]);
-										}
-									}}
-									value={projectAccess}
-								>
-									<SelectTrigger
-										className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 outline-none data-[state=open]:border-primary [&_svg]:opacity-100 [&_[data-placeholder]]:!text-black"
-										data-testid="project-access-dropdown"
-										id="project-access"
-									>
-										<div className="flex-1 text-left">
-											<span className={selectedProjects.length === 0 ? "text-app-gray-400" : ""}>
-												{selectedProjects.length > 0
-													? `${selectedProjects.length} project(s)
-	  selected`
-													: "Choose specific projects or grant access to all"}
-											</span>
-										</div>
-									</SelectTrigger>
-									<SelectContent className="border border-app-gray-200 bg-white">
-										{projects.map((project) => (
-											<SelectItem
-												className="px-3 py-2 cursor-pointer text-app-black text-[14px]"
 												key={project.id}
-												onSelect={(e) => {
-													e.preventDefault();
-												}}
-												value={project.id}
 											>
-												<div className="flex gap-1 items-center">
-													<Checkbox
-														checked={selectedProjects.includes(project.id)}
-														className="size-3 hover:border-white"
-														id={project.id}
-													/>
+												<button
+													className="p-0 text-white"
+													onClick={() => {
+														handleRemoveProject(project.id);
+													}}
+													type="button"
+												>
+													<X className="size-3" />
+												</button>
+												<span> {project.name}</span>
+											</div>
+										);
+									})}
+								</div>
+								<div>
+									<label
+										className="font-body text-xs font-normal text-app-gray-400"
+										htmlFor="project-access"
+									>
+										Research Projects Access
+									</label>
+									<Select
+										onValueChange={(projectId) => {
+											if (projectId && !selectedProjects.includes(projectId)) {
+												setSelectedProjects([...selectedProjects, projectId]);
+											}
+										}}
+										value={projectAccess}
+									>
+										<SelectTrigger
+											className="w-full h-10 px-3 border border-app-gray-300 rounded bg-white font-body text-[14px] text-app-gray-600 outline-none data-[state=open]:border-primary [&_svg]:opacity-100 [&_[data-placeholder]]:!text-black"
+											data-testid="project-access-dropdown"
+											id="project-access"
+										>
+											<div className="flex-1 text-left">
+												<span
+													className={selectedProjects.length === 0 ? "text-app-gray-400" : ""}
+												>
+													{selectedProjects.length > 0
+														? `${selectedProjects.length} project(s)
+	  selected`
+														: "Choose specific projects or grant access to all"}
+												</span>
+											</div>
+										</SelectTrigger>
+										<SelectContent className="border border-app-gray-200 bg-white">
+											{projects.map((project) => (
+												<SelectItem
+													className="px-3 py-2 cursor-pointer text-app-black text-[14px]"
+													key={project.id}
+													onSelect={(e) => {
+														e.preventDefault();
+													}}
+													value={project.id}
+												>
+													<div className="flex gap-1 items-center">
+														<Checkbox
+															checked={selectedProjects.includes(project.id)}
+															className="size-3 hover:border-white"
+															id={project.id}
+														/>
 
-													<label htmlFor={project.id}>{project.name}</label>
-												</div>
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+														<label htmlFor={project.id}>{project.name}</label>
+													</div>
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
 							</div>
-						</div>
-							)
-						}
-
+						)}
 					</div>
 
 					<div className="flex items-center justify-between">

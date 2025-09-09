@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +11,8 @@ import { useUserStore } from "@/stores/user-store";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { DeleteOrganizationModal } from "./delete-organization-modal";
+import { OrganizationAvatar } from "./organization-avatar";
+import { useAutoSave } from "@/hooks/use-auto-save";
 
 interface OrganizationSettingsGeneralProps {
 	organizationId: string;
@@ -83,7 +85,28 @@ export function OrganizationSettingsGeneral({
 		}
 	};
 
+	const handleLogoDelete = () => {
+		if (!canEdit) return;
+		toast.success("Logo delete functionality coming soon");
+	};
+
+	const handleLogoContainerClick = () => {
+		if (canEdit && !organization?.logo_url) {
+			fileInputRef.current?.click();
+		}
+	};
+
 	const handleSave = async () => {
+		if (
+			organization &&
+			organization.name === organizationName &&
+			organization.institutional_affiliation === institutionName &&
+			organization.contact_person_name === contactName &&
+			organization.contact_email === contactEmail
+		) {
+			return;
+		}
+
 		if (!(organizationId && canEdit)) return;
 
 		setIsUpdating(true);
@@ -105,34 +128,69 @@ export function OrganizationSettingsGeneral({
 		}
 	};
 
+	useAutoSave(handleSave, [organizationName, institutionName, contactName, contactEmail]);
+
 	return (
-		<div className="flex flex-col gap-10 max-w-[655px]" data-testid="organization-settings-general">
-			<div className="flex flex-col gap-6">
+		<div className="flex flex-col gap-10 max-w-[655px] px-6 " data-testid="organization-settings-general">
+			<div className="flex flex-col gap-6 ">
 				<div className="flex flex-col gap-2">
 					<h2 className="font-heading font-medium text-[24px] leading-[30px] text-app-black">
 						General Information
 					</h2>
 				</div>
 
-				<div className="flex flex-col gap-3 px-6">
+				<div className="flex flex-col gap-3  ">
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-semibold text-[16px] leading-[22px] text-app-black">Logo</h3>
 						<div className="flex flex-col gap-3">
 							<button
-								className={`size-[93px] rounded bg-app-gray-100 border-2 border-dashed border-app-gray-300 flex items-center justify-center relative overflow-hidden transition-colors ${
+								className={`group w-[93px] h-[95px] rounded bg-preview-bg  flex items-center justify-center relative overflow-hidden transition-colors ${
 									canEdit ? "cursor-pointer hover:border-primary" : "cursor-not-allowed opacity-60"
-								}`}
+								} ${organization?.logo_url ? "" : "border border-dashed border-app-gray-100"}`}
 								data-testid="organization-logo-container"
 								disabled={!canEdit}
-								onClick={() => canEdit && fileInputRef.current?.click()}
+								onClick={handleLogoContainerClick}
 								type="button"
 							>
 								{organization?.logo_url ? (
-									<Image
-										alt="Organization Logo"
-										className="object-cover"
-										fill
-										src={organization.logo_url}
+									<>
+										<Image
+											alt="Organization Logo"
+											className="object-cover"
+											fill
+											src={organization.logo_url}
+										/>
+
+										{canEdit && (
+											<div className="absolute inset-0 bg-app-black/80 hidden group-hover:flex gap-[9px] justify-center items-center">
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														fileInputRef.current?.click();
+													}}
+													type="button"
+													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												>
+													<RefreshCw className="text-white size-4" />
+												</button>
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														handleLogoDelete();
+													}}
+													type="button"
+													className="bg-primary size-6 p-1 rounded-xs cursor-pointer"
+												>
+													<Trash2 className="text-white size-4" />
+												</button>
+											</div>
+										)}
+									</>
+								) : organization?.name ? (
+									<OrganizationAvatar
+										className="size-full"
+										organizationName={organization.name}
+										organizationId={organization.id}
 									/>
 								) : (
 									<Plus className="size-4 text-app-gray-700" />
@@ -197,12 +255,12 @@ export function OrganizationSettingsGeneral({
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-6">
+			<div className="flex flex-col gap-6 ">
 				<div className="flex flex-col gap-2">
 					<h2 className="font-medium text-[24px] leading-[30px] text-app-black">Primary Contact</h2>
 				</div>
 
-				<div className="flex flex-col gap-3 px-6">
+				<div className="flex flex-col gap-3">
 					<div className="flex flex-col gap-3 w-[340px]">
 						<h3 className="font-heading font-semibold text-[16px] leading-[22px] text-app-black">
 							Contact Person Name
@@ -283,20 +341,6 @@ export function OrganizationSettingsGeneral({
 							</button>
 						</div>
 					</div>
-				</div>
-			)}
-
-			{canEdit && (
-				<div className="flex justify-end">
-					<button
-						className="px-4 py-2 bg-primary text-white rounded font-button text-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-						data-testid="organization-save-button"
-						disabled={isUpdating}
-						onClick={handleSave}
-						type="button"
-					>
-						{isUpdating ? "Saving..." : "Save Changes"}
-					</button>
 				</div>
 			)}
 
