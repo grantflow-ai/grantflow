@@ -8,6 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     g++ \
     libpq-dev \
+    libpango1.0-dev \
+    libcairo2-dev \
+    libgdk-pixbuf2.0-dev \
+    libffi-dev \
+    shared-mime-info \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 COPY pyproject.toml uv.lock ./
 COPY services/backend/pyproject.toml services/backend/pyproject.toml
