@@ -7,8 +7,8 @@ from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.src.api.routes.user import (
-    USER_DELETION_GRACE_PERIOD_DAYS,
     DeleteUserResponse,
+    get_user_deletion_grace_period,
 )
 from services.backend.tests.conftest import TestingClientType
 
@@ -20,7 +20,7 @@ async def test_delete_user_success(
 ) -> None:
     from datetime import UTC, datetime, timedelta
 
-    datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
+    datetime.now(UTC).replace(tzinfo=None) + timedelta(days=get_user_deletion_grace_period())
 
     mocker.patch(
         "services.backend.src.api.routes.user.get_user_deletion_status",
@@ -32,10 +32,11 @@ async def test_delete_user_success(
     assert response.status_code == 200, response.text
 
     result = response.json()
+    grace_period = get_user_deletion_grace_period()
     expected_response: DeleteUserResponse = {
-        "grace_period_days": USER_DELETION_GRACE_PERIOD_DAYS,
+        "grace_period_days": grace_period,
         "message": "Account scheduled for deletion. You will be removed from all projects immediately.",
-        "restoration_info": f"Contact support within {USER_DELETION_GRACE_PERIOD_DAYS} days to restore your account",
+        "restoration_info": f"Contact support within {grace_period} days to restore your account",
     }
 
     assert result == expected_response
@@ -148,14 +149,14 @@ async def test_delete_user_with_multiple_owners(
         return_value=None,
     )
 
-    deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
+    deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=get_user_deletion_grace_period())
     mock_schedule = mocker.patch(
         "services.backend.src.api.routes.user.schedule_user_deletion",
         return_value={
             "firebase_uid": firebase_uid,
             "status": "scheduled",
             "deletion_date": deletion_date,
-            "grace_period_days": USER_DELETION_GRACE_PERIOD_DAYS,
+            "grace_period_days": get_user_deletion_grace_period(),
         },
     )
 

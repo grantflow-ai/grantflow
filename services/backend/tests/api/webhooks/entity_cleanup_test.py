@@ -11,7 +11,7 @@ from litestar.status_codes import HTTP_201_CREATED, HTTP_401_UNAUTHORIZED, HTTP_
 from litestar.testing import AsyncTestClient
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization, OrganizationUser
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
@@ -69,7 +69,6 @@ async def expired_user(
         session.add(user)
         await session.commit()
 
-        # Soft delete the user with old timestamp
         await session.execute(
             text("UPDATE organization_users SET deleted_at = NOW() - INTERVAL '15 days' WHERE firebase_uid = :uid"),
             {"uid": user.firebase_uid},
@@ -93,7 +92,6 @@ async def recently_deleted_user(
         session.add(user)
         await session.commit()
 
-        # Soft delete the user with recent timestamp
         await session.execute(
             text("UPDATE organization_users SET deleted_at = NOW() - INTERVAL '5 days' WHERE firebase_uid = :uid"),
             {"uid": user.firebase_uid},
@@ -346,7 +344,6 @@ async def test_entity_cleanup_webhook_mixed_entities(
 async def test_entity_cleanup_webhook_database_error(
     entity_cleanup_test_client: AsyncTestClient[Any],
 ) -> None:
-    # Test top-level error handling by mocking the entire cleanup function
     with patch(
         "services.backend.src.api.webhooks.entity_cleanup._cleanup_expired_users",
         side_effect=Exception("Database connection failed"),
@@ -433,3 +430,73 @@ async def test_entity_cleanup_webhook_custom_organization_grace_period(
             assert data["organization_cleanup"]["processed"] == 1
         else:
             assert data["organization_cleanup"]["processed"] == 0
+
+
+async def test_login_restoration_and_webhook_cleanup_integration(
+    async_session_maker: async_sessionmaker[Any],
+    organization: Organization,
+    mock_firebase_delete_user: AsyncMock,
+) -> None:
+    from datetime import UTC, datetime
+
+    from services.backend.src.api.webhooks.entity_cleanup import _cleanup_expired_users
+
+    firebase_uid = f"integration-test-{uuid4().hex[:8]}"
+
+    async with async_session_maker() as session, session.begin():
+        user = OrganizationUser(
+            firebase_uid=firebase_uid,
+            organization_id=organization.id,
+            role=UserRoleEnum.COLLABORATOR,
+        )
+        session.add(user)
+        await session.flush()
+
+        await session.execute(
+            text("UPDATE organization_users SET deleted_at = NOW() - INTERVAL '5 days' WHERE firebase_uid = :uid"),
+            {"uid": firebase_uid},
+        )
+
+    async with async_session_maker() as session, session.begin():
+        soft_deleted_users = await session.execute(
+            select(OrganizationUser).where(
+                OrganizationUser.firebase_uid == firebase_uid, OrganizationUser.deleted_at.isnot(None)
+            )
+        )
+        soft_deleted_list = soft_deleted_users.scalars().all()
+
+        if soft_deleted_list:
+            from sqlalchemy import update
+
+            await session.execute(
+                update(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid).values(deleted_at=None)
+            )
+
+    async with async_session_maker() as session:
+        restored_user = await session.scalar(
+            select(OrganizationUser).where(
+                OrganizationUser.firebase_uid == firebase_uid, OrganizationUser.deleted_at.is_(None)
+            )
+        )
+        assert restored_user is not None, "User should be restored after login"
+
+    async with async_session_maker() as session, session.begin():
+        await session.execute(
+            text("UPDATE organization_users SET deleted_at = NOW() - INTERVAL '15 days' WHERE firebase_uid = :uid"),
+            {"uid": firebase_uid},
+        )
+
+    cleanup_results = await _cleanup_expired_users(async_session_maker, datetime.now(UTC).replace(tzinfo=None))
+
+    assert cleanup_results["processed"] == 1
+    assert cleanup_results["errors"] == []
+    assert len(cleanup_results["deleted_users"]) == 1
+    assert cleanup_results["deleted_users"][0]["firebase_uid"] == firebase_uid
+
+    mock_firebase_delete_user.assert_called_once_with(firebase_uid)
+
+    async with async_session_maker() as session:
+        deleted_user = await session.scalar(
+            select(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid)
+        )
+        assert deleted_user is None, "User should be completely removed after webhook cleanup"

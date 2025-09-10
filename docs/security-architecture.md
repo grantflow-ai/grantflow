@@ -80,12 +80,12 @@ GrantFlow follows defense-in-depth security principles with multiple layers of p
 - **Audit logging** for sensitive operations
 
 ### Automated Data Cleanup
-- **User Cleanup Function** (`fn-cleanup-{environment}`):
-  - Runs daily at 2 AM UTC via Cloud Scheduler
+- **Entity Cleanup Webhook** (`/webhooks/scheduler/entity-cleanup`):
+  - Triggered daily at 2 AM UTC via Cloud Scheduler HTTP target
   - 10-day grace period for soft-deleted users
   - 30-day grace period for soft-deleted organizations
-  - Hard deletes from Firebase Auth and database
-  - Monitoring alerts for cleanup failures
+  - Hard deletes from Firebase Auth and database after grace period
+  - Monitoring alerts for webhook failures
 - **Soft Delete Pattern**:
   - Users/organizations marked with `deleted_at` timestamp
   - Grace period allows recovery if needed
