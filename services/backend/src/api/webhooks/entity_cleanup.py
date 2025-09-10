@@ -45,22 +45,8 @@ async def _hard_delete_user_from_firebase(firebase_uid: str) -> None:
         raise
 
 
-async def _hard_delete_user_from_database(session: AsyncSession, firebase_uid: str) -> None:
-    await session.execute(delete(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid))
-
-    await session.execute(
-        text("DELETE FROM notifications WHERE firebase_uid = :uid"),
-        {"uid": firebase_uid},
-    )
-
-    await session.execute(
-        text("DELETE FROM project_access WHERE firebase_uid = :uid"),
-        {"uid": firebase_uid},
-    )
-
-
 async def _cleanup_expired_users(session_maker: async_sessionmaker[Any], now: datetime) -> UserCleanupResult:
-    user_grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", False) or "10")
+    user_grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
     cutoff_date = now - timedelta(days=user_grace_period_days)
 
     results = UserCleanupResult(processed=0, errors=[], deleted_users=[])
@@ -70,36 +56,64 @@ async def _cleanup_expired_users(session_maker: async_sessionmaker[Any], now: da
             OrganizationUser.deleted_at.isnot(None), OrganizationUser.deleted_at <= cutoff_date
         )
 
-        expired_users = await session.scalars(stmt)
+        expired_users = list(await session.scalars(stmt))
 
-        for user in expired_users:
-            firebase_uid = user.firebase_uid
-            deleted_at = user.deleted_at
+        firebase_uids = [user.firebase_uid for user in expired_users]
+        firebase_errors = []
 
+        for firebase_uid in firebase_uids:
             try:
                 await _hard_delete_user_from_firebase(firebase_uid)
-                await _hard_delete_user_from_database(session, firebase_uid)
+            except Exception as e:
+                firebase_errors.append((firebase_uid, str(e)))
+
+        successful_firebase_uids = [uid for uid in firebase_uids if uid not in [err[0] for err in firebase_errors]]
+
+        if successful_firebase_uids:
+            try:
+                await session.execute(
+                    text("DELETE FROM notifications WHERE firebase_uid = ANY(:uids)"),
+                    {"uids": successful_firebase_uids},
+                )
+
+                await session.execute(
+                    text("DELETE FROM project_access WHERE firebase_uid = ANY(:uids)"),
+                    {"uids": successful_firebase_uids},
+                )
+
+                await session.execute(
+                    delete(OrganizationUser).where(OrganizationUser.firebase_uid.in_(successful_firebase_uids))
+                )
+
                 await session.commit()
 
-                results["processed"] += 1
-                results["deleted_users"].append(
-                    {
-                        "firebase_uid": firebase_uid,
-                        "deleted_at": deleted_at.isoformat() if deleted_at else "",
-                        "hard_deleted_at": now.isoformat(),
-                    }
-                )
+                for user in expired_users:
+                    if user.firebase_uid in successful_firebase_uids:
+                        results["processed"] += 1
+                        results["deleted_users"].append(
+                            {
+                                "firebase_uid": user.firebase_uid,
+                                "deleted_at": user.deleted_at.isoformat() if user.deleted_at else "",
+                                "hard_deleted_at": now.isoformat(),
+                            }
+                        )
 
-                logger.info(
-                    "Successfully hard deleted user",
-                    firebase_uid=firebase_uid,
-                    deleted_at=deleted_at,
-                )
+                        logger.info(
+                            "Successfully hard deleted user",
+                            firebase_uid=user.firebase_uid,
+                            deleted_at=user.deleted_at,
+                        )
 
             except Exception as e:
-                error_msg = f"Failed to hard delete user {firebase_uid}: {e!s}"
+                await session.rollback()
+                error_msg = f"Failed to batch delete users from database: {e!s}"
                 results["errors"].append(error_msg)
-                logger.error(error_msg, firebase_uid=firebase_uid, error=str(e))
+                logger.error(error_msg, error=str(e), user_count=len(successful_firebase_uids))
+
+        for firebase_uid, error in firebase_errors:
+            error_msg = f"Failed to hard delete user {firebase_uid}: {error}"
+            results["errors"].append(error_msg)
+            logger.error(error_msg, firebase_uid=firebase_uid, error=error)
 
     return results
 
@@ -213,7 +227,7 @@ async def _delete_organization_data(session: AsyncSession, organization_id: str)
 async def _cleanup_expired_organizations(
     session_maker: async_sessionmaker[Any], now: datetime
 ) -> OrganizationCleanupResult:
-    org_grace_period_days = int(get_env("ORGANIZATION_DELETION_GRACE_PERIOD_DAYS", False) or "30")
+    org_grace_period_days = int(get_env("ORGANIZATION_DELETION_GRACE_PERIOD_DAYS", fallback="30"))
     cutoff_date = now - timedelta(days=org_grace_period_days)
 
     results = OrganizationCleanupResult(processed=0, errors=[], deleted_organizations=[])

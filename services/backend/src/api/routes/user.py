@@ -5,6 +5,7 @@ from litestar.exceptions import HTTPException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization
 from packages.db.src.tables import OrganizationUser as ProjectMember
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -17,7 +18,8 @@ from services.backend.src.utils.firebase import (
 logger = get_logger(__name__)
 
 
-USER_DELETION_GRACE_PERIOD_DAYS = 10
+def get_user_deletion_grace_period() -> int:
+    return int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
 
 
 class DeleteUserResponse(TypedDict):
@@ -104,7 +106,6 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
                 )
 
         async with session_maker() as session, session.begin():
-            # Soft delete user from organizations instead of hard delete
             result = await session.execute(
                 text(
                     "UPDATE organization_users SET deleted_at = NOW() WHERE firebase_uid = :uid AND deleted_at IS NULL"
@@ -119,16 +120,17 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
                 organizations_soft_deleted=organizations_soft_deleted,
             )
 
+        grace_period_days = get_user_deletion_grace_period()
         logger.info(
             "User deletion scheduled successfully",
             firebase_uid=firebase_uid,
-            grace_period_days=USER_DELETION_GRACE_PERIOD_DAYS,
+            grace_period_days=grace_period_days,
         )
 
         return {
             "message": "Account scheduled for deletion. You will be removed from all projects immediately.",
-            "grace_period_days": USER_DELETION_GRACE_PERIOD_DAYS,
-            "restoration_info": f"Contact support within {USER_DELETION_GRACE_PERIOD_DAYS} days to restore your account",
+            "grace_period_days": grace_period_days,
+            "restoration_info": f"Contact support within {grace_period_days} days to restore your account",
         }
 
     except HTTPException:
