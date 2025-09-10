@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdk-pixbuf2.0-dev \
     libffi-dev \
     shared-mime-info \
+    libgobject-2.0-0 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf-2.0-0 \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 FROM base AS install
