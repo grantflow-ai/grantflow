@@ -43,6 +43,23 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
     firebase_uid = decoded_token["uid"]
 
     async with session_maker() as session, session.begin():
+        # Restore user if they were soft-deleted (grace period)
+        soft_deleted_users = await session.execute(
+            select(OrganizationUser).where(
+                OrganizationUser.firebase_uid == firebase_uid, OrganizationUser.deleted_at.isnot(None)
+            )
+        )
+        soft_deleted_list = soft_deleted_users.scalars().all()
+
+        if soft_deleted_list:
+            await session.execute(
+                update(OrganizationUser).where(OrganizationUser.firebase_uid == firebase_uid).values(deleted_at=None)
+            )
+            logger.info(
+                "Restored soft-deleted user during login",
+                firebase_uid=firebase_uid,
+                restored_organizations=len(soft_deleted_list),
+            )
         result = await session.execute(
             select(OrganizationUser, Organization.updated_at)
             .join(Organization, OrganizationUser.organization_id == Organization.id)
