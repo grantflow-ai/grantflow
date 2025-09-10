@@ -13,13 +13,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.backend.src.common_types import APIRequest
 from services.backend.src.utils.firebase import (
     get_user_deletion_status,
+    schedule_user_deletion,
 )
 
 logger = get_logger(__name__)
-
-
-def get_user_deletion_grace_period() -> int:
-    return int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
 
 
 class DeleteUserResponse(TypedDict):
@@ -120,7 +117,9 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
                 organizations_soft_deleted=organizations_soft_deleted,
             )
 
-        grace_period_days = get_user_deletion_grace_period()
+        grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
+        await schedule_user_deletion(firebase_uid, grace_period_days)
+
         logger.info(
             "User deletion scheduled successfully",
             firebase_uid=firebase_uid,
