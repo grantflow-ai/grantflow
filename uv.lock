@@ -95,7 +95,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "0.66.0"
+version = "0.67.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -106,9 +106,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/50/daa51c035e6a941f7b8034705796c7643443a85f5381cb41a797757fc6d3/anthropic-0.66.0.tar.gz", hash = "sha256:5aa8b18da57dc27d83fc1d82c9fb860977e5adfae3e0c215d7ab2ebd70afb9cb", size = 436933, upload-time = "2025-09-03T14:55:40.879Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/09/08/ee91464cd821e6fca52d9a23be44815c95edd3c1cf1e844b2c5e85f0d57f/anthropic-0.67.0.tar.gz", hash = "sha256:d1531b210ea300c73423141d29bcee20fcd24ef9f426f6437c0a5d93fc98fb8e", size = 441639, upload-time = "2025-09-10T14:47:18.137Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/6a/d4ec7de9cc88b9a39c74dab1db259203b29b17fc564ecd1f92991678bd1e/anthropic-0.66.0-py3-none-any.whl", hash = "sha256:67b8cd4486f3cdd09211598dc5325cc8e4e349c106a03041231d551603551c06", size = 308035, upload-time = "2025-09-03T14:55:39.109Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/9d/9adbda372710918cc8271d089a2ceae4d977a125f90bc3c4b456bca4f281/anthropic-0.67.0-py3-none-any.whl", hash = "sha256:f80a81ec1132c514215f33d25edeeab1c4691ad5361b391ebb70d528b0605b55", size = 317126, upload-time = "2025-09-10T14:47:16.351Z" },
 ]
 
 [[package]]
@@ -1213,20 +1213,11 @@ name = "grantflow-cloud-functions"
 version = "0.1.0"
 source = { virtual = "functions" }
 dependencies = [
-    { name = "asyncpg" },
     { name = "cloudevents" },
-    { name = "db" },
     { name = "firebase-admin" },
     { name = "firebase-functions" },
     { name = "functions-framework" },
-    { name = "google-cloud-firestore" },
-    { name = "google-cloud-pubsub" },
     { name = "httpx" },
-    { name = "jinja2" },
-    { name = "markdown" },
-    { name = "python-docx" },
-    { name = "shared-utils", extra = ["ai", "gcs", "pubsub"] },
-    { name = "sqlalchemy" },
 ]
 
 [package.dev-dependencies]
@@ -1236,20 +1227,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "asyncpg", specifier = ">=0.29" },
     { name = "cloudevents", specifier = ">=1.10" },
-    { name = "db", editable = "packages/db" },
     { name = "firebase-admin", specifier = ">=6.5" },
     { name = "firebase-functions", specifier = ">=0.4.3" },
     { name = "functions-framework", specifier = ">=3.5" },
-    { name = "google-cloud-firestore", specifier = ">=2.11" },
-    { name = "google-cloud-pubsub", specifier = ">=2.18" },
     { name = "httpx", specifier = ">=0.27" },
-    { name = "jinja2", specifier = ">=3.1" },
-    { name = "markdown", specifier = ">=3.5" },
-    { name = "python-docx", specifier = ">=1.1" },
-    { name = "shared-utils", extras = ["ai", "gcs", "pubsub"], editable = "packages/shared_utils" },
-    { name = "sqlalchemy", specifier = ">=2" },
 ]
 
 [package.metadata.requires-dev]

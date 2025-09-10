@@ -56,11 +56,6 @@ output "monthly_budget_amount" {
   value       = var.monthly_budget_amount
 }
 
-output "entity_cleanup_function_name" {
-  description = "Name of the entity cleanup Cloud Function"
-  value       = google_cloudfunctions2_function.entity_cleanup.name
-}
-
 output "entity_cleanup_schedule" {
   description = "Schedule for entity cleanup job"
   value       = google_cloud_scheduler_job.entity_cleanup_daily.schedule
