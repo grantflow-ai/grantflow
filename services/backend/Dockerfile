@@ -1,9 +1,5 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS base
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
-
-FROM base AS install
-WORKDIR /app/
-ENV UV_LINK_MODE=copy
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     g++ \
@@ -14,6 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     shared-mime-info \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+FROM base AS install
+WORKDIR /app/
+ENV UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
 COPY services/backend/pyproject.toml services/backend/pyproject.toml
 COPY packages packages
@@ -22,17 +22,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM base AS app
 WORKDIR /app/
-
-# Install runtime dependencies for WeasyPrint
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpango-1.0-0 \
-    libcairo2 \
-    libgdk-pixbuf-2.0-0 \
-    libffi8 \
-    libglib2.0-0 \
-    libgobject-2.0-0 \
-    shared-mime-info \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/backend/src/ /app/services/backend/src/
