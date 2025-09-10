@@ -1,7 +1,8 @@
 import { ApplicationCardDataFactory, ListApplicationsResponseFactory, ProjectFactory } from "::testing/factories";
 import { act, cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, vi } from "vitest";
-import { listApplications } from "@/actions/grant-applications";
+import { listOrganizationApplications } from "@/actions/grant-applications";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { useOrganizationStore } from "@/stores/organization-store";
@@ -47,13 +48,14 @@ describe("NavMain", () => {
 			const mockApplications = ListApplicationsResponseFactory.build({
 				applications: ApplicationCardDataFactory.batch(7),
 			});
-			vi.mocked(listApplications).mockResolvedValue(mockApplications);
+			vi.mocked(listOrganizationApplications).mockResolvedValue(mockApplications);
 
 			render(
 				<SidebarProvider>
 					<NavMain userRole="OWNER" />
 				</SidebarProvider>,
 			);
+			await userEvent.click(screen.getByTestId("recent-applications-trigger"));
 			expect(await screen.findByTestId("search-input")).toBeInTheDocument();
 		});
 
@@ -61,13 +63,14 @@ describe("NavMain", () => {
 			const mockApplications = ListApplicationsResponseFactory.build({
 				applications: ApplicationCardDataFactory.batch(5),
 			});
-			vi.mocked(listApplications).mockResolvedValue(mockApplications);
+			vi.mocked(listOrganizationApplications).mockResolvedValue(mockApplications);
 
 			render(
 				<SidebarProvider>
 					<NavMain userRole="OWNER" />
 				</SidebarProvider>,
 			);
+			await userEvent.click(screen.getByTestId("recent-applications-trigger"));
 			await screen.findByText(mockApplications.applications[0].title);
 			expect(screen.queryByTestId("search-input")).not.toBeInTheDocument();
 		});
@@ -78,38 +81,41 @@ describe("NavMain", () => {
 			const mockApplications = ListApplicationsResponseFactory.build({
 				applications: [],
 			});
-			vi.mocked(listApplications).mockResolvedValue(mockApplications);
+			vi.mocked(listOrganizationApplications).mockResolvedValue(mockApplications);
 		});
 
-		it("shows all settings links for OWNER role", () => {
+		it("shows all settings links for OWNER role", async () => {
 			render(
 				<SidebarProvider>
 					<NavMain userRole="OWNER" />
 				</SidebarProvider>,
 			);
+			await userEvent.click(screen.getByTestId("settings-trigger"));
 			expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-notifications")).toBeInTheDocument();
 		});
 
-		it("hides billing and members links for COLLABORATOR role", () => {
+		it("hides billing and members links for COLLABORATOR role", async () => {
 			render(
 				<SidebarProvider>
 					<NavMain userRole="COLLABORATOR" />
 				</SidebarProvider>,
 			);
+			await userEvent.click(screen.getByTestId("settings-trigger"));
 			expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
 			expect(screen.queryByTestId("organization-settings-billing")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("organization-settings-members")).not.toBeInTheDocument();
 		});
 
-		it("shows billing and members links for ADMIN role", () => {
+		it("shows billing and members links for ADMIN role", async () => {
 			render(
 				<SidebarProvider>
 					<NavMain userRole="ADMIN" />
 				</SidebarProvider>,
 			);
+			await userEvent.click(screen.getByTestId("settings-trigger"));
 			expect(screen.getByTestId("organization-settings-account")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-billing")).toBeInTheDocument();
 			expect(screen.getByTestId("organization-settings-members")).toBeInTheDocument();
