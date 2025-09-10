@@ -5,6 +5,7 @@ from litestar.exceptions import HTTPException
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import Organization
 from packages.db.src.tables import OrganizationUser as ProjectMember
+from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -18,12 +19,8 @@ from services.backend.src.utils.firebase import (
 logger = get_logger(__name__)
 
 
-USER_DELETION_GRACE_PERIOD_DAYS = 10
-
-
 class DeleteUserResponse(TypedDict):
     message: str
-    scheduled_deletion_date: str
     grace_period_days: int
     restoration_info: str
 
@@ -107,35 +104,32 @@ async def delete_user(request: APIRequest, session_maker: async_sessionmaker[Any
 
         async with session_maker() as session, session.begin():
             result = await session.execute(
-                text("DELETE FROM organization_users WHERE firebase_uid = :uid"),
+                text(
+                    "UPDATE organization_users SET deleted_at = NOW() WHERE firebase_uid = :uid AND deleted_at IS NULL"
+                ),
                 {"uid": firebase_uid},
             )
-            organizations_removed = result.rowcount
-
-            await session.execute(
-                text("DELETE FROM notifications WHERE firebase_uid = :uid"),
-                {"uid": firebase_uid},
-            )
+            organizations_soft_deleted = result.rowcount
 
             logger.info(
-                "Removed user from organizations",
+                "Soft deleted user from organizations",
                 firebase_uid=firebase_uid,
-                organizations_removed=organizations_removed,
+                organizations_soft_deleted=organizations_soft_deleted,
             )
 
-        deletion_data = await schedule_user_deletion(firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS)
+        grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
+        await schedule_user_deletion(firebase_uid, grace_period_days)
 
         logger.info(
             "User deletion scheduled successfully",
             firebase_uid=firebase_uid,
-            deletion_date=deletion_data["deletion_date"].isoformat(),
+            grace_period_days=grace_period_days,
         )
 
         return {
             "message": "Account scheduled for deletion. You will be removed from all projects immediately.",
-            "scheduled_deletion_date": deletion_data["deletion_date"].isoformat() + "Z",
-            "grace_period_days": deletion_data["grace_period_days"],
-            "restoration_info": f"Contact support within {deletion_data['grace_period_days']} days to restore your account",
+            "grace_period_days": grace_period_days,
+            "restoration_info": f"Contact support within {grace_period_days} days to restore your account",
         }
 
     except HTTPException:
