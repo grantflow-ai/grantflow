@@ -106,3 +106,9 @@ variable "email_notifications_ack_deadline" {
   type        = number
   default     = 60
 }
+
+variable "pubsub_webhook_token" {
+  description = "Authentication token for PubSub webhook endpoints"
+  type        = string
+  sensitive   = true
+}

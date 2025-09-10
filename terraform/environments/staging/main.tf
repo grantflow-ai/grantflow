@@ -148,6 +148,7 @@ module "pubsub" {
 
   backend_service_account_email    = module.iam.backend_service_account_email
   email_notifications_ack_deadline = 60 # ~keep 1 minute for email notifications
+  pubsub_webhook_token             = data.google_secret_manager_secret_version.pubsub_webhook_token.secret_data
 }
 
 module "scheduler" {

@@ -4,7 +4,6 @@ from services.backend.tests.conftest import TestingClientType
 
 
 async def test_convert_file_pdf(test_client: TestingClientType) -> None:
-    """Test converting HTML to PDF format."""
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},
@@ -22,7 +21,6 @@ async def test_convert_file_pdf(test_client: TestingClientType) -> None:
 
 
 async def test_convert_file_docx(test_client: TestingClientType) -> None:
-    """Test converting HTML to DOCX format."""
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},
@@ -40,7 +38,6 @@ async def test_convert_file_docx(test_client: TestingClientType) -> None:
 
 
 async def test_convert_file_empty_html(test_client: TestingClientType) -> None:
-    """Test converting empty HTML content."""
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},
@@ -57,7 +54,6 @@ async def test_convert_file_empty_html(test_client: TestingClientType) -> None:
 
 
 async def test_convert_file_unauthenticated(test_client: TestingClientType) -> None:
-    """Test unauthenticated api call"""
     response = await test_client.post(
         "/files/convert",
         json={
@@ -71,7 +67,6 @@ async def test_convert_file_unauthenticated(test_client: TestingClientType) -> N
 
 
 async def test_convert_file_filename_without_extension(test_client: TestingClientType) -> None:
-    """Test converting with filename that doesn't have the correct extension."""
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},
@@ -88,7 +83,6 @@ async def test_convert_file_filename_without_extension(test_client: TestingClien
 
 
 async def test_convert_file_pdf_memory_error(test_client: TestingClientType) -> None:
-    """Test PDF conversion with memory error."""
     with patch("services.backend.src.api.routes.files.html_to_pdf") as mock_html_to_pdf:
         mock_html_to_pdf.side_effect = MemoryError("Out of memory")
 
@@ -108,7 +102,6 @@ async def test_convert_file_pdf_memory_error(test_client: TestingClientType) -> 
 
 
 async def test_convert_file_invalid_output_format(test_client: TestingClientType) -> None:
-    """Test with invalid output format."""
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},
@@ -125,7 +118,6 @@ async def test_convert_file_invalid_output_format(test_client: TestingClientType
 
 
 async def test_convert_file_missing_required_fields(test_client: TestingClientType) -> None:
-    """Test with missing required fields."""
     response = await test_client.post(
         "/files/convert",
         headers={"Authorization": "Bearer test-token"},
@@ -134,4 +126,4 @@ async def test_convert_file_missing_required_fields(test_client: TestingClientTy
         },
     )
 
-    assert response.status_code == 400  # Validation error
+    assert response.status_code == 400
