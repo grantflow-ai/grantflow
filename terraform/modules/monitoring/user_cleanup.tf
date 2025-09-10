@@ -1,169 +1,8 @@
+# Entity cleanup webhook configuration
+# Scheduled task to cleanup expired users and organizations
 
-# ~keep Default encryption is acceptable for function source code
-resource "google_storage_bucket" "entity_cleanup_functions" {
-  name                        = "${var.project_id}-entity-cleanup-functions"
-  location                    = "US"
-  force_destroy               = true
-  uniform_bucket_level_access = true
-
-  dynamic "encryption" {
-    for_each = var.enable_kms_encryption ? [1] : []
-    content {
-      default_kms_key_name = google_kms_crypto_key.monitoring_bucket_key[0].id
-    }
-  }
-
-  lifecycle_rule {
-    condition {
-      age = 7
-    }
-    action {
-      type = "Delete"
-    }
-  }
-}
-
-data "archive_file" "entity_cleanup_source" {
-  type        = "zip"
-  output_path = "${path.module}/entity-cleanup-function.zip"
-
-  source {
-    content  = file("${path.root}/../functions/src/user_cleanup/main.py")
-    filename = "main.py"
-  }
-
-  source {
-    content  = file("${path.module}/../../../functions/requirements.txt")
-    filename = "requirements.txt"
-  }
-}
-
-resource "google_storage_bucket_object" "entity_cleanup_source" {
-  name   = "entity-cleanup-function-${data.archive_file.entity_cleanup_source.output_md5}.zip"
-  bucket = google_storage_bucket.entity_cleanup_functions.name
-  source = data.archive_file.entity_cleanup_source.output_path
-}
-
-resource "google_service_account" "entity_cleanup" {
-  account_id   = "fn-cleanup-sa-${var.environment}"
-  display_name = "Entity Cleanup Function Service Account"
-  description  = "Service account for automated user and organization deletion cleanup"
-}
-
-resource "google_project_iam_member" "entity_cleanup_permissions" {
-  for_each = toset([
-    "roles/cloudsql.client",
-    "roles/datastore.user",
-    "roles/firebase.admin",
-    "roles/logging.logWriter",
-    "roles/monitoring.metricWriter",
-    "roles/cloudtrace.agent"
-  ])
-
-  project = var.project_id
-  role    = each.value
-  member  = "serviceAccount:${google_service_account.entity_cleanup.email}"
-}
-
-resource "google_pubsub_topic" "entity_cleanup_schedule" {
-  name = "entity-cleanup-schedule"
-
-  message_retention_duration = "86400s" # ~keep 1 day
-
-  labels = {
-    environment = var.environment
-    purpose     = "entity_cleanup"
-  }
-}
-
-
-resource "google_pubsub_subscription" "entity_cleanup_subscription" {
-  name  = "entity-cleanup-subscription"
-  topic = google_pubsub_topic.entity_cleanup_schedule.name
-
-  push_config {
-    push_endpoint = google_cloudfunctions2_function.entity_cleanup.service_config[0].uri
-
-    oidc_token {
-      service_account_email = google_service_account.entity_cleanup.email
-    }
-  }
-
-  dead_letter_policy {
-    dead_letter_topic     = google_pubsub_topic.monitoring_dlq.id
-    max_delivery_attempts = 5
-  }
-
-  retry_policy {
-    minimum_backoff = "10s"
-    maximum_backoff = "600s"
-  }
-
-  ack_deadline_seconds = 600
-
-  labels = {
-    environment = var.environment
-    purpose     = "entity_cleanup"
-  }
-}
-
-resource "google_cloudfunctions2_function" "entity_cleanup" {
-  name        = "fn-cleanup-${var.environment}"
-  location    = "us-central1"
-  description = "Automated cleanup of users and organizations with expired soft deletes"
-
-  build_config {
-    runtime     = "python312"
-    entry_point = "main"
-
-    source {
-      storage_source {
-        bucket = google_storage_bucket.entity_cleanup_functions.name
-        object = google_storage_bucket_object.entity_cleanup_source.name
-      }
-    }
-  }
-
-  service_config {
-    max_instance_count               = 1
-    min_instance_count               = 0
-    available_memory                 = "512M"
-    timeout_seconds                  = 540
-    max_instance_request_concurrency = 1
-
-    environment_variables = {
-      GOOGLE_CLOUD_PROJECT                    = var.project_id
-      CLOUD_SQL_INSTANCE                      = "grantflow-db"
-      CLOUD_SQL_REGION                        = "us-central1"
-      DATABASE_NAME                           = "grantflow"
-      DATABASE_USER                           = "grantflow"
-      USER_DELETION_GRACE_PERIOD_DAYS         = "10"
-      ORGANIZATION_DELETION_GRACE_PERIOD_DAYS = "30"
-    }
-
-    secret_environment_variables {
-      key        = "DATABASE_CONNECTION_STRING"
-      project_id = var.project_id
-      secret     = "DATABASE_CONNECTION_STRING"
-      version    = "latest"
-    }
-
-    service_account_email = google_service_account.entity_cleanup.email
-  }
-
-  event_trigger {
-    trigger_region = "us-central1"
-    event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
-    pubsub_topic   = google_pubsub_topic.entity_cleanup_schedule.id
-
-    retry_policy = "RETRY_POLICY_RETRY"
-  }
-
-  lifecycle {
-    ignore_changes = [
-      build_config[0].source[0].storage_source[0].object
-    ]
-  }
+data "google_secret_manager_secret_version" "webhook_auth_token" {
+  secret = "PUBSUB_WEBHOOK_TOKEN"
 }
 
 resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
@@ -174,9 +13,16 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
   attempt_deadline = "600s"
   region           = "us-central1"
 
-  pubsub_target {
-    topic_name = google_pubsub_topic.entity_cleanup_schedule.id
-    data = base64encode(jsonencode({
+  http_target {
+    uri         = "https://backend-zqiconmjeq-uc.a.run.app/webhooks/scheduler/entity-cleanup"
+    http_method = "POST"
+    
+    headers = {
+      "Content-Type"  = "application/json"
+      "Authorization" = data.google_secret_manager_secret_version.webhook_auth_token.secret_data
+    }
+    
+    body = base64encode(jsonencode({
       action    = "cleanup_expired_entities"
       timestamp = "scheduled"
     }))
@@ -193,15 +39,15 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
 }
 
 resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
-  display_name = "Entity Cleanup Function Failures"
+  display_name = "Entity Cleanup Webhook Failures"
   combiner     = "OR"
   enabled      = true
 
   conditions {
-    display_name = "Cloud Function execution failures"
+    display_name = "Entity cleanup webhook failures"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-cleanup-${var.environment}\" AND metric.type=\"logging.googleapis.com/log_entry_count\""
+      filter          = "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"backend\" AND jsonPayload.path=\"/webhooks/scheduler/entity-cleanup\""
       duration        = "300s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0
@@ -229,7 +75,7 @@ resource "google_monitoring_alert_policy" "entity_cleanup_failures" {
 
 resource "google_logging_metric" "entity_cleanup_operations" {
   name   = "entity_cleanup_operations"
-  filter = "resource.type=\"cloud_function\" AND resource.labels.function_name=\"fn-cleanup-${var.environment}\" AND jsonPayload.processed>=0"
+  filter = "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"backend\" AND jsonPayload.path=\"/webhooks/scheduler/entity-cleanup\" AND jsonPayload.processed>=0"
 
   metric_descriptor {
     metric_kind = "DELTA"

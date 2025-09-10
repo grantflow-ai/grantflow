@@ -99,6 +99,7 @@ from services.backend.src.api.sockets.grant_applications import (
     handle_grant_application_notifications,
 )
 from services.backend.src.api.webhooks.email_sending import handle_email_notification_webhook
+from services.backend.src.api.webhooks.entity_cleanup import handle_entity_cleanup_webhook
 from services.backend.src.api.webhooks.grant_matcher import handle_grant_matcher_webhook
 from services.backend.src.utils.firebase import get_firebase_app
 
@@ -168,6 +169,7 @@ api_routes: list[HTTPRouteHandler | WebsocketRouteHandler] = [
     handle_unsubscribe,
     handle_email_notification_webhook,
     handle_grant_matcher_webhook,
+    handle_entity_cleanup_webhook,
 ]
 
 
