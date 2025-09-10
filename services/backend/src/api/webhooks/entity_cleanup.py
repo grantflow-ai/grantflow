@@ -1,7 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, TypedDict
 
-from firebase_admin import auth
 from litestar import post
 from litestar.response import Response
 from litestar.status_codes import HTTP_201_CREATED, HTTP_500_INTERNAL_SERVER_ERROR
@@ -11,104 +10,69 @@ from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from services.backend.src.utils.firebase import delete_user
+
 logger = get_logger(__name__)
 
 
-class UserCleanupResult(TypedDict):
+class CleanupResult(TypedDict):
     processed: int
     errors: list[str]
-    deleted_users: list[dict[str, str]]
-
-
-class OrganizationCleanupResult(TypedDict):
-    processed: int
-    errors: list[str]
-    deleted_organizations: list[dict[str, str]]
 
 
 class CleanupResponse(TypedDict):
     status: Literal["success", "error"]
-    message: str
-    user_cleanup: UserCleanupResult
-    organization_cleanup: OrganizationCleanupResult
-    timestamp: str
+    users_processed: int
+    organizations_processed: int
+    total_errors: int
 
 
-async def _hard_delete_user_from_firebase(firebase_uid: str) -> None:
-    try:
-        auth.delete_user(firebase_uid)
-        logger.info("Deleted user from Firebase", firebase_uid=firebase_uid)
-    except auth.UserNotFoundError:
-        logger.info("User already deleted from Firebase", firebase_uid=firebase_uid)
-    except Exception as e:
-        logger.error("Failed to delete user from Firebase", firebase_uid=firebase_uid, error=str(e))
-        raise
-
-
-async def _cleanup_expired_users(session_maker: async_sessionmaker[Any], now: datetime) -> UserCleanupResult:
+async def _cleanup_expired_users(session_maker: async_sessionmaker[Any], now: datetime) -> CleanupResult:
     user_grace_period_days = int(get_env("USER_DELETION_GRACE_PERIOD_DAYS", fallback="10"))
     cutoff_date = now - timedelta(days=user_grace_period_days)
 
-    results = UserCleanupResult(processed=0, errors=[], deleted_users=[])
+    results = CleanupResult(processed=0, errors=[])
 
     async with session_maker() as session:
-        stmt = select(OrganizationUser).where(
+        stmt = select(OrganizationUser.firebase_uid, OrganizationUser.deleted_at).where(
             OrganizationUser.deleted_at.isnot(None), OrganizationUser.deleted_at <= cutoff_date
         )
 
-        expired_users = list(await session.scalars(stmt))
-
-        firebase_uids = [user.firebase_uid for user in expired_users]
+        expired_user_rows = list(await session.execute(stmt))
+        firebase_uids = [row[0] for row in expired_user_rows]
         firebase_errors = []
 
         for firebase_uid in firebase_uids:
             try:
-                await _hard_delete_user_from_firebase(firebase_uid)
+                await delete_user(firebase_uid)
             except Exception as e:
                 firebase_errors.append((firebase_uid, str(e)))
 
         successful_firebase_uids = [uid for uid in firebase_uids if uid not in [err[0] for err in firebase_errors]]
 
         if successful_firebase_uids:
-            try:
-                await session.execute(
-                    text("DELETE FROM notifications WHERE firebase_uid = ANY(:uids)"),
-                    {"uids": successful_firebase_uids},
-                )
+            await session.execute(
+                text("DELETE FROM notifications WHERE firebase_uid = ANY(:uids)"),
+                {"uids": successful_firebase_uids},
+            )
 
-                await session.execute(
-                    text("DELETE FROM project_access WHERE firebase_uid = ANY(:uids)"),
-                    {"uids": successful_firebase_uids},
-                )
+            await session.execute(
+                text("DELETE FROM project_access WHERE firebase_uid = ANY(:uids)"),
+                {"uids": successful_firebase_uids},
+            )
 
-                await session.execute(
-                    delete(OrganizationUser).where(OrganizationUser.firebase_uid.in_(successful_firebase_uids))
-                )
+            await session.execute(
+                delete(OrganizationUser).where(OrganizationUser.firebase_uid.in_(successful_firebase_uids))
+            )
 
-                await session.commit()
+            await session.commit()
 
-                for user in expired_users:
-                    if user.firebase_uid in successful_firebase_uids:
-                        results["processed"] += 1
-                        results["deleted_users"].append(
-                            {
-                                "firebase_uid": user.firebase_uid,
-                                "deleted_at": user.deleted_at.isoformat() if user.deleted_at else "",
-                                "hard_deleted_at": now.isoformat(),
-                            }
-                        )
-
-                        logger.info(
-                            "Successfully hard deleted user",
-                            firebase_uid=user.firebase_uid,
-                            deleted_at=user.deleted_at,
-                        )
-
-            except Exception as e:
-                await session.rollback()
-                error_msg = f"Failed to batch delete users from database: {e!s}"
-                results["errors"].append(error_msg)
-                logger.error(error_msg, error=str(e), user_count=len(successful_firebase_uids))
+            results["processed"] = len(successful_firebase_uids)
+            logger.info(
+                "Successfully hard deleted users",
+                user_count=len(successful_firebase_uids),
+                firebase_uids=successful_firebase_uids,
+            )
 
         for firebase_uid, error in firebase_errors:
             error_msg = f"Failed to hard delete user {firebase_uid}: {error}"
@@ -224,50 +188,30 @@ async def _delete_organization_data(session: AsyncSession, organization_id: str)
     )
 
 
-async def _cleanup_expired_organizations(
-    session_maker: async_sessionmaker[Any], now: datetime
-) -> OrganizationCleanupResult:
+async def _cleanup_expired_organizations(session_maker: async_sessionmaker[Any], now: datetime) -> CleanupResult:
     org_grace_period_days = int(get_env("ORGANIZATION_DELETION_GRACE_PERIOD_DAYS", fallback="30"))
     cutoff_date = now - timedelta(days=org_grace_period_days)
 
-    results = OrganizationCleanupResult(processed=0, errors=[], deleted_organizations=[])
+    results = CleanupResult(processed=0, errors=[])
 
     async with session_maker() as session:
-        stmt = select(Organization).where(Organization.deleted_at.isnot(None), Organization.deleted_at <= cutoff_date)
+        stmt = select(Organization.id).where(
+            Organization.deleted_at.isnot(None), Organization.deleted_at <= cutoff_date
+        )
 
-        expired_organizations = await session.scalars(stmt)
+        expired_org_ids = [str(org_id) for org_id in await session.scalars(stmt)]
 
-        for org in expired_organizations:
-            organization_id = str(org.id)
-            deleted_at = org.deleted_at
-            org_name = org.name
+        for organization_id in expired_org_ids:
+            await _delete_grant_related_data(session, organization_id)
+            await _delete_organization_data(session, organization_id)
+            await session.commit()
 
-            try:
-                await _delete_grant_related_data(session, organization_id)
-                await _delete_organization_data(session, organization_id)
-                await session.commit()
-
-                results["processed"] += 1
-                results["deleted_organizations"].append(
-                    {
-                        "organization_id": organization_id,
-                        "name": org_name,
-                        "deleted_at": deleted_at.isoformat() if deleted_at else "",
-                        "hard_deleted_at": now.isoformat(),
-                    }
-                )
-
-                logger.info(
-                    "Successfully hard deleted organization",
-                    organization_id=organization_id,
-                    name=org_name,
-                    deleted_at=deleted_at,
-                )
-
-            except Exception as e:
-                error_msg = f"Failed to hard delete organization {organization_id}: {e!s}"
-                results["errors"].append(error_msg)
-                logger.error(error_msg, organization_id=organization_id, error=str(e))
+        results["processed"] = len(expired_org_ids)
+        logger.info(
+            "Successfully hard deleted organizations",
+            org_count=len(expired_org_ids),
+            organization_ids=expired_org_ids,
+        )
 
     return results
 
@@ -287,12 +231,7 @@ async def handle_entity_cleanup_webhook(
         user_results = await _cleanup_expired_users(session_maker, now)
         org_results = await _cleanup_expired_organizations(session_maker, now)
 
-        total_processed = user_results["processed"] + org_results["processed"]
         total_errors = len(user_results["errors"]) + len(org_results["errors"])
-
-        message = f"Entity cleanup completed: {total_processed} entities processed"
-        if total_errors > 0:
-            message += f" with {total_errors} errors"
 
         logger.info(
             "Entity cleanup completed",
@@ -303,10 +242,9 @@ async def handle_entity_cleanup_webhook(
 
         return CleanupResponse(
             status="success",
-            message=message,
-            user_cleanup=user_results,
-            organization_cleanup=org_results,
-            timestamp=now.isoformat(),
+            users_processed=user_results["processed"],
+            organizations_processed=org_results["processed"],
+            total_errors=total_errors,
         )
 
     except Exception as e:
@@ -315,10 +253,9 @@ async def handle_entity_cleanup_webhook(
         return Response(
             content=CleanupResponse(
                 status="error",
-                message=f"Entity cleanup failed: {e!s}",
-                user_cleanup=UserCleanupResult(processed=0, errors=[str(e)], deleted_users=[]),
-                organization_cleanup=OrganizationCleanupResult(processed=0, errors=[], deleted_organizations=[]),
-                timestamp=now.isoformat(),
+                users_processed=0,
+                organizations_processed=0,
+                total_errors=1,
             ),
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
         )
