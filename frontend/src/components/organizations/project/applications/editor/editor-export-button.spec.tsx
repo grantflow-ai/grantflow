@@ -39,7 +39,6 @@ describe.sequential("EditorExportButton", () => {
 	const mockEditorRef = React.createRef<EditorRef | null>();
 
 	beforeEach(() => {
-		// Setup mock editor
 		mockEditorRef.current = {
 			getHTML: vi.fn().mockReturnValue("<p>Test content</p>"),
 		} as unknown as EditorRef;
