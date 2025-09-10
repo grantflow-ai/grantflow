@@ -51,7 +51,9 @@ const ProjectActions: FC<ProjectActionsProps> = ({
 			<input
 				className="w-full h-10 rounded-[4px] px-3 border border-[#e1dfeb] bg-white text-[14px] text-base text-black placeholder:text-gray-400 placeholder:font-normal placeholder:text-sm outline-none focus:border-[#1e13f8]"
 				data-testid="application-search-input"
-				onChange={(e) => { onSearchQueryChange(e.target.value); }}
+				onChange={(e) => {
+					onSearchQueryChange(e.target.value);
+				}}
 				placeholder="Search by application name or content"
 				value={searchQuery}
 			/>
