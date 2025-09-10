@@ -241,6 +241,8 @@ class TestEmailNotificationWebhook:
             }
         }
 
-        response = await test_client.post("/webhooks/pubsub/email-notifications", json=event_data)
+        with patch("services.backend.src.api.middleware.get_env") as mock_get_env:
+            mock_get_env.return_value = "test-webhook-token"
+            response = await test_client.post("/webhooks/pubsub/email-notifications", json=event_data)
 
         assert response.status_code == 401

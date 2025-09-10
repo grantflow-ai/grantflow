@@ -23,6 +23,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM base AS app
 WORKDIR /app/
 
+# Install runtime dependencies for WeasyPrint
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf-2.0-0 \
+    libffi8 \
+    libglib2.0-0 \
+    libgobject-2.0-0 \
+    shared-mime-info \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 COPY --chown=appuser:appuser --from=install /app/.venv/ /app/.venv
 COPY --chown=appuser:appuser services/backend/src/ /app/services/backend/src/
 COPY --chown=appuser:appuser packages /app/packages
