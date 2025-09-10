@@ -1,5 +1,3 @@
-# Entity cleanup webhook configuration
-# Scheduled task to cleanup expired users and organizations
 
 data "google_secret_manager_secret_version" "webhook_auth_token" {
   secret = "PUBSUB_WEBHOOK_TOKEN"
@@ -16,12 +14,12 @@ resource "google_cloud_scheduler_job" "entity_cleanup_daily" {
   http_target {
     uri         = "https://backend-zqiconmjeq-uc.a.run.app/webhooks/scheduler/entity-cleanup"
     http_method = "POST"
-    
+
     headers = {
       "Content-Type"  = "application/json"
       "Authorization" = data.google_secret_manager_secret_version.webhook_auth_token.secret_data
     }
-    
+
     body = base64encode(jsonencode({
       action    = "cleanup_expired_entities"
       timestamp = "scheduled"
