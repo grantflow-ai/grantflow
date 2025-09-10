@@ -187,7 +187,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 
 				expect(updatedSections.find((s: UpdateGrantSection) => s.id === "sub-2")).toBeUndefined();
 
-				const sortedSections = updatedSections.sort(
+				const sortedSections = updatedSections.toSorted(
 					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
 				);
 				expect(sortedSections[0].id).toBe("main-1");
@@ -234,7 +234,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
 				expect(updatedSections).toHaveLength(3);
 
-				const sortedSections = updatedSections.sort(
+				const sortedSections = updatedSections.toSorted(
 					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
 				);
 				expect(sortedSections[0].id).toBe("main-2");
@@ -322,7 +322,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				await dragHandlers.onReorder(sections, 0, 2, sections[0], sections[2]);
 
 				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
-				const ordered = updatedSections.sort(
+				const ordered = updatedSections.toSorted(
 					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
 				);
 
@@ -351,7 +351,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				await dragHandlers.onReorder(sections, 0, 4, sections[0], sections[4]);
 
 				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
-				const ordered = updatedSections.sort(
+				const ordered = updatedSections.toSorted(
 					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
 				);
 
@@ -497,7 +497,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 				const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
 				const subs = updatedSections
 					.filter((s: UpdateGrantSection) => s.parent_id === "main-1")
-					.sort((a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order);
+					.toSorted((a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order);
 
 				expect(subs[0].id).toBe("sub-2");
 				expect(subs[1].id).toBe("sub-3");
@@ -588,7 +588,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 
 				expect(sub1?.parent_id).toBe("main-2");
 
-				const orderedSections = updatedSections.sort(
+				const orderedSections = updatedSections.toSorted(
 					(a: UpdateGrantSection, b: UpdateGrantSection) => a.order - b.order,
 				);
 
@@ -815,7 +815,7 @@ describe("DragDropSectionManager - Outcome-Based Tests", () => {
 			await dragHandlers.onReorder(sections, 0, 2, sections[0], sections[2]);
 
 			const [[updatedSections]] = mockUpdateGrantSections.mock.calls;
-			const orders = updatedSections.map((s: UpdateGrantSection) => s.order).sort();
+			const orders = updatedSections.map((s: UpdateGrantSection) => s.order).toSorted();
 
 			expect(orders).toEqual([0, 1, 2]);
 		});

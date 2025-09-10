@@ -725,7 +725,7 @@ export function DragDropSectionManager({
 		collisionDetection: zoneCollisionDetection,
 	});
 
-	const sortedSections = useMemo(() => [...grantSections].sort((a, b) => a.order - b.order), [grantSections]);
+	const sortedSections = useMemo(() => [...grantSections].toSorted((a, b) => a.order - b.order), [grantSections]);
 
 	const mainSections = useMemo(() => sortedSections.filter((section) => !section.parent_id), [sortedSections]);
 
