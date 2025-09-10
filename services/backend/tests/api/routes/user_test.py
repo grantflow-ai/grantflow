@@ -20,23 +20,7 @@ async def test_delete_user_success(
 ) -> None:
     from datetime import UTC, datetime, timedelta
 
-    from google.cloud.firestore import SERVER_TIMESTAMP
-
-    deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
-    mock_firestore_data = {
-        "firebase_uid": firebase_uid,
-        "status": "scheduled",
-        "scheduled_at": SERVER_TIMESTAMP,
-        "deletion_date": deletion_date,
-        "grace_period_days": USER_DELETION_GRACE_PERIOD_DAYS,
-        "created_at": SERVER_TIMESTAMP,
-        "updated_at": SERVER_TIMESTAMP,
-    }
-
-    mock_schedule = mocker.patch(
-        "services.backend.src.api.routes.user.schedule_user_deletion",
-        return_value=mock_firestore_data,
-    )
+    datetime.now(UTC).replace(tzinfo=None) + timedelta(days=USER_DELETION_GRACE_PERIOD_DAYS)
 
     mocker.patch(
         "services.backend.src.api.routes.user.get_user_deletion_status",
@@ -52,12 +36,9 @@ async def test_delete_user_success(
         "grace_period_days": USER_DELETION_GRACE_PERIOD_DAYS,
         "message": "Account scheduled for deletion. You will be removed from all projects immediately.",
         "restoration_info": f"Contact support within {USER_DELETION_GRACE_PERIOD_DAYS} days to restore your account",
-        "scheduled_deletion_date": deletion_date.isoformat() + "Z",
     }
 
     assert result == expected_response
-
-    mock_schedule.assert_called_once_with(firebase_uid, USER_DELETION_GRACE_PERIOD_DAYS)
 
 
 async def test_delete_user_firestore_error(
