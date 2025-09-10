@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { createProject, deleteProject as deleteProjectAction, getProjects } from "@/actions/project";
+import {
+	createProject,
+	deleteProject as deleteProjectAction,
+	duplicateProject as duplicateProjectAction,
+	getProjects,
+} from "@/actions/project";
 import AppHeader from "@/components/layout/app-header";
 import { DashboardProjectCard } from "@/components/organizations/dashboard/dashboard-project-card";
 import { DashboardStats } from "@/components/organizations/dashboard/dashboard-stats";
@@ -18,7 +23,6 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useNewApplicationModalStore } from "@/stores/new-application-modal-store";
 import { useNotificationStore } from "@/stores/notification-store";
 import { useOrganizationStore } from "@/stores/organization-store";
-import { useProjectStore } from "@/stores/project-store";
 import type { API } from "@/types/api-types";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
@@ -46,7 +50,6 @@ export function DashboardClient({
 
 	const [isCreatingProject, setIsCreatingProject] = useState(false);
 
-	const { duplicateProject } = useProjectStore();
 	const { addNotification } = useNotificationStore();
 
 	const { getOrganization } = useOrganizationStore();
@@ -75,23 +78,6 @@ export function DashboardClient({
 			getOrganization(currentOrganizationId);
 		}
 	}, [currentOrganizationId, getOrganization]);
-	const handleDuplicateProject = async (projectId: string) => {
-		if (!currentOrganizationId) {
-			addNotification({
-				message: "Please select an organization first",
-				projectName: "",
-				title: "Organization Required",
-				type: "error",
-			});
-			return;
-		}
-		await duplicateProject(currentOrganizationId, projectId);
-	};
-
-	const handleProjectNavigation = (projectId: string, projectName: string) => {
-		navigateToProject(projectId, projectName);
-		router.push(routes.organization.project.detail());
-	};
 
 	const { data: projects = initialProjects, mutate } = useSWR(
 		currentOrganizationId ? ["projects", currentOrganizationId] : null,
@@ -101,6 +87,27 @@ export function DashboardClient({
 			revalidateOnFocus: false,
 		},
 	);
+
+	const handleDuplicateProject = async (projectId: string) => {
+		if (!currentOrganizationId) {
+			toast.error("Please select an organization first");
+			return;
+		}
+		const toastId = toast.loading("Duplicating research project");
+		try {
+			await duplicateProjectAction(currentOrganizationId, projectId);
+			await mutate();
+			toast.success("Research project duplicated successfully.", { id: toastId });
+		} catch (error) {
+			log.error("duplicate-project", error);
+			toast.error("Failed to duplicate research project.", { id: toastId });
+		}
+	};
+
+	const handleProjectNavigation = (projectId: string, projectName: string) => {
+		navigateToProject(projectId, projectName);
+		router.push(routes.organization.project.detail());
+	};
 
 	const projectTeamMembers = projects
 		.flatMap((project) => project.members)

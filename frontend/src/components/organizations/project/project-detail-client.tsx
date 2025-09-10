@@ -304,7 +304,9 @@ export function ProjectDetailClient() {
 							isCreatingApplication={isCreatingApplication}
 							onCreateApplication={handleCreateApplication}
 							onSearchQueryChange={setSearchQuery}
-							onShowInviteModal={() => { setShowInviteModal(true); }}
+							onShowInviteModal={() => {
+								setShowInviteModal(true);
+							}}
 							searchQuery={searchQuery}
 							teamMembers={projectTeamMembers}
 						/>

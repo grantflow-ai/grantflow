@@ -85,6 +85,7 @@ export function OrganizationSettingsGeneral({
 	};
 
 	const handleLogoDelete = () => {
+		// TODO: Implement logo deletion functionality
 		if (!canEdit) return;
 		toast.success("Logo delete functionality coming soon");
 	};
