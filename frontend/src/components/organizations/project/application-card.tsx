@@ -83,10 +83,10 @@ export function ApplicationCard({ application, onDelete, onDuplicate, onOpen }: 
 					<div>
 						<CardActionMenu
 							onDelete={() => {
-								onDelete?.(application.id);
+								onDelete(application.id);
 							}}
 							onDuplicate={() => {
-								onDuplicate?.(application.id, application.title);
+								onDuplicate(application.id, application.title);
 							}}
 						/>
 					</div>
