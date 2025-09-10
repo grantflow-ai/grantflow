@@ -321,13 +321,9 @@ resource "google_pubsub_subscription" "email_notifications_subscription" {
   push_config {
     push_endpoint = "${var.backend_url}/webhooks/pubsub/email-notifications"
 
-    oidc_token {
-      service_account_email = var.pubsub_invoker_service_account_email
-      audience              = var.backend_url
-    }
-
     attributes = {
       "x-goog-version" = "v1"
+      "Authorization"  = var.pubsub_webhook_token
     }
   }
 
