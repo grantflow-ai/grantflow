@@ -149,27 +149,23 @@ describe("ProjectDetailClient", () => {
 		expect(screen.getByTestId("mock-application-list")).toBeInTheDocument();
 	});
 
-	it("should redirect to projects page when no project", () => {
-		mockUseProjectStore.mockReturnValue({ getProjects: vi.fn(), project: null });
-		mockUseSWR
-			.mockReturnValueOnce({
-				data: undefined,
-				error: undefined,
-				isLoading: false,
-				isValidating: false,
-				mutate: mockMutate,
-			})
-			.mockReturnValueOnce({
-				data: undefined,
-				error: undefined,
-				isLoading: false,
-				isValidating: false,
-				mutate: vi.fn(),
-			});
+	it("should display loading indicator when no project is selected", () => {
+		mockUseProjectStore.mockReturnValue({
+			getProjects: vi.fn(),
+			project: null,
+			projects: [],
+		});
+		mockUseSWR.mockReturnValue({
+			data: undefined,
+			error: undefined,
+			isLoading: false,
+			isValidating: false,
+			mutate: vi.fn(),
+		});
 
 		render(<ProjectDetailClient />);
 
-		expect(mockReplace).toHaveBeenCalledWith("/organization");
+		expect(screen.getByText("Loading project...")).toBeInTheDocument();
 	});
 
 	it("should handle creating new application", async () => {
@@ -300,34 +296,40 @@ describe("ProjectDetailClient", () => {
 	});
 
 	it("should display loading state when applications are loading", () => {
-		mockUseProjectStore.mockReturnValue({
-			getProjects: vi.fn(),
-			project: mockProject,
-			projects: [],
-		});
-		mockUseSWR
-			.mockReturnValueOnce({
+		mockUseSWR.mockImplementation((key) => {
+			if (typeof key === "string" && key.includes("/applications")) {
+				return {
+					data: undefined,
+					error: undefined,
+					isLoading: true,
+					isValidating: false,
+					mutate: mockMutate,
+				};
+			}
+			if (typeof key === "string" && key.includes("/members")) {
+				return {
+					data: mockMembers,
+					error: undefined,
+					isLoading: false,
+					isValidating: false,
+					mutate: vi.fn(),
+				};
+			}
+			return {
 				data: undefined,
-				error: undefined,
-				isLoading: true,
-				isValidating: false,
-				mutate: mockMutate,
-			})
-			.mockReturnValueOnce({
-				data: mockMembers,
 				error: undefined,
 				isLoading: false,
 				isValidating: false,
 				mutate: vi.fn(),
-			});
+			};
+		});
 
 		render(<ProjectDetailClient />);
 
 		expect(MockApplicationList).toHaveBeenCalledWith(
 			expect.objectContaining({
 				applications: [],
-				isCreatingApplication: false,
-				searchQuery: "",
+				isLoading: true,
 			}),
 			undefined,
 		);
