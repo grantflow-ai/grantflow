@@ -15,8 +15,6 @@ Next.js 15, and the backend is a microservice-based Python architecture.
   - `auth_blocking/` - User authentication validation
   - `budget_alerts/` - Cost monitoring alerts
   - `email_notifications/` - Transactional email service
-  - `entity_cleanup/` - Automated data cleanup
-  - `user_cleanup/` - User account lifecycle management
 
 ### 🎨 Frontend Applications
 - **[`/frontend`](./frontend/README.md)** - Next.js 15 web application
