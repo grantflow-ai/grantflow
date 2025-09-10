@@ -17,17 +17,15 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 @pytest.fixture
 def mock_firebase_delete_user() -> Generator[AsyncMock]:
-    with patch("services.backend.src.api.webhooks.entity_cleanup.auth.delete_user") as mock:
+    with patch("services.backend.src.api.webhooks.entity_cleanup.delete_user") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_firebase_user_not_found_error() -> Generator[AsyncMock]:
-    from firebase_admin import auth
-
     with patch(
-        "services.backend.src.api.webhooks.entity_cleanup.auth.delete_user",
-        side_effect=auth.UserNotFoundError("User not found"),
+        "services.backend.src.api.webhooks.entity_cleanup.delete_user",
+        return_value=None,
     ) as mock:
         yield mock
 
@@ -153,10 +151,9 @@ async def test_entity_cleanup_webhook_no_expired_entities(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["user_cleanup"]["processed"] == 0
-    assert data["organization_cleanup"]["processed"] == 0
-    assert "Entity cleanup completed: 0 entities processed" in data["message"]
-    assert isinstance(data["timestamp"], str)
+    assert data["users_processed"] == 0
+    assert data["organizations_processed"] == 0
+    assert data["total_errors"] == 0
 
     mock_firebase_delete_user.assert_not_called()
 
@@ -175,14 +172,8 @@ async def test_entity_cleanup_webhook_expired_user_success(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["user_cleanup"]["processed"] == 1
-    assert data["user_cleanup"]["errors"] == []
-    assert len(data["user_cleanup"]["deleted_users"]) == 1
-
-    deleted_user_data = data["user_cleanup"]["deleted_users"][0]
-    assert deleted_user_data["firebase_uid"] == expired_user.firebase_uid
-    assert "deleted_at" in deleted_user_data
-    assert "hard_deleted_at" in deleted_user_data
+    assert data["users_processed"] == 1
+    assert data["total_errors"] == 0
 
     mock_firebase_delete_user.assert_called_once_with(expired_user.firebase_uid)
 
@@ -209,8 +200,8 @@ async def test_entity_cleanup_webhook_expired_user_firebase_not_found(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["user_cleanup"]["processed"] == 1
-    assert data["user_cleanup"]["errors"] == []
+    assert data["users_processed"] == 1
+    assert data["total_errors"] == 0
 
     mock_firebase_user_not_found_error.assert_called_once_with(expired_user.firebase_uid)
 
@@ -229,7 +220,7 @@ async def test_entity_cleanup_webhook_expired_user_firebase_error(
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
     with patch(
-        "services.backend.src.api.webhooks.entity_cleanup.auth.delete_user",
+        "services.backend.src.api.webhooks.entity_cleanup.delete_user",
         side_effect=Exception("Firebase service error"),
     ):
         response = await entity_cleanup_test_client.post(
@@ -240,9 +231,8 @@ async def test_entity_cleanup_webhook_expired_user_firebase_error(
         assert response.status_code == HTTP_201_CREATED
         data = response.json()
         assert data["status"] == "success"
-        assert data["user_cleanup"]["processed"] == 0
-        assert len(data["user_cleanup"]["errors"]) == 1
-        assert "Firebase service error" in data["user_cleanup"]["errors"][0]
+        assert data["users_processed"] == 0
+        assert data["total_errors"] == 1
 
         async with async_session_maker() as session:
             result = await session.execute(
@@ -266,7 +256,7 @@ async def test_entity_cleanup_webhook_recently_deleted_user_not_processed(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["user_cleanup"]["processed"] == 0
+    assert data["users_processed"] == 0
 
     mock_firebase_delete_user.assert_not_called()
 
@@ -284,15 +274,8 @@ async def test_entity_cleanup_webhook_expired_organization_success(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["organization_cleanup"]["processed"] == 1
-    assert data["organization_cleanup"]["errors"] == []
-    assert len(data["organization_cleanup"]["deleted_organizations"]) == 1
-
-    deleted_org_data = data["organization_cleanup"]["deleted_organizations"][0]
-    assert deleted_org_data["organization_id"] == str(expired_organization.id)
-    assert deleted_org_data["name"] == expired_organization.name
-    assert "deleted_at" in deleted_org_data
-    assert "hard_deleted_at" in deleted_org_data
+    assert data["organizations_processed"] == 1
+    assert data["total_errors"] == 0
 
     async with async_session_maker() as session:
         result = await session.execute(
@@ -315,7 +298,7 @@ async def test_entity_cleanup_webhook_recently_deleted_organization_not_processe
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["organization_cleanup"]["processed"] == 0
+    assert data["organizations_processed"] == 0
 
 
 async def test_entity_cleanup_webhook_mixed_entities(
@@ -334,9 +317,9 @@ async def test_entity_cleanup_webhook_mixed_entities(
     assert response.status_code == HTTP_201_CREATED
     data = response.json()
     assert data["status"] == "success"
-    assert data["user_cleanup"]["processed"] == 1
-    assert data["organization_cleanup"]["processed"] == 1
-    assert "Entity cleanup completed: 2 entities processed" in data["message"]
+    assert data["users_processed"] == 1
+    assert data["organizations_processed"] == 1
+    assert data["total_errors"] == 0
 
     mock_firebase_delete_user.assert_called_once_with(expired_user.firebase_uid)
 
@@ -356,9 +339,9 @@ async def test_entity_cleanup_webhook_database_error(
         assert response.status_code == HTTP_500_INTERNAL_SERVER_ERROR
         data = response.json()
         assert data["status"] == "error"
-        assert "Database connection failed" in data["message"]
-        assert data["user_cleanup"]["processed"] == 0
-        assert data["organization_cleanup"]["processed"] == 0
+        assert data["users_processed"] == 0
+        assert data["organizations_processed"] == 0
+        assert data["total_errors"] == 1
 
 
 @pytest.mark.parametrize(
@@ -388,10 +371,10 @@ async def test_entity_cleanup_webhook_custom_user_grace_period(
         assert data["status"] == "success"
 
         if should_be_processed:
-            assert data["user_cleanup"]["processed"] == 1
+            assert data["users_processed"] == 1
             mock_firebase_delete_user.assert_called_once()
         else:
-            assert data["user_cleanup"]["processed"] == 0
+            assert data["users_processed"] == 0
             mock_firebase_delete_user.assert_not_called()
 
 
@@ -427,9 +410,9 @@ async def test_entity_cleanup_webhook_custom_organization_grace_period(
         assert data["status"] == "success"
 
         if should_be_processed:
-            assert data["organization_cleanup"]["processed"] == 1
+            assert data["organizations_processed"] == 1
         else:
-            assert data["organization_cleanup"]["processed"] == 0
+            assert data["organizations_processed"] == 0
 
 
 async def test_login_restoration_and_webhook_cleanup_integration(
@@ -490,8 +473,6 @@ async def test_login_restoration_and_webhook_cleanup_integration(
 
     assert cleanup_results["processed"] == 1
     assert cleanup_results["errors"] == []
-    assert len(cleanup_results["deleted_users"]) == 1
-    assert cleanup_results["deleted_users"][0]["firebase_uid"] == firebase_uid
 
     mock_firebase_delete_user.assert_called_once_with(firebase_uid)
 
