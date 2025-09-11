@@ -124,6 +124,7 @@ async def dismiss_notification(
                 and_(
                     Notification.id == notification_id,
                     Notification.firebase_uid == request.auth,
+                    Notification.deleted_at.is_(None),
                 )
             )
         )

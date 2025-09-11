@@ -3,10 +3,11 @@ from typing import Any, NotRequired, TypedDict
 
 from litestar import get, post
 from litestar.exceptions import NotFoundException, ValidationException
+from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import Grant, GrantMatchingSubscription
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
-from sqlalchemy import func, insert, or_, select, update
+from sqlalchemy import func, insert, or_, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -82,7 +83,7 @@ async def handle_search_grants(
 
     try:
         async with session_maker() as session:
-            query = select(Grant)
+            query = select_active(Grant)
 
             if search_query:
                 search_vector = func.to_tsvector("english", Grant.description)
@@ -169,7 +170,7 @@ async def handle_get_grant_details(grant_id: str, session_maker: async_sessionma
 
     try:
         async with session_maker() as session:
-            query = select(Grant).where(Grant.document_number == grant_id)
+            query = select_active(Grant).where(Grant.document_number == grant_id)
             result = await session.execute(query)
             grant = result.scalar_one_or_none()
 
@@ -269,7 +270,7 @@ async def handle_unsubscribe(
     try:
         async with session_maker() as session, session.begin():
             subscription = await session.scalar(
-                select(GrantMatchingSubscription)
+                select_active(GrantMatchingSubscription)
                 .where(GrantMatchingSubscription.email == data["email"])
                 .where(GrantMatchingSubscription.unsubscribed.is_(False))
             )

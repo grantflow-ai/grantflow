@@ -50,7 +50,9 @@ async def check_exists_files_being_indexed(
                             if hasattr(file_table_cls, "grant_application_id")
                             else file_table_cls.granting_institution_id == organization_id
                         )
-                        .where(RagFile.indexing_status == SourceIndexingStatusEnum.INDEXING)
+                        .where(
+                            RagFile.indexing_status == SourceIndexingStatusEnum.INDEXING, RagFile.deleted_at.is_(None)
+                        )
                     )
                 )
             ),

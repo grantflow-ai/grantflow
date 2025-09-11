@@ -165,7 +165,11 @@ async def handle_update_grant_template(
             if not grant_template:
                 raise ValidationException("Grant template not found")
 
-            await session.execute(update(GrantTemplate).where(GrantTemplate.id == grant_template.id).values(**data))
+            await session.execute(
+                update(GrantTemplate)
+                .where(GrantTemplate.id == grant_template.id, GrantTemplate.deleted_at.is_(None))
+                .values(**data)
+            )
             await session.commit()
         except ValidationException:
             await session.rollback()

@@ -224,11 +224,15 @@ async def handle_update_organization_invitation(
                 update_data["role"] = data["role"]
 
             await session.execute(
-                update(OrganizationInvitation).where(OrganizationInvitation.id == invitation_id).values(update_data)
+                update(OrganizationInvitation)
+                .where(OrganizationInvitation.id == invitation_id, OrganizationInvitation.deleted_at.is_(None))
+                .values(update_data)
             )
 
             updated_invitation = await session.scalar(
-                select(OrganizationInvitation).where(OrganizationInvitation.id == invitation_id)
+                select(OrganizationInvitation).where(
+                    OrganizationInvitation.id == invitation_id, OrganizationInvitation.deleted_at.is_(None)
+                )
             )
 
             await log_organization_audit_from_request(
