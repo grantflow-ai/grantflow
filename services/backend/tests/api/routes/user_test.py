@@ -28,6 +28,17 @@ async def test_delete_user_success(
         return_value=None,
     )
 
+    deletion_date = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=10)
+    mocker.patch(
+        "services.backend.src.api.routes.user.schedule_user_deletion",
+        return_value={
+            "firebase_uid": firebase_uid,
+            "status": "scheduled",
+            "deletion_date": deletion_date,
+            "grace_period_days": 10,
+        },
+    )
+
     response = await test_client.delete("/user", headers={"Authorization": "Bearer some_token"})
 
     assert response.status_code == 200, response.text
