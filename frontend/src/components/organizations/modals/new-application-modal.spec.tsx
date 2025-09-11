@@ -8,7 +8,7 @@ describe.sequential("NewApplicationModal", () => {
 	});
 
 	const handleClose = vi.fn();
-	const handleCreate = vi.fn();
+	const handleCreate = vi.fn().mockResolvedValue(undefined);
 
 	it("should render all static elements when open", () => {
 		render(<NewApplicationModal isOpen={true} onClose={handleClose} onCreate={handleCreate} projects={[]} />);
