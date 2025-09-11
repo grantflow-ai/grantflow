@@ -31,8 +31,12 @@ const FILE_ACCEPTS = {
 const FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = FILE_SIZE_MB * 1024 * 1024;
 
-export function TemplateFileUploader({ parentId }: { parentId?: string }) {
+type SourceType = "application" | "template";
+
+export function TemplateFileUploader({ parentId, sourceType }: { parentId?: string; sourceType: SourceType }) {
 	const addFile = useApplicationStore((state) => state.addFile);
+	const addPendingUpload = useApplicationStore((state) => state.addPendingUpload);
+	const removePendingUpload = useApplicationStore((state) => state.removePendingUpload);
 
 	const validateFileUploads = useCallback((newFileUploads: File[]) => {
 		for (const file of newFileUploads) {
@@ -65,6 +69,8 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 
 			const fileWithId: FileWithId = Object.assign(file, { id: crypto.randomUUID() });
 
+			addPendingUpload(fileWithId, sourceType);
+
 			log.info("[file-upload] Created file with ID, calling addFile", {
 				fileId: fileWithId.id,
 				fileName: file.name,
@@ -79,7 +85,8 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 					parentId,
 				});
 			} catch (error) {
-				log.error("[file-upload] addFile failed in handleUploadFile", {
+				removePendingUpload(fileWithId.id, sourceType);
+				log.error("[file-upload] addFile failed, removed from pending uploads", {
 					error,
 					fileId: fileWithId.id,
 					fileName: file.name,
@@ -88,7 +95,7 @@ export function TemplateFileUploader({ parentId }: { parentId?: string }) {
 				throw error;
 			}
 		},
-		[addFile, parentId],
+		[addFile, addPendingUpload, removePendingUpload, parentId, sourceType],
 	);
 
 	const handleFilesAdded = useCallback(
