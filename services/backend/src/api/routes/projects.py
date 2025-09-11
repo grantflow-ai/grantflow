@@ -9,9 +9,19 @@ from uuid import UUID
 import msgspec
 from jwt import decode, encode
 from litestar import delete, get, patch, post
-from litestar.exceptions import ValidationException
+from litestar.exceptions import NotFoundException, ValidationException
 from packages.db.src.enums import UserRoleEnum
-from packages.db.src.tables import OrganizationInvitation, OrganizationUser, Project, ProjectAccess
+from packages.db.src.tables import (
+    EditorDocument,
+    GrantApplication,
+    GrantApplicationSource,
+    GrantTemplate,
+    GrantTemplateSource,
+    OrganizationInvitation,
+    OrganizationUser,
+    Project,
+    ProjectAccess,
+)
 from packages.shared_utils.src.env import get_env
 from packages.shared_utils.src.exceptions import DatabaseError
 from packages.shared_utils.src.logger import get_logger
@@ -921,3 +931,250 @@ async def handle_remove_project_member(
                 logger.error("Error removing project member", exc_info=e)
                 raise DatabaseError("Error removing project member", context=str(e)) from e
             raise e
+
+
+class DuplicateProjectRequestBody(TypedDict):
+    title: NotRequired[str]
+
+
+@post(
+    "/organizations/{organization_id:uuid}/projects/{project_id:uuid}/duplicate",
+    allowed_roles=[UserRoleEnum.OWNER, UserRoleEnum.ADMIN, UserRoleEnum.COLLABORATOR],
+    operation_id="DuplicateProject",
+)
+async def handle_duplicate_project(
+    request: APIRequest,
+    organization_id: UUID,
+    project_id: UUID,
+    data: DuplicateProjectRequestBody,
+    session_maker: async_sessionmaker[Any],
+) -> ProjectResponse:
+    logger.info(
+        "Duplicating project",
+        organization_id=organization_id,
+        project_id=project_id,
+        new_title=data.get("title"),
+    )
+
+    async with session_maker() as session, session.begin():
+        try:
+            original_project = await session.scalar(
+                select(Project)
+                .where(
+                    Project.id == project_id,
+                    Project.organization_id == organization_id,
+                    Project.deleted_at.is_(None),
+                )
+                .options(
+                    selectinload(Project.grant_applications).selectinload(GrantApplication.grant_template),
+                    selectinload(Project.grant_applications).selectinload(GrantApplication.rag_sources),
+                    selectinload(Project.grant_applications).selectinload(GrantApplication.editor_documents),
+                )
+            )
+
+            if not original_project:
+                raise NotFoundException("Project not found")
+
+            new_title = data.get("title", f"Copy of {original_project.name}")
+            new_project = await session.scalar(
+                insert(Project)
+                .values(
+                    {
+                        "organization_id": organization_id,
+                        "name": new_title,
+                        "description": original_project.description,
+                        "logo_url": original_project.logo_url,
+                    }
+                )
+                .returning(Project)
+            )
+
+            logger.info(
+                "Created new project",
+                original_project_id=str(project_id),
+                new_project_id=str(new_project.id),
+                applications_to_duplicate=len(original_project.grant_applications),
+            )
+
+            for original_app in original_project.grant_applications:
+                if original_app.deleted_at is not None:
+                    continue
+
+                new_app = await session.scalar(
+                    insert(GrantApplication)
+                    .values(
+                        {
+                            "project_id": new_project.id,
+                            "title": original_app.title,
+                            "description": original_app.description,
+                            "status": original_app.status,
+                            "form_inputs": original_app.form_inputs,
+                            "research_objectives": original_app.research_objectives,
+                            "text": original_app.text,
+                            "completed_at": original_app.completed_at,
+                            "parent_id": original_app.id,
+                        }
+                    )
+                    .returning(GrantApplication)
+                )
+
+                await session.execute(
+                    insert(EditorDocument).values(
+                        {
+                            "grant_application_id": new_app.id,
+                        }
+                    )
+                )
+
+                if original_app.grant_template:
+                    template = original_app.grant_template
+                    new_template = await session.scalar(
+                        insert(GrantTemplate)
+                        .values(
+                            {
+                                "grant_application_id": new_app.id,
+                                "grant_sections": template.grant_sections,
+                                "granting_institution_id": template.granting_institution_id,
+                                "submission_date": template.submission_date,
+                            }
+                        )
+                        .returning(GrantTemplate)
+                    )
+
+                    template_rag_sources_result = await session.execute(
+                        select(GrantTemplateSource.rag_source_id).where(
+                            GrantTemplateSource.grant_template_id == template.id,
+                            GrantTemplateSource.deleted_at.is_(None),
+                        )
+                    )
+                    template_rag_source_ids = list(template_rag_sources_result.scalars())
+
+                    if template_rag_source_ids:
+                        await session.execute(
+                            insert(GrantTemplateSource).values(
+                                [
+                                    {
+                                        "grant_template_id": new_template.id,
+                                        "rag_source_id": source_id,
+                                    }
+                                    for source_id in template_rag_source_ids
+                                ]
+                            )
+                        )
+
+                app_rag_sources_result = await session.execute(
+                    select(GrantApplicationSource.rag_source_id).where(
+                        GrantApplicationSource.grant_application_id == original_app.id,
+                        GrantApplicationSource.deleted_at.is_(None),
+                    )
+                )
+                app_rag_source_ids = list(app_rag_sources_result.scalars())
+
+                if app_rag_source_ids:
+                    await session.execute(
+                        insert(GrantApplicationSource).values(
+                            [
+                                {
+                                    "grant_application_id": new_app.id,
+                                    "rag_source_id": source_id,
+                                }
+                                for source_id in app_rag_source_ids
+                            ]
+                        )
+                    )
+
+                logger.info(
+                    "Duplicated application",
+                    original_app_id=str(original_app.id),
+                    new_app_id=str(new_app.id),
+                    has_template=original_app.grant_template is not None,
+                    rag_sources_count=len(app_rag_source_ids),
+                )
+
+            await session.commit()
+
+            logger.info(
+                "Project duplication completed successfully",
+                original_project_id=str(project_id),
+                new_project_id=str(new_project.id),
+                duplicated_applications=len(
+                    [app for app in original_project.grant_applications if app.deleted_at is None]
+                ),
+            )
+
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error("Error duplicating project", exc_info=e)
+            raise DatabaseError("Error duplicating project", context=str(e)) from e
+
+    async with session_maker() as session:
+        project = await session.scalar(
+            select(Project)
+            .options(
+                selectinload(Project.grant_applications),
+                selectinload(Project.project_access),
+            )
+            .where(
+                Project.id == new_project.id,
+                Project.deleted_at.is_(None),
+            )
+        )
+
+        organization_users = list(
+            await session.scalars(
+                select(OrganizationUser)
+                .where(OrganizationUser.organization_id == organization_id)
+                .where(OrganizationUser.deleted_at.is_(None))
+                .where(
+                    OrganizationUser.has_all_projects_access
+                    | (
+                        OrganizationUser.firebase_uid.in_(
+                            select(ProjectAccess.firebase_uid).where(ProjectAccess.project_id == project.id)
+                        )
+                    )
+                )
+            )
+        )
+
+    store = request.app.stores.get("firebase_user_cache")
+    member_uids = [ou.firebase_uid for ou in organization_users]
+
+    cached_data = await gather(*[store.get(uid) for uid in member_uids])
+
+    firebase_users: dict[str, dict[str, Any]] = {}
+    for uid, cached_user_data in zip(member_uids, cached_data, strict=False):
+        if cached_user_data:
+            firebase_users[uid] = msgspec.json.decode(cached_user_data)
+
+    if missing_uids := list(set(member_uids) - set(firebase_users.keys())):
+        fetched_users: dict[str, FirebaseUser] = await get_users(missing_uids)
+
+        for uid, user_data in fetched_users.items():
+            await store.set(uid, msgspec.json.encode(user_data), expires_in=3600)
+
+        firebase_users.update({uid: dict(user_data) for uid, user_data in fetched_users.items()})
+
+    return ProjectResponse(
+        id=str(project.id),
+        name=project.name,
+        description=project.description,
+        logo_url=project.logo_url,
+        grant_applications=[
+            BaseApplicationResponse(
+                id=str(grant_application.id),
+                title=grant_application.title,
+                completed_at=grant_application.completed_at.isoformat() if grant_application.completed_at else None,
+            )
+            for grant_application in project.grant_applications
+        ],
+        members=[
+            ProjectMemberInfo(
+                firebase_uid=ou.firebase_uid,
+                email=firebase_users[ou.firebase_uid]["email"],
+                display_name=firebase_users.get(ou.firebase_uid, {}).get("displayName"),
+                photo_url=firebase_users.get(ou.firebase_uid, {}).get("photoURL"),
+                role=ou.role,
+            )
+            for ou in organization_users
+        ],
+    )
