@@ -20,7 +20,6 @@ const ProjectTitle: FC<ProjectTitleProps> = ({
 }) => (
 	<div className="flex items-center gap-2">
 		{isEditing ? (
-			// biome-ignore lint/a11y/useSemanticElements: <div> is used to allow contentEditable
 			<div
 				aria-label="Project Title"
 				className={`font-medium text-[36px] leading-[42px] text-app-black outline-none border-b-2 border-primary focus:outline-none ${

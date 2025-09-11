@@ -84,7 +84,7 @@ def create_pubsub_event(object_path: str, event_type: str = "OBJECT_FINALIZE") -
 
 async def test_get_gcs_notification_data() -> None:
     valid_event = create_pubsub_event("test/path")
-    notification, trace_id = get_gcs_notification_data(valid_event)
+    notification, _trace_id = get_gcs_notification_data(valid_event)
     assert notification is not None
     assert notification["bucket_name"] == "test-bucket"
     assert notification["object_name"] == "test/path"
@@ -98,7 +98,7 @@ async def test_get_gcs_notification_data() -> None:
             attributes={},
         )
     )
-    notification, trace_id = get_gcs_notification_data(invalid_event)
+    notification, _trace_id = get_gcs_notification_data(invalid_event)
     assert notification is None
 
 
@@ -113,7 +113,7 @@ async def test_handle_pubsub_message(mock_parse_object_uri: MagicMock) -> None:
     object_path = "grant_application/987e4567-e89b-12d3-a456-426614174000/550e8400-e29b-41d4-a716-446655440000/test.pdf"
     event = create_pubsub_event(object_path)
 
-    result, obj_path, trace_id = await handle_pubsub_message(event)
+    result, obj_path, _trace_id = await handle_pubsub_message(event)
 
     assert isinstance(result, dict)
     assert result["entity_type"] == "grant_application"

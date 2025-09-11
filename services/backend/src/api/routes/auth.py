@@ -171,7 +171,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                     )
                     org_user_tuples = list(result.all())
 
-                    default_org_user, default_updated_at = max(
+                    default_org_user, _default_updated_at = max(
                         org_user_tuples,
                         key=lambda row: (_get_role_priority(row[0].role), row[1]),
                     )
@@ -204,7 +204,7 @@ async def handle_login(data: LoginRequestBody, session_maker: async_sessionmaker
                         email=user_email,
                     )
         else:
-            default_org_user, default_updated_at = max(
+            default_org_user, _default_updated_at = max(
                 org_user_tuples,
                 key=lambda row: (_get_role_priority(row[0].role), row[1]),
             )
