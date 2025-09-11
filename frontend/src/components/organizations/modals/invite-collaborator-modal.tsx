@@ -296,7 +296,7 @@ export function InviteCollaboratorModal({
 													<div className="flex gap-1 items-center">
 														<Checkbox
 															checked={selectedProjects.includes(project.id)}
-															className="size-3 group-data-[highlighted]:border-white"
+															className="size-3 group-data-[highlighted]:border-white data-[state=checked]:bg-transparent data-[state=checked]:border-white data-[state=checked]:text-primary"
 															id={project.id}
 														/>
 
