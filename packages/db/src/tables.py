@@ -40,7 +40,14 @@ from packages.db.src.enums import (
     SourceIndexingStatusEnum,
     UserRoleEnum,
 )
-from packages.db.src.json_objects import Chunk, GrantElement, GrantLongFormSection, ResearchDeepDive, ResearchObjective
+from packages.db.src.json_objects import (
+    CFPSectionAnalysis,
+    Chunk,
+    GrantElement,
+    GrantLongFormSection,
+    ResearchDeepDive,
+    ResearchObjective,
+)
 
 
 class Base(DeclarativeBase):
@@ -471,6 +478,21 @@ class GrantTemplate(BaseWithUUIDPK):
         uselist=False,
         foreign_keys="[GrantTemplate.rag_job_id]",
     )
+    cfp_analysis: Relationship["CFPAnalysis | None"] = relationship(
+        "CFPAnalysis", back_populates="grant_template", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class CFPAnalysis(BaseWithUUIDPK):
+    __tablename__ = "cfp_analyses"
+
+    grant_template_id: Mapped[UUID] = mapped_column(
+        SA_UUID(), ForeignKey("grant_templates.id", ondelete="CASCADE"), index=True, unique=True
+    )
+    analysis_data: Mapped[CFPSectionAnalysis] = mapped_column(JSON)
+    analyzed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=now(), index=True)
+
+    grant_template: Relationship["GrantTemplate"] = relationship("GrantTemplate", back_populates="cfp_analysis")
 
 
 class GrantTemplateSource(Base):

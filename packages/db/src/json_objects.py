@@ -53,3 +53,30 @@ class ResearchDeepDive(TypedDict):
     research_feasibility: NotRequired[str]
     impact: NotRequired[str]
     scientific_infrastructure: NotRequired[str]
+
+
+class RequirementWithQuote(TypedDict):
+    requirement: str
+    quote: str
+
+
+class SectionRequirement(TypedDict):
+    section: str
+    requirements: list[RequirementWithQuote]
+
+
+class LengthConstraint(TypedDict):
+    description: str
+    quote: str
+
+
+class EvaluationCriterion(TypedDict):
+    criterion: str
+    quote: str
+
+
+class CFPSectionAnalysis(TypedDict):
+    section_requirements: list[SectionRequirement]
+    length_constraints: list[LengthConstraint]
+    evaluation_criteria: list[EvaluationCriterion]
+    additional_requirements: list[RequirementWithQuote]
