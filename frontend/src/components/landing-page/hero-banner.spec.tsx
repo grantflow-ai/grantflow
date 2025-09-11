@@ -1,12 +1,15 @@
-import { render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 
-import { HeroBanner } from "@/components/landing-page/hero-banner";
+import { HeroBanner } from "./hero-banner";
 
 vi.mock("@/hooks/use-mobile", () => ({
 	useIsMobile: () => false,
 }));
 
-describe("HeroBanner", () => {
+describe.sequential("HeroBanner", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders the component with the correct structure", () => {
 		render(<HeroBanner />);
 

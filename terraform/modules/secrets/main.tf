@@ -86,6 +86,23 @@ resource "google_secret_manager_secret" "gcs_service_account_credentials" {
   }
 }
 
+resource "google_secret_manager_secret" "crdt_server_url_staging" {
+  secret_id = "NEXT_PUBLIC_CRDT_SERVER_URL_STAGING"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret" "crdt_server_url_production" {
+  secret_id = "NEXT_PUBLIC_CRDT_SERVER_URL"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
 
 resource "google_kms_key_ring" "secrets_keyring" {
   name     = "secrets-keyring"
@@ -112,7 +129,8 @@ resource "google_secret_manager_secret_iam_binding" "database_connection_string_
   role      = "roles/secretmanager.secretAccessor"
   members = [
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
-    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
+    "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
   ]
 }
 
@@ -187,5 +205,25 @@ resource "google_secret_manager_secret_iam_binding" "gcs_credentials_access" {
     "serviceAccount:${var.project_id}@appspot.gserviceaccount.com",
     "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com",
     "serviceAccount:backend-service@${var.project_id}.iam.gserviceaccount.com"
+  ]
+}
+
+resource "google_secret_manager_secret_iam_binding" "crdt_server_url_staging_access" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.crdt_server_url_staging.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members = [
+    "serviceAccount:firebase-app-hosting-compute@${var.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
+  ]
+}
+
+resource "google_secret_manager_secret_iam_binding" "crdt_server_url_production_access" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.crdt_server_url_production.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members = [
+    "serviceAccount:firebase-app-hosting-compute@${var.project_id}.iam.gserviceaccount.com",
+    "serviceAccount:${var.project_id}@appspot.gserviceaccount.com"
   ]
 }

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { HTMLProps } from "react";
-import { AnimatedFeatureArticle } from "@/components/landing-page/feature-articles-animated";
-import { ScrollFadeElement } from "@/components/landing-page/scroll-fade-element";
+import { AnimatedFeatureArticle } from "./feature-articles-animated";
+import { ScrollFadeElement } from "./scroll-fade-element";
 
 const CORE_FEATURES = [
 	{
@@ -45,7 +45,7 @@ export function CoreFeaturesSection() {
 					width={0}
 				/>
 			</div>
-			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center py-10 text-center text-stone-800 md:px-10 lg:px-20">
+			<div className="xl:px-30 relative z-10 flex w-full flex-col items-center py-[120px] text-center text-stone-800 md:px-10 lg:px-20">
 				<ScrollFadeElement className="mx-auto">
 					<h2
 						className="font-heading xl-my-10 my-3 px-8 text-3xl font-medium md:my-5 md:text-4xl lg:my-8"

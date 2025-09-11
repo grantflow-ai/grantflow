@@ -1,18 +1,12 @@
-"""
-Load Test Cases for Vector Benchmarks
-
-This module implements load testing scenarios using the comprehensive
-load testing framework.
-"""
-
 from typing import Any
 
 import pytest
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.benchmark_utils import benchmark_vector
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
+from .data_test import BenchmarkDataGenerator
 from .load_testing import (
     LOAD_TEST_CONFIGURATIONS,
     LoadTestConfiguration,
@@ -21,12 +15,11 @@ from .load_testing import (
     format_load_test_results,
 )
 from .synthetic_migrations import VectorTableModifier
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
 
-@benchmark_vector(timeout=1800)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=1800)
 @pytest.mark.parametrize("config", LOAD_TEST_CONFIGURATIONS, ids=lambda c: c.name)
 async def test_vector_search_load(
     async_session_maker: async_sessionmaker[AsyncSession],
@@ -34,11 +27,6 @@ async def test_vector_search_load(
     config: LoadTestConfiguration,
     logger: Any,
 ) -> None:
-    """
-    Test vector search performance under concurrent load.
-
-    This simulates realistic multi-user scenarios with different load patterns.
-    """
     logger.info("Starting vector search load test", description=config.description)
     logger.info("Expected use case", expected_use_case=config.expected_use_case)
 
@@ -47,7 +35,7 @@ async def test_vector_search_load(
         await modifier.modify_vector_dimension(config.vector_dimension)
         await modifier.modify_index_parameters(m=48, ef_construction=256)
 
-    from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+    from packages.db.src.tables import GrantApplication, GrantApplicationSource
     from testing.factories import GrantApplicationFactory, RagFileFactory
 
     async with async_session_maker() as session:
@@ -67,12 +55,12 @@ async def test_vector_search_load(
         await session.commit()
         await session.refresh(rag_source)
 
-        app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+        app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
         session.add(app_rag)
         await session.commit()
         await session.refresh(app_rag)
 
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(config.dataset_size, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, config.vector_dimension)
         await generator.insert_vectors_to_database(vectors)
@@ -135,15 +123,10 @@ async def test_vector_search_load(
     logger.info("Load test passed all requirements", config_name=config.name)
 
 
-@benchmark_vector(timeout=2400)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=2400)
 async def test_dimension_load_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Compare load testing performance across different vector dimensions.
-
-    This test helps determine if lower dimensions handle load better.
-    """
     logger.info("Starting dimension load comparison test")
 
     dimensions_to_test = [128, 256, 384]
@@ -170,17 +153,17 @@ async def test_dimension_load_comparison(
             modifier = VectorTableModifier(session)
             await modifier.modify_vector_dimension(dimension)
 
-            from packages.db.src.tables import GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, RagFileFactory
 
             grant_app = await GrantApplicationFactory.create_async()
             rag_source = await RagFileFactory.create_async(content_type="application/pdf")
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             await generator.generate_test_chunks(load_config.dataset_size, rag_source.id)
             query_vectors = await generator.generate_query_vectors(50, dimension)
 
@@ -220,17 +203,10 @@ async def test_dimension_load_comparison(
     logger.info("✅ All dimensions passed load testing requirements")
 
 
-@benchmark_vector(timeout=2400)
+@performance_test(execution_speed=TestExecutionSpeed.E2E_FULL, domain=TestDomain.VECTOR_BENCHMARK, timeout=2400)
 async def test_index_parameter_load_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Compare load testing performance across different HNSW index settings.
-
-    This test verifies how different index settings affect query performance.
-    It's important to find the right balance between index build time,
-    memory usage, and query performance.
-    """
     logger.info("Starting index parameter load comparison test")
 
     index_params = {
@@ -275,17 +251,17 @@ async def test_index_parameter_load_comparison(
             modifier = VectorTableModifier(session)
             await modifier.modify_index_parameters(m=m, ef_construction=ef_search)
 
-            from packages.db.src.tables import GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, RagFileFactory
 
             grant_app = await GrantApplicationFactory.create_async()
             rag_source = await RagFileFactory.create_async(content_type="application/pdf")
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             await generator.generate_test_chunks(load_config.dataset_size, rag_source.id)
             query_vectors = await generator.generate_query_vectors(50, 384)
 
@@ -328,13 +304,6 @@ async def test_index_parameter_load_comparison(
 async def test_result_quality_by_dimension(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Test result quality across different vector dimensions.
-
-    This test verifies that vector search quality is acceptable
-    at different dimensions. Lower dimensions should still return
-    relevant results.
-    """
     logger.info("Starting result quality by dimension test")
 
     dimensions_to_test = [128, 256, 384]
@@ -347,17 +316,17 @@ async def test_result_quality_by_dimension(
             await modifier.modify_vector_dimension(dimension)
             await modifier.modify_index_parameters(m=32, ef_construction=256)
 
-            from packages.db.src.tables import GrantApplicationRagSource
+            from packages.db.src.tables import GrantApplicationSource
             from testing.factories import GrantApplicationFactory, RagFileFactory
 
             grant_app = await GrantApplicationFactory.create_async()
             rag_source = await RagFileFactory.create_async(content_type="application/pdf")
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             chunks = await generator.generate_test_chunks(500, rag_source.id)
 
             vectors = await generator.create_test_vectors(chunks[:1], rag_source.id, dimension)

@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { acceptInvitation } from "@/actions/project";
 import { useUserStore } from "@/stores/user-store";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
 
 export default function AcceptInvitationPage() {
 	return (
@@ -52,8 +52,6 @@ function AcceptInvitationContent() {
 			setIsProcessing(true);
 
 			try {
-				// Extract invitation ID from JWT token (it's in the payload)
-				// We'll need to decode the JWT to get the invitation_id
 				const payload = JSON.parse(atob(token.split(".")[1])) as {
 					invitation_id: string;
 				};
@@ -65,7 +63,6 @@ function AcceptInvitationContent() {
 
 				const result = await acceptInvitation(invitationId);
 
-				// Get project ID from the result token payload
 				const resultPayload = JSON.parse(atob(result.token.split(".")[1])) as {
 					project_id: string;
 				};

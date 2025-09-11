@@ -1,16 +1,17 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApplication } from "@/actions/grant-applications";
-import { GrantApplicationEditor } from "@/components/projects/applications/grant-application-editor";
+import { EditorContainer } from "@/components/organizations/project/applications/editor/editor-container";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useOrganizationStore } from "@/stores/organization-store";
 import { useProjectStore } from "@/stores/project-store";
 import { routes } from "@/utils/navigation";
 
 export function ApplicationEditorPageClient() {
 	const router = useRouter();
 	const { project } = useProjectStore();
+	const { selectedOrganizationId } = useOrganizationStore();
 	const { activeApplicationId } = useNavigationStore();
 	const [application, setApplication] = useState<Awaited<ReturnType<typeof getApplication>> | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
@@ -18,19 +19,19 @@ export function ApplicationEditorPageClient() {
 
 	useEffect(() => {
 		async function loadApplication() {
-			if (!(project && activeApplicationId)) {
-				router.replace(routes.projects());
+			if (!(project && activeApplicationId && selectedOrganizationId)) {
+				router.replace(routes.organization.root());
 				return;
 			}
 
 			try {
 				setIsLoading(true);
-				const app = await getApplication(project.id, activeApplicationId);
+				const app = await getApplication(selectedOrganizationId, project.id, activeApplicationId);
 				setApplication(app);
 			} catch {
 				setError("Failed to load application");
 				setTimeout(() => {
-					router.replace(routes.project.detail());
+					router.replace(routes.organization.project.detail());
 				}, 2000);
 			} finally {
 				setIsLoading(false);
@@ -38,12 +39,13 @@ export function ApplicationEditorPageClient() {
 		}
 
 		void loadApplication();
-	}, [project, activeApplicationId, router]);
+	}, [project, activeApplicationId, router, selectedOrganizationId]);
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center min-h-screen bg-gray-50">
-				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+			<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 gap-4">
+				<div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary" />
+				<p className="text-gray-600 font-medium">Loading editor...</p>
 			</div>
 		);
 	}
@@ -57,29 +59,14 @@ export function ApplicationEditorPageClient() {
 		);
 	}
 
-	if (!(application && project)) {
-		return null; // Will redirect
+	if (!(application && project && application.editor_document_id && application.text)) {
+		return null;
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			<div className="bg-white border-b border-gray-200">
-				<div className="container mx-auto px-6 py-4">
-					<div className="flex items-center justify-between">
-						<h1 className="text-2xl font-semibold text-gray-900">{application.title}</h1>
-						<button
-							className="px-4 py-2 text-gray-600 hover:text-gray-900"
-							onClick={() => {
-								router.push(routes.project.detail());
-							}}
-							type="button"
-						>
-							Back to Project
-						</button>
-					</div>
-				</div>
-			</div>
-			<GrantApplicationEditor application={{ ...application, text: application.text ?? "" }} />
-		</div>
+		<EditorContainer
+			documentId={application.editor_document_id}
+			initialContent={application.editor_document_init ? undefined : application.text}
+		/>
 	);
 }

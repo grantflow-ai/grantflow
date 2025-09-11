@@ -1,13 +1,9 @@
 "use server";
 
 import type { API } from "@/types/api-types";
-import { getClient } from "@/utils/api";
+import { getClient } from "@/utils/api/server";
 import { createAuthHeaders, withAuthRedirect } from "@/utils/server-side";
 
-/**
- * Delete the current user's account (soft delete)
- * This will mark the account for deletion with a grace period for restoration
- */
 export async function deleteAccount() {
 	return withAuthRedirect(
 		getClient()
@@ -18,10 +14,16 @@ export async function deleteAccount() {
 	);
 }
 
-/**
- * Get list of projects where the user is the sole owner
- * These must be handled before account deletion
- */
+export async function getSoleOwnedOrganizations() {
+	return withAuthRedirect(
+		getClient()
+			.get("user/sole-owned-organizations", {
+				headers: await createAuthHeaders(),
+			})
+			.json<API.GetSoleOwnedOrganizations.Http200.ResponseBody>(),
+	);
+}
+
 export async function getSoleOwnedProjects() {
 	return withAuthRedirect(
 		getClient()
@@ -32,12 +34,7 @@ export async function getSoleOwnedProjects() {
 	);
 }
 
-/**
- * Restore a soft-deleted account within the grace period
- * @param token - Restoration token sent via email
- */
 export async function restoreAccount(token: string) {
-	// NOTE: Backend endpoint not yet implemented
 	return withAuthRedirect(
 		getClient()
 			.post("user/restore", {

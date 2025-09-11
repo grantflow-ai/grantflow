@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 
-import { TestimonialsSection } from "@/components/landing-page/testimonials-section";
+import { TestimonialsSection } from "./testimonials-section";
 
 vi.mock("@/components/landing-page/motion-components", () => ({
 	MotionArticle: vi.fn().mockImplementation(({ children, className, variants, ...props }) => (
@@ -51,7 +51,10 @@ vi.mock("@/components/landing-page/scroll-fade-element", () => ({
 	)),
 }));
 
-describe("TestimonialsSection", () => {
+describe.sequential("TestimonialsSection", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders section with correct structure and attributes", () => {
 		render(<TestimonialsSection />);
 

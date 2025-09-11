@@ -2,12 +2,13 @@
 
 import { Resend } from "resend";
 import { createInvitation } from "@/actions/project";
-import { InvitationEmailTemplate } from "@/components/email-templates/invitation-email-template";
+import InvitationEmailTemplate from "@/components/email-templates/invitation-email-template";
 import { getEnv } from "@/utils/env";
 
 interface InviteCollaboratorParams {
 	email: string;
 	inviterName: string;
+	organizationId: string;
 	projectId: string;
 	projectName: string;
 	role: "admin" | "member";
@@ -16,6 +17,7 @@ interface InviteCollaboratorParams {
 export async function inviteCollaborator({
 	email,
 	inviterName,
+	organizationId,
 	projectId,
 	projectName,
 	role,
@@ -25,28 +27,23 @@ export async function inviteCollaborator({
 	success: boolean;
 }> {
 	try {
-		// Initialize Resend client
 		const resend = new Resend(getEnv().RESEND_API_KEY);
 
-		// First create the invitation in our backend
-		const backendRole = role === "admin" ? "ADMIN" : "MEMBER";
-		const invitationResult = await createInvitation(projectId, {
+		const backendRole = role === "admin" ? "ADMIN" : "COLLABORATOR";
+		const invitationResult = await createInvitation(organizationId, projectId, {
 			email,
 			role: backendRole,
 		});
 
-		// Generate the invitation URL with the JWT token
 		const baseUrl = getEnv().NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 		const acceptInvitationUrl = `${baseUrl}/accept-invitation?token=${invitationResult.token}`;
 
-		// Send email using the proper template
 		const { error } = await resend.emails.send({
 			from: "noreply@grantflow.ai",
 			react: InvitationEmailTemplate({
 				acceptInvitationUrl,
 				inviterName,
 				projectName,
-				role,
 			}),
 			subject: `Invitation to collaborate on ${projectName}`,
 			to: [email],
@@ -59,7 +56,6 @@ export async function inviteCollaborator({
 			};
 		}
 
-		// Extract invitation ID from JWT token
 		const payload = JSON.parse(atob(invitationResult.token.split(".")[1])) as {
 			invitation_id: string;
 		};

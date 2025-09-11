@@ -21,11 +21,6 @@ from services.backend.src.api.routes.auth import (
     LoginResponse,
     OTPResponse,
 )
-from services.backend.src.api.routes.funding_organizations import (
-    CreateOrganizationRequestBody,
-    FundingOrganizationResponse,
-    UpdateOrganizationRequestBody,
-)
 from services.backend.src.api.routes.grant_applications import (
     ApplicationListItemResponse,
     ApplicationListResponse,
@@ -36,9 +31,14 @@ from services.backend.src.api.routes.grant_applications import (
     SourceResponse,
 )
 from services.backend.src.api.routes.grant_applications import (
-    FundingOrganizationResponse as AppFundingOrgResponse,
+    GrantingInstitutionResponse as AppGrantingInstitutionResponse,
 )
 from services.backend.src.api.routes.grant_template import UpdateGrantTemplateRequestBody
+from services.backend.src.api.routes.granting_institutions import (
+    CreateOrganizationRequestBody,
+    GrantingInstitutionResponse,
+    UpdateOrganizationRequestBody,
+)
 from services.backend.src.api.routes.notifications import (
     ListNotificationsResponse,
     NotificationResponse,
@@ -92,6 +92,7 @@ class LoginResponseFactory(TypedDictFactory[LoginResponse]):
 
 class ExtractedSectionDTOFactory(TypedDictFactory[ExtractedSectionDTO]):
     __model__ = ExtractedSectionDTO
+
     title = faker.sentence
     is_long_form = True
     parent_id = None
@@ -134,6 +135,7 @@ class SectionMetadataFactory(TypedDictFactory[SectionMetadata]):
 
 class UpdateOrganizationRequestBodyFactory(TypedDictFactory[UpdateOrganizationRequestBody]):
     __model__ = UpdateOrganizationRequestBody
+
     full_name = faker.company
 
     @classmethod
@@ -141,8 +143,8 @@ class UpdateOrganizationRequestBodyFactory(TypedDictFactory[UpdateOrganizationRe
         return faker.lexify("???")
 
 
-class FundingOrganizationResponseFactory(TypedDictFactory[FundingOrganizationResponse]):
-    __model__ = FundingOrganizationResponse
+class GrantingInstitutionResponseFactory(TypedDictFactory[GrantingInstitutionResponse]):
+    __model__ = GrantingInstitutionResponse
 
     @classmethod
     def id(cls) -> str:
@@ -183,8 +185,8 @@ class SourceResponseFactory(TypedDictFactory[SourceResponse]):
         return faker.url()
 
 
-class AppFundingOrgResponseFactory(TypedDictFactory[AppFundingOrgResponse]):
-    __model__ = AppFundingOrgResponse
+class AppGrantingInstitutionResponseFactory(TypedDictFactory[AppGrantingInstitutionResponse]):
+    __model__ = AppGrantingInstitutionResponse
 
     @classmethod
     def id(cls) -> str:
@@ -207,12 +209,14 @@ class AppFundingOrgResponseFactory(TypedDictFactory[AppFundingOrgResponse]):
 
 class ResearchObjectiveFactory(TypedDictFactory[ResearchObjective]):
     __model__ = ResearchObjective
+
     objective = faker.sentence
     description = faker.paragraph
 
 
 class ResearchDeepDiveFactory(TypedDictFactory[ResearchDeepDive]):
     __model__ = ResearchDeepDive
+
     executive_summary = faker.paragraph
 
     @classmethod
@@ -282,12 +286,12 @@ class GrantTemplateResponseFactory(TypedDictFactory[GrantTemplateResponse]):
         return str(uuid4())
 
     @classmethod
-    def funding_organization_id(cls) -> str:
+    def granting_institution_id(cls) -> str:
         return str(uuid4())
 
     @classmethod
-    def funding_organization(cls) -> AppFundingOrgResponse:
-        return AppFundingOrgResponseFactory.build()
+    def granting_institution(cls) -> AppGrantingInstitutionResponse:
+        return AppGrantingInstitutionResponseFactory.build()
 
     @classmethod
     def grant_sections(cls) -> list[GrantLongFormSection | GrantElement]:
@@ -456,7 +460,7 @@ class UpdateGrantTemplateRequestBodyFactory(TypedDictFactory[UpdateGrantTemplate
     __model__ = UpdateGrantTemplateRequestBody
 
     @classmethod
-    def funding_organization_id(cls) -> str:
+    def granting_institution_id(cls) -> str:
         return str(uuid4())
 
     @classmethod
@@ -527,7 +531,7 @@ class UpdateMemberRoleRequestBodyFactory(TypedDictFactory[UpdateMemberRoleReques
 
     @classmethod
     def role(cls) -> UserRoleEnum:
-        return faker.random_element([UserRoleEnum.OWNER, UserRoleEnum.MEMBER])
+        return faker.random_element([UserRoleEnum.OWNER, UserRoleEnum.COLLABORATOR])
 
 
 class RagJobResponseFactory(TypedDictFactory[RagJobResponse]):

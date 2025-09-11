@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { type HTMLMotionProps, motion } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,9 @@ const gradientPath = [
 	"radial-gradient(60% 100% at 100% 100%, var(--primary) 0%, transparent 100%)",
 ];
 
-export function AnimatedGradientBackground({ className }: React.HTMLAttributes<HTMLDivElement>) {
+type AnimatedGradientBackgroundProps = Omit<HTMLMotionProps<"div">, "animate" | "initial" | "transition">;
+
+export function AnimatedGradientBackground({ className, ...props }: AnimatedGradientBackgroundProps) {
 	return (
 		<motion.div
 			animate={{ background: gradientPath }}
@@ -28,6 +30,7 @@ export function AnimatedGradientBackground({ className }: React.HTMLAttributes<H
 				repeatType: "loop",
 				times: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
 			}}
+			{...props}
 		/>
 	);
 }

@@ -1,11 +1,11 @@
 export enum UserRole {
 	ADMIN = "ADMIN",
-	MEMBER = "MEMBER",
+	COLLABORATOR = "COLLABORATOR",
 	OWNER = "OWNER",
 }
 
 export interface UserInfo {
-	customClaims: null | Record<string, any>;
+	customClaims: null | Record<string, unknown>;
 	disabled: boolean;
 	displayName: null | string;
 	email: null | string;
@@ -23,5 +23,3 @@ export interface UserInfo {
 	tenantId: null | string;
 	uid: string;
 }
-
-export type UserRoleType = keyof typeof UserRole;

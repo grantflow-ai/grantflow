@@ -1,55 +1,43 @@
-import { PagePath } from "@/enums";
-
 interface BaseNavigationParams {
 	query?: Record<string, string>;
 }
 
-/**
- * Clean navigation routes without URL parameters or exposed IDs
- *
- * - All routes are static (e.g., /project, /application/editor)
- * - Entity context is managed through the navigation store
- * - UUIDs are used for API calls but never in URLs
- */
 export const routes = {
 	acceptInvitation: ({ query }: BaseNavigationParams = {}) => {
 		const params = new URLSearchParams(query);
 		const queryString = params.toString();
 		return queryString ? `/accept-invitation?${queryString}` : "/accept-invitation";
 	},
+	finishEmailSignin: () => "/onboarding/email",
 
-	// Application routes (context from store)
-	application: {
-		detail: () => "/application",
-		editor: () => "/application/editor",
-		wizard: () => "/application/wizard",
-	},
-	// Public routes
 	home: () => "/",
-	login: () => PagePath.LOGIN,
+	login: () => "/login",
 
-	// API routes
 	notifications: {
 		dismiss: (notificationId: string) => `/api/notifications/${notificationId}/dismiss`,
 	},
+	onboarding: () => "/onboarding",
 
-	// Project routes (context from store)
-	project: {
-		applications: {
-			list: () => "/project/applications",
-			new: () => "/project/applications/new",
+	organization: {
+		project: {
+			application: {
+				detail: () => "/organization/project/application",
+				editor: () => "/organization/project/application/editor",
+				list: () => "/organization/project/application",
+				new: () => "/organization/project/application/new",
+				wizard: () => "/organization/project/application/wizard",
+			},
+			detail: () => "/organization/project",
 		},
-		detail: () => "/project",
+		root: () => "/organization",
 		settings: {
-			account: () => "/project/settings/account",
-			billing: () => "/project/settings/billing",
-			members: () => "/project/settings/members",
-			notifications: () => "/project/settings/notifications",
+			account: () => "/organization/settings/account",
+			billing: () => "/organization/settings/billing",
+			members: () => "/organization/settings/members",
+			notifications: () => "/organization/settings/notifications",
+			personal: () => "/organization/settings/personal",
 		},
 	},
-
-	// Dashboard
-	projects: () => PagePath.PROJECTS,
 };
 
 export interface NavigationOptions {

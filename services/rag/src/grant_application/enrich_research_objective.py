@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from typing import Final, TypedDict
 
@@ -5,10 +6,14 @@ from packages.db.src.json_objects import ResearchObjective
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL
 from packages.shared_utils.src.exceptions import ValidationError
 
-from services.rag.src.grant_application.dto import EnrichObjectiveInputDTO
+from services.rag.src.grant_application.dto import EnrichmentDataDTO, EnrichObjectiveInputDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.evaluation import EvaluationCriterion, with_prompt_evaluation
 from services.rag.src.utils.prompt_template import PromptTemplate
+from services.rag.src.utils.scientific_context import format_scientific_context
+from services.rag.src.utils.wikidata_client import get_scientific_context
+
+logger = logging.getLogger(__name__)
 
 ENRICH_RESEARCH_OBJECTIVE_SYSTEM_PROMPT: Final[str] = """
 You are a specialized component in a RAG system dedicated to enriching STEM grant applications.
@@ -52,14 +57,21 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
 
     ## Instructions
 
-    1. Formulate between 3 to 10 guiding questions for the objective and its tasks:
+    1. **Generate 5 core scientific terms** that are fundamental to understanding and executing this research:
+        - Identify the most important scientific concepts, methodologies, or technologies central to this research
+        - Focus on terms that represent the foundational scientific principles underlying the research objective
+        - Select terms that would be essential for any researcher or reviewer to understand the scientific basis
+        - Ensure terms are specific enough to be meaningful but broad enough to capture key scientific domains
+        - These terms will be used for scientific context enhancement and should represent the core scientific foundation
+
+    2. Formulate between 3 to 10 guiding questions for the objective and its tasks:
         - Focus on questions that address the core purpose, methodology, expected outcomes, potential challenges, and broader implications of the research.
         - Ground the questions in the provided keywords and topics to ensure relevance and focus.
         - Include questions that prompt consideration of scientific rigor, innovation potential, and impact.
         - Ensure questions address the relationship between the main objective and its component tasks.
         - Craft questions that will elicit evidence-based, detailed responses suitable for a grant application.
 
-    2. Generate detailed descriptions for the objective and its tasks, addressing the following elements:
+    3. Generate detailed descriptions for the objective and its tasks, addressing the following elements:
         - **Purpose:** Clearly state the purpose and its contribution to the overall research goal, emphasizing scientific significance.
         - **Methodology:** Describe the methods and techniques to be employed with technical precision and scientific rigor.
         - **Expected Results:** Outline anticipated outcomes, deliverables, and potential impact with measurable indicators.
@@ -69,7 +81,7 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         - Ensure all descriptions are grounded in the provided keywords and topics.
         - Support descriptions with evidence from the retrieval results where applicable.
 
-    3. Write detailed instructions for AI text generation:
+    4. Write detailed instructions for AI text generation:
         - Provide detailed instructions for AI text generation of the objective and task descriptions.
         - Prioritize information from the sources and incorporate metadata.
         - Specify the desired writing style (e.g., formal and academic, persuasive, concise).
@@ -79,7 +91,7 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
         - Include instructions for emphasizing competitive aspects and advantages of the research approach.
         - Provide guidance on balancing technical detail with accessibility for grant reviewers.
 
-    4. Generate between 3-10 search queries for retrieval of relevant information for the objective and its tasks:
+    5. Generate between 3-10 search queries for retrieval of relevant information for the objective and its tasks:
         - Identify the specific terminology that is relevant to the objective and its tasks.
         - Construct queries using precise scientific terminology from the domain.
         - Include queries that combine multiple relevant concepts to increase specificity.
@@ -95,6 +107,7 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     Provide enriched content for the research objective and its tasks with the following structure:
 
     **For the research objective:**
+    - Core scientific terms: Exactly 5 fundamental scientific terms central to this research
     - Instructions: Detailed guidance for AI text generation including writing style, technical depth, and formatting requirements
     - Description: Comprehensive scientific description covering purpose, methodology, expected results, dependencies, risks, and innovation
     - Guiding questions: 3-10 questions addressing core purpose, methodology, outcomes, challenges, and implications
@@ -110,12 +123,20 @@ ENRICH_RESEARCH_OBJECTIVE_USER_PROMPT: Final[PromptTemplate] = PromptTemplate(
     - Search queries should be concise, specific phrases optimized for vector retrieval
     - Content must be grounded in provided keywords and topics
     - Maintain consistency across objective and task descriptions
+    - Core scientific terms must be exactly 5 terms that represent the foundational scientific concepts
     """,
 )
 
 enriched_object_schema = {
     "type": "object",
     "properties": {
+        "core_scientific_terms": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 5,
+            "maxItems": 5,
+            "description": "Exactly 5 fundamental scientific terms central to this research",
+        },
         "instructions": {
             "type": "string",
             "minLength": 50,
@@ -141,7 +162,7 @@ enriched_object_schema = {
             "description": "Concise queries (3-7 words) using precise scientific terminology for vector retrieval",
         },
     },
-    "required": ["instructions", "description", "guiding_questions", "search_queries"],
+    "required": ["core_scientific_terms", "instructions", "description", "guiding_questions", "search_queries"],
 }
 
 research_objective_enrichment_schema = {
@@ -156,13 +177,6 @@ research_objective_enrichment_schema = {
     },
     "required": ["research_objective", "research_tasks"],
 }
-
-
-class EnrichmentDataDTO(TypedDict):
-    instructions: str
-    description: str
-    guiding_questions: list[str]
-    search_queries: list[str]
 
 
 class ObjectiveEnrichmentDTO(TypedDict):
@@ -185,9 +199,15 @@ def validate_enrichment_response(
             },
         )
 
-    for field in ["instructions", "description", "guiding_questions", "search_queries"]:
+    for field in ["core_scientific_terms", "instructions", "description", "guiding_questions", "search_queries"]:
         if field not in objective:
             raise ValidationError(f"Missing {field} in objective", context=objective)
+
+    if len(objective["core_scientific_terms"]) != 5:
+        raise ValidationError(
+            "Objective must have exactly 5 core scientific terms",
+            context={"terms_count": len(objective["core_scientific_terms"])},
+        )
 
     if len(objective["guiding_questions"]) < 3:
         raise ValidationError(
@@ -223,9 +243,15 @@ def validate_enrichment_response(
         )
 
     for i, task in enumerate(response["research_tasks"]):
-        for field in ["instructions", "description", "guiding_questions", "search_queries"]:
+        for field in ["core_scientific_terms", "instructions", "description", "guiding_questions", "search_queries"]:
             if field not in task:
                 raise ValidationError(f"Missing {field} in task at index {i}", context=task)
+
+        if len(task["core_scientific_terms"]) != 5:
+            raise ValidationError(
+                f"Task at index {i} must have exactly 5 core scientific terms",
+                context={"terms_count": len(task["core_scientific_terms"])},
+            )
 
         if len(task["guiding_questions"]) < 3:
             raise ValidationError(
@@ -264,6 +290,53 @@ async def enrich_objective_generation(
     )
 
 
+async def enrich_objective_with_wikidata(
+    enrichment_data: ObjectiveEnrichmentDTO,
+    trace_id: str | None = None,
+) -> EnrichmentDataDTO:
+    try:
+        all_terms = []
+        all_terms.extend(enrichment_data["research_objective"]["core_scientific_terms"])
+
+        for task in enrichment_data["research_tasks"]:
+            all_terms.extend(task["core_scientific_terms"])
+
+        unique_terms = list(dict.fromkeys(all_terms))
+
+        if not unique_terms:
+            return {
+                "enriched_objective": "",
+                "search_queries": [],
+                "core_scientific_terms": [],
+                "scientific_context": "",
+            }
+
+        scientific_context = await get_scientific_context(unique_terms, trace_id)
+        formatted_context = format_scientific_context(scientific_context)
+
+        return {
+            "enriched_objective": "",
+            "search_queries": [],
+            "core_scientific_terms": unique_terms,
+            "scientific_context": formatted_context,
+        }
+
+    except Exception as e:
+        logger.error(
+            "Failed to enrich objective with Wikidata",
+            extra={
+                "error": str(e),
+                "trace_id": trace_id,
+            },
+        )
+        return {
+            "enriched_objective": "",
+            "search_queries": [],
+            "core_scientific_terms": [],
+            "scientific_context": "",
+        }
+
+
 criteria: list[EvaluationCriterion] = [
     EvaluationCriterion(
         name="Objective & Task Alignment",
@@ -274,6 +347,7 @@ criteria: list[EvaluationCriterion] = [
             - The enrichment preserves the scientific intent of the objective and tasks
             - The guiding questions address the core aspects of the objective and tasks
             - Search queries effectively capture the domain-specific terminology
+            - Core scientific terms accurately represent the foundational concepts of the research
         """,
         weight=1.2,
     ),
@@ -286,17 +360,19 @@ criteria: list[EvaluationCriterion] = [
             - Descriptions reflect current scientific understanding in the domain
             - Search queries use appropriate scientific terms relevant to the methodology
             - Guiding questions demonstrate understanding of scientific principles
+            - Core scientific terms are scientifically accurate and fundamental to the research
         """,
     ),
     EvaluationCriterion(
         name="Comprehensiveness",
         evaluation_instructions="""
         Verify the completeness of the enriched content:
-            - All required components are present (instructions, descriptions, questions, etc.)
+            - All required components are present (core scientific terms, instructions, descriptions, questions, etc.)
             - Each task is appropriately enriched with substantive content
             - The scope of descriptions covers all relevant aspects of the objective/tasks
             - Guiding questions address different dimensions of the research
             - Search queries collectively cover the breadth of the research area
+            - Core scientific terms comprehensively cover the foundational scientific concepts
         """,
     ),
     EvaluationCriterion(
@@ -308,6 +384,7 @@ criteria: list[EvaluationCriterion] = [
             - Guiding questions are clearly formulated and purposeful
             - Content follows a logical flow appropriate for a work plan
             - Search queries are well-formulated for effective retrieval
+            - Core scientific terms are clearly defined and appropriately selected
         """,
     ),
     EvaluationCriterion(
@@ -319,6 +396,7 @@ criteria: list[EvaluationCriterion] = [
             - User inputs are meaningfully incorporated
             - The enrichment builds upon rather than repeats source material
             - Search queries leverage context to enhance relevance
+            - Core scientific terms are grounded in the provided context and research domain
         """,
     ),
     EvaluationCriterion(
@@ -330,6 +408,7 @@ criteria: list[EvaluationCriterion] = [
             - Descriptions highlight innovative aspects and potential impact
             - Guiding questions prompt consideration of significance and broader implications
             - The enrichment positions the research effectively for evaluation
+            - Core scientific terms represent concepts that strengthen the scientific foundation of the proposal
         """,
     ),
 ]

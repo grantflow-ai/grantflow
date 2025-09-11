@@ -1,0 +1,185 @@
+"use client";
+
+import type { ChainedCommands, Editor } from "@tiptap/react";
+import * as React from "react";
+import { useHotkeys } from "react-hotkeys-hook";
+import { AlignCenterIcon } from "@/components/icons/align-center-icon";
+import { AlignJustifyIcon } from "@/components/icons/align-justify-icon";
+import { AlignLeftIcon } from "@/components/icons/align-left-icon";
+import { AlignRightIcon } from "@/components/icons/align-right-icon";
+
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
+
+import { isExtensionAvailable, isNodeTypeSelected } from "@/utils";
+
+export type TextAlign = "left" | "center" | "right" | "justify";
+
+export interface UseTextAlignConfig {
+	editor?: Editor | null;
+	align: TextAlign;
+	hideWhenUnavailable?: boolean;
+	onAligned?: () => void;
+}
+
+export const TEXT_ALIGN_SHORTCUT_KEYS: Record<TextAlign, string> = {
+	center: "mod+shift+e",
+	justify: "mod+shift+j",
+	left: "mod+shift+l",
+	right: "mod+shift+r",
+};
+
+export const textAlignIcons = {
+	center: AlignCenterIcon,
+	justify: AlignJustifyIcon,
+	left: AlignLeftIcon,
+	right: AlignRightIcon,
+};
+
+export const textAlignLabels: Record<TextAlign, string> = {
+	center: "Align center",
+	justify: "Align justify",
+	left: "Align left",
+	right: "Align right",
+};
+
+export function canSetTextAlign(editor: Editor | null, align: TextAlign): boolean {
+	if (!editor?.isEditable) return false;
+	if (!isExtensionAvailable(editor, "textAlign") || isNodeTypeSelected(editor, ["image"])) return false;
+
+	return editor.can().setTextAlign(align);
+}
+
+export function hasSetTextAlign(commands: ChainedCommands): commands is ChainedCommands & {
+	setTextAlign: (align: TextAlign) => ChainedCommands;
+} {
+	return "setTextAlign" in commands;
+}
+
+export function isTextAlignActive(editor: Editor | null, align: TextAlign): boolean {
+	if (!editor?.isEditable) return false;
+	return editor.isActive({ textAlign: align });
+}
+
+export function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
+	if (!editor?.isEditable) return false;
+	if (!canSetTextAlign(editor, align)) return false;
+
+	const chain = editor.chain().focus();
+	if (hasSetTextAlign(chain)) {
+		return chain.setTextAlign(align).run();
+	}
+
+	return false;
+}
+
+export function shouldShowButton(props: {
+	editor: Editor | null;
+	hideWhenUnavailable: boolean;
+	align: TextAlign;
+}): boolean {
+	const { editor, hideWhenUnavailable, align } = props;
+
+	if (!editor?.isEditable) return false;
+	if (!isExtensionAvailable(editor, "textAlign")) return false;
+
+	if (hideWhenUnavailable && !editor.isActive("code")) {
+		return canSetTextAlign(editor, align);
+	}
+
+	return true;
+}
+
+/**
+ * Custom hook that provides text align functionality for Tiptap editor
+ *
+ * @example
+ * ```tsx
+ * // Simple usage
+ * function MySimpleAlignButton() {
+ *   const { isVisible, handleTextAlign } = useTextAlign({ align: "center" })
+ *
+ *   if (!isVisible) return null
+ *
+ *   return <button onClick={handleTextAlign}>Align Center</button>
+ * }
+ *
+ * // Advanced usage with configuration
+ * function MyAdvancedAlignButton() {
+ *   const { isVisible, handleTextAlign, label, isActive } = useTextAlign({
+ *     editor: myEditor,
+ *     align: "right",
+ *     hideWhenUnavailable: true,
+ *     onAligned: () => console.log('Text aligned!')
+ *   })
+ *
+ *   if (!isVisible) return null
+ *
+ *   return (
+ *     <MyButton
+ *       onClick={handleTextAlign}
+ *       aria-pressed={isActive}
+ *       aria-label={label}
+ *     >
+ *       Align Right
+ *     </MyButton>
+ *   )
+ * }
+ * ```
+ */
+export function useTextAlign(config: UseTextAlignConfig) {
+	const { editor: providedEditor, align, hideWhenUnavailable = false, onAligned } = config;
+
+	const { editor } = useTiptapEditor(providedEditor);
+	const [isVisible, setIsVisible] = React.useState<boolean>(true);
+	const canAlign = canSetTextAlign(editor, align);
+	const isActive = isTextAlignActive(editor, align);
+
+	React.useEffect(() => {
+		if (!editor) return;
+
+		const handleSelectionUpdate = () => {
+			setIsVisible(shouldShowButton({ align, editor, hideWhenUnavailable }));
+		};
+
+		handleSelectionUpdate();
+
+		editor.on("selectionUpdate", handleSelectionUpdate);
+
+		return () => {
+			editor.off("selectionUpdate", handleSelectionUpdate);
+		};
+	}, [editor, hideWhenUnavailable, align]);
+
+	const handleTextAlign = React.useCallback(() => {
+		if (!editor) return false;
+
+		const success = setTextAlign(editor, align);
+		if (success) {
+			onAligned?.();
+		}
+		return success;
+	}, [editor, align, onAligned]);
+
+	useHotkeys(
+		TEXT_ALIGN_SHORTCUT_KEYS[align],
+		(event) => {
+			event.preventDefault();
+			handleTextAlign();
+		},
+		{
+			enabled: isVisible && canAlign,
+			enableOnContentEditable: true,
+			enableOnFormTags: true,
+		},
+	);
+
+	return {
+		canAlign,
+		handleTextAlign,
+		Icon: textAlignIcons[align],
+		isActive,
+		isVisible,
+		label: textAlignLabels[align],
+		shortcutKeys: TEXT_ALIGN_SHORTCUT_KEYS[align],
+	};
+}

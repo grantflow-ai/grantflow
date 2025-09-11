@@ -1,11 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { PaymentPlans } from "@/components/landing-page/payment-plans/payment-plans";
+import { PaymentPlans } from "./payment-plans";
 import { PaymentPlansList } from "./payment-plans.constants";
 
-describe("PaymentPlans", () => {
+describe.sequential("PaymentPlans", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	it("renders the component with correct structure", () => {
 		render(<PaymentPlans />);
 

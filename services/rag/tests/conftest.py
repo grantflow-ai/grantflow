@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -5,12 +6,13 @@ from uuid import UUID
 import pytest
 from dotenv import load_dotenv
 from packages.db.src.json_objects import GrantLongFormSection, ResearchDeepDive, ResearchObjective, ResearchTask
-from packages.db.src.tables import FundingOrganization, Project
+from packages.db.src.tables import GrantingInstitution, Project
 from pytest_mock import MockerFixture
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing import FIXTURES_FOLDER
 from testing.factories import GrantSectionFactory
-from testing.utils import create_grant_application_data, process_funding_organization
+from testing.scenarios.base import BaseScenario, list_available_scenarios, load_scenario
+from testing.utils import create_grant_application_data, process_granting_institution
 
 load_dotenv()
 
@@ -19,7 +21,6 @@ pytest_plugins = ["testing.base_test_plugin", "testing.db_test_plugin"]
 
 @pytest.fixture(scope="session", autouse=True)
 def preload_models() -> None:
-    """Preload ML models during test setup to avoid timeouts during execution."""
     import logging
     import time
 
@@ -52,7 +53,129 @@ def preload_models() -> None:
     logger.info("Model preloading completed in %.2f seconds", elapsed_time)
 
 
+@pytest.fixture
+def available_scenarios() -> list[str]:
+    return list_available_scenarios()
+
+
+@pytest.fixture
+def scenario_loader() -> Callable[[str], BaseScenario]:
+    return load_scenario
+
+
 GRANT_APPLICATION_ID = UUID("43b4aed5-8549-461f-9290-5ee9a630ac9a")
+MELANOMA_APPLICATION_ID = "43b4aed5-8549-461f-9290-5ee9a630ac9a"
+TEST_APPLICATIONS = {
+    "melanoma_alliance": MELANOMA_APPLICATION_ID,
+}
+
+
+@pytest.fixture
+def real_application_ids() -> dict[str, str]:
+    return TEST_APPLICATIONS
+
+
+@pytest.fixture
+async def melanoma_application_data(async_session_maker: async_sessionmaker[Any]) -> dict[str, Any]:
+    from packages.db.src.utils import retrieve_application
+
+    async with async_session_maker() as session:
+        application = await retrieve_application(application_id=MELANOMA_APPLICATION_ID, session=session)
+
+        return {
+            "application_id": MELANOMA_APPLICATION_ID,
+            "application": application,
+            "grant_template": application.grant_template,
+            "research_objectives": application.research_objectives or {},
+            "grant_sections": application.grant_template.grant_sections if application.grant_template else [],
+            "organization_id": application.grant_template.granting_institution_id
+            if application.grant_template
+            else None,
+        }
+
+
+@pytest.fixture
+def simple_test_objectives() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "obj-1",
+            "number": 1,
+            "title": "Develop immunotherapy approach",
+            "description": "Create and validate new CAR-T cell therapy",
+            "research_tasks": [
+                {
+                    "id": "task-1-1",
+                    "number": 1,
+                    "title": "Design CAR construct",
+                    "description": "Engineer CAR targeting melanoma antigens",
+                },
+                {
+                    "id": "task-1-2",
+                    "number": 2,
+                    "title": "In vitro validation",
+                    "description": "Test CAR-T cell efficacy in models",
+                },
+            ],
+        },
+        {
+            "id": "obj-2",
+            "number": 2,
+            "title": "Evaluate treatment efficacy",
+            "description": "Assess therapeutic potential in models",
+            "research_tasks": [
+                {
+                    "id": "task-2-1",
+                    "number": 1,
+                    "title": "Mouse model studies",
+                    "description": "Test therapy in xenograft models",
+                },
+                {
+                    "id": "task-2-2",
+                    "number": 2,
+                    "title": "Biomarker analysis",
+                    "description": "Identify predictive biomarkers",
+                },
+            ],
+        },
+        {
+            "id": "obj-3",
+            "number": 3,
+            "title": "Optimize treatment protocol",
+            "description": "Refine dosing and delivery methods",
+            "research_tasks": [
+                {
+                    "id": "task-3-1",
+                    "number": 1,
+                    "title": "Dose optimization",
+                    "description": "Determine optimal cell dose",
+                }
+            ],
+        },
+    ]
+
+
+@pytest.fixture
+def baseline_performance_targets() -> dict[str, float]:
+    return {
+        "total_time_limit": 900,
+        "work_plan_time_limit": 300,
+        "section_gen_time_limit": 600,
+        "enrichment_time_limit": 180,
+        "min_sections": 3,
+        "min_characters": 1000,
+    }
+
+
+@pytest.fixture
+def mock_job_manager() -> Any:
+    from services.rag.src.utils.job_manager import JobManager
+
+    async def create_mock_job_manager(session_maker: Any, application_id: UUID) -> JobManager:
+        job_manager = JobManager(session_maker)
+        await job_manager.create_grant_application_job(grant_application_id=application_id, total_stages=5)
+        return job_manager
+
+    return create_mock_job_manager
 
 
 @pytest.fixture
@@ -219,7 +342,7 @@ def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str,
     return {
         "grant_sections": grant_sections,
         "grant_application_id": str(GRANT_APPLICATION_ID),
-        "funding_organization_id": None,
+        "granting_institution_id": None,
         "submission_date": "2025-04-26",
     }
 
@@ -227,15 +350,15 @@ def grant_template_data(grant_sections: list[GrantLongFormSection]) -> dict[str,
 @pytest.fixture
 async def nih_organization(
     async_session_maker: async_sessionmaker[Any],
-) -> FundingOrganization:
-    return await process_funding_organization(async_session_maker, "NIH")
+) -> GrantingInstitution:
+    return await process_granting_institution(async_session_maker, "NIH")
 
 
 @pytest.fixture
 async def erc_organization(
     async_session_maker: async_sessionmaker[Any],
-) -> FundingOrganization:
-    return await process_funding_organization(async_session_maker, "ERC")
+) -> GrantingInstitution:
+    return await process_granting_institution(async_session_maker, "ERC")
 
 
 @pytest.fixture

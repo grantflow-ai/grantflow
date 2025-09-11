@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { WaitlistForm } from "@/components/landing-page/waitlist-form";
+import { WaitlistForm } from "./waitlist-form";
 
 const { mockAnalyticsIdentify, mockError, mockSuccess } = vi.hoisted(() => {
 	return {
@@ -30,12 +30,16 @@ vi.mock("sonner", async () => {
 	};
 });
 
-describe("WaitlistForm", () => {
+describe.sequential("WaitlistForm", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockSuccess.mockImplementation(() => {});
 		mockError.mockImplementation(() => {});
 		mockAnalyticsIdentify.mockResolvedValue(undefined);
+	});
+
+	afterEach(() => {
+		cleanup();
 	});
 
 	it("renders the form correctly", () => {
@@ -100,11 +104,12 @@ describe("WaitlistForm", () => {
 			);
 		});
 
-		expect(mockError).toHaveBeenCalledWith("Please check your information and try again.");
+		await waitFor(() => {
+			expect(mockError).toHaveBeenCalledWith("Please check your information and try again.");
+		});
 	});
 
 	it("should show loading state during form submission", async () => {
-		// Delay the resolution of analyticsIdentify to show loading state
 		mockAnalyticsIdentify.mockImplementationOnce(
 			() => new Promise((resolve) => setTimeout(() => resolve(undefined), 100)),
 		);
@@ -188,7 +193,6 @@ describe("WaitlistForm", () => {
 	});
 
 	it("should display the spinner during loading state", async () => {
-		// Delay the resolution of analyticsIdentify to show loading state
 		mockAnalyticsIdentify.mockImplementationOnce(
 			() => new Promise((resolve) => setTimeout(() => resolve(undefined), 100)),
 		);

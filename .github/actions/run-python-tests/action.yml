@@ -3,7 +3,7 @@ description: "Set up environment and run tests for a specific backend target"
 
 inputs:
     target:
-        description: "Target to test (backend, indexer, crawler, db, shared_utils, cloud_functions)"
+        description: "Target to test (backend, indexer, crawler, db, shared_utils, functions)"
         required: true
 
 runs:
@@ -29,7 +29,7 @@ runs:
           shell: bash
           run: |
               # Only set up PostgreSQL for services that need database access
-              if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "indexer" || "${{ inputs.target }}" == "crawler" || "${{ inputs.target }}" == "rag" || "${{ inputs.target }}" == "db" ]]; then
+              if [[ "${{ inputs.target }}" == "backend" || "${{ inputs.target }}" == "indexer" || "${{ inputs.target }}" == "crawler" || "${{ inputs.target }}" == "rag" || "${{ inputs.target }}" == "scraper" || "${{ inputs.target }}" == "db" ]]; then
                   # Install PostgreSQL 17 and pgvector
                   sudo apt-get update
                   sudo apt-get install -y wget ca-certificates
@@ -61,7 +61,6 @@ runs:
         - name: Install Dependencies for Target
           shell: bash
           # TODO: temporary fix, we need to handle dependencies for each target better ~keep
-          # run: uv sync --package ${{ inputs.target }} --all-extras --dev
           run: uv sync --all-packages --all-extras --dev --upgrade
 
         - name: Run Tests
@@ -69,8 +68,11 @@ runs:
           run: |
               if [[ "${{ inputs.target }}" == "db" || "${{ inputs.target }}" == "shared_utils" ]]; then
                 PYTHONPATH=. uv run pytest packages/${{ inputs.target }} -v
-              elif [[ "${{ inputs.target }}" == "cloud_functions" ]]; then
-                PYTHONPATH=. uv run pytest cloud_functions -v
+              elif [[ "${{ inputs.target }}" == "functions" ]]; then
+                PYTHONPATH=. uv run pytest functions -v
+              elif [[ "${{ inputs.target }}" == "backend" ]]; then
+                # Run backend tests serially (xdist removed)
+                PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               else
                 PYTHONPATH=. uv run pytest services/${{ inputs.target }} -v
               fi

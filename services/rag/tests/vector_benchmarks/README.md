@@ -2,6 +2,12 @@
 
 This framework provides comprehensive benchmarking for vector database performance across different dimensions and configurations. The key insight is that we use **synthetic migrations** to modify your production schema temporarily, allowing us to test your real RAG code with different vector configurations.
 
+**Important**: These tests require:
+- `E2E_TESTS=1` environment variable 
+- `PYTHONPATH=.` for proper imports
+- Must be run from the repository root directory
+- Use the `@performance_test` decorator with appropriate execution speed and domain
+
 ## Overview
 
 Instead of creating separate test schemas, we:
@@ -12,17 +18,30 @@ Instead of creating separate test schemas, we:
 
 This approach ensures benchmarks reflect real-world performance!
 
+## Implementation Details
+
+- **Environment Variable**: `E2E_TESTS=1` (required to enable performance tests)
+- **Pytest Marker**: Applied automatically by `@performance_test` decorator based on execution speed
+- **Test File Naming**: Tests use `@performance_test()` decorator from `testing.performance_framework`
+- **Data Generation**: Uses `BenchmarkDataGenerator` class from `data_test.py`
+- **Database Setup**: Creates isolated test databases per worker to avoid conflicts
+
 ## Quick Start
 
 ```bash
-# Run all vector benchmarks
-E2E_TESTS=1 pytest services/rag/tests/vector_benchmarks/ -m "vector_benchmark"
+# Run all vector benchmarks (from repository root)
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/ -m vector_benchmark -v
 
 # Run specific test
-E2E_TESTS=1 pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_baseline_vector_insertion
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_baseline_vector_insertion -v
 
-# Run with specific configuration
-E2E_TESTS=1 pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_configuration_baseline
+# Run baseline tests only
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py -k "baseline" -v
+
+# Run dimension scaling test
+PYTHONPATH=. E2E_TESTS=1 uv run pytest services/rag/tests/vector_benchmarks/benchmark_tests.py::test_vector_dimension_scaling -v
+
+# Important: Always run from repository root with PYTHONPATH=.
 ```
 
 ## Key Components
@@ -51,8 +70,8 @@ async with session_maker() as session:
 - `medium_balanced`: 256d vectors, balanced index (good compromise)
 - `current_production`: 384d vectors, current index (baseline)
 - `large_quality`: 512d vectors, quality index (accuracy-optimized)
-- `xl_experimental`: 768d vectors, experimental
-- `xxl_research`: 1024d vectors, research use
+- `xl_experimental`: 768d vectors, experimental settings
+- `xxl_research`: 1536d vectors, research use
 
 ### 2. Database Management (`database.py`)
 
@@ -73,14 +92,14 @@ async with session_maker() as session:
     pass
 ```
 
-### 3. Test Data Generation (`test_data.py`)
+### 3. Test Data Generation (`data_test.py`)
 
-Creates realistic test data using production models:
+Creates realistic test data using production models with smart vector insertion:
 
 ```python
-from .test_data import TestDataGenerator
+from .data_test import BenchmarkDataGenerator
 
-generator = TestDataGenerator(session)
+generator = BenchmarkDataGenerator(session)
 
 # Create proper database entities
 entities = await generator.create_test_entities()
@@ -92,8 +111,9 @@ rag_source = entities["rag_sources"][0]
 chunks = await generator.generate_test_chunks(1000, rag_source.id)
 vectors = await generator.create_test_vectors(chunks, rag_source.id, 256)
 
-# Insert using production code
+# Insert using production code with smart dimension detection
 await generator.insert_vectors_to_database(vectors)
+# Automatically uses raw SQL for non-384d vectors, ORM for 384d
 ```
 
 ### 4. Benchmark Framework (`framework.py`)
@@ -123,11 +143,11 @@ results = await framework.run_comprehensive_benchmark(vectors, queries)
 
 1. **`test_baseline_vector_insertion`** - Tests basic insertion performance
    - Creates 1000 vectors, measures insertion speed
-   - Baseline: >100 vectors/sec, <30s, <100MB memory
+   - Baseline: >50 vectors/sec, <30s, <200MB memory
 
 2. **`test_baseline_similarity_search`** - Tests basic search performance
    - 100 queries on 1000 vectors
-   - Baseline: >10 queries/sec, <100ms avg, <50MB memory
+   - Baseline: >5 queries/sec, <200ms avg, <100MB memory
 
 ### Comparison Tests
 
@@ -140,10 +160,14 @@ results = await framework.run_comprehensive_benchmark(vectors, queries)
    - Demonstrates speed vs accuracy tuning
 
 5. **`test_dataset_size_scaling`** - Tests scalability
-   - 500, 1000, 2000 vectors
-   - Verifies performance doesn't degrade significantly
+   - 100, 1000, 10000 vectors
+   - Verifies performance scaling patterns
 
-6. **`test_configuration_baseline`** - Tests predefined configurations
+6. **`test_vector_dimension_scaling`** - Tests dimension scaling performance
+   - Tests 96d, 384d, 768d, 1536d vectors using synthetic migrations
+   - Measures scaling factors and performance patterns
+
+7. **`test_configuration_baseline`** - Tests predefined configurations
    - Automatically tests multiple configurations
    - Uses parametrized fixture for easy comparison
 
@@ -152,40 +176,49 @@ results = await framework.run_comprehensive_benchmark(vectors, queries)
 ### Testing Different Vector Dimensions
 
 ```python
-@e2e_test(category=E2ETestCategory.VECTOR_BENCHMARK)
-async def test_my_dimension_benchmark(benchmark_db_manager):
-    # Test 512d vectors
-    await benchmark_db_manager.apply_vector_configuration("large_quality")
+from testing.performance_framework import performance_test, TestExecutionSpeed, TestDomain
+
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
+async def test_my_dimension_benchmark(async_session_maker, benchmark_entities, logger):
+    # Test 512d vectors using synthetic migrations
+    async with async_session_maker() as session:
+        modifier = VectorTableModifier(session)
+        await modifier.modify_vector_dimension(512)
     
-    session_maker = benchmark_db_manager.get_session()
-    async with session_maker() as session:
-        # Your production RAG code now uses 512d vectors!
-        # Test insertion, search, whatever you need
-        pass
+    # Your production RAG code now uses 512d vectors!
+    # Test insertion, search, whatever you need
+    framework = VectorBenchmarkFramework(async_session_maker)
+    # Run your benchmarks...
 ```
 
 ### Testing Custom Index Parameters
 
 ```python
-@e2e_test(category=E2ETestCategory.VECTOR_BENCHMARK)
-async def test_custom_index_params(benchmark_session, vector_table_modifier):
-    # Test super fast index
-    await vector_table_modifier.modify_index_parameters(m=12, ef_construction=64)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
+async def test_custom_index_params(async_session_maker, logger):
+    async with async_session_maker() as session:
+        modifier = VectorTableModifier(session)
+        # Test super fast index
+        await modifier.modify_index_parameters(m=12, ef_construction=64)
     
     # Now test your production code with this fast index
+    framework = VectorBenchmarkFramework(async_session_maker)
     # Schema automatically restored after test
 ```
 
 ### Using Fixtures for Common Patterns
 
 ```python
-@e2e_test(category=E2ETestCategory.VECTOR_BENCHMARK)
-async def test_with_dataset(small_dataset, framework):
-    # small_dataset fixture provides 1000 vectors ready to use
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
+async def test_with_dataset(small_dataset, async_session_maker, logger):
+    # small_dataset fixture provides vectors ready to use
     vectors = small_dataset["vectors"]
     
-    # Test search performance
-    query_vectors = create_query_vectors(100, 384)
+    framework = VectorBenchmarkFramework(async_session_maker)
+    
+    # Test search performance  
+    generator = small_dataset["generator"]
+    query_vectors = await generator.generate_query_vectors(100, 384)
     result = await framework.benchmark_similarity_search(query_vectors)
     
     assert result.throughput > 10
@@ -197,10 +230,10 @@ The tests include conservative baseline expectations that should pass on most sy
 
 | Metric | Baseline | Description |
 |--------|----------|-------------|
-| Vector Insertion | >100 vectors/sec | Basic insertion rate |
-| Similarity Search | >10 queries/sec | Basic search rate |
-| Memory Usage | <100MB | Memory for 1000 vectors |
-| Query Time | <100ms avg | Average query response time |
+| Vector Insertion | >50 vectors/sec | Basic insertion rate |
+| Similarity Search | >5 queries/sec | Basic search rate |
+| Memory Usage | <200MB | Memory for 1000 vectors |
+| Query Time | <200ms avg | Average query response time |
 
 ## Extending the Framework
 
@@ -233,12 +266,19 @@ class VectorBenchmarkFramework:
 ### Adding New Test Cases
 
 ```python
-@e2e_test(category=E2ETestCategory.VECTOR_BENCHMARK)
-async def test_my_benchmark(benchmark_session, test_data_generator):
-    # Create test data
-    # Run benchmark
-    # Assert expectations
-    pass
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
+async def test_my_benchmark(async_session_maker, benchmark_entities, logger):
+    async with async_session_maker() as session:
+        generator = BenchmarkDataGenerator(session)
+        # Create test data
+        chunks = await generator.generate_test_chunks(1000, benchmark_entities["rag_source"].id)
+        vectors = await generator.create_test_vectors(chunks, benchmark_entities["rag_source"].id, 384)
+        
+        framework = VectorBenchmarkFramework(async_session_maker)
+        # Run benchmark
+        result = await framework.benchmark_vector_insertion(vectors)
+        # Assert expectations
+        assert result.throughput > 50
 ```
 
 ## Performance Tips

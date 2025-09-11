@@ -190,8 +190,8 @@ async def test_handle_completions_request_with_retry(mocker: MockerFixture) -> N
     response.text = '{"key": "value"}'
 
     aio_client.models.generate_content.side_effect = [
-        TooManyRequests("error"),  # type: ignore[no-untyped-call]
-        TooManyRequests("error"),  # type: ignore[no-untyped-call]
+        TooManyRequests("error"),
+        TooManyRequests("error"),
         response,
     ]
     client._aio = aio_client

@@ -1,57 +1,27 @@
-"""
-Vector Benchmark Tests
-
-This module contains the actual benchmark tests that run with baseline values
-and pass successfully. These tests demonstrate how to use the vector benchmarking
-framework to compare different vector configurations.
-
-Key tests:
-- test_baseline_vector_insertion: Tests basic vector insertion performance
-- test_baseline_similarity_search: Tests basic similarity search performance
-- test_dimension_comparison: Compares performance across different vector dimensions
-- test_index_parameter_comparison: Tests different HNSW index parameters
-- test_dataset_size_scaling: Tests how performance scales with dataset size
-
-All tests use realistic baseline values that should pass in most environments.
-"""
-
 import uuid
 from typing import Any, cast
 
 from packages.shared_utils.src.logger import get_logger
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from testing.benchmark_utils import benchmark_vector
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
+from .data_test import BenchmarkDataGenerator
 from .framework import BenchmarkResult, VectorBenchmarkFramework
-from .test_data import TestDataGenerator  # type: ignore
 
 logger = get_logger(__name__)
 
 
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_baseline_vector_insertion(
     async_session_maker: async_sessionmaker[AsyncSession], benchmark_entities: dict[str, Any], logger: Any
 ) -> None:
-    """
-    Test basic vector insertion performance with baseline expectations.
-
-    This test:
-    1. Creates 1000 test vectors (small dataset for quick testing)
-    2. Measures insertion performance using production code
-    3. Verifies performance meets baseline expectations
-
-    Baseline expectations (should pass on most systems):
-    - Insertion rate: > 100 vectors/sec
-    - Memory usage: < 100MB
-    - Execution time: < 30 seconds
-    """
     logger.info("Testing baseline vector insertion performance")
 
     rag_source = benchmark_entities["rag_source"]
 
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(1000, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
 
@@ -74,29 +44,16 @@ async def test_baseline_vector_insertion(
     )
 
 
-@benchmark_vector(timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=180)
 async def test_baseline_similarity_search(
     async_session_maker: async_sessionmaker[AsyncSession], benchmark_entities: dict[str, Any], logger: Any
 ) -> None:
-    """
-    Test basic similarity search performance with baseline expectations.
-
-    This test:
-    1. Creates 1000 vectors in database
-    2. Runs 100 similarity searches
-    3. Verifies search performance meets baseline expectations
-
-    Baseline expectations (should pass on most systems):
-    - Search rate: > 10 queries/sec
-    - Average query time: < 100ms
-    - Memory usage: < 50MB
-    """
     logger.info("Testing baseline similarity search performance")
 
     rag_source = benchmark_entities["rag_source"]
 
     async with async_session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
         chunks = await generator.generate_test_chunks(1000, rag_source.id)
         vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
         await generator.insert_vectors_to_database(vectors)
@@ -130,22 +87,10 @@ async def test_baseline_similarity_search(
     )
 
 
-@benchmark_vector(timeout=600)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=600)
 async def test_dimension_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Compare performance across different vector dimensions.
-
-    This test:
-    1. Tests small (128d), medium (256d), and current (384d) dimensions
-    2. Uses same dataset size for fair comparison
-    3. Measures insertion and search performance
-    4. Verifies all dimensions perform reasonably
-
-    This demonstrates how synthetic migrations let us test the same
-    production code with different vector configurations!
-    """
     logger.info("Testing performance across different vector dimensions")
 
     dimensions = [128, 256, 384]
@@ -177,7 +122,7 @@ async def test_dimension_comparison(
             row = result.fetchone()
             logger.info("Vector column type after modification", row=row)
 
-        from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+        from packages.db.src.tables import GrantApplication, GrantApplicationSource
         from testing.factories import RagFileFactory
 
         async with async_session_maker() as session:
@@ -196,11 +141,11 @@ async def test_dimension_comparison(
             await session.commit()
             await session.refresh(rag_source)
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             chunks = await generator.generate_test_chunks(test_size, rag_source.id)
             vectors = await generator.create_test_vectors(chunks, rag_source.id, dimension)
 
@@ -250,23 +195,10 @@ async def test_dimension_comparison(
         )
 
 
-@benchmark_vector(timeout=400)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=400)
 async def test_index_parameter_comparison(
     async_session_maker: async_sessionmaker[AsyncSession], project: Any, logger: Any
 ) -> None:
-    """
-    Compare performance with different HNSW index parameters.
-
-    This test:
-    1. Tests different m and ef_construction values
-    2. Measures index build time and search performance
-    3. Demonstrates speed vs accuracy tradeoffs
-
-    HNSW parameters tested:
-    - Fast: m=16, ef_construction=128 (faster, less accurate)
-    - Balanced: m=32, ef_construction=256 (balanced)
-    - Quality: m=48, ef_construction=256 (current production)
-    """
     logger.info("Testing performance with different HNSW index parameters")
 
     index_configs = [
@@ -298,7 +230,7 @@ async def test_index_parameter_comparison(
 
             await modifier.modify_index_parameters(m=m, ef_construction=ef_construction)
 
-        from packages.db.src.tables import GrantApplication, GrantApplicationRagSource
+        from packages.db.src.tables import GrantApplication, GrantApplicationSource
         from testing.factories import RagFileFactory
 
         async with async_session_maker() as session:
@@ -317,11 +249,11 @@ async def test_index_parameter_comparison(
             await session.commit()
             await session.refresh(rag_source)
 
-            app_rag = GrantApplicationRagSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
             session.add(app_rag)
             await session.commit()
 
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
             chunks = await generator.generate_test_chunks(test_size, rag_source.id)
             vectors = await generator.create_test_vectors(chunks, rag_source.id, 384)
 
@@ -374,15 +306,8 @@ async def test_index_parameter_comparison(
         )
 
 
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], project: Any, logger: Any) -> None:
-    """
-    Test how vector dimension affects search performance.
-
-    This test runs the same benchmark with different vector dimensions
-    to establish scaling patterns and limits.
-    """
-
     db_config = configured_vector_db
     config_name = str(db_config["config_name"])
     config: dict[str, Any] = db_config["config"]
@@ -400,18 +325,48 @@ async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], pr
         logger.info("Testing dimension", dimension=dim)
 
         async with db_config["session_maker"]() as session:
-            generator = TestDataGenerator(session)
-
             await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
             await session.commit()
 
-            chunks = await generator.generate_test_chunks(100, uuid.uuid4())
-            vectors = await generator.create_test_vectors(chunks, uuid.uuid4(), dim)
+        async with db_config["session_maker"]() as session:
+            from .synthetic_migrations import VectorTableModifier
+
+            modifier = VectorTableModifier(session)
+            await modifier.modify_vector_dimension(dim)
+
+        async with db_config["session_maker"]() as session:
+            generator = BenchmarkDataGenerator(session)
+
+            from packages.db.src.tables import GrantApplication, GrantApplicationSource
+            from sqlalchemy import select
+            from testing.factories import RagFileFactory
+
+            result = await session.execute(select(GrantApplication).filter_by(project_id=project.id))
+            grant_app = result.scalar_one_or_none()
+            if not grant_app:
+                from testing.factories import GrantApplicationFactory
+
+                grant_app = GrantApplicationFactory.build(project_id=project.id)
+                session.add(grant_app)
+                await session.commit()
+                await session.refresh(grant_app)
+
+            rag_source = RagFileFactory.build()
+            session.add(rag_source)
+            await session.commit()
+            await session.refresh(rag_source)
+
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            session.add(app_rag)
+            await session.commit()
+
+            chunks = await generator.generate_test_chunks(100, rag_source.id)
+            vectors = await generator.create_test_vectors(chunks, rag_source.id, dim)
             await generator.insert_vectors_to_database(vectors)
 
             query_vectors = await generator.generate_query_vectors(1, dim)
 
-            framework = VectorBenchmarkFramework(session)
+            framework = VectorBenchmarkFramework(db_config["session_maker"])
             benchmark_result = await framework.benchmark_similarity_search(
                 query_vectors=query_vectors, k=10, test_name=f"dimension_{dim}"
             )
@@ -465,15 +420,8 @@ async def test_vector_dimension_scaling(configured_vector_db: dict[str, Any], pr
         )
 
 
-@benchmark_vector(timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=300)
 async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], project: Any, logger: Any) -> None:
-    """
-    Test how vector database performance scales with dataset size.
-
-    This test runs the same benchmark with different dataset sizes
-    to understand scaling patterns and bottlenecks.
-    """
-
     db_config = configured_vector_db
     config_name = str(db_config["config_name"])
     config = db_config["config"]
@@ -490,20 +438,41 @@ async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], projec
         logger.info("Testing dataset size", size=size)
 
         async with db_config["session_maker"]() as session:
-            generator = TestDataGenerator(session)
+            generator = BenchmarkDataGenerator(session)
 
             await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
             await session.commit()
 
-            source_id = uuid.uuid4()
+            from packages.db.src.tables import GrantApplication, GrantApplicationSource
+            from sqlalchemy import select
+            from testing.factories import RagFileFactory
 
-            chunks = await generator.generate_test_chunks(size, source_id)
-            vectors = await generator.create_test_vectors(chunks, source_id, dimension)
+            result = await session.execute(select(GrantApplication).filter_by(project_id=project.id))
+            grant_app = result.scalar_one_or_none()
+            if not grant_app:
+                from testing.factories import GrantApplicationFactory
+
+                grant_app = GrantApplicationFactory.build(project_id=project.id)
+                session.add(grant_app)
+                await session.commit()
+                await session.refresh(grant_app)
+
+            rag_source = RagFileFactory.build()
+            session.add(rag_source)
+            await session.commit()
+            await session.refresh(rag_source)
+
+            app_rag = GrantApplicationSource(grant_application_id=grant_app.id, rag_source_id=rag_source.id)
+            session.add(app_rag)
+            await session.commit()
+
+            chunks = await generator.generate_test_chunks(size, rag_source.id)
+            vectors = await generator.create_test_vectors(chunks, rag_source.id, dimension)
             await generator.insert_vectors_to_database(vectors)
 
             query_vectors = await generator.generate_query_vectors(1, dimension)
 
-            framework = VectorBenchmarkFramework(session)
+            framework = VectorBenchmarkFramework(db_config["session_maker"])
             benchmark_result = await framework.benchmark_similarity_search(
                 query_vectors=query_vectors, k=10, test_name=f"size_{size}"
             )
@@ -557,15 +526,8 @@ async def test_dataset_size_scaling(configured_vector_db: dict[str, Any], projec
         )
 
 
-@benchmark_vector(timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.VECTOR_BENCHMARK, timeout=120)
 async def test_configuration_baseline(configured_vector_db: dict[str, Any], project: Any, logger: Any) -> None:
-    """
-    Test baseline performance of a vector database configuration.
-
-    This demonstrates how the parametrized fixture makes it easy to test
-    different vector configurations with the same test code.
-    """
-
     db_config = configured_vector_db
     config_name = str(db_config["config_name"])
     config: dict[str, Any] = db_config["config"]
@@ -575,7 +537,7 @@ async def test_configuration_baseline(configured_vector_db: dict[str, Any], proj
     dimension = int(str(dimension_val)) if dimension_val is not None else 384
 
     async with session_maker() as session:
-        generator = TestDataGenerator(session)
+        generator = BenchmarkDataGenerator(session)
 
         await session.execute(text("TRUNCATE TABLE text_vectors CASCADE"))
         await session.commit()
@@ -585,7 +547,7 @@ async def test_configuration_baseline(configured_vector_db: dict[str, Any], proj
         await generator.insert_vectors_to_database(vectors)
 
         query_vectors = await generator.generate_query_vectors(1, dimension)
-        framework = VectorBenchmarkFramework(session)
+        framework = VectorBenchmarkFramework(session_maker)
 
         benchmark_result = await framework.benchmark_similarity_search(
             query_vectors=query_vectors, k=10, test_name=config_name
@@ -604,8 +566,4 @@ async def test_configuration_baseline(configured_vector_db: dict[str, Any], proj
 
 
 async def run_all_benchmarks() -> None:
-    """
-    Helper function to run all benchmarks for development/debugging.
-    Not a test itself, but useful for manual testing.
-    """
     logger.info("This is a helper function, not a test. Use individual test functions.")

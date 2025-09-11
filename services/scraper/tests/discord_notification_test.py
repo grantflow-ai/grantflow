@@ -9,11 +9,9 @@ from packages.shared_utils.src.discord import (
     send_scraper_report,
 )
 from services.scraper.src.main import run_scraper
-from services.scraper.src.storage import SimpleFileStorage
 
 
 def test_create_scraper_report_embed_success() -> None:
-    """Test creating a successful scraper report embed."""
     embed = create_scraper_report_embed(
         environment="staging",
         date_range="2025-07-01 to 2025-07-02",
@@ -49,7 +47,6 @@ def test_create_scraper_report_embed_success() -> None:
 
 
 def test_create_scraper_report_embed_failure() -> None:
-    """Test creating a failed scraper report embed."""
     embed = create_scraper_report_embed(
         environment="prod",
         date_range="2025-07-01 to 2025-07-02",
@@ -72,8 +69,6 @@ def test_create_scraper_report_embed_failure() -> None:
 
 
 def test_create_scraper_report_embed_time_formatting() -> None:
-    """Test different time formatting scenarios."""
-
     embed = create_scraper_report_embed(
         environment="staging",
         date_range="2025-07-01 to 2025-07-02",
@@ -113,7 +108,6 @@ def test_create_scraper_report_embed_time_formatting() -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_success(mock_client_class: Mock) -> None:
-    """Test successful Discord webhook sending."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 204
@@ -134,7 +128,6 @@ async def test_send_discord_webhook_success(mock_client_class: Mock) -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_failure(mock_client_class: Mock) -> None:
-    """Test Discord webhook sending failure."""
     mock_client = AsyncMock()
     mock_response = Mock()
     mock_response.status_code = 400
@@ -152,7 +145,6 @@ async def test_send_discord_webhook_failure(mock_client_class: Mock) -> None:
 
 @patch("packages.shared_utils.src.discord.httpx.AsyncClient")
 async def test_send_discord_webhook_exception(mock_client_class: Mock) -> None:
-    """Test Discord webhook sending with exception."""
     mock_client = AsyncMock()
     mock_client.post.side_effect = Exception("Network error")
     mock_client_class.return_value.__aenter__.return_value = mock_client
@@ -166,7 +158,6 @@ async def test_send_discord_webhook_exception(mock_client_class: Mock) -> None:
 
 
 async def test_send_discord_webhook_empty_url() -> None:
-    """Test Discord webhook with empty URL."""
     result = await send_discord_webhook(
         webhook_url="",
         content="Test message",
@@ -177,7 +168,6 @@ async def test_send_discord_webhook_empty_url() -> None:
 
 @patch("packages.shared_utils.src.discord.send_discord_webhook")
 async def test_send_scraper_report(mock_send_webhook: AsyncMock) -> None:
-    """Test sending a complete scraper report."""
     mock_send_webhook.return_value = True
 
     result = await send_scraper_report(
@@ -203,13 +193,13 @@ async def test_send_scraper_report(mock_send_webhook: AsyncMock) -> None:
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.download_search_data")
 @patch("services.scraper.src.main.download_grant_pages")
+@patch("services.scraper.src.main.get_existing_grant_identifiers")
 async def test_run_scraper_with_metrics(
+    mock_get_existing_grant_identifiers: AsyncMock,
     mock_download_grant_pages: AsyncMock,
     mock_download_search_data: AsyncMock,
     mock_send_report: AsyncMock,
 ) -> None:
-    """Test run_scraper returns correct metrics."""
-
     mock_search_results = [
         {"url": "https://example.com/grant1"},
         {"url": "https://example.com/grant2"},
@@ -217,15 +207,12 @@ async def test_run_scraper_with_metrics(
     ]
     mock_download_search_data.return_value = mock_search_results
     mock_download_grant_pages.return_value = 2
+    mock_get_existing_grant_identifiers.return_value = {"existing1"}
 
-    storage = SimpleFileStorage()
-
-    with patch.object(storage, "get_existing_file_identifiers", return_value={"existing1"}):
-        metrics = await run_scraper(
-            storage=storage,
-            from_date=date(2025, 7, 1),
-            to_date=date(2025, 7, 2),
-        )
+    metrics = await run_scraper(
+        from_date=date(2025, 7, 1),
+        to_date=date(2025, 7, 2),
+    )
 
     assert metrics["search_results_count"] == 3
     assert metrics["new_files_downloaded"] == 2
@@ -235,6 +222,7 @@ async def test_run_scraper_with_metrics(
     assert isinstance(metrics["total_duration_ms"], float)
 
 
+@patch("services.scraper.src.main.get_existing_grant_identifiers")
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
 @patch("services.scraper.src.main.get_env")
@@ -242,14 +230,13 @@ async def test_handle_scraper_request_success_with_discord(
     mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
+    mock_get_existing_grants: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test successful scraper request sends Discord notification."""
-
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
         "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
+        "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
         "DEBUG": "True",
     }.get(key, fallback)
 
@@ -262,13 +249,14 @@ async def test_handle_scraper_request_success_with_discord(
     }
     mock_run_scraper.return_value = mock_metrics
     mock_send_report.return_value = True
+    mock_get_existing_grants.return_value = {f"file_{i}" for i in range(100)}
 
     response = await test_client.post("/")
 
     assert response.status_code == 201
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert response_data["message"] == "Scraper completed successfully"
+    assert response_data["message"] == "Finished scraping NIH grants"
 
     mock_send_report.assert_called_once()
     call_kwargs = mock_send_report.call_args[1]
@@ -278,8 +266,9 @@ async def test_handle_scraper_request_success_with_discord(
     assert call_kwargs["new_files_downloaded"] == 10
     assert call_kwargs["existing_files_skipped"] == 15
     assert call_kwargs["total_processing_time_ms"] == 45000.0
-    assert call_kwargs["bucket_name"] == "local-storage"
+    assert call_kwargs["bucket_name"] == "postgresql:grants"
     assert call_kwargs["success"] is True
+    assert call_kwargs["total_files_in_bucket"] == 100
 
 
 @patch("services.scraper.src.main.send_scraper_report")
@@ -291,14 +280,16 @@ async def test_handle_scraper_request_failure_with_discord(
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test failed scraper request sends Discord failure notification."""
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
+            "ENVIRONMENT": "staging",
+            "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
+            "DEBUG": "True",
+        }
+        return env_map.get(key, fallback)
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_run_scraper.side_effect = Exception("Test error")
     mock_send_report.return_value = True
@@ -327,14 +318,16 @@ async def test_handle_scraper_request_no_discord_url(
     mock_send_report: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test scraper request without Discord URL configured."""
+    def mock_get_env_side_effect(key: str, raise_on_missing: bool = True, fallback: str = "") -> str:
+        env_map = {
+            "DISCORD_WEBHOOK_URL": "",
+            "ENVIRONMENT": "staging",
+            "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
+            "DEBUG": "True",
+        }
+        return env_map.get(key, fallback)
 
-    mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
-        "DISCORD_WEBHOOK_URL": "",
-        "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
-        "DEBUG": "True",
-    }.get(key, fallback)
+    mock_get_env.side_effect = mock_get_env_side_effect
 
     mock_metrics = {
         "search_results_count": 10,
@@ -350,11 +343,12 @@ async def test_handle_scraper_request_no_discord_url(
     assert response.status_code == 201
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert response_data["message"] == "Scraper completed successfully"
+    assert response_data["message"] == "Finished scraping NIH grants"
 
     mock_send_report.assert_not_called()
 
 
+@patch("services.scraper.src.main.get_existing_grant_identifiers")
 @patch("services.scraper.src.main.send_scraper_report")
 @patch("services.scraper.src.main.run_scraper")
 @patch("services.scraper.src.main.get_env")
@@ -362,14 +356,13 @@ async def test_handle_scraper_request_discord_send_fails(
     mock_get_env: Mock,
     mock_run_scraper: AsyncMock,
     mock_send_report: AsyncMock,
+    mock_get_existing_grants: AsyncMock,
     test_client: AsyncTestClient[Any],
 ) -> None:
-    """Test scraper request when Discord notification fails."""
-
     mock_get_env.side_effect = lambda key, raise_on_missing=True, fallback="": {
         "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/test",
         "ENVIRONMENT": "staging",
-        "STORAGE_EMULATOR_HOST": "localhost:8080",
+        "DATABASE_URL": "postgresql://test:test@localhost:5432/test_db",
         "DEBUG": "True",
     }.get(key, fallback)
 
@@ -382,12 +375,13 @@ async def test_handle_scraper_request_discord_send_fails(
     }
     mock_run_scraper.return_value = mock_metrics
     mock_send_report.side_effect = Exception("Discord API error")
+    mock_get_existing_grants.return_value = {f"file_{i}" for i in range(50)}
 
     response = await test_client.post("/")
 
     assert response.status_code == 201
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert response_data["message"] == "Scraper completed successfully"
+    assert response_data["message"] == "Finished scraping NIH grants"
 
     mock_send_report.assert_called_once()

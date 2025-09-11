@@ -1,18 +1,3 @@
-"""
-Vector Benchmark Framework
-
-This module provides the core benchmarking functionality that leverages
-your existing production code. Instead of creating mock implementations,
-we test the real RAG pipeline with different vector configurations.
-
-Key classes:
-- VectorBenchmarkFramework: Main benchmarking logic
-- BenchmarkResult: Stores benchmark results
-- PerformanceMetrics: Tracks performance data
-
-The beauty of this approach: we're testing your actual code performance!
-"""
-
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -30,22 +15,6 @@ logger = get_logger(__name__)
 
 @dataclass
 class BenchmarkResult:
-    """
-    Stores results from a benchmark test.
-
-    This captures all the important metrics for performance analysis.
-
-    Attributes:
-        test_name: Name of the benchmark test
-        vector_dimension: Dimension of vectors tested
-        dataset_size: Number of vectors in dataset
-        benchmark_type: Type of benchmark (insert, query, similarity_search)
-        execution_time_ms: Total execution time in milliseconds
-        memory_usage_mb: Memory usage in MB
-        throughput: Operations per second
-        additional_metrics: Any extra metrics specific to the test
-    """
-
     test_name: str
     vector_dimension: int
     dataset_size: int
@@ -58,22 +27,6 @@ class BenchmarkResult:
 
 
 class PerformanceMetrics:
-    """
-    Tracks performance metrics during benchmark execution.
-
-    This is a context manager that automatically measures:
-    - Execution time
-    - Memory usage before/after
-    - CPU usage (if needed)
-
-    Usage:
-        async with PerformanceMetrics("test_name") as metrics:
-            # Your benchmark code here
-            await do_something()
-
-        result = metrics.get_result()
-    """
-
     def __init__(self, test_name: str, dataset_size: int = 0) -> None:
         self.test_name = test_name
         self.dataset_size = dataset_size
@@ -85,14 +38,12 @@ class PerformanceMetrics:
         self.process = psutil.Process()
 
     async def __aenter__(self) -> "PerformanceMetrics":
-        """Start performance measurement"""
         self.memory_before = self.process.memory_info().rss / 1024 / 1024
         self.start_time = time.time()
         logger.debug("Starting performance measurement", test_name=self.test_name)
         return self
 
     async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
-        """End performance measurement"""
         self.end_time = time.time()
         self.memory_after = self.process.memory_info().rss / 1024 / 1024
 
@@ -107,20 +58,9 @@ class PerformanceMetrics:
         )
 
     def add_metric(self, name: str, value: Any) -> None:
-        """Add additional metric to tracking"""
         self.additional_metrics[name] = value
 
     def get_result(self, benchmark_type: str, vector_dimension: int) -> BenchmarkResult:
-        """
-        Get benchmark result with all metrics.
-
-        Args:
-            benchmark_type: Type of benchmark performed
-            vector_dimension: Dimension of vectors tested
-
-        Returns:
-            BenchmarkResult with all collected metrics
-        """
         if self.start_time is None or self.end_time is None:
             raise RuntimeError("Performance measurement not completed")
 
@@ -144,26 +84,6 @@ class PerformanceMetrics:
 
 
 class VectorBenchmarkFramework:
-    """
-    Main framework for vector benchmarking using production code.
-
-    This framework tests your real RAG pipeline with different vector configurations.
-    It provides benchmarks for:
-    - Vector insertion performance
-    - Similarity search performance
-    - Index build performance
-    - Memory usage analysis
-
-    Usage:
-        framework = VectorBenchmarkFramework(session_maker)
-
-        # Benchmark vector insertion
-        result = await framework.benchmark_vector_insertion(vectors)
-
-        # Benchmark similarity search
-        result = await framework.benchmark_similarity_search(query_vectors)
-    """
-
     def __init__(self, session_maker: async_sessionmaker[Any]) -> None:
         self.session_maker = session_maker
         self.results: list[BenchmarkResult] = []
@@ -171,25 +91,6 @@ class VectorBenchmarkFramework:
     async def benchmark_vector_insertion(
         self, vectors: list[VectorDTO], batch_size: int = 1000, test_name: str = "vector_insertion"
     ) -> BenchmarkResult:
-        """
-        Benchmarks vector insertion performance using production code.
-
-        This tests how fast your actual database insertion code works
-        with different vector dimensions and dataset sizes.
-
-        Args:
-            vectors: List of vectors to insert (from test_data.py)
-            batch_size: Number of vectors to insert per batch
-            test_name: Name for this benchmark test
-
-        Returns:
-            BenchmarkResult with insertion performance metrics
-
-        Example:
-            vectors = await test_data_generator.create_test_vectors(chunks, rag_source.id, 256)
-            result = await framework.benchmark_vector_insertion(vectors)
-            print(f"Insertion rate: {result.throughput:.1f} vectors/sec")
-        """
         vector_dimension = len(vectors[0]["embedding"]) if vectors else 0
 
         async with PerformanceMetrics(test_name, len(vectors)) as metrics, self.session_maker() as session:
@@ -252,25 +153,6 @@ class VectorBenchmarkFramework:
     async def benchmark_similarity_search(
         self, query_vectors: list[list[float]], k: int = 10, test_name: str = "similarity_search"
     ) -> BenchmarkResult:
-        """
-        Benchmarks similarity search performance using production code.
-
-        This tests how fast your actual vector search code works
-        with different vector dimensions and index configurations.
-
-        Args:
-            query_vectors: List of query vectors to search for
-            k: Number of nearest neighbors to return
-            test_name: Name for this benchmark test
-
-        Returns:
-            BenchmarkResult with search performance metrics
-
-        Example:
-            query_vectors = [[0.1, 0.2, ...], [0.3, 0.4, ...]]  # 100 query vectors
-            result = await framework.benchmark_similarity_search(query_vectors)
-            print(f"Search rate: {result.throughput:.1f} queries/sec")
-        """
         vector_dimension = len(query_vectors[0]) if query_vectors else 0
 
         async with PerformanceMetrics(test_name, len(query_vectors)) as metrics, self.session_maker() as session:
@@ -310,22 +192,6 @@ class VectorBenchmarkFramework:
         return result
 
     async def benchmark_index_build(self, test_name: str = "index_build") -> BenchmarkResult:
-        """
-        Benchmarks HNSW index build performance.
-
-        This tests how long it takes to build the vector index
-        with different configurations and dataset sizes.
-
-        Args:
-            test_name: Name for this benchmark test
-
-        Returns:
-            BenchmarkResult with index build performance metrics
-
-        Example:
-            result = await framework.benchmark_index_build()
-            print(f"Index build time: {result.execution_time_ms:.0f}ms")
-        """
         async with PerformanceMetrics(test_name, 0) as metrics, self.session_maker() as session:
             count_query = select(func.count(TextVector.id))
             result = await session.execute(count_query)
@@ -349,24 +215,6 @@ class VectorBenchmarkFramework:
     async def benchmark_memory_usage(
         self, vector_counts: list[int], vector_dimension: int, test_name: str = "memory_usage"
     ) -> list[BenchmarkResult]:
-        """
-        Benchmarks memory usage at different dataset sizes.
-
-        This helps understand how memory scales with vector count and dimension.
-
-        Args:
-            vector_counts: List of vector counts to test
-            vector_dimension: Dimension of vectors
-            test_name: Name for this benchmark test
-
-        Returns:
-            List of BenchmarkResult for each dataset size
-
-        Example:
-            results = await framework.benchmark_memory_usage([1000, 10000, 50000], 384)
-            for result in results:
-                print(f"{result.dataset_size} vectors: {result.memory_usage_mb:.1f}MB")
-        """
         results = []
 
         for vector_count in vector_counts:
@@ -396,28 +244,6 @@ class VectorBenchmarkFramework:
     async def run_comprehensive_benchmark(
         self, test_vectors: list[VectorDTO], query_vectors: list[list[float]], test_name: str = "comprehensive"
     ) -> dict[str, BenchmarkResult]:
-        """
-        Runs a comprehensive benchmark suite.
-
-        This tests all aspects of vector performance:
-        - Insertion speed
-        - Search speed
-        - Index build time
-        - Memory usage
-
-        Args:
-            test_vectors: Vectors to insert for testing
-            query_vectors: Vectors to use for search queries
-            test_name: Base name for benchmark tests
-
-        Returns:
-            Dict with results for each benchmark type
-
-        Example:
-            results = await framework.run_comprehensive_benchmark(vectors, queries)
-            print(f"Insertion: {results['insertion'].throughput:.1f} vectors/sec")
-            print(f"Search: {results['search'].throughput:.1f} queries/sec")
-        """
         logger.info("Starting comprehensive benchmark", test_vectors_count=len(test_vectors))
 
         results = {}
@@ -435,23 +261,10 @@ class VectorBenchmarkFramework:
         return results
 
     def get_all_results(self) -> list[BenchmarkResult]:
-        """
-        Get all benchmark results collected by this framework.
-
-        Returns:
-            List of all BenchmarkResult objects
-        """
         return self.results.copy()
 
     def clear_results(self) -> None:
-        """Clear all stored benchmark results"""
         self.results.clear()
 
     def export_results_to_dict(self) -> list[dict[str, Any]]:
-        """
-        Export all results as dictionaries for JSON serialization.
-
-        Returns:
-            List of result dictionaries
-        """
         return [asdict(result) for result in self.results]

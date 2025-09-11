@@ -1,18 +1,9 @@
-"""
-Comprehensive Parameter Matrix for Vector Optimization
-
-This module defines systematic parameter combinations for thorough performance testing.
-Instead of random fuzzing, we test meaningful combinations that help optimize production settings.
-"""
-
 from dataclasses import dataclass
 from typing import Any
 
 
 @dataclass
 class VectorTestParameters:
-    """Parameters for a single vector benchmark configuration."""
-
     dimension: int
     dataset_size: int
 
@@ -28,12 +19,6 @@ class VectorTestParameters:
 
 
 class ParameterMatrix:
-    """
-    Generates comprehensive parameter combinations for systematic testing.
-
-    This focuses on realistic production scenarios rather than exhaustive testing.
-    """
-
     DIMENSIONS = [128, 256, 384, 512, 768]
     DATASET_SIZES = [1000, 5000, 10000, 25000]
 
@@ -45,12 +30,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_dimension_optimization_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate matrix focused on dimension optimization.
-
-        Tests all dimensions with balanced parameters to find optimal dimension.
-        """
-
         base_params = {
             "m": 32,
             "ef_construction": 256,
@@ -72,11 +51,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_hnsw_optimization_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate matrix focused on HNSW parameter optimization.
-
-        Tests different M and ef_construction combinations to find optimal index settings.
-        """
         matrix = []
 
         base_params = {
@@ -113,11 +87,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_scale_optimization_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate matrix focused on dataset size scaling.
-
-        Tests how performance scales with different dataset sizes.
-        """
         matrix = []
 
         base_params = {
@@ -150,11 +119,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_batch_optimization_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate matrix focused on batch size optimization.
-
-        Tests different batch sizes to find optimal insertion strategy.
-        """
         matrix = []
 
         base_params = {
@@ -187,11 +151,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_search_optimization_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate matrix focused on search parameter optimization.
-
-        Tests different search k values and their impact on performance.
-        """
         matrix = []
 
         base_params = {
@@ -224,11 +183,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_comprehensive_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate a comprehensive matrix covering all optimization areas.
-
-        This is the main function for systematic performance testing.
-        """
         matrix = []
 
         matrix.extend(cls.generate_dimension_optimization_matrix())
@@ -241,13 +195,6 @@ class ParameterMatrix:
 
     @classmethod
     def generate_production_candidates_matrix(cls) -> list[VectorTestParameters]:
-        """
-        Generate matrix of top production candidates.
-
-        Based on initial testing, test the most promising configurations
-        with larger datasets for production decision making.
-        """
-
         return [
             VectorTestParameters(
                 dimension=128,
@@ -297,7 +244,6 @@ class ParameterMatrix:
 
     @classmethod
     def get_matrix_summary(cls, matrix: list[VectorTestParameters]) -> dict[str, Any]:
-        """Get summary statistics for a parameter matrix."""
         if not matrix:
             return {}
 

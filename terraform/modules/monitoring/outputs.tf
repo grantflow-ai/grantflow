@@ -34,7 +34,7 @@ output "monitoring_summary" {
     total_alert_policies = (
       length(google_monitoring_alert_policy.service_down) +
       length(google_monitoring_alert_policy.high_error_rate) +
-      3 # database, scraper, pubsub
+      3
     )
     services_monitored = ["backend", "crawler", "indexer", "rag", "scraper"]
     environment        = var.environment
@@ -54,4 +54,19 @@ output "budget_function_url" {
 output "monthly_budget_amount" {
   description = "The configured monthly budget amount in USD"
   value       = var.monthly_budget_amount
+}
+
+output "entity_cleanup_schedule" {
+  description = "Schedule for entity cleanup job"
+  value       = google_cloud_scheduler_job.entity_cleanup_daily.schedule
+}
+
+output "user_deletion_grace_period" {
+  description = "Grace period for user deletion in days"
+  value       = "10"
+}
+
+output "organization_deletion_grace_period" {
+  description = "Grace period for organization deletion in days"
+  value       = "30"
 }

@@ -12,31 +12,33 @@ from packages.db.src.connection import engine_ref, get_session_maker
 from packages.db.src.enums import UserRoleEnum
 from packages.db.src.tables import (
     Base,
-    FundingOrganization,
-    FundingOrganizationRagSource,
     GrantApplication,
-    GrantApplicationRagSource,
+    GrantApplicationSource,
+    GrantingInstitution,
+    GrantingInstitutionSource,
     GrantTemplate,
-    GrantTemplateRagSource,
+    GrantTemplateSource,
+    Organization,
+    OrganizationUser,
     Project,
-    ProjectUser,
     RagFile,
     RagUrl,
 )
 from pytest_asyncio import is_async_test
 from scripts.seed_db import seed_db
-from sqlalchemy import NullPool, select, text
+from sqlalchemy import NullPool, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from testing.factories import (
-    FundingOrganizationFactory,
-    FundingOrganizationSourceFactory,
     GrantApplicationFactory,
     GrantApplicationSourceFactory,
+    GrantingInstitutionFactory,
+    GrantingInstitutionSourceFactory,
     GrantTemplateFactory,
     GrantTemplateSourceFactory,
+    OrganizationFactory,
+    OrganizationUserFactory,
     ProjectFactory,
-    ProjectUserFactory,
     RagFileFactory,
     RagUrlFactory,
 )
@@ -48,7 +50,6 @@ for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects
 
 @pytest.fixture(scope="session")
 def worker_id(request: Any) -> str:
-    """Get the xdist worker id, or 'master' if not running under xdist."""
     workerinput = getattr(request.config, "workerinput", {})
     return workerinput.get("workerid", "master") if workerinput else "master"
 
@@ -62,11 +63,7 @@ def pytest_collection_modifyitems(items: list[Any]) -> None:
 
 @pytest.fixture(scope="session")
 async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
-    """Create a unique test database for each worker process."""
-
-    base_connection_string = (
-        os.getenv("DATABASE_URL") or f"postgresql://{os.getenv('USER', 'postgres')}@localhost:5432/postgres"
-    )
+    base_connection_string = os.getenv("DATABASE_URL") or "postgresql://grantflow:grantflow@localhost:5432/postgres"
 
     process_id = os.getpid()
     test_db_name = f"grantflow_test_{worker_id}_{process_id}"
@@ -102,13 +99,16 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
         try:
             admin_conn = await connect(admin_connection_string)
 
-            await admin_conn.execute(f"""
-                SELECT pg_terminate_backend(pid)
-                FROM pg_stat_activity
-                WHERE datname = '{test_db_name}' AND pid <> pg_backend_pid()
-            """)
+            template_db_name = f"{test_db_name}_template"
 
-            await admin_conn.execute(f'DROP DATABASE IF EXISTS "{test_db_name}"')
+            for db_name in [test_db_name, template_db_name]:
+                await admin_conn.execute(f"""
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+                """)
+                await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
+
             await admin_conn.close()
         except Exception:
             pass
@@ -116,7 +116,12 @@ async def db_connection_string(worker_id: str) -> AsyncGenerator[str]:
 
 @pytest.fixture(scope="session")
 async def async_db_engine(db_connection_string: str) -> AsyncEngine:
-    engine_ref.value = create_async_engine(db_connection_string, echo=False, poolclass=NullPool)
+    engine_ref.value = create_async_engine(
+        db_connection_string,
+        echo=False,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+    )
     async with engine_ref.value.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     return engine_ref.value
@@ -127,23 +132,84 @@ async def async_session_maker(async_db_engine: AsyncEngine) -> async_sessionmake
     return get_session_maker()
 
 
-@pytest.fixture(autouse=True)
-async def seed_database(async_session_maker: async_sessionmaker[Any]) -> None:
+@pytest.fixture(scope="session")
+async def database_snapshot(db_connection_string: str, async_session_maker: async_sessionmaker[Any]) -> str:
     await seed_db()
 
+    f"test_snapshot_{os.getpid()}"
+
+    parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
+    admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
+
+    admin_conn = await connect(admin_connection_string)
+
+    try:
+        db_name = parsed.path.lstrip("/")
+        template_db_name = f"{db_name}_template"
+
+        await admin_conn.execute(f"""
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+        """)
+
+        with contextlib.suppress(Exception):
+            await admin_conn.execute(f'DROP DATABASE IF EXISTS "{template_db_name}"')
+
+        await admin_conn.execute(f'CREATE DATABASE "{template_db_name}" WITH TEMPLATE "{db_name}"')
+
+        return template_db_name
+
+    finally:
+        await admin_conn.close()
+
 
 @pytest.fixture(autouse=True)
-async def cleanup_database(async_session_maker: async_sessionmaker[Any]) -> None:
-    """Clean up database state between tests by truncating all tables."""
-    async with async_session_maker() as session:
-        for table in reversed(Base.metadata.sorted_tables):
-            await session.execute(text(f"TRUNCATE TABLE {table.name} RESTART IDENTITY CASCADE"))
-        await session.commit()
+async def restore_database_snapshot(
+    database_snapshot: str, db_connection_string: str, request: pytest.FixtureRequest
+) -> AsyncGenerator[None]:
+    if "no_cleanup" in request.keywords:
+        yield
+        return
+
+    await _restore_from_snapshot(database_snapshot, db_connection_string)
+
+    yield
+
+
+async def _restore_from_snapshot(template_db_name: str, db_connection_string: str) -> None:
+    parsed = urlparse(db_connection_string.replace("postgresql+asyncpg://", "postgresql://"))
+    admin_connection_string = urlunparse(parsed._replace(path="/postgres"))
+    db_name = parsed.path.lstrip("/")
+
+    admin_conn = await connect(admin_connection_string)
+
+    try:
+        await admin_conn.execute(f"""
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = '{db_name}' AND pid <> pg_backend_pid()
+        """)
+
+        await admin_conn.execute(f'DROP DATABASE IF EXISTS "{db_name}"')
+        await admin_conn.execute(f'CREATE DATABASE "{db_name}" WITH TEMPLATE "{template_db_name}"')
+
+    finally:
+        await admin_conn.close()
 
 
 @pytest.fixture
-async def project(async_session_maker: async_sessionmaker[Any]) -> Project:
-    project_data = ProjectFactory.build()
+async def organization(async_session_maker: async_sessionmaker[Any]) -> Organization:
+    organization_data = OrganizationFactory.build()
+    async with async_session_maker() as session, session.begin():
+        session.add(organization_data)
+        await session.commit()
+    return organization_data
+
+
+@pytest.fixture
+async def project(async_session_maker: async_sessionmaker[Any], organization: Organization) -> Project:
+    project_data = ProjectFactory.build(organization_id=organization.id)
     async with async_session_maker() as session, session.begin():
         session.add(project_data)
         await session.commit()
@@ -151,8 +217,8 @@ async def project(async_session_maker: async_sessionmaker[Any]) -> Project:
 
 
 @pytest.fixture
-async def project_user(async_session_maker: async_sessionmaker[Any], project: Project) -> ProjectUser:
-    user_data = ProjectUserFactory.build(project_id=project.id)
+async def project_user(async_session_maker: async_sessionmaker[Any], organization: Organization) -> OrganizationUser:
+    user_data = OrganizationUserFactory.build(organization_id=organization.id)
     async with async_session_maker() as session, session.begin():
         session.add(user_data)
         await session.commit()
@@ -161,35 +227,50 @@ async def project_user(async_session_maker: async_sessionmaker[Any], project: Pr
 
 @pytest.fixture
 async def project_member_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
-) -> ProjectUser:
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
+) -> OrganizationUser:
+    organization_user = OrganizationUser(
+        organization_id=organization.id,
+        firebase_uid=firebase_uid,
+        role=UserRoleEnum.COLLABORATOR,
+        has_all_projects_access=True,
+    )
     async with async_session_maker() as session, session.begin():
-        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.MEMBER)
-        session.add(project_user)
+        session.add(organization_user)
         await session.commit()
-    return project_user
+    return organization_user
 
 
 @pytest.fixture
 async def project_admin_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
-) -> ProjectUser:
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
+) -> OrganizationUser:
+    organization_user = OrganizationUser(
+        organization_id=organization.id,
+        firebase_uid=firebase_uid,
+        role=UserRoleEnum.ADMIN,
+        has_all_projects_access=True,
+    )
     async with async_session_maker() as session, session.begin():
-        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.ADMIN)
-        session.add(project_user)
+        session.add(organization_user)
         await session.commit()
-    return project_user
+    return organization_user
 
 
 @pytest.fixture
 async def project_owner_user(
-    async_session_maker: async_sessionmaker[Any], firebase_uid: str, project: Project
-) -> ProjectUser:
+    async_session_maker: async_sessionmaker[Any], firebase_uid: str, organization: Organization
+) -> OrganizationUser:
+    organization_user = OrganizationUser(
+        organization_id=organization.id,
+        firebase_uid=firebase_uid,
+        role=UserRoleEnum.OWNER,
+        has_all_projects_access=True,
+    )
     async with async_session_maker() as session, session.begin():
-        project_user = ProjectUser(project_id=project.id, firebase_uid=firebase_uid, role=UserRoleEnum.OWNER)
-        session.add(project_user)
+        session.add(organization_user)
         await session.commit()
-    return project_user
+    return organization_user
 
 
 @pytest.fixture
@@ -211,8 +292,8 @@ async def rag_url(async_session_maker: async_sessionmaker[Any]) -> RagUrl:
 
 
 @pytest.fixture
-async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> FundingOrganization:
-    org_data = FundingOrganizationFactory.build()
+async def granting_institution(async_session_maker: async_sessionmaker[Any]) -> GrantingInstitution:
+    org_data = GrantingInstitutionFactory.build()
     async with async_session_maker() as session, session.begin():
         session.add(org_data)
         await session.commit()
@@ -220,11 +301,11 @@ async def funding_organization(async_session_maker: async_sessionmaker[Any]) -> 
 
 
 @pytest.fixture
-async def funding_organization_file(
-    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_file: RagFile
-) -> FundingOrganizationRagSource:
-    data = FundingOrganizationSourceFactory.build(
-        funding_organization_id=funding_organization.id, rag_source_id=rag_file.id
+async def granting_institution_file(
+    async_session_maker: async_sessionmaker[Any], granting_institution: GrantingInstitution, rag_file: RagFile
+) -> GrantingInstitutionSource:
+    data = GrantingInstitutionSourceFactory.build(
+        granting_institution_id=granting_institution.id, rag_source_id=rag_file.id
     )
     async with async_session_maker() as session, session.begin():
         session.add(data)
@@ -233,11 +314,11 @@ async def funding_organization_file(
 
 
 @pytest.fixture
-async def funding_organization_url(
-    async_session_maker: async_sessionmaker[Any], funding_organization: FundingOrganization, rag_url: RagUrl
-) -> FundingOrganizationRagSource:
-    data = FundingOrganizationSourceFactory.build(
-        funding_organization_id=funding_organization.id, rag_source_id=rag_url.id
+async def granting_institution_url(
+    async_session_maker: async_sessionmaker[Any], granting_institution: GrantingInstitution, rag_url: RagUrl
+) -> GrantingInstitutionSource:
+    data = GrantingInstitutionSourceFactory.build(
+        granting_institution_id=granting_institution.id, rag_source_id=rag_url.id
     )
     async with async_session_maker() as session, session.begin():
         session.add(data)
@@ -249,6 +330,7 @@ async def funding_organization_url(
 async def grant_application(async_session_maker: async_sessionmaker[Any], project: Project) -> GrantApplication:
     application_data = GrantApplicationFactory.build(
         project_id=project.id,
+        deleted_at=None,
     )
     async with async_session_maker() as session, session.begin():
         session.add(application_data)
@@ -259,7 +341,7 @@ async def grant_application(async_session_maker: async_sessionmaker[Any], projec
 @pytest.fixture
 async def grant_application_file(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_file: RagFile
-) -> GrantApplicationRagSource:
+) -> GrantApplicationSource:
     file_data = GrantApplicationSourceFactory.build(
         grant_application_id=grant_application.id, rag_source_id=rag_file.id
     )
@@ -272,7 +354,7 @@ async def grant_application_file(
 @pytest.fixture
 async def grant_application_url(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication, rag_url: RagUrl
-) -> GrantApplicationRagSource:
+) -> GrantApplicationSource:
     file_data = GrantApplicationSourceFactory.build(grant_application_id=grant_application.id, rag_source_id=rag_url.id)
     async with async_session_maker() as session, session.begin():
         session.add(file_data)
@@ -285,112 +367,112 @@ async def grant_template(
     async_session_maker: async_sessionmaker[Any], grant_application: GrantApplication
 ) -> GrantTemplate:
     async with async_session_maker() as session:
-        result = await session.execute(select(FundingOrganization.id).where(FundingOrganization.abbreviation == "NIH"))
-        funding_organization_id = result.scalar_one()
+        result = await session.execute(select(GrantingInstitution.id).where(GrantingInstitution.abbreviation == "NIH"))
+        granting_institution_id = result.scalar_one()
 
-    grant_template_data = GrantTemplateFactory.build(
-        grant_application_id=grant_application.id,
-        funding_organization_id=funding_organization_id,
-        grant_sections=[
-            {
-                "title": "Executive Summary",
-                "description": "A brief overview of the research proposal",
-                "topics": [
-                    {"type": "BACKGROUND_CONTEXT", "weight": 0.8},
-                    {"type": "IMPACT", "weight": 0.7},
-                    {"type": "RATIONALE", "weight": 0.5},
-                ],
-                "search_queries": [
-                    "current state of inner ear imaging",
-                    "limitations of current imaging techniques",
-                    "clinical needs in inner ear diagnosis",
-                    "rationale for improved imaging",
-                    "potential impact on patient care",
-                ],
-                "max_words": 400,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 1,
-            },
-            {
-                "title": "Research Significance",
-                "description": "The importance and potential impact of the research",
-                "topics": [
-                    {"type": "IMPACT", "weight": 0.9},
-                    {"type": "RATIONALE", "weight": 0.8},
-                    {"type": "BACKGROUND_CONTEXT", "weight": 0.5},
-                ],
-                "search_queries": [
-                    "importance of inner ear imaging",
-                    "clinical significance of improved resolution",
-                    "impact of inner ear pathology diagnosis",
-                    "current unmet needs in diagnosis and treatment",
-                    "clinical justification",
-                ],
-                "max_words": 600,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 2,
-            },
-            {
-                "title": "Research Innovation",
-                "description": "Novel aspects and innovative approaches of the research",
-                "topics": [
-                    {"type": "NOVELTY_AND_INNOVATION", "weight": 1.0},
-                    {"type": "RESEARCH_FEASIBILITY", "weight": 0.7},
-                    {"type": "BACKGROUND_CONTEXT", "weight": 0.4},
-                ],
-                "search_queries": [
-                    "novel imaging approaches for inner ear",
-                    "innovative aspects of proposed technology",
-                    "feasibility of achieving resolution increase",
-                    "comparison to existing methods",
-                    "technological advancements in imaging",
-                ],
-                "max_words": 600,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 3,
-            },
-            {
-                "title": "Research Plan",
-                "description": "Detailed methodology and implementation plan",
-                "topics": [
-                    {"type": "MILESTONES_AND_TIMELINE", "weight": 0.9},
-                    {"type": "RESEARCH_FEASIBILITY", "weight": 0.8},
-                    {"type": "RISKS_AND_MITIGATIONS", "weight": 0.6},
-                ],
-                "search_queries": [
-                    "timeline for technology development",
-                    "plan for clinical translation",
-                    "steps for non-invasive application",
-                    "limitations of technology",
-                    "alternative paths for clinical use",
-                    "risk assessment in imaging technology",
-                ],
-                "max_words": 1000,
-                "type": "section",
-                "is_research_plan": True,
-                "order": 4,
-            },
-            {
-                "title": "Expected Outcomes",
-                "description": "Anticipated results and impact of the research",
-                "topics": [{"type": "IMPACT", "weight": 1.0}, {"type": "RATIONALE", "weight": 0.7}],
-                "search_queries": [
-                    "impact on clinical decision making",
-                    "improved diagnosis of inner ear pathologies",
-                    "clinical settings for proposed use",
-                    "treatments enabled by improved diagnosis",
-                    "benefits of increased imaging resolution",
-                ],
-                "max_words": 500,
-                "type": "section",
-                "is_research_plan": False,
-                "order": 5,
-            },
-        ],
-    )
+        grant_template_data = GrantTemplateFactory.build(
+            grant_application_id=grant_application.id,
+            granting_institution_id=granting_institution_id,
+            grant_sections=[
+                {
+                    "title": "Executive Summary",
+                    "description": "A brief overview of the research proposal",
+                    "topics": [
+                        {"type": "BACKGROUND_CONTEXT", "weight": 0.8},
+                        {"type": "IMPACT", "weight": 0.7},
+                        {"type": "RATIONALE", "weight": 0.5},
+                    ],
+                    "search_queries": [
+                        "current state of inner ear imaging",
+                        "limitations of current imaging techniques",
+                        "clinical needs in inner ear diagnosis",
+                        "rationale for improved imaging",
+                        "potential impact on patient care",
+                    ],
+                    "max_words": 400,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 1,
+                },
+                {
+                    "title": "Research Significance",
+                    "description": "The importance and potential impact of the research",
+                    "topics": [
+                        {"type": "IMPACT", "weight": 0.9},
+                        {"type": "RATIONALE", "weight": 0.8},
+                        {"type": "BACKGROUND_CONTEXT", "weight": 0.5},
+                    ],
+                    "search_queries": [
+                        "importance of inner ear imaging",
+                        "clinical significance of improved resolution",
+                        "impact of inner ear pathology diagnosis",
+                        "current unmet needs in diagnosis and treatment",
+                        "clinical justification",
+                    ],
+                    "max_words": 600,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 2,
+                },
+                {
+                    "title": "Research Innovation",
+                    "description": "Novel aspects and innovative approaches of the research",
+                    "topics": [
+                        {"type": "NOVELTY_AND_INNOVATION", "weight": 1.0},
+                        {"type": "RESEARCH_FEASIBILITY", "weight": 0.7},
+                        {"type": "BACKGROUND_CONTEXT", "weight": 0.4},
+                    ],
+                    "search_queries": [
+                        "novel imaging approaches for inner ear",
+                        "innovative aspects of proposed technology",
+                        "feasibility of achieving resolution increase",
+                        "comparison to existing methods",
+                        "technological advancements in imaging",
+                    ],
+                    "max_words": 600,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 3,
+                },
+                {
+                    "title": "Research Plan",
+                    "description": "Detailed methodology and implementation plan",
+                    "topics": [
+                        {"type": "MILESTONES_AND_TIMELINE", "weight": 0.9},
+                        {"type": "RESEARCH_FEASIBILITY", "weight": 0.8},
+                        {"type": "RISKS_AND_MITIGATIONS", "weight": 0.6},
+                    ],
+                    "search_queries": [
+                        "timeline for technology development",
+                        "plan for clinical translation",
+                        "steps for non-invasive application",
+                        "limitations of technology",
+                        "alternative paths for clinical use",
+                        "risk assessment in imaging technology",
+                    ],
+                    "max_words": 1000,
+                    "type": "section",
+                    "is_research_plan": True,
+                    "order": 4,
+                },
+                {
+                    "title": "Expected Outcomes",
+                    "description": "Anticipated results and impact of the research",
+                    "topics": [{"type": "IMPACT", "weight": 1.0}, {"type": "RATIONALE", "weight": 0.7}],
+                    "search_queries": [
+                        "impact on clinical decision making",
+                        "improved diagnosis of inner ear pathologies",
+                        "clinical settings for proposed use",
+                        "treatments enabled by improved diagnosis",
+                        "benefits of increased imaging resolution",
+                    ],
+                    "max_words": 500,
+                    "type": "section",
+                    "is_research_plan": False,
+                    "order": 5,
+                },
+            ],
+        )
     async with async_session_maker() as session, session.begin():
         session.add(grant_template_data)
         await session.commit()
@@ -401,7 +483,7 @@ async def grant_template(
 @pytest.fixture
 async def grant_template_file(
     async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_file: RagFile
-) -> GrantTemplateRagSource:
+) -> GrantTemplateSource:
     data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_file.id)
     async with async_session_maker() as session, session.begin():
         session.add(data)
@@ -412,7 +494,7 @@ async def grant_template_file(
 @pytest.fixture
 async def grant_template_url(
     async_session_maker: async_sessionmaker[Any], grant_template: GrantTemplate, rag_url: RagUrl
-) -> GrantTemplateRagSource:
+) -> GrantTemplateSource:
     data = GrantTemplateSourceFactory.build(grant_template_id=grant_template.id, rag_source_id=rag_url.id)
     async with async_session_maker() as session, session.begin():
         session.add(data)

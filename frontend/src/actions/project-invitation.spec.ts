@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock Resend instance
 const mockEmailSend = vi.fn();
 
-// Mock dependencies - must be before imports
 vi.mock("@/actions/project");
 vi.mock("@/utils/env");
 vi.mock("resend", () => ({
@@ -34,27 +32,26 @@ describe("inviteCollaborator", () => {
 	const defaultParams = {
 		email: "test@example.com",
 		inviterName: "John Doe",
+		organizationId: "org-123",
 		projectId: "proj-123",
 		projectName: "Test Project",
 		role: "member" as const,
 	};
 
 	it("should create backend invitation and send email successfully", async () => {
-		// Mock backend invitation creation
 		const mockToken = btoa(JSON.stringify({ invitation_id: "inv-456" }));
 		const fullToken = `header.${mockToken}.signature`;
 		mockCreateInvitation.mockResolvedValue({
 			token: fullToken,
 		});
 
-		// Mock successful email sending
 		mockEmailSend.mockResolvedValue({ error: null });
 
 		const result = await inviteCollaborator(defaultParams);
 
-		expect(mockCreateInvitation).toHaveBeenCalledWith("proj-123", {
+		expect(mockCreateInvitation).toHaveBeenCalledWith("org-123", "proj-123", {
 			email: "test@example.com",
-			role: "MEMBER",
+			role: "COLLABORATOR",
 		});
 
 		expect(mockEmailSend).toHaveBeenCalledWith({
@@ -84,7 +81,7 @@ describe("inviteCollaborator", () => {
 			role: "admin",
 		});
 
-		expect(mockCreateInvitation).toHaveBeenCalledWith("proj-123", {
+		expect(mockCreateInvitation).toHaveBeenCalledWith("org-123", "proj-123", {
 			email: "test@example.com",
 			role: "ADMIN",
 		});
@@ -131,7 +128,6 @@ describe("inviteCollaborator", () => {
 
 		await inviteCollaborator(defaultParams);
 
-		// Verify that the email was sent with the correct parameters
 		expect(mockEmailSend).toHaveBeenCalledWith({
 			from: "noreply@grantflow.ai",
 			react: expect.any(Object),
@@ -139,8 +135,6 @@ describe("inviteCollaborator", () => {
 			to: ["test@example.com"],
 		});
 
-		// The React component is complex due to React Email structure
-		// Just verify the call was made - the URL building logic is tested elsewhere
 		expect(mockEmailSend).toHaveBeenCalledTimes(1);
 	});
 
@@ -160,7 +154,6 @@ describe("inviteCollaborator", () => {
 
 		await inviteCollaborator(defaultParams);
 
-		// Verify that the email was sent (the URL building logic is tested elsewhere)
 		expect(mockEmailSend).toHaveBeenCalledWith({
 			from: "noreply@grantflow.ai",
 			react: expect.any(Object),

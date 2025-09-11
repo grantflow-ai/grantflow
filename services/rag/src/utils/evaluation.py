@@ -1,20 +1,3 @@
-"""
-Comprehensive evaluation framework for the RAG system.
-
-This module consolidates all evaluation logic including:
-- Core LLM evaluation functionality
-- Performance optimizations
-- Caching mechanisms
-- Batch processing capabilities
-
-Key features:
-1. Configurable timeout limits
-2. Early termination on acceptable scores
-3. Batch evaluation support
-4. Result caching for improved performance
-5. Comprehensive monitoring and logging
-"""
-
 import asyncio
 import hashlib
 import re
@@ -125,29 +108,21 @@ PERFORMANCE_HISTORY_SIZE: Final[int] = 100
 
 @dataclass
 class EvaluationCriterion:
-    """Evaluation criterion with weighting support."""
-
     name: str
     evaluation_instructions: str
     weight: float = 1.0
 
 
 class EvaluationScore(TypedDict):
-    """Individual criterion evaluation result."""
-
     score: int
     instructions: str
 
 
 class EvaluationToolResponse(TypedDict):
-    """Complete evaluation response for all criteria."""
-
     criteria: dict[str, EvaluationScore]
 
 
 class ContentComplexity(Enum):
-    """Content complexity levels for routing optimization."""
-
     SIMPLE = "simple"
     MODERATE = "moderate"
     COMPLEX = "complex"
@@ -156,8 +131,6 @@ class ContentComplexity(Enum):
 
 @dataclass
 class ComplexityAnalysis:
-    """Analysis of content complexity for evaluation routing."""
-
     complexity_level: ContentComplexity
     word_count: int
     sentence_count: int
@@ -173,8 +146,6 @@ class ComplexityAnalysis:
 
 @dataclass
 class PerformanceMetrics:
-    """Performance metrics for adaptive timeout calculation."""
-
     complexity_level: ContentComplexity
     criteria_count: int
     actual_duration: float
@@ -186,8 +157,6 @@ class PerformanceMetrics:
 
 
 class AdaptiveTimeoutCalculator:
-    """Calculates adaptive timeouts based on historical performance."""
-
     def __init__(self, learning_rate: float = TIMEOUT_LEARNING_RATE) -> None:
         self.learning_rate = learning_rate
         self.performance_history: list[PerformanceMetrics] = []
@@ -204,8 +173,6 @@ class AdaptiveTimeoutCalculator:
         complexity_level: ContentComplexity,
         criteria_count: int,
     ) -> float:
-        """Calculate adaptive timeout based on historical performance."""
-
         multiplier = self.timeout_multipliers.get(complexity_level, 1.0)
 
         criteria_adjustment = 1.0 + (criteria_count - 1) * 0.15
@@ -218,7 +185,6 @@ class AdaptiveTimeoutCalculator:
         return max(min_timeout, min(adaptive_timeout, max_timeout))
 
     def record_performance(self, metrics: PerformanceMetrics) -> None:
-        """Record performance metrics and update timeout multipliers."""
         self.performance_history.append(metrics)
 
         if len(self.performance_history) > PERFORMANCE_HISTORY_SIZE:
@@ -227,7 +193,6 @@ class AdaptiveTimeoutCalculator:
         self._update_timeout_multiplier(metrics)
 
     def _update_timeout_multiplier(self, metrics: PerformanceMetrics) -> None:
-        """Update timeout multiplier based on performance metrics."""
         complexity_level = metrics.complexity_level
         current_multiplier = self.timeout_multipliers[complexity_level]
 
@@ -261,7 +226,6 @@ class AdaptiveTimeoutCalculator:
         )
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get performance statistics for monitoring."""
         if not self.performance_history:
             return {"total_evaluations": 0}
 
@@ -297,16 +261,12 @@ class AdaptiveTimeoutCalculator:
 
 @dataclass
 class CacheEntry:
-    """Cache entry with timestamp for TTL management."""
-
     result: EvaluationToolResponse
     timestamp: float
     access_count: int = 0
 
 
 class EvaluationCache:
-    """LRU cache for evaluation results with TTL and content-based hashing."""
-
     def __init__(self, max_size: int = DEFAULT_CACHE_SIZE, ttl_seconds: float = DEFAULT_TTL_SECONDS) -> None:
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
@@ -316,16 +276,13 @@ class EvaluationCache:
     def _generate_cache_key(
         self, prompt: str, model_output: str | dict[str, Any], criteria: list[EvaluationCriterion]
     ) -> str:
-        """Generate a deterministic cache key based on evaluation inputs."""
         content = f"{prompt}|{model_output}|{[c.name for c in criteria]}"
         return hashlib.sha256(content.encode()).hexdigest()[:32]
 
     def _is_expired(self, entry: CacheEntry) -> bool:
-        """Check if cache entry has expired."""
         return time.time() - entry.timestamp > self.ttl_seconds
 
     def _evict_expired(self) -> None:
-        """Remove expired entries from cache."""
         current_time = time.time()
         expired_keys = [key for key, entry in self._cache.items() if current_time - entry.timestamp > self.ttl_seconds]
 
@@ -333,20 +290,17 @@ class EvaluationCache:
             self._remove_entry(key)
 
     def _remove_entry(self, key: str) -> None:
-        """Remove entry from cache and access order."""
         if key in self._cache:
             del self._cache[key]
         if key in self._access_order:
             self._access_order.remove(key)
 
     def _evict_lru(self) -> None:
-        """Evict least recently used entry."""
         if self._access_order:
             lru_key = self._access_order[0]
             self._remove_entry(lru_key)
 
     def _update_access_order(self, key: str) -> None:
-        """Update access order for LRU tracking."""
         if key in self._access_order:
             self._access_order.remove(key)
         self._access_order.append(key)
@@ -354,7 +308,6 @@ class EvaluationCache:
     def get(
         self, prompt: str, model_output: str | dict[str, Any], criteria: list[EvaluationCriterion]
     ) -> EvaluationToolResponse | None:
-        """Get cached evaluation result if available and not expired."""
         key = self._generate_cache_key(prompt, model_output, criteria)
 
         if key not in self._cache:
@@ -385,8 +338,6 @@ class EvaluationCache:
         criteria: list[EvaluationCriterion],
         result: EvaluationToolResponse,
     ) -> None:
-        """Store evaluation result in cache."""
-
         self._evict_expired()
 
         while len(self._cache) >= self.max_size:
@@ -408,12 +359,10 @@ class EvaluationCache:
         )
 
     def clear(self) -> None:
-        """Clear all cached entries."""
         self._cache.clear()
         self._access_order.clear()
 
     def stats(self) -> dict[str, Any]:
-        """Get cache statistics."""
         total_access_count = sum(entry.access_count for entry in self._cache.values())
 
         return {
@@ -440,18 +389,6 @@ score_object_schema = {
 async def evaluate_prompt_output(
     *, criteria: list[EvaluationCriterion], prompt: str, model_output: str | dict[str, Any]
 ) -> EvaluationToolResponse:
-    """
-    Core evaluation function with caching support.
-
-    Args:
-        criteria: List of evaluation criteria
-        prompt: Original prompt for context
-        model_output: Output to evaluate
-
-    Returns:
-        Evaluation results with scores and feedback
-    """
-
     cached_result = _evaluation_cache.get(prompt, model_output, criteria)
     if cached_result is not None:
         return cached_result
@@ -502,17 +439,6 @@ async def evaluate_prompt_output(
 
 
 def analyze_content_complexity(content: str, criteria: list[EvaluationCriterion] | None = None) -> ComplexityAnalysis:
-    """
-    Analyze content complexity to determine optimal evaluation routing.
-
-    Args:
-        content: Text content to analyze
-        criteria: Optional evaluation criteria for context
-
-    Returns:
-        ComplexityAnalysis with routing recommendations
-    """
-
     words = content.split()
     word_count = len(words)
     sentences = re.split(r"[.!?]+", content)
@@ -599,7 +525,6 @@ def analyze_content_complexity(content: str, criteria: list[EvaluationCriterion]
 
 
 def _count_syllables(word: str) -> float:
-    """Estimate syllable count for readability calculation."""
     word = word.lower().strip()
     if not word:
         return 0
@@ -623,8 +548,6 @@ def _count_syllables(word: str) -> float:
 def _determine_complexity_level(
     word_count: int, technical_terms_count: int, section_count: int, structural_complexity: float
 ) -> ContentComplexity:
-    """Determine content complexity level based on metrics."""
-
     complexity_score = 0.0
 
     if word_count > COMPLEX_CONTENT_WORD_THRESHOLD:
@@ -658,7 +581,6 @@ def _get_routing_recommendations(
     criteria: list[EvaluationCriterion] | None,
     use_adaptive_timeout: bool = True,
 ) -> tuple[float, str]:
-    """Get timeout and evaluation mode recommendations based on complexity."""
     criteria_count = len(criteria) if criteria else 1
 
     base_timeouts = {
@@ -698,21 +620,6 @@ async def smart_evaluate_output(
     force_timeout: float | None = None,
     record_performance: bool = True,
 ) -> tuple[EvaluationToolResponse, ComplexityAnalysis]:
-    """
-    Smart evaluation with automatic routing based on content complexity.
-
-    Args:
-        criteria: Evaluation criteria
-        prompt: Original prompt for context
-        model_output: Output to evaluate
-        auto_route: Whether to automatically route based on complexity
-        force_mode: Force specific evaluation mode (overrides auto_route)
-        force_timeout: Force specific timeout (overrides recommendations)
-        record_performance: Whether to record performance metrics for learning
-
-    Returns:
-        Tuple of (evaluation_result, complexity_analysis)
-    """
     start_time = time.time()
 
     content_str = str(model_output)
@@ -802,21 +709,6 @@ async def fast_evaluate_output(
     model_output: str | dict[str, Any],
     evaluation_timeout: float = FAST_EVALUATION_TIMEOUT,
 ) -> EvaluationToolResponse:
-    """
-    Fast evaluation with early termination and timeout handling.
-
-    Args:
-        criteria: Evaluation criteria to assess
-        prompt: Original prompt for context
-        model_output: Output to evaluate
-        evaluation_timeout: Maximum time to spend on evaluation
-
-    Returns:
-        Evaluation results with scores and feedback
-
-    Raises:
-        EvaluationError: If evaluation fails or times out
-    """
     start_time = time.time()
 
     try:
@@ -886,34 +778,6 @@ async def optimized_prompt_evaluation[T](
     early_termination: bool = True,
     **kwargs: Any,
 ) -> T:
-    """
-    Optimized version of with_prompt_evaluation with performance improvements.
-
-    Key optimizations:
-    1. Reduced default retries
-    2. Early termination on excellent scores
-    3. Per-attempt timeout control
-    4. Larger score increment steps
-    5. Better error handling
-
-    Args:
-        prompt_identifier: Identifier for logging
-        passing_score: Minimum score to accept
-        prompt: Prompt text
-        prompt_handler: Function to generate content
-        retries: Maximum retry attempts (reduced default)
-        increment: Score reduction per retry (increased default)
-        criteria: Evaluation criteria
-        timeout_per_attempt: Timeout per evaluation attempt
-        early_termination: Whether to terminate early on excellent scores
-        **kwargs: Additional arguments for prompt_handler
-
-    Returns:
-        Generated content that meets quality standards
-
-    Raises:
-        EvaluationError: If unable to generate acceptable content
-    """
     start_time = time.time()
     current_prompt = str(prompt)
     iteration = 1
@@ -1073,18 +937,6 @@ async def batch_evaluate_outputs(
     max_concurrent: int = 3,
     timeout_per_task: float = STANDARD_EVALUATION_TIMEOUT,
 ) -> list[EvaluationToolResponse | Exception]:
-    """
-    Evaluate multiple outputs concurrently for improved throughput.
-
-    Args:
-        evaluation_tasks: List of evaluation task dictionaries with keys:
-                         'criteria', 'prompt', 'model_output'
-        max_concurrent: Maximum concurrent evaluations
-        timeout_per_task: Timeout per individual evaluation
-
-    Returns:
-        List of evaluation results or exceptions
-    """
     start_time = time.time()
 
     async def evaluate_single_task(task: dict[str, Any]) -> EvaluationToolResponse | Exception:
@@ -1146,10 +998,6 @@ async def with_prompt_evaluation[T, **P](
     criteria: list[EvaluationCriterion],
     **kwargs: Any,
 ) -> T:
-    """
-    Legacy evaluation function maintained for backward compatibility.
-    Consider using optimized_prompt_evaluation for better performance.
-    """
     current_prompt = str(prompt)
     iteration = 1
     min_passing_score: float = passing_score
@@ -1221,7 +1069,6 @@ async def quick_evaluation(
     prompt: str,
     model_output: str | dict[str, Any],
 ) -> EvaluationToolResponse:
-    """Quick evaluation with minimal timeout."""
     return await fast_evaluate_output(
         criteria=criteria,
         prompt=prompt,
@@ -1235,7 +1082,6 @@ async def standard_evaluation(
     prompt: str,
     model_output: str | dict[str, Any],
 ) -> EvaluationToolResponse:
-    """Standard evaluation with balanced timeout."""
     return await fast_evaluate_output(
         criteria=criteria,
         prompt=prompt,
@@ -1249,7 +1095,6 @@ async def thorough_evaluation(
     prompt: str,
     model_output: str | dict[str, Any],
 ) -> EvaluationToolResponse:
-    """Thorough evaluation with extended timeout."""
     return await fast_evaluate_output(
         criteria=criteria,
         prompt=prompt,
@@ -1259,18 +1104,15 @@ async def thorough_evaluation(
 
 
 def clear_evaluation_cache() -> None:
-    """Clear the global evaluation cache."""
     _evaluation_cache.clear()
     logger.info("Evaluation cache cleared")
 
 
 def get_cache_stats() -> dict[str, Any]:
-    """Get evaluation cache statistics."""
     return _evaluation_cache.stats()
 
 
 def configure_cache(max_size: int = DEFAULT_CACHE_SIZE, ttl_seconds: float = DEFAULT_TTL_SECONDS) -> None:
-    """Configure the global evaluation cache."""
     global _evaluation_cache  # noqa: PLW0603
     _evaluation_cache = EvaluationCache(max_size=max_size, ttl_seconds=ttl_seconds)
     logger.info(
@@ -1281,19 +1123,16 @@ def configure_cache(max_size: int = DEFAULT_CACHE_SIZE, ttl_seconds: float = DEF
 
 
 def get_adaptive_timeout_stats() -> dict[str, Any]:
-    """Get adaptive timeout calculator performance statistics."""
     return _adaptive_timeout_calculator.get_performance_stats()
 
 
 def reset_adaptive_timeouts() -> None:
-    """Reset adaptive timeout calculator to default state."""
     global _adaptive_timeout_calculator  # noqa: PLW0603
     _adaptive_timeout_calculator = AdaptiveTimeoutCalculator()
     logger.info("Adaptive timeout calculator reset to default state")
 
 
 def configure_adaptive_timeouts(learning_rate: float = TIMEOUT_LEARNING_RATE) -> None:
-    """Configure the adaptive timeout calculator."""
     global _adaptive_timeout_calculator  # noqa: PLW0603
     _adaptive_timeout_calculator = AdaptiveTimeoutCalculator(learning_rate=learning_rate)
     logger.info(

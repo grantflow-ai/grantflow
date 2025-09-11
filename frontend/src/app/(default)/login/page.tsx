@@ -5,31 +5,31 @@ import { sendSignInLinkToEmail, type User } from "firebase/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { login } from "@/actions/login";
-import { AppCard, AppCardContent } from "@/components/app";
+import { AppCard, AppCardContent } from "@/components/app/app-card";
 import { AppButton } from "@/components/app/buttons/app-button";
 import { SubmitButton } from "@/components/app/buttons/submit-button";
 import { SeparatorWithText } from "@/components/app/display/separator-with-text";
-import AppInput from "@/components/app/forms/input-field";
-import { IconGoAhead } from "@/components/branding/icons";
-import { LogoDark } from "@/components/branding/logo";
+import AppInput from "@/components/app/fields/input-field";
+import { LogoDark } from "@/components/branding/icons/logo";
+import { CookieConsentProvider } from "@/components/cookie-consent/cookie-consent-provider";
+import { IconGoAhead } from "@/components/icons";
 import { AuthCardHeader } from "@/components/onboarding/auth-card-header";
 import { OnboardingGradientBackgroundBottom } from "@/components/onboarding/backgrounds";
-import { SocialSigninButton } from "@/components/shared/social-signin-buttons";
+import { SocialSigninButton } from "@/components/onboarding/social-signin-buttons";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { FIREBASE_LOCAL_STORAGE_KEY } from "@/constants";
-import { initializeMockAuth, isMockAuthEnabled } from "@/dev-tools/mock-auth";
-import { PagePath } from "@/enums";
+import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useUserStore } from "@/stores/user-store";
 import { handleGoogleLogin, handleOrcidLogin } from "@/utils/auth-providers";
 import { getEnv } from "@/utils/env";
 import { convertFirebaseUser, getFirebaseAuth } from "@/utils/firebase";
-import { log } from "@/utils/logger";
+import { log } from "@/utils/logger/client";
+import { routes } from "@/utils/navigation";
 
 const loginFormSchema = z.object({
 	email: z.email({ message: "This email address is not valid." }),
@@ -39,23 +39,20 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export default function Login() {
 	const auth = getFirebaseAuth();
-	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [socialSignInError, setSocialSignInError] = useState<null | React.ReactNode | string>(null);
 	const { setUser } = useUserStore();
-
-	useEffect(() => {
-		if (isMockAuthEnabled()) {
-			log.info("Mock auth enabled - bypassing login page", { page: "login" });
-			initializeMockAuth();
-			router.push(PagePath.PROJECTS);
-		}
-	}, [router]);
+	const { hasConsent } = useCookieConsent();
 
 	const handleSocialSignIn = async (
 		provider: "google" | "orcid",
 		signInMethod: () => Promise<{ idToken: string; isNewUser: boolean; user: User }>,
 	) => {
+		if (!hasConsent) {
+			toast.error("Please accept cookies to continue with login");
+			return;
+		}
+
 		log.info(`Starting ${provider} sign-in`, { page: "login", provider });
 		setIsLoading(true);
 		setSocialSignInError(null);
@@ -83,8 +80,8 @@ export default function Login() {
 			);
 			setSocialSignInError(errorWithLink);
 		} catch (error) {
-			log.error(`${provider} sign-in failed`, error, { page: "login", provider });
 			if (!isRedirectError(error)) {
+				log.error(`${provider} sign-in failed`, error, { page: "login", provider });
 				toast.error(
 					error instanceof Error ? error.message : `${provider.toUpperCase()} sign-in failed due to an error`,
 				);
@@ -104,9 +101,14 @@ export default function Login() {
 	};
 
 	const handleEmailSignin = async (email: string) => {
+		if (!hasConsent) {
+			toast.error("Please accept cookies to continue with login");
+			return;
+		}
+
 		setIsLoading(true);
 
-		const url = new URL(PagePath.FINISH_EMAIL_SIGNIN, getEnv().NEXT_PUBLIC_SITE_URL).toString();
+		const url = new URL(routes.finishEmailSignin(), getEnv().NEXT_PUBLIC_SITE_URL).toString();
 
 		try {
 			await sendSignInLinkToEmail(auth, email, {
@@ -161,6 +163,7 @@ export default function Login() {
 							<AuthCardHeader description="Log in to manage your grant workflow" title="Welcome back!" />
 							<AppCardContent data-testid="login-card-content">
 								<LoginForm
+									hasConsent={hasConsent}
 									isLoading={isLoading}
 									onSubmit={({ email }) => handleEmailSignin(email)}
 									socialSignInError={socialSignInError}
@@ -178,6 +181,7 @@ export default function Login() {
 								>
 									<SocialSigninButton
 										data-testid="login-google-button"
+										isDisabled={!hasConsent}
 										isLoading={isLoading}
 										onClick={handleGoogleSignin}
 										platform="google"
@@ -185,6 +189,7 @@ export default function Login() {
 
 									<SocialSigninButton
 										data-testid="login-orcid-button"
+										isDisabled={!hasConsent}
 										isLoading={isLoading}
 										onClick={handleOrcidSignin}
 										platform="orcid"
@@ -202,7 +207,7 @@ export default function Login() {
 										size="sm"
 										variant="link"
 									>
-										<Link data-testid="login-create-account-button-link" href={PagePath.ONBOARDING}>
+										<Link data-testid="login-create-account-button-link" href={routes.onboarding()}>
 											Create an Account
 										</Link>
 									</AppButton>
@@ -212,15 +217,18 @@ export default function Login() {
 					</div>
 				</div>
 			</div>
+			<CookieConsentProvider />
 		</div>
 	);
 }
 
 function LoginForm({
+	hasConsent,
 	isLoading,
 	onSubmit,
 	socialSignInError,
 }: {
+	hasConsent: boolean;
 	isLoading: boolean;
 	onSubmit: (values: LoginFormValues) => void;
 	socialSignInError?: null | React.ReactNode | string;
@@ -262,7 +270,7 @@ function LoginForm({
 					<SubmitButton
 						className="mb-8 mt-3 w-full"
 						data-testid="login-form-submit-button"
-						disabled={!form.formState.isValid || isLoading}
+						disabled={!form.formState.isValid || isLoading || !hasConsent}
 						isLoading={isLoading}
 						rightIcon={<IconGoAhead />}
 					>

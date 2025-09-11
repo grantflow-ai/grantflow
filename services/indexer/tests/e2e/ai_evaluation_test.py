@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from packages.db.src.tables import GrantApplicationRagSource
+from packages.db.src.tables import GrantApplicationSource
 from packages.shared_utils.src.ai import ANTHROPIC_SONNET_MODEL, get_anthropic_client
 from packages.shared_utils.src.embeddings import index_chunks
 from packages.shared_utils.src.exceptions import ExternalOperationError
 from testing import TEST_DATA_SOURCES
-from testing.e2e_utils import E2ETestCategory, e2e_test
 from testing.evaluation_utils import comprehensive_quality_assessment, cosine_similarity
+from testing.performance_framework import TestDomain, TestExecutionSpeed, performance_test
 
 from services.indexer.src.processing import process_source
 
@@ -17,9 +17,9 @@ if TYPE_CHECKING:
     from packages.db.src.json_objects import Chunk
 
 
-@e2e_test(category=E2ETestCategory.AI_EVAL, timeout=180)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=180)
 async def test_content_relevance_evaluation(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running AI content relevance evaluation")
 
@@ -98,10 +98,8 @@ async def test_content_relevance_evaluation(
         pytest.fail(f"AI content relevance evaluation failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.AI_EVAL, timeout=240)
-async def test_hallucination_detection(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
-) -> None:
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=240)
+async def test_hallucination_detection(logger: logging.Logger, grant_application_file: GrantApplicationSource) -> None:
     logger.info("Running AI hallucination detection test")
 
     test_cases = [
@@ -171,9 +169,9 @@ async def test_hallucination_detection(
         pytest.fail(f"AI hallucination detection failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.SEMANTIC_EVALUATION, timeout=120)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=120)
 async def test_semantic_similarity_thresholds(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running semantic similarity threshold evaluation")
 
@@ -221,10 +219,10 @@ async def test_semantic_similarity_thresholds(
         pytest.fail(f"Semantic similarity threshold evaluation failed: {e}")
 
 
-@e2e_test(category=E2ETestCategory.QUALITY_ASSESSMENT, timeout=300)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=300)
 @pytest.mark.parametrize("data_file", TEST_DATA_SOURCES[:3])
 async def test_comprehensive_quality_with_ai_validation(
-    logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, data_file: Path, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running comprehensive quality assessment with AI validation for %s", data_file.name)
 
@@ -313,9 +311,9 @@ async def test_comprehensive_quality_with_ai_validation(
         pytest.fail(f"Comprehensive quality assessment failed for {data_file.name}: {e}")
 
 
-@e2e_test(category=E2ETestCategory.AI_EVAL, timeout=200)
+@performance_test(execution_speed=TestExecutionSpeed.QUALITY, domain=TestDomain.AI_EVALUATION, timeout=200)
 async def test_citation_accuracy_validation(
-    logger: logging.Logger, grant_application_file: GrantApplicationRagSource
+    logger: logging.Logger, grant_application_file: GrantApplicationSource
 ) -> None:
     logger.info("Running citation accuracy validation test")
 

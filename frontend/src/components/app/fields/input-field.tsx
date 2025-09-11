@@ -1,0 +1,160 @@
+"use client";
+
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
+const getTextColorClass = (hasError: boolean, disabled?: boolean) => {
+	if (hasError) return "text-error";
+	if (disabled) return "text-input-muted";
+	return "text-input-label";
+};
+
+const calculateCount = (text: string, countType: "chars" | "words") => {
+	if (countType === "chars") {
+		return text.length;
+	}
+	return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+};
+
+const formatCount = (count: number) => {
+	return count < 10 ? `0${count}` : `${count}`;
+};
+
+const getInputClasses = (
+	variant: "default" | "field",
+	errorMessage: null | React.ReactNode | string | undefined,
+	icon: React.ReactNode | undefined,
+	showCountTypeTag: boolean | undefined,
+	disabled?: boolean,
+	className?: string,
+) => {
+	return cn(
+		"w-full bg-white text-dark text-sm rounded-sm p-3 placeholder:text-sm",
+		disabled
+			? "placeholder:text-input-muted border-input-muted"
+			: "placeholder:text-input-placeholder border-input-muted",
+		variant === "field" && "ring-1 ring-input-border",
+		errorMessage && "border-error",
+		(icon ?? showCountTypeTag) && "pr-10",
+		"focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input",
+		"focus-visible:border focus-visible:border-primary",
+		className,
+	);
+};
+
+export default function AppInput({
+	className,
+	countType = "chars",
+	errorMessage,
+	icon,
+	label,
+	maxCount,
+	showCount = false,
+	showCountTypeTag = false,
+	testId,
+	variant = "default",
+	...props
+}: {
+	className?: string;
+	countType?: "chars" | "words";
+	errorMessage?: null | React.ReactNode | string;
+	icon?: React.ReactNode;
+	label?: string;
+	maxCount?: number;
+	showCount?: boolean;
+	showCountTypeTag?: boolean;
+	testId?: string;
+	variant?: "default" | "field";
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+	const hasError = !!errorMessage;
+	const [text, setText] = useState(props.value?.toString() ?? "");
+
+	const displayText = props.value === undefined ? text : props.value.toString();
+	const currentCount = calculateCount(displayText, countType);
+	const formattedCount = formatCount(currentCount);
+	const formattedMaxCount = maxCount ? formatCount(maxCount) : null;
+	const textColorClass = getTextColorClass(hasError, props.disabled);
+
+	return (
+		<div className="w-full">
+			<div className="flex items-center justify-between">
+				{label && (
+					<Label
+						className={`block text-start text-xs font-light ${textColorClass}`}
+						data-testid={`${testId}-label`}
+						htmlFor={props.id ?? testId}
+					>
+						{label}
+					</Label>
+				)}
+
+				{showCount && (
+					<div className={`text-xs ${textColorClass}`} data-testid={`${testId}-${countType}-count`}>
+						{formattedCount}
+						{formattedMaxCount ? `/${formattedMaxCount}` : ""}
+					</div>
+				)}
+			</div>
+
+			<div className="relative">
+				<Input
+					{...props}
+					className={getInputClasses(
+						variant,
+						errorMessage,
+						icon,
+						showCountTypeTag,
+						props.disabled,
+						className,
+					)}
+					data-testid={testId}
+					disabled={props.disabled}
+					id={props.id ?? testId}
+					maxLength={countType === "chars" ? maxCount : undefined}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+						const inputValue = e.target.value;
+						if (props.type === "number" && inputValue.replaceAll(/\D/g, "").length > 7) {
+							return;
+						}
+						setText(inputValue);
+						props.onChange?.(e);
+					}}
+					placeholder={props.placeholder}
+					value={displayText}
+				/>
+
+				{showCountTypeTag && (
+					<div
+						className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 bg-indigo-100 rounded-2xl inline-flex justify-start items-center gap-[2.85px]"
+						data-type="Characters"
+					>
+						<div className="justify-start text-app-gray-600 text-[10px] leading-3">
+							{countType === "chars" ? "Characters" : "Words"}
+						</div>
+					</div>
+				)}
+
+				{icon && !showCountTypeTag && (
+					<div
+						className={cn(
+							"absolute right-3 top-1/2 -translate-y-1/2",
+							props.disabled && "text-input-muted pointer-events-none",
+						)}
+						data-testid={`${testId}-icon`}
+					>
+						{icon}
+					</div>
+				)}
+			</div>
+
+			<div
+				className={`text-error mb-1 text-start text-sm ${hasError ? "visible" : "invisible"}`}
+				data-testid={`${testId}-error`}
+			>
+				{errorMessage}
+			</div>
+		</div>
+	);
+}

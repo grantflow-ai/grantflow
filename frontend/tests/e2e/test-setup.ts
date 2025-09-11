@@ -1,18 +1,13 @@
 import { test as base } from "@playwright/test";
 
-// Extend the base test to include setup
 export const test = base.extend({
-	// Auto-fixture that runs before each test
 	page: async ({ page }, use) => {
-		// Clear local storage to ensure clean state
 		await page.addInitScript(() => {
 			localStorage.clear();
 			sessionStorage.clear();
 		});
 
-		// Set mock auth flag in localStorage before navigation
 		await page.addInitScript(() => {
-			// Ensure user store has proper state
 			const userStore = {
 				state: {
 					hasSeenWelcomeModal: true,
@@ -30,11 +25,9 @@ export const test = base.extend({
 			};
 			localStorage.setItem("user-store", JSON.stringify(userStore));
 
-			// Test constants for consistent IDs (UUIDs)
 			const TEST_PROJECT_ID = "550e8400-e29b-41d4-a716-446655440000";
 			const TEST_APPLICATION_ID = "550e8400-e29b-41d4-a716-446655440001";
 
-			// Set up navigation store with test project and application IDs
 			const navigationStore = {
 				state: {
 					activeApplicationId: TEST_APPLICATION_ID,
@@ -45,13 +38,10 @@ export const test = base.extend({
 			localStorage.setItem("navigation-store", JSON.stringify(navigationStore));
 		});
 
-		// Configure mock API for faster tests
 		await page.addInitScript(() => {
-			// Set up faster mock API delays for testing
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			(globalThis as any).__MOCK_API_DELAY__ = 100; // 100ms instead of 3000ms
+			(globalThis as any).__MOCK_API_DELAY__ = 100;
 
-			// Clear mock stores to ensure consistent test state
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if ((globalThis as any).clearAllMockStores) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -59,9 +49,7 @@ export const test = base.extend({
 			}
 		});
 
-		// Set scenario for tests that need populated data
 		await page.addInitScript(() => {
-			// Wait for mock API client to be available
 			const waitForMockAPI = () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				if ((globalThis as any).getMockAPIClient) {
@@ -74,14 +62,11 @@ export const test = base.extend({
 			waitForMockAPI();
 		});
 
-		// Pre-populate stores with test data to avoid loading states
 		await page.addInitScript(() => {
-			// Test constants for consistent IDs (UUIDs) - redeclared in this context
 			const TEST_PROJECT_ID = "550e8400-e29b-41d4-a716-446655440000";
 			const TEST_APPLICATION_ID = "550e8400-e29b-41d4-a716-446655440001";
 			const TEST_TEMPLATE_ID = "550e8400-e29b-41d4-a716-446655440002";
 
-			// Set up project store with the test project
 			const projectStore = {
 				state: {
 					areOperationsInProgress: false,
@@ -129,7 +114,6 @@ export const test = base.extend({
 			};
 			localStorage.setItem("project-store", JSON.stringify(projectStore));
 
-			// Set up application store with the test application
 			const applicationStore = {
 				state: {
 					application: {
@@ -138,15 +122,15 @@ export const test = base.extend({
 						form_inputs: null,
 						grant_template: {
 							created_at: new Date().toISOString(),
-							funding_organization: {
-								abbreviation: "TFO",
+							grant_sections: [],
+							granting_institution: {
+								abbreviation: "TGI",
 								created_at: new Date().toISOString(),
-								full_name: "Test Funding Organization",
+								full_name: "Test Granting Institution",
 								id: "org-1",
 								logo_url: null,
 								updated_at: new Date().toISOString(),
 							},
-							grant_sections: [],
 							id: TEST_TEMPLATE_ID,
 							rag_sources: [
 								{
@@ -186,7 +170,6 @@ export const test = base.extend({
 			localStorage.setItem("application-store", JSON.stringify(applicationStore));
 		});
 
-		// Use the page
 		await use(page);
 	},
 });

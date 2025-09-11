@@ -1,5 +1,6 @@
 import {
 	CreateProjectRequestFactory,
+	DuplicateProjectResponseFactory,
 	IdResponseFactory,
 	ProjectFactory,
 	ProjectListItemFactory,
@@ -7,7 +8,7 @@ import {
 } from "::testing/factories";
 import { mockRedirect } from "::testing/global-mocks";
 import { HTTPError } from "ky";
-import { createProject, deleteProject, getProject, getProjects, updateProject } from "./project";
+import { createProject, deleteProject, duplicateProject, getProject, getProjects, updateProject } from "./project";
 
 const mockPost = vi.fn();
 const mockGet = vi.fn();
@@ -16,8 +17,8 @@ const mockPatch = vi.fn();
 const mockCreateAuthHeaders = vi.fn();
 const mockWithAuthRedirect = vi.fn();
 
-vi.mock("@/utils/api", async () => {
-	const actual = await vi.importActual("@/utils/api");
+vi.mock("@/utils/api/server", async () => {
+	const actual = await vi.importActual("@/utils/api/server");
 	return {
 		...actual,
 		getClient: () => ({
@@ -38,6 +39,7 @@ vi.mock("@/utils/server-side", async () => {
 	};
 });
 
+const mockOrganizationId = "mock-organization-id";
 const mockProjectId = "mock-project-id";
 const mockAuthHeaders = { Authorization: "Bearer mock-token" };
 
@@ -57,7 +59,6 @@ const mockGetProjectResponse = ProjectFactory.build({
 	id: mockProjectId,
 	logo_url: "https://example.com/logo.png",
 	name: "Test Project",
-	role: "OWNER",
 });
 
 const mockGetProjectsResponse = [
@@ -66,14 +67,12 @@ const mockGetProjectsResponse = [
 		id: mockProjectId,
 		logo_url: "https://example.com/logo.png",
 		name: "Test Project",
-		role: "OWNER",
 	}),
 	ProjectListItemFactory.build({
 		description: null,
 		id: "project-2",
 		logo_url: null,
 		name: "Another Project",
-		role: "MEMBER",
 	}),
 ];
 
@@ -82,7 +81,29 @@ const mockUpdateProjectResponse = ProjectListItemFactory.build({
 	id: mockProjectId,
 	logo_url: "https://example.com/updated-logo.png",
 	name: "Updated Project",
-	role: "OWNER",
+});
+
+const mockDuplicateProjectResponse = DuplicateProjectResponseFactory.build({
+	description: "Test Description",
+	grant_applications: [
+		{
+			completed_at: undefined,
+			id: "duplicated-app-1",
+			title: "Application 1",
+		},
+	],
+	id: "duplicated-project-id",
+	logo_url: "https://example.com/logo.png",
+	members: [
+		{
+			display_name: "Test User",
+			email: "test@example.com",
+			firebase_uid: "test-uid",
+			photo_url: "https://example.com/photo.png",
+			role: "OWNER",
+		},
+	],
+	name: "Copy of Test Project",
 });
 
 beforeEach(() => {
@@ -118,9 +139,9 @@ describe("Project Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const projectData = CreateProjectRequestFactory.build();
 
-			const result = await createProject(projectData);
+			const result = await createProject(mockOrganizationId, projectData);
 
-			expect(mockPost).toHaveBeenCalledWith("projects", {
+			expect(mockPost).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects`, {
 				headers: mockAuthHeaders,
 				json: projectData,
 			});
@@ -132,9 +153,9 @@ describe("Project Actions", () => {
 
 	describe("getProject", () => {
 		it("should call the API with correct parameters", async () => {
-			const result = await getProject(mockProjectId);
+			const result = await getProject(mockOrganizationId, mockProjectId);
 
-			expect(mockGet).toHaveBeenCalledWith(`projects/${mockProjectId}`, {
+			expect(mockGet).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects/${mockProjectId}`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -149,9 +170,9 @@ describe("Project Actions", () => {
 				json: vi.fn().mockResolvedValue(mockGetProjectsResponse),
 			});
 
-			const result = await getProjects();
+			const result = await getProjects(mockOrganizationId);
 
-			expect(mockGet).toHaveBeenCalledWith("projects", {
+			expect(mockGet).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects`, {
 				headers: mockAuthHeaders,
 			});
 
@@ -164,9 +185,9 @@ describe("Project Actions", () => {
 		it("should call the API with correct parameters", async () => {
 			const updateData = UpdateProjectRequestFactory.build();
 
-			const result = await updateProject(mockProjectId, updateData);
+			const result = await updateProject(mockOrganizationId, mockProjectId, updateData);
 
-			expect(mockPatch).toHaveBeenCalledWith(`projects/${mockProjectId}`, {
+			expect(mockPatch).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects/${mockProjectId}`, {
 				headers: mockAuthHeaders,
 				json: updateData,
 			});
@@ -178,13 +199,72 @@ describe("Project Actions", () => {
 
 	describe("deleteProject", () => {
 		it("should call the API with correct parameters", async () => {
-			await deleteProject(mockProjectId);
+			await deleteProject(mockOrganizationId, mockProjectId);
 
-			expect(mockDelete).toHaveBeenCalledWith(`projects/${mockProjectId}`, {
+			expect(mockDelete).toHaveBeenCalledWith(`organizations/${mockOrganizationId}/projects/${mockProjectId}`, {
 				headers: mockAuthHeaders,
 			});
 
 			expect(mockWithAuthRedirect).toHaveBeenCalled();
+		});
+	});
+
+	describe("duplicateProject", () => {
+		it("should call the API with correct parameters", async () => {
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockDuplicateProjectResponse),
+			});
+
+			const result = await duplicateProject(mockOrganizationId, mockProjectId);
+
+			expect(mockPost).toHaveBeenCalledWith(
+				`organizations/${mockOrganizationId}/projects/${mockProjectId}/duplicate`,
+				{
+					headers: mockAuthHeaders,
+					json: {},
+				},
+			);
+
+			expect(mockWithAuthRedirect).toHaveBeenCalled();
+			expect(result).toEqual(mockDuplicateProjectResponse);
+		});
+
+		it("should return a project with copied name", async () => {
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(mockDuplicateProjectResponse),
+			});
+
+			const result = await duplicateProject(mockOrganizationId, mockProjectId);
+
+			expect(result.name).toBe("Copy of Test Project");
+		});
+
+		it("should preserve all grant applications", async () => {
+			const responseWithMultipleApps = DuplicateProjectResponseFactory.build({
+				...mockDuplicateProjectResponse,
+				grant_applications: [
+					{
+						completed_at: undefined,
+						id: "duplicated-app-1",
+						title: "Application 1",
+					},
+					{
+						completed_at: "2024-01-01T00:00:00Z",
+						id: "duplicated-app-2",
+						title: "Application 2",
+					},
+				],
+			});
+
+			mockPost.mockReturnValueOnce({
+				json: vi.fn().mockResolvedValue(responseWithMultipleApps),
+			});
+
+			const result = await duplicateProject(mockOrganizationId, mockProjectId);
+
+			expect(result.grant_applications).toHaveLength(2);
+			expect(result.grant_applications[0].title).toBe("Application 1");
+			expect(result.grant_applications[1].title).toBe("Application 2");
 		});
 	});
 
@@ -197,12 +277,16 @@ describe("Project Actions", () => {
 
 			mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
-			await expect(getProject(mockProjectId)).rejects.toThrow("API Error");
+			await expect(getProject(mockOrganizationId, mockProjectId)).rejects.toThrow("API Error");
 		});
 
 		it("should redirect to sign-in page on 401 errors", async () => {
 			const mockResponse = new Response(null, { status: 401 });
-			const httpError = new HTTPError(mockResponse, { path: "projects" } as any, {} as any);
+			const httpError = new HTTPError(
+				mockResponse,
+				{ path: `organizations/${mockOrganizationId}/projects` } as any,
+				{} as any,
+			);
 
 			mockGet.mockReturnValueOnce({
 				json: vi.fn().mockRejectedValue(httpError),
@@ -218,7 +302,7 @@ describe("Project Actions", () => {
 				});
 			});
 
-			await getProject(mockProjectId);
+			await getProject(mockOrganizationId, mockProjectId);
 
 			expect(mockRedirect).toHaveBeenCalledWith("/signin");
 		});

@@ -8,41 +8,6 @@ terraform {
   }
 }
 
-variable "project_id" {
-  description = "The project ID to deploy to"
-  type        = string
-  default     = "grantflow"
-}
-
-variable "region" {
-  description = "The region for the Cloud Run service"
-  type        = string
-  default     = "us-central1"
-}
-
-variable "pubsub_invoker_service_account_email" {
-  description = "Email of the service account used for Pub/Sub to invoke Cloud Run"
-  type        = string
-}
-
-variable "message_retention_duration" {
-  description = "Message retention duration"
-  type        = string
-  default     = "86400s" # 1 day
-}
-
-variable "ack_deadline_seconds" {
-  description = "Acknowledgment deadline in seconds"
-  type        = number
-  default     = 60
-}
-
-variable "enable_dead_letter" {
-  description = "Enable dead letter queues"
-  type        = bool
-  default     = false
-}
-
 resource "google_pubsub_topic" "file_indexing" {
   name = "file-indexing"
 
@@ -53,68 +18,68 @@ resource "google_pubsub_topic" "file_indexing" {
   }
 }
 
-# Push subscription to trigger the indexer Cloud Run service
 resource "google_pubsub_subscription" "file_indexing_subscription" {
   name  = "file-indexing-subscription"
   topic = google_pubsub_topic.file_indexing.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  # ~keep File processing deadline (configurable)
+  ack_deadline_seconds = var.file_indexing_ack_deadline
 
+  # ~keep Increased backoff for indexer to handle burst traffic gracefully
   retry_policy {
-    minimum_backoff = "10s"
-    maximum_backoff = "600s"
+    minimum_backoff = var.indexer_retry_minimum_backoff
+    maximum_backoff = var.indexer_retry_maximum_backoff
   }
 
   enable_message_ordering = false
 
-  # Configure push to Cloud Run
+  # ~keep Flow control to prevent burst overload (429 errors)
   push_config {
-    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/indexer:call"
+    push_endpoint = var.indexer_url
 
-    # Authentication for the push endpoint
     oidc_token {
       service_account_email = var.pubsub_invoker_service_account_email
-      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/indexer"
+      audience              = var.indexer_url
     }
 
-    # This attribute specifies that we have a minimum number of failed attempts before acking the message
     attributes = {
       "x-goog-version" = "v1"
     }
   }
 
-  # Configure exponential backoff for failed deliveries
+  # ~keep Exponential backoff prevents retry storms during overload
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.file_indexing_dlq.id
-    max_delivery_attempts = 5
+    max_delivery_attempts = 10 # ~keep Increased for fanout pattern burst handling
+  }
+
+  # ~keep Exactly-once delivery is not compatible with push subscriptions
+
+  # ~keep Set expiration policy to clean up inactive subscriptions
+  expiration_policy {
+    ttl = "2678400s"
   }
 }
 
-# Dead letter queue topic for failed message processing
 resource "google_pubsub_topic" "file_indexing_dlq" {
   name = "file-indexing-dlq"
 
-  # Add labels for easier identification
   labels = {
     purpose = "dead-letter-queue"
   }
 }
 
-# Subscription to monitor the dead letter queue
 resource "google_pubsub_subscription" "file_indexing_dlq_subscription" {
   name  = "file-indexing-dlq-subscription"
   topic = google_pubsub_topic.file_indexing_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
-  # Keep messages for 7 days
   message_retention_duration = "604800s"
 
-  # Retain acknowledged messages
   retain_acked_messages = true
 }
 
-# URL Crawler topic
 resource "google_pubsub_topic" "url_crawling" {
   name = "url-crawling"
 
@@ -123,12 +88,12 @@ resource "google_pubsub_topic" "url_crawling" {
   }
 }
 
-# Push subscription to trigger the crawler Cloud Run service
 resource "google_pubsub_subscription" "url_crawling_subscription" {
   name  = "url-crawling-subscription"
   topic = google_pubsub_topic.url_crawling.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  # ~keep URL crawling deadline (configurable)
+  ack_deadline_seconds = var.url_crawling_ack_deadline
 
   retry_policy {
     minimum_backoff = "10s"
@@ -137,61 +102,50 @@ resource "google_pubsub_subscription" "url_crawling_subscription" {
 
   enable_message_ordering = false
 
-  # Configure push to Cloud Run
   push_config {
-    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/crawler:call"
+    push_endpoint = var.crawler_url
 
-    # Authentication for the push endpoint
     oidc_token {
       service_account_email = var.pubsub_invoker_service_account_email
-      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/crawler"
+      audience              = var.crawler_url
     }
 
-    # This attribute specifies that we have a minimum number of failed attempts before acking the message
     attributes = {
       "x-goog-version" = "v1"
     }
   }
 
-  # Configure exponential backoff for failed deliveries
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.url_crawling_dlq.id
-    max_delivery_attempts = 5
+    max_delivery_attempts = 10 # ~keep Increased for fanout pattern burst handling
   }
 }
 
-# Dead letter queue topic for failed message processing in URL crawling
 resource "google_pubsub_topic" "url_crawling_dlq" {
   name = "url-crawling-dlq"
 
-  # Add labels for easier identification
   labels = {
     purpose = "dead-letter-queue"
   }
 }
 
-# Subscription to monitor the URL crawling dead letter queue
 resource "google_pubsub_subscription" "url_crawling_dlq_subscription" {
   name  = "url-crawling-dlq-subscription"
   topic = google_pubsub_topic.url_crawling_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
-  # Keep messages for 7 days
   message_retention_duration = "604800s"
 
-  # Retain acknowledged messages
   retain_acked_messages = true
 }
 
-# IAM binding to allow the backend service account to publish to the URL crawling topic
 resource "google_pubsub_topic_iam_member" "backend_publisher" {
   topic  = google_pubsub_topic.url_crawling.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-# RAG Processing topic
 resource "google_pubsub_topic" "rag_processing" {
   name = "rag-processing"
 
@@ -200,12 +154,11 @@ resource "google_pubsub_topic" "rag_processing" {
   }
 }
 
-# Push subscription to trigger the RAG Cloud Run service
 resource "google_pubsub_subscription" "rag_processing_subscription" {
   name  = "rag-processing-subscription"
   topic = google_pubsub_topic.rag_processing.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds # 10 minutes max for Pub/Sub (maximum allowed)
+  ack_deadline_seconds = var.rag_processing_ack_deadline
 
   retry_policy {
     minimum_backoff = "30s"
@@ -214,94 +167,211 @@ resource "google_pubsub_subscription" "rag_processing_subscription" {
 
   enable_message_ordering = false
 
-  # Configure push to Cloud Run
   push_config {
-    push_endpoint = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/rag:call"
+    push_endpoint = var.rag_url
 
-    # Authentication for the push endpoint
     oidc_token {
       service_account_email = var.pubsub_invoker_service_account_email
-      audience              = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/services/rag"
+      audience              = var.rag_url
     }
 
-    # This attribute specifies that we have a minimum number of failed attempts before acking the message
     attributes = {
       "x-goog-version" = "v1"
     }
   }
 
-  # Configure exponential backoff for failed deliveries
   dead_letter_policy {
     dead_letter_topic     = google_pubsub_topic.rag_processing_dlq.id
-    max_delivery_attempts = 5 # Minimum required by GCP
+    max_delivery_attempts = 5
   }
 }
 
-# Dead letter queue topic for failed RAG processing
 resource "google_pubsub_topic" "rag_processing_dlq" {
   name = "rag-processing-dlq"
 
-  # Add labels for easier identification
   labels = {
     purpose = "dead-letter-queue"
   }
 }
 
-# Subscription to monitor the RAG processing dead letter queue
 resource "google_pubsub_subscription" "rag_processing_dlq_subscription" {
   name  = "rag-processing-dlq-subscription"
   topic = google_pubsub_topic.rag_processing_dlq.name
 
-  ack_deadline_seconds = var.ack_deadline_seconds
+  ack_deadline_seconds = var.dlq_ack_deadline
 
-  # Keep messages for 7 days
   message_retention_duration = "604800s"
 
-  # Retain acknowledged messages
   retain_acked_messages = true
 }
 
-# IAM binding to allow the backend service account to publish to the RAG processing topic
 resource "google_pubsub_topic_iam_member" "backend_rag_publisher" {
   topic  = google_pubsub_topic.rag_processing.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-# Frontend Notifications topic
 resource "google_pubsub_topic" "frontend_notifications" {
   name = "frontend-notifications"
+
+  message_retention_duration = var.message_retention_duration
 
   lifecycle {
     ignore_changes = all
   }
 }
 
-# NOTE: Subscriptions for frontend-notifications are created dynamically
-# by the application with parent_id filters. See pubsub.py:ensure_subscription_for_parent_id
+resource "google_pubsub_topic" "frontend_notifications_dlq" {
+  name = "frontend-notifications-dlq"
 
-# IAM binding to allow services to publish to the frontend notifications topic
+  labels = {
+    purpose = "dead-letter-queue"
+  }
+}
+
+resource "google_pubsub_subscription" "frontend_notifications_dlq_subscription" {
+  name  = "frontend-notifications-dlq-subscription"
+  topic = google_pubsub_topic.frontend_notifications_dlq.name
+
+  ack_deadline_seconds = var.dlq_ack_deadline
+
+  message_retention_duration = "604800s"
+
+  retain_acked_messages = true
+}
+
+# NOTE: Subscriptions for frontend-notifications are created dynamically
+
 resource "google_pubsub_topic_iam_member" "frontend_notifications_publisher" {
   topic  = google_pubsub_topic.frontend_notifications.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-# IAM binding to allow backend to create and subscribe to dynamic subscriptions
+resource "google_pubsub_topic_iam_member" "rag_frontend_notifications_publisher" {
+  count  = var.rag_service_account_email != "" ? 1 : 0
+  topic  = google_pubsub_topic.frontend_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.rag_service_account_email}"
+}
+
 resource "google_pubsub_topic_iam_member" "backend_subscriber" {
   topic  = google_pubsub_topic.frontend_notifications.name
   role   = "roles/pubsub.subscriber"
   member = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-# IAM binding to allow backend to create subscriptions
 resource "google_project_iam_member" "backend_pubsub_editor" {
   project = var.project_id
   role    = "roles/pubsub.editor"
   member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
-# Data source to get the project number for the default service account
 data "google_project" "project" {
   project_id = var.project_id
+}
+
+resource "google_pubsub_topic_iam_member" "file_indexing_dlq_publisher" {
+  topic  = google_pubsub_topic.file_indexing_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic_iam_member" "url_crawling_dlq_publisher" {
+  topic  = google_pubsub_topic.url_crawling_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic_iam_member" "rag_processing_dlq_publisher" {
+  topic  = google_pubsub_topic.rag_processing_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic_iam_member" "frontend_notifications_dlq_publisher" {
+  topic  = google_pubsub_topic.frontend_notifications_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic" "email_notifications" {
+  name = "email-notifications"
+
+  message_retention_duration = var.message_retention_duration
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+resource "google_pubsub_subscription" "email_notifications_subscription" {
+  name  = "email-notifications-subscription"
+  topic = google_pubsub_topic.email_notifications.name
+
+  ack_deadline_seconds = var.email_notifications_ack_deadline
+
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "300s"
+  }
+
+  enable_message_ordering = false
+
+  push_config {
+    push_endpoint = "${var.backend_url}/webhooks/pubsub/email-notifications"
+
+    attributes = {
+      "x-goog-version" = "v1"
+      "Authorization"  = var.pubsub_webhook_token
+    }
+  }
+
+  dead_letter_policy {
+    dead_letter_topic     = google_pubsub_topic.email_notifications_dlq.id
+    max_delivery_attempts = 5
+  }
+
+  expiration_policy {
+    ttl = "2678400s"
+  }
+}
+
+resource "google_pubsub_topic" "email_notifications_dlq" {
+  name = "email-notifications-dlq"
+
+  labels = {
+    purpose = "dead-letter-queue"
+  }
+}
+
+resource "google_pubsub_subscription" "email_notifications_dlq_subscription" {
+  name  = "email-notifications-dlq-subscription"
+  topic = google_pubsub_topic.email_notifications_dlq.name
+
+  ack_deadline_seconds = var.dlq_ack_deadline
+
+  message_retention_duration = "604800s"
+
+  retain_acked_messages = true
+}
+
+resource "google_pubsub_topic_iam_member" "rag_email_notifications_publisher" {
+  count  = var.rag_service_account_email != "" ? 1 : 0
+  topic  = google_pubsub_topic.email_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.rag_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "backend_email_notifications_publisher" {
+  count  = var.backend_service_account_email != "" ? 1 : 0
+  topic  = google_pubsub_topic.email_notifications.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.backend_service_account_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "email_notifications_dlq_publisher" {
+  topic  = google_pubsub_topic.email_notifications_dlq.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }

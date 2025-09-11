@@ -21,7 +21,8 @@ jobs:
             DEBUG: "True"
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
+
 
             - name: Run Scraper E2E Tests
               uses: ./.github/actions/run-python-e2e-tests
@@ -31,3 +32,4 @@ jobs:
                   timeout: 1800
               env:
                   E2E_TESTS: "1"
+                  GCP_PROJECT_ID: "grantflow-test"

@@ -1,7 +1,8 @@
-import { render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { afterEach, beforeEach, describe } from "vitest";
 import { ToastListener } from "./toast-listener";
 
 vi.mock("next/navigation", () => ({
@@ -23,7 +24,10 @@ vi.mock("sonner", () => ({
 	},
 }));
 
-describe("ToastListener", () => {
+describe.sequential("ToastListener", () => {
+	afterEach(() => {
+		cleanup();
+	});
 	const mockRouter = {
 		back: vi.fn(),
 		forward: vi.fn(),

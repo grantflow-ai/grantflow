@@ -25,23 +25,33 @@ def create_pubsub_event(data: dict[str, str]) -> PubSubEvent:
 
 
 def test_handle_pubsub_message_valid_grant_template() -> None:
+    from typing import cast
+
+    from packages.shared_utils.src.pubsub import RagRequest
+
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_template"}
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
+    rag_result = cast("RagRequest", result)
 
-    assert str(result["parent_id"]) == data["parent_id"]
-    assert result["parent_type"] == data["parent_type"]
+    assert str(rag_result["parent_id"]) == data["parent_id"]
+    assert rag_result["parent_type"] == data["parent_type"]
 
 
 def test_handle_pubsub_message_valid_grant_application() -> None:
+    from typing import cast
+
+    from packages.shared_utils.src.pubsub import RagRequest
+
     data = {"parent_id": "123e4567-e89b-12d3-a456-426614174000", "parent_type": "grant_application"}
     event = create_pubsub_event(data)
 
     result = handle_pubsub_message(event)
+    rag_result = cast("RagRequest", result)
 
-    assert str(result["parent_id"]) == data["parent_id"]
-    assert result["parent_type"] == data["parent_type"]
+    assert str(rag_result["parent_id"]) == data["parent_id"]
+    assert rag_result["parent_type"] == data["parent_type"]
 
 
 def test_handle_pubsub_message_invalid_parent_type() -> None:
@@ -88,7 +98,6 @@ def test_handle_pubsub_message_missing_parent_type() -> None:
         handle_pubsub_message(event)
 
 
-@pytest.mark.asyncio
 async def test_handle_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker = AsyncMock()
 
@@ -107,7 +116,6 @@ async def test_handle_request_invalid_message_raises_validation_error() -> None:
     mock_session_maker.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_handle_request_grant_template_success() -> None:
     mock_session_maker = AsyncMock()
 
@@ -126,7 +134,6 @@ async def test_handle_request_grant_template_success() -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_handle_request_grant_application_success() -> None:
     mock_session_maker = AsyncMock()
 
@@ -145,7 +152,6 @@ async def test_handle_request_grant_application_success() -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_handle_request_pipeline_error_propagates() -> None:
     mock_session_maker = AsyncMock()
 

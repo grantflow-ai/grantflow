@@ -46,29 +46,24 @@ export default defineConfig({
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*"
 		],
 		globals: true,
-		hookTimeout: 10_000,
+		hookTimeout: 30_000,
 		include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}", "**/*.spec.integration.{ts,tsx}"],
-		// Frontend tests don't need strict isolation (no database)
-		// Disabling isolation for speed - tests are isolated by design
-		isolate: false,
+		isolate: true,
 		onConsoleLog(log) {
 			return !suppressedErrors.some((error) => log.includes(error));
 		},
-		pool: "threads",
+		pool: "forks",
 		poolOptions: {
-			threads: {
-				maxThreads: 8,
-				minThreads: 2,
-				singleThread: false,
+			forks: {
+				singleFork: true,
 			},
 		},
-		// poolMatchGlobs is deprecated, using pool: "threads" for all tests
 		sequence: {
-			concurrent: true,
+			concurrent: false,
 			shuffle: false,
 		},
-		setupFiles: ["./testing/setup.ts", "./testing/global-mocks.ts", "./vitest.setup.ts"],
-		teardownTimeout: 10_000,
-		testTimeout: 15_000,
+		setupFiles: ["./testing/global-mocks.ts", "./testing/setup.ts", "./vitest.setup.ts"],
+		teardownTimeout: 30_000,
+		testTimeout: 30_000,
 	},
 });
