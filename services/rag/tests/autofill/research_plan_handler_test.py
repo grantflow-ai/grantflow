@@ -292,7 +292,7 @@ def test_validation_errors_research_plan(mock_logger: MagicMock) -> None:
             }
         )
 
-    with pytest.raises(ValidationError, match="task.*description too short"):
+    with pytest.raises(ValidationError, match=r"task.*description too short"):
         _validate_research_plan_response(
             {
                 "research_objectives": [
