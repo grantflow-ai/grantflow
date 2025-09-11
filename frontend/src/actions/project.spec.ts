@@ -1,5 +1,6 @@
 import {
 	CreateProjectRequestFactory,
+	DuplicateProjectResponseFactory,
 	IdResponseFactory,
 	ProjectFactory,
 	ProjectListItemFactory,
@@ -82,12 +83,11 @@ const mockUpdateProjectResponse = ProjectListItemFactory.build({
 	name: "Updated Project",
 });
 
-const mockDuplicateProjectResponse = {
-	created_at: new Date().toISOString(),
+const mockDuplicateProjectResponse = DuplicateProjectResponseFactory.build({
 	description: "Test Description",
 	grant_applications: [
 		{
-			completed_at: null,
+			completed_at: undefined,
 			id: "duplicated-app-1",
 			title: "Application 1",
 		},
@@ -100,12 +100,11 @@ const mockDuplicateProjectResponse = {
 			email: "test@example.com",
 			firebase_uid: "test-uid",
 			photo_url: "https://example.com/photo.png",
-			role: "OWNER" as const,
+			role: "OWNER",
 		},
 	],
 	name: "Copy of Test Project",
-	updated_at: new Date().toISOString(),
-};
+});
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -241,11 +240,11 @@ describe("Project Actions", () => {
 		});
 
 		it("should preserve all grant applications", async () => {
-			const responseWithMultipleApps = {
+			const responseWithMultipleApps = DuplicateProjectResponseFactory.build({
 				...mockDuplicateProjectResponse,
 				grant_applications: [
 					{
-						completed_at: null,
+						completed_at: undefined,
 						id: "duplicated-app-1",
 						title: "Application 1",
 					},
@@ -255,7 +254,7 @@ describe("Project Actions", () => {
 						title: "Application 2",
 					},
 				],
-			};
+			});
 
 			mockPost.mockReturnValueOnce({
 				json: vi.fn().mockResolvedValue(responseWithMultipleApps),

@@ -91,6 +91,33 @@ export const ProjectFactory = new Factory<API.GetProject.Http200.ResponseBody>((
 	name: factory.company.name(),
 }));
 
+export const DuplicateProjectResponseFactory = new Factory<API.DuplicateProject.Http201.ResponseBody>((factory) => ({
+	created_at: factory.date.recent().toISOString(),
+	description: factory.datatype.boolean() ? factory.lorem.paragraph() : undefined,
+	grant_applications: factory.helpers.multiple(
+		() => ({
+			completed_at: factory.datatype.boolean() ? factory.date.recent().toISOString() : undefined,
+			id: factory.string.uuid(),
+			title: factory.lorem.sentence(),
+		}),
+		{ count: { max: 5, min: 0 } },
+	),
+	id: factory.string.uuid(),
+	logo_url: factory.datatype.boolean() ? factory.image.url() : undefined,
+	members: factory.helpers.multiple(
+		() => ({
+			display_name: factory.datatype.boolean() ? factory.person.fullName() : undefined,
+			email: factory.internet.email(),
+			firebase_uid: factory.string.uuid(),
+			photo_url: factory.datatype.boolean() ? factory.image.avatar() : undefined,
+			role: factory.helpers.arrayElement(["OWNER", "ADMIN", "COLLABORATOR"] as const),
+		}),
+		{ count: { max: 5, min: 1 } },
+	),
+	name: `Copy of ${factory.company.name()}`,
+	updated_at: factory.date.recent().toISOString(),
+}));
+
 type IndexingStatus = RagSource["status"];
 type RagSource = NonNullable<API.CreateApplication.Http201.ResponseBody["rag_sources"]>[0];
 
