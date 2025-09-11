@@ -54,15 +54,14 @@ export async function deleteProject(organizationId: string, projectId: string) {
 }
 
 export async function duplicateProject(organizationId: string, projectId: string) {
-	const originalProject = await getProject(organizationId, projectId);
-
-	const duplicateData: API.CreateProject.RequestBody = {
-		description: originalProject.description,
-		logo_url: originalProject.logo_url,
-		name: `Copy of ${originalProject.name}`,
-	};
-
-	return createProject(organizationId, duplicateData);
+	return withAuthRedirect(
+		getClient()
+			.post(`organizations/${organizationId}/projects/${projectId}/duplicate`, {
+				headers: await createAuthHeaders(),
+				json: {},
+			})
+			.json<API.GetProject.Http200.ResponseBody>(),
+	);
 }
 
 export async function getProject(organizationId: string, projectId: string) {
