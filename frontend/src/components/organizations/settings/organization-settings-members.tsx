@@ -25,7 +25,7 @@ import type { API } from "@/types/api-types";
 import { UserRole } from "@/types/user";
 import { log } from "@/utils/logger/client";
 import { generateInitials } from "@/utils/user";
-import { EditPermissionModal } from "./edit-permission-modal";
+import { type CollaboratorPermission, EditPermissionModal } from "./edit-permission-modal";
 
 interface OrganizationMember {
 	displayName?: string;
@@ -61,6 +61,7 @@ const ROLE_LABELS = {
 };
 
 const EMPTY_PROJECTS: API.ListProjects.Http200.ResponseBody = [];
+
 export function OrganizationSettingsMembers({
 	currentUserRole,
 	onInviteHandlerChange,
@@ -229,6 +230,7 @@ export function OrganizationSettingsMembers({
 			revalidateOnFocus: false,
 		},
 	);
+
 	const allMembers = [...mappedMembers, ...pendingMembers];
 
 	if (isLoading) {
@@ -335,13 +337,21 @@ export function OrganizationSettingsMembers({
 			/>
 
 			<EditPermissionModal
-				currentUserRole={currentUserRole}
 				isOpen={editingMember !== null}
-				member={editingMember}
+				member={editingMember as ({ role: CollaboratorPermission } & OrganizationMember) | null}
 				onClose={() => {
 					setEditingMember(null);
 				}}
-				onUpdateRole={handleUpdateRole}
+				onEdit={async (options) => {
+					if (!editingMember) return;
+					await handleUpdateRole(
+						editingMember.firebaseUid,
+						options.role as UserRole,
+						options.hasAllProjectsAccess,
+					);
+				}}
+				ownerEmail={ownerEmail}
+				projects={projects}
 			/>
 		</div>
 	);
