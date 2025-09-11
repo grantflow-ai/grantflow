@@ -157,6 +157,10 @@ markers = [
   "benchmark: All benchmark tests",
   "benchmark_vector: Vector-specific benchmarks",
   "benchmark_database: Database performance benchmarks",
+  "scraper: Scraper service specific tests",
+  "retrieval: Retrieval and search tests",
+  "nlp_categorization: NLP categorization tests",
+  "quality: Quality assessment tests",
   "benchmark_api: API performance benchmarks",
 ]
 filterwarnings = [
