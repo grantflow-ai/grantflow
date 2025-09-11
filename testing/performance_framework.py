@@ -28,13 +28,15 @@ class StageTimer:
         self.context.end_stage()
 
 
-class ExecutionSpeed(str, Enum):
+class TestExecutionSpeed(str, Enum):
+    __test__ = False  # Prevent pytest collection
     SMOKE = "smoke"
     QUALITY = "quality"
     E2E_FULL = "e2e_full"
 
 
-class Domain(str, Enum):
+class TestDomain(str, Enum):
+    __test__ = False  # Prevent pytest collection
     GRANT_TEMPLATE = "grant_template"
     GRANT_APPLICATION = "grant_application"
     OPTIMIZATION = "optimization"
