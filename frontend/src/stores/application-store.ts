@@ -477,8 +477,9 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			if (!selectedOrganizationId) {
 				throw new Error("No organization selected");
 			}
-			const crawlUrl = isApplicationParent ? crawlApplicationUrl : crawlTemplateUrl;
-			await crawlUrl(selectedOrganizationId, application!.project_id, parentId, url);
+			await (isApplicationParent
+				? crawlApplicationUrl(selectedOrganizationId, application!.project_id, parentId, url)
+				: crawlTemplateUrl(selectedOrganizationId, application!.project_id, application!.id, parentId, url));
 			toast.success("URL added successfully");
 			log.info("[rag_sources_check] URL crawl completed, triggering getApplication", {
 				beforeApplicationRagSources: formatApplicationRagSources(application),
@@ -716,8 +717,15 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			if (!selectedOrganizationId) {
 				throw new Error("No organization selected");
 			}
-			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
-			await deleteSource(selectedOrganizationId, application!.project_id, parentId, fileToRemove.id);
+			await (isApplicationParent
+				? deleteApplicationSource(selectedOrganizationId, application!.project_id, parentId, fileToRemove.id)
+				: deleteTemplateSource(
+						selectedOrganizationId,
+						application!.project_id,
+						application!.id,
+						parentId,
+						fileToRemove.id,
+					));
 			toast.success(`File ${fileToRemove.name} removed`);
 			log.info("[rag_sources_check] File removal completed, triggering getApplication", {
 				beforeApplicationRagSources: formatApplicationRagSources(application),
@@ -781,7 +789,6 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 		});
 
 		try {
-			const deleteSource = isApplicationParent ? deleteApplicationSource : deleteTemplateSource;
 			log.info("[removeUrl] About to call delete API", {
 				deleteFunction: isApplicationParent ? "deleteApplicationSource" : "deleteTemplateSource",
 				parentId,
@@ -793,7 +800,16 @@ export const useApplicationStore = create<ApplicationActions & ApplicationState>
 			if (!selectedOrganizationId) {
 				throw new Error("No organization selected");
 			}
-			await deleteSource(selectedOrganizationId, application!.project_id, parentId, ragSource.sourceId);
+
+			await (isApplicationParent
+				? deleteApplicationSource(selectedOrganizationId, application!.project_id, parentId, ragSource.sourceId)
+				: deleteTemplateSource(
+						selectedOrganizationId,
+						application!.project_id,
+						application!.id,
+						parentId,
+						ragSource.sourceId,
+					));
 
 			log.info("[removeUrl] Delete API call succeeded");
 			toast.success("URL removed successfully");

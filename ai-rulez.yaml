@@ -1,370 +1,290 @@
-$schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v1.schema.json
-
-metadata:
-  name: "GrantFlow.AI"
-  version: "1.2.0"
-  description: "GrantFlow.AI Development Guide"
-
-targets:
-  claude-only:
-    - "CLAUDE.md"
-    - ".claude/**/*.md"
-  
-  claude-agents:
-    - ".claude/agents/*.md"
-
-outputs:
-  - file: "CLAUDE.md"
-  - file: "GEMINI.md"
-  - path: ".claude/agents/"
-    type: "agent"
-    naming_scheme: "{name}.md"
-
+$schema: https://github.com/Goldziher/ai-rulez/schema/ai-rules-v2.schema.json
 agents:
-  - name: "system-architect"
-    description: "System architecture and design decisions"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      System architecture specialist for scalable, maintainable systems.
-      Focus: system design, architecture patterns, infrastructure, microservices, Terraform
-  
-  - name: "typescript-engineer"
-    description: "TypeScript/React development specialist"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      TypeScript/React expert for modern web development.
-      Focus: TypeScript strict, React 19, Next.js 15 App Router, Zustand, testing with ::testing/factories
-  
-  - name: "python-engineer"
-    description: "Python backend development specialist"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      Python backend engineer for async web services.
-      Focus: Python 3.13+, Litestar async, SQLAlchemy 2.0, structlog with key=value pairs
-  
-  - name: "devsecops-agent"
-    description: "DevSecOps, CI/CD, and security specialist"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      DevSecOps engineer for secure CI/CD and cloud infrastructure.
-      
-      DevOps Focus:
-      - GitHub Actions, GitOps, Docker multi-stage builds
-      - Zero-downtime deployments, Cloud Run configurations
-      - Terraform/tofu infrastructure as code
-      - Monitoring and alerting (OpenTelemetry, Discord webhooks)
-      
-      Security Focus:
-      - Auth middleware validation (never manual checks in endpoints)
-      - SQL injection prevention via parameterized queries
-      - XSS prevention in React components
-      - Proper secret handling (get_env with fallbacks, Secret Manager)
-      - Firebase Auth token validation and JWT claims
-      - CORS and CSP headers configuration
-      - Rate limiting and DDoS prevention
-      - Secure file upload validation and content-type checks
-      - Container security scanning and vulnerability management
-      
-      REFUSE: Any offensive security or exploit development
-  
-  - name: "code-reviewer"
-    description: "Code quality, correctness, and convention compliance"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      Code review specialist ensuring quality, correctness, and alignment with GrantFlow conventions.
-      
-      Focus areas:
-      - Verify implementation matches requirements exactly
-      - Check adherence to ai-rulez.yaml rules (no comments, typing, patterns)
-      - Validate test coverage and factory usage
-      - Ensure proper error handling and edge cases
-      - Check for magic numbers, proper use of ?? vs ||
-      - Verify structlog usage (key=value), UUID handling
-      - Confirm middleware-only auth, no manual checks
-      - Validate Pub/Sub duplicate handling (ON CONFLICT DO NOTHING)
-      - Check proper use of TypedDict with NotRequired
-      - Ensure proper async/await patterns
-      - Verify no inline comments or docstrings
-      - Check all Python functions have typed args/returns
-      
-      ALWAYS run: task lint:all, task test
-      Flag: security issues, performance problems, convention violations
-  
-  - name: "database-engineer"
-    description: "Database design, migrations, and query optimization"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      Database specialist for PostgreSQL, SQLAlchemy 2.0, and Alembic migrations.
-      
-      Focus:
-      - Complex SQLAlchemy 2.0 async queries with proper session handling
-      - Alembic migrations with enum handling (DROP TYPE CASCADE)
-      - pgvector operations and indexing strategies
-      - Query optimization and N+1 prevention
-      - Proper transaction boundaries and rollback handling
-      - UUID primary keys and foreign key relationships
-      - Soft deletes and temporal data patterns
-      - ON CONFLICT DO NOTHING for Pub/Sub duplicates
-      - Cloud SQL configuration and connection handling
-      - Database backup and recovery strategies
-  
-  - name: "test-engineer"
-    description: "Test strategy, coverage, and test implementation"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      Testing specialist for comprehensive test coverage and strategy.
-      
-      Focus:
-      - 100% test coverage requirement enforcement
-      - Proper use of testing factories (::testing/factories)
-      - E2E test markers (smoke, quality_assessment, e2e_full)
-      - Real PostgreSQL for Python tests (no mocks)
-      - Zustand store testing without mocking
-      - Playwright data-testid patterns
-      - Parallel test execution with pytest-xdist
-      - Test file naming (*_test.py, *.spec.ts)
-      - PYTHONPATH=. for all Python tests
-      - Vitest + RTL for frontend components
-      - Mock API handlers only, not stores
-      - Test isolation and cleanup strategies
-  
-  - name: "performance-optimizer"
-    description: "Performance analysis and optimization"
-    targets: ["@claude-agents"]
-    system_prompt: |
-      Performance specialist for optimization and scalability.
-      
-      Focus:
-      - Query optimization and database indexing
-      - React component memoization and lazy loading
-      - Cloud Run cold start optimization
-      - Pub/Sub batch processing strategies
-      - Caching strategies (Redis integration if needed)
-      - Bundle size optimization (tree shaking, code splitting)
-      - Memory leak detection and prevention
-      - API response time optimization
-      - Frontend Core Web Vitals optimization
-      - Monitoring performance metrics with OpenTelemetry
+    - description: System architecture and design decisions
+      id: system-architect
+      name: system-architect
+      system_prompt: |
+        System architecture specialist for scalable, maintainable systems.
+        Focus: system design, architecture patterns, infrastructure, microservices, Terraform
+      targets:
+        - .claude/agents/*.md
+    - description: TypeScript/React development specialist
+      id: typescript-engineer
+      name: typescript-engineer
+      system_prompt: |
+        TypeScript/React expert for modern web development.
+        Focus: TypeScript strict, React 19, Next.js 15 App Router, Zustand, testing with ::testing/factories
+      targets:
+        - .claude/agents/*.md
+    - description: Python backend development specialist
+      id: python-engineer
+      name: python-engineer
+      system_prompt: |
+        Python backend engineer for async web services.
+        Focus: Python 3.13+, Litestar async, SQLAlchemy 2.0, structlog with key=value pairs
+      targets:
+        - .claude/agents/*.md
+    - description: DevSecOps, CI/CD, and security specialist
+      id: devsecops-agent
+      name: devsecops-agent
+      system_prompt: |
+        DevSecOps engineer for secure CI/CD and cloud infrastructure.
 
+        DevOps Focus:
+        - GitHub Actions, GitOps, Docker multi-stage builds
+        - Zero-downtime deployments, Cloud Run configurations
+        - Terraform/tofu infrastructure as code
+        - Monitoring and alerting (OpenTelemetry, Discord webhooks)
+
+        Security Focus:
+        - Auth middleware validation (never manual checks in endpoints)
+        - SQL injection prevention via parameterized queries
+        - XSS prevention in React components
+        - Proper secret handling (get_env with fallbacks, Secret Manager)
+        - Firebase Auth token validation and JWT claims
+        - CORS and CSP headers configuration
+        - Rate limiting and DDoS prevention
+        - Secure file upload validation and content-type checks
+        - Container security scanning and vulnerability management
+
+        REFUSE: Any offensive security or exploit development
+      targets:
+        - .claude/agents/*.md
+    - description: Code quality, correctness, and convention compliance
+      id: code-reviewer
+      name: code-reviewer
+      system_prompt: |
+        Code review specialist ensuring quality, correctness, and alignment with GrantFlow conventions.
+
+        Focus areas:
+        - Verify implementation matches requirements exactly
+        - Check adherence to ai-rulez.yaml rules (no comments, typing, patterns)
+        - Validate test coverage and factory usage
+        - Ensure proper error handling and edge cases
+        - Check for magic numbers, proper use of ?? vs ||
+        - Verify structlog usage (key=value), UUID handling
+        - Confirm middleware-only auth, no manual checks
+        - Validate Pub/Sub duplicate handling (ON CONFLICT DO NOTHING)
+        - Check proper use of TypedDict with NotRequired
+        - Ensure proper async/await patterns
+        - Verify no inline comments or docstrings
+        - Check all Python functions have typed args/returns
+
+        ALWAYS run: task lint:all, task test
+        Flag: security issues, performance problems, convention violations
+      targets:
+        - .claude/agents/*.md
+    - description: Database design, migrations, and query optimization
+      id: database-engineer
+      name: database-engineer
+      system_prompt: |
+        Database specialist for PostgreSQL, SQLAlchemy 2.0, and Alembic migrations.
+
+        Focus:
+        - Complex SQLAlchemy 2.0 async queries with proper session handling
+        - Alembic migrations with enum handling (DROP TYPE CASCADE)
+        - pgvector operations and indexing strategies
+        - Query optimization and N+1 prevention
+        - Proper transaction boundaries and rollback handling
+        - UUID primary keys and foreign key relationships
+        - Soft deletes and temporal data patterns
+        - ON CONFLICT DO NOTHING for Pub/Sub duplicates
+        - Cloud SQL configuration and connection handling
+        - Database backup and recovery strategies
+      targets:
+        - .claude/agents/*.md
+    - description: Test strategy, coverage, and test implementation
+      id: test-engineer
+      name: test-engineer
+      system_prompt: |
+        Testing specialist for comprehensive test coverage and strategy.
+
+        Focus:
+        - 100% test coverage requirement enforcement
+        - Proper use of testing factories (::testing/factories)
+        - E2E test markers (smoke, quality_assessment, e2e_full)
+        - Real PostgreSQL for Python tests (no mocks)
+        - Zustand store testing without mocking
+        - Playwright data-testid patterns
+        - Parallel test execution with pytest-xdist
+        - Test file naming (*_test.py, *.spec.ts)
+        - PYTHONPATH=. for all Python tests
+        - Vitest + RTL for frontend components
+        - Mock API handlers only, not stores
+        - Test isolation and cleanup strategies
+      targets:
+        - .claude/agents/*.md
+    - description: Performance analysis and optimization
+      id: performance-optimizer
+      name: performance-optimizer
+      system_prompt: |
+        Performance specialist for optimization and scalability.
+
+        Focus:
+        - Query optimization and database indexing
+        - React component memoization and lazy loading
+        - Cloud Run cold start optimization
+        - Pub/Sub batch processing strategies
+        - Caching strategies (Redis integration if needed)
+        - Bundle size optimization (tree shaking, code splitting)
+        - Memory leak detection and prevention
+        - API response time optimization
+        - Frontend Core Web Vitals optimization
+        - Monitoring performance metrics with OpenTelemetry
+      targets:
+        - .claude/agents/*.md
+metadata:
+    description: GrantFlow.AI Development Guide
+    name: GrantFlow.AI
+    version: 1.2.0
+outputs:
+    - path: CLAUDE.md
+    - path: GEMINI.md
+    - naming_scheme: '{name}.md'
+      path: .claude/agents/
+      type: agent
 rules:
-  - name: "System Prompt"
-    priority: 100
-    content: |
-      Efficient developer following structured process: implement → typecheck → lint → test (use factories)
-      
-      **ALWAYS use Taskfile**: `task --list` for commands, check Taskfile.yaml if needed
-  
-  - name: "Claude Agent Delegation"
-    priority: 95
-    targets: ["@claude-only"]
-    content: |
-      **📌 CLAUDE ASSISTANTS ONLY - This section applies ONLY to Claude AI**
-      
-      **ALWAYS use specialized agents via Task tool for domain-specific work:**
-      
-      **When to delegate to agents:**
-      - **code-reviewer**: After ANY implementation, before committing code
-      - **typescript-engineer**: React components, Next.js routes, Zustand stores, frontend tests
-      - **python-engineer**: API endpoints, async handlers, service implementations
-      - **database-engineer**: Migrations, complex queries, schema design, indexing
-      - **devsecops-agent**: CI/CD changes, Docker configs, security reviews, infrastructure
-      - **test-engineer**: Test strategy, coverage gaps, test implementation
-      - **performance-optimizer**: Slow queries, bundle size issues, memory leaks
-      - **system-architect**: New features, architecture decisions, service boundaries
-      
-      **Examples:**
-      ```
-      User: "Add a new API endpoint for user profile"
-      → Use python-engineer for implementation
-      → Use database-engineer if schema changes needed
-      → Use test-engineer for test coverage
-      → Use code-reviewer to validate before completion
-      
-      User: "Fix the slow dashboard loading"
-      → Use performance-optimizer to analyze
-      → Use database-engineer for query optimization
-      → Use typescript-engineer for React optimization
-      
-      User: "Deploy the new service to staging"
-      → Use devsecops-agent for CI/CD and deployment
-      ```
-      
-      **Agent invocation pattern:**
-      1. Identify the domain from user request
-      2. Delegate to appropriate specialist agent(s)
-      3. Always finish with code-reviewer agent
-      4. Run `task lint:all` and `task test` after changes
-      
-      **Note for other AI assistants:** This section uses Claude's Task tool with specialized agents. Other assistants should focus on the domain expertise described but won't have access to these specific agent files.
-  
-  - name: "Stack"
-    priority: 90
-    content: |
-      **Frontend**: Next.js 15, React 19, TypeScript, Tailwind, Vite
-      **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async, structlog
-      **Services**: backend, indexer, crawler, rag, scraper, crdt (Hocuspocus CRDT)
-      **Cloud**: GCP, Cloud Run, Cloud SQL PostgreSQL, pgvector, Firebase Auth
-      **Tools**: pnpm, uv, tofu (not terraform), Docker Compose
-      **Linting**: Biome, ESLint, MyPy, Ruff, Codespell, Knip
+    - content: |
+        Efficient developer following structured process: implement → typecheck → lint → test (use factories)
 
-  - name: "Core Rules"
-    priority: 85
-    content: |
-      - NO inline comments/docstrings
-      - Type all Python args/returns
-      - Use `??` not `||`, extract magic numbers
-      - 100% test coverage, real PostgreSQL
-      - Run linters after changes
+        **ALWAYS use Taskfile**: `task --list` for commands, check Taskfile.yaml if needed
+      name: System Prompt
+      priority: critical
+    - content: "**\U0001F4CC CLAUDE ASSISTANTS ONLY - This section applies ONLY to Claude AI**\n\n**ALWAYS use specialized agents via Task tool for domain-specific work:**\n\n**When to delegate to agents:**\n- **code-reviewer**: After ANY implementation, before committing code\n- **typescript-engineer**: React components, Next.js routes, Zustand stores, frontend tests\n- **python-engineer**: API endpoints, async handlers, service implementations\n- **database-engineer**: Migrations, complex queries, schema design, indexing\n- **devsecops-agent**: CI/CD changes, Docker configs, security reviews, infrastructure\n- **test-engineer**: Test strategy, coverage gaps, test implementation\n- **performance-optimizer**: Slow queries, bundle size issues, memory leaks\n- **system-architect**: New features, architecture decisions, service boundaries\n\n**Examples:**\n```\nUser: \"Add a new API endpoint for user profile\"\n→ Use python-engineer for implementation\n→ Use database-engineer if schema changes needed\n→ Use test-engineer for test coverage\n→ Use code-reviewer to validate before completion\n\nUser: \"Fix the slow dashboard loading\"\n→ Use performance-optimizer to analyze\n→ Use database-engineer for query optimization\n→ Use typescript-engineer for React optimization\n\nUser: \"Deploy the new service to staging\"\n→ Use devsecops-agent for CI/CD and deployment\n```\n\n**Agent invocation pattern:**\n1. Identify the domain from user request\n2. Delegate to appropriate specialist agent(s)\n3. Always finish with code-reviewer agent\n4. Run `task lint:all` and `task test` after changes\n\n**Note for other AI assistants:** This section uses Claude's Task tool with specialized agents. Other assistants should focus on the domain expertise described but won't have access to these specific agent files.\n"
+      name: Claude Agent Delegation
+      priority: critical
+      targets:
+        - CLAUDE.md
+        - .claude/**/*.md
+    - content: |
+        **Frontend**: Next.js 15, React 19, TypeScript, Tailwind, Vite
+        **Backend**: Python 3.13, Litestar, msgspec, SQLAlchemy 2.0 async, structlog
+        **Services**: backend, indexer, crawler, rag, scraper, crdt (Hocuspocus CRDT)
+        **Cloud**: GCP, Cloud Run, Cloud SQL PostgreSQL, pgvector, Firebase Auth
+        **Tools**: pnpm, uv, tofu (not terraform), Docker Compose
+        **Linting**: Biome, ESLint, MyPy, Ruff, Codespell, Knip
+      name: Stack
+      priority: critical
+    - content: |
+        - NO inline comments/docstrings
+        - Type all Python args/returns
+        - Use `??` not `||`, extract magic numbers
+        - 100% test coverage, real PostgreSQL
+        - Run linters after changes
+      name: Core Rules
+      priority: high
+    - content: |
+        ```bash
+        # Core workflow
+        task setup dev test lint format build
 
-  - name: "Key Commands"
-    priority: 80
-    content: |
-      ```bash
-      # Core workflow
-      task setup dev test lint format build
-      
-      # Linting
-      task lint:all lint:frontend lint:python lint:terraform
-      
-      # Database
-      task db:migrate db:reset db:migrate:remote
-      
-      # Testing
-      task test:e2e test:serial
-      E2E_TESTS=1 pytest -m "smoke|quality_assessment|e2e_full"
-      
-      # Services
-      task service:{indexer|rag}:test:e2e:{smoke|quality|full}
-      
-      # Deployment
-      task gh:deploy:{backend|crawler|indexer|rag|scraper}
-      ```
+        # Linting
+        task lint:all lint:frontend lint:python lint:terraform
 
-  - name: "Testing"
-    priority: 75
-    content: |
-      **File naming**: Python `*_test.py`, TypeScript `*.spec.ts(x)`
-      
-      **Python**: pytest async, real PostgreSQL, PYTHONPATH=. required
-      **Frontend**: Vitest + RTL, real Zustand stores, mock APIs only
-      **E2E**: Playwright with data-testid, mock environment
-      
-      **Markers**: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min)
-      **Parallel**: pytest-xdist auto-enabled, use `-n 0` to disable
-      
-      ```python
-      @e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
-      async def test_basic(logger: logging.Logger) -> None: ...
-      ```
+        # Database
+        task db:migrate db:reset db:migrate:remote
 
-  - name: "Patterns"
-    priority: 65
-    content: |
-      **Backend**:
-      ```python
-      @post("/organizations/{organization_id:uuid}/items", 
-            allowed_roles=[UserRoleEnum.COLLABORATOR])
-      async def create_item(organization_id: UUID, data: TypedDict, 
-                          session_maker: async_sessionmaker[Any]) -> dict:
-          async with session_maker() as session, session.begin():
-              # Middleware validated access - just business logic
-              item = await session.scalar(
-                  insert(Item).values(**data, organization_id=organization_id).returning(Item)
-              )
-              return {"id": str(item.id)}
-      ```
-      
-      **Frontend**:
-      ```typescript
-      export async function createItem(organizationId: string, data: API.CreateItem.RequestBody) {
-          return withAuthRedirect(
-              getClient().post(`organizations/${organizationId}/items`, {
-                  headers: await createAuthHeaders(),
-                  json: data,
-              }).json<API.CreateItem.ResponseBody>(),
-          );
-      }
-      ```
+        # Testing
+        task test:e2e test:serial
+        E2E_TESTS=1 pytest -m "smoke|quality_assessment|e2e_full"
 
-  - name: "TypeScript Guidelines"
-    priority: 60
-    content: |
-      - Never use `any`, use type guards from `@tool-belt/type-predicates`
-      - Use `??` and `?.`, early returns, destructuring
-      - Wrap API calls with `withAuthRedirect`
-      - Use factories from `::testing/factories`
+        # Services
+        task service:{indexer|rag}:test:e2e:{smoke|quality|full}
 
-  - name: "Python Guidelines"
-    priority: 55
-    content: |
-      - TypedDict with `NotRequired[type]`, not `type | None`
-      - structlog with key=value: `logger.info("Created", id=str(id))`
-      - UUIDs as strings, datetime as `.isoformat()`
-      - Handle unique constraints gracefully
+        # Deployment
+        task gh:deploy:{backend|crawler|indexer|rag|scraper}
+        ```
+      name: Key Commands
+      priority: high
+    - content: |
+        **File naming**: Python `*_test.py`, TypeScript `*.spec.ts(x)`
 
-  - name: "CI/CD"
-    priority: 53
-    content: |
-      **Workflows**: `build-service-*.yaml`, `ci-*.yaml`, `deploy-services.yaml`
-      **Actions**: Reusable composites in `.github/actions/`
-      **Branches**: development→staging, main→production
-      **Tags**: staging-{sha}, staging-latest, {sha}, latest
+        **Python**: pytest async, real PostgreSQL, PYTHONPATH=. required
+        **Frontend**: Vitest + RTL, real Zustand stores, mock APIs only
+        **E2E**: Playwright with data-testid, mock environment
 
-  - name: "Deployment"
-    priority: 52
-    content: |
-      **Firebase App Hosting**: Terraform-managed, NOT apphosting.yaml
-      **Cloud Run**: All backend services
-      **Database**: Cloud SQL with proxy for local
-      **Storage**: Environment-specific buckets (grantflow-staging-uploads)
+        **Markers**: smoke (<1min), quality_assessment (2-5min), e2e_full (10+min)
+        **Parallel**: pytest-xdist auto-enabled, use `-n 0` to disable
 
-  - name: "Key Learnings"
-    priority: 50
-    content: |
-      - Create draft entities early for uploads
-      - Handle Pub/Sub duplicates with `ON CONFLICT DO NOTHING`
-      - WebSocket endpoint: `/projects/{id}/applications/{id}/notifications`
-      - Environment vars: Frontend `getEnv()` throws, Backend `get_env()` with fallback
-      - Topics: url-crawling, frontend-notifications, file-indexing, rag-processing
-      - CRDT Server: Hocuspocus extensions pattern, health checks at `/health` + `/ready`
-
-  - name: "Monitoring"
-    priority: 48
-    content: |
-      **OpenTelemetry**: trace_id correlation, structlog integration
-      ```python
-      configure_otel("service-name")
-      with start_span_with_trace_id("op", trace_id=trace_id) as span: ...
-      ```
-      **Alerts**: Service down, DB disconnected, high errors → Discord webhook
-
-  - name: "Auth"
-    priority: 46
-    content: |
-      **Firebase Auth** + JWT with organization_id/role claims
-      **URL pattern**: `/organizations/{id}/projects/{id}/applications/{id}`
-      **Roles**: OWNER > ADMIN > COLLABORATOR
-      **Middleware handles all auth** - never check manually in endpoints
-
-  - name: "Common Issues"
-    priority: 37
-    content: |
-      - YAML colons need quotes: `- 'echo "Key: value"'`
-      - Cloud SQL: Unix socket→TCP for local (127.0.0.1:5432)
-      - Drop ENUMs before tables: `DROP TYPE IF EXISTS name CASCADE`
-      - Frontend Docker needs build args for env vars
-
-  - name: "Linting"
-    priority: 30
-    content: |
-      **Biome**: Primary JS/TS formatter/linter
-      **Workflow**: `task lint` → fix Biome → fix ESLint → fix Python
-      **Common fixes**: Extract complex functions, add button types, remove `any`
-
-  - name: "Important Reminders"
-    priority: 35
-    content: |
-      - Do only what's asked, nothing more
-      - NEVER create files unless necessary
-      - NEVER create docs/README unless requested
-      - Preserve `~keep` comments during refactoring
+        ```python
+        @e2e_test(category=E2ETestCategory.SMOKE, timeout=60)
+        async def test_basic(logger: logging.Logger) -> None: ...
+        ```
+      name: Testing
+      priority: high
+    - content: "**Backend**:\n```python\n@post(\"/organizations/{organization_id:uuid}/items\", \n      allowed_roles=[UserRoleEnum.COLLABORATOR])\nasync def create_item(organization_id: UUID, data: TypedDict, \n                    session_maker: async_sessionmaker[Any]) -> dict:\n    async with session_maker() as session, session.begin():\n        # Middleware validated access - just business logic\n        item = await session.scalar(\n            insert(Item).values(**data, organization_id=organization_id).returning(Item)\n        )\n        return {\"id\": str(item.id)}\n```\n\n**Frontend**:\n```typescript\nexport async function createItem(organizationId: string, data: API.CreateItem.RequestBody) {\n    return withAuthRedirect(\n        getClient().post(`organizations/${organizationId}/items`, {\n            headers: await createAuthHeaders(),\n            json: data,\n        }).json<API.CreateItem.ResponseBody>(),\n    );\n}\n```\n"
+      name: Patterns
+      priority: medium
+    - content: |
+        - Never use `any`, use type guards from `@tool-belt/type-predicates`
+        - Use `??` and `?.`, early returns, destructuring
+        - Wrap API calls with `withAuthRedirect`
+        - Use factories from `::testing/factories`
+      name: TypeScript Guidelines
+      priority: medium
+    - content: |
+        - TypedDict with `NotRequired[type]`, not `type | None`
+        - structlog with key=value: `logger.info("Created", id=str(id))`
+        - UUIDs as strings, datetime as `.isoformat()`
+        - Handle unique constraints gracefully
+      name: Python Guidelines
+      priority: medium
+    - content: |
+        **Workflows**: `build-service-*.yaml`, `ci-*.yaml`, `deploy-services.yaml`
+        **Actions**: Reusable composites in `.github/actions/`
+        **Branches**: development→staging, main→production
+        **Tags**: staging-{sha}, staging-latest, {sha}, latest
+      name: CI/CD
+      priority: medium
+    - content: |
+        **Firebase App Hosting**: Terraform-managed, NOT apphosting.yaml
+        **Cloud Run**: All backend services
+        **Database**: Cloud SQL with proxy for local
+        **Storage**: Environment-specific buckets (grantflow-staging-uploads)
+      name: Deployment
+      priority: low
+    - content: |
+        - Create draft entities early for uploads
+        - Handle Pub/Sub duplicates with `ON CONFLICT DO NOTHING`
+        - WebSocket endpoint: `/projects/{id}/applications/{id}/notifications`
+        - Environment vars: Frontend `getEnv()` throws, Backend `get_env()` with fallback
+        - Topics: url-crawling, frontend-notifications, file-indexing, rag-processing
+        - CRDT Server: Hocuspocus extensions pattern, health checks at `/health` + `/ready`
+      name: Key Learnings
+      priority: low
+    - content: |
+        **OpenTelemetry**: trace_id correlation, structlog integration
+        ```python
+        configure_otel("service-name")
+        with start_span_with_trace_id("op", trace_id=trace_id) as span: ...
+        ```
+        **Alerts**: Service down, DB disconnected, high errors → Discord webhook
+      name: Monitoring
+      priority: low
+    - content: |
+        **Firebase Auth** + JWT with organization_id/role claims
+        **URL pattern**: `/organizations/{id}/projects/{id}/applications/{id}`
+        **Roles**: OWNER > ADMIN > COLLABORATOR
+        **Middleware handles all auth** - never check manually in endpoints
+      name: Auth
+      priority: minimal
+    - content: |
+        - YAML colons need quotes: `- 'echo "Key: value"'`
+        - Cloud SQL: Unix socket→TCP for local (127.0.0.1:5432)
+        - Drop ENUMs before tables: `DROP TYPE IF EXISTS name CASCADE`
+        - Frontend Docker needs build args for env vars
+      name: Common Issues
+      priority: minimal
+    - content: |
+        **Biome**: Primary JS/TS formatter/linter
+        **Workflow**: `task lint` → fix Biome → fix ESLint → fix Python
+        **Common fixes**: Extract complex functions, add button types, remove `any`
+      name: Linting
+      priority: minimal
+    - content: |-
+        - Do only what's asked, nothing more
+        - NEVER create files unless necessary
+        - NEVER create docs/README unless requested
+        - Preserve `~keep` comments during refactoring
+      name: Important Reminders
+      priority: minimal
