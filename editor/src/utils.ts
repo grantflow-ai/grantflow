@@ -17,7 +17,7 @@ export const MAC_SYMBOLS: Record<string, string> = {
  * @returns boolean indicating if the current platform is Mac
  */
 export function isMac(): boolean {
-	return typeof navigator !== "undefined" && navigator.platform.toLowerCase().includes("mac");
+	return navigator?.platform.toLowerCase().includes("mac") ?? false;
 }
 
 /**
