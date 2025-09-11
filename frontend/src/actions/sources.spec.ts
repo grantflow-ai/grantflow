@@ -268,10 +268,15 @@ describe("Sources Actions", () => {
 	describe("Grant Template Sources", () => {
 		describe.sequential("getTemplateSources", () => {
 			it("should call the API with correct parameters", async () => {
-				const result = await getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId);
+				const result = await getTemplateSources(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockTemplateId,
+				);
 
 				expect(mockGet).toHaveBeenCalledWith(
-					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant_templates/${mockTemplateId}/sources`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -291,9 +296,9 @@ describe("Sources Actions", () => {
 					return await promise;
 				});
 
-				await expect(getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId)).rejects.toThrow(
-					"API Error",
-				);
+				await expect(
+					getTemplateSources(mockOrganizationId, mockProjectId, mockApplicationId, mockTemplateId),
+				).rejects.toThrow("API Error");
 			});
 
 			it("should redirect to sign-in page on 401 errors", async () => {
@@ -316,7 +321,7 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await getTemplateSources(mockOrganizationId, mockProjectId, mockTemplateId);
+				await getTemplateSources(mockOrganizationId, mockProjectId, mockApplicationId, mockTemplateId);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -324,10 +329,16 @@ describe("Sources Actions", () => {
 
 		describe.sequential("deleteTemplateSource", () => {
 			it("should call the API with correct parameters", async () => {
-				await deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId);
+				await deleteTemplateSource(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockTemplateId,
+					mockSourceId,
+				);
 
 				expect(mockDelete).toHaveBeenCalledWith(
-					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/${mockSourceId}`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant_templates/${mockTemplateId}/sources/${mockSourceId}`,
 					{
 						headers: mockAuthHeaders,
 					},
@@ -343,7 +354,13 @@ describe("Sources Actions", () => {
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
 				await expect(
-					deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId),
+					deleteTemplateSource(
+						mockOrganizationId,
+						mockProjectId,
+						mockApplicationId,
+						mockTemplateId,
+						mockSourceId,
+					),
 				).rejects.toThrow("API Error");
 			});
 
@@ -365,7 +382,13 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await deleteTemplateSource(mockOrganizationId, mockProjectId, mockTemplateId, mockSourceId);
+				await deleteTemplateSource(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockTemplateId,
+					mockSourceId,
+				);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
@@ -457,12 +480,13 @@ describe("Sources Actions", () => {
 				const result = await crawlTemplateUrl(
 					mockOrganizationId,
 					mockProjectId,
+					mockApplicationId,
 					mockTemplateId,
 					urlRequest.url,
 				);
 
 				expect(mockPost).toHaveBeenCalledWith(
-					`organizations/${mockOrganizationId}/projects/${mockProjectId}/grant_templates/${mockTemplateId}/sources/crawl-url`,
+					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant_templates/${mockTemplateId}/sources/crawl-url`,
 					{
 						headers: mockAuthHeaders,
 						json: { url: urlRequest.url },
@@ -482,7 +506,13 @@ describe("Sources Actions", () => {
 				mockWithAuthRedirect.mockImplementationOnce((promise: Promise<any>) => promise);
 
 				await expect(
-					crawlTemplateUrl(mockOrganizationId, mockProjectId, mockTemplateId, urlRequest.url),
+					crawlTemplateUrl(
+						mockOrganizationId,
+						mockProjectId,
+						mockApplicationId,
+						mockTemplateId,
+						urlRequest.url,
+					),
 				).rejects.toThrow("API Error");
 			});
 
@@ -506,7 +536,13 @@ describe("Sources Actions", () => {
 					}
 				});
 
-				await crawlTemplateUrl(mockOrganizationId, mockProjectId, mockTemplateId, urlRequest.url);
+				await crawlTemplateUrl(
+					mockOrganizationId,
+					mockProjectId,
+					mockApplicationId,
+					mockTemplateId,
+					urlRequest.url,
+				);
 
 				expect(mockRedirect).toHaveBeenCalledWith("/signin");
 			});
