@@ -131,10 +131,9 @@ async def test_list_granting_institutions_excludes_soft_deleted(
         initial_count = len(initial_data)
 
         # Soft-delete one institution
-        async with async_session_maker() as session:
+        async with async_session_maker() as session, session.begin():
             institutions[0].soft_delete()
             session.add(institutions[0])
-            await session.commit()
 
         # Get list again - should have one fewer result
         response = await test_client.get(
