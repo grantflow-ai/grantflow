@@ -12,6 +12,7 @@ from litestar.status_codes import (
 )
 from litestar.testing import AsyncTestClient
 from packages.db.src.tables import Grant, GrantingInstitution, GrantMatchingSubscription
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from services.backend.tests.conftest import TestingClientType
@@ -295,6 +296,123 @@ async def test_create_subscription_invalid_email(test_client: TestingClientType)
     )
 
     assert response.status_code == HTTP_201_CREATED
+
+
+# SOFT-DELETE FILTERING TESTS - Critical security tests to ensure deleted grants are not exposed
+
+
+async def test_search_grants_excludes_soft_deleted(
+    public_test_client: TestingClientType, sample_grants: list[Grant], async_session_maker: async_sessionmaker[Any]
+) -> None:
+    """Test that soft-deleted grants are not returned in search results."""
+    # First, verify all grants are returned normally
+    response = await public_test_client.get("/grants")
+    assert response.status_code == HTTP_200_OK
+    initial_data = response.json()
+    assert len(initial_data) == 3
+
+    # Soft-delete one of the grants
+    async with async_session_maker() as session:
+        grant_to_delete = sample_grants[0]
+        grant_to_delete.soft_delete()
+        session.add(grant_to_delete)
+        await session.commit()
+
+    # Now search should return only 2 grants
+    response = await public_test_client.get("/grants")
+    assert response.status_code == HTTP_200_OK
+    data = response.json()
+    assert len(data) == 2
+
+    # Ensure the deleted grant is not in the results
+    returned_document_numbers = {grant["document_number"] for grant in data}
+    assert grant_to_delete.document_number not in returned_document_numbers
+
+
+async def test_get_grant_details_excludes_soft_deleted(
+    public_test_client: TestingClientType, sample_grants: list[Grant], async_session_maker: async_sessionmaker[Any]
+) -> None:
+    """Test that soft-deleted grants cannot be accessed via details endpoint."""
+    grant_to_delete = sample_grants[0]
+
+    # First, verify the grant can be accessed normally
+    response = await public_test_client.get(f"/grants/{grant_to_delete.document_number}")
+    assert response.status_code == HTTP_200_OK
+
+    # Soft-delete the grant
+    async with async_session_maker() as session:
+        grant_to_delete.soft_delete()
+        session.add(grant_to_delete)
+        await session.commit()
+
+    # Now the grant should not be found
+    response = await public_test_client.get(f"/grants/{grant_to_delete.document_number}")
+    assert response.status_code == HTTP_404_NOT_FOUND
+    data = response.json()
+    assert data["detail"] == "Grant not found"
+
+
+async def test_search_with_filters_excludes_soft_deleted(
+    public_test_client: TestingClientType, sample_grants: list[Grant], async_session_maker: async_sessionmaker[Any]
+) -> None:
+    """Test that soft-deleted grants are excluded even when matching search filters."""
+    # Search for grants with specific category
+    response = await public_test_client.get("/grants", params={"category": "Research"})
+    assert response.status_code == HTTP_200_OK
+    initial_data = response.json()
+    research_grant_count = len(initial_data)
+    assert research_grant_count > 0
+
+    # Find and soft-delete a research grant
+    research_grant = next((grant for grant in sample_grants if grant.category == "Research"), None)
+    assert research_grant is not None
+
+    async with async_session_maker() as session:
+        research_grant.soft_delete()
+        session.add(research_grant)
+        await session.commit()
+
+    # Search again - should have one fewer result
+    response = await public_test_client.get("/grants", params={"category": "Research"})
+    assert response.status_code == HTTP_200_OK
+    data = response.json()
+    assert len(data) == research_grant_count - 1
+
+    # Ensure the deleted grant is not in the filtered results
+    returned_document_numbers = {grant["document_number"] for grant in data}
+    assert research_grant.document_number not in returned_document_numbers
+
+
+async def test_subscription_excludes_soft_deleted_grants(
+    test_client: TestingClientType, async_session_maker: async_sessionmaker[Any]
+) -> None:
+    """Test that soft-deleted subscriptions are not accessible."""
+    # Create a subscription
+    response = await test_client.post(
+        "/grants/subscribe",
+        json={
+            "email": "soft-delete-test@example.com",
+            "frequency": "daily",
+            "search_params": {"category": "Research"},
+        },
+    )
+    assert response.status_code == HTTP_201_CREATED
+
+    # Soft-delete the subscription
+    async with async_session_maker() as session:
+        subscription = await session.scalar(
+            select(GrantMatchingSubscription).where(GrantMatchingSubscription.email == "soft-delete-test@example.com")
+        )
+        assert subscription is not None
+        subscription.soft_delete()
+        session.add(subscription)
+        await session.commit()
+
+    # Try to unsubscribe - should fail because subscription is soft-deleted
+    response = await test_client.post("/grants/unsubscribe", json={"email": "soft-delete-test@example.com"})
+    assert response.status_code == HTTP_404_NOT_FOUND
+    data = response.json()
+    assert "No active subscription found" in data["detail"]
 
 
 async def test_unsubscribe_success(
